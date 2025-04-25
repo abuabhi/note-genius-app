@@ -8,14 +8,11 @@ import CTA from "@/components/landing/CTA";
 const HomePage = () => {
   return (
     <Layout>
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 z-0 bg-gradient-to-br from-purple-600 via-purple-900 to-indigo-900" />
-        <div className="relative z-10">
-          <Hero />
-          <Features />
-          <Testimonials />
-          <CTA />
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-mint-50 via-purple-50 to-white">
+        <Hero />
+        <Features />
+        <Testimonials />
+        <CTA />
       </div>
     </Layout>
   );
