@@ -49,7 +49,7 @@ export const ScheduleCalendar = () => {
         </div>
         <div className="flex-1">
           <h2 className="text-xl font-semibold mb-4">
-            {date ? date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            {date ? date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''}
           </h2>
           <div className="space-y-4">
             {mockEvents
