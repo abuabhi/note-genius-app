@@ -1,6 +1,6 @@
 
-import { useToast as useToastOriginal } from "@/hooks/use-toast";
-export { useToast, toast } from "@/hooks/use-toast";
+import { useToast as useToastOriginal } from "@/components/ui/use-toast";
 
-// This is a re-export file to maintain compatibility
-// with the existing codebase
+// Re-export the original hook and toast function
+export const useToast = useToastOriginal;
+export { toast } from "@/components/ui/use-toast";
