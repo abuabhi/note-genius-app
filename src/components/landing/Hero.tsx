@@ -44,7 +44,7 @@ const Hero = () => {
           </div>
         </div>
         <div className="relative">
-          <div className="absolute -inset-4 bg-gradient-to-r from-mint-300 to-purple-300 blur-3xl opacity-20" />
+          <div className="absolute -inset-4 bg-gradient-to-r from-mint-300 to-neutral-300 blur-3xl opacity-20" />
           <img
             src="/lovable-uploads/300e0c37-2d0d-4e48-aaaf-8b1c4dc65276.png"
             alt="Learning dashboard"
