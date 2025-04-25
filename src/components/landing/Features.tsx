@@ -1,59 +1,69 @@
 
-import { Notebook, BrainCircuit, FileText, AlertCircle } from "lucide-react";
+import { Brain, Zap, Star, Users } from "lucide-react";
 
 const features = [
   {
-    name: "Smart Notes",
-    description:
-      "Take notes or record audio that automatically transcribes to text. Our AI helps organize and structure your notes for better learning.",
-    icon: Notebook,
+    name: "Smart AI Analysis",
+    description: "Our AI understands your notes and learning style, creating personalized study materials that work for you.",
+    icon: Brain,
+    gradient: "from-purple-500 to-indigo-500",
   },
   {
-    name: "AI-Generated Flashcards",
-    description:
-      "Convert your notes into effective flashcards with spaced repetition algorithms to help you remember more in less time.",
-    icon: BrainCircuit,
+    name: "Instant Flashcards",
+    description: "Transform your notes into effective flashcards in seconds. Save hours of manual work.",
+    icon: Zap,
+    gradient: "from-pink-500 to-rose-500",
   },
   {
-    name: "Personalized Quizzes",
-    description:
-      "Generate customized quizzes based on your notes to test your knowledge and identify areas that need more focus.",
-    icon: FileText,
+    name: "Custom Quizzes",
+    description: "Generate tests that adapt to your knowledge gaps and help you learn faster.",
+    icon: Star,
+    gradient: "from-amber-500 to-orange-500",
   },
   {
-    name: "Study Insights",
-    description:
-      "Track your progress and receive insights about your learning patterns to help you study more effectively.",
-    icon: AlertCircle,
+    name: "Study Groups",
+    description: "Connect with classmates, share notes, and learn together in virtual study rooms.",
+    icon: Users,
+    gradient: "from-emerald-500 to-teal-500",
   },
 ];
 
 const Features = () => {
   return (
-    <div className="py-12 bg-white">
+    <div className="py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="lg:text-center">
-          <h2 className="text-base text-purple-600 font-semibold tracking-wide uppercase">Features</h2>
-          <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-            A better way to study
+        <div className="text-center">
+          <h2 className="text-base font-semibold text-purple-600 tracking-wide uppercase">Features</h2>
+          <p className="mt-2 text-4xl font-bold text-gray-900 tracking-tight">
+            Everything you need to excel
           </p>
-          <p className="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
-            Our AI-powered tools help you learn more efficiently and retain information longer.
+          <p className="mt-4 max-w-2xl text-xl text-gray-500 mx-auto">
+            Powerful tools that make studying smarter, not harder
           </p>
         </div>
 
-        <div className="mt-10">
-          <div className="space-y-10 md:space-y-0 md:grid md:grid-cols-2 md:gap-x-8 md:gap-y-10">
-            {features.map((feature) => (
-              <div key={feature.name} className="relative">
-                <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-purple-500 text-white">
-                  <feature.icon className="h-6 w-6" aria-hidden="true" />
+        <div className="mt-20 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+          {features.map((feature) => (
+            <div
+              key={feature.name}
+              className="relative group"
+            >
+              <div className="absolute -inset-1 rounded-lg bg-gradient-to-r opacity-25 blur-lg transition duration-200 group-hover:opacity-75"
+                style={{
+                  backgroundImage: `linear-gradient(to right, ${feature.gradient})`,
+                }}
+              />
+              <div className="relative h-full p-6 bg-white rounded-lg border border-gray-100 shadow-sm transition duration-200 group-hover:scale-[1.02]">
+                <div>
+                  <span className="inline-flex items-center justify-center p-3 rounded-md">
+                    <feature.icon className="h-6 w-6 text-purple-600" />
+                  </span>
                 </div>
-                <p className="ml-16 text-lg leading-6 font-medium text-gray-900">{feature.name}</p>
-                <p className="mt-2 ml-16 text-base text-gray-500">{feature.description}</p>
+                <h3 className="mt-4 text-lg font-medium text-gray-900">{feature.name}</h3>
+                <p className="mt-2 text-gray-500">{feature.description}</p>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

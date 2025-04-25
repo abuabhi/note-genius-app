@@ -1,44 +1,53 @@
 
 const testimonials = [
   {
-    content: "StudyAI has transformed how I prepare for exams. I'm spending less time making study materials and more time actually learning.",
-    author: "Alex Johnson",
-    role: "Computer Science Student",
+    content: "StudyAI feels like having a personal tutor. My grades improved within weeks!",
+    author: "Alex J.",
+    role: "Computer Science Major",
+    image: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
   },
   {
-    content: "The AI-generated quizzes helped me identify knowledge gaps I didn't know I had. My grades have improved significantly.",
-    author: "Sarah Williams",
+    content: "The AI quizzes are amazing at finding my weak spots. Game-changer for med school!",
+    author: "Sarah W.",
     role: "Medical Student",
+    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
   },
   {
-    content: "I love the flashcard feature! It saves me hours of work and the spaced repetition algorithm helps me remember everything better.",
-    author: "Michael Chen",
+    content: "Finally, a study tool that actually makes learning fun and effective!",
+    author: "Michael C.",
     role: "Law Student",
+    image: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
   },
 ];
 
 const Testimonials = () => {
   return (
-    <div className="bg-gray-50 py-16">
+    <div className="bg-purple-50 py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="lg:text-center mb-12">
-          <h2 className="text-base text-purple-600 font-semibold tracking-wide uppercase">Testimonials</h2>
-          <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-            Students love StudyAI
-          </p>
+        <div className="text-center">
+          <h2 className="text-base font-semibold text-purple-600 tracking-wide uppercase">Testimonials</h2>
+          <p className="mt-2 text-4xl font-bold text-gray-900">Loved by students worldwide</p>
         </div>
-        <div className="mt-10 grid gap-8 md:grid-cols-3">
+        <div className="mt-20 grid gap-8 lg:grid-cols-3">
           {testimonials.map((testimonial, index) => (
             <div
               key={index}
-              className="bg-white p-6 rounded-lg shadow-md flex flex-col"
+              className="relative group"
             >
-              <div className="flex-grow">
-                <p className="text-lg text-gray-600 italic">"{testimonial.content}"</p>
-              </div>
-              <div className="mt-4">
-                <p className="font-medium text-gray-900">{testimonial.author}</p>
-                <p className="text-gray-500">{testimonial.role}</p>
+              <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur opacity-10 group-hover:opacity-25 transition duration-200" />
+              <div className="relative h-full p-8 bg-white rounded-xl shadow-sm">
+                <div className="flex items-center gap-4 mb-4">
+                  <img
+                    className="h-12 w-12 rounded-full object-cover"
+                    src={testimonial.image}
+                    alt={testimonial.author}
+                  />
+                  <div>
+                    <h4 className="text-lg font-medium text-gray-900">{testimonial.author}</h4>
+                    <p className="text-sm text-purple-600">{testimonial.role}</p>
+                  </div>
+                </div>
+                <p className="text-gray-600 italic">{testimonial.content}</p>
               </div>
             </div>
           ))}
