@@ -15,6 +15,7 @@ import DashboardPage from "./pages/DashboardPage";
 import NotesPage from "./pages/NotesPage";
 import SchedulePage from "./pages/SchedulePage";
 import SettingsPage from "./pages/SettingsPage";
+import FlashcardsPage from "./pages/FlashcardsPage";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/notes" element={<NotesPage />} />
           <Route path="/schedule" element={<SchedulePage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/flashcards" element={<FlashcardsPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
