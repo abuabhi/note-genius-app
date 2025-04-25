@@ -26,10 +26,10 @@ const features = [
 
 const Features = () => {
   return (
-    <div className="py-24 bg-gradient-to-br from-white via-mint-50/50 to-purple-50/50">
+    <div className="py-24 bg-gradient-to-br from-white via-orange-50/50 to-orange-50/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <div className="inline-flex items-center px-4 py-2 bg-mint-100 rounded-full text-mint-700 text-sm mb-8">
+          <div className="inline-flex items-center px-4 py-2 bg-orange-100 rounded-full text-orange-700 text-sm mb-8">
             Why Choose Us
           </div>
           <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">
@@ -46,10 +46,10 @@ const Features = () => {
               key={feature.name}
               className="relative group rounded-2xl transition-all duration-200 hover:scale-105"
             >
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-mint-300 to-purple-300 rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-200" />
-              <div className="relative h-full p-6 bg-white rounded-2xl border border-mint-100">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-300 to-orange-300 rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-200" />
+              <div className="relative h-full p-6 bg-white rounded-2xl border border-orange-100">
                 <div>
-                  <span className="inline-flex items-center justify-center p-3 rounded-xl bg-gradient-to-br from-mint-400 to-purple-400">
+                  <span className="inline-flex items-center justify-center p-3 rounded-xl bg-gradient-to-br from-orange-400 to-orange-400">
                     <feature.icon className="h-6 w-6 text-white" />
                   </span>
                 </div>
