@@ -6,38 +6,36 @@ const features = [
     name: "Smart Learning Paths",
     description: "AI-powered study recommendations tailored to your learning style and goals.",
     icon: Brain,
-    gradient: "from-mint-400 to-mint-500",
   },
   {
     name: "Interactive Courses",
     description: "Engaging video lessons, quizzes, and hands-on projects to master new skills.",
     icon: BookOpen,
-    gradient: "from-purple-400 to-purple-500",
   },
   {
     name: "Progress Tracking",
     description: "Visual analytics and insights to monitor your learning journey.",
     icon: Calendar,
-    gradient: "from-mint-400 to-purple-400",
   },
   {
     name: "Study Groups",
     description: "Connect with peers and join study groups for collaborative learning.",
     icon: Users,
-    gradient: "from-purple-400 to-mint-400",
   },
 ];
 
 const Features = () => {
   return (
-    <div className="py-24 bg-white/50 backdrop-blur-sm">
+    <div className="py-24 bg-gradient-to-br from-white via-mint-50/50 to-purple-50/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <h2 className="text-base font-semibold text-mint-600 tracking-wide uppercase">Features</h2>
-          <p className="mt-2 text-3xl font-bold text-gray-900 sm:text-4xl">
+          <div className="inline-flex items-center px-4 py-2 bg-mint-100 rounded-full text-mint-700 text-sm mb-8">
+            Why Choose Us
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">
             Everything you need to excel
-          </p>
-          <p className="mt-4 max-w-2xl text-xl text-gray-600 mx-auto">
+          </h2>
+          <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
             Tools and features designed to make learning effective and enjoyable
           </p>
         </div>
@@ -46,16 +44,12 @@ const Features = () => {
           {features.map((feature) => (
             <div
               key={feature.name}
-              className="relative group rounded-xl transition-all duration-200 hover:scale-105"
+              className="relative group rounded-2xl transition-all duration-200 hover:scale-105"
             >
-              <div className="absolute -inset-0.5 bg-gradient-to-r opacity-75 blur-sm transition duration-200"
-                style={{
-                  backgroundImage: `linear-gradient(to right, ${feature.gradient})`,
-                }}
-              />
-              <div className="relative h-full p-6 bg-white rounded-xl border border-gray-100 shadow-sm">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-mint-300 to-purple-300 rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-200" />
+              <div className="relative h-full p-6 bg-white rounded-2xl border border-mint-100">
                 <div>
-                  <span className="inline-flex items-center justify-center p-3 rounded-lg bg-gradient-to-br" style={{backgroundImage: `linear-gradient(to bottom right, ${feature.gradient})`}}>
+                  <span className="inline-flex items-center justify-center p-3 rounded-xl bg-gradient-to-br from-mint-400 to-purple-400">
                     <feature.icon className="h-6 w-6 text-white" />
                   </span>
                 </div>

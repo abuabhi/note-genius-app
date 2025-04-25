@@ -22,11 +22,15 @@ const testimonials = [
 
 const Testimonials = () => {
   return (
-    <div className="bg-purple-50 py-24">
+    <div className="bg-gradient-to-br from-purple-50 via-mint-50 to-white py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <h2 className="text-base font-semibold text-purple-600 tracking-wide uppercase">Testimonials</h2>
-          <p className="mt-2 text-4xl font-bold text-gray-900">Loved by students worldwide</p>
+          <div className="inline-flex items-center px-4 py-2 bg-purple-100 rounded-full text-purple-700 text-sm mb-8">
+            Testimonials
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">
+            Loved by students worldwide
+          </h2>
         </div>
         <div className="mt-20 grid gap-8 lg:grid-cols-3">
           {testimonials.map((testimonial, index) => (
@@ -34,20 +38,20 @@ const Testimonials = () => {
               key={index}
               className="relative group"
             >
-              <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur opacity-10 group-hover:opacity-25 transition duration-200" />
-              <div className="relative h-full p-8 bg-white rounded-xl shadow-sm">
+              <div className="absolute -inset-1 bg-gradient-to-r from-mint-300 to-purple-300 rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-200" />
+              <div className="relative h-full p-8 bg-white rounded-2xl border border-mint-100">
                 <div className="flex items-center gap-4 mb-4">
                   <img
-                    className="h-12 w-12 rounded-full object-cover"
+                    className="h-12 w-12 rounded-full object-cover border-2 border-mint-200"
                     src={testimonial.image}
                     alt={testimonial.author}
                   />
                   <div>
                     <h4 className="text-lg font-medium text-gray-900">{testimonial.author}</h4>
-                    <p className="text-sm text-purple-600">{testimonial.role}</p>
+                    <p className="text-sm text-mint-700">{testimonial.role}</p>
                   </div>
                 </div>
-                <p className="text-gray-600 italic">{testimonial.content}</p>
+                <p className="text-gray-600">{testimonial.content}</p>
               </div>
             </div>
           ))}
