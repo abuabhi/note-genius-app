@@ -8,7 +8,7 @@ const Hero = () => {
     <div className="px-4 sm:px-6 lg:px-8 pt-20 pb-16 max-w-7xl mx-auto">
       <div className="grid lg:grid-cols-2 gap-12 items-center">
         <div className="space-y-8">
-          <div className="inline-flex items-center px-4 py-2 bg-orange-100 rounded-full text-orange-700 text-sm">
+          <div className="inline-flex items-center px-4 py-2 bg-mint-100 rounded-full text-mint-700 text-sm">
             <span>Start Learning Today</span>
           </div>
           <div>
@@ -44,7 +44,7 @@ const Hero = () => {
           </div>
         </div>
         <div className="relative">
-          <div className="absolute -inset-4 bg-gradient-to-r from-orange-300 to-orange-300 blur-3xl opacity-20" />
+          <div className="absolute -inset-4 bg-gradient-to-r from-mint-300 to-mint-300 blur-3xl opacity-20" />
           <img
             src="/lovable-uploads/300e0c37-2d0d-4e48-aaaf-8b1c4dc65276.png"
             alt="Learning dashboard"
