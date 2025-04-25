@@ -1,4 +1,3 @@
-
 import { BookOpen, Brain, Users, Calendar } from "lucide-react";
 
 const features = [
@@ -26,7 +25,7 @@ const features = [
 
 const Features = () => {
   return (
-    <div className="py-24 bg-gradient-to-br from-white via-mint-50/50 to-neutral-50/50">
+    <div className="py-24 bg-gradient-to-b from-mint-50/10 via-white to-mint-50/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <div className="inline-flex items-center px-4 py-2 bg-mint-100 rounded-full text-mint-700 text-sm mb-8">

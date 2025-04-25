@@ -1,4 +1,3 @@
-
 const testimonials = [
   {
     content: "StudyAI feels like having a personal tutor. My grades improved within weeks!",
@@ -22,7 +21,7 @@ const testimonials = [
 
 const Testimonials = () => {
   return (
-    <div className="bg-gradient-to-br from-neutral-50 via-mint-50 to-white py-24">
+    <div className="bg-gradient-to-b from-mint-50/20 via-white to-mint-50/30 py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <div className="inline-flex items-center px-4 py-2 bg-neutral-100 rounded-full text-neutral-700 text-sm mb-8">
