@@ -8,7 +8,7 @@ import CTA from "@/components/landing/CTA";
 const HomePage = () => {
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-mint-50 via-purple-50 to-white">
+      <div className="min-h-screen bg-gradient-to-br from-mint-50 via-purple-50/30 to-white">
         <Hero />
         <Features />
         <Testimonials />

@@ -6,8 +6,8 @@ import { ArrowRight, Star } from "lucide-react";
 const CTA = () => {
   return (
     <div className="relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-mint-400 via-mint-500 to-purple-500" />
-      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
+      <div className="absolute inset-0 bg-gradient-to-br from-mint-400/90 via-mint-500/80 to-purple-300/50" />
+      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5" />
       <div className="relative max-w-7xl mx-auto py-24 px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <div className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-white text-sm mb-8">
@@ -35,6 +35,3 @@ const CTA = () => {
       </div>
     </div>
   );
-};
-
-export default CTA;
