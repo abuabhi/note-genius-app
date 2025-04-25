@@ -30,18 +30,18 @@ export const NotesGrid = () => {
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {mockNotes.map((note) => (
-        <Card key={note.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+        <Card key={note.id} className="hover:shadow-lg transition-shadow cursor-pointer border-mint-100 bg-white/50 backdrop-blur-sm">
           <CardHeader>
             <div className="flex justify-between items-start">
               <div>
-                <CardTitle className="text-xl">{note.title}</CardTitle>
-                <CardDescription>{note.category}</CardDescription>
+                <CardTitle className="text-xl text-mint-800">{note.title}</CardTitle>
+                <CardDescription className="text-mint-600">{note.category}</CardDescription>
               </div>
-              <span className="text-sm text-muted-foreground">{note.date}</span>
+              <span className="text-sm text-mint-600">{note.date}</span>
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">{note.description}</p>
+            <p className="text-mint-700">{note.description}</p>
           </CardContent>
         </Card>
       ))}

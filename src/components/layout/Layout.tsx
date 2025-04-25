@@ -18,7 +18,7 @@ const Layout = ({ children }: LayoutProps) => {
 
   if (isPublicRoute) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
         <NavBar />
         <main className="flex-grow pt-16">
           {children}

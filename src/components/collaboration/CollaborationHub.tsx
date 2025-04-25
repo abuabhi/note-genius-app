@@ -14,7 +14,8 @@ const CollaborationHub = () => {
   return (
     <div className="space-y-6">
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="border-mint-100 shadow-sm hover:shadow-md transition-shadow">
+        {/* Stats Cards */}
+        <Card className="border-mint-100 bg-white/50 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-mint-700">Study Groups</CardTitle>
             <Group className="h-4 w-4 text-mint-600" />
@@ -25,7 +26,7 @@ const CollaborationHub = () => {
           </CardContent>
         </Card>
 
-        <Card className="border-mint-100 shadow-sm hover:shadow-md transition-shadow">
+        <Card className="border-mint-100 bg-white/50 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-mint-700">Shared Resources</CardTitle>
             <Share className="h-4 w-4 text-mint-600" />
@@ -36,7 +37,7 @@ const CollaborationHub = () => {
           </CardContent>
         </Card>
 
-        <Card className="border-mint-100 shadow-sm hover:shadow-md transition-shadow">
+        <Card className="border-mint-100 bg-white/50 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-mint-700">Team Members</CardTitle>
             <Users className="h-4 w-4 text-mint-600" />
@@ -48,7 +49,7 @@ const CollaborationHub = () => {
         </Card>
       </div>
 
-      <Card className="border-mint-100">
+      <Card className="border-mint-100 bg-white/50 backdrop-blur-sm">
         <CardHeader>
           <CardTitle>Create or Join a Study Group</CardTitle>
         </CardHeader>
