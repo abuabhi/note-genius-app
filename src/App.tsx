@@ -17,6 +17,8 @@ import SchedulePage from "./pages/SchedulePage";
 import SettingsPage from "./pages/SettingsPage";
 import FlashcardsPage from "./pages/FlashcardsPage";
 import QuizPage from "./pages/QuizPage";
+import ProgressPage from "./pages/ProgressPage";
+import CollaborationPage from "./pages/CollaborationPage";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +42,8 @@ const App = () => (
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/flashcards" element={<FlashcardsPage />} />
           <Route path="/quiz" element={<QuizPage />} />
+          <Route path="/progress" element={<ProgressPage />} />
+          <Route path="/collaboration" element={<CollaborationPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
