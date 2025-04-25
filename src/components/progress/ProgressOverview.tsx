@@ -1,7 +1,6 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { chartPie, chartBar } from "lucide-react";
+import { ChartPie, ChartBar } from "lucide-react";
 
 const ProgressOverview = () => {
   // Mock data - in a real app, this would come from an API
@@ -18,7 +17,7 @@ const ProgressOverview = () => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-medium">Course Progress</CardTitle>
-          {chartPie({ className: "h-4 w-4 text-muted-foreground" })}
+          {ChartPie({ className: "h-4 w-4 text-muted-foreground" })}
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -33,7 +32,7 @@ const ProgressOverview = () => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-medium">Quiz Performance</CardTitle>
-          {chartBar({ className: "h-4 w-4 text-muted-foreground" })}
+          {ChartBar({ className: "h-4 w-4 text-muted-foreground" })}
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -48,7 +47,7 @@ const ProgressOverview = () => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-medium">Flashcard Accuracy</CardTitle>
-          {chartPie({ className: "h-4 w-4 text-muted-foreground" })}
+          {ChartPie({ className: "h-4 w-4 text-muted-foreground" })}
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
