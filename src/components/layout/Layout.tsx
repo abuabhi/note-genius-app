@@ -30,7 +30,7 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex w-full bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
         <AuthSidebar />
         <div className="flex flex-col flex-1">
           <NavBar />

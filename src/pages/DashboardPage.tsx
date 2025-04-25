@@ -1,4 +1,3 @@
-
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,10 +8,10 @@ const DashboardPage = () => {
   return (
     <Layout>
       <div className="container mx-auto p-6">
-        <h1 className="text-3xl font-bold mb-6">Welcome back!</h1>
+        <h1 className="text-3xl font-bold mb-6 text-mint-700">Welcome back!</h1>
         
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
+          <Card className="border-mint-100 shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl">Quick Start</CardTitle>
               <CardDescription>Begin a new study session</CardDescription>
@@ -27,7 +26,7 @@ const DashboardPage = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-mint-100 shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl">My Notes</CardTitle>
               <CardDescription>Access your study materials</CardDescription>
@@ -42,7 +41,7 @@ const DashboardPage = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-mint-100 shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl">Schedule</CardTitle>
               <CardDescription>Manage your study calendar</CardDescription>
@@ -57,7 +56,7 @@ const DashboardPage = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-mint-100 shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl">Settings</CardTitle>
               <CardDescription>Manage your preferences</CardDescription>
