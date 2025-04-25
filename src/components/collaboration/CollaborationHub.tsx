@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Users, Share, Group } from "lucide-react";
@@ -17,7 +18,7 @@ const CollaborationHub = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Study Groups</CardTitle>
-            {Group({ className: "h-4 w-4 text-muted-foreground" })}
+            <Group className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{collaborationData.activeStudyGroups}</p>
@@ -28,7 +29,7 @@ const CollaborationHub = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Shared Resources</CardTitle>
-            {Share({ className: "h-4 w-4 text-muted-foreground" })}
+            <Share className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{collaborationData.sharedResources}</p>
@@ -39,7 +40,7 @@ const CollaborationHub = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Team Members</CardTitle>
-            {Users({ className: "h-4 w-4 text-muted-foreground" })}
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{collaborationData.teamMembers}</p>
@@ -54,11 +55,11 @@ const CollaborationHub = () => {
         </CardHeader>
         <CardContent className="grid gap-4">
           <Button className="w-full sm:w-auto">
-            {Group({ className: "mr-2 h-4 w-4" })}
+            <Group className="mr-2 h-4 w-4" />
             Create New Group
           </Button>
           <Button variant="outline" className="w-full sm:w-auto">
-            {Users({ className: "mr-2 h-4 w-4" })}
+            <Users className="mr-2 h-4 w-4" />
             Browse Groups
           </Button>
         </CardContent>
