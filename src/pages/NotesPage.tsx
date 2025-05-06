@@ -8,7 +8,8 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 const NotesPageContent = () => {
   const { addNote } = useNotes();
-  const { tierLimits, userTier } = useRequireAuth();
+  const { tierLimits, profile } = useRequireAuth();
+  const userTier = profile?.user_tier;
 
   const handleSaveNote = async (note: Omit<Note, 'id'>): Promise<Note | null> => {
     return await addNote(note);
