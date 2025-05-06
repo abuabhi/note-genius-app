@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Sheet, 
@@ -38,6 +37,7 @@ export const ImportDialog = ({ onSaveNote }: ImportDialogProps) => {
     setFileUrl,
     setExtractedText,
     setDocumentTitle,
+    setDocumentMetadata,
     resetState
   } = useImportState();
 
@@ -74,6 +74,10 @@ export const ImportDialog = ({ onSaveNote }: ImportDialogProps) => {
       if (result.fileUrl) setFileUrl(result.fileUrl);
       setExtractedText(result.text);
       setDocumentTitle(result.title);
+      
+      if (result.metadata) {
+        setDocumentMetadata(result.metadata);
+      }
     } catch (error) {
       console.error('Error processing document:', error);
       toast({

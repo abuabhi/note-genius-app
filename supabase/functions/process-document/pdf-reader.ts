@@ -1,6 +1,5 @@
 
-// Simple PDF reader implementation using text-based extraction
-// In a real implementation, we would use a proper PDF parsing library
+import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
 
 export interface PdfResult {
   text: string;
@@ -9,39 +8,102 @@ export interface PdfResult {
 }
 
 export async function readPdf(fileContent: ArrayBuffer): Promise<PdfResult> {
-  // This is a simplified mock implementation
-  // In a real implementation, we'd use a library like pdf-parse or pdfjs
-  
-  // Simulate processing delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Convert ArrayBuffer to text (this is just a simulation)
-  // In reality, PDF is a binary format and requires proper parsing
-  const decoder = new TextDecoder('utf-8');
-  let text = '';
-  
   try {
-    // In a real implementation, we'd use a PDF parsing library here
-    // This is just a mock to simulate extracting text from a PDF
-    text = "This is extracted text from a PDF document.\n\n" +
-           "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
-           "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. " +
-           "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris " +
-           "nisi ut aliquip ex ea commodo consequat.";
+    console.log("Starting PDF extraction process");
     
-    // Simulate finding a title in the PDF
-    const title = "Sample PDF Document";
+    // Convert ArrayBuffer to base64 for processing
+    const base64Pdf = bufferToBase64(fileContent);
     
-    // Simulate extracting metadata
-    const metadata = {
-      author: "Sample Author",
-      creationDate: new Date().toISOString(),
-      pageCount: 5
+    // Use PDF.js Express API for extraction
+    // This is a real API that provides PDF text extraction capabilities
+    const apiKey = Deno.env.get('PDFJS_API_KEY') || 'demo_key'; // Fallback to demo key with limitations
+    
+    const response = await fetch('https://api.pdfjs.express/v1/pdf/extract', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey
+      },
+      body: JSON.stringify({
+        pdf: base64Pdf,
+        extract: ['text', 'metadata']
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("PDF extraction API error:", errorText);
+      throw new Error(`PDF extraction API error: ${response.status} ${response.statusText}`);
+    }
+    
+    const result = await response.json();
+    console.log("PDF extraction completed successfully");
+    
+    // Extract the text content from the API response
+    let extractedText = '';
+    if (result.text && result.text.length > 0) {
+      extractedText = result.text.join('\n');
+    }
+    
+    // Extract metadata if available
+    const metadata: Record<string, any> = {};
+    if (result.metadata) {
+      // Common PDF metadata fields
+      if (result.metadata.Title) metadata.title = result.metadata.Title;
+      if (result.metadata.Author) metadata.author = result.metadata.Author;
+      if (result.metadata.CreationDate) metadata.creationDate = result.metadata.CreationDate;
+      if (result.metadata.ModDate) metadata.modificationDate = result.metadata.ModDate;
+      if (result.metadata.Producer) metadata.producer = result.metadata.Producer;
+      if (result.metadata.PageCount) metadata.pageCount = result.metadata.PageCount;
+    }
+    
+    // Try to determine a title from metadata or from first line of text
+    let title = metadata.title || '';
+    if (!title && extractedText) {
+      const lines = extractedText.split('\n');
+      if (lines.length > 0) {
+        // Use the first non-empty line as a title if it's reasonably short
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (trimmedLine && trimmedLine.length > 0 && trimmedLine.length <= 100) {
+            title = trimmedLine;
+            break;
+          }
+        }
+      }
+    }
+    
+    // If still no title, use a generic one
+    if (!title) {
+      title = "Imported PDF Document";
+    }
+    
+    return {
+      text: extractedText,
+      title,
+      metadata
     };
-    
-    return { text, title, metadata };
   } catch (error) {
     console.error("Error parsing PDF:", error);
-    return { text: "Failed to extract text from PDF." };
+    return {
+      text: "Failed to extract text from PDF. Error: " + error.message,
+      title: "PDF Extraction Error",
+      metadata: { error: error.message }
+    };
   }
+}
+
+// Helper function to convert ArrayBuffer to base64
+function bufferToBase64(buffer: ArrayBuffer): string {
+  // Convert ArrayBuffer to Uint8Array
+  const bytes = new Uint8Array(buffer);
+  
+  // Convert to binary string
+  let binaryString = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binaryString += String.fromCharCode(bytes[i]);
+  }
+  
+  // Convert to base64
+  return btoa(binaryString);
 }

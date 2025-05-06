@@ -40,13 +40,18 @@ export const uploadFileToStorage = async (file: File): Promise<string | null> =>
 
 export const processSelectedDocument = async (
   file: File | null,
-  fileType: string | null
+  fileType: string | null,
+  apiParams?: Record<string, any>
 ): Promise<ProcessResult> => {
-  if (!file && !fileType) {
-    throw new Error("No file or file type provided");
+  if (!fileType) {
+    throw new Error("No file type provided");
   }
 
   let uploadedUrl = null;
+  
+  // Get user session for user ID
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session?.user.id;
   
   // If we have a file, upload it first
   if (file) {
@@ -56,9 +61,6 @@ export const processSelectedDocument = async (
     }
 
     // Call our edge function to process the document
-    const { data: { session } } = await supabase.auth.getSession();
-    const userId = session?.user.id;
-
     const response = await supabase.functions.invoke('process-document', {
       body: {
         fileUrl: uploadedUrl,
@@ -73,15 +75,29 @@ export const processSelectedDocument = async (
 
     return {
       fileUrl: uploadedUrl,
-      text: response.data.text,
-      title: response.data.title
+      text: response.data.text || "No text could be extracted",
+      title: response.data.title || `Imported ${fileType.toUpperCase()} Document`
     };
-  } else {
-    // This is for API import where we don't have a file
+  } else if (apiParams) {
+    // This is for API import where we use external service parameters
+    const response = await supabase.functions.invoke('process-document', {
+      body: {
+        fileType: fileType,
+        userId: userId,
+        externalApiParams: apiParams
+      }
+    });
+
+    if (response.error) {
+      throw new Error(response.error.message || 'Error processing document from API');
+    }
+
     return {
       fileUrl: null,
-      text: "Placeholder text for API import",
-      title: `Imported ${fileType} Document`
+      text: response.data.text || "No text could be extracted from API",
+      title: response.data.title || `Imported ${fileType} Document`
     };
+  } else {
+    throw new Error("Either file or API parameters must be provided");
   }
 };
