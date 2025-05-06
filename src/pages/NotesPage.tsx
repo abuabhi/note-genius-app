@@ -3,6 +3,7 @@ import { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { NotesGrid } from "@/components/notes/NotesGrid";
 import { NoteSearch } from "@/components/notes/NoteSearch";
+import { NotePagination } from "@/components/notes/NotePagination";
 import { Button } from "@/components/ui/button";
 import { FileText, Plus } from "lucide-react";
 import { ScanNoteDialog } from "@/components/notes/ScanNoteDialog";
@@ -13,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
 const NotesContent = () => {
-  const { filteredNotes, addNote } = useNotes();
+  const { paginatedNotes, addNote } = useNotes();
   const [newNoteTitle, setNewNoteTitle] = useState("");
   const [newNoteDescription, setNewNoteDescription] = useState("");
   const [newNoteCategory, setNewNoteCategory] = useState("Uncategorized");
@@ -122,7 +123,8 @@ const NotesContent = () => {
           </div>
         </div>
       </div>
-      <NotesGrid notes={filteredNotes} />
+      <NotesGrid notes={paginatedNotes} />
+      <NotePagination />
     </div>
   );
 };
