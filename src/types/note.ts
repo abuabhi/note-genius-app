@@ -7,6 +7,8 @@ export interface Note {
   category: string;
   content?: string;
   sourceType?: 'manual' | 'scan' | 'import';
+  archived?: boolean;
+  pinned?: boolean;
   tags?: {
     id?: string;
     name: string;

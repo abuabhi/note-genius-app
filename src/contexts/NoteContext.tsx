@@ -15,6 +15,7 @@ export const NoteProvider = ({ children }: { children: ReactNode }) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [notesPerPage, setNotesPerPage] = useState<number>(6);
   const [loading, setLoading] = useState<boolean>(true);
+  const [showArchived, setShowArchived] = useState<boolean>(false);
   const { toast } = useToast();
 
   // Fetch notes from Supabase on component mount
@@ -39,15 +40,21 @@ export const NoteProvider = ({ children }: { children: ReactNode }) => {
     loadNotes();
   }, [toast]);
 
-  // Filter notes based on search term
+  // Filter notes based on search term and archived status
   const filteredNotes = useMemo(() => {
-    return filterNotes(notes, searchTerm);
-  }, [notes, searchTerm]);
+    const filtered = filterNotes(notes, searchTerm);
+    return filtered.filter(note => showArchived ? note.archived : !note.archived);
+  }, [notes, searchTerm, showArchived]);
 
-  // Sort the filtered notes
+  // Sort the filtered notes, with pinned notes first if not archived
   const sortedNotes = useMemo(() => {
-    return sortNotes(filteredNotes, sortType);
-  }, [filteredNotes, sortType]);
+    const sorted = sortNotes(filteredNotes, sortType);
+    if (!showArchived) {
+      // Put pinned notes at the top
+      return [...sorted.filter(note => note.pinned), ...sorted.filter(note => !note.pinned)];
+    }
+    return sorted;
+  }, [filteredNotes, sortType, showArchived]);
 
   // Calculate total pages
   const totalPages = Math.ceil(sortedNotes.length / notesPerPage);
@@ -133,6 +140,62 @@ export const NoteProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Pin/Unpin a note
+  const pinNote = async (id: string, pinned: boolean) => {
+    try {
+      await updateNoteInDatabase(id, { pinned });
+
+      // Update the local state
+      setNotes(prevNotes => 
+        prevNotes.map(note => 
+          note.id === id ? { ...note, pinned } : note
+        )
+      );
+      
+      toast({
+        title: pinned ? "Note pinned" : "Note unpinned",
+        description: pinned 
+          ? "Your note has been pinned to the top." 
+          : "Your note has been unpinned.",
+      });
+    } catch (error) {
+      console.error('Error pinning note:', error);
+      toast({
+        title: "Failed to update note",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Archive/Unarchive a note
+  const archiveNote = async (id: string, archived: boolean) => {
+    try {
+      await updateNoteInDatabase(id, { archived });
+
+      // Update the local state
+      setNotes(prevNotes => 
+        prevNotes.map(note => 
+          note.id === id ? { ...note, archived } : note
+        )
+      );
+      
+      toast({
+        title: archived ? "Note archived" : "Note restored",
+        description: archived 
+          ? "Your note has been moved to the archive." 
+          : "Your note has been restored from the archive.",
+      });
+    } catch (error) {
+      console.error('Error archiving note:', error);
+      toast({
+        title: "Failed to update note",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Get all available tags
   const getAllTags = async () => {
     return await fetchTagsFromDatabase();
@@ -158,8 +221,12 @@ export const NoteProvider = ({ children }: { children: ReactNode }) => {
       addNote, 
       deleteNote, 
       updateNote,
+      pinNote,
+      archiveNote,
       sortType,
       setSortType,
+      showArchived,
+      setShowArchived,
       currentPage,
       setCurrentPage,
       totalPages,

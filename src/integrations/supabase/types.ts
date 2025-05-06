@@ -47,36 +47,42 @@ export type Database = {
       }
       notes: {
         Row: {
+          archived: boolean | null
           category: string
           content: string | null
           created_at: string
           date: string
           description: string
           id: string
+          pinned: boolean | null
           source_type: string
           title: string
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          archived?: boolean | null
           category?: string
           content?: string | null
           created_at?: string
           date?: string
           description: string
           id?: string
+          pinned?: boolean | null
           source_type?: string
           title: string
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          archived?: boolean | null
           category?: string
           content?: string | null
           created_at?: string
           date?: string
           description?: string
           id?: string
+          pinned?: boolean | null
           source_type?: string
           title?: string
           updated_at?: string

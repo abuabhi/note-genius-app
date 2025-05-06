@@ -1,10 +1,20 @@
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Note } from "@/types/note";
-import { Camera, Tag } from "lucide-react";
+import { Archive, ArchiveRestore, Camera, Pin, PinOff, Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { 
+  ContextMenu, 
+  ContextMenuContent, 
+  ContextMenuItem, 
+  ContextMenuSeparator, 
+  ContextMenuTrigger 
+} from "@/components/ui/context-menu";
+import { useNotes } from "@/contexts/NoteContext";
 
 export const NotesGrid = ({ notes }: { notes: Note[] }) => {
+  const { pinNote, archiveNote } = useNotes();
+
   if (notes.length === 0) {
     return (
       <div className="text-center py-10">
@@ -13,46 +23,103 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
     );
   }
 
+  const handlePin = (id: string, isPinned: boolean) => {
+    pinNote(id, !isPinned);
+  };
+
+  const handleArchive = (id: string, isArchived: boolean) => {
+    archiveNote(id, !isArchived);
+  };
+
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {notes.map((note) => (
-        <Card key={note.id} className="hover:shadow-lg transition-shadow cursor-pointer border-mint-100 bg-white/50 backdrop-blur-sm">
-          <CardHeader>
-            <div className="flex justify-between items-start">
-              <div>
-                <CardTitle className="text-xl text-mint-800">{note.title}</CardTitle>
-                <CardDescription className="text-mint-600">{note.category}</CardDescription>
-              </div>
-              <span className="text-sm text-mint-600">{note.date}</span>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-mint-700">{note.description}</p>
-            <div className="flex flex-wrap gap-1 mt-3">
-              {note.tags && note.tags.length > 0 && note.tags.map(tag => (
-                <Badge 
-                  key={tag.id || tag.name} 
-                  style={{
-                    backgroundColor: tag.color,
-                    color: getBestTextColor(tag.color)
-                  }}
-                  className="flex items-center gap-1 text-xs"
-                >
-                  <Tag className="h-2.5 w-2.5" />
-                  {tag.name}
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
-          <CardFooter className="pt-0">
-            {note.sourceType === 'scan' && (
-              <div className="flex items-center">
-                <Camera className="h-3 w-3 text-mint-500 mr-1" />
-                <span className="text-xs text-mint-500">Scanned Note</span>
-              </div>
-            )}
-          </CardFooter>
-        </Card>
+        <ContextMenu key={note.id}>
+          <ContextMenuTrigger>
+            <Card className={`
+              hover:shadow-lg transition-shadow cursor-pointer border-mint-100 
+              bg-white/50 backdrop-blur-sm
+              ${note.pinned ? 'ring-2 ring-primary ring-opacity-50' : ''}
+              ${note.archived ? 'opacity-75' : ''}
+            `}>
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-xl text-mint-800 flex items-center gap-2">
+                      {note.pinned && <Pin className="h-4 w-4 text-primary" />}
+                      {note.title}
+                    </CardTitle>
+                    <CardDescription className="text-mint-600">{note.category}</CardDescription>
+                  </div>
+                  <span className="text-sm text-mint-600">{note.date}</span>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-mint-700">{note.description}</p>
+                <div className="flex flex-wrap gap-1 mt-3">
+                  {note.tags && note.tags.length > 0 && note.tags.map(tag => (
+                    <Badge 
+                      key={tag.id || tag.name} 
+                      style={{
+                        backgroundColor: tag.color,
+                        color: getBestTextColor(tag.color)
+                      }}
+                      className="flex items-center gap-1 text-xs"
+                    >
+                      <Tag className="h-2.5 w-2.5" />
+                      {tag.name}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+              <CardFooter className="pt-0">
+                <div className="flex items-center justify-between w-full">
+                  {note.sourceType === 'scan' && (
+                    <div className="flex items-center">
+                      <Camera className="h-3 w-3 text-mint-500 mr-1" />
+                      <span className="text-xs text-mint-500">Scanned Note</span>
+                    </div>
+                  )}
+                  {note.archived && (
+                    <div className="flex items-center ml-auto">
+                      <Archive className="h-3 w-3 text-mint-500 mr-1" />
+                      <span className="text-xs text-mint-500">Archived</span>
+                    </div>
+                  )}
+                </div>
+              </CardFooter>
+            </Card>
+          </ContextMenuTrigger>
+          
+          <ContextMenuContent>
+            <ContextMenuItem onClick={() => handlePin(note.id, !!note.pinned)}>
+              {note.pinned ? (
+                <>
+                  <PinOff className="h-4 w-4 mr-2" />
+                  Unpin Note
+                </>
+              ) : (
+                <>
+                  <Pin className="h-4 w-4 mr-2" />
+                  Pin Note
+                </>
+              )}
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => handleArchive(note.id, !!note.archived)}>
+              {note.archived ? (
+                <>
+                  <ArchiveRestore className="h-4 w-4 mr-2" />
+                  Restore from Archive
+                </>
+              ) : (
+                <>
+                  <Archive className="h-4 w-4 mr-2" />
+                  Archive Note
+                </>
+              )}
+            </ContextMenuItem>
+          </ContextMenuContent>
+        </ContextMenu>
       ))}
     </div>
   );

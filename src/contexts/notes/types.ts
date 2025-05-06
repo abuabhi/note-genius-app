@@ -12,8 +12,12 @@ export interface NoteContextType {
   addNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
   deleteNote: (id: string) => Promise<void>;
   updateNote: (id: string, updatedNote: Partial<Note>) => Promise<void>;
+  pinNote: (id: string, pinned: boolean) => Promise<void>;
+  archiveNote: (id: string, archived: boolean) => Promise<void>;
   sortType: SortType;
   setSortType: (type: SortType) => void;
+  showArchived: boolean;
+  setShowArchived: (show: boolean) => void;
   // Pagination
   currentPage: number;
   setCurrentPage: (page: number) => void;

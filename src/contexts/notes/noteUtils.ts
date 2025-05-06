@@ -16,6 +16,8 @@ export const fetchNotesFromSupabase = async (): Promise<Note[]> => {
         category,
         content,
         source_type,
+        archived,
+        pinned,
         scan_data (
           id,
           original_image_url,
@@ -68,6 +70,8 @@ export const fetchNotesFromSupabase = async (): Promise<Note[]> => {
       category: note.category,
       content: note.content,
       sourceType: note.source_type as 'manual' | 'scan' | 'import',
+      archived: note.archived || false,
+      pinned: note.pinned || false,
       tags: tagsByNoteId[note.id] || [],
       scanData: note.scan_data?.[0] ? {
         originalImageUrl: note.scan_data[0].original_image_url,

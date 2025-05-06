@@ -13,7 +13,9 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
         date: noteData.date,
         category: noteData.category,
         content: noteData.content,
-        source_type: noteData.sourceType
+        source_type: noteData.sourceType,
+        archived: noteData.archived || false,
+        pinned: noteData.pinned || false
       })
       .select()
       .single();
@@ -83,6 +85,8 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
       category: noteInsertData.category,
       content: noteInsertData.content,
       sourceType: noteInsertData.source_type as 'manual' | 'scan' | 'import',
+      archived: noteInsertData.archived || false,
+      pinned: noteInsertData.pinned || false,
       tags: noteData.tags || [],
       scanData: noteData.sourceType === 'scan' && noteData.scanData ? {
         originalImageUrl: noteData.scanData.originalImageUrl,
@@ -125,6 +129,8 @@ export const updateNoteInDatabase = async (id: string, updatedNote: Partial<Note
   if (updatedNote.category !== undefined) noteUpdateData.category = updatedNote.category;
   if (updatedNote.content !== undefined) noteUpdateData.content = updatedNote.content;
   if (updatedNote.sourceType !== undefined) noteUpdateData.source_type = updatedNote.sourceType;
+  if (updatedNote.archived !== undefined) noteUpdateData.archived = updatedNote.archived;
+  if (updatedNote.pinned !== undefined) noteUpdateData.pinned = updatedNote.pinned;
 
   if (Object.keys(noteUpdateData).length > 0) {
     const { error: noteError } = await supabase
