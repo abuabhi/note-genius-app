@@ -1,0 +1,71 @@
+
+import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { Note } from '@/types/note';
+
+// Mock data for initial notes
+const initialNotes: Note[] = [
+  {
+    id: "1",
+    title: "React Hooks",
+    description: "Understanding useState and useEffect",
+    date: "2025-04-25",
+    category: "Programming",
+  },
+  {
+    id: "2",
+    title: "Data Structures",
+    description: "Arrays, Linked Lists, and Trees",
+    date: "2025-04-24",
+    category: "Computer Science",
+  },
+  {
+    id: "3",
+    title: "TypeScript Basics",
+    description: "Types, Interfaces, and Generics",
+    date: "2025-04-23",
+    category: "Programming",
+  },
+];
+
+interface NoteContextType {
+  notes: Note[];
+  addNote: (note: Note) => void;
+  deleteNote: (id: string) => void;
+  updateNote: (id: string, updatedNote: Partial<Note>) => void;
+}
+
+const NoteContext = createContext<NoteContextType | undefined>(undefined);
+
+export const NoteProvider = ({ children }: { children: ReactNode }) => {
+  const [notes, setNotes] = useState<Note[]>(initialNotes);
+
+  const addNote = (note: Note) => {
+    setNotes(prevNotes => [note, ...prevNotes]);
+  };
+
+  const deleteNote = (id: string) => {
+    setNotes(prevNotes => prevNotes.filter(note => note.id !== id));
+  };
+
+  const updateNote = (id: string, updatedNote: Partial<Note>) => {
+    setNotes(prevNotes => 
+      prevNotes.map(note => 
+        note.id === id ? { ...note, ...updatedNote } : note
+      )
+    );
+  };
+
+  return (
+    <NoteContext.Provider value={{ notes, addNote, deleteNote, updateNote }}>
+      {children}
+    </NoteContext.Provider>
+  );
+};
+
+export const useNotes = () => {
+  const context = useContext(NoteContext);
+  if (context === undefined) {
+    throw new Error('useNotes must be used within a NoteProvider');
+  }
+  return context;
+};
