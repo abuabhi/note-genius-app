@@ -20,6 +20,7 @@ export const ImageProcessor = ({ imageUrl, onReset, onTextExtracted }: ImageProc
   const [processingError, setProcessingError] = useState<string | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState("eng");
   const [confidence, setConfidence] = useState<number | null>(null);
+  const [processedAt, setProcessedAt] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -33,11 +34,16 @@ export const ImageProcessor = ({ imageUrl, onReset, onTextExtracted }: ImageProc
     setProcessingError(null);
     
     try {
+      // Get current user session
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+
       // Call our Supabase edge function for OCR processing
       const { data, error } = await supabase.functions.invoke('process-image', {
         body: { 
           imageUrl: url,
-          language: selectedLanguage
+          language: selectedLanguage,
+          userId: userId // Pass user ID if available
         }
       });
       
@@ -47,6 +53,7 @@ export const ImageProcessor = ({ imageUrl, onReset, onTextExtracted }: ImageProc
       
       setRecognizedText(data.text);
       setConfidence(data.confidence);
+      setProcessedAt(data.processedAt);
       onTextExtracted(data.text);
       
       toast({
@@ -159,11 +166,18 @@ export const ImageProcessor = ({ imageUrl, onReset, onTextExtracted }: ImageProc
               placeholder="Extracted text will appear here..."
             />
             
-            {confidence !== null && (
-              <p className="text-xs text-muted-foreground mt-2">
-                OCR Confidence: {Math.round(confidence * 100)}%
-              </p>
-            )}
+            <div className="mt-2 flex flex-col space-y-1">
+              {confidence !== null && (
+                <p className="text-xs text-muted-foreground">
+                  OCR Confidence: {Math.round(confidence * 100)}%
+                </p>
+              )}
+              {processedAt && (
+                <p className="text-xs text-muted-foreground">
+                  Processed: {new Date(processedAt).toLocaleString()}
+                </p>
+              )}
+            </div>
           </>
         )}
       </div>
