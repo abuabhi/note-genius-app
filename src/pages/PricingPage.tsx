@@ -1,60 +1,106 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Loader2 } from "lucide-react";
+
+interface TierLimit {
+  tier: string;
+  max_notes: number;
+  max_storage_mb: number;
+  ocr_enabled: boolean;
+  ai_features_enabled: boolean;
+  collaboration_enabled: boolean;
+  priority_support: boolean;
+}
 
 const PricingPage = () => {
   const [annual, setAnnual] = useState(false);
+  const [tierLimits, setTierLimits] = useState<TierLimit[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
-  const plans = [
-    {
-      name: "Free",
-      price: { monthly: 0, annually: 0 },
-      description: "Perfect for trying out StudyAI",
-      features: [
-        "Access to basic flashcards",
-        "Limited study sessions",
-        "Progress tracking",
-        "Community forums",
-      ],
-      buttonText: "Get Started",
-      buttonLink: "/signup",
-      highlight: false,
-    },
-    {
-      name: "Pro",
-      price: { monthly: 12.99, annually: 9.99 },
-      description: "For dedicated students",
-      features: [
-        "Everything in Free",
-        "Unlimited study sessions",
-        "Advanced analytics",
-        "Smart study recommendations",
-        "Priority support",
-      ],
-      buttonText: "Upgrade to Pro",
-      buttonLink: "/signup?plan=pro",
-      highlight: true,
-    },
-    {
-      name: "Teams",
-      price: { monthly: 29.99, annually: 24.99 },
-      description: "Perfect for study groups and classes",
-      features: [
-        "Everything in Pro",
-        "Team collaboration features",
-        "Shared study materials",
-        "Group analytics",
-        "Admin dashboard",
-        "Dedicated support",
-      ],
-      buttonText: "Contact Sales",
-      buttonLink: "/contact",
-      highlight: false,
-    },
-  ];
+  useEffect(() => {
+    const fetchTierLimits = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('tier_limits')
+          .select('*')
+          .order('max_notes');
+          
+        if (error) {
+          throw error;
+        }
+        
+        setTierLimits(data as TierLimit[]);
+      } catch (error) {
+        console.error('Error fetching tier limits:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchTierLimits();
+  }, []);
+
+  const planPrices = {
+    SCHOLAR: { monthly: 0, annually: 0 },
+    GRADUATE: { monthly: 12.99, annually: 9.99 },
+    MASTER: { monthly: 29.99, annually: 24.99 },
+    DEAN: { monthly: 49.99, annually: 39.99 },
+  };
+
+  const tierDescriptions = {
+    SCHOLAR: "Perfect for trying out StudyAI",
+    GRADUATE: "For dedicated students",
+    MASTER: "Perfect for advanced learners",
+    DEAN: "Complete learning mastery",
+  };
+
+  const renderTierFeatures = (tier: TierLimit) => {
+    const features = [
+      `Up to ${tier.max_notes === 9999999 ? 'Unlimited' : tier.max_notes} notes`,
+      `${tier.max_storage_mb === 9999999 ? 'Unlimited' : tier.max_storage_mb} MB storage`,
+    ];
+    
+    if (tier.ocr_enabled) {
+      features.push('Handwritten note scanning (OCR)');
+    }
+    
+    if (tier.ai_features_enabled) {
+      features.push('AI study recommendations');
+      features.push('Smart flashcard generation');
+    }
+    
+    if (tier.collaboration_enabled) {
+      features.push('Collaborative study sessions');
+      features.push('Share and co-edit notes');
+    }
+    
+    if (tier.priority_support) {
+      features.push('Priority support');
+      features.push('Advanced analytics');
+    }
+    
+    return features;
+  };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="container mx-auto p-6 flex items-center justify-center h-[50vh]">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+            <p className="mt-2 text-muted-foreground">Loading pricing information...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -63,10 +109,10 @@ const PricingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
             <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl">
-              Simple, Transparent Pricing
+              Knowledge Growth Tiers
             </h1>
             <p className="mt-6 max-w-2xl mx-auto text-xl text-gray-500">
-              Choose the plan that works best for your learning journey
+              Choose the plan that elevates your learning journey
             </p>
             
             {/* Toggle */}
@@ -92,54 +138,65 @@ const PricingPage = () => {
         {/* Pricing Cards */}
         <div className="bg-gradient-to-b from-mint-50/10 via-white to-mint-50/20 py-24">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid md:grid-cols-3 gap-8">
-              {plans.map((plan) => (
-                <div 
-                  key={plan.name} 
-                  className={`rounded-lg overflow-hidden border ${
-                    plan.highlight 
-                      ? 'border-mint-400 shadow-lg shadow-mint-100' 
-                      : 'border-gray-200 shadow-sm'
-                  }`}
-                >
-                  <div className={`p-8 ${plan.highlight ? 'bg-mint-50' : 'bg-white'}`}>
-                    <h3 className="text-xl font-semibold text-gray-900">{plan.name}</h3>
-                    <div className="mt-4 flex items-baseline">
-                      <span className="text-4xl font-bold text-gray-900">
-                        ${annual ? plan.price.annually : plan.price.monthly}
-                      </span>
-                      <span className="ml-2 text-gray-500">/month</span>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {tierLimits.map((tier) => {
+                const tierKey = tier.tier as keyof typeof planPrices;
+                const isPopular = tierKey === 'GRADUATE';
+                const buttonText = tierKey === 'SCHOLAR' 
+                  ? "Get Started" 
+                  : `Upgrade to ${tierKey}`;
+                const buttonLink = user 
+                  ? "/settings?upgrade=true" 
+                  : `/signup?plan=${tierKey.toLowerCase()}`;
+                
+                return (
+                  <div 
+                    key={tier.tier} 
+                    className={`rounded-lg overflow-hidden border ${
+                      isPopular 
+                        ? 'border-mint-400 shadow-lg shadow-mint-100' 
+                        : 'border-gray-200 shadow-sm'
+                    }`}
+                  >
+                    <div className={`p-8 ${isPopular ? 'bg-mint-50' : 'bg-white'}`}>
+                      <h3 className="text-xl font-semibold text-gray-900">{tier.tier}</h3>
+                      <div className="mt-4 flex items-baseline">
+                        <span className="text-4xl font-bold text-gray-900">
+                          ${annual ? planPrices[tierKey].annually : planPrices[tierKey].monthly}
+                        </span>
+                        <span className="ml-2 text-gray-500">/month</span>
+                      </div>
+                      <p className="mt-2 text-gray-500">{tierDescriptions[tierKey]}</p>
+                      <Button 
+                        className={`mt-6 w-full ${
+                          isPopular 
+                            ? 'bg-mint-600 hover:bg-mint-700' 
+                            : 'bg-gray-800 hover:bg-gray-900'
+                        }`}
+                        asChild
+                      >
+                        <Link to={buttonLink}>{buttonText}</Link>
+                      </Button>
                     </div>
-                    <p className="mt-2 text-gray-500">{plan.description}</p>
-                    <Button 
-                      className={`mt-6 w-full ${
-                        plan.highlight 
-                          ? 'bg-mint-600 hover:bg-mint-700' 
-                          : 'bg-gray-800 hover:bg-gray-900'
-                      }`}
-                      asChild
-                    >
-                      <Link to={plan.buttonLink}>{plan.buttonText}</Link>
-                    </Button>
+                    <div className="px-8 py-6 bg-gray-50 border-t border-gray-100">
+                      <ul className="space-y-4">
+                        {renderTierFeatures(tier).map((feature) => (
+                          <li key={feature} className="flex items-start">
+                            <Check className="h-5 w-5 text-mint-500 shrink-0 mr-3" />
+                            <span className="text-gray-600">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
-                  <div className="px-8 py-6 bg-gray-50 border-t border-gray-100">
-                    <ul className="space-y-4">
-                      {plan.features.map((feature) => (
-                        <li key={feature} className="flex items-start">
-                          <Check className="h-5 w-5 text-mint-500 shrink-0 mr-3" />
-                          <span className="text-gray-600">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             
             <div className="mt-16 text-center">
               <h3 className="text-2xl font-semibold text-gray-900">Need something custom?</h3>
               <p className="mt-2 text-gray-500">
-                Contact our team for a custom solution tailored to your specific needs
+                Contact our team for a custom solution tailored to your specific educational needs
               </p>
               <Button className="mt-6 bg-mint-600 hover:bg-mint-700" asChild>
                 <Link to="/contact">Contact Us</Link>
@@ -158,8 +215,8 @@ const PricingPage = () => {
 
             <div className="space-y-8">
               <div className="bg-white p-6 rounded-lg shadow-sm border border-mint-100">
-                <h3 className="text-lg font-semibold text-gray-900">Can I cancel my subscription anytime?</h3>
-                <p className="mt-2 text-gray-600">Yes, you can cancel your subscription at any time. If you cancel, you'll still have access to your plan features until the end of your current billing period.</p>
+                <h3 className="text-lg font-semibold text-gray-900">Can I upgrade or downgrade my tier anytime?</h3>
+                <p className="mt-2 text-gray-600">Yes, you can change your tier at any time. When upgrading, you'll have immediate access to new features. When downgrading, changes will take effect at the end of your current billing period.</p>
               </div>
               <div className="bg-white p-6 rounded-lg shadow-sm border border-mint-100">
                 <h3 className="text-lg font-semibold text-gray-900">Do you offer student discounts?</h3>

@@ -90,6 +90,33 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          user_tier: Database["public"]["Enums"]["user_tier"]
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          id: string
+          updated_at?: string | null
+          user_tier?: Database["public"]["Enums"]["user_tier"]
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_tier?: Database["public"]["Enums"]["user_tier"]
+          username?: string | null
+        }
+        Relationships: []
+      }
       scan_data: {
         Row: {
           confidence: number | null
@@ -149,6 +176,36 @@ export type Database = {
         }
         Relationships: []
       }
+      tier_limits: {
+        Row: {
+          ai_features_enabled: boolean
+          collaboration_enabled: boolean
+          max_notes: number
+          max_storage_mb: number
+          ocr_enabled: boolean
+          priority_support: boolean
+          tier: Database["public"]["Enums"]["user_tier"]
+        }
+        Insert: {
+          ai_features_enabled?: boolean
+          collaboration_enabled?: boolean
+          max_notes: number
+          max_storage_mb: number
+          ocr_enabled?: boolean
+          priority_support?: boolean
+          tier: Database["public"]["Enums"]["user_tier"]
+        }
+        Update: {
+          ai_features_enabled?: boolean
+          collaboration_enabled?: boolean
+          max_notes?: number
+          max_storage_mb?: number
+          ocr_enabled?: boolean
+          priority_support?: boolean
+          tier?: Database["public"]["Enums"]["user_tier"]
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -157,7 +214,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      user_tier: "SCHOLAR" | "GRADUATE" | "MASTER" | "DEAN"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -272,6 +329,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_tier: ["SCHOLAR", "GRADUATE", "MASTER", "DEAN"],
+    },
   },
 } as const

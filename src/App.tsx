@@ -21,6 +21,7 @@ import FlashcardsPage from "./pages/FlashcardsPage";
 import QuizPage from "./pages/QuizPage";
 import ProgressPage from "./pages/ProgressPage";
 import CollaborationPage from "./pages/CollaborationPage";
+import { NoteProvider } from "./contexts/NoteContext";
 
 const queryClient = new QueryClient();
 
@@ -31,24 +32,26 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/pricing" element={<PricingPage />} />
-            <Route path="/faq" element={<FAQPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/notes" element={<NotesPage />} />
-            <Route path="/schedule" element={<SchedulePage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/flashcards" element={<FlashcardsPage />} />
-            <Route path="/quiz" element={<QuizPage />} />
-            <Route path="/progress" element={<ProgressPage />} />
-            <Route path="/collaboration" element={<CollaborationPage />} />
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
+          <NoteProvider>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/pricing" element={<PricingPage />} />
+              <Route path="/faq" element={<FAQPage />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/notes" element={<NotesPage />} />
+              <Route path="/schedule" element={<SchedulePage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/flashcards" element={<FlashcardsPage />} />
+              <Route path="/quiz" element={<QuizPage />} />
+              <Route path="/progress" element={<ProgressPage />} />
+              <Route path="/collaboration" element={<CollaborationPage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </NoteProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
