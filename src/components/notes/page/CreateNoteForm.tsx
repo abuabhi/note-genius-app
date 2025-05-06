@@ -1,129 +1,129 @@
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { FileText, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { Note } from "@/types/note";
-import { SheetFooter } from "@/components/ui/sheet";
-import { TagSelector } from "@/components/notes/TagSelector";
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useNotes } from '@/contexts/NoteContext';
+import { TagSelector } from '../TagSelector';
+import { Note } from '@/types/note';
 
 interface CreateNoteFormProps {
-  onAddNote: (note: Omit<Note, 'id'>) => Promise<any>;
-  onSuccess?: () => void;
+  onSave: (note: Omit<Note, 'id'>) => Promise<Note | null>;
+  initialData?: Partial<Omit<Note, 'id'>>;
 }
 
-export const CreateNoteForm = ({ onAddNote, onSuccess }: CreateNoteFormProps) => {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("Uncategorized");
-  const [tags, setTags] = useState<{ id?: string; name: string; color: string }[]>([]);
-  const [isCreating, setIsCreating] = useState(false);
-  const { toast } = useToast();
+export const CreateNoteForm: React.FC<CreateNoteFormProps> = ({ onSave, initialData }) => {
+  const { availableCategories } = useNotes();
+  const [title, setTitle] = useState(initialData?.title || '');
+  const [description, setDescription] = useState(initialData?.description || '');
+  const [content, setContent] = useState(initialData?.content || '');
+  const [category, setCategory] = useState(initialData?.category || 'Uncategorized');
+  const [selectedTags, setSelectedTags] = useState<{ name: string; color: string; }[]>(
+    initialData?.tags || []
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleAddNote = async () => {
-    if (!title.trim()) {
-      toast({
-        title: "Title Required",
-        description: "Please add a title for your note.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsCreating(true);
-    
-    const today = new Date();
-    const dateString = today.toISOString().split('T')[0];
-    
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
     const newNote: Omit<Note, 'id'> = {
-      title: title,
-      description: description,
-      date: dateString,
-      category: category,
+      title,
+      description,
+      content,
+      category,
+      date: new Date().toISOString().split('T')[0],
       sourceType: 'manual',
-      tags: tags,
+      tags: selectedTags
     };
-    
-    const result = await onAddNote(newNote);
-    
-    setIsCreating(false);
-    
-    if (result) {
-      setTitle("");
-      setDescription("");
-      setCategory("Uncategorized");
-      setTags([]);
-      
-      toast({
-        title: "Note Created",
-        description: "Your note has been created successfully.",
-      });
 
-      if (onSuccess) {
-        onSuccess();
-      }
+    try {
+      await onSave(newNote);
+      resetForm();
+    } catch (error) {
+      console.error('Error saving note:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
+  const resetForm = () => {
+    setTitle('');
+    setDescription('');
+    setContent('');
+    setCategory('Uncategorized');
+    setSelectedTags([]);
+  };
+
   return (
-    <>
-      <div className="space-y-4 py-4">
-        <div className="space-y-2">
-          <label htmlFor="title" className="text-sm font-medium">
-            Title
-          </label>
-          <Input
-            id="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Enter note title"
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-2">
+        <div className="space-y-1">
+          <Label htmlFor="title">Title</Label>
+          <Input 
+            id="title" 
+            placeholder="Note title" 
+            value={title} 
+            onChange={(e) => setTitle(e.target.value)} 
+            required 
           />
         </div>
-        <div className="space-y-2">
-          <label htmlFor="category" className="text-sm font-medium">
-            Category
-          </label>
-          <Input
-            id="category"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            placeholder="Enter category"
+        
+        <div className="space-y-1">
+          <Label htmlFor="description">Brief Description</Label>
+          <Input 
+            id="description" 
+            placeholder="Brief description" 
+            value={description} 
+            onChange={(e) => setDescription(e.target.value)} 
+            required 
           />
         </div>
-        <TagSelector 
-          selectedTags={tags}
-          onTagsChange={setTags}
-        />
-        <div className="space-y-2">
-          <label htmlFor="description" className="text-sm font-medium">
-            Description
-          </label>
-          <Textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Enter note description"
-            rows={5}
+        
+        <div className="space-y-1">
+          <Label htmlFor="category">Category</Label>
+          <Select value={category} onValueChange={setCategory}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Categories</SelectLabel>
+                <SelectItem value="Uncategorized">Uncategorized</SelectItem>
+                {availableCategories.filter(cat => cat !== 'Uncategorized').map(cat => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="space-y-1">
+          <Label htmlFor="content">Content</Label>
+          <Textarea 
+            id="content" 
+            placeholder="Write your note here..." 
+            value={content} 
+            onChange={(e) => setContent(e.target.value)} 
+            rows={8}
+            className="resize-none"
+          />
+        </div>
+        
+        <div className="space-y-1">
+          <Label>Tags</Label>
+          <TagSelector 
+            selectedTags={selectedTags} 
+            onChange={setSelectedTags}
           />
         </div>
       </div>
-      <SheetFooter>
-        <Button onClick={handleAddNote} disabled={isCreating}>
-          {isCreating ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creating...
-            </>
-          ) : (
-            <>
-              <FileText className="mr-2 h-4 w-4" />
-              Create Note
-            </>
-          )}
-        </Button>
-      </SheetFooter>
-    </>
+      
+      <Button type="submit" disabled={isSubmitting} className="w-full">
+        {isSubmitting ? 'Saving...' : 'Save Note'}
+      </Button>
+    </form>
   );
 };

@@ -1,68 +1,74 @@
 
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Archive, FileUp, Plus } from "lucide-react";
+import React from "react";
 import { NoteSearch } from "@/components/notes/NoteSearch";
-import { ScanNoteDialog } from "@/components/notes/ScanNoteDialog";
-import { ImportDialog } from "@/components/notes/import/ImportDialog";
-import { CreateNoteForm } from "./CreateNoteForm";
-import { Note } from "@/types/note";
-import { useState } from "react";
-import { useNotes } from "@/contexts/NoteContext";
-import { Toggle } from "@/components/ui/toggle";
+import { NoteSorter } from "@/components/notes/NoteSorter";
 import { FilterMenu } from "@/components/notes/FilterMenu";
+import { Button } from "@/components/ui/button";
+import { Plus, FileText, Filter } from "lucide-react";
+import { useNotes } from "@/contexts/NoteContext";
+import { CreateNoteForm } from "./CreateNoteForm";
+import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
+import { ScanNoteDialog } from "../ScanNoteDialog";
+import { ImportDialog } from "../import/ImportDialog";
+import { TierLimits, UserTier } from "@/hooks/useRequireAuth";
+import { Note } from "@/types/note";
 
 interface NotesHeaderProps {
-  onSaveNote: (note: Omit<Note, 'id'>) => Promise<any>;
-  onScanNote: (note: Omit<Note, 'id'>) => Promise<void>;
-  onImportNote: (note: Omit<Note, 'id'>) => Promise<void>;
+  onSaveNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
+  onScanNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
+  onImportNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
+  tierLimits?: TierLimits | null;
+  userTier?: UserTier;
 }
 
-export const NotesHeader = ({ onSaveNote, onScanNote, onImportNote }: NotesHeaderProps) => {
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const { showArchived, setShowArchived } = useNotes();
-  
+export const NotesHeader: React.FC<NotesHeaderProps> = ({ 
+  onSaveNote,
+  onScanNote,
+  onImportNote,
+  tierLimits,
+  userTier
+}) => {
+  const { searchTerm, setSearchTerm } = useNotes();
+  const [isNewNoteSheetOpen, setIsNewNoteSheetOpen] = React.useState(false);
+
+  // Check if OCR is enabled for the user's tier
+  const isOCREnabled = tierLimits?.ocr_enabled ?? false;
+
   return (
-    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-      <h1 className="text-3xl font-bold">My Notes</h1>
-      <div className="flex flex-col md:flex-row w-full md:w-auto gap-4">
-        <div className="flex flex-1 gap-2">
-          <NoteSearch />
-          <FilterMenu />
+    <div className="flex flex-col gap-4 mb-6">
+      <div className="flex items-center justify-between">
+        <div className="flex-1 mr-2">
+          <NoteSearch value={searchTerm} onChange={setSearchTerm} />
         </div>
         <div className="flex gap-2">
-          <Toggle 
-            pressed={showArchived}
-            onPressedChange={setShowArchived}
-            className="flex items-center"
-            aria-label="Toggle archived notes"
-          >
-            <Archive className="h-4 w-4 mr-2" />
-            {showArchived ? "Viewing Archive" : "Show Archive"}
-          </Toggle>
-          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+          <Sheet open={isNewNoteSheetOpen} onOpenChange={setIsNewNoteSheetOpen}>
             <SheetTrigger asChild>
-              <Button>
+              <Button className="whitespace-nowrap">
                 <Plus className="mr-2 h-4 w-4" />
                 New Note
               </Button>
             </SheetTrigger>
-            <SheetContent>
-              <SheetHeader>
-                <SheetTitle>Create New Note</SheetTitle>
-                <SheetDescription>
-                  Add a new note to your collection.
-                </SheetDescription>
-              </SheetHeader>
+            <SheetContent className="overflow-y-auto">
               <CreateNoteForm 
-                onAddNote={onSaveNote}
-                onSuccess={() => setIsSheetOpen(false)} 
+                onSave={async (note) => {
+                  const result = await onSaveNote(note);
+                  if (result) setIsNewNoteSheetOpen(false);
+                  return result;
+                }}
               />
             </SheetContent>
           </Sheet>
+
+          <ScanNoteDialog onSaveNote={onScanNote} isPremiumUser={isOCREnabled} />
           
-          <ScanNoteDialog onSaveNote={onScanNote} />
           <ImportDialog onSaveNote={onImportNote} />
+        </div>
+      </div>
+      
+      <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
+        <div className="flex flex-wrap gap-2">
+          <FilterMenu />
+          <NoteSorter />
         </div>
       </div>
     </div>

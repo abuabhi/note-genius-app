@@ -7,7 +7,7 @@ import { Note } from "@/types/note";
 import { ScanWorkflow } from "./scanning/ScanWorkflow";
 
 interface ScanNoteDialogProps {
-  onSaveNote: (note: Omit<Note, 'id'>) => Promise<void>;
+  onSaveNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
   isPremiumUser?: boolean;
 }
 
