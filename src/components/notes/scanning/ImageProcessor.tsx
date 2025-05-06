@@ -3,31 +3,41 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, RotateCw } from "lucide-react";
+import { AlertCircle, Globe, RotateCw } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { getAvailableOCRLanguages } from "@/utils/ocrUtils";
 
 interface ImageProcessorProps {
   imageUrl: string | null;
   onReset: () => void;
   onTextExtracted: (text: string) => void;
+  selectedLanguage: string;
+  onLanguageChange: (language: string) => void;
 }
 
-export const ImageProcessor = ({ imageUrl, onReset, onTextExtracted }: ImageProcessorProps) => {
+export const ImageProcessor = ({ 
+  imageUrl, 
+  onReset, 
+  onTextExtracted, 
+  selectedLanguage,
+  onLanguageChange
+}: ImageProcessorProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [recognizedText, setRecognizedText] = useState("");
   const [processingError, setProcessingError] = useState<string | null>(null);
-  const [selectedLanguage, setSelectedLanguage] = useState("eng");
   const [confidence, setConfidence] = useState<number | null>(null);
   const [processedAt, setProcessedAt] = useState<string | null>(null);
   const { toast } = useToast();
+  const availableLanguages = getAvailableOCRLanguages();
 
   useEffect(() => {
     if (imageUrl) {
       processImage(imageUrl);
     }
-  }, [imageUrl]);
+  }, [imageUrl, selectedLanguage]);
 
   const processImage = async (url: string) => {
     setIsProcessing(true);
@@ -86,10 +96,15 @@ export const ImageProcessor = ({ imageUrl, onReset, onTextExtracted }: ImageProc
   };
 
   const handleLanguageChange = (value: string) => {
-    setSelectedLanguage(value);
+    onLanguageChange(value);
     if (imageUrl) {
       processImage(imageUrl);
     }
+  };
+
+  const getLanguageNameByCode = (code: string): string => {
+    const language = availableLanguages.find(lang => lang.code === code);
+    return language ? language.name : code;
   };
 
   if (!imageUrl) return null;
@@ -127,19 +142,22 @@ export const ImageProcessor = ({ imageUrl, onReset, onTextExtracted }: ImageProc
         <div className="flex items-center justify-between mb-2">
           <p className="text-sm font-medium">Extracted Text</p>
           
-          <Select value={selectedLanguage} onValueChange={handleLanguageChange} disabled={isProcessing}>
-            <SelectTrigger className="w-[130px]">
-              <SelectValue placeholder="Language" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="eng">English</SelectItem>
-              <SelectItem value="fra">French</SelectItem>
-              <SelectItem value="spa">Spanish</SelectItem>
-              <SelectItem value="deu">German</SelectItem>
-              <SelectItem value="chi_sim">Chinese</SelectItem>
-              <SelectItem value="jpn">Japanese</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center">
+            <Globe className="h-4 w-4 mr-1 text-muted-foreground" />
+            
+            <Select value={selectedLanguage} onValueChange={handleLanguageChange} disabled={isProcessing}>
+              <SelectTrigger className="w-[130px]">
+                <SelectValue placeholder="Language" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableLanguages.map(language => (
+                  <SelectItem key={language.code} value={language.code}>
+                    {language.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         
         {processingError ? (
@@ -154,7 +172,7 @@ export const ImageProcessor = ({ imageUrl, onReset, onTextExtracted }: ImageProc
           <div className="h-full flex items-center justify-center">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mint-700 mx-auto"></div>
-              <p className="mt-4 text-sm text-mint-700">Processing your image...</p>
+              <p className="mt-4 text-sm text-mint-700">Processing your image in {getLanguageNameByCode(selectedLanguage)}...</p>
             </div>
           </div>
         ) : (

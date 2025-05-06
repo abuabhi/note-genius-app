@@ -55,6 +55,22 @@ export const processImageWithOCR = async (
           simulatedText = "これは日本語のシミュレートされたOCRテキストです。実際の実装では、画像からテキストを抽出します。";
           confidence = 0.76;
           break;
+        case 'ita':
+          simulatedText = "Questo è un testo OCR simulato in italiano. In una implementazione reale, estrarremmo il testo dall'immagine.";
+          confidence = 0.85;
+          break;
+        case 'por':
+          simulatedText = "Este é um texto OCR simulado em português. Em uma implementação real, extrairíamos texto da imagem.";
+          confidence = 0.84;
+          break;
+        case 'rus':
+          simulatedText = "Это симулированный текст OCR на русском языке. В реальной реализации мы извлекли бы текст из изображения.";
+          confidence = 0.77;
+          break;
+        case 'ara':
+          simulatedText = "هذا نص OCR محاكى باللغة العربية. في التطبيق الفعلي، سنستخرج النص من الصورة.";
+          confidence = 0.75;
+          break;
         default:
           simulatedText = "This is simulated OCR text. In a real implementation, we would extract text from the image using Tesseract.js.";
           confidence = 0.82;

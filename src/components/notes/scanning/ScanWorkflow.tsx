@@ -13,9 +13,16 @@ import { Note } from "@/types/note";
 interface ScanWorkflowProps {
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<void>;
   onClose: () => void;
+  selectedLanguage: string;
+  setSelectedLanguage: (language: string) => void;
 }
 
-export const ScanWorkflow = ({ onSaveNote, onClose }: ScanWorkflowProps) => {
+export const ScanWorkflow = ({ 
+  onSaveNote, 
+  onClose, 
+  selectedLanguage,
+  setSelectedLanguage 
+}: ScanWorkflowProps) => {
   const [activeTab, setActiveTab] = useState("camera");
   const [recognizedText, setRecognizedText] = useState("");
   const [noteTitle, setNoteTitle] = useState("");
@@ -65,6 +72,7 @@ export const ScanWorkflow = ({ onSaveNote, onClose }: ScanWorkflowProps) => {
           originalImageUrl: imageUrl,
           recognizedText: recognizedText,
           confidence: 0.8, // Simulated confidence score
+          language: selectedLanguage // Store the selected language
         }
       };
 
@@ -104,6 +112,8 @@ export const ScanWorkflow = ({ onSaveNote, onClose }: ScanWorkflowProps) => {
             imageUrl={capturedImage} 
             onReset={() => setCapturedImage(null)}
             onTextExtracted={setRecognizedText}
+            selectedLanguage={selectedLanguage}
+            onLanguageChange={setSelectedLanguage}
           />
           
           {recognizedText && (
@@ -113,6 +123,7 @@ export const ScanWorkflow = ({ onSaveNote, onClose }: ScanWorkflowProps) => {
               category={noteCategory}
               setCategory={setNoteCategory}
               isDisabled={!capturedImage || !recognizedText}
+              detectedLanguage={getLanguageName(selectedLanguage)}
             />
           )}
         </div>
@@ -138,4 +149,18 @@ export const ScanWorkflow = ({ onSaveNote, onClose }: ScanWorkflowProps) => {
       </div>
     </>
   );
+};
+
+// Helper function to get the language name from the language code
+const getLanguageName = (code: string): string => {
+  const languages = {
+    eng: "English",
+    fra: "French",
+    spa: "Spanish",
+    deu: "German",
+    chi_sim: "Chinese",
+    jpn: "Japanese"
+  };
+  
+  return languages[code as keyof typeof languages] || code;
 };

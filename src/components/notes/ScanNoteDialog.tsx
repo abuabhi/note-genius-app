@@ -12,6 +12,7 @@ interface ScanNoteDialogProps {
 
 export const ScanNoteDialog = ({ onSaveNote }: ScanNoteDialogProps) => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [detectedLanguage, setDetectedLanguage] = useState<string>("eng"); // Default language is English
 
   const handleClose = () => {
     setIsSheetOpen(false);
@@ -40,6 +41,8 @@ export const ScanNoteDialog = ({ onSaveNote }: ScanNoteDialogProps) => {
         <ScanWorkflow 
           onSaveNote={handleSaveNote}
           onClose={handleClose}
+          selectedLanguage={detectedLanguage}
+          setSelectedLanguage={setDetectedLanguage}
         />
       </SheetContent>
     </Sheet>
