@@ -64,7 +64,7 @@ export const ImageProcessor = ({
           toast({
             title: "Enhancement Warning",
             description: "Image enhancement failed, processing original image.",
-            variant: "warning",
+            variant: "destructive", // Changed from "warning" to "destructive"
           });
         }
       }
@@ -131,7 +131,7 @@ export const ImageProcessor = ({
       toast({
         title: "Premium Feature",
         description: "OpenAI processing is only available for premium users. Using Tesseract OCR instead.",
-        variant: "warning",
+        variant: "destructive", // Changed from "warning" to "destructive"
       });
       return;
     }

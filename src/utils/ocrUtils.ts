@@ -1,3 +1,4 @@
+
 // This file contains utility functions for OCR processing
 
 import { createWorker } from 'tesseract.js';
@@ -13,7 +14,15 @@ export const processImageWithOCR = async (
   language: string = 'eng'
 ): Promise<{ text: string; confidence: number }> => {
   try {
-    const worker = await createWorker(language);
+    // Create worker with the specified language
+    const worker = await createWorker({
+      langPath: 'https://tessdata.projectnaptha.com/4.0.0',
+      logger: m => console.log(m)
+    });
+    
+    await worker.loadLanguage(language);
+    await worker.initialize(language);
+    
     const { data } = await worker.recognize(imageUrl);
     await worker.terminate();
     
