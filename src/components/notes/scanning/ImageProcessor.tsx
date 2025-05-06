@@ -3,12 +3,14 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Globe, RotateCw } from "lucide-react";
+import { AlertCircle, Globe, RotateCw, Sparkles } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { getAvailableOCRLanguages } from "@/utils/ocrUtils";
+import { getAvailableOCRLanguages, enhanceImage } from "@/utils/ocrUtils";
+import { Badge } from "@/components/ui/badge";
 
 interface ImageProcessorProps {
   imageUrl: string | null;
@@ -16,6 +18,7 @@ interface ImageProcessorProps {
   onTextExtracted: (text: string) => void;
   selectedLanguage: string;
   onLanguageChange: (language: string) => void;
+  isPremiumUser?: boolean;
 }
 
 export const ImageProcessor = ({ 
@@ -23,13 +26,16 @@ export const ImageProcessor = ({
   onReset, 
   onTextExtracted, 
   selectedLanguage,
-  onLanguageChange
+  onLanguageChange,
+  isPremiumUser = false
 }: ImageProcessorProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [recognizedText, setRecognizedText] = useState("");
   const [processingError, setProcessingError] = useState<string | null>(null);
   const [confidence, setConfidence] = useState<number | null>(null);
   const [processedAt, setProcessedAt] = useState<string | null>(null);
+  const [useOpenAI, setUseOpenAI] = useState(false);
+  const [isEnhanced, setIsEnhanced] = useState(false);
   const { toast } = useToast();
   const availableLanguages = getAvailableOCRLanguages();
 
@@ -48,12 +54,28 @@ export const ImageProcessor = ({
       const { data: { session } } = await supabase.auth.getSession();
       const userId = session?.user?.id;
 
+      // Apply enhancement if requested
+      let processedUrl = url;
+      if (isEnhanced) {
+        try {
+          processedUrl = await enhanceImage(url);
+        } catch (enhanceError) {
+          console.error('Image enhancement error:', enhanceError);
+          toast({
+            title: "Enhancement Warning",
+            description: "Image enhancement failed, processing original image.",
+            variant: "warning",
+          });
+        }
+      }
+
       // Call our Supabase edge function for OCR processing
       const { data, error } = await supabase.functions.invoke('process-image', {
         body: { 
-          imageUrl: url,
+          imageUrl: processedUrl,
           language: selectedLanguage,
-          userId: userId // Pass user ID if available
+          userId: userId, // Pass user ID if available
+          useOpenAI: useOpenAI && isPremiumUser // Only use OpenAI if user is premium
         }
       });
       
@@ -102,6 +124,31 @@ export const ImageProcessor = ({
     }
   };
 
+  const toggleOpenAI = () => {
+    const newValue = !useOpenAI;
+    setUseOpenAI(newValue);
+    if (newValue && !isPremiumUser) {
+      toast({
+        title: "Premium Feature",
+        description: "OpenAI processing is only available for premium users. Using Tesseract OCR instead.",
+        variant: "warning",
+      });
+      return;
+    }
+    
+    if (imageUrl) {
+      processImage(imageUrl);
+    }
+  };
+
+  const toggleImageEnhancement = () => {
+    const newValue = !isEnhanced;
+    setIsEnhanced(newValue);
+    if (imageUrl) {
+      processImage(imageUrl);
+    }
+  };
+
   const getLanguageNameByCode = (code: string): string => {
     const language = availableLanguages.find(lang => lang.code === code);
     return language ? language.name : code;
@@ -135,6 +182,45 @@ export const ImageProcessor = ({
             <RotateCw className="mr-2 h-4 w-4" />
             Retry OCR
           </Button>
+        </div>
+        
+        <div className="mt-4 space-y-4 border rounded-md p-3 bg-muted/30">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="enhance-toggle" className="text-sm">Image Enhancement</Label>
+              <Switch 
+                id="enhance-toggle" 
+                checked={isEnhanced} 
+                onCheckedChange={toggleImageEnhancement} 
+                disabled={isProcessing} 
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Improves contrast and readability for better OCR results
+            </p>
+          </div>
+
+          {isPremiumUser && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Label htmlFor="openai-toggle" className="text-sm mr-2">OpenAI Processing</Label>
+                  <Badge variant="secondary" className="h-5 bg-gradient-to-r from-purple-500 to-blue-500 text-white">
+                    Premium
+                  </Badge>
+                </div>
+                <Switch 
+                  id="openai-toggle" 
+                  checked={useOpenAI} 
+                  onCheckedChange={toggleOpenAI} 
+                  disabled={isProcessing || !isPremiumUser} 
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Uses OpenAI's advanced image recognition for superior results
+              </p>
+            </div>
+          )}
         </div>
       </div>
       
@@ -172,7 +258,17 @@ export const ImageProcessor = ({
           <div className="h-full flex items-center justify-center">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mint-700 mx-auto"></div>
-              <p className="mt-4 text-sm text-mint-700">Processing your image in {getLanguageNameByCode(selectedLanguage)}...</p>
+              <p className="mt-4 text-sm text-mint-700">
+                {useOpenAI && isPremiumUser ? (
+                  <>
+                    <Sparkles className="inline-block mr-1 h-4 w-4 text-blue-500" />
+                    Processing with OpenAI...
+                  </>
+                ) : (
+                  <>Processing your image in {getLanguageNameByCode(selectedLanguage)}...</>
+                )}
+              </p>
+              {isEnhanced && <p className="text-xs text-muted-foreground mt-1">With image enhancement</p>}
             </div>
           </div>
         ) : (
@@ -193,6 +289,12 @@ export const ImageProcessor = ({
               {processedAt && (
                 <p className="text-xs text-muted-foreground">
                   Processed: {new Date(processedAt).toLocaleString()}
+                </p>
+              )}
+              {useOpenAI && isPremiumUser && (
+                <p className="text-xs font-medium text-blue-500 flex items-center">
+                  <Sparkles className="inline-block mr-1 h-3 w-3" />
+                  Processed with OpenAI
                 </p>
               )}
             </div>

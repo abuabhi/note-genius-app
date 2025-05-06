@@ -15,13 +15,15 @@ interface ScanWorkflowProps {
   onClose: () => void;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
+  isPremiumUser?: boolean;
 }
 
 export const ScanWorkflow = ({ 
   onSaveNote, 
   onClose, 
   selectedLanguage,
-  setSelectedLanguage 
+  setSelectedLanguage,
+  isPremiumUser = false
 }: ScanWorkflowProps) => {
   const [activeTab, setActiveTab] = useState("camera");
   const [recognizedText, setRecognizedText] = useState("");
@@ -114,6 +116,7 @@ export const ScanWorkflow = ({
             onTextExtracted={setRecognizedText}
             selectedLanguage={selectedLanguage}
             onLanguageChange={setSelectedLanguage}
+            isPremiumUser={isPremiumUser}
           />
           
           {recognizedText && (

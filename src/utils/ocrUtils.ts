@@ -1,5 +1,6 @@
-
 // This file contains utility functions for OCR processing
+
+import { createWorker } from 'tesseract.js';
 
 /**
  * Process an image with OCR to extract text
@@ -11,77 +12,19 @@ export const processImageWithOCR = async (
   imageUrl: string, 
   language: string = 'eng'
 ): Promise<{ text: string; confidence: number }> => {
-  // In a real implementation with Tesseract.js:
-  // const { createWorker } = await import('tesseract.js');
-  // const worker = await createWorker();
-  // await worker.loadLanguage(language);
-  // await worker.initialize(language);
-  // const { data } = await worker.recognize(imageUrl);
-  // await worker.terminate();
-  // return { text: data.text, confidence: data.confidence };
-  
-  // For now, we'll simulate OCR with different languages
-  return new Promise((resolve) => {
-    // Simulate longer processing time for non-English languages
-    const processingTime = language === 'eng' ? 1000 : 1500;
+  try {
+    const worker = await createWorker(language);
+    const { data } = await worker.recognize(imageUrl);
+    await worker.terminate();
     
-    setTimeout(() => {
-      let simulatedText = "";
-      let confidence = 0.85;
-      
-      // Simulate different text based on language
-      switch (language) {
-        case 'eng':
-          simulatedText = "This is simulated OCR text in English. In a real implementation, we would extract text from the image using Tesseract.js or an API.";
-          confidence = 0.92;
-          break;
-        case 'fra':
-          simulatedText = "Voici un texte OCR simulé en français. Dans une implémentation réelle, nous extrairions du texte de l'image.";
-          confidence = 0.88;
-          break;
-        case 'spa':
-          simulatedText = "Este es un texto OCR simulado en español. En una implementación real, extraeríamos texto de la imagen.";
-          confidence = 0.86;
-          break;
-        case 'deu':
-          simulatedText = "Dies ist ein simulierter OCR-Text auf Deutsch. In einer realen Implementierung würden wir Text aus dem Bild extrahieren.";
-          confidence = 0.84;
-          break;
-        case 'chi_sim':
-          simulatedText = "这是模拟的中文OCR文本。在实际实现中，我们将从图像中提取文本。";
-          confidence = 0.78;
-          break;
-        case 'jpn':
-          simulatedText = "これは日本語のシミュレートされたOCRテキストです。実際の実装では、画像からテキストを抽出します。";
-          confidence = 0.76;
-          break;
-        case 'ita':
-          simulatedText = "Questo è un testo OCR simulato in italiano. In una implementazione reale, estrarremmo il testo dall'immagine.";
-          confidence = 0.85;
-          break;
-        case 'por':
-          simulatedText = "Este é um texto OCR simulado em português. Em uma implementação real, extrairíamos texto da imagem.";
-          confidence = 0.84;
-          break;
-        case 'rus':
-          simulatedText = "Это симулированный текст OCR на русском языке. В реальной реализации мы извлекли бы текст из изображения.";
-          confidence = 0.77;
-          break;
-        case 'ara':
-          simulatedText = "هذا نص OCR محاكى باللغة العربية. في التطبيق الفعلي، سنستخرج النص من الصورة.";
-          confidence = 0.75;
-          break;
-        default:
-          simulatedText = "This is simulated OCR text. In a real implementation, we would extract text from the image using Tesseract.js.";
-          confidence = 0.82;
-      }
-      
-      resolve({
-        text: simulatedText,
-        confidence
-      });
-    }, processingTime);
-  });
+    return { 
+      text: data.text, 
+      confidence: data.confidence / 100 // Convert to 0-1 scale
+    };
+  } catch (error) {
+    console.error('OCR processing error:', error);
+    throw new Error(`OCR processing failed: ${(error as Error).message}`);
+  }
 };
 
 /**
@@ -91,17 +34,56 @@ export const processImageWithOCR = async (
  */
 export const enhanceImage = async (imageUrl: string): Promise<string> => {
   return new Promise((resolve) => {
-    setTimeout(() => {
-      // In a real implementation, we would:
-      // 1. Apply contrast adjustment
-      // 2. Perform adaptive thresholding and binarization
-      // 3. Apply noise reduction
-      // 4. Fix rotation and deskew image
-      // 5. Sharpen the image edges for text
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(imageUrl);
+        return;
+      }
       
-      // For demo purposes, we just return the original image
+      // Set canvas dimensions
+      canvas.width = img.width;
+      canvas.height = img.height;
+      
+      // Draw original image
+      ctx.drawImage(img, 0, 0);
+      
+      // Apply contrast enhancement and thresholding
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      
+      // Convert to grayscale and apply adaptive thresholding
+      for (let i = 0; i < data.length; i += 4) {
+        // Convert to grayscale
+        const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        
+        // Apply simple thresholding (improve contrast)
+        const threshold = 128;
+        const value = gray > threshold ? 255 : 0;
+        
+        // Set RGB values
+        data[i] = value;      // R
+        data[i + 1] = value;  // G
+        data[i + 2] = value;  // B
+        // Keep alpha channel as is
+      }
+      
+      // Put the processed data back
+      ctx.putImageData(imageData, 0, 0);
+      
+      // Convert to data URL
+      const enhancedImageUrl = canvas.toDataURL('image/png');
+      resolve(enhancedImageUrl);
+    };
+    
+    img.onerror = () => {
+      console.error('Error loading image for enhancement');
       resolve(imageUrl);
-    }, 500);
+    };
+    
+    img.src = imageUrl;
   });
 };
 

@@ -1,6 +1,8 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+import { createWorker } from 'https://esm.sh/tesseract.js@4.1.2';
+import { OpenAI } from "https://esm.sh/openai@4.20.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +12,7 @@ const corsHeaders = {
 // Get Supabase URL and key from environment variables
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
 
 // Initialize Supabase client with the service role key for admin rights
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -21,7 +24,7 @@ serve(async (req) => {
   }
   
   try {
-    const { imageUrl, language, userId } = await req.json();
+    const { imageUrl, language, userId, useOpenAI = false } = await req.json();
     
     if (!imageUrl) {
       return new Response(
@@ -31,51 +34,68 @@ serve(async (req) => {
     }
     
     // Log processing request
-    console.log(`Processing image with language: ${language} for user: ${userId || 'anonymous'}`);
-    
-    // In a real implementation, we would call a real OCR service here
-    // For now, simulate OCR processing with different languages
-    const processingTime = language === 'eng' ? 1000 : 1500;
-    
-    // Simulate OCR processing
-    let simulatedText = "";
-    let confidence = 0.85;
-    
-    // Simulate different text based on language
-    switch (language || 'eng') {
-      case 'eng':
-        simulatedText = "This is simulated OCR text in English from our Supabase Edge Function. In a real implementation, we would extract text from the image using an OCR API.";
-        confidence = 0.92;
-        break;
-      case 'fra':
-        simulatedText = "Voici un texte OCR simulé en français de notre fonction Edge Supabase. Dans une implémentation réelle, nous extrairions du texte de l'image.";
-        confidence = 0.88;
-        break;
-      case 'spa':
-        simulatedText = "Este es un texto OCR simulado en español de nuestra función Edge de Supabase. En una implementación real, extraeríamos texto de la imagen.";
-        confidence = 0.86;
-        break;
-      case 'deu':
-        simulatedText = "Dies ist ein simulierter OCR-Text auf Deutsch von unserer Supabase Edge-Funktion. In einer realen Implementierung würden wir Text aus dem Bild extrahieren.";
-        confidence = 0.84;
-        break;
-      case 'chi_sim':
-        simulatedText = "这是来自我们Supabase Edge Function的模拟中文OCR文本。在真实实现中，我们会使用OCR API从图像中提取文本。";
-        confidence = 0.78;
-        break;
-      case 'jpn':
-        simulatedText = "これは私たちのSupabase Edge Functionからの日本語のシミュレートされたOCRテキストです。実際の実装では、OCR APIを使用して画像からテキストを抽出します。";
-        confidence = 0.76;
-        break;
-      default:
-        simulatedText = "This is simulated OCR text from our Supabase Edge Function. In a real implementation, we would extract text from the image using an OCR API.";
-        confidence = 0.82;
+    console.log(`Processing image with language: ${language} for user: ${userId || 'anonymous'}. Using OpenAI: ${useOpenAI}`);
+
+    let extractedText = "";
+    let confidence = 0;
+    let processedAt = new Date().toISOString();
+
+    // Check if we should use OpenAI or Tesseract
+    if (useOpenAI && openaiApiKey) {
+      console.log("Using OpenAI for image processing");
+      
+      // Initialize OpenAI client
+      const openai = new OpenAI({
+        apiKey: openaiApiKey
+      });
+      
+      // Process image with OpenAI Vision API
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert OCR system. Extract all text visible in the image accurately."
+          },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "Extract all text from this image:" },
+              { type: "image_url", image_url: { url: imageUrl } }
+            ]
+          }
+        ],
+        max_tokens: 1000
+      });
+      
+      extractedText = response.choices[0].message.content || "";
+      confidence = 0.95; // OpenAI generally has high confidence
+      
+    } else {
+      console.log("Using Tesseract.js for image processing");
+      
+      try {
+        // Initialize Tesseract worker
+        const worker = await createWorker(language);
+        
+        // Process image with Tesseract
+        const result = await worker.recognize(imageUrl);
+        
+        extractedText = result.data.text;
+        confidence = result.data.confidence / 100; // Tesseract confidence is 0-100, normalize to 0-1
+        
+        // Terminate worker
+        await worker.terminate();
+      } catch (tesseractError) {
+        console.error("Tesseract processing error:", tesseractError);
+        return new Response(
+          JSON.stringify({ error: `OCR processing failed: ${tesseractError.message}` }),
+          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
     }
     
-    // Log successful processing
-    console.log(`OCR processing completed with confidence: ${confidence}`);
-    
-    // If userId is provided, we could log this activity to a processing_logs table
+    // If userId is provided, log this activity to a processing_logs table
     if (userId) {
       try {
         const { error } = await supabase
@@ -85,7 +105,8 @@ serve(async (req) => {
             image_url: imageUrl,
             language,
             confidence,
-            processed_at: new Date().toISOString()
+            processed_at: processedAt,
+            ocr_method: useOpenAI ? 'openai' : 'tesseract'
           });
           
         if (error) {
@@ -99,9 +120,9 @@ serve(async (req) => {
     
     return new Response(
       JSON.stringify({
-        text: simulatedText,
+        text: extractedText,
         confidence: confidence,
-        processedAt: new Date().toISOString()
+        processedAt: processedAt
       }),
       { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
