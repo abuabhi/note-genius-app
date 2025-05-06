@@ -17,7 +17,8 @@ import { Note } from "@/types/note";
 import { FileUpload } from "./FileUpload";
 import { ApiImport } from "./ApiImport";
 import { ProcessedDocumentPreview } from "./ProcessedDocumentPreview";
-import { supabase } from "@/integrations/supabase/client";
+import { useImportState } from "./useImportState";
+import { processSelectedDocument } from "./importUtils";
 
 interface ImportDialogProps {
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<void>;
@@ -25,61 +26,20 @@ interface ImportDialogProps {
 
 export const ImportDialog = ({ onSaveNote }: ImportDialogProps) => {
   const [activeTab, setActiveTab] = useState("file");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [fileUrl, setFileUrl] = useState<string | null>(null);
-  const [fileType, setFileType] = useState<string | null>(null);
-  const [extractedText, setExtractedText] = useState("");
-  const [documentTitle, setDocumentTitle] = useState("");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
-
-  const resetForm = () => {
-    setSelectedFile(null);
-    setFileUrl(null);
-    setFileType(null);
-    setExtractedText("");
-    setDocumentTitle("");
-    setActiveTab("file");
-    setIsProcessing(false);
-  };
-
-  const uploadFileToStorage = async (file: File): Promise<string | null> => {
-    try {
-      // Get current user and generate path
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error("User not authenticated");
-      }
-      
-      const userId = session.user.id;
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}/${Date.now()}.${fileExt}`;
-      
-      // Upload to Supabase Storage
-      const { data, error } = await supabase.storage
-        .from('note_images')
-        .upload(fileName, file);
-      
-      if (error) throw error;
-      
-      // Get the public URL
-      const { data: urlData } = supabase.storage
-        .from('note_images')
-        .getPublicUrl(data.path);
-      
-      return urlData.publicUrl;
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      toast({
-        title: "Upload Failed",
-        description: "Could not upload file to storage.",
-        variant: "destructive",
-      });
-      return null;
-    }
-  };
+  
+  const { 
+    importState,
+    setSelectedFile,
+    setFileType,
+    setFileUrl,
+    setExtractedText,
+    setDocumentTitle,
+    resetState
+  } = useImportState();
 
   const handleFileSelected = (file: File) => {
     setSelectedFile(file);
@@ -94,7 +54,7 @@ export const ImportDialog = ({ onSaveNote }: ImportDialogProps) => {
   };
 
   const processDocument = async () => {
-    if (!selectedFile && !fileType) {
+    if (!importState.selectedFile && !importState.fileType) {
       toast({
         title: "No Document Selected",
         description: "Please select a document to import.",
@@ -106,33 +66,14 @@ export const ImportDialog = ({ onSaveNote }: ImportDialogProps) => {
     setIsProcessing(true);
 
     try {
-      // If we have a file, upload it first
-      if (selectedFile) {
-        const uploadedUrl = await uploadFileToStorage(selectedFile);
-        if (!uploadedUrl) {
-          throw new Error("Failed to upload file");
-        }
-        setFileUrl(uploadedUrl);
-
-        // Call our edge function to process the document
-        const { data: { session } } = await supabase.auth.getSession();
-        const userId = session?.user.id;
-
-        const response = await supabase.functions.invoke('process-document', {
-          body: {
-            fileUrl: uploadedUrl,
-            fileType: fileType,
-            userId: userId
-          }
-        });
-
-        if (response.error) {
-          throw new Error(response.error.message || 'Error processing document');
-        }
-
-        setExtractedText(response.data.text);
-        setDocumentTitle(response.data.title);
-      }
+      const result = await processSelectedDocument(
+        importState.selectedFile, 
+        importState.fileType
+      );
+      
+      if (result.fileUrl) setFileUrl(result.fileUrl);
+      setExtractedText(result.text);
+      setDocumentTitle(result.title);
     } catch (error) {
       console.error('Error processing document:', error);
       toast({
@@ -146,7 +87,7 @@ export const ImportDialog = ({ onSaveNote }: ImportDialogProps) => {
   };
 
   const handleSaveImportedNote = async () => {
-    if (!extractedText) {
+    if (!importState.extractedText) {
       toast({
         title: "No Content",
         description: "There is no content to save.",
@@ -162,21 +103,21 @@ export const ImportDialog = ({ onSaveNote }: ImportDialogProps) => {
       const dateString = today.toISOString().split('T')[0];
 
       const newNote: Omit<Note, 'id'> = {
-        title: documentTitle || "Imported Document",
-        description: extractedText.substring(0, 100) + (extractedText.length > 100 ? "..." : ""),
+        title: importState.documentTitle || "Imported Document",
+        description: importState.extractedText.substring(0, 100) + (importState.extractedText.length > 100 ? "..." : ""),
         date: dateString,
         category: "Imported",
-        content: extractedText,
+        content: importState.extractedText,
         sourceType: 'import',
         importData: {
-          originalFileUrl: fileUrl,
-          fileType: fileType || 'unknown',
+          originalFileUrl: importState.fileUrl,
+          fileType: importState.fileType || 'unknown',
           importedAt: today.toISOString()
         }
       };
 
       await onSaveNote(newNote);
-      resetForm();
+      resetState();
       setIsSheetOpen(false);
       
       toast({
@@ -199,7 +140,7 @@ export const ImportDialog = ({ onSaveNote }: ImportDialogProps) => {
     <Sheet open={isSheetOpen} onOpenChange={(open) => {
       setIsSheetOpen(open);
       if (!open) {
-        resetForm();
+        resetState();
       }
     }}>
       <SheetTrigger asChild>
@@ -216,46 +157,20 @@ export const ImportDialog = ({ onSaveNote }: ImportDialogProps) => {
           </SheetDescription>
         </SheetHeader>
         
-        {!extractedText ? (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="file">File Import</TabsTrigger>
-              <TabsTrigger value="api">API Import</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="file" className="min-h-[300px] flex flex-col items-center justify-center">
-              <FileUpload 
-                onFileSelected={handleFileSelected}
-                acceptedTypes=".pdf,.docx,.doc"
-                selectedFile={selectedFile}
-              />
-              
-              {selectedFile && (
-                <Button 
-                  onClick={processDocument} 
-                  disabled={isProcessing} 
-                  className="mt-4"
-                >
-                  {isProcessing ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    <>Process Document</>
-                  )}
-                </Button>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="api" className="min-h-[300px]">
-              <ApiImport onImport={handleApiImport} />
-            </TabsContent>
-          </Tabs>
+        {!importState.extractedText ? (
+          <ImportTabs 
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            onFileSelected={handleFileSelected}
+            onApiImport={handleApiImport}
+            selectedFile={importState.selectedFile}
+            processDocument={processDocument}
+            isProcessing={isProcessing}
+          />
         ) : (
           <ProcessedDocumentPreview
-            text={extractedText}
-            title={documentTitle}
+            text={importState.extractedText}
+            title={importState.documentTitle}
             setTitle={setDocumentTitle}
           />
         )}
@@ -263,7 +178,7 @@ export const ImportDialog = ({ onSaveNote }: ImportDialogProps) => {
         <SheetFooter className="mt-4">
           <Button
             onClick={handleSaveImportedNote}
-            disabled={!extractedText || isSaving}
+            disabled={!importState.extractedText || isSaving}
           >
             {isSaving ? (
               <>
@@ -277,5 +192,63 @@ export const ImportDialog = ({ onSaveNote }: ImportDialogProps) => {
         </SheetFooter>
       </SheetContent>
     </Sheet>
+  );
+};
+
+interface ImportTabsProps {
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+  onFileSelected: (file: File) => void;
+  onApiImport: (type: string, content: string) => void;
+  selectedFile: File | null;
+  processDocument: () => Promise<void>;
+  isProcessing: boolean;
+}
+
+const ImportTabs = ({ 
+  activeTab, 
+  setActiveTab,
+  onFileSelected,
+  onApiImport,
+  selectedFile,
+  processDocument,
+  isProcessing
+}: ImportTabsProps) => {
+  return (
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="file">File Import</TabsTrigger>
+        <TabsTrigger value="api">API Import</TabsTrigger>
+      </TabsList>
+      
+      <TabsContent value="file" className="min-h-[300px] flex flex-col items-center justify-center">
+        <FileUpload 
+          onFileSelected={onFileSelected}
+          acceptedTypes=".pdf,.docx,.doc"
+          selectedFile={selectedFile}
+        />
+        
+        {selectedFile && (
+          <Button 
+            onClick={processDocument} 
+            disabled={isProcessing} 
+            className="mt-4"
+          >
+            {isProcessing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>Process Document</>
+            )}
+          </Button>
+        )}
+      </TabsContent>
+      
+      <TabsContent value="api" className="min-h-[300px]">
+        <ApiImport onImport={onApiImport} />
+      </TabsContent>
+    </Tabs>
   );
 };
