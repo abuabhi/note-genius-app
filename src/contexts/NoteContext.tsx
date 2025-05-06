@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 import { Note } from '@/types/note';
 
 // Mock data for initial notes
@@ -29,6 +29,9 @@ const initialNotes: Note[] = [
 
 interface NoteContextType {
   notes: Note[];
+  filteredNotes: Note[];
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
   addNote: (note: Note) => void;
   deleteNote: (id: string) => void;
   updateNote: (id: string, updatedNote: Partial<Note>) => void;
@@ -38,6 +41,20 @@ const NoteContext = createContext<NoteContextType | undefined>(undefined);
 
 export const NoteProvider = ({ children }: { children: ReactNode }) => {
   const [notes, setNotes] = useState<Note[]>(initialNotes);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+
+  // Filter notes based on search term
+  const filteredNotes = useMemo(() => {
+    if (!searchTerm.trim()) return notes;
+    
+    const lowerSearchTerm = searchTerm.toLowerCase();
+    return notes.filter(note => 
+      note.title.toLowerCase().includes(lowerSearchTerm) || 
+      note.description.toLowerCase().includes(lowerSearchTerm) || 
+      note.category.toLowerCase().includes(lowerSearchTerm) ||
+      (note.content && note.content.toLowerCase().includes(lowerSearchTerm))
+    );
+  }, [notes, searchTerm]);
 
   const addNote = (note: Note) => {
     setNotes(prevNotes => [note, ...prevNotes]);
@@ -56,7 +73,15 @@ export const NoteProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <NoteContext.Provider value={{ notes, addNote, deleteNote, updateNote }}>
+    <NoteContext.Provider value={{ 
+      notes, 
+      filteredNotes, 
+      searchTerm, 
+      setSearchTerm, 
+      addNote, 
+      deleteNote, 
+      updateNote 
+    }}>
       {children}
     </NoteContext.Provider>
   );
