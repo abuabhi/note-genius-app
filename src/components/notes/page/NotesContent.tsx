@@ -16,7 +16,7 @@ export const NotesContent = () => {
   const { toast } = useToast();
   const { isAuthorized, loading: authLoading, profile, tierLimits } = useRequireAuth();
 
-  const handleAddNote = async (note: Omit<Note, 'id'>) => {
+  const handleAddNote = async (note: Omit<Note, 'id'>): Promise<Note | null> => {
     // Check if user has reached their note limit
     if (tierLimits && notes.length >= tierLimits.max_notes) {
       toast({
@@ -29,7 +29,7 @@ export const NotesContent = () => {
     return await addNote(note);
   };
 
-  const handleScanNote = async (note: Omit<Note, 'id'>) => {
+  const handleScanNote = async (note: Omit<Note, 'id'>): Promise<Note | null> => {
     // Check if user's tier allows OCR
     if (tierLimits && !tierLimits.ocr_enabled) {
       toast({
@@ -50,7 +50,7 @@ export const NotesContent = () => {
     return result;
   };
 
-  const handleImportNote = async (note: Omit<Note, 'id'>) => {
+  const handleImportNote = async (note: Omit<Note, 'id'>): Promise<Note | null> => {
     const result = await handleAddNote(note);
     if (result) {
       toast({
@@ -103,7 +103,7 @@ export const NotesContent = () => {
           </div>
 
           {showTierWarning && profile.user_tier !== 'DEAN' && (
-            <Alert variant="warning" className="mb-4">
+            <Alert className="mb-4">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>You're approaching your notes limit</AlertTitle>
               <AlertDescription>

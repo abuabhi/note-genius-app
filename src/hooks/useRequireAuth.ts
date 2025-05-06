@@ -42,7 +42,20 @@ export const useRequireAuth = (redirectTo = '/login') => {
       const fetchProfileAndTierLimits = async () => {
         setProfileLoading(true);
         try {
-          // Fetch user profile
+          // Check if user is the specific email to give them Dean role
+          if (user.email === 'abhinav.paul.sharma@gmail.com') {
+            // Update the user to Dean tier
+            const { error: updateError } = await supabase
+              .from('profiles')
+              .update({ user_tier: 'DEAN' })
+              .eq('id', user.id);
+              
+            if (updateError) {
+              throw updateError;
+            }
+          }
+          
+          // Fetch user profile (will reflect the updated tier)
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('*')
