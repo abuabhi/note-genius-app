@@ -21,4 +21,7 @@ export interface NoteContextType {
   notesPerPage: number;
   setNotesPerPage: (count: number) => void;
   loading: boolean;
+  // Language detection for scanned notes
+  detectedLanguage?: string;
+  setDetectedLanguage?: (language: string) => void;
 }
