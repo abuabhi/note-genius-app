@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { NotesGrid } from "@/components/notes/NotesGrid";
 import { NotePagination } from "@/components/notes/NotePagination";
 import { NotesHeader } from "./NotesHeader";
@@ -7,13 +7,12 @@ import { useNotes } from "@/contexts/NoteContext";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Note } from "@/types/note";
-import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useRequireAuth } from "@/hooks/useRequireAuth"; 
 
 export const NotesContent = () => {
   const { paginatedNotes, addNote, loading } = useNotes();
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const { isAuthorized, loading: authLoading } = useRequireAuth();
 
   const handleAddNote = async (note: Omit<Note, 'id'>) => {
     return await addNote(note);
@@ -39,28 +38,8 @@ export const NotesContent = () => {
     }
   };
 
-  const checkAuth = async () => {
-    const { data } = await supabase.auth.getSession();
-    return data.session !== null;
-  };
-
-  useEffect(() => {
-    const checkUserAuth = async () => {
-      const isAuthenticated = await checkAuth();
-      if (!isAuthenticated) {
-        toast({
-          title: "Authentication Required",
-          description: "Please log in to view and create notes.",
-          variant: "destructive",
-        });
-        navigate("/login");
-      }
-    };
-    
-    checkUserAuth();
-  }, [navigate, toast]);
-
-  if (loading) {
+  // Show loading state while checking authentication
+  if (authLoading || loading) {
     return (
       <div className="container mx-auto p-6 flex items-center justify-center h-[50vh]">
         <div className="text-center">
@@ -69,6 +48,11 @@ export const NotesContent = () => {
         </div>
       </div>
     );
+  }
+
+  // If not authenticated, the useRequireAuth hook will redirect
+  if (!isAuthorized) {
+    return null;
   }
 
   return (

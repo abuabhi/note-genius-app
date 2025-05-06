@@ -1,14 +1,38 @@
+
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, FileText, BookOpen, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { Loader2 } from "lucide-react";
 
 const DashboardPage = () => {
+  const { isAuthorized, loading, user } = useRequireAuth();
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="container mx-auto p-6 flex items-center justify-center h-[50vh]">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+            <p className="mt-2 text-muted-foreground">Loading your dashboard...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!isAuthorized) {
+    return null; // Will redirect via the useRequireAuth hook
+  }
+
   return (
     <Layout>
       <div className="container mx-auto p-6">
-        <h1 className="text-3xl font-bold mb-6 text-mint-700">Welcome back!</h1>
+        <h1 className="text-3xl font-bold mb-6 text-mint-700">
+          Welcome back{user?.email ? `, ${user.email.split('@')[0]}!` : '!'}
+        </h1>
         
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card className="border-mint-100 shadow-sm hover:shadow-md transition-shadow">

@@ -1,12 +1,14 @@
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const SignupPage = () => {
   const [formData, setFormData] = useState({
@@ -17,6 +19,16 @@ const SignupPage = () => {
     acceptTerms: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const { signUp, user } = useAuth();
+
+  useEffect(() => {
+    // Redirect if user is already logged in
+    if (user) {
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -33,28 +45,27 @@ const SignupPage = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError("");
     
     if (formData.password !== formData.confirmPassword) {
-      toast({
-        title: "Passwords don't match",
-        description: "Please make sure your passwords match.",
-        variant: "destructive",
-      });
+      setError("Passwords don't match");
       return;
     }
     
     setIsSubmitting(true);
     
-    // Simulate signup attempt
-    setTimeout(() => {
-      toast({
-        title: "Demo signup",
-        description: "In a real app, this would create your account. For now, we're just showing this message.",
+    try {
+      await signUp(formData.email, formData.password, {
+        username: formData.name || formData.email.split('@')[0],
       });
+      // Navigation will occur after email verification
+    } catch (error: any) {
+      setError(error.message || "Failed to create account");
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -74,6 +85,12 @@ const SignupPage = () => {
 
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
           <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+            {error && (
+              <Alert variant="destructive" className="mb-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
                 <Label htmlFor="name">Full name</Label>
@@ -83,7 +100,6 @@ const SignupPage = () => {
                     name="name"
                     type="text"
                     autoComplete="name"
-                    required
                     value={formData.name}
                     onChange={handleChange}
                     className="block w-full"
@@ -191,10 +207,8 @@ const SignupPage = () => {
                     variant="outline"
                     className="w-full"
                     onClick={() => {
-                      toast({
-                        title: "Demo signup",
-                        description: "Social signup would be implemented in a real app.",
-                      });
+                      // Google signup would be implemented here
+                      setError("Social signup is not implemented yet");
                     }}
                   >
                     <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
@@ -214,10 +228,8 @@ const SignupPage = () => {
                     variant="outline"
                     className="w-full"
                     onClick={() => {
-                      toast({
-                        title: "Demo signup",
-                        description: "Social signup would be implemented in a real app.",
-                      });
+                      // Twitter signup would be implemented here
+                      setError("Social signup is not implemented yet");
                     }}
                   >
                     <svg className="h-5 w-5 text-[#1D9BF0]" fill="currentColor" viewBox="0 0 24 24">

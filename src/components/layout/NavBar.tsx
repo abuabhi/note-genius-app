@@ -1,11 +1,13 @@
 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Menu, X } from "lucide-react";
+import { Sparkles, Menu, X, User } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const NavBar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -36,12 +38,34 @@ const NavBar = () => {
             <Link to="/contact" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
               Contact
             </Link>
-            <Link to="/login" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
-              Login
-            </Link>
-            <Button asChild>
-              <Link to="/signup">Get Started</Link>
-            </Button>
+            
+            {user ? (
+              <>
+                <Link to="/dashboard" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+                  Dashboard
+                </Link>
+                <div className="flex items-center">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="flex items-center text-gray-600"
+                    onClick={signOut}
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    <span>{user.email?.split('@')[0] || 'Account'}</span>
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+                  Login
+                </Link>
+                <Button asChild>
+                  <Link to="/signup">Get Started</Link>
+                </Button>
+              </>
+            )}
           </div>
           
           {/* Mobile menu button */}
@@ -90,20 +114,45 @@ const NavBar = () => {
             >
               Contact
             </Link>
-            <Link 
-              to="/login"
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
-              onClick={toggleMenu}
-            >
-              Login
-            </Link>
-            <Link 
-              to="/signup"
-              className="block w-full text-center px-4 py-2 rounded-md shadow-sm text-base font-medium text-white bg-purple-600 hover:bg-purple-700"
-              onClick={toggleMenu}
-            >
-              Get Started
-            </Link>
+            
+            {user ? (
+              <>
+                <Link 
+                  to="/dashboard"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                  onClick={toggleMenu}
+                >
+                  Dashboard
+                </Link>
+                <button
+                  className="flex items-center w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                  onClick={() => {
+                    signOut();
+                    toggleMenu();
+                  }}
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link 
+                  to="/login"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                  onClick={toggleMenu}
+                >
+                  Login
+                </Link>
+                <Link 
+                  to="/signup"
+                  className="block w-full text-center px-4 py-2 rounded-md shadow-sm text-base font-medium text-white bg-purple-600 hover:bg-purple-700"
+                  onClick={toggleMenu}
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

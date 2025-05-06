@@ -1,11 +1,13 @@
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -13,6 +15,16 @@ const LoginPage = () => {
     password: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const { signIn, user } = useAuth();
+
+  useEffect(() => {
+    // Redirect if user is already logged in
+    if (user) {
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -22,18 +34,19 @@ const LoginPage = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError("");
     setIsSubmitting(true);
     
-    // Simulate login attempt
-    setTimeout(() => {
-      toast({
-        title: "Demo login",
-        description: "In a real app, this would log you in. For now, we're just showing this message.",
-      });
+    try {
+      await signIn(formData.email, formData.password);
+      // Navigation will be handled by the auth state change listener
+    } catch (error: any) {
+      setError(error.message || "Login failed. Please check your credentials.");
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -53,6 +66,12 @@ const LoginPage = () => {
 
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
           <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+            {error && (
+              <Alert variant="destructive" className="mb-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
                 <Label htmlFor="email">Email address</Label>
@@ -134,10 +153,8 @@ const LoginPage = () => {
                     variant="outline"
                     className="w-full"
                     onClick={() => {
-                      toast({
-                        title: "Demo login",
-                        description: "Social login would be implemented in a real app.",
-                      });
+                      // Google login would be implemented here
+                      setError("Social login is not implemented yet");
                     }}
                   >
                     <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
@@ -157,10 +174,8 @@ const LoginPage = () => {
                     variant="outline"
                     className="w-full"
                     onClick={() => {
-                      toast({
-                        title: "Demo login",
-                        description: "Social login would be implemented in a real app.",
-                      });
+                      // Twitter login would be implemented here
+                      setError("Social login is not implemented yet");
                     }}
                   >
                     <svg className="h-5 w-5 text-[#1D9BF0]" fill="currentColor" viewBox="0 0 24 24">
