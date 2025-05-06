@@ -9,7 +9,80 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      notes: {
+        Row: {
+          category: string
+          content: string | null
+          created_at: string
+          date: string
+          description: string
+          id: string
+          source_type: string
+          title: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          category?: string
+          content?: string | null
+          created_at?: string
+          date?: string
+          description: string
+          id?: string
+          source_type?: string
+          title: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          category?: string
+          content?: string | null
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          source_type?: string
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      scan_data: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          id: string
+          note_id: string
+          original_image_url: string | null
+          recognized_text: string | null
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          note_id: string
+          original_image_url?: string | null
+          recognized_text?: string | null
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          note_id?: string
+          original_image_url?: string | null
+          recognized_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scan_data_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

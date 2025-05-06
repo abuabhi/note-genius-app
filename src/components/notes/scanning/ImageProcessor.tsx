@@ -2,11 +2,11 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { processImageWithOCR, enhanceImage } from "@/utils/ocrUtils";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, RotateCw } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ImageProcessorProps {
   imageUrl: string | null;
@@ -33,19 +33,25 @@ export const ImageProcessor = ({ imageUrl, onReset, onTextExtracted }: ImageProc
     setProcessingError(null);
     
     try {
-      // First enhance the image for better OCR results
-      const enhancedImage = await enhanceImage(url);
+      // Call our Supabase edge function for OCR processing
+      const { data, error } = await supabase.functions.invoke('process-image', {
+        body: { 
+          imageUrl: url,
+          language: selectedLanguage
+        }
+      });
       
-      // Then process with OCR using the selected language
-      const { text, confidence: ocrConfidence } = await processImageWithOCR(enhancedImage, selectedLanguage);
+      if (error) {
+        throw new Error(error.message);
+      }
       
-      setRecognizedText(text);
-      setConfidence(ocrConfidence);
-      onTextExtracted(text);
+      setRecognizedText(data.text);
+      setConfidence(data.confidence);
+      onTextExtracted(data.text);
       
       toast({
         title: "Text Extracted",
-        description: `OCR processing complete with ${Math.round(ocrConfidence * 100)}% confidence.`,
+        description: `OCR processing complete with ${Math.round(data.confidence * 100)}% confidence.`,
       });
     } catch (error) {
       console.error("OCR processing error:", error);

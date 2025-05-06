@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Camera, FileText } from "lucide-react";
+import { Camera, FileText, Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Note } from "@/types/note";
@@ -10,9 +10,10 @@ import { CameraCapture } from "./scanning/CameraCapture";
 import { ImageUpload } from "./scanning/ImageUpload";
 import { ImageProcessor } from "./scanning/ImageProcessor";
 import { NoteMetadataForm } from "./scanning/NoteMetadataForm";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ScanNoteDialogProps {
-  onSaveNote: (note: Note) => void;
+  onSaveNote: (note: Omit<Note, 'id'>) => Promise<void>;
 }
 
 export const ScanNoteDialog = ({ onSaveNote }: ScanNoteDialogProps) => {
@@ -22,6 +23,7 @@ export const ScanNoteDialog = ({ onSaveNote }: ScanNoteDialogProps) => {
   const [noteTitle, setNoteTitle] = useState("");
   const [noteCategory, setNoteCategory] = useState("Uncategorized");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
   const handleImageCaptured = (imageUrl: string) => {
@@ -36,7 +38,61 @@ export const ScanNoteDialog = ({ onSaveNote }: ScanNoteDialogProps) => {
     setActiveTab("camera");
   };
 
-  const handleSaveNote = () => {
+  const uploadImageToStorage = async (imageUrl: string): Promise<string | null> => {
+    try {
+      // Extract base64 data
+      const base64Data = imageUrl.split(',')[1];
+      
+      // Convert to Blob
+      const byteCharacters = atob(base64Data);
+      const byteArrays = [];
+      
+      for (let offset = 0; offset < byteCharacters.length; offset += 1024) {
+        const slice = byteCharacters.slice(offset, offset + 1024);
+        const byteNumbers = new Array(slice.length);
+        for (let i = 0; i < slice.length; i++) {
+          byteNumbers[i] = slice.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        byteArrays.push(byteArray);
+      }
+      
+      const blob = new Blob(byteArrays, { type: 'image/png' });
+      
+      // Get current user and generate path
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("User not authenticated");
+      }
+      
+      const userId = session.user.id;
+      const fileName = `${userId}/${Date.now()}.png`;
+      
+      // Upload to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('note_images')
+        .upload(fileName, blob);
+      
+      if (error) throw error;
+      
+      // Get the public URL
+      const { data: urlData } = supabase.storage
+        .from('note_images')
+        .getPublicUrl(data.path);
+      
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: "Upload Failed",
+        description: "Could not upload image to storage.",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
+  const handleSaveNote = async () => {
     if (!noteTitle.trim()) {
       toast({
         title: "Title Required",
@@ -46,32 +102,45 @@ export const ScanNoteDialog = ({ onSaveNote }: ScanNoteDialogProps) => {
       return;
     }
 
-    const today = new Date();
-    const dateString = today.toISOString().split('T')[0];
+    setIsSaving(true);
 
-    const newNote: Note = {
-      id: Date.now().toString(),
-      title: noteTitle,
-      description: recognizedText.substring(0, 100) + (recognizedText.length > 100 ? "..." : ""),
-      date: dateString,
-      category: noteCategory,
-      content: recognizedText,
-      sourceType: 'scan',
-      scanData: {
-        originalImageUrl: capturedImage,
-        recognizedText: recognizedText,
-        confidence: 0.8, // Simulated confidence score
+    try {
+      // First upload the image to storage
+      let imageUrl = null;
+      if (capturedImage) {
+        imageUrl = await uploadImageToStorage(capturedImage);
       }
-    };
 
-    onSaveNote(newNote);
-    resetForm();
-    setIsSheetOpen(false);
-    
-    toast({
-      title: "Note Created",
-      description: "Your handwritten note has been converted and saved.",
-    });
+      const today = new Date();
+      const dateString = today.toISOString().split('T')[0];
+
+      const newNote: Omit<Note, 'id'> = {
+        title: noteTitle,
+        description: recognizedText.substring(0, 100) + (recognizedText.length > 100 ? "..." : ""),
+        date: dateString,
+        category: noteCategory,
+        content: recognizedText,
+        sourceType: 'scan',
+        scanData: {
+          originalImageUrl: imageUrl,
+          recognizedText: recognizedText,
+          confidence: 0.8, // Simulated confidence score
+        }
+      };
+
+      await onSaveNote(newNote);
+      resetForm();
+      setIsSheetOpen(false);
+    } catch (error) {
+      console.error("Error saving note:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save the note. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -136,10 +205,19 @@ export const ScanNoteDialog = ({ onSaveNote }: ScanNoteDialogProps) => {
         <SheetFooter className="mt-4">
           <Button
             onClick={handleSaveNote}
-            disabled={!capturedImage || !recognizedText || !noteTitle}
+            disabled={!capturedImage || !recognizedText || !noteTitle || isSaving}
           >
-            <FileText className="mr-2 h-4 w-4" />
-            Save Note
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <FileText className="mr-2 h-4 w-4" />
+                Save Note
+              </>
+            )}
           </Button>
         </SheetFooter>
       </SheetContent>
