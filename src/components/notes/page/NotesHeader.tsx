@@ -10,6 +10,7 @@ import { Note } from "@/types/note";
 import { useState } from "react";
 import { useNotes } from "@/contexts/NoteContext";
 import { Toggle } from "@/components/ui/toggle";
+import { FilterMenu } from "@/components/notes/FilterMenu";
 
 interface NotesHeaderProps {
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<any>;
@@ -25,7 +26,10 @@ export const NotesHeader = ({ onSaveNote, onScanNote, onImportNote }: NotesHeade
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
       <h1 className="text-3xl font-bold">My Notes</h1>
       <div className="flex flex-col md:flex-row w-full md:w-auto gap-4">
-        <NoteSearch />
+        <div className="flex flex-1 gap-2">
+          <NoteSearch />
+          <FilterMenu />
+        </div>
         <div className="flex gap-2">
           <Toggle 
             pressed={showArchived}

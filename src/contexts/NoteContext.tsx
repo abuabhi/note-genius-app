@@ -2,8 +2,8 @@
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Note } from '@/types/note';
-import { NoteContextType, SortType } from './notes/types';
-import { fetchNotesFromSupabase, filterNotes, sortNotes, paginateNotes } from './notes/noteUtils';
+import { NoteContextType, SortType, FilterOptions } from './notes/types';
+import { fetchNotesFromSupabase, filterNotes, sortNotes, paginateNotes, getUniqueCategories } from './notes/noteUtils';
 import { addNoteToDatabase, deleteNoteFromDatabase, updateNoteInDatabase, fetchTagsFromDatabase } from './notes/noteOperations';
 
 const NoteContext = createContext<NoteContextType | undefined>(undefined);
@@ -16,6 +16,7 @@ export const NoteProvider = ({ children }: { children: ReactNode }) => {
   const [notesPerPage, setNotesPerPage] = useState<number>(6);
   const [loading, setLoading] = useState<boolean>(true);
   const [showArchived, setShowArchived] = useState<boolean>(false);
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({});
   const { toast } = useToast();
 
   // Fetch notes from Supabase on component mount
@@ -40,11 +41,21 @@ export const NoteProvider = ({ children }: { children: ReactNode }) => {
     loadNotes();
   }, [toast]);
 
-  // Filter notes based on search term and archived status
+  // Get unique categories from notes
+  const availableCategories = useMemo(() => {
+    return getUniqueCategories(notes);
+  }, [notes]);
+
+  // Reset filters
+  const resetFilters = () => {
+    setFilterOptions({});
+  };
+
+  // Filter notes based on search term, filters, and archived status
   const filteredNotes = useMemo(() => {
-    const filtered = filterNotes(notes, searchTerm);
+    const filtered = filterNotes(notes, searchTerm, filterOptions);
     return filtered.filter(note => showArchived ? note.archived : !note.archived);
-  }, [notes, searchTerm, showArchived]);
+  }, [notes, searchTerm, filterOptions, showArchived]);
 
   // Sort the filtered notes, with pinned notes first if not archived
   const sortedNotes = useMemo(() => {
@@ -234,7 +245,11 @@ export const NoteProvider = ({ children }: { children: ReactNode }) => {
       setNotesPerPage,
       loading,
       getAllTags,
-      filterByTag
+      filterByTag,
+      filterOptions,
+      setFilterOptions,
+      resetFilters,
+      availableCategories
     }}>
       {children}
     </NoteContext.Provider>

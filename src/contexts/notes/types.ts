@@ -3,6 +3,14 @@ import { Note } from "@/types/note";
 
 export type SortType = 'date-desc' | 'date-asc' | 'title-asc' | 'title-desc' | 'category';
 
+export interface FilterOptions {
+  category?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  sourceType?: ('manual' | 'scan' | 'import')[];
+  hasTags?: boolean;
+}
+
 export interface NoteContextType {
   notes: Note[];
   filteredNotes: Note[];
@@ -31,4 +39,9 @@ export interface NoteContextType {
   // Tag-related functions
   getAllTags: () => Promise<{ id: string; name: string; color: string }[]>;
   filterByTag: (tagName: string) => void;
+  // Advanced filtering
+  filterOptions: FilterOptions;
+  setFilterOptions: (options: FilterOptions) => void;
+  resetFilters: () => void;
+  availableCategories: string[];
 }

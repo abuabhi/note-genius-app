@@ -1,7 +1,6 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Note } from "@/types/note";
-import { SortType } from "./types";
+import { FilterOptions, SortType } from "./types";
 
 export const fetchNotesFromSupabase = async (): Promise<Note[]> => {
   try {
@@ -88,18 +87,59 @@ export const fetchNotesFromSupabase = async (): Promise<Note[]> => {
   }
 };
 
-export const filterNotes = (notes: Note[], searchTerm: string): Note[] => {
-  if (!searchTerm.trim()) return notes;
+export const filterNotes = (notes: Note[], searchTerm: string, filterOptions: FilterOptions = {}): Note[] => {
+  if (!searchTerm.trim() && Object.keys(filterOptions).length === 0) return notes;
   
   const lowerSearchTerm = searchTerm.toLowerCase();
-  return notes.filter(note => 
-    note.title.toLowerCase().includes(lowerSearchTerm) || 
-    note.description.toLowerCase().includes(lowerSearchTerm) || 
-    note.category.toLowerCase().includes(lowerSearchTerm) ||
-    (note.content && note.content.toLowerCase().includes(lowerSearchTerm)) ||
-    // Search in tags as well
-    (note.tags && note.tags.some(tag => tag.name.toLowerCase().includes(lowerSearchTerm)))
-  );
+  return notes.filter(note => {
+    // Basic search term filtering
+    const matchesSearchTerm = !searchTerm.trim() || 
+      note.title.toLowerCase().includes(lowerSearchTerm) || 
+      note.description.toLowerCase().includes(lowerSearchTerm) || 
+      note.category.toLowerCase().includes(lowerSearchTerm) ||
+      (note.content && note.content.toLowerCase().includes(lowerSearchTerm)) ||
+      // Search in tags as well
+      (note.tags && note.tags.some(tag => tag.name.toLowerCase().includes(lowerSearchTerm)));
+    
+    if (!matchesSearchTerm) return false;
+    
+    // Advanced filtering
+    // Category filter
+    if (filterOptions.category && note.category !== filterOptions.category) {
+      return false;
+    }
+    
+    // Date range filter
+    if (filterOptions.dateFrom) {
+      const fromDate = new Date(filterOptions.dateFrom);
+      const noteDate = new Date(note.date);
+      if (noteDate < fromDate) return false;
+    }
+    
+    if (filterOptions.dateTo) {
+      const toDate = new Date(filterOptions.dateTo);
+      const noteDate = new Date(note.date);
+      if (noteDate > toDate) return false;
+    }
+    
+    // Source type filter
+    if (filterOptions.sourceType && filterOptions.sourceType.length > 0) {
+      if (!note.sourceType || !filterOptions.sourceType.includes(note.sourceType)) {
+        return false;
+      }
+    }
+    
+    // Has tags filter
+    if (filterOptions.hasTags === true && (!note.tags || note.tags.length === 0)) {
+      return false;
+    }
+    
+    if (filterOptions.hasTags === false && note.tags && note.tags.length > 0) {
+      return false;
+    }
+    
+    return true;
+  });
 };
 
 export const sortNotes = (notes: Note[], sortType: SortType): Note[] => {
@@ -124,4 +164,9 @@ export const sortNotes = (notes: Note[], sortType: SortType): Note[] => {
 export const paginateNotes = (notes: Note[], currentPage: number, notesPerPage: number): Note[] => {
   const startIndex = (currentPage - 1) * notesPerPage;
   return notes.slice(startIndex, startIndex + notesPerPage);
+};
+
+export const getUniqueCategories = (notes: Note[]): string[] => {
+  const categories = notes.map(note => note.category);
+  return [...new Set(categories)].sort();
 };
