@@ -38,7 +38,7 @@ export const NotesHeader: React.FC<NotesHeaderProps> = ({
     <div className="flex flex-col gap-4 mb-6">
       <div className="flex items-center justify-between">
         <div className="flex-1 mr-2">
-          <NoteSearch value={searchTerm} onChange={setSearchTerm} />
+          <NoteSearch />
         </div>
         <div className="flex gap-2">
           <Sheet open={isNewNoteSheetOpen} onOpenChange={setIsNewNoteSheetOpen}>

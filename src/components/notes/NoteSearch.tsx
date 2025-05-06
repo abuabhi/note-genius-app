@@ -1,4 +1,3 @@
-
 import { useNotes } from "@/contexts/NoteContext";
 import { Input } from "@/components/ui/input";
 import { Search, Tag, X } from "lucide-react";

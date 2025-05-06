@@ -116,7 +116,7 @@ export const CreateNoteForm: React.FC<CreateNoteFormProps> = ({ onSave, initialD
           <Label>Tags</Label>
           <TagSelector 
             selectedTags={selectedTags} 
-            onChange={setSelectedTags}
+            onTagsChange={setSelectedTags}
           />
         </div>
       </div>

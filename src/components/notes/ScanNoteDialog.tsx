@@ -20,7 +20,8 @@ export const ScanNoteDialog = ({ onSaveNote, isPremiumUser = false }: ScanNoteDi
   };
 
   const handleSaveNote = async (note: Omit<Note, 'id'>) => {
-    await onSaveNote(note);
+    const savedNote = await onSaveNote(note);
+    return savedNote !== null; // Return true if note was saved, false otherwise
   };
 
   return (
