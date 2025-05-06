@@ -145,12 +145,18 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
 
   // Filter notes by a specific tag
   const filterByTag = (tagName: string, setSearchTerm: (term: string) => void) => {
-    // Add the tag name to the search term
-    setSearchTerm(prevTerm => {
-      const terms = prevTerm.split(' ').filter(term => term !== tagName);
+    // Get the current search term first
+    const terms = notes.length > 0 ? 
+      notes[0].tags?.map(tag => tag.name).filter(name => name === tagName) || [] : 
+      [];
+    
+    // Add the tag name to the search term if not already included
+    if (!terms.includes(tagName)) {
       terms.push(tagName);
-      return terms.join(' ').trim();
-    });
+    }
+    
+    // Set the search term directly as a string
+    setSearchTerm(terms.join(' ').trim());
   };
 
   return {

@@ -47,7 +47,7 @@ export const NoteProvider = ({ children }: { children: ReactNode }) => {
   // Fetch notes from Supabase on component mount
   useFetchNotes(setNotes, setLoading);
 
-  // Create a wrapper for filterByTag that includes setSearchTerm
+  // Create a wrapper for filterByTag that uses our setSearchTerm directly
   const handleFilterByTag = (tagName: string) => {
     filterByTag(tagName, setSearchTerm);
   };
