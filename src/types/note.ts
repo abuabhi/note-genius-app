@@ -7,11 +7,16 @@ export interface Note {
   category: string;
   content?: string;
   sourceType?: 'manual' | 'scan' | 'import';
+  tags?: {
+    id: string;
+    name: string;
+    color: string;
+  }[];
   scanData?: {
     originalImageUrl?: string;
     recognizedText?: string;
     confidence?: number;
-    language?: string; // Added language property
+    language?: string;
   };
   importData?: {
     originalFileUrl?: string;

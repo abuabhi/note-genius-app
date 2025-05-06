@@ -9,6 +9,42 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      note_tags: {
+        Row: {
+          created_at: string
+          id: string
+          note_id: string
+          tag_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note_id: string
+          tag_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "note_tags_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "note_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notes: {
         Row: {
           category: string
@@ -53,6 +89,7 @@ export type Database = {
           confidence: number | null
           created_at: string
           id: string
+          language: string | null
           note_id: string
           original_image_url: string | null
           recognized_text: string | null
@@ -61,6 +98,7 @@ export type Database = {
           confidence?: number | null
           created_at?: string
           id?: string
+          language?: string | null
           note_id: string
           original_image_url?: string | null
           recognized_text?: string | null
@@ -69,6 +107,7 @@ export type Database = {
           confidence?: number | null
           created_at?: string
           id?: string
+          language?: string | null
           note_id?: string
           original_image_url?: string | null
           recognized_text?: string | null
@@ -82,6 +121,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tags: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
       }
     }
     Views: {

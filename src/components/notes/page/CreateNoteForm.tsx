@@ -7,6 +7,7 @@ import { FileText, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Note } from "@/types/note";
 import { SheetFooter } from "@/components/ui/sheet";
+import { TagSelector } from "@/components/notes/TagSelector";
 
 interface CreateNoteFormProps {
   onAddNote: (note: Omit<Note, 'id'>) => Promise<any>;
@@ -17,6 +18,7 @@ export const CreateNoteForm = ({ onAddNote, onSuccess }: CreateNoteFormProps) =>
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("Uncategorized");
+  const [tags, setTags] = useState<{ id?: string; name: string; color: string }[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
 
@@ -41,6 +43,7 @@ export const CreateNoteForm = ({ onAddNote, onSuccess }: CreateNoteFormProps) =>
       date: dateString,
       category: category,
       sourceType: 'manual',
+      tags: tags,
     };
     
     const result = await onAddNote(newNote);
@@ -51,6 +54,7 @@ export const CreateNoteForm = ({ onAddNote, onSuccess }: CreateNoteFormProps) =>
       setTitle("");
       setDescription("");
       setCategory("Uncategorized");
+      setTags([]);
       
       toast({
         title: "Note Created",
@@ -88,6 +92,10 @@ export const CreateNoteForm = ({ onAddNote, onSuccess }: CreateNoteFormProps) =>
             placeholder="Enter category"
           />
         </div>
+        <TagSelector 
+          selectedTags={tags}
+          onTagsChange={setTags}
+        />
         <div className="space-y-2">
           <label htmlFor="description" className="text-sm font-medium">
             Description

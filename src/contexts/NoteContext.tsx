@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Note } from '@/types/note';
 import { NoteContextType, SortType } from './notes/types';
 import { fetchNotesFromSupabase, filterNotes, sortNotes, paginateNotes } from './notes/noteUtils';
-import { addNoteToDatabase, deleteNoteFromDatabase, updateNoteInDatabase } from './notes/noteOperations';
+import { addNoteToDatabase, deleteNoteFromDatabase, updateNoteInDatabase, fetchTagsFromDatabase } from './notes/noteOperations';
 
 const NoteContext = createContext<NoteContextType | undefined>(undefined);
 
@@ -133,6 +133,21 @@ export const NoteProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Get all available tags
+  const getAllTags = async () => {
+    return await fetchTagsFromDatabase();
+  };
+
+  // Filter notes by a specific tag
+  const filterByTag = (tagName: string) => {
+    // Add the tag name to the search term
+    setSearchTerm(prevTerm => {
+      const terms = prevTerm.split(' ').filter(term => term !== tagName);
+      terms.push(tagName);
+      return terms.join(' ').trim();
+    });
+  };
+
   return (
     <NoteContext.Provider value={{ 
       notes, 
@@ -150,7 +165,9 @@ export const NoteProvider = ({ children }: { children: ReactNode }) => {
       totalPages,
       notesPerPage,
       setNotesPerPage,
-      loading
+      loading,
+      getAllTags,
+      filterByTag
     }}>
       {children}
     </NoteContext.Provider>

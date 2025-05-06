@@ -24,4 +24,7 @@ export interface NoteContextType {
   // Language detection for scanned notes
   detectedLanguage?: string;
   setDetectedLanguage?: (language: string) => void;
+  // Tag-related functions
+  getAllTags: () => Promise<{ id: string; name: string; color: string }[]>;
+  filterByTag: (tagName: string) => void;
 }

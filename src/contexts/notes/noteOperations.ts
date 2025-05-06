@@ -30,11 +30,47 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
           note_id: noteInsertData.id,
           original_image_url: noteData.scanData.originalImageUrl,
           recognized_text: noteData.scanData.recognizedText,
-          confidence: noteData.scanData.confidence
+          confidence: noteData.scanData.confidence,
+          language: noteData.scanData.language // Include language
         });
 
       if (scanError) {
         throw scanError;
+      }
+    }
+
+    // Add tags if provided
+    if (noteData.tags && noteData.tags.length > 0) {
+      // First ensure all tags exist in the database
+      for (const tag of noteData.tags) {
+        // Try to insert the tag (it will fail silently if the tag already exists due to UNIQUE constraint)
+        await supabase.from('tags').insert({ name: tag.name, color: tag.color }).select();
+      }
+
+      // Get all the tags we need
+      const { data: tagsData, error: tagsError } = await supabase
+        .from('tags')
+        .select('id, name, color')
+        .in('name', noteData.tags.map(tag => tag.name));
+
+      if (tagsError) {
+        throw tagsError;
+      }
+
+      // Link tags to the note
+      if (tagsData && tagsData.length > 0) {
+        const noteTagInserts = tagsData.map(tag => ({
+          note_id: noteInsertData.id,
+          tag_id: tag.id
+        }));
+
+        const { error: noteTagsError } = await supabase
+          .from('note_tags')
+          .insert(noteTagInserts);
+
+        if (noteTagsError) {
+          throw noteTagsError;
+        }
       }
     }
 
@@ -47,10 +83,12 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
       category: noteInsertData.category,
       content: noteInsertData.content,
       sourceType: noteInsertData.source_type as 'manual' | 'scan' | 'import',
+      tags: noteData.tags || [],
       scanData: noteData.sourceType === 'scan' && noteData.scanData ? {
         originalImageUrl: noteData.scanData.originalImageUrl,
         recognizedText: noteData.scanData.recognizedText,
-        confidence: noteData.scanData.confidence
+        confidence: noteData.scanData.confidence,
+        language: noteData.scanData.language
       } : undefined,
       importData: noteData.sourceType === 'import' && noteData.importData ? {
         originalFileUrl: noteData.importData.originalFileUrl,
@@ -67,6 +105,7 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
 };
 
 export const deleteNoteFromDatabase = async (id: string): Promise<void> => {
+  // The note_tags entries will be automatically deleted due to ON DELETE CASCADE
   const { error } = await supabase
     .from('notes')
     .delete()
@@ -105,7 +144,8 @@ export const updateNoteInDatabase = async (id: string, updatedNote: Partial<Note
       .update({
         original_image_url: updatedNote.scanData.originalImageUrl,
         recognized_text: updatedNote.scanData.recognizedText,
-        confidence: updatedNote.scanData.confidence
+        confidence: updatedNote.scanData.confidence,
+        language: updatedNote.scanData.language
       })
       .eq('note_id', id);
 
@@ -113,4 +153,86 @@ export const updateNoteInDatabase = async (id: string, updatedNote: Partial<Note
       throw scanError;
     }
   }
+
+  // Update tags if provided
+  if (updatedNote.tags) {
+    // First, get current tags for the note
+    const { data: currentNoteTags, error: currentNoteTagsError } = await supabase
+      .from('note_tags')
+      .select('tag_id')
+      .eq('note_id', id);
+
+    if (currentNoteTagsError) {
+      throw currentNoteTagsError;
+    }
+
+    // Ensure all new tags exist in the database
+    for (const tag of updatedNote.tags) {
+      // Try to insert the tag (will fail silently if tag already exists)
+      await supabase.from('tags').insert({ name: tag.name, color: tag.color }).select();
+    }
+
+    // Get IDs for all the new tags
+    const { data: tagsData, error: tagsError } = await supabase
+      .from('tags')
+      .select('id, name, color')
+      .in('name', updatedNote.tags.map(tag => tag.name));
+
+    if (tagsError) {
+      throw tagsError;
+    }
+
+    // Find tags to add and tags to remove
+    const currentTagIds = currentNoteTags?.map(nt => nt.tag_id) || [];
+    const newTagIds = tagsData?.map(t => t.id) || [];
+    
+    // Tags to add (in newTagIds but not in currentTagIds)
+    const tagsToAdd = newTagIds.filter(id => !currentTagIds.includes(id));
+    
+    // Tags to remove (in currentTagIds but not in newTagIds)
+    const tagsToRemove = currentTagIds.filter(id => !newTagIds.includes(id));
+
+    // Add new tags
+    if (tagsToAdd.length > 0) {
+      const noteTagInserts = tagsToAdd.map(tagId => ({
+        note_id: id,
+        tag_id: tagId
+      }));
+
+      const { error: addTagsError } = await supabase
+        .from('note_tags')
+        .insert(noteTagInserts);
+
+      if (addTagsError) {
+        throw addTagsError;
+      }
+    }
+
+    // Remove tags that are no longer associated
+    if (tagsToRemove.length > 0) {
+      const { error: removeTagsError } = await supabase
+        .from('note_tags')
+        .delete()
+        .eq('note_id', id)
+        .in('tag_id', tagsToRemove);
+
+      if (removeTagsError) {
+        throw removeTagsError;
+      }
+    }
+  }
+};
+
+export const fetchTagsFromDatabase = async (): Promise<{ id: string; name: string; color: string }[]> => {
+  const { data, error } = await supabase
+    .from('tags')
+    .select('id, name, color')
+    .order('name');
+
+  if (error) {
+    console.error('Error fetching tags:', error);
+    return [];
+  }
+
+  return data;
 };
