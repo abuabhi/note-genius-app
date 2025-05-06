@@ -7,6 +7,7 @@ import { NotePagination } from "@/components/notes/NotePagination";
 import { Button } from "@/components/ui/button";
 import { FileText, Plus, Loader2 } from "lucide-react";
 import { ScanNoteDialog } from "@/components/notes/ScanNoteDialog";
+import { ImportDialog } from "@/components/notes/import/ImportDialog";
 import { NoteProvider, useNotes } from "@/contexts/NoteContext";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
@@ -72,6 +73,16 @@ const NotesContent = () => {
       toast({
         title: "Note Created",
         description: "Your handwritten note has been converted and saved.",
+      });
+    }
+  };
+
+  const handleImportNote = async (note: Omit<Note, 'id'>) => {
+    const result = await addNote(note);
+    if (result) {
+      toast({
+        title: "Note Created",
+        description: "Your imported document has been saved as a note.",
       });
     }
   };
@@ -184,6 +195,7 @@ const NotesContent = () => {
             </Sheet>
             
             <ScanNoteDialog onSaveNote={handleScanNote} />
+            <ImportDialog onSaveNote={handleImportNote} />
           </div>
         </div>
       </div>
