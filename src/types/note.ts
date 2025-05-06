@@ -11,6 +11,7 @@ export interface Note {
     originalImageUrl?: string;
     recognizedText?: string;
     confidence?: number;
+    language?: string; // Added language property
   };
   importData?: {
     originalFileUrl?: string;
