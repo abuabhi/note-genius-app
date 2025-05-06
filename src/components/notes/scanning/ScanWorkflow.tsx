@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileText, Loader2 } from "lucide-react";
@@ -11,7 +10,7 @@ import { useImageUpload } from "./hooks/useImageUpload";
 import { Note } from "@/types/note";
 
 interface ScanWorkflowProps {
-  onSaveNote: (note: Omit<Note, 'id'>) => Promise<void>;
+  onSaveNote: (note: Omit<Note, 'id'>) => Promise<boolean>;
   onClose: () => void;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
@@ -78,9 +77,11 @@ export const ScanWorkflow = ({
         }
       };
 
-      await onSaveNote(newNote);
-      resetForm();
-      onClose();
+      const success = await onSaveNote(newNote);
+      if (success) {
+        resetForm();
+        onClose();
+      }
     } catch (error) {
       console.error("Error saving note:", error);
     } finally {

@@ -19,7 +19,7 @@ export const ScanNoteDialog = ({ onSaveNote, isPremiumUser = false }: ScanNoteDi
     setIsSheetOpen(false);
   };
 
-  const handleSaveNote = async (note: Omit<Note, 'id'>) => {
+  const handleSaveNote = async (note: Omit<Note, 'id'>): Promise<boolean> => {
     const savedNote = await onSaveNote(note);
     return savedNote !== null; // Return true if note was saved, false otherwise
   };
