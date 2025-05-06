@@ -8,7 +8,7 @@ export interface Note {
   content?: string;
   sourceType?: 'manual' | 'scan' | 'import';
   tags?: {
-    id: string;
+    id?: string;
     name: string;
     color: string;
   }[];
