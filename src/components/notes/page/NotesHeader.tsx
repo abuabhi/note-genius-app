@@ -59,9 +59,20 @@ export const NotesHeader: React.FC<NotesHeaderProps> = ({
             </SheetContent>
           </Sheet>
 
-          <ScanNoteDialog onSaveNote={onScanNote} isPremiumUser={isOCREnabled} />
+          <ScanNoteDialog 
+            onSaveNote={async (note) => {
+              const result = await onScanNote(note);
+              return result !== null;
+            }} 
+            isPremiumUser={isOCREnabled} 
+          />
           
-          <ImportDialog onSaveNote={onImportNote} />
+          <ImportDialog 
+            onSaveNote={async (note) => {
+              const result = await onImportNote(note);
+              return result !== null;
+            }}
+          />
         </div>
       </div>
       
