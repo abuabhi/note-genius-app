@@ -1,6 +1,6 @@
-
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Note } from "@/types/note";
+import { Camera } from "lucide-react";
 
 // Temporary mock data for demonstration
 const mockNotes: Note[] = [
