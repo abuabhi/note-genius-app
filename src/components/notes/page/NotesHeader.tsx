@@ -53,7 +53,7 @@ export const NotesHeader: React.FC<NotesHeaderProps> = ({
                 onSave={async (note) => {
                   const result = await onSaveNote(note);
                   if (result) setIsNewNoteSheetOpen(false);
-                  return result !== null;
+                  return result;
                 }}
               />
             </SheetContent>
