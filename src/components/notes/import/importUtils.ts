@@ -5,6 +5,7 @@ export interface ProcessResult {
   fileUrl: string | null;
   text: string;
   title: string;
+  metadata?: Record<string, any>; // Added metadata property
 }
 
 export const uploadFileToStorage = async (file: File): Promise<string | null> => {
@@ -76,7 +77,8 @@ export const processSelectedDocument = async (
     return {
       fileUrl: uploadedUrl,
       text: response.data.text || "No text could be extracted",
-      title: response.data.title || `Imported ${fileType.toUpperCase()} Document`
+      title: response.data.title || `Imported ${fileType.toUpperCase()} Document`,
+      metadata: response.data.metadata || {} // Added metadata handling
     };
   } else if (apiParams) {
     // This is for API import where we use external service parameters
@@ -95,7 +97,8 @@ export const processSelectedDocument = async (
     return {
       fileUrl: null,
       text: response.data.text || "No text could be extracted from API",
-      title: response.data.title || `Imported ${fileType} Document`
+      title: response.data.title || `Imported ${fileType} Document`,
+      metadata: response.data.metadata || {} // Added metadata handling
     };
   } else {
     throw new Error("Either file or API parameters must be provided");
