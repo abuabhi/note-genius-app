@@ -1,5 +1,6 @@
 
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 
 interface NoteMetadataFormProps {
   title: string;
@@ -7,6 +8,8 @@ interface NoteMetadataFormProps {
   category: string;
   setCategory: (category: string) => void;
   isDisabled: boolean;
+  detectedLanguage?: string;
+  confidence?: number;
 }
 
 export const NoteMetadataForm = ({ 
@@ -14,10 +17,21 @@ export const NoteMetadataForm = ({
   setTitle, 
   category, 
   setCategory,
-  isDisabled 
+  isDisabled,
+  detectedLanguage,
+  confidence
 }: NoteMetadataFormProps) => {
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium">Note Details</h3>
+        {detectedLanguage && (
+          <Badge variant="outline" className="text-xs">
+            {detectedLanguage} {confidence ? `(${Math.round(confidence * 100)}%)` : ''}
+          </Badge>
+        )}
+      </div>
+      
       <div>
         <label className="text-sm font-medium">Note Title</label>
         <Input 
