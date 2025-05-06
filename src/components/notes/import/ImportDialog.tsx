@@ -157,7 +157,7 @@ export const ImportDialog = ({ onSaveNote }: ImportDialogProps) => {
         <SheetHeader>
           <SheetTitle>Import Document</SheetTitle>
           <SheetDescription>
-            Import notes from PDF, Word, Apple Notes, Notion, or OneNote.
+            Import notes from PDF, Word, Notion, OneNote, Evernote, or Google Docs.
           </SheetDescription>
         </SheetHeader>
         

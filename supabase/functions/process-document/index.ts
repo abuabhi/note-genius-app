@@ -16,10 +16,11 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 // Initialize Supabase client with the service role key for admin rights
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// Notion API client - simplified for edge function
+// API keys for external services
 const notionApiKey = Deno.env.get('NOTION_API_KEY');
-const appleNotesApiKey = Deno.env.get('APPLE_NOTES_API_KEY');
 const onenoteApiKey = Deno.env.get('ONENOTE_API_KEY');
+const evernoteApiKey = Deno.env.get('EVERNOTE_API_KEY');
+const googleApiKey = Deno.env.get('GOOGLE_API_KEY');
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -90,31 +91,8 @@ serve(async (req) => {
     // Process API-based services
     else if (externalApiParams) {
       switch (fileType.toLowerCase()) {
-        case 'applenotes':
-          if (!appleNotesApiKey) {
-            return new Response(
-              JSON.stringify({ error: 'Apple Notes API key is not configured' }),
-              { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-            );
-          }
-          
-          console.log("Processing Apple Notes import");
-          try {
-            const result = await importFromAppleNotes(externalApiParams);
-            extractedText = result.text;
-            title = result.title || "Imported Apple Note";
-            metadata = result.metadata || {};
-          } catch (error) {
-            console.error('Apple Notes import error:', error);
-            return new Response(
-              JSON.stringify({ error: `Apple Notes import failed: ${error.message}` }),
-              { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-            );
-          }
-          break;
-          
         case 'notion':
-          if (!notionApiKey) {
+          if (!notionApiKey && !externalApiParams.token) {
             return new Response(
               JSON.stringify({ error: 'Notion API key is not configured' }),
               { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
@@ -137,7 +115,7 @@ serve(async (req) => {
           break;
           
         case 'onenote':
-          if (!onenoteApiKey) {
+          if (!onenoteApiKey && !externalApiParams.token) {
             return new Response(
               JSON.stringify({ error: 'OneNote API key is not configured' }),
               { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
@@ -154,6 +132,52 @@ serve(async (req) => {
             console.error('OneNote import error:', error);
             return new Response(
               JSON.stringify({ error: `OneNote import failed: ${error.message}` }),
+              { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+            );
+          }
+          break;
+
+        case 'evernote':
+          if (!evernoteApiKey && !externalApiParams.token) {
+            return new Response(
+              JSON.stringify({ error: 'Evernote API key is not configured' }),
+              { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+            );
+          }
+          
+          console.log("Processing Evernote import");
+          try {
+            const result = await importFromEvernote(externalApiParams);
+            extractedText = result.text;
+            title = result.title || "Imported Evernote Note";
+            metadata = result.metadata || {};
+          } catch (error) {
+            console.error('Evernote import error:', error);
+            return new Response(
+              JSON.stringify({ error: `Evernote import failed: ${error.message}` }),
+              { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+            );
+          }
+          break;
+
+        case 'googledocs':
+          if (!googleApiKey && !externalApiParams.token) {
+            return new Response(
+              JSON.stringify({ error: 'Google API key is not configured' }),
+              { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+            );
+          }
+          
+          console.log("Processing Google Docs import");
+          try {
+            const result = await importFromGoogleDocs(externalApiParams);
+            extractedText = result.text;
+            title = result.title || "Imported Google Document";
+            metadata = result.metadata || {};
+          } catch (error) {
+            console.error('Google Docs import error:', error);
+            return new Response(
+              JSON.stringify({ error: `Google Docs import failed: ${error.message}` }),
               { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
             );
           }
@@ -214,45 +238,6 @@ serve(async (req) => {
     );
   }
 });
-
-// Function to import from Apple Notes
-async function importFromAppleNotes(params: Record<string, any>): Promise<{text: string; title?: string; metadata?: Record<string, any>}> {
-  // This function would use the Apple Notes API
-  // Currently Apple doesn't provide a public API, but this is how it would work if they did
-  try {
-    // For demonstration purposes - in a real implementation you would:
-    // 1. Use the params.token for authentication
-    // 2. Call the hypothetical Apple Notes API
-    const apiToken = params.token;
-    const noteId = params.noteId;
-    
-    if (!apiToken || !noteId) {
-      throw new Error('Missing required parameters for Apple Notes import');
-    }
-    
-    // This would be a real API call in a production environment
-    // const response = await fetch(`https://api.icloud.com/notes/${noteId}`, {
-    //   headers: {
-    //     'Authorization': `Bearer ${apiToken}`,
-    //     'Content-Type': 'application/json'
-    //   }
-    // });
-    
-    // Simulating API response for demonstration
-    return {
-      text: "This is the content of an imported Apple Note.\n\nCurrently Apple doesn't provide a public API for Notes, so this is a simulated import. In a real implementation, you would need to use Apple's CloudKit JS or a similar approach.",
-      title: `Apple Note ${noteId}`,
-      metadata: {
-        source: "Apple Notes",
-        importedVia: "CloudKit simulation",
-        importDate: new Date().toISOString()
-      }
-    };
-  } catch (error) {
-    console.error("Apple Notes import error:", error);
-    throw error;
-  }
-}
 
 // Function to import from Notion
 async function importFromNotion(params: Record<string, any>): Promise<{text: string; title?: string; metadata?: Record<string, any>}> {
@@ -433,6 +418,136 @@ async function importFromOneNote(params: Record<string, any>): Promise<{text: st
     };
   } catch (error) {
     console.error("OneNote import error:", error);
+    throw error;
+  }
+}
+
+// Function to import from Evernote
+async function importFromEvernote(params: Record<string, any>): Promise<{text: string; title?: string; metadata?: Record<string, any>}> {
+  try {
+    const token = params.token || evernoteApiKey;
+    const noteGuid = params.noteGuid;
+    
+    if (!token || !noteGuid) {
+      throw new Error('Missing required parameters for Evernote import');
+    }
+    
+    // Evernote API requires OAuth and their SDK, so this is a simplified example
+    // In a real implementation, you'd use the Evernote SDK
+    const response = await fetch(`https://api.evernote.com/v1/notes/${noteGuid}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch Evernote note: ${response.statusText}`);
+    }
+    
+    const noteData = await response.json();
+    
+    // Evernote notes are in ENML format, so we'd need to convert that to plain text
+    // Here's a simplified representation:
+    const title = noteData.title || "Imported Evernote Note";
+    const content = noteData.content || "";
+    
+    // In a real implementation, parse ENML to extract text
+    // This is a simplified example
+    const textContent = content.replace(/<[^>]*>/g, ''); // Simple HTML tag removal
+    
+    const metadata = {
+      source: "Evernote",
+      noteGuid: noteGuid,
+      created: noteData.created,
+      updated: noteData.updated,
+      notebookGuid: noteData.notebookGuid
+    };
+    
+    return {
+      text: textContent,
+      title,
+      metadata
+    };
+  } catch (error) {
+    console.error("Evernote import error:", error);
+    throw error;
+  }
+}
+
+// Function to import from Google Docs
+async function importFromGoogleDocs(params: Record<string, any>): Promise<{text: string; title?: string; metadata?: Record<string, any>}> {
+  try {
+    const token = params.token || googleApiKey;
+    const documentId = params.documentId;
+    
+    if (!token || !documentId) {
+      throw new Error('Missing required parameters for Google Docs import');
+    }
+    
+    // First, get the document metadata
+    const metadataResponse = await fetch(`https://docs.googleapis.com/v1/documents/${documentId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!metadataResponse.ok) {
+      throw new Error(`Failed to fetch Google Doc metadata: ${metadataResponse.statusText}`);
+    }
+    
+    const docMetadata = await metadataResponse.json();
+    
+    // Get document content
+    const contentResponse = await fetch(`https://docs.googleapis.com/v1/documents/${documentId}/content`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!contentResponse.ok) {
+      throw new Error(`Failed to fetch Google Doc content: ${contentResponse.statusText}`);
+    }
+    
+    const contentData = await contentResponse.json();
+    
+    // Extract title from metadata
+    const title = docMetadata.title || "Imported Google Document";
+    
+    // Extract text content from the document structure
+    // Google Docs API returns a complex structure that needs to be processed
+    // This is a simplified version
+    let textContent = "";
+    if (contentData.body && contentData.body.content) {
+      contentData.body.content.forEach((element: any) => {
+        if (element.paragraph) {
+          element.paragraph.elements.forEach((paraElement: any) => {
+            if (paraElement.textRun && paraElement.textRun.content) {
+              textContent += paraElement.textRun.content;
+            }
+          });
+          textContent += "\n\n";
+        }
+      });
+    }
+    
+    const metadata = {
+      source: "Google Docs",
+      documentId: documentId,
+      title: docMetadata.title,
+      createdTime: docMetadata.createdTime,
+      modifiedTime: docMetadata.modifiedTime
+    };
+    
+    return {
+      text: textContent,
+      title,
+      metadata
+    };
+  } catch (error) {
+    console.error("Google Docs import error:", error);
     throw error;
   }
 }

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Apple, Book, File, Loader2 } from "lucide-react";
+import { Book, File, FileText, Loader2 } from "lucide-react";
 import { processSelectedDocument } from "./importUtils";
 
 interface ApiImportProps {
@@ -39,7 +39,7 @@ export const ApiImport = ({ onImport }: ApiImportProps) => {
       return;
     }
     
-    if (!pageId && importType !== "applenotes") {
+    if (!pageId) {
       toast({
         title: "Page/Document ID Required",
         description: "Please enter a valid page or document ID.",
@@ -64,8 +64,11 @@ export const ApiImport = ({ onImport }: ApiImportProps) => {
         case "onenote":
           apiParams.pageId = pageId;
           break;
-        case "applenotes":
-          apiParams.noteId = pageId || "recent"; // Use "recent" as fallback
+        case "evernote":
+          apiParams.noteGuid = pageId;
+          break;
+        case "googledocs":
+          apiParams.documentId = pageId;
           break;
       }
       
@@ -97,17 +100,7 @@ export const ApiImport = ({ onImport }: ApiImportProps) => {
         Select a service to import notes from:
       </p>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card 
-          className={`cursor-pointer hover:border-mint-500 ${importType === 'applenotes' ? 'border-mint-500 bg-mint-50' : ''}`}
-          onClick={() => setImportType('applenotes')}
-        >
-          <CardContent className="p-4 flex flex-col items-center">
-            <Apple className="h-8 w-8 text-mint-600 mb-2" />
-            <p className="font-medium">Apple Notes</p>
-          </CardContent>
-        </Card>
-        
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card 
           className={`cursor-pointer hover:border-mint-500 ${importType === 'notion' ? 'border-mint-500 bg-mint-50' : ''}`}
           onClick={() => setImportType('notion')}
@@ -125,6 +118,26 @@ export const ApiImport = ({ onImport }: ApiImportProps) => {
           <CardContent className="p-4 flex flex-col items-center">
             <File className="h-8 w-8 text-mint-600 mb-2" />
             <p className="font-medium">OneNote</p>
+          </CardContent>
+        </Card>
+        
+        <Card 
+          className={`cursor-pointer hover:border-mint-500 ${importType === 'evernote' ? 'border-mint-500 bg-mint-50' : ''}`}
+          onClick={() => setImportType('evernote')}
+        >
+          <CardContent className="p-4 flex flex-col items-center">
+            <FileText className="h-8 w-8 text-mint-600 mb-2" />
+            <p className="font-medium">Evernote</p>
+          </CardContent>
+        </Card>
+        
+        <Card 
+          className={`cursor-pointer hover:border-mint-500 ${importType === 'googledocs' ? 'border-mint-500 bg-mint-50' : ''}`}
+          onClick={() => setImportType('googledocs')}
+        >
+          <CardContent className="p-4 flex flex-col items-center">
+            <File className="h-8 w-8 text-mint-600 mb-2" />
+            <p className="font-medium">Google Docs</p>
           </CardContent>
         </Card>
       </div>
@@ -145,22 +158,20 @@ export const ApiImport = ({ onImport }: ApiImportProps) => {
             </p>
           </div>
           
-          {importType !== 'applenotes' && (
-            <div>
-              <Label htmlFor="page-id">{getLabelText(importType)}</Label>
-              <Input
-                id="page-id"
-                value={pageId}
-                onChange={(e) => setPageId(e.target.value)}
-                placeholder={getPlaceholderText(importType, 'id')}
-                className="mt-1"
-              />
-            </div>
-          )}
+          <div>
+            <Label htmlFor="page-id">{getLabelText(importType)}</Label>
+            <Input
+              id="page-id"
+              value={pageId}
+              onChange={(e) => setPageId(e.target.value)}
+              placeholder={getPlaceholderText(importType, 'id')}
+              className="mt-1"
+            />
+          </div>
           
           <Button 
             onClick={handleImport} 
-            disabled={isProcessing || !apiKey || (importType !== 'applenotes' && !pageId)}
+            disabled={isProcessing || !apiKey || !pageId}
           >
             {isProcessing ? (
               <>
@@ -182,9 +193,10 @@ function getServiceName(type: string | null): string {
   if (!type) return '';
   
   switch (type) {
-    case 'applenotes': return 'Apple Notes';
     case 'notion': return 'Notion';
     case 'onenote': return 'OneNote';
+    case 'evernote': return 'Evernote';
+    case 'googledocs': return 'Google Docs';
     default: return type.charAt(0).toUpperCase() + type.slice(1);
   }
 }
@@ -194,6 +206,8 @@ function getLabelText(type: string): string {
   switch (type) {
     case 'notion': return 'Notion Page ID';
     case 'onenote': return 'OneNote Page ID';
+    case 'evernote': return 'Note GUID';
+    case 'googledocs': return 'Document ID';
     default: return 'Document ID';
   }
 }
@@ -202,15 +216,18 @@ function getLabelText(type: string): string {
 function getPlaceholderText(type: string, field: 'token' | 'id'): string {
   if (field === 'token') {
     switch (type) {
-      case 'applenotes': return 'Enter Apple Notes API token';
       case 'notion': return 'Enter Notion integration token';
       case 'onenote': return 'Enter Microsoft Graph API token';
+      case 'evernote': return 'Enter Evernote Developer Token';
+      case 'googledocs': return 'Enter Google API token';
       default: return 'Enter API token';
     }
   } else { // id field
     switch (type) {
       case 'notion': return 'e.g., 2d7345ab-cdef-4567-8901-23456789abcd';
       case 'onenote': return 'e.g., {section-id}!{page-id}';
+      case 'evernote': return 'e.g., 12345678-1234-1234-1234-123456789abc';
+      case 'googledocs': return 'e.g., 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms';
       default: return 'Enter document ID';
     }
   }
@@ -219,12 +236,14 @@ function getPlaceholderText(type: string, field: 'token' | 'id'): string {
 // Helper function to get API-specific instructions
 function getApiInstructions(type: string): string {
   switch (type) {
-    case 'applenotes':
-      return 'Note: Apple Notes does not have an official public API. This is for demonstration purposes.';
     case 'notion':
       return 'Get your integration token from the Notion Integrations page and make sure to share the page with your integration.';
     case 'onenote':
       return 'Use a Microsoft Graph API access token with Notes.Read permissions.';
+    case 'evernote':
+      return 'Generate a developer token from your Evernote account settings.';
+    case 'googledocs':
+      return 'Use a Google API token with access to Google Drive and Docs APIs.';
     default:
       return '';
   }
