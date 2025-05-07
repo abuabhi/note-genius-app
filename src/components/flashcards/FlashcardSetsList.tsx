@@ -48,10 +48,7 @@ const FlashcardSetsList = () => {
         await fetchFlashcardSets();
       } catch (error) {
         console.error('Error loading flashcard sets:', error);
-        toast({
-          title: 'Failed to load flashcard sets',
-          description: 'Please try again later'
-        });
+        toast("Failed to load flashcard sets. Please try again later.");
       } finally {
         setIsLoading(false);
       }
@@ -65,28 +62,18 @@ const FlashcardSetsList = () => {
     
     try {
       await deleteFlashcardSet(setToDelete.id);
-      toast({
-        title: 'Flashcard set deleted',
-        description: 'The flashcard set has been deleted successfully'
-      });
+      toast("Flashcard set deleted successfully");
       setOpenDeleteDialog(false);
       setSetToDelete(null);
     } catch (error) {
       console.error('Error deleting flashcard set:', error);
-      toast({
-        title: 'Failed to delete flashcard set',
-        description: 'Please try again later',
-        variant: 'destructive'
-      });
+      toast("Failed to delete flashcard set. Please try again later.");
     }
   };
 
   const handleEditSet = (set: FlashcardSet) => {
     // Implementation for editing a set
-    toast({
-      title: 'Edit functionality',
-      description: 'Edit functionality coming soon'
-    });
+    toast("Edit functionality coming soon");
   };
   
   const handleStudySet = (set: FlashcardSet) => {

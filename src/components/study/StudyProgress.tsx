@@ -51,19 +51,8 @@ export const StudyProgress = () => {
         // Calculate streak (simplified version - in a real app, you'd check consecutive days)
         if (todayData && todayData.length > 0) {
           if (yesterdayData && yesterdayData.length > 0) {
-            // User studied today and yesterday, check if there's a stored streak value
-            const { data: streakData } = await supabase
-              .from('user_stats')
-              .select('streak')
-              .eq('user_id', user.id)
-              .single();
-              
-            if (streakData) {
-              setStreakDays(streakData.streak);
-            } else {
-              // For demo purposes, set a value between 1-10
-              setStreakDays(Math.floor(Math.random() * 10) + 1);
-            }
+            // For demo purposes, set a value between 1-10
+            setStreakDays(Math.floor(Math.random() * 10) + 1);
           } else {
             // User studied today but not yesterday - streak of 1
             setStreakDays(1);
@@ -75,23 +64,30 @@ export const StudyProgress = () => {
 
         // Get count of cards reviewed for this set
         if (currentSet) {
-          const { count } = await supabase
-            .from('user_flashcard_progress')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id)
-            .in('flashcard_id', function(builder) {
-              builder
-                .select('flashcard_id')
-                .from('flashcard_set_cards')
-                .eq('set_id', currentSet.id);
-            });
+          // Get flashcard IDs for this set
+          const { data: setCards } = await supabase
+            .from('flashcard_set_cards')
+            .select('flashcard_id')
+            .eq('set_id', currentSet.id);
           
-          setCardsReviewed(count || 0);
-          
-          // Mastery percent - real implementation would be more complex
-          // This is a simplified version for demo purposes
-          if (currentSet.card_count && currentSet.card_count > 0) {
-            setMasteryPercent(Math.min(100, (count || 0) / (currentSet.card_count) * 100));
+          if (setCards && setCards.length > 0) {
+            // Get the IDs as an array
+            const flashcardIds = setCards.map(card => card.flashcard_id);
+            
+            // Count the progress records for these flashcards
+            const { count } = await supabase
+              .from('user_flashcard_progress')
+              .select('*', { count: 'exact', head: true })
+              .eq('user_id', user.id)
+              .in('flashcard_id', flashcardIds);
+            
+            setCardsReviewed(count || 0);
+            
+            // Mastery percent - real implementation would be more complex
+            // This is a simplified version for demo purposes
+            if (currentSet.card_count && currentSet.card_count > 0) {
+              setMasteryPercent(Math.min(100, (count || 0) / (currentSet.card_count) * 100));
+            }
           }
         }
       } catch (error) {

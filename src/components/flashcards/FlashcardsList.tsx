@@ -26,10 +26,7 @@ const FlashcardsList = () => {
         await fetchFlashcards();
       } catch (error) {
         console.error('Error loading flashcards:', error);
-        toast({
-          title: 'Failed to load flashcards',
-          description: 'Please try again later'
-        });
+        toast('Failed to load flashcards. Please try again later.');
       } finally {
         setIsLoading(false);
       }

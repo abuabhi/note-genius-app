@@ -56,7 +56,7 @@ export const FlashcardStudy = ({ setId, mode }: FlashcardStudyProps) => {
         setFlashcards(sortedCards);
       } catch (error) {
         console.error("Error loading flashcards:", error);
-        toast.error("Failed to load flashcards");
+        toast("Failed to load flashcards");
       } finally {
         setIsLoading(false);
       }
@@ -104,10 +104,13 @@ export const FlashcardStudy = ({ setId, mode }: FlashcardStudyProps) => {
       
       // Update streak if score is good
       if (score >= 3) {
-        setStreak(prev => prev + 1);
-        if ((prev) => prev + 1 % 5 === 0) {
-          toast.success(`Streak of ${streak + 1}! Keep going!`);
-        }
+        setStreak(prev => {
+          const newStreak = prev + 1;
+          if (newStreak % 5 === 0) {
+            toast.success(`Streak of ${newStreak}! Keep going!`);
+          }
+          return newStreak;
+        });
       } else {
         setStreak(0);
       }
@@ -116,7 +119,7 @@ export const FlashcardStudy = ({ setId, mode }: FlashcardStudyProps) => {
       handleNext();
     } catch (error) {
       console.error("Error recording review:", error);
-      toast.error("Failed to save your progress");
+      toast("Failed to save your progress");
     }
   };
   
