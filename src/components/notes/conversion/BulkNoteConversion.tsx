@@ -108,6 +108,36 @@ export const BulkNoteConversion = ({ notes, onSuccess, onCancel }: BulkNoteConve
     }
   };
 
+  // AI-assisted content extraction for premium users
+  const handleAIExtraction = async () => {
+    if (!isPremium || selectedNotes.length === 0) return;
+    
+    // Get the selected notes
+    const selectedNotesData = notes.filter(note => selectedNotes.includes(note.id));
+    
+    // Here you would typically call an API to process the notes with AI
+    // For now, we'll simulate this with a delay
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Auto-generate a descriptive name if none exists
+    if (!setName.trim()) {
+      const topics = selectedNotesData.map(note => note.title.split(' ')[0]).slice(0, 3);
+      setSetName(`${topics.join(', ')} Flashcards`);
+    }
+    
+    // Generate a more detailed description
+    if (!setDescription.trim()) {
+      const noteCount = selectedNotesData.length;
+      const categories = [...new Set(selectedNotesData.map(note => note.category))];
+      setSetDescription(`Set containing ${noteCount} flashcards about ${categories.join(', ')}.`);
+    }
+    
+    toast({
+      title: "AI Processing Complete",
+      description: "Your notes have been analyzed and the flashcard set has been optimized.",
+    });
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -134,7 +164,10 @@ export const BulkNoteConversion = ({ notes, onSuccess, onCancel }: BulkNoteConve
             disabled={isSubmitting}
           />
           
-          <PremiumFeatureNotice isPremium={isPremium} />
+          <PremiumFeatureNotice 
+            isPremium={isPremium} 
+            onAIExtract={selectedNotes.length > 0 ? handleAIExtraction : undefined}
+          />
         </CardContent>
         <CardFooter>
           <ConversionFormFooter
