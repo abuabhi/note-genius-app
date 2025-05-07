@@ -47,13 +47,16 @@ const ProgressOverview = () => {
         }
         
         try {
-          const setsResponsePromise = fetchFlashcardSets();
+          // Since fetchFlashcardSets might return void or Promise<FlashcardSet[]>, 
+          // we need to handle both cases carefully
+          const setsPromise = fetchFlashcardSets();
           
-          if (setsResponsePromise instanceof Promise) {
+          if (setsPromise instanceof Promise) {
             try {
-              const setsResponse = await setsResponsePromise;
-              if (setsResponse && Array.isArray(setsResponse)) {
-                setCount = setsResponse.length;
+              const sets = await setsPromise;
+              // Check if sets is actually an array before accessing its length
+              if (sets && Array.isArray(sets)) {
+                setCount = sets.length;
               }
             } catch (err) {
               console.error("Error resolving sets promise:", err);
