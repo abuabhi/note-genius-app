@@ -60,14 +60,13 @@ export const useProgressStats = () => {
         const fetchSetsData = async (): Promise<FlashcardSet[] | null> => {
           try {
             // We need to handle the scenario where fetchFlashcardSets might return void
-            const result = await fetchFlashcardSets();
+            await fetchFlashcardSets(); // Just call it and wait for it to complete
             
-            // Check if result exists and is an array
-            if (result && Array.isArray(result)) {
-              return result;
-            }
+            // Since we can't rely on the return value directly, we'll access the 
+            // state that fetchFlashcardSets updates internally
+            // This is already handled by the FlashcardContext
             
-            // Return empty array if no valid result
+            // Return empty array as a fallback
             return [];
           } catch (e) {
             console.error("Error in fetchSetsData:", e);
