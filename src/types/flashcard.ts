@@ -72,4 +72,5 @@ export interface CreateFlashcardSetPayload {
   subject?: string;
   topic?: string;
   category_id?: string;
+  is_built_in?: boolean; // Added this field to fix the type error
 }
