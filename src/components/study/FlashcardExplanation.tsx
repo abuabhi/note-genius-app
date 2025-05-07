@@ -26,7 +26,7 @@ export const FlashcardExplanation = ({ flashcard, isVisible }: FlashcardExplanat
     if (!isPremium) {
       toast({
         title: "Premium Feature",
-        description: "AI explanations are available for Professor and Dean tier users.",
+        description: "AI explanations are available for Master and Dean tier users.",
         variant: "destructive",
       });
       return;

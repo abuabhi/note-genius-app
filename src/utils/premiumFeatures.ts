@@ -9,8 +9,8 @@ export const tierFeatures = {
     studyTracking: true,
     notesTaking: true,
   },
-  [UserTier.PROFESSOR]: {
-    // Professor tier has all Scholar features plus these
+  [UserTier.MASTER]: {
+    // Master tier has all Scholar features plus these
     basicFlashcards: true,
     studyTracking: true,
     notesTaking: true,
@@ -42,7 +42,7 @@ export const hasFeature = (tier: UserTier | undefined, feature: string): boolean
 
 // Premium feature checking
 export const isPremiumTier = (tier: UserTier | undefined): boolean => {
-  return tier === UserTier.PROFESSOR || tier === UserTier.DEAN;
+  return tier === UserTier.MASTER || tier === UserTier.DEAN;
 };
 
 export const isCollaborationEnabled = (tier: UserTier | undefined): boolean => {

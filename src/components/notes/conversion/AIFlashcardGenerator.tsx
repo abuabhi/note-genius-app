@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -30,7 +29,7 @@ export const AIFlashcardGenerator = ({ noteContent, subject, onFlashcardsGenerat
     if (!isPremium) {
       toast({
         title: "Premium Feature",
-        description: "AI flashcard generation is available for Professor and Dean tier users.",
+        description: "AI flashcard generation is available for Master and Dean tier users.",
         variant: "destructive",
       });
       return;

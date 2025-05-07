@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useFlashcards } from "@/contexts/FlashcardContext";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatePresence, motion } from "framer-motion";
 import { StudyControls } from "./StudyControls";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { FlashcardExplanation } from "./FlashcardExplanation";
 import { isPremiumTier } from "@/utils/premiumFeatures";
 
@@ -27,7 +28,7 @@ export const FlashcardStudy = ({ setId, mode }: FlashcardStudyProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [direction, setDirection] = useState<"left" | "right">("right");
   const [streak, setStreak] = useState(0);
-  const { user, userProfile } = useAuth();
+  const { user, userProfile } = useRequireAuth();
   const isPremium = isPremiumTier(userProfile?.user_tier);
   const cardContainerRef = useRef<HTMLDivElement>(null);
 
