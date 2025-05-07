@@ -35,7 +35,7 @@ const ProgressOverview = () => {
         
         try {
           const flashcardsData = await fetchFlashcards();
-          if (flashcardsData) {
+          if (flashcardsData && Array.isArray(flashcardsData)) {
             flashcardCount = flashcardsData.length;
           }
         } catch (error) {
@@ -44,7 +44,7 @@ const ProgressOverview = () => {
         
         try {
           const setsData = await fetchFlashcardSets();
-          if (setsData) {
+          if (setsData && Array.isArray(setsData)) {
             setCount = setsData.length;
           }
         } catch (error) {

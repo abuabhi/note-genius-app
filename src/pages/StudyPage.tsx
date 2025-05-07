@@ -25,7 +25,7 @@ const StudyPageContent = () => {
         const sets = await fetchFlashcardSets();
         
         // Then find the current set if we have a setId
-        if (setId && sets) {
+        if (setId && sets && Array.isArray(sets)) {
           const foundSet = sets.find(s => s.id === setId);
           if (foundSet) {
             setCurrentSet(foundSet);
