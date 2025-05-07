@@ -1,4 +1,3 @@
-
 import React from "react";
 import { NoteSearch } from "@/components/notes/NoteSearch";
 import { NoteSorter } from "@/components/notes/NoteSorter";
@@ -21,18 +20,30 @@ interface NotesHeaderProps {
   userTier?: UserTier;
 }
 
-export const NotesHeader: React.FC<NotesHeaderProps> = ({ 
+export const NotesHeader = ({
   onSaveNote,
   onScanNote,
   onImportNote,
   tierLimits,
   userTier
-}) => {
+}: NotesHeaderProps) => {
   const { searchTerm, setSearchTerm } = useNotes();
   const [isNewNoteSheetOpen, setIsNewNoteSheetOpen] = React.useState(false);
 
   // Check if OCR is enabled for the user's tier
   const isOCREnabled = tierLimits?.ocr_enabled ?? false;
+
+  // When passing to ImportDialog, convert the return type
+  const handleImportSave = async (note: Omit<Note, 'id'>): Promise<boolean> => {
+    const result = await onImportNote(note);
+    return result !== null;
+  };
+
+  // Similarly for ScanNoteDialog
+  const handleScanSave = async (note: Omit<Note, 'id'>): Promise<boolean> => {
+    const result = await onScanNote(note);
+    return result !== null;
+  };
 
   return (
     <div className="flex flex-col gap-4 mb-6">
@@ -60,18 +71,12 @@ export const NotesHeader: React.FC<NotesHeaderProps> = ({
           </Sheet>
 
           <ScanNoteDialog 
-            onSaveNote={async (note) => {
-              const result = await onScanNote(note);
-              return result !== null;
-            }} 
+            onSaveNote={handleScanSave} 
             isPremiumUser={isOCREnabled} 
           />
           
           <ImportDialog 
-            onSaveNote={async (note) => {
-              const result = await onImportNote(note);
-              return result !== null;
-            }}
+            onSaveNote={handleImportSave} 
           />
         </div>
       </div>
