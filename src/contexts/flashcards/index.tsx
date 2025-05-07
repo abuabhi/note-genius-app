@@ -26,25 +26,6 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     ...setOperations,
     ...studyOperations,
     ...categoryOperations,
-    fetchBuiltInSets: async () => {
-      // Implementation for fetchBuiltInSets if missing
-      try {
-        const builtInSets = await flashcardOperations.fetchBuiltInSets();
-        return builtInSets;
-      } catch (error) {
-        console.error('Error fetching built-in sets:', error);
-        return [];
-      }
-    },
-    cloneFlashcardSet: async (setId: string) => {
-      // Implementation for cloneFlashcardSet if missing
-      try {
-        return await flashcardOperations.cloneFlashcardSet(setId);
-      } catch (error) {
-        console.error('Error cloning flashcard set:', error);
-        throw error;
-      }
-    }
   };
   
   return (

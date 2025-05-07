@@ -11,7 +11,9 @@ export const tierFeatures = {
   },
   [UserTier.PROFESSOR]: {
     // Professor tier has all Scholar features plus these
-    ...UserTier.SCHOLAR && tierFeatures[UserTier.SCHOLAR],
+    basicFlashcards: true,
+    studyTracking: true,
+    notesTaking: true,
     aiFlashcardGeneration: true,
     explanationsAndHints: true,
     exportImport: true,
@@ -19,10 +21,15 @@ export const tierFeatures = {
   },
   [UserTier.DEAN]: {
     // Dean tier has all features
-    ...UserTier.PROFESSOR && tierFeatures[UserTier.PROFESSOR],
+    basicFlashcards: true,
+    studyTracking: true,
+    notesTaking: true,
+    aiFlashcardGeneration: true,
+    explanationsAndHints: true,
+    exportImport: true,
+    calendarIntegration: true,
     smartScheduling: true,
     collaborativeFeatures: true,
-    calendarIntegration: true,
     unlimitedSets: true,
   },
 };

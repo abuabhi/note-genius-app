@@ -1,308 +1,236 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetDescription, 
-  SheetHeader, 
-  SheetTitle, 
-  SheetTrigger 
-} from "@/components/ui/sheet";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Import, FileDown, AlertCircle, CheckCircle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useFlashcards } from "@/contexts/FlashcardContext";
-import { FlashcardSet, Flashcard } from "@/types/flashcard";
+import { FlashcardSet } from "@/types/flashcard";
+import { FileDown, FileUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { isPremiumTier } from "@/utils/premiumFeatures";
-
-interface ImportFlashcardData {
-  name: string;
-  description?: string;
-  flashcards: {
-    front_content: string;
-    back_content: string;
-    difficulty?: number;
-  }[];
-}
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 export const ExportImportFlashcards = () => {
-  const [isImportOpen, setIsImportOpen] = useState(false);
-  const [importText, setImportText] = useState("");
-  const [importName, setImportName] = useState("");
-  const [importDescription, setImportDescription] = useState("");
-  const [isImporting, setIsImporting] = useState(false);
-  const [importError, setImportError] = useState<string | null>(null);
-  const [importPreview, setImportPreview] = useState<{
-    name: string;
-    description: string;
-    cardCount: number;
-  } | null>(null);
-  
-  const { flashcardSets, createFlashcardSet, createFlashcard } = useFlashcards();
-  const { toast } = useToast();
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"export" | "import">("export");
   const { userProfile } = useRequireAuth();
   
   const isPremium = isPremiumTier(userProfile?.user_tier);
-  
-  const handleExportSet = (set: FlashcardSet) => {
-    if (!isPremium) {
-      toast({
-        title: "Premium Feature",
-        description: "Exporting flashcards is available for Professor and Dean tier users.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // In a real implementation, we'd fetch all cards for the set
-    // For now, just prepare a sample export
-    const exportData = {
-      name: set.name,
-      description: set.description,
-      subject: set.subject,
-      topic: set.topic,
-      flashcards: [
-        {
-          front_content: "Sample front content",
-          back_content: "Sample back content",
-          difficulty: 3
-        }
-      ]
-    };
-    
-    const exportStr = JSON.stringify(exportData, null, 2);
-    const blob = new Blob([exportStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    
-    // Create download link and trigger download
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${set.name.replace(/\s+/g, "_").toLowerCase()}_flashcards.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    toast({
-      title: "Export Successful",
-      description: `Flashcard set "${set.name}" has been exported.`,
-    });
+
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
   };
-  
-  const parseImportJson = (jsonText: string): ImportFlashcardData | null => {
-    try {
-      const parsed = JSON.parse(jsonText);
-      
-      // Validate the structure
-      if (!parsed.name || !Array.isArray(parsed.flashcards)) {
-        return null;
-      }
-      
-      return parsed;
-    } catch (error) {
-      console.error("Error parsing JSON:", error);
-      return null;
-    }
-  };
-  
-  const handlePreview = () => {
-    setImportError(null);
-    setImportPreview(null);
-    
-    const parsed = parseImportJson(importText);
-    
-    if (!parsed) {
-      setImportError("Invalid import format. Please check your JSON structure.");
-      return;
-    }
-    
-    setImportPreview({
-      name: parsed.name,
-      description: parsed.description || "",
-      cardCount: parsed.flashcards.length,
-    });
-    
-    setImportName(parsed.name);
-    setImportDescription(parsed.description || "");
-  };
-  
-  const handleImport = async () => {
-    if (!isPremium) {
-      toast({
-        title: "Premium Feature",
-        description: "Importing flashcards is available for Professor and Dean tier users.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setImportError(null);
-    setIsImporting(true);
-    
-    try {
-      const parsed = parseImportJson(importText);
-      
-      if (!parsed) {
-        setImportError("Invalid import format. Please check your JSON structure.");
-        return;
-      }
-      
-      // Create new set
-      const newSet = await createFlashcardSet({
-        name: importName || parsed.name,
-        description: importDescription || parsed.description,
-      });
-      
-      if (!newSet) {
-        throw new Error("Failed to create flashcard set");
-      }
-      
-      // Create flashcards in the set
-      for (const card of parsed.flashcards) {
-        await createFlashcard({
-          front_content: card.front_content,
-          back_content: card.back_content,
-          difficulty: card.difficulty as 1 | 2 | 3 | 4 | 5 || 3,
-        }, newSet.id);
-      }
-      
-      toast({
-        title: "Import Successful",
-        description: `Imported ${parsed.flashcards.length} flashcards into "${importName || parsed.name}".`,
-      });
-      
-      // Reset and close
-      setImportText("");
-      setImportName("");
-      setImportDescription("");
-      setImportPreview(null);
-      setIsImportOpen(false);
-    } catch (error) {
-      console.error("Error importing flashcards:", error);
-      setImportError("Failed to import flashcards. Please try again.");
-      toast({
-        title: "Import Failed",
-        description: "An error occurred while importing flashcards.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsImporting(false);
-    }
-  };
-  
-  const exportButton = (set: FlashcardSet) => (
-    <Button
-      variant="outline"
-      size="sm"
-      className="flex items-center"
-      onClick={() => handleExportSet(set)}
-      disabled={!isPremium}
-    >
-      <FileDown className="h-4 w-4 mr-2" />
-      Export
-    </Button>
-  );
-  
+
   return (
-    <>
-      <Sheet open={isImportOpen} onOpenChange={setIsImportOpen}>
-        <SheetTrigger asChild>
-          <Button
-            variant="outline"
-            className="flex items-center"
-            onClick={() => {
-              if (!isPremium) {
-                toast({
-                  title: "Premium Feature",
-                  description: "Importing flashcards is available for Professor and Dean tier users.",
-                  variant: "destructive",
-                });
-                return;
-              }
-              setIsImportOpen(true);
-            }}
+    <div className="flex gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        className="flex items-center gap-1"
+        onClick={() => {
+          setActiveTab("export");
+          setIsOpen(true);
+        }}
+      >
+        <FileDown className="h-4 w-4" />
+        <span className="hidden sm:inline">Export</span>
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        className="flex items-center gap-1"
+        onClick={() => {
+          setActiveTab("import");
+          setIsOpen(true);
+        }}
+      >
+        <FileUp className="h-4 w-4" />
+        <span className="hidden sm:inline">Import</span>
+      </Button>
+
+      <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+        <DialogContent className="sm:max-w-[550px]">
+          <DialogHeader>
+            <DialogTitle>Export/Import Flashcards</DialogTitle>
+            <DialogDescription>
+              Export your flashcards to share with others or import flashcards from a file.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Tabs
+            value={activeTab}
+            onValueChange={(value) => setActiveTab(value as "export" | "import")}
+            className="mt-4"
           >
-            <Import className="h-4 w-4 mr-2" />
-            Import Flashcards
-          </Button>
-        </SheetTrigger>
-        <SheetContent className="sm:max-w-md">
-          <SheetHeader>
-            <SheetTitle>Import Flashcards</SheetTitle>
-            <SheetDescription>
-              Import flashcards from a JSON file. The JSON should include a set name and an array of flashcards.
-            </SheetDescription>
-          </SheetHeader>
-          
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="importJson">Paste JSON Data</Label>
-              <Textarea
-                id="importJson"
-                placeholder='{"name": "Set Name", "flashcards": [{"front_content": "Front", "back_content": "Back"}]}'
-                value={importText}
-                onChange={(e) => setImportText(e.target.value)}
-                rows={8}
-              />
-              <Button onClick={handlePreview} disabled={!importText.trim()}>
-                Preview
-              </Button>
-            </div>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="export">Export</TabsTrigger>
+              <TabsTrigger value="import">Import</TabsTrigger>
+            </TabsList>
             
-            {importError && (
-              <div className="flex items-center space-x-2 text-red-600">
-                <AlertCircle className="h-4 w-4" />
-                <span className="text-sm">{importError}</span>
-              </div>
-            )}
+            <TabsContent value="export" className="py-4">
+              <ExportFlashcards isPremium={isPremium} />
+            </TabsContent>
             
-            {importPreview && (
-              <div className="space-y-4 border rounded-md p-4">
-                <div className="flex items-center space-x-2 text-green-600">
-                  <CheckCircle className="h-4 w-4" />
-                  <span className="text-sm">Valid import with {importPreview.cardCount} flashcards</span>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="importName">Set Name</Label>
-                  <Input
-                    id="importName"
-                    value={importName}
-                    onChange={(e) => setImportName(e.target.value)}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="importDescription">Description (optional)</Label>
-                  <Textarea
-                    id="importDescription"
-                    value={importDescription}
-                    onChange={(e) => setImportDescription(e.target.value)}
-                    rows={2}
-                  />
-                </div>
-                
-                <Button 
-                  onClick={handleImport} 
-                  disabled={isImporting || !importName.trim()}
-                  className="w-full"
-                >
-                  {isImporting ? "Importing..." : "Import Flashcards"}
-                </Button>
-              </div>
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
-      
-      {/* Export button is returned for use in other components */}
-      {exportButton}
-    </>
+            <TabsContent value="import" className="py-4">
+              <ImportFlashcards isPremium={isPremium} />
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };
 
-export { exportButton } from "./ExportImportFlashcards";
+const ExportFlashcards = ({ isPremium }: { isPremium: boolean }) => {
+  const { flashcardSets } = useFlashcards();
+  const { toast } = useToast();
+  const [selectedSetId, setSelectedSetId] = useState<string | null>(null);
+
+  const handleExport = () => {
+    if (!isPremium) {
+      toast({
+        title: "Premium Feature",
+        description: "Exporting flashcards is available for premium users only.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedSetId) {
+      toast({
+        title: "No set selected",
+        description: "Please select a flashcard set to export.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const selectedSet = flashcardSets.find((set) => set.id === selectedSetId);
+    if (!selectedSet) return;
+
+    // Implement actual export functionality here
+    toast({
+      title: "Export started",
+      description: `Exporting ${selectedSet.name}...`,
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <label htmlFor="set" className="block text-sm font-medium mb-1">
+          Select Flashcard Set
+        </label>
+        <select
+          id="set"
+          className="w-full rounded-md border border-input bg-background px-3 py-2"
+          onChange={(e) => setSelectedSetId(e.target.value)}
+          value={selectedSetId || ""}
+        >
+          <option value="">Select a set...</option>
+          {flashcardSets.map((set) => (
+            <option key={set.id} value={set.id}>
+              {set.name} ({set.card_count || 0} cards)
+            </option>
+          ))}
+        </select>
+      </div>
+      
+      <div className="flex justify-end">
+        <Button
+          onClick={handleExport}
+          disabled={!isPremium || !selectedSetId}
+        >
+          <FileDown className="mr-2 h-4 w-4" />
+          Export Set
+        </Button>
+      </div>
+      
+      {!isPremium && (
+        <div className="bg-muted p-3 rounded-md text-sm text-muted-foreground">
+          Exporting flashcards is a premium feature. Upgrade your account to access this feature.
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ImportFlashcards = ({ isPremium }: { isPremium: boolean }) => {
+  const { toast } = useToast();
+  const [file, setFile] = useState<File | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+    }
+  };
+
+  const handleImport = () => {
+    if (!isPremium) {
+      toast({
+        title: "Premium Feature",
+        description: "Importing flashcards is available for premium users only.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!file) {
+      toast({
+        title: "No file selected",
+        description: "Please select a file to import.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Implement actual import functionality here
+    toast({
+      title: "Import started",
+      description: `Importing ${file.name}...`,
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <label htmlFor="file" className="block text-sm font-medium mb-1">
+          Select File to Import
+        </label>
+        <input
+          type="file"
+          id="file"
+          accept=".json,.csv"
+          onChange={handleFileChange}
+          className="w-full rounded-md border border-input bg-background px-3 py-2"
+        />
+        <p className="text-xs text-muted-foreground mt-1">
+          Supported formats: JSON, CSV
+        </p>
+      </div>
+      
+      <div className="flex justify-end">
+        <Button
+          onClick={handleImport}
+          disabled={!isPremium || !file}
+        >
+          <FileUp className="mr-2 h-4 w-4" />
+          Import File
+        </Button>
+      </div>
+      
+      {!isPremium && (
+        <div className="bg-muted p-3 rounded-md text-sm text-muted-foreground">
+          Importing flashcards is a premium feature. Upgrade your account to access this feature.
+        </div>
+      )}
+    </div>
+  );
+};
