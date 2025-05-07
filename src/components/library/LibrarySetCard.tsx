@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFlashcards } from "@/contexts/FlashcardContext";
@@ -23,15 +22,15 @@ interface LibrarySetCardProps {
 
 // Define which sets are available to which tiers
 const tierAccess: Record<string, UserTier[]> = {
-  "Mathematics": ["SCHOLAR", "GRADUATE", "MASTER", "DEAN"],
-  "Basic Sciences": ["SCHOLAR", "GRADUATE", "MASTER", "DEAN"],
-  "English": ["SCHOLAR", "GRADUATE", "MASTER", "DEAN"],
-  "History": ["GRADUATE", "MASTER", "DEAN"],
-  "Advanced Sciences": ["GRADUATE", "MASTER", "DEAN"],
-  "Computer Science": ["MASTER", "DEAN"],
-  "Advanced Mathematics": ["MASTER", "DEAN"],
-  "Foreign Languages": ["DEAN"],
-  "Medicine": ["DEAN"],
+  "Mathematics": [UserTier.SCHOLAR, UserTier.GRADUATE, UserTier.MASTER, UserTier.DEAN],
+  "Basic Sciences": [UserTier.SCHOLAR, UserTier.GRADUATE, UserTier.MASTER, UserTier.DEAN],
+  "English": [UserTier.SCHOLAR, UserTier.GRADUATE, UserTier.MASTER, UserTier.DEAN],
+  "History": [UserTier.GRADUATE, UserTier.MASTER, UserTier.DEAN],
+  "Advanced Sciences": [UserTier.GRADUATE, UserTier.MASTER, UserTier.DEAN],
+  "Computer Science": [UserTier.MASTER, UserTier.DEAN],
+  "Advanced Mathematics": [UserTier.MASTER, UserTier.DEAN],
+  "Foreign Languages": [UserTier.DEAN],
+  "Medicine": [UserTier.DEAN],
 };
 
 export function LibrarySetCard({ set, userTier }: LibrarySetCardProps) {
@@ -43,13 +42,13 @@ export function LibrarySetCard({ set, userTier }: LibrarySetCardProps) {
   // Determine if user has access to this set
   const hasAccess = () => {
     const subject = set.subject || "";
-    const requiredTiers = tierAccess[subject] || ["DEAN"]; // Default to highest tier if not specified
+    const requiredTiers = tierAccess[subject] || [UserTier.DEAN]; // Default to highest tier if not specified
     
     const tierLevels: Record<UserTier, number> = {
-      "SCHOLAR": 1,
-      "GRADUATE": 2,
-      "MASTER": 3,
-      "DEAN": 4
+      [UserTier.SCHOLAR]: 1,
+      [UserTier.GRADUATE]: 2,
+      [UserTier.MASTER]: 3,
+      [UserTier.DEAN]: 4
     };
     
     const userLevel = tierLevels[userTier];
@@ -105,7 +104,7 @@ export function LibrarySetCard({ set, userTier }: LibrarySetCardProps) {
         <p className="text-sm text-muted-foreground">{set.description || "No description available."}</p>
         <div className="mt-4 flex items-center text-sm text-muted-foreground">
           <BookOpen className="h-4 w-4 mr-1" />
-          <span>{cardCount} {cardCount === 1 ? 'card' : 'cards'}</span>
+          <span>{set.card_count || 0} {(set.card_count || 0) === 1 ? 'card' : 'cards'}</span>
         </div>
       </CardContent>
       <CardFooter>

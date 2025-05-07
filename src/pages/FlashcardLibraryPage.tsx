@@ -15,6 +15,9 @@ const FlashcardLibraryPage = () => {
     difficulty: "",
   });
 
+  const defaultTier = UserTier.SCHOLAR;
+  const currentUserTier = userProfile?.user_tier || defaultTier;
+
   return (
     <Layout>
       <FlashcardProvider>
@@ -29,7 +32,7 @@ const FlashcardLibraryPage = () => {
             <div className="md:col-span-3">
               <LibraryCatalog
                 filters={filters}
-                userTier={userProfile?.user_tier || "SCHOLAR"}
+                userTier={currentUserTier}
               />
             </div>
           </div>

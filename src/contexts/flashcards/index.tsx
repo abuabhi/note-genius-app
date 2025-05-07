@@ -17,7 +17,7 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
   const flashcardOperations = useFlashcardsOperations(state);
   const setOperations = useFlashcardSets(state);
   const studyOperations = useStudyOperations(state);
-  const categoryOperations = useCategoryOperations(state.setCategories, state.setLoading);
+  const categoryOperations = useCategoryOperations(state.categories, state.setCategories);
   
   // Combine all operations
   const contextValue: FlashcardContextType = {

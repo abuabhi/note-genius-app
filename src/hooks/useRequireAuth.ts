@@ -54,10 +54,17 @@ export const useRequireAuth = (redirectTo = '/login') => {
             .single();
           
           if (error) throw error;
-          setUserProfile(data);
+          
+          // Convert the string tier to UserTier enum
+          const profileWithEnumTier = {
+            ...data,
+            user_tier: data.user_tier as UserTier
+          };
+          
+          setUserProfile(profileWithEnumTier);
           
           // Set tier limits based on user tier
-          const limits = getTierLimits(data.user_tier);
+          const limits = getTierLimits(profileWithEnumTier.user_tier);
           setTierLimits(limits);
           
         } catch (error) {
