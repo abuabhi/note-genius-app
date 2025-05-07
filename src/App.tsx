@@ -24,6 +24,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import MicrosoftAuthCallback from "@/components/auth/MicrosoftAuthCallback";
+import NotionAuthCallback from "@/components/auth/NotionAuthCallback";
 
 function App() {
   return (
@@ -51,6 +52,7 @@ function App() {
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/faq" element={<FAQPage />} />
             <Route path="/auth/microsoft-callback" element={<MicrosoftAuthCallback />} />
+            <Route path="/auth/notion-callback" element={<NotionAuthCallback />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
           <Toaster />

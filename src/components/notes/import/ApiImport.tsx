@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { processSelectedDocument } from "./importUtils";
 import { OneNoteConnection } from "./OneNoteConnection";
+import { NotionConnection } from "./NotionConnection";
 import { ImportServiceGrid } from "./services/ImportServiceGrid";
 import { ManualApiImportForm } from "./services/ManualApiImportForm";
 
@@ -18,6 +19,7 @@ export const ApiImport = ({ onImport }: ApiImportProps) => {
   const [importType, setImportType] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [oneNoteToken, setOneNoteToken] = useState<string | null>(null);
+  const [notionToken, setNotionToken] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleImport = async () => {
@@ -45,6 +47,24 @@ export const ApiImport = ({ onImport }: ApiImportProps) => {
         toast({
           title: "Page ID Required",
           description: "Please enter a OneNote page ID.",
+          variant: "destructive",
+        });
+        return;
+      }
+    } else if (importType === "notion") {
+      if (!notionToken) {
+        toast({
+          title: "Authentication Required",
+          description: "Please connect to Notion first.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (!pageId) {
+        toast({
+          title: "Page ID Required",
+          description: "Please enter a Notion page ID.",
           variant: "destructive",
         });
         return;
@@ -78,7 +98,7 @@ export const ApiImport = ({ onImport }: ApiImportProps) => {
       // Add specific parameters based on import type
       switch (importType) {
         case "notion":
-          apiParams.token = apiKey;
+          apiParams.token = notionToken;
           apiParams.pageId = pageId;
           break;
         case "onenote":
@@ -132,6 +152,8 @@ export const ApiImport = ({ onImport }: ApiImportProps) => {
         <div className="space-y-4 mt-4 p-4 border rounded-md">
           {importType === 'onenote' ? (
             <OneNoteConnection onConnected={token => setOneNoteToken(token)} />
+          ) : importType === 'notion' ? (
+            <NotionConnection onConnected={token => setNotionToken(token)} />
           ) : (
             <ManualApiImportForm
               importType={importType}
