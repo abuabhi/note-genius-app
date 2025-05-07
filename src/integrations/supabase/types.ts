@@ -9,6 +9,123 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      flashcard_set_cards: {
+        Row: {
+          created_at: string
+          flashcard_id: string
+          id: string
+          position: number
+          set_id: string
+        }
+        Insert: {
+          created_at?: string
+          flashcard_id: string
+          id?: string
+          position: number
+          set_id: string
+        }
+        Update: {
+          created_at?: string
+          flashcard_id?: string
+          id?: string
+          position?: number
+          set_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flashcard_set_cards_flashcard_id_fkey"
+            columns: ["flashcard_id"]
+            isOneToOne: false
+            referencedRelation: "flashcards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flashcard_set_cards_set_id_fkey"
+            columns: ["set_id"]
+            isOneToOne: false
+            referencedRelation: "flashcard_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flashcard_sets: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_built_in: boolean | null
+          name: string
+          subject: string | null
+          topic: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_built_in?: boolean | null
+          name: string
+          subject?: string | null
+          topic?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_built_in?: boolean | null
+          name?: string
+          subject?: string | null
+          topic?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      flashcards: {
+        Row: {
+          back_content: string
+          created_at: string
+          difficulty: number | null
+          front_content: string
+          id: string
+          is_built_in: boolean | null
+          last_reviewed_at: string | null
+          next_review_at: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          back_content: string
+          created_at?: string
+          difficulty?: number | null
+          front_content: string
+          id?: string
+          is_built_in?: boolean | null
+          last_reviewed_at?: string | null
+          next_review_at?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          back_content?: string
+          created_at?: string
+          difficulty?: number | null
+          front_content?: string
+          id?: string
+          is_built_in?: boolean | null
+          last_reviewed_at?: string | null
+          next_review_at?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       note_tags: {
         Row: {
           created_at: string
@@ -155,6 +272,41 @@ export type Database = {
           },
         ]
       }
+      subject_categories: {
+        Row: {
+          created_at: string
+          id: string
+          level: number | null
+          name: string
+          parent_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          level?: number | null
+          name: string
+          parent_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          level?: number | null
+          name?: string
+          parent_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subject_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "subject_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tags: {
         Row: {
           color: string | null
@@ -179,7 +331,9 @@ export type Database = {
       tier_limits: {
         Row: {
           ai_features_enabled: boolean
+          ai_flashcard_generation: boolean | null
           collaboration_enabled: boolean
+          max_flashcard_sets: number | null
           max_notes: number
           max_storage_mb: number
           ocr_enabled: boolean
@@ -188,7 +342,9 @@ export type Database = {
         }
         Insert: {
           ai_features_enabled?: boolean
+          ai_flashcard_generation?: boolean | null
           collaboration_enabled?: boolean
+          max_flashcard_sets?: number | null
           max_notes: number
           max_storage_mb: number
           ocr_enabled?: boolean
@@ -197,7 +353,9 @@ export type Database = {
         }
         Update: {
           ai_features_enabled?: boolean
+          ai_flashcard_generation?: boolean | null
           collaboration_enabled?: boolean
+          max_flashcard_sets?: number | null
           max_notes?: number
           max_storage_mb?: number
           ocr_enabled?: boolean
@@ -205,6 +363,56 @@ export type Database = {
           tier?: Database["public"]["Enums"]["user_tier"]
         }
         Relationships: []
+      }
+      user_flashcard_progress: {
+        Row: {
+          created_at: string
+          ease_factor: number | null
+          flashcard_id: string | null
+          id: string
+          interval: number | null
+          last_reviewed_at: string | null
+          last_score: number | null
+          next_review_at: string | null
+          repetition: number | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          ease_factor?: number | null
+          flashcard_id?: string | null
+          id?: string
+          interval?: number | null
+          last_reviewed_at?: string | null
+          last_score?: number | null
+          next_review_at?: string | null
+          repetition?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          ease_factor?: number | null
+          flashcard_id?: string | null
+          id?: string
+          interval?: number | null
+          last_reviewed_at?: string | null
+          last_score?: number | null
+          next_review_at?: string | null
+          repetition?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_flashcard_progress_flashcard_id_fkey"
+            columns: ["flashcard_id"]
+            isOneToOne: false
+            referencedRelation: "flashcards"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

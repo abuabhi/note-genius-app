@@ -1,28 +1,99 @@
 
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen } from "lucide-react";
-import { useState } from "react";
-
-// Mock data - in a real app, this would come from an API
-const mockFlashcards = [
-  { id: 1, front: "What is React?", back: "A JavaScript library for building user interfaces" },
-  { id: 2, front: "What is JSX?", back: "A syntax extension for JavaScript that allows you to write HTML-like code in JavaScript" },
-  { id: 3, front: "What is a component?", back: "A reusable piece of UI that can contain its own logic and styling" },
-];
+import { BookOpen, ArrowLeft, ArrowRight, AlertCircle } from "lucide-react";
+import { useFlashcards } from "@/contexts/FlashcardContext";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/hooks/use-toast";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 const FlashcardsList = () => {
-  const [currentCard, setCurrentCard] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  const { flashcards, fetchFlashcards, loading } = useFlashcards();
+  const { toast } = useToast();
+  const { profile } = useRequireAuth();
+
+  useEffect(() => {
+    const loadFlashcards = async () => {
+      setIsLoading(true);
+      try {
+        await fetchFlashcards();
+      } catch (error) {
+        console.error('Error loading flashcards:', error);
+        toast({
+          title: 'Failed to load flashcards',
+          description: 'Please try again later',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadFlashcards();
+  }, [fetchFlashcards, toast]);
 
   const handleNext = () => {
+    if (flashcards.length === 0) return;
     setIsFlipped(false);
-    setCurrentCard((prev) => (prev + 1) % mockFlashcards.length);
+    setCurrentIndex((prev) => (prev + 1) % flashcards.length);
+  };
+
+  const handlePrevious = () => {
+    if (flashcards.length === 0) return;
+    setIsFlipped(false);
+    setCurrentIndex((prev) => (prev - 1 + flashcards.length) % flashcards.length);
   };
 
   const handleFlip = () => {
     setIsFlipped(!isFlipped);
   };
+
+  // Loading state
+  if (isLoading || loading.flashcards) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <div className="min-h-[200px] flex flex-col items-center justify-center space-y-4">
+              <Skeleton className="h-8 w-4/5" />
+              <Skeleton className="h-4 w-3/5" />
+              <Skeleton className="h-4 w-2/5" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+      </div>
+    );
+  }
+
+  // No flashcards state
+  if (flashcards.length === 0) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <div className="min-h-[200px] flex flex-col items-center justify-center text-center">
+              <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold">No flashcards found</h3>
+              <p className="text-muted-foreground mt-2">
+                Create your first flashcard to get started with your study session.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -33,24 +104,32 @@ const FlashcardsList = () => {
             onClick={handleFlip}
           >
             <p className="text-lg">
-              {isFlipped ? mockFlashcards[currentCard].back : mockFlashcards[currentCard].front}
+              {isFlipped ? flashcards[currentIndex].back_content : flashcards[currentIndex].front_content}
             </p>
           </div>
         </CardContent>
       </Card>
       
+      <Progress value={(currentIndex + 1) / flashcards.length * 100} className="mb-4" />
+      
       <div className="flex justify-between items-center">
         <p className="text-sm text-muted-foreground">
-          Card {currentCard + 1} of {mockFlashcards.length}
+          Card {currentIndex + 1} of {flashcards.length}
         </p>
-        <Button onClick={handleNext}>
-          <BookOpen className="mr-2 h-4 w-4" />
-          Next Card
-        </Button>
+        
+        <div className="flex space-x-2">
+          <Button variant="outline" onClick={handlePrevious}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          
+          <Button onClick={handleNext}>
+            <BookOpen className="mr-2 h-4 w-4" />
+            Next Card
+          </Button>
+        </div>
       </div>
     </div>
   );
 };
 
 export default FlashcardsList;
-
