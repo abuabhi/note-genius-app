@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useFlashcards } from "@/contexts/FlashcardContext";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,6 +11,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { StudyControls } from "./StudyControls";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { FlashcardExplanation } from "./FlashcardExplanation";
+import { isPremiumTier } from "@/utils/premiumFeatures";
 
 interface FlashcardStudyProps {
   setId: string;
@@ -26,7 +27,8 @@ export const FlashcardStudy = ({ setId, mode }: FlashcardStudyProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [direction, setDirection] = useState<"left" | "right">("right");
   const [streak, setStreak] = useState(0);
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
+  const isPremium = isPremiumTier(userProfile?.user_tier);
   const cardContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -228,6 +230,14 @@ export const FlashcardStudy = ({ setId, mode }: FlashcardStudyProps) => {
       {/* Score controls for review mode */}
       {mode === "review" && isFlipped && (
         <StudyControls onScore={handleScoreCard} />
+      )}
+      
+      {/* AI Explanation for difficult cards - shown only when card is flipped */}
+      {isPremium && isFlipped && (
+        <FlashcardExplanation 
+          flashcard={currentCard}
+          isVisible={isFlipped}
+        />
       )}
     </div>
   );

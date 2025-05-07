@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +11,8 @@ import {
   Pencil, 
   Trash, 
   AlertCircle,
-  BookOpen
+  BookOpen,
+  FileDown
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -32,6 +32,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { ExportImportFlashcards } from "./ExportImportFlashcards";
+import { ShareFlashcardSet } from "@/components/collaboration/ShareFlashcardSet";
 
 const FlashcardSetsList = () => {
   const { flashcardSets, fetchFlashcardSets, deleteFlashcardSet, loading } = useFlashcards();
@@ -80,6 +82,11 @@ const FlashcardSetsList = () => {
     navigate(`/study/${set.id}`);
   };
 
+  const handleExportSet = (set: FlashcardSet) => {
+    // Implementation for exporting a set
+    toast("Export functionality coming soon");
+  };
+
   // Loading state
   if (isLoading || loading.sets) {
     return (
@@ -120,6 +127,10 @@ const FlashcardSetsList = () => {
 
   return (
     <>
+      <div className="mb-4 flex justify-end">
+        <ExportImportFlashcards />
+      </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {flashcardSets.map((set) => (
           <Card key={set.id}>
@@ -174,7 +185,7 @@ const FlashcardSetsList = () => {
                 </div>
               )}
             </CardContent>
-            <CardFooter className="pt-2">
+            <CardFooter className="pt-2 flex flex-col gap-2">
               <Button 
                 className="w-full" 
                 onClick={() => handleStudySet(set)}
@@ -183,6 +194,18 @@ const FlashcardSetsList = () => {
                 <BookOpen className="mr-2 h-4 w-4" />
                 Study
               </Button>
+              <div className="flex w-full gap-2">
+                <ShareFlashcardSet set={set} />
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => handleExportSet(set)}
+                >
+                  <FileDown className="h-4 w-4 mr-2" />
+                  Export
+                </Button>
+              </div>
             </CardFooter>
           </Card>
         ))}
