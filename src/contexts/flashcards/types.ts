@@ -58,13 +58,23 @@ export interface FlashcardProviderProps {
 
 export interface FlashcardState {
   flashcards: Flashcard[];
+  setFlashcards: React.Dispatch<React.SetStateAction<Flashcard[]>>;
   flashcardSets: FlashcardSet[];
+  setFlashcardSets: React.Dispatch<React.SetStateAction<FlashcardSet[]>>;
   categories: SubjectCategory[];
+  setCategories: React.Dispatch<React.SetStateAction<SubjectCategory[]>>;
   currentFlashcard: Flashcard | null;
+  setCurrentFlashcard: React.Dispatch<React.SetStateAction<Flashcard | null>>;
   currentSet: FlashcardSet | null;
+  setCurrentSet: React.Dispatch<React.SetStateAction<FlashcardSet | null>>;
   loading: {
     flashcards: boolean;
     sets: boolean;
     categories: boolean;
   };
+  setLoading: React.Dispatch<React.SetStateAction<{
+    flashcards: boolean;
+    sets: boolean;
+    categories: boolean;
+  }>>;
 }
