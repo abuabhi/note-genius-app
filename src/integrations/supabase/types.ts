@@ -9,6 +9,65 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      events: {
+        Row: {
+          all_day: boolean | null
+          color: string | null
+          created_at: string
+          description: string | null
+          end_time: string
+          event_type: string
+          flashcard_set_id: string | null
+          id: string
+          is_recurring: boolean | null
+          recurrence_pattern: Json | null
+          start_time: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          all_day?: boolean | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          end_time: string
+          event_type?: string
+          flashcard_set_id?: string | null
+          id?: string
+          is_recurring?: boolean | null
+          recurrence_pattern?: Json | null
+          start_time: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          all_day?: boolean | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          end_time?: string
+          event_type?: string
+          flashcard_set_id?: string | null
+          id?: string
+          is_recurring?: boolean | null
+          recurrence_pattern?: Json | null
+          start_time?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_flashcard_set_id_fkey"
+            columns: ["flashcard_set_id"]
+            isOneToOne: false
+            referencedRelation: "flashcard_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       flashcard_set_cards: {
         Row: {
           created_at: string
