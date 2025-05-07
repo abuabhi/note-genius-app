@@ -56,36 +56,31 @@ export const useProgressStats = () => {
           console.error("Error fetching flashcards:", error);
         }
         
-        try {
-          // Get sets count - we need a better approach that won't cause TypeScript errors
-          const fetchSetsData = async (): Promise<FlashcardSet[] | null> => {
-            try {
-              // We need to handle the scenario where fetchFlashcardSets might return void
-              const result = fetchFlashcardSets();
-              
-              // If the result is a Promise, await it
-              if (result instanceof Promise) {
-                const sets = await result;
-                return sets || [];
-              }
-              
-              // If it's not a Promise and not returning anything, return empty array
-              return [];
-            } catch (e) {
-              console.error("Error in fetchSetsData:", e);
-              return null;
+        // Fix the TypeScript error by using a proper async function that explicitly returns an array
+        const fetchSetsData = async (): Promise<FlashcardSet[] | null> => {
+          try {
+            // We need to handle the scenario where fetchFlashcardSets might return void
+            const result = await fetchFlashcardSets();
+            
+            // Check if result exists and is an array
+            if (result && Array.isArray(result)) {
+              return result;
             }
-          };
-          
-          // Call our wrapper function
-          const sets = await fetchSetsData();
-          
-          // Now safely check if sets exists and is an array
-          if (sets !== null) {
-            setCount = sets.length;
+            
+            // Return empty array if no valid result
+            return [];
+          } catch (e) {
+            console.error("Error in fetchSetsData:", e);
+            return null;
           }
-        } catch (error) {
-          console.error("Error fetching sets:", error);
+        };
+        
+        // Call our wrapper function and safely handle the result
+        const sets = await fetchSetsData();
+        
+        // Now safely check if sets exists and is an array
+        if (sets !== null) {
+          setCount = sets.length;
         }
         
         setStats({
