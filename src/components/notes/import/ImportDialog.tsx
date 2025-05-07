@@ -20,7 +20,7 @@ import { useImportState } from "./useImportState";
 import { processSelectedDocument } from "./importUtils";
 
 interface ImportDialogProps {
-  onSaveNote: (note: Omit<Note, 'id'>) => Promise<void>;
+  onSaveNote: (note: Omit<Note, 'id'>) => Promise<boolean>;
 }
 
 export const ImportDialog = ({ onSaveNote }: ImportDialogProps) => {
