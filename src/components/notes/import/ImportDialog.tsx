@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Sheet, 
@@ -13,7 +12,7 @@ import { FileUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Note } from "@/types/note";
 import { ProcessedDocumentPreview } from "./ProcessedDocumentPreview";
-import { useImportState } from "./useImportState";
+import { useImportState } from "./hooks/useImportState";
 import { processSelectedDocument } from "./importUtils";
 import { ImportTabs } from "./tabs/ImportTabs";
 import { ImportDialogFooter } from "./ImportDialogFooter";
