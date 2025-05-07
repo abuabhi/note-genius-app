@@ -34,18 +34,20 @@ const ProgressOverview = () => {
         let setCount = 0;
         
         try {
-          const flashcardsData = await fetchFlashcards();
-          if (flashcardsData && Array.isArray(flashcardsData)) {
-            flashcardCount = flashcardsData.length;
+          const flashcardsResponse = await fetchFlashcards();
+          // Checking if the response is valid and is an array
+          if (flashcardsResponse && Array.isArray(flashcardsResponse)) {
+            flashcardCount = flashcardsResponse.length;
           }
         } catch (error) {
           console.error("Error fetching flashcards:", error);
         }
         
         try {
-          const setsData = await fetchFlashcardSets();
-          if (setsData && Array.isArray(setsData)) {
-            setCount = setsData.length;
+          const setsResponse = await fetchFlashcardSets();
+          // Checking if the response is valid and is an array
+          if (setsResponse && Array.isArray(setsResponse)) {
+            setCount = setsResponse.length;
           }
         } catch (error) {
           console.error("Error fetching sets:", error);

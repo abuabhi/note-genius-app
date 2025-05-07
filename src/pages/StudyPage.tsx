@@ -22,11 +22,11 @@ const StudyPageContent = () => {
       setIsLoading(true);
       try {
         // Load sets first
-        const sets = await fetchFlashcardSets();
+        const setsResponse = await fetchFlashcardSets();
         
         // Then find the current set if we have a setId
-        if (setId && sets && Array.isArray(sets)) {
-          const foundSet = sets.find(s => s.id === setId);
+        if (setId && setsResponse && Array.isArray(setsResponse)) {
+          const foundSet = setsResponse.find(s => s.id === setId);
           if (foundSet) {
             setCurrentSet(foundSet);
           }
