@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -44,11 +43,11 @@ const SharedWithMe = () => {
             permission_level,
             created_at,
             expires_at,
-            flashcard_sets:flashcard_set_id (
+            flashcard_sets(
               name,
               description
             ),
-            profiles:owner_user_id (
+            profiles!owner_user_id(
               username
             )
           `)
@@ -66,7 +65,7 @@ const SharedWithMe = () => {
           expires_at: item.expires_at,
           set_name: item.flashcard_sets?.name || 'Unnamed Set',
           set_description: item.flashcard_sets?.description,
-          owner_username: item.profiles?.username
+          owner_username: item.profiles?.username || 'Unknown user'
         }));
 
         setSharedItems(formattedData);
@@ -81,7 +80,7 @@ const SharedWithMe = () => {
     fetchSharedItems();
   }, [user]);
 
-  const getPermissionBadge = (level: string) => {
+  function getPermissionBadge(level: string) {
     switch (level) {
       case 'admin':
         return <Badge variant="default">Admin</Badge>;
@@ -91,11 +90,11 @@ const SharedWithMe = () => {
       default:
         return <Badge variant="outline">View Only</Badge>;
     }
-  };
+  }
 
-  const handleViewSet = (setId: string) => {
+  function handleViewSet(setId: string) {
     navigate(`/study/${setId}`);
-  };
+  }
 
   if (loading) {
     return (
@@ -130,7 +129,7 @@ const SharedWithMe = () => {
                 <div className="space-y-1">
                   <CardTitle className="line-clamp-1">{item.set_name}</CardTitle>
                   <CardDescription>
-                    Shared by {item.owner_username || 'Unknown user'}
+                    Shared by {item.owner_username}
                   </CardDescription>
                 </div>
                 <Book className="h-5 w-5 text-muted-foreground" />

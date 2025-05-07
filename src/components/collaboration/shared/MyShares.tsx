@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -54,10 +53,10 @@ const MyShares = () => {
             permission_level,
             created_at,
             expires_at,
-            flashcard_sets:flashcard_set_id (
+            flashcard_sets(
               name
             ),
-            profiles:recipient_user_id (
+            profiles!recipient_user_id(
               username
             )
           `)
@@ -74,7 +73,7 @@ const MyShares = () => {
           created_at: item.created_at,
           expires_at: item.expires_at,
           set_name: item.flashcard_sets?.name || 'Unnamed Set',
-          recipient_username: item.profiles?.username
+          recipient_username: item.profiles?.username || 'Unknown user'
         }));
 
         setMyShares(formattedData);
@@ -159,7 +158,7 @@ const MyShares = () => {
                 <div className="space-y-1">
                   <CardTitle className="line-clamp-1">{share.set_name}</CardTitle>
                   <CardDescription>
-                    Shared with {share.recipient_username || 'Unknown user'}
+                    Shared with {share.recipient_username}
                   </CardDescription>
                 </div>
                 <Book className="h-5 w-5 text-muted-foreground" />

@@ -26,7 +26,7 @@ const CollaborationHub = () => {
   return (
     <div className="space-y-6">
       {!isCollaborationEnabled && (
-        <Alert variant="warning" className="mb-6">
+        <Alert variant="destructive" className="mb-6">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Limited Collaboration Features</AlertTitle>
           <AlertDescription>
