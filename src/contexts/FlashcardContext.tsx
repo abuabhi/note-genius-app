@@ -1,7 +1,6 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Flashcard, FlashcardSet, CreateFlashcardPayload, CreateFlashcardSetPayload, FlashcardScore, FlashcardProgress, SubjectCategory } from '@/types/flashcard';
+import { Flashcard, FlashcardSet, CreateFlashcardPayload, CreateFlashcardSetPayload, FlashcardScore, FlashcardProgress, SubjectCategory, FlashcardDifficulty } from '@/types/flashcard';
 import { useToast } from '@/hooks/use-toast';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 
@@ -199,7 +198,13 @@ export const FlashcardProvider: React.FC<{ children: ReactNode }> = ({ children 
       
       if (error) throw error;
       
-      setFlashcards(data);
+      // Ensure the difficulty is of type FlashcardDifficulty
+      const typedFlashcards = data.map(card => ({
+        ...card,
+        difficulty: card.difficulty as FlashcardDifficulty
+      }));
+      
+      setFlashcards(typedFlashcards);
     } catch (error) {
       console.error('Error fetching flashcards:', error);
       toast({
@@ -228,7 +233,11 @@ export const FlashcardProvider: React.FC<{ children: ReactNode }> = ({ children 
       
       // Extract the flashcards from the joined query and maintain the position order
       const orderedFlashcards = data
-        .map(item => ({ ...item.flashcard, position: item.position }))
+        .map(item => ({ 
+          ...item.flashcard,
+          difficulty: item.flashcard.difficulty as FlashcardDifficulty,
+          position: item.position 
+        }))
         .sort((a, b) => a.position - b.position);
       
       return orderedFlashcards;
@@ -255,8 +264,14 @@ export const FlashcardProvider: React.FC<{ children: ReactNode }> = ({ children 
       
       if (error) throw error;
       
+      // Ensure the difficulty is of type FlashcardDifficulty
+      const typedFlashcard = {
+        ...data,
+        difficulty: data.difficulty as FlashcardDifficulty
+      };
+      
       // Update local state
-      setFlashcards(prev => [data, ...prev]);
+      setFlashcards(prev => [typedFlashcard, ...prev]);
       
       // If a set ID is provided, add the flashcard to that set
       if (setId) {
@@ -292,7 +307,7 @@ export const FlashcardProvider: React.FC<{ children: ReactNode }> = ({ children 
         description: 'Your new flashcard has been created successfully.',
       });
       
-      return data;
+      return typedFlashcard;
     } catch (error) {
       console.error('Error creating flashcard:', error);
       toast({
