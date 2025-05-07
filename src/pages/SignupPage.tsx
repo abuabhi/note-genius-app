@@ -21,7 +21,7 @@ const SignupPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const { signUp, user } = useAuth();
+  const { signUp, signInWithGoogle, user } = useAuth();
 
   useEffect(() => {
     // Redirect if user is already logged in
@@ -65,6 +65,16 @@ const SignupPage = () => {
       setError(error.message || "Failed to create account");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError("");
+    try {
+      await signInWithGoogle();
+      // Navigation will be handled by the auth state change listener
+    } catch (error: any) {
+      setError(error.message || "Failed to sign in with Google");
     }
   };
 
@@ -205,10 +215,7 @@ const SignupPage = () => {
                   type="button"
                   variant="outline"
                   className="w-full"
-                  onClick={() => {
-                    // Google signup would be implemented here
-                    setError("Social signup is not implemented yet");
-                  }}
+                  onClick={handleGoogleSignIn}
                 >
                   <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
