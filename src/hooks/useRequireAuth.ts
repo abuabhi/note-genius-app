@@ -1,5 +1,4 @@
 
-
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -42,63 +41,67 @@ export const useRequireAuth = (redirectTo = '/login') => {
   const navigate = useNavigate();
   
   useEffect(() => {
-    if (!loading && !user) {
-      navigate(redirectTo);
-    } else if (!loading && user) {
-      setIsAuthorized(true);
-      
-      const fetchProfileAndTierLimits = async () => {
-        setProfileLoading(true);
-        try {
-          // Check if user is the specific email to give them Dean role
-          if (user.email === 'abhinav.paul.sharma@gmail.com') {
-            // Update the user to Dean tier
-            const { error: updateError } = await supabase
-              .from('profiles')
-              .update({ user_tier: UserTier.DEAN })
-              .eq('id', user.id);
-              
-            if (updateError) {
-              throw updateError;
+    const checkAuth = async () => {
+      if (!loading && !user) {
+        navigate(redirectTo);
+      } else if (!loading && user) {
+        setIsAuthorized(true);
+        
+        const fetchProfileAndTierLimits = async () => {
+          setProfileLoading(true);
+          try {
+            // Check if user is the specific email to give them Dean role
+            if (user.email === 'abhinav.paul.sharma@gmail.com') {
+              // Update the user to Dean tier
+              const { error: updateError } = await supabase
+                .from('profiles')
+                .update({ user_tier: UserTier.DEAN })
+                .eq('id', user.id);
+                
+              if (updateError) {
+                throw updateError;
+              }
             }
-          }
-          
-          // Fetch user profile (will reflect the updated tier)
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
             
-          if (profileError) {
-            throw profileError;
-          }
-
-          setProfile(profileData as UserProfile);
-          
-          // Fetch tier limits
-          if (profileData?.user_tier) {
-            const { data: tierData, error: tierError } = await supabase
-              .from('tier_limits')
+            // Fetch user profile (will reflect the updated tier)
+            const { data: profileData, error: profileError } = await supabase
+              .from('profiles')
               .select('*')
-              .eq('tier', profileData.user_tier)
+              .eq('id', user.id)
               .single();
               
-            if (tierError) {
-              throw tierError;
+            if (profileError) {
+              throw profileError;
             }
+
+            setProfile(profileData as UserProfile);
             
-            setTierLimits(tierData as TierLimits);
+            // Fetch tier limits
+            if (profileData?.user_tier) {
+              const { data: tierData, error: tierError } = await supabase
+                .from('tier_limits')
+                .select('*')
+                .eq('tier', profileData.user_tier)
+                .single();
+                
+              if (tierError) {
+                throw tierError;
+              }
+              
+              setTierLimits(tierData as TierLimits);
+            }
+          } catch (error) {
+            console.error('Error fetching user profile or tier limits:', error);
+          } finally {
+            setProfileLoading(false);
           }
-        } catch (error) {
-          console.error('Error fetching user profile or tier limits:', error);
-        } finally {
-          setProfileLoading(false);
-        }
-      };
-      
-      fetchProfileAndTierLimits();
-    }
+        };
+        
+        fetchProfileAndTierLimits();
+      }
+    };
+    
+    checkAuth();
   }, [user, loading, navigate, redirectTo]);
 
   return { isAuthorized, loading: loading || profileLoading, user, profile, tierLimits };
