@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -55,15 +56,29 @@ const MyShares = () => {
             expires_at,
             flashcard_sets(
               name
-            ),
-            profiles!recipient_user_id(
-              username
             )
           `)
           .eq('owner_user_id', user.id)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
+
+        // Fetch recipient usernames in a separate query
+        const recipientIds = data.map(item => item.recipient_user_id);
+        const { data: recipientProfiles, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, username')
+          .in('id', recipientIds);
+        
+        if (profileError) throw profileError;
+
+        // Create a map of recipient IDs to usernames
+        const recipientMap = new Map();
+        if (recipientProfiles) {
+          recipientProfiles.forEach(profile => {
+            recipientMap.set(profile.id, profile.username);
+          });
+        }
 
         const formattedData = data.map((item) => ({
           id: item.id,
@@ -73,7 +88,7 @@ const MyShares = () => {
           created_at: item.created_at,
           expires_at: item.expires_at,
           set_name: item.flashcard_sets?.name || 'Unnamed Set',
-          recipient_username: item.profiles?.username || 'Unknown user'
+          recipient_username: recipientMap.get(item.recipient_user_id) || 'Unknown user'
         }));
 
         setMyShares(formattedData);

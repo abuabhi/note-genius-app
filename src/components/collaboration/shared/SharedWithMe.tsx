@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -46,15 +47,29 @@ const SharedWithMe = () => {
             flashcard_sets(
               name,
               description
-            ),
-            profiles!owner_user_id(
-              username
             )
           `)
           .eq('recipient_user_id', user.id)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
+
+        // Fetch owner usernames in a separate query since we can't directly join
+        const ownerIds = data.map(item => item.owner_user_id);
+        const { data: ownerProfiles, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, username')
+          .in('id', ownerIds);
+        
+        if (profileError) throw profileError;
+
+        // Create a map of owner IDs to usernames
+        const ownerMap = new Map();
+        if (ownerProfiles) {
+          ownerProfiles.forEach(profile => {
+            ownerMap.set(profile.id, profile.username);
+          });
+        }
 
         const formattedData = data.map((item) => ({
           id: item.id,
@@ -65,7 +80,7 @@ const SharedWithMe = () => {
           expires_at: item.expires_at,
           set_name: item.flashcard_sets?.name || 'Unnamed Set',
           set_description: item.flashcard_sets?.description,
-          owner_username: item.profiles?.username || 'Unknown user'
+          owner_username: ownerMap.get(item.owner_user_id) || 'Unknown user'
         }));
 
         setSharedItems(formattedData);
