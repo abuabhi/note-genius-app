@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ChartPie, ChartBar, Zap, Trophy, BookOpen, Calendar } from "lucide-react";
@@ -34,9 +33,8 @@ const ProgressOverview = () => {
         let setCount = 0;
         
         try {
-          const flashcardsResponse = await fetchFlashcards();
-          // Since fetchFlashcards doesn't return data but updates state internally,
-          // we can't check its response directly
+          // fetchFlashcards returns void, so we can't use its return value directly
+          await fetchFlashcards();
           
           // We'll add a delay to allow the state update to complete
           await new Promise(resolve => setTimeout(resolve, 100));
@@ -48,10 +46,14 @@ const ProgressOverview = () => {
         }
         
         try {
-          const setsResponse = await fetchFlashcardSets();
-          // Checking if the response is valid
-          if (setsResponse) {
-            setCount = setsResponse.length;
+          const setsResponsePromise = fetchFlashcardSets();
+          
+          // Check if the function returns a Promise containing an array
+          if (setsResponsePromise instanceof Promise) {
+            const setsResponse = await setsResponsePromise;
+            if (setsResponse && Array.isArray(setsResponse)) {
+              setCount = setsResponse.length;
+            }
           }
         } catch (error) {
           console.error("Error fetching sets:", error);

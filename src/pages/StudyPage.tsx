@@ -22,13 +22,18 @@ const StudyPageContent = () => {
       setIsLoading(true);
       try {
         // Load sets first
-        const setsResponse = await fetchFlashcardSets();
+        await fetchFlashcardSets();
         
         // Then find the current set if we have a setId
-        if (setId && setsResponse) {
-          const foundSet = setsResponse.find(s => s.id === setId);
-          if (foundSet) {
-            setCurrentSet(foundSet);
+        if (setId && currentSet?.id !== setId) {
+          const { fetchFlashcardSets: refetch } = useFlashcards();
+          const sets = await refetch();
+          
+          if (sets && Array.isArray(sets)) {
+            const foundSet = sets.find(s => s.id === setId);
+            if (foundSet) {
+              setCurrentSet(foundSet);
+            }
           }
         }
       } catch (error) {
@@ -44,7 +49,7 @@ const StudyPageContent = () => {
     return () => {
       setCurrentSet(null);
     };
-  }, [setId, fetchFlashcardSets, setCurrentSet]);
+  }, [setId, fetchFlashcardSets, setCurrentSet, currentSet]);
   
   if (!setId) {
     return <Navigate to="/flashcards" />;
