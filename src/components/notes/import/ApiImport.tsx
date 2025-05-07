@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { processSelectedDocument } from "./importUtils";
 import { OneNoteConnection } from "./OneNoteConnection";
 import { NotionConnection } from "./NotionConnection";
+import { GoogleDocsConnection } from "./GoogleDocsConnection";
 import { ImportServiceGrid } from "./services/ImportServiceGrid";
 import { ManualApiImportForm } from "./services/ManualApiImportForm";
 
@@ -20,6 +21,7 @@ export const ApiImport = ({ onImport }: ApiImportProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [oneNoteToken, setOneNoteToken] = useState<string | null>(null);
   const [notionToken, setNotionToken] = useState<string | null>(null);
+  const [googleDocsToken, setGoogleDocsToken] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleImport = async () => {
@@ -69,6 +71,24 @@ export const ApiImport = ({ onImport }: ApiImportProps) => {
         });
         return;
       }
+    } else if (importType === "googledocs") {
+      if (!googleDocsToken) {
+        toast({
+          title: "Authentication Required",
+          description: "Please connect to Google Docs first.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (!pageId) {
+        toast({
+          title: "Document ID Required",
+          description: "Please enter a Google Docs document ID.",
+          variant: "destructive",
+        });
+        return;
+      }
     } else {
       if (!apiKey) {
         toast({
@@ -105,13 +125,13 @@ export const ApiImport = ({ onImport }: ApiImportProps) => {
           apiParams.token = oneNoteToken;
           apiParams.pageId = pageId;
           break;
+        case "googledocs":
+          apiParams.token = googleDocsToken;
+          apiParams.documentId = pageId;
+          break;
         case "evernote":
           apiParams.token = apiKey;
           apiParams.noteGuid = pageId;
-          break;
-        case "googledocs":
-          apiParams.token = apiKey;
-          apiParams.documentId = pageId;
           break;
       }
       
@@ -154,6 +174,8 @@ export const ApiImport = ({ onImport }: ApiImportProps) => {
             <OneNoteConnection onConnected={token => setOneNoteToken(token)} />
           ) : importType === 'notion' ? (
             <NotionConnection onConnected={token => setNotionToken(token)} />
+          ) : importType === 'googledocs' ? (
+            <GoogleDocsConnection onConnected={token => setGoogleDocsToken(token)} />
           ) : (
             <ManualApiImportForm
               importType={importType}

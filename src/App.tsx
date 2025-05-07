@@ -25,6 +25,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import MicrosoftAuthCallback from "@/components/auth/MicrosoftAuthCallback";
 import NotionAuthCallback from "@/components/auth/NotionAuthCallback";
+import GoogleDocsAuthCallback from "@/components/auth/GoogleDocsAuthCallback";
 
 function App() {
   return (
@@ -53,6 +54,7 @@ function App() {
             <Route path="/faq" element={<FAQPage />} />
             <Route path="/auth/microsoft-callback" element={<MicrosoftAuthCallback />} />
             <Route path="/auth/notion-callback" element={<NotionAuthCallback />} />
+            <Route path="/auth/googledocs-callback" element={<GoogleDocsAuthCallback />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
           <Toaster />
