@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { FlashcardContextType, FlashcardProviderProps } from './types';
 import { useFlashcardState } from './useFlashcardState';
@@ -52,6 +52,18 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
   const { recordFlashcardReview, getFlashcardProgress } = useStudyOperations(profile?.id);
   
   const { fetchCategories } = useCategoryOperations(setCategories, setLoading);
+
+  // Fetch initial data when the provider mounts
+  useEffect(() => {
+    // Fetch data for flashcards and sets when needed
+    const loadInitialData = async () => {
+      await fetchFlashcardSets();
+      await fetchFlashcards();
+      await fetchCategories();
+    };
+    
+    loadInitialData();
+  }, []);
 
   // Combine everything into the context value
   const contextValue: FlashcardContextType = {
