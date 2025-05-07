@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { NotesGrid } from "@/components/notes/NotesGrid";
 import { NotePagination } from "@/components/notes/NotePagination";
@@ -91,8 +92,18 @@ export const NotesContent = ({
         tierLimits={tierLimits}
         userTier={userTier}
       />
-      <NotesGrid notes={paginatedNotes} />
-      <NotePagination />
+      
+      {notes.length === 0 && !loading ? (
+        <div className="text-center py-10 bg-gray-50 rounded-lg">
+          <p className="text-lg text-mint-600 mb-2">No notes found</p>
+          <p className="text-sm text-muted-foreground">Create your first note by clicking the "New Note" button above.</p>
+        </div>
+      ) : (
+        <>
+          <NotesGrid notes={paginatedNotes} />
+          <NotePagination />
+        </>
+      )}
     </div>
   );
 };
