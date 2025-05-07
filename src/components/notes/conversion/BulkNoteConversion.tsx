@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,7 +26,7 @@ export const BulkNoteConversion = ({ notes, onSuccess, onCancel }: BulkNoteConve
   const [setDescription, setSetDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { profile } = useRequireAuth();
-  const isPremium = profile?.user_tier === "PROFESSOR" || profile?.user_tier === "DEAN";
+  const isPremium = profile?.user_tier === UserTier.PROFESSOR || profile?.user_tier === UserTier.DEAN;
 
   const { createFlashcardSet, createFlashcard } = useFlashcards();
   const { toast } = useToast();
