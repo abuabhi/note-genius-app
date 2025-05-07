@@ -19,6 +19,7 @@ import PricingPage from "@/pages/PricingPage";
 import FAQPage from "@/pages/FAQPage";
 import FlashcardLibraryPage from "@/pages/FlashcardLibraryPage";
 import AdminFlashcardPage from "@/pages/AdminFlashcardPage";
+import StudyPage from "@/pages/StudyPage";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -39,6 +40,7 @@ function App() {
             <Route path="/flashcards" element={<FlashcardsPage />} />
             <Route path="/flashcard-library" element={<FlashcardLibraryPage />} />
             <Route path="/admin/flashcards" element={<AdminFlashcardPage />} />
+            <Route path="/study/:setId" element={<StudyPage />} />
             <Route path="/note-to-flashcard" element={<NoteToFlashcardPage />} />
             <Route path="/schedule" element={<SchedulePage />} />
             <Route path="/quiz" element={<QuizPage />} />

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -5,16 +6,17 @@ import { BookOpen, ArrowLeft, ArrowRight, AlertCircle } from "lucide-react";
 import { useFlashcards } from "@/contexts/FlashcardContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { motion, AnimatePresence } from "framer-motion";
 
 const FlashcardsList = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [direction, setDirection] = useState<"left" | "right">("right");
   
   const { flashcards, fetchFlashcards, loading } = useFlashcards();
-  const { toast } = useToast();
   const { userProfile } = useRequireAuth();
 
   useEffect(() => {
@@ -26,8 +28,7 @@ const FlashcardsList = () => {
         console.error('Error loading flashcards:', error);
         toast({
           title: 'Failed to load flashcards',
-          description: 'Please try again later',
-          variant: 'destructive'
+          description: 'Please try again later'
         });
       } finally {
         setIsLoading(false);
@@ -35,18 +36,24 @@ const FlashcardsList = () => {
     };
 
     loadFlashcards();
-  }, [fetchFlashcards, toast]);
+  }, [fetchFlashcards]);
 
   const handleNext = () => {
     if (flashcards.length === 0) return;
+    setDirection("right");
     setIsFlipped(false);
-    setCurrentIndex((prev) => (prev + 1) % flashcards.length);
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev + 1) % flashcards.length);
+    }, 200);
   };
 
   const handlePrevious = () => {
     if (flashcards.length === 0) return;
+    setDirection("left");
     setIsFlipped(false);
-    setCurrentIndex((prev) => (prev - 1 + flashcards.length) % flashcards.length);
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev - 1 + flashcards.length) % flashcards.length);
+    }, 200);
   };
 
   const handleFlip = () => {
@@ -96,18 +103,40 @@ const FlashcardsList = () => {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <Card className="mb-6">
-        <CardContent className="p-6">
-          <div 
-            className="min-h-[200px] flex items-center justify-center text-center cursor-pointer"
-            onClick={handleFlip}
+      <div className="perspective-1000 mb-6">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentIndex + (isFlipped ? "-flipped" : "")}
+            initial={{ 
+              rotateY: isFlipped ? 0 : 180,
+              x: direction === "right" ? 100 : -100,
+              opacity: 0
+            }}
+            animate={{ 
+              rotateY: isFlipped ? 180 : 0,
+              x: 0,
+              opacity: 1
+            }}
+            exit={{ 
+              x: direction === "right" ? -100 : 100,
+              opacity: 0
+            }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            style={{ transformStyle: "preserve-3d" }}
+            className="w-full cursor-pointer"
           >
-            <p className="text-lg">
-              {isFlipped ? flashcards[currentIndex].back_content : flashcards[currentIndex].front_content}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+            <Card onClick={handleFlip}>
+              <CardContent className="p-6">
+                <div className="min-h-[200px] flex items-center justify-center text-center">
+                  <p className="text-lg">
+                    {isFlipped ? flashcards[currentIndex].back_content : flashcards[currentIndex].front_content}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </AnimatePresence>
+      </div>
       
       <Progress value={(currentIndex + 1) / flashcards.length * 100} className="mb-4" />
       
