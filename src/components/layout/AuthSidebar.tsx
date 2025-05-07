@@ -46,7 +46,7 @@ const sidebarItems = [
   },
   {
     title: "Collaboration",
-    path: "/collaboration",
+    path: "/collaborate",
     icon: Users,
   },
   {

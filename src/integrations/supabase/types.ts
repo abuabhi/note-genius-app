@@ -272,6 +272,141 @@ export type Database = {
           },
         ]
       }
+      shared_flashcard_sets: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          flashcard_set_id: string
+          id: string
+          owner_user_id: string
+          permission_level: string
+          recipient_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          flashcard_set_id: string
+          id?: string
+          owner_user_id: string
+          permission_level: string
+          recipient_user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          flashcard_set_id?: string
+          id?: string
+          owner_user_id?: string
+          permission_level?: string
+          recipient_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_flashcard_sets_flashcard_set_id_fkey"
+            columns: ["flashcard_set_id"]
+            isOneToOne: false
+            referencedRelation: "flashcard_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      study_group_members: {
+        Row: {
+          group_id: string
+          id: string
+          joined_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          joined_at?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          joined_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "study_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      study_group_resources: {
+        Row: {
+          created_at: string
+          created_by: string
+          group_id: string
+          id: string
+          resource_id: string
+          resource_type: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          group_id: string
+          id?: string
+          resource_id: string
+          resource_type: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          group_id?: string
+          id?: string
+          resource_id?: string
+          resource_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_group_resources_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "study_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      study_groups: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_public: boolean
+          name: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          name: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          name?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subject_categories: {
         Row: {
           created_at: string
