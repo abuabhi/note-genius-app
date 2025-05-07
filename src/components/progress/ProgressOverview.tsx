@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ChartPie, ChartBar, Zap, Trophy, BookOpen, Calendar } from "lucide-react";
@@ -48,11 +49,14 @@ const ProgressOverview = () => {
         try {
           const setsResponsePromise = fetchFlashcardSets();
           
-          // Check if the function returns a Promise containing an array
           if (setsResponsePromise instanceof Promise) {
-            const setsResponse = await setsResponsePromise;
-            if (setsResponse && Array.isArray(setsResponse)) {
-              setCount = setsResponse.length;
+            try {
+              const setsResponse = await setsResponsePromise;
+              if (setsResponse && Array.isArray(setsResponse)) {
+                setCount = setsResponse.length;
+              }
+            } catch (err) {
+              console.error("Error resolving sets promise:", err);
             }
           }
         } catch (error) {

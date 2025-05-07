@@ -27,13 +27,17 @@ const StudyPageContent = () => {
         // Then find the current set if we have a setId
         if (setId && currentSet?.id !== setId) {
           const { fetchFlashcardSets: refetch } = useFlashcards();
-          const sets = await refetch();
           
-          if (sets && Array.isArray(sets)) {
-            const foundSet = sets.find(s => s.id === setId);
-            if (foundSet) {
-              setCurrentSet(foundSet);
+          try {
+            const sets = await refetch();
+            if (Array.isArray(sets) && sets.length > 0) {
+              const foundSet = sets.find(s => s.id === setId);
+              if (foundSet) {
+                setCurrentSet(foundSet);
+              }
             }
+          } catch (error) {
+            console.error("Error refetching flashcard sets:", error);
           }
         }
       } catch (error) {
