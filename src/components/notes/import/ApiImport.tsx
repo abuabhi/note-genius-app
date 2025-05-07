@@ -6,6 +6,7 @@ import { processSelectedDocument } from "./importUtils";
 import { OneNoteConnection } from "./OneNoteConnection";
 import { NotionConnection } from "./NotionConnection";
 import { GoogleDocsConnection } from "./GoogleDocsConnection";
+import { EvernoteConnection } from "./EvernoteConnection";
 import { ImportServiceGrid } from "./services/ImportServiceGrid";
 import { ManualApiImportForm } from "./services/ManualApiImportForm";
 
@@ -22,6 +23,7 @@ export const ApiImport = ({ onImport }: ApiImportProps) => {
   const [oneNoteToken, setOneNoteToken] = useState<string | null>(null);
   const [notionToken, setNotionToken] = useState<string | null>(null);
   const [googleDocsToken, setGoogleDocsToken] = useState<string | null>(null);
+  const [evernoteToken, setEvernoteToken] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleImport = async () => {
@@ -89,6 +91,24 @@ export const ApiImport = ({ onImport }: ApiImportProps) => {
         });
         return;
       }
+    } else if (importType === "evernote") {
+      if (!evernoteToken) {
+        toast({
+          title: "Authentication Required",
+          description: "Please connect to Evernote first.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (!pageId) {
+        toast({
+          title: "Note GUID Required",
+          description: "Please enter an Evernote note GUID.",
+          variant: "destructive",
+        });
+        return;
+      }
     } else {
       if (!apiKey) {
         toast({
@@ -130,7 +150,7 @@ export const ApiImport = ({ onImport }: ApiImportProps) => {
           apiParams.documentId = pageId;
           break;
         case "evernote":
-          apiParams.token = apiKey;
+          apiParams.token = evernoteToken;
           apiParams.noteGuid = pageId;
           break;
       }
@@ -176,6 +196,8 @@ export const ApiImport = ({ onImport }: ApiImportProps) => {
             <NotionConnection onConnected={token => setNotionToken(token)} />
           ) : importType === 'googledocs' ? (
             <GoogleDocsConnection onConnected={token => setGoogleDocsToken(token)} />
+          ) : importType === 'evernote' ? (
+            <EvernoteConnection onConnected={token => setEvernoteToken(token)} />
           ) : (
             <ManualApiImportForm
               importType={importType}

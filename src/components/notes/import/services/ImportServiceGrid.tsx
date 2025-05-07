@@ -1,5 +1,5 @@
 
-import { Book, File, FileText, File as GoogleDocsIcon } from "lucide-react";
+import { Book, FileText, File as GoogleDocsIcon, Newspaper } from "lucide-react";
 import { ImportServiceCard } from "./ImportServiceCard";
 
 interface ImportServiceGridProps {
@@ -13,8 +13,8 @@ export const ImportServiceGrid = ({
 }: ImportServiceGridProps) => {
   const services = [
     { id: 'notion', name: 'Notion', icon: Book },
-    { id: 'onenote', name: 'OneNote', icon: File },
-    { id: 'evernote', name: 'Evernote', icon: FileText },
+    { id: 'onenote', name: 'OneNote', icon: FileText },
+    { id: 'evernote', name: 'Evernote', icon: Newspaper },
     { id: 'googledocs', name: 'Google Docs', icon: GoogleDocsIcon }
   ];
 
