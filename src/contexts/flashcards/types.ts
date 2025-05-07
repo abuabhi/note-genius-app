@@ -1,4 +1,3 @@
-
 import { 
   Flashcard, 
   FlashcardSet, 
@@ -6,8 +5,7 @@ import {
   CreateFlashcardSetPayload, 
   FlashcardScore, 
   FlashcardProgress, 
-  SubjectCategory, 
-  FlashcardDifficulty 
+  SubjectCategory
 } from '@/types/flashcard';
 
 export interface FlashcardContextType {

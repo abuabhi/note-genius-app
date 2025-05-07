@@ -3,8 +3,7 @@ import {
   Flashcard, 
   FlashcardSet,
   FlashcardDifficulty,
-  CreateFlashcardPayload, 
-  CreateFlashcardSetPayload 
+  CreateFlashcardPayload
 } from '@/types/flashcard';
 import { useToast } from '@/hooks/use-toast';
 import { FlashcardState } from './types';
@@ -15,11 +14,7 @@ export const useFlashcardsOperations = (
   const { 
     setFlashcards, 
     setFlashcardSets, 
-    setLoading,
-    currentFlashcard, 
-    setCurrentFlashcard,
-    currentSet, 
-    setCurrentSet,
+    setLoading
   } = state;
   
   const { toast } = useToast();
