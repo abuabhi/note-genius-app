@@ -8,6 +8,8 @@ export const tierFeatures = {
     basicFlashcards: true,
     studyTracking: true,
     notesTaking: true,
+    basicQuizzes: true,
+    basicProgress: true,
   },
   [UserTier.MASTER]: {
     // Master tier has all Scholar features plus these
@@ -18,6 +20,10 @@ export const tierFeatures = {
     explanationsAndHints: true,
     exportImport: true,
     calendarIntegration: false,
+    basicQuizzes: true,
+    basicProgress: true,
+    quizExplanations: true,
+    advancedAnalytics: true,
   },
   [UserTier.DEAN]: {
     // Dean tier has all features
@@ -31,6 +37,13 @@ export const tierFeatures = {
     smartScheduling: true,
     collaborativeFeatures: true,
     unlimitedSets: true,
+    basicQuizzes: true,
+    basicProgress: true,
+    quizExplanations: true,
+    advancedAnalytics: true,
+    smartQuizGeneration: true,
+    personalizedLearningPath: true,
+    customQuizTemplates: true,
   },
 };
 
