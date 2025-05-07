@@ -369,6 +369,98 @@ export type Database = {
           },
         ]
       }
+      study_achievements: {
+        Row: {
+          achieved_at: string | null
+          badge_image: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          points: number | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          achieved_at?: string | null
+          badge_image?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          points?: number | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          achieved_at?: string | null
+          badge_image?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          points?: number | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      study_goals: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          end_date: string
+          flashcard_set_id: string | null
+          id: string
+          is_completed: boolean | null
+          progress: number | null
+          start_date: string
+          subject: string | null
+          target_hours: number
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          end_date: string
+          flashcard_set_id?: string | null
+          id?: string
+          is_completed?: boolean | null
+          progress?: number | null
+          start_date?: string
+          subject?: string | null
+          target_hours: number
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          end_date?: string
+          flashcard_set_id?: string | null
+          id?: string
+          is_completed?: boolean | null
+          progress?: number | null
+          start_date?: string
+          subject?: string | null
+          target_hours?: number
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_goals_flashcard_set_id_fkey"
+            columns: ["flashcard_set_id"]
+            isOneToOne: false
+            referencedRelation: "flashcard_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       study_group_members: {
         Row: {
           group_id: string
@@ -465,6 +557,65 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      study_sessions: {
+        Row: {
+          break_time: number | null
+          created_at: string | null
+          duration: number | null
+          end_time: string | null
+          flashcard_set_id: string | null
+          focus_time: number | null
+          id: string
+          is_active: boolean | null
+          notes: string | null
+          start_time: string
+          subject: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          break_time?: number | null
+          created_at?: string | null
+          duration?: number | null
+          end_time?: string | null
+          flashcard_set_id?: string | null
+          focus_time?: number | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          start_time?: string
+          subject?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          break_time?: number | null
+          created_at?: string | null
+          duration?: number | null
+          end_time?: string | null
+          flashcard_set_id?: string | null
+          focus_time?: number | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          start_time?: string
+          subject?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_sessions_flashcard_set_id_fkey"
+            columns: ["flashcard_set_id"]
+            isOneToOne: false
+            referencedRelation: "flashcard_sets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subject_categories: {
         Row: {

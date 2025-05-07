@@ -16,6 +16,7 @@ import {
   Activity,
   Users,
   Settings,
+  Clock,
 } from "lucide-react";
 
 const sidebarItems = [
@@ -33,6 +34,11 @@ const sidebarItems = [
     title: "Flashcards",
     path: "/flashcards",
     icon: FileText,
+  },
+  {
+    title: "Study Sessions",
+    path: "/study-sessions",
+    icon: Clock,
   },
   {
     title: "Quizzes",

@@ -1,7 +1,8 @@
+
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, FileText, BookOpen, Settings, BarChart, GraduationCap, Shield } from "lucide-react";
+import { Calendar, FileText, BookOpen, Settings, BarChart, GraduationCap, Shield, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Loader2 } from "lucide-react";
@@ -113,8 +114,8 @@ const DashboardPage = () => {
             </CardHeader>
             <CardContent>
               <Button asChild className="w-full">
-                <Link to="/study/new">
-                  <BookOpen className="mr-2 h-4 w-4" />
+                <Link to="/study-sessions">
+                  <Clock className="mr-2 h-4 w-4" />
                   Start Studying
                 </Link>
               </Button>
