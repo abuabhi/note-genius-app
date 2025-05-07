@@ -1,10 +1,18 @@
 
+
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
-export type UserTier = 'SCHOLAR' | 'GRADUATE' | 'MASTER' | 'DEAN';
+// Convert UserTier from a type to an enum so it can be used as a value
+export enum UserTier {
+  SCHOLAR = 'SCHOLAR',
+  GRADUATE = 'GRADUATE',
+  MASTER = 'MASTER',
+  PROFESSOR = 'PROFESSOR',
+  DEAN = 'DEAN'
+}
 
 export interface UserProfile {
   id: string;
@@ -47,7 +55,7 @@ export const useRequireAuth = (redirectTo = '/login') => {
             // Update the user to Dean tier
             const { error: updateError } = await supabase
               .from('profiles')
-              .update({ user_tier: 'DEAN' })
+              .update({ user_tier: UserTier.DEAN })
               .eq('id', user.id);
               
             if (updateError) {

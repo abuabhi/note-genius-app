@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,8 +12,7 @@ import { CreateFlashcardSetPayload } from "@/types/flashcard";
 import { ArrowsUpFromLine, Loader2 } from "lucide-react";
 import { FlashcardSet } from "@/types/flashcard";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { UserTier } from "@/hooks/useRequireAuth";
+import { useRequireAuth, UserTier } from "@/hooks/useRequireAuth";
 
 interface BulkNoteConversionProps {
   notes: Note[];
