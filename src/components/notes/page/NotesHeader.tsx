@@ -1,4 +1,3 @@
-
 import React from "react";
 import { NoteSearch } from "@/components/notes/NoteSearch";
 import { NoteSorter } from "@/components/notes/NoteSorter";

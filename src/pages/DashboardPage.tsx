@@ -1,4 +1,3 @@
-
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,8 @@ import { Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 const DashboardPage = () => {
-  const { isAuthorized, loading, user, profile, tierLimits } = useRequireAuth();
+  const { user, userProfile, tierLimits, loading } = useRequireAuth();
+  const isAuthorized = !!user;
 
   if (loading) {
     return (
@@ -36,18 +36,18 @@ const DashboardPage = () => {
         </h1>
         
         {/* User tier information */}
-        {profile && tierLimits && (
+        {userProfile && tierLimits && (
           <Card className="mb-8 border-mint-100 shadow-sm">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-2xl flex items-center gap-2">
                     <GraduationCap className="h-6 w-6 text-mint-600" />
-                    {profile.user_tier} Tier
+                    {userProfile.user_tier} Tier
                   </CardTitle>
                   <CardDescription>Your learning journey level</CardDescription>
                 </div>
-                {profile.user_tier !== 'DEAN' && (
+                {userProfile.user_tier !== 'DEAN' && (
                   <Button asChild variant="outline" size="sm">
                     <Link to="/pricing">Upgrade</Link>
                   </Button>

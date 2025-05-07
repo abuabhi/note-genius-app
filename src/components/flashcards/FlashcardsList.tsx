@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,7 @@ const FlashcardsList = () => {
   
   const { flashcards, fetchFlashcards, loading } = useFlashcards();
   const { toast } = useToast();
-  const { profile } = useRequireAuth();
+  const { userProfile } = useRequireAuth();
 
   useEffect(() => {
     const loadFlashcards = async () => {

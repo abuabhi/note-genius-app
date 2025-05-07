@@ -2,7 +2,7 @@
 import React, { createContext, useContext } from 'react';
 import { FlashcardContextType, FlashcardProviderProps } from './types';
 import { useFlashcardState } from './useFlashcardState';
-import { useFlashcards } from './useFlashcards';
+import { useFlashcardsOperations } from './useFlashcards';
 import { useFlashcardSets } from './useFlashcardSets';
 import { useStudyOperations } from './useStudyOperations';
 import { useCategoryOperations } from './useCategoryOperations';
@@ -14,7 +14,7 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
   const state = useFlashcardState();
   
   // Get operations
-  const flashcardOperations = useFlashcards(state);
+  const flashcardOperations = useFlashcardsOperations(state);
   const setOperations = useFlashcardSets(state);
   const studyOperations = useStudyOperations(state);
   const categoryOperations = useCategoryOperations(state.setCategories, state.setLoading);

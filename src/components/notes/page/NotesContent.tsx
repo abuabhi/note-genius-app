@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { NotesGrid } from "@/components/notes/NotesGrid";
 import { NotePagination } from "@/components/notes/NotePagination";
@@ -7,10 +6,9 @@ import { useNotes } from "@/contexts/NoteContext";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Note } from "@/types/note";
-import { useRequireAuth } from "@/hooks/useRequireAuth"; 
+import { useRequireAuth, TierLimits, UserTier } from "@/hooks/useRequireAuth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { TierLimits, UserTier } from "@/hooks/useRequireAuth";
 
 interface NotesContentProps {
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
@@ -29,7 +27,8 @@ export const NotesContent = ({
 }: NotesContentProps) => {
   const { paginatedNotes, notes, loading } = useNotes();
   const { toast } = useToast();
-  const { isAuthorized, loading: authLoading } = useRequireAuth();
+  const { user, loading: authLoading } = useRequireAuth();
+  const isAuthorized = !!user;
 
   // Show loading state while checking authentication
   if (authLoading || loading) {

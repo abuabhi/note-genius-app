@@ -1,14 +1,15 @@
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Flashcard, 
-  FlashcardSet, 
+  FlashcardSet,
+  FlashcardDifficulty,
   CreateFlashcardPayload, 
   CreateFlashcardSetPayload 
 } from '@/types/flashcard';
 import { useToast } from '@/hooks/use-toast';
 import { FlashcardState } from './types';
 
-export const useFlashcards = (
+export const useFlashcardsOperations = (
   state: FlashcardState
 ) => {
   const { 

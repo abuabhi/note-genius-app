@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -24,8 +23,8 @@ export const BulkNoteConversion = ({ notes, onSuccess, onCancel }: BulkNoteConve
   const [setName, setSetName] = useState("");
   const [setDescription, setSetDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { profile } = useRequireAuth();
-  const isPremium = profile?.user_tier === UserTier.PROFESSOR || profile?.user_tier === UserTier.DEAN;
+  const { userProfile } = useRequireAuth();
+  const isPremium = userProfile?.user_tier === UserTier.MASTER || userProfile?.user_tier === UserTier.DEAN;
 
   const { createFlashcardSet, createFlashcard } = useFlashcards();
   const { toast } = useToast();
