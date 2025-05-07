@@ -2,9 +2,13 @@
 import { supabase } from '@/integrations/supabase/client';
 import { FlashcardScore, FlashcardProgress } from '@/types/flashcard';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { FlashcardState } from './types';
 
-export const useStudyOperations = (userId?: string) => {
+export const useStudyOperations = (state: FlashcardState) => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const userId = user?.id;
 
   // Record a flashcard review using the SM-2 spaced repetition algorithm
   const recordFlashcardReview = async (flashcardId: string, score: FlashcardScore) => {

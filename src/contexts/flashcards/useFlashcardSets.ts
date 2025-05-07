@@ -2,15 +2,10 @@
 import { supabase } from '@/integrations/supabase/client';
 import { FlashcardSet, CreateFlashcardSetPayload } from '@/types/flashcard';
 import { useToast } from '@/hooks/use-toast';
+import { FlashcardState } from './types';
 
-export const useFlashcardSets = (
-  setFlashcardSets: React.Dispatch<React.SetStateAction<FlashcardSet[]>>,
-  setLoading: React.Dispatch<React.SetStateAction<{
-    flashcards: boolean;
-    sets: boolean;
-    categories: boolean;
-  }>>
-) => {
+export const useFlashcardSets = (state: FlashcardState) => {
+  const { setFlashcardSets, setLoading } = state;
   const { toast } = useToast();
 
   // Fetch all flashcard sets for the current user

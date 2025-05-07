@@ -1,22 +1,20 @@
 
+import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { SubjectCategory } from '@/types/flashcard';
 import { useToast } from '@/hooks/use-toast';
 
 export const useCategoryOperations = (
-  setCategories: React.Dispatch<React.SetStateAction<SubjectCategory[]>>,
-  setLoading: React.Dispatch<React.SetStateAction<{
-    flashcards: boolean;
-    sets: boolean;
-    categories: boolean;
-  }>>
+  categories: SubjectCategory[],
+  setCategories: React.Dispatch<React.SetStateAction<SubjectCategory[]>>
 ) => {
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
 
   // Fetch all subject categories
   const fetchCategories = async () => {
     try {
-      setLoading(prev => ({ ...prev, categories: true }));
+      setLoading(true);
       
       const { data, error } = await supabase
         .from('subject_categories')
@@ -57,7 +55,7 @@ export const useCategoryOperations = (
         variant: 'destructive',
       });
     } finally {
-      setLoading(prev => ({ ...prev, categories: false }));
+      setLoading(false);
     }
   };
 
