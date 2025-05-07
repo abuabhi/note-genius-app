@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 import { readPdf } from './pdf-reader.ts';
@@ -117,12 +116,12 @@ serve(async (req) => {
         case 'onenote':
           if (!onenoteApiKey && !externalApiParams.token) {
             return new Response(
-              JSON.stringify({ error: 'OneNote API key is not configured' }),
+              JSON.stringify({ error: 'OneNote access token is not provided' }),
               { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
             );
           }
           
-          console.log("Processing OneNote import");
+          console.log("Processing OneNote import with OAuth token");
           try {
             const result = await importFromOneNote(externalApiParams);
             extractedText = result.text;
@@ -348,6 +347,8 @@ async function importFromOneNote(params: Record<string, any>): Promise<{text: st
       throw new Error('Missing required parameters for OneNote import');
     }
     
+    console.log("Making API call to Microsoft Graph for OneNote page");
+    
     // Make real API call to Microsoft Graph API for OneNote
     const response = await fetch(`https://graph.microsoft.com/v1.0/me/onenote/pages/${pageId}/content`, {
       headers: {
@@ -357,6 +358,8 @@ async function importFromOneNote(params: Record<string, any>): Promise<{text: st
     });
     
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Failed to fetch OneNote page: ${response.status} ${response.statusText}`, errorText);
       throw new Error(`Failed to fetch OneNote page: ${response.statusText}`);
     }
     
@@ -372,28 +375,38 @@ async function importFromOneNote(params: Record<string, any>): Promise<{text: st
     });
     
     if (!metadataResponse.ok) {
+      console.error(`Failed to fetch OneNote metadata: ${metadataResponse.status} ${metadataResponse.statusText}`);
       throw new Error(`Failed to fetch OneNote page metadata: ${metadataResponse.statusText}`);
     }
     
     const pageMetadata = await metadataResponse.json();
     
-    // Extract text from HTML content
-    // For a real implementation, use a proper HTML-to-text converter
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlContent, "text/html");
-    
-    // Basic text extraction
+    // Extract text from HTML content using a simple approach
+    // In a production environment, use a proper HTML parser
     let textContent = "";
-    if (doc && doc.body) {
-      // Remove script tags
-      const scripts = doc.querySelectorAll('script');
-      scripts.forEach(script => script.remove());
+    try {
+      // Create a new DOMParser
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlContent, "text/html");
       
-      // Get text content
-      textContent = doc.body.textContent || "";
-      
-      // Clean up whitespace
-      textContent = textContent.replace(/\s+/g, ' ').trim();
+      if (doc && doc.body) {
+        // Remove script tags
+        const scripts = doc.querySelectorAll('script');
+        scripts.forEach(script => script.remove());
+        
+        // Get text content
+        textContent = doc.body.textContent || "";
+        
+        // Clean up whitespace
+        textContent = textContent.replace(/\s+/g, ' ').trim();
+      }
+    } catch (parseError) {
+      console.error("Error parsing HTML:", parseError);
+      // Fallback: basic HTML tag removal
+      textContent = htmlContent
+        .replace(/<[^>]*>/g, ' ') // Remove HTML tags
+        .replace(/\s+/g, ' ')     // Replace multiple whitespace with single space
+        .trim();
     }
     
     // Extract title
@@ -410,6 +423,8 @@ async function importFromOneNote(params: Record<string, any>): Promise<{text: st
       sectionId: pageMetadata.parentSection?.id,
       sectionName: pageMetadata.parentSection?.displayName
     };
+    
+    console.log(`Successfully processed OneNote page: ${title}`);
     
     return {
       text: textContent,

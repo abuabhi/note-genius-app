@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Book, File, FileText, Loader2 } from "lucide-react";
 import { processSelectedDocument } from "./importUtils";
+import { OneNoteConnection } from "./OneNoteConnection";
 
 interface ApiImportProps {
   onImport: (type: string, content: string) => void;
@@ -18,6 +19,7 @@ export const ApiImport = ({ onImport }: ApiImportProps) => {
   const [pageId, setPageId] = useState("");
   const [importType, setImportType] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [oneNoteToken, setOneNoteToken] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleImport = async () => {
@@ -30,44 +32,67 @@ export const ApiImport = ({ onImport }: ApiImportProps) => {
       return;
     }
     
-    if (!apiKey) {
-      toast({
-        title: "API Key Required",
-        description: "Please enter a valid API key or access token.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (!pageId) {
-      toast({
-        title: "Page/Document ID Required",
-        description: "Please enter a valid page or document ID.",
-        variant: "destructive",
-      });
-      return;
+    // Validate inputs based on import type
+    if (importType === "onenote") {
+      if (!oneNoteToken) {
+        toast({
+          title: "Authentication Required",
+          description: "Please connect to OneNote first.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (!pageId) {
+        toast({
+          title: "Page ID Required",
+          description: "Please enter a OneNote page ID.",
+          variant: "destructive",
+        });
+        return;
+      }
+    } else {
+      if (!apiKey) {
+        toast({
+          title: "API Key Required",
+          description: "Please enter a valid API key or access token.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (!pageId) {
+        toast({
+          title: "Page/Document ID Required",
+          description: "Please enter a valid page or document ID.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
     
     setIsProcessing(true);
     
     try {
       // Prepare API parameters based on the import type
-      const apiParams: Record<string, any> = {
-        token: apiKey,
-      };
+      const apiParams: Record<string, any> = {};
       
       // Add specific parameters based on import type
       switch (importType) {
         case "notion":
+          apiParams.token = apiKey;
           apiParams.pageId = pageId;
           break;
         case "onenote":
+          apiParams.token = oneNoteToken;
           apiParams.pageId = pageId;
           break;
         case "evernote":
+          apiParams.token = apiKey;
           apiParams.noteGuid = pageId;
           break;
         case "googledocs":
+          apiParams.token = apiKey;
           apiParams.documentId = pageId;
           break;
       }
@@ -144,19 +169,23 @@ export const ApiImport = ({ onImport }: ApiImportProps) => {
       
       {importType && (
         <div className="space-y-4 mt-4 p-4 border rounded-md">
-          <div>
-            <Label htmlFor="api-token">API Token/Integration Key</Label>
-            <Input
-              id="api-token"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder={getPlaceholderText(importType, 'token')}
-              className="mt-1"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              {getApiInstructions(importType)}
-            </p>
-          </div>
+          {importType === 'onenote' ? (
+            <OneNoteConnection onConnected={token => setOneNoteToken(token)} />
+          ) : (
+            <div>
+              <Label htmlFor="api-token">API Token/Integration Key</Label>
+              <Input
+                id="api-token"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder={getPlaceholderText(importType, 'token')}
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {getApiInstructions(importType)}
+              </p>
+            </div>
+          )}
           
           <div>
             <Label htmlFor="page-id">{getLabelText(importType)}</Label>
@@ -171,7 +200,8 @@ export const ApiImport = ({ onImport }: ApiImportProps) => {
           
           <Button 
             onClick={handleImport} 
-            disabled={isProcessing || !apiKey || !pageId}
+            disabled={isProcessing || 
+              (importType === 'onenote' ? !oneNoteToken || !pageId : !apiKey || !pageId)}
           >
             {isProcessing ? (
               <>

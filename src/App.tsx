@@ -23,6 +23,7 @@ import StudyPage from "@/pages/StudyPage";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
+import MicrosoftAuthCallback from "@/components/auth/MicrosoftAuthCallback";
 
 function App() {
   return (
@@ -49,6 +50,7 @@ function App() {
             <Route path="/collaborate" element={<CollaborationPage />} />
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/faq" element={<FAQPage />} />
+            <Route path="/auth/microsoft-callback" element={<MicrosoftAuthCallback />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
           <Toaster />
