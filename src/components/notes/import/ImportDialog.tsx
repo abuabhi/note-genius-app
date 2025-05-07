@@ -1,23 +1,22 @@
+
 import { useState } from "react";
 import { 
   Sheet, 
   SheetContent, 
   SheetDescription, 
-  SheetFooter, 
   SheetHeader, 
   SheetTitle, 
   SheetTrigger 
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { FileUp, Loader2 } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FileUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Note } from "@/types/note";
-import { FileUpload } from "./FileUpload";
-import { ApiImport } from "./ApiImport";
 import { ProcessedDocumentPreview } from "./ProcessedDocumentPreview";
 import { useImportState } from "./useImportState";
 import { processSelectedDocument } from "./importUtils";
+import { ImportTabs } from "./tabs/ImportTabs";
+import { ImportDialogFooter } from "./ImportDialogFooter";
 
 interface ImportDialogProps {
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<boolean>;
@@ -179,80 +178,12 @@ export const ImportDialog = ({ onSaveNote }: ImportDialogProps) => {
           />
         )}
         
-        <SheetFooter className="mt-4">
-          <Button
-            onClick={handleSaveImportedNote}
-            disabled={!importState.extractedText || isSaving}
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>Save as Note</>
-            )}
-          </Button>
-        </SheetFooter>
+        <ImportDialogFooter
+          onSave={handleSaveImportedNote}
+          hasContent={!!importState.extractedText}
+          isSaving={isSaving}
+        />
       </SheetContent>
     </Sheet>
-  );
-};
-
-interface ImportTabsProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
-  onFileSelected: (file: File) => void;
-  onApiImport: (type: string, content: string) => void;
-  selectedFile: File | null;
-  processDocument: () => Promise<void>;
-  isProcessing: boolean;
-}
-
-const ImportTabs = ({ 
-  activeTab, 
-  setActiveTab,
-  onFileSelected,
-  onApiImport,
-  selectedFile,
-  processDocument,
-  isProcessing
-}: ImportTabsProps) => {
-  return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-      <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="file">File Import</TabsTrigger>
-        <TabsTrigger value="api">API Import</TabsTrigger>
-      </TabsList>
-      
-      <TabsContent value="file" className="min-h-[300px] flex flex-col items-center justify-center">
-        <FileUpload 
-          onFileSelected={onFileSelected}
-          acceptedTypes=".pdf,.docx,.doc"
-          selectedFile={selectedFile}
-        />
-        
-        {selectedFile && (
-          <Button 
-            onClick={processDocument} 
-            disabled={isProcessing} 
-            className="mt-4"
-          >
-            {isProcessing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              <>Process Document</>
-            )}
-          </Button>
-        )}
-      </TabsContent>
-      
-      <TabsContent value="api" className="min-h-[300px]">
-        <ApiImport onImport={onApiImport} />
-      </TabsContent>
-    </Tabs>
   );
 };
