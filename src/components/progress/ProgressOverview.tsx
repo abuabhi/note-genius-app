@@ -5,6 +5,7 @@ import { ChartPie, ChartBar, Zap, Trophy, BookOpen, Calendar } from "lucide-reac
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFlashcards } from "@/contexts/FlashcardContext";
+import { FlashcardSet } from "@/types/flashcard";
 
 const ProgressOverview = () => {
   const { user } = useAuth();
@@ -47,25 +48,31 @@ const ProgressOverview = () => {
         }
         
         try {
-          // Get sets count - need to be careful with the return type
-          const fetchSets = async () => {
-            // We'll use this wrapper function to handle the return type safely
+          // Get sets count - we need a better approach that won't cause TypeScript errors
+          const fetchSetsData = async (): Promise<FlashcardSet[] | null> => {
             try {
+              // We need to handle the scenario where fetchFlashcardSets might return void
               const result = fetchFlashcardSets();
-              // Check if result is a Promise
+              
+              // If the result is a Promise, await it
               if (result instanceof Promise) {
-                return await result;
+                const sets = await result;
+                return sets;
               }
-              // If it's not a Promise, we can't get data from it
-              return null;
+              
+              // If it's not a Promise and not returning anything, return empty array
+              return [];
             } catch (e) {
-              console.error("Error in fetchSets:", e);
+              console.error("Error in fetchSetsData:", e);
               return null;
             }
           };
           
-          const sets = await fetchSets();
-          if (sets && Array.isArray(sets)) {
+          // Call our wrapper function
+          const sets = await fetchSetsData();
+          
+          // Now safely check if sets exists and is an array
+          if (sets !== null) {
             setCount = sets.length;
           }
         } catch (error) {
