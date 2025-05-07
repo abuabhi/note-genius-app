@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ChartPie, ChartBar, Zap, Trophy, BookOpen, Calendar } from "lucide-react";
@@ -29,11 +30,26 @@ const ProgressOverview = () => {
       try {
         // In a real app, we'd make API calls to get this data
         // For now, we'll use some mock data combined with real flashcard counts
-        const flashcardsData = await fetchFlashcards();
-        const setsData = await fetchFlashcardSets();
+        let flashcardCount = 0;
+        let setCount = 0;
         
-        const flashcardCount = flashcardsData ? flashcardsData.length : 0;
-        const setCount = setsData ? setsData.length : 0;
+        try {
+          const flashcardsData = await fetchFlashcards();
+          if (flashcardsData) {
+            flashcardCount = flashcardsData.length;
+          }
+        } catch (error) {
+          console.error("Error fetching flashcards:", error);
+        }
+        
+        try {
+          const setsData = await fetchFlashcardSets();
+          if (setsData) {
+            setCount = setsData.length;
+          }
+        } catch (error) {
+          console.error("Error fetching sets:", error);
+        }
         
         setStats({
           completedCourses: Math.floor(Math.random() * 8) + 1,

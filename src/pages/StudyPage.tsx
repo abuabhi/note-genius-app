@@ -14,7 +14,7 @@ export type StudyMode = "learn" | "review" | "test";
 const StudyPageContent = () => {
   const { setId } = useParams<{ setId: string }>();
   const [mode, setMode] = useState<StudyMode>("learn");
-  const { fetchFlashcardsInSet, currentSet, setCurrentSet, fetchFlashcardSets } = useFlashcards();
+  const { fetchFlashcardSets, currentSet, setCurrentSet } = useFlashcards();
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
@@ -25,7 +25,7 @@ const StudyPageContent = () => {
         const sets = await fetchFlashcardSets();
         
         // Then find the current set if we have a setId
-        if (setId && sets && sets.length > 0) {
+        if (setId && sets) {
           const foundSet = sets.find(s => s.id === setId);
           if (foundSet) {
             setCurrentSet(foundSet);
