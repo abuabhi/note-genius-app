@@ -17,6 +17,7 @@ import SettingsPage from "@/pages/SettingsPage";
 import CollaborationPage from "@/pages/CollaborationPage";
 import PricingPage from "@/pages/PricingPage";
 import FAQPage from "@/pages/FAQPage";
+import FlashcardLibraryPage from "@/pages/FlashcardLibraryPage";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -35,6 +36,7 @@ function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/notes" element={<NotesPage />} />
             <Route path="/flashcards" element={<FlashcardsPage />} />
+            <Route path="/flashcard-library" element={<FlashcardLibraryPage />} />
             <Route path="/note-to-flashcard" element={<NoteToFlashcardPage />} />
             <Route path="/schedule" element={<SchedulePage />} />
             <Route path="/quiz" element={<QuizPage />} />

@@ -47,6 +47,10 @@ export interface FlashcardContextType {
   // Category operations
   fetchCategories: () => Promise<void>;
   
+  // Library operations
+  fetchBuiltInSets: () => Promise<FlashcardSet[]>;
+  cloneFlashcardSet: (setId: string) => Promise<FlashcardSet>;
+  
   // Current states
   setCurrentFlashcard: (flashcard: Flashcard | null) => void;
   setCurrentSet: (set: FlashcardSet | null) => void;
