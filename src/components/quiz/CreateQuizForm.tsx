@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -83,7 +84,7 @@ export const CreateQuizForm = ({
   const { createQuiz } = useQuizzes();
   const { subjects } = useSubjects();
   const { grades } = useGrades();
-  const { sections } = useSections({});
+  const { sections } = useSections();
   const navigate = useNavigate();
   
   const [filteredSections, setFilteredSections] = useState(sections || []);
