@@ -6,12 +6,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useFlashcards } from "@/contexts/FlashcardContext";
 import { useGrades } from "./useGrades";
+import { useSubjects } from "./useSubjects";
+import { useSections } from "./useSections";
 
 export const useCSVImport = () => {
   const [isImporting, setIsImporting] = useState(false);
   const [results, setResults] = useState<CSVUploadResult | null>(null);
   const { fetchCategories } = useFlashcards();
-  const { grades, importGradesFromCSV } = useGrades();
+  const { importGradesFromCSV } = useGrades();
+  const { importSubjectsFromCSV } = useSubjects();
+  const { importSectionsFromCSV } = useSections();
 
   // Parse CSV file
   const parseCSV = (file: File): Promise<any[]> => {
@@ -114,44 +118,29 @@ export const useCSVImport = () => {
       // Parse CSV file
       const rows = await parseCSV(file);
       
-      // Get current grades for reference
-      const { data: currentGrades } = await supabase.from("grades").select("id, name");
-      const gradeMap = new Map(currentGrades?.map(g => [g.name.toLowerCase(), g.id]) || []);
-      
       // Validate and format data
-      const validRows: any[] = [];
+      const validRows: CSVSubjectRow[] = [];
       const errors: { row: number; message: string }[] = [];
       
-      for (let i = 0; i < rows.length; i++) {
-        const row = rows[i] as CSVSubjectRow;
-        
+      rows.forEach((row: any, index) => {
         // Validate required fields
         if (!row.name) {
-          errors.push({ row: i + 1, message: "Name is required" });
-          continue;
+          errors.push({ row: index + 1, message: "Name is required" });
+          return;
         }
         
         if (!row.grade_name) {
-          errors.push({ row: i + 1, message: "Grade name is required" });
-          continue;
-        }
-        
-        // Check if grade exists
-        const gradeName = row.grade_name.trim().toLowerCase();
-        const gradeId = gradeMap.get(gradeName);
-        
-        if (!gradeId) {
-          errors.push({ row: i + 1, message: `Grade "${row.grade_name}" not found` });
-          continue;
+          errors.push({ row: index + 1, message: "Grade name is required" });
+          return;
         }
         
         // Format and add to valid rows
         validRows.push({
           name: row.name.trim(),
-          grade_id: gradeId,
-          description: row.description || null
+          grade_name: row.grade_name.trim(),
+          description: row.description || undefined
         });
-      }
+      });
       
       // If there are no valid rows, return result with errors
       if (validRows.length === 0) {
@@ -166,26 +155,22 @@ export const useCSVImport = () => {
       }
       
       // Import valid rows
-      const { data, error } = await supabase
-        .from("subject_categories")
-        .insert(validRows)
-        .select();
+      const { success, result, error } = await importSubjectsFromCSV(validRows);
       
-      if (error) throw error;
+      if (!success || error) {
+        throw error || new Error("Failed to import subjects");
+      }
       
-      // Refresh categories
-      fetchCategories();
-      
-      const result = {
-        totalRows: rows.length,
-        successCount: data?.length || 0,
-        errorCount: errors.length,
-        errors
+      // Merge any parse errors with import errors
+      const finalResult = {
+        ...result,
+        errors: [...(result?.errors || []), ...errors],
+        errorCount: (result?.errorCount || 0) + errors.length
       };
       
-      setResults(result);
-      toast.success(`Imported ${result.successCount} subjects successfully`);
-      return result;
+      setResults(finalResult);
+      toast.success(`Imported ${finalResult.successCount} subjects successfully`);
+      return finalResult;
     } catch (error) {
       console.error("Error importing subjects:", error);
       const errorResult = {
@@ -210,70 +195,35 @@ export const useCSVImport = () => {
       // Parse CSV file
       const rows = await parseCSV(file);
       
-      // Get current grades and subjects for reference
-      const { data: currentGrades } = await supabase.from("grades").select("id, name");
-      const gradeMap = new Map(currentGrades?.map(g => [g.name.toLowerCase(), g.id]) || []);
-      
-      const { data: currentSubjects } = await supabase.from("subject_categories").select("id, name, grade_id");
-      const subjectMap = new Map();
-      
-      currentSubjects?.forEach(subject => {
-        // Use subject name + grade_id as key to ensure uniqueness
-        subjectMap.set(`${subject.name.toLowerCase()}_${subject.grade_id}`, subject.id);
-      });
-      
       // Validate and format data
-      const validRows: any[] = [];
+      const validRows: CSVSectionRow[] = [];
       const errors: { row: number; message: string }[] = [];
       
-      for (let i = 0; i < rows.length; i++) {
-        const row = rows[i] as CSVSectionRow;
-        
+      rows.forEach((row: any, index) => {
         // Validate required fields
         if (!row.name) {
-          errors.push({ row: i + 1, message: "Name is required" });
-          continue;
+          errors.push({ row: index + 1, message: "Name is required" });
+          return;
         }
         
         if (!row.subject_name) {
-          errors.push({ row: i + 1, message: "Subject name is required" });
-          continue;
+          errors.push({ row: index + 1, message: "Subject name is required" });
+          return;
         }
         
         if (!row.grade_name) {
-          errors.push({ row: i + 1, message: "Grade name is required" });
-          continue;
-        }
-        
-        // Check if grade exists
-        const gradeName = row.grade_name.trim().toLowerCase();
-        const gradeId = gradeMap.get(gradeName);
-        
-        if (!gradeId) {
-          errors.push({ row: i + 1, message: `Grade "${row.grade_name}" not found` });
-          continue;
-        }
-        
-        // Check if subject exists
-        const subjectName = row.subject_name.trim().toLowerCase();
-        const subjectKey = `${subjectName}_${gradeId}`;
-        const subjectId = subjectMap.get(subjectKey);
-        
-        if (!subjectId) {
-          errors.push({ 
-            row: i + 1, 
-            message: `Subject "${row.subject_name}" not found for grade "${row.grade_name}"` 
-          });
-          continue;
+          errors.push({ row: index + 1, message: "Grade name is required" });
+          return;
         }
         
         // Format and add to valid rows
         validRows.push({
           name: row.name.trim(),
-          subject_id: subjectId,
-          description: row.description || null
+          subject_name: row.subject_name.trim(),
+          grade_name: row.grade_name.trim(),
+          description: row.description || undefined
         });
-      }
+      });
       
       // If there are no valid rows, return result with errors
       if (validRows.length === 0) {
@@ -288,23 +238,22 @@ export const useCSVImport = () => {
       }
       
       // Import valid rows
-      const { data, error } = await supabase
-        .from("sections")
-        .insert(validRows)
-        .select();
+      const { success, result, error } = await importSectionsFromCSV(validRows);
       
-      if (error) throw error;
+      if (!success || error) {
+        throw error || new Error("Failed to import sections");
+      }
       
-      const result = {
-        totalRows: rows.length,
-        successCount: data?.length || 0,
-        errorCount: errors.length,
-        errors
+      // Merge any parse errors with import errors
+      const finalResult = {
+        ...result,
+        errors: [...(result?.errors || []), ...errors],
+        errorCount: (result?.errorCount || 0) + errors.length
       };
       
-      setResults(result);
-      toast.success(`Imported ${result.successCount} sections successfully`);
-      return result;
+      setResults(finalResult);
+      toast.success(`Imported ${finalResult.successCount} sections successfully`);
+      return finalResult;
     } catch (error) {
       console.error("Error importing sections:", error);
       const errorResult = {
@@ -482,6 +431,10 @@ export const useCSVImport = () => {
       };
       
       setResults(result);
+      
+      // Refresh flashcard data
+      fetchCategories();
+      
       toast.success(`Imported ${successCount} flashcards in ${flashcardsBySet.size} sets successfully`);
       return result;
     } catch (error) {

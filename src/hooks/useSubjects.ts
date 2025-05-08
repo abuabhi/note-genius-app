@@ -2,32 +2,33 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Section, CSVSectionRow } from "@/types/admin";
+import { CSVSubjectRow } from "@/types/admin";
+import { SubjectCategory } from "@/types/flashcard";
 import { toast } from "sonner";
 
-export const useSections = () => {
+export const useSubjects = () => {
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
 
-  // Fetch all sections with subject information
-  const { data: sections = [], isLoading } = useQuery({
-    queryKey: ["sections"],
+  // Fetch all subjects with grade information
+  const { data: subjects = [], isLoading } = useQuery({
+    queryKey: ["subjects"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("sections")
-        .select("*, subject_categories(*)");
+        .from("subject_categories")
+        .select("*, grades(*)");
 
       if (error) throw error;
-      return data as Section[];
+      return data as (SubjectCategory & { grades: any })[];
     },
   });
 
-  // Create section
-  const createSection = useMutation({
-    mutationFn: async (newSection: Omit<Section, "id" | "created_at" | "updated_at" | "subject">) => {
+  // Create subject
+  const createSubject = useMutation({
+    mutationFn: async (newSubject: Omit<SubjectCategory, "id" | "created_at" | "updated_at">) => {
       const { data, error } = await supabase
-        .from("sections")
-        .insert(newSection)
+        .from("subject_categories")
+        .insert(newSubject)
         .select()
         .single();
 
@@ -35,21 +36,21 @@ export const useSections = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sections"] });
-      toast.success("Section created successfully");
+      queryClient.invalidateQueries({ queryKey: ["subjects"] });
+      toast.success("Subject created successfully");
     },
     onError: (error) => {
-      toast.error("Failed to create section");
-      console.error("Error creating section:", error);
+      toast.error("Failed to create subject");
+      console.error("Error creating subject:", error);
     }
   });
 
-  // Update section
-  const updateSection = useMutation({
-    mutationFn: async ({ id, subject, ...updatedSection }: Section) => {
+  // Update subject
+  const updateSubject = useMutation({
+    mutationFn: async ({ id, ...updatedSubject }: SubjectCategory) => {
       const { data, error } = await supabase
-        .from("sections")
-        .update(updatedSection)
+        .from("subject_categories")
+        .update(updatedSubject)
         .eq("id", id)
         .select()
         .single();
@@ -58,20 +59,20 @@ export const useSections = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sections"] });
-      toast.success("Section updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["subjects"] });
+      toast.success("Subject updated successfully");
     },
     onError: (error) => {
-      toast.error("Failed to update section");
-      console.error("Error updating section:", error);
+      toast.error("Failed to update subject");
+      console.error("Error updating subject:", error);
     }
   });
 
-  // Delete section
-  const deleteSection = useMutation({
+  // Delete subject
+  const deleteSubject = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("sections")
+        .from("subject_categories")
         .delete()
         .eq("id", id);
 
@@ -79,17 +80,17 @@ export const useSections = () => {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sections"] });
-      toast.success("Section deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["subjects"] });
+      toast.success("Subject deleted successfully");
     },
     onError: (error) => {
-      toast.error("Failed to delete section");
-      console.error("Error deleting section:", error);
+      toast.error("Failed to delete subject");
+      console.error("Error deleting subject:", error);
     }
   });
 
-  // Bulk import sections from CSV
-  const importSectionsFromCSV = async (rows: CSVSectionRow[]): Promise<{
+  // Bulk import subjects from CSV
+  const importSubjectsFromCSV = async (rows: CSVSubjectRow[]): Promise<{
     success: boolean;
     result?: any;
     error?: any;
@@ -97,14 +98,7 @@ export const useSections = () => {
     try {
       setLoading(true);
       
-      // Get current subject categories for reference
-      const { data: subjects, error: subjectsError } = await supabase
-        .from("subject_categories")
-        .select("id, name, grade_id");
-        
-      if (subjectsError) throw subjectsError;
-      
-      // Get grades for reference
+      // Get current grades for reference
       const { data: grades, error: gradesError } = await supabase
         .from("grades")
         .select("id, name");
@@ -126,11 +120,6 @@ export const useSections = () => {
           continue;
         }
         
-        if (!row.subject_name) {
-          errors.push({ row: i + 1, message: "Subject name is required" });
-          continue;
-        }
-        
         if (!row.grade_name) {
           errors.push({ row: i + 1, message: "Grade name is required" });
           continue;
@@ -145,24 +134,10 @@ export const useSections = () => {
           continue;
         }
         
-        // Find subject id
-        const subject = subjects?.find(s => 
-          s.name.toLowerCase() === row.subject_name.trim().toLowerCase() && 
-          s.grade_id === gradeId
-        );
-        
-        if (!subject) {
-          errors.push({ 
-            row: i + 1, 
-            message: `Subject "${row.subject_name}" not found for grade "${row.grade_name}"` 
-          });
-          continue;
-        }
-        
         // Add to valid rows
         validRows.push({
           name: row.name.trim(),
-          subject_id: subject.id,
+          grade_id: gradeId,
           description: row.description || null
         });
       }
@@ -180,14 +155,14 @@ export const useSections = () => {
       
       // Insert valid rows
       const { data, error } = await supabase
-        .from("sections")
+        .from("subject_categories")
         .insert(validRows)
         .select();
         
       if (error) throw error;
       
-      // Refresh sections data
-      queryClient.invalidateQueries({ queryKey: ["sections"] });
+      // Refresh subjects data
+      queryClient.invalidateQueries({ queryKey: ["subjects"] });
       
       return { 
         success: true, 
@@ -199,7 +174,7 @@ export const useSections = () => {
         }
       };
     } catch (error) {
-      console.error("Error importing sections:", error);
+      console.error("Error importing subjects:", error);
       return { success: false, error };
     } finally {
       setLoading(false);
@@ -207,12 +182,12 @@ export const useSections = () => {
   };
 
   return {
-    sections,
+    subjects,
     isLoading,
     loading,
-    createSection,
-    updateSection,
-    deleteSection,
-    importSectionsFromCSV
+    createSubject,
+    updateSubject,
+    deleteSubject,
+    importSubjectsFromCSV
   };
 };

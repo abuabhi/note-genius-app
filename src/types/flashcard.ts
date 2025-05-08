@@ -1,76 +1,71 @@
 
-export type FlashcardDifficulty = 1 | 2 | 3 | 4 | 5;
-
-export interface Flashcard {
+export interface SubjectCategory {
   id: string;
-  front_content: string;
-  back_content: string;
-  difficulty: FlashcardDifficulty;
-  created_at: string;
-  updated_at: string;
-  is_built_in: boolean;
-  last_reviewed_at?: string;
-  next_review_at?: string;
+  name: string;
+  grade_id?: string;
+  parent_id?: string | null;
+  level?: number;
+  created_at?: string;
+  updated_at?: string;
+  description?: string | null;
 }
 
 export interface FlashcardSet {
   id: string;
   name: string;
-  description?: string;
+  description?: string | null;
+  user_id?: string | null;
+  category_id?: string | null;
+  section_id?: string | null;
+  subject?: string | null;
+  topic?: string | null;
   created_at: string;
   updated_at: string;
-  is_built_in: boolean;
-  category_id?: string;
-  subject?: string;
-  topic?: string;
-  card_count?: number; // Computed field for UI
+  is_built_in?: boolean;
+  cards_count?: number;
 }
 
-export interface FlashcardSetCard {
+export interface Flashcard {
   id: string;
-  flashcard_id: string;
-  set_id: string;
-  position: number;
+  front_content: string;
+  back_content: string;
+  difficulty?: number;
+  user_id?: string | null;
   created_at: string;
-  flashcard?: Flashcard; // For eager loading
+  updated_at: string;
+  last_reviewed_at?: string | null;
+  next_review_at?: string | null;
+  is_built_in?: boolean;
+  position?: number; // Used when part of a set
 }
 
 export interface FlashcardProgress {
   id: string;
+  user_id: string;
   flashcard_id: string;
-  ease_factor: number;
+  last_reviewed_at: string | null;
+  next_review_at: string | null;
   interval: number;
   repetition: number;
-  last_reviewed_at?: string;
-  next_review_at?: string;
-  last_score?: number;
-  created_at: string;
-  updated_at: string;
+  ease_factor: number;
+  last_score: number | null;
 }
 
-export interface SubjectCategory {
+export enum StudyMode {
+  LEARN = 'learn',
+  REVIEW = 'review',
+  TEST = 'test',
+}
+
+export interface FlashcardTag {
   id: string;
   name: string;
-  parent_id?: string;
-  level: number;
-  created_at: string;
-  updated_at: string;
-  subcategories?: SubjectCategory[]; // For hierarchical display
+  color?: string;
 }
 
-export type FlashcardScore = 0 | 1 | 2 | 3 | 4 | 5;
-
-export interface CreateFlashcardPayload {
-  front_content: string;
-  back_content: string;
-  difficulty?: FlashcardDifficulty;
-}
-
-export interface CreateFlashcardSetPayload {
-  name: string;
-  description?: string;
-  subject?: string;
-  topic?: string;
-  category_id?: string;
-  is_built_in?: boolean; // Added this field to fix the type error
+export interface LibraryFilter {
+  grades?: string[];
+  subjects?: string[];
+  sections?: string[];
+  searchTerm?: string;
 }
