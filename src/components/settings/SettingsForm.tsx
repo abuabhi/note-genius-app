@@ -16,12 +16,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCountries } from "@/hooks/useCountries";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserTier } from "@/hooks/useUserTier";
+import { UserTier } from "@/hooks/useRequireAuth";
 
 const SettingsForm = () => {
   const { userTier } = useUserTier();
   const { countries, userCountry, updateUserCountry } = useCountries();
   const { user } = useAuth();
-  const isDeanUser = userTier === 'DEAN';
+  const isDeanUser = userTier === UserTier.DEAN;
   
   const [settings, setSettings] = useState({
     email: user?.email || "user@example.com",
@@ -109,7 +110,7 @@ const SettingsForm = () => {
             />
           </div>
           
-          {(isDeanUser || userTier === "ADMIN") && (
+          {(isDeanUser || userTier === UserTier.ADMIN) && (
             <div className="space-y-2">
               <Label htmlFor="country">Country</Label>
               <Select
