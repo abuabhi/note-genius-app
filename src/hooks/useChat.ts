@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { UserProfile } from "@/hooks/useRequireAuth";
+import { UserProfile, UserTier } from "@/hooks/useRequireAuth";
 import { ChatMessage, ChatConversation, UserConnection } from "@/types/chat";
 import { useToast } from "@/hooks/use-toast";
 
@@ -25,19 +25,19 @@ export const useChat = () => {
       setLoadingConversations(true);
       try {
         const { data, error } = await supabase
-          .from('chat_conversation_participants')
+          .from('conversation_participants')
           .select(`
             conversation_id,
-            conversation:conversations!inner(
+            conversation:chat_conversations!inner(
               id,
               created_at,
               updated_at,
               last_message_at
             ),
-            participants:chat_conversation_participants!conversations_id_fkey(
+            participants:conversation_participants!chat_conversations_id_fkey(
               user_id,
               last_read_at,
-              profile:profiles!chat_conversation_participants_user_id_fkey(
+              profile:profiles!conversation_participants_user_id_fkey(
                 id,
                 username,
                 avatar_url,
@@ -85,7 +85,14 @@ export const useChat = () => {
           .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`);
 
         if (error) throw error;
-        setConnections(data);
+        
+        // Ensure the status is of the correct type
+        const typedConnections = data.map(conn => ({
+          ...conn,
+          status: conn.status as 'pending' | 'accepted' | 'declined' | 'blocked'
+        }));
+        
+        setConnections(typedConnections);
       } catch (error) {
         console.error('Error fetching connections:', error);
       } finally {
@@ -150,7 +157,7 @@ export const useChat = () => {
 
       // Update conversation last_message_at
       await supabase
-        .from('conversations')
+        .from('chat_conversations')
         .update({ last_message_at: new Date().toISOString() })
         .eq('id', conversationId);
 
@@ -169,7 +176,7 @@ export const useChat = () => {
 
     try {
       await supabase
-        .from('chat_conversation_participants')
+        .from('conversation_participants')
         .update({ last_read_at: new Date().toISOString() })
         .eq('conversation_id', conversationId)
         .eq('user_id', user.id);
@@ -190,7 +197,14 @@ export const useChat = () => {
         .limit(10);
 
       if (error) throw error;
-      return data;
+      
+      // Ensure the user_tier is properly typed
+      const typedProfiles = data.map(profile => ({
+        ...profile,
+        user_tier: profile.user_tier as UserTier
+      }));
+      
+      return typedProfiles;
     } catch (error) {
       console.error('Error searching users:', error);
       return [];
@@ -259,7 +273,7 @@ export const useChat = () => {
       if (data && data.length > 0) {
         // Create conversation for these users
         const { data: conversationData, error: convError } = await supabase
-          .from('conversations')
+          .from('chat_conversations')
           .insert({})
           .select();
 
@@ -270,13 +284,13 @@ export const useChat = () => {
         // Add participants to conversation
         await Promise.all([
           supabase
-            .from('chat_conversation_participants')
+            .from('conversation_participants')
             .insert({
               conversation_id: conversationId,
               user_id: user.id
             }),
           supabase
-            .from('chat_conversation_participants')
+            .from('conversation_participants')
             .insert({
               conversation_id: conversationId,
               user_id: data[0].sender_id
