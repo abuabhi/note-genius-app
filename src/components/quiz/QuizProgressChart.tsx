@@ -1,152 +1,148 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  ChartContainer, 
-  ChartTooltip, 
-  ChartTooltipContent
-} from "@/components/ui/chart";
-import { 
-  Bar, 
-  BarChart, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  ResponsiveContainer,
-  Tooltip,
-  Legend,
+import {
+  LineChart,
   Line,
-  LineChart 
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+  BarChart,
+  Bar,
 } from "recharts";
+import { useQuizResults } from "@/hooks/useQuizzes";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { isPremiumTier } from "@/utils/premiumFeatures";
-
-// Mock data - in a real app, this would come from an API
-const mockProgressData = [
-  { date: 'Mon', score: 65, avgTime: 45, quizzesCompleted: 1 },
-  { date: 'Tue', score: 70, avgTime: 42, quizzesCompleted: 2 },
-  { date: 'Wed', score: 0, avgTime: 0, quizzesCompleted: 0 }, // No quizzes taken
-  { date: 'Thu', score: 75, avgTime: 38, quizzesCompleted: 1 },
-  { date: 'Fri', score: 85, avgTime: 35, quizzesCompleted: 2 },
-  { date: 'Sat', score: 90, avgTime: 30, quizzesCompleted: 3 },
-  { date: 'Sun', score: 80, avgTime: 33, quizzesCompleted: 2 },
-];
-
-// Mock data for subject performance
-const mockSubjectData = [
-  { subject: 'Math', score: 85, quizzesCompleted: 5, strength: 'high' },
-  { subject: 'Geography', score: 70, quizzesCompleted: 3, strength: 'medium' },
-  { subject: 'History', score: 60, quizzesCompleted: 2, strength: 'medium' },
-  { subject: 'Science', score: 90, quizzesCompleted: 4, strength: 'high' },
-];
 
 const QuizProgressChart = () => {
-  const { userProfile } = useRequireAuth();
-  const isPremium = isPremiumTier(userProfile?.user_tier);
+  const { data: quizResults, isLoading } = useQuizResults();
+  
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <Skeleton className="h-6 w-48" />
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-80 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  if (!quizResults?.length) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Quiz Progress</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center py-12">
+          <p className="text-muted-foreground">
+            You haven't completed any quizzes yet. Take some quizzes to see your progress!
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  // Process data for score over time chart
+  const scoreData = quizResults.map((result) => {
+    const date = new Date(result.completed_at);
+    return {
+      name: `${date.getMonth() + 1}/${date.getDate()}`,
+      score: Math.round((result.score / result.total_questions) * 100),
+      quiz: result.quiz?.title || 'Untitled Quiz',
+    };
+  }).reverse();
+  
+  // Process data for subjects performance
+  const subjectPerformance: Record<string, { total: number; correct: number }> = {};
+  quizResults.forEach((result) => {
+    const quizTitle = result.quiz?.title || 'Other';
+    if (!subjectPerformance[quizTitle]) {
+      subjectPerformance[quizTitle] = { total: 0, correct: 0 };
+    }
+    subjectPerformance[quizTitle].total += result.total_questions;
+    subjectPerformance[quizTitle].correct += result.score;
+  });
+  
+  const subjectData = Object.entries(subjectPerformance).map(([subject, data]) => ({
+    name: subject,
+    percentage: Math.round((data.correct / data.total) * 100),
+    correct: data.correct,
+    total: data.total,
+  }));
   
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Quiz Performance</CardTitle>
+        <CardTitle>Quiz Progress</CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="weekly">
-          <TabsList>
-            <TabsTrigger value="weekly">Weekly Progress</TabsTrigger>
-            <TabsTrigger value="subjects">Subjects</TabsTrigger>
-            {isPremium && <TabsTrigger value="learning">Learning Curve</TabsTrigger>}
+        <Tabs defaultValue="scores">
+          <TabsList className="mb-4">
+            <TabsTrigger value="scores">Progress Over Time</TabsTrigger>
+            <TabsTrigger value="subjects">Performance by Quiz</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="weekly" className="pt-4">
-            <ChartContainer 
-              config={{
-                score: {
-                  label: 'Score',
-                  theme: { light: '#10b981', dark: '#10b981' }
-                },
-                quizzesCompleted: {
-                  label: 'Quizzes Completed',
-                  theme: { light: '#6366f1', dark: '#818cf8' }
-                }
-              }}
-              className="h-[300px]"
-            >
-              <BarChart data={mockProgressData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis yAxisId="left" orientation="left" stroke="#10b981" />
-                <YAxis yAxisId="right" orientation="right" stroke="#6366f1" />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Legend />
-                <Bar dataKey="score" name="Score" yAxisId="left" fill="#10b981" />
-                <Bar dataKey="quizzesCompleted" name="Quizzes Completed" yAxisId="right" fill="#6366f1" />
-              </BarChart>
-            </ChartContainer>
-            <p className="text-sm text-muted-foreground mt-4 text-center">
-              Your quiz scores and activity throughout the week
-            </p>
-          </TabsContent>
-          
-          <TabsContent value="subjects" className="pt-4">
-            <ChartContainer 
-              config={{
-                score: {
-                  label: 'Score',
-                  theme: { light: '#f59e0b', dark: '#fbbf24' }
-                },
-                quizzesCompleted: {
-                  label: 'Quizzes Completed',
-                  theme: { light: '#8b5cf6', dark: '#a78bfa' }
-                }
-              }}
-              className="h-[300px]"
-            >
-              <BarChart data={mockSubjectData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="subject" />
-                <YAxis />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Legend />
-                <Bar dataKey="score" name="Average Score" fill="#f59e0b" />
-                <Bar dataKey="quizzesCompleted" name="Quizzes Completed" fill="#8b5cf6" />
-              </BarChart>
-            </ChartContainer>
-            <p className="text-sm text-muted-foreground mt-4 text-center">
-              Your performance across different subjects
-            </p>
-          </TabsContent>
-          
-          {isPremium && (
-            <TabsContent value="learning" className="pt-4">
-              <ChartContainer 
-                config={{
-                  avgTime: {
-                    label: 'Avg. Time (sec)',
-                    theme: { light: '#ec4899', dark: '#f472b6' }
-                  },
-                  score: {
-                    label: 'Score',
-                    theme: { light: '#06b6d4', dark: '#22d3ee' }
-                  }
-                }}
-                className="h-[300px]"
-              >
-                <LineChart data={mockProgressData}>
+          <TabsContent value="scores">
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={scoreData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis yAxisId="left" orientation="left" stroke="#06b6d4" />
-                  <YAxis yAxisId="right" orientation="right" stroke="#ec4899" />
-                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <XAxis dataKey="name" />
+                  <YAxis domain={[0, 100]} />
+                  <Tooltip 
+                    formatter={(value) => [`${value}%`, 'Score']}
+                    labelFormatter={(label) => `Date: ${label}`}
+                  />
                   <Legend />
-                  <Line type="monotone" yAxisId="left" dataKey="score" name="Score Trend" stroke="#06b6d4" activeDot={{ r: 8 }} />
-                  <Line type="monotone" yAxisId="right" dataKey="avgTime" name="Response Time" stroke="#ec4899" />
+                  <Line
+                    type="monotone"
+                    dataKey="score"
+                    stroke="#3b82f6"
+                    activeDot={{ r: 8 }}
+                    name="Quiz Score (%)"
+                  />
                 </LineChart>
-              </ChartContainer>
-              <p className="text-sm text-muted-foreground mt-4 text-center">
-                Your learning curve shows improving scores and decreasing response times
-              </p>
-            </TabsContent>
-          )}
+              </ResponsiveContainer>
+            </div>
+            <p className="text-xs text-muted-foreground text-center mt-4">
+              Chart shows your quiz scores over time. Hover for details.
+            </p>
+          </TabsContent>
+          
+          <TabsContent value="subjects">
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={subjectData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis domain={[0, 100]} />
+                  <Tooltip 
+                    formatter={(value, name) => {
+                      if (name === 'percentage') return [`${value}%`, 'Score'];
+                      return [value, name];
+                    }}
+                    labelFormatter={(label) => `Quiz: ${label}`}
+                  />
+                  <Legend />
+                  <Bar
+                    dataKey="percentage"
+                    fill="#3b82f6"
+                    name="Score (%)"
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <p className="text-xs text-muted-foreground text-center mt-4">
+              Chart shows your performance across different quizzes.
+            </p>
+          </TabsContent>
         </Tabs>
       </CardContent>
     </Card>

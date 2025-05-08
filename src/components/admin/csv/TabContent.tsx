@@ -1,76 +1,236 @@
 
-import { ReactNode } from "react";
-import { TabsContent } from "@/components/ui/tabs";
+import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useGradesImport } from "@/hooks/csv/useGradesImport";
+import { useSubjectsImport } from "@/hooks/csv/useSubjectsImport";
+import { useSectionsImport } from "@/hooks/csv/useSectionsImport";
+import { useFlashcardsImport } from "@/hooks/csv/useFlashcardsImport";
+import { FileUploader } from "@/components/admin/csv/FileUploader";
+import { Button } from "@/components/ui/button";
+import { ImportResults } from "@/components/admin/csv/ImportResults";
+import { Download } from "lucide-react";
+import { QuizCSVImport } from "@/components/admin/csv/QuizCSVImport";
 
-interface TabContentProps {
-  value: string;
-  children: ReactNode;
-}
-
-export function TabContent({ value, children }: TabContentProps) {
+export const TabContent = () => {
+  const [gradesFile, setGradesFile] = useState<File | null>(null);
+  const [subjectsFile, setSubjectsFile] = useState<File | null>(null);
+  const [sectionsFile, setSectionsFile] = useState<File | null>(null);
+  const [flashcardsFile, setFlashcardsFile] = useState<File | null>(null);
+  
+  const {
+    importGrades,
+    getTemplateCSV: getGradesTemplate,
+    isImporting: isImportingGrades,
+    importResults: gradesResults,
+  } = useGradesImport();
+  
+  const {
+    importSubjects,
+    getTemplateCSV: getSubjectsTemplate,
+    isImporting: isImportingSubjects,
+    importResults: subjectsResults,
+  } = useSubjectsImport();
+  
+  const {
+    importSections,
+    getTemplateCSV: getSectionsTemplate,
+    isImporting: isImportingSections,
+    importResults: sectionsResults,
+  } = useSectionsImport();
+  
+  const {
+    importFlashcards,
+    getTemplateCSV: getFlashcardsTemplate,
+    isImporting: isImportingFlashcards,
+    importResults: flashcardsResults,
+  } = useFlashcardsImport();
+  
+  const handleGradesSubmit = () => {
+    if (gradesFile) {
+      importGrades(gradesFile);
+    }
+  };
+  
+  const handleSubjectsSubmit = () => {
+    if (subjectsFile) {
+      importSubjects(subjectsFile);
+    }
+  };
+  
+  const handleSectionsSubmit = () => {
+    if (sectionsFile) {
+      importSections(sectionsFile);
+    }
+  };
+  
+  const handleFlashcardsSubmit = () => {
+    if (flashcardsFile) {
+      importFlashcards(flashcardsFile);
+    }
+  };
+  
+  const downloadTemplate = (type: 'grades' | 'subjects' | 'sections' | 'flashcards') => {
+    let templateContent = '';
+    let filename = '';
+    
+    switch (type) {
+      case 'grades':
+        templateContent = getGradesTemplate();
+        filename = 'grades_template.csv';
+        break;
+      case 'subjects':
+        templateContent = getSubjectsTemplate();
+        filename = 'subjects_template.csv';
+        break;
+      case 'sections':
+        templateContent = getSectionsTemplate();
+        filename = 'sections_template.csv';
+        break;
+      case 'flashcards':
+        templateContent = getFlashcardsTemplate();
+        filename = 'flashcards_template.csv';
+        break;
+    }
+    
+    const blob = new Blob([templateContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  
   return (
-    <TabsContent value={value} className="space-y-4">
-      <div className="text-sm">
-        {children}
-      </div>
-    </TabsContent>
+    <Tabs defaultValue="grades" className="w-full">
+      <TabsList>
+        <TabsTrigger value="grades">Grades</TabsTrigger>
+        <TabsTrigger value="subjects">Subjects</TabsTrigger>
+        <TabsTrigger value="sections">Sections</TabsTrigger>
+        <TabsTrigger value="flashcards">Flashcards</TabsTrigger>
+        <TabsTrigger value="quizzes">Quizzes</TabsTrigger>
+      </TabsList>
+      
+      <TabsContent value="grades" className="space-y-4 pt-4">
+        <div>
+          <p className="text-sm text-muted-foreground mb-2">
+            Import grades from a CSV file. Download the template below for the correct format.
+          </p>
+          <Button variant="outline" size="sm" onClick={() => downloadTemplate('grades')}>
+            <Download className="mr-2 h-4 w-4" />
+            Download CSV Template
+          </Button>
+        </div>
+        
+        <FileUploader 
+          onFileSelect={setGradesFile} 
+          acceptedTypes=".csv"
+          description="Upload a CSV file with grade data"
+        />
+        
+        {gradesResults && <ImportResults results={gradesResults} />}
+        
+        <div className="flex justify-end">
+          <Button 
+            onClick={handleGradesSubmit} 
+            disabled={!gradesFile || isImportingGrades}
+          >
+            {isImportingGrades ? "Importing..." : "Import Grades"}
+          </Button>
+        </div>
+      </TabsContent>
+      
+      <TabsContent value="subjects" className="space-y-4 pt-4">
+        <div>
+          <p className="text-sm text-muted-foreground mb-2">
+            Import subjects from a CSV file. Download the template below for the correct format.
+          </p>
+          <Button variant="outline" size="sm" onClick={() => downloadTemplate('subjects')}>
+            <Download className="mr-2 h-4 w-4" />
+            Download CSV Template
+          </Button>
+        </div>
+        
+        <FileUploader 
+          onFileSelect={setSubjectsFile} 
+          acceptedTypes=".csv"
+          description="Upload a CSV file with subject data"
+        />
+        
+        {subjectsResults && <ImportResults results={subjectsResults} />}
+        
+        <div className="flex justify-end">
+          <Button 
+            onClick={handleSubjectsSubmit} 
+            disabled={!subjectsFile || isImportingSubjects}
+          >
+            {isImportingSubjects ? "Importing..." : "Import Subjects"}
+          </Button>
+        </div>
+      </TabsContent>
+      
+      <TabsContent value="sections" className="space-y-4 pt-4">
+        <div>
+          <p className="text-sm text-muted-foreground mb-2">
+            Import sections from a CSV file. Download the template below for the correct format.
+          </p>
+          <Button variant="outline" size="sm" onClick={() => downloadTemplate('sections')}>
+            <Download className="mr-2 h-4 w-4" />
+            Download CSV Template
+          </Button>
+        </div>
+        
+        <FileUploader 
+          onFileSelect={setSectionsFile} 
+          acceptedTypes=".csv"
+          description="Upload a CSV file with section data"
+        />
+        
+        {sectionsResults && <ImportResults results={sectionsResults} />}
+        
+        <div className="flex justify-end">
+          <Button 
+            onClick={handleSectionsSubmit} 
+            disabled={!sectionsFile || isImportingSections}
+          >
+            {isImportingSections ? "Importing..." : "Import Sections"}
+          </Button>
+        </div>
+      </TabsContent>
+      
+      <TabsContent value="flashcards" className="space-y-4 pt-4">
+        <div>
+          <p className="text-sm text-muted-foreground mb-2">
+            Import flashcards from a CSV file. Download the template below for the correct format.
+          </p>
+          <Button variant="outline" size="sm" onClick={() => downloadTemplate('flashcards')}>
+            <Download className="mr-2 h-4 w-4" />
+            Download CSV Template
+          </Button>
+        </div>
+        
+        <FileUploader 
+          onFileSelect={setFlashcardsFile} 
+          acceptedTypes=".csv"
+          description="Upload a CSV file with flashcard data"
+        />
+        
+        {flashcardsResults && <ImportResults results={flashcardsResults} />}
+        
+        <div className="flex justify-end">
+          <Button 
+            onClick={handleFlashcardsSubmit} 
+            disabled={!flashcardsFile || isImportingFlashcards}
+          >
+            {isImportingFlashcards ? "Importing..." : "Import Flashcards"}
+          </Button>
+        </div>
+      </TabsContent>
+      
+      <TabsContent value="quizzes" className="pt-4">
+        <QuizCSVImport />
+      </TabsContent>
+    </Tabs>
   );
-}
-
-export function GradesTabContent() {
-  return (
-    <TabContent value="grades">
-      <p>Upload a CSV file with the following columns:</p>
-      <ul className="list-disc list-inside mt-2">
-        <li><strong>name</strong> (required): The grade name (e.g., "Grade 1")</li>
-        <li><strong>level</strong> (required): A number representing the grade level</li>
-        <li><strong>description</strong> (optional): A description of the grade</li>
-      </ul>
-    </TabContent>
-  );
-}
-
-export function SubjectsTabContent() {
-  return (
-    <TabContent value="subjects">
-      <p>Upload a CSV file with the following columns:</p>
-      <ul className="list-disc list-inside mt-2">
-        <li><strong>name</strong> (required): The subject name (e.g., "Math")</li>
-        <li><strong>grade_name</strong> (required): The name of the grade this subject belongs to</li>
-        <li><strong>description</strong> (optional): A description of the subject</li>
-      </ul>
-    </TabContent>
-  );
-}
-
-export function SectionsTabContent() {
-  return (
-    <TabContent value="sections">
-      <p>Upload a CSV file with the following columns:</p>
-      <ul className="list-disc list-inside mt-2">
-        <li><strong>name</strong> (required): The section name (e.g., "Algebra")</li>
-        <li><strong>subject_name</strong> (required): The name of the subject this section belongs to</li>
-        <li><strong>grade_name</strong> (required): The name of the grade</li>
-        <li><strong>description</strong> (optional): A description of the section</li>
-      </ul>
-    </TabContent>
-  );
-}
-
-export function FlashcardsTabContent() {
-  return (
-    <TabContent value="flashcards">
-      <p>Upload a CSV file with the following columns:</p>
-      <ul className="list-disc list-inside mt-2">
-        <li><strong>set_name</strong> (required): The name of the flashcard set</li>
-        <li><strong>front_content</strong> (required): The content for the front of the flashcard</li>
-        <li><strong>back_content</strong> (required): The content for the back of the flashcard</li>
-        <li><strong>subject_name</strong> (required): The name of the subject</li>
-        <li><strong>grade_name</strong> (required): The name of the grade</li>
-        <li><strong>section_name</strong> (optional): The name of the section</li>
-        <li><strong>difficulty</strong> (optional): A number from 1-5 representing difficulty</li>
-      </ul>
-      <p className="mt-2">Note: All flashcards with the same set_name will be grouped into a single set.</p>
-    </TabContent>
-  );
-}
+};

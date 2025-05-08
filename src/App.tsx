@@ -28,6 +28,8 @@ const FAQPage = lazy(() => import('@/pages/FAQPage'));
 const ContactPage = lazy(() => import('@/pages/ContactPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 const QuizPage = lazy(() => import('@/pages/QuizPage'));
+const CreateQuizPage = lazy(() => import('@/pages/CreateQuizPage'));
+const TakeQuizPage = lazy(() => import('@/pages/TakeQuizPage'));
 
 // Admin pages
 const AdminFlashcardPage = lazy(() => import('@/pages/AdminFlashcardPage'));
@@ -65,6 +67,8 @@ function App() {
               <Route path="/flashcard-library" element={<FlashcardLibraryPage />} />
               <Route path="/study-sessions" element={<StudySessionsPage />} />
               <Route path="/quiz" element={<QuizPage />} />
+              <Route path="/quiz/create" element={<CreateQuizPage />} />
+              <Route path="/quiz/take/:quizId" element={<TakeQuizPage />} />
               <Route path="/progress" element={<ProgressPage />} />
               <Route path="/collaborate" element={<CollaborationPage />} />
               <Route path="/settings" element={<SettingsPage />} />

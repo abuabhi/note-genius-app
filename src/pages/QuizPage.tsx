@@ -8,10 +8,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { useNavigate } from "react-router-dom";
 
 const QuizPage = () => {
   const { userProfile } = useRequireAuth();
   const [activeTab, setActiveTab] = useState("quizzes");
+  const navigate = useNavigate();
   
   return (
     <Layout>
@@ -21,7 +23,10 @@ const QuizPage = () => {
             <h1 className="text-3xl font-bold mb-1">Quizzes</h1>
             <p className="text-muted-foreground">Test your knowledge and track your learning progress</p>
           </div>
-          <Button className="mt-4 sm:mt-0">
+          <Button 
+            className="mt-4 sm:mt-0"
+            onClick={() => navigate("/quiz/create")}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Create Quiz
           </Button>

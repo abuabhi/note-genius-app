@@ -331,6 +331,245 @@ export type Database = {
         }
         Relationships: []
       }
+      quiz_options: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_correct: boolean
+          position: number
+          question_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_correct?: boolean
+          position?: number
+          question_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_correct?: boolean
+          position?: number
+          question_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_options_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_question_responses: {
+        Row: {
+          created_at: string
+          id: string
+          is_correct: boolean
+          question_id: string
+          result_id: string
+          selected_option_id: string | null
+          time_spent_seconds: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_correct?: boolean
+          question_id: string
+          result_id: string
+          selected_option_id?: string | null
+          time_spent_seconds?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_correct?: boolean
+          question_id?: string
+          result_id?: string
+          selected_option_id?: string | null
+          time_spent_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_question_responses_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_question_responses_result_id_fkey"
+            columns: ["result_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_results"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_question_responses_selected_option_id_fkey"
+            columns: ["selected_option_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_options"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_questions: {
+        Row: {
+          created_at: string
+          difficulty: number | null
+          explanation: string | null
+          id: string
+          position: number
+          question: string
+          question_type: string
+          quiz_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          difficulty?: number | null
+          explanation?: string | null
+          id?: string
+          position?: number
+          question: string
+          question_type?: string
+          quiz_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          difficulty?: number | null
+          explanation?: string | null
+          id?: string
+          position?: number
+          question?: string
+          question_type?: string
+          quiz_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_results: {
+        Row: {
+          completed_at: string
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          quiz_id: string
+          score: number
+          total_questions: number
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          quiz_id: string
+          score: number
+          total_questions: number
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          quiz_id?: string
+          score?: number
+          total_questions?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_results_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quizzes: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          description: string | null
+          grade_id: string | null
+          id: string
+          is_public: boolean | null
+          section_id: string | null
+          source_id: string | null
+          source_type: string
+          title: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          grade_id?: string | null
+          id?: string
+          is_public?: boolean | null
+          section_id?: string | null
+          source_id?: string | null
+          source_type?: string
+          title: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          grade_id?: string | null
+          id?: string
+          is_public?: boolean | null
+          section_id?: string | null
+          source_id?: string | null
+          source_type?: string
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quizzes_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "subject_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quizzes_grade_id_fkey"
+            columns: ["grade_id"]
+            isOneToOne: false
+            referencedRelation: "grades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quizzes_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scan_data: {
         Row: {
           confidence: number | null
