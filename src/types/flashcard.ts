@@ -8,6 +8,7 @@ export interface SubjectCategory {
   created_at?: string;
   updated_at?: string;
   description?: string | null;
+  subcategories?: SubjectCategory[]; // Added for hierarchy
 }
 
 export interface FlashcardSet {
@@ -22,7 +23,8 @@ export interface FlashcardSet {
   created_at: string;
   updated_at: string;
   is_built_in?: boolean;
-  cards_count?: number;
+  cards_count?: number; // Original property
+  card_count?: number;  // Added for compatibility where it's already used
 }
 
 export interface Flashcard {
@@ -68,4 +70,28 @@ export interface LibraryFilter {
   subjects?: string[];
   sections?: string[];
   searchTerm?: string;
+}
+
+// Added missing types
+
+export type FlashcardDifficulty = 1 | 2 | 3 | 4 | 5;
+
+export type FlashcardScore = 0 | 1 | 2 | 3 | 4 | 5;
+
+export interface CreateFlashcardPayload {
+  front_content: string;
+  back_content: string;
+  difficulty?: FlashcardDifficulty;
+  user_id?: string;
+}
+
+export interface CreateFlashcardSetPayload {
+  name: string;
+  description?: string;
+  subject?: string;
+  topic?: string;
+  category_id?: string;
+  section_id?: string;
+  user_id?: string;
+  is_built_in?: boolean;
 }
