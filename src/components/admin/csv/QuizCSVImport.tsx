@@ -57,9 +57,11 @@ export const QuizCSVImport = () => {
           </div>
           
           <FileUploader 
-            onFileSelect={handleFileSelect} 
+            onFileChange={handleFileSelect} 
             acceptedTypes=".csv"
             description="Upload a CSV file with quiz data"
+            selectedFile={file}
+            isImporting={isImporting}
           />
           
           {importResults && <ImportResults results={importResults} />}

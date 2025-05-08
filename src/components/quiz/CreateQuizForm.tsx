@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -183,7 +182,7 @@ export const CreateQuizForm = ({
       toast({
         title: "Cannot remove question",
         description: "You need at least one question.",
-        variant: "warning"
+        variant: "destructive"
       });
     }
   };
@@ -197,7 +196,7 @@ export const CreateQuizForm = ({
       toast({
         title: "Maximum options reached",
         description: "You can only have up to 5 options per question.",
-        variant: "warning"
+        variant: "destructive"
       });
       return;
     }
@@ -217,7 +216,7 @@ export const CreateQuizForm = ({
       toast({
         title: "Cannot remove option",
         description: "You need at least two options.",
-        variant: "warning"
+        variant: "destructive"
       });
       return;
     }
@@ -228,7 +227,7 @@ export const CreateQuizForm = ({
       toast({
         title: "Cannot remove option",
         description: "You need at least one correct option.",
-        variant: "warning"
+        variant: "destructive"
       });
       return;
     }

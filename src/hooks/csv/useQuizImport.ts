@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { parseCSV } from '@/utils/csvUtils';
 import { supabase } from '@/integrations/supabase/client';
@@ -179,7 +178,7 @@ export const useQuizImport = () => {
         toast({
           title: "Import partially complete",
           description: `Imported ${successCount} out of ${totalRows} quiz questions. Check errors for details.`,
-          variant: "warning"
+          variant: "destructive"
         });
       } else {
         toast({

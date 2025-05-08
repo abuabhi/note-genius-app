@@ -4,12 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Download, Upload } from "lucide-react";
 
 interface FileUploaderProps {
-  selectedFile: File | null;
-  isImporting: boolean;
-  templateType: 'grades' | 'subjects' | 'sections' | 'flashcards';
-  onFileChange: (file: File | null) => void;
-  onImport: () => void;
-  getTemplateCSV: (type: 'grades' | 'subjects' | 'sections' | 'flashcards') => string;
+  selectedFile?: File | null;
+  isImporting?: boolean;
+  templateType?: 'grades' | 'subjects' | 'sections' | 'flashcards';
+  onFileChange?: (file: File | null) => void;
+  onImport?: () => void;
+  getTemplateCSV?: (type?: 'grades' | 'subjects' | 'sections' | 'flashcards') => string;
+  onFileSelect?: (file: File | null) => void; // For compatibility
+  acceptedTypes: string;
+  description: string;
 }
 
 export function FileUploader({
@@ -18,15 +21,22 @@ export function FileUploader({
   templateType,
   onFileChange,
   onImport,
-  getTemplateCSV
+  getTemplateCSV,
+  onFileSelect, // Added for backward compatibility
+  acceptedTypes,
+  description
 }: FileUploaderProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      onFileChange(e.target.files[0]);
+      const file = e.target.files[0];
+      if (onFileChange) onFileChange(file);
+      if (onFileSelect) onFileSelect(file); // For backward compatibility
     }
   };
   
   const downloadTemplate = () => {
+    if (!getTemplateCSV || !templateType) return;
+    
     const csvContent = getTemplateCSV(templateType);
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
@@ -52,34 +62,38 @@ export function FileUploader({
           <div>
             <h3 className="font-medium">Upload CSV File</h3>
             <p className="text-sm text-muted-foreground">
-              Select a CSV file to import {templateType}
+              {description}
             </p>
           </div>
-          <Button
-            variant="outline"
-            onClick={downloadTemplate}
-            className="flex items-center"
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Download Template
-          </Button>
+          {getTemplateCSV && templateType && (
+            <Button
+              variant="outline"
+              onClick={downloadTemplate}
+              className="flex items-center"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download Template
+            </Button>
+          )}
         </div>
 
         <div className="flex items-center gap-4">
           <input
             type="file"
-            accept=".csv"
+            accept={acceptedTypes}
             onChange={handleFileChange}
             className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border file:border-gray-300 file:text-sm file:font-semibold file:bg-transparent file:text-gray-700 hover:file:bg-gray-100"
           />
-          <Button 
-            onClick={onImport} 
-            disabled={!selectedFile || isImporting}
-            className="flex items-center"
-          >
-            <Upload className="mr-2 h-4 w-4" />
-            {isImporting ? "Importing..." : "Import"}
-          </Button>
+          {onImport && (
+            <Button 
+              onClick={onImport} 
+              disabled={!selectedFile || isImporting}
+              className="flex items-center"
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              {isImporting ? "Importing..." : "Import"}
+            </Button>
+          )}
         </div>
 
         {selectedFile && (

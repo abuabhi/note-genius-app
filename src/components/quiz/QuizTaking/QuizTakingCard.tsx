@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +6,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { CheckCircle, XCircle } from "lucide-react";
 import { Progress } from '@/components/ui/progress';
-import { useUserTier } from '@/hooks/useRequireAuth';
+import { useUserTier } from '@/hooks/useUserTier';
 import { Separator } from '@/components/ui/separator';
 import { useState as useStateHook } from 'react';
 

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,7 +34,7 @@ export const NoteToQuiz = () => {
       toast({
         title: "No notes selected",
         description: "Please select at least one note to generate a quiz.",
-        variant: "warning",
+        variant: "destructive"
       });
       return;
     }
