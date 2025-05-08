@@ -110,7 +110,7 @@ const SettingsForm = () => {
             />
           </div>
           
-          {(isDeanUser || userTier === UserTier.ADMIN) && (
+          {(isDeanUser || userTier === UserTier.DEAN) && (
             <div className="space-y-2">
               <Label htmlFor="country">Country</Label>
               <Select
