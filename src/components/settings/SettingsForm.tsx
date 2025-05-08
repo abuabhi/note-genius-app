@@ -13,12 +13,19 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { settingsFormSchema, type SettingsFormValues } from "./schemas/settingsFormSchema";
 import { Form } from "@/components/ui/form";
+import UnsavedChangesDialog from "./dialogs/UnsavedChangesDialog";
+import { useNavigate } from "react-router-dom";
+import { useUnsavedChangesPrompt } from "@/hooks/useUnsavedChangesPrompt";
 
 const SettingsForm = () => {
   const { userTier } = useUserTier();
   const { countries, userCountry, updateUserCountry } = useCountries();
   const { user } = useAuth();
   const isDeanUser = userTier === UserTier.DEAN;
+  const navigate = useNavigate();
+  
+  const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
   
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsFormSchema),
@@ -33,13 +40,27 @@ const SettingsForm = () => {
     mode: "onBlur",
   });
 
-  const { reset, formState: { isDirty } } = form;
+  const { reset, formState: { isDirty, isSubmitSuccessful } } = form;
+
+  // Use the unsaved changes prompt hook
+  const { handleNavigationAttempt } = useUnsavedChangesPrompt(
+    isDirty,
+    setShowUnsavedChangesDialog,
+    setPendingNavigation
+  );
 
   useEffect(() => {
     if (userCountry) {
       form.setValue("countryId", userCountry.id);
     }
   }, [userCountry, form]);
+
+  // Reset form when submission is successful
+  useEffect(() => {
+    if (isSubmitSuccessful) {
+      setShowUnsavedChangesDialog(false);
+    }
+  }, [isSubmitSuccessful]);
 
   const onSubmit = async (data: SettingsFormValues) => {
     try {
@@ -69,39 +90,57 @@ const SettingsForm = () => {
     });
   };
 
+  // Confirm navigation and discard changes
+  const confirmNavigation = () => {
+    setShowUnsavedChangesDialog(false);
+    if (pendingNavigation) {
+      navigate(pendingNavigation);
+      setPendingNavigation(null);
+    }
+  };
+
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <AccountSettingsCard 
-          user={user}
-          userTier={userTier}
-          form={form}
-          countries={countries}
-          onCountryChange={handleCountryChange}
-        />
+    <>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <AccountSettingsCard 
+            user={user}
+            userTier={userTier}
+            form={form}
+            countries={countries}
+            onCountryChange={handleCountryChange}
+          />
 
-        <NotificationsCard form={form} />
+          <NotificationsCard form={form} />
 
-        <AppearanceCard form={form} />
+          <AppearanceCard form={form} />
 
-        <div className="flex justify-between">
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={() => reset()}
-            disabled={!isDirty}
-          >
-            Reset
-          </Button>
-          <Button 
-            type="submit" 
-            disabled={!isDirty || form.formState.isSubmitting}
-          >
-            {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
-          </Button>
-        </div>
-      </form>
-    </Form>
+          <div className="flex justify-between">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => reset()}
+              disabled={!isDirty}
+            >
+              Reset
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={!isDirty || form.formState.isSubmitting}
+            >
+              {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
+        </form>
+      </Form>
+
+      {/* Unsaved changes confirmation dialog */}
+      <UnsavedChangesDialog 
+        isOpen={showUnsavedChangesDialog}
+        onClose={() => setShowUnsavedChangesDialog(false)}
+        onConfirm={confirmNavigation}
+      />
+    </>
   );
 };
 
