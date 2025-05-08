@@ -2,6 +2,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { isPremiumTier } from "@/utils/premiumFeatures";
 
 type UserTier = 'SCHOLAR' | 'RESEARCHER' | 'DEAN' | 'ADMIN';
 
@@ -28,6 +29,7 @@ export const useUserTier = () => {
   return {
     userTier: data?.user_tier as UserTier | undefined,
     isLoading,
-    error
+    error,
+    isUserPremium: data ? isPremiumTier(data.user_tier as UserTier) : false
   };
 };
