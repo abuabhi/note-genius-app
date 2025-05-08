@@ -1,20 +1,15 @@
 
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { FormControl, FormField, FormItem, FormLabel, FormDescription } from "@/components/ui/form";
+import { UseFormReturn } from "react-hook-form";
+import { SettingsFormValues } from "../schemas/settingsFormSchema";
 
 interface NotificationsCardProps {
-  settings: {
-    emailNotifications: boolean;
-    studyReminders: boolean;
-  };
-  onSwitchChange: (name: string, checked: boolean) => void;
+  form: UseFormReturn<SettingsFormValues>;
 }
 
-const NotificationsCard = ({ 
-  settings, 
-  onSwitchChange 
-}: NotificationsCardProps) => {
+const NotificationsCard = ({ form }: NotificationsCardProps) => {
   return (
     <Card>
       <CardHeader>
@@ -24,35 +19,47 @@ const NotificationsCard = ({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label>Email Notifications</Label>
-            <p className="text-sm text-muted-foreground">
-              Receive email updates about your study progress
-            </p>
-          </div>
-          <Switch
-            checked={settings.emailNotifications}
-            onCheckedChange={(checked) =>
-              onSwitchChange("emailNotifications", checked)
-            }
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="emailNotifications"
+          render={({ field }) => (
+            <FormItem className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <FormLabel>Email Notifications</FormLabel>
+                <FormDescription>
+                  Receive email updates about your study progress
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
         
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label>Study Reminders</Label>
-            <p className="text-sm text-muted-foreground">
-              Get reminded about your scheduled study sessions
-            </p>
-          </div>
-          <Switch
-            checked={settings.studyReminders}
-            onCheckedChange={(checked) =>
-              onSwitchChange("studyReminders", checked)
-            }
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="studyReminders"
+          render={({ field }) => (
+            <FormItem className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <FormLabel>Study Reminders</FormLabel>
+                <FormDescription>
+                  Get reminded about your scheduled study sessions
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
       </CardContent>
     </Card>
   );

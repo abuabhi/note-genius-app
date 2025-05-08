@@ -1,19 +1,15 @@
 
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { FormControl, FormField, FormItem, FormLabel, FormDescription } from "@/components/ui/form";
+import { UseFormReturn } from "react-hook-form";
+import { SettingsFormValues } from "../schemas/settingsFormSchema";
 
 interface AppearanceCardProps {
-  settings: {
-    darkMode: boolean;
-  };
-  onSwitchChange: (name: string, checked: boolean) => void;
+  form: UseFormReturn<SettingsFormValues>;
 }
 
-const AppearanceCard = ({ 
-  settings, 
-  onSwitchChange 
-}: AppearanceCardProps) => {
+const AppearanceCard = ({ form }: AppearanceCardProps) => {
   return (
     <Card>
       <CardHeader>
@@ -23,20 +19,26 @@ const AppearanceCard = ({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label>Dark Mode</Label>
-            <p className="text-sm text-muted-foreground">
-              Toggle dark mode on or off
-            </p>
-          </div>
-          <Switch
-            checked={settings.darkMode}
-            onCheckedChange={(checked) =>
-              onSwitchChange("darkMode", checked)
-            }
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="darkMode"
+          render={({ field }) => (
+            <FormItem className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <FormLabel>Dark Mode</FormLabel>
+                <FormDescription>
+                  Toggle dark mode on or off
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
       </CardContent>
     </Card>
   );

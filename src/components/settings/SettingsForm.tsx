@@ -9,6 +9,10 @@ import { UserTier } from "@/hooks/useRequireAuth";
 import AccountSettingsCard from "./cards/AccountSettingsCard";
 import NotificationsCard from "./cards/NotificationsCard";
 import AppearanceCard from "./cards/AppearanceCard";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { settingsFormSchema, type SettingsFormValues } from "./schemas/settingsFormSchema";
+import { Form } from "@/components/ui/form";
 
 const SettingsForm = () => {
   const { userTier } = useUserTier();
@@ -16,94 +20,88 @@ const SettingsForm = () => {
   const { user } = useAuth();
   const isDeanUser = userTier === UserTier.DEAN;
   
-  const [settings, setSettings] = useState({
-    email: user?.email || "user@example.com",
-    emailNotifications: true,
-    studyReminders: true,
-    darkMode: false,
-    language: "en",
-    countryId: "",
+  const form = useForm<SettingsFormValues>({
+    resolver: zodResolver(settingsFormSchema),
+    defaultValues: {
+      email: user?.email || "user@example.com",
+      emailNotifications: true,
+      studyReminders: true,
+      darkMode: false,
+      language: "en",
+      countryId: "",
+    },
+    mode: "onBlur",
   });
+
+  const { reset, formState: { isDirty } } = form;
 
   useEffect(() => {
     if (userCountry) {
-      setSettings(prev => ({
-        ...prev,
-        countryId: userCountry.id
-      }));
+      form.setValue("countryId", userCountry.id);
     }
-  }, [userCountry]);
+  }, [userCountry, form]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setSettings((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSwitchChange = (name: string, checked: boolean) => {
-    setSettings((prev) => ({
-      ...prev,
-      [name]: checked,
-    }));
+  const onSubmit = async (data: SettingsFormValues) => {
+    try {
+      console.log("Form submitted with values:", data);
+      
+      // Handle country update for DEAN users
+      if (isDeanUser && data.countryId) {
+        const result = await updateUserCountry(data.countryId);
+        if (!result.success) {
+          toast.error("Failed to update country preference");
+          return;
+        }
+      }
+      
+      toast.success("Settings saved successfully");
+      reset(data); // Reset form state but keep the values
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast.error("Failed to save settings");
+    }
   };
 
   const handleCountryChange = async (countryId: string) => {
-    setSettings((prev) => ({
-      ...prev,
-      countryId,
-    }));
-    
-    if (isDeanUser) {
-      const result = await updateUserCountry(countryId);
-      if (result.success) {
-        toast.success("Country preference updated");
-      } else {
-        toast.error("Failed to update country preference");
-      }
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast.success("Settings saved successfully");
+    form.setValue("countryId", countryId, { 
+      shouldDirty: true,
+      shouldValidate: true 
+    });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <AccountSettingsCard 
-        user={user}
-        userTier={userTier}
-        settings={{
-          email: settings.email,
-          language: settings.language,
-          countryId: settings.countryId
-        }}
-        countries={countries}
-        onInputChange={handleInputChange}
-        onCountryChange={handleCountryChange}
-      />
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <AccountSettingsCard 
+          user={user}
+          userTier={userTier}
+          form={form}
+          countries={countries}
+          onCountryChange={handleCountryChange}
+        />
 
-      <NotificationsCard 
-        settings={{
-          emailNotifications: settings.emailNotifications,
-          studyReminders: settings.studyReminders
-        }}
-        onSwitchChange={handleSwitchChange}
-      />
+        <NotificationsCard form={form} />
 
-      <AppearanceCard 
-        settings={{
-          darkMode: settings.darkMode
-        }}
-        onSwitchChange={handleSwitchChange}
-      />
+        <AppearanceCard form={form} />
 
-      <div className="flex justify-end">
-        <Button type="submit">Save Changes</Button>
-      </div>
-    </form>
+        <div className="flex justify-between">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => reset()}
+            disabled={!isDirty}
+          >
+            Reset
+          </Button>
+          <Button 
+            type="submit" 
+            disabled={!isDirty || form.formState.isSubmitting}
+          >
+            {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 };
 

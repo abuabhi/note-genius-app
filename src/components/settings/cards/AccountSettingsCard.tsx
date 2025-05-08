@@ -1,33 +1,29 @@
 
-import { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
+import { User } from "@supabase/supabase-js";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserTier } from "@/hooks/useRequireAuth";
 import { Country } from "@/hooks/useCountries";
-import { toast } from "sonner";
-import { User } from "@supabase/supabase-js";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { UseFormReturn } from "react-hook-form";
+import { SettingsFormValues } from "../schemas/settingsFormSchema";
+import { AlertCircle } from "lucide-react";
 
 interface AccountSettingsCardProps {
   user: User | null;
   userTier?: UserTier;
-  settings: {
-    email: string;
-    language: string;
-    countryId: string;
-  };
+  form: UseFormReturn<SettingsFormValues>;
   countries: Country[];
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onCountryChange: (countryId: string) => Promise<void>;
 }
 
 const AccountSettingsCard = ({
   user,
   userTier,
-  settings,
+  form,
   countries,
-  onInputChange,
   onCountryChange
 }: AccountSettingsCardProps) => {
   const isDeanUser = userTier === UserTier.DEAN;
@@ -41,52 +37,73 @@ const AccountSettingsCard = ({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="email">Email address</Label>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            value={settings.email}
-            onChange={onInputChange}
-            disabled={!!user}
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email address</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  type="email"
+                  disabled={!!user}
+                  placeholder="Enter your email address"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         
-        <div className="space-y-2">
-          <Label htmlFor="language">Language</Label>
-          <Input
-            id="language"
-            name="language"
-            value={settings.language}
-            onChange={onInputChange}
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="language"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Language</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  placeholder="Enter your preferred language"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         
         {isDeanUser && (
-          <div className="space-y-2">
-            <Label htmlFor="country">Country</Label>
-            <Select
-              value={settings.countryId}
-              onValueChange={onCountryChange}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select your country" />
-              </SelectTrigger>
-              <SelectContent>
-                {countries.map((country) => (
-                  <SelectItem key={country.id} value={country.id}>
-                    {country.name} ({country.code})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {isDeanUser && (
-              <p className="text-sm text-muted-foreground">
-                As a DEAN user, you can change your country preference
-              </p>
+          <FormField
+            control={form.control}
+            name="countryId"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <FormLabel>Country</FormLabel>
+                <Select
+                  value={field.value}
+                  onValueChange={onCountryChange}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your country" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {countries.map((country) => (
+                      <SelectItem key={country.id} value={country.id}>
+                        {country.name} ({country.code})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+                <p className="text-sm text-muted-foreground">
+                  As a DEAN user, you can change your country preference
+                </p>
+              </FormItem>
             )}
-          </div>
+          />
         )}
       </CardContent>
     </Card>
