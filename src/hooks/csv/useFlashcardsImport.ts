@@ -1,9 +1,9 @@
 
 import { useState } from "react";
 import { CSVFlashcardRow, CSVUploadResult } from "@/types/admin";
-import { supabase } from "@/integrations/supabase/client";
 import { parseCSV } from "@/utils/csvUtils";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { useFlashcards } from "@/contexts/FlashcardContext";
 
 export const useFlashcardsImport = () => {
