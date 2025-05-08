@@ -1,40 +1,27 @@
 
-import { createContext, useContext, useState, ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { createContext, useContext, useState, ReactNode } from 'react';
 
-interface NavigationContextType {
-  handleNavigation: (path: string) => void;
-  registerNavigationGuard: (
-    guard: (path: string) => boolean
-  ) => () => void;
+interface NavigationContextProps {
+  isSidebarOpen: boolean;
+  toggleSidebar: () => void;
+  closeSidebar: () => void;
 }
 
-const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
+const NavigationContext = createContext<NavigationContextProps | undefined>(undefined);
 
 export const NavigationProvider = ({ children }: { children: ReactNode }) => {
-  const navigate = useNavigate();
-  const [navigationGuards, setNavigationGuards] = useState<Array<(path: string) => boolean>>([]);
-
-  // Register a navigation guard and return a function to unregister it
-  const registerNavigationGuard = (guard: (path: string) => boolean) => {
-    setNavigationGuards((prev) => [...prev, guard]);
-    return () => {
-      setNavigationGuards((prev) => prev.filter((g) => g !== guard));
-    };
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
+  const toggleSidebar = () => {
+    setIsSidebarOpen(prev => !prev);
   };
-
-  // Run all navigation guards before navigating
-  const handleNavigation = (path: string) => {
-    // Check if any guard prevents navigation
-    const canNavigate = navigationGuards.every((guard) => guard(path));
-    
-    if (canNavigate) {
-      navigate(path);
-    }
+  
+  const closeSidebar = () => {
+    setIsSidebarOpen(false);
   };
 
   return (
-    <NavigationContext.Provider value={{ handleNavigation, registerNavigationGuard }}>
+    <NavigationContext.Provider value={{ isSidebarOpen, toggleSidebar, closeSidebar }}>
       {children}
     </NavigationContext.Provider>
   );
@@ -42,8 +29,10 @@ export const NavigationProvider = ({ children }: { children: ReactNode }) => {
 
 export const useNavigation = () => {
   const context = useContext(NavigationContext);
+  
   if (context === undefined) {
-    throw new Error("useNavigation must be used within a NavigationProvider");
+    throw new Error('useNavigation must be used within a NavigationProvider');
   }
+  
   return context;
 };

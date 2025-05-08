@@ -22,6 +22,7 @@ import {
   FolderKanban,
   Upload,
   User,
+  MessageSquare,
 } from "lucide-react";
 
 const sidebarItems = [
@@ -54,6 +55,11 @@ const sidebarItems = [
     title: "Progress",
     path: "/progress",
     icon: Activity,
+  },
+  {
+    title: "Chat",
+    path: "/chat",
+    icon: MessageSquare,
   },
   {
     title: "Collaboration",
