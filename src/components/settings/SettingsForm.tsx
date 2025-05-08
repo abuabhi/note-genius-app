@@ -1,22 +1,14 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCountries } from "@/hooks/useCountries";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCountries } from "@/hooks/useCountries";
 import { useUserTier } from "@/hooks/useUserTier";
 import { UserTier } from "@/hooks/useRequireAuth";
+import AccountSettingsCard from "./cards/AccountSettingsCard";
+import NotificationsCard from "./cards/NotificationsCard";
+import AppearanceCard from "./cards/AppearanceCard";
 
 const SettingsForm = () => {
   const { userTier } = useUserTier();
@@ -80,128 +72,33 @@ const SettingsForm = () => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Account Settings</CardTitle>
-          <CardDescription>
-            Manage your account preferences and personal information
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email address</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              value={settings.email}
-              onChange={handleInputChange}
-              disabled={!!user}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="language">Language</Label>
-            <Input
-              id="language"
-              name="language"
-              value={settings.language}
-              onChange={handleInputChange}
-            />
-          </div>
-          
-          {isDeanUser && (
-            <div className="space-y-2">
-              <Label htmlFor="country">Country</Label>
-              <Select
-                value={settings.countryId}
-                onValueChange={handleCountryChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select your country" />
-                </SelectTrigger>
-                <SelectContent>
-                  {countries.map((country) => (
-                    <SelectItem key={country.id} value={country.id}>
-                      {country.name} ({country.code})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {isDeanUser && (
-                <p className="text-sm text-muted-foreground">
-                  As a DEAN user, you can change your country preference
-                </p>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <AccountSettingsCard 
+        user={user}
+        userTier={userTier}
+        settings={{
+          email: settings.email,
+          language: settings.language,
+          countryId: settings.countryId
+        }}
+        countries={countries}
+        onInputChange={handleInputChange}
+        onCountryChange={handleCountryChange}
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Notifications</CardTitle>
-          <CardDescription>
-            Configure how you want to receive notifications
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Email Notifications</Label>
-              <p className="text-sm text-muted-foreground">
-                Receive email updates about your study progress
-              </p>
-            </div>
-            <Switch
-              checked={settings.emailNotifications}
-              onCheckedChange={(checked) =>
-                handleSwitchChange("emailNotifications", checked)
-              }
-            />
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Study Reminders</Label>
-              <p className="text-sm text-muted-foreground">
-                Get reminded about your scheduled study sessions
-              </p>
-            </div>
-            <Switch
-              checked={settings.studyReminders}
-              onCheckedChange={(checked) =>
-                handleSwitchChange("studyReminders", checked)
-              }
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <NotificationsCard 
+        settings={{
+          emailNotifications: settings.emailNotifications,
+          studyReminders: settings.studyReminders
+        }}
+        onSwitchChange={handleSwitchChange}
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Appearance</CardTitle>
-          <CardDescription>
-            Customize how the application looks
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Dark Mode</Label>
-              <p className="text-sm text-muted-foreground">
-                Toggle dark mode on or off
-              </p>
-            </div>
-            <Switch
-              checked={settings.darkMode}
-              onCheckedChange={(checked) =>
-                handleSwitchChange("darkMode", checked)
-              }
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <AppearanceCard 
+        settings={{
+          darkMode: settings.darkMode
+        }}
+        onSwitchChange={handleSwitchChange}
+      />
 
       <div className="flex justify-end">
         <Button type="submit">Save Changes</Button>
