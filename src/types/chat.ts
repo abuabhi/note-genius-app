@@ -24,7 +24,7 @@ export interface ConversationParticipant {
   user_id: string;
   created_at: string;
   last_read_at: string | null;
-  profile?: UserProfile;
+  profile?: UserProfile | any; // Allow any for now to fix type errors
 }
 
 export interface ChatMessage {
@@ -34,5 +34,12 @@ export interface ChatMessage {
   message: string;
   created_at: string;
   is_read: boolean;
-  sender?: UserProfile;
+  sender?: UserProfile | any; // Allow any for now to fix type errors
+}
+
+// Update TierLimits to include chat_enabled
+export interface TierLimits {
+  collaboration_enabled: boolean;
+  chat_enabled?: boolean;
+  // Add other tier limits as needed
 }

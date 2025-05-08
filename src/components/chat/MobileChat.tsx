@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChatSidebar } from "./ChatSidebar";
 import { ChatContainer } from "./ChatContainer";
 import { useChat } from "@/hooks/useChat";
@@ -64,5 +64,3 @@ export const MobileChat = () => {
     </div>
   );
 };
-
-import { useEffect } from 'react';

@@ -16,9 +16,9 @@ export const Chat = () => {
 
   useEffect(() => {
     if (!loading && tierLimits) {
-      // Check if the user has chat_enabled in tierLimits or if user is DEAN
+      // Check if the user has chat features enabled or is DEAN tier
       setIsFeatureEnabled(
-        tierLimits.chat_enabled || 
+        (tierLimits.chat_enabled !== undefined ? tierLimits.chat_enabled : false) || 
         tierLimits.collaboration_enabled || 
         userProfile?.user_tier === UserTier.DEAN
       );

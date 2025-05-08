@@ -44,7 +44,8 @@ export const useChat = () => {
         .order('last_message_at', { ascending: false });
 
       if (error) throw error;
-      return data as ChatConversation[];
+      // Use type assertion to make TypeScript happy
+      return data as unknown as ChatConversation[];
     },
     enabled: !!user,
   });
@@ -65,7 +66,8 @@ export const useChat = () => {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      return data as ChatMessage[];
+      // Use type assertion to make TypeScript happy
+      return data as unknown as ChatMessage[];
     },
     enabled: !!activeConversationId && !!user,
   });
@@ -288,10 +290,11 @@ export const useChat = () => {
             .eq('id', payload.new.sender_id)
             .single();
           
+          // Create a new message object with sender info
           const message = {
             ...payload.new,
             sender: data
-          } as ChatMessage;
+          } as unknown as ChatMessage;
           
           onNewMessage(message);
         }

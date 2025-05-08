@@ -1,8 +1,8 @@
+
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Menu, X } from "lucide-react";
-import { ChatCircle, Calendar, Settings, ChartLineUp, Book, Rocket, BrainCircuit, FileText } from "lucide-react";
+import { Menu, X, MessageSquare, Calendar, Settings, BarChart, Book, Rocket, Brain, FileText } from "lucide-react";
 
 const NavigationLink = ({ to, children, icon }: { to: string; children: React.ReactNode; icon?: React.ReactNode }) => (
   <Link to={to} className="ml-8 hover:text-gray-500 flex items-center">
@@ -18,7 +18,7 @@ const MobileNavLink = ({ to, children, onClick }: { to: string; children: React.
 );
 
 const NavBar = () => {
-  const { logOut, user } = useAuth();
+  const { user, signOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isAuthenticated = !!user;
 
@@ -30,6 +30,11 @@ const NavBar = () => {
     setIsMobileMenuOpen(false);
   };
 
+  const handleLogout = () => {
+    signOut && signOut();
+    closeMobileMenu();
+  };
+
   return (
     <nav className="bg-background border-b shadow-sm">
       <div className="mx-auto px-4">
@@ -37,7 +42,7 @@ const NavBar = () => {
           {/* Logo and brand */}
           <div className="flex items-center">
             <Link to="/" className="text-xl font-bold">
-              StudyTool.io <BrainCircuit className="inline-block w-6 h-6 ml-1" />
+              StudyTool.io <Brain className="inline-block w-6 h-6 ml-1" />
             </Link>
           </div>
 
@@ -45,7 +50,7 @@ const NavBar = () => {
           <div className="hidden md:flex items-center">
             {isAuthenticated && (
               <>
-                <NavigationLink to="/dashboard" icon={<ChartLineUp className="mr-2 h-4 w-4" />}>
+                <NavigationLink to="/dashboard" icon={<BarChart className="mr-2 h-4 w-4" />}>
                   Dashboard
                 </NavigationLink>
                 <NavigationLink to="/notes" icon={<FileText className="mr-2 h-4 w-4" />}>
@@ -63,7 +68,7 @@ const NavBar = () => {
                 <NavigationLink to="/library" icon={<Book className="mr-2 h-4 w-4" />}>
                   Library
                 </NavigationLink>
-                <NavigationLink to="/chat" icon={<ChatCircle className="mr-2 h-4 w-4" />}>
+                <NavigationLink to="/chat" icon={<MessageSquare className="mr-2 h-4 w-4" />}>
                   Chat
                 </NavigationLink>
               </>
@@ -96,34 +101,34 @@ const NavBar = () => {
                   ) : (
                     <>
                       <MobileNavLink to="/dashboard" onClick={closeMobileMenu}>
-                        <ChartLineUp className="mr-2 h-5 w-5" />
+                        <BarChart className="mr-2 h-5 w-5 inline" />
                         Dashboard
                       </MobileNavLink>
                       <MobileNavLink to="/notes" onClick={closeMobileMenu}>
-                        <FileText className="mr-2 h-5 w-5" />
+                        <FileText className="mr-2 h-5 w-5 inline" />
                         Notes
                       </MobileNavLink>
                       <MobileNavLink to="/flashcards" onClick={closeMobileMenu}>
-                        <Rocket className="mr-2 h-5 w-5" />
+                        <Rocket className="mr-2 h-5 w-5 inline" />
                         Flashcards
                       </MobileNavLink>
                       <MobileNavLink to="/schedule" onClick={closeMobileMenu}>
-                        <Calendar className="mr-2 h-5 w-5" />
+                        <Calendar className="mr-2 h-5 w-5 inline" />
                         Schedule
                       </MobileNavLink>
                       <MobileNavLink to="/settings" onClick={closeMobileMenu}>
-                        <Settings className="mr-2 h-5 w-5" />
+                        <Settings className="mr-2 h-5 w-5 inline" />
                         Settings
                       </MobileNavLink>
                       <MobileNavLink to="/library" onClick={closeMobileMenu}>
-                        <Book className="mr-2 h-5 w-5" />
+                        <Book className="mr-2 h-5 w-5 inline" />
                         Library
                       </MobileNavLink>
                       <MobileNavLink to="/chat" onClick={closeMobileMenu}>
-                        <ChatCircle className="mr-2 h-5 w-5" />
+                        <MessageSquare className="mr-2 h-5 w-5 inline" />
                         Chat
                       </MobileNavLink>
-                      <button onClick={() => { logOut(); closeMobileMenu(); }} className="block py-2 px-4 hover:bg-gray-100 w-full text-left">
+                      <button onClick={handleLogout} className="block py-2 px-4 hover:bg-gray-100 w-full text-left">
                         Log Out
                       </button>
                     </>
@@ -145,7 +150,7 @@ const NavBar = () => {
                 </Link>
               </>
             ) : (
-              <button onClick={logOut} className="ml-8 hover:text-gray-500">
+              <button onClick={handleLogout} className="ml-8 hover:text-gray-500">
                 Log Out
               </button>
             )}
