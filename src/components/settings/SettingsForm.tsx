@@ -43,7 +43,7 @@ const SettingsForm = () => {
   const { reset, formState: { isDirty, isSubmitSuccessful } } = form;
 
   // Use the unsaved changes prompt hook
-  const { handleNavigationAttempt } = useUnsavedChangesPrompt(
+  useUnsavedChangesPrompt(
     isDirty,
     setShowUnsavedChangesDialog,
     setPendingNavigation
