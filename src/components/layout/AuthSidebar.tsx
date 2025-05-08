@@ -21,6 +21,7 @@ import {
   BookOpen,
   FolderKanban,
   Upload,
+  User,
 } from "lucide-react";
 
 const sidebarItems = [
@@ -86,6 +87,11 @@ const adminItems = [
     title: "Sections",
     path: "/admin/sections",
     icon: FolderKanban,
+  },
+  {
+    title: "Users",
+    path: "/admin/users",
+    icon: User,
   },
   {
     title: "CSV Import",

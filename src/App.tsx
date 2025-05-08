@@ -32,6 +32,7 @@ const AdminFlashcardPage = lazy(() => import('@/pages/AdminFlashcardPage'));
 const AdminGradesPage = lazy(() => import('@/pages/AdminGradesPage'));
 const AdminSectionsPage = lazy(() => import('@/pages/AdminSectionsPage'));
 const AdminCSVImportPage = lazy(() => import('@/pages/AdminCSVImportPage'));
+const AdminUsersPage = lazy(() => import('@/pages/AdminUsersPage'));
 
 // API callbacks
 const NotionAuthCallback = lazy(() => import('@/components/auth/NotionAuthCallback'));
@@ -73,6 +74,7 @@ function App() {
             <Route path="/admin/grades" element={<AdminGradesPage />} />
             <Route path="/admin/sections" element={<AdminSectionsPage />} />
             <Route path="/admin/csv-import" element={<AdminCSVImportPage />} />
+            <Route path="/admin/users" element={<AdminUsersPage />} />
             
             {/* API Callback Routes */}
             <Route path="/auth/notion/callback" element={<NotionAuthCallback />} />

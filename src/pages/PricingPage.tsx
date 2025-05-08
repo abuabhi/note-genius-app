@@ -30,6 +30,7 @@ const PricingPage = () => {
         const { data, error } = await supabase
           .from('tier_limits')
           .select('*')
+          .in('tier', ['SCHOLAR', 'GRADUATE', 'MASTER']) // Only get public tiers
           .order('max_notes');
           
         if (error) {
@@ -51,14 +52,14 @@ const PricingPage = () => {
     SCHOLAR: { monthly: 0, annually: 0 },
     GRADUATE: { monthly: 12.99, annually: 9.99 },
     MASTER: { monthly: 29.99, annually: 24.99 },
-    DEAN: { monthly: 49.99, annually: 39.99 },
+    DEAN: { monthly: 49.99, annually: 39.99 }, // Kept for reference but not displayed
   };
 
   const tierDescriptions = {
     SCHOLAR: "Perfect for trying out StudyAI",
     GRADUATE: "For dedicated students",
     MASTER: "Perfect for advanced learners",
-    DEAN: "Complete learning mastery",
+    DEAN: "Complete learning mastery", // Kept for reference but not displayed
   };
 
   const renderTierFeatures = (tier: TierLimit) => {
@@ -138,7 +139,7 @@ const PricingPage = () => {
         {/* Pricing Cards */}
         <div className="bg-gradient-to-b from-mint-50/10 via-white to-mint-50/20 py-24">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {tierLimits.map((tier) => {
                 const tierKey = tier.tier as keyof typeof planPrices;
                 const isPopular = tierKey === 'GRADUATE';
