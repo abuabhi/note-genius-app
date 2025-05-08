@@ -1,13 +1,13 @@
 
 import { useState } from "react";
 import { CSVSectionRow, CSVUploadResult } from "@/types/admin";
-import { useSections } from "@/hooks/useSections";
+import { useSectionCSVImport } from "@/hooks/sections/useSectionCSVImport";
 import { parseCSV } from "@/utils/csvUtils";
 import { toast } from "sonner";
 
 export const useSectionsImport = () => {
   const [isImporting, setIsImporting] = useState(false);
-  const { importSectionsFromCSV } = useSections();
+  const { importSectionsFromCSV } = useSectionCSVImport();
 
   const importSections = async (file: File): Promise<CSVUploadResult> => {
     try {
