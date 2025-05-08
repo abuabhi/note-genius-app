@@ -26,7 +26,7 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Reminder, ReminderFormValues } from '@/hooks/useReminders';
+import { Reminder, ReminderFormValues, DeliveryMethod } from '@/hooks/useReminders';
 
 const reminderSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -34,7 +34,7 @@ const reminderSchema = z.object({
   reminderDate: z.date(),
   reminderTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Please enter a valid time in 24-hour format (HH:MM)"),
   type: z.enum(['study_event', 'goal_deadline', 'flashcard_review']),
-  delivery_methods: z.array(z.string()),
+  delivery_methods: z.array(z.enum(['in_app', 'email', 'whatsapp']).transform(val => val as DeliveryMethod)),
   recurrence: z.enum(['none', 'daily', 'weekly', 'monthly']),
   event_id: z.string().optional(),
   goal_id: z.string().optional(),
@@ -67,7 +67,7 @@ export const ReminderFormDialog = ({
       reminderDate: new Date(),
       reminderTime: format(new Date(), 'HH:mm'),
       type: 'study_event',
-      delivery_methods: ['in_app'],
+      delivery_methods: ['in_app'] as DeliveryMethod[],
       recurrence: 'none',
       event_id: undefined,
       goal_id: undefined,
@@ -96,7 +96,7 @@ export const ReminderFormDialog = ({
         reminderDate: new Date(),
         reminderTime: format(new Date(), 'HH:mm'),
         type: 'study_event',
-        delivery_methods: ['in_app'],
+        delivery_methods: ['in_app'] as DeliveryMethod[],
         recurrence: 'none',
         event_id: undefined,
         goal_id: undefined,
@@ -118,7 +118,7 @@ export const ReminderFormDialog = ({
         description: data.description || null,
         reminder_time: reminderDate.toISOString(),
         type: data.type,
-        delivery_methods: data.delivery_methods,
+        delivery_methods: data.delivery_methods as DeliveryMethod[],
         recurrence: data.recurrence,
         event_id: data.event_id,
         goal_id: data.goal_id,
@@ -135,9 +135,9 @@ export const ReminderFormDialog = ({
   };
   
   const deliveryMethods = [
-    { id: 'in_app', label: 'In-App' },
-    { id: 'email', label: 'Email' },
-    { id: 'whatsapp', label: 'WhatsApp' }
+    { id: 'in_app' as const, label: 'In-App' },
+    { id: 'email' as const, label: 'Email' },
+    { id: 'whatsapp' as const, label: 'WhatsApp' }
   ];
   
   const reminderType = form.watch('type');

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -152,7 +151,30 @@ export const useReminders = () => {
   };
 
   const dismissReminder = async (id: string) => {
-    return updateReminder(id, { status: 'dismissed' as ReminderStatus });
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('reminders')
+        .update({ status: 'dismissed' })
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setReminders((prev) => 
+        prev.map((reminder) => 
+          reminder.id === id ? { ...reminder, status: 'dismissed' as ReminderStatus } : reminder
+        )
+      );
+      
+      toast.success('Reminder dismissed');
+      return true;
+    } catch (error) {
+      console.error('Error dismissing reminder:', error);
+      toast.error('Failed to dismiss reminder');
+      return false;
+    }
   };
 
   useEffect(() => {
