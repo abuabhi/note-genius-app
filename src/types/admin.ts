@@ -1,4 +1,25 @@
 
+import { SubjectCategory } from "./flashcard";
+
+export interface Grade {
+  id: string;
+  name: string;
+  level: number;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Section {
+  id: string;
+  name: string;
+  subject_id: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+  subject?: SubjectCategory; // For eager loading
+}
+
 export interface CSVGradeRow {
   name: string;
   level: number;
