@@ -59,13 +59,14 @@ const UserTierManagement: React.FC = () => {
       if (profilesError) throw profilesError;
       
       // Join the data
-      const userData = authUsers.users.map(authUser => {
+      const userData: User[] = authUsers.users.map(authUser => {
         const profile = profiles.find(p => p.id === authUser.id);
         return {
           id: authUser.id,
           email: authUser.email || '',
           username: profile?.username || authUser.email?.split('@')[0] || '',
-          user_tier: profile?.user_tier || UserTier.SCHOLAR,
+          // Ensure we use the exact UserTier enum values
+          user_tier: (profile?.user_tier as UserTier) || UserTier.SCHOLAR,
           created_at: authUser.created_at,
         };
       });
@@ -111,6 +112,7 @@ const UserTierManagement: React.FC = () => {
     }
   };
 
+  // Filter users by search term and tier
   const filteredUsers = users.filter(user => {
     // Filter by search term
     const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase()) || 
