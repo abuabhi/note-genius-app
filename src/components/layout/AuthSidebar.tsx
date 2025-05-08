@@ -17,6 +17,10 @@ import {
   Users,
   Settings,
   Clock,
+  GraduationCap,
+  BookOpen,
+  FolderKanban,
+  Upload,
 } from "lucide-react";
 
 const sidebarItems = [
@@ -62,8 +66,37 @@ const sidebarItems = [
   },
 ];
 
+const adminItems = [
+  {
+    title: "Manage Flashcards",
+    path: "/admin/flashcards",
+    icon: FileText,
+  },
+  {
+    title: "Grades",
+    path: "/admin/grades",
+    icon: GraduationCap,
+  },
+  {
+    title: "Subjects",
+    path: "/admin/subjects",
+    icon: BookOpen,
+  },
+  {
+    title: "Sections",
+    path: "/admin/sections",
+    icon: FolderKanban,
+  },
+  {
+    title: "CSV Import",
+    path: "/admin/csv-import",
+    icon: Upload,
+  },
+];
+
 const AuthSidebar = () => {
   const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith("/admin");
 
   return (
     <Sidebar>
@@ -89,6 +122,30 @@ const AuthSidebar = () => {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {isAdminRoute && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Admin</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminItems.map((item) => (
+                  <SidebarMenuItem key={item.path}>
+                    <SidebarMenuButton 
+                      asChild 
+                      tooltip={item.title}
+                      isActive={location.pathname === item.path}
+                    >
+                      <Link to={item.path}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
     </Sidebar>
   );

@@ -115,6 +115,7 @@ export type Database = {
           id: string
           is_built_in: boolean | null
           name: string
+          section_id: string | null
           subject: string | null
           topic: string | null
           updated_at: string
@@ -127,6 +128,7 @@ export type Database = {
           id?: string
           is_built_in?: boolean | null
           name: string
+          section_id?: string | null
           subject?: string | null
           topic?: string | null
           updated_at?: string
@@ -139,12 +141,21 @@ export type Database = {
           id?: string
           is_built_in?: boolean | null
           name?: string
+          section_id?: string | null
           subject?: string | null
           topic?: string | null
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "flashcard_sets_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       flashcards: {
         Row: {
@@ -182,6 +193,33 @@ export type Database = {
           next_review_at?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      grades: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          level: number
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          level: number
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          level?: number
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -327,6 +365,41 @@ export type Database = {
             columns: ["note_id"]
             isOneToOne: false
             referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sections: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          subject_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          subject_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          subject_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sections_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subject_categories"
             referencedColumns: ["id"]
           },
         ]
@@ -620,6 +693,7 @@ export type Database = {
       subject_categories: {
         Row: {
           created_at: string
+          grade_id: string | null
           id: string
           level: number | null
           name: string
@@ -628,6 +702,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          grade_id?: string | null
           id?: string
           level?: number | null
           name: string
@@ -636,6 +711,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          grade_id?: string | null
           id?: string
           level?: number | null
           name?: string
@@ -643,6 +719,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "subject_categories_grade_id_fkey"
+            columns: ["grade_id"]
+            isOneToOne: false
+            referencedRelation: "grades"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "subject_categories_parent_id_fkey"
             columns: ["parent_id"]
