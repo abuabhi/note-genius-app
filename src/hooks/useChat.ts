@@ -47,24 +47,50 @@ export const useChat = () => {
           
         if (conversationsError) throw conversationsError;
         
-        // For each conversation, fetch participants
-        const processedConversations = await Promise.all(
+        // For each conversation, fetch participants with their complete data
+        const processedConversations: ChatConversation[] = await Promise.all(
           conversationsData.map(async (conversation) => {
-            const { data: participants, error: participantsError } = await supabase
+            const { data: participantsData, error: participantsError } = await supabase
               .from('conversation_participants')
               .select(`
+                id,
+                conversation_id,
                 user_id,
-                last_read_at,
-                profile:profiles(id, username, avatar_url, user_tier)
+                created_at,
+                last_read_at
               `)
               .eq('conversation_id', conversation.id);
               
             if (participantsError) throw participantsError;
             
+            // Fetch profiles separately for each participant
+            const participants = await Promise.all(
+              (participantsData || []).map(async (participant) => {
+                const { data: profileData, error: profileError } = await supabase
+                  .from('profiles')
+                  .select('*')
+                  .eq('id', participant.user_id)
+                  .single();
+                  
+                if (profileError) {
+                  console.error('Error fetching profile:', profileError);
+                  return {
+                    ...participant,
+                    profile: null
+                  };
+                }
+                
+                return {
+                  ...participant,
+                  profile: profileData
+                };
+              })
+            );
+            
             return {
               ...conversation,
-              participants: participants || []
-            };
+              participants: participants
+            } as ChatConversation;
           })
         );
 
