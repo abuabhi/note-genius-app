@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Moon, MoonOff } from 'lucide-react';
+import { Moon } from 'lucide-react';
 import { useDndMode } from '@/hooks/useDndMode';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -43,10 +43,8 @@ export const DndToggle = () => {
           >
             {isToggling ? (
               <div className="h-4 w-4 border-2 border-t-transparent border-current rounded-full animate-spin" />
-            ) : isDndActive ? (
-              <Moon className="h-4 w-4" />
             ) : (
-              <MoonOff className="h-4 w-4" />
+              <Moon className="h-4 w-4" />
             )}
           </Button>
         </TooltipTrigger>

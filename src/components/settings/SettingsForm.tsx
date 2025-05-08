@@ -30,16 +30,7 @@ const SettingsForm = () => {
   const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
   
-  // Extended form schema with new notification settings
-  const form = useForm<SettingsFormValues & {
-    whatsappNotifications: boolean;
-    whatsappPhone: string;
-    goalNotifications: boolean;
-    weeklyReports: boolean;
-    dndEnabled: boolean;
-    dndStartTime: string;
-    dndEndTime: string;
-  }>({
+  const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsFormSchema),
     defaultValues: {
       email: user?.email || "user@example.com",
@@ -48,7 +39,6 @@ const SettingsForm = () => {
       darkMode: false,
       language: "en",
       countryId: "",
-      // Additional fields
       whatsappNotifications: false,
       whatsappPhone: "",
       goalNotifications: true,
@@ -84,13 +74,16 @@ const SettingsForm = () => {
         if (error) throw error;
         
         if (data) {
-          const notificationPrefs = data.notification_preferences || {};
+          // Parse notification preferences safely
+          const notificationPrefs = data.notification_preferences ? 
+            (typeof data.notification_preferences === 'object' ? data.notification_preferences : {}) : 
+            {};
           
-          form.setValue("emailNotifications", notificationPrefs.email || false);
-          form.setValue("whatsappNotifications", notificationPrefs.whatsapp || false);
-          form.setValue("studyReminders", notificationPrefs.studyReminders || true);
-          form.setValue("goalNotifications", notificationPrefs.goalNotifications || true);
-          form.setValue("weeklyReports", notificationPrefs.weeklyReports || false);
+          form.setValue("emailNotifications", notificationPrefs?.email === true);
+          form.setValue("whatsappNotifications", notificationPrefs?.whatsapp === true);
+          form.setValue("studyReminders", notificationPrefs?.studyReminders === true);
+          form.setValue("goalNotifications", notificationPrefs?.goalNotifications === true);
+          form.setValue("weeklyReports", notificationPrefs?.weeklyReports === true);
           
           // DND settings
           form.setValue("whatsappPhone", data.whatsapp_phone || "");
@@ -119,15 +112,7 @@ const SettingsForm = () => {
     }
   }, [isSubmitSuccessful]);
 
-  const onSubmit = async (data: SettingsFormValues & {
-    whatsappNotifications: boolean;
-    whatsappPhone: string;
-    goalNotifications: boolean;
-    weeklyReports: boolean;
-    dndEnabled: boolean;
-    dndStartTime: string;
-    dndEndTime: string;
-  }) => {
+  const onSubmit = async (data: SettingsFormValues) => {
     try {
       console.log("Form submitted with values:", data);
       

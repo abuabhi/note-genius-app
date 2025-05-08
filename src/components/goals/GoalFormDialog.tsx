@@ -87,11 +87,19 @@ export const GoalFormDialog = ({
     setIsSubmitting(true);
     try {
       const formData: GoalFormValues = {
-        ...data,
-        id: initialData?.id,
+        title: data.title,
+        description: data.description || '',
+        subject: data.subject || '',
+        target_hours: data.target_hours,
         start_date: format(data.start_date, 'yyyy-MM-dd'),
         end_date: format(data.end_date, 'yyyy-MM-dd'),
+        flashcard_set_id: data.flashcard_set_id || null,
       };
+      
+      // Add the ID if we're updating an existing goal
+      if (initialData?.id) {
+        formData.id = initialData.id;
+      }
       
       await onSubmit(formData);
       onOpenChange(false);
