@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,36 +23,50 @@ export const useChat = () => {
     const fetchConversations = async () => {
       setLoadingConversations(true);
       try {
-        const { data, error } = await supabase
+        // First, get all conversation IDs where the user is a participant
+        const { data: participantData, error: participantError } = await supabase
           .from('conversation_participants')
-          .select(`
-            conversation_id,
-            conversation:chat_conversations!inner(
-              id,
-              created_at,
-              updated_at,
-              last_message_at
-            ),
-            participants:conversation_participants!chat_conversations_id_fkey(
-              user_id,
-              last_read_at,
-              profile:profiles!conversation_participants_user_id_fkey(
-                id,
-                username,
-                avatar_url,
-                user_tier
-              )
-            )
-          `)
+          .select('conversation_id')
           .eq('user_id', user.id);
 
-        if (error) throw error;
+        if (participantError) throw participantError;
+        
+        if (!participantData || participantData.length === 0) {
+          setConversations([]);
+          setLoadingConversations(false);
+          return;
+        }
 
-        // Process data to match our expected format
-        const processedConversations = data.map((item: any) => ({
-          ...item.conversation,
-          participants: item.participants
-        }));
+        const conversationIds = participantData.map(p => p.conversation_id);
+        
+        // Fetch conversation details
+        const { data: conversationsData, error: conversationsError } = await supabase
+          .from('chat_conversations')
+          .select('*')
+          .in('id', conversationIds);
+          
+        if (conversationsError) throw conversationsError;
+        
+        // For each conversation, fetch participants
+        const processedConversations = await Promise.all(
+          conversationsData.map(async (conversation) => {
+            const { data: participants, error: participantsError } = await supabase
+              .from('conversation_participants')
+              .select(`
+                user_id,
+                last_read_at,
+                profile:profiles(id, username, avatar_url, user_tier)
+              `)
+              .eq('conversation_id', conversation.id);
+              
+            if (participantsError) throw participantsError;
+            
+            return {
+              ...conversation,
+              participants: participants || []
+            };
+          })
+        );
 
         setConversations(processedConversations);
       } catch (error) {
@@ -117,7 +130,7 @@ export const useChat = () => {
           .from('chat_messages')
           .select(`
             *,
-            sender:profiles!chat_messages_sender_id_fkey(
+            sender:profiles(
               id,
               username,
               avatar_url,
