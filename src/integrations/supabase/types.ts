@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      countries: {
+        Row: {
+          code: string
+          created_at: string
+          flag_url: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          flag_url?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          flag_url?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           all_day: boolean | null
@@ -110,8 +134,10 @@ export type Database = {
       flashcard_sets: {
         Row: {
           category_id: string | null
+          country_id: string | null
           created_at: string
           description: string | null
+          education_system: string | null
           id: string
           is_built_in: boolean | null
           name: string
@@ -123,8 +149,10 @@ export type Database = {
         }
         Insert: {
           category_id?: string | null
+          country_id?: string | null
           created_at?: string
           description?: string | null
+          education_system?: string | null
           id?: string
           is_built_in?: boolean | null
           name: string
@@ -136,8 +164,10 @@ export type Database = {
         }
         Update: {
           category_id?: string | null
+          country_id?: string | null
           created_at?: string
           description?: string | null
+          education_system?: string | null
           id?: string
           is_built_in?: boolean | null
           name?: string
@@ -148,6 +178,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "flashcard_sets_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "flashcard_sets_section_id_fkey"
             columns: ["section_id"]
@@ -307,6 +344,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          country_id: string | null
           created_at: string | null
           id: string
           updated_at: string | null
@@ -315,6 +353,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          country_id?: string | null
           created_at?: string | null
           id: string
           updated_at?: string | null
@@ -323,13 +362,22 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          country_id?: string | null
           created_at?: string | null
           id?: string
           updated_at?: string | null
           user_tier?: Database["public"]["Enums"]["user_tier"]
           username?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       quiz_options: {
         Row: {
@@ -506,8 +554,10 @@ export type Database = {
       quizzes: {
         Row: {
           category_id: string | null
+          country_id: string | null
           created_at: string
           description: string | null
+          education_system: string | null
           grade_id: string | null
           id: string
           is_public: boolean | null
@@ -520,8 +570,10 @@ export type Database = {
         }
         Insert: {
           category_id?: string | null
+          country_id?: string | null
           created_at?: string
           description?: string | null
+          education_system?: string | null
           grade_id?: string | null
           id?: string
           is_public?: boolean | null
@@ -534,8 +586,10 @@ export type Database = {
         }
         Update: {
           category_id?: string | null
+          country_id?: string | null
           created_at?: string
           description?: string | null
+          education_system?: string | null
           grade_id?: string | null
           id?: string
           is_public?: boolean | null
@@ -552,6 +606,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "subject_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quizzes_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
             referencedColumns: ["id"]
           },
           {
@@ -931,7 +992,9 @@ export type Database = {
       }
       subject_categories: {
         Row: {
+          country_id: string | null
           created_at: string
+          education_system: string | null
           grade_id: string | null
           id: string
           level: number | null
@@ -940,7 +1003,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          country_id?: string | null
           created_at?: string
+          education_system?: string | null
           grade_id?: string | null
           id?: string
           level?: number | null
@@ -949,7 +1014,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          country_id?: string | null
           created_at?: string
+          education_system?: string | null
           grade_id?: string | null
           id?: string
           level?: number | null
@@ -958,6 +1025,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "subject_categories_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "subject_categories_grade_id_fkey"
             columns: ["grade_id"]

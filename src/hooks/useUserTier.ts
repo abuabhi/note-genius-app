@@ -1,14 +1,33 @@
 
-import { useRequireAuth, UserTier } from '@/hooks/useRequireAuth';
+import { useAuth } from "@/contexts/AuthContext";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+type UserTier = 'SCHOLAR' | 'RESEARCHER' | 'DEAN' | 'ADMIN';
 
 export const useUserTier = () => {
-  const { userProfile } = useRequireAuth();
+  const { user } = useAuth();
   
-  const isUserPremium = userProfile?.user_tier === UserTier.DEAN || 
-                        userProfile?.user_tier === UserTier.MASTER;
-  
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["userTier", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_tier")
+        .eq("id", user.id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
   return {
-    isUserPremium,
-    userTier: userProfile?.user_tier
+    userTier: data?.user_tier as UserTier | undefined,
+    isLoading,
+    error
   };
 };

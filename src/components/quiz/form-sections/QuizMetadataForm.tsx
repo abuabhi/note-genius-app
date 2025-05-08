@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { FormDescription } from "@/components/ui/form";
 import { UseFormReturn } from "react-hook-form";
 import { QuizFormValues } from "../schema/quizFormSchema";
+import { useCountries } from "@/hooks/useCountries";
 
 interface QuizMetadataFormProps {
   form: UseFormReturn<QuizFormValues>;
@@ -16,6 +17,8 @@ interface QuizMetadataFormProps {
 }
 
 export const QuizMetadataForm = ({ form, subjects, grades, filteredSections }: QuizMetadataFormProps) => {
+  const { countries, isLoading: countriesLoading } = useCountries();
+  
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Quiz Details */}
@@ -44,6 +47,51 @@ export const QuizMetadataForm = ({ form, subjects, grades, filteredSections }: Q
                 <Textarea
                   placeholder="Brief description of this quiz"
                   {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="countryId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Country</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a country" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {countries?.map((country) => (
+                    <SelectItem key={country.id} value={country.id}>
+                      {country.name} ({country.code})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="educationSystem"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Education System</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="Education system (e.g., CBSE, Common Core)" 
+                  {...field} 
                 />
               </FormControl>
               <FormMessage />

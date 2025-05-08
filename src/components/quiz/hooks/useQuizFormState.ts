@@ -15,6 +15,8 @@ export interface UseQuizFormStateProps {
   }[];
   initialTitle?: string;
   initialDescription?: string;
+  initialCountryId?: string;
+  initialEducationSystem?: string;
   sections: any[];
 }
 
@@ -22,6 +24,8 @@ export const useQuizFormState = ({
   initialQuestions,
   initialTitle = '',
   initialDescription = '',
+  initialCountryId = '',
+  initialEducationSystem = '',
   sections
 }: UseQuizFormStateProps) => {
   const form = useForm<QuizFormValues>({
@@ -30,6 +34,8 @@ export const useQuizFormState = ({
       title: initialTitle,
       description: initialDescription,
       isPublic: false,
+      countryId: initialCountryId,
+      educationSystem: initialEducationSystem,
       questions: initialQuestions || [
         {
           question: "",

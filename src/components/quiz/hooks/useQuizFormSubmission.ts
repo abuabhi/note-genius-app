@@ -26,6 +26,8 @@ export const useQuizFormSubmission = ({
         category_id: data.categoryId,
         grade_id: data.gradeId,
         section_id: data.sectionId,
+        country_id: data.countryId,
+        education_system: data.educationSystem,
         source_type: sourceType,
         source_id: sourceId,
         is_public: data.isPublic,

@@ -9,6 +9,8 @@ export const useQuizForm = ({
   initialQuestions,
   initialTitle = '',
   initialDescription = '',
+  initialCountryId = '',
+  initialEducationSystem = '',
   sourceType = 'custom',
   sourceId,
   onSuccess,
@@ -18,6 +20,8 @@ export const useQuizForm = ({
     initialQuestions,
     initialTitle,
     initialDescription,
+    initialCountryId,
+    initialEducationSystem,
     sections
   });
   
