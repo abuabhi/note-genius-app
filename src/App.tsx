@@ -1,211 +1,108 @@
+import React, { useEffect } from 'react';
+import { Routes, Route, useLocation } from 'react-router-dom';
+import HomePage from "./pages/HomePage";
+import LoginPage from "./pages/LoginPage";
+import SignupPage from "./pages/SignupPage";
+import AboutPage from "./pages/AboutPage";
+import ContactPage from "./pages/ContactPage";
+import PricingPage from "./pages/PricingPage";
+import FAQPage from "./pages/FAQPage";
+import DashboardPage from "./pages/DashboardPage";
+import NotesPage from "./pages/NotesPage";
+import QuizPage from "./pages/QuizPage";
+import FlashcardsPage from "./pages/FlashcardsPage";
+import StudyPage from "./pages/StudyPage";
+import StudySessionsPage from "./pages/StudySessionsPage";
+import ProgressPage from "./pages/ProgressPage";
+import SchedulePage from "./pages/SchedulePage";
+import SettingsPage from "./pages/SettingsPage";
+import FlashcardLibraryPage from "./pages/FlashcardLibraryPage";
+import AdminUsersPage from "./pages/admin/AdminUsersPage";
+import AdminFlashcardPage from "./pages/admin/AdminFlashcardPage";
+import AdminSectionsPage from "./pages/admin/AdminSectionsPage";
+import AdminGradesPage from "./pages/admin/AdminGradesPage";
+import AdminCSVImportPage from "./pages/admin/AdminCSVImportPage";
+import CreateQuizPage from "./pages/CreateQuizPage";
+import TakeQuizPage from "./pages/TakeQuizPage";
+import NoteToFlashcardPage from "./pages/NoteToFlashcardPage";
+import CollaborationPage from "./pages/CollaborationPage";
+import NotFoundPage from "./pages/NotFoundPage";
+import NotionAuthCallback from './pages/auth/NotionAuthCallback';
+import EvernoteAuthCallback from './pages/auth/EvernoteAuthCallback';
+import MicrosoftAuthCallback from './pages/auth/MicrosoftAuthCallback';
+import GoogleDocsAuthCallback from './pages/auth/GoogleDocsAuthCallback';
+import { useAuth } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { NavigationProvider } from './contexts/NavigationContext';
+import ChatPage from "./pages/ChatPage";
 
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Suspense, lazy } from 'react';
-import { ThemeProvider } from '@/components/theme-provider';
-import { Toaster } from '@/components/ui/sonner';
-import { AuthProvider } from '@/contexts/AuthContext';
-import { NavigationProvider } from '@/contexts/NavigationContext';
-import HomePage from '@/pages/HomePage';
-import PricingPage from '@/pages/PricingPage';
+const App = () => {
+  const { initializeAuth } = useAuth();
+  const location = useLocation();
 
-// Auth pages
-const LoginPage = lazy(() => import('@/pages/LoginPage'));
-const SignupPage = lazy(() => import('@/pages/SignupPage'));
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
 
-// Main app pages
-const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
-const NotesPage = lazy(() => import('@/pages/NotesPage'));
-const FlashcardsPage = lazy(() => import('@/pages/FlashcardsPage'));
-const StudySessionsPage = lazy(() => import('@/pages/StudySessionsPage'));
-const ProgressPage = lazy(() => import('@/pages/ProgressPage'));
-const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
-const StudyPage = lazy(() => import('@/pages/StudyPage'));
-const SchedulePage = lazy(() => import('@/pages/SchedulePage'));
-const NoteToFlashcardPage = lazy(() => import('@/pages/NoteToFlashcardPage'));
-const CollaborationPage = lazy(() => import('@/pages/CollaborationPage'));
-const FlashcardLibraryPage = lazy(() => import('@/pages/FlashcardLibraryPage'));
-const AboutPage = lazy(() => import('@/pages/AboutPage'));
-const FAQPage = lazy(() => import('@/pages/FAQPage'));
-const ContactPage = lazy(() => import('@/pages/ContactPage'));
-const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
-const QuizPage = lazy(() => import('@/pages/QuizPage'));
-const CreateQuizPage = lazy(() => import('@/pages/CreateQuizPage'));
-const TakeQuizPage = lazy(() => import('@/pages/TakeQuizPage'));
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
-// Admin pages
-const AdminFlashcardPage = lazy(() => import('@/pages/AdminFlashcardPage'));
-const AdminGradesPage = lazy(() => import('@/pages/AdminGradesPage'));
-const AdminSectionsPage = lazy(() => import('@/pages/AdminSectionsPage'));
-const AdminCSVImportPage = lazy(() => import('@/pages/AdminCSVImportPage'));
-const AdminUsersPage = lazy(() => import('@/pages/AdminUsersPage'));
-
-// API callbacks
-const NotionAuthCallback = lazy(() => import('@/components/auth/NotionAuthCallback'));
-const EvernoteAuthCallback = lazy(() => import('@/components/auth/EvernoteAuthCallback'));
-const GoogleDocsAuthCallback = lazy(() => import('@/components/auth/GoogleDocsAuthCallback'));
-const MicrosoftAuthCallback = lazy(() => import('@/components/auth/MicrosoftAuthCallback'));
-
-function App() {
   return (
-    <ThemeProvider defaultTheme="light" storageKey="study-app-theme">
-      <BrowserRouter>
-        <AuthProvider>
-          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
-            <Routes>
-              <Route path="/" element={
-                <NavigationProvider>
-                  <HomePage />
-                </NavigationProvider>
-              } />
-              
-              {/* Auth Routes */}
-              <Route path="/login" element={
-                <NavigationProvider>
-                  <LoginPage />
-                </NavigationProvider>
-              } />
-              <Route path="/signup" element={
-                <NavigationProvider>
-                  <SignupPage />
-                </NavigationProvider>
-              } />
-              
-              {/* Public Pages */}
-              <Route path="/pricing" element={
-                <NavigationProvider>
-                  <PricingPage />
-                </NavigationProvider>
-              } />
-              
-              {/* Main App Routes */}
-              <Route path="/dashboard" element={
-                <NavigationProvider>
-                  <DashboardPage />
-                </NavigationProvider>
-              } />
-              <Route path="/notes" element={
-                <NavigationProvider>
-                  <NotesPage />
-                </NavigationProvider>
-              } />
-              <Route path="/flashcards" element={
-                <NavigationProvider>
-                  <FlashcardsPage />
-                </NavigationProvider>
-              } />
-              <Route path="/flashcard-library" element={
-                <NavigationProvider>
-                  <FlashcardLibraryPage />
-                </NavigationProvider>
-              } />
-              <Route path="/study-sessions" element={
-                <NavigationProvider>
-                  <StudySessionsPage />
-                </NavigationProvider>
-              } />
-              <Route path="/quiz" element={
-                <NavigationProvider>
-                  <QuizPage />
-                </NavigationProvider>
-              } />
-              <Route path="/quiz/create" element={
-                <NavigationProvider>
-                  <CreateQuizPage />
-                </NavigationProvider>
-              } />
-              <Route path="/quiz/take/:quizId" element={
-                <NavigationProvider>
-                  <TakeQuizPage />
-                </NavigationProvider>
-              } />
-              <Route path="/progress" element={
-                <NavigationProvider>
-                  <ProgressPage />
-                </NavigationProvider>
-              } />
-              <Route path="/collaborate" element={
-                <NavigationProvider>
-                  <CollaborationPage />
-                </NavigationProvider>
-              } />
-              <Route path="/settings" element={
-                <NavigationProvider>
-                  <SettingsPage />
-                </NavigationProvider>
-              } />
-              <Route path="/study/:setId" element={
-                <NavigationProvider>
-                  <StudyPage />
-                </NavigationProvider>
-              } />
-              <Route path="/schedule" element={
-                <NavigationProvider>
-                  <SchedulePage />
-                </NavigationProvider>
-              } />
-              <Route path="/note-to-flashcard/:noteId" element={
-                <NavigationProvider>
-                  <NoteToFlashcardPage />
-                </NavigationProvider>
-              } />
-              <Route path="/about" element={
-                <NavigationProvider>
-                  <AboutPage />
-                </NavigationProvider>
-              } />
-              <Route path="/faq" element={
-                <NavigationProvider>
-                  <FAQPage />
-                </NavigationProvider>
-              } />
-              <Route path="/contact" element={
-                <NavigationProvider>
-                  <ContactPage />
-                </NavigationProvider>
-              } />
-              
-              {/* Admin Routes */}
-              <Route path="/admin/flashcards" element={
-                <NavigationProvider>
-                  <AdminFlashcardPage />
-                </NavigationProvider>
-              } />
-              <Route path="/admin/grades" element={
-                <NavigationProvider>
-                  <AdminGradesPage />
-                </NavigationProvider>
-              } />
-              <Route path="/admin/sections" element={
-                <NavigationProvider>
-                  <AdminSectionsPage />
-                </NavigationProvider>
-              } />
-              <Route path="/admin/csv-import" element={
-                <NavigationProvider>
-                  <AdminCSVImportPage />
-                </NavigationProvider>
-              } />
-              <Route path="/admin/users" element={
-                <NavigationProvider>
-                  <AdminUsersPage />
-                </NavigationProvider>
-              } />
-              
-              {/* API Callback Routes */}
-              <Route path="/auth/notion/callback" element={<NotionAuthCallback />} />
-              <Route path="/auth/evernote/callback" element={<EvernoteAuthCallback />} />
-              <Route path="/auth/googledocs/callback" element={<GoogleDocsAuthCallback />} />
-              <Route path="/auth/microsoft/callback" element={<MicrosoftAuthCallback />} />
-              
-              {/* 404 Route */}
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
-          </Suspense>
-          <Toaster />
-        </AuthProvider>
-      </BrowserRouter>
-    </ThemeProvider>
+    <div>
+      <ThemeProvider>
+        <NavigationProvider>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/faq" element={<FAQPage />} />
+
+            {/* Protected routes */}
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/notes" element={<NotesPage />} />
+            <Route path="/quizzes" element={<QuizPage />} />
+            <Route path="/flashcards" element={<FlashcardsPage />} />
+            <Route path="/study" element={<StudyPage />} />
+            <Route path="/study-sessions" element={<StudySessionsPage />} />
+            <Route path="/progress" element={<ProgressPage />} />
+            <Route path="/schedule" element={<SchedulePage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/library" element={<FlashcardLibraryPage />} />
+            <Route path="/chat" element={<ChatPage />} />
+
+            {/* Admin routes */}
+            <Route path="/admin/users" element={<AdminUsersPage />} />
+            <Route path="/admin/flashcards" element={<AdminFlashcardPage />} />
+            <Route path="/admin/sections" element={<AdminSectionsPage />} />
+            <Route path="/admin/grades" element={<AdminGradesPage />} />
+            <Route path="/admin/csv-import" element={<AdminCSVImportPage />} />
+            
+            {/* Creating routes */}
+            <Route path="/create-quiz" element={<CreateQuizPage />} />
+            <Route path="/quizzes/:quizId" element={<TakeQuizPage />} />
+            <Route path="/notes-to-flashcards" element={<NoteToFlashcardPage />} />
+            
+            {/* Collaboration routes */}
+            <Route path="/collaboration" element={<CollaborationPage />} />
+            
+            {/* Auth callback routes */}
+            <Route path="/auth/notion/callback" element={<NotionAuthCallback />} />
+            <Route path="/auth/evernote/callback" element={<EvernoteAuthCallback />} />
+            <Route path="/auth/microsoft/callback" element={<MicrosoftAuthCallback />} />
+            <Route path="/auth/googledocs/callback" element={<GoogleDocsAuthCallback />} />
+            
+            {/* 404 */}
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </NavigationProvider>
+      </ThemeProvider>
+    </div>
   );
-}
+};
 
 export default App;

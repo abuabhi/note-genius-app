@@ -9,6 +9,94 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      chat_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          last_message_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          id: string
+          is_read: boolean | null
+          message: string
+          sender_id: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message: string
+          sender_id: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_participants: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          id: string
+          last_read_at: string | null
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          id?: string
+          last_read_at?: string | null
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          last_read_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_participants_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       countries: {
         Row: {
           code: string
@@ -1073,6 +1161,7 @@ export type Database = {
         Row: {
           ai_features_enabled: boolean
           ai_flashcard_generation: boolean | null
+          chat_enabled: boolean
           collaboration_enabled: boolean
           max_flashcard_sets: number | null
           max_notes: number
@@ -1084,6 +1173,7 @@ export type Database = {
         Insert: {
           ai_features_enabled?: boolean
           ai_flashcard_generation?: boolean | null
+          chat_enabled?: boolean
           collaboration_enabled?: boolean
           max_flashcard_sets?: number | null
           max_notes: number
@@ -1095,6 +1185,7 @@ export type Database = {
         Update: {
           ai_features_enabled?: boolean
           ai_flashcard_generation?: boolean | null
+          chat_enabled?: boolean
           collaboration_enabled?: boolean
           max_flashcard_sets?: number | null
           max_notes?: number
@@ -1102,6 +1193,33 @@ export type Database = {
           ocr_enabled?: boolean
           priority_support?: boolean
           tier?: Database["public"]["Enums"]["user_tier"]
+        }
+        Relationships: []
+      }
+      user_connections: {
+        Row: {
+          created_at: string
+          id: string
+          receiver_id: string
+          sender_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          receiver_id: string
+          sender_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          receiver_id?: string
+          sender_id?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
