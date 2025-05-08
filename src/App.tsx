@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from '@/contexts/AuthContext';
 import HomePage from '@/pages/HomePage';
+import PricingPage from '@/pages/PricingPage';
 
 // Auth pages
 const LoginPage = lazy(() => import('@/pages/LoginPage'));
@@ -53,6 +54,9 @@ function App() {
               {/* Auth Routes */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
+              
+              {/* Public Pages */}
+              <Route path="/pricing" element={<PricingPage />} />
               
               {/* Main App Routes */}
               <Route path="/dashboard" element={<DashboardPage />} />
