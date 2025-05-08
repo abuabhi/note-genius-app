@@ -6,6 +6,7 @@ import { useUserManagement } from "./useUserManagement";
 import SearchBar from "./SearchBar";
 import FilterDropdown from "./FilterDropdown";
 import UserTable from "./UserTable";
+import { Loader } from "lucide-react";
 
 const UserTierManagement: React.FC = () => {
   const { 
@@ -26,7 +27,12 @@ const UserTierManagement: React.FC = () => {
           <Skeleton className="h-10 w-[250px]" />
           <Skeleton className="h-10 w-[150px]" />
         </div>
-        <Skeleton className="h-[500px] w-full rounded-md" />
+        <div className="flex items-center justify-center h-[500px] w-full rounded-md border">
+          <div className="flex flex-col items-center space-y-4 text-muted-foreground">
+            <Loader className="h-8 w-8 animate-spin" />
+            <p>Loading users...</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -41,7 +47,15 @@ const UserTierManagement: React.FC = () => {
       <UserTable users={filteredUsers} updateUserTier={updateUserTier} />
 
       <div className="flex justify-end">
-        <Button onClick={fetchUsers}>Refresh Users</Button>
+        <Button 
+          onClick={() => {
+            fetchUsers();
+          }}
+          disabled={loading}
+        >
+          {loading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
+          Refresh Users
+        </Button>
       </div>
     </div>
   );

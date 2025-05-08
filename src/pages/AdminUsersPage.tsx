@@ -3,7 +3,7 @@ import React from "react";
 import Layout from "@/components/layout/Layout";
 import { useRequireAuth, UserTier } from "@/hooks/useRequireAuth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ShieldAlert } from "lucide-react";
+import { Loader, ShieldAlert } from "lucide-react";
 import UserTierManagement from "@/components/admin/users/UserTierManagement";
 
 const AdminUsersPage = () => {
@@ -14,8 +14,9 @@ const AdminUsersPage = () => {
     return (
       <Layout>
         <div className="container mx-auto p-6">
-          <div className="flex justify-center items-center h-64">
-            <span>Loading...</span>
+          <div className="flex flex-col justify-center items-center h-64">
+            <Loader className="h-8 w-8 animate-spin mb-4" />
+            <span className="text-muted-foreground">Loading user profile...</span>
           </div>
         </div>
       </Layout>
