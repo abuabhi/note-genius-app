@@ -13,6 +13,8 @@ export const useCreateQuiz = () => {
       category_id?: string;
       section_id?: string;
       grade_id?: string;
+      country_id?: string;
+      education_system?: string;
       source_type: 'prebuilt' | 'note' | 'custom';
       source_id?: string;
       is_public?: boolean;
@@ -38,6 +40,8 @@ export const useCreateQuiz = () => {
           category_id: newQuiz.category_id || null,
           section_id: newQuiz.section_id || null,
           grade_id: newQuiz.grade_id || null,
+          country_id: newQuiz.country_id || null,
+          education_system: newQuiz.education_system || null,
           source_type: newQuiz.source_type,
           source_id: newQuiz.source_id || null,
           is_public: newQuiz.is_public || false,
