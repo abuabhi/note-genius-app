@@ -36,10 +36,3 @@ export interface ChatMessage {
   is_read: boolean;
   sender?: UserProfile | any; // Allow any for now to fix type errors
 }
-
-// Update TierLimits to include chat_enabled
-export interface TierLimits {
-  collaboration_enabled: boolean;
-  chat_enabled?: boolean;
-  // Add other tier limits as needed
-}

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,6 +26,7 @@ export interface TierLimits {
   ai_features_enabled: boolean;
   collaboration_enabled: boolean;
   priority_support: boolean;
+  chat_enabled?: boolean;
 }
 
 export const useRequireAuth = (redirectTo = '/login') => {
@@ -89,7 +89,8 @@ export const useRequireAuth = (redirectTo = '/login') => {
           ocr_enabled: true,
           ai_features_enabled: true,
           collaboration_enabled: true,
-          priority_support: true
+          priority_support: true,
+          chat_enabled: true
         };
       case UserTier.MASTER:
         return {
@@ -99,7 +100,8 @@ export const useRequireAuth = (redirectTo = '/login') => {
           ocr_enabled: true,
           ai_features_enabled: true,
           collaboration_enabled: true,
-          priority_support: true
+          priority_support: true,
+          chat_enabled: true
         };
       case UserTier.GRADUATE:
         return {
@@ -109,7 +111,8 @@ export const useRequireAuth = (redirectTo = '/login') => {
           ocr_enabled: true,
           ai_features_enabled: false,
           collaboration_enabled: true,
-          priority_support: false
+          priority_support: false,
+          chat_enabled: true
         };
       case UserTier.SCHOLAR:
       default:
@@ -120,7 +123,8 @@ export const useRequireAuth = (redirectTo = '/login') => {
           ocr_enabled: false,
           ai_features_enabled: false,
           collaboration_enabled: false,
-          priority_support: false
+          priority_support: false,
+          chat_enabled: false
         };
     }
   };
