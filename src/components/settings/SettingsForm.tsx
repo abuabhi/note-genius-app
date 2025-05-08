@@ -76,14 +76,15 @@ const SettingsForm = () => {
         if (data) {
           // Parse notification preferences safely
           const notificationPrefs = data.notification_preferences ? 
-            (typeof data.notification_preferences === 'object' ? data.notification_preferences : {}) : 
+            (typeof data.notification_preferences === 'object' && !Array.isArray(data.notification_preferences) ? 
+              data.notification_preferences : {}) : 
             {};
           
-          form.setValue("emailNotifications", notificationPrefs?.email === true);
-          form.setValue("whatsappNotifications", notificationPrefs?.whatsapp === true);
-          form.setValue("studyReminders", notificationPrefs?.studyReminders === true);
-          form.setValue("goalNotifications", notificationPrefs?.goalNotifications === true);
-          form.setValue("weeklyReports", notificationPrefs?.weeklyReports === true);
+          form.setValue("emailNotifications", notificationPrefs.email === true);
+          form.setValue("whatsappNotifications", notificationPrefs.whatsapp === true);
+          form.setValue("studyReminders", notificationPrefs.studyReminders === true);
+          form.setValue("goalNotifications", notificationPrefs.goalNotifications === true);
+          form.setValue("weeklyReports", notificationPrefs.weeklyReports === true);
           
           // DND settings
           form.setValue("whatsappPhone", data.whatsapp_phone || "");
