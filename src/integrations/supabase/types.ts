@@ -434,28 +434,43 @@ export type Database = {
           avatar_url: string | null
           country_id: string | null
           created_at: string | null
+          dnd_end_time: string | null
+          dnd_start_time: string | null
+          do_not_disturb: boolean | null
           id: string
+          notification_preferences: Json | null
           updated_at: string | null
           user_tier: Database["public"]["Enums"]["user_tier"]
           username: string | null
+          whatsapp_phone: string | null
         }
         Insert: {
           avatar_url?: string | null
           country_id?: string | null
           created_at?: string | null
+          dnd_end_time?: string | null
+          dnd_start_time?: string | null
+          do_not_disturb?: boolean | null
           id: string
+          notification_preferences?: Json | null
           updated_at?: string | null
           user_tier?: Database["public"]["Enums"]["user_tier"]
           username?: string | null
+          whatsapp_phone?: string | null
         }
         Update: {
           avatar_url?: string | null
           country_id?: string | null
           created_at?: string | null
+          dnd_end_time?: string | null
+          dnd_start_time?: string | null
+          do_not_disturb?: boolean | null
           id?: string
+          notification_preferences?: Json | null
           updated_at?: string | null
           user_tier?: Database["public"]["Enums"]["user_tier"]
           username?: string | null
+          whatsapp_phone?: string | null
         }
         Relationships: [
           {
@@ -715,6 +730,69 @@ export type Database = {
             columns: ["section_id"]
             isOneToOne: false
             referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reminders: {
+        Row: {
+          created_at: string | null
+          delivery_methods: Json
+          description: string | null
+          event_id: string | null
+          goal_id: string | null
+          id: string
+          recurrence: string | null
+          reminder_time: string
+          status: string
+          title: string
+          type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          delivery_methods?: Json
+          description?: string | null
+          event_id?: string | null
+          goal_id?: string | null
+          id?: string
+          recurrence?: string | null
+          reminder_time: string
+          status?: string
+          title: string
+          type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          delivery_methods?: Json
+          description?: string | null
+          event_id?: string | null
+          goal_id?: string | null
+          id?: string
+          recurrence?: string | null
+          reminder_time?: string
+          status?: string
+          title?: string
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reminders_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reminders_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "study_goals"
             referencedColumns: ["id"]
           },
         ]

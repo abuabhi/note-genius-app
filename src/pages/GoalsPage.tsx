@@ -1,0 +1,192 @@
+
+import { useState } from 'react';
+import { PlusCircle, Search, Filter, Target } from 'lucide-react';
+import Layout from '@/components/layout/Layout';
+import { GoalCard } from '@/components/goals/GoalCard';
+import { GoalFormDialog } from '@/components/goals/GoalFormDialog';
+import { useStudyGoals, StudyGoal, GoalFormValues } from '@/hooks/useStudyGoals';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const GoalsPage = () => {
+  const { loading: authLoading } = useRequireAuth();
+  const { goals, loading: goalsLoading, createGoal, updateGoal, deleteGoal } = useStudyGoals();
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filter, setFilter] = useState('all');
+  const [activeTab, setActiveTab] = useState('all');
+  const [formOpen, setFormOpen] = useState(false);
+  const [selectedGoal, setSelectedGoal] = useState<StudyGoal | undefined>(undefined);
+  
+  const handleCreateGoal = async (data: GoalFormValues) => {
+    await createGoal(data);
+  };
+  
+  const handleUpdateGoal = async (data: GoalFormValues) => {
+    if (selectedGoal?.id) {
+      await updateGoal(selectedGoal.id, data);
+    }
+  };
+  
+  const handleEditGoal = (goal: StudyGoal) => {
+    setSelectedGoal(goal);
+    setFormOpen(true);
+  };
+  
+  const filteredGoals = goals.filter(goal => {
+    // Text search
+    const matchesSearch = 
+      goal.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      (goal.description?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (goal.subject?.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    // Status filter
+    if (filter === 'completed') return goal.is_completed && matchesSearch;
+    if (filter === 'in-progress') return !goal.is_completed && matchesSearch;
+    
+    // Show all that match the search
+    return matchesSearch;
+  });
+  
+  const sortedGoals = [...filteredGoals].sort((a, b) => {
+    // Sort logic based on active tab
+    if (activeTab === 'recent') {
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    } else if (activeTab === 'due-soon') {
+      return new Date(a.end_date).getTime() - new Date(b.end_date).getTime();
+    } else if (activeTab === 'progress') {
+      return b.progress - a.progress;
+    }
+    // Default sorting: completed at the bottom, then by due date
+    if (a.is_completed !== b.is_completed) {
+      return a.is_completed ? 1 : -1;
+    }
+    return new Date(a.end_date).getTime() - new Date(b.end_date).getTime();
+  });
+
+  const loading = authLoading || goalsLoading;
+  
+  return (
+    <Layout>
+      <div className="container mx-auto p-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold mb-1">Study Goals</h1>
+            <p className="text-muted-foreground">Set, track, and achieve your study objectives</p>
+          </div>
+          <Button 
+            onClick={() => {
+              setSelectedGoal(undefined);
+              setFormOpen(true);
+            }}
+            className="mt-4 md:mt-0"
+          >
+            <PlusCircle className="mr-2 h-4 w-4" /> Create Goal
+          </Button>
+        </div>
+        
+        <div className="mb-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center mb-4">
+              <TabsList className="mb-2 sm:mb-0">
+                <TabsTrigger value="all">All Goals</TabsTrigger>
+                <TabsTrigger value="due-soon">Due Soon</TabsTrigger>
+                <TabsTrigger value="progress">By Progress</TabsTrigger>
+                <TabsTrigger value="recent">Recent</TabsTrigger>
+              </TabsList>
+              
+              <div className="flex flex-1 gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search goals..."
+                    className="pl-8 w-full"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                
+                <Select value={filter} onValueChange={setFilter}>
+                  <SelectTrigger className="w-[160px]">
+                    <Filter className="mr-2 h-4 w-4" />
+                    <SelectValue placeholder="Filter" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="in-progress">In Progress</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <TabsContent value={activeTab} className="mt-0">
+              {loading ? (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="border rounded-md p-4">
+                      <Skeleton className="h-6 w-3/4 mb-2" />
+                      <Skeleton className="h-4 w-full mb-4" />
+                      <Skeleton className="h-2 w-full mb-2" />
+                      <div className="grid grid-cols-2 gap-2 mb-4">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-full" />
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Skeleton className="h-8 w-16" />
+                        <Skeleton className="h-8 w-16" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : sortedGoals.length > 0 ? (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {sortedGoals.map(goal => (
+                    <GoalCard
+                      key={goal.id}
+                      goal={goal}
+                      onEdit={handleEditGoal}
+                      onDelete={deleteGoal}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center p-8 text-center border rounded-lg bg-muted/20">
+                  <Target className="h-12 w-12 text-muted-foreground mb-2" />
+                  <h3 className="font-medium text-lg mb-1">No goals found</h3>
+                  <p className="text-muted-foreground text-sm mb-4">
+                    {searchQuery || filter !== 'all' 
+                      ? "No goals match your current filters. Try adjusting your search." 
+                      : "Start by creating your first study goal."}
+                  </p>
+                  <Button 
+                    onClick={() => {
+                      setSelectedGoal(undefined);
+                      setFormOpen(true);
+                    }}
+                    variant="outline"
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" /> Create Goal
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
+        
+        <GoalFormDialog
+          open={formOpen}
+          onOpenChange={setFormOpen}
+          onSubmit={selectedGoal ? handleUpdateGoal : handleCreateGoal}
+          initialData={selectedGoal}
+        />
+      </div>
+    </Layout>
+  );
+};
+
+export default GoalsPage;

@@ -9,6 +9,8 @@ import { UserTier } from "@/hooks/useRequireAuth";
 import AccountSettingsCard from "./cards/AccountSettingsCard";
 import NotificationsCard from "./cards/NotificationsCard";
 import AppearanceCard from "./cards/AppearanceCard";
+import { NotificationSettingsCard } from "./cards/NotificationSettingsCard";
+import { DoNotDisturbCard } from "./cards/DoNotDisturbCard";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { settingsFormSchema, type SettingsFormValues } from "./schemas/settingsFormSchema";
@@ -16,6 +18,7 @@ import { Form } from "@/components/ui/form";
 import UnsavedChangesDialog from "./dialogs/UnsavedChangesDialog";
 import { useNavigate } from "react-router-dom";
 import { useUnsavedChangesPrompt } from "@/hooks/useUnsavedChangesPrompt";
+import { supabase } from "@/integrations/supabase/client";
 
 const SettingsForm = () => {
   const { userTier } = useUserTier();
@@ -27,7 +30,16 @@ const SettingsForm = () => {
   const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
   
-  const form = useForm<SettingsFormValues>({
+  // Extended form schema with new notification settings
+  const form = useForm<SettingsFormValues & {
+    whatsappNotifications: boolean;
+    whatsappPhone: string;
+    goalNotifications: boolean;
+    weeklyReports: boolean;
+    dndEnabled: boolean;
+    dndStartTime: string;
+    dndEndTime: string;
+  }>({
     resolver: zodResolver(settingsFormSchema),
     defaultValues: {
       email: user?.email || "user@example.com",
@@ -36,6 +48,14 @@ const SettingsForm = () => {
       darkMode: false,
       language: "en",
       countryId: "",
+      // Additional fields
+      whatsappNotifications: false,
+      whatsappPhone: "",
+      goalNotifications: true,
+      weeklyReports: false,
+      dndEnabled: false,
+      dndStartTime: "22:00",
+      dndEndTime: "07:00",
     },
     mode: "onBlur",
   });
@@ -48,6 +68,43 @@ const SettingsForm = () => {
     setShowUnsavedChangesDialog,
     setPendingNavigation
   );
+  
+  // Fetch initial user notification preferences
+  useEffect(() => {
+    const fetchUserPreferences = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('notification_preferences, whatsapp_phone, do_not_disturb, dnd_start_time, dnd_end_time')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) throw error;
+        
+        if (data) {
+          const notificationPrefs = data.notification_preferences || {};
+          
+          form.setValue("emailNotifications", notificationPrefs.email || false);
+          form.setValue("whatsappNotifications", notificationPrefs.whatsapp || false);
+          form.setValue("studyReminders", notificationPrefs.studyReminders || true);
+          form.setValue("goalNotifications", notificationPrefs.goalNotifications || true);
+          form.setValue("weeklyReports", notificationPrefs.weeklyReports || false);
+          
+          // DND settings
+          form.setValue("whatsappPhone", data.whatsapp_phone || "");
+          form.setValue("dndEnabled", data.do_not_disturb || false);
+          form.setValue("dndStartTime", data.dnd_start_time || "22:00");
+          form.setValue("dndEndTime", data.dnd_end_time || "07:00");
+        }
+      } catch (error) {
+        console.error("Error fetching user preferences:", error);
+      }
+    };
+    
+    fetchUserPreferences();
+  }, [user, form]);
 
   useEffect(() => {
     if (userCountry) {
@@ -62,7 +119,15 @@ const SettingsForm = () => {
     }
   }, [isSubmitSuccessful]);
 
-  const onSubmit = async (data: SettingsFormValues) => {
+  const onSubmit = async (data: SettingsFormValues & {
+    whatsappNotifications: boolean;
+    whatsappPhone: string;
+    goalNotifications: boolean;
+    weeklyReports: boolean;
+    dndEnabled: boolean;
+    dndStartTime: string;
+    dndEndTime: string;
+  }) => {
     try {
       console.log("Form submitted with values:", data);
       
@@ -71,6 +136,35 @@ const SettingsForm = () => {
         const result = await updateUserCountry(data.countryId);
         if (!result.success) {
           toast.error("Failed to update country preference");
+          return;
+        }
+      }
+      
+      // Save notification preferences to user profile
+      if (user) {
+        const notificationPreferences = {
+          email: data.emailNotifications,
+          whatsapp: data.whatsappNotifications,
+          in_app: true, // Always enabled
+          studyReminders: data.studyReminders,
+          goalNotifications: data.goalNotifications,
+          weeklyReports: data.weeklyReports
+        };
+        
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            notification_preferences: notificationPreferences,
+            whatsapp_phone: data.whatsappPhone,
+            do_not_disturb: data.dndEnabled,
+            dnd_start_time: data.dndEnabled ? data.dndStartTime : null,
+            dnd_end_time: data.dndEnabled ? data.dndEndTime : null
+          })
+          .eq('id', user.id);
+          
+        if (error) {
+          console.error("Error saving notification preferences:", error);
+          toast.error("Failed to save notification preferences");
           return;
         }
       }
@@ -112,6 +206,10 @@ const SettingsForm = () => {
           />
 
           <NotificationsCard form={form} />
+          
+          <NotificationSettingsCard form={form} userTier={userTier} />
+          
+          <DoNotDisturbCard form={form} />
 
           <AppearanceCard form={form} />
 

@@ -35,6 +35,7 @@ import GoogleDocsAuthCallback from './components/auth/GoogleDocsAuthCallback';
 import { useAuth } from './contexts/AuthContext';
 import { NavigationProvider } from './contexts/NavigationContext';
 import ChatPage from "./pages/ChatPage";
+import GoalsPage from "./pages/GoalsPage";
 
 const App = () => {
   const { user } = useAuth();
@@ -66,6 +67,7 @@ const App = () => {
           <Route path="/study-sessions" element={<StudySessionsPage />} />
           <Route path="/progress" element={<ProgressPage />} />
           <Route path="/schedule" element={<SchedulePage />} />
+          <Route path="/goals" element={<GoalsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/library" element={<FlashcardLibraryPage />} />
           <Route path="/chat" element={<ChatPage />} />
