@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -110,8 +110,8 @@ export const CreateQuizForm = ({
   
   const watchedCategory = form.watch('categoryId');
   
-  // Filter sections when subject changes
-  useState(() => {
+  // Fixed: Changed useState to useEffect
+  useEffect(() => {
     if (watchedCategory && sections) {
       setFilteredSections(sections.filter(section => 
         section.subject_id === watchedCategory
@@ -119,7 +119,7 @@ export const CreateQuizForm = ({
     } else {
       setFilteredSections(sections || []);
     }
-  });
+  }, [watchedCategory, sections]); // Added dependencies array
   
   const onSubmit = async (data: FormValues) => {
     try {
