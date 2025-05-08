@@ -1,0 +1,115 @@
+
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { ChatMessage } from "@/types/chat";
+import { useToast } from "@/hooks/use-toast";
+import { UseMessagesReturn } from './types';
+
+export const useMessages = (
+  activeConversationId: string | null
+): UseMessagesReturn => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState(true);
+
+  // Fetch messages when conversation is selected
+  useEffect(() => {
+    if (!activeConversationId) {
+      setMessages([]);
+      return;
+    }
+
+    const fetchMessages = async () => {
+      setLoadingMessages(true);
+      try {
+        const { data, error } = await supabase
+          .from('chat_messages')
+          .select(`
+            *,
+            sender:profiles(
+              id,
+              username,
+              avatar_url,
+              user_tier
+            )
+          `)
+          .eq('conversation_id', activeConversationId)
+          .order('created_at');
+
+        if (error) throw error;
+        setMessages(data);
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+      } finally {
+        setLoadingMessages(false);
+      }
+    };
+
+    fetchMessages();
+  }, [activeConversationId]);
+
+  const sendMessage = useCallback(async ({ conversationId, message }: { conversationId: string, message: string }) => {
+    if (!user || !conversationId || !message.trim()) return;
+
+    try {
+      // Insert message
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .insert({
+          conversation_id: conversationId,
+          sender_id: user.id,
+          message: message.trim(),
+        })
+        .select();
+
+      if (error) throw error;
+
+      // Update conversation last_message_at
+      await supabase
+        .from('chat_conversations')
+        .update({ last_message_at: new Date().toISOString() })
+        .eq('id', conversationId);
+
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to send message',
+        variant: 'destructive',
+      });
+    }
+  }, [user, toast]);
+
+  const subscribeToMessages = useCallback((conversationId: string, callback: (message: ChatMessage) => void) => {
+    const channel = supabase
+      .channel(`chat-${conversationId}`)
+      .on('postgres_changes', 
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'chat_messages',
+          filter: `conversation_id=eq.${conversationId}`
+        }, 
+        (payload) => {
+          // When a new message is received
+          const newMessage = payload.new as ChatMessage;
+          setMessages(prevMessages => [...prevMessages, newMessage]);
+          callback(newMessage);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  return {
+    messages,
+    loadingMessages,
+    sendMessage,
+    subscribeToMessages
+  };
+};

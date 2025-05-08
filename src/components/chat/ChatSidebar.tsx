@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useChat } from "@/hooks/useChat";
+import { useChat } from "@/hooks/chat"; // Updated import path
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";

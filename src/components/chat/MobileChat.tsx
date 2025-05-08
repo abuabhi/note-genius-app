@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { ChatSidebar } from "./ChatSidebar";
 import { ChatContainer } from "./ChatContainer";
-import { useChat } from "@/hooks/useChat";
+import { useChat } from "@/hooks/chat"; // Updated import path
 import { EmptyChat } from "./EmptyChat";
 import {
   Sheet,

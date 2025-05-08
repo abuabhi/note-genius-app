@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useChat } from "@/hooks/useChat";
+import { useChat } from "@/hooks/chat"; // Updated import path
 import { MessageList } from "./MessageList";
 import { MessageInput } from "./MessageInput";
 import { Button } from "@/components/ui/button";

@@ -2,7 +2,7 @@
 import { ChatSidebar } from "./ChatSidebar";
 import { ChatContainer } from "./ChatContainer";
 import { EmptyChat } from "./EmptyChat";
-import { useChat } from "@/hooks/useChat";
+import { useChat } from "@/hooks/chat"; // Updated import path
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";

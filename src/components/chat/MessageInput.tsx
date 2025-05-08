@@ -1,9 +1,8 @@
-
 import { useState, KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send } from "lucide-react";
-import { useChat } from "@/hooks/useChat";
+import { useChat } from "@/hooks/chat";
 
 interface MessageInputProps {
   conversationId: string;
