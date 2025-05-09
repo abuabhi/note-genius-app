@@ -1,3 +1,4 @@
+
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
@@ -8,12 +9,12 @@ import { ReminderNavPopover } from '@/components/reminders/ReminderNavPopover';
 
 export default function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth(); // Changed from logout to signOut
   const navigate = useNavigate();
   const { menuLinks } = useNavigationContext();
 
   const handleLogout = async () => {
-    await logout();
+    await signOut(); // Changed from logout to signOut
     navigate('/');
   };
 

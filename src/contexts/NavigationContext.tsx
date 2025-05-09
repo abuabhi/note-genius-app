@@ -1,6 +1,12 @@
 
 import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 
+// Define the navigation link structure
+interface NavigationLink {
+  href: string;
+  label: string;
+}
+
 type NavigationGuard = (path: string) => boolean;
 
 interface NavigationContextProps {
@@ -8,6 +14,7 @@ interface NavigationContextProps {
   toggleSidebar: () => void;
   closeSidebar: () => void;
   registerNavigationGuard: (guard: NavigationGuard) => () => void;
+  menuLinks: NavigationLink[];
 }
 
 const NavigationContext = createContext<NavigationContextProps | undefined>(undefined);
@@ -15,6 +22,16 @@ const NavigationContext = createContext<NavigationContextProps | undefined>(unde
 export const NavigationProvider = ({ children }: { children: ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [navigationGuards, setNavigationGuards] = useState<NavigationGuard[]>([]);
+  
+  // Default menu links
+  const menuLinks: NavigationLink[] = [
+    { href: "/dashboard", label: "Dashboard" },
+    { href: "/notes", label: "Notes" },
+    { href: "/flashcards", label: "Flashcards" },
+    { href: "/schedule", label: "Schedule" },
+    { href: "/goals", label: "Goals" },
+    { href: "/settings", label: "Settings" }
+  ];
   
   const toggleSidebar = () => {
     setIsSidebarOpen(prev => !prev);
@@ -39,7 +56,8 @@ export const NavigationProvider = ({ children }: { children: ReactNode }) => {
         isSidebarOpen, 
         toggleSidebar, 
         closeSidebar,
-        registerNavigationGuard
+        registerNavigationGuard,
+        menuLinks
       }}
     >
       {children}
@@ -56,3 +74,6 @@ export const useNavigation = () => {
   
   return context;
 };
+
+// Export the context hook with proper name
+export const useNavigationContext = useNavigation;

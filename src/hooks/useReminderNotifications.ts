@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Reminder } from '@/hooks/useReminders';
+import { Reminder, DeliveryMethod, ReminderStatus, ReminderRecurrence, ReminderType } from '@/hooks/useReminders';
 
 export const useReminderNotifications = () => {
   const { user } = useAuth();
@@ -27,12 +28,12 @@ export const useReminderNotifications = () => {
       // Transform to ensure it matches our Reminder type
       const typedReminders = data?.map(item => ({
         ...item,
-        type: item.type as any,
-        status: item.status as any,
-        recurrence: item.recurrence as any,
-        delivery_methods: Array.isArray(item.delivery_methods) ? 
-          item.delivery_methods : 
-          ['in_app']
+        type: item.type as ReminderType,
+        status: item.status as ReminderStatus,
+        recurrence: item.recurrence as ReminderRecurrence,
+        delivery_methods: (Array.isArray(item.delivery_methods) ? 
+          item.delivery_methods as DeliveryMethod[] : 
+          ['in_app' as DeliveryMethod])
       })) || [];
       
       setPendingReminders(typedReminders);
