@@ -3,34 +3,52 @@ import { useConversations } from './useConversations';
 import { useMessages } from './useMessages';
 import { useConnections } from './useConnections';
 import { useUserSearch } from './useUserSearch';
+import { useState, useEffect } from 'react';
 
 export const useChat = () => {
+  const [error, setError] = useState<Error | null>(null);
+
   const {
     conversations,
     loadingConversations,
     activeConversationId,
     setActiveConversationId,
-    updateLastRead
+    updateLastRead,
+    error: conversationsError
   } = useConversations();
 
   const {
     messages,
     loadingMessages,
     sendMessage,
-    subscribeToMessages
+    subscribeToMessages,
+    error: messagesError
   } = useMessages(activeConversationId);
 
   const {
     connections,
     loadingConnections,
     acceptConnectionRequest,
-    declineConnectionRequest
+    declineConnectionRequest,
+    error: connectionsError
   } = useConnections();
 
   const {
     searchUsers,
-    sendConnectionRequest
+    sendConnectionRequest,
+    error: userSearchError
   } = useUserSearch();
+
+  // Consolidate errors from all hooks
+  useEffect(() => {
+    const currentError = conversationsError || messagesError || connectionsError || userSearchError;
+    if (currentError) {
+      console.error('Chat error:', currentError);
+      setError(currentError);
+    } else {
+      setError(null);
+    }
+  }, [conversationsError, messagesError, connectionsError, userSearchError]);
 
   return {
     // Conversations
@@ -55,5 +73,8 @@ export const useChat = () => {
     // User search
     searchUsers,
     sendConnectionRequest,
+    
+    // Error handling
+    error
   };
 };

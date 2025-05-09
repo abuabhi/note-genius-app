@@ -11,6 +11,7 @@ export const useConnections = (): UseConnectionsReturn => {
   const { toast } = useToast();
   const [connections, setConnections] = useState<UserConnection[]>([]);
   const [loadingConnections, setLoadingConnections] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   // Fetch connections for current user
   useEffect(() => {
@@ -18,6 +19,7 @@ export const useConnections = (): UseConnectionsReturn => {
 
     const fetchConnections = async () => {
       setLoadingConnections(true);
+      setError(null);
       try {
         // Get connections where user is either sender or receiver
         const { data, error } = await supabase
@@ -36,18 +38,25 @@ export const useConnections = (): UseConnectionsReturn => {
         setConnections(typedConnections);
       } catch (error) {
         console.error('Error fetching connections:', error);
+        setError(error instanceof Error ? error : new Error('Failed to load connections'));
+        toast({
+          title: 'Error',
+          description: 'Failed to load connections',
+          variant: 'destructive',
+        });
       } finally {
         setLoadingConnections(false);
       }
     };
 
     fetchConnections();
-  }, [user]);
+  }, [user, toast]);
 
   const acceptConnectionRequest = useCallback(async (connectionId: string) => {
     if (!user) return;
 
     try {
+      setError(null);
       // Update connection status
       const { data, error } = await supabase
         .from('user_connections')
@@ -93,6 +102,7 @@ export const useConnections = (): UseConnectionsReturn => {
       }
     } catch (error) {
       console.error('Error accepting connection:', error);
+      setError(error instanceof Error ? error : new Error('Failed to accept connection'));
       toast({
         title: 'Error',
         description: 'Failed to accept connection',
@@ -105,6 +115,7 @@ export const useConnections = (): UseConnectionsReturn => {
     if (!user) return;
 
     try {
+      setError(null);
       // Update connection status
       const { error } = await supabase
         .from('user_connections')
@@ -120,6 +131,7 @@ export const useConnections = (): UseConnectionsReturn => {
       });
     } catch (error) {
       console.error('Error declining connection:', error);
+      setError(error instanceof Error ? error : new Error('Failed to decline connection'));
       toast({
         title: 'Error',
         description: 'Failed to decline connection',
@@ -133,5 +145,6 @@ export const useConnections = (): UseConnectionsReturn => {
     loadingConnections,
     acceptConnectionRequest,
     declineConnectionRequest,
+    error
   };
 };

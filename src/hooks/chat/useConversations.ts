@@ -12,6 +12,7 @@ export const useConversations = (): UseConversationsReturn => {
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [loadingConversations, setLoadingConversations] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   // Fetch conversations for current user
   useEffect(() => {
@@ -19,6 +20,7 @@ export const useConversations = (): UseConversationsReturn => {
 
     const fetchConversations = async () => {
       setLoadingConversations(true);
+      setError(null);
       try {
         // First, get all conversation IDs where the user is a participant
         const { data: participantData, error: participantError } = await supabase
@@ -94,6 +96,7 @@ export const useConversations = (): UseConversationsReturn => {
         setConversations(processedConversations);
       } catch (error) {
         console.error('Error fetching conversations:', error);
+        setError(error instanceof Error ? error : new Error('Failed to load conversations'));
         toast({
           title: 'Error',
           description: 'Failed to load conversations',
@@ -118,6 +121,7 @@ export const useConversations = (): UseConversationsReturn => {
         .eq('user_id', user.id);
     } catch (error) {
       console.error('Error updating last read:', error);
+      setError(error instanceof Error ? error : new Error('Failed to update last read timestamp'));
     }
   }, [user]);
 
@@ -127,5 +131,6 @@ export const useConversations = (): UseConversationsReturn => {
     setActiveConversationId,
     activeConversationId,
     updateLastRead,
+    error,
   };
 };

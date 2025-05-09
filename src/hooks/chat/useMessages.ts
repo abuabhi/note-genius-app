@@ -13,16 +13,19 @@ export const useMessages = (
   const { toast } = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   // Fetch messages when conversation is selected
   useEffect(() => {
     if (!activeConversationId) {
       setMessages([]);
+      setLoadingMessages(false);
       return;
     }
 
     const fetchMessages = async () => {
       setLoadingMessages(true);
+      setError(null);
       try {
         const { data, error } = await supabase
           .from('chat_messages')
@@ -42,18 +45,25 @@ export const useMessages = (
         setMessages(data);
       } catch (error) {
         console.error('Error fetching messages:', error);
+        setError(error instanceof Error ? error : new Error('Failed to load messages'));
+        toast({
+          title: 'Error',
+          description: 'Failed to load messages',
+          variant: 'destructive',
+        });
       } finally {
         setLoadingMessages(false);
       }
     };
 
     fetchMessages();
-  }, [activeConversationId]);
+  }, [activeConversationId, toast]);
 
   const sendMessage = useCallback(async ({ conversationId, message }: { conversationId: string, message: string }) => {
     if (!user || !conversationId || !message.trim()) return;
 
     try {
+      setError(null);
       // Insert message
       const { data, error } = await supabase
         .from('chat_messages')
@@ -74,6 +84,7 @@ export const useMessages = (
 
     } catch (error) {
       console.error('Error sending message:', error);
+      setError(error instanceof Error ? error : new Error('Failed to send message'));
       toast({
         title: 'Error',
         description: 'Failed to send message',
@@ -83,6 +94,7 @@ export const useMessages = (
   }, [user, toast]);
 
   const subscribeToMessages = useCallback((conversationId: string, callback: (message: ChatMessage) => void) => {
+    setError(null);
     const channel = supabase
       .channel(`chat-${conversationId}`)
       .on('postgres_changes', 
@@ -94,12 +106,21 @@ export const useMessages = (
         }, 
         (payload) => {
           // When a new message is received
-          const newMessage = payload.new as ChatMessage;
-          setMessages(prevMessages => [...prevMessages, newMessage]);
-          callback(newMessage);
+          try {
+            const newMessage = payload.new as ChatMessage;
+            setMessages(prevMessages => [...prevMessages, newMessage]);
+            callback(newMessage);
+          } catch (err) {
+            console.error('Error processing new message:', err);
+            setError(err instanceof Error ? err : new Error('Failed to process new message'));
+          }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR') {
+          setError(new Error('Failed to subscribe to message updates'));
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
@@ -110,6 +131,7 @@ export const useMessages = (
     messages,
     loadingMessages,
     sendMessage,
-    subscribeToMessages
+    subscribeToMessages,
+    error
   };
 };

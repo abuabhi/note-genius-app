@@ -10,6 +10,7 @@ export interface ChatState {
   loadingConversations: boolean;
   loadingConnections: boolean;
   loadingMessages: boolean;
+  error: Error | null;
 }
 
 export interface UseConversationsReturn {
@@ -18,6 +19,7 @@ export interface UseConversationsReturn {
   setActiveConversationId: (id: string | null) => void;
   activeConversationId: string | null;
   updateLastRead: (conversationId: string) => Promise<void>;
+  error: Error | null;
 }
 
 export interface UseMessagesReturn {
@@ -25,6 +27,7 @@ export interface UseMessagesReturn {
   loadingMessages: boolean;
   sendMessage: ({ conversationId, message }: { conversationId: string, message: string }) => Promise<void>;
   subscribeToMessages: (conversationId: string, callback: (message: ChatMessage) => void) => () => void;
+  error: Error | null;
 }
 
 export interface UseConnectionsReturn {
@@ -32,9 +35,11 @@ export interface UseConnectionsReturn {
   loadingConnections: boolean;
   acceptConnectionRequest: (connectionId: string) => Promise<void>;
   declineConnectionRequest: (connectionId: string) => Promise<void>;
+  error: Error | null;
 }
 
 export interface UseUserSearchReturn {
   searchUsers: (query: string) => Promise<UserProfile[]>;
   sendConnectionRequest: (receiverId: string) => Promise<void>;
+  error: Error | null;
 }

@@ -1,5 +1,5 @@
 
-import { useCallback } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserProfile, UserTier } from "@/hooks/useRequireAuth";
@@ -9,11 +9,13 @@ import { UseUserSearchReturn } from './types';
 export const useUserSearch = (): UseUserSearchReturn => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [error, setError] = useState<Error | null>(null);
 
   const searchUsers = useCallback(async (query: string): Promise<UserProfile[]> => {
     if (!user || query.length < 3) return [];
 
     try {
+      setError(null);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -32,6 +34,7 @@ export const useUserSearch = (): UseUserSearchReturn => {
       return typedProfiles;
     } catch (error) {
       console.error('Error searching users:', error);
+      setError(error instanceof Error ? error : new Error('Failed to search users'));
       return [];
     }
   }, [user]);
@@ -40,6 +43,7 @@ export const useUserSearch = (): UseUserSearchReturn => {
     if (!user) return;
 
     try {
+      setError(null);
       // Check if connection already exists
       const { data: existingConnection } = await supabase
         .from('user_connections')
@@ -72,6 +76,7 @@ export const useUserSearch = (): UseUserSearchReturn => {
       });
     } catch (error) {
       console.error('Error sending connection request:', error);
+      setError(error instanceof Error ? error : new Error('Failed to send connection request'));
       toast({
         title: 'Error',
         description: 'Failed to send connection request',
@@ -83,5 +88,6 @@ export const useUserSearch = (): UseUserSearchReturn => {
   return {
     searchUsers,
     sendConnectionRequest,
+    error
   };
 };
