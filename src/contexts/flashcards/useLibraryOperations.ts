@@ -12,7 +12,7 @@ export const useLibraryOperations = (state: FlashcardState) => {
     try {
       const { data, error } = await supabase
         .from('flashcard_sets')
-        .select('*, subject_categories(*)')
+        .select('*')
         .eq('is_built_in', true)
         .order('name');
       
