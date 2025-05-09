@@ -3,15 +3,15 @@ import React from "react";
 import Layout from "@/components/layout/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminSubjectList } from "@/components/admin/AdminSubjectList";
-import { Helmet } from "react-helmet";
 
 const AdminSubjectsPage = () => {
+  // Set document title using React's useEffect
+  React.useEffect(() => {
+    document.title = "Admin - Subjects | StudyApp";
+  }, []);
+
   return (
     <Layout>
-      <Helmet>
-        <title>Admin - Subjects | StudyApp</title>
-      </Helmet>
-      
       <div className="container mx-auto py-6 space-y-6">
         <h1 className="text-2xl font-bold">Subject Management</h1>
         
