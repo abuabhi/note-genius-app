@@ -1,3 +1,4 @@
+
 import { 
   Flashcard, 
   FlashcardSet, 
@@ -15,6 +16,7 @@ export interface FlashcardContextType {
   currentFlashcard: Flashcard | null;
   currentSet: FlashcardSet | null;
   categories: SubjectCategory[];
+  setCategories: React.Dispatch<React.SetStateAction<SubjectCategory[]>>;
   
   // Loading states
   loading: {
@@ -43,7 +45,7 @@ export interface FlashcardContextType {
   getFlashcardProgress: (flashcardId: string) => Promise<FlashcardProgress | null>;
   
   // Category operations
-  fetchCategories: () => Promise<void>;
+  fetchCategories: () => Promise<SubjectCategory[]>;
   
   // Library operations
   fetchBuiltInSets: () => Promise<FlashcardSet[]>;

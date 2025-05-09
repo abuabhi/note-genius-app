@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useFlashcards } from "@/contexts/FlashcardContext";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,7 +26,7 @@ import { SubjectCategory } from "@/types/flashcard";
 import { supabase } from "@/integrations/supabase/client";
 
 export function AdminSubjectList() {
-  const { categories, setCategories } = useFlashcards();
+  const { categories, setCategories, fetchCategories } = useFlashcards();
   const [loading, setLoading] = useState(true);
   const [newSubject, setNewSubject] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -37,32 +36,7 @@ export function AdminSubjectList() {
     const loadCategories = async () => {
       setLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('subject_categories')
-          .select('*')
-          .order('name');
-        
-        if (error) throw error;
-        
-        // Transform into expected format with subcategories
-        const categoriesById: Record<string, SubjectCategory> = {};
-        const rootCategories: SubjectCategory[] = [];
-        
-        // First pass: index all categories
-        data.forEach(category => {
-          categoriesById[category.id] = { ...category, subcategories: [] };
-        });
-        
-        // Second pass: build hierarchy
-        data.forEach(category => {
-          if (category.parent_id && categoriesById[category.parent_id]) {
-            categoriesById[category.parent_id].subcategories?.push(categoriesById[category.id]);
-          } else {
-            rootCategories.push(categoriesById[category.id]);
-          }
-        });
-        
-        setCategories(rootCategories);
+        await fetchCategories();
       } catch (error) {
         console.error("Error loading categories:", error);
         toast({
@@ -76,7 +50,7 @@ export function AdminSubjectList() {
     };
     
     loadCategories();
-  }, [setCategories, toast]);
+  }, [fetchCategories, toast]);
 
   const handleAddSubject = async () => {
     if (!newSubject.trim()) {
@@ -105,31 +79,8 @@ export function AdminSubjectList() {
       setNewSubject("");
       setDialogOpen(false);
       
-      // Refresh categories list
-      const { data: updatedData, error: fetchError } = await supabase
-        .from('subject_categories')
-        .select('*')
-        .order('name');
-      
-      if (fetchError) throw fetchError;
-      
-      // Update categories with the same transformation logic
-      const categoriesById: Record<string, SubjectCategory> = {};
-      const rootCategories: SubjectCategory[] = [];
-      
-      updatedData.forEach(category => {
-        categoriesById[category.id] = { ...category, subcategories: [] };
-      });
-      
-      updatedData.forEach(category => {
-        if (category.parent_id && categoriesById[category.parent_id]) {
-          categoriesById[category.parent_id].subcategories?.push(categoriesById[category.id]);
-        } else {
-          rootCategories.push(categoriesById[category.id]);
-        }
-      });
-      
-      setCategories(rootCategories);
+      // Refresh categories
+      fetchCategories();
     } catch (error) {
       console.error("Error adding subject:", error);
       toast({

@@ -58,5 +58,5 @@ export const useCategoryOperations = (
     }
   };
 
-  return { fetchCategories, loading };
+  return { fetchCategories, categoriesLoading: loading };
 };

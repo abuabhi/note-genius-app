@@ -17,7 +17,13 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
   const flashcardOperations = useFlashcardsOperations(state);
   const setOperations = useFlashcardSets(state);
   const studyOperations = useStudyOperations(state);
-  const categoryOperations = useCategoryOperations(state.categories, state.setCategories);
+  const { fetchCategories, categoriesLoading } = useCategoryOperations(state.categories, state.setCategories);
+  
+  // Update loading state for categories
+  state.setLoading(prevLoading => ({
+    ...prevLoading,
+    categories: categoriesLoading
+  }));
   
   // Combine all operations
   const contextValue: FlashcardContextType = {
@@ -25,7 +31,7 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     ...flashcardOperations,
     ...setOperations,
     ...studyOperations,
-    ...categoryOperations,
+    fetchCategories,
   };
   
   return (
