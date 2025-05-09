@@ -21,6 +21,7 @@ import FlashcardLibraryPage from "./pages/FlashcardLibraryPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
 import AdminFlashcardPage from "./pages/AdminFlashcardPage";
 import AdminSectionsPage from "./pages/AdminSectionsPage";
+import AdminSubjectsPage from "./pages/AdminSubjectsPage";
 import AdminGradesPage from "./pages/AdminGradesPage";
 import AdminCSVImportPage from "./pages/AdminCSVImportPage";
 import CreateQuizPage from "./pages/CreateQuizPage";
@@ -76,6 +77,7 @@ const App = () => {
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/flashcards" element={<AdminFlashcardPage />} />
           <Route path="/admin/sections" element={<AdminSectionsPage />} />
+          <Route path="/admin/subjects" element={<AdminSubjectsPage />} />
           <Route path="/admin/grades" element={<AdminGradesPage />} />
           <Route path="/admin/csv-import" element={<AdminCSVImportPage />} />
           
