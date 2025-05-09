@@ -33,9 +33,10 @@ export const Chat = () => {
   useEffect(() => {
     // Show toast when there's a chat error
     if (chatError) {
+      console.error("Chat error detected:", chatError);
       toast({
         title: "Chat Error",
-        description: "There was an error loading your conversations. Please try again later.",
+        description: "There was an error loading your conversations. Please try again.",
         variant: "destructive"
       });
     }
@@ -45,7 +46,6 @@ export const Chat = () => {
     setIsRetrying(true);
     setRetryCount(prev => prev + 1);
     
-    // Add more detailed logging for debugging
     console.log("Retrying chat connection...", { retryCount: retryCount + 1 });
     resetErrors();
     
@@ -87,7 +87,7 @@ export const Chat = () => {
           <AlertDescription className="mt-2">
             <p className="mb-4">
               We encountered an issue loading your conversations. 
-              {retryCount > 2 ? " Please try again later." : " This might be due to a temporary server problem."}
+              {retryCount > 2 ? " This might be due to a database permission issue." : " This might be due to a temporary server problem."}
             </p>
             <Button 
               onClick={handleRetry} 

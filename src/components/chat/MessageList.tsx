@@ -1,6 +1,6 @@
 
 import { useEffect, useRef } from "react";
-import { useChat } from "@/hooks/useChat";
+import { useChat } from "@/hooks/chat"; // Updated import path
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";

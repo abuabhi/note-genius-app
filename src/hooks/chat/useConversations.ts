@@ -25,16 +25,33 @@ export const useConversations = (): UseConversationsReturn => {
       try {
         console.log("Fetching conversations for user:", user.id);
         
-        // Step 1: Get conversations directly with a more efficient query
-        // Avoiding the recursion by not joining on conversation_participants table
+        // With our new security definer function and policies, we can simplify our queries
+        // First, fetch conversation IDs where the user is a participant
+        const { data: participantData, error: participantError } = await supabase
+          .from('conversation_participants')
+          .select('conversation_id, last_read_at')
+          .eq('user_id', user.id);
+          
+        if (participantError) {
+          console.error("Error fetching participants:", participantError);
+          throw participantError;
+        }
+        
+        if (!participantData || participantData.length === 0) {
+          console.log("No conversations found for user");
+          setConversations([]);
+          setLoadingConversations(false);
+          return;
+        }
+
+        // Get the conversation IDs
+        const conversationIds = participantData.map(p => p.conversation_id);
+        
+        // Fetch the conversations
         const { data: conversationsData, error: conversationsError } = await supabase
           .from('chat_conversations')
-          .select(`
-            id,
-            created_at,
-            updated_at,
-            last_message_at
-          `)
+          .select('*')
+          .in('id', conversationIds)
           .order('last_message_at', { ascending: false });
           
         if (conversationsError) {
@@ -42,130 +59,84 @@ export const useConversations = (): UseConversationsReturn => {
           throw conversationsError;
         }
         
-        if (!conversationsData || conversationsData.length === 0) {
-          console.log("No conversations found for user");
-          setConversations([]);
-          setLoadingConversations(false);
-          return;
-        }
-
-        console.log(`Found ${conversationsData.length} potential conversations`);
-        
-        // Step 2: For each conversation, check if the user is a participant
-        const userConversations = [];
-        
-        for (const conversation of conversationsData) {
-          try {
-            // Check if user is participant in this conversation
-            const { data: participantData, error: participantError } = await supabase
+        // For each conversation, fetch all participants
+        const conversationsWithParticipants = await Promise.all(
+          conversationsData.map(async (conversation) => {
+            // Get all participants for this conversation
+            const { data: allParticipants, error: participantsError } = await supabase
               .from('conversation_participants')
-              .select('*')
-              .eq('conversation_id', conversation.id)
-              .eq('user_id', user.id)
-              .maybeSingle();
+              .select(`
+                user_id,
+                last_read_at,
+                conversation_id
+              `)
+              .eq('conversation_id', conversation.id);
               
-            if (participantError) {
-              console.error("Error checking participant:", participantError);
-              continue;
+            if (participantsError) {
+              console.error("Error fetching all participants:", participantsError);
+              throw participantsError;
             }
             
-            if (!participantData) {
-              continue; // User is not a participant in this conversation
-            }
+            // Get profiles for all participants
+            const userIds = allParticipants.map(p => p.user_id);
             
-            // Get other participants for this conversation
-            const { data: otherParticipantsData, error: otherParticipantsError } = await supabase
-              .from('conversation_participants')
-              .select('user_id, last_read_at')
-              .eq('conversation_id', conversation.id)
-              .neq('user_id', user.id);
-              
-            if (otherParticipantsError) {
-              console.error("Error fetching other participants:", otherParticipantsError);
-              continue;
-            }
-            
-            // If no other participants, skip this conversation
-            if (!otherParticipantsData || otherParticipantsData.length === 0) {
-              continue;
-            }
-            
-            // Get profiles for other participants
-            const otherParticipantIds = otherParticipantsData.map(p => p.user_id);
-            
-            const { data: profilesData, error: profilesError } = await supabase
+            const { data: profiles, error: profilesError } = await supabase
               .from('profiles')
               .select('*')
-              .in('id', otherParticipantIds);
+              .in('id', userIds);
               
             if (profilesError) {
               console.error("Error fetching profiles:", profilesError);
-              continue;
+              throw profilesError;
             }
             
-            // Add current user as participant
-            const participants = [
-              {
-                user_id: user.id,
-                conversation_id: conversation.id,
-                last_read_at: participantData.last_read_at,
-                profile: null // We don't need current user's profile
-              }
-            ];
-            
-            // Add other participants with their profiles
-            otherParticipantsData.forEach(participant => {
-              const profile = profilesData?.find(p => p.id === participant.user_id);
-              participants.push({
+            // Combine participants with their profiles
+            const participants = allParticipants.map(participant => {
+              const profile = profiles?.find(p => p.id === participant.user_id);
+              
+              return {
                 user_id: participant.user_id,
-                conversation_id: conversation.id,
+                conversation_id: participant.conversation_id,
                 last_read_at: participant.last_read_at,
                 profile: profile || null
-              });
+              };
             });
             
-            // Add conversation with participants to the list
-            userConversations.push({
+            return {
               ...conversation,
               participants
-            });
-          } catch (err) {
-            console.error("Error processing conversation:", err);
-            continue;
-          }
-        }
-
-        setConversations(userConversations);
-        console.log("Successfully processed conversations:", userConversations.length);
+            } as ChatConversation;
+          })
+        );
+        
+        setConversations(conversationsWithParticipants);
+        console.log("Successfully loaded conversations:", conversationsWithParticipants.length);
       } catch (error) {
         console.error('Error fetching conversations:', error);
         setError(error instanceof Error ? error : new Error('Failed to load conversations'));
-        toast({
-          title: 'Error',
-          description: 'Failed to load conversations. Retrying...',
-          variant: 'destructive',
-        });
         
-        // Increment retry count to limit retries
-        setRetryCount(prev => prev + 1);
+        if (retryCount < 3) {
+          toast({
+            title: 'Error',
+            description: 'Failed to load conversations. Retrying...',
+            variant: 'destructive',
+          });
+          
+          // Increment retry count to limit retries
+          setRetryCount(prev => prev + 1);
+        } else {
+          toast({
+            title: 'Connection Issues',
+            description: 'Having trouble connecting to the chat service. Please try again later.',
+            variant: 'destructive',
+          });
+        }
       } finally {
         setLoadingConversations(false);
       }
     };
 
-    // Only fetch if we haven't exceeded retry limit
-    if (retryCount < 3) {
-      fetchConversations();
-    } else if (retryCount === 3) {
-      // Final attempt notification
-      toast({
-        title: 'Connection Issues',
-        description: 'Having trouble connecting to the chat service. Please try again later.',
-        variant: 'destructive',
-      });
-      setError(new Error('Maximum retry attempts reached'));
-      setLoadingConversations(false);
-    }
+    fetchConversations();
   }, [user, toast, retryCount]);
 
   const updateLastRead = useCallback(async (conversationId: string) => {

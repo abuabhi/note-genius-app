@@ -1356,7 +1356,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_user_in_conversation: {
+        Args: { conversation_uuid: string }
+        Returns: boolean
+      }
     }
     Enums: {
       user_tier: "SCHOLAR" | "GRADUATE" | "MASTER" | "DEAN"
