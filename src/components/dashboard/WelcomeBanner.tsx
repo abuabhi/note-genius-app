@@ -2,23 +2,34 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserTier } from "@/hooks/useUserTier";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { UserTier } from "@/hooks/useRequireAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Bell, Star, Clock } from "lucide-react";
 import { format } from "date-fns";
 
-const tierLabels = {
-  [UserTier.SCHOLAR]: "Scholar Plan",
-  [UserTier.GRADUATE]: "Graduate Plan",
-  [UserTier.MASTER]: "Master Plan",
-  [UserTier.DEAN]: "Dean Plan",
-};
-
 export function WelcomeBanner() {
   const { user } = useAuth();
-  const { userTier } = useUserTier();
+  
+  const { data: userProfile } = useQuery({
+    queryKey: ["userProfile", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!user,
+  });
   
   const { data: recentActivity } = useQuery({
     queryKey: ["recentActivity", user?.id],
@@ -58,7 +69,8 @@ export function WelcomeBanner() {
     return "evening";
   };
 
-  const username = user?.email?.split('@')[0] || "Scholar";
+  // Get user's name from profile, fall back to first part of email if no username
+  const displayName = userProfile?.username || user?.email?.split('@')[0] || "Scholar";
   const timeOfDay = getTimeOfDay();
 
   return (
@@ -66,16 +78,9 @@ export function WelcomeBanner() {
       <CardContent className="p-6">
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-bold text-mint-800">
-                Good {timeOfDay}, {username}!
-              </h2>
-              {userTier && (
-                <Badge variant="outline" className="bg-mint-200/50 text-mint-700 hover:bg-mint-200">
-                  {tierLabels[userTier]}
-                </Badge>
-              )}
-            </div>
+            <h2 className="text-2xl font-bold text-mint-800">
+              Good {timeOfDay}, {displayName}!
+            </h2>
             <p className="text-mint-700">
               {new Date().toLocaleDateString(undefined, { 
                 weekday: 'long', 
@@ -120,9 +125,7 @@ export function WelcomeBanner() {
               <div>
                 <p className="text-xs text-mint-600">Today's focus</p>
                 <p className="font-medium text-mint-800">
-                  {userTier && userTier !== UserTier.SCHOLAR 
-                    ? "Keep up the momentum!" 
-                    : "Start your study journey"}
+                  Keep up the momentum!
                 </p>
               </div>
             </div>

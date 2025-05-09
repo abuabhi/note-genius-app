@@ -51,14 +51,27 @@ export function UserTierDisplay() {
       
       if (flashcardsError) console.error('Error fetching flashcards count:', flashcardsError);
       
-      // For storage, we'd typically track this via file uploads
-      // This is a placeholder that could be replaced with actual storage tracking
-      const storageUsed = notesCount ? notesCount * 5 : 0; // Rough estimate: 5MB per note
+      // Get actual storage used - calculate based on note content size
+      const { data: notes, error: contentError } = await supabase
+        .from('notes')
+        .select('content');
+        
+      if (contentError) console.error('Error fetching notes content:', contentError);
+      
+      // Calculate storage used by the notes content
+      // A better implementation would track actual storage usage across all files
+      const contentSize = notes?.reduce((total, note) => {
+        // Calculate bytes in content: 2 bytes per character (UTF-16)
+        return total + (note.content ? note.content.length * 2 : 0);
+      }, 0) || 0;
+      
+      // Convert bytes to MB with 2 decimal places
+      const storageMB = Math.round((contentSize / (1024 * 1024)) * 100) / 100;
       
       return {
         notesCount: notesCount || 0,
         flashcardsCount: flashcardsCount || 0,
-        storageUsed,
+        storageUsed: storageMB || 0,
       };
     },
     enabled: !!userTier,
@@ -135,7 +148,7 @@ export function UserTierDisplay() {
                 <span className="text-xs text-muted-foreground">Storage</span>
               </div>
               <span className="text-xs font-medium">
-                {isLoadingUsage ? '...' : `${Math.round(usageStats?.storageUsed || 0)} MB`}/
+                {isLoadingUsage ? '...' : `${usageStats?.storageUsed} MB`}/
                 {tierLimits?.max_storage_mb === Infinity ? "∞" : `${tierLimits?.max_storage_mb} MB`}
               </span>
             </div>
@@ -144,37 +157,6 @@ export function UserTierDisplay() {
               className="h-1"
               indicatorClassName={tierColors[userTier]} 
             />
-          </div>
-          
-          {/* Features list */}
-          <div className="pt-1 border-t border-border/40">
-            <h4 className="text-xs font-medium mb-1.5">Key features:</h4>
-            <ul className="text-xs space-y-1 text-muted-foreground">
-              <li className="flex items-center gap-1">
-                <span className={tierLimits.ocr_enabled ? "text-green-500" : "text-red-500"}>
-                  {tierLimits.ocr_enabled ? "✓" : "✗"}
-                </span>
-                <span>OCR scanning</span>
-              </li>
-              <li className="flex items-center gap-1">
-                <span className={tierLimits.ai_features_enabled ? "text-green-500" : "text-red-500"}>
-                  {tierLimits.ai_features_enabled ? "✓" : "✗"}
-                </span>
-                <span>AI features</span>
-              </li>
-              <li className="flex items-center gap-1">
-                <span className={tierLimits.collaboration_enabled ? "text-green-500" : "text-red-500"}>
-                  {tierLimits.collaboration_enabled ? "✓" : "✗"}
-                </span>
-                <span>Collaboration</span>
-              </li>
-              <li className="flex items-center gap-1">
-                <span className={tierLimits.chat_enabled ? "text-green-500" : "text-red-500"}>
-                  {tierLimits.chat_enabled ? "✓" : "✗"}
-                </span>
-                <span>AI Study Chat</span>
-              </li>
-            </ul>
           </div>
         </div>
       )}
