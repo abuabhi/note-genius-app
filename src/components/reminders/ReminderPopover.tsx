@@ -55,7 +55,10 @@ export const ReminderPopover = () => {
           <RemindersList 
             reminders={reminders}
             loading={isLoading}
-            onDismiss={(id) => dismissReminder.mutate(id)}
+            onDismiss={(id) => {
+              dismissReminder.mutate(id);
+              return Promise.resolve(true);
+            }}
           />
         </div>
       </PopoverContent>

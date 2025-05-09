@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -5,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { StudyGoal, GoalFormValues } from '@/hooks/useStudyGoals';
-import { useReminders, ReminderFormValues } from '@/hooks/useReminders';
+import { useReminders } from '@/hooks/useReminders';
 import { AutomaticReminderDialog, AutomaticReminderConfig } from '@/components/reminders/AutomaticReminderDialog';
 import { toast } from 'sonner';
 
@@ -136,7 +137,7 @@ export const GoalFormDialog = ({
         title: `Goal Deadline: ${goalData.title}`,
         description: `Reminder for your goal: ${goalData.title}${goalData.description ? ` - ${goalData.description}` : ''}`,
         reminder_time: reminderDate,
-        type: 'goal_deadline' as ReminderType,
+        type: 'goal_deadline',
         delivery_methods: config.delivery_methods,
         recurrence: config.recurrence,
         goal_id: goalId,

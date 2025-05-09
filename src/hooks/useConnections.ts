@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,7 +45,10 @@ export const useConnections = () => {
         throw error;
       }
       
-      return data as UserConnection[];
+      return (data || []).map(item => ({
+        ...item,
+        sender_profile: item.sender_profile || { id: item.sender_id, username: null }
+      })) as UserConnection[];
     },
     enabled: !!user
   });
@@ -71,7 +73,10 @@ export const useConnections = () => {
         throw error;
       }
       
-      return data as UserConnection[];
+      return (data || []).map(item => ({
+        ...item,
+        receiver_profile: item.receiver_profile || { id: item.receiver_id, username: null }
+      })) as UserConnection[];
     },
     enabled: !!user
   });
@@ -111,8 +116,18 @@ export const useConnections = () => {
         throw receivedError;
       }
       
-      // Merge the two sets of connections
-      return [...(sentConnections as UserConnection[] || []), ...(receivedConnections as UserConnection[] || [])];
+      // Merge the two sets of connections and handle potentially missing profiles
+      const sentWithProfiles = (sentConnections || []).map(item => ({
+        ...item,
+        receiver_profile: item.receiver_profile || { id: item.receiver_id, username: null }
+      })) as UserConnection[];
+      
+      const receivedWithProfiles = (receivedConnections || []).map(item => ({
+        ...item,
+        sender_profile: item.sender_profile || { id: item.sender_id, username: null }
+      })) as UserConnection[];
+      
+      return [...sentWithProfiles, ...receivedWithProfiles];
     },
     enabled: !!user
   });
