@@ -3,6 +3,7 @@ import React from "react";
 import Layout from "@/components/layout/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminSubjectList } from "@/components/admin/AdminSubjectList";
+import { FlashcardProvider } from "@/contexts/FlashcardContext";
 
 const AdminSubjectsPage = () => {
   // Set document title using React's useEffect
@@ -22,7 +23,9 @@ const AdminSubjectsPage = () => {
           </TabsList>
           
           <TabsContent value="subjects">
-            <AdminSubjectList />
+            <FlashcardProvider>
+              <AdminSubjectList />
+            </FlashcardProvider>
           </TabsContent>
           
           <TabsContent value="import">
