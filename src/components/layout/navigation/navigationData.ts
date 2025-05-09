@@ -51,7 +51,7 @@ export const navigationGroups = [
       },
       {
         title: "Quizzes",
-        path: "/quiz",
+        path: "/quizzes",
         icon: Activity,
       },
     ]
@@ -94,7 +94,7 @@ export const navigationGroups = [
       },
       {
         title: "Collaboration",
-        path: "/collaborate",
+        path: "/collaborate",  // Updated to match the URL you're trying to access
         icon: Users,
       },
     ]

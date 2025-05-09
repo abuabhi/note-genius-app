@@ -88,6 +88,7 @@ const App = () => {
           
           {/* Collaboration routes */}
           <Route path="/collaboration" element={<CollaborationPage />} />
+          <Route path="/collaborate" element={<CollaborationPage />} />  {/* Added this route */}
           
           {/* Auth callback routes */}
           <Route path="/auth/notion/callback" element={<NotionAuthCallback />} />
