@@ -7,7 +7,8 @@ import { supabase } from '@/integrations/supabase/client';
 // Define available user tiers as enum
 export enum UserTier {
   SCHOLAR = 'SCHOLAR',
-  TEACHER = 'TEACHER',
+  GRADUATE = 'GRADUATE',
+  MASTER = 'MASTER',
   DEAN = 'DEAN'
 }
 
@@ -92,7 +93,24 @@ export const useRequireAuth = () => {
             setTierLimits(tierData);
           }
 
-          setUserProfile(profileData);
+          // Transform the profileData to match the UserProfile interface
+          const typedProfile: UserProfile = {
+            id: profileData.id,
+            username: profileData.username || '',
+            avatar_url: profileData.avatar_url,
+            user_tier: profileData.user_tier as UserTier,
+            do_not_disturb: profileData.do_not_disturb || false,
+            dnd_start_time: profileData.dnd_start_time,
+            dnd_end_time: profileData.dnd_end_time,
+            notification_preferences: 
+              typeof profileData.notification_preferences === 'object' 
+                ? profileData.notification_preferences
+                : { email: false, in_app: true, whatsapp: false },
+            created_at: profileData.created_at || '',
+            updated_at: profileData.updated_at || ''
+          };
+
+          setUserProfile(typedProfile);
         }
       } catch (error) {
         console.error('Error in useRequireAuth:', error);

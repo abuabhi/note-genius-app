@@ -131,11 +131,11 @@ export function UserTierDisplay() {
               </div>
               <span className="text-xs font-medium">
                 {isLoadingUsage ? '...' : usageStats?.flashcardsCount || 0}/
-                {tierLimits?.max_flashcards === Infinity ? "∞" : tierLimits?.max_flashcards}
+                {tierLimits?.max_flashcard_sets === Infinity ? "∞" : tierLimits?.max_flashcard_sets}
               </span>
             </div>
             <Progress 
-              value={isLoadingUsage ? 30 : getUsagePercentage(usageStats?.flashcardsCount || 0, tierLimits?.max_flashcards || 100)}
+              value={isLoadingUsage ? 30 : getUsagePercentage(usageStats?.flashcardsCount || 0, tierLimits?.max_flashcard_sets || 100)}
               className="h-1"
               indicatorClassName={tierColors[userTier]} 
             />

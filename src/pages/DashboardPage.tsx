@@ -14,9 +14,8 @@ import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
 
 const DashboardPage = () => {
   const { user, userProfile, loading } = useRequireAuth();
-  const isAuthorized = !!user;
 
-  console.log("Dashboard rendering:", { user, isAuthorized, loading });
+  console.log("Dashboard rendering:", { user, userProfile, loading });
 
   if (loading) {
     return (
@@ -31,7 +30,7 @@ const DashboardPage = () => {
     );
   }
 
-  if (!isAuthorized) {
+  if (!user) {
     console.log("Not authorized, redirecting via useRequireAuth");
     return null; // Will redirect via the useRequireAuth hook
   }

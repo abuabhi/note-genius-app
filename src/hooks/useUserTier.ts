@@ -34,7 +34,7 @@ export const useUserTier = () => {
         return {
           max_notes: Infinity,
           max_storage_mb: 10000,
-          max_flashcards: Infinity,
+          max_flashcard_sets: Infinity,
           ocr_enabled: true,
           ai_features_enabled: true,
           collaboration_enabled: true,
@@ -45,7 +45,7 @@ export const useUserTier = () => {
         return {
           max_notes: 1000,
           max_storage_mb: 5000,
-          max_flashcards: 5000,
+          max_flashcard_sets: 5000,
           ocr_enabled: true,
           ai_features_enabled: true,
           collaboration_enabled: true,
@@ -56,7 +56,7 @@ export const useUserTier = () => {
         return {
           max_notes: 500,
           max_storage_mb: 1000,
-          max_flashcards: 1000,
+          max_flashcard_sets: 1000,
           ocr_enabled: true,
           ai_features_enabled: false,
           collaboration_enabled: true,
@@ -68,7 +68,7 @@ export const useUserTier = () => {
         return {
           max_notes: 100,
           max_storage_mb: 250,
-          max_flashcards: 250,
+          max_flashcard_sets: 250,
           ocr_enabled: false,
           ai_features_enabled: false,
           collaboration_enabled: false,

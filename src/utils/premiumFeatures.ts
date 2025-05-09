@@ -11,8 +11,19 @@ export const tierFeatures = {
     basicQuizzes: true,
     basicProgress: true,
   },
+  [UserTier.GRADUATE]: {
+    // Graduate tier has all Scholar features plus these
+    basicFlashcards: true,
+    studyTracking: true,
+    notesTaking: true,
+    explanationsAndHints: true,
+    exportImport: true,
+    basicQuizzes: true,
+    basicProgress: true,
+    quizExplanations: true,
+  },
   [UserTier.MASTER]: {
-    // Master tier has all Scholar features plus these
+    // Master tier has all Graduate features plus these
     basicFlashcards: true,
     studyTracking: true,
     notesTaking: true,
