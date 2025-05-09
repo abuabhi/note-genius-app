@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { useNavigationContext } from '@/contexts/NavigationContext';
 import { ReminderNavPopover } from '@/components/reminders/ReminderNavPopover';
+import { DndToggle } from '@/components/dnd/DndToggle';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -97,6 +98,9 @@ export default function NavBar() {
                   </DropdownMenuContent>
                 </DropdownMenu>
                 
+                {/* DND Toggle - Added here */}
+                <DndToggle />
+                
                 {/* Reminders popover */}
                 <ReminderNavPopover />
               </div>
@@ -133,6 +137,11 @@ export default function NavBar() {
                       <Link to="/admin/csv-import">CSV Import</Link>
                     </>
                   )}
+                  {/* DND Toggle for mobile - Added here */}
+                  <div className="flex items-center justify-between py-2">
+                    <span>Do Not Disturb Mode</span>
+                    <DndToggle />
+                  </div>
                   <Button variant="outline" onClick={handleLogout}>
                     Logout
                   </Button>
