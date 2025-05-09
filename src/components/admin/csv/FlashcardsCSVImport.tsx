@@ -23,7 +23,7 @@ export function FlashcardsCSVImport() {
   const { importFlashcards, isImporting, importResults } = useFlashcardsImport();
   const form = useForm({
     defaultValues: {
-      country: ""
+      country: "all" // Changed the default value from empty string to "all"
     }
   });
 
@@ -81,7 +81,7 @@ export function FlashcardsCSVImport() {
                         <SelectValue placeholder="Select a country" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Countries</SelectItem>
+                        <SelectItem value="all">All Countries</SelectItem> {/* Changed value from "" to "all" */}
                         {countries.map((country) => (
                           <SelectItem key={country.id} value={country.code}>
                             {country.name} ({country.code})
