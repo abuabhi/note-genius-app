@@ -1,4 +1,3 @@
-
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { StudyStatsChart } from "@/components/progress/StudyStatsChart";
 import { StudyStatsOverview } from "@/components/study/StudyStatsOverview";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
 
 const DashboardPage = () => {
   const { user, userProfile, loading } = useRequireAuth();
@@ -35,9 +35,7 @@ const DashboardPage = () => {
   return (
     <Layout>
       <div className="container mx-auto p-6">
-        <h1 className="text-3xl font-bold mb-6 text-mint-700">
-          Welcome back{user?.email ? `, ${user.email.split('@')[0]}!` : '!'}
-        </h1>
+        <WelcomeBanner />
         
         {/* Analytics Tabs */}
         <div className="mb-8">
