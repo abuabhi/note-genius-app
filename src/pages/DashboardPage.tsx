@@ -12,7 +12,7 @@ import { StudyStatsOverview } from "@/components/study/StudyStatsOverview";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const DashboardPage = () => {
-  const { user, userProfile, tierLimits, loading } = useRequireAuth();
+  const { user, userProfile, loading } = useRequireAuth();
   const isAuthorized = !!user;
 
   if (loading) {
@@ -38,75 +38,6 @@ const DashboardPage = () => {
         <h1 className="text-3xl font-bold mb-6 text-mint-700">
           Welcome back{user?.email ? `, ${user.email.split('@')[0]}!` : '!'}
         </h1>
-        
-        {/* User tier information */}
-        {userProfile && tierLimits && (
-          <Card className="mb-8 border-mint-100 shadow-sm">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-2xl flex items-center gap-2">
-                    <GraduationCap className="h-6 w-6 text-mint-600" />
-                    {userProfile.user_tier} Tier
-                  </CardTitle>
-                  <CardDescription>Your learning journey level</CardDescription>
-                </div>
-                {userProfile.user_tier !== 'DEAN' && (
-                  <Button asChild variant="outline" size="sm">
-                    <Link to="/pricing">Upgrade</Link>
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4">
-                {/* Notes usage */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium">Notes</span>
-                    <span className="text-xs text-muted-foreground">
-                      {/* Handle notes count when we have access to it */}
-                      0 / {tierLimits.max_notes}
-                    </span>
-                  </div>
-                  <Progress value={0} max={100} className="h-2" />
-                </div>
-                
-                {/* Storage usage */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium">Storage</span>
-                    <span className="text-xs text-muted-foreground">
-                      {/* Handle storage usage when we have access to it */}
-                      0 MB / {tierLimits.max_storage_mb} MB
-                    </span>
-                  </div>
-                  <Progress value={0} max={100} className="h-2" />
-                </div>
-
-                {/* Features */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
-                  <div className="flex items-center gap-2">
-                    <Shield className={`h-4 w-4 ${tierLimits.ocr_enabled ? 'text-green-500' : 'text-gray-300'}`} />
-                    <span className={`text-sm ${tierLimits.ocr_enabled ? 'text-gray-700' : 'text-gray-400'}`}>OCR Scanning</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Shield className={`h-4 w-4 ${tierLimits.ai_features_enabled ? 'text-green-500' : 'text-gray-300'}`} />
-                    <span className={`text-sm ${tierLimits.ai_features_enabled ? 'text-gray-700' : 'text-gray-400'}`}>AI Features</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Shield className={`h-4 w-4 ${tierLimits.collaboration_enabled ? 'text-green-500' : 'text-gray-300'}`} />
-                    <span className={`text-sm ${tierLimits.collaboration_enabled ? 'text-gray-700' : 'text-gray-400'}`}>Collaboration</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Shield className={`h-4 w-4 ${tierLimits.priority_support ? 'text-green-500' : 'text-gray-300'}`} />
-                    <span className={`text-sm ${tierLimits.priority_support ? 'text-gray-700' : 'text-gray-400'}`}>Priority Support</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
         
         {/* Analytics Tabs */}
         <div className="mb-8">
@@ -183,7 +114,7 @@ const DashboardPage = () => {
               <Button asChild variant="outline" className="w-full">
                 <Link to="/settings">
                   <Settings className="mr-2 h-4 w-4" />
-                  Open Settings
+                  View Settings
                 </Link>
               </Button>
             </CardContent>
