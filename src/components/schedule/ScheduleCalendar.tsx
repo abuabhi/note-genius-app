@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarComponent, Views, momentLocalizer } from 'react-big-calendar';
+import { Calendar as CalendarComponent, View, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { format, parseISO, set } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { useEvents } from '@/hooks/useEvents';
 import { EventCard } from './EventCard';
 import { Card } from '@/components/ui/card';
@@ -20,7 +20,7 @@ interface ScheduleCalendarProps {
 const localizer = momentLocalizer(moment);
 
 export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ selectedDate, onDateChange }) => {
-  const { events, isLoading, createEvent, updateEvent, deleteEvent } = useEvents();
+  const { events, isLoading, createEvent, deleteEvent } = useEvents(selectedDate);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   
   const [formattedEvents, setFormattedEvents] = useState<any[]>([]);
@@ -78,7 +78,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ selectedDate
           onNavigate={date => onDateChange(date)}
           selectable
           onSelectSlot={handleSelectSlot}
-          defaultView={Views.MONTH}
+          defaultView="month"
           popup
           components={{
             event: EventCard as any
@@ -88,10 +88,10 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ selectedDate
 
       {showCreateDialog && (
         <CreateEventDialog
-          open={showCreateDialog}
+          isOpen={showCreateDialog}
           onClose={() => setShowCreateDialog(false)}
-          onSave={createEvent}
-          defaultStartTime={selectedDate}
+          onEventCreated={() => {}}
+          selectedDate={selectedDate}
         />
       )}
     </>

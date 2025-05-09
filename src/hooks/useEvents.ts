@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -32,12 +32,12 @@ export const useEvents = (currentDate: Date = new Date()) => {
   });
 
   // Update date range when current date changes
-  const updateDateRange = (newDate: Date) => {
+  useEffect(() => {
     setDateRange({
-      start: startOfMonth(newDate),
-      end: endOfMonth(newDate)
+      start: startOfMonth(currentDate),
+      end: endOfMonth(currentDate)
     });
-  };
+  }, [currentDate]);
 
   // Fetch events for the current month
   const { data: events = [], isLoading, error } = useQuery({
@@ -139,7 +139,10 @@ export const useEvents = (currentDate: Date = new Date()) => {
       addMonths(currentDate, 1) : 
       addMonths(currentDate, -1);
     
-    updateDateRange(newDate);
+    setDateRange({
+      start: startOfMonth(newDate),
+      end: endOfMonth(newDate)
+    });
   };
 
   return {
@@ -150,6 +153,6 @@ export const useEvents = (currentDate: Date = new Date()) => {
     createEvent,
     deleteEvent,
     loadAdjacentMonth,
-    updateDateRange,
+    updateDateRange: setDateRange,
   };
 };
