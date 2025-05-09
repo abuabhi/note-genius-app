@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -6,6 +5,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { StudyGoal, GoalFormValues } from '@/hooks/useStudyGoals';
+import { useReminders, ReminderFormValues } from '@/hooks/useReminders';
+import { AutomaticReminderDialog, AutomaticReminderConfig } from '@/components/reminders/AutomaticReminderDialog';
+import { toast } from 'sonner';
 
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
@@ -45,6 +47,9 @@ export const GoalFormDialog = ({
   flashcardSets = []
 }: GoalFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showReminderDialog, setShowReminderDialog] = useState(false);
+  const [reminderConfig, setReminderConfig] = useState<AutomaticReminderConfig | null>(null);
+  const { createReminder } = useReminders();
 
   const form = useForm<z.infer<typeof goalSchema>>({
     resolver: zodResolver(goalSchema),
@@ -101,7 +106,13 @@ export const GoalFormDialog = ({
         formData.id = initialData.id;
       }
       
-      await onSubmit(formData);
+      const result = await onSubmit(formData);
+      
+      // If reminder configuration exists and goal creation was successful
+      if (reminderConfig && result?.id) {
+        await createReminderForGoal(result.id, data, reminderConfig);
+      }
+      
       onOpenChange(false);
     } catch (error) {
       console.error("Error submitting goal:", error);
@@ -109,60 +120,71 @@ export const GoalFormDialog = ({
       setIsSubmitting(false);
     }
   };
+  
+  const createReminderForGoal = async (
+    goalId: string, 
+    goalData: z.infer<typeof goalSchema>,
+    config: AutomaticReminderConfig
+  ) => {
+    try {
+      // Calculate reminder date based on end date and advance days
+      const endDate = new Date(goalData.end_date);
+      const reminderDate = new Date(endDate);
+      reminderDate.setDate(endDate.getDate() - config.advanceDays);
+      
+      const reminderData: ReminderFormValues = {
+        title: `Goal Deadline: ${goalData.title}`,
+        description: `Reminder for your goal: ${goalData.title}${goalData.description ? ` - ${goalData.description}` : ''}`,
+        reminder_time: reminderDate.toISOString(),
+        type: 'goal_deadline',
+        delivery_methods: config.delivery_methods,
+        recurrence: config.recurrence,
+        goal_id: goalId,
+      };
+      
+      await createReminder(reminderData);
+      toast.success('Reminder created for this goal');
+    } catch (error) {
+      console.error("Error creating reminder for goal:", error);
+      toast.error('Failed to create reminder for this goal');
+    }
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{initialData ? 'Edit Study Goal' : 'Create Study Goal'}</DialogTitle>
-        </DialogHeader>
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter goal title" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description (Optional)</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Describe your study goal"
-                      className="resize-none" 
-                      {...field} 
-                      value={field.value || ''}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="grid grid-cols-2 gap-4">
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{initialData ? 'Edit Study Goal' : 'Create Study Goal'}</DialogTitle>
+          </DialogHeader>
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="subject"
+                name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Subject (Optional)</FormLabel>
+                    <FormLabel>Title</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="e.g. Math, Science"
-                        {...field}
+                      <Input placeholder="Enter goal title" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description (Optional)</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Describe your study goal"
+                        className="resize-none" 
+                        {...field} 
                         value={field.value || ''}
                       />
                     </FormControl>
@@ -171,157 +193,201 @@ export const GoalFormDialog = ({
                 )}
               />
               
-              <FormField
-                control={form.control}
-                name="target_hours"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Target Hours</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        min="1" 
-                        placeholder="Hours"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="start_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Start Date</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className="w-full pl-3 text-left font-normal"
-                          >
-                            {field.value ? (
-                              format(field.value, "MMM dd, yyyy")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) =>
-                            date < new Date(new Date().setHours(0, 0, 0, 0))
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="end_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>End Date</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className="w-full pl-3 text-left font-normal"
-                          >
-                            {field.value ? (
-                              format(field.value, "MMM dd, yyyy")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) => {
-                            const startDate = form.getValues("start_date");
-                            return date < startDate;
-                          }}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            {flashcardSets.length > 0 && (
-              <FormField
-                control={form.control}
-                name="flashcard_set_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Flashcard Set (Optional)</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="subject"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Subject (Optional)</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a flashcard set" />
-                        </SelectTrigger>
+                        <Input 
+                          placeholder="e.g. Math, Science"
+                          {...field}
+                          value={field.value || ''}
+                        />
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="">None</SelectItem>
-                        {flashcardSets.map(set => (
-                          <SelectItem key={set.id} value={set.id}>
-                            {set.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      Connect this goal to a flashcard set
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-            
-            <DialogFooter>
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => onOpenChange(false)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Saving..." : initialData ? "Update" : "Create"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="target_hours"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Target Hours</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          min="1" 
+                          placeholder="Hours"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="start_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Start Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className="w-full pl-3 text-left font-normal"
+                            >
+                              {field.value ? (
+                                format(field.value, "MMM dd, yyyy")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date < new Date(new Date().setHours(0, 0, 0, 0))
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="end_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>End Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className="w-full pl-3 text-left font-normal"
+                            >
+                              {field.value ? (
+                                format(field.value, "MMM dd, yyyy")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) => {
+                              const startDate = form.getValues("start_date");
+                              return date < startDate;
+                            }}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              {flashcardSets.length > 0 && (
+                <FormField
+                  control={form.control}
+                  name="flashcard_set_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Flashcard Set (Optional)</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a flashcard set" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="">None</SelectItem>
+                          {flashcardSets.map(set => (
+                            <SelectItem key={set.id} value={set.id}>
+                              {set.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Connect this goal to a flashcard set
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+              
+              {/* Add button to set reminder at the end of the form */}
+              <div className="flex justify-start">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setShowReminderDialog(true)}
+                  className="flex items-center gap-2"
+                >
+                  {reminderConfig ? "✓ " : ""} Set Reminder
+                </Button>
+              </div>
+              
+              <DialogFooter>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => onOpenChange(false)}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Saving..." : initialData ? "Update" : "Create"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      
+      <AutomaticReminderDialog 
+        open={showReminderDialog}
+        onOpenChange={setShowReminderDialog}
+        onConfirm={(config) => {
+          setReminderConfig(config);
+          setShowReminderDialog(false);
+        }}
+        title={form.watch('title') || "Goal"}
+        targetDate={form.watch('end_date')}
+        reminderType="goal_deadline"
+      />
+    </>
   );
 };
