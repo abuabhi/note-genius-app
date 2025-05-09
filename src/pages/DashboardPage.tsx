@@ -1,3 +1,4 @@
+
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,8 @@ const DashboardPage = () => {
   const { user, userProfile, loading } = useRequireAuth();
   const isAuthorized = !!user;
 
+  console.log("Dashboard rendering:", { user, isAuthorized, loading });
+
   if (loading) {
     return (
       <Layout>
@@ -29,6 +32,7 @@ const DashboardPage = () => {
   }
 
   if (!isAuthorized) {
+    console.log("Not authorized, redirecting via useRequireAuth");
     return null; // Will redirect via the useRequireAuth hook
   }
 

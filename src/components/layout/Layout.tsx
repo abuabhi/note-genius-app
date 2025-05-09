@@ -10,11 +10,13 @@ interface LayoutProps {
   children: ReactNode;
 }
 
-const publicRoutes = ['/', '/about', '/pricing', '/faq', '/contact', '/login', '/signup'];
-
 const Layout = ({ children }: LayoutProps) => {
   const { pathname } = useLocation();
+  const publicRoutes = ['/', '/about', '/pricing', '/faq', '/contact', '/login', '/signup'];
   const isPublicRoute = publicRoutes.includes(pathname);
+
+  // Added to debug layout rendering
+  console.log("Layout rendering:", { pathname, isPublicRoute });
 
   if (isPublicRoute) {
     return (

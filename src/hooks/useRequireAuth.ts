@@ -1,141 +1,108 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
+// Define available user tiers as enum
 export enum UserTier {
   SCHOLAR = 'SCHOLAR',
-  GRADUATE = 'GRADUATE',
-  MASTER = 'MASTER',
+  TEACHER = 'TEACHER',
   DEAN = 'DEAN'
 }
 
+export type TierLimits = {
+  max_notes: number;
+  max_flashcard_sets: number;
+  max_storage_mb: number;
+  ai_features_enabled: boolean;
+  ai_flashcard_generation: boolean;
+  ocr_enabled: boolean;
+  collaboration_enabled: boolean;
+  chat_enabled: boolean;
+  priority_support: boolean;
+};
+
 export interface UserProfile {
   id: string;
-  username: string | null;
-  user_tier: UserTier;
+  username: string;
   avatar_url: string | null;
-  created_at: string | null;
+  user_tier: UserTier;
+  do_not_disturb: boolean;
+  dnd_start_time: string | null;
+  dnd_end_time: string | null;
+  notification_preferences: {
+    email: boolean;
+    in_app: boolean;
+    whatsapp: boolean;
+  };
+  created_at: string;
+  updated_at: string;
 }
 
-export interface TierLimits {
-  max_notes: number;
-  max_storage_mb: number;
-  max_flashcards: number;
-  ocr_enabled: boolean;
-  ai_features_enabled: boolean;
-  collaboration_enabled: boolean;
-  priority_support: boolean;
-  chat_enabled?: boolean;
-}
-
-export const useRequireAuth = (redirectTo = '/login') => {
+export const useRequireAuth = () => {
   const { user, loading: authLoading } = useAuth();
-  const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [tierLimits, setTierLimits] = useState<TierLimits | null>(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const isAuthorized = !!user;
+
+  // Debug log for troubleshooting
+  console.log('useRequireAuth hook running, auth state:', { user, authLoading, loading });
 
   useEffect(() => {
-    const checkAuth = async () => {
-      // Wait for auth state to be determined
-      if (authLoading) return;
-      
-      if (!user) {
-        navigate(redirectTo);
-      } else {
-        // Fetch user profile
-        try {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-          
-          if (error) throw error;
-          
-          // Convert the string tier to UserTier enum
-          const profileWithEnumTier = {
-            ...data,
-            user_tier: data.user_tier as UserTier
-          };
-          
-          setUserProfile(profileWithEnumTier);
-          
-          // Set tier limits based on user tier
-          const limits = getTierLimits(profileWithEnumTier.user_tier);
-          setTierLimits(limits);
-          
-        } catch (error) {
-          console.error('Error fetching user profile:', error);
-        } finally {
-          setLoading(false);
+    // Don't do anything while the auth is still loading
+    if (authLoading) return;
+    
+    console.log('Auth loading finished, user:', user);
+    
+    if (!user) {
+      console.log('No user found, redirecting to /login');
+      // We delay navigation to avoid issues with React state updates
+      setTimeout(() => navigate('/login'), 10);
+      setLoading(false);
+      return;
+    }
+    
+    const fetchUserData = async () => {
+      try {
+        // Fetch the user profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Error fetching user profile:', profileError);
+          throw profileError;
         }
+
+        // Fetch tier limits based on user's tier
+        if (profileData) {
+          const { data: tierData, error: tierError } = await supabase
+            .from('tier_limits')
+            .select('*')
+            .eq('tier', profileData.user_tier)
+            .single();
+
+          if (tierError) {
+            console.error('Error fetching tier limits:', tierError);
+          } else {
+            setTierLimits(tierData);
+          }
+
+          setUserProfile(profileData);
+        }
+      } catch (error) {
+        console.error('Error in useRequireAuth:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    checkAuth();
-  }, [user, authLoading, navigate, redirectTo]);
-  
-  // Define tier limits based on user tier
-  const getTierLimits = (tier: UserTier): TierLimits => {
-    switch(tier) {
-      case UserTier.DEAN:
-        return {
-          max_notes: Infinity,
-          max_storage_mb: 10000,
-          max_flashcards: Infinity,
-          ocr_enabled: true,
-          ai_features_enabled: true,
-          collaboration_enabled: true,
-          priority_support: true,
-          chat_enabled: true
-        };
-      case UserTier.MASTER:
-        return {
-          max_notes: 1000,
-          max_storage_mb: 5000,
-          max_flashcards: 5000,
-          ocr_enabled: true,
-          ai_features_enabled: true,
-          collaboration_enabled: true,
-          priority_support: true,
-          chat_enabled: true
-        };
-      case UserTier.GRADUATE:
-        return {
-          max_notes: 500,
-          max_storage_mb: 1000,
-          max_flashcards: 1000,
-          ocr_enabled: true,
-          ai_features_enabled: false,
-          collaboration_enabled: true,
-          priority_support: false,
-          chat_enabled: true
-        };
-      case UserTier.SCHOLAR:
-      default:
-        return {
-          max_notes: 100,
-          max_storage_mb: 250,
-          max_flashcards: 250,
-          ocr_enabled: false,
-          ai_features_enabled: false,
-          collaboration_enabled: false,
-          priority_support: false,
-          chat_enabled: false
-        };
-    }
-  };
+    fetchUserData();
+  }, [user, authLoading, navigate]);
 
-  // Return both user and profile along with helper properties
-  return { 
-    user, 
-    userProfile, 
-    profile: userProfile, // Alias for backward compatibility 
-    loading: authLoading || loading,
-    isAuthorized,
-    tierLimits
-  };
+  return { user, userProfile, loading: authLoading || loading, tierLimits };
 };
