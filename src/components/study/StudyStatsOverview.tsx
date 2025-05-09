@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useStudySessions } from "@/hooks/useStudySessions";
 import { formatDuration } from "@/utils/formatTime";
 import { Clock, Calendar, Book } from "lucide-react";
+import { FlashcardProvider } from "@/contexts/FlashcardContext";
 
 export const StudyStatsOverview = () => {
   const { sessions, isLoading, getSessionStatistics } = useStudySessions();

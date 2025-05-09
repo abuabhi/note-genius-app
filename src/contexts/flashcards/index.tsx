@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 import { FlashcardContextType, FlashcardProviderProps } from './types';
 import { useFlashcardState } from './useFlashcardState';
 import { useFlashcardsOperations } from './useFlashcards';
@@ -19,11 +19,13 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
   const studyOperations = useStudyOperations(state);
   const { fetchCategories, categoriesLoading } = useCategoryOperations(state.categories, state.setCategories);
   
-  // Update loading state for categories
-  state.setLoading(prevLoading => ({
-    ...prevLoading,
-    categories: categoriesLoading
-  }));
+  // Update loading state for categories using useEffect to prevent infinite re-renders
+  useEffect(() => {
+    state.setLoading(prevLoading => ({
+      ...prevLoading,
+      categories: categoriesLoading
+    }));
+  }, [categoriesLoading, state.setLoading]);
   
   // Combine all operations
   const contextValue: FlashcardContextType = {
