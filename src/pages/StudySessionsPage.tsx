@@ -1,15 +1,34 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { StudySessionList } from "@/components/study/StudySessionList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StudyStatsOverview } from "@/components/study/StudyStatsOverview";
 import { Calendar } from "lucide-react";
+import { useStudySessions } from "@/hooks/useStudySessions";
 
 const StudySessionsPage = () => {
   const { user, loading } = useRequireAuth();
   const [activeTab, setActiveTab] = useState("all");
+  const { sessions, isLoading } = useStudySessions();
+
+  // Filter sessions based on the active tab
+  const getFilteredSessions = () => {
+    if (!sessions) return [];
+    
+    switch(activeTab) {
+      case 'recent':
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        return sessions.filter(s => new Date(s.start_time) >= oneWeekAgo);
+      case 'archived':
+        return sessions.filter(s => !s.is_active);
+      case 'all':
+      default:
+        return sessions;
+    }
+  };
 
   if (loading) {
     return (
@@ -51,13 +70,13 @@ const StudySessionsPage = () => {
               <TabsTrigger value="archived">Archived Sessions</TabsTrigger>
             </TabsList>
             <TabsContent value="all">
-              <StudySessionList filter="all" />
+              <StudySessionList sessions={getFilteredSessions()} isLoading={isLoading} />
             </TabsContent>
             <TabsContent value="recent">
-              <StudySessionList filter="recent" />
+              <StudySessionList sessions={getFilteredSessions()} isLoading={isLoading} />
             </TabsContent>
             <TabsContent value="archived">
-              <StudySessionList filter="archived" />
+              <StudySessionList sessions={getFilteredSessions()} isLoading={isLoading} />
             </TabsContent>
           </Tabs>
         </div>

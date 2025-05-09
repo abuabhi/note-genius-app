@@ -94,6 +94,12 @@ export const useRequireAuth = () => {
           }
 
           // Transform the profileData to match the UserProfile interface
+          const notificationPrefs = profileData.notification_preferences ? 
+            (typeof profileData.notification_preferences === 'string' 
+              ? JSON.parse(profileData.notification_preferences)
+              : profileData.notification_preferences) 
+            : { email: false, in_app: true, whatsapp: false };
+
           const typedProfile: UserProfile = {
             id: profileData.id,
             username: profileData.username || '',
@@ -102,14 +108,11 @@ export const useRequireAuth = () => {
             do_not_disturb: profileData.do_not_disturb || false,
             dnd_start_time: profileData.dnd_start_time,
             dnd_end_time: profileData.dnd_end_time,
-            notification_preferences: 
-              typeof profileData.notification_preferences === 'object' 
-                ? {
-                    email: profileData.notification_preferences?.email === true,
-                    in_app: profileData.notification_preferences?.in_app !== false,
-                    whatsapp: profileData.notification_preferences?.whatsapp === true
-                  }
-                : { email: false, in_app: true, whatsapp: false },
+            notification_preferences: {
+              email: notificationPrefs.email === true,
+              in_app: notificationPrefs.in_app !== false,
+              whatsapp: notificationPrefs.whatsapp === true
+            },
             created_at: profileData.created_at || '',
             updated_at: profileData.updated_at || ''
           };

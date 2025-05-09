@@ -237,11 +237,32 @@ export const useChat = () => {
 
       if (error) throw error;
       
-      // Ensure the user_tier is properly typed
-      const typedProfiles = data.map(profile => ({
-        ...profile,
-        user_tier: profile.user_tier as UserTier
-      }));
+      // Transform profiles to match UserProfile interface
+      const typedProfiles: UserProfile[] = data.map(profile => {
+        // Parse notification_preferences if it's a string or use default
+        const notificationPrefs = profile.notification_preferences ? 
+          (typeof profile.notification_preferences === 'string' 
+            ? JSON.parse(profile.notification_preferences)
+            : profile.notification_preferences) 
+          : { email: false, in_app: true, whatsapp: false };
+
+        return {
+          id: profile.id,
+          username: profile.username || '',
+          avatar_url: profile.avatar_url,
+          user_tier: profile.user_tier as UserTier,
+          do_not_disturb: profile.do_not_disturb || false,
+          dnd_start_time: profile.dnd_start_time,
+          dnd_end_time: profile.dnd_end_time,
+          notification_preferences: {
+            email: notificationPrefs.email === true,
+            in_app: notificationPrefs.in_app !== false,
+            whatsapp: notificationPrefs.whatsapp === true
+          },
+          created_at: profile.created_at || '',
+          updated_at: profile.updated_at || ''
+        };
+      });
       
       return typedProfiles;
     } catch (error) {

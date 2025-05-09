@@ -18,7 +18,7 @@ export const useUserSearch = (): UseUserSearchReturn => {
       setError(null);
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, username, avatar_url, user_tier, created_at, updated_at')
+        .select('id, username, avatar_url, user_tier, created_at, updated_at, do_not_disturb, dnd_start_time, dnd_end_time, notification_preferences')
         .ilike('username', `%${query}%`)
         .neq('id', user.id)
         .limit(10);
@@ -26,22 +26,31 @@ export const useUserSearch = (): UseUserSearchReturn => {
       if (error) throw error;
       
       // Transform profiles to match UserProfile interface
-      const typedProfiles: UserProfile[] = data.map(profile => ({
-        id: profile.id,
-        username: profile.username || '',
-        avatar_url: profile.avatar_url,
-        user_tier: profile.user_tier as UserTier,
-        do_not_disturb: false, // Default values for search results
-        dnd_start_time: null,
-        dnd_end_time: null,
-        notification_preferences: {
-          email: false,
-          in_app: true,
-          whatsapp: false
-        },
-        created_at: profile.created_at || '',
-        updated_at: profile.updated_at || ''
-      }));
+      const typedProfiles: UserProfile[] = data.map(profile => {
+        // Parse notification_preferences if it's a string or use default
+        const notificationPrefs = profile.notification_preferences ? 
+          (typeof profile.notification_preferences === 'string' 
+            ? JSON.parse(profile.notification_preferences)
+            : profile.notification_preferences) 
+          : { email: false, in_app: true, whatsapp: false };
+
+        return {
+          id: profile.id,
+          username: profile.username || '',
+          avatar_url: profile.avatar_url,
+          user_tier: profile.user_tier as UserTier,
+          do_not_disturb: profile.do_not_disturb || false,
+          dnd_start_time: profile.dnd_start_time,
+          dnd_end_time: profile.dnd_end_time,
+          notification_preferences: {
+            email: notificationPrefs.email === true,
+            in_app: notificationPrefs.in_app !== false,
+            whatsapp: notificationPrefs.whatsapp === true
+          },
+          created_at: profile.created_at || '',
+          updated_at: profile.updated_at || ''
+        };
+      });
       
       return typedProfiles;
     } catch (error) {

@@ -7,11 +7,12 @@ import { CalendarDays, BookOpen, Clock } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 interface StudySessionListProps {
-  sessions: StudySession[];
-  isLoading: boolean;
+  sessions?: StudySession[];
+  isLoading?: boolean;
+  filter?: string;
 }
 
-export const StudySessionList = ({ sessions, isLoading }: StudySessionListProps) => {
+export const StudySessionList = ({ sessions = [], isLoading = false, filter }: StudySessionListProps) => {
   if (isLoading) {
     return (
       <Card>
