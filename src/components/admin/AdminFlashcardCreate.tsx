@@ -227,7 +227,7 @@ export function AdminFlashcardCreate() {
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="_none">None</SelectItem>
                     {categories.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.name}
@@ -307,7 +307,7 @@ export function AdminFlashcardCreate() {
                       <SelectValue placeholder="Select set" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="_none">None</SelectItem>
                       {/* We should display sets here */}
                     </SelectContent>
                   </Select>
@@ -333,3 +333,4 @@ export function AdminFlashcardCreate() {
 }
 
 import { supabase } from "@/integrations/supabase/client";
+
