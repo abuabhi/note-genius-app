@@ -25,32 +25,16 @@ export const useConversations = (): UseConversationsReturn => {
       try {
         console.log("Fetching conversations for user:", user.id);
         
-        // Step 1: Get the conversation IDs where the user is a participant
-        const { data: participantData, error: participantError } = await supabase
-          .from('conversation_participants')
-          .select('conversation_id, last_read_at')
-          .eq('user_id', user.id);
-          
-        if (participantError) {
-          console.error("Error fetching participant data:", participantError);
-          throw participantError;
-        }
-        
-        if (!participantData || participantData.length === 0) {
-          console.log("No conversations found for user");
-          setConversations([]);
-          setLoadingConversations(false);
-          return;
-        }
-
-        console.log(`Found ${participantData.length} conversations for user`);
-        
-        // Step 2: Get the conversation details
-        const conversationIds = participantData.map(p => p.conversation_id);
+        // Step 1: Get conversations directly with a more efficient query
+        // Avoiding the recursion by not joining on conversation_participants table
         const { data: conversationsData, error: conversationsError } = await supabase
           .from('chat_conversations')
-          .select('*')
-          .in('id', conversationIds)
+          .select(`
+            id,
+            created_at,
+            updated_at,
+            last_message_at
+          `)
           .order('last_message_at', { ascending: false });
           
         if (conversationsError) {
@@ -58,74 +42,101 @@ export const useConversations = (): UseConversationsReturn => {
           throw conversationsError;
         }
         
-        // Step 3: For each conversation, process the participants
-        const processedConversations = await Promise.all(
-          conversationsData.map(async (conversation) => {
-            try {
-              // Get all participants for this conversation
-              const { data: allParticipantsData, error: allParticipantsError } = await supabase
-                .from('conversation_participants')
-                .select('user_id, last_read_at')
-                .eq('conversation_id', conversation.id);
-              
-              if (allParticipantsError) {
-                console.error("Error fetching all participants:", allParticipantsError);
-                throw allParticipantsError;
-              }
-              
-              // Step 4: Fetch profiles for each participant (including current user)
-              const participants = await Promise.all(
-                allParticipantsData.map(async (participant) => {
-                  // Only fetch profile if not current user to reduce queries
-                  try {
-                    const { data: profileData, error: profileError } = await supabase
-                      .from('profiles')
-                      .select('*')
-                      .eq('id', participant.user_id)
-                      .single();
-                    
-                    if (profileError) {
-                      console.error("Error fetching profile:", profileError);
-                      return {
-                        user_id: participant.user_id,
-                        conversation_id: conversation.id,
-                        last_read_at: participant.last_read_at,
-                        profile: null
-                      };
-                    }
-                    
-                    return {
-                      user_id: participant.user_id,
-                      conversation_id: conversation.id,
-                      last_read_at: participant.last_read_at,
-                      profile: profileData
-                    };
-                  } catch (err) {
-                    console.error("Error processing participant:", err);
-                    return {
-                      user_id: participant.user_id,
-                      conversation_id: conversation.id,
-                      last_read_at: participant.last_read_at,
-                      profile: null
-                    };
-                  }
-                })
-              );
-              
-              return {
-                ...conversation,
-                participants
-              } as ChatConversation;
-            } catch (err) {
-              console.error("Error processing conversation:", err);
-              return null;
-            }
-          })
-        );
+        if (!conversationsData || conversationsData.length === 0) {
+          console.log("No conversations found for user");
+          setConversations([]);
+          setLoadingConversations(false);
+          return;
+        }
 
-        // Filter out null values (conversations where there was an error)
-        setConversations(processedConversations.filter(c => c !== null) as ChatConversation[]);
-        console.log("Successfully processed conversations:", processedConversations.length);
+        console.log(`Found ${conversationsData.length} potential conversations`);
+        
+        // Step 2: For each conversation, check if the user is a participant
+        const userConversations = [];
+        
+        for (const conversation of conversationsData) {
+          try {
+            // Check if user is participant in this conversation
+            const { data: participantData, error: participantError } = await supabase
+              .from('conversation_participants')
+              .select('*')
+              .eq('conversation_id', conversation.id)
+              .eq('user_id', user.id)
+              .maybeSingle();
+              
+            if (participantError) {
+              console.error("Error checking participant:", participantError);
+              continue;
+            }
+            
+            if (!participantData) {
+              continue; // User is not a participant in this conversation
+            }
+            
+            // Get other participants for this conversation
+            const { data: otherParticipantsData, error: otherParticipantsError } = await supabase
+              .from('conversation_participants')
+              .select('user_id, last_read_at')
+              .eq('conversation_id', conversation.id)
+              .neq('user_id', user.id);
+              
+            if (otherParticipantsError) {
+              console.error("Error fetching other participants:", otherParticipantsError);
+              continue;
+            }
+            
+            // If no other participants, skip this conversation
+            if (!otherParticipantsData || otherParticipantsData.length === 0) {
+              continue;
+            }
+            
+            // Get profiles for other participants
+            const otherParticipantIds = otherParticipantsData.map(p => p.user_id);
+            
+            const { data: profilesData, error: profilesError } = await supabase
+              .from('profiles')
+              .select('*')
+              .in('id', otherParticipantIds);
+              
+            if (profilesError) {
+              console.error("Error fetching profiles:", profilesError);
+              continue;
+            }
+            
+            // Add current user as participant
+            const participants = [
+              {
+                user_id: user.id,
+                conversation_id: conversation.id,
+                last_read_at: participantData.last_read_at,
+                profile: null // We don't need current user's profile
+              }
+            ];
+            
+            // Add other participants with their profiles
+            otherParticipantsData.forEach(participant => {
+              const profile = profilesData?.find(p => p.id === participant.user_id);
+              participants.push({
+                user_id: participant.user_id,
+                conversation_id: conversation.id,
+                last_read_at: participant.last_read_at,
+                profile: profile || null
+              });
+            });
+            
+            // Add conversation with participants to the list
+            userConversations.push({
+              ...conversation,
+              participants
+            });
+          } catch (err) {
+            console.error("Error processing conversation:", err);
+            continue;
+          }
+        }
+
+        setConversations(userConversations);
+        console.log("Successfully processed conversations:", userConversations.length);
       } catch (error) {
         console.error('Error fetching conversations:', error);
         setError(error instanceof Error ? error : new Error('Failed to load conversations'));
