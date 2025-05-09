@@ -12,7 +12,7 @@ import { RemindersList } from './RemindersList';
 import { useReminders } from '@/hooks/useReminders';
 
 export const ReminderPopover = () => {
-  const { reminders, loading, dismissReminder } = useReminders();
+  const { reminders, isLoading, dismissReminder } = useReminders();
   const [open, setOpen] = useState(false);
   
   // Count pending reminders (not dismissed)
@@ -53,9 +53,9 @@ export const ReminderPopover = () => {
         </div>
         <div className="max-h-[300px] overflow-y-auto">
           <RemindersList 
-            reminders={reminders.filter(r => r.status === 'pending')}
-            loading={loading}
-            onDismiss={dismissReminder}
+            reminders={reminders}
+            loading={isLoading}
+            onDismiss={(id) => dismissReminder.mutate(id)}
           />
         </div>
       </PopoverContent>

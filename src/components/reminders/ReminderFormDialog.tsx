@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, Bell } from "lucide-react";
-import { useReminders } from "@/hooks/useReminders";
+import { useReminders, ReminderType, ReminderRecurrence, DeliveryMethod } from "@/hooks/useReminders";
 
 import {
   Dialog,
@@ -100,9 +100,9 @@ export function ReminderFormDialog({
         title: values.title,
         description: values.description,
         reminder_time: reminderTime,
-        type: values.type,
-        delivery_methods: values.deliveryMethods,
-        recurrence: values.recurrence as 'none' | 'daily' | 'weekly' | 'monthly',
+        type: values.type as ReminderType,
+        delivery_methods: values.deliveryMethods as DeliveryMethod[],
+        recurrence: values.recurrence as ReminderRecurrence,
       });
       
       onReminderCreated();

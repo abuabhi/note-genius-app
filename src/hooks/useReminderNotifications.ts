@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Reminder, DeliveryMethod, ReminderStatus, ReminderRecurrence, ReminderType } from '@/hooks/useReminders';
+import { Reminder, ReminderStatus, ReminderRecurrence, ReminderType, DeliveryMethod } from '@/hooks/useReminders';
 
 export const useReminderNotifications = () => {
   const { user } = useAuth();
@@ -53,7 +53,7 @@ export const useReminderNotifications = () => {
     try {
       const { error } = await supabase
         .from('reminders')
-        .update({ status: 'dismissed' })
+        .update({ status: 'dismissed' as ReminderStatus })
         .eq('id', id)
         .eq('user_id', user.id);
 
@@ -84,7 +84,7 @@ export const useReminderNotifications = () => {
       
       const { error } = await supabase
         .from('reminders')
-        .update({ status: 'dismissed' })
+        .update({ status: 'dismissed' as ReminderStatus })
         .in('id', sentReminderIds)
         .eq('user_id', user.id);
 

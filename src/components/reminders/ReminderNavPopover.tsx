@@ -57,7 +57,7 @@ export function ReminderNavPopover() {
   };
 
   const handleCreateReminder = async (data: any) => {
-    await createReminder(data);
+    await createReminder.mutateAsync(data);
     return true;
   };
 
@@ -152,9 +152,9 @@ export function ReminderNavPopover() {
       </Popover>
       
       <ReminderFormDialog
-        open={showCreateDialog}
-        onOpenChange={setShowCreateDialog}
-        onSubmit={handleCreateReminder}
+        isOpen={showCreateDialog}
+        onClose={() => setShowCreateDialog(false)}
+        onReminderCreated={() => setShowCreateDialog(false)}
       />
     </>
   );

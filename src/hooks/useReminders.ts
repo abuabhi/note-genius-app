@@ -6,39 +6,58 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format, addDays, addWeeks, addMonths } from "date-fns";
 
+export type ReminderStatus = 'pending' | 'sent' | 'cancelled';
+export type ReminderRecurrence = 'none' | 'daily' | 'weekly' | 'monthly';
+export type DeliveryMethod = 'in_app' | 'email' | 'whatsapp';
+export type ReminderType = 'study_event' | 'goal_deadline' | 'flashcard_review' | 'study' | 'event' | 'goal' | 'other';
+
 export interface Reminder {
   id: string;
   user_id: string;
   title: string;
   description?: string;
   reminder_time: string;
-  type: string;
-  status: 'pending' | 'sent' | 'cancelled';
+  type: ReminderType;
+  status: ReminderStatus;
   event_id?: string;
   goal_id?: string;
-  delivery_methods: string[];
-  recurrence: 'none' | 'daily' | 'weekly' | 'monthly';
+  delivery_methods: DeliveryMethod[];
+  recurrence: ReminderRecurrence;
   created_at: string;
   updated_at: string;
+  events?: any;
+  goals?: any;
 }
 
 export interface CreateReminderData {
   title: string;
   description?: string;
   reminder_time: Date;
-  type: string;
+  type: ReminderType;
   event_id?: string;
   goal_id?: string;
-  delivery_methods: string[];
-  recurrence: 'none' | 'daily' | 'weekly' | 'monthly';
+  delivery_methods: DeliveryMethod[];
+  recurrence: ReminderRecurrence;
+}
+
+export interface ReminderFormValues {
+  title: string;
+  description?: string;
+  reminder_time: string;
+  type: ReminderType;
+  event_id?: string;
+  goal_id?: string;
+  delivery_methods: DeliveryMethod[];
+  recurrence: ReminderRecurrence;
 }
 
 export const useReminders = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [isLoading, setIsLoading] = useState(false);
 
   // Query for active reminders
-  const { data: reminders = [], isLoading } = useQuery({
+  const { data: reminders = [], isLoading: remindersLoading } = useQuery({
     queryKey: ["reminders", user?.id],
     queryFn: async () => {
       if (!user) return [];
@@ -59,7 +78,15 @@ export const useReminders = () => {
         throw error;
       }
 
-      return data || [];
+      // Transform the data to match our type
+      return (data || []).map(item => ({
+        ...item,
+        type: item.type as ReminderType,
+        status: item.status as ReminderStatus,
+        delivery_methods: Array.isArray(item.delivery_methods) 
+          ? item.delivery_methods as DeliveryMethod[]
+          : ['in_app' as DeliveryMethod]
+      })) as Reminder[];
     },
     enabled: !!user,
   });
@@ -129,6 +156,33 @@ export const useReminders = () => {
     },
   });
 
+  // Mutation to dismiss a reminder
+  const dismissReminder = useMutation({
+    mutationFn: async (reminderId: string) => {
+      if (!user) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase
+        .from('reminders')
+        .update({ status: 'sent' })
+        .eq('id', reminderId)
+        .eq('user_id', user.id)
+        .select();
+
+      if (error) {
+        console.error('Error dismissing reminder:', error);
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reminders'] });
+    },
+    onError: () => {
+      toast.error('Failed to dismiss reminder');
+    },
+  });
+
   // Generate the next recurring date based on recurrence pattern
   const getNextRecurrenceDate = (date: Date, recurrence: string): Date => {
     switch (recurrence) {
@@ -155,9 +209,10 @@ export const useReminders = () => {
 
   return {
     reminders,
-    isLoading,
+    isLoading: isLoading || remindersLoading,
     createReminder,
     cancelReminder,
+    dismissReminder,
     formatReminderTime,
     getNextRecurrenceDate
   };

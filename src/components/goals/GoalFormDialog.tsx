@@ -132,17 +132,17 @@ export const GoalFormDialog = ({
       const reminderDate = new Date(endDate);
       reminderDate.setDate(endDate.getDate() - config.advanceDays);
       
-      const reminderData: ReminderFormValues = {
+      const reminderData = {
         title: `Goal Deadline: ${goalData.title}`,
         description: `Reminder for your goal: ${goalData.title}${goalData.description ? ` - ${goalData.description}` : ''}`,
-        reminder_time: reminderDate.toISOString(),
-        type: 'goal_deadline',
+        reminder_time: reminderDate,
+        type: 'goal_deadline' as ReminderType,
         delivery_methods: config.delivery_methods,
         recurrence: config.recurrence,
         goal_id: goalId,
       };
       
-      await createReminder(reminderData);
+      await createReminder.mutateAsync(reminderData);
       toast.success('Reminder created for this goal');
     } catch (error) {
       console.error("Error creating reminder for goal:", error);

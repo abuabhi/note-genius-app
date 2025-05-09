@@ -74,7 +74,9 @@ export const ConnectionsManager = () => {
               ) : (
                 <div className="space-y-2 mt-4">
                   {connections.map((connection) => {
+                    // Handle both types of connections
                     const profile = connection.sender_profile || connection.receiver_profile;
+                    
                     if (!profile) return null;
                     
                     return (
@@ -116,7 +118,7 @@ export const ConnectionsManager = () => {
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium">{request.sender_profile?.username}</p>
+                          <p className="font-medium">{request.sender_profile?.username || 'Unknown User'}</p>
                           <p className="text-xs text-muted-foreground">
                             Sent request {new Date(request.created_at).toLocaleDateString()}
                           </p>
@@ -164,7 +166,7 @@ export const ConnectionsManager = () => {
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium">{request.receiver_profile?.username}</p>
+                          <p className="font-medium">{request.receiver_profile?.username || 'Unknown User'}</p>
                           <p className="text-xs text-muted-foreground">
                             Sent request {new Date(request.created_at).toLocaleDateString()}
                           </p>

@@ -5,6 +5,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+export interface UserProfile {
+  id: string;
+  username: string | null;
+  avatar_url?: string | null;
+}
+
 export interface UserConnection {
   id: string;
   sender_id: string;
@@ -14,12 +20,6 @@ export interface UserConnection {
   updated_at: string;
   sender_profile?: UserProfile;
   receiver_profile?: UserProfile;
-}
-
-export interface UserProfile {
-  id: string;
-  username: string;
-  avatar_url?: string;
 }
 
 export const useConnections = () => {
@@ -36,7 +36,7 @@ export const useConnections = () => {
         .from('user_connections')
         .select(`
           *,
-          sender_profile:sender_id(id, username, avatar_url)
+          sender_profile:profiles!user_connections_sender_id_fkey(id, username, avatar_url)
         `)
         .eq('receiver_id', user.id)
         .eq('status', 'pending');
@@ -46,7 +46,7 @@ export const useConnections = () => {
         throw error;
       }
       
-      return data;
+      return data as UserConnection[];
     },
     enabled: !!user
   });
@@ -61,7 +61,7 @@ export const useConnections = () => {
         .from('user_connections')
         .select(`
           *,
-          receiver_profile:receiver_id(id, username, avatar_url)
+          receiver_profile:profiles!user_connections_receiver_id_fkey(id, username, avatar_url)
         `)
         .eq('sender_id', user.id)
         .eq('status', 'pending');
@@ -71,7 +71,7 @@ export const useConnections = () => {
         throw error;
       }
       
-      return data;
+      return data as UserConnection[];
     },
     enabled: !!user
   });
@@ -87,7 +87,7 @@ export const useConnections = () => {
         .from('user_connections')
         .select(`
           *,
-          receiver_profile:receiver_id(id, username, avatar_url)
+          receiver_profile:profiles!user_connections_receiver_id_fkey(id, username, avatar_url)
         `)
         .eq('sender_id', user.id)
         .eq('status', 'accepted');
@@ -101,7 +101,7 @@ export const useConnections = () => {
         .from('user_connections')
         .select(`
           *,
-          sender_profile:sender_id(id, username, avatar_url)
+          sender_profile:profiles!user_connections_sender_id_fkey(id, username, avatar_url)
         `)
         .eq('receiver_id', user.id)
         .eq('status', 'accepted');
@@ -112,7 +112,7 @@ export const useConnections = () => {
       }
       
       // Merge the two sets of connections
-      return [...(sentConnections || []), ...(receivedConnections || [])];
+      return [...(sentConnections as UserConnection[] || []), ...(receivedConnections as UserConnection[] || [])];
     },
     enabled: !!user
   });

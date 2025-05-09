@@ -1,10 +1,10 @@
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { Clock, Bell } from 'lucide-react';
+import { ReminderFormValues, ReminderRecurrence, DeliveryMethod, ReminderType } from '@/hooks/useReminders';
 
 import { 
   Dialog, 
@@ -25,7 +25,6 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ReminderFormValues, ReminderRecurrence, DeliveryMethod } from '@/hooks/useReminders';
 
 const reminderSchema = z.object({
   enableReminder: z.boolean(),
@@ -40,7 +39,7 @@ type AutomaticReminderDialogProps = {
   onConfirm: (reminderConfig: AutomaticReminderConfig | null) => void;
   title?: string;
   targetDate?: Date;
-  reminderType: 'study_event' | 'goal_deadline' | 'flashcard_review';
+  reminderType: ReminderType;
 };
 
 export type AutomaticReminderConfig = {
