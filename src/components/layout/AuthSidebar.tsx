@@ -4,6 +4,7 @@ import {
   Sidebar,
   SidebarContent,
   SidebarSeparator,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
 import {
   LayoutDashboard,
@@ -20,7 +21,6 @@ import {
   MessageSquare,
   Calendar,
   Target,
-  ChevronDown,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserTier } from "@/hooks/useRequireAuth";
@@ -193,10 +193,6 @@ const AuthSidebar = () => {
   return (
     <Sidebar>
       <SidebarContent>
-        {/* User Tier Display */}
-        <UserTierDisplay />
-        <SidebarSeparator />
-
         {/* Main Navigation */}
         <Accordion type="multiple" defaultValue={getDefaultAccordionValue()} className="w-full">
           {navigationGroups.map((group) => (
@@ -261,6 +257,12 @@ const AuthSidebar = () => {
           )}
         </Accordion>
       </SidebarContent>
+      
+      {/* Footer with User Tier Display */}
+      <SidebarFooter>
+        <SidebarSeparator />
+        <UserTierDisplay />
+      </SidebarFooter>
     </Sidebar>
   );
 };
