@@ -32,8 +32,8 @@ export function AdminFlashcardSetsList() {
   const [loading, setLoading] = useState(true);
   const [countryMap, setCountryMap] = useState<Record<string, string>>({});
   const [filters, setFilters] = useState({
-    country: "",
-    subject: "",
+    country: "all", // Changed from empty string to "all"
+    subject: "all", // Changed from empty string to "all"
     search: ""
   });
   const { toast } = useToast();
@@ -120,12 +120,12 @@ export function AdminFlashcardSetsList() {
   // Apply filters to the sets
   const filteredSets = sets.filter(set => {
     // Filter by country
-    if (filters.country && (!set.country_id || set.country_id !== filters.country)) {
+    if (filters.country !== "all" && (!set.country_id || set.country_id !== filters.country)) {
       return false;
     }
     
     // Filter by subject
-    if (filters.subject && (!set.subject || !set.subject.toLowerCase().includes(filters.subject.toLowerCase()))) {
+    if (filters.subject !== "all" && (!set.subject || !set.subject.toLowerCase().includes(filters.subject.toLowerCase()))) {
       return false;
     }
     
@@ -170,7 +170,7 @@ export function AdminFlashcardSetsList() {
               <SelectValue placeholder="Filter by country" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Countries</SelectItem>
+              <SelectItem value="all">All Countries</SelectItem> {/* Changed value from "" to "all" */}
               {countries.map((country) => (
                 <SelectItem key={country.id} value={country.id}>
                   {country.name} ({country.code})
@@ -186,7 +186,7 @@ export function AdminFlashcardSetsList() {
               <SelectValue placeholder="Filter by subject" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Subjects</SelectItem>
+              <SelectItem value="all">All Subjects</SelectItem> {/* Changed value from "" to "all" */}
               {Array.from(new Set(sets.map(set => set.subject).filter(Boolean))).map((subject) => (
                 <SelectItem key={subject} value={subject || ""}>
                   {subject}
