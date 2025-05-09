@@ -96,7 +96,7 @@ export const useNoteEnrichment = () => {
       const { data: tierData, error: tierError } = await supabase
         .from('tier_limits')
         .select('note_enrichment_limit_per_month')
-        .eq('tier', tierLimits?.tier || 'SCHOLAR')
+        .eq('tier', tierLimits?.user_tier || 'SCHOLAR')
         .single();
       
       if (tierError) throw tierError;
@@ -147,7 +147,7 @@ export const useNoteEnrichment = () => {
       }
       
       // Call the edge function
-      const response = await fetch(`${supabase.auth.url}/functions/v1/enrich-note`, {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/enrich-note`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

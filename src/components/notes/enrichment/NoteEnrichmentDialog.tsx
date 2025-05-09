@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Dialog, 
@@ -29,7 +28,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Progress } from "@/components/ui/progress";
 import { Separator } from '@/components/ui/separator';
-import { useState as useHookState } from '@/hooks/use-toast';
 
 interface NoteEnrichmentDialogProps {
   open: boolean;

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -22,6 +21,8 @@ export type TierLimits = {
   collaboration_enabled: boolean;
   chat_enabled: boolean;
   priority_support: boolean;
+  note_enrichment_enabled: boolean;
+  note_enrichment_limit_per_month?: number;
 };
 
 export interface UserProfile {
