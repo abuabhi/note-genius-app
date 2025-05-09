@@ -98,9 +98,11 @@ export const useEvents = (currentDate: Date = new Date()) => {
     },
     enabled: !!user,
     retry: false,
-    onError: (err) => {
-      console.error('Query error when fetching due flashcards:', err);
-      // Silent failure - we don't want to break the calendar if flashcards can't be loaded
+    meta: {
+      onError: (err: any) => {
+        console.error('Query error when fetching due flashcards:', err);
+        // Silent failure - we don't want to break the calendar if flashcards can't be loaded
+      }
     }
   });
 
