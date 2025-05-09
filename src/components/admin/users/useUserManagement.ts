@@ -19,35 +19,24 @@ export const useUserManagement = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Fetch user profiles from the profiles table instead of the auth.admin API
+      // Fetch user profiles from the profiles table
       const { data: profiles, error } = await supabase
         .from('profiles')
         .select('id, username, user_tier, created_at, avatar_url');
         
       if (error) throw error;
       
-      // For each profile, get the email from the users view if available
-      // This approach avoids the need for admin privileges
-      const { data: authUsers, error: authError } = await supabase
-        .from('users')
-        .select('id, email')
-        .in('id', profiles.map(profile => profile.id));
-      
-      // If we can't access the users view, we'll just use the profiles data
-      // and leave email fields empty or use username as a fallback
-      const emailMap = new Map();
-      
-      if (!authError && authUsers) {
-        authUsers.forEach(user => {
-          emailMap.set(user.id, user.email);
-        });
-      }
-      
-      // Join the data
+      // Since we can't reliably access user emails directly,
+      // we'll create user data using available profile information
       const userData: User[] = profiles.map(profile => {
+        // Create email from username or use a placeholder
+        const emailAddress = profile.username 
+          ? `${profile.username}@example.com` 
+          : `user-${profile.id.substring(0, 8)}@example.com`;
+        
         return {
           id: profile.id,
-          email: emailMap.get(profile.id) || `${profile.username || 'user'}@example.com`,
+          email: emailAddress,
           username: profile.username || '',
           user_tier: profile.user_tier as UserTier,
           created_at: profile.created_at || new Date().toISOString(),
