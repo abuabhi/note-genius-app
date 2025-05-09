@@ -33,7 +33,7 @@ export const useConversations = (): UseConversationsReturn => {
             updated_at,
             last_message_at
           `)
-          .order('last_message_at', { ascending: false, nullsLast: true });
+          .order('last_message_at', { ascending: false });
           
         if (conversationsError) throw conversationsError;
         
