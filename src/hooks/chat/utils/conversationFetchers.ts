@@ -6,17 +6,23 @@ import { ChatConversation, ConversationParticipant } from '@/types/chat';
  * Fetches conversation IDs where the user is a participant
  */
 export const fetchUserConversationIds = async (userId: string) => {
-  const { data: participantData, error: participantError } = await supabase
-    .from('conversation_participants')
-    .select('conversation_id, last_read_at')
-    .eq('user_id', userId);
+  try {
+    const { data: participantData, error: participantError } = await supabase
+      .from('conversation_participants')
+      .select('conversation_id, last_read_at')
+      .eq('user_id', userId);
+      
+    if (participantError) {
+      console.error("Error fetching participants:", participantError);
+      throw participantError;
+    }
     
-  if (participantError) {
-    console.error("Error fetching participants:", participantError);
-    throw participantError;
+    return participantData || [];
+  } catch (error) {
+    console.error("Error in fetchUserConversationIds:", error);
+    // Return empty array instead of throwing to prevent infinite retries
+    return [];
   }
-  
-  return participantData || [];
 };
 
 /**
@@ -25,39 +31,46 @@ export const fetchUserConversationIds = async (userId: string) => {
 export const fetchConversationsData = async (conversationIds: string[]) => {
   if (!conversationIds.length) return [];
   
-  const { data: conversationsData, error: conversationsError } = await supabase
-    .from('chat_conversations')
-    .select('*')
-    .in('id', conversationIds)
-    .order('last_message_at', { ascending: false });
+  try {
+    const { data: conversationsData, error: conversationsError } = await supabase
+      .from('chat_conversations')
+      .select('*')
+      .in('id', conversationIds)
+      .order('last_message_at', { ascending: false });
+      
+    if (conversationsError) {
+      console.error("Error fetching conversations:", conversationsError);
+      throw conversationsError;
+    }
     
-  if (conversationsError) {
-    console.error("Error fetching conversations:", conversationsError);
-    throw conversationsError;
+    return conversationsData || [];
+  } catch (error) {
+    console.error("Error in fetchConversationsData:", error);
+    return [];
   }
-  
-  return conversationsData || [];
 };
 
 /**
  * Fetches participants for a conversation
  */
 export const fetchConversationParticipants = async (conversationId: string) => {
-  const { data: allParticipants, error: participantsError } = await supabase
-    .from('conversation_participants')
-    .select(`
-      user_id,
-      last_read_at,
-      conversation_id
-    `)
-    .eq('conversation_id', conversationId);
+  try {
+    // Directly query conversation_participants without additional filtering
+    const { data: allParticipants, error: participantsError } = await supabase
+      .from('conversation_participants')
+      .select('id, user_id, conversation_id, created_at, last_read_at')
+      .eq('conversation_id', conversationId);
+      
+    if (participantsError) {
+      console.error("Error fetching participants:", participantsError);
+      throw participantsError;
+    }
     
-  if (participantsError) {
-    console.error("Error fetching participants:", participantsError);
-    throw participantsError;
+    return allParticipants || [];
+  } catch (error) {
+    console.error("Error in fetchConversationParticipants:", error);
+    return [];
   }
-  
-  return allParticipants || [];
 };
 
 /**
@@ -66,17 +79,22 @@ export const fetchConversationParticipants = async (conversationId: string) => {
 export const fetchUserProfiles = async (userIds: string[]) => {
   if (!userIds.length) return [];
   
-  const { data: profiles, error: profilesError } = await supabase
-    .from('profiles')
-    .select('*')
-    .in('id', userIds);
+  try {
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, username, avatar_url, user_tier')
+      .in('id', userIds);
+      
+    if (profilesError) {
+      console.error("Error fetching profiles:", profilesError);
+      throw profilesError;
+    }
     
-  if (profilesError) {
-    console.error("Error fetching profiles:", profilesError);
-    throw profilesError;
+    return profiles || [];
+  } catch (error) {
+    console.error("Error in fetchUserProfiles:", error);
+    return [];
   }
-  
-  return profiles || [];
 };
 
 /**
@@ -91,6 +109,6 @@ export const updateConversationLastRead = async (conversationId: string, userId:
       .eq('user_id', userId);
   } catch (error) {
     console.error('Error updating last read:', error);
-    throw error instanceof Error ? error : new Error('Failed to update last read timestamp');
+    // Don't throw to prevent crashes
   }
 };

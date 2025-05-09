@@ -17,7 +17,7 @@ export const mapParticipantsWithProfiles = (
       user_id: participant.user_id,
       conversation_id: participant.conversation_id,
       last_read_at: participant.last_read_at,
-      created_at: participant.created_at,
+      created_at: participant.created_at || new Date().toISOString(),
       profile: profile || null
     };
   });
@@ -43,13 +43,27 @@ export const assembleConversations = async (
   conversationsData: any[],
   fetchParticipantsForConversation: (conversationId: string) => Promise<ConversationParticipant[]>
 ): Promise<ChatConversation[]> => {
-  // Process each conversation to add participants
-  const conversationsWithParticipants = await Promise.all(
-    conversationsData.map(async (conversation) => {
-      const participants = await fetchParticipantsForConversation(conversation.id);
-      return assembleConversation(conversation, participants);
-    })
-  );
-  
-  return conversationsWithParticipants;
+  try {
+    // Process each conversation to add participants
+    const conversationsWithParticipants = await Promise.all(
+      conversationsData.map(async (conversation) => {
+        try {
+          const participants = await fetchParticipantsForConversation(conversation.id);
+          return assembleConversation(conversation, participants);
+        } catch (error) {
+          console.error(`Error processing conversation ${conversation.id}:`, error);
+          // Return conversation without participants rather than failing the entire operation
+          return {
+            ...conversation,
+            participants: []
+          } as ChatConversation;
+        }
+      })
+    );
+    
+    return conversationsWithParticipants;
+  } catch (error) {
+    console.error("Error in assembleConversations:", error);
+    return [];
+  }
 };

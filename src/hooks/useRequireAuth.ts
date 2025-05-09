@@ -104,7 +104,11 @@ export const useRequireAuth = () => {
             dnd_end_time: profileData.dnd_end_time,
             notification_preferences: 
               typeof profileData.notification_preferences === 'object' 
-                ? profileData.notification_preferences
+                ? {
+                    email: profileData.notification_preferences?.email === true,
+                    in_app: profileData.notification_preferences?.in_app !== false,
+                    whatsapp: profileData.notification_preferences?.whatsapp === true
+                  }
                 : { email: false, in_app: true, whatsapp: false },
             created_at: profileData.created_at || '',
             updated_at: profileData.updated_at || ''

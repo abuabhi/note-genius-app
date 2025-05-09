@@ -18,17 +18,29 @@ export const useUserSearch = (): UseUserSearchReturn => {
       setError(null);
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, username, avatar_url, user_tier, created_at, updated_at')
         .ilike('username', `%${query}%`)
         .neq('id', user.id)
         .limit(10);
 
       if (error) throw error;
       
-      // Ensure the user_tier is properly typed
-      const typedProfiles = data.map(profile => ({
-        ...profile,
-        user_tier: profile.user_tier as UserTier
+      // Transform profiles to match UserProfile interface
+      const typedProfiles: UserProfile[] = data.map(profile => ({
+        id: profile.id,
+        username: profile.username || '',
+        avatar_url: profile.avatar_url,
+        user_tier: profile.user_tier as UserTier,
+        do_not_disturb: false, // Default values for search results
+        dnd_start_time: null,
+        dnd_end_time: null,
+        notification_preferences: {
+          email: false,
+          in_app: true,
+          whatsapp: false
+        },
+        created_at: profile.created_at || '',
+        updated_at: profile.updated_at || ''
       }));
       
       return typedProfiles;

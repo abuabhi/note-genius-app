@@ -37,6 +37,7 @@ export const useUserTier = () => {
           max_flashcard_sets: Infinity,
           ocr_enabled: true,
           ai_features_enabled: true,
+          ai_flashcard_generation: true,
           collaboration_enabled: true,
           priority_support: true,
           chat_enabled: true
@@ -48,6 +49,7 @@ export const useUserTier = () => {
           max_flashcard_sets: 5000,
           ocr_enabled: true,
           ai_features_enabled: true,
+          ai_flashcard_generation: true,
           collaboration_enabled: true,
           priority_support: true,
           chat_enabled: true
@@ -59,6 +61,7 @@ export const useUserTier = () => {
           max_flashcard_sets: 1000,
           ocr_enabled: true,
           ai_features_enabled: false,
+          ai_flashcard_generation: false,
           collaboration_enabled: true,
           priority_support: false,
           chat_enabled: true
@@ -71,6 +74,7 @@ export const useUserTier = () => {
           max_flashcard_sets: 250,
           ocr_enabled: false,
           ai_features_enabled: false,
+          ai_flashcard_generation: false,
           collaboration_enabled: false,
           priority_support: false,
           chat_enabled: false
