@@ -39,48 +39,69 @@ export const useEvents = (currentDate: Date = new Date()) => {
     });
   }, [currentDate]);
 
-  // Fetch events for the current month
+  // Fetch events for the current month with improved error handling
   const { data: events = [], isLoading, error } = useQuery({
     queryKey: ['events', user?.id, dateRange.start.toISOString(), dateRange.end.toISOString()],
     queryFn: async () => {
       if (!user) return [];
       
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('start_time', dateRange.start.toISOString())
-        .lte('start_time', dateRange.end.toISOString())
-        .order('start_time', { ascending: true });
-      
-      if (error) throw error;
-      return data as Event[];
+      try {
+        const { data, error } = await supabase
+          .from('events')
+          .select('*')
+          .eq('user_id', user.id)
+          .gte('start_time', dateRange.start.toISOString())
+          .lte('start_time', dateRange.end.toISOString())
+          .order('start_time', { ascending: true });
+        
+        if (error) throw error;
+        return data as Event[];
+      } catch (err) {
+        console.error('Error fetching events:', err);
+        throw err; // Re-throw for handling in the component
+      }
     },
-    enabled: !!user
+    enabled: !!user,
+    retry: 1, // Only retry once to avoid too many error messages
+    staleTime: 10000, // Cache data for 10 seconds
+    refetchOnWindowFocus: false // Don't refetch when window gains focus
   });
 
-  // Fetch due flashcards for this period
+  // Fetch due flashcards for this period with improved error handling
   const { data: dueFlashcards = [] } = useQuery({
     queryKey: ['dueFlashcards', user?.id, dateRange.start.toISOString(), dateRange.end.toISOString()],
     queryFn: async () => {
       if (!user) return [];
       
-      const { data, error } = await supabase
-        .from('user_flashcard_progress')
-        .select(`
-          id,
-          flashcard_id,
-          next_review_at,
-          flashcards(front_content, back_content)
-        `)
-        .eq('user_id', user.id)
-        .gte('next_review_at', dateRange.start.toISOString())
-        .lte('next_review_at', dateRange.end.toISOString());
-      
-      if (error) throw error;
-      return data || [];
+      try {
+        const { data, error } = await supabase
+          .from('user_flashcard_progress')
+          .select(`
+            id,
+            flashcard_id,
+            next_review_at,
+            flashcards(front_content, back_content)
+          `)
+          .eq('user_id', user.id)
+          .gte('next_review_at', dateRange.start.toISOString())
+          .lte('next_review_at', dateRange.end.toISOString());
+        
+        if (error) {
+          console.error('Error fetching due flashcards:', error);
+          return [];
+        }
+        return data || [];
+      } catch (err) {
+        console.error('Exception when fetching due flashcards:', err);
+        return []; // Return empty array instead of throwing to avoid breaking UI
+      }
     },
-    enabled: !!user
+    enabled: !!user,
+    retry: false,
+    onError: (err) => {
+      console.error('Query error when fetching due flashcards:', err);
+      // Silent failure - we don't want to break the calendar if flashcards can't be loaded
+    }
   });
 
   // Create event mutation

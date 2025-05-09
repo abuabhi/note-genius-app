@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarClock, Clock, Edit3 } from "lucide-react";
+import { CalendarClock, Clock } from "lucide-react";
 import { format, addHours } from "date-fns";
 import { toast } from "sonner";
 
@@ -69,22 +69,32 @@ export function CreateEventDialog({
     defaultValues,
   });
 
-  // Fetch user's flashcard sets
+  // Fetch user's flashcard sets with improved error handling
   const { data: flashcardSets } = useQuery({
-    queryKey: ['flashcardSets'],
+    queryKey: ['flashcardSets', user?.id],
     queryFn: async () => {
       if (!user) return [];
       
-      const { data, error } = await supabase
-        .from('flashcard_sets')
-        .select('id, name')
-        .eq('user_id', user.id)
-        .order('name', { ascending: true });
-        
-      if (error) throw error;
-      return data || [];
+      try {
+        const { data, error } = await supabase
+          .from('flashcard_sets')
+          .select('id, name')
+          .eq('user_id', user.id)
+          .order('name', { ascending: true });
+          
+        if (error) {
+          console.error('Error fetching flashcard sets:', error);
+          return [];
+        }
+        return data || [];
+      } catch (err) {
+        console.error('Exception when fetching flashcard sets:', err);
+        return [];
+      }
     },
-    enabled: !!user,
+    enabled: !!user && isOpen, // Only fetch when dialog is open
+    retry: false, // Don't retry on failure to prevent error loops
+    staleTime: 30000, // Cache data for 30 seconds
   });
 
   const eventType = form.watch("eventType");

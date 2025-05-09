@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { CreateEventDialog } from './CreateEventDialog';
+import { toast } from 'sonner';
 
 interface ScheduleCalendarProps {
   selectedDate: Date;
@@ -20,10 +21,21 @@ interface ScheduleCalendarProps {
 const localizer = momentLocalizer(moment);
 
 export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ selectedDate, onDateChange }) => {
-  const { events, isLoading, createEvent, deleteEvent } = useEvents(selectedDate);
+  const { events, isLoading, error, createEvent, deleteEvent } = useEvents(selectedDate);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   
   const [formattedEvents, setFormattedEvents] = useState<any[]>([]);
+
+  // Handle any errors from the useEvents hook
+  useEffect(() => {
+    if (error) {
+      console.error('Error fetching events:', error);
+      // Show error toast only once, not in an infinite loop
+      toast.error("Error loading events. Please try again later.", {
+        id: "events-error", // Use an ID to prevent duplicate toasts
+      });
+    }
+  }, [error]);
 
   useEffect(() => {
     if (events) {
@@ -40,6 +52,11 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ selectedDate
   const handleSelectSlot = ({ start }: { start: Date }) => {
     onDateChange(start);
     setShowCreateDialog(true);
+  };
+  
+  const handleEventCreated = () => {
+    // Refetch events or update UI as needed
+    toast.success("Event created successfully");
   };
 
   if (isLoading) {
@@ -90,7 +107,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ selectedDate
         <CreateEventDialog
           isOpen={showCreateDialog}
           onClose={() => setShowCreateDialog(false)}
-          onEventCreated={() => {}}
+          onEventCreated={handleEventCreated}
           selectedDate={selectedDate}
         />
       )}
