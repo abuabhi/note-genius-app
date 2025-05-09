@@ -37,9 +37,10 @@ export const DesktopChat = () => {
               </Button>
             </SheetTrigger>
             <SheetContent>
+              {/* Include the same connection search content as ChatSidebar */}
               <div className="h-full flex flex-col">
                 <h2 className="text-lg font-semibold mb-4">Find Connections</h2>
-                {/* Sheet content would go here if needed */}
+                <ChatSidebar />
               </div>
             </SheetContent>
           </Sheet>
