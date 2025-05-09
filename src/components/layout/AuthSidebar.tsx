@@ -23,7 +23,12 @@ import {
   Upload,
   User,
   MessageSquare,
+  Calendar,
+  Target,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { UserTier } from "@/hooks/useRequireAuth";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 const sidebarItems = [
   {
@@ -39,7 +44,7 @@ const sidebarItems = [
   {
     title: "Flashcards",
     path: "/flashcards",
-    icon: FileText,
+    icon: BookOpen,
   },
   {
     title: "Study Sessions",
@@ -49,12 +54,22 @@ const sidebarItems = [
   {
     title: "Quizzes",
     path: "/quiz",
-    icon: FileText,
+    icon: Activity,
   },
   {
     title: "Progress",
     path: "/progress",
     icon: Activity,
+  },
+  {
+    title: "Schedule",
+    path: "/schedule",
+    icon: Calendar,
+  },
+  {
+    title: "Goals",
+    path: "/goals",
+    icon: Target,
   },
   {
     title: "Chat",
@@ -108,8 +123,9 @@ const adminItems = [
 
 const AuthSidebar = () => {
   const location = useLocation();
-  const isAdminRoute = location.pathname.startsWith("/admin");
-
+  const { userProfile } = useRequireAuth();
+  const isAdmin = userProfile?.user_tier === UserTier.DEAN;
+  
   return (
     <Sidebar>
       <SidebarContent>
@@ -135,7 +151,7 @@ const AuthSidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {isAdminRoute && (
+        {isAdmin && (
           <SidebarGroup>
             <SidebarGroupLabel>Admin</SidebarGroupLabel>
             <SidebarGroupContent>

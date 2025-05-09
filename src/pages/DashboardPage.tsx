@@ -7,6 +7,9 @@ import { Link } from "react-router-dom";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { StudyStatsChart } from "@/components/progress/StudyStatsChart";
+import { StudyStatsOverview } from "@/components/study/StudyStatsOverview";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const DashboardPage = () => {
   const { user, userProfile, tierLimits, loading } = useRequireAuth();
@@ -105,7 +108,26 @@ const DashboardPage = () => {
           </Card>
         )}
         
+        {/* Analytics Tabs */}
+        <div className="mb-8">
+          <Tabs defaultValue="overview">
+            <TabsList className="mb-4">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="detailed">Detailed Stats</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="overview">
+              <StudyStatsOverview />
+            </TabsContent>
+            
+            <TabsContent value="detailed">
+              <StudyStatsChart />
+            </TabsContent>
+          </Tabs>
+        </div>
+
         {/* Quick actions section */}
+        <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card className="border-mint-100 shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="space-y-1">

@@ -23,15 +23,8 @@ export const NavigationProvider = ({ children }: { children: ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [navigationGuards, setNavigationGuards] = useState<NavigationGuard[]>([]);
   
-  // Default menu links
-  const menuLinks: NavigationLink[] = [
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/notes", label: "Notes" },
-    { href: "/flashcards", label: "Flashcards" },
-    { href: "/schedule", label: "Schedule" },
-    { href: "/goals", label: "Goals" },
-    { href: "/settings", label: "Settings" }
-  ];
+  // Empty menu links since we're now using the sidebar for navigation
+  const menuLinks: NavigationLink[] = [];
   
   const toggleSidebar = () => {
     setIsSidebarOpen(prev => !prev);

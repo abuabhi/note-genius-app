@@ -1,20 +1,28 @@
 
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, UserCircle, Shield } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { useNavigationContext } from '@/contexts/NavigationContext';
 import { ReminderNavPopover } from '@/components/reminders/ReminderNavPopover';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useRequireAuth, UserTier } from '@/hooks/useRequireAuth';
 
 export default function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, signOut } = useAuth(); // Changed from logout to signOut
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const { menuLinks } = useNavigationContext();
+  const { userProfile } = useRequireAuth();
+  const isAdmin = userProfile?.user_tier === UserTier.DEAN;
 
   const handleLogout = async () => {
-    await signOut(); // Changed from logout to signOut
+    await signOut();
     navigate('/');
   };
 
@@ -42,18 +50,55 @@ export default function NavBar() {
           ) : (
             <>
               <div className="flex items-center gap-4">
-                {menuLinks.map((link) => (
-                  <Link key={link.href} to={link.href}>
-                    {link.label}
-                  </Link>
-                ))}
+                {/* Admin dropdown only for DEAN tier */}
+                {isAdmin && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="flex items-center gap-1">
+                        <Shield className="h-4 w-4" />
+                        <span>Admin</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/users">Users</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/flashcards">Flashcards</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/sections">Sections</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/grades">Grades</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/csv-import">CSV Import</Link>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
                 
-                {/* Add the ReminderNavPopover component here */}
+                {/* User profile dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="flex items-center gap-1">
+                      <UserCircle className="h-4 w-4" />
+                      <span>Profile</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link to="/settings">Settings</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleLogout}>
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                
+                {/* Reminders popover */}
                 <ReminderNavPopover />
-                
-                <Button variant="outline" onClick={handleLogout}>
-                  Logout
-                </Button>
               </div>
             </>
           )}
@@ -77,11 +122,17 @@ export default function NavBar() {
                 </>
               ) : (
                 <>
-                  {menuLinks.map((link) => (
-                    <Link key={link.href} to={link.href}>
-                      {link.label}
-                    </Link>
-                  ))}
+                  <Link to="/settings">Settings</Link>
+                  {isAdmin && (
+                    <>
+                      <div className="font-medium text-sm text-muted-foreground pt-2">Admin</div>
+                      <Link to="/admin/users">Users</Link>
+                      <Link to="/admin/flashcards">Flashcards</Link>
+                      <Link to="/admin/sections">Sections</Link>
+                      <Link to="/admin/grades">Grades</Link>
+                      <Link to="/admin/csv-import">CSV Import</Link>
+                    </>
+                  )}
                   <Button variant="outline" onClick={handleLogout}>
                     Logout
                   </Button>
