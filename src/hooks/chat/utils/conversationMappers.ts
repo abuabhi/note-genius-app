@@ -13,9 +13,11 @@ export const mapParticipantsWithProfiles = (
     const profile = profiles?.find(p => p.id === participant.user_id);
     
     return {
+      id: participant.id,
       user_id: participant.user_id,
       conversation_id: participant.conversation_id,
       last_read_at: participant.last_read_at,
+      created_at: participant.created_at,
       profile: profile || null
     };
   });
