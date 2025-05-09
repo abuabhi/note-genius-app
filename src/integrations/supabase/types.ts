@@ -348,6 +348,47 @@ export type Database = {
         }
         Relationships: []
       }
+      note_enrichment_usage: {
+        Row: {
+          completion_tokens: number
+          created_at: string
+          id: string
+          llm_provider: string
+          month_year: string
+          note_id: string
+          prompt_tokens: number
+          user_id: string
+        }
+        Insert: {
+          completion_tokens?: number
+          created_at?: string
+          id?: string
+          llm_provider: string
+          month_year: string
+          note_id: string
+          prompt_tokens?: number
+          user_id: string
+        }
+        Update: {
+          completion_tokens?: number
+          created_at?: string
+          id?: string
+          llm_provider?: string
+          month_year?: string
+          note_id?: string
+          prompt_tokens?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "note_enrichment_usage_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       note_tags: {
         Row: {
           created_at: string
@@ -1244,6 +1285,8 @@ export type Database = {
           max_flashcard_sets: number | null
           max_notes: number
           max_storage_mb: number
+          note_enrichment_enabled: boolean
+          note_enrichment_limit_per_month: number | null
           ocr_enabled: boolean
           priority_support: boolean
           tier: Database["public"]["Enums"]["user_tier"]
@@ -1256,6 +1299,8 @@ export type Database = {
           max_flashcard_sets?: number | null
           max_notes: number
           max_storage_mb: number
+          note_enrichment_enabled?: boolean
+          note_enrichment_limit_per_month?: number | null
           ocr_enabled?: boolean
           priority_support?: boolean
           tier: Database["public"]["Enums"]["user_tier"]
@@ -1268,6 +1313,8 @@ export type Database = {
           max_flashcard_sets?: number | null
           max_notes?: number
           max_storage_mb?: number
+          note_enrichment_enabled?: boolean
+          note_enrichment_limit_per_month?: number | null
           ocr_enabled?: boolean
           priority_support?: boolean
           tier?: Database["public"]["Enums"]["user_tier"]

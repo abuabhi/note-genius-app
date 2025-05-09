@@ -1,129 +1,234 @@
 
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useNotes } from '@/contexts/NoteContext';
-import { TagSelector } from '../TagSelector';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { CalendarIcon, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Note } from '@/types/note';
+import { TagSelector } from '../TagSelector';
+import { useNotes } from '@/contexts/NoteContext';
+import { EnhanceNoteButton } from '../enrichment/EnhanceNoteButton';
+
+const formSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().min(1, 'Description is required'),
+  date: z.date(),
+  category: z.string().min(1, 'Category is required'),
+  content: z.string().optional(),
+});
+
+type FormValues = z.infer<typeof formSchema> & { tags: { name: string; color: string }[] };
 
 interface CreateNoteFormProps {
   onSave: (note: Omit<Note, 'id'>) => Promise<Note | null>;
-  initialData?: Partial<Omit<Note, 'id'>>;
+  initialData?: Note;
 }
 
-export const CreateNoteForm: React.FC<CreateNoteFormProps> = ({ onSave, initialData }) => {
-  const { availableCategories } = useNotes();
-  const [title, setTitle] = useState(initialData?.title || '');
-  const [description, setDescription] = useState(initialData?.description || '');
-  const [content, setContent] = useState(initialData?.content || '');
-  const [category, setCategory] = useState(initialData?.category || 'Uncategorized');
-  const [selectedTags, setSelectedTags] = useState<{ name: string; color: string; }[]>(
-    initialData?.tags || []
-  );
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => {
+  const [isSaving, setIsSaving] = useState(false);
+  const { availableCategories, getAllTags } = useNotes();
+  const [selectedTags, setSelectedTags] = useState<{ id?: string; name: string; color: string }[]>([]);
+  const [availableTags, setAvailableTags] = useState<{ id: string; name: string; color: string }[]>([]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: initialData?.title || '',
+      description: initialData?.description || '',
+      date: initialData?.date ? new Date(initialData.date) : new Date(),
+      category: initialData?.category || 'General',
+      content: initialData?.content || '',
+      tags: [],
+    },
+  });
 
-    const newNote: Omit<Note, 'id'> = {
-      title,
-      description,
-      content,
-      category,
-      date: new Date().toISOString().split('T')[0],
-      sourceType: 'manual',
-      tags: selectedTags
+  useEffect(() => {
+    // Load available tags
+    const loadTags = async () => {
+      const tags = await getAllTags();
+      setAvailableTags(tags);
     };
 
+    loadTags();
+
+    // Set initial tags if available
+    if (initialData?.tags) {
+      setSelectedTags(initialData.tags);
+    }
+  }, [getAllTags, initialData]);
+
+  const onSubmit = async (values: FormValues) => {
+    setIsSaving(true);
     try {
-      await onSave(newNote);
-      resetForm();
-    } catch (error) {
-      console.error('Error saving note:', error);
+      const noteData: Omit<Note, 'id'> = {
+        title: values.title,
+        description: values.description,
+        date: values.date.toISOString().split('T')[0],
+        category: values.category,
+        content: values.content,
+        sourceType: initialData?.sourceType || 'manual',
+        tags: selectedTags,
+      };
+
+      await onSave(noteData);
     } finally {
-      setIsSubmitting(false);
+      setIsSaving(false);
     }
   };
 
-  const resetForm = () => {
-    setTitle('');
-    setDescription('');
-    setContent('');
-    setCategory('Uncategorized');
-    setSelectedTags([]);
+  const handleEnhancedContent = (enhancedContent: string) => {
+    form.setValue('content', enhancedContent);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-2">
-        <div className="space-y-1">
-          <Label htmlFor="title">Title</Label>
-          <Input 
-            id="title" 
-            placeholder="Note title" 
-            value={title} 
-            onChange={(e) => setTitle(e.target.value)} 
-            required 
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="title"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Title</FormLabel>
+                <FormControl>
+                  <Input placeholder="Note title" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
-        
-        <div className="space-y-1">
-          <Label htmlFor="description">Brief Description</Label>
-          <Input 
-            id="description" 
-            placeholder="Brief description" 
-            value={description} 
-            onChange={(e) => setDescription(e.target.value)} 
-            required 
+
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea placeholder="Brief description" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
-        
-        <div className="space-y-1">
-          <Label htmlFor="category">Category</Label>
-          <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select a category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Categories</SelectLabel>
-                <SelectItem value="Uncategorized">Uncategorized</SelectItem>
-                {availableCategories.filter(cat => cat !== 'Uncategorized').map(cat => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div className="space-y-1">
-          <Label htmlFor="content">Content</Label>
-          <Textarea 
-            id="content" 
-            placeholder="Write your note here..." 
-            value={content} 
-            onChange={(e) => setContent(e.target.value)} 
-            rows={8}
-            className="resize-none"
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Date</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          className={cn('w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
+                        >
+                          {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Category" 
+                      {...field} 
+                      list="categories"
+                    />
+                  </FormControl>
+                  {availableCategories && availableCategories.length > 0 && (
+                    <datalist id="categories">
+                      {availableCategories.map((category, index) => (
+                        <option key={index} value={category} />
+                      ))}
+                    </datalist>
+                  )}
+                  <FormDescription>
+                    Choose an existing category or create a new one
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <FormField
+            control={form.control}
+            name="content"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex justify-between items-center">
+                  <FormLabel>Content</FormLabel>
+                  {initialData?.id && (
+                    <EnhanceNoteButton 
+                      noteId={initialData.id}
+                      noteTitle={form.getValues('title')}
+                      noteContent={field.value || ''}
+                      onEnhance={handleEnhancedContent}
+                    />
+                  )}
+                </div>
+                <FormControl>
+                  <Textarea
+                    placeholder="Note content"
+                    className="min-h-[200px] font-mono"
+                    {...field}
+                    value={field.value || ''}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
+
+          <div>
+            <FormLabel>Tags</FormLabel>
+            <TagSelector
+              availableTags={availableTags}
+              selectedTags={selectedTags}
+              onTagsChange={setSelectedTags}
+            />
+          </div>
         </div>
-        
-        <div className="space-y-1">
-          <Label>Tags</Label>
-          <TagSelector 
-            selectedTags={selectedTags} 
-            onTagsChange={setSelectedTags}
-          />
-        </div>
-      </div>
-      
-      <Button type="submit" disabled={isSubmitting} className="w-full">
-        {isSubmitting ? 'Saving...' : 'Save Note'}
-      </Button>
-    </form>
+
+        <Button type="submit" disabled={isSaving} className="w-full">
+          {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isSaving ? 'Saving...' : initialData ? 'Update Note' : 'Create Note'}
+        </Button>
+      </form>
+    </Form>
   );
 };
