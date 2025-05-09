@@ -1,195 +1,164 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
-export type ReminderType = 'study_event' | 'goal_deadline' | 'flashcard_review';
-export type ReminderStatus = 'pending' | 'sent' | 'dismissed';
-export type ReminderRecurrence = 'none' | 'daily' | 'weekly' | 'monthly';
-export type DeliveryMethod = 'in_app' | 'email' | 'whatsapp';
+import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { format, addDays, addWeeks, addMonths } from "date-fns";
 
-export type Reminder = {
+export interface Reminder {
   id: string;
+  user_id: string;
   title: string;
-  description: string | null;
+  description?: string;
   reminder_time: string;
-  type: ReminderType;
-  delivery_methods: DeliveryMethod[];
-  status: ReminderStatus;
-  recurrence: ReminderRecurrence;
+  type: string;
+  status: 'pending' | 'sent' | 'cancelled';
   event_id?: string;
   goal_id?: string;
+  delivery_methods: string[];
+  recurrence: 'none' | 'daily' | 'weekly' | 'monthly';
   created_at: string;
-  user_id: string;
-};
+  updated_at: string;
+}
 
-export type ReminderFormValues = Omit<Reminder, 'id' | 'created_at' | 'status' | 'user_id'> & {
-  id?: string;
-};
+export interface CreateReminderData {
+  title: string;
+  description?: string;
+  reminder_time: Date;
+  type: string;
+  event_id?: string;
+  goal_id?: string;
+  delivery_methods: string[];
+  recurrence: 'none' | 'daily' | 'weekly' | 'monthly';
+}
 
 export const useReminders = () => {
   const { user } = useAuth();
-  const [reminders, setReminders] = useState<Reminder[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  const fetchReminders = async () => {
-    if (!user) return;
+  // Query for active reminders
+  const { data: reminders = [], isLoading } = useQuery({
+    queryKey: ["reminders", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
 
-    try {
-      setLoading(true);
       const { data, error } = await supabase
         .from('reminders')
-        .select('*')
+        .select(`
+          *,
+          events:event_id(*),
+          goals:goal_id(*)
+        `)
         .eq('user_id', user.id)
+        .eq('status', 'pending')
         .order('reminder_time', { ascending: true });
 
-      if (error) throw error;
-      
-      // Transform the data to ensure it matches our Reminder type
-      const typedReminders = data?.map(item => ({
-        ...item,
-        type: item.type as ReminderType,
-        status: item.status as ReminderStatus,
-        recurrence: item.recurrence as ReminderRecurrence,
-        delivery_methods: (Array.isArray(item.delivery_methods) ? 
-          item.delivery_methods : 
-          ['in_app']) as DeliveryMethod[]
-      })) || [];
-      
-      setReminders(typedReminders);
-    } catch (error) {
-      console.error('Error fetching reminders:', error);
-      toast.error('Failed to load reminders');
-    } finally {
-      setLoading(false);
-    }
-  };
+      if (error) {
+        console.error('Error fetching reminders:', error);
+        throw error;
+      }
 
-  const createReminder = async (reminderData: ReminderFormValues) => {
-    if (!user) return null;
+      return data || [];
+    },
+    enabled: !!user,
+  });
 
-    try {
+  // Mutation to create a reminder
+  const createReminder = useMutation({
+    mutationFn: async (reminderData: CreateReminderData) => {
+      if (!user) throw new Error('User not authenticated');
+
       const { data, error } = await supabase
         .from('reminders')
         .insert({
-          ...reminderData,
           user_id: user.id,
+          title: reminderData.title,
+          description: reminderData.description,
+          reminder_time: reminderData.reminder_time.toISOString(),
+          type: reminderData.type,
+          event_id: reminderData.event_id,
+          goal_id: reminderData.goal_id,
+          delivery_methods: reminderData.delivery_methods,
+          recurrence: reminderData.recurrence,
+          status: 'pending'
         })
-        .select()
-        .single();
+        .select();
 
-      if (error) throw error;
-      
-      // Transform the returned data to match our Reminder type
-      const newReminder: Reminder = {
-        ...data,
-        type: data.type as ReminderType,
-        status: data.status as ReminderStatus,
-        recurrence: data.recurrence as ReminderRecurrence,
-        delivery_methods: (Array.isArray(data.delivery_methods) ? 
-          data.delivery_methods : 
-          ['in_app']) as DeliveryMethod[]
-      };
-      
-      setReminders((prev) => [...prev, newReminder]);
+      if (error) {
+        console.error('Error creating reminder:', error);
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: () => {
       toast.success('Reminder created successfully');
-      return newReminder;
-    } catch (error) {
-      console.error('Error creating reminder:', error);
-      toast.error('Failed to create reminder');
-      return null;
-    }
-  };
+      queryClient.invalidateQueries({ queryKey: ['reminders'] });
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to create reminder: ${error.message}`);
+    },
+  });
 
-  const updateReminder = async (id: string, reminderData: Partial<ReminderFormValues>) => {
-    if (!user) return false;
+  // Mutation to cancel a reminder
+  const cancelReminder = useMutation({
+    mutationFn: async (reminderId: string) => {
+      if (!user) throw new Error('User not authenticated');
 
-    try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('reminders')
-        .update(reminderData)
-        .eq('id', id)
-        .eq('user_id', user.id);
+        .update({ status: 'cancelled' })
+        .eq('id', reminderId)
+        .eq('user_id', user.id)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error cancelling reminder:', error);
+        throw error;
+      }
 
-      setReminders((prev) => 
-        prev.map((reminder) => 
-          reminder.id === id ? { ...reminder, ...reminderData } : reminder
-        )
-      );
-      
-      toast.success('Reminder updated successfully');
-      return true;
-    } catch (error) {
-      console.error('Error updating reminder:', error);
-      toast.error('Failed to update reminder');
-      return false;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Reminder cancelled');
+      queryClient.invalidateQueries({ queryKey: ['reminders'] });
+    },
+    onError: () => {
+      toast.error('Failed to cancel reminder');
+    },
+  });
+
+  // Generate the next recurring date based on recurrence pattern
+  const getNextRecurrenceDate = (date: Date, recurrence: string): Date => {
+    switch (recurrence) {
+      case 'daily':
+        return addDays(date, 1);
+      case 'weekly':
+        return addWeeks(date, 1);
+      case 'monthly':
+        return addMonths(date, 1);
+      default:
+        return date;
     }
   };
 
-  const deleteReminder = async (id: string) => {
-    if (!user) return false;
-
+  // Helper function to format reminder date
+  const formatReminderTime = (dateString: string) => {
     try {
-      const { error } = await supabase
-        .from('reminders')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      setReminders((prev) => prev.filter((reminder) => reminder.id !== id));
-      toast.success('Reminder deleted successfully');
-      return true;
+      const date = new Date(dateString);
+      return format(date, "MMM d, yyyy 'at' h:mm a");
     } catch (error) {
-      console.error('Error deleting reminder:', error);
-      toast.error('Failed to delete reminder');
-      return false;
+      return 'Invalid date';
     }
   };
-
-  const dismissReminder = async (id: string) => {
-    if (!user) return false;
-
-    try {
-      const { error } = await supabase
-        .from('reminders')
-        .update({ status: 'dismissed' })
-        .eq('id', id)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      setReminders((prev) => 
-        prev.map((reminder) => 
-          reminder.id === id ? { ...reminder, status: 'dismissed' as ReminderStatus } : reminder
-        )
-      );
-      
-      toast.success('Reminder dismissed');
-      return true;
-    } catch (error) {
-      console.error('Error dismissing reminder:', error);
-      toast.error('Failed to dismiss reminder');
-      return false;
-    }
-  };
-
-  useEffect(() => {
-    if (user) {
-      fetchReminders();
-    }
-  }, [user]);
 
   return {
     reminders,
-    loading,
-    fetchReminders,
+    isLoading,
     createReminder,
-    updateReminder,
-    deleteReminder,
-    dismissReminder,
+    cancelReminder,
+    formatReminderTime,
+    getNextRecurrenceDate
   };
 };
