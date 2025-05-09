@@ -19,6 +19,7 @@ export interface UseConversationsReturn {
   setActiveConversationId: (id: string | null) => void;
   activeConversationId: string | null;
   updateLastRead: (conversationId: string) => Promise<void>;
+  resetErrors: () => void;
   error: Error | null;
 }
 

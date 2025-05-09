@@ -6,16 +6,17 @@ import { useChat } from "@/hooks/chat"; // Updated import path
 import { useRequireAuth, UserTier } from "@/hooks/useRequireAuth";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { LockIcon, AlertCircle } from "lucide-react";
+import { LockIcon, AlertCircle, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
 export const Chat = () => {
   const { tierLimits, userProfile, loading } = useRequireAuth();
-  const { error: chatError } = useChat();
+  const { error: chatError, resetErrors } = useChat();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isFeatureEnabled, setIsFeatureEnabled] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   useEffect(() => {
     if (!loading && tierLimits) {
@@ -38,6 +39,16 @@ export const Chat = () => {
       });
     }
   }, [chatError, toast]);
+
+  const handleRetry = () => {
+    setIsRetrying(true);
+    resetErrors();
+    
+    // Add a small delay for UI feedback
+    setTimeout(() => {
+      setIsRetrying(false);
+    }, 1000);
+  };
 
   if (loading) {
     return (
@@ -70,7 +81,23 @@ export const Chat = () => {
           <AlertTitle>Error Loading Chat</AlertTitle>
           <AlertDescription className="mt-2">
             <p className="mb-4">We encountered an issue loading your conversations. This might be due to a temporary server problem.</p>
-            <Button onClick={() => window.location.reload()}>Try Again</Button>
+            <Button 
+              onClick={handleRetry} 
+              disabled={isRetrying}
+              className="flex items-center gap-2"
+            >
+              {isRetrying ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  Retrying...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4" />
+                  Try Again
+                </>
+              )}
+            </Button>
           </AlertDescription>
         </Alert>
       </div>

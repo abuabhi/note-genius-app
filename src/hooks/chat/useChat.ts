@@ -3,7 +3,7 @@ import { useConversations } from './useConversations';
 import { useMessages } from './useMessages';
 import { useConnections } from './useConnections';
 import { useUserSearch } from './useUserSearch';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export const useChat = () => {
   const [error, setError] = useState<Error | null>(null);
@@ -14,6 +14,7 @@ export const useChat = () => {
     activeConversationId,
     setActiveConversationId,
     updateLastRead,
+    resetErrors: resetConversationErrors,
     error: conversationsError
   } = useConversations();
 
@@ -50,6 +51,12 @@ export const useChat = () => {
     }
   }, [conversationsError, messagesError, connectionsError, userSearchError]);
 
+  // Reset all errors
+  const resetErrors = useCallback(() => {
+    resetConversationErrors();
+    setError(null);
+  }, [resetConversationErrors]);
+
   return {
     // Conversations
     conversations,
@@ -75,6 +82,7 @@ export const useChat = () => {
     sendConnectionRequest,
     
     // Error handling
-    error
+    error,
+    resetErrors
   };
 };
