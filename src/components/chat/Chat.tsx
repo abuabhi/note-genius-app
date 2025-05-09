@@ -17,6 +17,7 @@ export const Chat = () => {
   const { toast } = useToast();
   const [isFeatureEnabled, setIsFeatureEnabled] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     if (!loading && tierLimits) {
@@ -42,12 +43,16 @@ export const Chat = () => {
 
   const handleRetry = () => {
     setIsRetrying(true);
+    setRetryCount(prev => prev + 1);
+    
+    // Add more detailed logging for debugging
+    console.log("Retrying chat connection...", { retryCount: retryCount + 1 });
     resetErrors();
     
     // Add a small delay for UI feedback
     setTimeout(() => {
       setIsRetrying(false);
-    }, 1000);
+    }, 2000);
   };
 
   if (loading) {
@@ -80,10 +85,13 @@ export const Chat = () => {
           <AlertCircle className="h-5 w-5" />
           <AlertTitle>Error Loading Chat</AlertTitle>
           <AlertDescription className="mt-2">
-            <p className="mb-4">We encountered an issue loading your conversations. This might be due to a temporary server problem.</p>
+            <p className="mb-4">
+              We encountered an issue loading your conversations. 
+              {retryCount > 2 ? " Please try again later." : " This might be due to a temporary server problem."}
+            </p>
             <Button 
               onClick={handleRetry} 
-              disabled={isRetrying}
+              disabled={isRetrying || retryCount > 5}
               className="flex items-center gap-2"
             >
               {isRetrying ? (
@@ -94,7 +102,7 @@ export const Chat = () => {
               ) : (
                 <>
                   <RefreshCw className="h-4 w-4" />
-                  Try Again
+                  Try Again {retryCount > 0 ? `(${retryCount}/5)` : ''}
                 </>
               )}
             </Button>

@@ -23,55 +23,69 @@ export const useConversations = (): UseConversationsReturn => {
       setLoadingConversations(true);
       setError(null);
       try {
-        // Attempt to directly fetch conversations where the user is a participant
-        // This avoids the potential RLS recursion issue
-        const { data: conversationsData, error: conversationsError } = await supabase
-          .from('chat_conversations')
-          .select(`
-            id,
-            created_at,
-            updated_at,
-            last_message_at
-          `)
-          .order('last_message_at', { ascending: false });
-          
-        if (conversationsError) throw conversationsError;
+        console.log("Fetching conversations for user:", user.id);
         
-        if (!conversationsData || conversationsData.length === 0) {
+        // Step 1: Get the conversation IDs where the user is a participant
+        const { data: participantData, error: participantError } = await supabase
+          .from('conversation_participants')
+          .select('conversation_id, last_read_at')
+          .eq('user_id', user.id);
+          
+        if (participantError) {
+          console.error("Error fetching participant data:", participantError);
+          throw participantError;
+        }
+        
+        if (!participantData || participantData.length === 0) {
+          console.log("No conversations found for user");
           setConversations([]);
           setLoadingConversations(false);
           return;
         }
+
+        console.log(`Found ${participantData.length} conversations for user`);
         
-        // For each conversation, fetch participants data separately
-        const processedConversations: ChatConversation[] = await Promise.all(
+        // Step 2: Get the conversation details
+        const conversationIds = participantData.map(p => p.conversation_id);
+        const { data: conversationsData, error: conversationsError } = await supabase
+          .from('chat_conversations')
+          .select('*')
+          .in('id', conversationIds)
+          .order('last_message_at', { ascending: false });
+          
+        if (conversationsError) {
+          console.error("Error fetching conversations:", conversationsError);
+          throw conversationsError;
+        }
+        
+        // Step 3: For each conversation, process the participants
+        const processedConversations = await Promise.all(
           conversationsData.map(async (conversation) => {
             try {
-              // Get participant IDs for this conversation
-              const { data: participantsData, error: participantsError } = await supabase
+              // Get all participants for this conversation
+              const { data: allParticipantsData, error: allParticipantsError } = await supabase
                 .from('conversation_participants')
                 .select('user_id, last_read_at')
                 .eq('conversation_id', conversation.id);
-                
-              if (participantsError) throw participantsError;
               
-              // If this conversation doesn't include the current user, skip it
-              if (!participantsData?.some(p => p.user_id === user.id)) {
-                return null;
+              if (allParticipantsError) {
+                console.error("Error fetching all participants:", allParticipantsError);
+                throw allParticipantsError;
               }
               
-              // Fetch profiles for each participant
+              // Step 4: Fetch profiles for each participant (including current user)
               const participants = await Promise.all(
-                (participantsData || []).map(async (participant) => {
+                allParticipantsData.map(async (participant) => {
+                  // Only fetch profile if not current user to reduce queries
                   try {
                     const { data: profileData, error: profileError } = await supabase
                       .from('profiles')
                       .select('*')
                       .eq('id', participant.user_id)
                       .single();
-                      
+                    
                     if (profileError) {
-                      console.error('Error fetching profile:', profileError);
+                      console.error("Error fetching profile:", profileError);
                       return {
                         user_id: participant.user_id,
                         conversation_id: conversation.id,
@@ -87,7 +101,7 @@ export const useConversations = (): UseConversationsReturn => {
                       profile: profileData
                     };
                   } catch (err) {
-                    console.error('Error processing participant:', err);
+                    console.error("Error processing participant:", err);
                     return {
                       user_id: participant.user_id,
                       conversation_id: conversation.id,
@@ -103,14 +117,15 @@ export const useConversations = (): UseConversationsReturn => {
                 participants
               } as ChatConversation;
             } catch (err) {
-              console.error('Error processing conversation:', err);
+              console.error("Error processing conversation:", err);
               return null;
             }
           })
         );
 
-        // Filter out null values (conversations where there was an error or user isn't a participant)
+        // Filter out null values (conversations where there was an error)
         setConversations(processedConversations.filter(c => c !== null) as ChatConversation[]);
+        console.log("Successfully processed conversations:", processedConversations.length);
       } catch (error) {
         console.error('Error fetching conversations:', error);
         setError(error instanceof Error ? error : new Error('Failed to load conversations'));
