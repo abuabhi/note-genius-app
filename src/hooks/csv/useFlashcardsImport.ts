@@ -9,7 +9,10 @@ import { useFlashcards } from "@/contexts/FlashcardContext";
 export const useFlashcardsImport = () => {
   const [isImporting, setIsImporting] = useState(false);
   const [importResults, setImportResults] = useState<CSVUploadResult | null>(null);
-  const { fetchCategories } = useFlashcards();
+  
+  // Get fetchCategories from context or provide a fallback
+  const flashcardContext = useFlashcards();
+  const fetchCategories = flashcardContext?.fetchCategories || (() => Promise.resolve([]));
 
   const importFlashcards = async (file: File): Promise<CSVUploadResult> => {
     try {
@@ -203,7 +206,11 @@ export const useFlashcardsImport = () => {
       setImportResults(result);
       
       // Refresh flashcard data
-      fetchCategories();
+      try {
+        await fetchCategories();
+      } catch (error) {
+        console.error("Error refreshing categories after import:", error);
+      }
       
       toast.success(`Imported ${successCount} flashcards in ${flashcardsBySet.size} sets successfully`);
       return result;

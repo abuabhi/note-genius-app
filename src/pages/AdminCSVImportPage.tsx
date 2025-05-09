@@ -4,6 +4,7 @@ import { useRequireAuth, UserTier } from "@/hooks/useRequireAuth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ShieldAlert } from "lucide-react";
 import { CSVImport } from "@/components/admin/CSVImport";
+import { FlashcardProvider } from "@/contexts/FlashcardContext";
 
 const AdminCSVImportPage = () => {
   const { userProfile, loading } = useRequireAuth();
@@ -38,16 +39,18 @@ const AdminCSVImportPage = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto p-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">CSV Import</h1>
-          <p className="text-muted-foreground">
-            Bulk import grades, subjects, sections, and flashcards using CSV files.
-          </p>
+      <FlashcardProvider>
+        <div className="container mx-auto p-6">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold mb-2">CSV Import</h1>
+            <p className="text-muted-foreground">
+              Bulk import grades, subjects, sections, and flashcards using CSV files.
+            </p>
+          </div>
+          
+          <CSVImport />
         </div>
-        
-        <CSVImport />
-      </div>
+      </FlashcardProvider>
     </Layout>
   );
 };
