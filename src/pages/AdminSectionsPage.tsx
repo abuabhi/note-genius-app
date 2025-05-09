@@ -5,6 +5,7 @@ import { useRequireAuth, UserTier } from "@/hooks/useRequireAuth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ShieldAlert } from "lucide-react";
 import SectionsContent from "@/components/admin/sections/SectionsContent";
+import { FlashcardProvider } from "@/contexts/FlashcardContext";
 
 const AdminSectionsPage = () => {
   const { userProfile, loading } = useRequireAuth();
@@ -39,7 +40,9 @@ const AdminSectionsPage = () => {
 
   return (
     <Layout>
-      <SectionsContent />
+      <FlashcardProvider>
+        <SectionsContent />
+      </FlashcardProvider>
     </Layout>
   );
 };
