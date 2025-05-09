@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { MobileChat } from "./MobileChat";
 import { DesktopChat } from "./DesktopChat";
-import { useChat } from "@/hooks/chat"; // Updated import path
+import { useChat } from "@/hooks/chat";
 import { useRequireAuth, UserTier } from "@/hooks/useRequireAuth";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
