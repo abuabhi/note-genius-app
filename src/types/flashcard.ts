@@ -18,6 +18,8 @@ export interface FlashcardSet {
   user_id?: string | null;
   category_id?: string | null;
   section_id?: string | null;
+  country_id?: string | null;  // Added country_id property
+  education_system?: string | null; // Added education_system property
   subject?: string | null;
   topic?: string | null;
   created_at: string;
@@ -92,6 +94,8 @@ export interface CreateFlashcardSetPayload {
   topic?: string;
   category_id?: string;
   section_id?: string;
+  country_id?: string; // Added country_id property
+  education_system?: string; // Added education_system property
   user_id?: string;
   is_built_in?: boolean;
 }
