@@ -8,6 +8,7 @@ import { useFlashcards } from "@/contexts/FlashcardContext";
 
 export const useFlashcardsImport = () => {
   const [isImporting, setIsImporting] = useState(false);
+  const [importResults, setImportResults] = useState<CSVUploadResult | null>(null);
   const { fetchCategories } = useFlashcards();
 
   const importFlashcards = async (file: File): Promise<CSVUploadResult> => {
@@ -17,15 +18,26 @@ export const useFlashcardsImport = () => {
       // Parse CSV file
       const rows = await parseCSV(file);
       
+      // Get current countries for reference
+      const { data: currentCountries } = await supabase.from("countries").select("id, code, name");
+      const countryMap = new Map();
+      
+      currentCountries?.forEach(country => {
+        countryMap.set(country.code.toLowerCase(), country.id);
+        countryMap.set(country.name.toLowerCase(), country.id);
+      });
+      
       // Get current grades, subjects, and sections for reference
       const { data: currentGrades } = await supabase.from("grades").select("id, name");
       const gradeMap = new Map(currentGrades?.map(g => [g.name.toLowerCase(), g.id]) || []);
       
-      const { data: currentSubjects } = await supabase.from("subject_categories").select("id, name, grade_id");
+      const { data: currentSubjects } = await supabase.from("subject_categories").select("id, name, grade_id, country_id");
       const subjectMap = new Map();
       
       currentSubjects?.forEach(subject => {
-        subjectMap.set(`${subject.name.toLowerCase()}_${subject.grade_id}`, subject.id);
+        // Include country_id in the key to handle subjects with same name in different countries
+        const key = `${subject.name.toLowerCase()}_${subject.grade_id}_${subject.country_id || 'global'}`;
+        subjectMap.set(key, subject.id);
       });
       
       const { data: currentSections } = await supabase.from("sections").select("id, name, subject_id");
@@ -66,6 +78,21 @@ export const useFlashcardsImport = () => {
             continue;
           }
           
+          // Get the country ID if specified
+          let countryId = null;
+          if (firstCard.country_code || firstCard.country_name) {
+            const countryKey = (firstCard.country_code || firstCard.country_name || '').toLowerCase();
+            countryId = countryMap.get(countryKey);
+            
+            if (!countryId) {
+              errors.push({ 
+                row: rows.findIndex(r => (r as CSVFlashcardRow).set_name === setName) + 1, 
+                message: `Country "${firstCard.country_code || firstCard.country_name}" not found for set "${setName}"` 
+              });
+              continue;
+            }
+          }
+          
           // Get the grade ID
           const gradeName = firstCard.grade_name.trim().toLowerCase();
           const gradeId = gradeMap.get(gradeName);
@@ -80,13 +107,14 @@ export const useFlashcardsImport = () => {
           
           // Get the subject ID
           const subjectName = firstCard.subject_name.trim().toLowerCase();
-          const subjectKey = `${subjectName}_${gradeId}`;
+          // Include country in the key to handle subjects with same name in different countries
+          const subjectKey = `${subjectName}_${gradeId}_${countryId || 'global'}`;
           const subjectId = subjectMap.get(subjectKey);
           
           if (!subjectId) {
             errors.push({ 
               row: rows.findIndex(r => (r as CSVFlashcardRow).set_name === setName) + 1, 
-              message: `Subject "${firstCard.subject_name}" not found for grade "${firstCard.grade_name}"` 
+              message: `Subject "${firstCard.subject_name}" not found for grade "${firstCard.grade_name}"${countryId ? ` and country ${firstCard.country_code || firstCard.country_name}` : ''}` 
             });
             continue;
           }
@@ -115,6 +143,8 @@ export const useFlashcardsImport = () => {
               subject: firstCard.subject_name,
               category_id: subjectId,
               section_id: sectionId,
+              country_id: countryId,
+              education_system: firstCard.education_system || null,
               is_built_in: true
             })
             .select()
@@ -169,6 +199,9 @@ export const useFlashcardsImport = () => {
         errors
       };
       
+      // Store the results for display
+      setImportResults(result);
+      
       // Refresh flashcard data
       fetchCategories();
       
@@ -182,6 +215,7 @@ export const useFlashcardsImport = () => {
         errorCount: 1,
         errors: [{ row: 0, message: `Import failed: ${error}` }]
       };
+      setImportResults(errorResult);
       toast.error("Failed to import flashcards");
       return errorResult;
     } finally {
@@ -191,6 +225,7 @@ export const useFlashcardsImport = () => {
 
   return {
     importFlashcards,
-    isImporting
+    isImporting,
+    importResults
   };
 };

@@ -30,6 +30,8 @@ export interface CSVSubjectRow {
   name: string;
   grade_name: string;
   description?: string;
+  country_code?: string;
+  country_name?: string;
 }
 
 export interface CSVSectionRow {
@@ -37,6 +39,8 @@ export interface CSVSectionRow {
   subject_name: string;
   grade_name: string;
   description?: string;
+  country_code?: string;
+  country_name?: string;
 }
 
 export interface CSVFlashcardRow {
@@ -47,6 +51,9 @@ export interface CSVFlashcardRow {
   grade_name: string;
   section_name?: string;
   difficulty?: number;
+  country_code?: string;
+  country_name?: string;
+  education_system?: string;
 }
 
 export interface CSVUploadResult {
