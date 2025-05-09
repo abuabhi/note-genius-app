@@ -34,12 +34,9 @@ export const useCategoryOperations = (
       
       // Second pass: build the tree structure
       data.forEach(category => {
-        if (category.parent_id) {
+        if (category.parent_id && categoriesById[category.parent_id]) {
           // Add to parent's subcategories
-          const parent = categoriesById[category.parent_id];
-          if (parent && parent.subcategories) {
-            parent.subcategories.push(categoriesById[category.id]);
-          }
+          categoriesById[category.parent_id].subcategories?.push(categoriesById[category.id]);
         } else {
           // Root category
           rootCategories.push(categoriesById[category.id]);
@@ -47,6 +44,7 @@ export const useCategoryOperations = (
       });
       
       setCategories(rootCategories);
+      return rootCategories;
     } catch (error) {
       console.error('Error fetching categories:', error);
       toast({
@@ -54,10 +52,11 @@ export const useCategoryOperations = (
         description: 'Please try again later.',
         variant: 'destructive',
       });
+      return [];
     } finally {
       setLoading(false);
     }
   };
 
-  return { fetchCategories };
+  return { fetchCategories, loading };
 };
