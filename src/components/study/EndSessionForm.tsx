@@ -27,7 +27,16 @@ export const EndSessionForm = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    endSession.mutate(notes, {
+    const endSessionData = {
+      sessionId: activeSession.id,
+      endTime: new Date(),
+      duration: focusTime + breakTime,
+      notes,
+      focusTime,
+      breakTime
+    };
+    
+    endSession.mutate(endSessionData, {
       onSuccess: () => {
         onComplete();
       }
