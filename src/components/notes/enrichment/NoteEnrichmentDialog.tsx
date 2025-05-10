@@ -59,7 +59,7 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
   const handleEnhancement = async () => {
     if (!selectedEnhancement) {
       toast("Enhancement required", {
-        description: "Please select an enhancement type",
+        description: "Please select an enhancement type"
       });
       return;
     }

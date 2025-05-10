@@ -22,16 +22,14 @@ export function useEnrichmentService() {
   ) => {
     if (!userId) {
       toast("Authentication required", {
-        description: "Please log in to use this feature",
-        variant: "destructive"
+        description: "Please log in to use this feature"
       });
       return null;
     }
     
     if (!isFeatureEnabled) {
       toast("Feature not available", {
-        description: "Note enrichment is not available for your tier",
-        variant: "destructive"
+        description: "Note enrichment is not available for your tier"
       });
       return null;
     }
