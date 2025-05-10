@@ -40,7 +40,9 @@ export const useUserTier = () => {
           ai_flashcard_generation: true,
           collaboration_enabled: true,
           priority_support: true,
-          chat_enabled: true
+          chat_enabled: true,
+          note_enrichment_enabled: true,
+          note_enrichment_limit_per_month: Infinity
         };
       case UserTier.MASTER:
         return {
@@ -52,7 +54,9 @@ export const useUserTier = () => {
           ai_flashcard_generation: true,
           collaboration_enabled: true,
           priority_support: true,
-          chat_enabled: true
+          chat_enabled: true,
+          note_enrichment_enabled: true,
+          note_enrichment_limit_per_month: 50
         };
       case UserTier.GRADUATE:
         return {
@@ -64,7 +68,9 @@ export const useUserTier = () => {
           ai_flashcard_generation: false,
           collaboration_enabled: true,
           priority_support: false,
-          chat_enabled: true
+          chat_enabled: true,
+          note_enrichment_enabled: true,
+          note_enrichment_limit_per_month: 10
         };
       case UserTier.SCHOLAR:
       default:
@@ -77,7 +83,9 @@ export const useUserTier = () => {
           ai_flashcard_generation: false,
           collaboration_enabled: false,
           priority_support: false,
-          chat_enabled: false
+          chat_enabled: false,
+          note_enrichment_enabled: false,
+          note_enrichment_limit_per_month: 0
         };
     }
   };
