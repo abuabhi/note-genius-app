@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { FileText, ListChecks, HelpCircle, Lightbulb, FileSymlink, Pencil } from 'lucide-react';
-import { EnhancementOption, EnhancementFunction } from '@/hooks/useNoteEnrichment';
+import { EnhancementOption, EnhancementFunction } from '@/hooks/noteEnrichment/types';
 
 interface EnhancementSelectionProps {
   options: EnhancementOption[];

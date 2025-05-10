@@ -1,105 +1,41 @@
 
 import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Note } from '@/types/note';
-import { fetchNoteEnrichmentUsage, updateNoteInDatabase } from '@/contexts/notes/noteOperations';
-import { enrichNote } from './noteEnrichment/enrichmentService';
 import { useUserTier } from '@/hooks/useUserTier';
+import { updateNoteInDatabase } from '@/contexts/notes/noteOperations';
+import { enrichNote } from './noteEnrichment/enrichmentService';
+import { enhancementOptions } from './noteEnrichment/enhancementOptions';
+import { useUsageStats } from './noteEnrichment/useUsageStats';
+import { EnhancementFunction, EnhancementOption } from './noteEnrichment/types';
 
-export type EnhancementFunction = 
-  | 'summarize' 
-  | 'extract-key-points' 
-  | 'generate-questions' 
-  | 'improve-clarity' 
-  | 'convert-to-markdown'
-  | 'fix-spelling-grammar';
-
-export interface EnhancementOption {
-  id: EnhancementFunction;
-  name: string;
-  description: string;
-  icon: string;
-}
+export type { EnhancementFunction, EnhancementOption };
 
 export const useNoteEnrichment = (note?: Note) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedEnhancement, setSelectedEnhancement] = useState<EnhancementFunction | null>(null);
   const [enhancedContent, setEnhancedContent] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
-  const [usage, setUsage] = useState<{ current: number, limit: number | null }>({ current: 0, limit: null });
-  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   const { tierLimits } = useUserTier();
   
-  // These properties need to be added to match NoteEnrichmentDialog
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentUsage, setCurrentUsage] = useState(0);
-  const [monthlyLimit, setMonthlyLimit] = useState<number | null>(null);
+  const { 
+    currentUsage,
+    monthlyLimit,
+    fetchUsageStats,
+    hasReachedLimit
+  } = useUsageStats();
+  
   const isEnabled = tierLimits?.note_enrichment_enabled || import.meta.env.DEV;
-
-  const enhancementOptions: EnhancementOption[] = [
-    {
-      id: 'summarize',
-      name: 'Summarize',
-      description: 'Create a concise summary of your note',
-      icon: 'FileText'
-    },
-    {
-      id: 'extract-key-points',
-      name: 'Extract Key Points',
-      description: 'Extract the main points from your note',
-      icon: 'ListChecks'
-    },
-    {
-      id: 'generate-questions',
-      name: 'Generate Questions',
-      description: 'Create study questions based on your note',
-      icon: 'HelpCircle'
-    },
-    {
-      id: 'improve-clarity',
-      name: 'Improve Clarity',
-      description: 'Rewrite your note for better clarity and readability',
-      icon: 'Lightbulb'
-    },
-    {
-      id: 'convert-to-markdown',
-      name: 'Convert to Markdown',
-      description: 'Format your note with Markdown styling',
-      icon: 'FileSymlink'
-    },
-    {
-      id: 'fix-spelling-grammar',
-      name: 'Fix Spelling & Grammar',
-      description: 'Correct spelling and grammar errors',
-      icon: 'Pencil'
-    }
-  ];
 
   // Initialize function to load usage data
   const initialize = async () => {
-    await checkUsage();
+    await fetchUsageStats();
   };
 
   useEffect(() => {
     initialize();
   }, []);
-
-  const checkUsage = async () => {
-    try {
-      const usageData = await fetchNoteEnrichmentUsage();
-      setUsage(usageData);
-      setCurrentUsage(usageData.current);
-      setMonthlyLimit(usageData.limit);
-      return usageData;
-    } catch (error) {
-      console.error('Error checking usage:', error);
-      return { current: 0, limit: null };
-    }
-  };
-
-  const hasReachedLimit = () => {
-    return usage.limit !== null && usage.current >= usage.limit;
-  };
 
   const processEnhancement = async (enhancementType: EnhancementFunction): Promise<boolean> => {
     try {
@@ -108,8 +44,8 @@ export const useNoteEnrichment = (note?: Note) => {
       setError(null);
       
       // Check if user has reached their limit
-      const currentUsage = await checkUsage();
-      if (currentUsage.limit !== null && currentUsage.current >= currentUsage.limit) {
+      const usage = await fetchUsageStats();
+      if (hasReachedLimit(usage)) {
         setError('You have reached your monthly enhancement limit.');
         toast({
           title: "Enhancement limit reached",
@@ -221,10 +157,9 @@ export const useNoteEnrichment = (note?: Note) => {
     enhancementOptions,
     processEnhancement,
     applyEnhancement,
-    usage,
-    hasReachedLimit,
-    checkUsage,
-    // Added properties to fix build errors
+    usage: { current: currentUsage, limit: monthlyLimit },
+    hasReachedLimit: () => hasReachedLimit({ current: currentUsage, limit: monthlyLimit }),
+    checkUsage: fetchUsageStats,
     isLoading,
     currentUsage,
     monthlyLimit,
@@ -234,3 +169,6 @@ export const useNoteEnrichment = (note?: Note) => {
     enrichNote: enrichNoteDirectly
   };
 };
+
+// Re-export for convenience
+export { enhancementOptions };

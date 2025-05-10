@@ -1,7 +1,7 @@
 
 import { Note } from "@/types/note";
 import { supabase } from "@/integrations/supabase/client";
-import { EnhancementFunction } from '../useNoteEnrichment';
+import { EnhancementFunction } from './types';
 
 export const enrichNote = async (note: Note, enhancementType: EnhancementFunction): Promise<string> => {
   try {
@@ -33,7 +33,7 @@ export const enrichNote = async (note: Note, enhancementType: EnhancementFunctio
 };
 
 // Track usage of the enrichment feature
-const trackUsage = async (noteId: string) => {
+export const trackUsage = async (noteId: string) => {
   const currentMonth = new Date().toISOString().slice(0, 7); // Format: YYYY-MM
   const userId = (await supabase.auth.getUser()).data.user?.id;
   
