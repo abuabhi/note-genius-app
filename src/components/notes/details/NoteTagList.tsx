@@ -27,7 +27,7 @@ export const NoteTagList = ({
   const displayTags = tags.slice(0, maxTags);
 
   return (
-    <div className="flex flex-wrap gap-2 items-center">
+    <div className="flex flex-wrap gap-1 items-center">
       {displayTags.map((tag) => (
         <Badge
           key={tag.id || tag.name}
@@ -35,7 +35,7 @@ export const NoteTagList = ({
             backgroundColor: tag.color,
             color: getBestTextColor(tag.color)
           }}
-          className="flex items-center gap-1 text-xs"
+          className="flex items-center gap-1 text-xs py-0.5 px-1.5 rounded-lg"
         >
           {showTagIcon && <Tag className="h-2.5 w-2.5" />}
           {tag.name}

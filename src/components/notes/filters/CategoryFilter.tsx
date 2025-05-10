@@ -32,7 +32,7 @@ export const CategoryFilter = ({
           onCategoryChange(value === "_any" ? undefined : value)
         }
       >
-        <SelectTrigger id="category" className="border-purple-200 focus:ring-purple-400">
+        <SelectTrigger id="category" className="border-mint-200 focus:ring-mint-400">
           <SelectValue placeholder="Any subject" />
         </SelectTrigger>
         <SelectContent className="bg-white">

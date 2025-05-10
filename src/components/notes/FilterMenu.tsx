@@ -54,21 +54,21 @@ export const FilterMenu = () => {
         <Button
           variant="outline"
           size="sm"
-          className="relative border-purple-200 hover:bg-purple-50 hover:text-purple-700"
+          className="relative border-mint-200 hover:bg-mint-50 hover:text-mint-700"
         >
           <Filter className="h-4 w-4 mr-2" />
           Filters
           {activeFilterCount > 0 && (
             <Badge
               variant="secondary"
-              className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center bg-purple-100 text-purple-800"
+              className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center bg-mint-100 text-mint-800"
             >
               {activeFilterCount}
             </Badge>
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80">
+      <PopoverContent className="w-80 border-mint-200 bg-white">
         <FilterMenuContent
           localFilters={localFilters}
           setLocalFilters={setLocalFilters}

@@ -75,41 +75,46 @@ export const FilterMenuContent = ({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h4 className="font-medium">Filter Notes</h4>
+        <h4 className="font-medium text-mint-800">Filter Notes</h4>
         {activeFilterCount > 0 && (
-          <Button variant="ghost" size="sm" onClick={handleClearFilters} className="h-8 px-2 hover:text-purple-700">
+          <Button variant="ghost" size="sm" onClick={handleClearFilters} className="h-8 px-2 hover:text-mint-700">
             <X className="h-4 w-4 mr-1" /> Clear filters
           </Button>
         )}
       </div>
       
-      <CategoryFilter 
-        category={localFilters.category} 
-        availableCategories={availableCategories}
-        onCategoryChange={handleCategoryChange}
-      />
+      <div className="space-y-4">
+        {/* Subject and Date in same section */}
+        <div className="space-y-3">
+          <CategoryFilter 
+            category={localFilters.category} 
+            availableCategories={availableCategories}
+            onCategoryChange={handleCategoryChange}
+          />
+          
+          <DateRangeFilter
+            dateFrom={dateFromString}
+            dateTo={dateToString}
+            onDateFromChange={handleDateFromChange}
+            onDateToChange={handleDateToChange}
+          />
+        </div>
+        
+        <SourceTypeFilter
+          sourceType={Array.isArray(localFilters.sourceType) ? 
+            localFilters.sourceType as ('manual' | 'scan' | 'import')[] :
+            localFilters.sourceType ? [localFilters.sourceType as 'manual' | 'scan' | 'import'] : []
+          }
+          onSourceTypeChange={handleSourceTypeChange}
+        />
+        
+        <TagsFilter
+          hasTags={localFilters.hasTags}
+          onHasTagsChange={handleHasTagsChange}
+        />
+      </div>
       
-      <DateRangeFilter
-        dateFrom={dateFromString}
-        dateTo={dateToString}
-        onDateFromChange={handleDateFromChange}
-        onDateToChange={handleDateToChange}
-      />
-      
-      <SourceTypeFilter
-        sourceType={Array.isArray(localFilters.sourceType) ? 
-          localFilters.sourceType as ('manual' | 'scan' | 'import')[] :
-          localFilters.sourceType ? [localFilters.sourceType as 'manual' | 'scan' | 'import'] : []
-        }
-        onSourceTypeChange={handleSourceTypeChange}
-      />
-      
-      <TagsFilter
-        hasTags={localFilters.hasTags}
-        onHasTagsChange={handleHasTagsChange}
-      />
-      
-      <Button onClick={handleApplyFilters} className="w-full bg-purple-600 hover:bg-purple-700">
+      <Button onClick={handleApplyFilters} className="w-full bg-mint-600 hover:bg-mint-700">
         Apply Filters
       </Button>
     </div>
