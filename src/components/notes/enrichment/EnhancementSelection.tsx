@@ -27,15 +27,20 @@ export const EnhancementSelection: React.FC<EnhancementSelectionProps> = ({
     }
   };
 
+  const handleOptionClick = (id: EnhancementFunction) => {
+    console.log("Enhancement option selected:", id);
+    onSelect(id);
+  };
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
       {options.map((option) => (
         <Card 
           key={option.id}
-          className={`cursor-pointer hover:border-primary transition-colors ${
-            selectedEnhancement === option.id ? 'border-primary bg-primary/5' : ''
+          className={`cursor-pointer hover:border-mint-300 hover:bg-mint-50 transition-colors ${
+            selectedEnhancement === option.id ? 'border-mint-500 bg-mint-50' : ''
           }`}
-          onClick={() => onSelect(option.id)}
+          onClick={() => handleOptionClick(option.id)}
         >
           <CardHeader className="p-4 pb-2">
             <div className="flex items-center gap-2">

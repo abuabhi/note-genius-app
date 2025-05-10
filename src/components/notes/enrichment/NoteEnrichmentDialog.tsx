@@ -42,7 +42,8 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
     monthlyLimit,
     isEnabled,
     initialize,
-    enhancementOptions
+    enhancementOptions,
+    setEnhancedContent
   } = useNoteEnrichment();
   
   const [selectedEnhancement, setSelectedEnhancement] = useState<EnhancementFunction | null>(null);
@@ -52,9 +53,10 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
     if (open) {
       setError(null);
       setSelectedEnhancement(null);
+      setEnhancedContent(null);
       initialize();
     }
-  }, [open, initialize]);
+  }, [open, initialize, setEnhancedContent]);
   
   const handleEnhancement = async () => {
     if (!selectedEnhancement) {
@@ -72,16 +74,25 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
     }
     
     setError(null);
+    console.log("Starting enhancement with type:", selectedEnhancement);
     
-    const result = await enrichNote(
-      noteId, 
-      noteContent, 
-      selectedEnhancement,
-      noteTitle
-    );
-    
-    if (!result) {
-      setError("Failed to enhance note. Please check your connection and try again.");
+    try {
+      const result = await enrichNote(
+        noteId, 
+        noteContent, 
+        selectedEnhancement,
+        noteTitle
+      );
+      
+      if (!result) {
+        setError("Failed to enhance note. Please check your connection and try again.");
+      } else {
+        console.log("Enhancement successful, result:", result);
+      }
+    } catch (error) {
+      console.error("Enhancement error:", error);
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+      setError(errorMessage);
     }
   };
   
@@ -162,7 +173,10 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
           <EnhancementSelection 
             options={enhancementOptions}
             selectedEnhancement={selectedEnhancement}
-            onSelect={(id) => setSelectedEnhancement(id as EnhancementFunction)}
+            onSelect={(id) => {
+              console.log("Setting selected enhancement:", id);
+              setSelectedEnhancement(id as EnhancementFunction);
+            }}
           />
         )}
         

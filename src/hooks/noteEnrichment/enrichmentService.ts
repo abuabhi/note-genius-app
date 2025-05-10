@@ -41,6 +41,13 @@ export function useEnrichmentService() {
       return null;
     }
     
+    console.log("Starting enrichment process:", {
+      noteId,
+      enhancementType,
+      contentLength: noteContent.length,
+      hasTitle: !!noteTitle
+    });
+    
     setIsLoading(true);
     setEnhancedContent(null);
     setError(null);
