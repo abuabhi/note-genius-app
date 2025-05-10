@@ -76,6 +76,9 @@ export default function NavBar() {
                       <DropdownMenuItem asChild>
                         <Link to="/admin/csv-import">CSV Import</Link>
                       </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/features">Feature Management</Link>
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 )}
@@ -117,6 +120,7 @@ export default function NavBar() {
                       <Link to="/admin/sections">Sections</Link>
                       <Link to="/admin/grades">Grades</Link>
                       <Link to="/admin/csv-import">CSV Import</Link>
+                      <Link to="/admin/features">Feature Management</Link>
                     </>
                   )}
                   {/* DND Toggle for mobile */}

@@ -159,20 +159,6 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   isActive={pathname.includes("/settings")}
                   isCollapsed={isCollapsed}
                 />
-
-                {/* Admin section - only for DEAN users */}
-                {userProfile?.user_tier === UserTier.DEAN && (
-                  <>
-                    <Separator className="my-2" />
-                    <NavLink
-                      to="/admin/features"
-                      icon={Settings}
-                      label="Feature Management"
-                      isActive={pathname.includes("/admin/features")}
-                      isCollapsed={isCollapsed}
-                    />
-                  </>
-                )}
               </div>
             </ScrollArea>
           </div>
