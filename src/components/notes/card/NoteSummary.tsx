@@ -104,7 +104,6 @@ export const NoteSummary = ({
           size="sm"
           className="text-xs h-7 px-2 text-muted-foreground bg-transparent hover:bg-muted/30"
           onClick={handleGenerateSummary}
-          disabled={effectiveStatus === 'generating'}
         >
           <Sparkles className="h-3 w-3 mr-1" />
           Generate summary
