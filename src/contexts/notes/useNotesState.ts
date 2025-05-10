@@ -109,6 +109,15 @@ export function useNotesState() {
           }
         }
         
+        // Filter by hasTags (if specified)
+        if (filterOptions.hasTags === true && (!note.tags || note.tags.length === 0)) {
+          return false;
+        }
+        
+        if (filterOptions.hasTags === false && note.tags && note.tags.length > 0) {
+          return false;
+        }
+        
         return true;
       })
       .sort((a, b) => {
@@ -124,6 +133,16 @@ export function useNotesState() {
             return new Date(a.date).getTime() - new Date(b.date).getTime();
           case 'alphabetical':
             return a.title.localeCompare(b.title);
+          case 'date-desc':
+            return new Date(b.date).getTime() - new Date(a.date).getTime();
+          case 'date-asc':
+            return new Date(a.date).getTime() - new Date(b.date).getTime();
+          case 'title-asc':
+            return a.title.localeCompare(b.title);
+          case 'title-desc':
+            return b.title.localeCompare(a.title);
+          case 'category':
+            return a.category.localeCompare(b.category);
           default:
             return 0;
         }

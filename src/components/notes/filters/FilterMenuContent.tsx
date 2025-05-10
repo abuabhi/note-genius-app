@@ -33,25 +33,25 @@ export const FilterMenuContent = ({
   };
 
   // Date filter handlers
-  const handleDateFromChange = (dateFrom: string | undefined) => {
+  const handleDateFromChange = (dateString: string | undefined) => {
     setLocalFilters({
       ...localFilters,
-      dateFrom
+      dateFrom: dateString ? new Date(dateString) : undefined
     });
   };
 
-  const handleDateToChange = (dateTo: string | undefined) => {
+  const handleDateToChange = (dateString: string | undefined) => {
     setLocalFilters({
       ...localFilters,
-      dateTo
+      dateTo: dateString ? new Date(dateString) : undefined
     });
   };
 
-  // Source type filter handler - updated to match the expected interface
+  // Source type filter handler
   const handleSourceTypeChange = (sourceType: ('manual' | 'scan' | 'import')[]) => {
     setLocalFilters({
       ...localFilters,
-      sourceType
+      sourceType: sourceType as any
     });
   };
 
@@ -62,6 +62,15 @@ export const FilterMenuContent = ({
       hasTags
     });
   };
+
+  // Convert the Date objects to strings for the DateRangeFilter component
+  const dateFromString = localFilters.dateFrom instanceof Date 
+    ? localFilters.dateFrom.toISOString().split('T')[0]
+    : undefined;
+    
+  const dateToString = localFilters.dateTo instanceof Date
+    ? localFilters.dateTo.toISOString().split('T')[0]
+    : undefined;
 
   return (
     <div className="space-y-4">
@@ -81,14 +90,17 @@ export const FilterMenuContent = ({
       />
       
       <DateRangeFilter
-        dateFrom={localFilters.dateFrom}
-        dateTo={localFilters.dateTo}
+        dateFrom={dateFromString}
+        dateTo={dateToString}
         onDateFromChange={handleDateFromChange}
         onDateToChange={handleDateToChange}
       />
       
       <SourceTypeFilter
-        sourceType={localFilters.sourceType}
+        sourceType={Array.isArray(localFilters.sourceType) ? 
+          localFilters.sourceType as ('manual' | 'scan' | 'import')[] :
+          localFilters.sourceType ? [localFilters.sourceType as 'manual' | 'scan' | 'import'] : []
+        }
         onSourceTypeChange={handleSourceTypeChange}
       />
       

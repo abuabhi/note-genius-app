@@ -7,7 +7,10 @@ export interface FilterOptions {
   category?: string;
   sourceType?: string | string[];
   tags?: string[];
+  hasTags?: boolean;
 }
+
+export type SortType = 'date-desc' | 'date-asc' | 'title-asc' | 'title-desc' | 'category' | 'newest' | 'oldest' | 'alphabetical';
 
 export interface NoteContextType {
   notes: Note[];

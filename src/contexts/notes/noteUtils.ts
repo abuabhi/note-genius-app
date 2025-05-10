@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Note } from "@/types/note";
 import { FilterOptions, SortType } from "./types";
@@ -65,7 +66,7 @@ export const fetchNotesFromSupabase = async (): Promise<Note[]> => {
   }
 };
 
-export const filterNotes = (notes: Note[], searchTerm: string, filterOptions: FilterOptions = {}): Note[] => {
+const filterNotes = (notes: Note[], searchTerm: string, filterOptions: FilterOptions = {}): Note[] => {
   if (!searchTerm.trim() && Object.keys(filterOptions).length === 0) return notes;
   
   const lowerSearchTerm = searchTerm.toLowerCase();
@@ -120,7 +121,7 @@ export const filterNotes = (notes: Note[], searchTerm: string, filterOptions: Fi
   });
 };
 
-export const sortNotes = (notes: Note[], sortType: SortType): Note[] => {
+const sortNotes = (notes: Note[], sortType: SortType): Note[] => {
   return [...notes].sort((a, b) => {
     switch (sortType) {
       case 'date-desc':
@@ -133,18 +134,45 @@ export const sortNotes = (notes: Note[], sortType: SortType): Note[] => {
         return b.title.localeCompare(a.title);
       case 'category':
         return a.category.localeCompare(b.category);
+      case 'newest':
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      case 'oldest':
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
+      case 'alphabetical':
+        return a.title.localeCompare(b.title);
       default:
         return 0;
     }
   });
 };
 
-export const paginateNotes = (notes: Note[], currentPage: number, notesPerPage: number): Note[] => {
+const paginateNotes = (notes: Note[], currentPage: number, notesPerPage: number): Note[] => {
   const startIndex = (currentPage - 1) * notesPerPage;
   return notes.slice(startIndex, startIndex + notesPerPage);
 };
 
-export const getUniqueCategories = (notes: Note[]): string[] => {
+const getUniqueCategories = (notes: Note[]): string[] => {
   const categories = notes.map(note => note.category);
   return [...new Set(categories)].sort();
+};
+
+const matchesSearchTerm = (note: Note, searchTerm: string): boolean => {
+  if (!searchTerm.trim()) return true;
+  
+  const lowerSearchTerm = searchTerm.toLowerCase();
+  return note.title.toLowerCase().includes(lowerSearchTerm) || 
+    note.description.toLowerCase().includes(lowerSearchTerm) || 
+    note.category.toLowerCase().includes(lowerSearchTerm) ||
+    (note.content && note.content.toLowerCase().includes(lowerSearchTerm)) ||
+    (note.tags && note.tags.some(tag => tag.name.toLowerCase().includes(lowerSearchTerm)));
+};
+
+// Export all functions as a single object named 'noteUtils'
+export const noteUtils = {
+  fetchNotesFromSupabase,
+  filterNotes,
+  sortNotes,
+  paginateNotes,
+  getUniqueCategories,
+  matchesSearchTerm
 };
