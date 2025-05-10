@@ -147,7 +147,7 @@ export const ImportDialog = ({ onSaveNote }: ImportDialogProps) => {
       }
     }}>
       <DialogTrigger asChild>
-        <Button className="bg-purple-600 hover:bg-purple-700">
+        <Button className="bg-mint-500 hover:bg-mint-600">
           <FileUp className="mr-2 h-4 w-4" />
           Import
         </Button>

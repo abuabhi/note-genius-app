@@ -22,7 +22,7 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
   if (notes.length === 0) {
     return (
       <div className="text-center py-10">
-        <p className="text-lg text-purple-600">No notes found. Create a note or adjust your search.</p>
+        <p className="text-lg text-mint-600">No notes found. Create a note or adjust your search.</p>
       </div>
     );
   }
@@ -55,9 +55,9 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
             <ContextMenuTrigger>
               <Card 
                 className={`
-                  hover:shadow-lg transition-shadow cursor-pointer border-purple-100 
-                  bg-white/50 backdrop-blur-sm hover:bg-purple-50/60
-                  ${note.pinned ? 'ring-2 ring-purple-400 shadow-md' : ''}
+                  hover:shadow-lg transition-shadow cursor-pointer border-mint-200 
+                  bg-white/50 backdrop-blur-sm hover:bg-mint-50/60
+                  ${note.pinned ? 'ring-2 ring-mint-400 shadow-md' : ''}
                   ${note.archived ? 'opacity-75' : ''}
                 `}
                 onClick={() => handleNoteClick(note)}
@@ -65,17 +65,17 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle className="text-xl text-purple-800 flex items-center gap-2">
-                        {note.pinned && <Pin className="h-4 w-4 text-purple-500" />}
+                      <CardTitle className="text-xl text-mint-800 flex items-center gap-2">
+                        {note.pinned && <Pin className="h-4 w-4 text-mint-500" />}
                         {note.title}
                       </CardTitle>
-                      <CardDescription className="text-purple-600">{note.category}</CardDescription>
+                      <CardDescription className="text-mint-600">{note.category}</CardDescription>
                     </div>
-                    <span className="text-sm text-purple-600">{note.date}</span>
+                    <span className="text-sm text-mint-600">{note.date}</span>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-purple-700 whitespace-pre-line">{note.description}</p>
+                  <p className="text-mint-700 whitespace-pre-line">{note.description}</p>
                   <div className="flex flex-wrap gap-1 mt-3">
                     {note.tags && note.tags.length > 0 && note.tags.map(tag => (
                       <Badge 
@@ -96,14 +96,14 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
                   <div className="flex items-center justify-between w-full">
                     {note.sourceType === 'scan' && (
                       <div className="flex items-center">
-                        <Camera className="h-3 w-3 text-purple-500 mr-1" />
-                        <span className="text-xs text-purple-500">Scanned Note</span>
+                        <Camera className="h-3 w-3 text-mint-500 mr-1" />
+                        <span className="text-xs text-mint-500">Scanned Note</span>
                       </div>
                     )}
                     {note.archived && (
                       <div className="flex items-center ml-auto">
-                        <Archive className="h-3 w-3 text-purple-500 mr-1" />
-                        <span className="text-xs text-purple-500">Archived</span>
+                        <Archive className="h-3 w-3 text-mint-500 mr-1" />
+                        <span className="text-xs text-mint-500">Archived</span>
                       </div>
                     )}
                   </div>
