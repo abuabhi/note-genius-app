@@ -92,9 +92,9 @@ const AdminFeatureToggle = () => {
               <div className="flex items-center">
                 <span className="text-sm text-muted-foreground mr-2">Minimum tier required:</span>
                 <Select
-                  value={feature.requires_tier || ''}
+                  value={feature.requires_tier || "none"}
                   onValueChange={(value) => {
-                    handleChangeTier(feature, value === '' ? null : value as UserTier);
+                    handleChangeTier(feature, value === "none" ? null : value as UserTier);
                   }}
                   disabled={updatingFeature === feature.id}
                 >
@@ -102,7 +102,7 @@ const AdminFeatureToggle = () => {
                     <SelectValue placeholder="No tier requirement" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No tier requirement</SelectItem>
+                    <SelectItem value="none">No tier requirement</SelectItem>
                     <SelectItem value={UserTier.SCHOLAR}>{UserTier.SCHOLAR}</SelectItem>
                     <SelectItem value={UserTier.GRADUATE}>{UserTier.GRADUATE}</SelectItem>
                     <SelectItem value={UserTier.MASTER}>{UserTier.MASTER}</SelectItem>
