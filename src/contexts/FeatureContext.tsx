@@ -44,7 +44,14 @@ export const FeatureProvider: React.FC<{ children: React.ReactNode }> = ({ child
       
       if (error) throw error;
       
-      setFeatures(data || []);
+      // Convert the data to ensure requires_tier is of the correct type
+      const typedFeatures: Feature[] = (data || []).map(feature => ({
+        ...feature,
+        // Cast the string to UserTier or null
+        requires_tier: feature.requires_tier as UserTier | null
+      }));
+      
+      setFeatures(typedFeatures);
     } catch (err) {
       console.error('Error fetching features:', err);
       setError(err instanceof Error ? err : new Error('Failed to fetch features'));
