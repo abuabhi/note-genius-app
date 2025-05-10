@@ -7,8 +7,9 @@ export interface FilterOptions {
   category?: string;
   dateFrom?: string;
   dateTo?: string;
-  sourceType?: ('manual' | 'scan' | 'import')[];
+  sourceType?: string[];
   hasTags?: boolean;
+  [key: string]: any;
 }
 
 export interface NoteContextType {
@@ -23,25 +24,19 @@ export interface NoteContextType {
   pinNote: (id: string, pinned: boolean) => Promise<void>;
   archiveNote: (id: string, archived: boolean) => Promise<void>;
   sortType: SortType;
-  setSortType: (type: SortType) => void;
+  setSortType: (sortType: SortType) => void;
   showArchived: boolean;
   setShowArchived: (show: boolean) => void;
-  // Pagination
   currentPage: number;
   setCurrentPage: (page: number) => void;
   totalPages: number;
   notesPerPage: number;
-  setNotesPerPage: (count: number) => void;
+  setNotesPerPage: (perPage: number) => void;
   loading: boolean;
-  // Language detection for scanned notes
-  detectedLanguage?: string;
-  setDetectedLanguage?: (language: string) => void;
-  // Tag-related functions
-  getAllTags: () => Promise<{ id: string; name: string; color: string }[]>;
+  getAllTags: () => Promise<{ id: string; name: string; color: string; }[]>;
   filterByTag: (tagName: string) => void;
-  // Advanced filtering
   filterOptions: FilterOptions;
-  setFilterOptions: (options: FilterOptions) => void;
+  setFilterOptions: (options: FilterOptions | ((prev: FilterOptions) => FilterOptions)) => void;
   resetFilters: () => void;
   availableCategories: string[];
 }

@@ -1,13 +1,12 @@
-
 import { useToast } from '@/hooks/use-toast';
 import { Note } from "@/types/note";
 import { 
   addNoteToDatabase, 
   deleteNoteFromDatabase, 
   updateNoteInDatabase, 
-  fetchTagsFromDatabase,
-  updateNoteTagsInDatabase
+  fetchTagsFromDatabase
 } from './operations';
+import { updateNoteTagsInDatabase } from './operations/tagOperations';
 
 export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React.SetStateAction<Note[]>>, currentPage: number, setCurrentPage: React.Dispatch<React.SetStateAction<number>>, paginatedNotes: Note[]) {
   const { toast } = useToast();
@@ -47,7 +46,7 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
     }
   };
 
-  const deleteNote = async (id: string) => {
+  const deleteNote = async (id: string): Promise<void> => {
     try {
       await deleteNoteFromDatabase(id);
 
@@ -63,7 +62,6 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
         title: "Note deleted",
         description: "Your note has been successfully deleted.",
       });
-      return true;
     } catch (error) {
       console.error('Error deleting note:', error);
       toast({
@@ -71,11 +69,10 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
         description: "Please try again later.",
         variant: "destructive",
       });
-      return false;
     }
   };
 
-  const updateNote = async (id: string, updatedNote: Partial<Note>) => {
+  const updateNote = async (id: string, updatedNote: Partial<Note>): Promise<void> => {
     try {
       console.log("Updating note with ID:", id, "and data:", updatedNote);
       
@@ -99,8 +96,6 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
         title: "Note updated",
         description: "Your note has been successfully updated.",
       });
-      
-      return true;
     } catch (error) {
       console.error('Error updating note:', error);
       toast({
@@ -108,12 +103,11 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
         description: "Please try again later.",
         variant: "destructive",
       });
-      return false;
     }
   };
 
   // Pin/Unpin a note
-  const pinNote = async (id: string, pinned: boolean) => {
+  const pinNote = async (id: string, pinned: boolean): Promise<void> => {
     try {
       await updateNoteInDatabase(id, { pinned });
 
@@ -130,8 +124,6 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
           ? "Your note has been pinned to the top." 
           : "Your note has been unpinned.",
       });
-      
-      return true;
     } catch (error) {
       console.error('Error pinning note:', error);
       toast({
@@ -139,12 +131,11 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
         description: "Please try again later.",
         variant: "destructive",
       });
-      return false;
     }
   };
 
   // Archive/Unarchive a note
-  const archiveNote = async (id: string, archived: boolean) => {
+  const archiveNote = async (id: string, archived: boolean): Promise<void> => {
     try {
       await updateNoteInDatabase(id, { archived });
 
@@ -161,8 +152,6 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
           ? "Your note has been moved to the archive." 
           : "Your note has been restored from the archive.",
       });
-      
-      return true;
     } catch (error) {
       console.error('Error archiving note:', error);
       toast({
@@ -170,7 +159,6 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
         description: "Please try again later.",
         variant: "destructive",
       });
-      return false;
     }
   };
 

@@ -7,6 +7,7 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { toast } from "@/components/ui/sonner";
 import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { FilterOptions } from "@/contexts/notes/types";
 
 const NotesPage = () => {
   const { addNote, availableCategories, setFilterOptions } = useNotes();
@@ -25,11 +26,12 @@ const NotesPage = () => {
       localStorage.setItem("lastVisitedPage", currentPath);
       
       // Clear any existing filter options to start fresh
-      setFilterOptions(prev => ({
-        ...prev,
+      const resetOptions: FilterOptions = {
         startDate: undefined,
         endDate: undefined
-      }));
+      };
+      
+      setFilterOptions(resetOptions);
     }
     
     // Clean up function that runs when the component unmounts
