@@ -53,7 +53,7 @@ export const AddNoteDropdown: React.FC<AddNoteDropdownProps> = ({
             Add Note
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56 bg-white border border-gray-200">
+        <DropdownMenuContent align="end" className="w-56 bg-white border border-gray-200 z-50">
           <DropdownMenuItem onClick={() => setIsManualDialogOpen(true)} className="cursor-pointer">
             <FileText className="mr-2 h-4 w-4" />
             <span>Manual Entry</span>

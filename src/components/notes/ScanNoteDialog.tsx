@@ -48,10 +48,6 @@ export const ScanNoteDialog = ({
     }
   };
 
-  const handleSaveNote = async (note: Omit<Note, 'id'>): Promise<boolean> => {
-    return await onSaveNote(note);
-  };
-
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
       {!isVisible && (
@@ -78,7 +74,7 @@ export const ScanNoteDialog = ({
         </DialogHeader>
         
         <ScanWorkflow 
-          onSaveNote={handleSaveNote}
+          onSaveNote={onSaveNote}
           onClose={handleClose}
           selectedLanguage={detectedLanguage}
           setSelectedLanguage={setDetectedLanguage}

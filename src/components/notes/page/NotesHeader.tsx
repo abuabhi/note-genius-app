@@ -44,7 +44,6 @@ export const NotesHeader = ({
           <NoteSearch />
         </div>
         <div className="flex gap-2">
-          {/* Use the AddNoteDropdown component */}
           <AddNoteDropdown
             onSaveNote={onSaveNote}
             onScanNote={onScanNote}
@@ -52,7 +51,6 @@ export const NotesHeader = ({
             isPremiumUser={isOCREnabled}
           />
 
-          {/* Keep the Convert to Flashcards button separate */}
           <Button 
             variant="outline" 
             className="whitespace-nowrap border-mint-200 hover:bg-mint-50"
