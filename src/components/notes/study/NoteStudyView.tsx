@@ -9,9 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { 
-  TextAlignLeft, 
-  TextAlignCenter, 
-  TextAlignJustify,
+  AlignLeft, 
+  AlignCenter, 
+  AlignJustify,
   Minus,
   Plus,
   Moon,
@@ -114,7 +114,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
                 title="Align left"
                 className={`${textAlign === "left" ? "bg-mint-100 hover:bg-mint-200" : ""} ${isDarkMode ? 'border-gray-700 hover:bg-gray-800' : ''}`}
               >
-                <TextAlignLeft className="h-4 w-4" />
+                <AlignLeft className="h-4 w-4" />
               </Button>
               <Button
                 size="icon"
@@ -123,7 +123,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
                 title="Align center"
                 className={`${textAlign === "center" ? "bg-mint-100 hover:bg-mint-200" : ""} ${isDarkMode ? 'border-gray-700 hover:bg-gray-800' : ''}`}
               >
-                <TextAlignCenter className="h-4 w-4" />
+                <AlignCenter className="h-4 w-4" />
               </Button>
               <Button
                 size="icon"
@@ -132,7 +132,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
                 title="Justify text"
                 className={`${textAlign === "justify" ? "bg-mint-100 hover:bg-mint-200" : ""} ${isDarkMode ? 'border-gray-700 hover:bg-gray-800' : ''}`}
               >
-                <TextAlignJustify className="h-4 w-4" />
+                <AlignJustify className="h-4 w-4" />
               </Button>
               <Separator orientation="vertical" className="h-6" />
               <Button
