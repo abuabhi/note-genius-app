@@ -1,25 +1,14 @@
-
 import React from "react";
 import { NoteSearch } from "@/components/notes/NoteSearch";
 import { NoteSorter } from "@/components/notes/NoteSorter";
 import { FilterMenu } from "@/components/notes/FilterMenu";
 import { Button } from "@/components/ui/button";
-import { Plus, FileText, Filter, Book, ArrowRight } from "lucide-react";
+import { FileText, ArrowRight, Book } from "lucide-react";
 import { useNotes } from "@/contexts/NoteContext";
-import { CreateNoteForm } from "./CreateNoteForm";
-import { 
-  Dialog, 
-  DialogTrigger, 
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription 
-} from "@/components/ui/dialog";
-import { ScanNoteDialog } from "../ScanNoteDialog";
-import { ImportDialog } from "../import/ImportDialog";
 import { TierLimits, UserTier } from "@/hooks/useRequireAuth";
 import { Note } from "@/types/note";
 import { useNavigate } from "react-router-dom";
+import { AddNoteDropdown } from "../AddNoteDropdown";
 
 interface NotesHeaderProps {
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
@@ -36,24 +25,11 @@ export const NotesHeader = ({
   tierLimits,
   userTier
 }: NotesHeaderProps) => {
-  const { searchTerm, setSearchTerm, filteredNotes } = useNotes();
-  const [isNewNoteDialogOpen, setIsNewNoteDialogOpen] = React.useState(false);
+  const { filteredNotes } = useNotes();
   const navigate = useNavigate();
 
   // Check if OCR is enabled for the user's tier
   const isOCREnabled = tierLimits?.ocr_enabled ?? false;
-
-  // When passing to ImportDialog, convert the return type
-  const handleImportSave = async (note: Omit<Note, 'id'>): Promise<boolean> => {
-    const result = await onImportNote(note);
-    return result !== null;
-  };
-
-  // Similarly for ScanNoteDialog
-  const handleScanSave = async (note: Omit<Note, 'id'>): Promise<boolean> => {
-    const result = await onScanNote(note);
-    return result !== null;
-  };
 
   // Navigate to the note to flashcard conversion page
   const handleNoteToFlashcard = () => {
@@ -67,41 +43,15 @@ export const NotesHeader = ({
           <NoteSearch />
         </div>
         <div className="flex gap-2">
-          <Dialog open={isNewNoteDialogOpen} onOpenChange={setIsNewNoteDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="whitespace-nowrap bg-mint-500 hover:bg-mint-600 text-white">
-                <Plus className="mr-2 h-4 w-4" />
-                New Note
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-mint-200 bg-white">
-              <DialogHeader>
-                <DialogTitle className="text-xl font-semibold text-mint-800">Create New Note</DialogTitle>
-                <DialogDescription className="text-muted-foreground">
-                  Fill out the form below to create a new note.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="py-2">
-                <CreateNoteForm 
-                  onSave={async (note) => {
-                    const result = await onSaveNote(note);
-                    if (result) setIsNewNoteDialogOpen(false);
-                    return result;
-                  }}
-                />
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          <ScanNoteDialog 
-            onSaveNote={handleScanSave} 
-            isPremiumUser={isOCREnabled} 
-          />
-          
-          <ImportDialog 
-            onSaveNote={handleImportSave} 
+          {/* Replace the 3 buttons with new dropdown component */}
+          <AddNoteDropdown
+            onSaveNote={onSaveNote}
+            onScanNote={onScanNote}
+            onImportNote={onImportNote}
+            isPremiumUser={isOCREnabled}
           />
 
+          {/* Keep the Convert to Flashcards button separate */}
           <Button 
             variant="outline" 
             className="whitespace-nowrap border-mint-200 hover:bg-mint-50"

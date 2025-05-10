@@ -1,13 +1,11 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
-  DialogTitle,
-  DialogTrigger
+  DialogTitle
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Camera, Sparkles } from "lucide-react";
@@ -17,14 +15,37 @@ import { ScanWorkflow } from "./scanning/ScanWorkflow";
 interface ScanNoteDialogProps {
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<boolean>;
   isPremiumUser?: boolean;
+  isVisible?: boolean;
+  onClose?: () => void;
 }
 
-export const ScanNoteDialog = ({ onSaveNote, isPremiumUser = false }: ScanNoteDialogProps) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+export const ScanNoteDialog = ({ 
+  onSaveNote, 
+  isPremiumUser = false,
+  isVisible = false,
+  onClose
+}: ScanNoteDialogProps) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(isVisible);
   const [detectedLanguage, setDetectedLanguage] = useState<string>("eng"); // Default language is English
+
+  // Sync internal state with props
+  useEffect(() => {
+    setIsDialogOpen(isVisible);
+  }, [isVisible]);
+  
+  // When dialog is closed internally, also call the onClose prop if provided
+  const handleDialogChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open && onClose) {
+      onClose();
+    }
+  };
 
   const handleClose = () => {
     setIsDialogOpen(false);
+    if (onClose) {
+      onClose();
+    }
   };
 
   const handleSaveNote = async (note: Omit<Note, 'id'>): Promise<boolean> => {
@@ -32,13 +53,13 @@ export const ScanNoteDialog = ({ onSaveNote, isPremiumUser = false }: ScanNoteDi
   };
 
   return (
-    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <DialogTrigger asChild>
-        <Button className="bg-mint-500 hover:bg-mint-600">
+    <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
+      {!isVisible && (
+        <Button className="bg-mint-500 hover:bg-mint-600" onClick={() => setIsDialogOpen(true)}>
           <Camera className="mr-2 h-4 w-4" />
           Scan Note
         </Button>
-      </DialogTrigger>
+      )}
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto border-mint-100 bg-white">
         <DialogHeader>
           <div className="flex items-center gap-2">
