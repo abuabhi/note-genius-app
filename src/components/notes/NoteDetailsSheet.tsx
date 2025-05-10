@@ -13,6 +13,7 @@ import { NoteAttachments } from './details/NoteAttachments';
 import { NoteActionButtons } from './details/NoteActionButtons';
 import { useNoteDetails } from './details/useNoteDetails';
 import { useNavigate } from 'react-router-dom';
+import { SubjectTagSelect } from './tags/SubjectTagSelect';
 
 interface NoteDetailsSheetProps {
   note: Note;
@@ -55,7 +56,17 @@ export const NoteDetailsSheet: React.FC<NoteDetailsSheetProps> = ({
 
         <p className="text-md leading-6">{note.description}</p>
 
-        <NoteTagList tags={note.tags} />
+        <div className="flex flex-col gap-4">
+          <div>
+            <h3 className="text-sm font-medium mb-2 text-mint-700">Subject</h3>
+            <SubjectTagSelect note={note} />
+          </div>
+          
+          <div>
+            <h3 className="text-sm font-medium mb-2 text-mint-700">Tags</h3>
+            <NoteTagList tags={note.tags} showTagIcon={true} />
+          </div>
+        </div>
 
         <NoteContentSection
           noteId={note.id}

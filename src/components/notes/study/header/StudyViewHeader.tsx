@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { Edit, Save } from "lucide-react";
 import { Note } from "@/types/note";
 import { TextAlignType } from "../hooks/useStudyViewState";
+import { generateColorFromString, getBestTextColor } from "@/utils/colorUtils";
 
 interface StudyViewHeaderProps {
   note: Note;
@@ -42,6 +43,26 @@ export const StudyViewHeader: React.FC<StudyViewHeaderProps> = ({
   onToggleEditing,
   onSave
 }) => {
+  // Generate category badge with color
+  const getCategoryBadge = (category: string) => {
+    if (!category) return null;
+    
+    const color = generateColorFromString(category);
+    const textColor = getBestTextColor(color);
+    
+    return (
+      <Badge 
+        style={{ 
+          backgroundColor: color, 
+          color: textColor 
+        }}
+        className="font-normal"
+      >
+        {category}
+      </Badge>
+    );
+  };
+
   return (
     <CardHeader className="pb-2 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 border-b">
       <div className="space-y-1 flex-grow">
@@ -78,11 +99,7 @@ export const StudyViewHeader: React.FC<StudyViewHeaderProps> = ({
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <span>{format(new Date(note.date), 'MMM d, yyyy')}</span>
           <span className="text-xs">•</span>
-          {note.category && (
-            <Badge variant="outline" className="font-normal">
-              {note.category}
-            </Badge>
-          )}
+          {note.category && getCategoryBadge(note.category)}
           {note.tags?.length > 0 && (
             <div className="hidden sm:flex flex-wrap gap-1 items-center">
               <span className="text-xs">•</span>
