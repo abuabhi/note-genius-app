@@ -10,6 +10,7 @@ import PricingPage from "./pages/PricingPage";
 import FAQPage from "./pages/FAQPage";
 import DashboardPage from "./pages/DashboardPage";
 import NotesPage from "./pages/NotesPage";
+import NoteStudyPage from "./pages/NoteStudyPage";
 import QuizPage from "./pages/QuizPage";
 import FlashcardsPage from "./pages/FlashcardsPage";
 import StudyPage from "./pages/StudyPage";
@@ -65,6 +66,7 @@ const App = () => {
             {/* Protected routes */}
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/notes" element={<NotesPage />} />
+            <Route path="/notes/study/:noteId" element={<NoteStudyPage />} />
             <Route path="/quizzes" element={<QuizPage />} />
             <Route path="/flashcards" element={<FlashcardsPage />} />
             <Route path="/study" element={<StudyPage />} />

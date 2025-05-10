@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Dialog,
   DialogContent,
@@ -12,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { useNotes } from '@/contexts/NoteContext';
 import { Textarea } from '@/components/ui/textarea';
 import { EnhanceNoteButton } from './enrichment/EnhanceNoteButton';
-import { Archive, Copy, Edit, Pin, PinOff, Tags, Trash2, ExternalLink } from 'lucide-react';
+import { Archive, Book, Copy, Edit, ExternalLink, Pin, PinOff, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface NoteDetailsSheetProps {
@@ -28,6 +29,7 @@ export const NoteDetailsSheet: React.FC<NoteDetailsSheetProps> = ({
   onOpenChange,
   onEdit
 }) => {
+  const navigate = useNavigate();
   const { updateNote, pinNote, archiveNote, deleteNote } = useNotes();
   const [isDeleting, setIsDeleting] = useState(false);
   const [noteContent, setNoteContent] = useState(note.content || '');
@@ -94,6 +96,11 @@ export const NoteDetailsSheet: React.FC<NoteDetailsSheetProps> = ({
     updateNote(note.id, { content: enhancedContent });
   };
 
+  const handleOpenStudyMode = () => {
+    onOpenChange(false); // Close the dialog
+    navigate(`/notes/study/${note.id}`); // Navigate to the study mode page
+  };
+
   const getScanPreviewUrl = () => {
     if (note.sourceType === 'scan' && note.scanData?.originalImageUrl) {
       return note.scanData.originalImageUrl;
@@ -126,7 +133,6 @@ export const NoteDetailsSheet: React.FC<NoteDetailsSheetProps> = ({
 
         {(note.tags && note.tags.length > 0) && (
           <div className="flex flex-wrap gap-2 items-center">
-            <Tags className="h-4 w-4 text-muted-foreground" />
             {note.tags.map((tag) => (
               <Badge
                 key={tag.id || tag.name}
@@ -214,6 +220,15 @@ export const NoteDetailsSheet: React.FC<NoteDetailsSheetProps> = ({
         )}
 
         <div className="flex flex-wrap gap-2">
+          <Button 
+            variant="default" 
+            className="flex items-center gap-2 bg-mint-600 hover:bg-mint-700"
+            onClick={handleOpenStudyMode}
+          >
+            <Book className="h-4 w-4" />
+            Study Mode
+          </Button>
+        
           <Button variant="outline" onClick={onEdit} className="flex items-center gap-2">
             <Edit className="h-4 w-4" />
             Edit
