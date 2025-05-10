@@ -1,9 +1,8 @@
-
 import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
-    <footer className="bg-gradient-to-b from-mint-300 to-mint-400/80 text-mint-900 border-t border-mint-400">
+    <footer className="bg-[#F2FCF6] text-mint-900 border-t border-mint-400">
       <div className="max-w-7xl mx-auto py-12 px-4 overflow-hidden sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div>
