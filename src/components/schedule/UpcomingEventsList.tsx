@@ -40,7 +40,7 @@ export const UpcomingEventsList: React.FC<UpcomingEventsListProps> = ({
 
   if (isLoading) {
     return (
-      <Card className="border shadow-sm">
+      <Card className="border border-mint-100 shadow-sm">
         <CardHeader>
           <CardTitle>Upcoming Events</CardTitle>
         </CardHeader>
@@ -72,23 +72,23 @@ export const UpcomingEventsList: React.FC<UpcomingEventsListProps> = ({
 
   return (
     <>
-      <Card className="border shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
+      <Card className="border border-mint-100 shadow-sm">
+        <CardHeader className="bg-gradient-to-r from-mint-50 to-mint-100/40 border-b border-mint-100">
+          <CardTitle className="flex items-center gap-2 text-mint-800">
+            <Calendar className="h-5 w-5 text-mint-600" />
             Upcoming Events (Next 7 Days)
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 md:p-6">
           {days.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground">
+            <div className="text-center py-6 text-muted-foreground border border-dashed border-mint-200 rounded-md bg-mint-50/30">
               No upcoming events in the next 7 days
             </div>
           ) : (
             <div className="space-y-4">
               {days.map(day => (
                 <div key={day} className="space-y-2">
-                  <h3 className="font-semibold text-sm">
+                  <h3 className="font-semibold text-sm text-mint-700 bg-mint-50 p-2 rounded-md">
                     {isSameDay(new Date(day), new Date()) 
                       ? 'Today' 
                       : format(new Date(day), 'EEEE, MMMM d')}
@@ -97,19 +97,19 @@ export const UpcomingEventsList: React.FC<UpcomingEventsListProps> = ({
                     {eventsByDay[day].map(event => (
                       <div 
                         key={event.id} 
-                        className="p-3 rounded-md border flex items-start gap-2 hover:shadow-sm transition-shadow"
+                        className="p-3 rounded-md border border-mint-100 flex items-start gap-2 hover:shadow-sm transition-shadow"
                         style={{ borderLeftColor: event.color, borderLeftWidth: '4px' }}
                       >
                         <div className="flex-1">
                           <div className="flex items-center justify-between">
-                            <h4 className="font-medium">{event.title}</h4>
+                            <h4 className="font-medium text-mint-800">{event.title}</h4>
                             <div className="flex items-center gap-1">
                               <Badge
                                 variant={
                                   event.event_type === 'study' ? 'default' : 
                                   event.event_type === 'deadline' ? 'destructive' : 'secondary'
                                 }
-                                className="mr-2"
+                                className={event.event_type === 'study' ? 'bg-mint-500 hover:bg-mint-600' : ''}
                               >
                                 {event.event_type}
                               </Badge>
@@ -118,7 +118,7 @@ export const UpcomingEventsList: React.FC<UpcomingEventsListProps> = ({
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                  className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 ml-2"
                                   onClick={() => handleDeleteClick(event.id)}
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
@@ -128,19 +128,19 @@ export const UpcomingEventsList: React.FC<UpcomingEventsListProps> = ({
                             </div>
                           </div>
                           
-                          <div className="text-sm text-muted-foreground flex items-center mt-1">
+                          <div className="text-sm text-mint-600 flex items-center mt-1">
                             <Clock className="h-3.5 w-3.5 mr-1" />
                             {format(new Date(event.start_time), 'h:mm a')} - {format(new Date(event.end_time), 'h:mm a')}
                           </div>
                           
                           {event.is_recurring && (
-                            <Badge variant="outline" className="mt-1">
+                            <Badge variant="outline" className="mt-1 border-mint-200 text-mint-700">
                               Recurring: {event.recurrence_pattern?.pattern ?? 'Custom'}
                             </Badge>
                           )}
                           
                           {event.description && (
-                            <p className="text-sm mt-1 line-clamp-2">{event.description}</p>
+                            <p className="text-sm mt-1 line-clamp-2 text-muted-foreground">{event.description}</p>
                           )}
                         </div>
                       </div>
@@ -154,7 +154,7 @@ export const UpcomingEventsList: React.FC<UpcomingEventsListProps> = ({
       </Card>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="border border-mint-100">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Event</AlertDialogTitle>
             <AlertDialogDescription>
@@ -162,7 +162,7 @@ export const UpcomingEventsList: React.FC<UpcomingEventsListProps> = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="border-mint-200 text-mint-700">Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={confirmDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

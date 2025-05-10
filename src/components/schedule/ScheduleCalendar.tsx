@@ -82,7 +82,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ selectedDate
 
   if (isLoading) {
     return (
-      <Card className="p-4">
+      <Card className="p-4 shadow-sm border border-mint-100">
         <div className="flex justify-between items-center mb-4">
           <Skeleton className="h-8 w-1/3" />
           <Skeleton className="h-8 w-20" />
@@ -99,13 +99,13 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ selectedDate
   return (
     <>
       <div className="flex justify-end mb-4">
-        <Button onClick={() => setShowCreateDialog(true)} className="bg-primary hover:bg-primary/90">
+        <Button onClick={() => setShowCreateDialog(true)} className="bg-mint-500 hover:bg-mint-600 text-white">
           <Plus className="h-4 w-4 mr-2" />
           Add Event
         </Button>
       </div>
       
-      <Card className="p-4 h-[70vh] border shadow-sm">
+      <Card className="p-4 h-[70vh] border border-mint-100 shadow-sm">
         <CalendarComponent
           localizer={localizer}
           events={formattedEvents}
@@ -117,7 +117,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ selectedDate
           selectable
           onSelectSlot={handleSelectSlot}
           defaultView="month"
-          views={['month', 'week', 'day']} // Removed 'agenda' view
+          views={['month', 'week', 'day']}
           popup
           components={{
             event: (eventProps) => <EventCard event={eventProps.event} onDelete={() => handleDeleteEvent(eventProps.event)} />

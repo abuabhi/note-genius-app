@@ -38,17 +38,17 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onDelete }) => {
   
   return (
     <div className="p-2">
-      <Card className="overflow-hidden hover:shadow-md transition-shadow duration-300">
+      <Card className="overflow-hidden hover:shadow-md transition-shadow duration-300 border border-mint-100">
         <div 
           className="h-2"
-          style={{ backgroundColor: event.color || '#4f46e5' }}
+          style={{ backgroundColor: event.color || '#3dc087' }}
         />
         <CardContent className="p-2">
           <div className="flex justify-between items-start">
             <h3 className="font-medium">{event.title || 'Untitled Event'}</h3>
             <div className="flex items-center">
               {event.event_type && (
-                <span className="text-xs px-2 py-1 rounded-full bg-secondary mr-2">
+                <span className="text-xs px-2 py-1 rounded-full bg-mint-50 text-mint-700 mr-2">
                   {event.event_type}
                 </span>
               )}
@@ -72,7 +72,7 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onDelete }) => {
             </p>
           )}
           
-          <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1 mt-1 text-xs text-mint-700">
             <Clock className="h-3 w-3" />
             <span>
               {formatTime(startTime)}

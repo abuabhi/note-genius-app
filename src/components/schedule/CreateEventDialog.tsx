@@ -62,7 +62,7 @@ export function CreateEventDialog({
     endTime: format(endTime, "yyyy-MM-dd'T'HH:mm"),
     allDay: false,
     eventType: "study",
-    color: "#4f46e5",
+    color: "#3dc087", // Changed to mint color
     flashcardSetId: "",
     isRecurring: false,
     recurrencePattern: "none",
@@ -149,10 +149,10 @@ export function CreateEventDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-white border border-mint-100">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <CalendarClock className="h-5 w-5" />
+          <DialogTitle className="flex items-center gap-2 text-mint-800">
+            <CalendarClock className="h-5 w-5 text-mint-600" />
             Add New Event
           </DialogTitle>
         </DialogHeader>
@@ -164,9 +164,9 @@ export function CreateEventDialog({
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Event Title</FormLabel>
+                  <FormLabel className="text-mint-800">Event Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="Study Session" {...field} />
+                    <Input placeholder="Study Session" {...field} className="border-mint-200 focus-visible:ring-mint-500" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -178,7 +178,7 @@ export function CreateEventDialog({
               name="eventType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Event Type</FormLabel>
+                  <FormLabel className="text-mint-800">Event Type</FormLabel>
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
@@ -187,21 +187,21 @@ export function CreateEventDialog({
                     >
                       <FormItem className="flex items-center space-x-1 space-y-0">
                         <FormControl>
-                          <RadioGroupItem value="study" />
+                          <RadioGroupItem value="study" className="text-mint-600 border-mint-400" />
                         </FormControl>
-                        <FormLabel className="font-normal">Study</FormLabel>
+                        <FormLabel className="font-normal text-mint-700">Study</FormLabel>
                       </FormItem>
                       <FormItem className="flex items-center space-x-1 space-y-0">
                         <FormControl>
-                          <RadioGroupItem value="deadline" />
+                          <RadioGroupItem value="deadline" className="text-mint-600 border-mint-400" />
                         </FormControl>
-                        <FormLabel className="font-normal">Deadline</FormLabel>
+                        <FormLabel className="font-normal text-mint-700">Deadline</FormLabel>
                       </FormItem>
                       <FormItem className="flex items-center space-x-1 space-y-0">
                         <FormControl>
-                          <RadioGroupItem value="reminder" />
+                          <RadioGroupItem value="reminder" className="text-mint-600 border-mint-400" />
                         </FormControl>
-                        <FormLabel className="font-normal">Reminder</FormLabel>
+                        <FormLabel className="font-normal text-mint-700">Reminder</FormLabel>
                       </FormItem>
                     </RadioGroup>
                   </FormControl>
@@ -215,13 +215,13 @@ export function CreateEventDialog({
                 name="flashcardSetId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Flashcard Set (optional)</FormLabel>
+                    <FormLabel className="text-mint-800">Flashcard Set (optional)</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="border-mint-200 focus:ring-mint-500">
                           <SelectValue placeholder="Select a flashcard set" />
                         </SelectTrigger>
                       </FormControl>
@@ -246,9 +246,9 @@ export function CreateEventDialog({
                 name="startTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Start Time</FormLabel>
+                    <FormLabel className="text-mint-800">Start Time</FormLabel>
                     <FormControl>
-                      <Input type="datetime-local" {...field} />
+                      <Input type="datetime-local" {...field} className="border-mint-200 focus-visible:ring-mint-500" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -260,9 +260,9 @@ export function CreateEventDialog({
                 name="endTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>End Time</FormLabel>
+                    <FormLabel className="text-mint-800">End Time</FormLabel>
                     <FormControl>
-                      <Input type="datetime-local" {...field} />
+                      <Input type="datetime-local" {...field} className="border-mint-200 focus-visible:ring-mint-500" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -274,14 +274,15 @@ export function CreateEventDialog({
               control={form.control}
               name="allDay"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border border-mint-200 p-3">
                   <div className="space-y-0.5">
-                    <FormLabel>All Day</FormLabel>
+                    <FormLabel className="text-mint-800">All Day</FormLabel>
                   </div>
                   <FormControl>
                     <Switch
                       checked={field.value}
                       onCheckedChange={field.onChange}
+                      className="data-[state=checked]:bg-mint-600"
                     />
                   </FormControl>
                 </FormItem>
@@ -292,15 +293,16 @@ export function CreateEventDialog({
               control={form.control}
               name="isRecurring"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border border-mint-200 p-3">
                   <div className="space-y-0.5 flex items-center">
-                    <Repeat className="h-4 w-4 mr-2" />
-                    <FormLabel>Recurring Event</FormLabel>
+                    <Repeat className="h-4 w-4 mr-2 text-mint-600" />
+                    <FormLabel className="text-mint-800">Recurring Event</FormLabel>
                   </div>
                   <FormControl>
                     <Switch
                       checked={field.value}
                       onCheckedChange={field.onChange}
+                      className="data-[state=checked]:bg-mint-600"
                     />
                   </FormControl>
                 </FormItem>
@@ -313,13 +315,13 @@ export function CreateEventDialog({
                 name="recurrencePattern"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Recurrence Pattern</FormLabel>
+                    <FormLabel className="text-mint-800">Recurrence Pattern</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="border-mint-200 focus:ring-mint-500">
                           <SelectValue placeholder="Select a recurrence pattern" />
                         </SelectTrigger>
                       </FormControl>
@@ -340,11 +342,11 @@ export function CreateEventDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description (optional)</FormLabel>
+                  <FormLabel className="text-mint-800">Description (optional)</FormLabel>
                   <FormControl>
                     <Textarea 
                       placeholder="Add details about your event" 
-                      className="resize-none" 
+                      className="resize-none border-mint-200 focus-visible:ring-mint-500" 
                       {...field}
                     />
                   </FormControl>
@@ -358,13 +360,13 @@ export function CreateEventDialog({
               name="color"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Color</FormLabel>
+                  <FormLabel className="text-mint-800">Color</FormLabel>
                   <div className="flex items-center gap-2">
                     <FormControl>
                       <Input 
                         type="color"
                         {...field}
-                        className="w-12 h-8 p-1 cursor-pointer"
+                        className="w-12 h-8 p-1 cursor-pointer border-mint-200"
                       />
                     </FormControl>
                     <div 
@@ -380,15 +382,17 @@ export function CreateEventDialog({
             <DialogFooter className="sm:justify-end">
               <Button 
                 type="button" 
-                variant="secondary" 
+                variant="outline" 
                 onClick={onClose}
                 disabled={isSubmitting}
+                className="border-mint-300 text-mint-700 hover:bg-mint-50"
               >
                 Cancel
               </Button>
               <Button 
                 type="submit" 
                 disabled={isSubmitting}
+                className="bg-mint-600 hover:bg-mint-700 text-white"
               >
                 {isSubmitting ? "Creating..." : "Create Event"}
               </Button>

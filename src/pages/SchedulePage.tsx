@@ -35,7 +35,7 @@ const SchedulePage = () => {
       <Layout>
         <div className="container mx-auto p-4 md:p-6 h-full">
           <div className="flex justify-center items-center h-[80vh]">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mint-500" />
           </div>
         </div>
       </Layout>

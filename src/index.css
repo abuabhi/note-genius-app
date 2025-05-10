@@ -90,15 +90,15 @@
 }
 
 .custom-calendar .rbc-toolbar button.rbc-active {
-  @apply bg-primary text-primary-foreground;
+  @apply bg-mint-500 text-white;
 }
 
 .custom-calendar .rbc-month-view {
-  @apply rounded-md border border-border;
+  @apply rounded-md border border-mint-100;
 }
 
 .custom-calendar .rbc-header {
-  @apply py-2 font-semibold text-sm;
+  @apply py-2 font-semibold text-sm text-mint-700;
 }
 
 .custom-calendar .rbc-event {
@@ -106,7 +106,7 @@
 }
 
 .custom-calendar .rbc-day-bg.rbc-today {
-  @apply bg-accent/30;
+  @apply bg-mint-50;
 }
 
 .custom-calendar .rbc-off-range-bg {
@@ -114,15 +114,35 @@
 }
 
 .custom-calendar .rbc-date-cell {
-  @apply p-1 text-sm;
+  @apply p-1 text-sm text-mint-800;
 }
 
 .custom-calendar .rbc-show-more {
-  @apply text-primary hover:underline;
+  @apply text-mint-600 hover:underline;
 }
 
 .custom-calendar .rbc-time-content,
 .custom-calendar .rbc-time-header-content {
-  @apply border-border;
+  @apply border-mint-100;
 }
 
+/* Additional calendar customizations */
+.custom-calendar .rbc-event {
+  @apply bg-mint-500;
+}
+
+.custom-calendar .rbc-event-content {
+  @apply font-medium;
+}
+
+.custom-calendar .rbc-day-slot .rbc-event {
+  @apply border-mint-600;
+}
+
+.custom-calendar .rbc-today {
+  @apply bg-mint-50;
+}
+
+.custom-calendar .rbc-current-time-indicator {
+  @apply bg-mint-700;
+}
