@@ -37,19 +37,25 @@ export const EnhancementSelection: React.FC<EnhancementSelectionProps> = ({
       {options.map((option) => (
         <Card 
           key={option.id}
-          className={`cursor-pointer hover:border-mint-300 hover:bg-mint-50 transition-colors ${
-            selectedEnhancement === option.id ? 'border-mint-500 bg-mint-50' : ''
+          className={`cursor-pointer border transition-colors ${
+            selectedEnhancement === option.id 
+              ? 'border-mint-500 bg-mint-50 shadow-sm' 
+              : 'hover:border-mint-300 hover:bg-mint-50/50'
           }`}
           onClick={() => handleOptionClick(option.id)}
         >
           <CardHeader className="p-4 pb-2">
             <div className="flex items-center gap-2">
-              {getIconComponent(option.icon)}
+              <div className={`text-mint-600 ${selectedEnhancement === option.id ? 'text-mint-700' : ''}`}>
+                {getIconComponent(option.icon)}
+              </div>
               <CardTitle className="text-base">{option.name}</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="p-4 pt-0">
-            <CardDescription>{option.description}</CardDescription>
+            <CardDescription className={selectedEnhancement === option.id ? 'text-mint-700' : ''}>
+              {option.description}
+            </CardDescription>
           </CardContent>
         </Card>
       ))}

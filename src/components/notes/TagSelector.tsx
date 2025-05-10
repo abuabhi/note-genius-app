@@ -1,13 +1,15 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { X, Plus, Tag } from 'lucide-react';
+import { X, Plus, Tag, Check } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { Input } from '@/components/ui/input';
+import { getBestTextColor } from './study/utils/colorUtils';
 
 export interface TagSelectorProps {
   selectedTags: { id?: string; name: string; color: string }[];
@@ -15,11 +17,25 @@ export interface TagSelectorProps {
   availableTags: { id: string; name: string; color: string }[];
 }
 
+// Generate a random color in hex format
+const getRandomColor = () => {
+  const letters = '0123456789ABCDEF';
+  let color = '#';
+  for (let i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+};
+
 export const TagSelector: React.FC<TagSelectorProps> = ({
   selectedTags,
   onTagsChange,
   availableTags,
 }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [newTagName, setNewTagName] = useState('');
+  const [newTagColor, setNewTagColor] = useState('#3dc087'); // Default mint color
+
   const handleTagSelect = (tag: { id: string; name: string; color: string }) => {
     // Check if tag is already selected by ID or name
     if (selectedTags.some((selectedTag) => 
@@ -33,6 +49,26 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
     console.log("Adding tag:", tag);
     const newTags = [...selectedTags, tag];
     onTagsChange(newTags);
+    setIsOpen(false);
+  };
+
+  const handleNewTagCreate = () => {
+    if (!newTagName.trim()) return;
+    
+    // Create new tag with random color if not specified
+    const newTag = {
+      name: newTagName.trim(),
+      color: newTagColor || getRandomColor(),
+    };
+    
+    // Add to selected tags
+    const newTags = [...selectedTags, newTag];
+    onTagsChange(newTags);
+    
+    // Reset form
+    setNewTagName('');
+    setNewTagColor('#3dc087');
+    setIsOpen(false);
   };
 
   const handleTagRemove = (tagToRemove: { id?: string; name: string; color: string }) => {
@@ -82,70 +118,78 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
         </Badge>
       ))}
       
-      <Popover>
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button 
             type="button" 
             variant="outline" 
             size="sm" 
-            className="border-purple-200 hover:bg-purple-50 hover:text-purple-700"
+            className="border-mint-200 hover:bg-mint-50 hover:text-mint-700"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Tag
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-80">
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium">Select tags</h4>
-            {availableUnselectedTags.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No available tags to select.</p>
-            ) : (
-              <div className="grid gap-2">
-                {availableUnselectedTags.map((tag) => (
-                  <div 
-                    key={tag.id}
-                    className="flex items-center justify-between hover:bg-purple-50 p-2 rounded-md cursor-pointer"
-                    onClick={() => handleTagSelect(tag)}
-                  >
-                    <span className="flex items-center">
-                      <span 
-                        className="h-3 w-3 rounded-full mr-2" 
-                        style={{ backgroundColor: tag.color }}
-                      ></span>
-                      {tag.name}
-                    </span>
-                    <Plus className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                ))}
+          <div className="space-y-4">
+            <h4 className="text-sm font-medium">Select or create a tag</h4>
+            
+            {availableUnselectedTags.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">Available tags:</p>
+                <div className="grid gap-2">
+                  {availableUnselectedTags.map((tag) => (
+                    <div 
+                      key={tag.id}
+                      className="flex items-center justify-between hover:bg-mint-50 p-2 rounded-md cursor-pointer"
+                      onClick={() => handleTagSelect(tag)}
+                    >
+                      <span className="flex items-center">
+                        <span 
+                          className="h-3 w-3 rounded-full mr-2" 
+                          style={{ backgroundColor: tag.color }}
+                        ></span>
+                        {tag.name}
+                      </span>
+                      <Plus className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
+            
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">Create a new tag:</p>
+              <div className="grid gap-3">
+                <Input
+                  placeholder="Tag name"
+                  value={newTagName}
+                  onChange={(e) => setNewTagName(e.target.value)}
+                  className="border-mint-200 focus-visible:ring-mint-500"
+                />
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="color"
+                    value={newTagColor}
+                    onChange={(e) => setNewTagColor(e.target.value)}
+                    className="w-12 h-8 p-1 cursor-pointer"
+                  />
+                  <span className="text-xs text-muted-foreground">Tag color</span>
+                </div>
+                <Button 
+                  type="button"
+                  onClick={handleNewTagCreate}
+                  disabled={!newTagName.trim()}
+                  className="bg-mint-500 hover:bg-mint-600 text-white"
+                >
+                  <Check className="mr-2 h-4 w-4" />
+                  Create Tag
+                </Button>
+              </div>
+            </div>
           </div>
         </PopoverContent>
       </Popover>
     </div>
   );
 };
-
-// Helper function to determine text color based on background color
-function getBestTextColor(bgColor: string): string {
-  // Remove the hash if it exists
-  const color = bgColor.startsWith('#') ? bgColor.slice(1) : bgColor;
-  
-  // Convert to RGB
-  let r, g, b;
-  if (color.length === 3) {
-    r = parseInt(color[0] + color[0], 16);
-    g = parseInt(color[1] + color[1], 16);
-    b = parseInt(color[2] + color[2], 16);
-  } else {
-    r = parseInt(color.slice(0, 2), 16);
-    g = parseInt(color.slice(2, 4), 16);
-    b = parseInt(color.slice(4, 6), 16);
-  }
-  
-  // Calculate luminance
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  
-  // Return white for dark backgrounds, black for light backgrounds
-  return luminance > 0.5 ? 'black' : 'white';
-}
