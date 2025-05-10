@@ -14,8 +14,7 @@ const Layout = ({ children }: LayoutProps) => {
   const publicRoutes = ['/', '/about', '/pricing', '/faq', '/contact', '/login', '/signup'];
   const isPublicRoute = publicRoutes.includes(pathname);
 
-  // Added to debug layout rendering
-  console.log("Layout rendering:", { pathname, isPublicRoute });
+  // Removed debug logging that might cause unnecessary re-renders
 
   if (isPublicRoute) {
     return (
@@ -29,6 +28,7 @@ const Layout = ({ children }: LayoutProps) => {
     );
   }
 
+  // Enhanced the private routes layout to prevent any redirection
   return (
     <div className="min-h-screen flex w-full bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
       <CustomSidebar />

@@ -1,3 +1,4 @@
+
 import Layout from "@/components/layout/Layout";
 import { NotesContent } from "@/components/notes/page/NotesContent";
 import { useNotes } from "@/contexts/NoteContext";
@@ -5,29 +6,30 @@ import { Note } from "@/types/note";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { toast } from "@/components/ui/sonner";
 import { useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { FilterOptions } from "@/contexts/notes/types";
 
 const NotesPage = () => {
   const { addNote, availableCategories, setFilterOptions } = useNotes();
   const { userProfile, tierLimits } = useRequireAuth();
   const userTier = userProfile?.user_tier;
-  const navigate = useNavigate();
   const location = useLocation();
 
-  // Fixed the redirection issue - simplified the effect logic
+  // Simply reset filter options when component mounts, no redirection logic
   useEffect(() => {
-    // Just set the current location in localStorage without redirection logic
-    localStorage.setItem("lastVisitedPage", location.pathname);
-    
-    // Clear any existing filter options to start fresh
+    // Reset filters when component mounts
     const resetOptions: FilterOptions = {
       dateFrom: undefined,
       dateTo: undefined
     };
     
     setFilterOptions(resetOptions);
-  }, [location.pathname, setFilterOptions]);
+    
+    // Only store the path, no redirection logic
+    if (location.pathname === '/notes') {
+      localStorage.setItem("lastVisitedPage", location.pathname);
+    }
+  }, [setFilterOptions, location.pathname]);
 
   const handleSaveNote = async (note: Omit<Note, 'id'>): Promise<Note | null> => {
     try {

@@ -49,19 +49,16 @@ export const useRequireAuth = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Debug log for troubleshooting
-  console.log('useRequireAuth hook running, auth state:', { user, authLoading, loading });
-
+  // Remove debug logging
+  
   useEffect(() => {
     // Don't do anything while the auth is still loading
     if (authLoading) return;
     
-    console.log('Auth loading finished, user:', user);
-    
     if (!user) {
-      console.log('No user found, redirecting to /login');
-      // We delay navigation to avoid issues with React state updates
-      setTimeout(() => navigate('/login'), 10);
+      // Only redirect to login if the user is not authenticated
+      // Use the navigate function directly instead of setTimeout to avoid timing issues
+      navigate('/login');
       setLoading(false);
       return;
     }
