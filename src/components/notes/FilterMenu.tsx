@@ -103,7 +103,7 @@ export const FilterMenu = () => {
                 <SelectValue placeholder="Any subject" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any subject</SelectItem>
+                <SelectItem value="any">Any subject</SelectItem>
                 {availableCategories.map(category => (
                   <SelectItem key={category} value={category}>
                     {category}
