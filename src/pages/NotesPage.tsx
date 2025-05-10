@@ -1,12 +1,11 @@
 
 import Layout from "@/components/layout/Layout";
-import { NoteProvider } from "@/contexts/NoteContext";
 import { NotesContent } from "@/components/notes/page/NotesContent";
 import { useNotes } from "@/contexts/NoteContext";
 import { Note } from "@/types/note";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 
-const NotesPageContent = () => {
+const NotesPage = () => {
   const { addNote } = useNotes();
   const { userProfile, tierLimits } = useRequireAuth();
   const userTier = userProfile?.user_tier;
@@ -30,22 +29,14 @@ const NotesPageContent = () => {
   };
 
   return (
-    <NotesContent 
-      onSaveNote={handleSaveNote}
-      onScanNote={handleScanNote}
-      onImportNote={handleImportNote}
-      tierLimits={tierLimits}
-      userTier={userTier}
-    />
-  );
-};
-
-const NotesPage = () => {
-  return (
     <Layout>
-      <NoteProvider>
-        <NotesPageContent />
-      </NoteProvider>
+      <NotesContent 
+        onSaveNote={handleSaveNote}
+        onScanNote={handleScanNote}
+        onImportNote={handleImportNote}
+        tierLimits={tierLimits}
+        userTier={userTier}
+      />
     </Layout>
   );
 };

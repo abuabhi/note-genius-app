@@ -24,12 +24,14 @@ import { Note } from '@/types/note';
 import { TagSelector } from '../TagSelector';
 import { useNotes } from '@/contexts/NoteContext';
 import { EnhanceNoteButton } from '../enrichment/EnhanceNoteButton';
+import { useToast } from '@/hooks/use-toast';
+import { useNoteEnrichment } from '@/hooks/useNoteEnrichment';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().min(1, 'Description is required'),
   date: z.date(),
-  category: z.string().min(1, 'Category is required'),
+  subject: z.string().min(1, 'Subject is required'),
   content: z.string().optional(),
 });
 
@@ -42,9 +44,12 @@ interface CreateNoteFormProps {
 
 export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => {
   const [isSaving, setIsSaving] = useState(false);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const { availableCategories, getAllTags } = useNotes();
   const [selectedTags, setSelectedTags] = useState<{ id?: string; name: string; color: string }[]>([]);
   const [availableTags, setAvailableTags] = useState<{ id: string; name: string; color: string }[]>([]);
+  const { toast } = useToast();
+  const { enrichNote, isLoading: enrichLoading } = useNoteEnrichment();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -52,7 +57,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
       title: initialData?.title || '',
       description: initialData?.description || '',
       date: initialData?.date ? new Date(initialData.date) : new Date(),
-      category: initialData?.category || 'General',
+      subject: initialData?.category || 'General',
       content: initialData?.content || '',
       tags: [],
     },
@@ -73,6 +78,52 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
     }
   }, [getAllTags, initialData]);
 
+  const generateSummary = async (content: string) => {
+    if (!content || content.trim().length < 50) {
+      toast({
+        title: "Content too short",
+        description: "Please add more content to generate a summary",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsGeneratingSummary(true);
+    try {
+      // Use the enrichNote function to generate a bullet point summary
+      const noteId = initialData?.id || 'temp-id-for-summary';
+      const result = await enrichNote(
+        noteId,
+        content,
+        'addKeyPoints',
+        form.getValues('title')
+      );
+      
+      if (result) {
+        // Format the result as bullet points if it's not already
+        let summaryText = result;
+        if (!summaryText.includes('•') && !summaryText.includes('-')) {
+          summaryText = summaryText
+            .split('\n')
+            .filter(line => line.trim().length > 0)
+            .map(line => `• ${line}`)
+            .join('\n');
+        }
+        
+        form.setValue('description', summaryText);
+      }
+    } catch (error) {
+      console.error('Error generating summary:', error);
+      toast({
+        title: "Summary generation failed",
+        description: "Could not generate a summary from your note content",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingSummary(false);
+    }
+  };
+
   const onSubmit = async (values: FormValues) => {
     setIsSaving(true);
     try {
@@ -80,7 +131,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
         title: values.title,
         description: values.description,
         date: values.date.toISOString().split('T')[0],
-        category: values.category,
+        category: values.subject, // Map subject to category field
         content: values.content,
         sourceType: initialData?.sourceType || 'manual',
         tags: selectedTags,
@@ -119,9 +170,32 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
             name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Description</FormLabel>
+                <div className="flex justify-between items-center">
+                  <FormLabel>Description</FormLabel>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => generateSummary(form.getValues('content'))}
+                    disabled={isGeneratingSummary || !form.getValues('content')}
+                    className="h-8 text-xs"
+                  >
+                    {isGeneratingSummary ? (
+                      <>
+                        <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      'Generate Bullet Points'
+                    )}
+                  </Button>
+                </div>
                 <FormControl>
-                  <Textarea placeholder="Brief description" {...field} />
+                  <Textarea 
+                    placeholder="Brief description or key points"
+                    className="whitespace-pre-wrap"
+                    {...field} 
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -158,26 +232,26 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
 
             <FormField
               control={form.control}
-              name="category"
+              name="subject"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Category</FormLabel>
+                  <FormLabel>Subject</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="Category" 
+                      placeholder="Subject" 
                       {...field} 
-                      list="categories"
+                      list="subjects"
                     />
                   </FormControl>
                   {availableCategories && availableCategories.length > 0 && (
-                    <datalist id="categories">
+                    <datalist id="subjects">
                       {availableCategories.map((category, index) => (
                         <option key={index} value={category} />
                       ))}
                     </datalist>
                   )}
                   <FormDescription>
-                    Choose an existing category or create a new one
+                    Choose an existing subject or create a new one
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

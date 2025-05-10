@@ -89,7 +89,7 @@ export const FilterMenu = () => {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
+            <Label htmlFor="category">Subject</Label>
             <Select
               value={localFilters.category || ""}
               onValueChange={(value) => 
@@ -100,10 +100,10 @@ export const FilterMenu = () => {
               }
             >
               <SelectTrigger id="category">
-                <SelectValue placeholder="Any category" />
+                <SelectValue placeholder="Any subject" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any category</SelectItem>
+                <SelectItem value="">Any subject</SelectItem>
                 {availableCategories.map(category => (
                   <SelectItem key={category} value={category}>
                     {category}
