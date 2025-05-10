@@ -1,14 +1,13 @@
 
 import React from "react";
 import { CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { StudyViewControls } from "../controls/StudyViewControls";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { Edit, Save } from "lucide-react";
 import { Note } from "@/types/note";
 import { TextAlignType } from "../hooks/useStudyViewState";
 import { generateColorFromString, getBestTextColor } from "@/utils/colorUtils";
+import { Input } from "@/components/ui/input";
 
 interface StudyViewHeaderProps {
   note: Note;
@@ -18,6 +17,7 @@ interface StudyViewHeaderProps {
   isFullScreen: boolean;
   isEditing: boolean;
   isSaving?: boolean;
+  editableTitle?: string;
   onIncreaseFontSize: () => void;
   onDecreaseFontSize: () => void;
   onChangeTextAlign: (align: TextAlignType) => void;
@@ -25,6 +25,7 @@ interface StudyViewHeaderProps {
   onToggleFullScreen: () => void;
   onToggleEditing: () => void;
   onSave: () => void;
+  onTitleChange?: (title: string) => void;
 }
 
 export const StudyViewHeader: React.FC<StudyViewHeaderProps> = ({
@@ -35,13 +36,15 @@ export const StudyViewHeader: React.FC<StudyViewHeaderProps> = ({
   isFullScreen,
   isEditing,
   isSaving = false,
+  editableTitle,
   onIncreaseFontSize,
   onDecreaseFontSize,
   onChangeTextAlign,
   onToggleWidth,
   onToggleFullScreen,
   onToggleEditing,
-  onSave
+  onSave,
+  onTitleChange
 }) => {
   // Generate category badge with color
   const getCategoryBadge = (category: string) => {
@@ -67,9 +70,17 @@ export const StudyViewHeader: React.FC<StudyViewHeaderProps> = ({
     <CardHeader className="pb-2 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 border-b">
       <div className="space-y-1 flex-grow">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl md:text-2xl text-mint-800">
-            {note.title}
-          </CardTitle>
+          {isEditing && onTitleChange ? (
+            <Input
+              value={editableTitle || note.title}
+              onChange={(e) => onTitleChange(e.target.value)}
+              className="text-xl md:text-2xl font-semibold text-mint-800 focus-visible:ring-1 focus-visible:ring-mint-500"
+            />
+          ) : (
+            <CardTitle className="text-xl md:text-2xl text-mint-800">
+              {note.title}
+            </CardTitle>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <span>{format(new Date(note.date), 'MMM d, yyyy')}</span>

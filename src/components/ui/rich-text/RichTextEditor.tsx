@@ -32,7 +32,9 @@ export const RichTextEditor = ({
         types: ['heading', 'paragraph'],
         alignments: ['left', 'center', 'right', 'justify'],
       }),
-      Highlight,
+      Highlight.configure({
+        multicolor: true,
+      }),
       BulletList,
       OrderedList,
     ],

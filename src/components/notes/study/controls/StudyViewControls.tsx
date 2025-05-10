@@ -118,29 +118,6 @@ export const StudyViewControls: React.FC<StudyViewControlsProps> = ({
         )
       )}
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            title="Text alignment"
-          >
-            {getAlignmentIcon()}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => onChangeTextAlign("center")}>
-            <AlignCenter className="h-4 w-4 mr-2" />
-            <span>Align Center</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onChangeTextAlign("justify")}>
-            <AlignJustify className="h-4 w-4 mr-2" />
-            <span>Justify</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
       <Button
         variant="ghost"
         size="icon"
@@ -168,6 +145,29 @@ export const StudyViewControls: React.FC<StudyViewControlsProps> = ({
           <Maximize className="h-4 w-4" />
         )}
       </Button>
+      
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            title="Text alignment"
+          >
+            {getAlignmentIcon()}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => onChangeTextAlign("center")}>
+            <AlignCenter className="h-4 w-4 mr-2" />
+            <span>Align Center</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onChangeTextAlign("justify")}>
+            <AlignJustify className="h-4 w-4 mr-2" />
+            <span>Justify</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };

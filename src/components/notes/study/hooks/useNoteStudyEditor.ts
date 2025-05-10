@@ -7,6 +7,7 @@ import { useNotes } from "@/contexts/NoteContext";
 
 export const useNoteStudyEditor = (note: Note) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [editableTitle, setEditableTitle] = useState(note.title || '');
   const [editableContent, setEditableContent] = useState(note.content || '');
   const [isSaving, setIsSaving] = useState(false);
   const [selectedTags, setSelectedTags] = useState<{ id?: string; name: string; color: string }[]>(
@@ -29,10 +30,12 @@ export const useNoteStudyEditor = (note: Note) => {
     if (isEditing) {
       // Cancel editing, restore original content
       setEditableContent(note.content || '');
+      setEditableTitle(note.title || '');
       setSelectedTags(note.tags || []);
     } else {
       // Start editing
       setEditableContent(note.content || '');
+      setEditableTitle(note.title || '');
       setSelectedTags(note.tags || []);
     }
     setIsEditing(!isEditing);
@@ -43,9 +46,16 @@ export const useNoteStudyEditor = (note: Note) => {
     setEditableContent(html);
   };
   
+  // Handle title changes
+  const handleTitleChange = (title: string) => {
+    setEditableTitle(title);
+  };
+  
   // Save content changes
   const handleSaveContent = async () => {
+    // Check if anything changed
     if (editableContent === note.content && 
+        editableTitle === note.title &&
         JSON.stringify(selectedTags) === JSON.stringify(note.tags)) {
       setIsEditing(false);
       return;
@@ -55,11 +65,13 @@ export const useNoteStudyEditor = (note: Note) => {
     try {
       await updateNoteInDatabase(note.id, {
         content: editableContent,
+        title: editableTitle,
         tags: selectedTags
       });
-      toast("Content updated successfully");
+      toast("Note updated successfully");
       // We need to update the note in our view
       note.content = editableContent;
+      note.title = editableTitle;
       note.tags = selectedTags;
       setIsEditing(false);
     } catch (error) {
@@ -90,11 +102,13 @@ export const useNoteStudyEditor = (note: Note) => {
 
   return {
     isEditing,
+    editableTitle,
     editableContent,
     selectedTags,
     availableTags,
     isSaving,
     toggleEditing,
+    handleTitleChange,
     handleContentChange,
     handleSaveContent,
     handleEnhanceContent,

@@ -3,7 +3,7 @@ import { Editor } from '@tiptap/react';
 import { 
   Bold, 
   Italic, 
-  ListCheck as List, 
+  List, 
   ListOrdered, 
   AlignLeft, 
   AlignCenter, 
@@ -11,13 +11,42 @@ import {
   Highlighter
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 
 interface RichTextToolbarProps {
   editor: Editor;
 }
 
+const highlightColors = [
+  { name: 'Yellow', color: '#FEF7CD' },
+  { name: 'Green', color: '#F2FCE2' },
+  { name: 'Blue', color: '#D3E4FD' },
+  { name: 'Pink', color: '#FFDEE2' },
+  { name: 'Purple', color: '#E5DEFF' },
+  { name: 'Orange', color: '#FDE1D3' },
+];
+
 export const RichTextToolbar = ({ editor }: RichTextToolbarProps) => {
   if (!editor) return null;
+
+  const isHighlightActive = () => {
+    return editor.isActive('highlight') || highlightColors.some(({ color }) => 
+      editor.isActive('highlight', { color })
+    );
+  };
+
+  const toggleHighlight = (color?: string) => {
+    if (color) {
+      editor.chain().focus().toggleHighlight({ color }).run();
+    } else {
+      editor.chain().focus().toggleHighlight().run();
+    }
+  };
 
   return (
     <div className="border-b border-input bg-background p-1 flex flex-wrap gap-1 items-center">
@@ -93,15 +122,34 @@ export const RichTextToolbar = ({ editor }: RichTextToolbarProps) => {
       
       <div className="h-4 w-px bg-border mx-1" />
       
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => editor.chain().focus().toggleHighlight().run()}
-        className={editor.isActive('highlight') ? 'bg-accent' : ''}
-        title="Highlight"
-      >
-        <Highlighter className="h-4 w-4" />
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={isHighlightActive() ? 'bg-accent' : ''}
+            title="Highlight"
+          >
+            <Highlighter className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          <DropdownMenuItem onClick={() => toggleHighlight()}>
+            <div className="h-4 w-4 bg-yellow-100 rounded mr-2"></div>
+            <span>Default</span>
+          </DropdownMenuItem>
+          {highlightColors.map(({ name, color }) => (
+            <DropdownMenuItem key={color} onClick={() => toggleHighlight(color)}>
+              <div className="h-4 w-4 rounded mr-2" style={{ backgroundColor: color }}></div>
+              <span>{name}</span>
+            </DropdownMenuItem>
+          ))}
+          <DropdownMenuItem onClick={() => editor.chain().focus().unsetHighlight().run()}>
+            <div className="h-4 w-4 mr-2 border border-gray-300"></div>
+            <span>No Highlight</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };

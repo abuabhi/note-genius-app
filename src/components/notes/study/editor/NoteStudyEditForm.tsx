@@ -1,11 +1,10 @@
 
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
 import { EnhanceNoteButton } from "../../enrichment/EnhanceNoteButton";
 import { RichTextEditor } from "@/components/ui/rich-text/RichTextEditor";
 import { TagSelector } from "../../TagSelector";
 import { Note } from "@/types/note";
+import { Separator } from "@/components/ui/separator";
 
 interface NoteStudyEditFormProps {
   note: Note;
@@ -25,33 +24,13 @@ export const NoteStudyEditForm: React.FC<NoteStudyEditFormProps> = ({
   editableContent,
   selectedTags,
   availableTags,
-  isSaving,
   handleContentChange,
-  handleSaveContent,
-  toggleEditing,
   handleEnhanceContent,
   setSelectedTags
 }) => {
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div className="flex gap-2">
-          <Button 
-            onClick={handleSaveContent} 
-            disabled={isSaving}
-            className="bg-mint-500 hover:bg-mint-600"
-          >
-            Save Changes
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={toggleEditing}
-            disabled={isSaving}
-          >
-            <X className="h-4 w-4 mr-2" />
-            Cancel
-          </Button>
-        </div>
+    <div className="space-y-6">
+      <div className="flex justify-end">
         <EnhanceNoteButton
           noteId={note.id}
           noteTitle={note.title}
@@ -68,6 +47,8 @@ export const NoteStudyEditForm: React.FC<NoteStudyEditFormProps> = ({
             onChange={handleContentChange}
           />
         </div>
+        
+        <Separator className="my-4" />
         
         <div>
           <label className="text-sm font-medium mb-1 block">Tags</label>

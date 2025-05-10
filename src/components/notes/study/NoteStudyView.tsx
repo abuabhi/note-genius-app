@@ -27,11 +27,13 @@ export const NoteStudyView: React.FC<NoteStudyViewProps> = ({ note }) => {
   
   const {
     isEditing,
+    editableTitle,
     editableContent,
     selectedTags,
     availableTags,
     isSaving,
     toggleEditing,
+    handleTitleChange,
     handleContentChange,
     handleSaveContent,
     handleEnhanceContent,
@@ -51,6 +53,7 @@ export const NoteStudyView: React.FC<NoteStudyViewProps> = ({ note }) => {
         isFullWidth={isFullWidth}
         isFullScreen={isFullScreen}
         isEditing={isEditing}
+        editableTitle={editableTitle}
         onIncreaseFontSize={handleIncreaseFontSize}
         onDecreaseFontSize={handleDecreaseFontSize}
         onChangeTextAlign={handleTextAlign}
@@ -58,6 +61,7 @@ export const NoteStudyView: React.FC<NoteStudyViewProps> = ({ note }) => {
         onToggleFullScreen={toggleFullScreen}
         onToggleEditing={toggleEditing}
         onSave={handleSaveContent}
+        onTitleChange={handleTitleChange}
         isSaving={isSaving}
       />
 
