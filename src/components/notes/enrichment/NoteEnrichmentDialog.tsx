@@ -70,7 +70,7 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
       setEnhancedContent('');
       initialize();
     }
-  }, [open, initialize, setEnhancedContent, setSelectedEnhancement]);
+  }, [open, initialize, setSelectedEnhancement, setEnhancedContent]);
   
   const handleEnhancement = async () => {
     if (!selectedEnhancement) {

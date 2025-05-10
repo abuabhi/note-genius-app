@@ -39,6 +39,7 @@ export const useNoteEnrichment = (note?: Note) => {
 
   const processEnhancement = async (enhancementType: EnhancementFunction): Promise<boolean> => {
     try {
+      console.log(`Processing enhancement with type: ${enhancementType}`);
       setIsProcessing(true);
       setIsLoading(true);
       setError(null);
@@ -47,7 +48,7 @@ export const useNoteEnrichment = (note?: Note) => {
       const usage = await fetchUsageStats();
       if (hasReachedLimit(usage)) {
         setError('You have reached your monthly enhancement limit.');
-        toast("Enhancement limit reached", {
+        toast.error("Enhancement limit reached", {
           description: "You have reached your monthly note enhancement limit."
         });
         return false;
@@ -60,9 +61,10 @@ export const useNoteEnrichment = (note?: Note) => {
       
       // Process the enhancement
       const result = await enrichNote(note, enhancementType);
+      console.log("Enhancement result received:", result.substring(0, 50) + "...");
       setEnhancedContent(result);
       
-      toast("Note enhanced", {
+      toast.success("Note enhanced", {
         description: "Your note has been enhanced successfully."
       });
       
@@ -71,7 +73,7 @@ export const useNoteEnrichment = (note?: Note) => {
       console.error('Error during note enrichment:', error);
       setError('An error occurred during enhancement. Please try again later.');
       
-      toast("Enhancement failed", {
+      toast.error("Enhancement failed", {
         description: "There was a problem enhancing your note."
       });
       
@@ -90,7 +92,7 @@ export const useNoteEnrichment = (note?: Note) => {
         content: enhancedContent 
       });
       
-      toast("Enhancement applied", {
+      toast.success("Enhancement applied", {
         description: "The enhancement has been applied to your note."
       });
       
@@ -98,7 +100,7 @@ export const useNoteEnrichment = (note?: Note) => {
     } catch (error) {
       console.error('Error applying enhancement:', error);
       
-      toast("Failed to apply enhancement", {
+      toast.error("Failed to apply enhancement", {
         description: "There was a problem updating your note."
       });
       

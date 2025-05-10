@@ -39,7 +39,7 @@ export const EnhancementSelection: React.FC<EnhancementSelectionProps> = ({
           }`}
           onClick={() => {
             console.log(`Selecting enhancement: ${option.id}`);
-            onSelect(option.id);
+            onSelect(option.id as EnhancementFunction);
           }}
         >
           <CardHeader className="p-4 pb-2">
