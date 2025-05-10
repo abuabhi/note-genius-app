@@ -3,8 +3,7 @@ import { ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import NavBar from "./NavBar";
 import Footer from "./Footer";
-import AuthSidebar from "./AuthSidebar";
-import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
+import { CustomSidebar } from "../ui/sidebar-custom";
 
 interface LayoutProps {
   children: ReactNode;
@@ -31,23 +30,16 @@ const Layout = ({ children }: LayoutProps) => {
   }
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
-        <AuthSidebar />
-        <SidebarInset>
-          <div className="flex flex-col flex-1">
-            <NavBar />
-            <main className="flex-grow p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <SidebarTrigger />
-              </div>
-              {children}
-            </main>
-            <Footer />
-          </div>
-        </SidebarInset>
+    <div className="min-h-screen flex w-full bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
+      <CustomSidebar />
+      <div className="flex flex-col flex-1 ml-[3.05rem] transition-all">
+        <NavBar />
+        <main className="flex-grow p-4">
+          {children}
+        </main>
+        <Footer />
       </div>
-    </SidebarProvider>
+    </div>
   );
 };
 

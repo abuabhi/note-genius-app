@@ -1,3 +1,4 @@
+
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ import { StudyStatsChart } from "@/components/progress/StudyStatsChart";
 import { StudyStatsOverview } from "@/components/study/StudyStatsOverview";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
-import { DropdownDemo } from "@/components/demo/DropdownDemo";
+
 const DashboardPage = () => {
   const {
     user,
@@ -39,9 +40,6 @@ const DashboardPage = () => {
   return <Layout>
       <div className="container mx-auto p-6">
         <WelcomeBanner />
-        
-        {/* New Dropdown Demo */}
-        
         
         {/* Analytics Tabs */}
         <div className="mb-8">
