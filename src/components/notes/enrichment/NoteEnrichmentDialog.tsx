@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { 
   Dialog, 
   DialogContent, 
@@ -8,14 +8,15 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
-import { useNoteEnrichment, EnhancementFunction } from '@/hooks/useNoteEnrichment';
+import { useNoteEnrichment } from '@/hooks/useNoteEnrichment';
 import { toast } from 'sonner';
 import { Progress } from "@/components/ui/progress";
 import { PremiumFeatureNotice } from './PremiumFeatureNotice';
 import { EnhancementSelection } from './EnhancementSelection';
 import { EnhancementProcessing } from './EnhancementProcessing';
 import { EnhancementResults } from './EnhancementResults';
-import { AlertCircle, RefreshCcw } from 'lucide-react';
+import { EnhancementError } from './EnhancementError';
+import { UsageIndicator } from './UsageIndicator';
 import { Note } from '@/types/note';
 
 interface NoteEnrichmentDialogProps {
@@ -53,7 +54,6 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
     setSelectedEnhancement,
     enhancementOptions,
     processEnhancement,
-    applyEnhancement,
     isLoading,
     currentUsage,
     monthlyLimit,
@@ -127,37 +127,11 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
           <DialogTitle>Enhance Your Note</DialogTitle>
         </DialogHeader>
         
-        {/* Usage Indicator */}
-        <div className="mb-4">
-          <div className="flex justify-between text-sm mb-1">
-            <span>Monthly Usage</span>
-            <span>{currentUsage} / {monthlyLimit || '∞'}</span>
-          </div>
-          {monthlyLimit && (
-            <Progress value={(currentUsage / monthlyLimit) * 100} />
-          )}
-        </div>
+        <UsageIndicator currentUsage={currentUsage} monthlyLimit={monthlyLimit} />
 
         {/* Error Display */}
         {error && (
-          <div className="p-4 border border-red-200 bg-red-50 rounded-md flex items-start gap-2 mb-4">
-            <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
-            <div className="flex-1">
-              <p className="text-red-700 font-medium">Enhancement failed</p>
-              <p className="text-red-600 text-sm">{error}</p>
-              <div className="mt-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="text-red-600 border-red-300 hover:bg-red-50 mr-2"
-                  onClick={handleRetry}
-                >
-                  <RefreshCcw className="h-3 w-3 mr-1" />
-                  Try Again
-                </Button>
-              </div>
-            </div>
-          </div>
+          <EnhancementError error={error} onRetry={handleRetry} />
         )}
 
         {/* Enhancement Selection */}
@@ -167,7 +141,7 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
             selectedEnhancement={selectedEnhancement}
             onSelect={(id) => {
               console.log("Setting selected enhancement:", id);
-              setSelectedEnhancement(id as EnhancementFunction);
+              setSelectedEnhancement(id);
             }}
           />
         )}
