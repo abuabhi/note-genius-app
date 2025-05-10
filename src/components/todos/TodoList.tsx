@@ -3,14 +3,14 @@ import React from 'react';
 import { Check, Trash2, Clock, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Todo } from '@/hooks/useTodos';
+import { Todo, TodoStatus } from '@/hooks/useTodos';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 
 interface TodoListProps {
   todos: Todo[];
   isLoading: boolean;
-  onUpdate: (id: string, status: 'pending' | 'completed' | 'cancelled') => void;
+  onUpdate: (id: string, status: TodoStatus) => void;
   onDelete: (id: string) => void;
   formatDate: (date: string | null) => string | null;
 }

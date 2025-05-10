@@ -4,7 +4,7 @@ import { Check, CheckCheck, Clock, ListTodo } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { TodoList } from "@/components/todos/TodoList";
 import { TodoForm } from "@/components/todos/TodoForm";
-import { useTodos } from "@/hooks/useTodos";
+import { useTodos, TodoStatus } from "@/hooks/useTodos";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -32,6 +32,11 @@ const TodoPage = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // This function adapts the mutation to the expected form
+  const handleUpdateTodoStatus = (id: string, status: TodoStatus) => {
+    updateTodoStatus.mutate({ id, status });
   };
 
   if (loading) {
@@ -92,7 +97,7 @@ const TodoPage = () => {
                 <TodoList
                   todos={todos}
                   isLoading={isLoading}
-                  onUpdate={updateTodoStatus.mutate}
+                  onUpdate={handleUpdateTodoStatus}
                   onDelete={deleteTodo.mutate}
                   formatDate={formatDate}
                 />

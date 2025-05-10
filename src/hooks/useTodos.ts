@@ -39,7 +39,7 @@ export const useTodos = () => {
     isLoading, 
     error 
   } = useQuery({
-    queryKey: ["todos", user?.id],
+    queryKey: ["todos", user?.id, filter],
     queryFn: async () => {
       if (!user) return [];
 
@@ -60,9 +60,10 @@ export const useTodos = () => {
         throw error;
       }
 
+      // Transform the data to include a default priority if it's not set
       return data.map(item => ({
         ...item,
-        priority: item.priority || 'medium',
+        priority: (item.priority as TodoPriority) || 'medium',
       })) as Todo[];
     },
     enabled: !!user,
