@@ -1,5 +1,5 @@
 
-import { TokenUsage } from './types';
+import { TokenUsage } from './types.ts';
 
 interface OpenAIResponse {
   enhancedContent: string;

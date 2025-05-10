@@ -48,7 +48,7 @@ export const NoteSummary: React.FC<NoteSummaryProps> = ({
       <div className="flex flex-col space-y-1">
         {summary ? (
           <div className="prose prose-sm max-w-none text-gray-600">
-            <ReactMarkdown className="line-clamp-2 text-sm">
+            <ReactMarkdown>
               {displayText}
             </ReactMarkdown>
           </div>
