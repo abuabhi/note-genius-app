@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarClock, Clock, Repeat } from "lucide-react";
 import { format, addHours } from "date-fns";
 import { toast } from "sonner";
@@ -26,7 +25,7 @@ const eventSchema = z.object({
   endTime: z.string().min(1, "End time is required"),
   allDay: z.boolean().default(false),
   eventType: z.string().default("study"),
-  color: z.string().default("#4f46e5"),
+  color: z.string().default("#3dc087"),
   flashcardSetId: z.string().optional(),
   isRecurring: z.boolean().default(false),
   recurrencePattern: z.string().default("none"),
@@ -49,6 +48,7 @@ export function CreateEventDialog({
 }: CreateEventDialogProps) {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
   
   const startTime = new Date(selectedDate);
   startTime.setHours(9, 0, 0, 0);
@@ -74,7 +74,7 @@ export function CreateEventDialog({
   });
 
   // Fetch user's flashcard sets with improved error handling
-  const { data: flashcardSets } = useQuery({
+  const { data: flashcardSets = [] } = useQuery({
     queryKey: ['flashcardSets', user?.id],
     queryFn: async () => {
       if (!user) return [];
@@ -136,6 +136,10 @@ export function CreateEventDialog({
 
       if (error) throw error;
 
+      // Invalidate queries to trigger a refresh
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['upcomingEvents'] });
+      
       toast.success("Event created successfully");
       onEventCreated?.(); // Call the callback to trigger a refresh
       onClose();

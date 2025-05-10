@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { Calendar as CalendarComponent, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { format } from 'date-fns';
 import { useEvents } from '@/hooks/useEvents';
 import { EventCard } from './EventCard';
 import { Card } from '@/components/ui/card';
@@ -32,9 +31,8 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ selectedDate
   useEffect(() => {
     if (error) {
       console.error('Error fetching events:', error);
-      // Show error toast only once, not in an infinite loop
       toast.error("Error loading events. Please try again later.", {
-        id: "events-error", // Use an ID to prevent duplicate toasts
+        id: "events-error",
       });
     }
   }, [error]);
@@ -57,7 +55,6 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ selectedDate
   };
   
   const handleEventCreated = () => {
-    // Refetch events after a new event is created
     refetchEvents();
     toast.success("Event created successfully");
   };
@@ -78,6 +75,25 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ selectedDate
       }
       setShowDeleteDialog(false);
     }
+  };
+
+  // Custom event styling for the calendar
+  const eventStyleGetter = (event: any) => {
+    const style = {
+      backgroundColor: event.color || '#3dc087',
+      borderRadius: '4px',
+      opacity: 0.9,
+      color: '#fff',
+      border: '0px',
+      display: 'block',
+      fontWeight: 500,
+      padding: '2px 5px',
+      fontSize: '90%',
+      boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+    };
+    return {
+      style
+    };
   };
 
   if (isLoading) {
@@ -120,8 +136,9 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ selectedDate
           views={['month', 'week', 'day']}
           popup
           components={{
-            event: (eventProps) => <EventCard event={eventProps.event} onDelete={() => handleDeleteEvent(eventProps.event)} />
+            event: (eventProps) => <div className="truncate px-1 text-white">{eventProps.title}</div>
           }}
+          eventPropGetter={eventStyleGetter}
           className="custom-calendar"
         />
       </Card>

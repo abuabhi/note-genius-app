@@ -16,7 +16,8 @@ const SchedulePage = () => {
     upcomingLoading, 
     formatEventDate, 
     deleteEvent,
-    refetchEvents
+    refetchEvents,
+    refetchUpcomingEvents
   } = useEvents(date);
 
   const handleDeleteEvent = async (eventId: string) => {
@@ -24,6 +25,7 @@ const SchedulePage = () => {
       await deleteEvent.mutateAsync(eventId);
       toast.success("Event deleted successfully");
       refetchEvents();
+      refetchUpcomingEvents(); // Add this to refresh upcoming events too
     } catch (error) {
       toast.error("Failed to delete event");
       console.error("Delete event error:", error);

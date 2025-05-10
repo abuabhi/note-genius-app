@@ -40,12 +40,12 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onDelete }) => {
     <div className="p-2">
       <Card className="overflow-hidden hover:shadow-md transition-shadow duration-300 border border-mint-100">
         <div 
-          className="h-2"
+          className="h-3"
           style={{ backgroundColor: event.color || '#3dc087' }}
         />
-        <CardContent className="p-2">
+        <CardContent className="p-3">
           <div className="flex justify-between items-start">
-            <h3 className="font-medium">{event.title || 'Untitled Event'}</h3>
+            <h3 className="font-medium text-mint-800">{event.title || 'Untitled Event'}</h3>
             <div className="flex items-center">
               {event.event_type && (
                 <span className="text-xs px-2 py-1 rounded-full bg-mint-50 text-mint-700 mr-2">
@@ -67,12 +67,12 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onDelete }) => {
           </div>
           
           {event.description && (
-            <p className="text-muted-foreground text-xs mt-1">
+            <p className="text-muted-foreground text-xs mt-2">
               {event.description}
             </p>
           )}
           
-          <div className="flex items-center gap-1 mt-1 text-xs text-mint-700">
+          <div className="flex items-center gap-1 mt-2 text-xs text-mint-700">
             <Clock className="h-3 w-3" />
             <span>
               {formatTime(startTime)}

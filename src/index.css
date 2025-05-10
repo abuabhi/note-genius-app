@@ -94,15 +94,17 @@
 }
 
 .custom-calendar .rbc-month-view {
-  @apply rounded-md border border-mint-100;
+  @apply rounded-md border border-mint-100 overflow-hidden;
 }
 
 .custom-calendar .rbc-header {
-  @apply py-2 font-semibold text-sm text-mint-700;
+  @apply py-2 font-semibold text-sm text-mint-700 border-b border-mint-100;
 }
 
 .custom-calendar .rbc-event {
-  @apply rounded-md border-none shadow-sm;
+  @apply rounded-md border-none shadow-sm overflow-hidden;
+  padding: 0 !important;
+  margin: 1px;
 }
 
 .custom-calendar .rbc-day-bg.rbc-today {
@@ -119,6 +121,10 @@
 
 .custom-calendar .rbc-show-more {
   @apply text-mint-600 hover:underline;
+  background: transparent !important;
+  font-weight: 500;
+  padding: 0 4px;
+  font-size: 11px;
 }
 
 .custom-calendar .rbc-time-content,
@@ -145,4 +151,23 @@
 
 .custom-calendar .rbc-current-time-indicator {
   @apply bg-mint-700;
+}
+
+/* Make calendar cells more distinct */
+.custom-calendar .rbc-month-row {
+  @apply border-mint-100;
+}
+
+.custom-calendar .rbc-day-bg {
+  @apply border-mint-100;
+}
+
+/* Add hover state for day cells */
+.custom-calendar .rbc-day-bg:hover {
+  @apply bg-mint-50/50;
+}
+
+/* Enhance event text readability */
+.custom-calendar .rbc-event-content {
+  @apply text-xs font-medium whitespace-nowrap overflow-hidden text-ellipsis px-1;
 }

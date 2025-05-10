@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,7 +67,7 @@ export const useEvents = (currentDate: Date = new Date()) => {
   });
 
   // Fetch upcoming events for the next 7 days
-  const { data: upcomingEvents = [], isLoading: upcomingLoading } = useQuery({
+  const { data: upcomingEvents = [], isLoading: upcomingLoading, refetch: refetchUpcomingEvents } = useQuery({
     queryKey: ['upcomingEvents', user?.id],
     queryFn: async () => {
       if (!user) return [];
@@ -97,7 +96,8 @@ export const useEvents = (currentDate: Date = new Date()) => {
     },
     enabled: !!user,
     retry: 1,
-    staleTime: 30000, // Cache for 30 seconds
+    staleTime: 0, // Don't cache upcoming events to ensure they refresh
+    refetchOnWindowFocus: true // Refresh when window gains focus
   });
 
   // Fetch due flashcards for this period with improved error handling
@@ -162,6 +162,7 @@ export const useEvents = (currentDate: Date = new Date()) => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['upcomingEvents'] });
       refetchEvents(); // Explicitly refetch events after successful creation
+      refetchUpcomingEvents(); // Also refetch upcoming events
       toast.success('Event created successfully!');
     },
     onError: (error) => {
@@ -185,6 +186,7 @@ export const useEvents = (currentDate: Date = new Date()) => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['upcomingEvents'] });
       refetchEvents(); // Explicitly refetch events after successful deletion
+      refetchUpcomingEvents(); // Also refetch upcoming events
       toast.success('Event deleted successfully!');
     },
     onError: (error) => {
@@ -219,7 +221,7 @@ export const useEvents = (currentDate: Date = new Date()) => {
     events,
     upcomingEvents,
     upcomingLoading,
-    dueFlashcards,
+    dueFlashcards: [], // Keep for backward compatibility
     isLoading,
     error,
     createEvent,
@@ -227,6 +229,7 @@ export const useEvents = (currentDate: Date = new Date()) => {
     loadAdjacentMonth,
     updateDateRange: setDateRange,
     refetchEvents,
+    refetchUpcomingEvents, // Add this new function
     formatEventDate,
   };
 };
