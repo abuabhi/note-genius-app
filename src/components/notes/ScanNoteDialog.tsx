@@ -34,17 +34,17 @@ export const ScanNoteDialog = ({ onSaveNote, isPremiumUser = false }: ScanNoteDi
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-purple-600 hover:bg-purple-700">
+        <Button className="bg-mint-500 hover:bg-mint-600">
           <Camera className="mr-2 h-4 w-4" />
           Scan Note
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto border-mint-100 bg-white">
         <DialogHeader>
           <div className="flex items-center gap-2">
             <DialogTitle>Scan Handwritten Note</DialogTitle>
             {isPremiumUser && (
-              <span className="inline-flex items-center px-2 py-1 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 text-white text-xs font-medium">
+              <span className="inline-flex items-center px-2 py-1 rounded-full bg-gradient-to-r from-mint-400 to-mint-500 text-white text-xs font-medium">
                 <Sparkles className="h-3 w-3 mr-1" />
                 Premium
               </span>

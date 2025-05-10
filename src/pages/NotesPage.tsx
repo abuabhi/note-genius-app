@@ -30,7 +30,7 @@ const NotesPage = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white">
+      <div className="min-h-screen bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
         <NotesContent 
           onSaveNote={handleSaveNote}
           onScanNote={handleScanNote}

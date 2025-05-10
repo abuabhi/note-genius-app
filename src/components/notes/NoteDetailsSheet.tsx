@@ -113,12 +113,12 @@ export const NoteDetailsSheet: React.FC<NoteDetailsSheetProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto border-mint-100">
         <DialogHeader className="space-y-1">
-          <DialogTitle className="text-xl font-bold">{note.title}</DialogTitle>
+          <DialogTitle className="text-xl font-bold text-mint-800">{note.title}</DialogTitle>
           <div className="text-sm text-muted-foreground flex flex-wrap gap-2 items-center">
             <span>{note.date}</span>
-            <span className="text-purple-600">{note.category}</span>
+            <span className="text-mint-600">{note.category}</span>
           </div>
         </DialogHeader>
 
@@ -160,7 +160,7 @@ export const NoteDetailsSheet: React.FC<NoteDetailsSheetProps> = ({
           <Textarea
             value={noteContent}
             onChange={(e) => setNoteContent(e.target.value)}
-            className="min-h-[200px] font-mono"
+            className="min-h-[200px] font-mono border-mint-200 focus-visible:ring-mint-400"
             readOnly
           />
         </div>
@@ -168,7 +168,7 @@ export const NoteDetailsSheet: React.FC<NoteDetailsSheetProps> = ({
         {scanPreviewUrl && (
           <div className="space-y-2">
             <h3 className="text-md font-medium">Scanned Image</h3>
-            <div className="relative rounded-md overflow-hidden border">
+            <div className="relative rounded-md overflow-hidden border border-mint-100">
               <img 
                 src={scanPreviewUrl} 
                 alt="Scanned note" 
@@ -195,12 +195,12 @@ export const NoteDetailsSheet: React.FC<NoteDetailsSheetProps> = ({
         {importPreviewUrl && (
           <div className="space-y-2">
             <h3 className="text-md font-medium">Imported File</h3>
-            <div className="flex items-center gap-2 p-3 border rounded-md">
+            <div className="flex items-center gap-2 p-3 border border-mint-100 rounded-md">
               <a 
                 href={importPreviewUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-blue-600 flex items-center gap-1"
+                className="text-sm text-mint-600 flex items-center gap-1"
               >
                 {note.importData?.fileType?.toUpperCase()} File <ExternalLink className="h-3 w-3" />
               </a>

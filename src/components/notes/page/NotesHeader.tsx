@@ -69,12 +69,12 @@ export const NotesHeader = ({
         <div className="flex gap-2">
           <Dialog open={isNewNoteDialogOpen} onOpenChange={setIsNewNoteDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="whitespace-nowrap bg-purple-600 hover:bg-purple-700">
+              <Button className="whitespace-nowrap bg-mint-500 hover:bg-mint-600">
                 <Plus className="mr-2 h-4 w-4" />
                 New Note
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-mint-100">
               <DialogHeader>
                 <DialogTitle>Create New Note</DialogTitle>
                 <DialogDescription>
@@ -102,7 +102,7 @@ export const NotesHeader = ({
 
           <Button 
             variant="outline" 
-            className="whitespace-nowrap border-purple-200 hover:bg-purple-50"
+            className="whitespace-nowrap border-mint-200 hover:bg-mint-50"
             onClick={handleNoteToFlashcard}
             disabled={filteredNotes.length === 0}
           >

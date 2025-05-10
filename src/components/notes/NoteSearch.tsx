@@ -25,13 +25,13 @@ export const NoteSearch = () => {
 
   return (
     <div className="relative">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-purple-400" />
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-mint-400" />
       <Input
         type="text"
         value={localSearchTerm}
         onChange={handleSearchChange}
         placeholder="Search notes..."
-        className="pl-10 pr-10 border-purple-200 focus-visible:ring-purple-400"
+        className="pl-10 pr-10 border-mint-200 focus-visible:ring-mint-400"
       />
       {localSearchTerm && (
         <Button

@@ -34,7 +34,7 @@ export const NoteSorter = () => {
         value={sortType}
         onValueChange={handleSortChange}
       >
-        <SelectTrigger className="w-[180px] h-9 bg-white border-purple-200 focus:ring-purple-400">
+        <SelectTrigger className="w-[180px] h-9 bg-white border-mint-200 focus:ring-mint-400">
           <SelectValue placeholder="Sort by" />
         </SelectTrigger>
         <SelectContent>
@@ -51,8 +51,8 @@ export const NoteSorter = () => {
         size="sm" 
         onClick={toggleArchived}
         className={showArchived ? 
-          "bg-purple-600 hover:bg-purple-700" : 
-          "border-purple-200 hover:bg-purple-50 hover:text-purple-700"}
+          "bg-mint-500 hover:bg-mint-600" : 
+          "border-mint-200 hover:bg-mint-50 hover:text-mint-700"}
       >
         {showArchived ? (
           <>
