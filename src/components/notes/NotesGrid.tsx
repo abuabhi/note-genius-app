@@ -9,6 +9,7 @@ import { NoteDetailsSheet } from "./NoteDetailsSheet";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { NoteTagList } from "./details/NoteTagList";
 
 export const NotesGrid = ({ notes }: { notes: Note[] }) => {
   const { pinNote, archiveNote, deleteNote } = useNotes();
@@ -56,39 +57,6 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
     e.stopPropagation();
     setSelectedNote(note);
     setIsDetailsOpen(true);
-  };
-
-  // Helper for tag display
-  const getCategoryBadge = (note: Note) => {
-    // Find if there's a tag that matches the note's category
-    const categoryTag = note.tags?.find(tag => tag.name === note.category);
-    
-    if (categoryTag) {
-      return (
-        <Badge 
-          key="category-tag" 
-          style={{
-            backgroundColor: categoryTag.color,
-            color: getBestTextColor(categoryTag.color)
-          }}
-          className="flex items-center gap-1 text-xs"
-        >
-          <Tag className="h-2.5 w-2.5" />
-          {categoryTag.name}
-        </Badge>
-      );
-    }
-    
-    // No matching tag, show the category on its own
-    return (
-      <Badge 
-        key="category" 
-        variant="outline" 
-        className="flex items-center gap-1 text-xs"
-      >
-        {note.category}
-      </Badge>
-    );
   };
 
   return (
@@ -145,31 +113,48 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
               </div>
             </CardHeader>
             <CardContent className="p-4 pt-0">
-              <div className="flex flex-wrap gap-1 mt-3">
-                {getCategoryBadge(note)}
-                {note.tags && note.tags.length > 0 && note.tags
-                  .filter(tag => tag.name !== note.category) // Don't show category tag twice
-                  .slice(0, 3)
-                  .map(tag => (
-                    <Badge 
-                      key={tag.id || tag.name} 
-                      style={{
-                        backgroundColor: tag.color,
-                        color: getBestTextColor(tag.color)
-                      }}
-                      className="flex items-center gap-1 text-xs"
-                    >
-                      <Tag className="h-2.5 w-2.5" />
-                      {tag.name}
-                    </Badge>
-                  ))
-                }
-                {note.tags && note.tags.length > 4 && (
-                  <Badge variant="outline" className="text-xs">
-                    +{note.tags.length - 4} more
+              {/* Display Category Badge */}
+              <div className="flex flex-wrap gap-1 mb-2 mt-3">
+                {note.category && (
+                  <Badge 
+                    className="text-xs"
+                    style={{
+                      backgroundColor: generateColorFromString(note.category),
+                      color: getBestTextColor(generateColorFromString(note.category))
+                    }}
+                  >
+                    {note.category}
                   </Badge>
                 )}
               </div>
+
+              {/* Display Tags */}
+              {note.tags && note.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {note.tags
+                    .filter(tag => tag.name !== note.category) // Don't show category tag twice
+                    .slice(0, 3)
+                    .map(tag => (
+                      <Badge 
+                        key={tag.id || tag.name} 
+                        style={{
+                          backgroundColor: tag.color,
+                          color: getBestTextColor(tag.color)
+                        }}
+                        className="flex items-center gap-1 text-xs"
+                      >
+                        <Tag className="h-2.5 w-2.5" />
+                        {tag.name}
+                      </Badge>
+                    ))
+                  }
+                  {note.tags.length > 4 && (
+                    <Badge variant="outline" className="text-xs">
+                      +{note.tags.length - 4} more
+                    </Badge>
+                  )}
+                </div>
+              )}
             </CardContent>
             <CardFooter className="pt-0 flex justify-between">
               <div className="flex items-center">
@@ -236,4 +221,15 @@ function getBestTextColor(bgColor: string): string {
   
   // Return white for dark backgrounds, black for light backgrounds
   return luminance > 0.5 ? 'black' : 'white';
+}
+
+// Generate a color based on a string (for category tags)
+function generateColorFromString(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 70%, 60%)`;
 }
