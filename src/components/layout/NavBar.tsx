@@ -1,6 +1,6 @@
 
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, UserCircle, Shield } from 'lucide-react';
+import { Menu, X, Shield } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -80,25 +80,7 @@ export default function NavBar() {
                   </DropdownMenu>
                 )}
                 
-                {/* User profile dropdown */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="flex items-center gap-1">
-                      <UserCircle className="h-4 w-4" />
-                      <span>Profile</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <Link to="/settings">Settings</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleLogout}>
-                      Logout
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                
-                {/* DND Toggle - Added here */}
+                {/* DND Toggle */}
                 <DndToggle />
                 
                 {/* Reminders popover */}
@@ -137,7 +119,7 @@ export default function NavBar() {
                       <Link to="/admin/csv-import">CSV Import</Link>
                     </>
                   )}
-                  {/* DND Toggle for mobile - Added here */}
+                  {/* DND Toggle for mobile */}
                   <div className="flex items-center justify-between py-2">
                     <span>Do Not Disturb Mode</span>
                     <DndToggle />

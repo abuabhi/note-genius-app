@@ -13,16 +13,14 @@ import {
   Clock,
   FileText,
   GraduationCap,
-  Layout,
   LayoutDashboard,
   ListTodo,
   LogOut,
   MessageSquare,
   Settings,
+  Shield,
   Target,
   User,
-  UserCircle,
-  UserCog,
   Users,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -141,7 +139,7 @@ export function CustomSidebar() {
                       className="flex items-center gap-2"
                     >
                       <Link to="/settings">
-                        <UserCog className="h-4 w-4" /> Profile Settings
+                        <Settings className="h-4 w-4" /> Settings
                       </Link>
                     </DropdownMenuItem>
                     {isAdmin && (
@@ -150,7 +148,7 @@ export function CustomSidebar() {
                         className="flex items-center gap-2"
                       >
                         <Link to="/admin/users">
-                          <User className="h-4 w-4" /> Admin Panel
+                          <Shield className="h-4 w-4" /> Admin Panel
                         </Link>
                       </DropdownMenuItem>
                     )}
@@ -351,56 +349,85 @@ export function CustomSidebar() {
                         </motion.li>
                       </Link>
                     </div>
-
-                    {/* Library Section */}
-                    <div className="py-1">
-                      <p className="px-2 text-xs font-medium text-muted-foreground mb-1">Resources</p>
-                      <Link
-                        to="/library"
-                        className={cn(
-                          "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
-                          pathname?.includes("/library") && "bg-muted text-mint-600",
-                        )}
-                      >
-                        <GraduationCap className="h-4 w-4" />
-                        <motion.li variants={variants}>
-                          {!isCollapsed && (
-                            <p className="ml-2 text-sm font-medium">Library</p>
+                    
+                    {/* Admin Section - Only visible to admin users */}
+                    {isAdmin && (
+                      <div className="py-1">
+                        <p className="px-2 text-xs font-medium text-amber-500 mb-1">Admin</p>
+                        <Link
+                          to="/admin/users"
+                          className={cn(
+                            "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
+                            pathname?.includes("/admin/users") && "bg-muted text-amber-600",
                           )}
-                        </motion.li>
-                      </Link>
-                    </div>
+                        >
+                          <User className="h-4 w-4" />
+                          <motion.li variants={variants}>
+                            {!isCollapsed && (
+                              <p className="ml-2 text-sm font-medium">Users</p>
+                            )}
+                          </motion.li>
+                        </Link>
+                        <Link
+                          to="/admin/flashcards"
+                          className={cn(
+                            "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
+                            pathname?.includes("/admin/flashcards") && "bg-muted text-amber-600",
+                          )}
+                        >
+                          <FileText className="h-4 w-4" />
+                          <motion.li variants={variants}>
+                            {!isCollapsed && (
+                              <p className="ml-2 text-sm font-medium">Flashcards</p>
+                            )}
+                          </motion.li>
+                        </Link>
+                        <Link
+                          to="/admin/sections"
+                          className={cn(
+                            "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
+                            pathname?.includes("/admin/sections") && "bg-muted text-amber-600",
+                          )}
+                        >
+                          <GraduationCap className="h-4 w-4" />
+                          <motion.li variants={variants}>
+                            {!isCollapsed && (
+                              <p className="ml-2 text-sm font-medium">Sections</p>
+                            )}
+                          </motion.li>
+                        </Link>
+                        <Link
+                          to="/admin/csv-import"
+                          className={cn(
+                            "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
+                            pathname?.includes("/admin/csv-import") && "bg-muted text-amber-600",
+                          )}
+                        >
+                          <FileText className="h-4 w-4" />
+                          <motion.li variants={variants}>
+                            {!isCollapsed && (
+                              <p className="ml-2 text-sm font-medium">CSV Import</p>
+                            )}
+                          </motion.li>
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 </ScrollArea>
               </div>
               <div className="flex flex-col p-2">
-                <Link
-                  to="/settings"
-                  className="mt-auto flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary"
-                >
-                  <Settings className="h-4 w-4 shrink-0" />
-                  <motion.li variants={variants}>
-                    {!isCollapsed && (
-                      <p className="ml-2 text-sm font-medium">Settings</p>
-                    )}
-                  </motion.li>
-                </Link>
                 <div>
                   <DropdownMenu modal={false}>
                     <DropdownMenuTrigger className="w-full">
                       <div className="flex h-8 w-full flex-row items-center gap-2 rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary">
-                        <Avatar className="size-4">
-                          <AvatarFallback>
-                            {user?.email?.charAt(0).toUpperCase() || "S"}
-                          </AvatarFallback>
-                        </Avatar>
+                        <LogOut className="h-4 w-4" />
                         <motion.li
                           variants={variants}
                           className="flex w-full items-center gap-2"
                         >
                           {!isCollapsed && (
                             <>
-                              <p className="text-sm font-medium">Account</p>
+                              <p className="text-sm font-medium">Logout</p>
                               <ChevronsUpDown className="ml-auto h-4 w-4 text-muted-foreground/50" />
                             </>
                           )}
@@ -425,19 +452,9 @@ export function CustomSidebar() {
                       </div>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        asChild
-                        className="flex items-center gap-2"
-                      >
-                        <Link to="/settings">
-                          <UserCircle className="h-4 w-4" /> Profile
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
                         className="flex items-center gap-2 cursor-pointer"
                         onClick={() => {
-                          // Use auth context's signOut function
                           if (window.confirm("Are you sure you want to log out?")) {
-                            // This is a placeholder - will be replaced by actual signOut
                             window.location.href = "/login";
                           }
                         }}
