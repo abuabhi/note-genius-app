@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Import } from "lucide-react";
 import { ImportTabs } from "./tabs/ImportTabs";
 import { Note } from "@/types/note";
