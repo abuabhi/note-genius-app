@@ -9,13 +9,13 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { useNoteEnrichment, EnhancementFunction } from '@/hooks/useNoteEnrichment';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 import { Progress } from "@/components/ui/progress";
 import { PremiumFeatureNotice } from './PremiumFeatureNotice';
 import { EnhancementSelection } from './EnhancementSelection';
 import { EnhancementProcessing } from './EnhancementProcessing';
 import { EnhancementResults } from './EnhancementResults';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, RefreshCcw } from 'lucide-react';
 
 interface NoteEnrichmentDialogProps {
   open: boolean;
@@ -51,6 +51,7 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
   useEffect(() => {
     if (open) {
       setError(null);
+      setSelectedEnhancement(null);
       initialize();
     }
   }, [open, initialize]);
@@ -59,6 +60,13 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
     if (!selectedEnhancement) {
       toast("Enhancement required", {
         description: "Please select an enhancement type",
+      });
+      return;
+    }
+    
+    if (!noteContent || noteContent.trim().length < 50) {
+      toast("Content too short", {
+        description: "Please add more content to enhance"
       });
       return;
     }
@@ -73,7 +81,7 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
     );
     
     if (!result) {
-      setError("Failed to enhance note. Please try again.");
+      setError("Failed to enhance note. Please check your connection and try again.");
     }
   };
   
@@ -131,17 +139,20 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
         {error && (
           <div className="p-4 border border-red-200 bg-red-50 rounded-md flex items-start gap-2 mb-4">
             <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
-            <div>
+            <div className="flex-1">
               <p className="text-red-700 font-medium">Enhancement failed</p>
               <p className="text-red-600 text-sm">{error}</p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="mt-2 text-red-600 border-red-300 hover:bg-red-50"
-                onClick={handleRetry}
-              >
-                Try Again
-              </Button>
+              <div className="mt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="text-red-600 border-red-300 hover:bg-red-50 mr-2"
+                  onClick={handleRetry}
+                >
+                  <RefreshCcw className="h-3 w-3 mr-1" />
+                  Try Again
+                </Button>
+              </div>
             </div>
           </div>
         )}

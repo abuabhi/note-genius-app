@@ -3,9 +3,10 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { EnhancementFunction } from './types';
+import { toast } from 'sonner';
 
 export function useEnrichmentService() {
-  const { toast } = useToast();
+  const { toast: shadowToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [enhancedContent, setEnhancedContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -20,8 +21,7 @@ export function useEnrichmentService() {
     noteTitle?: string
   ) => {
     if (!userId) {
-      toast({
-        title: "Authentication required",
+      toast("Authentication required", {
         description: "Please log in to use this feature",
         variant: "destructive"
       });
@@ -29,10 +29,16 @@ export function useEnrichmentService() {
     }
     
     if (!isFeatureEnabled) {
-      toast({
-        title: "Feature not available",
+      toast("Feature not available", {
         description: "Note enrichment is not available for your tier",
         variant: "destructive"
+      });
+      return null;
+    }
+    
+    if (!noteContent || noteContent.trim().length < 10) {
+      toast("Content too short", {
+        description: "Please add more content to enhance"
       });
       return null;
     }
@@ -50,7 +56,7 @@ export function useEnrichmentService() {
         throw new Error('Authentication failed');
       }
       
-      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/enrich-note`;
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL || 'https://zuhcmwujzfddmafozubd.supabase.co'}/functions/v1/enrich-note`;
       console.log("Calling edge function at:", apiUrl);
       
       // Call the edge function
@@ -70,6 +76,13 @@ export function useEnrichmentService() {
       
       console.log("Edge function response status:", response.status);
       
+      // Check response status before trying to parse
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Server error response:', errorText);
+        throw new Error(`Server returned ${response.status}: ${errorText || 'Unknown error'}`);
+      }
+      
       // Handle non-JSON responses or network errors
       let result;
       try {
@@ -78,11 +91,6 @@ export function useEnrichmentService() {
       } catch (parseError) {
         console.error('Error parsing response:', parseError);
         throw new Error('Invalid response from server. Please try again later.');
-      }
-      
-      if (!response.ok) {
-        console.error('Server error response:', result);
-        throw new Error(result.error || `Failed to enrich note: ${response.status}`);
       }
       
       if (!result.enhancedContent) {
@@ -96,10 +104,8 @@ export function useEnrichmentService() {
       console.error('Error enriching note:', error);
       const errorMessage = error instanceof Error ? error.message : "An error occurred";
       setError(errorMessage);
-      toast({
-        title: "Enhancement failed",
-        description: errorMessage,
-        variant: "destructive"
+      toast("Enhancement failed", {
+        description: errorMessage
       });
       return null;
     } finally {

@@ -22,6 +22,10 @@ export const generateFlashcardsFromNotes = async (
       throw new Error(error.message);
     }
 
+    if (!data || !data.flashcards) {
+      throw new Error('Invalid response from server');
+    }
+
     return data.flashcards || [];
   } catch (error) {
     console.error('Error calling generate-flashcards function:', error);
@@ -33,6 +37,10 @@ export const getExplanationForCard = async (
   flashcard: Flashcard
 ): Promise<string> => {
   try {
+    if (!flashcard.front_content || !flashcard.back_content) {
+      throw new Error('Flashcard content is missing');
+    }
+
     const { data, error } = await supabase.functions.invoke('generate-explanation', {
       body: {
         front: flashcard.front_content,
@@ -43,6 +51,10 @@ export const getExplanationForCard = async (
     if (error) {
       console.error('Error generating explanation:', error);
       throw new Error(error.message);
+    }
+
+    if (!data || !data.explanation) {
+      throw new Error('Invalid response from server');
     }
 
     return data.explanation || "No explanation available.";

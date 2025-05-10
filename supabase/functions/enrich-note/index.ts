@@ -44,6 +44,15 @@ serve(async (req) => {
   }
   
   try {
+    // Check if OpenAI API key is available
+    if (!openaiApiKey) {
+      console.error('OpenAI API key is not set');
+      return new Response(
+        JSON.stringify({ error: 'OpenAI API key is not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
     // Extract auth token from request
@@ -69,7 +78,17 @@ serve(async (req) => {
     }
     
     // Parse request body
-    const { noteId, noteContent, enhancementType, noteTitle } = await req.json();
+    let requestBody;
+    try {
+      requestBody = await req.json();
+    } catch (e) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    const { noteId, noteContent, enhancementType, noteTitle } = requestBody;
     
     if (!noteId || !noteContent || !enhancementType) {
       return new Response(
@@ -86,18 +105,43 @@ serve(async (req) => {
       );
     }
 
-    // Check if user has access to note enrichment feature
-    const { data: tierData, error: tierError } = await supabase
-      .from('tier_limits')
-      .select('note_enrichment_enabled, note_enrichment_limit_per_month')
-      .eq('tier', (await supabase
+    // Check if user has access to note enrichment feature - using try/catch for error handling
+    let tierData;
+    try {
+      // Get user's tier
+      const profileResponse = await supabase
         .from('profiles')
         .select('user_tier')
         .eq('id', user.id)
-        .single()).data?.user_tier ?? 'SCHOLAR')
-      .single();
+        .single();
+        
+      if (profileResponse.error) {
+        throw new Error(profileResponse.error.message);
+      }
+      
+      const userTier = profileResponse.data?.user_tier ?? 'SCHOLAR';
+      
+      // Get tier limits
+      const tierResponse = await supabase
+        .from('tier_limits')
+        .select('note_enrichment_enabled, note_enrichment_limit_per_month')
+        .eq('tier', userTier)
+        .single();
+        
+      if (tierResponse.error) {
+        throw new Error(tierResponse.error.message);
+      }
+      
+      tierData = tierResponse.data;
+    } catch (error) {
+      console.error('Error fetching user tier data:', error);
+      return new Response(
+        JSON.stringify({ error: 'Error checking user permissions' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
-    if (tierError || !tierData?.note_enrichment_enabled) {
+    if (!tierData?.note_enrichment_enabled) {
       return new Response(
         JSON.stringify({ error: 'Note enrichment not available for your tier' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -105,18 +149,22 @@ serve(async (req) => {
     }
     
     // Check usage limits
-    const currentMonth = new Date().toISOString().slice(0, 7); // Format: YYYY-MM
-    const { data: usageData, error: usageError } = await supabase
-      .from('note_enrichment_usage')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('month_year', currentMonth);
-    
-    if (!usageError && usageData && usageData.length >= tierData.note_enrichment_limit_per_month) {
-      return new Response(
-        JSON.stringify({ error: 'Monthly note enrichment limit reached' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    try {
+      const currentMonth = new Date().toISOString().slice(0, 7); // Format: YYYY-MM
+      const usageResponse = await supabase
+        .from('note_enrichment_usage')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('month_year', currentMonth);
+      
+      if (!usageResponse.error && usageResponse.data && usageResponse.data.length >= tierData.note_enrichment_limit_per_month) {
+        return new Response(
+          JSON.stringify({ error: 'Monthly note enrichment limit reached' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } catch (error) {
+      console.error('Error checking usage limits:', error);
     }
     
     // Construct prompt based on enhancement type
@@ -133,21 +181,30 @@ Response Guidelines:
 - Format using basic markdown for readability where appropriate
 - Focus on the most important concepts from the provided content`;
     
-    // Call OpenAI API
-    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: 'You are an expert educational assistant that helps improve study notes.' },
-          { role: 'user', content: prompt }
-        ],
-      }),
-    });
+    // Call OpenAI API with error handling
+    let openAIResponse;
+    try {
+      openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openaiApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: 'You are an expert educational assistant that helps improve study notes.' },
+            { role: 'user', content: prompt }
+          ],
+        }),
+      });
+    } catch (error) {
+      console.error('OpenAI API network error:', error);
+      return new Response(
+        JSON.stringify({ error: 'Failed to connect to OpenAI API' }),
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     // Check if the response is valid before trying to parse JSON
     if (!openAIResponse.ok) {
@@ -184,20 +241,24 @@ Response Guidelines:
     const enhancedContent = openAIData.choices[0].message.content;
     const tokenUsage: TokenUsage = openAIData.usage;
     
-    // Record usage
-    const { error: recordError } = await supabase
-      .from('note_enrichment_usage')
-      .insert({
-        user_id: user.id,
-        note_id: noteId,
-        llm_provider: 'openai',
-        prompt_tokens: tokenUsage.prompt_tokens,
-        completion_tokens: tokenUsage.completion_tokens,
-        month_year: currentMonth,
-      });
-    
-    if (recordError) {
-      console.error('Failed to record usage:', recordError);
+    // Record usage with error handling
+    try {
+      const { error: recordError } = await supabase
+        .from('note_enrichment_usage')
+        .insert({
+          user_id: user.id,
+          note_id: noteId,
+          llm_provider: 'openai',
+          prompt_tokens: tokenUsage.prompt_tokens,
+          completion_tokens: tokenUsage.completion_tokens,
+          month_year: new Date().toISOString().slice(0, 7),
+        });
+      
+      if (recordError) {
+        console.error('Failed to record usage:', recordError);
+      }
+    } catch (error) {
+      console.error('Error recording usage:', error);
     }
     
     // Return the enhanced content with additional error handling
