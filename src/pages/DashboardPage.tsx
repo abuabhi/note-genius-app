@@ -11,6 +11,7 @@ import { StudyStatsChart } from "@/components/progress/StudyStatsChart";
 import { StudyStatsOverview } from "@/components/study/StudyStatsOverview";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
+import { DropdownDemo } from "@/components/demo/DropdownDemo";
 
 const DashboardPage = () => {
   const { user, userProfile, loading } = useRequireAuth();
@@ -39,6 +40,12 @@ const DashboardPage = () => {
     <Layout>
       <div className="container mx-auto p-6">
         <WelcomeBanner />
+        
+        {/* New Dropdown Demo */}
+        <div className="mb-8 p-4 border rounded-lg bg-white">
+          <h2 className="text-lg font-semibold mb-4">New Dropdown Style Demo</h2>
+          <DropdownDemo />
+        </div>
         
         {/* Analytics Tabs */}
         <div className="mb-8">
