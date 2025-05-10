@@ -27,8 +27,8 @@ const NotesPage = () => {
       
       // Clear any existing filter options to start fresh
       const resetOptions: FilterOptions = {
-        startDate: undefined,
-        endDate: undefined
+        dateFrom: undefined,
+        dateTo: undefined
       };
       
       setFilterOptions(resetOptions);

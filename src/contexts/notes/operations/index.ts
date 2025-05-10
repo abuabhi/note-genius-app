@@ -4,6 +4,7 @@ import { addNoteToDatabase as addNoteDb, deleteNoteFromDatabase as deleteNoteDb,
 import { updateNoteTagsInDatabase, addNoteTagsToDatabase } from "./tagOperations";
 import { updateScanDataInDatabase, addScanDataToDatabase } from "./scanOperations";
 
+// Re-export functions from other modules
 export { fetchTagsFromDatabase } from "./tagOperations";
 export { fetchNoteEnrichmentUsage } from "./usageStats";
 
@@ -59,5 +60,4 @@ export const updateNoteInDatabase = async (id: string, updatedNote: Partial<Note
 };
 
 // Re-export the supabase instance for convenience
-import { supabase } from "@/integrations/supabase/client";
-export { supabase };
+export { supabase } from "@/integrations/supabase/client";

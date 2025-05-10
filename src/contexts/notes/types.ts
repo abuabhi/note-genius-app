@@ -7,7 +7,7 @@ export interface FilterOptions {
   category?: string;
   dateFrom?: string;
   dateTo?: string;
-  sourceType?: string[];
+  sourceType?: ('manual' | 'scan' | 'import')[];
   hasTags?: boolean;
   [key: string]: any;
 }

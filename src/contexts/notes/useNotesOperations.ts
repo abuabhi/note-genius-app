@@ -1,12 +1,13 @@
+
 import { useToast } from '@/hooks/use-toast';
 import { Note } from "@/types/note";
 import { 
   addNoteToDatabase, 
   deleteNoteFromDatabase, 
   updateNoteInDatabase, 
-  fetchTagsFromDatabase
+  fetchTagsFromDatabase,
+  updateNoteTagsInDatabase
 } from './operations';
-import { updateNoteTagsInDatabase } from './operations/tagOperations';
 
 export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React.SetStateAction<Note[]>>, currentPage: number, setCurrentPage: React.Dispatch<React.SetStateAction<number>>, paginatedNotes: Note[]) {
   const { toast } = useToast();
