@@ -1,4 +1,3 @@
-
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,40 +11,37 @@ import { StudyStatsOverview } from "@/components/study/StudyStatsOverview";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
 import { DropdownDemo } from "@/components/demo/DropdownDemo";
-
 const DashboardPage = () => {
-  const { user, userProfile, loading } = useRequireAuth();
-
-  console.log("Dashboard rendering:", { user, userProfile, loading });
-
+  const {
+    user,
+    userProfile,
+    loading
+  } = useRequireAuth();
+  console.log("Dashboard rendering:", {
+    user,
+    userProfile,
+    loading
+  });
   if (loading) {
-    return (
-      <Layout>
+    return <Layout>
         <div className="container mx-auto p-6 flex items-center justify-center h-[50vh]">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
             <p className="mt-2 text-muted-foreground">Loading your dashboard...</p>
           </div>
         </div>
-      </Layout>
-    );
+      </Layout>;
   }
-
   if (!user) {
     console.log("Not authorized, redirecting via useRequireAuth");
     return null; // Will redirect via the useRequireAuth hook
   }
-
-  return (
-    <Layout>
+  return <Layout>
       <div className="container mx-auto p-6">
         <WelcomeBanner />
         
         {/* New Dropdown Demo */}
-        <div className="mb-8 p-4 border rounded-lg bg-white">
-          <h2 className="text-lg font-semibold mb-4">New Dropdown Style Demo</h2>
-          <DropdownDemo />
-        </div>
+        
         
         {/* Analytics Tabs */}
         <div className="mb-8">
@@ -129,8 +125,6 @@ const DashboardPage = () => {
           </Card>
         </div>
       </div>
-    </Layout>
-  );
+    </Layout>;
 };
-
 export default DashboardPage;
