@@ -1,4 +1,3 @@
 
-// This is a general index file for edge functions
-// Individual functions are implemented in their respective folders
-export {};
+// Main index file to satisfy Supabase Edge Functions requirements
+console.log("Supabase Edge Functions initialized");
