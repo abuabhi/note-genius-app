@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DateRange, Event } from "./types";
 import { startOfDay, endOfDay, addDays } from "date-fns";
+import { PostgrestError } from "@supabase/supabase-js";
 
 /**
  * Hook for fetching events for a specific date range
@@ -25,8 +26,18 @@ export const useEventQuery = (userId: string | undefined, dateRange: DateRange) 
         if (error) throw error;
         return data as Event[];
       } catch (err) {
-        console.error('Error fetching events:', err);
-        throw err;
+        // Make sure we're throwing a PostgrestError or at least something that looks like it
+        if (err instanceof Error && 'code' in err) {
+          throw err; // This is already a PostgrestError
+        }
+        // Create a PostgrestError-like object to maintain type compatibility
+        const pgError: PostgrestError = {
+          message: err instanceof Error ? err.message : 'Unknown error fetching events',
+          details: '',
+          hint: '',
+          code: 'CUSTOM_ERROR'
+        };
+        throw pgError;
       }
     },
     enabled: !!userId,
@@ -58,8 +69,7 @@ export const useUpcomingEventsQuery = (userId: string | undefined) => {
           .order('start_time', { ascending: true });
         
         if (error) {
-          console.error('Error fetching upcoming events:', error);
-          return [];
+          throw error;
         }
         return data as Event[];
       } catch (err) {
@@ -97,8 +107,7 @@ export const useDueFlashcardsQuery = (userId: string | undefined, dateRange: Dat
           .lte('next_review_at', dateRange.end.toISOString());
         
         if (error) {
-          console.error('Error fetching due flashcards:', error);
-          return [];
+          throw error;
         }
         return data || [];
       } catch (err) {

@@ -6,6 +6,7 @@ import { DateRange, UseEventsReturn } from "./types";
 import { formatEventDate } from "./eventUtils";
 import { useEventQuery, useUpcomingEventsQuery, useDueFlashcardsQuery } from "./useEventQueries";
 import { useCreateEvent, useDeleteEvent } from "./useEventMutations";
+import { PostgrestError } from "@supabase/supabase-js";
 
 /**
  * Main hook for events management
@@ -63,7 +64,7 @@ export const useEvents = (currentDate: Date = new Date()): UseEventsReturn => {
     upcomingLoading,
     dueFlashcards,
     isLoading,
-    error,
+    error: error as PostgrestError | null, // Ensure correct type is returned
     createEvent,
     deleteEvent,
     loadAdjacentMonth,
