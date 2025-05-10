@@ -1,20 +1,17 @@
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { 
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Note } from '@/types/note';
-import { Badge } from '@/components/ui/badge';
-import { useNotes } from '@/contexts/NoteContext';
-import { Textarea } from '@/components/ui/textarea';
-import { EnhanceNoteButton } from './enrichment/EnhanceNoteButton';
-import { Archive, Book, Copy, Edit, ExternalLink, Pin, PinOff, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { NoteHeader } from './details/NoteHeader';
+import { NoteTagList } from './details/NoteTagList';
+import { NoteContentSection } from './details/NoteContentSection';
+import { NoteAttachments } from './details/NoteAttachments';
+import { NoteActionButtons } from './details/NoteActionButtons';
+import { useNoteDetails } from './details/useNoteDetails';
 
 interface NoteDetailsSheetProps {
   note: Note;
@@ -29,261 +26,56 @@ export const NoteDetailsSheet: React.FC<NoteDetailsSheetProps> = ({
   onOpenChange,
   onEdit
 }) => {
-  const navigate = useNavigate();
-  const { updateNote, pinNote, archiveNote, deleteNote } = useNotes();
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [noteContent, setNoteContent] = useState(note.content || '');
-
-  const handlePin = async () => {
-    try {
-      await pinNote(note.id, !note.pinned);
-      toast(`Note ${note.pinned ? 'unpinned' : 'pinned'} successfully`, {
-        description: note.pinned ? 'The note is no longer pinned' : 'The note is now pinned at the top',
-      });
-    } catch (error) {
-      toast('Failed to pin note', {
-        description: 'An error occurred while updating the note',
-      });
-    }
-  };
-
-  const handleArchive = async () => {
-    try {
-      await archiveNote(note.id, !note.archived);
-      toast(`Note ${note.archived ? 'restored' : 'archived'} successfully`, {
-        description: note.archived ? 'The note is no longer archived' : 'The note has been moved to archive',
-      });
-      onOpenChange(false);
-    } catch (error) {
-      toast('Failed to archive note', {
-        description: 'An error occurred while updating the note',
-      });
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!isDeleting) {
-      setIsDeleting(true);
-      return;
-    }
-
-    try {
-      await deleteNote(note.id);
-      toast('Note deleted successfully', {
-        description: 'The note has been permanently deleted',
-      });
-      onOpenChange(false);
-    } catch (error) {
-      toast('Failed to delete note', {
-        description: 'An error occurred while deleting the note',
-      });
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const handleCopyContent = () => {
-    if (note.content) {
-      navigator.clipboard.writeText(note.content);
-      toast('Copied to clipboard', {
-        description: 'Note content copied to clipboard',
-      });
-    }
-  };
-
-  const handleApplyEnhancement = (enhancedContent: string) => {
-    setNoteContent(enhancedContent);
-    updateNote(note.id, { content: enhancedContent });
-  };
-
-  const handleOpenStudyMode = () => {
-    onOpenChange(false); // Close the dialog
-    navigate(`/notes/study/${note.id}`); // Navigate to the study mode page
-  };
-
-  const getScanPreviewUrl = () => {
-    if (note.sourceType === 'scan' && note.scanData?.originalImageUrl) {
-      return note.scanData.originalImageUrl;
-    }
-    return null;
-  };
-
-  const getImportPreviewUrl = () => {
-    if (note.sourceType === 'import' && note.importData?.originalFileUrl) {
-      return note.importData.originalFileUrl;
-    }
-    return null;
-  };
-
-  const scanPreviewUrl = getScanPreviewUrl();
-  const importPreviewUrl = getImportPreviewUrl();
+  const {
+    isDeleting,
+    noteContent,
+    setNoteContent,
+    handlePin,
+    handleArchive,
+    handleDelete,
+    handleApplyEnhancement,
+    handleOpenStudyMode,
+    scanPreviewUrl,
+    importPreviewUrl
+  } = useNoteDetails(note, onOpenChange);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto border-mint-100">
-        <DialogHeader className="space-y-1">
-          <DialogTitle className="text-xl font-bold text-mint-800">{note.title}</DialogTitle>
-          <div className="text-sm text-muted-foreground flex flex-wrap gap-2 items-center">
-            <span>{note.date}</span>
-            <span className="text-mint-600">{note.category}</span>
-          </div>
+        <DialogHeader>
+          <NoteHeader note={note} />
         </DialogHeader>
 
         <p className="text-md leading-6">{note.description}</p>
 
-        {(note.tags && note.tags.length > 0) && (
-          <div className="flex flex-wrap gap-2 items-center">
-            {note.tags.map((tag) => (
-              <Badge
-                key={tag.id || tag.name}
-                style={{
-                  backgroundColor: tag.color,
-                  color: getBestTextColor(tag.color)
-                }}
-                className="text-xs"
-              >
-                {tag.name}
-              </Badge>
-            ))}
-          </div>
-        )}
+        <NoteTagList tags={note.tags} />
 
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <h3 className="text-md font-medium">Content</h3>
-            <div className="flex gap-2">
-              <Button variant="ghost" size="icon" onClick={handleCopyContent} title="Copy content">
-                <Copy className="h-4 w-4" />
-              </Button>
-              <EnhanceNoteButton 
-                noteId={note.id}
-                noteTitle={note.title}
-                noteContent={noteContent}
-                onEnhance={handleApplyEnhancement}
-              />
-            </div>
-          </div>
-          <Textarea
-            value={noteContent}
-            onChange={(e) => setNoteContent(e.target.value)}
-            className="min-h-[200px] font-mono border-mint-200 focus-visible:ring-mint-400"
-            readOnly
-          />
-        </div>
+        <NoteContentSection
+          noteId={note.id}
+          noteTitle={note.title}
+          content={noteContent}
+          onContentChange={setNoteContent}
+          onApplyEnhancement={handleApplyEnhancement}
+        />
         
-        {scanPreviewUrl && (
-          <div className="space-y-2">
-            <h3 className="text-md font-medium">Scanned Image</h3>
-            <div className="relative rounded-md overflow-hidden border border-mint-100">
-              <img 
-                src={scanPreviewUrl} 
-                alt="Scanned note" 
-                className="w-full h-auto max-h-[300px] object-contain"
-              />
-              <a 
-                href={scanPreviewUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="absolute top-2 right-2 bg-background/70 p-1 rounded-md"
-                title="Open original"
-              >
-                <ExternalLink className="h-4 w-4" />
-              </a>
-            </div>
-            {note.scanData?.confidence && (
-              <p className="text-xs text-muted-foreground">
-                OCR Confidence: {Math.round(note.scanData.confidence * 100)}%
-              </p>
-            )}
-          </div>
-        )}
+        <NoteAttachments
+          scanPreviewUrl={scanPreviewUrl}
+          importPreviewUrl={importPreviewUrl}
+          confidence={note.scanData?.confidence}
+          fileType={note.importData?.fileType}
+          importedAt={note.importData?.importedAt}
+        />
 
-        {importPreviewUrl && (
-          <div className="space-y-2">
-            <h3 className="text-md font-medium">Imported File</h3>
-            <div className="flex items-center gap-2 p-3 border border-mint-100 rounded-md">
-              <a 
-                href={importPreviewUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-mint-600 flex items-center gap-1"
-              >
-                {note.importData?.fileType?.toUpperCase()} File <ExternalLink className="h-3 w-3" />
-              </a>
-              {note.importData?.importedAt && (
-                <span className="text-xs text-muted-foreground ml-auto">
-                  Imported on {new Date(note.importData.importedAt).toLocaleDateString()}
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-
-        <div className="flex flex-wrap gap-2">
-          <Button 
-            variant="default" 
-            className="flex items-center gap-2 bg-mint-600 hover:bg-mint-700"
-            onClick={handleOpenStudyMode}
-          >
-            <Book className="h-4 w-4" />
-            Study Mode
-          </Button>
-        
-          <Button variant="outline" onClick={onEdit} className="flex items-center gap-2">
-            <Edit className="h-4 w-4" />
-            Edit
-          </Button>
-          <Button variant="outline" onClick={handlePin} className="flex items-center gap-2">
-            {note.pinned ? (
-              <>
-                <PinOff className="h-4 w-4" />
-                Unpin
-              </>
-            ) : (
-              <>
-                <Pin className="h-4 w-4" />
-                Pin
-              </>
-            )}
-          </Button>
-          <Button variant="outline" onClick={handleArchive} className="flex items-center gap-2">
-            <Archive className="h-4 w-4" />
-            {note.archived ? 'Restore' : 'Archive'}
-          </Button>
-          <Button 
-            variant={isDeleting ? "destructive" : "outline"} 
-            onClick={handleDelete}
-            className="flex items-center gap-2"
-          >
-            <Trash2 className="h-4 w-4" />
-            {isDeleting ? 'Confirm Delete' : 'Delete'}
-          </Button>
-        </div>
+        <NoteActionButtons
+          note={note}
+          isDeleting={isDeleting}
+          onEdit={onEdit}
+          onOpenStudyMode={handleOpenStudyMode}
+          onPin={handlePin}
+          onArchive={handleArchive}
+          onDelete={handleDelete}
+        />
       </DialogContent>
     </Dialog>
   );
 };
-
-// Helper function to determine text color based on background color
-function getBestTextColor(bgColor: string): string {
-  // Remove the hash if it exists
-  const color = bgColor.startsWith('#') ? bgColor.slice(1) : bgColor;
-  
-  // Convert to RGB
-  let r, g, b;
-  if (color.length === 3) {
-    r = parseInt(color[0] + color[0], 16);
-    g = parseInt(color[1] + color[1], 16);
-    b = parseInt(color[2] + color[2], 16);
-  } else {
-    r = parseInt(color.slice(0, 2), 16);
-    g = parseInt(color.slice(2, 4), 16);
-    b = parseInt(color.slice(4, 6), 16);
-  }
-  
-  // Calculate luminance
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  
-  // Return white for dark backgrounds, black for light backgrounds
-  return luminance > 0.5 ? 'black' : 'white';
-}
