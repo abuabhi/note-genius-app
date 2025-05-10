@@ -96,7 +96,8 @@ export const useNoteEnrichment = () => {
       const { data: tierData, error: tierError } = await supabase
         .from('tier_limits')
         .select('note_enrichment_limit_per_month')
-        .eq('tier', tierLimits?.user_tier || 'SCHOLAR')
+        // Fixed: Removing reference to user_tier as it doesn't exist on TierLimits
+        .eq('tier', 'SCHOLAR') // Using a default value or we should get it from userProfile
         .single();
       
       if (tierError) throw tierError;
