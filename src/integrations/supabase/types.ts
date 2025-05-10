@@ -436,6 +436,9 @@ export type Database = {
           id: string
           pinned: boolean | null
           source_type: string
+          summary: string | null
+          summary_generated_at: string | null
+          summary_status: string | null
           title: string
           updated_at: string
           user_id: string | null
@@ -450,6 +453,9 @@ export type Database = {
           id?: string
           pinned?: boolean | null
           source_type?: string
+          summary?: string | null
+          summary_generated_at?: string | null
+          summary_status?: string | null
           title: string
           updated_at?: string
           user_id?: string | null
@@ -464,6 +470,9 @@ export type Database = {
           id?: string
           pinned?: boolean | null
           source_type?: string
+          summary?: string | null
+          summary_generated_at?: string | null
+          summary_status?: string | null
           title?: string
           updated_at?: string
           user_id?: string | null

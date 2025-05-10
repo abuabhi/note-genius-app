@@ -14,6 +14,9 @@ export interface Note {
     name: string;
     color: string;
   }[];
+  summary?: string;
+  summary_generated_at?: string;
+  summary_status?: 'pending' | 'generating' | 'completed' | 'failed';
   scanData?: {
     originalImageUrl?: string;
     recognizedText?: string;

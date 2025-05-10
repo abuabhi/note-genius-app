@@ -15,7 +15,10 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
         content: noteData.content,
         source_type: noteData.sourceType,
         archived: noteData.archived || false,
-        pinned: noteData.pinned || false
+        pinned: noteData.pinned || false,
+        summary: noteData.summary,
+        summary_generated_at: noteData.summary_generated_at,
+        summary_status: noteData.summary_status || 'pending'
       })
       .select()
       .single();
@@ -36,6 +39,9 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
       archived: noteInsertData.archived || false,
       pinned: noteInsertData.pinned || false,
       tags: noteData.tags || [],
+      summary: noteInsertData.summary,
+      summary_generated_at: noteInsertData.summary_generated_at,
+      summary_status: noteInsertData.summary_status,
       scanData: noteData.sourceType === 'scan' && noteData.scanData ? {
         originalImageUrl: noteData.scanData.originalImageUrl,
         recognizedText: noteData.scanData.recognizedText,
@@ -79,6 +85,9 @@ export const updateNoteInDatabase = async (id: string, updatedNote: Partial<Note
   if (updatedNote.sourceType !== undefined) noteUpdateData.source_type = updatedNote.sourceType;
   if (updatedNote.archived !== undefined) noteUpdateData.archived = updatedNote.archived;
   if (updatedNote.pinned !== undefined) noteUpdateData.pinned = updatedNote.pinned;
+  if (updatedNote.summary !== undefined) noteUpdateData.summary = updatedNote.summary;
+  if (updatedNote.summary_generated_at !== undefined) noteUpdateData.summary_generated_at = updatedNote.summary_generated_at;
+  if (updatedNote.summary_status !== undefined) noteUpdateData.summary_status = updatedNote.summary_status;
 
   if (Object.keys(noteUpdateData).length > 0) {
     const { error: noteError } = await supabase

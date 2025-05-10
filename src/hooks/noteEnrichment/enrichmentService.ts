@@ -72,3 +72,27 @@ export const trackUsage = async (noteId: string, tokenUsage?: { prompt_tokens: n
     console.error('Error in trackUsage:', error);
   }
 };
+
+// Generate a summary specifically for a note card (150 characters max)
+export const generateNoteSummary = async (note: Note): Promise<string> => {
+  try {
+    // Check if we already have a recent summary (less than a day old)
+    if (note.summary && note.summary_generated_at) {
+      const lastGenerated = new Date(note.summary_generated_at);
+      const now = new Date();
+      // If less than 24 hours and content hasn't changed, return existing summary
+      if ((now.getTime() - lastGenerated.getTime()) < 24 * 60 * 60 * 1000) {
+        return note.summary;
+      }
+    }
+    
+    // Generate a new summary
+    const summary = await enrichNote(note, 'summarize');
+    
+    // Truncate to 150 characters
+    return summary.length > 150 ? summary.substring(0, 147) + '...' : summary;
+  } catch (error) {
+    console.error('Error generating note summary:', error);
+    throw error;
+  }
+};
