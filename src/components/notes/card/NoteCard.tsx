@@ -102,27 +102,29 @@ export const NoteCard = ({
           isConfirmingDelete={confirmDelete === note.id}
         />
         
-        <div className="flex flex-col">
-          <CardTitle className="text-xl text-mint-800 pr-16"> {/* Add padding-right to avoid overlap with pin */}
+        <div className="flex flex-row items-center justify-between">
+          <CardTitle className="text-xl text-mint-800 pr-8"> {/* Add padding-right to avoid overlap with pin */}
             {note.title}
           </CardTitle>
-          <span className="text-sm text-mint-600 mt-1">{note.date}</span>
+        </div>
+        
+        {/* Date and Category in same row */}
+        <div className="flex items-center justify-between mt-1">
+          <span className="text-sm text-mint-600">{note.date}</span>
+          <div className="flex items-center gap-1">
+            <FileText className="h-3 w-3 text-mint-700" />
+            <span 
+              className="text-sm font-bold italic"
+              style={{
+                color: generateColorFromString(note.category),
+              }}
+            >
+              {note.category}
+            </span>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="p-4 pt-0">
-        {/* Display Category as Bold & Italic */}
-        <div className="flex items-center gap-1 mb-2">
-          <FileText className="h-3 w-3 text-mint-700" />
-          <span 
-            className="text-sm font-bold italic"
-            style={{
-              color: generateColorFromString(note.category),
-            }}
-          >
-            {note.category}
-          </span>
-        </div>
-
         {/* Display Summary */}
         <NoteSummary
           summary={note.summary}
@@ -135,36 +137,36 @@ export const NoteCard = ({
         {/* Tags at bottom left */}
         <div className="flex-1">
           {note.tags && note.tags.length > 0 && (
-            <div className="flex items-center gap-1">
+            <div className="flex flex-wrap gap-1 items-center">
               <Tag className="h-3 w-3 text-mint-700" />
-              <div className="flex-grow">
-                <NoteTagList 
-                  tags={note.tags
-                    .filter(tag => tag.name !== note.category) // Don't show category tag twice
-                    .slice(0, 3)
-                  }
-                />
-                {note.tags.length > 4 && (
-                  <Badge variant="outline" className="text-xs mt-1">
-                    +{note.tags.length - 4} more
-                  </Badge>
-                )}
-              </div>
+              <NoteTagList 
+                tags={note.tags
+                  .filter(tag => tag.name !== note.category) // Don't show category tag twice
+                  .slice(0, 3)
+                }
+              />
+              {note.tags.length > 4 && (
+                <Badge variant="outline" className="text-xs mt-1">
+                  +{note.tags.length - 4} more
+                </Badge>
+              )}
             </div>
           )}
           
-          {note.sourceType === 'scan' && (
-            <div className="flex items-center mt-2">
-              <Camera className="h-3 w-3 text-mint-500 mr-1" />
-              <span className="text-xs text-mint-500">Scanned</span>
-            </div>
-          )}
-          {note.archived && (
-            <div className="flex items-center mt-2">
-              <Archive className="h-3 w-3 text-mint-500 mr-1" />
-              <span className="text-xs text-mint-500">Archived</span>
-            </div>
-          )}
+          <div className="flex flex-wrap mt-1 gap-2">
+            {note.sourceType === 'scan' && (
+              <div className="flex items-center">
+                <Camera className="h-3 w-3 text-mint-500 mr-1" />
+                <span className="text-xs text-mint-500">Scanned</span>
+              </div>
+            )}
+            {note.archived && (
+              <div className="flex items-center">
+                <Archive className="h-3 w-3 text-mint-500 mr-1" />
+                <span className="text-xs text-mint-500">Archived</span>
+              </div>
+            )}
+          </div>
         </div>
         
         {/* Study Mode button at bottom right */}
