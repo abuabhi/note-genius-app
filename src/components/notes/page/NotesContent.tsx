@@ -10,6 +10,10 @@ import { Note } from "@/types/note";
 import { useRequireAuth, TierLimits, UserTier } from "@/hooks/useRequireAuth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { CreateNoteForm } from "./CreateNoteForm";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ScanNoteDialog } from "../ScanNoteDialog";
+import { ImportDialog } from "../import/ImportDialog";
 
 interface NotesContentProps {
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
@@ -30,6 +34,11 @@ export const NotesContent = ({
   const { toast } = useToast();
   const { user, loading: authLoading } = useRequireAuth();
   const isAuthorized = !!user;
+  
+  // State for dialog visibility
+  const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
+  const [isScanDialogOpen, setIsScanDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
   // Show loading state while checking authentication
   if (authLoading || loading) {
@@ -47,6 +56,18 @@ export const NotesContent = ({
   if (!isAuthorized) {
     return null;
   }
+
+  // When passing to ScanNoteDialog, convert the return type
+  const handleScanSave = async (note: Omit<Note, 'id'>): Promise<boolean> => {
+    const result = await onScanNote(note);
+    return result !== null;
+  };
+
+  // Similarly for ImportDialog
+  const handleImportSave = async (note: Omit<Note, 'id'>): Promise<boolean> => {
+    const result = await onImportNote(note);
+    return result !== null;
+  };
 
   // Display tier limit warning if user is approaching their limit
   const showTierWarning = tierLimits && notes.length >= tierLimits.max_notes * 0.8;
@@ -104,6 +125,42 @@ export const NotesContent = ({
           <NotePagination />
         </>
       )}
+
+      {/* Manual Entry Dialog */}
+      <Dialog open={isManualDialogOpen} onOpenChange={setIsManualDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-mint-200 bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-mint-800">Create New Note</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Fill out the form below to create a new note.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            <CreateNoteForm 
+              onSave={async (note) => {
+                const result = await onSaveNote(note);
+                if (result) setIsManualDialogOpen(false);
+                return result;
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Scan Dialog is handled by its own component */}
+      <ScanNoteDialog 
+        onSaveNote={handleScanSave} 
+        isPremiumUser={tierLimits?.ocr_enabled ?? false} 
+        isVisible={isScanDialogOpen}
+        onClose={() => setIsScanDialogOpen(false)}
+      />
+      
+      {/* Import Dialog is handled by its own component */}
+      <ImportDialog 
+        onSaveNote={handleImportSave}
+        isVisible={isImportDialogOpen}
+        onClose={() => setIsImportDialogOpen(false)}
+      />
     </div>
   );
 };
