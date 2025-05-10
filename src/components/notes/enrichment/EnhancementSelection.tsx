@@ -27,10 +27,6 @@ export const EnhancementSelection: React.FC<EnhancementSelectionProps> = ({
     }
   };
 
-  // Debugging
-  console.log("Enhancement options:", options);
-  console.log("Currently selected enhancement:", selectedEnhancement);
-
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
       {options.map((option) => (
