@@ -6,23 +6,27 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import {
-  Blocks,
+  Activity,
+  BookOpen,
+  Calendar,
   ChevronsUpDown,
-  FileClock,
+  Clock,
+  FileText,
   GraduationCap,
   Layout,
   LayoutDashboard,
+  ListTodo,
   LogOut,
-  MessageSquareText,
-  MessagesSquare,
-  Plus,
+  MessageSquare,
   Settings,
+  Target,
+  User,
   UserCircle,
   UserCog,
-  UserSearch,
+  Users,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -83,7 +87,8 @@ export function CustomSidebar() {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const { user, userProfile } = useRequireAuth();
   const isAdmin = userProfile?.user_tier === UserTier.DEAN;
-  const pathname = window.location.pathname;
+  const location = useLocation();
+  const pathname = location.pathname;
   
   return (
     <motion.div
@@ -145,7 +150,7 @@ export function CustomSidebar() {
                         className="flex items-center gap-2"
                       >
                         <Link to="/admin/users">
-                          <Blocks className="h-4 w-4" /> Admin Panel
+                          <User className="h-4 w-4" /> Admin Panel
                         </Link>
                       </DropdownMenuItem>
                     )}
@@ -158,142 +163,213 @@ export function CustomSidebar() {
               <div className="flex grow flex-col gap-4">
                 <ScrollArea className="h-16 grow p-2">
                   <div className={cn("flex w-full flex-col gap-1")}>
-                    <Link
-                      to="/dashboard"
-                      className={cn(
-                        "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
-                        pathname?.includes("dashboard") &&
-                          "bg-muted text-mint-600",
-                      )}
-                    >
-                      <LayoutDashboard className="h-4 w-4" />
-                      <motion.li variants={variants}>
-                        {!isCollapsed && (
-                          <p className="ml-2 text-sm font-medium">Dashboard</p>
+                    {/* Main Section */}
+                    <div className="py-1">
+                      <p className="px-2 text-xs font-medium text-muted-foreground mb-1">Main</p>
+                      <Link
+                        to="/dashboard"
+                        className={cn(
+                          "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
+                          pathname === "/dashboard" && "bg-muted text-mint-600",
                         )}
-                      </motion.li>
-                    </Link>
-                    <Link
-                      to="/notes"
-                      className={cn(
-                        "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
-                        pathname?.includes("notes") &&
-                          "bg-muted text-mint-600",
-                      )}
-                    >
-                      <FileClock className="h-4 w-4" />
-                      <motion.li variants={variants}>
-                        {!isCollapsed && (
-                          <div className="flex items-center gap-2">
+                      >
+                        <LayoutDashboard className="h-4 w-4" />
+                        <motion.li variants={variants}>
+                          {!isCollapsed && (
+                            <p className="ml-2 text-sm font-medium">Dashboard</p>
+                          )}
+                        </motion.li>
+                      </Link>
+                    </div>
+
+                    {/* Study Tools Section */}
+                    <div className="py-1">
+                      <p className="px-2 text-xs font-medium text-muted-foreground mb-1">Study Tools</p>
+                      <Link
+                        to="/notes"
+                        className={cn(
+                          "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
+                          pathname?.includes("/notes") && "bg-muted text-mint-600",
+                        )}
+                      >
+                        <FileText className="h-4 w-4" />
+                        <motion.li variants={variants}>
+                          {!isCollapsed && (
                             <p className="ml-2 text-sm font-medium">Notes</p>
-                          </div>
+                          )}
+                        </motion.li>
+                      </Link>
+                      <Link
+                        to="/flashcards"
+                        className={cn(
+                          "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
+                          pathname?.includes("/flashcards") && "bg-muted text-mint-600",
                         )}
-                      </motion.li>
-                    </Link>
-                    <Link
-                      to="/chat"
-                      className={cn(
-                        "flex h-8 flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
-                        pathname?.includes("chat") && "bg-muted text-mint-600",
-                      )}
-                    >
-                      <MessagesSquare className="h-4 w-4" />
-                      <motion.li variants={variants}>
-                        {!isCollapsed && (
-                          <div className="ml-2 flex items-center gap-2">
-                            <p className="text-sm font-medium">Chat</p>
-                            <Badge
-                              className={cn(
-                                "flex h-fit w-fit items-center gap-1.5 rounded border-none bg-mint-50 px-1.5 text-mint-600 dark:bg-mint-700 dark:text-mint-300",
-                              )}
-                              variant="outline"
-                            >
-                              BETA
-                            </Badge>
-                          </div>
+                      >
+                        <BookOpen className="h-4 w-4" />
+                        <motion.li variants={variants}>
+                          {!isCollapsed && (
+                            <p className="ml-2 text-sm font-medium">Flashcards</p>
+                          )}
+                        </motion.li>
+                      </Link>
+                      <Link
+                        to="/study-sessions"
+                        className={cn(
+                          "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
+                          pathname?.includes("/study-sessions") && "bg-muted text-mint-600",
                         )}
-                      </motion.li>
-                    </Link>
-                    <Separator className="w-full" />
-                    <Link
-                      to="/flashcards"
-                      className={cn(
-                        "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
-                        pathname?.includes("flashcards") && "bg-muted text-mint-600",
-                      )}
-                    >
-                      <Layout className="h-4 w-4" />
-                      <motion.li variants={variants}>
-                        {!isCollapsed && (
-                          <p className="ml-2 text-sm font-medium">Flashcards</p>
+                      >
+                        <Clock className="h-4 w-4" />
+                        <motion.li variants={variants}>
+                          {!isCollapsed && (
+                            <p className="ml-2 text-sm font-medium">Study Sessions</p>
+                          )}
+                        </motion.li>
+                      </Link>
+                      <Link
+                        to="/quizzes"
+                        className={cn(
+                          "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
+                          pathname?.includes("/quizzes") && "bg-muted text-mint-600",
                         )}
-                      </motion.li>
-                    </Link>
-                    <Link
-                      to="/study"
-                      className={cn(
-                        "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
-                        pathname?.includes("study") &&
-                          "bg-muted text-mint-600",
-                      )}
-                    >
-                      <UserCircle className="h-4 w-4" />
-                      <motion.li variants={variants}>
-                        {!isCollapsed && (
-                          <p className="ml-2 text-sm font-medium">Study</p>
+                      >
+                        <Activity className="h-4 w-4" />
+                        <motion.li variants={variants}>
+                          {!isCollapsed && (
+                            <p className="ml-2 text-sm font-medium">Quizzes</p>
+                          )}
+                        </motion.li>
+                      </Link>
+                    </div>
+
+                    {/* Planning Section */}
+                    <div className="py-1">
+                      <p className="px-2 text-xs font-medium text-muted-foreground mb-1">Planning</p>
+                      <Link
+                        to="/schedule"
+                        className={cn(
+                          "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
+                          pathname?.includes("/schedule") && "bg-muted text-mint-600",
                         )}
-                      </motion.li>
-                    </Link>
-                    <Link
-                      to="/quizzes"
-                      className={cn(
-                        "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
-                        pathname?.includes("quizzes") &&
-                          "bg-muted text-mint-600",
-                      )}
-                    >
-                      <UserSearch className="h-4 w-4" />
-                      <motion.li variants={variants}>
-                        {!isCollapsed && (
-                          <p className="ml-2 text-sm font-medium">
-                            Quizzes
-                          </p>
+                      >
+                        <Calendar className="h-4 w-4" />
+                        <motion.li variants={variants}>
+                          {!isCollapsed && (
+                            <p className="ml-2 text-sm font-medium">Schedule</p>
+                          )}
+                        </motion.li>
+                      </Link>
+                      <Link
+                        to="/goals"
+                        className={cn(
+                          "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
+                          pathname?.includes("/goals") && "bg-muted text-mint-600",
                         )}
-                      </motion.li>
-                    </Link>
-                    <Separator className="w-full" />
-                    <Link
-                      to="/library"
-                      className={cn(
-                        "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
-                        pathname?.includes("library") &&
-                          "bg-muted text-mint-600",
-                      )}
-                    >
-                      <GraduationCap className="h-4 w-4" />
-                      <motion.li variants={variants}>
-                        {!isCollapsed && (
-                          <p className="ml-2 text-sm font-medium">
-                            Library
-                          </p>
+                      >
+                        <Target className="h-4 w-4" />
+                        <motion.li variants={variants}>
+                          {!isCollapsed && (
+                            <p className="ml-2 text-sm font-medium">Goals</p>
+                          )}
+                        </motion.li>
+                      </Link>
+                      <Link
+                        to="/todos"
+                        className={cn(
+                          "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
+                          pathname?.includes("/todos") && "bg-muted text-mint-600",
                         )}
-                      </motion.li>
-                    </Link>
-                    <Link
-                      to="/progress"
-                      className={cn(
-                        "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
-                        pathname?.includes("progress") &&
-                          "bg-muted text-mint-600",
-                      )}
-                    >
-                      <MessageSquareText className="h-4 w-4" />
-                      <motion.li variants={variants}>
-                        {!isCollapsed && (
-                          <p className="ml-2 text-sm font-medium">Progress</p>
+                      >
+                        <ListTodo className="h-4 w-4" />
+                        <motion.li variants={variants}>
+                          {!isCollapsed && (
+                            <p className="ml-2 text-sm font-medium">Todos</p>
+                          )}
+                        </motion.li>
+                      </Link>
+                    </div>
+
+                    {/* Progress Section */}
+                    <div className="py-1">
+                      <p className="px-2 text-xs font-medium text-muted-foreground mb-1">Progress</p>
+                      <Link
+                        to="/progress"
+                        className={cn(
+                          "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
+                          pathname?.includes("/progress") && "bg-muted text-mint-600",
                         )}
-                      </motion.li>
-                    </Link>
+                      >
+                        <Activity className="h-4 w-4" />
+                        <motion.li variants={variants}>
+                          {!isCollapsed && (
+                            <p className="ml-2 text-sm font-medium">Progress</p>
+                          )}
+                        </motion.li>
+                      </Link>
+                    </div>
+
+                    {/* Communication Section */}
+                    <div className="py-1">
+                      <p className="px-2 text-xs font-medium text-muted-foreground mb-1">Communication</p>
+                      <Link
+                        to="/chat"
+                        className={cn(
+                          "flex h-8 flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
+                          pathname?.includes("/chat") && "bg-muted text-mint-600",
+                        )}
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                        <motion.li variants={variants}>
+                          {!isCollapsed && (
+                            <div className="ml-2 flex items-center gap-2">
+                              <p className="text-sm font-medium">Chat</p>
+                              <Badge
+                                className={cn(
+                                  "flex h-fit w-fit items-center gap-1.5 rounded border-none bg-mint-50 px-1.5 text-mint-600 dark:bg-mint-700 dark:text-mint-300",
+                                )}
+                                variant="outline"
+                              >
+                                BETA
+                              </Badge>
+                            </div>
+                          )}
+                        </motion.li>
+                      </Link>
+                      <Link
+                        to="/collaborate"
+                        className={cn(
+                          "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
+                          pathname?.includes("/collaborate") && "bg-muted text-mint-600",
+                        )}
+                      >
+                        <Users className="h-4 w-4" />
+                        <motion.li variants={variants}>
+                          {!isCollapsed && (
+                            <p className="ml-2 text-sm font-medium">Collaboration</p>
+                          )}
+                        </motion.li>
+                      </Link>
+                    </div>
+
+                    {/* Library Section */}
+                    <div className="py-1">
+                      <p className="px-2 text-xs font-medium text-muted-foreground mb-1">Resources</p>
+                      <Link
+                        to="/library"
+                        className={cn(
+                          "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
+                          pathname?.includes("/library") && "bg-muted text-mint-600",
+                        )}
+                      >
+                        <GraduationCap className="h-4 w-4" />
+                        <motion.li variants={variants}>
+                          {!isCollapsed && (
+                            <p className="ml-2 text-sm font-medium">Library</p>
+                          )}
+                        </motion.li>
+                      </Link>
+                    </div>
                   </div>
                 </ScrollArea>
               </div>
