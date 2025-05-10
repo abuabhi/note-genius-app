@@ -2,7 +2,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import {
-  AlignLeft,
   AlignCenter,
   AlignJustify,
   Maximize,
@@ -11,6 +10,8 @@ import {
   LayoutTemplate,
   Plus,
   Minus,
+  Edit,
+  Save
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -25,11 +26,15 @@ interface StudyViewControlsProps {
   textAlign: TextAlignType;
   isFullWidth: boolean;
   isFullScreen: boolean;
+  isEditing?: boolean;
+  isSaving?: boolean;
   onIncreaseFontSize: () => void;
   onDecreaseFontSize: () => void;
   onChangeTextAlign: (align: TextAlignType) => void;
   onToggleWidth: () => void;
   onToggleFullScreen: () => void;
+  onToggleEditing?: () => void;
+  onSave?: () => void;
 }
 
 export const StudyViewControls: React.FC<StudyViewControlsProps> = ({
@@ -37,23 +42,25 @@ export const StudyViewControls: React.FC<StudyViewControlsProps> = ({
   textAlign,
   isFullWidth,
   isFullScreen,
+  isEditing = false,
+  isSaving = false,
   onIncreaseFontSize,
   onDecreaseFontSize,
   onChangeTextAlign,
   onToggleWidth,
   onToggleFullScreen,
+  onToggleEditing,
+  onSave
 }) => {
   // Get the right alignment icon based on the current alignment
   const getAlignmentIcon = () => {
     switch (textAlign) {
-      case "left":
-        return <AlignLeft className="h-4 w-4" />;
       case "center":
         return <AlignCenter className="h-4 w-4" />;
       case "justify":
         return <AlignJustify className="h-4 w-4" />;
       default:
-        return <AlignLeft className="h-4 w-4" />;
+        return <AlignCenter className="h-4 w-4" />;
     }
   };
 
@@ -83,6 +90,34 @@ export const StudyViewControls: React.FC<StudyViewControlsProps> = ({
         </Button>
       </div>
 
+      {/* Edit/Save Button */}
+      {onToggleEditing && onSave && (
+        isEditing ? (
+          <Button
+            variant="default"
+            size="sm"
+            onClick={onSave}
+            disabled={isSaving}
+            className="h-8 flex items-center gap-1 bg-mint-600 hover:bg-mint-700"
+            title="Save changes"
+          >
+            <Save className="h-4 w-4" />
+            <span className="hidden sm:inline">Save</span>
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onToggleEditing}
+            className="h-8 flex items-center gap-1"
+            title="Edit note"
+          >
+            <Edit className="h-4 w-4" />
+            <span className="hidden sm:inline">Edit</span>
+          </Button>
+        )
+      )}
+
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -95,10 +130,6 @@ export const StudyViewControls: React.FC<StudyViewControlsProps> = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => onChangeTextAlign("left")}>
-            <AlignLeft className="h-4 w-4 mr-2" />
-            <span>Align Left</span>
-          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onChangeTextAlign("center")}>
             <AlignCenter className="h-4 w-4 mr-2" />
             <span>Align Center</span>

@@ -70,31 +70,6 @@ export const StudyViewHeader: React.FC<StudyViewHeaderProps> = ({
           <CardTitle className="text-xl md:text-2xl text-mint-800">
             {note.title}
           </CardTitle>
-          
-          {isEditing ? (
-            <div className="flex items-center gap-1">
-              <Button
-                variant="default"
-                size="sm"
-                onClick={onSave}
-                disabled={isSaving}
-                className="flex items-center gap-1 bg-mint-600 hover:bg-mint-700"
-              >
-                <Save className="h-4 w-4" />
-                <span className="hidden sm:inline">Save</span>
-              </Button>
-            </div>
-          ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onToggleEditing}
-              className="flex items-center gap-1"
-            >
-              <Edit className="h-4 w-4" />
-              <span>Edit Note</span>
-            </Button>
-          )}
         </div>
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <span>{format(new Date(note.date), 'MMM d, yyyy')}</span>
@@ -133,6 +108,10 @@ export const StudyViewHeader: React.FC<StudyViewHeaderProps> = ({
         onChangeTextAlign={onChangeTextAlign}
         onToggleWidth={onToggleWidth}
         onToggleFullScreen={onToggleFullScreen}
+        isEditing={isEditing}
+        onToggleEditing={onToggleEditing}
+        onSave={onSave}
+        isSaving={isSaving}
       />
     </CardHeader>
   );
