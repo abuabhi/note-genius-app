@@ -127,7 +127,7 @@ export function CreateEventDialog({
       if (error) throw error;
 
       toast.success("Event created successfully");
-      onEventCreated?.();
+      onEventCreated?.(); // Call the callback to trigger a refresh
       onClose();
     } catch (error) {
       console.error("Error creating event:", error);

@@ -40,7 +40,7 @@ export const useEvents = (currentDate: Date = new Date()) => {
   }, [currentDate]);
 
   // Fetch events for the current month with improved error handling
-  const { data: events = [], isLoading, error } = useQuery({
+  const { data: events = [], isLoading, error, refetch: refetchEvents } = useQuery({
     queryKey: ['events', user?.id, dateRange.start.toISOString(), dateRange.end.toISOString()],
     queryFn: async () => {
       if (!user) return [];
@@ -127,6 +127,7 @@ export const useEvents = (currentDate: Date = new Date()) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
+      refetchEvents(); // Explicitly refetch events after successful creation
       toast.success('Event created successfully!');
     },
     onError: (error) => {
@@ -148,6 +149,7 @@ export const useEvents = (currentDate: Date = new Date()) => {
     },
     onSuccess: (eventId) => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
+      refetchEvents(); // Explicitly refetch events after successful deletion
       toast.success('Event deleted successfully!');
     },
     onError: (error) => {
@@ -177,5 +179,6 @@ export const useEvents = (currentDate: Date = new Date()) => {
     deleteEvent,
     loadAdjacentMonth,
     updateDateRange: setDateRange,
+    refetchEvents, // Export the refetchEvents function
   };
 };

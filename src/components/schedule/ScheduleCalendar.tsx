@@ -21,7 +21,7 @@ interface ScheduleCalendarProps {
 const localizer = momentLocalizer(moment);
 
 export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ selectedDate, onDateChange }) => {
-  const { events, isLoading, error, createEvent, deleteEvent } = useEvents(selectedDate);
+  const { events, isLoading, error, createEvent, deleteEvent, refetchEvents } = useEvents(selectedDate);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   
   const [formattedEvents, setFormattedEvents] = useState<any[]>([]);
@@ -55,7 +55,8 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ selectedDate
   };
   
   const handleEventCreated = () => {
-    // Refetch events or update UI as needed
+    // Refetch events after a new event is created
+    refetchEvents();
     toast.success("Event created successfully");
   };
 
