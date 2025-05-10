@@ -38,6 +38,7 @@ export const ImageProcessor = ({
   const [processedAt, setProcessedAt] = useState<string | null>(null);
   const [useOpenAI, setUseOpenAI] = useState(false);
   const [isEnhanced, setIsEnhanced] = useState(false);
+  const [processingAttempts, setProcessingAttempts] = useState(0);
   const { toast } = useToast();
   const { availableLanguages, getLanguageNameByCode } = useOCRLanguage();
 
@@ -52,6 +53,9 @@ export const ImageProcessor = ({
     setProcessingError(null);
     
     try {
+      console.log("Starting OCR processing...");
+      setProcessingAttempts(prev => prev + 1);
+      
       // Get current user session
       const { data: { session } } = await supabase.auth.getSession();
       const userId = session?.user?.id;
@@ -60,6 +64,7 @@ export const ImageProcessor = ({
       let processedUrl = url;
       if (isEnhanced) {
         try {
+          console.log("Enhancing image before OCR processing");
           processedUrl = await enhanceImage(url);
         } catch (enhanceError) {
           console.error('Image enhancement error:', enhanceError);
@@ -71,6 +76,8 @@ export const ImageProcessor = ({
         }
       }
 
+      console.log("Calling process-image edge function");
+      
       // Call our Supabase edge function for OCR processing
       const { data, error } = await supabase.functions.invoke('process-image', {
         body: { 
@@ -83,8 +90,16 @@ export const ImageProcessor = ({
       });
       
       if (error) {
-        throw new Error(error.message);
+        console.error("Edge function error:", error);
+        throw new Error(error.message || "Failed to process image");
       }
+      
+      if (!data || !data.text) {
+        console.error("Invalid response data:", data);
+        throw new Error("Invalid response from OCR service");
+      }
+      
+      console.log("OCR processing completed successfully:", data);
       
       // Process response data
       setRecognizedText(data.text);
@@ -94,6 +109,7 @@ export const ImageProcessor = ({
       
       const providerName = data.provider === 'openai' ? 'OpenAI' : 
                            data.provider === 'google-vision' ? 'Google Vision' : 
+                           data.provider === 'mock' ? 'Demo Mode' :
                            'OCR Engine';
       
       toast({
@@ -138,8 +154,8 @@ export const ImageProcessor = ({
     if (newValue && !isPremiumUser) {
       toast({
         title: "Premium Feature",
-        description: "OpenAI processing is only available for premium users. Using Tesseract OCR instead.",
-        variant: "destructive", // Changed from "warning" to "destructive"
+        description: "OpenAI processing is only available for premium users. Using standard OCR instead.",
+        variant: "destructive",
       });
       return;
     }

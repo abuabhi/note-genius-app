@@ -33,34 +33,56 @@ serve(async (req) => {
       throw new Error("Image URL is required");
     }
     
-    console.log(`Processing image: ${imageUrl}, language: ${language}, useOpenAI: ${useOpenAI}, enhanceImage: ${enhanceImage}`);
+    console.log(`Processing image: ${imageUrl.substring(0, 50)}..., language: ${language}, useOpenAI: ${useOpenAI}, enhanceImage: ${enhanceImage}`);
     
     // Fetch the image
     let imageData: string | ArrayBuffer = imageUrl;
     
     // If the imageUrl is an actual URL (not a data URL), fetch it
     if (imageUrl.startsWith('http')) {
-      const response = await fetch(imageUrl);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch image: ${response.statusText}`);
+      console.log("Fetching image from URL...");
+      try {
+        const response = await fetch(imageUrl);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch image: ${response.statusText}`);
+        }
+        
+        // Get the image as an array buffer
+        imageData = await response.arrayBuffer();
+        
+        // Convert to base64 for processing if needed
+        const base64 = btoa(String.fromCharCode(...new Uint8Array(imageData)));
+        imageData = `data:${response.headers.get("content-type") || "image/png"};base64,${base64}`;
+        console.log("Image successfully converted to data URL");
+      } catch (fetchError) {
+        console.error("Error fetching image:", fetchError);
+        throw fetchError;
       }
-      
-      // Get the image as an array buffer
-      imageData = await response.arrayBuffer();
-      
-      // Convert to base64 for processing if needed
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(imageData)));
-      imageData = `data:${response.headers.get("content-type") || "image/png"};base64,${base64}`;
     }
+    
+    // Check if we have API keys before attempting to use the services
+    const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
+    const googleApiKey = Deno.env.get("GOOGLE_CLOUD_API_KEY");
+    
+    console.log(`API Keys available: OpenAI: ${openaiApiKey ? "Yes" : "No"}, Google Cloud: ${googleApiKey ? "Yes" : "No"}`);
     
     // Choose OCR provider based on parameters
     let result: OCRResult;
     
-    if (useOpenAI && Deno.env.get("OPENAI_API_KEY")) {
+    if (useOpenAI && openaiApiKey) {
       // Use OpenAI Vision API for premium users
-      result = await processWithOpenAI(imageData.toString(), language);
+      console.log("Using OpenAI Vision API for OCR...");
+      try {
+        result = await processWithOpenAI(imageData.toString(), language);
+        console.log("OpenAI processing completed successfully");
+      } catch (openaiError) {
+        console.error("OpenAI processing failed, falling back to Google Cloud Vision:", openaiError);
+        // If OpenAI fails, fallback to Google Cloud Vision or mock
+        result = await processWithCloudOCR(imageData.toString(), language, enhanceImage);
+      }
     } else {
       // Use Cloud Vision API (or fallback to mock response)
+      console.log("Using Google Cloud Vision API or mock for OCR...");
       result = await processWithCloudOCR(imageData.toString(), language, enhanceImage);
     }
     
@@ -70,6 +92,8 @@ serve(async (req) => {
       // Here you would typically log to a database
       // This would be implemented based on your usage tracking needs
     }
+    
+    console.log("Returning OCR result");
     
     return new Response(
       JSON.stringify({
@@ -143,10 +167,18 @@ async function processWithOpenAI(imageData: string, language: string): Promise<O
     
     if (!response.ok) {
       const error = await response.json();
+      console.error("OpenAI API error response:", error);
       throw new Error(`OpenAI API error: ${JSON.stringify(error)}`);
     }
     
     const data = await response.json();
+    console.log("OpenAI response received");
+    
+    if (!data.choices || data.choices.length === 0) {
+      console.error("Invalid OpenAI response structure:", data);
+      throw new Error("Invalid response from OpenAI");
+    }
+    
     const extractedText = data.choices[0].message.content.trim();
     
     return {
@@ -157,7 +189,7 @@ async function processWithOpenAI(imageData: string, language: string): Promise<O
       provider: "openai"
     };
   } catch (error) {
-    console.error("OpenAI processing error:", error);
+    console.error("OpenAI processing error details:", error);
     throw new Error(`OpenAI processing failed: ${error.message}`);
   }
 }
