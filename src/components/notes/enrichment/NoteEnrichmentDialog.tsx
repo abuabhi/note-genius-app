@@ -9,12 +9,13 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { useNoteEnrichment, EnhancementFunction } from '@/hooks/useNoteEnrichment';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/sonner';
 import { Progress } from "@/components/ui/progress";
 import { PremiumFeatureNotice } from './PremiumFeatureNotice';
 import { EnhancementSelection } from './EnhancementSelection';
 import { EnhancementProcessing } from './EnhancementProcessing';
 import { EnhancementResults } from './EnhancementResults';
+import { AlertCircle } from 'lucide-react';
 
 interface NoteEnrichmentDialogProps {
   open: boolean;
@@ -44,24 +45,25 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
     enhancementOptions
   } = useNoteEnrichment();
   
-  const { toast } = useToast();
   const [selectedEnhancement, setSelectedEnhancement] = useState<EnhancementFunction | null>(null);
+  const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
     if (open) {
+      setError(null);
       initialize();
     }
   }, [open, initialize]);
   
   const handleEnhancement = async () => {
     if (!selectedEnhancement) {
-      toast({
-        title: "Enhancement required",
+      toast("Enhancement required", {
         description: "Please select an enhancement type",
-        variant: "destructive"
       });
       return;
     }
+    
+    setError(null);
     
     const result = await enrichNote(
       noteId, 
@@ -71,19 +73,29 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
     );
     
     if (!result) {
-      return; // Error already handled in the hook
+      setError("Failed to enhance note. Please try again.");
     }
   };
   
   const handleApplyEnhancement = () => {
     if (enhancedContent) {
       onApplyEnhancement(enhancedContent);
-      toast({
-        title: "Enhancement applied",
+      toast("Enhancement applied", {
         description: "Your note has been updated with the enhanced content"
       });
       onOpenChange(false);
     }
+  };
+  
+  const handleRetry = () => {
+    setError(null);
+    handleEnhancement();
+  };
+  
+  const handleClose = () => {
+    setError(null);
+    setSelectedEnhancement(null);
+    onOpenChange(false);
   };
   
   // If feature is not enabled, show premium notice
@@ -98,7 +110,7 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
   }
   
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Enhance Your Note</DialogTitle>
@@ -115,8 +127,27 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
           )}
         </div>
 
+        {/* Error Display */}
+        {error && (
+          <div className="p-4 border border-red-200 bg-red-50 rounded-md flex items-start gap-2 mb-4">
+            <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-red-700 font-medium">Enhancement failed</p>
+              <p className="text-red-600 text-sm">{error}</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2 text-red-600 border-red-300 hover:bg-red-50"
+                onClick={handleRetry}
+              >
+                Try Again
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Enhancement Selection */}
-        {!enhancedContent && !isLoading && (
+        {!enhancedContent && !isLoading && !error && (
           <EnhancementSelection 
             options={enhancementOptions}
             selectedEnhancement={selectedEnhancement}
@@ -138,14 +169,16 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
         <DialogFooter className="flex justify-between mt-4">
           <Button 
             variant="outline" 
-            onClick={() => onOpenChange(false)}
+            onClick={handleClose}
+            className="border-mint-200 hover:bg-mint-50 hover:text-mint-700"
           >
             Cancel
           </Button>
-          {!enhancedContent && !isLoading && (
+          {!enhancedContent && !isLoading && !error && (
             <Button 
               onClick={handleEnhancement}
               disabled={!selectedEnhancement || isLoading}
+              className="bg-mint-500 hover:bg-mint-600 text-white"
             >
               Generate Enhancement
             </Button>

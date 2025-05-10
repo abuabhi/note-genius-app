@@ -8,6 +8,7 @@ export function useEnrichmentService() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [enhancedContent, setEnhancedContent] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Enrich note content using the edge function
   const enrichNote = async (
@@ -38,6 +39,7 @@ export function useEnrichmentService() {
     
     setIsLoading(true);
     setEnhancedContent(null);
+    setError(null);
     
     try {
       // Get auth token
@@ -63,10 +65,22 @@ export function useEnrichmentService() {
         })
       });
       
-      const result = await response.json();
+      // Handle non-JSON responses or network errors
+      let result;
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        console.error('Error parsing response:', parseError);
+        throw new Error('Invalid response from server. Please try again later.');
+      }
       
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to enrich note');
+        console.error('Server error response:', result);
+        throw new Error(result.error || `Failed to enrich note: ${response.status}`);
+      }
+      
+      if (!result.enhancedContent) {
+        throw new Error('No content received from the enhancement service');
       }
       
       setEnhancedContent(result.enhancedContent);
@@ -74,9 +88,11 @@ export function useEnrichmentService() {
       return result;
     } catch (error) {
       console.error('Error enriching note:', error);
+      const errorMessage = error instanceof Error ? error.message : "An error occurred";
+      setError(errorMessage);
       toast({
         title: "Enhancement failed",
-        description: error instanceof Error ? error.message : "An error occurred",
+        description: errorMessage,
         variant: "destructive"
       });
       return null;
@@ -89,6 +105,8 @@ export function useEnrichmentService() {
     enrichNote,
     isLoading,
     enhancedContent,
-    setEnhancedContent
+    error,
+    setEnhancedContent,
+    setError
   };
 }

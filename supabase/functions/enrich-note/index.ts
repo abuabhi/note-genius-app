@@ -149,11 +149,34 @@ Response Guidelines:
       }),
     });
     
-    const openAIData = await openAIResponse.json();
+    // Check if the response is valid before trying to parse JSON
+    if (!openAIResponse.ok) {
+      const errorText = await openAIResponse.text();
+      console.error('OpenAI API error:', openAIResponse.status, errorText);
+      return new Response(
+        JSON.stringify({ 
+          error: `OpenAI API error: ${openAIResponse.status}`, 
+          details: errorText
+        }),
+        { status: openAIResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Try to parse the response safely
+    let openAIData;
+    try {
+      openAIData = await openAIResponse.json();
+    } catch (parseError) {
+      console.error('Failed to parse OpenAI response:', parseError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to parse API response', details: parseError.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     if (!openAIData.choices || openAIData.choices.length === 0) {
       return new Response(
-        JSON.stringify({ error: 'Failed to generate enhancement', details: openAIData.error }),
+        JSON.stringify({ error: 'Invalid response from OpenAI API', details: openAIData }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -177,7 +200,7 @@ Response Guidelines:
       console.error('Failed to record usage:', recordError);
     }
     
-    // Return the enhanced content
+    // Return the enhanced content with additional error handling
     return new Response(
       JSON.stringify({ 
         enhancedContent,
