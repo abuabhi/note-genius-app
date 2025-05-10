@@ -11,7 +11,8 @@ export const useNoteStudyEditor = (note: Note) => {
   const [editableContent, setEditableContent] = useState(note.content || '');
   const [isSaving, setIsSaving] = useState(false);
   const [selectedTags, setSelectedTags] = useState<{ id?: string; name: string; color: string }[]>(
-    note.tags || []
+    // Create a deep copy of the tags to prevent reference issues
+    (note.tags || []).map(tag => ({...tag}))
   );
   const { getAllTags } = useNotes();
   const [availableTags, setAvailableTags] = useState<{ id: string; name: string; color: string }[]>([]);
@@ -31,12 +32,14 @@ export const useNoteStudyEditor = (note: Note) => {
       // Cancel editing, restore original content
       setEditableContent(note.content || '');
       setEditableTitle(note.title || '');
-      setSelectedTags(note.tags || []);
+      // Create a deep copy of the original tags
+      setSelectedTags((note.tags || []).map(tag => ({...tag})));
     } else {
       // Start editing
       setEditableContent(note.content || '');
       setEditableTitle(note.title || '');
-      setSelectedTags(note.tags || []);
+      // Create a deep copy of the original tags
+      setSelectedTags((note.tags || []).map(tag => ({...tag})));
     }
     setIsEditing(!isEditing);
   };
@@ -54,9 +57,11 @@ export const useNoteStudyEditor = (note: Note) => {
   // Save content changes
   const handleSaveContent = async () => {
     // Check if anything changed
+    const tagsChanged = JSON.stringify(selectedTags) !== JSON.stringify(note.tags);
+    
     if (editableContent === note.content && 
         editableTitle === note.title &&
-        JSON.stringify(selectedTags) === JSON.stringify(note.tags)) {
+        !tagsChanged) {
       setIsEditing(false);
       return;
     }
@@ -72,7 +77,8 @@ export const useNoteStudyEditor = (note: Note) => {
       // We need to update the note in our view
       note.content = editableContent;
       note.title = editableTitle;
-      note.tags = selectedTags;
+      // Create a deep copy to prevent reference issues
+      note.tags = selectedTags.map(tag => ({...tag}));
       setIsEditing(false);
     } catch (error) {
       toast("Failed to save changes", {

@@ -69,14 +69,18 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
 
   const handleTagRemove = (tagToRemove: { id?: string; name: string; color: string }) => {
     console.log("Removing tag:", tagToRemove);
-    const updatedTags = selectedTags.filter((tag) => {
-      // If both tags have IDs, compare the IDs
-      if (tag.id && tagToRemove.id) {
-        return tag.id !== tagToRemove.id;
-      }
-      // If no IDs (or one doesn't have an ID), compare by name
-      return tag.name !== tagToRemove.name;
-    });
+    // Fix: Create a deep copy of the selected tags to prevent reference issues
+    const updatedTags = selectedTags
+      .filter((tag) => {
+        // If both tags have IDs, compare the IDs
+        if (tag.id && tagToRemove.id) {
+          return tag.id !== tagToRemove.id;
+        }
+        // If no IDs (or one doesn't have an ID), compare by name
+        return tag.name !== tagToRemove.name;
+      })
+      .map(tag => ({...tag})); // Create new objects to ensure reference integrity
+      
     console.log("Tags after removal:", updatedTags);
     onTagsChange(updatedTags);
   };
