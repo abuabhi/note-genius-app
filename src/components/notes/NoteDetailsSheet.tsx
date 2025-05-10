@@ -30,9 +30,9 @@ export const NoteDetailsSheet: React.FC<NoteDetailsSheetProps> = ({
 }) => {
   const navigate = useNavigate();
   const {
-    isDeleting,
     noteContent,
     setNoteContent,
+    isDeleting,
     handlePin,
     handleArchive,
     handleDelete,

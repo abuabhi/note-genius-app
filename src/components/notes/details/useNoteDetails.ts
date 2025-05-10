@@ -11,6 +11,7 @@ export const useNoteDetails = (note: Note, onOpenChange: (open: boolean) => void
   const navigate = useNavigate();
 
   const [noteContent, setNoteContent] = useState(note.content || '');
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Get scan data preview URL if available
   const scanPreviewUrl = note.sourceType === 'scan' && note.scanData?.originalImageUrl
@@ -51,6 +52,7 @@ export const useNoteDetails = (note: Note, onOpenChange: (open: boolean) => void
 
   // Handle deleting note
   const handleDelete = async () => {
+    setIsDeleting(true);
     try {
       await deleteNote(note.id);
       onOpenChange(false);
@@ -64,6 +66,8 @@ export const useNoteDetails = (note: Note, onOpenChange: (open: boolean) => void
         description: "Failed to delete note",
         variant: "destructive"
       });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -96,6 +100,7 @@ export const useNoteDetails = (note: Note, onOpenChange: (open: boolean) => void
   return {
     noteContent,
     setNoteContent,
+    isDeleting,
     handlePin,
     handleArchive,
     handleDelete,
