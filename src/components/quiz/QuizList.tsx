@@ -60,7 +60,7 @@ const QuizList = () => {
               <SelectValue placeholder="All Subjects" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Subjects</SelectItem>
+              <SelectItem value="_all">All Subjects</SelectItem>
               {subjects?.map((subject) => (
                 <SelectItem key={subject.id} value={subject.id}>
                   {subject.name}
@@ -74,7 +74,7 @@ const QuizList = () => {
               <SelectValue placeholder="All Grades" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Grades</SelectItem>
+              <SelectItem value="_all">All Grades</SelectItem>
               {grades?.map((grade) => (
                 <SelectItem key={grade.id} value={grade.id}>
                   {grade.name}

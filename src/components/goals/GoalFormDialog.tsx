@@ -322,7 +322,7 @@ export const GoalFormDialog = ({
                       <FormLabel>Flashcard Set (Optional)</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        value={field.value}
+                        value={field.value || "_none"}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -330,7 +330,7 @@ export const GoalFormDialog = ({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="_none">None</SelectItem>
                           {flashcardSets.map(set => (
                             <SelectItem key={set.id} value={set.id}>
                               {set.name}

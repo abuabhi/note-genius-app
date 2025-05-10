@@ -11,9 +11,9 @@ import { Separator } from "@/components/ui/separator";
 const FlashcardLibraryPage = () => {
   const { userProfile } = useRequireAuth();
   const [filters, setFilters] = useState({
-    subject: "",
-    gradeLevel: "",
-    difficulty: "",
+    subject: "_all",
+    gradeLevel: "_all",
+    difficulty: "_all",
   });
 
   const defaultTier = UserTier.SCHOLAR;

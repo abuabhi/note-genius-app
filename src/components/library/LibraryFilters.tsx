@@ -69,7 +69,7 @@ export function LibraryFilters({ filters, setFilters }: FiltersProps) {
               <SelectValue placeholder="All Subjects" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Subjects</SelectItem>
+              <SelectItem value="_all">All Subjects</SelectItem>
               {subjects.map((subject) => (
                 <SelectItem key={subject} value={subject}>
                   {subject}
@@ -91,7 +91,7 @@ export function LibraryFilters({ filters, setFilters }: FiltersProps) {
               <SelectValue placeholder="All Grade Levels" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Grade Levels</SelectItem>
+              <SelectItem value="_all">All Grade Levels</SelectItem>
               {gradeLevels.map((level) => (
                 <SelectItem key={level} value={level}>
                   {level}
@@ -113,7 +113,7 @@ export function LibraryFilters({ filters, setFilters }: FiltersProps) {
               <SelectValue placeholder="All Difficulties" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Difficulties</SelectItem>
+              <SelectItem value="_all">All Difficulties</SelectItem>
               {difficulties.map((difficulty) => (
                 <SelectItem key={difficulty} value={difficulty}>
                   {difficulty}

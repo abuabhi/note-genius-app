@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useFlashcards } from "@/contexts/FlashcardContext";
 import {
@@ -32,8 +31,8 @@ export function AdminFlashcardSetsList() {
   const [loading, setLoading] = useState(true);
   const [countryMap, setCountryMap] = useState<Record<string, string>>({});
   const [filters, setFilters] = useState({
-    country: "all", // Changed from empty string to "all"
-    subject: "all", // Changed from empty string to "all"
+    country: "all",
+    subject: "all",
     search: ""
   });
   const { toast } = useToast();
@@ -166,8 +165,8 @@ export function AdminFlashcardSetsList() {
             value={filters.country}
             onValueChange={(value) => setFilters(prev => ({ ...prev, country: value }))}
           >
-            <SelectTrigger className="w-full md:w-[200px]">
-              <SelectValue placeholder="Filter by country" />
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by Country" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Countries</SelectItem>
@@ -178,17 +177,19 @@ export function AdminFlashcardSetsList() {
               ))}
             </SelectContent>
           </Select>
+          
           <Select
             value={filters.subject}
             onValueChange={(value) => setFilters(prev => ({ ...prev, subject: value }))}
           >
-            <SelectTrigger className="w-full md:w-[200px]">
-              <SelectValue placeholder="Filter by subject" />
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by Subject" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Subjects</SelectItem>
+              {/* Get unique subjects from sets */}
               {Array.from(new Set(sets.map(set => set.subject).filter(Boolean))).map((subject) => (
-                <SelectItem key={subject} value={subject || "_none"}>
+                <SelectItem key={subject} value={subject as string}>
                   {subject}
                 </SelectItem>
               ))}
