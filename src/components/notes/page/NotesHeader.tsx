@@ -1,3 +1,4 @@
+
 import React from "react";
 import { NoteSearch } from "@/components/notes/NoteSearch";
 import { NoteSorter } from "@/components/notes/NoteSorter";
@@ -43,7 +44,7 @@ export const NotesHeader = ({
           <NoteSearch />
         </div>
         <div className="flex gap-2">
-          {/* Replace the 3 buttons with new dropdown component */}
+          {/* Use the AddNoteDropdown component */}
           <AddNoteDropdown
             onSaveNote={onSaveNote}
             onScanNote={onScanNote}

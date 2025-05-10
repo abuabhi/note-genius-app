@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import HomePage from "./pages/HomePage";
@@ -90,7 +91,7 @@ const App = () => {
             {/* Creating routes */}
             <Route path="/create-quiz" element={<CreateQuizPage />} />
             <Route path="/quizzes/:quizId" element={<TakeQuizPage />} />
-            <Route path="/notes-to-flashcards" element={<NoteToFlashcardPage />} />
+            <Route path="/note-to-flashcard" element={<NoteToFlashcardPage />} />
             
             {/* Collaboration routes */}
             <Route path="/collaboration" element={<CollaborationPage />} />
