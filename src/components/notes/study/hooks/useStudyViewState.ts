@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 
-export type TextAlignType = "left" | "center" | "justify";
+export type TextAlignType = "left" | "center" | "right" | "justify";
 
 export const useStudyViewState = () => {
   const [fontSize, setFontSize] = useState(16);

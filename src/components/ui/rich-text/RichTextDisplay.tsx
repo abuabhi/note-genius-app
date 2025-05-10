@@ -5,7 +5,7 @@ interface RichTextDisplayProps {
   content: string;
   className?: string;
   fontSize?: number;
-  textAlign?: 'left' | 'center' | 'right';
+  textAlign?: 'left' | 'center' | 'right' | 'justify';
 }
 
 export const RichTextDisplay = ({ 

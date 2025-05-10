@@ -30,7 +30,7 @@ export const RichTextEditor = ({
       StarterKit,
       TextAlign.configure({
         types: ['heading', 'paragraph'],
-        alignments: ['left', 'center', 'right'],
+        alignments: ['left', 'center', 'right', 'justify'],
       }),
       Highlight,
       BulletList,

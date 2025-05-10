@@ -3,13 +3,12 @@ import { Editor } from '@tiptap/react';
 import { 
   Bold, 
   Italic, 
-  List, 
+  ListCheck as List, 
   ListOrdered, 
   AlignLeft, 
   AlignCenter, 
   AlignRight, 
-  Highlighter, 
-  Underline 
+  Highlighter
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -39,15 +38,6 @@ export const RichTextToolbar = ({ editor }: RichTextToolbarProps) => {
         title="Italic"
       >
         <Italic className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => editor.chain().focus().toggleUnderline().run()}
-        className={editor.isActive('underline') ? 'bg-accent' : ''}
-        title="Underline"
-      >
-        <Underline className="h-4 w-4" />
       </Button>
       
       <div className="h-4 w-px bg-border mx-1" />
