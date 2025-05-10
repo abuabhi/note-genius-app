@@ -93,10 +93,10 @@ const EditNotePage = () => {
             <ArrowLeft className="h-4 w-4" />
             Back
           </Button>
-          <h1 className="text-2xl font-bold text-purple-800">Edit Note</h1>
+          <h1 className="text-2xl font-bold text-mint-800">Edit Note</h1>
         </div>
 
-        <div className="bg-white shadow-sm rounded-lg border border-purple-100 p-6">
+        <div className="bg-white shadow-sm rounded-lg border border-mint-100 p-6">
           <CreateNoteForm onSave={handleSaveNote} initialData={note} />
         </div>
       </div>

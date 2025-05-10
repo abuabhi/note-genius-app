@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -24,7 +23,7 @@ import { Note } from '@/types/note';
 import { TagSelector } from '../TagSelector';
 import { useNotes } from '@/contexts/NoteContext';
 import { EnhanceNoteButton } from '../enrichment/EnhanceNoteButton';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useNoteEnrichment } from '@/hooks/useNoteEnrichment';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -49,9 +48,8 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
   const { availableCategories, getAllTags } = useNotes();
   const [selectedTags, setSelectedTags] = useState<{ id?: string; name: string; color: string }[]>([]);
   const [availableTags, setAvailableTags] = useState<{ id: string; name: string; color: string }[]>([]);
-  const { toast } = useToast();
   const { user } = useAuth();
-  const { enrichNote, isEnabled: enrichmentEnabled, isLoading: enrichLoading } = useNoteEnrichment();
+  const { enrichNote, isEnabled: enrichmentEnabled } = useNoteEnrichment();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -103,8 +101,6 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
         noteId,
         content,
         'addKeyPoints',
-        user?.id,
-        enrichmentEnabled,
         form.getValues('title')
       );
       

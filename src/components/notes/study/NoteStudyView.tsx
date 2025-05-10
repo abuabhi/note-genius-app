@@ -6,6 +6,8 @@ import { useStudyViewState, TextAlignType } from "./hooks/useStudyViewState";
 import { StudyViewHeader } from "./header/StudyViewHeader";
 import { NoteContentDisplay } from "./NoteContentDisplay";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Edit } from "lucide-react";
 
 interface NoteStudyViewProps {
   note: Note;

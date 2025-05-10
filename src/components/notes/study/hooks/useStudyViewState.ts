@@ -1,50 +1,78 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-export type TextAlignType = 'left' | 'center' | 'justify';
+export type TextAlignType = "left" | "center" | "justify";
 
 export const useStudyViewState = () => {
-  const [fontSize, setFontSize] = useState<number>(16);
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  const [fontSize, setFontSize] = useState(16);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [textAlign, setTextAlign] = useState<TextAlignType>("left");
-  const [isFullWidth, setIsFullWidth] = useState<boolean>(false);
-  const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
+  const [isFullWidth, setIsFullWidth] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
+  // Load preferences from localStorage
+  useEffect(() => {
+    const savedFontSize = localStorage.getItem("studyViewFontSize");
+    const savedDarkMode = localStorage.getItem("studyViewDarkMode");
+    const savedTextAlign = localStorage.getItem("studyViewTextAlign");
+    const savedFullWidth = localStorage.getItem("studyViewFullWidth");
+
+    if (savedFontSize) setFontSize(parseInt(savedFontSize));
+    if (savedDarkMode) setIsDarkMode(savedDarkMode === "true");
+    if (savedTextAlign) setTextAlign(savedTextAlign as TextAlignType);
+    if (savedFullWidth) setIsFullWidth(savedFullWidth === "true");
+  }, []);
+
+  // Save preferences to localStorage
+  useEffect(() => {
+    localStorage.setItem("studyViewFontSize", fontSize.toString());
+    localStorage.setItem("studyViewDarkMode", isDarkMode.toString());
+    localStorage.setItem("studyViewTextAlign", textAlign);
+    localStorage.setItem("studyViewFullWidth", isFullWidth.toString());
+  }, [fontSize, isDarkMode, textAlign, isFullWidth]);
+
+  // Toggle fullscreen
+  useEffect(() => {
+    const handleFullScreenChange = () => {
+      setIsFullScreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullScreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullScreenChange);
+    };
+  }, []);
+
+  // Font size handlers
   const handleIncreaseFontSize = () => {
-    if (fontSize < 24) {
-      setFontSize(fontSize + 2);
-    }
+    setFontSize((prev) => Math.min(prev + 1, 24));
   };
 
   const handleDecreaseFontSize = () => {
-    if (fontSize > 12) {
-      setFontSize(fontSize - 2);
-    }
+    setFontSize((prev) => Math.max(prev - 1, 12));
   };
 
+  // Dark mode toggle
   const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
+    setIsDarkMode((prev) => !prev);
   };
 
+  // Text alignment
   const handleTextAlign = (align: TextAlignType) => {
     setTextAlign(align);
   };
 
+  // Width toggle
   const toggleWidth = () => {
-    setIsFullWidth(!isFullWidth);
+    setIsFullWidth((prev) => !prev);
   };
 
+  // Fullscreen toggle
   const toggleFullScreen = () => {
     if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(err => {
-        console.error(`Error attempting to enable full-screen mode: ${err.message}`);
-      });
-      setIsFullScreen(true);
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-        setIsFullScreen(false);
-      }
+      document.documentElement.requestFullscreen();
+    } else if (document.exitFullscreen) {
+      document.exitFullscreen();
     }
   };
 

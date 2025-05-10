@@ -1,25 +1,30 @@
 
-import { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { 
-  AlignLeft, 
-  AlignCenter, 
-  AlignJustify,
-  Minus,
-  Plus,
+import {
+  Type,
   Moon,
   Sun,
-  ArrowLeftRight,
+  AlignLeft,
+  AlignCenter,
+  AlignJustify,
   Maximize,
   Minimize,
+  LayoutGrid,
+  LayoutTemplate,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { TextAlignType } from "../hooks/useStudyViewState";
 
 interface StudyViewControlsProps {
   fontSize: number;
-  textAlign: TextAlignType;
   isDarkMode: boolean;
+  textAlign: TextAlignType;
   isFullWidth: boolean;
   isFullScreen: boolean;
   onIncreaseFontSize: () => void;
@@ -30,10 +35,10 @@ interface StudyViewControlsProps {
   onToggleFullScreen: () => void;
 }
 
-export const StudyViewControls = ({
+export const StudyViewControls: React.FC<StudyViewControlsProps> = ({
   fontSize,
-  textAlign,
   isDarkMode,
+  textAlign,
   isFullWidth,
   isFullScreen,
   onIncreaseFontSize,
@@ -41,85 +46,115 @@ export const StudyViewControls = ({
   onToggleDarkMode,
   onChangeTextAlign,
   onToggleWidth,
-  onToggleFullScreen
-}: StudyViewControlsProps) => {
+  onToggleFullScreen,
+}) => {
+  // Get the right alignment icon based on the current alignment
+  const getAlignmentIcon = () => {
+    switch (textAlign) {
+      case "left":
+        return <AlignLeft className="h-4 w-4" />;
+      case "center":
+        return <AlignCenter className="h-4 w-4" />;
+      case "justify":
+        return <AlignJustify className="h-4 w-4" />;
+      default:
+        return <AlignLeft className="h-4 w-4" />;
+    }
+  };
+
   return (
-    <div className="flex items-center gap-2 flex-wrap">
+    <div className="flex flex-wrap justify-end gap-1 mt-2 sm:mt-0">
+      <div className="flex items-center shadow-sm border rounded-md">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 rounded-none rounded-l-md"
+          onClick={onDecreaseFontSize}
+          title="Decrease font size"
+        >
+          <Type className="h-4 w-4" />
+        </Button>
+        <div className="px-2 flex items-center justify-center min-w-[24px] text-sm border-l border-r">
+          {fontSize}
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 rounded-none rounded-r-md"
+          onClick={onIncreaseFontSize}
+          title="Increase font size"
+        >
+          <Type className="h-4 w-4" />
+        </Button>
+      </div>
+
       <Button
+        variant="ghost"
         size="icon"
-        variant="outline"
-        onClick={onDecreaseFontSize}
-        title="Decrease font size"
-        className={`${isDarkMode ? 'border-gray-700 hover:bg-gray-800' : ''}`}
-        disabled={fontSize <= 12}
-      >
-        <Minus className="h-4 w-4" />
-      </Button>
-      <Button
-        size="icon" 
-        variant="outline"
-        onClick={onIncreaseFontSize}
-        title="Increase font size"
-        className={`${isDarkMode ? 'border-gray-700 hover:bg-gray-800' : ''}`}
-        disabled={fontSize >= 24}
-      >
-        <Plus className="h-4 w-4" />
-      </Button>
-      <Separator orientation="vertical" className="h-6" />
-      <Button
-        size="icon"
-        variant="outline"
-        onClick={() => onChangeTextAlign("left")}
-        title="Align left"
-        className={`${textAlign === "left" ? "bg-mint-100 hover:bg-mint-200" : ""} ${isDarkMode ? 'border-gray-700 hover:bg-gray-800' : ''}`}
-      >
-        <AlignLeft className="h-4 w-4" />
-      </Button>
-      <Button
-        size="icon"
-        variant="outline"
-        onClick={() => onChangeTextAlign("center")}
-        title="Align center"
-        className={`${textAlign === "center" ? "bg-mint-100 hover:bg-mint-200" : ""} ${isDarkMode ? 'border-gray-700 hover:bg-gray-800' : ''}`}
-      >
-        <AlignCenter className="h-4 w-4" />
-      </Button>
-      <Button
-        size="icon"
-        variant="outline"
-        onClick={() => onChangeTextAlign("justify")}
-        title="Justify text"
-        className={`${textAlign === "justify" ? "bg-mint-100 hover:bg-mint-200" : ""} ${isDarkMode ? 'border-gray-700 hover:bg-gray-800' : ''}`}
-      >
-        <AlignJustify className="h-4 w-4" />
-      </Button>
-      <Separator orientation="vertical" className="h-6" />
-      <Button
-        size="icon"
-        variant="outline"
-        onClick={onToggleWidth}
-        title={isFullWidth ? "Narrow width" : "Full width"}
-        className={`${isDarkMode ? 'border-gray-700 hover:bg-gray-800' : ''}`}
-      >
-        <ArrowLeftRight className="h-4 w-4" />
-      </Button>
-      <Button
-        size="icon"
-        variant="outline"
-        onClick={onToggleFullScreen}
-        title={isFullScreen ? "Exit fullscreen" : "Fullscreen"}
-        className={`${isDarkMode ? 'border-gray-700 hover:bg-gray-800' : ''}`}
-      >
-        {isFullScreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-      </Button>
-      <Button
-        size="icon"
-        variant="outline"
+        className="h-8 w-8"
         onClick={onToggleDarkMode}
         title={isDarkMode ? "Light mode" : "Dark mode"}
-        className={`${isDarkMode ? 'border-gray-700 hover:bg-gray-800' : ''}`}
       >
-        {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        {isDarkMode ? (
+          <Sun className="h-4 w-4" />
+        ) : (
+          <Moon className="h-4 w-4" />
+        )}
+      </Button>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            title="Text alignment"
+          >
+            {getAlignmentIcon()}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => onChangeTextAlign("left")}>
+            <AlignLeft className="h-4 w-4 mr-2" />
+            <span>Align Left</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onChangeTextAlign("center")}>
+            <AlignCenter className="h-4 w-4 mr-2" />
+            <span>Align Center</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onChangeTextAlign("justify")}>
+            <AlignJustify className="h-4 w-4 mr-2" />
+            <span>Justify</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8"
+        onClick={onToggleWidth}
+        title={isFullWidth ? "Narrow width" : "Full width"}
+      >
+        {isFullWidth ? (
+          <LayoutTemplate className="h-4 w-4" />
+        ) : (
+          <LayoutGrid className="h-4 w-4" />
+        )}
+      </Button>
+
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8"
+        onClick={onToggleFullScreen}
+        title={isFullScreen ? "Exit full screen" : "Full screen"}
+      >
+        {isFullScreen ? (
+          <Minimize className="h-4 w-4" />
+        ) : (
+          <Maximize className="h-4 w-4" />
+        )}
       </Button>
     </div>
   );
