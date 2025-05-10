@@ -4,7 +4,7 @@ import Layout from "@/components/layout/Layout";
 import { ScheduleCalendar } from "@/components/schedule/ScheduleCalendar";
 import { ScheduleHeader } from "@/components/schedule/ScheduleHeader";
 import { UpcomingEventsList } from "@/components/schedule/UpcomingEventsList";
-import { useEvents } from "@/hooks/useEvents";
+import { useEvents } from "@/hooks/events";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { toast } from "sonner";
 

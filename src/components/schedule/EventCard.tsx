@@ -1,10 +1,9 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, Clock, Trash2 } from "lucide-react";
 import { format } from "date-fns";
-import { Event } from "@/hooks/useEvents";
+import { Event } from "@/hooks/events";
 
 interface EventCardProps {
   event: any;

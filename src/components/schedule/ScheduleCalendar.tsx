@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Calendar as CalendarComponent, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { useEvents } from '@/hooks/useEvents';
+import { useEvents } from '@/hooks/events';
 import { EventCard } from './EventCard';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
