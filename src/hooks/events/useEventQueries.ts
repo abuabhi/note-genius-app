@@ -35,7 +35,8 @@ export const useEventQuery = (userId: string | undefined, dateRange: DateRange) 
           message: err instanceof Error ? err.message : 'Unknown error fetching events',
           details: '',
           hint: '',
-          code: 'CUSTOM_ERROR'
+          code: 'CUSTOM_ERROR',
+          name: 'PostgrestError'  // Add the missing 'name' property
         };
         throw pgError;
       }
