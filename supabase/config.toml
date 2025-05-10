@@ -128,3 +128,28 @@ entrypoint = "index.ts"
 verify_jwt = true
 import_map = "supabase/functions/import_map.json"
 entrypoint = "index.ts"
+
+[functions.notion-auth]
+verify_jwt = true
+import_map = "supabase/functions/import_map.json"
+entrypoint = "index.ts"
+
+[functions.microsoft-auth]
+verify_jwt = true
+import_map = "supabase/functions/import_map.json"
+entrypoint = "index.ts"
+
+[functions.process-image]
+verify_jwt = true
+import_map = "supabase/functions/import_map.json"
+entrypoint = "index.ts"
+
+[functions.process-document]
+verify_jwt = true
+import_map = "supabase/functions/import_map.json"
+entrypoint = "index.ts"
+
+[functions.send-notification]
+verify_jwt = true
+import_map = "supabase/functions/import_map.json" 
+entrypoint = "index.ts"
