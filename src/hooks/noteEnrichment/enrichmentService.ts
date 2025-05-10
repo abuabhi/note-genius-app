@@ -1,129 +1,49 @@
 
-import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { EnhancementFunction } from './types';
-import { toast } from 'sonner';
+import { Note } from "@/types/note";
+import { supabase } from "@/integrations/supabase/client";
+import { EnhancementFunction } from '../useNoteEnrichment';
 
-export function useEnrichmentService() {
-  const { toast: shadowToast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const [enhancedContent, setEnhancedContent] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  // Enrich note content using the edge function
-  const enrichNote = async (
-    noteId: string,
-    noteContent: string,
-    enhancementType: EnhancementFunction,
-    userId: string | undefined,
-    isFeatureEnabled: boolean,
-    noteTitle?: string
-  ) => {
-    if (!userId) {
-      toast("Authentication required", {
-        description: "Please log in to use this feature"
-      });
-      return null;
-    }
-    
-    if (!isFeatureEnabled) {
-      toast("Feature not available", {
-        description: "Note enrichment is not available for your tier"
-      });
-      return null;
-    }
-    
-    if (!noteContent || noteContent.trim().length < 10) {
-      toast("Content too short", {
-        description: "Please add more content to enhance"
-      });
-      return null;
-    }
-    
-    console.log("Starting enrichment process:", {
-      noteId,
-      enhancementType,
-      contentLength: noteContent.length,
-      hasTitle: !!noteTitle
+export const enrichNote = async (note: Note, enhancementType: EnhancementFunction): Promise<string> => {
+  try {
+    const { data, error } = await supabase.functions.invoke('enrich-note', {
+      body: {
+        noteContent: note.content || note.description,
+        enhancementType: enhancementType,
+        noteTitle: note.title,
+        noteCategory: note.category
+      },
     });
-    
-    setIsLoading(true);
-    setEnhancedContent(null);
-    setError(null);
-    
-    try {
-      // Get auth token
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData.session?.access_token;
-      
-      if (!accessToken) {
-        throw new Error('Authentication failed');
-      }
-      
-      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL || 'https://zuhcmwujzfddmafozubd.supabase.co'}/functions/v1/enrich-note`;
-      console.log("Calling edge function at:", apiUrl);
-      
-      // Call the edge function
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          noteId,
-          noteContent,
-          enhancementType,
-          noteTitle
-        })
-      });
-      
-      console.log("Edge function response status:", response.status);
-      
-      // Check response status before trying to parse
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Server error response:', errorText);
-        throw new Error(`Server returned ${response.status}: ${errorText || 'Unknown error'}`);
-      }
-      
-      // Handle non-JSON responses or network errors
-      let result;
-      try {
-        result = await response.json();
-        console.log("Edge function response:", result);
-      } catch (parseError) {
-        console.error('Error parsing response:', parseError);
-        throw new Error('Invalid response from server. Please try again later.');
-      }
-      
-      if (!result.enhancedContent) {
-        throw new Error('No content received from the enhancement service');
-      }
-      
-      setEnhancedContent(result.enhancedContent);
-      
-      return result;
-    } catch (error) {
-      console.error('Error enriching note:', error);
-      const errorMessage = error instanceof Error ? error.message : "An error occurred";
-      setError(errorMessage);
-      toast("Enhancement failed", {
-        description: errorMessage
-      });
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  return {
-    enrichNote,
-    isLoading,
-    enhancedContent,
-    error,
-    setEnhancedContent,
-    setError
-  };
-}
+    if (error) {
+      throw new Error(`Error invoking enrichment function: ${error.message}`);
+    }
+
+    if (!data || !data.enhancedContent) {
+      throw new Error('No enhanced content returned from the function');
+    }
+
+    // Update the usage tracking
+    await trackUsage();
+
+    return data.enhancedContent;
+  } catch (error) {
+    console.error("Error during note enrichment:", error);
+    throw error;
+  }
+};
+
+// Track usage of the enrichment feature
+const trackUsage = async () => {
+  const currentMonth = new Date().toISOString().slice(0, 7); // Format: YYYY-MM
+  
+  const { error } = await supabase
+    .from('note_enrichment_usage')
+    .insert({
+      user_id: (await supabase.auth.getUser()).data.user?.id,
+      month_year: currentMonth
+    });
+  
+  if (error) {
+    console.error('Error tracking usage:', error);
+  }
+};
