@@ -66,7 +66,7 @@ export const ImageProcessor = ({
           toast({
             title: "Enhancement Warning",
             description: "Image enhancement failed, processing original image.",
-            variant: "destructive", // Changed from "warning" to "destructive"
+            variant: "destructive",
           });
         }
       }
@@ -77,7 +77,8 @@ export const ImageProcessor = ({
           imageUrl: processedUrl,
           language: selectedLanguage,
           userId: userId, // Pass user ID if available
-          useOpenAI: useOpenAI && isPremiumUser // Only use OpenAI if user is premium
+          useOpenAI: useOpenAI && isPremiumUser, // Only use OpenAI if user is premium
+          enhanceImage: isEnhanced // Pass enhancement flag
         }
       });
       
@@ -85,14 +86,19 @@ export const ImageProcessor = ({
         throw new Error(error.message);
       }
       
+      // Process response data
       setRecognizedText(data.text);
       setConfidence(data.confidence);
       setProcessedAt(data.processedAt);
       onTextExtracted(data.text);
       
+      const providerName = data.provider === 'openai' ? 'OpenAI' : 
+                           data.provider === 'google-vision' ? 'Google Vision' : 
+                           'OCR Engine';
+      
       toast({
         title: "Text Extracted",
-        description: `OCR processing complete with ${Math.round(data.confidence * 100)}% confidence.`,
+        description: `OCR processing complete with ${Math.round(data.confidence * 100)}% confidence using ${providerName}.`,
       });
     } catch (error) {
       console.error("OCR processing error:", error);
