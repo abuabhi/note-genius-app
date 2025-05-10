@@ -63,14 +63,14 @@ export const FilterMenu = () => {
         <Button
           variant="outline"
           size="sm"
-          className="relative"
+          className="relative border-purple-200 hover:bg-purple-50 hover:text-purple-700"
         >
           <Filter className="h-4 w-4 mr-2" />
           Filters
           {activeFilterCount > 0 && (
             <Badge
               variant="secondary"
-              className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center"
+              className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center bg-purple-100 text-purple-800"
             >
               {activeFilterCount}
             </Badge>
@@ -82,7 +82,7 @@ export const FilterMenu = () => {
           <div className="flex items-center justify-between">
             <h4 className="font-medium">Filter Notes</h4>
             {activeFilterCount > 0 && (
-              <Button variant="ghost" size="sm" onClick={handleClearFilters} className="h-8 px-2">
+              <Button variant="ghost" size="sm" onClick={handleClearFilters} className="h-8 px-2 hover:text-purple-700">
                 <X className="h-4 w-4 mr-1" /> Clear filters
               </Button>
             )}
@@ -99,7 +99,7 @@ export const FilterMenu = () => {
                 })
               }
             >
-              <SelectTrigger id="category">
+              <SelectTrigger id="category" className="border-purple-200 focus:ring-purple-400">
                 <SelectValue placeholder="Any subject" />
               </SelectTrigger>
               <SelectContent>
@@ -126,6 +126,7 @@ export const FilterMenu = () => {
                     dateFrom: e.target.value || undefined
                   })
                 }
+                className="border-purple-200 focus-visible:ring-purple-400"
               />
             </div>
             <div className="space-y-2">
@@ -140,6 +141,7 @@ export const FilterMenu = () => {
                     dateTo: e.target.value || undefined
                   })
                 }
+                className="border-purple-200 focus-visible:ring-purple-400"
               />
             </div>
           </div>
@@ -161,6 +163,7 @@ export const FilterMenu = () => {
                           : types.filter(t => t !== type)
                       });
                     }}
+                    className="border-purple-300 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
                   />
                   <label
                     htmlFor={`type-${type}`}
@@ -185,6 +188,7 @@ export const FilterMenu = () => {
                     hasTags: checked === 'indeterminate' ? undefined : checked === true
                   });
                 }}
+                className="border-purple-300 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
               />
               <label
                 htmlFor="has-tags"
@@ -203,6 +207,7 @@ export const FilterMenu = () => {
                     hasTags: checked === 'indeterminate' ? undefined : checked === false ? false : undefined
                   });
                 }}
+                className="border-purple-300 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
               />
               <label
                 htmlFor="no-tags"
@@ -213,7 +218,7 @@ export const FilterMenu = () => {
             </div>
           </div>
           
-          <Button onClick={handleApplyFilters} className="w-full">
+          <Button onClick={handleApplyFilters} className="w-full bg-purple-600 hover:bg-purple-700">
             Apply Filters
           </Button>
         </div>

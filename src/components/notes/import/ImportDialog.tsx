@@ -1,12 +1,13 @@
+
 import { useState } from "react";
 import { 
-  Sheet, 
-  SheetContent, 
-  SheetDescription, 
-  SheetHeader, 
-  SheetTitle, 
-  SheetTrigger 
-} from "@/components/ui/sheet";
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FileUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -23,7 +24,7 @@ interface ImportDialogProps {
 
 export const ImportDialog = ({ onSaveNote }: ImportDialogProps) => {
   const [activeTab, setActiveTab] = useState("file");
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
@@ -120,7 +121,7 @@ export const ImportDialog = ({ onSaveNote }: ImportDialogProps) => {
 
       await onSaveNote(newNote);
       resetState();
-      setIsSheetOpen(false);
+      setIsDialogOpen(false);
       
       toast({
         title: "Document Imported",
@@ -139,25 +140,25 @@ export const ImportDialog = ({ onSaveNote }: ImportDialogProps) => {
   };
 
   return (
-    <Sheet open={isSheetOpen} onOpenChange={(open) => {
-      setIsSheetOpen(open);
+    <Dialog open={isDialogOpen} onOpenChange={(open) => {
+      setIsDialogOpen(open);
       if (!open) {
         resetState();
       }
     }}>
-      <SheetTrigger asChild>
-        <Button>
+      <DialogTrigger asChild>
+        <Button className="bg-purple-600 hover:bg-purple-700">
           <FileUp className="mr-2 h-4 w-4" />
           Import
         </Button>
-      </SheetTrigger>
-      <SheetContent className="w-full sm:max-w-lg md:max-w-xl overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>Import Document</SheetTitle>
-          <SheetDescription>
+      </DialogTrigger>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Import Document</DialogTitle>
+          <DialogDescription>
             Import notes from PDF, Word, Notion, OneNote, Evernote, or Google Docs.
-          </SheetDescription>
-        </SheetHeader>
+          </DialogDescription>
+        </DialogHeader>
         
         {!importState.extractedText ? (
           <ImportTabs 
@@ -182,7 +183,7 @@ export const ImportDialog = ({ onSaveNote }: ImportDialogProps) => {
           hasContent={!!importState.extractedText}
           isSaving={isSaving}
         />
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 };

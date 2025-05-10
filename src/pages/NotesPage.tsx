@@ -30,13 +30,15 @@ const NotesPage = () => {
 
   return (
     <Layout>
-      <NotesContent 
-        onSaveNote={handleSaveNote}
-        onScanNote={handleScanNote}
-        onImportNote={handleImportNote}
-        tierLimits={tierLimits}
-        userTier={userTier}
-      />
+      <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white">
+        <NotesContent 
+          onSaveNote={handleSaveNote}
+          onScanNote={handleScanNote}
+          onImportNote={handleImportNote}
+          tierLimits={tierLimits}
+          userTier={userTier}
+        />
+      </div>
     </Layout>
   );
 };

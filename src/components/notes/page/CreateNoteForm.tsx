@@ -35,7 +35,7 @@ const formSchema = z.object({
   content: z.string().optional(),
 });
 
-type FormValues = z.infer<typeof formSchema> & { tags: { name: string; color: string }[] };
+type FormValues = z.infer<typeof formSchema>;
 
 interface CreateNoteFormProps {
   onSave: (note: Omit<Note, 'id'>) => Promise<Note | null>;
@@ -59,7 +59,6 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
       date: initialData?.date ? new Date(initialData.date) : new Date(),
       subject: initialData?.category || 'General',
       content: initialData?.content || '',
-      tags: [],
     },
   });
 
@@ -126,6 +125,9 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
 
   const onSubmit = async (values: FormValues) => {
     setIsSaving(true);
+    console.log("Submitting form with values:", values);
+    console.log("Selected tags:", selectedTags);
+    
     try {
       const noteData: Omit<Note, 'id'> = {
         title: values.title,
@@ -136,8 +138,24 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
         sourceType: initialData?.sourceType || 'manual',
         tags: selectedTags,
       };
-
-      await onSave(noteData);
+      
+      console.log("Saving note with data:", noteData);
+      const result = await onSave(noteData);
+      console.log("Save result:", result);
+      
+      if (result) {
+        toast({
+          title: "Note saved",
+          description: "Your note has been successfully saved",
+        });
+      }
+    } catch (error) {
+      console.error("Error saving note:", error);
+      toast({
+        title: "Failed to save note",
+        description: "An error occurred while saving your note",
+        variant: "destructive"
+      });
     } finally {
       setIsSaving(false);
     }
@@ -158,7 +176,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
               <FormItem>
                 <FormLabel>Title</FormLabel>
                 <FormControl>
-                  <Input placeholder="Note title" {...field} />
+                  <Input placeholder="Note title" {...field} className="border-purple-200 focus-visible:ring-purple-400" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -178,7 +196,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
                     size="sm"
                     onClick={() => generateSummary(form.getValues('content'))}
                     disabled={isGeneratingSummary || !form.getValues('content')}
-                    className="h-8 text-xs"
+                    className="h-8 text-xs border-purple-200 hover:bg-purple-50 hover:text-purple-700"
                   >
                     {isGeneratingSummary ? (
                       <>
@@ -193,7 +211,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
                 <FormControl>
                   <Textarea 
                     placeholder="Brief description or key points"
-                    className="whitespace-pre-wrap"
+                    className="whitespace-pre-wrap border-purple-200 focus-visible:ring-purple-400"
                     {...field} 
                   />
                 </FormControl>
@@ -214,7 +232,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
                       <FormControl>
                         <Button
                           variant="outline"
-                          className={cn('w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
+                          className={cn('w-full pl-3 text-left font-normal border-purple-200 hover:bg-purple-50', !field.value && 'text-muted-foreground')}
                         >
                           {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
@@ -241,6 +259,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
                       placeholder="Subject" 
                       {...field} 
                       list="subjects"
+                      className="border-purple-200 focus-visible:ring-purple-400"
                     />
                   </FormControl>
                   {availableCategories && availableCategories.length > 0 && (
@@ -278,7 +297,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
                 <FormControl>
                   <Textarea
                     placeholder="Note content"
-                    className="min-h-[200px] font-mono"
+                    className="min-h-[200px] font-mono border-purple-200 focus-visible:ring-purple-400"
                     {...field}
                     value={field.value || ''}
                   />
@@ -298,7 +317,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
           </div>
         </div>
 
-        <Button type="submit" disabled={isSaving} className="w-full">
+        <Button type="submit" disabled={isSaving} className="w-full bg-purple-600 hover:bg-purple-700">
           {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {isSaving ? 'Saving...' : initialData ? 'Update Note' : 'Create Note'}
         </Button>

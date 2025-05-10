@@ -1,3 +1,4 @@
+
 import React from "react";
 import { NoteSearch } from "@/components/notes/NoteSearch";
 import { NoteSorter } from "@/components/notes/NoteSorter";
@@ -6,7 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Plus, FileText, Filter, Book, ArrowRight } from "lucide-react";
 import { useNotes } from "@/contexts/NoteContext";
 import { CreateNoteForm } from "./CreateNoteForm";
-import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
+import { 
+  Dialog, 
+  DialogTrigger, 
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription 
+} from "@/components/ui/dialog";
 import { ScanNoteDialog } from "../ScanNoteDialog";
 import { ImportDialog } from "../import/ImportDialog";
 import { TierLimits, UserTier } from "@/hooks/useRequireAuth";
@@ -29,7 +37,7 @@ export const NotesHeader = ({
   userTier
 }: NotesHeaderProps) => {
   const { searchTerm, setSearchTerm, filteredNotes } = useNotes();
-  const [isNewNoteSheetOpen, setIsNewNoteSheetOpen] = React.useState(false);
+  const [isNewNoteDialogOpen, setIsNewNoteDialogOpen] = React.useState(false);
   const navigate = useNavigate();
 
   // Check if OCR is enabled for the user's tier
@@ -59,23 +67,29 @@ export const NotesHeader = ({
           <NoteSearch />
         </div>
         <div className="flex gap-2">
-          <Sheet open={isNewNoteSheetOpen} onOpenChange={setIsNewNoteSheetOpen}>
-            <SheetTrigger asChild>
-              <Button className="whitespace-nowrap">
+          <Dialog open={isNewNoteDialogOpen} onOpenChange={setIsNewNoteDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="whitespace-nowrap bg-purple-600 hover:bg-purple-700">
                 <Plus className="mr-2 h-4 w-4" />
                 New Note
               </Button>
-            </SheetTrigger>
-            <SheetContent className="overflow-y-auto">
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Create New Note</DialogTitle>
+                <DialogDescription>
+                  Fill out the form below to create a new note.
+                </DialogDescription>
+              </DialogHeader>
               <CreateNoteForm 
                 onSave={async (note) => {
                   const result = await onSaveNote(note);
-                  if (result) setIsNewNoteSheetOpen(false);
+                  if (result) setIsNewNoteDialogOpen(false);
                   return result;
                 }}
               />
-            </SheetContent>
-          </Sheet>
+            </DialogContent>
+          </Dialog>
 
           <ScanNoteDialog 
             onSaveNote={handleScanSave} 
@@ -88,7 +102,7 @@ export const NotesHeader = ({
 
           <Button 
             variant="outline" 
-            className="whitespace-nowrap"
+            className="whitespace-nowrap border-purple-200 hover:bg-purple-50"
             onClick={handleNoteToFlashcard}
             disabled={filteredNotes.length === 0}
           >

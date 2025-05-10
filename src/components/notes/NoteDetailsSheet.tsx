@@ -1,6 +1,11 @@
 
 import { useState } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Note } from '@/types/note';
 import { Badge } from '@/components/ui/badge';
@@ -107,15 +112,15 @@ export const NoteDetailsSheet: React.FC<NoteDetailsSheetProps> = ({
   const importPreviewUrl = getImportPreviewUrl();
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full md:max-w-xl space-y-6 overflow-y-auto">
-        <SheetHeader className="space-y-1">
-          <SheetTitle className="text-xl font-bold">{note.title}</SheetTitle>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="space-y-1">
+          <DialogTitle className="text-xl font-bold">{note.title}</DialogTitle>
           <div className="text-sm text-muted-foreground flex flex-wrap gap-2 items-center">
             <span>{note.date}</span>
-            <span className="text-primary">{note.category}</span>
+            <span className="text-purple-600">{note.category}</span>
           </div>
-        </SheetHeader>
+        </DialogHeader>
 
         <p className="text-md leading-6">{note.description}</p>
 
@@ -239,8 +244,8 @@ export const NoteDetailsSheet: React.FC<NoteDetailsSheetProps> = ({
             {isDeleting ? 'Confirm Delete' : 'Delete'}
           </Button>
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 };
 
