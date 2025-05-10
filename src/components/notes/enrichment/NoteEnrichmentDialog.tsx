@@ -16,6 +16,7 @@ import { EnhancementSelection } from './EnhancementSelection';
 import { EnhancementProcessing } from './EnhancementProcessing';
 import { EnhancementResults } from './EnhancementResults';
 import { AlertCircle, RefreshCcw } from 'lucide-react';
+import { Note } from '@/types/note';
 
 interface NoteEnrichmentDialogProps {
   open: boolean;
@@ -34,26 +35,37 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
   noteContent,
   onApplyEnhancement
 }) => {
+  // Create a mock note object to pass to useNoteEnrichment
+  const mockNote: Note = {
+    id: noteId,
+    title: noteTitle,
+    content: noteContent,
+    description: "",
+    date: new Date().toISOString().split('T')[0],
+    category: "General"
+  };
+  
   const { 
-    enrichNote, 
-    isLoading, 
+    isProcessing,
     enhancedContent, 
-    currentUsage, 
+    error,
+    selectedEnhancement,
+    setSelectedEnhancement,
+    enhancementOptions,
+    processEnhancement,
+    applyEnhancement,
+    isLoading,
+    currentUsage,
     monthlyLimit,
     isEnabled,
     initialize,
-    enhancementOptions,
     setEnhancedContent
-  } = useNoteEnrichment();
-  
-  const [selectedEnhancement, setSelectedEnhancement] = useState<EnhancementFunction | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  } = useNoteEnrichment(mockNote);
   
   useEffect(() => {
     if (open) {
-      setError(null);
       setSelectedEnhancement(null);
-      setEnhancedContent(null);
+      setEnhancedContent('');
       initialize();
     }
   }, [open, initialize, setEnhancedContent]);
@@ -73,27 +85,8 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
       return;
     }
     
-    setError(null);
     console.log("Starting enhancement with type:", selectedEnhancement);
-    
-    try {
-      const result = await enrichNote(
-        noteId, 
-        noteContent, 
-        selectedEnhancement,
-        noteTitle
-      );
-      
-      if (!result) {
-        setError("Failed to enhance note. Please check your connection and try again.");
-      } else {
-        console.log("Enhancement successful, result:", result);
-      }
-    } catch (error) {
-      console.error("Enhancement error:", error);
-      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
-      setError(errorMessage);
-    }
+    await processEnhancement(selectedEnhancement);
   };
   
   const handleApplyEnhancement = () => {
@@ -107,13 +100,12 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
   };
   
   const handleRetry = () => {
-    setError(null);
-    handleEnhancement();
+    if (selectedEnhancement) {
+      processEnhancement(selectedEnhancement);
+    }
   };
   
   const handleClose = () => {
-    setError(null);
-    setSelectedEnhancement(null);
     onOpenChange(false);
   };
   

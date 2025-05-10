@@ -23,7 +23,7 @@ export const enrichNote = async (note: Note, enhancementType: EnhancementFunctio
     }
 
     // Update the usage tracking
-    await trackUsage();
+    await trackUsage(note.id);
 
     return data.enhancedContent;
   } catch (error) {
@@ -33,14 +33,24 @@ export const enrichNote = async (note: Note, enhancementType: EnhancementFunctio
 };
 
 // Track usage of the enrichment feature
-const trackUsage = async () => {
+const trackUsage = async (noteId: string) => {
   const currentMonth = new Date().toISOString().slice(0, 7); // Format: YYYY-MM
+  const userId = (await supabase.auth.getUser()).data.user?.id;
+  
+  if (!userId) {
+    console.error('Cannot track usage: No authenticated user found');
+    return;
+  }
   
   const { error } = await supabase
     .from('note_enrichment_usage')
     .insert({
-      user_id: (await supabase.auth.getUser()).data.user?.id,
-      month_year: currentMonth
+      user_id: userId,
+      month_year: currentMonth,
+      note_id: noteId,
+      llm_provider: 'openai', // Default provider
+      prompt_tokens: 0,       // Default values since we don't have this info
+      completion_tokens: 0    // Default values since we don't have this info
     });
   
   if (error) {

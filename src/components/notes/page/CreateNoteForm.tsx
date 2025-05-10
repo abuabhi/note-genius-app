@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -96,31 +95,33 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
       const noteId = initialData?.id || 'temp-id-for-summary';
       console.log("Using noteId:", noteId);
       
-      const result = await enrichNote(
-        noteId,
-        content,
-        'addKeyPoints',
-        form.getValues('title')
-      );
-      
-      console.log("Enrichment result:", result);
-      
-      if (result) {
-        // Format the result as bullet points if it's not already
-        let summaryText = result;
-        if (!summaryText.includes('•') && !summaryText.includes('-')) {
-          summaryText = summaryText
-            .split('\n')
-            .filter(line => line.trim().length > 0)
-            .map(line => `• ${line}`)
-            .join('\n');
-        }
+      if (enrichNote) {
+        const result = await enrichNote(
+          noteId,
+          content,
+          'extract-key-points',
+          form.getValues('title')
+        );
         
-        console.log("Setting description to:", summaryText);
-        form.setValue('description', summaryText);
-        toast("Summary generated", {
-          description: "Key points extracted from your note content"
-        });
+        console.log("Enrichment result:", result);
+        
+        if (result) {
+          // Format the result as bullet points if it's not already
+          let summaryText = result;
+          if (!summaryText.includes('•') && !summaryText.includes('-')) {
+            summaryText = summaryText
+              .split('\n')
+              .filter(line => line.trim().length > 0)
+              .map(line => `• ${line}`)
+              .join('\n');
+          }
+          
+          console.log("Setting description to:", summaryText);
+          form.setValue('description', summaryText);
+          toast("Summary generated", {
+            description: "Key points extracted from your note content"
+          });
+        }
       }
     } catch (error) {
       console.error('Error generating summary:', error);
