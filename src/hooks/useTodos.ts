@@ -60,7 +60,7 @@ export const useTodos = () => {
         throw error;
       }
 
-      // Transform the data to include a default priority if it's not set
+      // Transform the data to include a priority property since it might not exist in all records
       return data.map(item => ({
         ...item,
         priority: (item.priority as TodoPriority) || 'medium',
