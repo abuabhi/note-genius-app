@@ -4,9 +4,10 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders, createCorsResponse } from './cors.ts';
 import { authenticateUser } from './auth.ts';
 import { callOpenAI } from './openai.ts';
-import { createPrompt, enhancementPrompts } from './prompts.ts';
+import { createPrompt } from './prompts.ts';
 import { EnrichmentRequestBody, ErrorResponse } from './types.ts';
 
+// Get environment variables
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
 const openaiApiKey = Deno.env.get('OPENAI_API_KEY') || '';
@@ -50,7 +51,11 @@ serve(async (req) => {
     let requestBody: EnrichmentRequestBody;
     try {
       requestBody = await req.json();
-      console.log("Request body parsed:", JSON.stringify(requestBody));
+      console.log("Request body parsed:", JSON.stringify({
+        noteId: requestBody.noteId,
+        enhancementType: requestBody.enhancementType,
+        noteTitle: requestBody.noteTitle
+      }));
     } catch (e) {
       console.error('Invalid JSON body:', e);
       return createCorsResponse(
@@ -59,7 +64,7 @@ serve(async (req) => {
       );
     }
     
-    const { noteId, noteContent, enhancementType, noteTitle, noteCategory } = requestBody;
+    const { noteId, noteContent, enhancementType, noteTitle } = requestBody;
     
     // Validate request parameters
     if (!noteId || !noteContent || !enhancementType) {
@@ -70,23 +75,9 @@ serve(async (req) => {
       );
     }
     
-    // Check if enhancement type is valid
-    if (!Object.keys(enhancementPrompts).includes(enhancementType)) {
-      console.error('Invalid enhancement type:', enhancementType);
-      return createCorsResponse(
-        { error: 'Invalid enhancement type' } as ErrorResponse,
-        400
-      );
-    }
-
-    // For demonstration purposes, let's assume all users have access to this feature
-    // In production, you would check user permissions here
-    const isFeatureEnabled = true;
-    const monthlyLimit = 100;
-    
     // Construct prompt and call OpenAI
     const prompt = createPrompt(enhancementType, noteTitle, noteContent);
-    console.log("Calling OpenAI API");
+    console.log("Calling OpenAI API with enhancement type:", enhancementType);
     
     let enhancedContent: string;
     let tokenUsage;
@@ -95,7 +86,7 @@ serve(async (req) => {
       const openAIResult = await callOpenAI(prompt, openaiApiKey);
       enhancedContent = openAIResult.enhancedContent;
       tokenUsage = openAIResult.tokenUsage;
-      console.log("Enhancement successful. Token usage:", tokenUsage);
+      console.log("Enhancement successful. Content length:", enhancedContent.length);
     } catch (openAIError) {
       console.error('OpenAI API error:', openAIError);
       return createCorsResponse(
