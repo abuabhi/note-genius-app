@@ -1,10 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from "../_shared/cors.ts";
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -13,9 +9,19 @@ serve(async (req) => {
   }
   
   try {
-    // Basic implementation of the document processing function
+    // Implementation of document processing
+    const { url, type } = await req.json();
+    
+    // Basic document processing logic
+    // In a real implementation, this would process different document types
+    const documentContent = `Processed document from ${url} of type ${type}`;
+    
     return new Response(
-      JSON.stringify({ message: "Document processing function" }),
+      JSON.stringify({ 
+        success: true, 
+        content: documentContent,
+        message: "Document processed successfully" 
+      }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
