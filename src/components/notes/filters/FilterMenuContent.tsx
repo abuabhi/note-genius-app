@@ -47,14 +47,11 @@ export const FilterMenuContent = ({
     });
   };
 
-  // Source type filter handler
-  const handleSourceTypeChange = (type: 'manual' | 'scan' | 'import', checked: boolean) => {
-    const types = localFilters.sourceType || [];
+  // Source type filter handler - updated to match the expected interface
+  const handleSourceTypeChange = (sourceType: ('manual' | 'scan' | 'import')[]) => {
     setLocalFilters({
       ...localFilters,
-      sourceType: checked
-        ? [...types, type]
-        : types.filter(t => t !== type)
+      sourceType
     });
   };
 
@@ -91,7 +88,7 @@ export const FilterMenuContent = ({
       />
       
       <SourceTypeFilter
-        selectedTypes={localFilters.sourceType}
+        sourceType={localFilters.sourceType}
         onSourceTypeChange={handleSourceTypeChange}
       />
       
