@@ -1,4 +1,3 @@
-
 import Layout from "@/components/layout/Layout";
 import { NotesContent } from "@/components/notes/page/NotesContent";
 import { useNotes } from "@/contexts/NoteContext";
@@ -33,20 +32,7 @@ const NotesPage = () => {
       // If a category is provided and it's not already in our list, add it
       if (note.category && note.category !== 'General' && note.category !== 'Uncategorized') {
         addCategory(note.category);
-        
-        // Ensure category is added as a tag if it doesn't already exist
-        const color = generateColorFromString(note.category);
-        
-        // Check if we already have this category as a tag
-        const existingCategoryTag = note.tags?.find(tag => tag.name === note.category);
-        
-        if (!existingCategoryTag) {
-          // Add category as a tag
-          note.tags = [...(note.tags || []), { 
-            name: note.category, 
-            color 
-          }];
-        }
+        // We've removed the automatic tag creation based on category
       }
       
       const newNote = await addNote(note);
@@ -66,20 +52,7 @@ const NotesPage = () => {
       // If a category is provided and it's not already in our list, add it
       if (note.category && note.category !== 'General' && note.category !== 'Uncategorized') {
         addCategory(note.category);
-        
-        // Ensure category is added as a tag
-        const color = generateColorFromString(note.category);
-        
-        // Check if we already have this category as a tag
-        const existingCategoryTag = note.tags?.find(tag => tag.name === note.category);
-        
-        if (!existingCategoryTag) {
-          // Add category as a tag
-          note.tags = [...(note.tags || []), { 
-            name: note.category, 
-            color 
-          }];
-        }
+        // We've removed the automatic tag creation based on category
       }
       
       const newNote = await addNote({
@@ -102,20 +75,7 @@ const NotesPage = () => {
       // If a category is provided and it's not already in our list, add it
       if (note.category && note.category !== 'General' && note.category !== 'Uncategorized') {
         addCategory(note.category);
-        
-        // Ensure category is added as a tag
-        const color = generateColorFromString(note.category);
-        
-        // Check if we already have this category as a tag
-        const existingCategoryTag = note.tags?.find(tag => tag.name === note.category);
-        
-        if (!existingCategoryTag) {
-          // Add category as a tag
-          note.tags = [...(note.tags || []), { 
-            name: note.category, 
-            color 
-          }];
-        }
+        // We've removed the automatic tag creation based on category
       }
       
       const newNote = await addNote({
@@ -133,7 +93,7 @@ const NotesPage = () => {
     }
   };
 
-  // Generate a color based on a string (for category tags)
+  // Keep the utility function for generating colors but we no longer use it for automatic tag creation
   const generateColorFromString = (str: string): string => {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {

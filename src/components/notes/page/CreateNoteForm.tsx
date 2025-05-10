@@ -51,28 +51,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
     // Add category to global state
     addCategory(newCategory);
     
-    // Optional: Add category as a tag as well
-    ensureSubjectTag(newCategory);
-  };
-  
-  // Auto-created tag based on selected subject
-  const ensureSubjectTag = (subject: string) => {
-    if (!subject) return;
-    
-    // Check if a tag for this subject already exists
-    const existingSubjectTag = selectedTags.find(tag => 
-      tag.name.toLowerCase() === subject.toLowerCase()
-    );
-    
-    // If no tag exists for this subject, create one
-    if (!existingSubjectTag) {
-      // Generate a consistent color from the subject name
-      const color = generateColorFromString(subject);
-      
-      // Add the subject as a tag
-      const subjectTag = { name: subject, color };
-      setSelectedTags(prev => [...prev, subjectTag]);
-    }
+    // We no longer automatically add the category as a tag here
   };
   
   // Generate a color based on a string (for subject tags)
@@ -85,17 +64,6 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
     const hue = Math.abs(hash) % 360;
     return `hsl(${hue}, 70%, 60%)`;
   };
-  
-  // When subject changes, ensure there's a tag for it
-  useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      if (name === 'subject' && value.subject && value.subject !== '_custom' && value.subject !== '_none') {
-        ensureSubjectTag(value.subject as string);
-      }
-    });
-    
-    return () => subscription.unsubscribe();
-  }, [form.watch, selectedTags]);
 
   useEffect(() => {
     // Load available tags
@@ -109,10 +77,8 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
     // Set initial tags if available
     if (initialData?.tags) {
       setSelectedTags(initialData.tags);
-    } else if (initialData?.category && initialData.category !== 'General') {
-      // Add the category as a tag
-      ensureSubjectTag(initialData.category);
     }
+    // We remove the automatic tag creation based on category here
   }, [getAllTags, initialData]);
 
   const handleEnhancedContent = (enhancedContent: string) => {
