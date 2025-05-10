@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Import } from "lucide-react";
 import { ImportTabs } from "./tabs/ImportTabs";
 import { Note } from "@/types/note";
+import { useImportState } from "./useImportState";
 
 interface ImportDialogProps {
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<boolean>;
@@ -24,6 +25,27 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({
   onClose
 }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(isVisible);
+  const { 
+    activeTab, 
+    setActiveTab, 
+    selectedFile, 
+    setSelectedFile,
+    processedText,
+    setProcessedText,
+    documentTitle,
+    setDocumentTitle,
+    isProcessing,
+    setIsProcessing,
+    isSaving,
+    setIsSaving,
+    handleFileSelected,
+    handleApiImport,
+    processDocument,
+    saveAsNote
+  } = useImportState(onSaveNote, () => {
+    setIsDialogOpen(false);
+    if (onClose) onClose();
+  });
 
   // Sync internal state with props
   useEffect(() => {
@@ -55,12 +77,45 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({
         </DialogHeader>
 
         <ImportTabs 
-          onSaveNote={onSaveNote} 
-          onClose={() => {
-            setIsDialogOpen(false);
-            if (onClose) onClose();
-          }}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onFileSelected={handleFileSelected}
+          onApiImport={handleApiImport}
+          selectedFile={selectedFile}
+          processDocument={processDocument}
+          isProcessing={isProcessing}
         />
+        
+        {processedText && (
+          <div className="mt-4">
+            <div className="mb-4">
+              <label htmlFor="title" className="block text-sm font-medium mb-1">Document Title</label>
+              <input
+                id="title"
+                type="text"
+                value={documentTitle}
+                onChange={(e) => setDocumentTitle(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded"
+                placeholder="Enter a title for your note"
+              />
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Content Preview</label>
+              <div className="border border-gray-200 rounded p-4 max-h-60 overflow-y-auto bg-gray-50">
+                <pre className="whitespace-pre-wrap text-sm">{processedText}</pre>
+              </div>
+            </div>
+            
+            <Button
+              onClick={saveAsNote}
+              disabled={isSaving || !documentTitle}
+              className="w-full"
+            >
+              {isSaving ? 'Saving...' : 'Save as Note'}
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

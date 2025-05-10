@@ -1,68 +1,116 @@
 
 import { useState } from "react";
+import { Note } from "@/types/note";
+import { uploadFileToStorage, processSelectedDocument } from "./importUtils";
 
-interface ImportState {
-  selectedFile: File | null;
-  fileType: string | null;
-  fileUrl: string | null;
-  extractedText: string;
-  documentTitle: string;
-  documentMetadata?: Record<string, any>;
-}
+export const useImportState = (
+  onSaveNote: (note: Omit<Note, 'id'>) => Promise<boolean>,
+  onComplete?: () => void
+) => {
+  // Tab state
+  const [activeTab, setActiveTab] = useState("file");
+  
+  // File state
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  
+  // Processed content state
+  const [processedText, setProcessedText] = useState<string | null>(null);
+  const [documentTitle, setDocumentTitle] = useState("");
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [fileType, setFileType] = useState<string | null>(null);
+  
+  // Loading states
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-export const useImportState = () => {
-  const [importState, setImportState] = useState<ImportState>({
-    selectedFile: null,
-    fileType: null,
-    fileUrl: null,
-    extractedText: '',
-    documentTitle: '',
-    documentMetadata: {}
-  });
-
-  const setSelectedFile = (file: File | null) => {
-    setImportState(prev => ({ ...prev, selectedFile: file }));
+  // Handle file selection
+  const handleFileSelected = (file: File) => {
+    setSelectedFile(file);
+    setProcessedText(null);
+    setDocumentTitle(file.name.split('.')[0] || "Imported Document");
+    setFileType(file.name.split('.').pop()?.toLowerCase() || null);
   };
 
-  const setFileType = (type: string | null) => {
-    setImportState(prev => ({ ...prev, fileType: type }));
+  // Handle API import
+  const handleApiImport = (type: string, content: string) => {
+    setProcessedText(content);
+    setDocumentTitle(`Imported from ${type}`);
+    setFileType(type);
+    setSelectedFile(null);
   };
 
-  const setFileUrl = (url: string | null) => {
-    setImportState(prev => ({ ...prev, fileUrl: url }));
+  // Process the selected document
+  const processDocument = async () => {
+    if (!selectedFile && !fileType) return;
+    
+    setIsProcessing(true);
+    
+    try {
+      const result = await processSelectedDocument(selectedFile, fileType || "unknown");
+      setProcessedText(result.text);
+      setDocumentTitle(result.title);
+      setFileUrl(result.fileUrl);
+    } catch (error) {
+      console.error("Error processing document:", error);
+      setProcessedText("Error processing document. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const setExtractedText = (text: string) => {
-    setImportState(prev => ({ ...prev, extractedText: text }));
-  };
-
-  const setDocumentTitle = (title: string) => {
-    setImportState(prev => ({ ...prev, documentTitle: title }));
-  };
-
-  const setDocumentMetadata = (metadata: Record<string, any>) => {
-    setImportState(prev => ({ ...prev, documentMetadata: metadata }));
-  };
-
-  const resetState = () => {
-    setImportState({
-      selectedFile: null,
-      fileType: null,
-      fileUrl: null,
-      extractedText: '',
-      documentTitle: '',
-      documentMetadata: {}
-    });
+  // Save the processed document as a note
+  const saveAsNote = async () => {
+    if (!processedText) return;
+    
+    setIsSaving(true);
+    
+    try {
+      const note: Omit<Note, 'id'> = {
+        title: documentTitle,
+        content: processedText,
+        date: new Date().toISOString(),
+        category: "Imports",
+        description: `Imported ${fileType ? `from ${fileType} file` : "document"}`,
+        sourceType: "import",
+        importData: {
+          originalFileUrl: fileUrl || undefined,
+          fileType: fileType || "unknown",
+          importedAt: new Date().toISOString()
+        }
+      };
+      
+      const success = await onSaveNote(note);
+      
+      if (success && onComplete) {
+        onComplete();
+      }
+    } catch (error) {
+      console.error("Error saving note:", error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return {
-    importState,
+    activeTab,
+    setActiveTab,
+    selectedFile,
     setSelectedFile,
-    setFileType,
-    setFileUrl,
-    setExtractedText,
+    processedText,
+    setProcessedText,
+    documentTitle,
     setDocumentTitle,
-    setDocumentMetadata,
-    resetState
+    fileUrl,
+    setFileUrl,
+    fileType,
+    setFileType,
+    isProcessing,
+    setIsProcessing,
+    isSaving,
+    setIsSaving,
+    handleFileSelected,
+    handleApiImport,
+    processDocument,
+    saveAsNote
   };
 };
