@@ -50,7 +50,6 @@ const App = () => {
   const location = useLocation();
 
   // Store current path in localStorage when path changes 
-  // This will help maintain user's position after auth events
   useEffect(() => {
     if (location.pathname !== '/login' && location.pathname !== '/signup') {
       localStorage.setItem("lastVisitedPage", location.pathname);
@@ -65,6 +64,7 @@ const App = () => {
         <NoteProvider>
           <FeatureProvider>
             <Routes>
+              {/* Public routes */}
               <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
@@ -73,22 +73,83 @@ const App = () => {
               <Route path="/pricing" element={<PricingPage />} />
               <Route path="/faq" element={<FAQPage />} />
 
-              {/* Protected routes */}
+              {/* Standard protected routes - always available */}
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/notes" element={<NotesPage />} />
               <Route path="/notes/study/:noteId" element={<NoteStudyPage />} />
-              <Route path="/quizzes" element={<QuizPage />} />
               <Route path="/flashcards" element={<FlashcardsPage />} />
               <Route path="/study" element={<StudyPage />} />
-              <Route path="/study-sessions" element={<StudySessionsPage />} />
-              <Route path="/progress" element={<ProgressPage />} />
-              <Route path="/schedule" element={<SchedulePage />} />
-              <Route path="/goals" element={<GoalsPage />} />
-              <Route path="/todos" element={<TodoPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/library" element={<FlashcardLibraryPage />} />
+              <Route path="/notes/edit/:noteId" element={<EditNotePage />} />
+
+              {/* Feature-protected routes */}
+              <Route
+                path="/study-sessions"
+                element={
+                  <FeatureProtectedRoute featureKey="study_sessions">
+                    <StudySessionsPage />
+                  </FeatureProtectedRoute>
+                }
+              />
+              <Route
+                path="/progress"
+                element={
+                  <FeatureProtectedRoute featureKey="progress">
+                    <ProgressPage />
+                  </FeatureProtectedRoute>
+                }
+              />
+              <Route
+                path="/schedule"
+                element={
+                  <FeatureProtectedRoute featureKey="schedule">
+                    <SchedulePage />
+                  </FeatureProtectedRoute>
+                }
+              />
+              <Route
+                path="/goals"
+                element={
+                  <FeatureProtectedRoute featureKey="goals">
+                    <GoalsPage />
+                  </FeatureProtectedRoute>
+                }
+              />
+              <Route
+                path="/todos"
+                element={
+                  <FeatureProtectedRoute featureKey="todos">
+                    <TodoPage />
+                  </FeatureProtectedRoute>
+                }
+              />
+              <Route
+                path="/quizzes"
+                element={
+                  <FeatureProtectedRoute featureKey="quizzes">
+                    <QuizPage />
+                  </FeatureProtectedRoute>
+                }
+              />
+              <Route
+                path="/quiz/create"
+                element={
+                  <FeatureProtectedRoute featureKey="quizzes">
+                    <CreateQuizPage />
+                  </FeatureProtectedRoute>
+                }
+              />
+              <Route
+                path="/quizzes/:quizId"
+                element={
+                  <FeatureProtectedRoute featureKey="quizzes">
+                    <TakeQuizPage />
+                  </FeatureProtectedRoute>
+                }
+              />
               
-              {/* Feature protected routes */}
+              {/* Already feature protected routes */}
               <Route 
                 path="/chat" 
                 element={
@@ -123,9 +184,7 @@ const App = () => {
               <Route path="/admin/csv-import" element={<AdminCSVImportPage />} />
               <Route path="/admin/features" element={<AdminFeaturesPage />} />
               
-              {/* Creating routes */}
-              <Route path="/create-quiz" element={<CreateQuizPage />} />
-              <Route path="/quizzes/:quizId" element={<TakeQuizPage />} />
+              {/* Create / conversion routes */}
               <Route path="/note-to-flashcard" element={<NoteToFlashcardPage />} />
               
               {/* Auth callback routes */}
@@ -133,8 +192,6 @@ const App = () => {
               <Route path="/auth/evernote/callback" element={<EvernoteAuthCallback />} />
               <Route path="/auth/microsoft/callback" element={<MicrosoftAuthCallback />} />
               <Route path="/auth/googledocs/callback" element={<GoogleDocsAuthCallback />} />
-              
-              <Route path="/notes/edit/:noteId" element={<EditNotePage />} />
               
               {/* 404 */}
               <Route path="*" element={<NotFoundPage />} />

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserTier } from '@/hooks/useUserTier';
@@ -13,6 +12,7 @@ export interface Feature {
   description: string;
   created_at: string;
   updated_at: string;
+  visibility_mode: 'visible' | 'hidden';
 }
 
 interface FeatureContextValue {
@@ -20,6 +20,7 @@ interface FeatureContextValue {
   loading: boolean;
   error: Error | null;
   isFeatureEnabled: (featureKey: string) => boolean;
+  isFeatureVisible: (featureKey: string) => boolean;
   updateFeature: (id: string, updates: Partial<Feature>) => Promise<void>;
   refreshFeatures: () => Promise<void>;
 }
@@ -48,7 +49,9 @@ export const FeatureProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const typedFeatures: Feature[] = (data || []).map(feature => ({
         ...feature,
         // Cast the string to UserTier or null
-        requires_tier: feature.requires_tier as UserTier | null
+        requires_tier: feature.requires_tier as UserTier | null,
+        // Set default visibility mode if not present
+        visibility_mode: feature.visibility_mode || 'visible'
       }));
       
       setFeatures(typedFeatures);
@@ -90,6 +93,19 @@ export const FeatureProvider: React.FC<{ children: React.ReactNode }> = ({ child
     
     return userTierLevel >= requiredTierLevel;
   };
+  
+  // Check if a feature should be visible in the UI
+  const isFeatureVisible = (featureKey: string): boolean => {
+    const feature = features.find(f => f.feature_key === featureKey);
+    // If feature doesn't exist, it's not visible
+    if (!feature) return false;
+    
+    // If feature is explicitly set to hidden, it's not visible
+    if (feature.visibility_mode === 'hidden') return false;
+    
+    // Otherwise, it's visible (even if disabled)
+    return true;
+  };
 
   const updateFeature = async (id: string, updates: Partial<Feature>): Promise<void> => {
     try {
@@ -122,7 +138,8 @@ export const FeatureProvider: React.FC<{ children: React.ReactNode }> = ({ child
         features, 
         loading, 
         error, 
-        isFeatureEnabled, 
+        isFeatureEnabled,
+        isFeatureVisible,
         updateFeature,
         refreshFeatures: fetchFeatures 
       }}
@@ -143,4 +160,9 @@ export const useFeatures = () => {
 export const useFeature = (featureKey: string) => {
   const { isFeatureEnabled } = useFeatures();
   return isFeatureEnabled(featureKey);
+};
+
+export const useFeatureVisibility = (featureKey: string) => {
+  const { isFeatureVisible } = useFeatures();
+  return isFeatureVisible(featureKey);
 };

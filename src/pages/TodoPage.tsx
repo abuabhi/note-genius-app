@@ -9,6 +9,7 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FeatureDisabledAlert } from "@/components/routes/FeatureProtectedRoute";
 
 const TodoPage = () => {
   const { user, loading } = useRequireAuth();
@@ -65,6 +66,8 @@ const TodoPage = () => {
             Todo List
           </h1>
         </div>
+
+        <FeatureDisabledAlert featureKey="todos" featureDisplayName="Todo Lists" />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-1">

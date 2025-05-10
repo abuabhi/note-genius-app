@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
+import { FeatureDisabledAlert } from '@/components/routes/FeatureProtectedRoute';
 
 const GoalsPage = () => {
   const { loading: authLoading } = useRequireAuth();
@@ -88,6 +89,8 @@ const GoalsPage = () => {
             <PlusCircle className="mr-2 h-4 w-4" /> Create Goal
           </Button>
         </div>
+        
+        <FeatureDisabledAlert featureKey="goals" featureDisplayName="Study Goals" />
         
         <div className="mb-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>

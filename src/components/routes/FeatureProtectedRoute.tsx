@@ -1,9 +1,9 @@
 
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useFeature } from '@/contexts/FeatureContext';
+import { useFeatures } from '@/contexts/FeatureContext';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, EyeOff } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 
 interface FeatureProtectedRouteProps {
@@ -17,13 +17,14 @@ export const FeatureProtectedRoute: React.FC<FeatureProtectedRouteProps> = ({
   children, 
   fallbackPath = '/dashboard' 
 }) => {
-  const isEnabled = useFeature(featureKey);
+  const { isFeatureEnabled, isFeatureVisible } = useFeatures();
   
-  if (!isEnabled) {
-    // For direct navigation attempts, redirect to fallback
+  // If the feature is not visible, redirect to fallback
+  if (!isFeatureVisible(featureKey)) {
     return <Navigate to={fallbackPath} replace />;
   }
   
+  // If feature is visible but disabled, let the FeatureDisabledAlert handle it
   return <>{children}</>;
 };
 
@@ -31,9 +32,10 @@ export const FeatureDisabledAlert: React.FC<{
   featureKey: string;
   featureDisplayName: string;
 }> = ({ featureKey, featureDisplayName }) => {
-  const isEnabled = useFeature(featureKey);
+  const { isFeatureEnabled, isFeatureVisible } = useFeatures();
   
-  if (isEnabled) return null;
+  // If feature is enabled OR not visible, don't show an alert
+  if (isFeatureEnabled(featureKey) || !isFeatureVisible(featureKey)) return null;
   
   return (
     <Alert variant="destructive" className="mb-4">
@@ -45,4 +47,26 @@ export const FeatureDisabledAlert: React.FC<{
       </AlertDescription>
     </Alert>
   );
+};
+
+// Higher-order component wrapper for feature-protected pages
+export const withFeatureProtection = (
+  Component: React.ComponentType, 
+  featureKey: string, 
+  featureDisplayName: string
+) => {
+  return (props: any) => {
+    const { isFeatureVisible } = useFeatures();
+    
+    if (!isFeatureVisible(featureKey)) {
+      return <Navigate to="/dashboard" replace />;
+    }
+    
+    return (
+      <>
+        <FeatureDisabledAlert featureKey={featureKey} featureDisplayName={featureDisplayName} />
+        <Component {...props} />
+      </>
+    );
+  };
 };

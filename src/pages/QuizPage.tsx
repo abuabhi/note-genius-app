@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useNavigate } from "react-router-dom";
+import { FeatureDisabledAlert } from "@/components/routes/FeatureProtectedRoute";
 
 const QuizPage = () => {
   const { userProfile } = useRequireAuth();
@@ -31,6 +32,8 @@ const QuizPage = () => {
             Create Quiz
           </Button>
         </div>
+        
+        <FeatureDisabledAlert featureKey="quizzes" featureDisplayName="Quizzes" />
         
         <QuizStats />
         

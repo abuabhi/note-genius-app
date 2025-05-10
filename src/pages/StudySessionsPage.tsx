@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StudyStatsOverview } from "@/components/study/StudyStatsOverview";
 import { Calendar } from "lucide-react";
 import { useStudySessions } from "@/hooks/useStudySessions";
+import { FeatureDisabledAlert } from "@/components/routes/FeatureProtectedRoute";
 
 const StudySessionsPage = () => {
   const { user, loading } = useRequireAuth();
@@ -59,6 +60,8 @@ const StudySessionsPage = () => {
             </span>
           </div>
         </div>
+
+        <FeatureDisabledAlert featureKey="study_sessions" featureDisplayName="Study Sessions" />
 
         <StudyStatsOverview />
 

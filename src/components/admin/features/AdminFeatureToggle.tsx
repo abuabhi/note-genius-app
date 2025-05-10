@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { UserTier } from '@/hooks/useRequireAuth';
-import { Loader, AlertTriangle, Info } from 'lucide-react';
+import { Loader, AlertTriangle, Info, Eye, EyeOff } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -14,10 +14,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const AdminFeatureToggle = () => {
   const { features, loading, error, updateFeature, refreshFeatures } = useFeatures();
   const [updatingFeature, setUpdatingFeature] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("all");
 
   const handleToggleFeature = async (feature: Feature) => {
     try {
@@ -34,6 +36,31 @@ const AdminFeatureToggle = () => {
       await updateFeature(feature.id, { requires_tier: tier });
     } finally {
       setUpdatingFeature(null);
+    }
+  };
+
+  const handleChangeVisibility = async (feature: Feature) => {
+    try {
+      setUpdatingFeature(feature.id);
+      const newVisibility = feature.visibility_mode === 'visible' ? 'hidden' : 'visible';
+      await updateFeature(feature.id, { visibility_mode: newVisibility });
+    } finally {
+      setUpdatingFeature(null);
+    }
+  };
+
+  const getFilteredFeatures = () => {
+    switch (activeTab) {
+      case 'enabled':
+        return features.filter(f => f.is_enabled);
+      case 'disabled':
+        return features.filter(f => !f.is_enabled);
+      case 'visible':
+        return features.filter(f => f.visibility_mode === 'visible');
+      case 'hidden':
+        return features.filter(f => f.visibility_mode === 'hidden');
+      default:
+        return features;
     }
   };
 
@@ -62,12 +89,23 @@ const AdminFeatureToggle = () => {
           <Info className="h-4 w-4" />
           <AlertDescription>
             Use these toggles to enable or disable features across the application.
-            Disabling a feature will prevent all users from accessing it, regardless of their tier.
+            For disabled features, you can also choose whether they should be visible but inactive,
+            or completely hidden from the user interface.
           </AlertDescription>
         </Alert>
       </div>
 
-      {features.map((feature) => (
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+        <TabsList>
+          <TabsTrigger value="all">All Features</TabsTrigger>
+          <TabsTrigger value="enabled">Enabled</TabsTrigger>
+          <TabsTrigger value="disabled">Disabled</TabsTrigger>
+          <TabsTrigger value="visible">Visible</TabsTrigger>
+          <TabsTrigger value="hidden">Hidden</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {getFilteredFeatures().map((feature) => (
         <Card key={feature.id}>
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
@@ -88,7 +126,7 @@ const AdminFeatureToggle = () => {
             </div>
           </CardHeader>
           <CardContent className="pt-2">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0">
               <div className="flex items-center">
                 <span className="text-sm text-muted-foreground mr-2">Minimum tier required:</span>
                 <Select
@@ -110,16 +148,35 @@ const AdminFeatureToggle = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                {feature.is_enabled ? (
-                  <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">
-                    Enabled
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">
-                    Disabled
-                  </Badge>
-                )}
+
+              <div className="flex items-center justify-between md:justify-end space-x-4">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-muted-foreground">
+                    {feature.visibility_mode === 'visible' ? 'Visible when disabled' : 'Hidden when disabled'}:
+                  </span>
+                  <button
+                    onClick={() => handleChangeVisibility(feature)}
+                    className="inline-flex items-center text-slate-500 hover:text-primary"
+                    disabled={updatingFeature === feature.id}
+                  >
+                    {feature.visibility_mode === 'visible' ? 
+                      <Eye className="h-4 w-4" /> : 
+                      <EyeOff className="h-4 w-4" />
+                    }
+                  </button>
+                </div>
+                
+                <div>
+                  {feature.is_enabled ? (
+                    <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">
+                      Enabled
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">
+                      Disabled
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
           </CardContent>
