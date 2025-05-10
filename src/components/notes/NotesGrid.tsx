@@ -12,7 +12,6 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
   const { pinNote, archiveNote, deleteNote } = useNotes();
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const navigate = useNavigate();
 
   if (notes.length === 0) {
@@ -27,18 +26,8 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    // If we're already confirming deletion for this note
-    if (confirmDelete === id) {
-      deleteNote(id);
-      setConfirmDelete(null);
-      toast("Note deleted");
-    } else {
-      // First click - set confirm state
-      setConfirmDelete(id);
-      // Auto-reset after 3 seconds
-      setTimeout(() => setConfirmDelete(null), 3000);
-    }
+    deleteNote(id);
+    toast("Note deleted");
   };
 
   const handleNoteClick = (note: Note) => {
@@ -63,7 +52,7 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
             onShowDetails={handleShowDetails}
             onPin={handlePin}
             onDelete={handleDelete}
-            confirmDelete={confirmDelete}
+            confirmDelete={null} // Remove the confirmDelete state as we're using a dialog now
           />
         ))}
       </div>

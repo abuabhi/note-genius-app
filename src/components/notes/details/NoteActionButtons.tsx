@@ -2,6 +2,17 @@
 import { Archive, Book, Edit, Pin, PinOff, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Note } from '@/types/note';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface NoteActionButtonsProps {
   note: Note;
@@ -54,14 +65,35 @@ export const NoteActionButtons = ({
         <Archive className="h-4 w-4" />
         {note.archived ? 'Restore' : 'Archive'}
       </Button>
-      <Button 
-        variant={isDeleting ? "destructive" : "outline"} 
-        onClick={onDelete}
-        className="flex items-center gap-2"
-      >
-        <Trash2 className="h-4 w-4" />
-        {isDeleting ? 'Confirm Delete' : 'Delete'}
-      </Button>
+      
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-2 hover:bg-red-50 hover:text-red-700 hover:border-red-200"
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the note "{note.title}".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={onDelete}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

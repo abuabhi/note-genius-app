@@ -10,7 +10,6 @@ export const useNoteDetails = (note: Note, onOpenChange: (open: boolean) => void
   const { updateNote, pinNote, archiveNote, deleteNote } = useNotes();
   const navigate = useNavigate();
 
-  const [isDeleting, setIsDeleting] = useState(false);
   const [noteContent, setNoteContent] = useState(note.content || '');
   
   // Get scan data preview URL if available
@@ -53,17 +52,18 @@ export const useNoteDetails = (note: Note, onOpenChange: (open: boolean) => void
   // Handle deleting note
   const handleDelete = async () => {
     try {
-      setIsDeleting(true);
       await deleteNote(note.id);
       onOpenChange(false);
+      toast({
+        title: "Success",
+        description: "Note deleted successfully"
+      });
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to delete note",
         variant: "destructive"
       });
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -94,7 +94,6 @@ export const useNoteDetails = (note: Note, onOpenChange: (open: boolean) => void
   };
 
   return {
-    isDeleting,
     noteContent,
     setNoteContent,
     handlePin,
