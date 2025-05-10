@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -48,8 +49,7 @@ export const useRequireAuth = () => {
   const [tierLimits, setTierLimits] = useState<TierLimits | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
-  // Remove debug logging
+  const location = useLocation();
   
   useEffect(() => {
     // Don't do anything while the auth is still loading
@@ -57,7 +57,6 @@ export const useRequireAuth = () => {
     
     if (!user) {
       // Only redirect to login if the user is not authenticated
-      // Use the navigate function directly instead of setTimeout to avoid timing issues
       navigate('/login');
       setLoading(false);
       return;
@@ -125,7 +124,13 @@ export const useRequireAuth = () => {
     };
 
     fetchUserData();
-  }, [user, authLoading, navigate]);
+    
+    // Store the current path as the last visited page
+    if (location.pathname !== '/login' && location.pathname !== '/signup') {
+      localStorage.setItem('lastVisitedPage', location.pathname);
+    }
+    
+  }, [user, authLoading, navigate, location.pathname]);
 
   return { user, userProfile, loading: authLoading || loading, tierLimits };
 };

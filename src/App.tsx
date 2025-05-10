@@ -1,6 +1,7 @@
 
 import React, { useEffect } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext';
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
@@ -34,7 +35,6 @@ import NotionAuthCallback from './components/auth/NotionAuthCallback';
 import EvernoteAuthCallback from './components/auth/EvernoteAuthCallback';
 import MicrosoftAuthCallback from './components/auth/MicrosoftAuthCallback';
 import GoogleDocsAuthCallback from './components/auth/GoogleDocsAuthCallback';
-import { useAuth } from './contexts/AuthContext';
 import { NavigationProvider } from './contexts/NavigationContext';
 import { NoteProvider } from '@/contexts/NoteContext';
 import ChatPage from "./pages/ChatPage";
@@ -46,8 +46,13 @@ const App = () => {
   const { user } = useAuth();
   const location = useLocation();
 
-  // Scroll to top on route change
+  // Store current path in localStorage when path changes 
+  // This will help maintain user's position after auth events
   useEffect(() => {
+    if (location.pathname !== '/login' && location.pathname !== '/signup') {
+      localStorage.setItem("lastVisitedPage", location.pathname);
+    }
+    // Always scroll to top on route change
     window.scrollTo(0, 0);
   }, [location.pathname]);
 

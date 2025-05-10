@@ -1,9 +1,8 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 type AuthContextType = {
   session: Session | null;
@@ -23,6 +22,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -32,9 +32,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(currentSession?.user ?? null);
         
         if (event === 'SIGNED_IN' && currentSession) {
+          // Get the last visited page from localStorage
+          const lastVisitedPage = localStorage.getItem('lastVisitedPage');
+          
           // Use setTimeout to avoid nested Supabase calls in the callback
           setTimeout(() => {
-            navigate('/dashboard');
+            // Only navigate to dashboard if not on a specific page like notes
+            if (!lastVisitedPage || lastVisitedPage === '/login' || lastVisitedPage === '/signup') {
+              navigate('/dashboard');
+            }
           }, 0);
         } else if (event === 'SIGNED_OUT') {
           // Use setTimeout to avoid nested Supabase calls in the callback
@@ -58,7 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, location]);
 
   const signUp = async (email: string, password: string, userData?: { username?: string }) => {
     try {

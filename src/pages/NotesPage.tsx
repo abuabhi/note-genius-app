@@ -1,4 +1,3 @@
-
 import Layout from "@/components/layout/Layout";
 import { NotesContent } from "@/components/notes/page/NotesContent";
 import { useNotes } from "@/contexts/NoteContext";
@@ -15,7 +14,6 @@ const NotesPage = () => {
   const userTier = userProfile?.user_tier;
   const location = useLocation();
 
-  // Simply reset filter options when component mounts, no redirection logic
   useEffect(() => {
     // Reset filters when component mounts
     const resetOptions: FilterOptions = {
@@ -25,11 +23,9 @@ const NotesPage = () => {
     
     setFilterOptions(resetOptions);
     
-    // Only store the path, no redirection logic
-    if (location.pathname === '/notes') {
-      localStorage.setItem("lastVisitedPage", location.pathname);
-    }
-  }, [setFilterOptions, location.pathname]);
+    // Simply record that we're on the notes page - no redirection logic at all
+    localStorage.setItem("lastVisitedPage", location.pathname);
+  }, [setFilterOptions]);
 
   const handleSaveNote = async (note: Omit<Note, 'id'>): Promise<Note | null> => {
     try {
