@@ -110,7 +110,7 @@ export const NoteMetadataFields = ({
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="">Select subject</SelectItem>
+                <SelectItem value="_none">Select subject</SelectItem>
                 {availableCategories.map((category) => (
                   <SelectItem key={category} value={category}>
                     {category}

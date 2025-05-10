@@ -22,16 +22,16 @@ export const CategoryFilter = ({
   return (
     <FilterOption label="Subject">
       <Select
-        value={category || ""}
+        value={category || "_any"}
         onValueChange={(value) => 
-          onCategoryChange(value === "" ? undefined : value)
+          onCategoryChange(value === "_any" ? undefined : value)
         }
       >
         <SelectTrigger id="category" className="border-purple-200 focus:ring-purple-400">
           <SelectValue placeholder="Any subject" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">Any subject</SelectItem>
+          <SelectItem value="_any">Any subject</SelectItem>
           {availableCategories.map(category => (
             <SelectItem key={category} value={category}>
               {category}
