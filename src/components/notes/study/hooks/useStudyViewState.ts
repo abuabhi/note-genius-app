@@ -1,10 +1,12 @@
 
 import { useState } from "react";
 
+export type TextAlignType = 'left' | 'center' | 'justify';
+
 export const useStudyViewState = () => {
   const [fontSize, setFontSize] = useState<number>(16);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
-  const [textAlign, setTextAlign] = useState<string>("left");
+  const [textAlign, setTextAlign] = useState<TextAlignType>("left");
   const [isFullWidth, setIsFullWidth] = useState<boolean>(false);
   const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
 
@@ -24,7 +26,7 @@ export const useStudyViewState = () => {
     setIsDarkMode(!isDarkMode);
   };
 
-  const handleTextAlign = (align: string) => {
+  const handleTextAlign = (align: TextAlignType) => {
     setTextAlign(align);
   };
 

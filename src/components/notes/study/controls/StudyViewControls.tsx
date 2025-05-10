@@ -14,17 +14,18 @@ import {
   Maximize,
   Minimize,
 } from "lucide-react";
+import { TextAlignType } from "../hooks/useStudyViewState";
 
 interface StudyViewControlsProps {
   fontSize: number;
-  textAlign: string;
+  textAlign: TextAlignType;
   isDarkMode: boolean;
   isFullWidth: boolean;
   isFullScreen: boolean;
   onIncreaseFontSize: () => void;
   onDecreaseFontSize: () => void;
   onToggleDarkMode: () => void;
-  onChangeTextAlign: (align: string) => void;
+  onChangeTextAlign: (align: TextAlignType) => void;
   onToggleWidth: () => void;
   onToggleFullScreen: () => void;
 }

@@ -2,11 +2,12 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
+import { TextAlignType } from "./hooks/useStudyViewState";
 
 interface NoteContentDisplayProps {
   content: string;
   fontSize: number;
-  textAlign: string;
+  textAlign: TextAlignType;
   isDarkMode: boolean;
   showScannedImage?: boolean;
   scannedImageUrl?: string;
@@ -72,7 +73,7 @@ export const NoteContentDisplay = ({
             key={index}
             style={{
               fontSize: `${fontSize}px`,
-              textAlign: textAlign as "left" | "center" | "justify" | "right",
+              textAlign: textAlign,
               lineHeight: '1.7',
               marginBottom: '1.2em'
             }}
