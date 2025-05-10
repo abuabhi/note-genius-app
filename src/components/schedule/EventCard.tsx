@@ -1,14 +1,17 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, Clock, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { Event } from "@/hooks/useEvents";
 
-export const EventCard = (props: any) => {
-  const { event, onDelete = () => {} } = props;
-  
+interface EventCardProps {
+  event: any;
+  onDelete?: (event: any) => void;
+}
+
+export const EventCard: React.FC<EventCardProps> = ({ event, onDelete }) => {
   if (!event) {
     return null;
   }
@@ -25,10 +28,17 @@ export const EventCard = (props: any) => {
       return 'Invalid date';
     }
   };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onDelete) {
+      onDelete(event);
+    }
+  };
   
   return (
     <div className="p-2">
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden hover:shadow-md transition-shadow duration-300">
         <div 
           className="h-2"
           style={{ backgroundColor: event.color || '#4f46e5' }}
@@ -36,11 +46,24 @@ export const EventCard = (props: any) => {
         <CardContent className="p-2">
           <div className="flex justify-between items-start">
             <h3 className="font-medium">{event.title || 'Untitled Event'}</h3>
-            {event.event_type && (
-              <span className="text-xs px-2 py-1 rounded-full bg-secondary">
-                {event.event_type}
-              </span>
-            )}
+            <div className="flex items-center">
+              {event.event_type && (
+                <span className="text-xs px-2 py-1 rounded-full bg-secondary mr-2">
+                  {event.event_type}
+                </span>
+              )}
+              {onDelete && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  onClick={handleDelete}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span className="sr-only">Delete</span>
+                </Button>
+              )}
+            </div>
           </div>
           
           {event.description && (

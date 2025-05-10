@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarComponent, View, momentLocalizer } from 'react-big-calendar';
+import { Calendar as CalendarComponent, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { useEvents } from '@/hooks/useEvents';
 import { EventCard } from './EventCard';
 import { Card } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { CreateEventDialog } from './CreateEventDialog';
 import { toast } from 'sonner';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface ScheduleCalendarProps {
   selectedDate: Date;
@@ -23,9 +24,10 @@ const localizer = momentLocalizer(moment);
 export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ selectedDate, onDateChange }) => {
   const { events, isLoading, error, createEvent, deleteEvent, refetchEvents } = useEvents(selectedDate);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  
   const [formattedEvents, setFormattedEvents] = useState<any[]>([]);
-
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  
   // Handle any errors from the useEvents hook
   useEffect(() => {
     if (error) {
@@ -60,6 +62,24 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ selectedDate
     toast.success("Event created successfully");
   };
 
+  const handleDeleteEvent = (event: any) => {
+    setSelectedEvent(event);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (selectedEvent) {
+      try {
+        await deleteEvent.mutateAsync(selectedEvent.id);
+        toast.success("Event deleted successfully");
+      } catch (error) {
+        toast.error("Failed to delete event");
+        console.error("Delete event error:", error);
+      }
+      setShowDeleteDialog(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <Card className="p-4">
@@ -79,13 +99,13 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ selectedDate
   return (
     <>
       <div className="flex justify-end mb-4">
-        <Button onClick={() => setShowCreateDialog(true)}>
+        <Button onClick={() => setShowCreateDialog(true)} className="bg-primary hover:bg-primary/90">
           <Plus className="h-4 w-4 mr-2" />
           Add Event
         </Button>
       </div>
       
-      <Card className="p-4 h-[70vh]">
+      <Card className="p-4 h-[70vh] border shadow-sm">
         <CalendarComponent
           localizer={localizer}
           events={formattedEvents}
@@ -97,10 +117,12 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ selectedDate
           selectable
           onSelectSlot={handleSelectSlot}
           defaultView="month"
+          views={['month', 'week', 'day']} // Removed 'agenda' view
           popup
           components={{
-            event: EventCard as any
+            event: (eventProps) => <EventCard event={eventProps.event} onDelete={() => handleDeleteEvent(eventProps.event)} />
           }}
+          className="custom-calendar"
         />
       </Card>
 
@@ -112,6 +134,23 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ selectedDate
           selectedDate={selectedDate}
         />
       )}
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Event</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete event "{selectedEvent?.title}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

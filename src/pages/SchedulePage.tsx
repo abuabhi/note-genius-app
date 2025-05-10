@@ -6,11 +6,29 @@ import { ScheduleHeader } from "@/components/schedule/ScheduleHeader";
 import { UpcomingEventsList } from "@/components/schedule/UpcomingEventsList";
 import { useEvents } from "@/hooks/useEvents";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { toast } from "sonner";
 
 const SchedulePage = () => {
   const { user, loading } = useRequireAuth();
   const [date, setDate] = useState<Date>(new Date());
-  const { upcomingEvents, upcomingLoading, formatEventDate } = useEvents(date);
+  const { 
+    upcomingEvents, 
+    upcomingLoading, 
+    formatEventDate, 
+    deleteEvent,
+    refetchEvents
+  } = useEvents(date);
+
+  const handleDeleteEvent = async (eventId: string) => {
+    try {
+      await deleteEvent.mutateAsync(eventId);
+      toast.success("Event deleted successfully");
+      refetchEvents();
+    } catch (error) {
+      toast.error("Failed to delete event");
+      console.error("Delete event error:", error);
+    }
+  };
 
   if (loading) {
     return (
@@ -42,6 +60,7 @@ const SchedulePage = () => {
             events={upcomingEvents} 
             isLoading={upcomingLoading} 
             formatEventDate={formatEventDate}
+            onDeleteEvent={handleDeleteEvent}
           />
         </div>
       </div>

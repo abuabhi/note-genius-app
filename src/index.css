@@ -79,3 +79,50 @@
 .perspective-1000 {
   perspective: 1000px;
 }
+
+/* Custom Calendar Styling */
+.custom-calendar .rbc-toolbar {
+  @apply mb-4 flex flex-wrap justify-between items-center;
+}
+
+.custom-calendar .rbc-toolbar button {
+  @apply bg-secondary hover:bg-secondary/80 text-secondary-foreground px-3 py-1 rounded text-sm font-medium transition-colors;
+}
+
+.custom-calendar .rbc-toolbar button.rbc-active {
+  @apply bg-primary text-primary-foreground;
+}
+
+.custom-calendar .rbc-month-view {
+  @apply rounded-md border border-border;
+}
+
+.custom-calendar .rbc-header {
+  @apply py-2 font-semibold text-sm;
+}
+
+.custom-calendar .rbc-event {
+  @apply rounded-md border-none shadow-sm;
+}
+
+.custom-calendar .rbc-day-bg.rbc-today {
+  @apply bg-accent/30;
+}
+
+.custom-calendar .rbc-off-range-bg {
+  @apply bg-muted/50;
+}
+
+.custom-calendar .rbc-date-cell {
+  @apply p-1 text-sm;
+}
+
+.custom-calendar .rbc-show-more {
+  @apply text-primary hover:underline;
+}
+
+.custom-calendar .rbc-time-content,
+.custom-calendar .rbc-time-header-content {
+  @apply border-border;
+}
+
