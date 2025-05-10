@@ -18,7 +18,7 @@ import { FormSubmitButton } from './form/FormSubmitButton';
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   date: z.date(),
-  subject: z.string().min(1, 'Subject is required'),
+  subject: z.string().optional(),
   content: z.string().optional(),
 });
 
@@ -41,14 +41,14 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
     defaultValues: {
       title: initialData?.title || '',
       date: initialData?.date ? new Date(initialData.date) : new Date(),
-      subject: initialData?.category || 'General',
+      subject: initialData?.category || '',
       content: initialData?.content || '',
     },
   });
 
   // Auto-created tag based on selected subject
   const ensureSubjectTag = (subject: string) => {
-    if (!subject || subject === 'General') return;
+    if (!subject) return;
     
     // Check if a tag for this subject already exists
     const existingSubjectTag = selectedTags.find(tag => 
@@ -80,7 +80,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
   // When subject changes, ensure there's a tag for it
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
-      if (name === 'subject') {
+      if (name === 'subject' && value.subject) {
         ensureSubjectTag(value.subject as string);
       }
     });
@@ -124,7 +124,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
         title: values.title,
         description: values.title, // Using title as description since we're removing description field
         date: values.date.toISOString().split('T')[0],
-        category: values.subject, // Map subject to category field
+        category: values.subject || '', // Map subject to category field, allow empty
         content: values.content,
         sourceType: initialData?.sourceType || 'manual',
         tags: selectedTags,
@@ -163,6 +163,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
             noteId={initialData?.id}
             noteTitle={form.getValues('title')}
             onEnhance={handleEnhancedContent}
+            showGenerateButton={false}
           />
 
           <div>

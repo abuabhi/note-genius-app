@@ -1,21 +1,23 @@
 
 import { Control } from "react-hook-form";
-import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
-import { EnhanceNoteButton } from "../../enrichment/EnhanceNoteButton";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { RichTextEditor } from "@/components/ui/rich-text/RichTextEditor";
+import { EnhanceNoteButton } from "../../enrichment/EnhanceNoteButton";
 
 interface NoteContentFieldProps {
   control: Control<any>;
   noteId?: string;
-  noteTitle?: string;
-  onEnhance: (enhancedContent: string) => void;
+  noteTitle: string;
+  onEnhance: (content: string) => void;
+  showGenerateButton?: boolean;
 }
 
-export const NoteContentField = ({
-  control,
-  noteId,
-  noteTitle,
-  onEnhance
+export const NoteContentField = ({ 
+  control, 
+  noteId, 
+  noteTitle, 
+  onEnhance,
+  showGenerateButton = false
 }: NoteContentFieldProps) => {
   return (
     <FormField
@@ -23,9 +25,9 @@ export const NoteContentField = ({
       name="content"
       render={({ field }) => (
         <FormItem>
-          <div className="flex justify-between">
+          <div className="flex items-center justify-between">
             <FormLabel>Content</FormLabel>
-            {noteId && noteTitle && (
+            {noteId && (
               <EnhanceNoteButton
                 noteId={noteId}
                 noteTitle={noteTitle}
@@ -35,11 +37,9 @@ export const NoteContentField = ({
             )}
           </div>
           <FormControl>
-            <RichTextEditor
-              content={field.value || ''}
-              onChange={field.onChange}
-            />
+            <RichTextEditor content={field.value || ''} onChange={field.onChange} />
           </FormControl>
+          <FormMessage />
         </FormItem>
       )}
     />

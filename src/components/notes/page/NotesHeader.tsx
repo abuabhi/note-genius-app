@@ -74,20 +74,22 @@ export const NotesHeader = ({
                 New Note
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-mint-100">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-mint-200">
               <DialogHeader>
-                <DialogTitle>Create New Note</DialogTitle>
+                <DialogTitle className="text-xl font-semibold text-mint-800">Create New Note</DialogTitle>
                 <DialogDescription>
                   Fill out the form below to create a new note.
                 </DialogDescription>
               </DialogHeader>
-              <CreateNoteForm 
-                onSave={async (note) => {
-                  const result = await onSaveNote(note);
-                  if (result) setIsNewNoteDialogOpen(false);
-                  return result;
-                }}
-              />
+              <div className="py-2">
+                <CreateNoteForm 
+                  onSave={async (note) => {
+                    const result = await onSaveNote(note);
+                    if (result) setIsNewNoteDialogOpen(false);
+                    return result;
+                  }}
+                />
+              </div>
             </DialogContent>
           </Dialog>
 

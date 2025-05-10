@@ -102,7 +102,7 @@ export const NoteMetadataFields = ({
             <Select
               onValueChange={field.onChange}
               defaultValue={field.value}
-              value={field.value}
+              value={field.value || ''}
             >
               <FormControl>
                 <SelectTrigger className="border-mint-200 focus:ring-mint-400">
@@ -110,6 +110,7 @@ export const NoteMetadataFields = ({
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
+                <SelectItem value="">Select subject</SelectItem>
                 {availableCategories.map((category) => (
                   <SelectItem key={category} value={category}>
                     {category}
