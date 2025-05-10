@@ -153,3 +153,23 @@ entrypoint = "index.ts"
 verify_jwt = true
 import_map = "supabase/functions/import_map.json" 
 entrypoint = "index.ts"
+
+[functions.generate-flashcards]
+verify_jwt = true
+import_map = "supabase/functions/import_map.json"
+entrypoint = "index.ts"
+
+[functions.generate-explanation]
+verify_jwt = true
+import_map = "supabase/functions/import_map.json"
+entrypoint = "index.ts"
+
+[functions.evernote-auth]
+verify_jwt = true
+import_map = "supabase/functions/import_map.json"
+entrypoint = "index.ts"
+
+[functions.googledocs-auth]
+verify_jwt = true
+import_map = "supabase/functions/import_map.json"
+entrypoint = "index.ts"
