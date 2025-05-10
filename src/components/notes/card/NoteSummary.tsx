@@ -8,37 +8,61 @@ import { generateNoteSummary } from '@/hooks/noteEnrichment/enrichmentService';
 import { toast } from 'sonner';
 
 interface NoteSummaryProps {
-  note: Note;
+  note?: Note;
+  summary?: string;
+  description?: string;
+  status?: 'idle' | 'generating' | 'completed' | 'error' | 'pending' | 'failed';
   maxLength?: number;
   generateOnLoad?: boolean;
+  onGenerateSummary?: () => Promise<void>;
 }
 
 type SummaryState = 'idle' | 'generating' | 'completed' | 'error';
 
-export const NoteSummary = ({ note, maxLength = 150, generateOnLoad = false }: NoteSummaryProps) => {
-  const [summaryText, setSummaryText] = useState(note.summary || '');
+export const NoteSummary = ({ 
+  note,
+  summary,
+  description,
+  status = 'idle',
+  maxLength = 150, 
+  generateOnLoad = false,
+  onGenerateSummary
+}: NoteSummaryProps) => {
+  const [summaryText, setSummaryText] = useState(note?.summary || summary || '');
   const [summaryState, setSummaryState] = useState<SummaryState>(
-    note.summary ? 'completed' : 'idle'
+    summary || note?.summary ? 'completed' : 'idle'
   );
   const [error, setError] = useState<string | null>(null);
 
+  // Handle the case where the component receives a note object
   const handleGenerateSummary = async () => {
+    if (onGenerateSummary) {
+      // Use the parent-provided generator function
+      await onGenerateSummary();
+      return;
+    }
+
+    if (!note) {
+      console.error('No note provided for summary generation');
+      return;
+    }
+
     try {
       setSummaryState('generating');
       setError(null);
 
-      const summary = await generateNoteSummary(note);
+      const summaryContent = await generateNoteSummary(note);
       
       // Update in database
       await updateNoteInDatabase(note.id, {
-        summary,
+        summary: summaryContent,
         summary_generated_at: new Date().toISOString()
       });
       
       // Update local state
-      setSummaryText(summary);
+      setSummaryText(summaryContent);
       setSummaryState('completed');
-      note.summary = summary;
+      note.summary = summaryContent;
       note.summary_generated_at = new Date().toISOString();
       
     } catch (err) {
@@ -51,31 +75,36 @@ export const NoteSummary = ({ note, maxLength = 150, generateOnLoad = false }: N
     }
   };
 
+  // Use status from props if provided, otherwise use internal state
+  const effectiveStatus = status !== 'idle' ? status : summaryState;
+  
   // Display text with truncation if needed
   const displayText = (): string => {
-    if (!summaryText) return '';
+    const textToDisplay = summaryText || description || '';
     
-    if (summaryText.length <= maxLength) {
-      return summaryText;
+    if (!textToDisplay) return '';
+    
+    if (textToDisplay.length <= maxLength) {
+      return textToDisplay;
     }
     
-    return `${summaryText.substring(0, maxLength - 3)}...`;
+    return `${textToDisplay.substring(0, maxLength - 3)}...`;
   };
 
   return (
     <div className="mt-2">
-      {summaryState === 'completed' && summaryText && (
+      {(effectiveStatus === 'completed' || effectiveStatus === 'pending') && (summaryText || description) && (
         <p className="text-sm line-clamp-3 text-muted-foreground">{displayText()}</p>
       )}
       
       {/* Show generate button when not generating and no summary exists */}
-      {(summaryState === 'idle' || summaryState === 'error') && (
+      {(effectiveStatus === 'idle' || effectiveStatus === 'error' || effectiveStatus === 'failed') && (
         <Button
           variant="ghost"
           size="sm"
           className="text-xs h-7 px-2 text-muted-foreground bg-transparent hover:bg-muted/30"
           onClick={handleGenerateSummary}
-          disabled={summaryState === 'generating'}
+          disabled={effectiveStatus === 'generating'}
         >
           <Sparkles className="h-3 w-3 mr-1" />
           Generate summary
@@ -83,7 +112,7 @@ export const NoteSummary = ({ note, maxLength = 150, generateOnLoad = false }: N
       )}
       
       {/* Loading indicator */}
-      {summaryState === 'generating' && (
+      {effectiveStatus === 'generating' && (
         <div className="flex items-center text-xs text-muted-foreground">
           <div className="animate-spin h-3 w-3 border-2 border-mint-300 border-t-transparent rounded-full mr-1"></div>
           Generating summary...
