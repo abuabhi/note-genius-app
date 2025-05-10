@@ -47,8 +47,7 @@ export const useNoteEnrichment = (note?: Note) => {
       const usage = await fetchUsageStats();
       if (hasReachedLimit(usage)) {
         setError('You have reached your monthly enhancement limit.');
-        toast({
-          title: "Enhancement limit reached",
+        toast("Enhancement limit reached", {
           description: "You have reached your monthly note enhancement limit.",
           variant: "destructive",
         });
@@ -64,8 +63,7 @@ export const useNoteEnrichment = (note?: Note) => {
       const result = await enrichNote(note, enhancementType);
       setEnhancedContent(result);
       
-      toast({
-        title: "Note enhanced",
+      toast("Note enhanced", {
         description: "Your note has been enhanced successfully.",
       });
       
@@ -74,8 +72,7 @@ export const useNoteEnrichment = (note?: Note) => {
       console.error('Error during note enrichment:', error);
       setError('An error occurred during enhancement. Please try again later.');
       
-      toast({
-        title: "Enhancement failed",
+      toast("Enhancement failed", {
         description: "There was a problem enhancing your note.",
         variant: "destructive",
       });
@@ -95,8 +92,7 @@ export const useNoteEnrichment = (note?: Note) => {
         content: enhancedContent 
       });
       
-      toast({
-        title: "Enhancement applied",
+      toast("Enhancement applied", {
         description: "The enhancement has been applied to your note.",
       });
       
@@ -104,8 +100,7 @@ export const useNoteEnrichment = (note?: Note) => {
     } catch (error) {
       console.error('Error applying enhancement:', error);
       
-      toast({
-        title: "Failed to apply enhancement",
+      toast("Failed to apply enhancement", {
         description: "There was a problem updating your note.",
         variant: "destructive",
       });
