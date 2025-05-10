@@ -46,7 +46,7 @@ export const NoteSummary: React.FC<NoteSummaryProps> = ({
     return (
       <div className="flex flex-col space-y-1">
         <p className="text-sm line-clamp-2 text-gray-600">{displayText}</p>
-        {!summary && onGenerateSummary && status !== 'generating' && (
+        {!summary && onGenerateSummary && status !== 'pending' && status !== 'generating' && (
           <button 
             onClick={onGenerateSummary}
             className="text-xs text-mint-600 hover:text-mint-800 underline self-start"

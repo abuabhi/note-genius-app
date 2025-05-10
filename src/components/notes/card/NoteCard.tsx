@@ -32,8 +32,7 @@ export const NoteCard = ({
 }: NoteCardProps) => {
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   
-  const handleGenerateSummary = async (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleGenerateSummary = async () => {
     try {
       setIsGeneratingSummary(true);
       
@@ -123,7 +122,7 @@ export const NoteCard = ({
           summary={note.summary}
           description={note.description}
           status={isGeneratingSummary ? 'generating' : note.summary_status}
-          onGenerateSummary={(e) => handleGenerateSummary(e)}
+          onGenerateSummary={handleGenerateSummary}
         />
 
         {/* Display Tags */}
