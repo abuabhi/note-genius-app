@@ -118,3 +118,13 @@ entrypoint = "index.ts"
 verify_jwt = true
 import_map = "supabase/functions/import_map.json"
 entrypoint = "index.ts"
+
+[functions.generate-quiz]
+verify_jwt = true
+import_map = "supabase/functions/import_map.json"
+entrypoint = "index.ts"
+
+[functions.enrich-note]
+verify_jwt = true
+import_map = "supabase/functions/import_map.json"
+entrypoint = "index.ts"
