@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Note } from '@/types/note';
 import { useUserTier } from '@/hooks/useUserTier';
-import { updateNoteInDatabase } from '@/contexts/notes/noteOperations';
+import { updateNoteInDatabase } from '@/contexts/notes/operations';
 import { enrichNote } from './noteEnrichment/enrichmentService';
 import { enhancementOptions } from './noteEnrichment/enhancementOptions';
 import { useUsageStats } from './noteEnrichment/useUsageStats';
