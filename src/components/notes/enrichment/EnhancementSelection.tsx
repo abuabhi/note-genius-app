@@ -29,34 +29,38 @@ export const EnhancementSelection: React.FC<EnhancementSelectionProps> = ({
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-      {options.map((option) => (
-        <Card 
-          key={option.id}
-          className={`cursor-pointer border transition-colors ${
-            selectedEnhancement === option.id 
-              ? 'border-mint-500 bg-mint-50 shadow-sm' 
-              : 'hover:border-mint-300 hover:bg-mint-50/50'
-          }`}
-          onClick={() => {
-            console.log(`Selecting enhancement: ${option.id}`);
-            onSelect(option.id as EnhancementFunction);
-          }}
-        >
-          <CardHeader className="p-4 pb-2">
-            <div className="flex items-center gap-2">
-              <div className={`text-mint-600 ${selectedEnhancement === option.id ? 'text-mint-700' : ''}`}>
-                {getIconComponent(option.icon)}
+      {options.map((option) => {
+        const isSelected = selectedEnhancement === option.id;
+        
+        return (
+          <Card 
+            key={option.id}
+            className={`cursor-pointer border transition-colors ${
+              isSelected 
+                ? 'border-mint-500 bg-mint-50 shadow-sm' 
+                : 'hover:border-mint-300 hover:bg-mint-50/50'
+            }`}
+            onClick={() => {
+              console.log(`Selecting enhancement: ${option.id}`);
+              onSelect(option.id as EnhancementFunction);
+            }}
+          >
+            <CardHeader className="p-4 pb-2">
+              <div className="flex items-center gap-2">
+                <div className={`text-mint-600 ${isSelected ? 'text-mint-700' : ''}`}>
+                  {getIconComponent(option.icon)}
+                </div>
+                <CardTitle className="text-base">{option.name}</CardTitle>
               </div>
-              <CardTitle className="text-base">{option.name}</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="p-4 pt-0">
-            <CardDescription className={selectedEnhancement === option.id ? 'text-mint-700' : ''}>
-              {option.description}
-            </CardDescription>
-          </CardContent>
-        </Card>
-      ))}
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <CardDescription className={isSelected ? 'text-mint-700' : ''}>
+                {option.description}
+              </CardDescription>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 };

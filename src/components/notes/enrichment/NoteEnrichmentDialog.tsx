@@ -175,7 +175,7 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
           {!enhancedContent && !isLoading && !error && (
             <Button 
               onClick={handleEnhancement}
-              disabled={!selectedEnhancement || isLoading}
+              disabled={selectedEnhancement === null || isLoading}
               className="bg-mint-500 hover:bg-mint-600 text-white"
             >
               Generate Enhancement
