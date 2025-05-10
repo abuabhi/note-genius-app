@@ -32,11 +32,15 @@ export const CategoryFilter = ({
         </SelectTrigger>
         <SelectContent className="bg-white">
           <SelectItem value="_any">Any subject</SelectItem>
-          {availableCategories.map(category => (
-            <SelectItem key={category} value={category}>
-              {category}
-            </SelectItem>
-          ))}
+          {availableCategories.map(category => {
+            if (!category || category.trim() === '') return null;
+            
+            return (
+              <SelectItem key={category} value={category}>
+                {category}
+              </SelectItem>
+            );
+          })}
         </SelectContent>
       </Select>
     </FilterOption>

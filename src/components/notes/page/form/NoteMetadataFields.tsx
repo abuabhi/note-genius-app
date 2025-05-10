@@ -87,7 +87,7 @@ export const NoteMetadataFields = ({
                     date > new Date() || date < new Date("1900-01-01")
                   }
                   initialFocus
-                  className="bg-white"
+                  className="bg-white pointer-events-auto"
                 />
               </PopoverContent>
             </Popover>
@@ -138,9 +138,11 @@ export const NoteMetadataFields = ({
                     className="border-mint-200 focus-visible:ring-mint-400 min-w-[120px]"
                     onChange={(e) => {
                       const newCategory = e.target.value;
-                      field.onChange(newCategory);
-                      if (onNewCategoryAdd && newCategory) {
-                        onNewCategoryAdd(newCategory);
+                      if (newCategory.trim() !== '') {
+                        field.onChange(newCategory);
+                        if (onNewCategoryAdd && newCategory) {
+                          onNewCategoryAdd(newCategory);
+                        }
                       }
                     }}
                     onBlur={(e) => {

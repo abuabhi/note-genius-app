@@ -20,7 +20,7 @@ interface SubjectTagSelectProps {
 
 export const SubjectTagSelect = ({ note, onSubjectChange }: SubjectTagSelectProps) => {
   const { availableCategories, updateNote } = useNotes();
-  const [currentSubject, setCurrentSubject] = useState<string>(note.category || "");
+  const [currentSubject, setCurrentSubject] = useState<string>(note.category || "general");
 
   // Handle subject change
   const handleSubjectChange = async (value: string) => {
@@ -35,14 +35,14 @@ export const SubjectTagSelect = ({ note, onSubjectChange }: SubjectTagSelectProp
       } catch (error) {
         console.error("Failed to update note subject:", error);
         // Reset to previous value on error
-        setCurrentSubject(note.category || "");
+        setCurrentSubject(note.category || "general");
       }
     }
   };
 
   // Update local state when note changes from outside
   useEffect(() => {
-    setCurrentSubject(note.category || "");
+    setCurrentSubject(note.category || "general");
   }, [note.category]);
 
   // Generate color for each subject
@@ -74,7 +74,10 @@ export const SubjectTagSelect = ({ note, onSubjectChange }: SubjectTagSelectProp
           </SelectValue>
         </SelectTrigger>
         <SelectContent className="bg-white">
+          <SelectItem value="general">General</SelectItem>
           {availableCategories.map((category) => {
+            if (!category || category.trim() === '') return null;
+            
             const color = generateColorFromString(category);
             const textColor = getBestTextColor(color);
             
