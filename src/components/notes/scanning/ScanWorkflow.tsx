@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileText, Loader2 } from "lucide-react";
@@ -137,6 +138,7 @@ export const ScanWorkflow = ({
         <Button
           onClick={handleSaveNote}
           disabled={!capturedImage || !recognizedText || !noteTitle || isSaving}
+          className="bg-mint-500 hover:bg-mint-600 text-white"
         >
           {isSaving ? (
             <>

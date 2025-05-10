@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
+import { useState } from "react";
 
 interface NoteMetadataFieldsProps {
   control: Control<any>;
@@ -33,6 +34,10 @@ export const NoteMetadataFields = ({
   availableCategories,
   onNewCategoryAdd,
 }: NoteMetadataFieldsProps) => {
+  // State to track if we're in custom input mode
+  const [isCustomInputMode, setIsCustomInputMode] = useState(false);
+  const [customCategory, setCustomCategory] = useState("");
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <FormField
@@ -103,55 +108,72 @@ export const NoteMetadataFields = ({
           <FormItem className="md:col-span-1">
             <FormLabel>Subject</FormLabel>
             <div className="flex gap-2">
-              <Select
-                onValueChange={(value) => {
-                  if (value === "_custom") {
-                    // Will be handled by the custom input
-                    return;
-                  }
-                  field.onChange(value === "_none" ? "" : value);
-                }}
-                value={field.value || "_none"}
-              >
-                <FormControl>
-                  <SelectTrigger className="border-mint-200 focus:ring-mint-400 flex-1">
-                    <SelectValue placeholder="Select subject" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent className="bg-white">
-                  <SelectItem value="_none">Select subject</SelectItem>
-                  {availableCategories.length > 0 && (
-                    availableCategories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))
-                  )}
-                  <SelectItem value="_custom">Add new subject...</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              {field.value === "_custom" && (
-                <div className="flex items-center gap-2">
+              {!isCustomInputMode ? (
+                <Select
+                  onValueChange={(value) => {
+                    if (value === "_custom") {
+                      setIsCustomInputMode(true);
+                      setCustomCategory("");
+                      return;
+                    }
+                    field.onChange(value === "_none" ? "" : value);
+                  }}
+                  value={field.value || "_none"}
+                >
+                  <FormControl>
+                    <SelectTrigger className="border-mint-200 focus:ring-mint-400 flex-1">
+                      <SelectValue placeholder="Select subject" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="bg-white">
+                    <SelectItem value="_none">Select subject</SelectItem>
+                    {availableCategories.length > 0 && (
+                      availableCategories
+                        .filter(category => category && category.trim() !== '')
+                        .map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))
+                    )}
+                    <SelectItem value="_custom">Add new subject...</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="flex w-full items-center gap-2">
                   <Input
                     placeholder="New subject"
-                    className="border-mint-200 focus-visible:ring-mint-400 min-w-[120px]"
-                    onChange={(e) => {
-                      const newCategory = e.target.value;
-                      if (newCategory.trim() !== '') {
-                        field.onChange(newCategory);
-                        if (onNewCategoryAdd && newCategory) {
-                          onNewCategoryAdd(newCategory);
-                        }
-                      }
-                    }}
-                    onBlur={(e) => {
-                      if (!e.target.value.trim()) {
-                        field.onChange("_none");
-                      }
-                    }}
+                    className="border-mint-200 focus-visible:ring-mint-400"
+                    value={customCategory}
+                    onChange={(e) => setCustomCategory(e.target.value)}
                     autoFocus
                   />
+                  <Button 
+                    type="button" 
+                    size="sm"
+                    className="bg-mint-500 hover:bg-mint-600 text-white"
+                    onClick={() => {
+                      if (customCategory.trim() !== '') {
+                        field.onChange(customCategory);
+                        if (onNewCategoryAdd) {
+                          onNewCategoryAdd(customCategory);
+                        }
+                        setIsCustomInputMode(false);
+                      }
+                    }}
+                  >
+                    Add
+                  </Button>
+                  <Button 
+                    type="button" 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => {
+                      setIsCustomInputMode(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
                 </div>
               )}
             </div>
