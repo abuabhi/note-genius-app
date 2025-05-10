@@ -19,6 +19,11 @@ export const CategoryFilter = ({
   availableCategories,
   onCategoryChange
 }: CategoryFilterProps) => {
+  // Filter out empty categories and duplicates
+  const uniqueCategories = [...new Set(availableCategories)]
+    .filter(category => category && category.trim() !== '')
+    .sort();
+
   return (
     <FilterOption label="Subject">
       <Select
@@ -32,15 +37,11 @@ export const CategoryFilter = ({
         </SelectTrigger>
         <SelectContent className="bg-white">
           <SelectItem value="_any">Any subject</SelectItem>
-          {availableCategories.map(category => {
-            if (!category || category.trim() === '') return null;
-            
-            return (
-              <SelectItem key={category} value={category}>
-                {category}
-              </SelectItem>
-            );
-          })}
+          {uniqueCategories.map(category => (
+            <SelectItem key={category} value={category}>
+              {category}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </FilterOption>

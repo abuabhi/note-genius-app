@@ -1,3 +1,4 @@
+
 import Layout from "@/components/layout/Layout";
 import { NotesContent } from "@/components/notes/page/NotesContent";
 import { useNotes } from "@/contexts/NoteContext";
@@ -9,7 +10,7 @@ import { useLocation } from "react-router-dom";
 import { FilterOptions } from "@/contexts/notes/types";
 
 const NotesPage = () => {
-  const { addNote, availableCategories, setFilterOptions } = useNotes();
+  const { addNote, availableCategories, setFilterOptions, addCategory } = useNotes();
   const { userProfile, tierLimits } = useRequireAuth();
   const userTier = userProfile?.user_tier;
   const location = useLocation();
@@ -25,12 +26,15 @@ const NotesPage = () => {
     
     // Simply record that we're on the notes page - no redirection logic at all
     localStorage.setItem("lastVisitedPage", location.pathname);
-  }, [setFilterOptions]);
+  }, [setFilterOptions, location.pathname]);
 
   const handleSaveNote = async (note: Omit<Note, 'id'>): Promise<Note | null> => {
     try {
-      // Ensure category is added as a tag if it doesn't already exist
+      // If a category is provided and it's not already in our list, add it
       if (note.category && note.category !== 'General' && note.category !== 'Uncategorized') {
+        addCategory(note.category);
+        
+        // Ensure category is added as a tag if it doesn't already exist
         const color = generateColorFromString(note.category);
         
         // Check if we already have this category as a tag
@@ -59,8 +63,11 @@ const NotesPage = () => {
 
   const handleScanNote = async (note: Omit<Note, 'id'>): Promise<Note | null> => {
     try {
-      // Ensure category is added as a tag
+      // If a category is provided and it's not already in our list, add it
       if (note.category && note.category !== 'General' && note.category !== 'Uncategorized') {
+        addCategory(note.category);
+        
+        // Ensure category is added as a tag
         const color = generateColorFromString(note.category);
         
         // Check if we already have this category as a tag
@@ -92,8 +99,11 @@ const NotesPage = () => {
 
   const handleImportNote = async (note: Omit<Note, 'id'>): Promise<Note | null> => {
     try {
-      // Ensure category is added as a tag
+      // If a category is provided and it's not already in our list, add it
       if (note.category && note.category !== 'General' && note.category !== 'Uncategorized') {
+        addCategory(note.category);
+        
+        // Ensure category is added as a tag
         const color = generateColorFromString(note.category);
         
         // Check if we already have this category as a tag

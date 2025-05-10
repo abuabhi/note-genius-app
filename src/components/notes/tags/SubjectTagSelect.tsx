@@ -19,12 +19,17 @@ interface SubjectTagSelectProps {
 }
 
 export const SubjectTagSelect = ({ note, onSubjectChange }: SubjectTagSelectProps) => {
-  const { availableCategories, updateNote } = useNotes();
+  const { availableCategories, updateNote, addCategory } = useNotes();
   const [currentSubject, setCurrentSubject] = useState<string>(note.category || "general");
 
   // Handle subject change
   const handleSubjectChange = async (value: string) => {
     setCurrentSubject(value);
+    
+    // If this is a new subject, add it to our available categories
+    if (value && value !== 'general' && !availableCategories.includes(value)) {
+      addCategory(value);
+    }
     
     if (onSubjectChange) {
       onSubjectChange(value);

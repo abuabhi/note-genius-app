@@ -31,7 +31,7 @@ interface CreateNoteFormProps {
 
 export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => {
   const [isSaving, setIsSaving] = useState(false);
-  const { availableCategories, getAllTags, updateNote } = useNotes();
+  const { availableCategories, getAllTags, updateNote, addCategory } = useNotes();
   const [selectedTags, setSelectedTags] = useState<{ id?: string; name: string; color: string }[]>([]);
   const [availableTags, setAvailableTags] = useState<{ id: string; name: string; color: string }[]>([]);
   const { user } = useAuth();
@@ -48,6 +48,10 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
 
   // Handle new category creation
   const handleNewCategoryAdd = (newCategory: string) => {
+    // Add category to global state
+    addCategory(newCategory);
+    
+    // Optional: Add category as a tag as well
     ensureSubjectTag(newCategory);
   };
   

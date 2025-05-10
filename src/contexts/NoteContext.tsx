@@ -30,6 +30,7 @@ export const NoteProvider = ({ children }: { children: ReactNode }) => {
     paginatedNotes,
     totalPages,
     availableCategories,
+    setAvailableCategories,
     resetFilters
   } = useNotesState();
 
@@ -50,6 +51,17 @@ export const NoteProvider = ({ children }: { children: ReactNode }) => {
   // Create a wrapper for filterByTag that uses our setSearchTerm directly
   const handleFilterByTag = (tagName: string) => {
     filterByTag(tagName, setSearchTerm);
+  };
+
+  // Add a category to availableCategories
+  const addCategory = (category: string) => {
+    if (!category || category.trim() === '') return;
+    
+    // Check if category already exists
+    if (availableCategories.includes(category.trim())) return;
+    
+    // Add the new category
+    setAvailableCategories(prev => [...prev, category.trim()]);
   };
 
   return (
@@ -79,7 +91,8 @@ export const NoteProvider = ({ children }: { children: ReactNode }) => {
       filterOptions,
       setFilterOptions,
       resetFilters,
-      availableCategories
+      availableCategories,
+      addCategory
     }}>
       {children}
     </NoteContext.Provider>

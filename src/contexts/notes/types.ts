@@ -1,15 +1,12 @@
 
 import { Note } from "@/types/note";
 
-export type SortType = 'date-desc' | 'date-asc' | 'title-asc' | 'title-desc' | 'category';
-
 export interface FilterOptions {
+  dateFrom?: Date;
+  dateTo?: Date;
   category?: string;
-  dateFrom?: string;
-  dateTo?: string;
-  sourceType?: ('manual' | 'scan' | 'import')[];
-  hasTags?: boolean;
-  [key: string]: any;
+  sourceType?: string | string[];
+  tags?: string[];
 }
 
 export interface NoteContextType {
@@ -20,23 +17,24 @@ export interface NoteContextType {
   setSearchTerm: (term: string) => void;
   addNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
   deleteNote: (id: string) => Promise<void>;
-  updateNote: (id: string, updatedNote: Partial<Note>) => Promise<void>;
+  updateNote: (id: string, note: Partial<Note>) => Promise<void>;
   pinNote: (id: string, pinned: boolean) => Promise<void>;
   archiveNote: (id: string, archived: boolean) => Promise<void>;
-  sortType: SortType;
-  setSortType: (sortType: SortType) => void;
+  sortType: string;
+  setSortType: (type: string) => void;
   showArchived: boolean;
   setShowArchived: (show: boolean) => void;
   currentPage: number;
   setCurrentPage: (page: number) => void;
   totalPages: number;
   notesPerPage: number;
-  setNotesPerPage: (perPage: number) => void;
+  setNotesPerPage: (count: number) => void;
   loading: boolean;
-  getAllTags: () => Promise<{ id: string; name: string; color: string; }[]>;
+  getAllTags: () => Promise<{ id: string; name: string; color: string }[]>;
   filterByTag: (tagName: string) => void;
   filterOptions: FilterOptions;
-  setFilterOptions: (options: FilterOptions | ((prev: FilterOptions) => FilterOptions)) => void;
+  setFilterOptions: (options: FilterOptions) => void;
   resetFilters: () => void;
   availableCategories: string[];
+  addCategory: (category: string) => void;
 }
