@@ -7,7 +7,6 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Import } from "lucide-react";
 import { ImportTabs } from "./tabs/ImportTabs";
 import { Note } from "@/types/note";
@@ -58,12 +57,6 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
-      {!isVisible && (
-        <Button className="bg-mint-500 hover:bg-mint-600" onClick={() => setIsDialogOpen(true)}>
-          <Import className="mr-2 h-4 w-4" />
-          Import
-        </Button>
-      )}
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto border-mint-100 bg-white">
         <DialogHeader>
           <DialogTitle>Import Document</DialogTitle>

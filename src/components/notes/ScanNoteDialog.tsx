@@ -7,7 +7,6 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Camera, Sparkles } from "lucide-react";
 import { Note } from "@/types/note";
 import { ScanWorkflow } from "./scanning/ScanWorkflow";
@@ -50,12 +49,6 @@ export const ScanNoteDialog = ({
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
-      {!isVisible && (
-        <Button className="bg-mint-500 hover:bg-mint-600" onClick={() => setIsDialogOpen(true)}>
-          <Camera className="mr-2 h-4 w-4" />
-          Scan Note
-        </Button>
-      )}
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto border-mint-100 bg-white">
         <DialogHeader>
           <div className="flex items-center gap-2">

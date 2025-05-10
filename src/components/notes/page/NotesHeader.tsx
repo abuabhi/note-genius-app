@@ -44,6 +44,7 @@ export const NotesHeader = ({
           <NoteSearch />
         </div>
         <div className="flex gap-2">
+          {/* Only show the dropdown, not individual buttons */}
           <AddNoteDropdown
             onSaveNote={onSaveNote}
             onScanNote={onScanNote}
