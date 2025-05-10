@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Sparkles } from 'lucide-react';
 import { NoteEnrichmentDialog } from './NoteEnrichmentDialog';
 import { useUserTier } from '@/hooks/useUserTier';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface EnhanceNoteButtonProps {
   noteId: string;
@@ -22,15 +23,22 @@ export const EnhanceNoteButton: React.FC<EnhanceNoteButtonProps> = ({
 }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const { tierLimits } = useUserTier();
+  const { user } = useAuth();
   
   // Only show the button if note enrichment is enabled for the user's tier
-  if (!tierLimits?.note_enrichment_enabled) {
+  // or if we're in development mode for easier testing
+  const isEnabled = tierLimits?.note_enrichment_enabled || import.meta.env.DEV;
+  
+  if (!isEnabled || !user) {
     return null;
   }
+
+  console.log("Rendering EnhanceNoteButton for note:", noteId);
 
   return (
     <>
       <Button
+        type="button"
         variant={variant}
         onClick={() => setDialogOpen(true)}
         className="flex items-center gap-2"

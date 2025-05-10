@@ -21,14 +21,17 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
   availableTags,
 }) => {
   const handleTagSelect = (tag: { id: string; name: string; color: string }) => {
-    // Check if tag is already selected
-    if (selectedTags.some((selectedTag) => selectedTag.id === tag.id)) {
+    // Check if tag is already selected by ID or name
+    if (selectedTags.some((selectedTag) => 
+      (selectedTag.id && tag.id && selectedTag.id === tag.id) || 
+      selectedTag.name === tag.name
+    )) {
+      console.log("Tag already selected, skipping:", tag);
       return;
     }
     
     console.log("Adding tag:", tag);
     const newTags = [...selectedTags, tag];
-    console.log("Updated tags:", newTags);
     onTagsChange(newTags);
   };
 
@@ -48,7 +51,10 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
 
   // Filter out tags that are already selected
   const availableUnselectedTags = availableTags.filter(
-    (tag) => !selectedTags.some((selectedTag) => selectedTag.id === tag.id)
+    (tag) => !selectedTags.some((selectedTag) => 
+      (selectedTag.id && tag.id && selectedTag.id === tag.id) || 
+      selectedTag.name === tag.name
+    )
   );
 
   return (
@@ -65,6 +71,7 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
           <Tag className="h-3 w-3 mr-1" />
           {tag.name}
           <Button 
+            type="button"
             variant="ghost" 
             size="icon" 
             onClick={() => handleTagRemove(tag)}
@@ -77,7 +84,12 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
       
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" className="border-purple-200 hover:bg-purple-50 hover:text-purple-700">
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="sm" 
+            className="border-purple-200 hover:bg-purple-50 hover:text-purple-700"
+          >
             <Plus className="mr-2 h-4 w-4" />
             Add Tag
           </Button>

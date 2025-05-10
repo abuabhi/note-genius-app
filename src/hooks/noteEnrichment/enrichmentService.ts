@@ -50,8 +50,11 @@ export function useEnrichmentService() {
         throw new Error('Authentication failed');
       }
       
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/enrich-note`;
+      console.log("Calling edge function at:", apiUrl);
+      
       // Call the edge function
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/enrich-note`, {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -65,10 +68,13 @@ export function useEnrichmentService() {
         })
       });
       
+      console.log("Edge function response status:", response.status);
+      
       // Handle non-JSON responses or network errors
       let result;
       try {
         result = await response.json();
+        console.log("Edge function response:", result);
       } catch (parseError) {
         console.error('Error parsing response:', parseError);
         throw new Error('Invalid response from server. Please try again later.');

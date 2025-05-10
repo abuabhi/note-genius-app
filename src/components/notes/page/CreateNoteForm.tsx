@@ -26,6 +26,7 @@ import { useNotes } from '@/contexts/NoteContext';
 import { EnhanceNoteButton } from '../enrichment/EnhanceNoteButton';
 import { useToast } from '@/hooks/use-toast';
 import { useNoteEnrichment } from '@/hooks/useNoteEnrichment';
+import { useAuth } from '@/contexts/AuthContext';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -49,7 +50,8 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
   const [selectedTags, setSelectedTags] = useState<{ id?: string; name: string; color: string }[]>([]);
   const [availableTags, setAvailableTags] = useState<{ id: string; name: string; color: string }[]>([]);
   const { toast } = useToast();
-  const { enrichNote, isLoading: enrichLoading } = useNoteEnrichment();
+  const { user } = useAuth();
+  const { enrichNote, isEnabled: enrichmentEnabled, isLoading: enrichLoading } = useNoteEnrichment();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -66,6 +68,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
     // Load available tags
     const loadTags = async () => {
       const tags = await getAllTags();
+      console.log("Available tags loaded:", tags);
       setAvailableTags(tags);
     };
 
@@ -73,6 +76,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
 
     // Set initial tags if available
     if (initialData?.tags) {
+      console.log("Setting initial tags:", initialData.tags);
       setSelectedTags(initialData.tags);
     }
   }, [getAllTags, initialData]);
@@ -89,14 +93,22 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
     
     setIsGeneratingSummary(true);
     try {
+      console.log("Generating summary for content");
+      
       // Use the enrichNote function to generate a bullet point summary
       const noteId = initialData?.id || 'temp-id-for-summary';
+      console.log("Using noteId:", noteId);
+      
       const result = await enrichNote(
         noteId,
         content,
         'addKeyPoints',
+        user?.id,
+        enrichmentEnabled,
         form.getValues('title')
       );
+      
+      console.log("Enrichment result:", result);
       
       if (result) {
         // Format the result as bullet points if it's not already
@@ -109,7 +121,12 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
             .join('\n');
         }
         
+        console.log("Setting description to:", summaryText);
         form.setValue('description', summaryText);
+        toast({
+          title: "Summary generated",
+          description: "Key points extracted from your note content",
+        });
       }
     } catch (error) {
       console.error('Error generating summary:', error);
@@ -162,7 +179,12 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
   };
 
   const handleEnhancedContent = (enhancedContent: string) => {
+    console.log("Setting enhanced content:", enhancedContent);
     form.setValue('content', enhancedContent);
+    toast({
+      title: "Content enhanced",
+      description: "Your note has been enhanced with AI"
+    });
   };
 
   return (
@@ -231,6 +253,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
+                          type="button"
                           variant="outline"
                           className={cn('w-full pl-3 text-left font-normal border-purple-200 hover:bg-purple-50', !field.value && 'text-muted-foreground')}
                         >
