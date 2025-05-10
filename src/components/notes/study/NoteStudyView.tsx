@@ -5,13 +5,14 @@ import { Note } from "@/types/note";
 import { useStudyViewState, TextAlignType } from "./hooks/useStudyViewState";
 import { StudyViewHeader } from "./header/StudyViewHeader";
 import { NoteContentDisplay } from "./NoteContentDisplay";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Edit, Save, X } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
+import { X } from "lucide-react";
 import { EnhanceNoteButton } from "../enrichment/EnhanceNoteButton";
 import { toast } from "sonner";
 import { updateNoteInDatabase } from "@/contexts/notes/operations";
+import { RichTextEditor } from "@/components/ui/rich-text/RichTextEditor";
+import { TagSelector } from "../TagSelector";
+import { useNotes } from "@/contexts/NoteContext";
 
 interface NoteStudyViewProps {
   note: Note;
@@ -33,30 +34,41 @@ export const NoteStudyView: React.FC<NoteStudyViewProps> = ({ note }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editableContent, setEditableContent] = useState(note.content || '');
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<{ id?: string; name: string; color: string }[]>(
+    note.tags || []
+  );
+  const { getAllTags } = useNotes();
+  const [availableTags, setAvailableTags] = useState<{ id: string; name: string; color: string }[]>([]);
   
-  const navigate = useNavigate();
+  // Fetch available tags when component mounts
+  React.useEffect(() => {
+    const loadTags = async () => {
+      const tags = await getAllTags();
+      setAvailableTags(tags);
+    };
+    loadTags();
+  }, [getAllTags]);
 
-  const handleEdit = () => {
-    navigate(`/notes/edit/${note.id}`);
-  };
-  
   const toggleEditing = () => {
     if (isEditing) {
       // Cancel editing, restore original content
       setEditableContent(note.content || '');
+      setSelectedTags(note.tags || []);
     } else {
       // Start editing
       setEditableContent(note.content || '');
+      setSelectedTags(note.tags || []);
     }
     setIsEditing(!isEditing);
   };
   
-  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setEditableContent(e.target.value);
+  const handleContentChange = (html: string) => {
+    setEditableContent(html);
   };
   
   const handleSaveContent = async () => {
-    if (editableContent === note.content) {
+    if (editableContent === note.content && 
+        JSON.stringify(selectedTags) === JSON.stringify(note.tags)) {
       setIsEditing(false);
       return;
     }
@@ -64,11 +76,13 @@ export const NoteStudyView: React.FC<NoteStudyViewProps> = ({ note }) => {
     setIsSaving(true);
     try {
       await updateNoteInDatabase(note.id, {
-        content: editableContent
+        content: editableContent,
+        tags: selectedTags
       });
       toast("Content updated successfully");
       // We need to update the note in our view
       note.content = editableContent;
+      note.tags = selectedTags;
       setIsEditing(false);
     } catch (error) {
       toast("Failed to save changes", {
@@ -113,7 +127,6 @@ export const NoteStudyView: React.FC<NoteStudyViewProps> = ({ note }) => {
         onChangeTextAlign={handleTextAlign}
         onToggleWidth={toggleWidth}
         onToggleFullScreen={toggleFullScreen}
-        onEdit={handleEdit}
         onToggleEditing={toggleEditing}
         onSave={handleSaveContent}
         isSaving={isSaving}
@@ -129,7 +142,6 @@ export const NoteStudyView: React.FC<NoteStudyViewProps> = ({ note }) => {
                   disabled={isSaving}
                   className="bg-mint-500 hover:bg-mint-600"
                 >
-                  <Save className="h-4 w-4 mr-2" />
                   Save Changes
                 </Button>
                 <Button 
@@ -148,12 +160,25 @@ export const NoteStudyView: React.FC<NoteStudyViewProps> = ({ note }) => {
                 onEnhance={handleEnhanceContent}
               />
             </div>
-            <Textarea
-              value={editableContent}
-              onChange={handleContentChange}
-              className="min-h-[500px] font-mono text-base border-mint-200 focus-visible:ring-mint-400"
-              style={{ fontSize: `${fontSize}px` }}
-            />
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-1 block">Content</label>
+                <RichTextEditor
+                  content={editableContent}
+                  onChange={handleContentChange}
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium mb-1 block">Tags</label>
+                <TagSelector
+                  selectedTags={selectedTags}
+                  onTagsChange={setSelectedTags}
+                  availableTags={availableTags}
+                />
+              </div>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">

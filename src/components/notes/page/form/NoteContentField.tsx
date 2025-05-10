@@ -1,14 +1,14 @@
 
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
-import { EnhanceNoteButton } from '@/components/notes/enrichment/EnhanceNoteButton';
 import { Control } from "react-hook-form";
+import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
+import { EnhanceNoteButton } from "../../enrichment/EnhanceNoteButton";
+import { RichTextEditor } from "@/components/ui/rich-text/RichTextEditor";
 
 interface NoteContentFieldProps {
   control: Control<any>;
   noteId?: string;
-  noteTitle: string;
-  onEnhance: (content: string) => void;
+  noteTitle?: string;
+  onEnhance: (enhancedContent: string) => void;
 }
 
 export const NoteContentField = ({
@@ -23,10 +23,10 @@ export const NoteContentField = ({
       name="content"
       render={({ field }) => (
         <FormItem>
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between">
             <FormLabel>Content</FormLabel>
-            {noteId && (
-              <EnhanceNoteButton 
+            {noteId && noteTitle && (
+              <EnhanceNoteButton
                 noteId={noteId}
                 noteTitle={noteTitle}
                 noteContent={field.value || ''}
@@ -35,14 +35,11 @@ export const NoteContentField = ({
             )}
           </div>
           <FormControl>
-            <Textarea
-              placeholder="Note content"
-              className="min-h-[200px] font-mono border-purple-200 focus-visible:ring-purple-400"
-              {...field}
-              value={field.value || ''}
+            <RichTextEditor
+              content={field.value || ''}
+              onChange={field.onChange}
             />
           </FormControl>
-          <FormMessage />
         </FormItem>
       )}
     />

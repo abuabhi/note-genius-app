@@ -14,9 +14,9 @@ import { NoteMetadataFields } from './form/NoteMetadataFields';
 import { NoteContentField } from './form/NoteContentField';
 import { FormSubmitButton } from './form/FormSubmitButton';
 
+// Updated schema to remove description
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
-  description: z.string().min(1, 'Description is required'),
   date: z.date(),
   subject: z.string().min(1, 'Subject is required'),
   content: z.string().optional(),
@@ -31,29 +31,67 @@ interface CreateNoteFormProps {
 
 export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => {
   const [isSaving, setIsSaving] = useState(false);
-  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const { availableCategories, getAllTags } = useNotes();
   const [selectedTags, setSelectedTags] = useState<{ id?: string; name: string; color: string }[]>([]);
   const [availableTags, setAvailableTags] = useState<{ id: string; name: string; color: string }[]>([]);
   const { user } = useAuth();
-  const { enrichNote, isEnabled: enrichmentEnabled } = useNoteEnrichment();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: initialData?.title || '',
-      description: initialData?.description || '',
       date: initialData?.date ? new Date(initialData.date) : new Date(),
       subject: initialData?.category || 'General',
       content: initialData?.content || '',
     },
   });
 
+  // Auto-created tag based on selected subject
+  const ensureSubjectTag = (subject: string) => {
+    if (!subject || subject === 'General') return;
+    
+    // Check if a tag for this subject already exists
+    const existingSubjectTag = selectedTags.find(tag => 
+      tag.name.toLowerCase() === subject.toLowerCase()
+    );
+    
+    // If no tag exists for this subject, create one
+    if (!existingSubjectTag) {
+      // Generate a consistent color from the subject name
+      const color = generateColorFromString(subject);
+      
+      // Add the subject as a tag
+      const subjectTag = { name: subject, color };
+      setSelectedTags(prev => [...prev, subjectTag]);
+    }
+  };
+  
+  // Generate a color based on a string (for subject tags)
+  const generateColorFromString = (str: string): string => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    const hue = Math.abs(hash) % 360;
+    return `hsl(${hue}, 70%, 60%)`;
+  };
+  
+  // When subject changes, ensure there's a tag for it
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === 'subject') {
+        ensureSubjectTag(value.subject as string);
+      }
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [form.watch, selectedTags]);
+
   useEffect(() => {
     // Load available tags
     const loadTags = async () => {
       const tags = await getAllTags();
-      console.log("Available tags loaded:", tags);
       setAvailableTags(tags);
     };
 
@@ -61,64 +99,19 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
 
     // Set initial tags if available
     if (initialData?.tags) {
-      console.log("Setting initial tags:", initialData.tags);
       setSelectedTags(initialData.tags);
+    } else if (initialData?.category && initialData.category !== 'General') {
+      // Add the category as a tag
+      ensureSubjectTag(initialData.category);
     }
   }, [getAllTags, initialData]);
 
-  const generateSummary = async () => {
-    const content = form.getValues('content');
-    if (!content || content.trim().length < 50) {
-      toast("Content too short", {
-        description: "Please add more content to generate a summary"
-      });
-      return;
-    }
-    
-    setIsGeneratingSummary(true);
-    try {
-      console.log("Generating summary for content");
-      
-      // Use the enrichNote function to generate a bullet point summary
-      const noteId = initialData?.id || 'temp-id-for-summary';
-      console.log("Using noteId:", noteId);
-      
-      if (enrichNote) {
-        const result = await enrichNote(
-          noteId,
-          content,
-          'extract-key-points',
-          form.getValues('title')
-        );
-        
-        console.log("Enrichment result:", result);
-        
-        if (result) {
-          // Format the result as bullet points if it's not already
-          let summaryText = result;
-          if (!summaryText.includes('•') && !summaryText.includes('-')) {
-            summaryText = summaryText
-              .split('\n')
-              .filter(line => line.trim().length > 0)
-              .map(line => `• ${line}`)
-              .join('\n');
-          }
-          
-          console.log("Setting description to:", summaryText);
-          form.setValue('description', summaryText);
-          toast("Summary generated", {
-            description: "Key points extracted from your note content"
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error generating summary:', error);
-      toast("Summary generation failed", {
-        description: "Could not generate a summary from your note content"
-      });
-    } finally {
-      setIsGeneratingSummary(false);
-    }
+  const handleEnhancedContent = (enhancedContent: string) => {
+    console.log("Setting enhanced content:", enhancedContent);
+    form.setValue('content', enhancedContent);
+    toast("Content enhanced", {
+      description: "Your note has been enhanced with AI"
+    });
   };
 
   const onSubmit = async (values: FormValues) => {
@@ -129,7 +122,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
     try {
       const noteData: Omit<Note, 'id'> = {
         title: values.title,
-        description: values.description,
+        description: values.title, // Using title as description since we're removing description field
         date: values.date.toISOString().split('T')[0],
         category: values.subject, // Map subject to category field
         content: values.content,
@@ -156,22 +149,12 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
     }
   };
 
-  const handleEnhancedContent = (enhancedContent: string) => {
-    console.log("Setting enhanced content:", enhancedContent);
-    form.setValue('content', enhancedContent);
-    toast("Content enhanced", {
-      description: "Your note has been enhanced with AI"
-    });
-  };
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-4">
           <NoteMetadataFields 
             control={form.control} 
-            isGeneratingSummary={isGeneratingSummary}
-            onGenerateSummary={generateSummary}
             availableCategories={availableCategories}
           />
 

@@ -1,7 +1,8 @@
+
 import { useState } from "react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Note } from "@/types/note";
-import { Archive, ArchiveRestore, Camera, Pin, PinOff, Tag, Trash2 } from "lucide-react";
+import { Archive, Camera, Pin, PinOff, Tag, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useNotes } from "@/contexts/NoteContext";
 import { NoteDetailsSheet } from "./NoteDetailsSheet";
@@ -57,6 +58,39 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
     setIsDetailsOpen(true);
   };
 
+  // Helper for tag display
+  const getCategoryBadge = (note: Note) => {
+    // Find if there's a tag that matches the note's category
+    const categoryTag = note.tags?.find(tag => tag.name === note.category);
+    
+    if (categoryTag) {
+      return (
+        <Badge 
+          key="category-tag" 
+          style={{
+            backgroundColor: categoryTag.color,
+            color: getBestTextColor(categoryTag.color)
+          }}
+          className="flex items-center gap-1 text-xs"
+        >
+          <Tag className="h-2.5 w-2.5" />
+          {categoryTag.name}
+        </Badge>
+      );
+    }
+    
+    // No matching tag, show the category on its own
+    return (
+      <Badge 
+        key="category" 
+        variant="outline" 
+        className="flex items-center gap-1 text-xs"
+      >
+        {note.category}
+      </Badge>
+    );
+  };
+
   return (
     <>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -78,7 +112,6 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
                     {note.pinned && <Pin className="h-4 w-4 text-mint-500" />}
                     {note.title}
                   </CardTitle>
-                  <CardDescription className="text-mint-600">{note.category}</CardDescription>
                 </div>
                 <span className="text-sm text-mint-600">{note.date}</span>
               </div>
@@ -112,21 +145,30 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
               </div>
             </CardHeader>
             <CardContent className="p-4 pt-0">
-              <p className="text-mint-700 whitespace-pre-line line-clamp-3">{note.description}</p>
               <div className="flex flex-wrap gap-1 mt-3">
-                {note.tags && note.tags.length > 0 && note.tags.map(tag => (
-                  <Badge 
-                    key={tag.id || tag.name} 
-                    style={{
-                      backgroundColor: tag.color,
-                      color: getBestTextColor(tag.color)
-                    }}
-                    className="flex items-center gap-1 text-xs"
-                  >
-                    <Tag className="h-2.5 w-2.5" />
-                    {tag.name}
+                {getCategoryBadge(note)}
+                {note.tags && note.tags.length > 0 && note.tags
+                  .filter(tag => tag.name !== note.category) // Don't show category tag twice
+                  .slice(0, 3)
+                  .map(tag => (
+                    <Badge 
+                      key={tag.id || tag.name} 
+                      style={{
+                        backgroundColor: tag.color,
+                        color: getBestTextColor(tag.color)
+                      }}
+                      className="flex items-center gap-1 text-xs"
+                    >
+                      <Tag className="h-2.5 w-2.5" />
+                      {tag.name}
+                    </Badge>
+                  ))
+                }
+                {note.tags && note.tags.length > 4 && (
+                  <Badge variant="outline" className="text-xs">
+                    +{note.tags.length - 4} more
                   </Badge>
-                ))}
+                )}
               </div>
             </CardContent>
             <CardFooter className="pt-0 flex justify-between">

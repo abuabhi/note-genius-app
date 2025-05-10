@@ -13,6 +13,21 @@ const NotesPage = () => {
 
   const handleSaveNote = async (note: Omit<Note, 'id'>): Promise<Note | null> => {
     try {
+      // Check if a tag for the note's category already exists
+      const categoryTag = note.tags?.find(tag => tag.name === note.category);
+      
+      // If no tag exists for this category and it's not a default category, create one
+      if (!categoryTag && note.category !== 'General' && note.category !== 'Uncategorized') {
+        // Generate a consistent color from the category name
+        const color = generateColorFromString(note.category);
+        
+        // Add the category as a tag if it doesn't already exist
+        note.tags = [...(note.tags || []), { 
+          name: note.category, 
+          color 
+        }];
+      }
+      
       const newNote = await addNote(note);
       toast("Note created successfully");
       return newNote;
@@ -26,6 +41,12 @@ const NotesPage = () => {
 
   const handleScanNote = async (note: Omit<Note, 'id'>): Promise<Note | null> => {
     try {
+      // Ensure category is added as a tag
+      if (note.category !== 'General' && note.category !== 'Uncategorized') {
+        const color = generateColorFromString(note.category);
+        note.tags = [...(note.tags || []), { name: note.category, color }];
+      }
+      
       const newNote = await addNote({
         ...note,
         sourceType: 'scan'
@@ -42,6 +63,12 @@ const NotesPage = () => {
 
   const handleImportNote = async (note: Omit<Note, 'id'>): Promise<Note | null> => {
     try {
+      // Ensure category is added as a tag
+      if (note.category !== 'General' && note.category !== 'Uncategorized') {
+        const color = generateColorFromString(note.category);
+        note.tags = [...(note.tags || []), { name: note.category, color }];
+      }
+      
       const newNote = await addNote({
         ...note,
         sourceType: 'import'
@@ -54,6 +81,17 @@ const NotesPage = () => {
       });
       return null;
     }
+  };
+
+  // Generate a color based on a string (for category tags)
+  const generateColorFromString = (str: string): string => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    const hue = Math.abs(hash) % 360;
+    return `hsl(${hue}, 70%, 60%)`;
   };
 
   return (

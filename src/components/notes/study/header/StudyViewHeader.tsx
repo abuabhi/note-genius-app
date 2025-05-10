@@ -22,7 +22,6 @@ interface StudyViewHeaderProps {
   onChangeTextAlign: (align: TextAlignType) => void;
   onToggleWidth: () => void;
   onToggleFullScreen: () => void;
-  onEdit: () => void;
   onToggleEditing: () => void;
   onSave: () => void;
 }
@@ -40,7 +39,6 @@ export const StudyViewHeader: React.FC<StudyViewHeaderProps> = ({
   onChangeTextAlign,
   onToggleWidth,
   onToggleFullScreen,
-  onEdit,
   onToggleEditing,
   onSave
 }) => {
@@ -66,25 +64,15 @@ export const StudyViewHeader: React.FC<StudyViewHeaderProps> = ({
               </Button>
             </div>
           ) : (
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onToggleEditing}
-                className="flex items-center gap-1"
-              >
-                <Edit className="h-4 w-4" />
-                <span className="hidden sm:inline">Quick Edit</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onEdit}
-                className="ml-1 flex items-center gap-1"
-              >
-                Full Edit
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onToggleEditing}
+              className="flex items-center gap-1"
+            >
+              <Edit className="h-4 w-4" />
+              <span>Edit Note</span>
+            </Button>
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">

@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { TextAlignType } from "./hooks/useStudyViewState";
+import { RichTextDisplay } from "@/components/ui/rich-text/RichTextDisplay";
 
 interface NoteContentDisplayProps {
   content: string;
@@ -24,9 +25,6 @@ export const NoteContentDisplay = ({
   const toggleOriginalScan = () => {
     setShowOriginalScan(!showOriginalScan);
   };
-
-  // Split content into paragraphs
-  const paragraphs = content.split('\n').filter(p => p.trim() !== '');
 
   return (
     <div className="space-y-4">
@@ -65,26 +63,11 @@ export const NoteContentDisplay = ({
         </div>
       )}
 
-      <div className="prose max-w-none">
-        {paragraphs.map((paragraph, index) => (
-          <p 
-            key={index}
-            style={{
-              fontSize: `${fontSize}px`,
-              textAlign: textAlign,
-              lineHeight: '1.7',
-              marginBottom: '1.2em'
-            }}
-            className="text-gray-800"
-          >
-            {paragraph}
-          </p>
-        ))}
-        
-        {paragraphs.length === 0 && (
-          <p className="text-muted-foreground italic">This note has no content.</p>
-        )}
-      </div>
+      <RichTextDisplay 
+        content={content}
+        fontSize={fontSize}
+        textAlign={textAlign}
+      />
     </div>
   );
 };
