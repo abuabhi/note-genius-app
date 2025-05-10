@@ -2,9 +2,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Type,
-  Moon,
-  Sun,
   AlignLeft,
   AlignCenter,
   AlignJustify,
@@ -12,6 +9,8 @@ import {
   Minimize,
   LayoutGrid,
   LayoutTemplate,
+  Plus,
+  Minus,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -23,13 +22,11 @@ import { TextAlignType } from "../hooks/useStudyViewState";
 
 interface StudyViewControlsProps {
   fontSize: number;
-  isDarkMode: boolean;
   textAlign: TextAlignType;
   isFullWidth: boolean;
   isFullScreen: boolean;
   onIncreaseFontSize: () => void;
   onDecreaseFontSize: () => void;
-  onToggleDarkMode: () => void;
   onChangeTextAlign: (align: TextAlignType) => void;
   onToggleWidth: () => void;
   onToggleFullScreen: () => void;
@@ -37,13 +34,11 @@ interface StudyViewControlsProps {
 
 export const StudyViewControls: React.FC<StudyViewControlsProps> = ({
   fontSize,
-  isDarkMode,
   textAlign,
   isFullWidth,
   isFullScreen,
   onIncreaseFontSize,
   onDecreaseFontSize,
-  onToggleDarkMode,
   onChangeTextAlign,
   onToggleWidth,
   onToggleFullScreen,
@@ -72,7 +67,7 @@ export const StudyViewControls: React.FC<StudyViewControlsProps> = ({
           onClick={onDecreaseFontSize}
           title="Decrease font size"
         >
-          <Type className="h-4 w-4" />
+          <Minus className="h-4 w-4" />
         </Button>
         <div className="px-2 flex items-center justify-center min-w-[24px] text-sm border-l border-r">
           {fontSize}
@@ -84,23 +79,9 @@ export const StudyViewControls: React.FC<StudyViewControlsProps> = ({
           onClick={onIncreaseFontSize}
           title="Increase font size"
         >
-          <Type className="h-4 w-4" />
+          <Plus className="h-4 w-4" />
         </Button>
       </div>
-
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8"
-        onClick={onToggleDarkMode}
-        title={isDarkMode ? "Light mode" : "Dark mode"}
-      >
-        {isDarkMode ? (
-          <Sun className="h-4 w-4" />
-        ) : (
-          <Moon className="h-4 w-4" />
-        )}
-      </Button>
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

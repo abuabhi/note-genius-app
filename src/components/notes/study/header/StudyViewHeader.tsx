@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { StudyViewControls } from "../controls/StudyViewControls";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { Edit } from "lucide-react";
+import { Edit, Save } from "lucide-react";
 import { Note } from "@/types/note";
 import { TextAlignType } from "../hooks/useStudyViewState";
 
@@ -13,51 +13,79 @@ interface StudyViewHeaderProps {
   note: Note;
   fontSize: number;
   textAlign: TextAlignType;
-  isDarkMode: boolean;
   isFullWidth: boolean;
   isFullScreen: boolean;
+  isEditing: boolean;
+  isSaving?: boolean;
   onIncreaseFontSize: () => void;
   onDecreaseFontSize: () => void;
-  onToggleDarkMode: () => void;
   onChangeTextAlign: (align: TextAlignType) => void;
   onToggleWidth: () => void;
   onToggleFullScreen: () => void;
   onEdit: () => void;
+  onToggleEditing: () => void;
+  onSave: () => void;
 }
 
 export const StudyViewHeader: React.FC<StudyViewHeaderProps> = ({
   note,
   fontSize,
   textAlign,
-  isDarkMode,
   isFullWidth,
   isFullScreen,
+  isEditing,
+  isSaving = false,
   onIncreaseFontSize,
   onDecreaseFontSize,
-  onToggleDarkMode,
   onChangeTextAlign,
   onToggleWidth,
   onToggleFullScreen,
-  onEdit
+  onEdit,
+  onToggleEditing,
+  onSave
 }) => {
   return (
-    <CardHeader className={`pb-2 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 ${
-      isDarkMode ? 'border-b border-gray-700' : 'border-b'
-    }`}>
+    <CardHeader className="pb-2 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 border-b">
       <div className="space-y-1 flex-grow">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl md:text-2xl">
+          <CardTitle className="text-xl md:text-2xl text-mint-800">
             {note.title}
           </CardTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onEdit}
-            className="ml-2 flex items-center gap-1"
-          >
-            <Edit className="h-4 w-4" />
-            <span className="hidden sm:inline">Edit</span>
-          </Button>
+          
+          {isEditing ? (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="default"
+                size="sm"
+                onClick={onSave}
+                disabled={isSaving}
+                className="flex items-center gap-1 bg-mint-600 hover:bg-mint-700"
+              >
+                <Save className="h-4 w-4" />
+                <span className="hidden sm:inline">Save</span>
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onToggleEditing}
+                className="flex items-center gap-1"
+              >
+                <Edit className="h-4 w-4" />
+                <span className="hidden sm:inline">Quick Edit</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onEdit}
+                className="ml-1 flex items-center gap-1"
+              >
+                Full Edit
+              </Button>
+            </div>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <span>{format(new Date(note.date), 'MMM d, yyyy')}</span>
@@ -92,13 +120,11 @@ export const StudyViewHeader: React.FC<StudyViewHeaderProps> = ({
 
       <StudyViewControls
         fontSize={fontSize}
-        isDarkMode={isDarkMode}
         textAlign={textAlign}
         isFullWidth={isFullWidth}
         isFullScreen={isFullScreen}
         onIncreaseFontSize={onIncreaseFontSize}
         onDecreaseFontSize={onDecreaseFontSize}
-        onToggleDarkMode={onToggleDarkMode}
         onChangeTextAlign={onChangeTextAlign}
         onToggleWidth={onToggleWidth}
         onToggleFullScreen={onToggleFullScreen}

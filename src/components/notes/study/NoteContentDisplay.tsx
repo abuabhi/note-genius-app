@@ -8,7 +8,6 @@ interface NoteContentDisplayProps {
   content: string;
   fontSize: number;
   textAlign: TextAlignType;
-  isDarkMode: boolean;
   showScannedImage?: boolean;
   scannedImageUrl?: string;
 }
@@ -17,7 +16,6 @@ export const NoteContentDisplay = ({
   content,
   fontSize,
   textAlign,
-  isDarkMode,
   showScannedImage = false,
   scannedImageUrl
 }: NoteContentDisplayProps) => {
@@ -38,7 +36,7 @@ export const NoteContentDisplay = ({
             variant="outline"
             size="sm"
             onClick={toggleOriginalScan}
-            className={`mb-2 ${isDarkMode ? 'border-gray-700 hover:bg-gray-800' : ''}`}
+            className="mb-2"
           >
             {showOriginalScan ? "Hide Original Scan" : "Show Original Scan"}
           </Button>
@@ -77,11 +75,15 @@ export const NoteContentDisplay = ({
               lineHeight: '1.7',
               marginBottom: '1.2em'
             }}
-            className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}
+            className="text-gray-800"
           >
             {paragraph}
           </p>
         ))}
+        
+        {paragraphs.length === 0 && (
+          <p className="text-muted-foreground italic">This note has no content.</p>
+        )}
       </div>
     </div>
   );

@@ -5,7 +5,6 @@ export type TextAlignType = "left" | "center" | "justify";
 
 export const useStudyViewState = () => {
   const [fontSize, setFontSize] = useState(16);
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [textAlign, setTextAlign] = useState<TextAlignType>("left");
   const [isFullWidth, setIsFullWidth] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -13,12 +12,10 @@ export const useStudyViewState = () => {
   // Load preferences from localStorage
   useEffect(() => {
     const savedFontSize = localStorage.getItem("studyViewFontSize");
-    const savedDarkMode = localStorage.getItem("studyViewDarkMode");
     const savedTextAlign = localStorage.getItem("studyViewTextAlign");
     const savedFullWidth = localStorage.getItem("studyViewFullWidth");
 
     if (savedFontSize) setFontSize(parseInt(savedFontSize));
-    if (savedDarkMode) setIsDarkMode(savedDarkMode === "true");
     if (savedTextAlign) setTextAlign(savedTextAlign as TextAlignType);
     if (savedFullWidth) setIsFullWidth(savedFullWidth === "true");
   }, []);
@@ -26,10 +23,9 @@ export const useStudyViewState = () => {
   // Save preferences to localStorage
   useEffect(() => {
     localStorage.setItem("studyViewFontSize", fontSize.toString());
-    localStorage.setItem("studyViewDarkMode", isDarkMode.toString());
     localStorage.setItem("studyViewTextAlign", textAlign);
     localStorage.setItem("studyViewFullWidth", isFullWidth.toString());
-  }, [fontSize, isDarkMode, textAlign, isFullWidth]);
+  }, [fontSize, textAlign, isFullWidth]);
 
   // Toggle fullscreen
   useEffect(() => {
@@ -50,11 +46,6 @@ export const useStudyViewState = () => {
 
   const handleDecreaseFontSize = () => {
     setFontSize((prev) => Math.max(prev - 1, 12));
-  };
-
-  // Dark mode toggle
-  const toggleDarkMode = () => {
-    setIsDarkMode((prev) => !prev);
   };
 
   // Text alignment
@@ -78,13 +69,11 @@ export const useStudyViewState = () => {
 
   return {
     fontSize,
-    isDarkMode,
     textAlign,
     isFullWidth,
     isFullScreen,
     handleIncreaseFontSize,
     handleDecreaseFontSize,
-    toggleDarkMode,
     handleTextAlign,
     toggleWidth,
     toggleFullScreen
