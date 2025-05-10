@@ -5,7 +5,8 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogFooter
+  DialogFooter,
+  DialogDescription
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { useNoteEnrichment } from '@/hooks/useNoteEnrichment';
@@ -68,7 +69,7 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
       setEnhancedContent('');
       initialize();
     }
-  }, [open, initialize, setEnhancedContent]);
+  }, [open, initialize, setEnhancedContent, setSelectedEnhancement]);
   
   const handleEnhancement = async () => {
     if (!selectedEnhancement) {
@@ -125,6 +126,9 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
       <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Enhance Your Note</DialogTitle>
+          <DialogDescription>
+            Select an enhancement option below to improve your note content.
+          </DialogDescription>
         </DialogHeader>
         
         <UsageIndicator currentUsage={currentUsage} monthlyLimit={monthlyLimit} />

@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { FileText, ListChecks, HelpCircle, Lightbulb, FileSymlink, Pencil } from 'lucide-react';
-import { EnhancementOption, EnhancementFunction } from '@/hooks/noteEnrichment/types';
+import { EnhancementFunction, EnhancementOption } from '@/hooks/noteEnrichment/types';
 
 interface EnhancementSelectionProps {
   options: EnhancementOption[];
@@ -27,11 +27,6 @@ export const EnhancementSelection: React.FC<EnhancementSelectionProps> = ({
     }
   };
 
-  const handleOptionClick = (id: EnhancementFunction) => {
-    console.log("Enhancement option selected:", id);
-    onSelect(id);
-  };
-
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
       {options.map((option) => (
@@ -42,7 +37,7 @@ export const EnhancementSelection: React.FC<EnhancementSelectionProps> = ({
               ? 'border-mint-500 bg-mint-50 shadow-sm' 
               : 'hover:border-mint-300 hover:bg-mint-50/50'
           }`}
-          onClick={() => handleOptionClick(option.id)}
+          onClick={() => onSelect(option.id)}
         >
           <CardHeader className="p-4 pb-2">
             <div className="flex items-center gap-2">

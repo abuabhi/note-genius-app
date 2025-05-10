@@ -7,6 +7,7 @@ export const enrichNote = async (note: Note, enhancementType: EnhancementFunctio
   try {
     const { data, error } = await supabase.functions.invoke('enrich-note', {
       body: {
+        noteId: note.id,
         noteContent: note.content || note.description,
         enhancementType: enhancementType,
         noteTitle: note.title,

@@ -18,23 +18,14 @@ interface TokenUsage {
   total_tokens: number;
 }
 
-// Supported enhancement functions
-type EnhancementFunction = 
-  | 'summarize' 
-  | 'addKeyPoints' 
-  | 'explainConcepts' 
-  | 'suggestQuestions' 
-  | 'addExamples'
-  | 'improvePhrasing';
-
-// Mapping of enhancement functions to structured prompts
-const enhancementPrompts: Record<EnhancementFunction, string> = {
-  summarize: "Create a concise summary of the following note content:",
-  addKeyPoints: "Extract and list the key points from the following note content:",
-  explainConcepts: "Identify and explain the main concepts from the following note content:",
-  suggestQuestions: "Generate study questions based on the following note content:",
-  addExamples: "Provide relevant examples to illustrate the concepts in the following note content:",
-  improvePhrasing: "Rewrite the following note content to improve clarity and readability while preserving all information:"
+// Mapping of enhancement functions from client to the prompts used by the API
+const enhancementPrompts: Record<string, string> = {
+  'summarize': "Create a concise summary of the following note content:",
+  'extract-key-points': "Extract and list the key points from the following note content:",
+  'generate-questions': "Generate study questions based on the following note content:",
+  'improve-clarity': "Rewrite the following note content to improve clarity and readability while preserving all information:",
+  'convert-to-markdown': "Format the following note content with proper Markdown styling:",
+  'fix-spelling-grammar': "Correct spelling and grammar errors in the following note content while preserving the meaning:"
 };
 
 serve(async (req) => {
@@ -121,7 +112,7 @@ serve(async (req) => {
     const monthlyLimit = 100;
     
     // Construct prompt based on enhancement type
-    const prompt = `${enhancementPrompts[enhancementType as EnhancementFunction]}
+    const prompt = `${enhancementPrompts[enhancementType]}
     
 Note Title: ${noteTitle || 'Untitled Note'}
 
