@@ -61,10 +61,14 @@ export const useTodos = () => {
       }
 
       // Transform the data to include a priority property since it might not exist in all records
-      return data.map(item => ({
-        ...item,
-        priority: (item.priority as TodoPriority) || 'medium',
-      })) as Todo[];
+      return data.map(item => {
+        // Type assertion for the item with an optional priority field
+        const typedItem = item as any;
+        return {
+          ...typedItem,
+          priority: (typedItem.priority as TodoPriority) || 'medium',
+        } as Todo;
+      });
     },
     enabled: !!user,
   });
