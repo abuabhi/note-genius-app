@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarClock, Clock } from "lucide-react";
+import { CalendarClock, Clock, Repeat } from "lucide-react";
 import { format, addHours } from "date-fns";
 import { toast } from "sonner";
 
@@ -28,6 +28,8 @@ const eventSchema = z.object({
   eventType: z.string().default("study"),
   color: z.string().default("#4f46e5"),
   flashcardSetId: z.string().optional(),
+  isRecurring: z.boolean().default(false),
+  recurrencePattern: z.string().default("none"),
 });
 
 type EventFormValues = z.infer<typeof eventSchema>;
@@ -62,6 +64,8 @@ export function CreateEventDialog({
     eventType: "study",
     color: "#4f46e5",
     flashcardSetId: "",
+    isRecurring: false,
+    recurrencePattern: "none",
   };
 
   const form = useForm<EventFormValues>({
@@ -98,6 +102,7 @@ export function CreateEventDialog({
   });
 
   const eventType = form.watch("eventType");
+  const isRecurring = form.watch("isRecurring");
 
   const onSubmit = async (values: EventFormValues) => {
     if (!user) {
@@ -108,6 +113,9 @@ export function CreateEventDialog({
     setIsSubmitting(true);
 
     try {
+      // Prepare recurrence pattern data if recurring is enabled
+      const recurrencePattern = values.isRecurring ? { pattern: values.recurrencePattern } : null;
+      
       const eventData = {
         user_id: user.id,
         title: values.title,
@@ -118,6 +126,8 @@ export function CreateEventDialog({
         event_type: values.eventType,
         color: values.color,
         flashcard_set_id: values.flashcardSetId || null,
+        is_recurring: values.isRecurring,
+        recurrence_pattern: recurrencePattern,
       };
 
       const { error } = await supabase
@@ -277,6 +287,53 @@ export function CreateEventDialog({
                 </FormItem>
               )}
             />
+            
+            <FormField
+              control={form.control}
+              name="isRecurring"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5 flex items-center">
+                    <Repeat className="h-4 w-4 mr-2" />
+                    <FormLabel>Recurring Event</FormLabel>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            
+            {isRecurring && (
+              <FormField
+                control={form.control}
+                name="recurrencePattern"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Recurrence Pattern</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a recurrence pattern" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="daily">Daily</SelectItem>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <FormField
               control={form.control}

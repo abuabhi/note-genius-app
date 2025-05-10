@@ -37,6 +37,7 @@ import { useAuth } from './contexts/AuthContext';
 import { NavigationProvider } from './contexts/NavigationContext';
 import ChatPage from "./pages/ChatPage";
 import GoalsPage from "./pages/GoalsPage";
+import TodoPage from "./pages/TodoPage";
 
 const App = () => {
   const { user } = useAuth();
@@ -69,6 +70,7 @@ const App = () => {
           <Route path="/progress" element={<ProgressPage />} />
           <Route path="/schedule" element={<SchedulePage />} />
           <Route path="/goals" element={<GoalsPage />} />
+          <Route path="/todos" element={<TodoPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/library" element={<FlashcardLibraryPage />} />
           <Route path="/chat" element={<ChatPage />} />

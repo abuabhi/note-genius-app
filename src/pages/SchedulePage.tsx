@@ -3,11 +3,14 @@ import { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { ScheduleCalendar } from "@/components/schedule/ScheduleCalendar";
 import { ScheduleHeader } from "@/components/schedule/ScheduleHeader";
+import { UpcomingEventsList } from "@/components/schedule/UpcomingEventsList";
+import { useEvents } from "@/hooks/useEvents";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 const SchedulePage = () => {
   const { user, loading } = useRequireAuth();
   const [date, setDate] = useState<Date>(new Date());
+  const { upcomingEvents, upcomingLoading, formatEventDate } = useEvents(date);
 
   if (loading) {
     return (
@@ -32,6 +35,14 @@ const SchedulePage = () => {
         <ScheduleHeader selectedDate={date} onDateChange={setDate} />
         <div className="mt-6">
           <ScheduleCalendar selectedDate={date} onDateChange={setDate} />
+        </div>
+        
+        <div className="mt-8">
+          <UpcomingEventsList 
+            events={upcomingEvents} 
+            isLoading={upcomingLoading} 
+            formatEventDate={formatEventDate}
+          />
         </div>
       </div>
     </Layout>

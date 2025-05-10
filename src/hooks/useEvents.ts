@@ -1,10 +1,10 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { startOfMonth, endOfMonth, addMonths } from "date-fns";
+import { startOfMonth, endOfMonth, addMonths, startOfDay, addDays, endOfDay, format } from "date-fns";
 
 export type Event = {
   id: string;
@@ -67,6 +67,39 @@ export const useEvents = (currentDate: Date = new Date()) => {
     refetchOnWindowFocus: false // Don't refetch when window gains focus
   });
 
+  // Fetch upcoming events for the next 7 days
+  const { data: upcomingEvents = [], isLoading: upcomingLoading } = useQuery({
+    queryKey: ['upcomingEvents', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const today = startOfDay(new Date());
+      const nextWeek = endOfDay(addDays(today, 7));
+      
+      try {
+        const { data, error } = await supabase
+          .from('events')
+          .select('*')
+          .eq('user_id', user.id)
+          .gte('start_time', today.toISOString())
+          .lte('start_time', nextWeek.toISOString())
+          .order('start_time', { ascending: true });
+        
+        if (error) {
+          console.error('Error fetching upcoming events:', error);
+          return [];
+        }
+        return data as Event[];
+      } catch (err) {
+        console.error('Error fetching upcoming events:', err);
+        return []; 
+      }
+    },
+    enabled: !!user,
+    retry: 1,
+    staleTime: 30000, // Cache for 30 seconds
+  });
+
   // Fetch due flashcards for this period with improved error handling
   const { data: dueFlashcards = [] } = useQuery({
     queryKey: ['dueFlashcards', user?.id, dateRange.start.toISOString(), dateRange.end.toISOString()],
@@ -127,6 +160,7 @@ export const useEvents = (currentDate: Date = new Date()) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['upcomingEvents'] });
       refetchEvents(); // Explicitly refetch events after successful creation
       toast.success('Event created successfully!');
     },
@@ -149,6 +183,7 @@ export const useEvents = (currentDate: Date = new Date()) => {
     },
     onSuccess: (eventId) => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['upcomingEvents'] });
       refetchEvents(); // Explicitly refetch events after successful deletion
       toast.success('Event deleted successfully!');
     },
@@ -157,6 +192,16 @@ export const useEvents = (currentDate: Date = new Date()) => {
       console.error('Error deleting event:', error);
     }
   });
+
+  // Format event date for display
+  const formatEventDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return format(date, "MMM d, yyyy 'at' h:mm a");
+    } catch (error) {
+      return 'Invalid date';
+    }
+  };
 
   // Load next/previous month events
   const loadAdjacentMonth = async (direction: 'next' | 'prev') => {
@@ -172,6 +217,8 @@ export const useEvents = (currentDate: Date = new Date()) => {
 
   return {
     events,
+    upcomingEvents,
+    upcomingLoading,
     dueFlashcards,
     isLoading,
     error,
@@ -179,6 +226,7 @@ export const useEvents = (currentDate: Date = new Date()) => {
     deleteEvent,
     loadAdjacentMonth,
     updateDateRange: setDateRange,
-    refetchEvents, // Export the refetchEvents function
+    refetchEvents,
+    formatEventDate,
   };
 };

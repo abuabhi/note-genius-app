@@ -13,7 +13,8 @@ import {
   User,
   MessageSquare,
   Calendar,
-  Target
+  Target,
+  ListTodo
 } from "lucide-react";
 import { NavigationItemType } from "./NavigationGroup";
 
@@ -69,6 +70,11 @@ export const navigationGroups = [
         title: "Goals",
         path: "/goals",
         icon: Target,
+      },
+      {
+        title: "Todos",
+        path: "/todos",
+        icon: ListTodo,
       },
     ]
   },
