@@ -1,5 +1,5 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 serve(async (req) => {
@@ -9,23 +9,14 @@ serve(async (req) => {
   }
   
   try {
-    // Implementation of document processing
-    const { url, type } = await req.json();
-    
-    // Basic document processing logic
-    // In a real implementation, this would process different document types
-    const documentContent = `Processed document from ${url} of type ${type}`;
-    
+    // Document processing logic would go here
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        content: documentContent,
-        message: "Document processed successfully" 
-      }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ message: "Document processing endpoint" }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error processing document:', error);
+    console.error('Error in process-document function:', error);
+    
     return new Response(
       JSON.stringify({ error: error.message || 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
