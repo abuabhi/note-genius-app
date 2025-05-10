@@ -12,6 +12,7 @@ import { NoteSummary } from "./NoteSummary";
 import { useState } from "react";
 import { updateNoteInDatabase } from "@/contexts/notes/operations";
 import { enrichNote } from "@/hooks/noteEnrichment/enrichmentService";
+import { useNavigate } from "react-router-dom";
 
 interface NoteCardProps {
   note: Note;
@@ -31,6 +32,7 @@ export const NoteCard = ({
   confirmDelete
 }: NoteCardProps) => {
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const navigate = useNavigate();
   
   const handleGenerateSummary = async () => {
     try {
@@ -46,20 +48,20 @@ export const NoteCard = ({
       const content = note.content || note.description;
       const summaryContent = await enrichNote(note, 'summarize');
       
-      // Truncate to 150 characters if longer
-      const truncatedSummary = summaryContent.length > 150 
-        ? summaryContent.substring(0, 147) + '...'
+      // Format as markdown and truncate if too long
+      const markdownSummary = summaryContent.length > 250 
+        ? summaryContent.substring(0, 247) + '...'
         : summaryContent;
         
       // Update the note with the generated summary
       await updateNoteInDatabase(note.id, {
-        summary: truncatedSummary,
+        summary: markdownSummary,
         summary_generated_at: new Date().toISOString(),
         summary_status: 'completed'
       });
       
       // Update local state
-      note.summary = truncatedSummary;
+      note.summary = markdownSummary;
       note.summary_generated_at = new Date().toISOString();
       note.summary_status = 'completed';
     } catch (error) {
@@ -74,6 +76,11 @@ export const NoteCard = ({
     }
   };
 
+  const handleGoToStudyMode = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/notes/study/${note.id}`);
+  };
+
   return (
     <Card 
       key={note.id}
@@ -86,35 +93,34 @@ export const NoteCard = ({
       onClick={() => onNoteClick(note)}
     >
       <CardHeader className="relative p-4 pb-2">
-        <div className="flex justify-between items-start">
-          <CardTitle className="text-xl text-mint-800">
+        {/* Card actions positioned absolutely */}
+        <NoteCardActions 
+          noteId={note.id} 
+          isPinned={!!note.pinned} 
+          onPin={onPin} 
+          onDelete={onDelete}
+          isConfirmingDelete={confirmDelete === note.id}
+        />
+        
+        <div className="flex flex-col">
+          <CardTitle className="text-xl text-mint-800 pr-16"> {/* Add padding-right to avoid overlap with pin */}
             {note.title}
           </CardTitle>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-mint-600">{note.date}</span>
-            <NoteCardActions 
-              noteId={note.id} 
-              isPinned={!!note.pinned} 
-              onPin={onPin} 
-              onDelete={onDelete}
-              isConfirmingDelete={confirmDelete === note.id}
-            />
-          </div>
+          <span className="text-sm text-mint-600 mt-1">{note.date}</span>
         </div>
       </CardHeader>
       <CardContent className="p-4 pt-0">
-        {/* Display Category */}
+        {/* Display Category as Bold & Italic */}
         <div className="flex items-center gap-1 mb-2">
           <FileText className="h-3 w-3 text-mint-700" />
-          <Badge 
-            className="text-xs"
+          <span 
+            className="text-sm font-bold italic"
             style={{
-              backgroundColor: generateColorFromString(note.category),
-              color: getBestTextColor(generateColorFromString(note.category))
+              color: generateColorFromString(note.category),
             }}
           >
             {note.category}
-          </Badge>
+          </span>
         </div>
 
         {/* Display Summary */}
@@ -124,49 +130,51 @@ export const NoteCard = ({
           status={isGeneratingSummary ? 'generating' : note.summary_status}
           onGenerateSummary={handleGenerateSummary}
         />
-
-        {/* Display Tags */}
-        {note.tags && note.tags.length > 0 && (
-          <div className="flex items-center gap-1 mt-3">
-            <Tag className="h-3 w-3 text-mint-700" />
-            <div className="flex-grow">
-              <NoteTagList 
-                tags={note.tags
-                  .filter(tag => tag.name !== note.category) // Don't show category tag twice
-                  .slice(0, 3)
-                }
-              />
-              {note.tags.length > 4 && (
-                <Badge variant="outline" className="text-xs mt-1">
-                  +{note.tags.length - 4} more
-                </Badge>
-              )}
-            </div>
-          </div>
-        )}
       </CardContent>
-      <CardFooter className="pt-0 flex justify-between">
-        <div className="flex items-center">
+      <CardFooter className="p-4 pt-2 flex justify-between">
+        {/* Tags at bottom left */}
+        <div className="flex-1">
+          {note.tags && note.tags.length > 0 && (
+            <div className="flex items-center gap-1">
+              <Tag className="h-3 w-3 text-mint-700" />
+              <div className="flex-grow">
+                <NoteTagList 
+                  tags={note.tags
+                    .filter(tag => tag.name !== note.category) // Don't show category tag twice
+                    .slice(0, 3)
+                  }
+                />
+                {note.tags.length > 4 && (
+                  <Badge variant="outline" className="text-xs mt-1">
+                    +{note.tags.length - 4} more
+                  </Badge>
+                )}
+              </div>
+            </div>
+          )}
+          
           {note.sourceType === 'scan' && (
-            <div className="flex items-center">
+            <div className="flex items-center mt-2">
               <Camera className="h-3 w-3 text-mint-500 mr-1" />
               <span className="text-xs text-mint-500">Scanned</span>
             </div>
           )}
           {note.archived && (
-            <div className="flex items-center ml-2">
+            <div className="flex items-center mt-2">
               <Archive className="h-3 w-3 text-mint-500 mr-1" />
               <span className="text-xs text-mint-500">Archived</span>
             </div>
           )}
         </div>
+        
+        {/* Study Mode button at bottom right */}
         <Button 
           variant="ghost" 
           size="sm" 
           className="h-7 text-xs text-mint-600 hover:text-mint-800"
-          onClick={(e) => onShowDetails(note, e)}
+          onClick={handleGoToStudyMode}
         >
-          Details
+          Study Mode
         </Button>
       </CardFooter>
     </Card>

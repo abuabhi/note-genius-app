@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Loader2 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 interface NoteSummaryProps {
   summary?: string;
@@ -45,7 +46,16 @@ export const NoteSummary: React.FC<NoteSummaryProps> = ({
     
     return (
       <div className="flex flex-col space-y-1">
-        <p className="text-sm line-clamp-2 text-gray-600">{displayText}</p>
+        {summary ? (
+          <div className="prose prose-sm max-w-none text-gray-600">
+            <ReactMarkdown className="line-clamp-2 text-sm">
+              {displayText}
+            </ReactMarkdown>
+          </div>
+        ) : (
+          <p className="text-sm line-clamp-2 text-gray-600">{displayText}</p>
+        )}
+        
         {!summary && onGenerateSummary && status !== 'pending' && status !== 'generating' && (
           <button 
             onClick={onGenerateSummary}

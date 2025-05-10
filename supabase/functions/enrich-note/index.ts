@@ -5,7 +5,7 @@ import { corsHeaders, createCorsResponse } from './cors.ts';
 import { authenticateUser } from './auth.ts';
 import { callOpenAI } from './openai.ts';
 import { createPrompt } from './prompts.ts';
-import { EnrichmentRequestBody, ErrorResponse } from './types.ts';
+import type { EnrichmentRequestBody, ErrorResponse, EnhancementFunction, TokenUsage } from './types.ts';
 
 // Get environment variables
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';

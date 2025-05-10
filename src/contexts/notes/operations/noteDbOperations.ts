@@ -18,7 +18,7 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
         pinned: noteData.pinned || false,
         summary: noteData.summary,
         summary_generated_at: noteData.summary_generated_at,
-        summary_status: noteData.summary_status || 'pending'
+        summary_status: noteData.summary_status || 'generating' // Default to generating to auto-trigger summary
       })
       .select()
       .single();
@@ -41,7 +41,7 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
       tags: noteData.tags || [],
       summary: noteInsertData.summary,
       summary_generated_at: noteInsertData.summary_generated_at,
-      summary_status: noteInsertData.summary_status,
+      summary_status: noteInsertData.summary_status as 'pending' | 'generating' | 'completed' | 'failed',
       scanData: noteData.sourceType === 'scan' && noteData.scanData ? {
         originalImageUrl: noteData.scanData.originalImageUrl,
         recognizedText: noteData.scanData.recognizedText,

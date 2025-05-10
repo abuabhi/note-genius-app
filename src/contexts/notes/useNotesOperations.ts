@@ -8,6 +8,7 @@ import {
   fetchTagsFromDatabase,
   updateNoteTagsInDatabase
 } from './operations';
+import { enrichNote } from '@/hooks/noteEnrichment/enrichmentService';
 
 export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React.SetStateAction<Note[]>>, currentPage: number, setCurrentPage: React.Dispatch<React.SetStateAction<number>>, paginatedNotes: Note[]) {
   const { toast } = useToast();
@@ -15,7 +16,14 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
   const addNote = async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
     try {
       console.log("Adding note with data:", noteData);
-      const newNote = await addNoteToDatabase(noteData);
+      
+      // Set the summary_status to 'generating' to indicate we're going to generate a summary
+      const noteToAdd = {
+        ...noteData,
+        summary_status: 'generating' as 'pending' | 'generating' | 'completed' | 'failed'
+      };
+      
+      const newNote = await addNoteToDatabase(noteToAdd);
       
       if (newNote) {
         console.log("Note added successfully:", newNote);
@@ -25,6 +33,51 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
           title: "Note added",
           description: "Your note has been successfully added.",
         });
+        
+        // Automatically generate summary in background
+        try {
+          const content = newNote.content || newNote.description;
+          const summaryContent = await enrichNote(newNote, 'summarize');
+          
+          // Format as markdown
+          const markdownSummary = summaryContent;
+          
+          // Update the note with the generated summary
+          await updateNoteInDatabase(newNote.id, {
+            summary: markdownSummary,
+            summary_generated_at: new Date().toISOString(),
+            summary_status: 'completed'
+          });
+          
+          // Update the local state
+          setNotes(prevNotes => 
+            prevNotes.map(note => 
+              note.id === newNote.id ? {
+                ...note, 
+                summary: markdownSummary,
+                summary_generated_at: new Date().toISOString(),
+                summary_status: 'completed'
+              } : note
+            )
+          );
+          console.log("Summary automatically generated:", markdownSummary);
+        } catch (error) {
+          console.error("Error auto-generating summary:", error);
+          // Update status to failed
+          await updateNoteInDatabase(newNote.id, {
+            summary_status: 'failed'
+          });
+          
+          // Update the local state
+          setNotes(prevNotes => 
+            prevNotes.map(note => 
+              note.id === newNote.id ? {
+                ...note, 
+                summary_status: 'failed'
+              } : note
+            )
+          );
+        }
         
         return newNote;
       } else {
