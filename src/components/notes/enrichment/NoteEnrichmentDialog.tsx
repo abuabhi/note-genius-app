@@ -19,6 +19,7 @@ import { EnhancementResults } from './EnhancementResults';
 import { EnhancementError } from './EnhancementError';
 import { UsageIndicator } from './UsageIndicator';
 import { Note } from '@/types/note';
+import { EnhancementFunction } from '@/hooks/noteEnrichment/types';
 
 interface NoteEnrichmentDialogProps {
   open: boolean;
@@ -109,6 +110,11 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
   const handleClose = () => {
     onOpenChange(false);
   };
+
+  const handleSelectEnhancement = (id: EnhancementFunction) => {
+    console.log("NoteEnrichmentDialog - Setting selected enhancement to:", id);
+    setSelectedEnhancement(id);
+  };
   
   // If feature is not enabled, show premium notice
   if (!isEnabled) {
@@ -143,10 +149,7 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
           <EnhancementSelection 
             options={enhancementOptions}
             selectedEnhancement={selectedEnhancement}
-            onSelect={(id) => {
-              console.log("Setting selected enhancement:", id);
-              setSelectedEnhancement(id);
-            }}
+            onSelect={handleSelectEnhancement}
           />
         )}
         
