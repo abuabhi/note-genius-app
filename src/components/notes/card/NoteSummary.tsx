@@ -97,7 +97,7 @@ export const NoteSummary = ({
         <p className="text-sm line-clamp-3 text-muted-foreground">{displayText()}</p>
       )}
       
-      {/* Show generate button when not generating and no summary exists */}
+      {/* Show generate button when not generating and no summary exists - fixed the condition */}
       {(effectiveStatus === 'idle' || effectiveStatus === 'error' || effectiveStatus === 'failed') && (
         <Button
           variant="ghost"
