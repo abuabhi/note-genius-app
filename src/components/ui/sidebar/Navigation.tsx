@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { staggerVariants } from "./motion";
 import { useRequireAuth, UserTier } from "@/hooks/useRequireAuth";
 import { Separator } from "@/components/ui/separator";
+import { useFeature } from "@/contexts/FeatureContext";
 
 // Import all icons we need
 import {
@@ -31,6 +32,10 @@ interface NavigationProps {
 export const Navigation = ({ isCollapsed }: NavigationProps) => {
   const { pathname } = useLocation();
   const { userProfile } = useRequireAuth();
+  
+  // Check feature availability
+  const isChatEnabled = useFeature("chat");
+  const isCollaborationEnabled = useFeature("collaboration");
   
   return (
     <motion.ul variants={staggerVariants} className="flex h-full flex-col">
@@ -114,32 +119,36 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   isCollapsed={isCollapsed}
                 />
 
-                {/* Communication Section - replaced header with separator */}
+                {/* Communication Section - replaced header with separator, conditional rendering */}
                 <Separator className="my-2" />
-                <NavLink
-                  to="/chat"
-                  icon={MessageSquare}
-                  label="Chat"
-                  isActive={pathname.includes("/chat")}
-                  isCollapsed={isCollapsed}
-                  badge={
-                    <Badge
-                      className={cn(
-                        "flex h-fit w-fit items-center gap-1.5 rounded border-none bg-mint-50 px-1.5 text-mint-600 dark:bg-mint-700 dark:text-mint-300",
-                      )}
-                      variant="outline"
-                    >
-                      BETA
-                    </Badge>
-                  }
-                />
-                <NavLink
-                  to="/collaborate"
-                  icon={Users}
-                  label="Collaboration"
-                  isActive={pathname.includes("/collaborate")}
-                  isCollapsed={isCollapsed}
-                />
+                {isChatEnabled && (
+                  <NavLink
+                    to="/chat"
+                    icon={MessageSquare}
+                    label="Chat"
+                    isActive={pathname.includes("/chat")}
+                    isCollapsed={isCollapsed}
+                    badge={
+                      <Badge
+                        className={cn(
+                          "flex h-fit w-fit items-center gap-1.5 rounded border-none bg-mint-50 px-1.5 text-mint-600 dark:bg-mint-700 dark:text-mint-300",
+                        )}
+                        variant="outline"
+                      >
+                        BETA
+                      </Badge>
+                    }
+                  />
+                )}
+                {isCollaborationEnabled && (
+                  <NavLink
+                    to="/collaborate"
+                    icon={Users}
+                    label="Collaboration"
+                    isActive={pathname.includes("/collaborate")}
+                    isCollapsed={isCollapsed}
+                  />
+                )}
                 
                 {/* Settings - with separator */}
                 <Separator className="my-2" />
@@ -150,6 +159,20 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   isActive={pathname.includes("/settings")}
                   isCollapsed={isCollapsed}
                 />
+
+                {/* Admin section - only for DEAN users */}
+                {userProfile?.user_tier === UserTier.DEAN && (
+                  <>
+                    <Separator className="my-2" />
+                    <NavLink
+                      to="/admin/features"
+                      icon={Settings}
+                      label="Feature Management"
+                      isActive={pathname.includes("/admin/features")}
+                      isCollapsed={isCollapsed}
+                    />
+                  </>
+                )}
               </div>
             </ScrollArea>
           </div>

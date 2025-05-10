@@ -9,6 +9,36 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      app_features: {
+        Row: {
+          created_at: string
+          description: string
+          feature_key: string
+          id: string
+          is_enabled: boolean
+          requires_tier: Database["public"]["Enums"]["user_tier"] | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          feature_key: string
+          id?: string
+          is_enabled?: boolean
+          requires_tier?: Database["public"]["Enums"]["user_tier"] | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          feature_key?: string
+          id?: string
+          is_enabled?: boolean
+          requires_tier?: Database["public"]["Enums"]["user_tier"] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chat_conversations: {
         Row: {
           created_at: string
