@@ -19,8 +19,8 @@ export const useNoteDetails = (note: Note, onOpenChange: (open: boolean) => void
     : null;
 
   // Get import data preview URL if available
-  const importPreviewUrl = note.sourceType === 'import' && note.importData?.previewUrl
-    ? note.importData.previewUrl
+  const importPreviewUrl = note.sourceType === 'import' && note.importData?.originalFileUrl
+    ? note.importData.originalFileUrl
     : null;
 
   // Handle pinning/unpinning note

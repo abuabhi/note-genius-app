@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -81,10 +82,8 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
 
   const generateSummary = async (content: string) => {
     if (!content || content.trim().length < 50) {
-      toast({
-        title: "Content too short",
-        description: "Please add more content to generate a summary",
-        variant: "destructive"
+      toast("Content too short", {
+        description: "Please add more content to generate a summary"
       });
       return;
     }
@@ -119,17 +118,14 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
         
         console.log("Setting description to:", summaryText);
         form.setValue('description', summaryText);
-        toast({
-          title: "Summary generated",
-          description: "Key points extracted from your note content",
+        toast("Summary generated", {
+          description: "Key points extracted from your note content"
         });
       }
     } catch (error) {
       console.error('Error generating summary:', error);
-      toast({
-        title: "Summary generation failed",
-        description: "Could not generate a summary from your note content",
-        variant: "destructive"
+      toast("Summary generation failed", {
+        description: "Could not generate a summary from your note content"
       });
     } finally {
       setIsGeneratingSummary(false);
@@ -157,17 +153,14 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
       console.log("Save result:", result);
       
       if (result) {
-        toast({
-          title: "Note saved",
-          description: "Your note has been successfully saved",
+        toast("Note saved", {
+          description: "Your note has been successfully saved"
         });
       }
     } catch (error) {
       console.error("Error saving note:", error);
-      toast({
-        title: "Failed to save note",
-        description: "An error occurred while saving your note",
-        variant: "destructive"
+      toast("Failed to save note", {
+        description: "An error occurred while saving your note"
       });
     } finally {
       setIsSaving(false);
@@ -177,8 +170,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
   const handleEnhancedContent = (enhancedContent: string) => {
     console.log("Setting enhanced content:", enhancedContent);
     form.setValue('content', enhancedContent);
-    toast({
-      title: "Content enhanced",
+    toast("Content enhanced", {
       description: "Your note has been enhanced with AI"
     });
   };
