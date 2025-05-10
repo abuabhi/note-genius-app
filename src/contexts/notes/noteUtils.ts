@@ -4,86 +4,64 @@ import { FilterOptions, SortType } from "./types";
 
 export const fetchNotesFromSupabase = async (): Promise<Note[]> => {
   try {
-    // First, fetch all the notes with their scan data
-    const { data, error } = await supabase
+    const { data: notesData, error: notesError } = await supabase
       .from('notes')
       .select(`
-        id,
-        title,
-        description,
-        date,
-        category,
-        content,
-        source_type,
-        archived,
-        pinned,
-        scan_data (
-          id,
-          original_image_url,
-          recognized_text,
-          confidence,
-          language
-        )
+        *,
+        tags:note_tags(
+          tag:tags(id, name, color)
+        ),
+        scanData:scan_data(*)
       `)
       .order('created_at', { ascending: false });
 
-    if (error) {
-      throw error;
+    if (notesError) {
+      throw notesError;
     }
 
-    // Get all note IDs to fetch tags for
-    const noteIds = data.map(note => note.id);
+    // Transform the data into the Note format
+    const notes: Note[] = notesData.map((note) => {
+      // Extract tags from the nested structure
+      const tags = note.tags
+        ? note.tags
+            .filter((tagObj: any) => tagObj.tag)
+            .map((tagObj: any) => ({
+              id: tagObj.tag.id,
+              name: tagObj.tag.name,
+              color: tagObj.tag.color
+            }))
+        : [];
 
-    // Fetch all note-tag relationships for these notes
-    const { data: noteTagRelations, error: noteTagError } = await supabase
-      .from('note_tags')
-      .select(`
-        note_id,
-        tags:tag_id (
-          id,
-          name,
-          color
-        )
-      `)
-      .in('note_id', noteIds);
+      // Extract scan data if present
+      const scanData = note.scanData && note.scanData.length > 0
+        ? {
+            originalImageUrl: note.scanData[0].original_image_url,
+            recognizedText: note.scanData[0].recognized_text,
+            confidence: note.scanData[0].confidence,
+            language: note.scanData[0].language
+          }
+        : undefined;
 
-    if (noteTagError) {
-      throw noteTagError;
-    }
-
-    // Group tags by note_id
-    const tagsByNoteId: Record<string, { id: string; name: string; color: string }[]> = {};
-    noteTagRelations?.forEach(relation => {
-      if (!tagsByNoteId[relation.note_id]) {
-        tagsByNoteId[relation.note_id] = [];
-      }
-      tagsByNoteId[relation.note_id].push(relation.tags);
+      // Return the formatted note
+      return {
+        id: note.id,
+        title: note.title,
+        description: note.description,
+        date: new Date(note.date).toISOString().split('T')[0],
+        category: note.category,
+        content: note.content,
+        sourceType: note.source_type as 'manual' | 'scan' | 'import',
+        archived: note.archived || false,
+        pinned: note.pinned || false,
+        tags,
+        scanData
+      };
     });
 
-    // Transform the data to match our Note interface
-    const transformedNotes: Note[] = data.map(note => ({
-      id: note.id,
-      title: note.title,
-      description: note.description,
-      date: new Date(note.date).toISOString().split('T')[0],
-      category: note.category,
-      content: note.content,
-      sourceType: note.source_type as 'manual' | 'scan' | 'import',
-      archived: note.archived || false,
-      pinned: note.pinned || false,
-      tags: tagsByNoteId[note.id] || [],
-      scanData: note.scan_data?.[0] ? {
-        originalImageUrl: note.scan_data[0].original_image_url,
-        recognizedText: note.scan_data[0].recognized_text,
-        confidence: note.scan_data[0].confidence,
-        language: note.scan_data[0].language
-      } : undefined
-    }));
-
-    return transformedNotes;
+    return notes;
   } catch (error) {
     console.error('Error fetching notes:', error);
-    return [];
+    throw error;
   }
 };
 
