@@ -2,12 +2,12 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { FileText, ListChecks, HelpCircle, Lightbulb, FileSymlink, Pencil } from 'lucide-react';
-import { EnhancementOption } from '@/hooks/noteEnrichment/types';
+import { EnhancementOption, EnhancementFunction } from '@/hooks/useNoteEnrichment';
 
 interface EnhancementSelectionProps {
   options: EnhancementOption[];
-  selectedEnhancement: string | null;
-  onSelect: (id: string) => void;
+  selectedEnhancement: EnhancementFunction | null;
+  onSelect: (id: EnhancementFunction) => void;
 }
 
 export const EnhancementSelection: React.FC<EnhancementSelectionProps> = ({

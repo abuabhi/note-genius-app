@@ -8,11 +8,9 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
-import { AlertCircle } from 'lucide-react';
-import { useNoteEnrichment } from '@/hooks/useNoteEnrichment';
+import { useNoteEnrichment, EnhancementFunction } from '@/hooks/useNoteEnrichment';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from "@/components/ui/progress";
-import { Separator } from '@/components/ui/separator';
 import { PremiumFeatureNotice } from './PremiumFeatureNotice';
 import { EnhancementSelection } from './EnhancementSelection';
 import { EnhancementProcessing } from './EnhancementProcessing';
@@ -47,7 +45,7 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
   } = useNoteEnrichment();
   
   const { toast } = useToast();
-  const [selectedEnhancement, setSelectedEnhancement] = useState<string | null>(null);
+  const [selectedEnhancement, setSelectedEnhancement] = useState<EnhancementFunction | null>(null);
   
   useEffect(() => {
     if (open) {
@@ -122,7 +120,7 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
           <EnhancementSelection 
             options={enhancementOptions}
             selectedEnhancement={selectedEnhancement}
-            onSelect={setSelectedEnhancement}
+            onSelect={(id) => setSelectedEnhancement(id as EnhancementFunction)}
           />
         )}
         
