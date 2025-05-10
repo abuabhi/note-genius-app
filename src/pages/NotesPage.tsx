@@ -1,4 +1,3 @@
-
 import Layout from "@/components/layout/Layout";
 import { NotesContent } from "@/components/notes/page/NotesContent";
 import { useNotes } from "@/contexts/NoteContext";
@@ -16,32 +15,19 @@ const NotesPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Prevent navigation away from the notes page when it's refreshing
+  // Fixed the redirection issue - simplified the effect logic
   useEffect(() => {
-    // This effect runs only when the component mounts
-    // It's meant to handle the case where user navigates back to this page
-    const currentPath = location.pathname;
-    if (currentPath === "/notes") {
-      // Store the current path in localStorage
-      localStorage.setItem("lastVisitedPage", currentPath);
-      
-      // Clear any existing filter options to start fresh
-      const resetOptions: FilterOptions = {
-        dateFrom: undefined,
-        dateTo: undefined
-      };
-      
-      setFilterOptions(resetOptions);
-    }
+    // Just set the current location in localStorage without redirection logic
+    localStorage.setItem("lastVisitedPage", location.pathname);
     
-    // Clean up function that runs when the component unmounts
-    return () => {
-      // Only update when unmounting from notes page, not during rerenders
-      if (location.pathname === "/notes") {
-        localStorage.setItem("lastVisitedPage", "/notes");
-      }
+    // Clear any existing filter options to start fresh
+    const resetOptions: FilterOptions = {
+      dateFrom: undefined,
+      dateTo: undefined
     };
-  }, []);
+    
+    setFilterOptions(resetOptions);
+  }, [location.pathname, setFilterOptions]);
 
   const handleSaveNote = async (note: Omit<Note, 'id'>): Promise<Note | null> => {
     try {

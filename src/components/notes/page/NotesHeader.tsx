@@ -1,10 +1,10 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { NoteSearch } from "@/components/notes/NoteSearch";
 import { NoteSorter } from "@/components/notes/NoteSorter";
 import { FilterMenu } from "@/components/notes/FilterMenu";
 import { Button } from "@/components/ui/button";
-import { FileText, ArrowRight, Book, ChevronDown, PlusCircle } from "lucide-react";
+import { FileText, ArrowRight, Book, ChevronDown, PlusCircle, Camera, Import } from "lucide-react";
 import { useNotes } from "@/contexts/NoteContext";
 import { TierLimits, UserTier } from "@/hooks/useRequireAuth";
 import { Note } from "@/types/note";
@@ -15,6 +15,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { CreateNoteForm } from "./CreateNoteForm";
+import { ScanNoteDialog } from "../ScanNoteDialog";
+import { ImportDialog } from "../import/ImportDialog";
 
 interface NotesHeaderProps {
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
@@ -35,9 +39,9 @@ export const NotesHeader = ({
   const navigate = useNavigate();
   
   // State to track which dialogs are open
-  const [isManualDialogOpen, setIsManualDialogOpen] = React.useState(false);
-  const [isScanDialogOpen, setIsScanDialogOpen] = React.useState(false);
-  const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false);
+  const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
+  const [isScanDialogOpen, setIsScanDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
   // Check if OCR is enabled for the user's tier
   const isOCREnabled = tierLimits?.ocr_enabled ?? false;
@@ -54,7 +58,6 @@ export const NotesHeader = ({
           <NoteSearch />
         </div>
         <div className="flex gap-2">
-          {/* New dropdown implementation */}
           <div className="inline-flex -space-x-px divide-x divide-primary-foreground/30 rounded-lg shadow-sm shadow-black/5 rtl:space-x-reverse">
             <Button 
               className="rounded-none shadow-none first:rounded-s-lg last:rounded-e-lg focus-visible:z-10 bg-mint-500 hover:bg-mint-600 text-white"
@@ -87,14 +90,14 @@ export const NotesHeader = ({
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setIsScanDialogOpen(true)} className="cursor-pointer">
-                  <FileText className="mr-2 h-4 w-4" />
+                  <Camera className="mr-2 h-4 w-4" />
                   <div className="flex flex-col gap-1">
                     <span className="text-sm font-medium">Scan Note</span>
                     <span className="text-xs text-muted-foreground">Create a note by scanning physical documents</span>
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setIsImportDialogOpen(true)} className="cursor-pointer">
-                  <FileText className="mr-2 h-4 w-4" />
+                  <Import className="mr-2 h-4 w-4" />
                   <div className="flex flex-col gap-1">
                     <span className="text-sm font-medium">Import Document</span>
                     <span className="text-xs text-muted-foreground">Create a note by importing a document</span>
@@ -125,8 +128,49 @@ export const NotesHeader = ({
         </div>
       </div>
 
-      {/* Import the needed dialog components and render them here */}
-      {/* We'll need to update CreateNoteForm, ScanNoteDialog and ImportDialog imports and usage here */}
+      {/* Manual Entry Dialog */}
+      <Dialog open={isManualDialogOpen} onOpenChange={setIsManualDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-mint-200 bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-mint-800">Create New Note</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Fill out the form below to create a new note.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            <CreateNoteForm 
+              onSave={async (note) => {
+                const result = await onSaveNote(note);
+                if (result) setIsManualDialogOpen(false);
+                return result;
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Scan Dialog */}
+      <ScanNoteDialog 
+        onSaveNote={async (note) => {
+          const result = await onScanNote(note);
+          if (result) setIsScanDialogOpen(false);
+          return result !== null;
+        }}
+        isPremiumUser={isOCREnabled}
+        isVisible={isScanDialogOpen}
+        onClose={() => setIsScanDialogOpen(false)}
+      />
+      
+      {/* Import Dialog */}
+      <ImportDialog 
+        onSaveNote={async (note) => {
+          const result = await onImportNote(note);
+          if (result) setIsImportDialogOpen(false);
+          return result !== null;
+        }}
+        isVisible={isImportDialogOpen}
+        onClose={() => setIsImportDialogOpen(false)}
+      />
     </div>
   );
 };
