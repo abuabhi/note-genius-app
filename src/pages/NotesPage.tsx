@@ -5,11 +5,41 @@ import { useNotes } from "@/contexts/NoteContext";
 import { Note } from "@/types/note";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { toast } from "@/components/ui/sonner";
+import { useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const NotesPage = () => {
-  const { addNote } = useNotes();
+  const { addNote, availableCategories, setFilterOptions } = useNotes();
   const { userProfile, tierLimits } = useRequireAuth();
   const userTier = userProfile?.user_tier;
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Prevent navigation away from the notes page when it's refreshing
+  useEffect(() => {
+    // This effect runs only when the component mounts
+    // It's meant to handle the case where user navigates back to this page
+    const currentPath = location.pathname;
+    if (currentPath === "/notes") {
+      // Store the current path in localStorage
+      localStorage.setItem("lastVisitedPage", currentPath);
+      
+      // Clear any existing filter options to start fresh
+      setFilterOptions(prev => ({
+        ...prev,
+        startDate: undefined,
+        endDate: undefined
+      }));
+    }
+    
+    // Clean up function that runs when the component unmounts
+    return () => {
+      // Only update when unmounting from notes page, not during rerenders
+      if (location.pathname === "/notes") {
+        localStorage.setItem("lastVisitedPage", "/notes");
+      }
+    };
+  }, []);
 
   const handleSaveNote = async (note: Omit<Note, 'id'>): Promise<Note | null> => {
     try {
@@ -33,6 +63,7 @@ const NotesPage = () => {
       toast("Note created successfully");
       return newNote;
     } catch (error) {
+      console.error("Error creating note:", error);
       toast("Failed to create note", {
         description: "There was an error creating your note",
       });
@@ -65,6 +96,7 @@ const NotesPage = () => {
       toast("Scanned note created successfully");
       return newNote;
     } catch (error) {
+      console.error("Error creating scanned note:", error);
       toast("Failed to create scanned note", {
         description: "There was an error processing your scan",
       });
@@ -97,6 +129,7 @@ const NotesPage = () => {
       toast("Note imported successfully");
       return newNote;
     } catch (error) {
+      console.error("Error importing note:", error);
       toast("Failed to import note", {
         description: "There was an error importing your document",
       });

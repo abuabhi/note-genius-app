@@ -9,7 +9,7 @@ import { TagSelector } from '../TagSelector';
 import { useNotes } from '@/contexts/NoteContext';
 import { useNoteEnrichment } from '@/hooks/useNoteEnrichment';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
 import { NoteMetadataFields } from './form/NoteMetadataFields';
 import { NoteContentField } from './form/NoteContentField';
 import { FormSubmitButton } from './form/FormSubmitButton';
@@ -31,7 +31,7 @@ interface CreateNoteFormProps {
 
 export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => {
   const [isSaving, setIsSaving] = useState(false);
-  const { availableCategories, getAllTags } = useNotes();
+  const { availableCategories, getAllTags, updateNote } = useNotes();
   const [selectedTags, setSelectedTags] = useState<{ id?: string; name: string; color: string }[]>([]);
   const [availableTags, setAvailableTags] = useState<{ id: string; name: string; color: string }[]>([]);
   const { user } = useAuth();
@@ -46,6 +46,11 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
     },
   });
 
+  // Handle new category creation
+  const handleNewCategoryAdd = (newCategory: string) => {
+    ensureSubjectTag(newCategory);
+  };
+  
   // Auto-created tag based on selected subject
   const ensureSubjectTag = (subject: string) => {
     if (!subject) return;
@@ -80,7 +85,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
   // When subject changes, ensure there's a tag for it
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
-      if (name === 'subject' && value.subject) {
+      if (name === 'subject' && value.subject && value.subject !== '_custom' && value.subject !== '_none') {
         ensureSubjectTag(value.subject as string);
       }
     });
@@ -120,11 +125,17 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
     console.log("Selected tags:", selectedTags);
     
     try {
+      // Clean up any special values
+      let processedSubject = values.subject;
+      if (processedSubject === '_none' || processedSubject === '_custom') {
+        processedSubject = '';
+      }
+      
       const noteData: Omit<Note, 'id'> = {
         title: values.title,
         description: values.title, // Using title as description since we're removing description field
         date: values.date.toISOString().split('T')[0],
-        category: values.subject || '', // Map subject to category field, allow empty
+        category: processedSubject || '', // Map subject to category field, allow empty
         content: values.content,
         sourceType: initialData?.sourceType || 'manual',
         tags: selectedTags,
@@ -156,6 +167,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
           <NoteMetadataFields 
             control={form.control} 
             availableCategories={availableCategories}
+            onNewCategoryAdd={handleNewCategoryAdd}
           />
 
           <NoteContentField

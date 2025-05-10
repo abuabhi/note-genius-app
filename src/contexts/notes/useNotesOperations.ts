@@ -1,10 +1,12 @@
+
 import { useToast } from '@/hooks/use-toast';
 import { Note } from "@/types/note";
 import { 
   addNoteToDatabase, 
   deleteNoteFromDatabase, 
   updateNoteInDatabase, 
-  fetchTagsFromDatabase 
+  fetchTagsFromDatabase,
+  updateNoteTagsInDatabase
 } from './operations';
 
 export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React.SetStateAction<Note[]>>, currentPage: number, setCurrentPage: React.Dispatch<React.SetStateAction<number>>, paginatedNotes: Note[]) {
@@ -12,18 +14,28 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
 
   const addNote = async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
     try {
+      console.log("Adding note with data:", noteData);
       const newNote = await addNoteToDatabase(noteData);
       
       if (newNote) {
+        console.log("Note added successfully:", newNote);
         // Update the local state with the new note
         setNotes(prevNotes => [newNote, ...prevNotes]);
         toast({
           title: "Note added",
           description: "Your note has been successfully added.",
         });
+        
+        return newNote;
+      } else {
+        console.error("Failed to add note: newNote is null");
+        toast({
+          title: "Failed to add note",
+          description: "Please try again later.",
+          variant: "destructive",
+        });
+        return null;
       }
-      
-      return newNote;
     } catch (error) {
       console.error('Error adding note:', error);
       toast({
@@ -51,6 +63,7 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
         title: "Note deleted",
         description: "Your note has been successfully deleted.",
       });
+      return true;
     } catch (error) {
       console.error('Error deleting note:', error);
       toast({
@@ -58,14 +71,24 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
         description: "Please try again later.",
         variant: "destructive",
       });
+      return false;
     }
   };
 
   const updateNote = async (id: string, updatedNote: Partial<Note>) => {
     try {
+      console.log("Updating note with ID:", id, "and data:", updatedNote);
+      
+      // Update the note in the database
       await updateNoteInDatabase(id, updatedNote);
+      
+      // If we have tags, update them separately
+      if (updatedNote.tags) {
+        console.log("Updating tags for note:", updatedNote.tags);
+        await updateNoteTagsInDatabase(id, updatedNote.tags);
+      }
 
-      // Update the local state
+      // Update the local state with an optimistic update
       setNotes(prevNotes => 
         prevNotes.map(note => 
           note.id === id ? { ...note, ...updatedNote } : note
@@ -76,6 +99,8 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
         title: "Note updated",
         description: "Your note has been successfully updated.",
       });
+      
+      return true;
     } catch (error) {
       console.error('Error updating note:', error);
       toast({
@@ -83,6 +108,7 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
         description: "Please try again later.",
         variant: "destructive",
       });
+      return false;
     }
   };
 
@@ -104,6 +130,8 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
           ? "Your note has been pinned to the top." 
           : "Your note has been unpinned.",
       });
+      
+      return true;
     } catch (error) {
       console.error('Error pinning note:', error);
       toast({
@@ -111,6 +139,7 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
         description: "Please try again later.",
         variant: "destructive",
       });
+      return false;
     }
   };
 
@@ -132,6 +161,8 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
           ? "Your note has been moved to the archive." 
           : "Your note has been restored from the archive.",
       });
+      
+      return true;
     } catch (error) {
       console.error('Error archiving note:', error);
       toast({
@@ -139,12 +170,23 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
         description: "Please try again later.",
         variant: "destructive",
       });
+      return false;
     }
   };
 
   // Get all available tags
   const getAllTags = async () => {
-    return await fetchTagsFromDatabase();
+    try {
+      return await fetchTagsFromDatabase();
+    } catch (error) {
+      console.error('Error fetching tags:', error);
+      toast({
+        title: "Failed to fetch tags",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+      return [];
+    }
   };
 
   // Filter notes by a specific tag

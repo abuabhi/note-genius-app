@@ -30,7 +30,7 @@ export const CategoryFilter = ({
         <SelectTrigger id="category" className="border-purple-200 focus:ring-purple-400">
           <SelectValue placeholder="Any subject" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="bg-white">
           <SelectItem value="_any">Any subject</SelectItem>
           {availableCategories.map(category => (
             <SelectItem key={category} value={category}>

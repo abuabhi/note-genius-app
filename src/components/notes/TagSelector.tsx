@@ -19,12 +19,9 @@ export interface TagSelectorProps {
 
 // Generate a random color in hex format
 const getRandomColor = () => {
-  const letters = '0123456789ABCDEF';
-  let color = '#';
-  for (let i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * 16)];
-  }
-  return color;
+  // Generate HSL color with good saturation and lightness
+  const hue = Math.floor(Math.random() * 360);
+  return `hsl(${hue}, 70%, 60%)`;
 };
 
 export const TagSelector: React.FC<TagSelectorProps> = ({
@@ -49,7 +46,6 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
     console.log("Adding tag:", tag);
     const newTags = [...selectedTags, tag];
     onTagsChange(newTags);
-    setIsOpen(false);
   };
 
   const handleNewTagCreate = () => {
@@ -130,7 +126,7 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
             Add Tag
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-80">
+        <PopoverContent className="w-80 bg-white">
           <div className="space-y-4">
             <h4 className="text-sm font-medium">Select or create a tag</h4>
             

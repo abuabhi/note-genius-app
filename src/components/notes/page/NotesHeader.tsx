@@ -69,15 +69,15 @@ export const NotesHeader = ({
         <div className="flex gap-2">
           <Dialog open={isNewNoteDialogOpen} onOpenChange={setIsNewNoteDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="whitespace-nowrap bg-mint-500 hover:bg-mint-600">
+              <Button className="whitespace-nowrap bg-mint-500 hover:bg-mint-600 text-white">
                 <Plus className="mr-2 h-4 w-4" />
                 New Note
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-mint-200">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-mint-200 bg-white">
               <DialogHeader>
                 <DialogTitle className="text-xl font-semibold text-mint-800">Create New Note</DialogTitle>
-                <DialogDescription>
+                <DialogDescription className="text-muted-foreground">
                   Fill out the form below to create a new note.
                 </DialogDescription>
               </DialogHeader>
