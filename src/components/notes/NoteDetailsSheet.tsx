@@ -12,12 +12,13 @@ import { NoteContentSection } from './details/NoteContentSection';
 import { NoteAttachments } from './details/NoteAttachments';
 import { NoteActionButtons } from './details/NoteActionButtons';
 import { useNoteDetails } from './details/useNoteDetails';
+import { useNavigate } from 'react-router-dom';
 
 interface NoteDetailsSheetProps {
   note: Note;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onEdit: () => void;
+  onEdit?: () => void;
 }
 
 export const NoteDetailsSheet: React.FC<NoteDetailsSheetProps> = ({
@@ -26,6 +27,7 @@ export const NoteDetailsSheet: React.FC<NoteDetailsSheetProps> = ({
   onOpenChange,
   onEdit
 }) => {
+  const navigate = useNavigate();
   const {
     isDeleting,
     noteContent,
@@ -38,6 +40,11 @@ export const NoteDetailsSheet: React.FC<NoteDetailsSheetProps> = ({
     scanPreviewUrl,
     importPreviewUrl
   } = useNoteDetails(note, onOpenChange);
+
+  const handleEdit = () => {
+    onOpenChange(false); // Close the dialog
+    navigate(`/notes/edit/${note.id}`); // Navigate to edit page
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -69,7 +76,7 @@ export const NoteDetailsSheet: React.FC<NoteDetailsSheetProps> = ({
         <NoteActionButtons
           note={note}
           isDeleting={isDeleting}
-          onEdit={onEdit}
+          onEdit={handleEdit}
           onOpenStudyMode={handleOpenStudyMode}
           onPin={handlePin}
           onArchive={handleArchive}

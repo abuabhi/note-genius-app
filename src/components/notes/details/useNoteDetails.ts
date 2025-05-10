@@ -11,6 +11,19 @@ export const useNoteDetails = (note: Note, onOpenChange: (open: boolean) => void
   const [isDeleting, setIsDeleting] = useState(false);
   const [noteContent, setNoteContent] = useState(note.content || '');
 
+  // This function will be called when the content is changed in the content section
+  const handleContentChange = async (content: string) => {
+    setNoteContent(content);
+    try {
+      await updateNote(note.id, { content });
+    } catch (error) {
+      console.error('Error updating note content:', error);
+      toast('Failed to update content', {
+        description: 'An error occurred while updating the note content',
+      });
+    }
+  };
+
   const handlePin = async () => {
     try {
       await pinNote(note.id, !note.pinned);
@@ -95,7 +108,7 @@ export const useNoteDetails = (note: Note, onOpenChange: (open: boolean) => void
   return {
     isDeleting,
     noteContent,
-    setNoteContent,
+    setNoteContent: handleContentChange,
     handlePin,
     handleArchive,
     handleDelete,

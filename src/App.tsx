@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import HomePage from "./pages/HomePage";
@@ -40,6 +39,7 @@ import { NoteProvider } from '@/contexts/NoteContext';
 import ChatPage from "./pages/ChatPage";
 import GoalsPage from "./pages/GoalsPage";
 import TodoPage from "./pages/TodoPage";
+import EditNotePage from "./pages/EditNotePage";
 
 const App = () => {
   const { user } = useAuth();
@@ -101,6 +101,9 @@ const App = () => {
             <Route path="/auth/evernote/callback" element={<EvernoteAuthCallback />} />
             <Route path="/auth/microsoft/callback" element={<MicrosoftAuthCallback />} />
             <Route path="/auth/googledocs/callback" element={<GoogleDocsAuthCallback />} />
+            
+            {/* Add this new route for editing notes */}
+            <Route path="/notes/edit/:noteId" element={<EditNotePage />} />
             
             {/* 404 */}
             <Route path="*" element={<NotFoundPage />} />

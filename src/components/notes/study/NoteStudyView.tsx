@@ -4,12 +4,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { NoteContentDisplay } from "./NoteContentDisplay";
 import { StudyViewHeader } from "./header/StudyViewHeader";
 import { useStudyViewState } from "./hooks/useStudyViewState";
+import { useNavigate } from "react-router-dom";
 
 interface NoteStudyViewProps {
   note: Note;
 }
 
 export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
+  const navigate = useNavigate();
   const {
     fontSize,
     isDarkMode,
@@ -23,6 +25,10 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
     toggleWidth,
     toggleFullScreen
   } = useStudyViewState();
+
+  const handleEditNote = () => {
+    navigate(`/notes/edit/${note.id}`);
+  };
 
   return (
     <div className={`min-h-[calc(100vh-200px)] transition-colors ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white'}`}>
@@ -40,6 +46,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
           onChangeTextAlign={handleTextAlign}
           onToggleWidth={toggleWidth}
           onToggleFullScreen={toggleFullScreen}
+          onEdit={handleEditNote}
         />
 
         <CardContent className="p-0">
