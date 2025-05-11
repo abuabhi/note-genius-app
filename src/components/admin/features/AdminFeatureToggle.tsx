@@ -1,11 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useFeatures, Feature } from '@/contexts/FeatureContext';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
 import { UserTier } from '@/hooks/useRequireAuth';
-import { Loader, AlertTriangle, Info, Eye, EyeOff, Plus, RefreshCw } from 'lucide-react';
+import { Loader, Info, Eye, RefreshCw, Plus } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -22,6 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Checkbox } from '@/components/ui/checkbox';
 
 // All required features that should exist
 const REQUIRED_FEATURES = [
@@ -32,9 +32,12 @@ const REQUIRED_FEATURES = [
   { key: "quizzes", description: "Quiz creation and taking" },
   { key: "flashcards", description: "Flashcards creation and study" },
   { key: "schedule", description: "Calendar and scheduling" },
-  { key: "chat", description: "AI chat assistant" },
-  { key: "collaboration", description: "Collaboration with other users" },
-  { key: "import", description: "Import from external services" }
+  { key: "chat", description: "Chat with other users and AI assistant" },
+  { key: "collaboration", description: "Collaborate with other users on notes and flashcards" },
+  { key: "import", description: "Import from external services" },
+  { key: "ai_flashcard_generation", description: "AI-powered flashcard generation from notes" },
+  { key: "note_enrichment", description: "AI-powered note enrichment features" },
+  { key: "ocr_scanning", description: "Optical Character Recognition for scanning notes" }
 ];
 
 const AdminFeatureToggle = () => {
@@ -197,7 +200,6 @@ const AdminFeatureToggle = () => {
   if (error) {
     return (
       <Alert variant="destructive">
-        <AlertTriangle className="h-4 w-4" />
         <AlertDescription>Failed to load features: {error.message}</AlertDescription>
       </Alert>
     );
@@ -252,30 +254,24 @@ const AdminFeatureToggle = () => {
         </div>
       </div>
 
-      {getFilteredFeatures().map((feature) => (
-        <Card key={feature.id}>
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
+      <div className="space-y-4">
+        {getFilteredFeatures().map((feature) => (
+          <div key={feature.id} className="border border-border rounded-lg p-4 bg-white">
+            <div className="flex justify-between items-start">
               <div>
-                <CardTitle className="text-lg">{feature.feature_key}</CardTitle>
-                <CardDescription>{feature.description}</CardDescription>
+                <h3 className="text-lg font-medium">{feature.feature_key}</h3>
+                <p className="text-sm text-muted-foreground">{feature.description}</p>
               </div>
-              <div className="flex items-center space-x-2">
-                {updatingFeature === feature.id ? (
-                  <Loader className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Switch
-                    checked={feature.is_enabled}
-                    onCheckedChange={() => handleToggleFeature(feature)}
-                  />
-                )}
-              </div>
+              <Switch 
+                checked={feature.is_enabled} 
+                disabled={updatingFeature === feature.id}
+                onCheckedChange={() => handleToggleFeature(feature)} 
+              />
             </div>
-          </CardHeader>
-          <CardContent className="pt-2">
-            <div className="flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0">
-              <div className="flex items-center">
-                <span className="text-sm text-muted-foreground mr-2">Minimum tier required:</span>
+
+            <div className="flex flex-col md:flex-row justify-between mt-4 items-start gap-4">
+              <div className="w-full md:w-auto">
+                <p className="text-sm text-muted-foreground mb-1">Minimum tier required:</p>
                 <Select
                   value={feature.requires_tier || "none"}
                   onValueChange={(value) => {
@@ -296,39 +292,19 @@ const AdminFeatureToggle = () => {
                 </Select>
               </div>
 
-              <div className="flex items-center justify-between md:justify-end space-x-4">
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-muted-foreground">
-                    {feature.visibility_mode === 'visible' ? 'Visible when disabled' : 'Hidden when disabled'}:
-                  </span>
-                  <button
-                    onClick={() => handleChangeVisibility(feature)}
-                    className="inline-flex items-center text-slate-500 hover:text-primary"
-                    disabled={updatingFeature === feature.id}
-                  >
-                    {feature.visibility_mode === 'visible' ? 
-                      <Eye className="h-4 w-4" /> : 
-                      <EyeOff className="h-4 w-4" />
-                    }
-                  </button>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Visible when disabled:</span>
+                <div className="flex items-center" onClick={() => !updatingFeature && handleChangeVisibility(feature)}>
+                  <Eye className={`h-4 w-4 ${feature.visibility_mode === 'visible' ? 'text-green-500' : 'text-gray-300'}`} />
                 </div>
-                
-                <div>
-                  {feature.is_enabled ? (
-                    <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">
-                      Enabled
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">
-                      Disabled
-                    </Badge>
-                  )}
-                </div>
+                <span className={`text-xs px-2 py-1 rounded-full ${feature.is_enabled ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                  {feature.is_enabled ? 'Enabled' : 'Disabled'}
+                </span>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      ))}
+          </div>
+        ))}
+      </div>
       
       <Dialog open={isCreatingFeature} onOpenChange={setIsCreatingFeature}>
         <DialogContent className="sm:max-w-[475px]">
