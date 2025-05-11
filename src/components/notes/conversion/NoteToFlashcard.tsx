@@ -7,8 +7,9 @@ import { toast } from "sonner";
 import { AIFlashcardGenerator } from "./AIFlashcardGenerator";
 import { usePremiumFeatures } from "@/hooks/usePremiumFeatures";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
-import { useFlashcardsOperations } from "@/contexts/flashcards/useFlashcards";
+import { useFlashcards } from "@/contexts/flashcards";
 import { useFlashcardState } from "@/contexts/flashcards/useFlashcardState";
+import { useFlashcardOperations } from "@/contexts/flashcards/useFlashcardOperations";
 
 interface NoteToFlashcardProps {
   note: Note;
@@ -18,7 +19,7 @@ interface NoteToFlashcardProps {
 
 export const NoteToFlashcard = ({ note, flashcardSetId, onFlashcardCreated }: NoteToFlashcardProps) => {
   const flashcardState = useFlashcardState();
-  const { addFlashcard } = useFlashcardsOperations(flashcardState);
+  const { addFlashcard } = useFlashcardOperations(flashcardState);
   const [isGenerating, setIsGenerating] = useState(false);
   const { subjects } = useUserSubjects();
   const { aiFlashcardGenerationEnabled } = usePremiumFeatures();

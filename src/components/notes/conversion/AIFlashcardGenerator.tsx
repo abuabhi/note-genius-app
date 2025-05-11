@@ -1,7 +1,7 @@
 
 import { useState, Dispatch, SetStateAction } from "react";
-import { useFlashcardsOperations } from "@/contexts/flashcards/useFlashcards";
 import { useFlashcardState } from "@/contexts/flashcards/useFlashcardState";
+import { useFlashcardOperations } from "@/contexts/flashcards/useFlashcardOperations";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -26,7 +26,7 @@ export const AIFlashcardGenerator = ({
   subjectName
 }: AIFlashcardGeneratorProps) => {
   const flashcardState = useFlashcardState();
-  const { addFlashcard } = useFlashcardsOperations(flashcardState);
+  const { addFlashcard } = useFlashcardOperations(flashcardState);
   const [generatedCount, setGeneratedCount] = useState(0);
 
   const handleGenerateFlashcards = async () => {

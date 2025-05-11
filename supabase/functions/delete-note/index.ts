@@ -31,6 +31,16 @@ serve(async (req) => {
       )
     }
 
+    // First delete any rows in note_enrichment_usage table referencing this note
+    const { error: usageError } = await supabase
+      .from('note_enrichment_usage')
+      .delete()
+      .eq('note_id', noteId)
+    
+    if (usageError) {
+      console.log('Warning: Error deleting note_enrichment_usage:', usageError)
+    }
+
     // Delete any associated scan data
     const { error: scanError } = await supabase
       .from('scan_data')
