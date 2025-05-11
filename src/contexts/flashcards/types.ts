@@ -8,6 +8,7 @@ import {
   FlashcardProgress, 
   SubjectCategory
 } from '@/types/flashcard';
+import { User } from '@supabase/supabase-js';
 
 export interface FlashcardContextType {
   // Data
@@ -81,4 +82,5 @@ export interface FlashcardState {
     sets: boolean;
     categories: boolean;
   }>>;
+  user: User | null;
 }

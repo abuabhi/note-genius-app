@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Flashcard, FlashcardSet, SubjectCategory } from '@/types/flashcard';
 import { FlashcardState } from './types';
+import { useAuth } from '@/contexts/auth';
 
 export const useFlashcardState = (): FlashcardState => {
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
@@ -14,6 +15,8 @@ export const useFlashcardState = (): FlashcardState => {
     sets: false,
     categories: false,
   });
+  
+  const { user } = useAuth();
 
   return {
     flashcards,
@@ -28,5 +31,6 @@ export const useFlashcardState = (): FlashcardState => {
     setCurrentSet,
     loading,
     setLoading,
+    user
   };
 };

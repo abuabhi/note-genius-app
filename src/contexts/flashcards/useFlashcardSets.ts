@@ -1,12 +1,11 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { FlashcardSet, CreateFlashcardSetPayload } from '@/types/flashcard';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { FlashcardState } from './types';
 
 export const useFlashcardSets = (state: FlashcardState) => {
   const { setFlashcardSets, setLoading, user } = state;
-  const { toast } = useToast();
 
   // Helper function to convert database response to FlashcardSet
   const convertToFlashcardSet = (data: any): FlashcardSet => {
@@ -69,11 +68,7 @@ export const useFlashcardSets = (state: FlashcardState) => {
       return setsWithCardCounts;
     } catch (error) {
       console.error('Error fetching flashcard sets:', error);
-      toast({
-        title: 'Error fetching flashcard sets',
-        description: 'Please try again later.',
-        variant: 'destructive',
-      });
+      toast.error('Failed to load flashcard sets');
       return [];
     } finally {
       setLoading(prev => ({ ...prev, sets: false }));
@@ -113,85 +108,10 @@ export const useFlashcardSets = (state: FlashcardState) => {
       return builtInSetsWithCardCounts;
     } catch (error) {
       console.error('Error fetching built-in flashcard sets:', error);
-      toast({
-        title: 'Error fetching flashcard sets',
-        description: 'Please try again later.',
-        variant: 'destructive',
-      });
+      toast.error('Failed to load flashcard sets');
       return [];
     } finally {
       setLoading(prev => ({ ...prev, sets: false }));
-    }
-  };
-
-  // Clone a flashcard set for the user
-  const cloneFlashcardSet = async (setId: string): Promise<FlashcardSet | null> => {
-    if (!user) return null;
-
-    try {
-      // Get the original set
-      const { data: originalSet, error: setError } = await supabase
-        .from('flashcard_sets')
-        .select('*')
-        .eq('id', setId)
-        .single();
-
-      if (setError) throw setError;
-
-      // Create a new set based on the original
-      const { data: newSet, error: createError } = await supabase
-        .from('flashcard_sets')
-        .insert({
-          name: `${originalSet.name} (Copy)`,
-          description: originalSet.description,
-          subject: originalSet.subject,
-          topic: originalSet.topic,
-          category_id: originalSet.category_id,
-          user_id: user.id,
-          is_built_in: false
-        })
-        .select()
-        .single();
-
-      if (createError) throw createError;
-
-      // Get all cards from the original set
-      const { data: originalCards, error: cardsError } = await supabase
-        .from('flashcards')
-        .select('*')
-        .eq('set_id', setId);
-
-      if (cardsError) throw cardsError;
-
-      // Clone all cards to the new set
-      if (originalCards && originalCards.length > 0) {
-        const newCards = originalCards.map(card => ({
-          front_content: card.front_content,
-          back_content: card.back_content,
-          user_id: user.id,
-          set_id: newSet.id,
-          difficulty: card.difficulty,
-          is_built_in: false
-        }));
-
-        await supabase.from('flashcards').insert(newCards);
-      }
-
-      toast({
-        title: 'Flashcard set cloned successfully',
-        variant: 'default',
-      });
-      
-      await fetchFlashcardSets(); // Refresh the user's sets
-      return convertToFlashcardSet(newSet);
-    } catch (error) {
-      console.error('Error cloning flashcard set:', error);
-      toast({
-        title: 'Failed to clone flashcard set',
-        description: 'Please try again later.',
-        variant: 'destructive',
-      });
-      return null;
     }
   };
 
@@ -214,19 +134,12 @@ export const useFlashcardSets = (state: FlashcardState) => {
       const formattedSet = convertToFlashcardSet(data);
       setFlashcardSets(prev => [formattedSet, ...prev]);
       
-      toast({
-        title: 'Flashcard set created',
-        description: `"${data.name}" has been created successfully.`,
-      });
+      toast.success('Flashcard set created');
       
       return formattedSet;
     } catch (error) {
       console.error('Error creating flashcard set:', error);
-      toast({
-        title: 'Error creating flashcard set',
-        description: 'Please try again later.',
-        variant: 'destructive',
-      });
+      toast.error('Failed to create flashcard set');
       return null;
     }
   };
@@ -248,17 +161,10 @@ export const useFlashcardSets = (state: FlashcardState) => {
         prev.map(set => set.id === id ? { ...set, ...setData } : set)
       );
       
-      toast({
-        title: 'Flashcard set updated',
-        description: 'Your changes have been saved.',
-      });
+      toast.success('Flashcard set updated');
     } catch (error) {
       console.error('Error updating flashcard set:', error);
-      toast({
-        title: 'Error updating flashcard set',
-        description: 'Please try again later.',
-        variant: 'destructive',
-      });
+      toast.error('Failed to update flashcard set');
     }
   };
 
@@ -277,17 +183,10 @@ export const useFlashcardSets = (state: FlashcardState) => {
       
       setFlashcardSets(prev => prev.filter(set => set.id !== id));
       
-      toast({
-        title: 'Flashcard set deleted',
-        description: 'The flashcard set has been removed.',
-      });
+      toast.success('Flashcard set deleted');
     } catch (error) {
       console.error('Error deleting flashcard set:', error);
-      toast({
-        title: 'Error deleting flashcard set',
-        description: 'Please try again later.',
-        variant: 'destructive',
-      });
+      toast.error('Failed to delete flashcard set');
     }
   };
 
@@ -307,11 +206,7 @@ export const useFlashcardSets = (state: FlashcardState) => {
       return data;
     } catch (error) {
       console.error('Error fetching subject categories:', error);
-      toast({
-        title: 'Error fetching categories',
-        description: 'Please try again later.',
-        variant: 'destructive',
-      });
+      toast.error('Failed to load categories');
       return [];
     } finally {
       setLoading(prev => ({ ...prev, categories: false }));
@@ -324,7 +219,6 @@ export const useFlashcardSets = (state: FlashcardState) => {
     updateFlashcardSet,
     deleteFlashcardSet,
     fetchBuiltInSets,
-    cloneFlashcardSet,
     fetchCategories
   };
 };

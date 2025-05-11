@@ -68,7 +68,7 @@ export const useFlashcardOperations = (
     }
   };
 
-  // This is the problematic function - completely rewritten to avoid type recursion issues
+  // Fetch flashcards in a specific set
   const fetchFlashcardsInSet = async (setId: string): Promise<Flashcard[]> => {
     if (!setId) return [];
     
