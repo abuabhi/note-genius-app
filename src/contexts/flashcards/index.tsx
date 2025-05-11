@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState } from 'react';
 import { FlashcardContextType, FlashcardProviderProps, FlashcardState } from './types';
 import { FlashcardSet, Flashcard, SubjectCategory, FlashcardProgress, FlashcardScore, CreateFlashcardPayload, CreateFlashcardSetPayload } from '@/types/flashcard';
@@ -151,7 +150,28 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     }
   };
 
-  // Fetch all flashcards for the user
+  // Fixing the problematic recursive call by using a local implementation
+  const fetchFlashcardsInSet = async (setId: string): Promise<Flashcard[]> => {
+    setLoading(prev => ({ ...prev, flashcards: true }));
+    try {
+      const { data, error } = await supabase
+        .from('flashcards')
+        .select('*')
+        .eq('set_id', setId);
+
+      if (error) throw error;
+      
+      return data as Flashcard[];
+    } catch (error) {
+      console.error('Error fetching flashcards in set:', error);
+      toast.error('Failed to load flashcards');
+      return [];
+    } finally {
+      setLoading(prev => ({ ...prev, flashcards: false }));
+    }
+  };
+
+  // All other functions...
   const fetchFlashcards = async (filters?: any): Promise<Flashcard[]> => {
     if (!user) return [];
     
@@ -187,28 +207,6 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     }
   };
 
-  // Fetch flashcards for a specific set
-  const fetchFlashcardsInSet = async (setId: string): Promise<Flashcard[]> => {
-    setLoading(prev => ({ ...prev, flashcards: true }));
-    try {
-      const { data, error } = await supabase
-        .from('flashcards')
-        .select('*')
-        .eq('set_id', setId);
-
-      if (error) throw error;
-      
-      return data as Flashcard[];
-    } catch (error) {
-      console.error('Error fetching flashcards in set:', error);
-      toast.error('Failed to load flashcards');
-      return [];
-    } finally {
-      setLoading(prev => ({ ...prev, flashcards: false }));
-    }
-  };
-
-  // Create a new flashcard set
   const createFlashcardSet = async (setData: CreateFlashcardSetPayload): Promise<FlashcardSet | null> => {
     if (!user) return null;
     
@@ -234,7 +232,6 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     }
   };
 
-  // Update an existing flashcard set
   const updateFlashcardSet = async (id: string, setData: Partial<CreateFlashcardSetPayload>): Promise<void> => {
     try {
       const { error } = await supabase
@@ -253,7 +250,6 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     }
   };
 
-  // Delete a flashcard set
   const deleteFlashcardSet = async (id: string): Promise<void> => {
     try {
       const { error } = await supabase
@@ -272,7 +268,6 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     }
   };
 
-  // Create a new flashcard
   const createFlashcard = async (cardData: CreateFlashcardPayload, setId?: string): Promise<Flashcard | null> => {
     if (!user) return null;
     
@@ -299,7 +294,6 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     }
   };
 
-  // Update an existing flashcard
   const updateFlashcard = async (id: string, cardData: Partial<CreateFlashcardPayload>): Promise<void> => {
     try {
       const { error } = await supabase
@@ -318,7 +312,6 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     }
   };
 
-  // Delete a flashcard
   const deleteFlashcard = async (id: string): Promise<void> => {
     try {
       const { error } = await supabase
@@ -337,7 +330,6 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     }
   };
 
-  // Add a flashcard to a set
   const addFlashcardToSet = async (flashcardId: string, setId: string, position?: number): Promise<void> => {
     try {
       const { error } = await supabase
@@ -357,7 +349,6 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     }
   };
 
-  // Remove a flashcard from a set
   const removeFlashcardFromSet = async (flashcardId: string, setId: string): Promise<void> => {
     try {
       const { error } = await supabase
@@ -375,7 +366,6 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     }
   };
 
-  // Record a review of a flashcard
   const recordFlashcardReview = async (flashcardId: string, score: FlashcardScore): Promise<void> => {
     if (!user) return;
     
@@ -466,7 +456,6 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     }
   };
 
-  // Get the progress for a flashcard
   const getFlashcardProgress = async (flashcardId: string): Promise<FlashcardProgress | null> => {
     if (!user) return null;
     
@@ -490,7 +479,6 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     }
   };
 
-  // Fetch subject categories
   const fetchCategories = async (): Promise<SubjectCategory[]> => {
     setLoading(prev => ({ ...prev, categories: true }));
     try {
