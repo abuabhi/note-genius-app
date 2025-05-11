@@ -1,6 +1,6 @@
 
 import React from "react";
-import { MoreHorizontal, Pin, Trash2, Download, Mail, FileText, FilePdf } from "lucide-react";
+import { MoreHorizontal, Pin, Trash2, Download, Mail, FileText, File } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -97,7 +97,8 @@ export const NoteCardActions = ({
         const { data, error } = await supabase.functions.invoke("send-note-email", {
           body: { 
             noteTitle, 
-            noteContent
+            noteContent,
+            recipient: "" // We'll add recipient UI later
           }
         });
         
@@ -166,7 +167,7 @@ export const NoteCardActions = ({
             </DropdownMenuSubTrigger>
             <DropdownMenuSubContent className="bg-white">
               <DropdownMenuItem onClick={handleDownloadAsPDF} className="cursor-pointer">
-                <FilePdf className="mr-2 h-4 w-4" />
+                <File className="mr-2 h-4 w-4" />
                 <span>PDF Document</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleDownloadAsMarkdown} className="cursor-pointer">

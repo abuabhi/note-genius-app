@@ -51,6 +51,7 @@ serve(async (req) => {
     // For demonstration purposes, we'll return success
     // In a real implementation, you would use a service like SendGrid, Mailgun, etc.
     console.log("Email would be sent with subject:", subject);
+    console.log("Recipient:", recipient || "Not specified");
     
     return new Response(
       JSON.stringify({ 
