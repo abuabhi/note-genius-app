@@ -81,7 +81,8 @@ export const NoteProvider = ({ children }: { children: ReactNode }) => {
       setFilterOptions,
       resetFilters,
       availableCategories,
-      addCategory
+      addCategory,
+      setNotes  // Include setNotes in the context value
     }}>
       {children}
     </NoteContext.Provider>
