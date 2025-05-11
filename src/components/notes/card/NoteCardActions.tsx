@@ -21,8 +21,8 @@ interface NoteCardActionsProps {
   noteTitle: string;
   noteContent?: string;
   isPinned: boolean;
-  onPin: (id: string, isPinned: boolean, e: React.MouseEvent) => void;
-  onDelete: (id: string, e: React.MouseEvent) => void;
+  onPin: (id: string, isPinned: boolean) => void;  // Updated signature
+  onDelete: (id: string) => void;  // Updated signature
   iconSize?: number;
 }
 
@@ -35,12 +35,15 @@ export const NoteCardActions = ({
   onDelete,
   iconSize = 4
 }: NoteCardActionsProps) => {
-  const handleAction = (
-    action: (id: string, ...args: any[]) => void,
-    ...args: any[]
-  ) => (e: React.MouseEvent) => {
+  // Simplified action handlers that don't expect event parameter
+  const handlePin = (e: React.MouseEvent) => {
     e.stopPropagation();
-    action(noteId, ...args);
+    onPin(noteId, isPinned);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDelete(noteId);
   };
 
   const handleDownloadAsPDF = (e: React.MouseEvent) => {
@@ -152,7 +155,7 @@ export const NoteCardActions = ({
         <DropdownMenuContent align="end" className="bg-white border border-mint-100 w-48">
           <DropdownMenuItem 
             className="flex items-center cursor-pointer" 
-            onClick={handleAction(onPin, isPinned)}
+            onClick={handlePin}
           >
             <Pin className="mr-2 h-4 w-4" />
             <span>{isPinned ? "Unpin note" : "Pin note"}</span>
@@ -189,7 +192,7 @@ export const NoteCardActions = ({
           
           <DropdownMenuItem 
             className="flex items-center cursor-pointer text-red-600 hover:text-red-800 focus:text-red-800" 
-            onClick={handleAction(onDelete)}
+            onClick={handleDelete}
           >
             <Trash2 className="mr-2 h-4 w-4" />
             <span>Delete note</span>

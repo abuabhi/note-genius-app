@@ -18,8 +18,7 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
     return <EmptyNotesState />;
   }
 
-  const handlePin = async (id: string, isPinned: boolean, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handlePin = async (id: string, isPinned: boolean) => {
     try {
       await pinNote(id, !isPinned);
       toast.success(isPinned ? "Note unpinned" : "Note pinned");
@@ -29,8 +28,7 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
     }
   };
 
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDelete = async (id: string) => {
     try {
       await deleteNote(id);
       toast.success("Note deleted");
