@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth'; // Updated import path
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 

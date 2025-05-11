@@ -1,3 +1,4 @@
+
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -9,7 +10,7 @@ import { LogOut, ChevronsUpDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { useAuth } from "@/contexts/auth";
+import { useAuth } from "@/contexts/auth"; // Updated import path
 import { itemVariants } from "./motion";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";

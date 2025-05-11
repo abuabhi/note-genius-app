@@ -1,5 +1,5 @@
 
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth"; // Updated import path
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { isPremiumTier } from "@/utils/premiumFeatures";

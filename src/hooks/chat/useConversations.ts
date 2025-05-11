@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth'; // Updated import path
 import { ChatConversation } from "@/types/chat";
 import { UseConversationsReturn } from './types';
 import { useConversationErrors } from './utils/useConversationErrors';

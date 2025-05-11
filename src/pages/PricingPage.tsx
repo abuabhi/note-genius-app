@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth"; // Updated import path
 import { Loader2 } from "lucide-react";
 
 interface TierLimit {

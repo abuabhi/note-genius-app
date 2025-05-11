@@ -6,7 +6,7 @@ import { MessageInput } from "./MessageInput";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth"; // Updated import path
 import { Separator } from "@/components/ui/separator";
 import { UserProfile } from "@/hooks/useRequireAuth";
 

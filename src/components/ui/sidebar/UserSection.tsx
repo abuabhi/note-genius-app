@@ -1,3 +1,4 @@
+
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ChevronsUpDown, Settings, Shield, LogOut } from "lucide-react";
@@ -12,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useRequireAuth, UserTier } from "@/hooks/useRequireAuth";
 import { itemVariants } from "./motion";
-import { useAuth } from "@/contexts/auth";
+import { useAuth } from "@/contexts/auth"; // Updated import path
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 

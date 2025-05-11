@@ -1,10 +1,9 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sparkles } from 'lucide-react';
 import { NoteEnrichmentDialog } from './NoteEnrichmentDialog';
 import { useUserTier } from '@/hooks/useUserTier';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth'; // Updated import path
 
 interface EnhanceNoteButtonProps {
   noteId: string;

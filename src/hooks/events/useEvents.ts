@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth"; // Updated import path
 import { startOfMonth, endOfMonth, addMonths } from "date-fns";
 import { DateRange, UseEventsReturn } from "./types";
 import { formatEventDate } from "./eventUtils";
