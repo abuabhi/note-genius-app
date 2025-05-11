@@ -18,22 +18,39 @@ export const useLibraryOperations = (
     try {
       const { data, error } = await supabase
         .from('flashcard_sets')
-        .select('*, subject_categories(id, name)')
+        .select('*')
         .eq('is_built_in', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      // Format the sets with card counts
-      const builtInSetsWithCardCounts = await Promise.all(
+      // Get category information and card counts for each set
+      const builtInSetsWithDetails = await Promise.all(
         data.map(async (set) => {
           // Get card count for this set
           const { count, error: countError } = await supabase
             .from('flashcard_set_cards')
             .select('*', { count: 'exact', head: true })
             .eq('set_id', set.id);
+
+          // Get category information if available
+          let categoryInfo = null;
+          if (set.category_id) {
+            const { data: categoryData, error: categoryError } = await supabase
+              .from('subject_categories')
+              .select('id, name')
+              .eq('id', set.category_id)
+              .single();
+              
+            if (!categoryError && categoryData) {
+              categoryInfo = {
+                id: categoryData.id,
+                name: categoryData.name
+              };
+            }
+          }
           
-          // Convert to proper type with card count
+          // Return formatted flashcard set
           return {
             id: set.id,
             name: set.name,
@@ -49,15 +66,12 @@ export const useLibraryOperations = (
             category_id: set.category_id,
             education_system: set.education_system,
             section_id: set.section_id,
-            subject_categories: set.subject_categories ? {
-              id: set.subject_categories.id,
-              name: set.subject_categories.name
-            } : undefined
+            subject_categories: categoryInfo
           } as FlashcardSet;
         })
       );
       
-      return builtInSetsWithCardCounts;
+      return builtInSetsWithDetails;
     } catch (error) {
       console.error('Error fetching built-in flashcard sets:', error);
       toast.error('Failed to load flashcard sets');
@@ -125,26 +139,41 @@ export const useLibraryOperations = (
       // Refresh the user's sets by fetching them directly
       const { data: userSets } = await supabase
         .from('flashcard_sets')
-        .select('*, subject_categories(id, name)')
+        .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       
       if (userSets) {
-        // Process sets to include card counts
+        // Process sets to include card counts and categories
         const formattedSets = await Promise.all(
           userSets.map(async (set) => {
+            // Get card count
             const { count, error: countError } = await supabase
               .from('flashcard_set_cards')
               .select('*', { count: 'exact', head: true })
               .eq('set_id', set.id);
             
+            // Get category if available
+            let categoryInfo = null;
+            if (set.category_id) {
+              const { data: categoryData, error: categoryError } = await supabase
+                .from('subject_categories')
+                .select('id, name')
+                .eq('id', set.category_id)
+                .single();
+              
+              if (!categoryError && categoryData) {
+                categoryInfo = {
+                  id: categoryData.id,
+                  name: categoryData.name
+                };
+              }
+            }
+            
             return {
               ...set,
               card_count: countError ? 0 : count || 0,
-              subject_categories: set.subject_categories ? {
-                id: set.subject_categories.id,
-                name: set.subject_categories.name
-              } : undefined
+              subject_categories: categoryInfo
             } as FlashcardSet;
           })
         );
