@@ -1,5 +1,5 @@
 
-import { useFlashcardOperations } from './useFlashcardOperations';
+import { useFlashcardsOperations } from './useFlashcardOperations';
 import { useFlashcardSets } from './useFlashcardSets';
 import { useLibraryOperations } from './useLibraryOperations';
 import { FlashcardState } from './types';
@@ -8,7 +8,7 @@ export const useFlashcardsOperations = (
   state: FlashcardState
 ) => {
   // Import operations from separate modules
-  const flashcardOperations = useFlashcardOperations(state);
+  const flashcardOperations = useFlashcardsOperations(state);
   const flashcardSetsOperations = useFlashcardSets(state);
   const libraryOperations = useLibraryOperations(state);
 

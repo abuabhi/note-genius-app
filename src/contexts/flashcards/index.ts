@@ -2,7 +2,7 @@
 // This file serves as the entry point for the flashcards context exports
 export { useFlashcardState } from './useFlashcardState';
 export { useFlashcards } from './useFlashcards';
-export { useFlashcardsOperations } from './useFlashcardOperations';
+export { useFlashcardsOperations, useFlashcardsOperations as useFlashcardOperations } from './useFlashcardOperations';
 export { useFlashcardSets } from './useFlashcardSets';
 export { useCategoryOperations } from './useCategoryOperations';
 export { useStudyOperations } from './useStudyOperations';

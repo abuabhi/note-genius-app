@@ -35,10 +35,6 @@ export const fetchBuiltInSets = async (state: FlashcardState): Promise<Flashcard
         subject,
         created_at,
         updated_at,
-        image_url,
-        cards_count,
-        metadata,
-        owner_id,
         topic,
         country_id,
         category_id,
@@ -74,15 +70,10 @@ export const fetchLibraryFlashcardSets = async (filters?: LibraryFilters): Promi
         id,
         name,
         description,
-        is_public,
         is_built_in,
         subject,
         created_at,
         updated_at,
-        image_url,
-        cards_count,
-        metadata,
-        owner_id,
         topic,
         country_id,
         category_id,
@@ -148,15 +139,16 @@ export const fetchFlashcardSetsWithCount = async (filters?: LibraryFilters): Pro
         id,
         name,
         description,
-        is_public,
         is_built_in,
         subject,
         created_at,
         updated_at,
-        image_url,
-        cards_count,
-        metadata,
-        owner_id
+        topic,
+        country_id,
+        category_id,
+        education_system,
+        section_id,
+        user_id
       `);
     
     if (error) {
@@ -166,12 +158,23 @@ export const fetchFlashcardSetsWithCount = async (filters?: LibraryFilters): Pro
     if (!data || data.length === 0) {
       return [];
     }
+
+    // Get card counts for each set
+    const setsWithCounts = await Promise.all(
+      data.map(async (set) => {
+        const { count, error: countError } = await supabase
+          .from('flashcard_set_cards')
+          .select('*', { count: 'exact', head: true })
+          .eq('set_id', set.id);
+
+        return {
+          ...set,
+          flashcard_count: countError ? 0 : count || 0
+        } as FlashcardSetWithCount;
+      })
+    );
     
-    // Convert data to FlashcardSetWithCount format
-    return data.map(set => ({
-      ...set,
-      flashcard_count: set.cards_count || 0
-    })) as FlashcardSetWithCount[];
+    return setsWithCounts;
   } catch (error) {
     console.error('Error fetching flashcard sets with count:', error);
     return [];

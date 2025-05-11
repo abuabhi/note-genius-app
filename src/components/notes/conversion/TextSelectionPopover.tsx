@@ -3,9 +3,8 @@ import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { TextSelectionToFlashcard } from "./TextSelectionToFlashcard";
-import { useFlashcardState } from "@/contexts/flashcards";
-import { useFlashcardsOperations } from "@/contexts/flashcards";
+import { useFlashcardState } from "@/contexts/flashcards/useFlashcardState";
+import { useFlashcardOperations } from "@/contexts/flashcards";
 
 interface TextSelectionPopoverProps {
   selectedText: string;
@@ -16,7 +15,7 @@ export const TextSelectionPopover = ({ selectedText, onClose }: TextSelectionPop
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(true);
   const flashcardState = useFlashcardState();
-  const { addFlashcard } = useFlashcardsOperations(flashcardState);
+  const { addFlashcard } = useFlashcardOperations(flashcardState);
 
   const handleCreateFlashcard = async () => {
     try {
@@ -83,12 +82,6 @@ export const TextSelectionPopover = ({ selectedText, onClose }: TextSelectionPop
               Create Flashcard
             </Button>
           </div>
-          
-          {/* Pass the necessary props to TextSelectionToFlashcard component */}
-          {/* <TextSelectionToFlashcard 
-            selectedText={selectedText}
-            onClose={onClose}
-          /> */}
         </div>
       </PopoverContent>
     </Popover>
