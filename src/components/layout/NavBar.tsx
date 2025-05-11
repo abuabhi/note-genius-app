@@ -1,8 +1,7 @@
-
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, Shield, Book, Info, ListChecks, DollarSign } from 'lucide-react';
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth';
 import { Button } from '@/components/ui/button';
 import { useNavigationContext } from '@/contexts/NavigationContext';
 import { ReminderNavPopover } from '@/components/reminders/ReminderNavPopover';
@@ -235,4 +234,3 @@ export default function NavBar() {
     </nav>
   );
 }
-

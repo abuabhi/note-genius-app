@@ -1,7 +1,7 @@
 
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
 import { LoadingState } from "@/components/notes/page/LoadingState";
 import Layout from "@/components/layout/Layout";

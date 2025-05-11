@@ -6,7 +6,7 @@ import './index.css'
 import { BrowserRouter } from 'react-router-dom'
 import { ThemeProvider } from './components/theme-provider'
 import { Toaster } from './components/ui/toaster'
-import { AuthProvider } from './contexts/AuthContext'
+import { AuthProvider } from './contexts/auth'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 // Create a client
