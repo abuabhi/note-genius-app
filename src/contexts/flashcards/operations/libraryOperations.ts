@@ -3,7 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { FlashcardSet } from '@/types/flashcard';
 import { toast } from 'sonner';
 import { FlashcardState } from '../types';
-import { convertToFlashcardSet } from '../utils/flashcardSetMappers';
 
 /**
  * Fetch built-in flashcard sets for the library
@@ -24,22 +23,38 @@ export const fetchBuiltInSets = async (state: FlashcardState): Promise<Flashcard
     if (error) throw error;
     
     // Get card counts for each set
-    const sets = await Promise.all(
-      data.map(async (set) => {
-        const { count, error: countError } = await supabase
-          .from('flashcard_set_cards')
-          .select('*', { count: 'exact', head: true })
-          .eq('set_id', set.id);
-          
-        return {
-          ...set,
-          card_count: countError ? 0 : count || 0
-        };
-      })
-    );
+    const sets: FlashcardSet[] = [];
     
-    // Use the utility function to convert to FlashcardSet objects
-    return sets.map(set => convertToFlashcardSet(set));
+    for (const set of data) {
+      const { count, error: countError } = await supabase
+        .from('flashcard_set_cards')
+        .select('*', { count: 'exact', head: true })
+        .eq('set_id', set.id);
+        
+      // Create a properly typed FlashcardSet object
+      sets.push({
+        id: set.id,
+        name: set.name,
+        description: set.description,
+        user_id: set.user_id,
+        created_at: set.created_at,
+        updated_at: set.updated_at,
+        is_built_in: set.is_built_in,
+        card_count: countError ? 0 : count || 0,
+        subject: set.subject,
+        topic: set.topic,
+        country_id: set.country_id,
+        category_id: set.category_id,
+        education_system: set.education_system,
+        section_id: set.section_id,
+        subject_categories: set.subject_categories ? {
+          id: set.subject_categories.id,
+          name: set.subject_categories.name
+        } : undefined
+      });
+    }
+    
+    return sets;
   } catch (error) {
     console.error('Error fetching built-in flashcard sets:', error);
     toast.error('Failed to load flashcard sets');
@@ -123,7 +138,7 @@ export const cloneFlashcardSet = async (state: FlashcardState, setId: string): P
     }
 
     // Step 6: Create a complete FlashcardSet object to return and update state with
-    const clonedSet = {
+    const clonedSet: FlashcardSet = {
       id: createdSetData.id,
       name: createdSetData.name,
       description: createdSetData.description,
@@ -135,7 +150,7 @@ export const cloneFlashcardSet = async (state: FlashcardState, setId: string): P
       category_id: createdSetData.category_id,
       is_built_in: false,
       card_count: cardCount
-    } as FlashcardSet;
+    };
     
     // Update app state with new set
     setFlashcardSets(prevSets => [clonedSet, ...prevSets]);
