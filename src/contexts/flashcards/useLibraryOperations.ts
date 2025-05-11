@@ -96,17 +96,19 @@ export const useLibraryOperations = (
       if (setError) throw setError;
 
       // Create a new set based on the original
+      const newSetData = {
+        name: `${originalSet.name} (Copy)`,
+        description: originalSet.description,
+        subject: originalSet.subject,
+        topic: originalSet.topic,
+        category_id: originalSet.category_id,
+        user_id: user.id,
+        is_built_in: false
+      };
+
       const { data: newSet, error: createError } = await supabase
         .from('flashcard_sets')
-        .insert({
-          name: `${originalSet.name} (Copy)`,
-          description: originalSet.description,
-          subject: originalSet.subject,
-          topic: originalSet.topic,
-          category_id: originalSet.category_id,
-          user_id: user.id,
-          is_built_in: false
-        })
+        .insert(newSetData)
         .select()
         .single();
 
@@ -139,7 +141,7 @@ export const useLibraryOperations = (
       // Refresh the user's sets - using simpler approach to avoid circular references
       await refreshUserSets(user.id);
       
-      // Convert and return the new set 
+      // Convert and return the new set with explicit typing to avoid recursive type issues
       const formattedSet: FlashcardSet = {
         id: newSet.id,
         name: newSet.name,
@@ -147,7 +149,7 @@ export const useLibraryOperations = (
         user_id: newSet.user_id,
         created_at: newSet.created_at,
         updated_at: newSet.updated_at,
-        is_built_in: newSet.is_built_in || false,
+        is_built_in: false,
         subject: newSet.subject,
         topic: newSet.topic,
         category_id: newSet.category_id,
@@ -206,12 +208,26 @@ export const useLibraryOperations = (
             }
           }
           
-          // Return formatted set
-          return {
-            ...set,
+          // Return formatted set with explicit typing
+          const formattedSet: FlashcardSet = {
+            id: set.id,
+            name: set.name,
+            description: set.description,
+            user_id: set.user_id,
+            created_at: set.created_at,
+            updated_at: set.updated_at,
+            is_built_in: set.is_built_in || false,
             card_count: countError ? 0 : count || 0,
+            subject: set.subject,
+            topic: set.topic,
+            country_id: set.country_id,
+            category_id: set.category_id,
+            education_system: set.education_system,
+            section_id: set.section_id,
             subject_categories: categoryInfo
-          } as FlashcardSet;
+          };
+          
+          return formattedSet;
         })
       );
       
