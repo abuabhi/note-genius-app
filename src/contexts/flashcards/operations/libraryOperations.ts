@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { PostgrestError } from '@supabase/supabase-js';
 import { FlashcardState } from '../types';
@@ -37,17 +38,20 @@ export const transformLibraryData = (libraryData: any[]) => {
   });
 };
 
+// Define our custom RPC function return type
+interface SetCountResult {
+  set_id: string;
+  card_count: number;
+}
+
 // Fetch flashcard sets for the library
 export const fetchFlashcardLibrary = async () => {
   try {
     // First get the count of cards per set using a separate query
-    // Use a more generic type definition since the function isn't in the generated types
-    const { data: setCountData, error: countError } = await supabase.rpc(
-      'get_flashcard_sets_with_count'
-    ) as unknown as {
-      data: Array<{set_id: string; card_count: number}>;
-      error: PostgrestError | null;
-    };
+    // We need to call the RPC function without type checking and then cast the result
+    const countResponse = await supabase.rpc('get_flashcard_sets_with_count');
+    const setCountData = countResponse.data as SetCountResult[] | null;
+    const countError = countResponse.error as PostgrestError | null;
     
     if (countError) {
       throw countError;
@@ -85,7 +89,7 @@ export const fetchFlashcardLibrary = async () => {
     // Merge the count data with the sets data
     const combinedData = setsData.map(set => {
       const countInfo = setCountData && Array.isArray(setCountData) ? 
-        setCountData.find((item) => item.set_id === set.id) : 
+        setCountData.find(item => item.set_id === set.id) : 
         undefined;
       
       return {
@@ -226,9 +230,3 @@ export const cloneFlashcardSet = async (state: FlashcardState, setId: string): P
     return null;
   }
 };
-
-// No need for this export block since we're already exporting the functions above
-// export { 
-//   fetchBuiltInSets,
-//   cloneFlashcardSet
-// };
