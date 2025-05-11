@@ -45,7 +45,8 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
     content: noteContent,
     description: "",
     date: new Date().toISOString().split('T')[0],
-    category: "General"
+    category: "General",
+    sourceType: "manual" // Explicitly set as "manual" with the correct type
   };
   
   const { 

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Note } from '@/types/note';
@@ -122,14 +123,14 @@ export const useNoteEnrichment = (note?: Note) => {
         return null;
       }
       
-      const mockNote = {
+      const mockNote: Note = {
         id: noteId,
         title: title,
         content: content,
         description: "",
         date: new Date().toISOString().split('T')[0],
         category: "General",
-        sourceType: 'manual' // Add this line to fix the error
+        sourceType: "manual" // Explicitly using the literal "manual" type
       };
       
       const result = await enrichNote(mockNote, enhancementType);
