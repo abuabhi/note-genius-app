@@ -1,17 +1,6 @@
 
 import { Note } from "@/types/note";
-
-export type SortType = 'newest' | 'oldest' | 'alphabetical' | 'date-desc' | 'date-asc' | 'title-asc' | 'title-desc' | 'category';
-
-export interface FilterOptions {
-  dateFrom?: Date;
-  dateTo?: Date;
-  category?: string;
-  sourceType?: 'manual' | 'scan' | 'import' | ('manual' | 'scan' | 'import')[];
-  hasTags?: boolean;
-  tags?: string[];
-  subjectId?: string; // Add subject ID filter option
-}
+import { FilterOptions, SortType } from "./state/types";
 
 export interface NoteContextType {
   notes: Note[];
@@ -42,3 +31,6 @@ export interface NoteContextType {
   availableCategories: string[];
   addCategory: (category: string) => void;
 }
+
+// Re-export types from state/types to maintain backward compatibility
+export { FilterOptions, SortType };

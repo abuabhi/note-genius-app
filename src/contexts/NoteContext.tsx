@@ -1,14 +1,14 @@
 
 import React, { createContext, useContext, ReactNode } from 'react';
 import { NoteContextType } from './notes/types';
-import { useNotesState } from './notes/useNotesState';
+import { useNotesState } from './notes/state/useNotesState';
 import { useNotesOperations } from './notes/useNotesOperations';
 import { useFetchNotes } from './notes/useFetchNotes';
 
 const NoteContext = createContext<NoteContextType | undefined>(undefined);
 
 export const NoteProvider = ({ children }: { children: ReactNode }) => {
-  // Get state management
+  // Get state management from refactored hook
   const {
     notes,
     setNotes,
@@ -30,7 +30,7 @@ export const NoteProvider = ({ children }: { children: ReactNode }) => {
     paginatedNotes,
     totalPages,
     availableCategories,
-    setAvailableCategories,
+    addCategory,
     resetFilters
   } = useNotesState();
 
@@ -51,17 +51,6 @@ export const NoteProvider = ({ children }: { children: ReactNode }) => {
   // Create a wrapper for filterByTag that uses our setSearchTerm directly
   const handleFilterByTag = (tagName: string) => {
     filterByTag(tagName, setSearchTerm);
-  };
-
-  // Add a category to availableCategories
-  const addCategory = (category: string) => {
-    if (!category || category.trim() === '') return;
-    
-    // Check if category already exists
-    if (availableCategories.includes(category.trim())) return;
-    
-    // Add the new category
-    setAvailableCategories(prev => [...prev, category.trim()]);
   };
 
   return (
