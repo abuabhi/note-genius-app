@@ -66,26 +66,29 @@ export const deleteNoteFromDatabase = async (id: string): Promise<void> => {
   try {
     console.log("Attempting to delete note with ID:", id);
     
-    // First try deleting just the note - this should cascade to related tables via foreign keys
-    const { error } = await supabase
-      .from('notes')
-      .delete()
-      .eq('id', id);
+    // First try using the edge function which handles related records properly
+    const { error: edgeFunctionError } = await supabase.functions.invoke('delete-note', {
+      body: { noteId: id }
+    });
 
-    if (error) {
-      console.warn('Error in regular delete, trying force delete with edge function:', error);
+    if (edgeFunctionError) {
+      console.error('Edge function delete error:', edgeFunctionError);
       
-      // If regular delete fails (due to foreign key constraints or RLS), try using the edge function
-      const { error: edgeFunctionError } = await supabase.functions.invoke('delete-note', {
-        body: { noteId: id }
-      });
+      // If the edge function fails, try the fallback method - direct delete
+      console.log('Trying fallback delete method');
+      const { error } = await supabase
+        .from('notes')
+        .delete()
+        .eq('id', id);
 
-      if (edgeFunctionError) {
-        console.error('Edge function delete error:', edgeFunctionError);
-        throw edgeFunctionError;
+      if (error) {
+        console.error('Fallback delete error:', error);
+        throw error;
+      } else {
+        console.log("Note deleted successfully via fallback method");
       }
     } else {
-      console.log("Note deleted successfully via regular delete");
+      console.log("Note deleted successfully via edge function");
     }
   } catch (error) {
     console.error('Error deleting note:', error);
