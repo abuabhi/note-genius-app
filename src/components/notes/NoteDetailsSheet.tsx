@@ -14,6 +14,8 @@ import { NoteActionButtons } from './details/NoteActionButtons';
 import { useNoteDetails } from './details/useNoteDetails';
 import { useNavigate } from 'react-router-dom';
 import { SubjectTagSelect } from './tags/SubjectTagSelect';
+import { NoteManagement } from './NoteManagement';
+import { useAuth } from '@/hooks/auth/useAuth';
 
 interface NoteDetailsSheetProps {
   note: Note;
@@ -29,6 +31,7 @@ export const NoteDetailsSheet: React.FC<NoteDetailsSheetProps> = ({
   onEdit
 }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const {
     noteContent,
     setNoteContent,
@@ -93,6 +96,9 @@ export const NoteDetailsSheet: React.FC<NoteDetailsSheetProps> = ({
           onArchive={handleArchive}
           onDelete={handleDelete}
         />
+        
+        {/* Add advanced note management for troubleshooting */}
+        {user && <NoteManagement noteId={note.id} />}
       </DialogContent>
     </Dialog>
   );

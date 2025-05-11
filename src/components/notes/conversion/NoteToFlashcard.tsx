@@ -1,127 +1,102 @@
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { useFlashcards } from "@/contexts/FlashcardContext";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2, FileText, ArrowRight } from "lucide-react";
+
+// Create a new file to handle individual note to flashcard conversion
+import { useState } from "react";
 import { Note } from "@/types/note";
-import { CreateFlashcardPayload } from "@/types/flashcard";
+import { useFlashcards } from "@/contexts/FlashcardContext";
+import { Button } from "@/components/ui/button";
+import { TextSelectionToFlashcard } from "./TextSelectionToFlashcard";
+import { toast } from "sonner";
+import { AIFlashcardGenerator } from "./AIFlashcardGenerator";
+import { PremiumFeatureNotice } from "./PremiumFeatureNotice";
+import { usePremiumFeatures } from "@/hooks/usePremiumFeatures";
+import { useUserSubjects } from "@/hooks/useUserSubjects";
 
 interface NoteToFlashcardProps {
   note: Note;
-  onSuccess?: () => void;
-  onCancel?: () => void;
+  flashcardSetId: string | null;
+  onFlashcardCreated?: () => void;
 }
 
-export const NoteToFlashcard = ({ note, onSuccess, onCancel }: NoteToFlashcardProps) => {
-  const [frontContent, setFrontContent] = useState(note.title || "");
-  const [backContent, setBackContent] = useState(note.content || note.description || "");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedDifficulty, setSelectedDifficulty] = useState<number>(3);
-  const [selectedSetId, setSelectedSetId] = useState<string | undefined>(undefined);
-
-  const { createFlashcard } = useFlashcards();
-  const { toast } = useToast();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!frontContent.trim() || !backContent.trim()) {
-      toast({
-        title: "Missing content",
-        description: "Please fill in both sides of the flashcard.",
-        variant: "destructive",
-      });
+export const NoteToFlashcard = ({ note, flashcardSetId, onFlashcardCreated }: NoteToFlashcardProps) => {
+  const { addFlashcard } = useFlashcards();
+  const [isGenerating, setIsGenerating] = useState(false);
+  const { subjects } = useUserSubjects();
+  const { aiFlashcardGenerationEnabled } = usePremiumFeatures();
+  
+  // Find the subject name if we have a subject_id
+  const subjectName = note.subject_id 
+    ? subjects.find(s => s.id === note.subject_id)?.name || "Unknown Subject"
+    : note.category || "General";
+  
+  // Create flashcard from the entire note content
+  const handleCreateFromFullNote = async () => {
+    if (!flashcardSetId) {
+      toast.error("Please select a flashcard set first");
       return;
     }
-
-    setIsSubmitting(true);
-
+    
+    if (!note.content || note.content.trim() === "") {
+      toast.error("Note content is empty");
+      return;
+    }
+    
     try {
-      const cardData: CreateFlashcardPayload = {
-        front_content: frontContent.trim(),
-        back_content: backContent.trim(),
-      };
-
-      const result = await createFlashcard(cardData, selectedSetId);
-      
-      if (result) {
-        toast({
-          title: "Conversion successful",
-          description: "Note has been converted to flashcard.",
-        });
-        
-        if (onSuccess) {
-          onSuccess();
-        }
-      }
-    } catch (error) {
-      console.error("Error converting note to flashcard:", error);
-      toast({
-        title: "Conversion failed",
-        description: "Failed to convert note to flashcard. Please try again.",
-        variant: "destructive",
+      await addFlashcard({
+        front_content: `<p><strong>${note.title}</strong></p>`,
+        back_content: note.content || "",
+        set_id: flashcardSetId,
+        subject: subjectName,
       });
-    } finally {
-      setIsSubmitting(false);
+      
+      toast.success("Flashcard created from note");
+      onFlashcardCreated?.();
+    } catch (error) {
+      console.error("Error creating flashcard from note:", error);
+      toast.error("Failed to create flashcard");
     }
   };
-
+  
+  if (!note) return null;
+  
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileText className="h-5 w-5" />
-          <ArrowRight className="h-4 w-4" />
-          Convert Note to Flashcard
-        </CardTitle>
-      </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
-          <div>
-            <label htmlFor="front" className="block text-sm font-medium mb-1">
-              Front (Question)
-            </label>
-            <Textarea
-              id="front"
-              value={frontContent}
-              onChange={(e) => setFrontContent(e.target.value)}
-              className="min-h-[100px]"
-              placeholder="Enter question or concept"
-              disabled={isSubmitting}
-            />
-          </div>
-          <div>
-            <label htmlFor="back" className="block text-sm font-medium mb-1">
-              Back (Answer)
-            </label>
-            <Textarea
-              id="back"
-              value={backContent}
-              onChange={(e) => setBackContent(e.target.value)}
-              className="min-h-[100px]"
-              placeholder="Enter answer or explanation"
-              disabled={isSubmitting}
-            />
-          </div>
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
-            Cancel
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-lg font-medium mb-2">Convert Note to Flashcard</h3>
+        <div className="flex flex-wrap gap-2">
+          <Button 
+            onClick={handleCreateFromFullNote} 
+            disabled={!flashcardSetId}
+            size="sm"
+          >
+            Create Card from Full Note
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              "Convert to Flashcard"
-            )}
-          </Button>
-        </CardFooter>
-      </form>
-    </Card>
+        </div>
+      </div>
+      
+      {/* Selection based conversion */}
+      <TextSelectionToFlashcard 
+        note={note} 
+        flashcardSetId={flashcardSetId}
+        onFlashcardCreated={onFlashcardCreated}
+        subjectName={subjectName}
+      />
+      
+      {/* AI-Based Generation */}
+      {aiFlashcardGenerationEnabled ? (
+        <AIFlashcardGenerator
+          note={note}
+          flashcardSetId={flashcardSetId}
+          onFlashcardCreated={onFlashcardCreated}
+          isGenerating={isGenerating}
+          setIsGenerating={setIsGenerating}
+          subjectName={subjectName}
+        />
+      ) : (
+        <PremiumFeatureNotice
+          title="AI Flashcard Generation"
+          description="Automatically generate flashcards from your notes using AI"
+        />
+      )}
+    </div>
   );
 };
