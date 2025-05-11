@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
 import { useNotes } from "@/contexts/NoteContext";
 import { useToast } from "@/hooks/use-toast";
 import { Note } from "@/types/note";
@@ -11,6 +10,8 @@ import { TierInfo } from "./TierInfo";
 import { SubjectsSection } from "./SubjectsSection";
 import { NotesDisplay } from "./NotesDisplay";
 import { NoteCreationDialogs } from "./NoteCreationDialogs";
+import { LoadingState } from "./LoadingState";
+import { ErrorState } from "./ErrorState";
 
 interface NotesContentProps {
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
@@ -29,23 +30,16 @@ export const NotesContent = ({
 }: NotesContentProps) => {
   const { paginatedNotes, notes, loading, setFilterOptions, filteredNotes } = useNotes();
   const { user, loading: authLoading } = useRequireAuth();
-  const isAuthorized = !!user;
   const [activeSubjectId, setActiveSubjectId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   // Show loading state while checking authentication
-  if (authLoading || loading) {
-    return (
-      <div className="container mx-auto p-6 flex items-center justify-center h-[50vh]">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-mint-500" />
-          <p className="mt-2 text-muted-foreground">Loading your notes...</p>
-        </div>
-      </div>
-    );
+  if (authLoading) {
+    return <LoadingState message="Checking authentication..." />;
   }
 
   // If not authenticated, the useRequireAuth hook will redirect
-  if (!isAuthorized) {
+  if (!user) {
     return null;
   }
 
@@ -78,7 +72,7 @@ export const NotesContent = ({
       />
       
       {/* Admin Delete Tool - Only show for authenticated users */}
-      {isAuthorized && (
+      {user && (
         <div className="mb-6">
           <AdminNoteDelete />
         </div>

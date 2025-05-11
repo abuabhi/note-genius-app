@@ -34,7 +34,9 @@ export const SubjectsSection = ({
       // Remove subject filter if "All" is selected
       setFilterOptions(prev => {
         const newFilters = { ...prev };
-        delete newFilters.subjectId;
+        if (newFilters.subjectId) {
+          delete newFilters.subjectId;
+        }
         return newFilters;
       });
     }
@@ -48,7 +50,7 @@ export const SubjectsSection = ({
     );
   }
 
-  if (subjects.length === 0) {
+  if (!subjects || subjects.length === 0) {
     return null;
   }
 
@@ -59,7 +61,6 @@ export const SubjectsSection = ({
         onSubjectChange={setActiveSubjectId} 
       />
       
-      {/* Debugging counts */}
       {activeSubjectId && (
         <div className="text-xs text-mint-500 mt-2">
           Showing {filteredNotesCount} notes for selected subject

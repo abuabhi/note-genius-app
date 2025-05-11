@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 import NavBar from "./NavBar";
 import Footer from "./Footer";
 import { CustomSidebar } from "../ui/sidebar-custom";
+import { useAuth } from "@/contexts/auth";
 
 interface LayoutProps {
   children: ReactNode;
@@ -11,8 +12,11 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   const { pathname } = useLocation();
+  const { user } = useAuth();
   const publicRoutes = ['/', '/about', '/pricing', '/faq', '/contact', '/login', '/signup'];
   const isPublicRoute = publicRoutes.includes(pathname);
+  
+  console.log("Layout rendering path:", pathname, "Public route:", isPublicRoute, "User:", !!user);
 
   if (isPublicRoute) {
     return (
