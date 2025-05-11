@@ -76,7 +76,7 @@ export const useLibraryOperations = (state: FlashcardState) => {
       }
 
       // Step 2: Create new set with basic data
-      const newSetData = {
+      const setToCreate = {
         name: `${originalSetData.name} (Copy)`,
         description: originalSetData.description,
         subject: originalSetData.subject,
@@ -87,13 +87,13 @@ export const useLibraryOperations = (state: FlashcardState) => {
       };
 
       // Step 3: Insert new set
-      const { data: newSetData, error: createError } = await supabase
+      const { data: createdSetData, error: createError } = await supabase
         .from('flashcard_sets')
-        .insert(newSetData)
+        .insert(setToCreate)
         .select('id, name, description, user_id, created_at, updated_at, subject, topic, category_id')
         .single();
 
-      if (createError || !newSetData) {
+      if (createError || !createdSetData) {
         toast.error("Failed to create new set");
         return null;
       }
@@ -116,7 +116,7 @@ export const useLibraryOperations = (state: FlashcardState) => {
           front_content: card.front_content,
           back_content: card.back_content,
           user_id: user.id,
-          set_id: newSetData.id,
+          set_id: createdSetData.id,
           difficulty: card.difficulty,
           is_built_in: false
         }));
@@ -124,9 +124,17 @@ export const useLibraryOperations = (state: FlashcardState) => {
         await supabase.from('flashcards').insert(newCards);
       }
 
-      // Step 6: Create a simple object to return and update state with
+      // Step 6: Create a complete FlashcardSet object to return and update state with
       const clonedSet: FlashcardSet = {
-        ...newSetData,
+        id: createdSetData.id,
+        name: createdSetData.name,
+        description: createdSetData.description,
+        user_id: createdSetData.user_id,
+        created_at: createdSetData.created_at,
+        updated_at: createdSetData.updated_at,
+        subject: createdSetData.subject,
+        topic: createdSetData.topic,
+        category_id: createdSetData.category_id,
         is_built_in: false,
         card_count: cardCount
       };
