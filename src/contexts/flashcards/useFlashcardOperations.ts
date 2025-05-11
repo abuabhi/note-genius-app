@@ -2,10 +2,11 @@
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Flashcard, 
-  FlashcardDifficulty,
+  FlashcardScore,
+  FlashcardProgress,
   CreateFlashcardPayload
 } from '@/types/flashcard';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { FlashcardState } from './types';
 
 export const useFlashcardOperations = (
@@ -14,9 +15,8 @@ export const useFlashcardOperations = (
   const { 
     setFlashcards, 
     setFlashcardSets,
+    user
   } = state;
-  
-  const { toast } = useToast();
 
   // Helper function to convert database object to Flashcard type
   const convertToFlashcard = (data: any): Flashcard => {
@@ -26,7 +26,7 @@ export const useFlashcardOperations = (
       back: data.back_content || '',
       front_content: data.front_content,
       back_content: data.back_content,
-      difficulty: data.difficulty as FlashcardDifficulty,
+      difficulty: data.difficulty,
       created_at: data.created_at,
       updated_at: data.updated_at,
       user_id: data.user_id,
@@ -41,13 +41,106 @@ export const useFlashcardOperations = (
     };
   };
 
+  // Fetch all flashcards for the current user
+  const fetchFlashcards = async () => {
+    if (!user) return [];
+    
+    try {
+      state.setLoading(prev => ({ ...prev, flashcards: true }));
+      
+      const { data, error } = await supabase
+        .from('flashcards')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      const typedFlashcards: Flashcard[] = data.map(card => convertToFlashcard(card));
+      setFlashcards(typedFlashcards);
+      return typedFlashcards;
+    } catch (error) {
+      console.error('Error fetching flashcards:', error);
+      toast.error('Failed to load flashcards');
+      return [];
+    } finally {
+      state.setLoading(prev => ({ ...prev, flashcards: false }));
+    }
+  };
+
+  // This is the problematic function - completely rewritten to avoid type recursion issues
+  const fetchFlashcardsInSet = async (setId: string): Promise<Flashcard[]> => {
+    if (!setId) return [];
+    
+    state.setLoading(prev => ({ ...prev, flashcards: true }));
+    
+    try {
+      // First step: Get the relationship between flashcards and sets, with position info
+      const { data: linkData, error: linkError } = await supabase
+        .from('flashcard_set_cards')
+        .select('flashcard_id, position')
+        .eq('set_id', setId)
+        .order('position');
+      
+      if (linkError) throw linkError;
+      
+      if (!linkData || linkData.length === 0) {
+        return [];
+      }
+      
+      // Extract all flashcard IDs
+      const flashcardIds = linkData.map(link => link.flashcard_id);
+      
+      // Create a position lookup map
+      const positions: Record<string, number> = {};
+      linkData.forEach(link => {
+        positions[link.flashcard_id] = link.position;
+      });
+      
+      // Second step: Get the actual flashcard data
+      const { data: cardData, error: cardError } = await supabase
+        .from('flashcards')
+        .select('*')
+        .in('id', flashcardIds);
+      
+      if (cardError) throw cardError;
+      
+      // Process the flashcards and assign positions
+      const flashcards = cardData.map(card => {
+        const flashcard = convertToFlashcard(card);
+        // Add position and set_id from our linkData
+        flashcard.position = positions[card.id] || 0;
+        flashcard.set_id = setId;
+        return flashcard;
+      });
+      
+      // Sort by position
+      const sortedFlashcards = flashcards.sort((a, b) => {
+        return (a.position || 0) - (b.position || 0);
+      });
+      
+      return sortedFlashcards;
+    } catch (error) {
+      console.error('Error fetching flashcards in set:', error);
+      toast.error('Failed to load flashcards');
+      return [];
+    } finally {
+      state.setLoading(prev => ({ ...prev, flashcards: false }));
+    }
+  };
+
   // Create a new flashcard
   const createFlashcard = async (cardData: CreateFlashcardPayload, setId?: string): Promise<Flashcard | null> => {
+    if (!user) return null;
+    
     try {
       // First, create the flashcard
       const { data, error } = await supabase
         .from('flashcards')
-        .insert(cardData)
+        .insert({
+          ...cardData,
+          user_id: user.id
+        })
         .select()
         .single();
       
@@ -64,12 +157,10 @@ export const useFlashcardOperations = (
         // Get the current highest position in the set
         const { count, error: positionError } = await supabase
           .from('flashcard_set_cards')
-          .select('position', { count: 'exact', head: true })
-          .eq('set_id', setId)
-          .order('position', { ascending: false })
-          .limit(1);
+          .select('*', { count: 'exact', head: true })
+          .eq('set_id', setId);
         
-        const nextPosition = positionError || !count ? 0 : count + 1;
+        const position = positionError || !count ? 0 : count;
         
         // Add the flashcard to the set
         const { error: linkError } = await supabase
@@ -77,7 +168,7 @@ export const useFlashcardOperations = (
           .insert({
             flashcard_id: data.id,
             set_id: setId,
-            position: nextPosition,
+            position,
           });
         
         if (linkError) throw linkError;
@@ -88,30 +179,25 @@ export const useFlashcardOperations = (
         );
       }
       
-      toast({
-        title: 'Flashcard created',
-        description: 'Your new flashcard has been created successfully.',
-      });
-      
+      toast.success('Flashcard created successfully');
       return typedFlashcard;
     } catch (error) {
       console.error('Error creating flashcard:', error);
-      toast({
-        title: 'Error creating flashcard',
-        description: 'Please try again later.',
-        variant: 'destructive',
-      });
+      toast.error('Failed to create flashcard');
       return null;
     }
   };
 
   // Update an existing flashcard
   const updateFlashcard = async (id: string, cardData: Partial<CreateFlashcardPayload>) => {
+    if (!user) return;
+    
     try {
       const { error } = await supabase
         .from('flashcards')
         .update(cardData)
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id);
       
       if (error) throw error;
       
@@ -119,131 +205,39 @@ export const useFlashcardOperations = (
         prev.map(card => card.id === id ? { ...card, ...cardData } : card)
       );
       
-      toast({
-        title: 'Flashcard updated',
-        description: 'Your changes have been saved.',
-      });
+      toast.success('Flashcard updated successfully');
     } catch (error) {
       console.error('Error updating flashcard:', error);
-      toast({
-        title: 'Error updating flashcard',
-        description: 'Please try again later.',
-        variant: 'destructive',
-      });
+      toast.error('Failed to update flashcard');
     }
   };
 
   // Delete a flashcard
   const deleteFlashcard = async (id: string) => {
+    if (!user) return;
+    
     try {
       const { error } = await supabase
         .from('flashcards')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id);
       
       if (error) throw error;
       
       setFlashcards(prev => prev.filter(card => card.id !== id));
       
-      // Update card counts for any sets that contained this card
-      const { data: setData } = await supabase
-        .from('flashcard_set_cards')
-        .select('set_id')
-        .eq('flashcard_id', id);
-      
-      if (setData && setData.length > 0) {
-        const affectedSetIds = setData.map(item => item.set_id);
-        
-        setFlashcardSets(prev => 
-          prev.map(set => 
-            affectedSetIds.includes(set.id) 
-              ? { ...set, card_count: Math.max(0, (set.card_count || 1) - 1) } 
-              : set
-          )
-        );
-      }
-      
-      toast({
-        title: 'Flashcard deleted',
-        description: 'The flashcard has been removed.',
-      });
+      toast.success('Flashcard deleted successfully');
     } catch (error) {
       console.error('Error deleting flashcard:', error);
-      toast({
-        title: 'Error deleting flashcard',
-        description: 'Please try again later.',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  // Fetch all flashcards for the current user
-  const fetchFlashcards = async () => {
-    try {
-      state.setLoading(prev => ({ ...prev, flashcards: true }));
-      
-      const { data, error } = await supabase
-        .from('flashcards')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      
-      // Convert all cards to proper Flashcard type
-      const typedFlashcards: Flashcard[] = data.map(card => convertToFlashcard(card));
-      
-      setFlashcards(typedFlashcards);
-      return typedFlashcards;
-    } catch (error) {
-      console.error('Error fetching flashcards:', error);
-      toast({
-        title: 'Error fetching flashcards',
-        description: 'Please try again later.',
-        variant: 'destructive',
-      });
-      return [];
-    } finally {
-      state.setLoading(prev => ({ ...prev, flashcards: false }));
-    }
-  };
-
-  // Fetch flashcards in a specific set
-  const fetchFlashcardsInSet = async (setId: string): Promise<Flashcard[]> => {
-    try {
-      const { data, error } = await supabase
-        .from('flashcard_set_cards')
-        .select(`
-          position,
-          flashcard:flashcard_id (*)
-        `)
-        .eq('set_id', setId)
-        .order('position');
-      
-      if (error) throw error;
-      
-      // Extract the flashcards from the joined query and maintain the position order
-      const orderedFlashcards: Flashcard[] = data
-        .map(item => {
-          const card = convertToFlashcard(item.flashcard);
-          card.position = item.position;
-          return card;
-        })
-        .sort((a, b) => (a.position || 0) - (b.position || 0));
-      
-      return orderedFlashcards;
-    } catch (error) {
-      console.error('Error fetching flashcards in set:', error);
-      toast({
-        title: 'Error fetching flashcards',
-        description: 'Please try again later.',
-        variant: 'destructive',
-      });
-      return [];
+      toast.error('Failed to delete flashcard');
     }
   };
 
   // Add a flashcard to a set
   const addFlashcardToSet = async (flashcardId: string, setId: string, position?: number) => {
+    if (!user) return;
+    
     try {
       // If position is not provided, add to the end
       if (position === undefined) {
@@ -273,27 +267,23 @@ export const useFlashcardOperations = (
         prev.map(set => set.id === setId ? { ...set, card_count: (set.card_count || 0) + 1 } : set)
       );
       
-      toast({
-        title: 'Flashcard added to set',
-        description: 'The flashcard has been added to the set.',
-      });
+      toast.success('Flashcard added to set');
     } catch (error) {
       console.error('Error adding flashcard to set:', error);
-      toast({
-        title: 'Error adding flashcard to set',
-        description: 'Please try again later.',
-        variant: 'destructive',
-      });
+      toast.error('Failed to add flashcard to set');
     }
   };
 
   // Remove a flashcard from a set
   const removeFlashcardFromSet = async (flashcardId: string, setId: string) => {
+    if (!user) return;
+    
     try {
       const { error } = await supabase
         .from('flashcard_set_cards')
         .delete()
-        .match({ flashcard_id: flashcardId, set_id: setId });
+        .eq('flashcard_id', flashcardId)
+        .eq('set_id', setId);
       
       if (error) throw error;
       
@@ -302,17 +292,123 @@ export const useFlashcardOperations = (
         prev.map(set => set.id === setId ? { ...set, card_count: Math.max(0, (set.card_count || 1) - 1) } : set)
       );
       
-      toast({
-        title: 'Flashcard removed from set',
-        description: 'The flashcard has been removed from the set.',
-      });
+      toast.success('Flashcard removed from set');
     } catch (error) {
       console.error('Error removing flashcard from set:', error);
-      toast({
-        title: 'Error removing flashcard from set',
-        description: 'Please try again later.',
-        variant: 'destructive',
-      });
+      toast.error('Failed to remove flashcard from set');
+    }
+  };
+
+  const recordFlashcardReview = async (flashcardId: string, score: FlashcardScore): Promise<void> => {
+    if (!user) return;
+    
+    try {
+      // First check if there's an existing progress record
+      const { data: existingProgress, error: queryError } = await supabase
+        .from('user_flashcard_progress')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('flashcard_id', flashcardId)
+        .maybeSingle();
+
+      if (queryError && queryError.code !== 'PGRST116') { // PGRST116 is "not found"
+        throw queryError;
+      }
+
+      // Apply spaced repetition algorithm to calculate next review date
+      const now = new Date();
+      const currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      let repetition = 0;
+      let easeFactor = 2.5;
+      let interval = 1;
+      
+      if (existingProgress) {
+        repetition = existingProgress.repetition;
+        easeFactor = existingProgress.ease_factor;
+        
+        if (score >= 3) {
+          // Correct response
+          if (repetition === 0) {
+            interval = 1;
+          } else if (repetition === 1) {
+            interval = 6;
+          } else {
+            interval = Math.round(existingProgress.interval * easeFactor);
+          }
+          repetition += 1;
+        } else {
+          // Incorrect response, reset repetition
+          repetition = 0;
+          interval = 1;
+        }
+        
+        // Adjust ease factor based on response quality
+        easeFactor = Math.max(1.3, easeFactor + (0.1 - (5 - score) * (0.08 + (5 - score) * 0.02)));
+      }
+      
+      // Calculate next review date
+      const nextReviewDate = new Date(currentDate);
+      nextReviewDate.setDate(nextReviewDate.getDate() + interval);
+
+      if (existingProgress) {
+        // Update existing progress
+        const { error: updateError } = await supabase
+          .from('user_flashcard_progress')
+          .update({
+            last_score: score,
+            last_reviewed_at: now.toISOString(),
+            next_review_at: nextReviewDate.toISOString(),
+            repetition,
+            interval,
+            ease_factor: easeFactor
+          })
+          .eq('id', existingProgress.id);
+
+        if (updateError) throw updateError;
+      } else {
+        // Create new progress record
+        const { error: insertError } = await supabase
+          .from('user_flashcard_progress')
+          .insert({
+            user_id: user.id,
+            flashcard_id: flashcardId,
+            last_score: score,
+            last_reviewed_at: now.toISOString(),
+            next_review_at: nextReviewDate.toISOString(),
+            repetition,
+            interval,
+            ease_factor: easeFactor
+          });
+
+        if (insertError) throw insertError;
+      }
+    } catch (error) {
+      console.error('Error recording flashcard review:', error);
+      throw error;
+    }
+  };
+
+  const getFlashcardProgress = async (flashcardId: string): Promise<FlashcardProgress | null> => {
+    if (!user) return null;
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_flashcard_progress')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('flashcard_id', flashcardId)
+        .maybeSingle();
+
+      if (error) {
+        if (error.code === 'PGRST116') return null; // Not found
+        throw error;
+      }
+      
+      return data as FlashcardProgress;
+    } catch (error) {
+      console.error('Error getting flashcard progress:', error);
+      return null;
     }
   };
 
@@ -324,5 +420,7 @@ export const useFlashcardOperations = (
     fetchFlashcardsInSet,
     addFlashcardToSet,
     removeFlashcardFromSet,
+    recordFlashcardReview,
+    getFlashcardProgress
   };
 };
