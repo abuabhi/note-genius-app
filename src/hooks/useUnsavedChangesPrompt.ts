@@ -1,51 +1,42 @@
 
-import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import { useNavigation } from "@/contexts/NavigationContext";
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
-/**
- * Hook to prompt users about unsaved changes when they try to navigate away
- * @param isDirty Whether there are unsaved changes
- * @param setShowDialog Function to show the confirmation dialog
- * @param setPendingNavigation Function to set the pending navigation path
- */
 export const useUnsavedChangesPrompt = (
   isDirty: boolean,
   setShowDialog: (show: boolean) => void,
   setPendingNavigation: (path: string | null) => void
 ) => {
   const location = useLocation();
-  const { registerNavigationGuard } = useNavigation();
 
-  // Handle browser refresh/close
   useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isDirty) {
-        const message = "You have unsaved changes. Are you sure you want to leave?";
-        e.returnValue = message;
-        return message;
+    if (!isDirty) return;
+
+    // Custom event handler for navigation attempts
+    const handleBeforeNavigate = (event: any) => {
+      // Don't block if form is pristine (no changes)
+      if (!isDirty) return;
+
+      // If there's a nextPath, store it 
+      if (event.detail && event.detail.nextPath) {
+        event.preventDefault();
+        setPendingNavigation(event.detail.nextPath);
+        setShowDialog(true);
       }
     };
 
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, [isDirty]);
+    // Add event listener
+    window.addEventListener('beforeNavigate', handleBeforeNavigate);
 
-  // Register navigation guard to show dialog when navigating away
+    return () => {
+      window.removeEventListener('beforeNavigate', handleBeforeNavigate);
+    };
+  }, [isDirty, setShowDialog, setPendingNavigation]);
+
+  // Reset pending navigation when location changes
   useEffect(() => {
-    if (isDirty) {
-      const unregister = registerNavigationGuard((path) => {
-        if (path !== location.pathname) {
-          setPendingNavigation(path);
-          setShowDialog(true);
-          return false; // Prevent immediate navigation
-        }
-        return true; // Allow navigation
-      });
-      
-      return unregister;
-    }
-  }, [isDirty, location.pathname, setShowDialog, setPendingNavigation, registerNavigationGuard]);
+    setPendingNavigation(null);
+  }, [location, setPendingNavigation]);
 };
+
+export default useUnsavedChangesPrompt;

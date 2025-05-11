@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/auth"; // Updated import path
+import { useAuth } from "@/contexts/auth"; 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -18,6 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { SubjectSelection } from "./SubjectSelection";
 import { GradeSelection } from "./GradeSelection";
 import { SchoolInput } from "./SchoolInput";
+import { GradeLevel } from "@/types/subject";
 
 export const OnboardingForm = () => {
   const { user } = useAuth();

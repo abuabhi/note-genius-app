@@ -1,66 +1,125 @@
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/auth'; // Updated import path
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 
-export type DndSettings = {
+export interface DndSettings {
   enabled: boolean;
   startTime: string | null;
   endTime: string | null;
-};
+}
 
 export const useDndMode = () => {
   const { user } = useAuth();
   const [dndSettings, setDndSettings] = useState<DndSettings>({
     enabled: false,
     startTime: null,
-    endTime: null,
+    endTime: null
   });
-  const [loading, setLoading] = useState(true);
   const [isDndActive, setIsDndActive] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const fetchDndSettings = async () => {
-    if (!user) return;
+  useEffect(() => {
+    const fetchDndSettings = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
 
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('do_not_disturb, dnd_start_time, dnd_end_time')
-        .eq('id', user.id)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('do_not_disturb, dnd_start_time, dnd_end_time')
+          .eq('id', user.id)
+          .single();
 
-      if (error) throw error;
-      
-      setDndSettings({
-        enabled: data.do_not_disturb || false,
-        startTime: data.dnd_start_time || null,
-        endTime: data.dnd_end_time || null,
-      });
-    } catch (error) {
-      console.error('Error fetching DND settings:', error);
-    } finally {
-      setLoading(false);
+        if (error) throw error;
+
+        if (data) {
+          setDndSettings({
+            enabled: data.do_not_disturb || false,
+            startTime: data.dnd_start_time,
+            endTime: data.dnd_end_time
+          });
+          
+          // Check if DND is currently active based on time
+          checkIfDndActive(data.do_not_disturb, data.dnd_start_time, data.dnd_end_time);
+        }
+      } catch (error) {
+        console.error('Error fetching DND settings:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchDndSettings();
+    
+    // Set up interval to check DND status every minute
+    const intervalId = setInterval(() => {
+      if (dndSettings.enabled) {
+        checkIfDndActive(
+          dndSettings.enabled,
+          dndSettings.startTime,
+          dndSettings.endTime
+        );
+      }
+    }, 60000);
+    
+    return () => clearInterval(intervalId);
+  }, [user]);
+  
+  // Check if current time is within DND period
+  const checkIfDndActive = (enabled: boolean, startTime: string | null, endTime: string | null) => {
+    if (!enabled || !startTime || !endTime) {
+      setIsDndActive(false);
+      return;
+    }
+    
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes(); // minutes since midnight
+    
+    // Convert DND times to minutes since midnight
+    const start = timeStringToMinutes(startTime);
+    const end = timeStringToMinutes(endTime);
+    
+    // Check if current time is within DND period
+    if (start <= end) {
+      // Simple case: start time is before end time
+      setIsDndActive(currentTime >= start && currentTime <= end);
+    } else {
+      // Complex case: DND period spans across midnight
+      setIsDndActive(currentTime >= start || currentTime <= end);
     }
   };
-
-  const updateDndSettings = async (settings: DndSettings) => {
+  
+  const timeStringToMinutes = (timeString: string): number => {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+  
+  const updateDndSettings = async (newSettings: DndSettings) => {
     if (!user) return false;
-
+    
     try {
       const { error } = await supabase
         .from('profiles')
         .update({
-          do_not_disturb: settings.enabled,
-          dnd_start_time: settings.startTime,
-          dnd_end_time: settings.endTime,
+          do_not_disturb: newSettings.enabled,
+          dnd_start_time: newSettings.enabled ? newSettings.startTime : null,
+          dnd_end_time: newSettings.enabled ? newSettings.endTime : null
         })
         .eq('id', user.id);
-
+        
       if (error) throw error;
       
-      setDndSettings(settings);
+      setDndSettings(newSettings);
+      checkIfDndActive(
+        newSettings.enabled,
+        newSettings.startTime,
+        newSettings.endTime
+      );
+      
       toast.success('Do Not Disturb settings updated');
       return true;
     } catch (error) {
@@ -69,64 +128,19 @@ export const useDndMode = () => {
       return false;
     }
   };
-
-  const toggleDndMode = async (enabled: boolean) => {
+  
+  const toggleDnd = async () => {
     return updateDndSettings({
       ...dndSettings,
-      enabled,
+      enabled: !dndSettings.enabled
     });
   };
-
-  // Check if DND is currently active based on schedule or manual setting
-  useEffect(() => {
-    const checkDndStatus = () => {
-      if (dndSettings.enabled) {
-        // If DND is enabled without a time range, it's always active
-        if (!dndSettings.startTime || !dndSettings.endTime) {
-          setIsDndActive(true);
-          return;
-        }
-
-        // Check if current time is within DND hours
-        const now = new Date();
-        const currentTime = now.getHours() * 60 + now.getMinutes();
-        
-        const [startHours, startMinutes] = dndSettings.startTime.split(':').map(Number);
-        const startTimeMinutes = startHours * 60 + startMinutes;
-        
-        const [endHours, endMinutes] = dndSettings.endTime.split(':').map(Number);
-        const endTimeMinutes = endHours * 60 + endMinutes;
-
-        if (startTimeMinutes <= endTimeMinutes) {
-          // Simple case: start time is before end time (same day)
-          setIsDndActive(currentTime >= startTimeMinutes && currentTime <= endTimeMinutes);
-        } else {
-          // Complex case: end time is on the next day (e.g., 10:00 PM - 6:00 AM)
-          setIsDndActive(currentTime >= startTimeMinutes || currentTime <= endTimeMinutes);
-        }
-      } else {
-        setIsDndActive(false);
-      }
-    };
-
-    checkDndStatus();
-    const interval = setInterval(checkDndStatus, 60000); // Check every minute
-
-    return () => clearInterval(interval);
-  }, [dndSettings]);
-
-  useEffect(() => {
-    if (user) {
-      fetchDndSettings();
-    }
-  }, [user]);
-
+  
   return {
     dndSettings,
     isDndActive,
-    loading,
-    fetchDndSettings,
+    isLoading,
     updateDndSettings,
-    toggleDndMode,
+    toggleDnd
   };
 };

@@ -1,71 +1,82 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/auth"; // Updated import path
 
-export type Country = {
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/auth';
+import { supabase } from '@/integrations/supabase/client';
+
+export interface Country {
   id: string;
   name: string;
   code: string;
-  flag_url: string | null;
-};
+  flag_url?: string;
+}
 
 export const useCountries = () => {
   const { user } = useAuth();
-  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [countries, setCountries] = useState<Country[]>([]);
+  const [userCountry, setUserCountry] = useState<Country | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch all countries
-  const { data: countries = [], isLoading } = useQuery({
-    queryKey: ["countries"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("countries")
-        .select("*")
-        .order("name");
+  useEffect(() => {
+    const fetchCountries = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('countries')
+          .select('*')
+          .order('name');
+
+        if (error) throw error;
+        setCountries(data as Country[]);
+
+        if (user) {
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('country_id')
+            .eq('id', user.id)
+            .single();
+
+          if (profileError) {
+            console.warn('Error fetching user country:', profileError);
+          } else if (profileData && profileData.country_id) {
+            const userCountryData = data.find(c => c.id === profileData.country_id);
+            if (userCountryData) {
+              setUserCountry(userCountryData as Country);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching countries:', error);
+        setCountries([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCountries();
+  }, [user]);
+
+  const updateUserCountry = async (countryId: string) => {
+    if (!user) return { success: false, error: 'User not authenticated' };
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ country_id: countryId })
+        .eq('id', user.id);
 
       if (error) throw error;
-      return data as Country[];
-    },
-  });
 
-  // Fetch user's country
-  const { data: userCountry } = useQuery({
-    queryKey: ["userCountry", user?.id],
-    queryFn: async () => {
-      if (!user) return null;
-      
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("country_id, countries(id, name, code, flag_url)")
-        .eq("id", user.id)
-        .single();
-      
-      if (error || !data) return null;
-      return data.countries as Country;
-    },
-    enabled: !!user
-  });
+      const newUserCountry = countries.find(c => c.id === countryId);
+      if (newUserCountry) {
+        setUserCountry(newUserCountry);
+      }
 
-  // Update user's country preference
-  const updateUserCountry = async (countryId: string) => {
-    if (!user) return { success: false };
-    
-    const { error } = await supabase
-      .from("profiles")
-      .update({ country_id: countryId })
-      .eq("id", user.id);
-    
-    if (error) return { success: false, error };
-    setSelectedCountry(countryId);
-    return { success: true };
+      return { success: true };
+    } catch (error) {
+      console.error('Error updating user country:', error);
+      return { success: false, error };
+    }
   };
 
-  return {
-    countries,
-    isLoading,
-    userCountry,
-    selectedCountry: selectedCountry || userCountry?.id,
-    setSelectedCountry,
-    updateUserCountry
-  };
+  return { countries, userCountry, updateUserCountry, isLoading };
 };

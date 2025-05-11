@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/auth";
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/auth';
 import { useConnections } from "./chat/useConnections";
 import { UserProfile, UserTier } from "@/hooks/useRequireAuth";
 import { ChatMessage, ChatConversation, UserConnection } from "@/types/chat";

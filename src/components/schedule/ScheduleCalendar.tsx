@@ -144,8 +144,8 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ selectedDate
 
       {showCreateDialog && (
         <CreateEventDialog
-          isOpen={showCreateDialog}
-          onClose={() => setShowCreateDialog(false)}
+          open={showCreateDialog}
+          onOpenChange={setShowCreateDialog}
           onEventCreated={handleEventCreated}
           selectedDate={selectedDate}
         />

@@ -1,113 +1,96 @@
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/auth"; // Updated import path
-import { UserSubject } from "@/types/subject";
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/auth';
+import { supabase } from '@/integrations/supabase/client';
+import { UserSubject } from '@/types/subject';
 
 export const useUserSubjects = () => {
+  const { user } = useAuth();
   const [subjects, setSubjects] = useState<UserSubject[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
 
-  const fetchSubjects = async () => {
-    if (!user) {
-      setIsLoading(false);
-      return;
-    }
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
 
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      const { data, error } = await supabase
-        .from('user_subjects')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: true });
-      
-      if (error) throw error;
-      
-      setSubjects(data || []);
-    } catch (err: any) {
-      console.error("Error fetching user subjects:", err);
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('user_subjects')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('name');
 
-  const addSubject = async (subjectName: string): Promise<boolean> => {
-    if (!user) return false;
-    if (!subjectName.trim()) return false;
+        if (error) throw error;
+        
+        setSubjects(data as UserSubject[]);
+      } catch (error) {
+        console.error('Error fetching user subjects:', error);
+        setSubjects([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSubjects();
+  }, [user]);
+
+  const addSubject = async (name: string) => {
+    if (!user || !name.trim()) return false;
 
     try {
       // Check if subject already exists
       const exists = subjects.some(
-        (subject) => subject.name.toLowerCase() === subjectName.trim().toLowerCase()
+        (subject) => subject.name.toLowerCase() === name.trim().toLowerCase()
       );
-      
+
       if (exists) {
-        setError("Subject already exists");
+        console.warn('Subject already exists');
         return false;
       }
-      
-      const newSubject = {
+
+      const newSubject: UserSubject = {
         user_id: user.id,
-        name: subjectName.trim()
+        name: name.trim()
       };
-      
+
       const { data, error } = await supabase
         .from('user_subjects')
         .insert(newSubject)
         .select();
-      
+
       if (error) throw error;
-      
-      if (data && data.length > 0) {
-        setSubjects([...subjects, data[0]]);
-        return true;
-      }
-      
-      return false;
-    } catch (err: any) {
-      console.error("Error adding subject:", err);
-      setError(err.message);
+
+      setSubjects([...subjects, data[0] as UserSubject]);
+      return true;
+    } catch (error) {
+      console.error('Error adding subject:', error);
       return false;
     }
   };
 
-  const removeSubject = async (subjectId: string): Promise<boolean> => {
+  const removeSubject = async (subjectId: string) => {
     if (!user) return false;
-    
+
     try {
       const { error } = await supabase
         .from('user_subjects')
         .delete()
         .eq('id', subjectId)
         .eq('user_id', user.id);
-      
+
       if (error) throw error;
-      
-      setSubjects(subjects.filter((subject) => subject.id !== subjectId));
+
+      setSubjects(subjects.filter(subject => subject.id !== subjectId));
       return true;
-    } catch (err: any) {
-      console.error("Error removing subject:", err);
-      setError(err.message);
+    } catch (error) {
+      console.error('Error removing subject:', error);
       return false;
     }
   };
 
-  useEffect(() => {
-    fetchSubjects();
-  }, [user]);
-
-  return {
-    subjects,
-    isLoading,
-    error,
-    fetchSubjects,
-    addSubject,
-    removeSubject
-  };
+  return { subjects, isLoading, addSubject, removeSubject };
 };

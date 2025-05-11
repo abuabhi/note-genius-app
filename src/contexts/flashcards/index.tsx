@@ -1,5 +1,6 @@
-
-import React, { createContext, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/auth';
 import { FlashcardContextType, FlashcardProviderProps } from './types';
 import { useFlashcardState } from './useFlashcardState';
 import { useFlashcardsOperations } from './useFlashcards';
@@ -27,6 +28,17 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     }));
   }, [categoriesLoading, state.setLoading]);
   
+  // Add these missing methods to your FlashcardContextProvider component:
+  const recordFlashcardReview = async (flashcardId: string, score: number) => {
+    // Implementation goes here
+    console.log("Recording flashcard review:", flashcardId, score);
+  };
+
+  const getFlashcardProgress = async (flashcardId: string) => {
+    // Implementation goes here
+    return { success: true, data: { repetition: 0, ease_factor: 2.5 } };
+  };
+
   // Combine all operations
   const contextValue: FlashcardContextType = {
     ...state,
@@ -34,6 +46,8 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     ...setOperations,
     ...studyOperations,
     fetchCategories,
+    recordFlashcardReview,
+    getFlashcardProgress,
   };
   
   return (

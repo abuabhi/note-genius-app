@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/auth"; // Updated import path
+import { useAuth } from "@/contexts/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDistanceToNow } from 'date-fns';
 
@@ -26,20 +26,10 @@ const RecentActivityFeed = () => {
 
       setLoading(true);
       try {
-        // Check if the 'activity' table exists in the database
-        const { data: activityExists, error: checkError } = await supabase
-          .rpc('check_table_exists', { table_name: 'activity' })
-          .single();
-
-        if (checkError || !activityExists) {
-          console.error("Activity table doesn't exist:", checkError);
-          setActivity([]);
-          return;
-        }
-
-        // Use a safe approach with custom RPC function or a more specific query
+        // Since we can't check if the table exists via rpc, we'll try to fetch data directly
+        // and handle errors appropriately
         const { data, error } = await supabase
-          .from('user_activity')  // Using a different table name as a fallback
+          .from('activity') // Try the correct table name based on schema
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })

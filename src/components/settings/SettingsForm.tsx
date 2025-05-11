@@ -1,9 +1,40 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useAuth } from "@/contexts/auth"; // Updated import path
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from "@/contexts/auth"; 
 import { supabase } from "@/integrations/supabase/client";
+import { settingsFormSchema, SettingsFormValues } from "./schemas/settingsFormSchema";
+import { useUserTier, UserTier } from "@/hooks/useUserTier";
+import { useCountries } from "@/hooks/useCountries";
+import { useUnsavedChangesPrompt } from "@/hooks/useUnsavedChangesPrompt";
+import UnsavedChangesDialog from "@/components/dialogs/UnsavedChangesDialog";
+import { toast } from "sonner";
+import { 
+  Form, 
+  FormControl, 
+  FormItem, 
+  FormLabel, 
+  FormDescription 
+} from "@/components/ui/form";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { AccountSettingsCard } from "./cards/AccountSettingsCard";
+import { AppearanceCard } from "./cards/AppearanceCard";
+import { NotificationsCard } from "./cards/NotificationsCard";
+import { NotificationSettingsCard } from "./cards/NotificationSettingsCard";
+import { DoNotDisturbCard } from "./cards/DoNotDisturbCard";
+import { UpgradeTierCard } from "./cards/UpgradeTierCard";
+import { SubjectsSettingsCard } from "./cards/SubjectsSettingsCard";
+
+// Now let's use these imports in the component
 
 const SettingsForm = () => {
   const { userTier } = useUserTier();
