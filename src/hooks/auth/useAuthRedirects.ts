@@ -40,5 +40,6 @@ export const useAuthRedirects = ({
         navigate('/dashboard', { replace: true });
       }
     }
+    // We removed the redirection to /login for non-authenticated users on public routes
   }, [user, onboardingCompleted, onboardingLoading, navigate, location.pathname, loading]);
 };

@@ -13,12 +13,13 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const { pathname } = useLocation();
   const { user } = useAuth();
-  const publicRoutes = ['/', '/about', '/pricing', '/faq', '/contact', '/login', '/signup'];
+  const publicRoutes = ['/', '/about', '/pricing', '/faq', '/contact', '/blog', '/features', '/login', '/signup'];
   const isPublicRoute = publicRoutes.includes(pathname);
   
   console.log("Layout rendering path:", pathname, "Public route:", isPublicRoute, "User:", !!user);
 
-  if (isPublicRoute) {
+  // For public routes OR when user is not authenticated, use the public layout without sidebar
+  if (isPublicRoute || !user) {
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
         <NavBar />
@@ -30,6 +31,7 @@ const Layout = ({ children }: LayoutProps) => {
     );
   }
 
+  // For authenticated users on non-public routes, use the layout with sidebar
   return (
     <div className="min-h-screen flex w-full bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
       <CustomSidebar />

@@ -63,7 +63,7 @@ export default function NavBar() {
         
         {/* Desktop Navigation - Right Side - Auth Buttons or User Menu */}
         <div className="hidden md:flex items-center space-x-4">
-          {/* If user is not authenticated or if we're on the home page, show Login/Signup */}
+          {/* Always show Login/Signup on public routes when not authenticated */}
           {!user ? (
             <>
               <Link to="/login" className="text-mint-700 hover:text-mint-900 font-medium">Login</Link>
@@ -116,7 +116,7 @@ export default function NavBar() {
                 </div>
               )}
               
-              {/* If we're on the home page or public route and the user is authenticated, show Dashboard/Logout */}
+              {/* If we're on a public route and the user is authenticated, show Dashboard/Logout */}
               {isPublicRoute && (
                 <>
                   <Link to="/dashboard" className="text-mint-700 hover:text-mint-900 font-medium">Dashboard</Link>
