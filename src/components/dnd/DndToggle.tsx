@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { BellOff } from 'lucide-react';
+import { Ban } from 'lucide-react';
 import { useDndMode } from '@/hooks/useDndMode';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -35,16 +35,16 @@ export const DndToggle = () => {
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            variant={isDndActive ? "secondary" : "ghost"}
+            variant={isDndActive ? "destructive" : "ghost"}
             size="icon"
-            className={`h-9 w-9 rounded-full ${isDndActive ? 'bg-amber-100 text-amber-900 hover:bg-amber-200 hover:text-amber-900' : ''}`}
+            className={`h-9 w-9 rounded-full ${isDndActive ? 'bg-red-500 hover:bg-red-600' : ''}`}
             onClick={handleToggle}
             disabled={isToggling}
           >
             {isToggling ? (
               <div className="h-4 w-4 border-2 border-t-transparent border-current rounded-full animate-spin" />
             ) : (
-              <BellOff className="h-4 w-4" />
+              <Ban className="h-5 w-5" />
             )}
           </Button>
         </TooltipTrigger>
