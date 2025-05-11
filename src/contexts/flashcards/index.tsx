@@ -150,23 +150,46 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     }
   };
 
-  // Fixing the problematic recursive call by using a local implementation
+  // Fixed implementation of fetchFlashcardsInSet to avoid recursive type issues
   const fetchFlashcardsInSet = async (setId: string): Promise<Flashcard[]> => {
     setLoading(prev => ({ ...prev, flashcards: true }));
     try {
+      // Direct query to get flashcards in a set through the join table
       const { data, error } = await supabase
-        .from('flashcards')
-        .select('*')
-        .eq('set_id', setId);
+        .from('flashcard_set_cards')
+        .select(`
+          flashcard_id,
+          position,
+          flashcards:flashcard_id (
+            id, front_content, back_content, difficulty, created_at, updated_at, 
+            user_id, is_built_in, last_reviewed_at, next_review_at
+          )
+        `)
+        .eq('set_id', setId)
+        .order('position');
 
       if (error) throw error;
       
-      // Map database fields to Flashcard object structure
-      const mappedFlashcards = data.map(card => ({
-        ...card,
-        front: card.front_content,
-        back: card.back_content,
-      })) as Flashcard[];
+      // Map and transform the joined data to the Flashcard structure
+      const mappedFlashcards = data.map(item => {
+        const card = item.flashcards;
+        return {
+          id: card.id,
+          front: card.front_content,
+          back: card.back_content,
+          front_content: card.front_content,
+          back_content: card.back_content,
+          difficulty: card.difficulty,
+          user_id: card.user_id,
+          created_at: card.created_at,
+          updated_at: card.updated_at,
+          is_built_in: card.is_built_in,
+          last_reviewed_at: card.last_reviewed_at,
+          next_review_at: card.next_review_at,
+          position: item.position,
+          set_id: setId
+        } as Flashcard;
+      });
       
       return mappedFlashcards;
     } catch (error) {
