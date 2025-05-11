@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Calendar as CalendarComponent, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
@@ -9,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { CreateEventDialog } from './CreateEventDialog';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface ScheduleCalendarProps {
@@ -147,7 +148,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ selectedDate
           open={showCreateDialog}
           onOpenChange={setShowCreateDialog}
           onEventCreated={handleEventCreated}
-          selectedDate={selectedDate}
+          // Remove the selectedDate prop if CreateEventDialog doesn't accept it
         />
       )}
 

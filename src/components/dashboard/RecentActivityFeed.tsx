@@ -26,10 +26,9 @@ const RecentActivityFeed = () => {
 
       setLoading(true);
       try {
-        // Since we can't check if the table exists via rpc, we'll try to fetch data directly
-        // and handle errors appropriately
+        // Since there's no activity table, we'll use study_sessions data and convert it
         const { data, error } = await supabase
-          .from('activity') // Try the correct table name based on schema
+          .from('study_sessions')
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
@@ -56,7 +55,16 @@ const RecentActivityFeed = () => {
           ];
           setActivity(mockActivity);
         } else {
-          setActivity(data as Activity[] || []);
+          // Convert study sessions to Activity format
+          const formattedActivities: Activity[] = (data || []).map(session => ({
+            id: session.id,
+            user_id: session.user_id,
+            activity_type: 'study_session',
+            description: session.title || 'Study session',
+            created_at: session.created_at
+          }));
+          
+          setActivity(formattedActivities);
         }
       } catch (error) {
         console.error("Unexpected error:", error);
@@ -77,6 +85,8 @@ const RecentActivityFeed = () => {
         return `Created a new flashcard set: ${item.description}`;
       case 'quiz_created':
         return `Created a new quiz: ${item.description}`;
+      case 'study_session':
+        return `Study session: ${item.description}`;
       default:
         return item.description;
     }

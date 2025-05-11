@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from "sonner";
-import { useAuth } from "@/contexts/auth";
+import { useAuth } from '@/contexts/auth';
+import { toast } from '@/components/ui/sonner';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { UserConnection } from "@/types/chat";
 import { useToast } from "@/hooks/use-toast";
 import { UseConnectionsReturn } from './types';

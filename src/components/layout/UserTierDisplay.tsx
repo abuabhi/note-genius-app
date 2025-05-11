@@ -1,8 +1,7 @@
 
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { useUserTier } from "@/hooks/useUserTier";
-import { UserTier } from "@/hooks/useRequireAuth";
+import { useUserTier, UserTier } from "@/hooks/useUserTier";
 import { CirclePercent, BarChart } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,7 +31,22 @@ interface UsageStats {
 }
 
 export function UserTierDisplay() {
-  const { userTier, isLoading, tierLimits } = useUserTier();
+  const { userTier, isLoading } = useUserTier();
+  
+  // Fetch tier limits data separately
+  const { data: tierLimits } = useQuery({
+    queryKey: ["tierLimits", userTier],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('tier_limits')
+        .select('*')
+        .eq('tier', userTier)
+        .single();
+      
+      return data;
+    },
+    enabled: !!userTier,
+  });
   
   const { data: usageStats, isLoading: isLoadingUsage } = useQuery({
     queryKey: ["userUsageStats"],

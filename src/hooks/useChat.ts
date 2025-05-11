@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
+import { useRouter } from '@/hooks/useRouter';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useConnections } from "./chat/useConnections";
 import { UserProfile, UserTier } from "@/hooks/useRequireAuth";
 import { ChatMessage, ChatConversation, UserConnection } from "@/types/chat";

@@ -1,17 +1,17 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Ban } from 'lucide-react';
 import { useDndMode } from '@/hooks/useDndMode';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export const DndToggle = () => {
-  const { dndSettings, isDndActive, toggleDndMode, loading } = useDndMode();
+  const { dndSettings, isDndActive, toggleDnd, isLoading } = useDndMode();
   const [isToggling, setIsToggling] = useState(false);
   
   const handleToggle = async () => {
     setIsToggling(true);
-    await toggleDndMode(!isDndActive);
+    await toggleDnd(); // Using the correct function name from the hook
     setIsToggling(false);
   };
   
@@ -22,7 +22,7 @@ export const DndToggle = () => {
     return `(${dndSettings.startTime} - ${dndSettings.endTime})`;
   };
   
-  if (loading) {
+  if (isLoading) { // Using isLoading instead of loading
     return (
       <Button variant="ghost" size="icon" disabled className="h-9 w-9">
         <div className="h-4 w-4 border-2 border-t-transparent border-current rounded-full animate-spin" />

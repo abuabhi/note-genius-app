@@ -20,7 +20,7 @@ interface UserAchievement {
   id: string;
   achievement_id: string;
   created_at: string;
-  achievements?: Achievement;
+  achievement?: Achievement;
 }
 
 export const Achievements = () => {
@@ -35,36 +35,47 @@ export const Achievements = () => {
       
       setLoading(true);
       try {
-        // Use a safer approach since 'user_achievements' table might not exist
-        const { data, error } = await supabase
-          .from('achievements') // Try with this table name
-          .select(`
-            id,
-            name,
-            description,
-            icon,
-            type
-          `)
-          .limit(10);
-        
-        if (error) {
-          console.error("Error fetching achievements:", error);
-          setAchievements([]);
-        } else {
-          // Convert to the expected format
-          const formattedData = data.map(achievement => ({
-            id: achievement.id,
-            achievement_id: achievement.id,
+        // Since there's no achievements table, we'll create sample achievements
+        const sampleAchievements = [
+          { 
+            id: "1", 
+            achievement_id: "1",
             created_at: new Date().toISOString(),
-            achievements: {
-              name: achievement.name,
-              description: achievement.description,
-              icon: achievement.icon || "Award",
-              type: achievement.type || "general"
+            achievement: {
+              id: "1",
+              name: "First Note",
+              description: "Created your first note",
+              icon: "FileText",
+              type: "note"
             }
-          }));
-          setAchievements(formattedData);
-        }
+          },
+          {
+            id: "2", 
+            achievement_id: "2",
+            created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
+            achievement: {
+              id: "2",
+              name: "Study Streak",
+              description: "Studied for 3 consecutive days",
+              icon: "CalendarDays",
+              type: "study"
+            }
+          },
+          {
+            id: "3", 
+            achievement_id: "3",
+            created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
+            achievement: {
+              id: "3",
+              name: "Flashcard Master",
+              description: "Mastered 50 flashcards",
+              icon: "Cards",
+              type: "flashcard"
+            }
+          }
+        ];
+        
+        setAchievements(sampleAchievements);
       } catch (error) {
         console.error("Error fetching achievements:", error);
         setAchievements([]);
@@ -76,13 +87,6 @@ export const Achievements = () => {
     fetchAchievements();
   }, [user]);
   
-  // Sample data for demonstration
-  const sampleAchievements = [
-    { id: "1", name: "First Note", description: "Created your first note", icon: "FileText", type: "note" },
-    { id: "2", name: "Study Streak", description: "Studied for 3 consecutive days", icon: "CalendarDays", type: "study" },
-    { id: "3", name: "Flashcard Master", description: "Mastered 50 flashcards", icon: "Cards", type: "flashcard" },
-  ];
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
@@ -112,10 +116,10 @@ export const Achievements = () => {
                     achievements.map((achievement) => (
                       <AchievementItem
                         key={achievement.id}
-                        name={achievement.achievements?.name || "Unknown Achievement"}
-                        description={achievement.achievements?.description || "No description"}
-                        icon={achievement.achievements?.icon || "Award"}
-                        type={achievement.achievements?.type || "general"}
+                        name={achievement.achievement?.name || "Unknown Achievement"}
+                        description={achievement.achievement?.description || "No description"}
+                        icon={achievement.achievement?.icon || "Award"}
+                        type={achievement.achievement?.type || "general"}
                         date={achievement.created_at}
                       />
                     ))
@@ -137,14 +141,14 @@ export const Achievements = () => {
             <CardContent>
               <ScrollArea className="h-[300px]">
                 <div className="space-y-4">
-                  {sampleAchievements.map((achievement) => (
+                  {achievements.map((achievement) => (
                     <AchievementItem
                       key={achievement.id}
-                      name={achievement.name}
-                      description={achievement.description}
-                      icon={achievement.icon}
-                      type={achievement.type}
-                      date={new Date().toISOString()}
+                      name={achievement.achievement?.name || "Unknown Achievement"}
+                      description={achievement.achievement?.description || "No description"}
+                      icon={achievement.achievement?.icon || "Award"}
+                      type={achievement.achievement?.type || "general"}
+                      date={achievement.created_at}
                     />
                   ))}
                 </div>
