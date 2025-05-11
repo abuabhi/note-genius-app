@@ -136,56 +136,89 @@ export const useLibraryOperations = (
 
       toast.success('Flashcard set cloned successfully');
       
-      // Refresh the user's sets by fetching them directly
-      const { data: userSets } = await supabase
-        .from('flashcard_sets')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      // Refresh the user's sets - using simpler approach to avoid circular references
+      await refreshUserSets(user.id);
       
-      if (userSets) {
-        // Process sets to include card counts and categories
-        const formattedSets = await Promise.all(
-          userSets.map(async (set) => {
-            // Get card count
-            const { count, error: countError } = await supabase
-              .from('flashcard_set_cards')
-              .select('*', { count: 'exact', head: true })
-              .eq('set_id', set.id);
-            
-            // Get category if available
-            let categoryInfo = null;
-            if (set.category_id) {
-              const { data: categoryData, error: categoryError } = await supabase
-                .from('subject_categories')
-                .select('id, name')
-                .eq('id', set.category_id)
-                .single();
-              
-              if (!categoryError && categoryData) {
-                categoryInfo = {
-                  id: categoryData.id,
-                  name: categoryData.name
-                };
-              }
-            }
-            
-            return {
-              ...set,
-              card_count: countError ? 0 : count || 0,
-              subject_categories: categoryInfo
-            } as FlashcardSet;
-          })
-        );
-        
-        setFlashcardSets(formattedSets);
-      }
+      // Convert and return the new set 
+      const formattedSet: FlashcardSet = {
+        id: newSet.id,
+        name: newSet.name,
+        description: newSet.description,
+        user_id: newSet.user_id,
+        created_at: newSet.created_at,
+        updated_at: newSet.updated_at,
+        is_built_in: newSet.is_built_in || false,
+        subject: newSet.subject,
+        topic: newSet.topic,
+        category_id: newSet.category_id,
+        card_count: originalCards?.length || 0
+      };
       
-      return newSet as FlashcardSet;
+      return formattedSet;
     } catch (error) {
       console.error('Error cloning flashcard set:', error);
       toast.error('Failed to clone flashcard set');
       return null;
+    }
+  };
+  
+  // Helper function to refresh user's flashcard sets
+  const refreshUserSets = async (userId: string): Promise<void> => {
+    try {
+      // Get basic set data
+      const { data: userSets, error } = await supabase
+        .from('flashcard_sets')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      // If no sets, just set empty array
+      if (!userSets || userSets.length === 0) {
+        setFlashcardSets([]);
+        return;
+      }
+      
+      // Process sets with counts and categories
+      const formattedSets: FlashcardSet[] = await Promise.all(
+        userSets.map(async (set) => {
+          // Get card count
+          const { count, error: countError } = await supabase
+            .from('flashcard_set_cards')
+            .select('*', { count: 'exact', head: true })
+            .eq('set_id', set.id);
+          
+          // Get category if available
+          let categoryInfo = null;
+          if (set.category_id) {
+            const { data: categoryData, error: categoryError } = await supabase
+              .from('subject_categories')
+              .select('id, name')
+              .eq('id', set.category_id)
+              .single();
+            
+            if (!categoryError && categoryData) {
+              categoryInfo = {
+                id: categoryData.id,
+                name: categoryData.name
+              };
+            }
+          }
+          
+          // Return formatted set
+          return {
+            ...set,
+            card_count: countError ? 0 : count || 0,
+            subject_categories: categoryInfo
+          } as FlashcardSet;
+        })
+      );
+      
+      setFlashcardSets(formattedSets);
+    } catch (error) {
+      console.error('Error refreshing user flashcard sets:', error);
+      // Don't show toast here as this is a background operation
     }
   };
 
