@@ -18,19 +18,46 @@ export const useLibraryOperations = (
     try {
       const { data, error } = await supabase
         .from('flashcard_sets')
-        .select('*, flashcard_set_cards(count)')
+        .select('*, subject_categories(id, name)')
         .eq('is_built_in', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      // Format the sets to include card count
-      const formattedSets = data.map(set => ({
-        ...set,
-        card_count: set.flashcard_set_cards?.[0]?.count || 0
-      })) as FlashcardSet[];
+      // Format the sets with card counts
+      const builtInSetsWithCardCounts = await Promise.all(
+        data.map(async (set) => {
+          // Get card count for this set
+          const { count, error: countError } = await supabase
+            .from('flashcard_set_cards')
+            .select('*', { count: 'exact', head: true })
+            .eq('set_id', set.id);
+          
+          // Convert to proper type with card count
+          return {
+            id: set.id,
+            name: set.name,
+            description: set.description,
+            user_id: set.user_id,
+            created_at: set.created_at,
+            updated_at: set.updated_at,
+            is_built_in: set.is_built_in,
+            card_count: countError ? 0 : count || 0,
+            subject: set.subject,
+            topic: set.topic,
+            country_id: set.country_id,
+            category_id: set.category_id,
+            education_system: set.education_system,
+            section_id: set.section_id,
+            subject_categories: set.subject_categories ? {
+              id: set.subject_categories.id,
+              name: set.subject_categories.name
+            } : undefined
+          } as FlashcardSet;
+        })
+      );
       
-      return formattedSets;
+      return builtInSetsWithCardCounts;
     } catch (error) {
       console.error('Error fetching built-in flashcard sets:', error);
       toast.error('Failed to load flashcard sets');
@@ -94,18 +121,33 @@ export const useLibraryOperations = (
       }
 
       toast.success('Flashcard set cloned successfully');
-      // Refresh the user's sets
-      const { data: userData } = await supabase
+      
+      // Refresh the user's sets by fetching them directly
+      const { data: userSets } = await supabase
         .from('flashcard_sets')
-        .select('*, flashcard_set_cards(count)')
+        .select('*, subject_categories(id, name)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       
-      if (userData) {
-        const formattedSets = userData.map(set => ({
-          ...set,
-          card_count: set.flashcard_set_cards?.[0]?.count || 0
-        })) as FlashcardSet[];
+      if (userSets) {
+        // Process sets to include card counts
+        const formattedSets = await Promise.all(
+          userSets.map(async (set) => {
+            const { count, error: countError } = await supabase
+              .from('flashcard_set_cards')
+              .select('*', { count: 'exact', head: true })
+              .eq('set_id', set.id);
+            
+            return {
+              ...set,
+              card_count: countError ? 0 : count || 0,
+              subject_categories: set.subject_categories ? {
+                id: set.subject_categories.id,
+                name: set.subject_categories.name
+              } : undefined
+            } as FlashcardSet;
+          })
+        );
         
         setFlashcardSets(formattedSets);
       }
