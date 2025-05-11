@@ -1,6 +1,5 @@
-
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useState, useEffect, useMemo } from 'react';
+import { useAuth } from '@/contexts/auth'; // Updated import path
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';

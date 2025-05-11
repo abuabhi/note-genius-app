@@ -1,212 +1,132 @@
-
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Trophy, Award, Clock, Zap, BookOpen, Star, Brain, Target } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-
-interface Achievement {
-  id: string;
-  title: string;
-  description: string;
-  badge_image: string | null;
-  achieved_at: string | null;
-  points: number;
-  type: string;
-  icon: React.ReactNode;
-}
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { AchievementItem } from "@/components/progress/AchievementItem";
+import { useAuth } from "@/contexts/auth"; // Updated import path
 
 export const Achievements = () => {
   const { user } = useAuth();
-  
-  const { data: achievements = [], isLoading } = useQuery({
-    queryKey: ["achievements", user?.id],
-    queryFn: async () => {
-      if (!user) return [];
+  const [achievements, setAchievements] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("overview");
+
+  useEffect(() => {
+    const fetchAchievements = async () => {
+      if (!user) return;
       
-      // Fetch user achievements from the database
-      const { data: userAchievements, error } = await supabase
-        .from('study_achievements')
-        .select('*')
-        .eq('user_id', user.id);
+      setLoading(true);
+      try {
+        // Fetch user-specific achievements
+        const { data, error } = await supabase
+          .from('user_achievements')
+          .select(`
+            id,
+            achievement_id,
+            achievements (
+              name,
+              description,
+              icon,
+              type
+            ),
+            created_at
+          `)
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
         
-      if (error) {
-        console.error('Error fetching achievements:', error);
-        throw error;
+        if (error) throw error;
+        
+        setAchievements(data || []);
+      } catch (error) {
+        console.error("Error fetching achievements:", error);
+      } finally {
+        setLoading(false);
       }
-      
-      // Get the list of all available achievements
-      const { data: allAchievements, error: allError } = await supabase
-        .from('study_achievements')
-        .select('type, title, description, points')
-        .eq('user_id', null); // System-defined achievements have null user_id
-      
-      if (allError) {
-        console.error('Error fetching all achievements:', allError);
-      }
-      
-      // Map achievements with their icons
-      const mappedAchievements: Achievement[] = (userAchievements || []).map(achievement => ({
-        ...achievement,
-        icon: getAchievementIcon(achievement.type)
-      }));
-      
-      // Add available but not yet achieved achievements
-      if (allAchievements) {
-        allAchievements.forEach(achievement => {
-          const exists = mappedAchievements.some(a => a.type === achievement.type);
-          
-          if (!exists) {
-            mappedAchievements.push({
-              id: `pending-${achievement.type}`,
-              title: achievement.title,
-              description: achievement.description,
-              badge_image: null,
-              achieved_at: null,
-              points: achievement.points,
-              type: achievement.type,
-              icon: getAchievementIcon(achievement.type)
-            });
-          }
-        });
-      }
-      
-      return mappedAchievements;
-    },
-    enabled: !!user
-  });
-
-  if (isLoading) {
-    return <AchievementsLoading />;
-  }
-
-  const earnedAchievements = achievements.filter(a => a.achieved_at);
-  const totalPoints = earnedAchievements.reduce((sum, a) => sum + a.points, 0);
+    };
+    
+    fetchAchievements();
+  }, [user]);
+  
+  // Sample data for demonstration
+  const sampleAchievements = [
+    { id: "1", name: "First Note", description: "Created your first note", icon: "FileText", type: "note" },
+    { id: "2", name: "Study Streak", description: "Studied for 3 consecutive days", icon: "CalendarDays", type: "study" },
+    { id: "3", name: "Flashcard Master", description: "Mastered 50 flashcards", icon: "Cards", type: "flashcard" },
+  ];
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold">Achievements</h2>
-          <p className="text-muted-foreground">Track your learning milestones and accomplishments</p>
-        </div>
-        <div className="text-right">
-          <div className="text-2xl font-bold">{earnedAchievements.length}/{achievements.length}</div>
-          <div className="text-muted-foreground">Total points: {totalPoints}</div>
+          <h2 className="text-2xl font-semibold">Achievements</h2>
+          <p className="text-muted-foreground">Track your progress and milestones</p>
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {achievements.map((achievement) => (
-          <AchievementCard 
-            key={achievement.id} 
-            achievement={achievement}
-            isEarned={!!achievement.achieved_at}
-          />
-        ))}
-      </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="details">Details</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="overview" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Achievements</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[300px]">
+                <div className="space-y-4">
+                  {loading ? (
+                    <p>Loading achievements...</p>
+                  ) : achievements.length > 0 ? (
+                    achievements.map((achievement) => (
+                      <AchievementItem
+                        key={achievement.id}
+                        name={achievement.achievements?.name || "Unknown Achievement"}
+                        description={achievement.achievements?.description || "No description"}
+                        icon={achievement.achievements?.icon || "Award"}
+                        type={achievement.achievements?.type || "general"}
+                        date={achievement.created_at}
+                      />
+                    ))
+                  ) : (
+                    <p>No achievements yet. Keep learning to unlock new milestones!</p>
+                  )}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="details" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>All Achievements</CardTitle>
+              <Separator />
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[300px]">
+                <div className="space-y-4">
+                  {sampleAchievements.map((achievement) => (
+                    <AchievementItem
+                      key={achievement.id}
+                      name={achievement.name}
+                      description={achievement.description}
+                      icon={achievement.icon}
+                      type={achievement.type}
+                      date={new Date().toLocaleDateString()}
+                    />
+                  ))}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
-};
-
-const AchievementCard = ({ 
-  achievement, 
-  isEarned 
-}: { 
-  achievement: Achievement; 
-  isEarned: boolean;
-}) => {
-  return (
-    <Card className={`${isEarned ? 'bg-gradient-to-br from-slate-50 to-slate-100 border-indigo-200' : 'opacity-70 grayscale'}`}>
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <CardTitle className="text-lg font-semibold">
-            {achievement.title}
-          </CardTitle>
-          
-          {isEarned && (
-            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-              +{achievement.points} pts
-            </Badge>
-          )}
-        </div>
-      </CardHeader>
-      
-      <CardContent>
-        <div className="flex items-center gap-4">
-          <div className={`p-3 rounded-full ${isEarned ? 'bg-primary/20 text-primary' : 'bg-slate-200 text-slate-400'}`}>
-            {achievement.icon}
-          </div>
-          
-          <div className="flex-1">
-            <p className="text-sm text-muted-foreground">{achievement.description}</p>
-            {isEarned && achievement.achieved_at && (
-              <p className="text-xs text-primary font-medium mt-1">
-                Achieved on {new Date(achievement.achieved_at).toLocaleDateString()}
-              </p>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-const AchievementsLoading = () => (
-  <div className="space-y-6">
-    <div className="flex justify-between items-center">
-      <div>
-        <Skeleton className="h-8 w-48 mb-1" />
-        <Skeleton className="h-4 w-64" />
-      </div>
-      <div className="text-right">
-        <Skeleton className="h-8 w-16 mb-1" />
-        <Skeleton className="h-4 w-24" />
-      </div>
-    </div>
-    
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <Card key={i} className="opacity-70">
-          <CardHeader className="pb-2">
-            <Skeleton className="h-6 w-1/2 mb-1" />
-          </CardHeader>
-          
-          <CardContent>
-            <div className="flex items-center gap-4">
-              <Skeleton className="h-12 w-12 rounded-full" />
-              <div className="flex-1">
-                <Skeleton className="h-4 w-full mb-2" />
-                <Skeleton className="h-4 w-3/4" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  </div>
-);
-
-const getAchievementIcon = (type: string) => {
-  switch (type) {
-    case 'streak':
-      return <Zap className="h-5 w-5" />;
-    case 'quiz_master':
-      return <Trophy className="h-5 w-5" />;
-    case 'time_spent':
-      return <Clock className="h-5 w-5" />;
-    case 'flashcard_master':
-      return <BookOpen className="h-5 w-5" />;
-    case 'first_set':
-      return <Award className="h-5 w-5" />;
-    case 'perfect_score':
-      return <Star className="h-5 w-5" />;
-    case 'consistent_learner': 
-      return <Target className="h-5 w-5" />;
-    default:
-      return <Brain className="h-5 w-5" />;
-  }
 };

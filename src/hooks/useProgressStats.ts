@@ -1,9 +1,8 @@
-
-import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth"; // Updated import path
+import { addDays, format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
-import { format, subDays, isAfter } from "date-fns";
 import { useFlashcards } from "@/contexts/FlashcardContext";
 import { useToast } from "@/hooks/use-toast";
 

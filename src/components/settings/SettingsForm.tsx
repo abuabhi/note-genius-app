@@ -1,27 +1,9 @@
-
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
-import { useCountries } from "@/hooks/useCountries";
-import { useUserTier } from "@/hooks/useUserTier";
-import { UserTier } from "@/hooks/useRequireAuth";
-import AccountSettingsCard from "./cards/AccountSettingsCard";
-import NotificationsCard from "./cards/NotificationsCard";
-import AppearanceCard from "./cards/AppearanceCard";
-import { NotificationSettingsCard } from "./cards/NotificationSettingsCard";
-import { DoNotDisturbCard } from "./cards/DoNotDisturbCard";
-import { UpgradeTierCard } from "./cards/UpgradeTierCard";
-import { SubjectsSettingsCard } from "./cards/SubjectsSettingsCard";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { settingsFormSchema, type SettingsFormValues } from "./schemas/settingsFormSchema";
-import { Form } from "@/components/ui/form";
-import UnsavedChangesDialog from "./dialogs/UnsavedChangesDialog";
-import { useNavigate } from "react-router-dom";
-import { useUnsavedChangesPrompt } from "@/hooks/useUnsavedChangesPrompt";
+import { z } from "zod";
+import { useAuth } from "@/contexts/auth"; // Updated import path
 import { supabase } from "@/integrations/supabase/client";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const SettingsForm = () => {
   const { userTier } = useUserTier();

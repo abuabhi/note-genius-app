@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth";
+import { useConnections } from "./chat/useConnections";
 import { UserProfile, UserTier } from "@/hooks/useRequireAuth";
 import { ChatMessage, ChatConversation, UserConnection } from "@/types/chat";
 import { useToast } from "@/hooks/use-toast";
@@ -8,12 +9,11 @@ import { useToast } from "@/hooks/use-toast";
 export const useChat = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { connections } = useConnections();
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
-  const [connections, setConnections] = useState<UserConnection[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [loadingConversations, setLoadingConversations] = useState(true);
-  const [loadingConnections, setLoadingConnections] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(true);
 
   // Fetch conversations for current user
@@ -109,38 +109,6 @@ export const useChat = () => {
 
     fetchConversations();
   }, [user, toast]);
-
-  // Fetch connections for current user
-  useEffect(() => {
-    if (!user) return;
-
-    const fetchConnections = async () => {
-      setLoadingConnections(true);
-      try {
-        // Get connections where user is either sender or receiver
-        const { data, error } = await supabase
-          .from('user_connections')
-          .select('*')
-          .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`);
-
-        if (error) throw error;
-        
-        // Ensure the status is of the correct type
-        const typedConnections = data.map(conn => ({
-          ...conn,
-          status: conn.status as 'pending' | 'accepted' | 'declined' | 'blocked'
-        }));
-        
-        setConnections(typedConnections);
-      } catch (error) {
-        console.error('Error fetching connections:', error);
-      } finally {
-        setLoadingConnections(false);
-      }
-    };
-
-    fetchConnections();
-  }, [user]);
 
   // Fetch messages when conversation is selected
   useEffect(() => {
@@ -430,7 +398,6 @@ export const useChat = () => {
     activeConversationId,
     setActiveConversationId,
     loadingConversations,
-    loadingConnections,
     loadingMessages,
     sendMessage,
     updateLastRead,

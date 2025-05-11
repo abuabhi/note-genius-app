@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,7 +7,7 @@ import { Note } from '@/types/note';
 import { TagSelector } from '../TagSelector';
 import { useNotes } from '@/contexts/NoteContext';
 import { useNoteEnrichment } from '@/hooks/useNoteEnrichment';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth'; // Updated import path
 import { toast } from '@/components/ui/sonner';
 import { NoteMetadataFields } from './form/NoteMetadataFields';
 import { NoteContentField } from './form/NoteContentField';

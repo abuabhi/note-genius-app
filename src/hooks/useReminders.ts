@@ -1,10 +1,7 @@
-
-import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { format, addDays, addWeeks, addMonths } from "date-fns";
+import { useAuth } from "@/contexts/auth"; // Updated import path
+import { useReminderNotifications } from "./useReminderNotifications";
 
 export type ReminderStatus = 'pending' | 'sent' | 'cancelled';
 export type ReminderRecurrence = 'none' | 'daily' | 'weekly' | 'monthly';

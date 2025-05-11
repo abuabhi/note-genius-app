@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Award, Calendar, Zap, Star } from "lucide-react";
 import { useFlashcards } from "@/contexts/FlashcardContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth"; // Updated import path
 import { supabase } from "@/integrations/supabase/client";
 
 export const StudyProgress = () => {

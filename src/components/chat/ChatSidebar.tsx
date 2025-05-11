@@ -16,7 +16,7 @@ import {
   SheetTitle, 
   SheetTrigger 
 } from "@/components/ui/sheet";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth"; // Updated import path
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserConnection } from "@/types/chat";
 

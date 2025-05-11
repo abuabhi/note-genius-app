@@ -1,166 +1,126 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarClock, Clock, Repeat } from "lucide-react";
-import { format, addHours } from "date-fns";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import { useUserSubjects } from "@/hooks/useUserSubjects";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth"; // Updated import path
+import { useScheduleColors } from "@/hooks/useScheduleColors";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-const eventSchema = z.object({
-  title: z.string().min(1, "Title is required"),
+const formSchema = z.object({
+  title: z.string().min(2, {
+    message: "Title must be at least 2 characters.",
+  }),
+  date: z.date({
+    required_error: "A date is required.",
+  }),
+  subject: z.string().optional(),
   description: z.string().optional(),
-  startTime: z.string().min(1, "Start time is required"),
-  endTime: z.string().min(1, "End time is required"),
-  allDay: z.boolean().default(false),
-  eventType: z.string().default("study"),
-  color: z.string().default("#3dc087"),
-  flashcardSetId: z.string().optional(),
-  isRecurring: z.boolean().default(false),
-  recurrencePattern: z.string().default("none"),
+  color: z.string().optional(),
 });
 
-type EventFormValues = z.infer<typeof eventSchema>;
-
 interface CreateEventDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  selectedDate?: Date;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onEventCreated?: () => void;
 }
 
-export function CreateEventDialog({ 
-  isOpen, 
-  onClose, 
-  selectedDate = new Date(),
-  onEventCreated 
-}: CreateEventDialogProps) {
+export const CreateEventDialog: React.FC<CreateEventDialogProps> = ({
+  open,
+  onOpenChange,
+  onEventCreated
+}) => {
+  const { subjects } = useUserSubjects();
   const { user } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const queryClient = useQueryClient();
-  
-  const startTime = new Date(selectedDate);
-  startTime.setHours(9, 0, 0, 0);
-  
-  const endTime = addHours(startTime, 1);
-  
-  const defaultValues = {
-    title: "",
-    description: "",
-    startTime: format(startTime, "yyyy-MM-dd'T'HH:mm"),
-    endTime: format(endTime, "yyyy-MM-dd'T'HH:mm"),
-    allDay: false,
-    eventType: "study",
-    color: "#3dc087", // Changed to mint color
-    flashcardSetId: "",
-    isRecurring: false,
-    recurrencePattern: "none",
-  };
+  const { scheduleColors } = useScheduleColors();
+  const [selectedColor, setSelectedColor] = useState("");
 
-  const form = useForm<EventFormValues>({
-    resolver: zodResolver(eventSchema),
-    defaultValues,
-  });
-
-  // Fetch user's flashcard sets with improved error handling
-  const { data: flashcardSets = [] } = useQuery({
-    queryKey: ['flashcardSets', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      
-      try {
-        const { data, error } = await supabase
-          .from('flashcard_sets')
-          .select('id, name')
-          .eq('user_id', user.id)
-          .order('name', { ascending: true });
-          
-        if (error) {
-          console.error('Error fetching flashcard sets:', error);
-          return [];
-        }
-        return data || [];
-      } catch (err) {
-        console.error('Exception when fetching flashcard sets:', err);
-        return [];
-      }
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: "",
+      date: new Date(),
+      subject: "",
+      description: "",
+      color: "",
     },
-    enabled: !!user && isOpen, // Only fetch when dialog is open
-    retry: false, // Don't retry on failure to prevent error loops
-    staleTime: 30000, // Cache data for 30 seconds
   });
 
-  const eventType = form.watch("eventType");
-  const isRecurring = form.watch("isRecurring");
-
-  const onSubmit = async (values: EventFormValues) => {
-    if (!user) {
-      toast.error("You must be logged in to create events");
-      return;
+  useEffect(() => {
+    if (scheduleColors && scheduleColors.length > 0) {
+      setSelectedColor(scheduleColors[0].value);
+      form.setValue("color", scheduleColors[0].value);
     }
+  }, [scheduleColors, form]);
 
-    setIsSubmitting(true);
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!user) return;
 
-    try {
-      // Prepare recurrence pattern data if recurring is enabled
-      const recurrencePattern = values.isRecurring ? { pattern: values.recurrencePattern } : null;
-      
-      const eventData = {
-        user_id: user.id,
-        title: values.title,
-        description: values.description,
-        start_time: new Date(values.startTime).toISOString(),
-        end_time: new Date(values.endTime).toISOString(),
-        all_day: values.allDay,
-        event_type: values.eventType,
-        color: values.color,
-        flashcard_set_id: values.flashcardSetId || null,
-        is_recurring: values.isRecurring,
-        recurrence_pattern: recurrencePattern,
-      };
+    const createEvent = async () => {
+      const { data, error } = await supabase
+        .from("events")
+        .insert([
+          {
+            user_id: user.id,
+            title: values.title,
+            date: format(values.date, "yyyy-MM-dd"),
+            subject: values.subject,
+            description: values.description,
+            color: values.color,
+          },
+        ])
+        .select();
 
-      const { error } = await supabase
-        .from('events')
-        .insert(eventData);
+      if (error) {
+        toast.error("Something went wrong. Please try again.");
+      } else {
+        toast.success("Event created successfully!");
+        form.reset();
+        onOpenChange(false);
+        if (onEventCreated) {
+          onEventCreated();
+        }
+      }
+    };
 
-      if (error) throw error;
-
-      // Invalidate queries to trigger a refresh
-      queryClient.invalidateQueries({ queryKey: ['events'] });
-      queryClient.invalidateQueries({ queryKey: ['upcomingEvents'] });
-      
-      toast.success("Event created successfully");
-      onEventCreated?.(); // Call the callback to trigger a refresh
-      onClose();
-    } catch (error) {
-      console.error("Error creating event:", error);
-      toast.error("Failed to create event");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    createEvent();
+  }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md bg-white border border-mint-100">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-mint-800">
-            <CalendarClock className="h-5 w-5 text-mint-600" />
-            Add New Event
-          </DialogTitle>
+          <DialogTitle>Create Event</DialogTitle>
         </DialogHeader>
-
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -168,189 +128,89 @@ export function CreateEventDialog({
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-mint-800">Event Title</FormLabel>
+                  <FormLabel>Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="Study Session" {...field} className="border-mint-200 focus-visible:ring-mint-500" />
+                    <Input placeholder="Event title" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
-              name="eventType"
+              name="date"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Date</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-[240px] pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date < new Date()
+                        }
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="subject"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-mint-800">Event Type</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="flex space-x-2"
-                    >
-                      <FormItem className="flex items-center space-x-1 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="study" className="text-mint-600 border-mint-400" />
-                        </FormControl>
-                        <FormLabel className="font-normal text-mint-700">Study</FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-1 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="deadline" className="text-mint-600 border-mint-400" />
-                        </FormControl>
-                        <FormLabel className="font-normal text-mint-700">Deadline</FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-1 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="reminder" className="text-mint-600 border-mint-400" />
-                        </FormControl>
-                        <FormLabel className="font-normal text-mint-700">Reminder</FormLabel>
-                      </FormItem>
-                    </RadioGroup>
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            
-            {eventType === "study" && flashcardSets && flashcardSets.length > 0 && (
-              <FormField
-                control={form.control}
-                name="flashcardSetId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-mint-800">Flashcard Set (optional)</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="border-mint-200 focus:ring-mint-500">
-                          <SelectValue placeholder="Select a flashcard set" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="">None</SelectItem>
-                        {flashcardSets.map((set) => (
-                          <SelectItem key={set.id} value={set.id}>
-                            {set.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="startTime"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-mint-800">Start Time</FormLabel>
+                  <FormLabel>Subject</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <Input type="datetime-local" {...field} className="border-mint-200 focus-visible:ring-mint-500" />
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a subject" />
+                      </SelectTrigger>
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="endTime"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-mint-800">End Time</FormLabel>
-                    <FormControl>
-                      <Input type="datetime-local" {...field} className="border-mint-200 focus-visible:ring-mint-500" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <FormField
-              control={form.control}
-              name="allDay"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border border-mint-200 p-3">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-mint-800">All Day</FormLabel>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      className="data-[state=checked]:bg-mint-600"
-                    />
-                  </FormControl>
+                    <SelectContent>
+                      {subjects?.map((subject) => (
+                        <SelectItem key={subject.id} value={subject.name}>
+                          {subject.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
                 </FormItem>
               )}
             />
-            
-            <FormField
-              control={form.control}
-              name="isRecurring"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border border-mint-200 p-3">
-                  <div className="space-y-0.5 flex items-center">
-                    <Repeat className="h-4 w-4 mr-2 text-mint-600" />
-                    <FormLabel className="text-mint-800">Recurring Event</FormLabel>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      className="data-[state=checked]:bg-mint-600"
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            
-            {isRecurring && (
-              <FormField
-                control={form.control}
-                name="recurrencePattern"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-mint-800">Recurrence Pattern</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="border-mint-200 focus:ring-mint-500">
-                          <SelectValue placeholder="Select a recurrence pattern" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="daily">Daily</SelectItem>
-                        <SelectItem value="weekly">Weekly</SelectItem>
-                        <SelectItem value="monthly">Monthly</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
             <FormField
               control={form.control}
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-mint-800">Description (optional)</FormLabel>
+                  <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea 
-                      placeholder="Add details about your event" 
-                      className="resize-none border-mint-200 focus-visible:ring-mint-500" 
+                    <Textarea
+                      placeholder="Event description"
+                      className="resize-none"
                       {...field}
                     />
                   </FormControl>
@@ -358,52 +218,32 @@ export function CreateEventDialog({
                 </FormItem>
               )}
             />
-
-            <FormField
-              control={form.control}
-              name="color"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-mint-800">Color</FormLabel>
-                  <div className="flex items-center gap-2">
-                    <FormControl>
-                      <Input 
-                        type="color"
-                        {...field}
-                        className="w-12 h-8 p-1 cursor-pointer border-mint-200"
-                      />
-                    </FormControl>
-                    <div 
-                      className="w-8 h-8 rounded-full" 
-                      style={{ backgroundColor: field.value }}
-                    />
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <DialogFooter className="sm:justify-end">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={onClose}
-                disabled={isSubmitting}
-                className="border-mint-300 text-mint-700 hover:bg-mint-50"
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={isSubmitting}
-                className="bg-mint-600 hover:bg-mint-700 text-white"
-              >
-                {isSubmitting ? "Creating..." : "Create Event"}
-              </Button>
-            </DialogFooter>
+            <div className="grid w-full max-w-sm items-center gap-1.5">
+              <Label htmlFor="color">Color</Label>
+              <div className="flex gap-2">
+                {scheduleColors?.map((color) => (
+                  <Button
+                    key={color.value}
+                    variant="outline"
+                    className={cn(
+                      "w-8 h-8 rounded-full p-0",
+                      color.value === selectedColor
+                        ? "ring-2 ring-primary"
+                        : "ring-0"
+                    )}
+                    style={{ backgroundColor: color.value }}
+                    onClick={() => {
+                      setSelectedColor(color.value);
+                      form.setValue("color", color.value);
+                    }}
+                  ></Button>
+                ))}
+              </div>
+            </div>
+            <Button type="submit">Create event</Button>
           </form>
         </Form>
       </DialogContent>
     </Dialog>
   );
-}
+};

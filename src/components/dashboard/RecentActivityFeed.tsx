@@ -1,148 +1,85 @@
-
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
-import { Clock, BookOpen, FileText, BarChart } from "lucide-react";
-import { useFeatures } from "@/contexts/FeatureContext";
-
-type ActivityType = "session" | "note" | "flashcard" | "quiz";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/auth"; // Updated import path
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatDistanceToNow } from 'date-fns';
 
 interface Activity {
   id: string;
-  type: ActivityType;
-  title: string;
+  user_id: string;
+  activity_type: string;
+  description: string;
   created_at: string;
-  description?: string;
-  icon: React.ReactNode;
 }
 
-export function RecentActivityFeed() {
-  const { user } = useAuth();
-  const { isFeatureVisible } = useFeatures();
-  const [activities, setActivities] = useState<Activity[]>([]);
+const RecentActivityFeed = () => {
+  const [activity, setActivity] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    async function fetchRecentActivity() {
+    const fetchActivity = async () => {
       if (!user) return;
+
       setLoading(true);
-      
-      const fetchPromises = [];
-      const allActivities = [];
-      
-      // Only fetch session data if the study_sessions feature is visible
-      if (isFeatureVisible('study_sessions')) {
-        // Fetch last 5 study sessions
-        const sessionPromise = supabase
-          .from('study_sessions')
-          .select('id, title, start_time, duration')
-          .eq('user_id', user.id)
-          .order('start_time', { ascending: false })
-          .limit(5)
-          .then(({ data }) => {
-            return (data || []).map(session => ({
-              id: `session-${session.id}`,
-              type: 'session' as ActivityType,
-              title: session.title || 'Study Session',
-              created_at: session.start_time,
-              description: `Duration: ${Math.floor(session.duration / 60)} minutes`,
-              icon: <Clock className="h-4 w-4 text-blue-500" />
-            }));
-          });
-          
-        fetchPromises.push(sessionPromise);
-      }
-      
-      // Notes are always visible as a core feature
-      // Fetch last 5 notes
-      const notesPromise = supabase
-        .from('notes')
-        .select('id, title, created_at')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(5)
-        .then(({ data }) => {
-          return (data || []).map(note => ({
-            id: `note-${note.id}`,
-            type: 'note' as ActivityType,
-            title: note.title || 'Note',
-            created_at: note.created_at,
-            description: 'Note created',
-            icon: <FileText className="h-4 w-4 text-green-500" />
-          }));
-        });
-        
-      fetchPromises.push(notesPromise);
-      
-      // Add more feature-specific activity fetching here as needed
-      // For example, if you have quiz activities:
-      // if (isFeatureVisible('quizzes')) { ... }
-      
       try {
-        const results = await Promise.all(fetchPromises);
-        const combinedActivities = results.flat()
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-          .slice(0, 5);
-        
-        setActivities(combinedActivities);
-      } catch (error) {
-        console.error("Error fetching activities:", error);
+        const { data, error } = await supabase
+          .from('activity')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        if (error) {
+          console.error("Error fetching activity:", error);
+        } else {
+          setActivity(data || []);
+        }
       } finally {
         setLoading(false);
       }
-    }
-    
-    fetchRecentActivity();
-  }, [user, isFeatureVisible]);
+    };
 
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Recent Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
-                <div className="flex-1 space-y-1">
-                  <div className="h-4 w-2/3 bg-gray-200 rounded animate-pulse" />
-                  <div className="h-3 w-1/2 bg-gray-200 rounded animate-pulse" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+    fetchActivity();
+  }, [user]);
+
+  const getActivityDescription = (item: Activity) => {
+    switch (item.activity_type) {
+      case 'note_created':
+        return `Created a new note: ${item.description}`;
+      case 'flashcard_set_created':
+        return `Created a new flashcard set: ${item.description}`;
+      case 'quiz_created':
+        return `Created a new quiz: ${item.description}`;
+      default:
+        return item.description;
+    }
+  };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Recent Activity</CardTitle>
+        <CardTitle>Recent Activity</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4 max-h-[350px] overflow-auto">
-        {activities.length === 0 ? (
-          <p className="text-center text-muted-foreground">No recent activity found</p>
+      <CardContent className="p-4">
+        {loading ? (
+          <p>Loading activity...</p>
+        ) : activity.length > 0 ? (
+          <ul className="space-y-3">
+            {activity.map((item) => (
+              <li key={item.id} className="text-sm">
+                {getActivityDescription(item)} - {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
+              </li>
+            ))}
+          </ul>
         ) : (
-          activities.map(activity => (
-            <div key={activity.id} className="flex items-start gap-3 pb-3 border-b border-gray-100">
-              <div className="mt-1">{activity.icon}</div>
-              <div>
-                <h4 className="font-medium">{activity.title}</h4>
-                <p className="text-sm text-muted-foreground mt-1">{activity.description}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {format(new Date(activity.created_at), "MMM d, yyyy • h:mm a")}
-                </p>
-              </div>
-            </div>
-          ))
+          <p>No recent activity</p>
         )}
       </CardContent>
     </Card>
   );
-}
+};
+
+export default RecentActivityFeed;

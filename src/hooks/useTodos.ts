@@ -1,7 +1,6 @@
-
 import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";

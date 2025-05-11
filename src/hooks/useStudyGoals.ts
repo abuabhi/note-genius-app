@@ -1,8 +1,7 @@
-
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export type StudyGoal = {
   id: string;

@@ -1,5 +1,6 @@
-
-import { useAuth } from "@/contexts/AuthContext";
+import { useState } from "react";
+import { useAuth } from "@/contexts/auth"; // Updated import path
+import { Button } from "@/components/ui/button";
 import { useUserTier } from "@/hooks/useUserTier";
 import { Card, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
