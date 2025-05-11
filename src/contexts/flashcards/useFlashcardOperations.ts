@@ -18,6 +18,29 @@ export const useFlashcardOperations = (
   
   const { toast } = useToast();
 
+  // Helper function to convert database object to Flashcard type
+  const convertToFlashcard = (data: any): Flashcard => {
+    return {
+      id: data.id,
+      front: data.front_content || '',
+      back: data.back_content || '',
+      front_content: data.front_content,
+      back_content: data.back_content,
+      difficulty: data.difficulty as FlashcardDifficulty,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      user_id: data.user_id,
+      is_built_in: data.is_built_in,
+      last_reviewed_at: data.last_reviewed_at,
+      next_review_at: data.next_review_at,
+      position: data.position,
+      hint: data.hint,
+      image_url: data.image_url,
+      audio_url: data.audio_url,
+      set_id: data.set_id
+    };
+  };
+
   // Create a new flashcard
   const createFlashcard = async (cardData: CreateFlashcardPayload, setId?: string): Promise<Flashcard | null> => {
     try {
@@ -30,11 +53,8 @@ export const useFlashcardOperations = (
       
       if (error) throw error;
       
-      // Ensure the difficulty is of type FlashcardDifficulty
-      const typedFlashcard = {
-        ...data,
-        difficulty: data.difficulty as FlashcardDifficulty
-      };
+      // Convert to proper Flashcard type
+      const typedFlashcard = convertToFlashcard(data);
       
       // Update local state
       setFlashcards(prev => [typedFlashcard, ...prev]);
@@ -42,14 +62,14 @@ export const useFlashcardOperations = (
       // If a set ID is provided, add the flashcard to that set
       if (setId) {
         // Get the current highest position in the set
-        const { data: positionData, error: positionError } = await supabase
+        const { count, error: positionError } = await supabase
           .from('flashcard_set_cards')
-          .select('position')
+          .select('position', { count: 'exact', head: true })
           .eq('set_id', setId)
           .order('position', { ascending: false })
           .limit(1);
         
-        const nextPosition = positionError || !positionData.length ? 0 : positionData[0].position + 1;
+        const nextPosition = positionError || !count ? 0 : count + 1;
         
         // Add the flashcard to the set
         const { error: linkError } = await supabase
@@ -169,13 +189,11 @@ export const useFlashcardOperations = (
       
       if (error) throw error;
       
-      // Ensure the difficulty is of type FlashcardDifficulty
-      const typedFlashcards = data.map(card => ({
-        ...card,
-        difficulty: card.difficulty as FlashcardDifficulty
-      }));
+      // Convert all cards to proper Flashcard type
+      const typedFlashcards: Flashcard[] = data.map(card => convertToFlashcard(card));
       
       setFlashcards(typedFlashcards);
+      return typedFlashcards;
     } catch (error) {
       console.error('Error fetching flashcards:', error);
       toast({
@@ -183,6 +201,7 @@ export const useFlashcardOperations = (
         description: 'Please try again later.',
         variant: 'destructive',
       });
+      return [];
     } finally {
       state.setLoading(prev => ({ ...prev, flashcards: false }));
     }
@@ -203,13 +222,13 @@ export const useFlashcardOperations = (
       if (error) throw error;
       
       // Extract the flashcards from the joined query and maintain the position order
-      const orderedFlashcards = data
-        .map(item => ({ 
-          ...item.flashcard,
-          difficulty: item.flashcard.difficulty as FlashcardDifficulty,
-          position: item.position 
-        }))
-        .sort((a, b) => a.position - b.position);
+      const orderedFlashcards: Flashcard[] = data
+        .map(item => {
+          const card = convertToFlashcard(item.flashcard);
+          card.position = item.position;
+          return card;
+        })
+        .sort((a, b) => (a.position || 0) - (b.position || 0));
       
       return orderedFlashcards;
     } catch (error) {

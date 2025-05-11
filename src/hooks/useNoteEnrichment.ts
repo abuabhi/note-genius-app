@@ -1,10 +1,10 @@
 
 import { useState, useCallback } from 'react';
-import { EnhancementFunction } from './noteEnrichment/types';
+import { EnhancementFunction, EnhancementResult } from './noteEnrichment/types';
 import { enhancementOptions } from './noteEnrichment/enhancementOptions';
-import { usageStats } from './noteEnrichment/usageStats';
 import { useUserTier } from './useUserTier';
 import { Note } from '@/types/note';
+import { toast } from 'sonner';
 
 export function useNoteEnrichment(note?: Note) {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -14,10 +14,17 @@ export function useNoteEnrichment(note?: Note) {
   const [selectedEnhancement, setSelectedEnhancement] = useState<EnhancementFunction | null>(null);
   
   const { userTier, isLoading: tierLoading } = useUserTier();
-  const { remaining, total, updateUsage } = usageStats();
-  const isEnabled = userTier && ['PROFESSOR', 'DEAN'].includes(userTier);
+  
+  // Mock usage stats (will be replaced with real implementation)
+  const remaining = 5;
+  const total = 10;
   const currentUsage = total - remaining;
   const monthlyLimit = total;
+  
+  const updateUsage = useCallback(() => {
+    // Mock usage update - will be implemented with real API call
+    console.log("Usage stats updated");
+  }, []);
 
   const initialize = useCallback(() => {
     setIsProcessing(false);
@@ -26,10 +33,11 @@ export function useNoteEnrichment(note?: Note) {
     setSelectedEnhancement(null);
   }, []);
 
-  const processEnhancement = useCallback(async (enhancementType: EnhancementFunction) => {
+  const processEnhancement = useCallback(async (enhancementType: EnhancementFunction): Promise<EnhancementResult> => {
     if (!note?.content) {
-      setError('No content to enhance');
-      return;
+      const error = 'No content to enhance';
+      setError(error);
+      return { success: false, content: '', error };
     }
 
     setIsLoading(true);
@@ -62,7 +70,7 @@ export function useNoteEnrichment(note?: Note) {
     content: string, 
     enhancementType: EnhancementFunction,
     title: string = ""
-  ) => {
+  ): Promise<EnhancementResult> => {
     if (!content) {
       setError('No content to enhance');
       return { success: false, content: '', error: 'No content to enhance' };
@@ -80,10 +88,12 @@ export function useNoteEnrichment(note?: Note) {
       
       setEnhancedContent(enhanced);
       updateUsage();
+      toast.success("Note enhanced successfully");
       return { success: true, content: enhanced, error: '' };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       setError(errorMessage);
+      toast.error("Failed to enhance note");
       return { success: false, content: '', error: errorMessage };
     } finally {
       setIsProcessing(false);
@@ -103,10 +113,11 @@ export function useNoteEnrichment(note?: Note) {
     total,
     currentUsage,
     monthlyLimit,
-    isEnabled,
+    isEnabled: userTier && ['PROFESSOR', 'DEAN'].includes(userTier),
     initialize,
     processEnhancement,
-    enrichNote
+    enrichNote,
+    updateUsage
   };
 }
 

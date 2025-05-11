@@ -8,6 +8,30 @@ export const useFlashcardSets = (state: FlashcardState) => {
   const { setFlashcardSets, setLoading } = state;
   const { toast } = useToast();
 
+  // Helper function to convert database response to FlashcardSet
+  const convertToFlashcardSet = (data: any): FlashcardSet => {
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      user_id: data.user_id,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      is_built_in: data.is_built_in,
+      card_count: data.card_count || 0,
+      subject: data.subject,
+      topic: data.topic,
+      country_id: data.country_id,
+      category_id: data.category_id,
+      education_system: data.education_system,
+      section_id: data.section_id,
+      subject_categories: data.subject_categories ? {
+        id: data.subject_categories.id,
+        name: data.subject_categories.name
+      } : undefined
+    };
+  };
+
   // Fetch all flashcard sets for the current user
   const fetchFlashcardSets = async (): Promise<FlashcardSet[]> => {
     try {
@@ -15,7 +39,7 @@ export const useFlashcardSets = (state: FlashcardState) => {
       
       const { data, error } = await supabase
         .from('flashcard_sets')
-        .select('*, subject_categories(*)')
+        .select('*, subject_categories(id, name)')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -28,10 +52,13 @@ export const useFlashcardSets = (state: FlashcardState) => {
             .select('*', { count: 'exact', head: true })
             .eq('set_id', set.id);
           
-          return {
+          // Convert to proper type and add card count
+          const formattedSet = convertToFlashcardSet({
             ...set,
-            card_count: countError ? 0 : count || 0,
-          };
+            card_count: countError ? 0 : count || 0
+          });
+          
+          return formattedSet;
         })
       );
       
@@ -61,13 +88,18 @@ export const useFlashcardSets = (state: FlashcardState) => {
       
       if (error) throw error;
       
-      setFlashcardSets(prev => [{ ...data, card_count: 0 }, ...prev]);
+      const formattedSet = convertToFlashcardSet({
+        ...data,
+        card_count: 0
+      });
+      
+      setFlashcardSets(prev => [formattedSet, ...prev]);
       toast({
         title: 'Flashcard set created',
         description: `"${data.name}" has been created successfully.`,
       });
       
-      return data;
+      return formattedSet;
     } catch (error) {
       console.error('Error creating flashcard set:', error);
       toast({

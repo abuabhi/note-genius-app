@@ -32,9 +32,9 @@ export const useDndMode = () => {
       setIsLoading(true);
       try {
         const { data, error } = await supabase
-          .from("user_settings")
-          .select("dnd_enabled, dnd_start_time, dnd_end_time, dnd_days")
-          .eq("user_id", user.id)
+          .from('profiles')
+          .select("do_not_disturb, dnd_start_time, dnd_end_time")
+          .eq("id", user.id)
           .single();
 
         if (error && error.code !== "PGRST116") {
@@ -44,10 +44,10 @@ export const useDndMode = () => {
 
         if (data) {
           setDndSettings({
-            enabled: data.dnd_enabled || false,
+            enabled: data.do_not_disturb || false,
             startTime: data.dnd_start_time,
             endTime: data.dnd_end_time,
-            enabledDays: data.dnd_days,
+            enabledDays: null, // Not currently stored in profiles table
           });
         }
       } catch (error) {
@@ -68,15 +68,13 @@ export const useDndMode = () => {
       const newEnabledState = !dndSettings.enabled;
       
       const { error } = await supabase
-        .from("user_settings")
-        .upsert({
-          user_id: user.id,
-          dnd_enabled: newEnabledState,
+        .from("profiles")
+        .update({
+          do_not_disturb: newEnabledState,
           dnd_start_time: dndSettings.startTime,
-          dnd_end_time: dndSettings.endTime,
-          dnd_days: dndSettings.enabledDays,
+          dnd_end_time: dndSettings.endTime
         })
-        .select();
+        .eq("id", user.id);
 
       if (error) throw error;
 
@@ -100,15 +98,13 @@ export const useDndMode = () => {
 
     try {
       const { error } = await supabase
-        .from("user_settings")
-        .upsert({
-          user_id: user.id,
-          dnd_enabled: newSettings.enabled,
+        .from("profiles")
+        .update({
+          do_not_disturb: newSettings.enabled,
           dnd_start_time: newSettings.startTime,
-          dnd_end_time: newSettings.endTime,
-          dnd_days: newSettings.enabledDays,
+          dnd_end_time: newSettings.endTime
         })
-        .select();
+        .eq("id", user.id);
 
       if (error) throw error;
 

@@ -83,6 +83,7 @@ export interface CreateFlashcardSetPayload {
   subject?: string;
   topic?: string;
   is_public?: boolean;
+  is_built_in?: boolean;
   category_id?: string;
   country_id?: string;
 }
@@ -97,4 +98,5 @@ export interface SubjectCategory {
   education_system?: string;
   created_at?: string;
   updated_at?: string;
+  subcategories?: SubjectCategory[];
 }

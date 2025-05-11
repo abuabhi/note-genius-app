@@ -40,7 +40,7 @@ export const useCategoryOperations = (
       
       // Organize into hierarchical structure
       const rootCategories: SubjectCategory[] = [];
-      const categoriesById: Record<string, SubjectCategory> = {};
+      const categoriesById: Record<string, SubjectCategory & {subcategories: SubjectCategory[]}> = {};
       
       // First pass: index all categories by ID
       if (data) {
@@ -52,7 +52,7 @@ export const useCategoryOperations = (
         data.forEach(category => {
           if (category.parent_id && categoriesById[category.parent_id]) {
             // Add to parent's subcategories
-            categoriesById[category.parent_id].subcategories?.push(categoriesById[category.id]);
+            categoriesById[category.parent_id].subcategories.push(categoriesById[category.id]);
           } else {
             // Root category
             rootCategories.push(categoriesById[category.id]);

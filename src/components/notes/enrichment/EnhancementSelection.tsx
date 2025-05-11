@@ -30,7 +30,7 @@ export const EnhancementSelection: React.FC<EnhancementSelectionProps> = ({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
       {options.map((option) => {
-        const isSelected = selectedEnhancement === option.id;
+        const isSelected = selectedEnhancement === option.value;
         
         return (
           <Card 
@@ -41,8 +41,8 @@ export const EnhancementSelection: React.FC<EnhancementSelectionProps> = ({
                 : 'hover:border-mint-300 hover:bg-mint-50/50'
             }`}
             onClick={() => {
-              console.log(`Selecting enhancement: ${option.id}`);
-              onSelect(option.id as EnhancementFunction);
+              console.log(`Selecting enhancement: ${option.value}`);
+              onSelect(option.value);
             }}
           >
             <CardHeader className="p-4 pb-2">
@@ -50,7 +50,7 @@ export const EnhancementSelection: React.FC<EnhancementSelectionProps> = ({
                 <div className={`text-mint-600 ${isSelected ? 'text-mint-700' : ''}`}>
                   {getIconComponent(option.icon)}
                 </div>
-                <CardTitle className="text-base">{option.name}</CardTitle>
+                <CardTitle className="text-base">{option.title}</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="p-4 pt-0">

@@ -22,13 +22,13 @@ export const EnhanceNoteButton = ({
     isProcessing,
     remaining, 
     selectedEnhancement,
-    enrichNote 
+    enrichNote
   } = useNoteEnrichment();
   
   const { userTier, isLoading } = useUserTier();
   
   const handleEnhance = async () => {
-    if (!noteId || !noteContent) return;
+    if (!noteId || !noteContent || !selectedEnhancement) return;
     
     try {
       const result = await enrichNote(
@@ -55,7 +55,7 @@ export const EnhanceNoteButton = ({
       onClick={handleEnhance}
       size="sm"
       variant="outline"
-      disabled={isProcessing}
+      disabled={isProcessing || !selectedEnhancement}
     >
       <Sparkles className="mr-2 h-4 w-4" />
       {isProcessing ? "Enhancing..." : "Enhance"}

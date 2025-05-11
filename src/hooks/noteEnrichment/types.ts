@@ -12,3 +12,16 @@ export interface EnhancementResult {
   content: string;
   error: string;
 }
+
+export interface EnhancementOption {
+  id: string;
+  value: EnhancementFunction;
+  title: string;
+  description: string;
+  icon: string;
+}
+
+export interface EnhancementUsage {
+  current: number;
+  limit: number | null;
+}

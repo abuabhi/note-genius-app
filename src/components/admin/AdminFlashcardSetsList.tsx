@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useFlashcards } from "@/contexts/FlashcardContext";
 import {
@@ -22,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Search, Filter } from "lucide-react";
+import { Search } from "lucide-react";
 
 export function AdminFlashcardSetsList() {
   const { fetchBuiltInSets, updateFlashcardSet } = useFlashcards();
@@ -95,7 +96,12 @@ export function AdminFlashcardSetsList() {
 
   const handleToggleBuiltIn = async (setId: string, isBuiltIn: boolean) => {
     try {
-      await updateFlashcardSet(setId, { is_built_in: !isBuiltIn });
+      // Create a payload that matches the CreateFlashcardSetPayload type
+      // but also includes is_built_in that's used in the database
+      await updateFlashcardSet(setId, { 
+        is_built_in: !isBuiltIn 
+      } as any); // Using 'as any' to bypass type checking for this specific field
+      
       setSets(prevSets => 
         prevSets.map(set => 
           set.id === setId ? { ...set, is_built_in: !isBuiltIn } : set
