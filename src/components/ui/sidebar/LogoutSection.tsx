@@ -13,6 +13,7 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useAuth } from "@/contexts/AuthContext";
 import { itemVariants } from "./motion";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface LogoutSectionProps {
   isCollapsed: boolean;
@@ -21,13 +22,13 @@ interface LogoutSectionProps {
 export const LogoutSection = ({ isCollapsed }: LogoutSectionProps) => {
   const { user, userProfile } = useRequireAuth();
   const { signOut } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
-      if (window.confirm("Are you sure you want to log out?")) {
-        await signOut();
-        toast.success("You've been successfully logged out");
-      }
+      await signOut();
+      toast.success("You've been successfully logged out");
+      navigate('/login');
     } catch (error) {
       console.error("Logout error:", error);
       toast.error("Failed to log out. Please try again.");
