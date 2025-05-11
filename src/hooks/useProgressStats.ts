@@ -4,6 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { format, subDays, isAfter } from "date-fns";
+import { useFlashcards } from "@/contexts/FlashcardContext";
+import { useToast } from "@/hooks/use-toast";
 
 export interface ProgressStats {
   completedCourses: number;
@@ -19,7 +21,9 @@ export interface ProgressStats {
 
 export const useProgressStats = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const { flashcardSets, loading: flashcardsLoading } = useFlashcards();
 
   const { data: stats = {
     completedCourses: 0,
@@ -30,8 +34,8 @@ export const useProgressStats = () => {
     streakDays: 0,
     totalCardsMastered: 0,
     studyTimeHours: 0,
-    totalSets: 0
-  }, isLoading: isStatsLoading } = useQuery({
+    totalSets: flashcardSets?.length || 0
+  }, isLoading: isStatsLoading, error } = useQuery({
     queryKey: ["progressStats", user?.id],
     queryFn: async () => {
       if (!user) {
@@ -57,15 +61,8 @@ export const useProgressStats = () => {
         console.error('Error fetching quiz results:', quizResultsError);
       }
 
-      // Get flashcards statistics
-      const { data: flashcardSets, error: flashcardSetsError } = await supabase
-        .from('flashcard_sets')
-        .select('id')
-        .or(`user_id.eq.${user.id},is_public.eq.true`);
-
-      if (flashcardSetsError) {
-        console.error('Error fetching flashcard sets:', flashcardSetsError);
-      }
+      // Get flashcard statistics
+      const totalSets = flashcardSets?.length || 0;
 
       // Get user flashcard progress data
       const { data: flashcardProgress, error: flashcardProgressError } = await supabase
@@ -159,15 +156,29 @@ export const useProgressStats = () => {
         streakDays,
         totalCardsMastered: masteredCards,
         studyTimeHours,
-        totalSets: flashcardSets?.length || 0
+        totalSets
       };
     },
-    enabled: !!user,
+    enabled: !!user && !flashcardsLoading,
     staleTime: 10 * 60 * 1000, // 10 minutes cache
+    retry: 2, // Retry failed requests twice before giving up
+    onError: (error) => {
+      console.error("Error fetching progress stats:", error);
+      toast({
+        title: "Error fetching progress data",
+        description: "Please try refreshing the page",
+        variant: "destructive"
+      });
+    }
   });
+
+  if (error) {
+    console.error("Error from useQuery:", error);
+  }
 
   return { 
     stats, 
-    isLoading: isLoading || isStatsLoading
+    isLoading: isLoading || isStatsLoading || flashcardsLoading,
+    error
   };
 };

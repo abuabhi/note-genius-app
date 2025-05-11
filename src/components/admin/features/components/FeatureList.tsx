@@ -2,6 +2,7 @@
 import React from 'react';
 import { Feature } from '@/contexts/FeatureContext';
 import { FeatureCard } from './FeatureCard';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface FeatureListProps {
   features: Feature[];
@@ -10,9 +11,11 @@ interface FeatureListProps {
 export function FeatureList({ features }: FeatureListProps) {
   if (features.length === 0) {
     return (
-      <div className="text-center p-6 bg-gray-50 rounded-lg border border-gray-200">
-        <p className="text-muted-foreground">No features found matching the current filter</p>
-      </div>
+      <EmptyState
+        title="No features found"
+        description="No features found matching the current filter"
+        className="bg-gray-50 border border-gray-200 rounded-lg"
+      />
     );
   }
 

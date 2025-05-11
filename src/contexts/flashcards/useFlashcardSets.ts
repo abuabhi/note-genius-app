@@ -9,13 +9,13 @@ export const useFlashcardSets = (state: FlashcardState) => {
   const { toast } = useToast();
 
   // Fetch all flashcard sets for the current user
-  const fetchFlashcardSets = async () => {
+  const fetchFlashcardSets = async (): Promise<FlashcardSet[]> => {
     try {
       setLoading(prev => ({ ...prev, sets: true }));
       
       const { data, error } = await supabase
         .from('flashcard_sets')
-        .select('*')
+        .select('*, subject_categories(*)')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -36,6 +36,7 @@ export const useFlashcardSets = (state: FlashcardState) => {
       );
       
       setFlashcardSets(setsWithCardCounts);
+      return setsWithCardCounts;
     } catch (error) {
       console.error('Error fetching flashcard sets:', error);
       toast({
@@ -43,6 +44,7 @@ export const useFlashcardSets = (state: FlashcardState) => {
         description: 'Please try again later.',
         variant: 'destructive',
       });
+      return [];
     } finally {
       setLoading(prev => ({ ...prev, sets: false }));
     }
