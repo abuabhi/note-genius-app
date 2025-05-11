@@ -1,3 +1,4 @@
+
 "use client";
 
 import { cn } from "@/lib/utils";
@@ -5,7 +6,6 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { UserSection } from "./sidebar/UserSection";
 import { Navigation } from "./sidebar/Navigation";
-import { LogoutSection } from "./sidebar/LogoutSection";
 import { 
   sidebarVariants, 
   contentVariants,
@@ -36,9 +36,6 @@ export function CustomSidebar() {
         
         {/* Main Navigation */}
         <Navigation isCollapsed={isCollapsed} />
-        
-        {/* Logout Section */}
-        <LogoutSection isCollapsed={isCollapsed} />
       </motion.div>
     </motion.div>
   );

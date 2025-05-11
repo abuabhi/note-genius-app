@@ -1,17 +1,21 @@
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { ChevronsUpDown, Settings, Shield } from "lucide-react";
+import { ChevronsUpDown, Settings, Shield, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
-  DropdownMenuTrigger 
+  DropdownMenuTrigger,
+  DropdownMenuSeparator 
 } from "@/components/ui/dropdown-menu";
 import { useRequireAuth, UserTier } from "@/hooks/useRequireAuth";
 import { itemVariants } from "./motion";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface UserSectionProps {
   isCollapsed: boolean;
@@ -19,7 +23,20 @@ interface UserSectionProps {
 
 export const UserSection = ({ isCollapsed }: UserSectionProps) => {
   const { user, userProfile } = useRequireAuth();
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
   const isAdmin = userProfile?.user_tier === UserTier.DEAN;
+  
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast.success("You've been successfully logged out");
+      navigate('/login');
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Failed to log out. Please try again.");
+    }
+  };
   
   return (
     <div className="flex h-[54px] w-full shrink-0 border-b p-2">
@@ -68,6 +85,13 @@ export const UserSection = ({ isCollapsed }: UserSectionProps) => {
                 </Link>
               </DropdownMenuItem>
             )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="flex items-center gap-2 cursor-pointer"
+            >
+              <LogOut className="h-4 w-4" /> Sign out
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
