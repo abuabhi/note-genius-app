@@ -150,29 +150,42 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     }
   };
 
-  // Fixed implementation of fetchFlashcardsInSet to avoid recursive type issues
+  // Fully rewritten implementation to avoid recursive type issues
   const fetchFlashcardsInSet = async (setId: string): Promise<Flashcard[]> => {
     setLoading(prev => ({ ...prev, flashcards: true }));
+    
     try {
-      // Direct query to get flashcards in a set through the join table
-      const { data, error } = await supabase
+      // First get all flashcard IDs in this set with their positions
+      const { data: setCardLinks, error: linksError } = await supabase
         .from('flashcard_set_cards')
-        .select(`
-          flashcard_id,
-          position,
-          flashcards:flashcard_id (
-            id, front_content, back_content, difficulty, created_at, updated_at, 
-            user_id, is_built_in, last_reviewed_at, next_review_at
-          )
-        `)
+        .select('flashcard_id, position')
         .eq('set_id', setId)
         .order('position');
-
-      if (error) throw error;
+        
+      if (linksError) throw linksError;
       
-      // Map and transform the joined data to the Flashcard structure
-      const mappedFlashcards = data.map(item => {
-        const card = item.flashcards;
+      if (!setCardLinks || setCardLinks.length === 0) {
+        return []; // No cards in this set
+      }
+      
+      // Get all flashcards by their IDs
+      const flashcardIds = setCardLinks.map(link => link.flashcard_id);
+      
+      const { data: cardData, error: cardsError } = await supabase
+        .from('flashcards')
+        .select('*')
+        .in('id', flashcardIds);
+        
+      if (cardsError) throw cardsError;
+      
+      // Create a map of positions by flashcard ID
+      const positionMap = setCardLinks.reduce((acc, link) => {
+        acc[link.flashcard_id] = link.position;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      // Map the flashcards with their positions and convert to Flashcard type
+      const mappedFlashcards = cardData.map(card => {
         return {
           id: card.id,
           front: card.front_content,
@@ -183,15 +196,17 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
           user_id: card.user_id,
           created_at: card.created_at,
           updated_at: card.updated_at,
-          is_built_in: card.is_built_in,
+          is_built_in: card.is_built_in || false,
           last_reviewed_at: card.last_reviewed_at,
           next_review_at: card.next_review_at,
-          position: item.position,
+          position: positionMap[card.id] || 0,
           set_id: setId
         } as Flashcard;
       });
       
-      return mappedFlashcards;
+      // Sort by position
+      return mappedFlashcards.sort((a, b) => (a.position || 0) - (b.position || 0));
+      
     } catch (error) {
       console.error('Error fetching flashcards in set:', error);
       toast.error('Failed to load flashcards');
