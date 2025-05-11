@@ -20,7 +20,6 @@ import {
   LayoutDashboard,
   ListTodo,
   MessageSquare,
-  Settings,
   Target,
   Users,
 } from "lucide-react";
@@ -188,15 +187,8 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   />
                 )}
                 
-                {/* Settings - with separator */}
-                <Separator className="my-2" />
-                <NavLink
-                  to="/settings"
-                  icon={Settings}
-                  label="Settings"
-                  isActive={pathname.includes("/settings")}
-                  isCollapsed={isCollapsed}
-                />
+                {/* Removed the Settings link from here as it's already in the user profile dropdown */}
+                {/* This removes the duplicate settings link */}
               </div>
             </ScrollArea>
           </div>

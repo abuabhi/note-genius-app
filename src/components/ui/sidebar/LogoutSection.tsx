@@ -10,7 +10,9 @@ import { LogOut, ChevronsUpDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { itemVariants } from "./motion";
+import { toast } from "sonner";
 
 interface LogoutSectionProps {
   isCollapsed: boolean;
@@ -18,6 +20,19 @@ interface LogoutSectionProps {
 
 export const LogoutSection = ({ isCollapsed }: LogoutSectionProps) => {
   const { user, userProfile } = useRequireAuth();
+  const { signOut } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      if (window.confirm("Are you sure you want to log out?")) {
+        await signOut();
+        toast.success("You've been successfully logged out");
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Failed to log out. Please try again.");
+    }
+  };
 
   return (
     <div className="flex flex-col p-2">
@@ -58,11 +73,7 @@ export const LogoutSection = ({ isCollapsed }: LogoutSectionProps) => {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="flex items-center gap-2 cursor-pointer"
-              onClick={() => {
-                if (window.confirm("Are you sure you want to log out?")) {
-                  window.location.href = "/login";
-                }
-              }}
+              onClick={handleLogout}
             >
               <LogOut className="h-4 w-4" /> Sign out
             </DropdownMenuItem>

@@ -11,6 +11,7 @@ import NotificationsCard from "./cards/NotificationsCard";
 import AppearanceCard from "./cards/AppearanceCard";
 import { NotificationSettingsCard } from "./cards/NotificationSettingsCard";
 import { DoNotDisturbCard } from "./cards/DoNotDisturbCard";
+import { UpgradeTierCard } from "./cards/UpgradeTierCard";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { settingsFormSchema, type SettingsFormValues } from "./schemas/settingsFormSchema";
@@ -183,6 +184,9 @@ const SettingsForm = () => {
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {/* New Upgrade Tier Card added at the top for visibility */}
+          <UpgradeTierCard />
+          
           <AccountSettingsCard 
             user={user}
             userTier={userTier}
