@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -137,6 +138,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
             control={form.control} 
             availableCategories={availableCategories}
             onNewCategoryAdd={handleNewCategoryAdd}
+            setValue={form.setValue} // Pass setValue from form to the component
           />
 
           <NoteContentField

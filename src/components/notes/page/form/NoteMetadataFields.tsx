@@ -1,5 +1,5 @@
 
-import { Control } from "react-hook-form";
+import { Control, UseFormSetValue } from "react-hook-form";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -15,12 +15,14 @@ interface NoteMetadataFieldsProps {
   control: Control<any>;
   availableCategories: string[];
   onNewCategoryAdd: (category: string) => void;
+  setValue: UseFormSetValue<any>; // Add setValue from useForm
 }
 
 export const NoteMetadataFields = ({
   control,
   availableCategories,
-  onNewCategoryAdd
+  onNewCategoryAdd,
+  setValue // Receive setValue from parent component
 }: NoteMetadataFieldsProps) => {
   const { subjects, isLoading: loadingSubjects } = useUserSubjects();
 
@@ -100,19 +102,13 @@ export const NoteMetadataFields = ({
                   field.onChange("");
                   
                   // Also update the category field
-                  const categoryField = control._fields.category;
-                  if (categoryField) {
-                    control.setValue("category", "General");
-                  }
+                  setValue("category", "General");
                 }
                 // For user subjects, find the name and update the category field
                 else {
                   const selectedSubject = subjects.find(s => s.id === value);
                   if (selectedSubject) {
-                    const categoryField = control._fields.category;
-                    if (categoryField) {
-                      control.setValue("category", selectedSubject.name);
-                    }
+                    setValue("category", selectedSubject.name);
                   }
                 }
               }} 
