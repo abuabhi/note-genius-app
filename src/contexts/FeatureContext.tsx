@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserTier } from '@/hooks/useUserTier';
@@ -46,12 +47,13 @@ export const FeatureProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (error) throw error;
       
       // Convert the data to ensure requires_tier is of the correct type
+      // and visibility_mode is properly cast to the union type
       const typedFeatures: Feature[] = (data || []).map(feature => ({
         ...feature,
         // Cast the string to UserTier or null
         requires_tier: feature.requires_tier as UserTier | null,
-        // Set default visibility mode if not present
-        visibility_mode: feature.visibility_mode || 'visible'
+        // Ensure visibility_mode is one of the allowed values
+        visibility_mode: (feature.visibility_mode === 'hidden' ? 'hidden' : 'visible') as 'visible' | 'hidden'
       }));
       
       setFeatures(typedFeatures);
