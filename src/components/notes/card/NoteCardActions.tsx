@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { jsPDF } from "jspdf";
+import jsPDF from "jspdf";  // Changed import syntax
 import { supabase } from "@/integrations/supabase/client";
 
 interface NoteCardActionsProps {
