@@ -24,7 +24,7 @@ export const useLibraryOperations = (
 
       if (error) throw error;
       
-      // Get category information and card counts for each set
+      // Get card counts and category info for each set
       const builtInSetsWithDetails = await Promise.all(
         data.map(async (set) => {
           // Get card count for this set
@@ -138,11 +138,13 @@ export const useLibraryOperations = (
 
       toast.success('Flashcard set cloned successfully');
       
-      // Refresh the user's sets - using simpler approach to avoid circular references
-      await refreshUserSets(user.id);
+      // Update the user's sets
+      fetchUserSets(user.id).then(sets => {
+        setFlashcardSets(sets);
+      });
       
-      // Convert and return the new set with explicit typing to avoid recursive type issues
-      const formattedSet: FlashcardSet = {
+      // Return the new set
+      return {
         id: newSet.id,
         name: newSet.name,
         description: newSet.description,
@@ -155,8 +157,6 @@ export const useLibraryOperations = (
         category_id: newSet.category_id,
         card_count: originalCards?.length || 0
       };
-      
-      return formattedSet;
     } catch (error) {
       console.error('Error cloning flashcard set:', error);
       toast.error('Failed to clone flashcard set');
@@ -164,8 +164,8 @@ export const useLibraryOperations = (
     }
   };
   
-  // Helper function to refresh user's flashcard sets
-  const refreshUserSets = async (userId: string): Promise<void> => {
+  // Helper function to fetch user's flashcard sets
+  const fetchUserSets = async (userId: string): Promise<FlashcardSet[]> => {
     try {
       // Get basic set data
       const { data: userSets, error } = await supabase
@@ -176,14 +176,13 @@ export const useLibraryOperations = (
       
       if (error) throw error;
       
-      // If no sets, just set empty array
+      // If no sets, just return empty array
       if (!userSets || userSets.length === 0) {
-        setFlashcardSets([]);
-        return;
+        return [];
       }
       
       // Process sets with counts and categories
-      const formattedSets: FlashcardSet[] = await Promise.all(
+      const formattedSets = await Promise.all(
         userSets.map(async (set) => {
           // Get card count
           const { count, error: countError } = await supabase
@@ -208,8 +207,8 @@ export const useLibraryOperations = (
             }
           }
           
-          // Return formatted set with explicit typing
-          const formattedSet: FlashcardSet = {
+          // Return formatted set
+          return {
             id: set.id,
             name: set.name,
             description: set.description,
@@ -225,16 +224,14 @@ export const useLibraryOperations = (
             education_system: set.education_system,
             section_id: set.section_id,
             subject_categories: categoryInfo
-          };
-          
-          return formattedSet;
+          } as FlashcardSet;
         })
       );
       
-      setFlashcardSets(formattedSets);
+      return formattedSets;
     } catch (error) {
-      console.error('Error refreshing user flashcard sets:', error);
-      // Don't show toast here as this is a background operation
+      console.error('Error fetching user flashcard sets:', error);
+      return [];
     }
   };
 
