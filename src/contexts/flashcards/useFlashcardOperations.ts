@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { FlashcardState } from "./types";
 
-export function useFlashcardsOperations(state?: FlashcardState) {
+export function useFlashcardOperations(state?: FlashcardState) {
   const { setFlashcards, setFlashcardSets } = state || useFlashcardState();
   const [isLoading, setIsLoading] = useState(false);
   
@@ -18,11 +18,15 @@ export function useFlashcardsOperations(state?: FlashcardState) {
     try {
       setIsLoading(true);
       
+      // Create the flashcard first
       const { data, error } = await supabase
         .from('flashcards')
         .insert({
           front_content: flashcardData.front_content,
           back_content: flashcardData.back_content,
+          // For backward compatibility with the Flashcard type
+          front: flashcardData.front_content,
+          back: flashcardData.back_content,
           user_id: state?.user?.id
         })
         .select()
@@ -46,15 +50,22 @@ export function useFlashcardsOperations(state?: FlashcardState) {
         }
       }
       
-      // Add to local state
-      setFlashcards(prev => [...prev, data]);
+      // Add to local state - make sure it conforms to the Flashcard type
+      const newFlashcard: Flashcard = {
+        ...data,
+        // Ensure all required properties are set
+        front: data.front_content,
+        back: data.back_content
+      };
+      
+      setFlashcards(prev => [...prev, newFlashcard]);
       
       // Update the set count
       if (flashcardData.set_id) {
         await updateSetCount(flashcardData.set_id);
       }
       
-      return data;
+      return newFlashcard;
     } catch (error) {
       console.error("Error adding flashcard:", error);
       toast.error("Failed to add flashcard");
@@ -105,6 +116,3 @@ export function useFlashcardsOperations(state?: FlashcardState) {
 
 // Add the missing import for useFlashcardState
 import { useFlashcardState } from "./useFlashcardState";
-
-// Export the function with the correct name
-export { useFlashcardsOperations as useFlashcardOperations };

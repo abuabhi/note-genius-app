@@ -1,14 +1,15 @@
 
-import { useFlashcardsOperations } from './useFlashcardOperations';
+import { useFlashcardOperations } from './useFlashcardOperations';
 import { useFlashcardSets } from './useFlashcardSets';
 import { useLibraryOperations } from './useLibraryOperations';
 import { FlashcardState } from './types';
 
-export const useFlashcardsOperations = (
+// Renamed to avoid the naming conflict with imported functions
+export const combineFlashcardOperations = (
   state: FlashcardState
 ) => {
   // Import operations from separate modules
-  const flashcardOperations = useFlashcardsOperations(state);
+  const flashcardOperations = useFlashcardOperations(state);
   const flashcardSetsOperations = useFlashcardSets(state);
   const libraryOperations = useLibraryOperations(state);
 

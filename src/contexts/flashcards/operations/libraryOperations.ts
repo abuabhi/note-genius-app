@@ -1,222 +1,152 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { FlashcardSet } from "@/types/flashcard";
+import { supabase } from '@/integrations/supabase/client';
+import { FlashcardSet } from '@/types/flashcard';
+import { toast } from 'sonner';
 import { FlashcardState } from '../types';
+import { convertToFlashcardSet } from '../utils/flashcardSetMappers';
 
-export interface LibraryFilters {
-  searchTerm?: string;
-  selectedSubjects?: string[];
-  selectedTags?: string[];
-  sortBy?: string;
-  filterMine?: boolean;
-  filterBuiltIn?: boolean;
-  filterShared?: boolean;
-}
-
-export interface FlashcardSetWithCount extends FlashcardSet {
-  flashcard_count: number;
-}
-
-// Fetch built-in sets for the library
+/**
+ * Fetch flashcard sets from the built-in library
+ */
 export const fetchBuiltInSets = async (state: FlashcardState): Promise<FlashcardSet[]> => {
+  const { setLoading } = state;
+  
   try {
-    const { setLoading } = state;
-    if (setLoading) {
-      setLoading(prev => ({ ...prev, sets: true }));
-    }
-
+    setLoading(prev => ({ ...prev, sets: true }));
+    
     const { data, error } = await supabase
       .from('flashcard_sets')
-      .select(`
-        id,
-        name,
-        description,
-        is_built_in,
-        subject,
-        created_at,
-        updated_at,
-        topic,
-        country_id,
-        category_id,
-        education_system,
-        section_id
-      `)
-      .eq('is_built_in', true);
+      .select('*, subject_categories(id, name)')
+      .eq('is_built_in', true)
+      .order('created_at', { ascending: false });
+      
+    if (error) throw error;
     
-    if (error) {
-      throw error;
-    }
-    
-    if (setLoading) {
-      setLoading(prev => ({ ...prev, sets: false }));
-    }
-    
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching built-in flashcard sets:', error);
-    if (state.setLoading) {
-      state.setLoading(prev => ({ ...prev, sets: false }));
-    }
-    return [];
-  }
-};
-
-// Fetch all flashcard sets that are available in the library
-export const fetchLibraryFlashcardSets = async (filters?: LibraryFilters): Promise<FlashcardSet[]> => {
-  try {
-    let query = supabase
-      .from('flashcard_sets')
-      .select(`
-        id,
-        name,
-        description,
-        is_built_in,
-        subject,
-        created_at,
-        updated_at,
-        topic,
-        country_id,
-        category_id,
-        education_system,
-        section_id
-      `);
-    
-    // Apply filters as needed
-    if (filters?.filterBuiltIn) {
-      query = query.eq('is_built_in', true);
-    }
-    
-    // Apply search filter
-    if (filters?.searchTerm) {
-      query = query.or(`name.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`);
-    }
-    
-    // Apply subject filter
-    if (filters?.selectedSubjects && filters.selectedSubjects.length > 0) {
-      query = query.in('subject', filters.selectedSubjects);
-    }
-    
-    // Apply sorting
-    if (filters?.sortBy) {
-      switch (filters.sortBy) {
-        case 'name_asc':
-          query = query.order('name', { ascending: true });
-          break;
-        case 'name_desc':
-          query = query.order('name', { ascending: false });
-          break;
-        case 'date_asc':
-          query = query.order('created_at', { ascending: true });
-          break;
-        case 'date_desc':
-        default:
-          query = query.order('created_at', { ascending: false });
-          break;
-      }
-    } else {
-      // Default sort by most recent
-      query = query.order('created_at', { ascending: false });
-    }
-
-    const { data, error } = await query;
-    
-    if (error) {
-      throw error;
-    }
-    
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching library flashcard sets:', error);
-    return [];
-  }
-};
-
-export const fetchFlashcardSetsWithCount = async (filters?: LibraryFilters): Promise<FlashcardSetWithCount[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('flashcard_sets')
-      .select(`
-        id,
-        name,
-        description,
-        is_built_in,
-        subject,
-        created_at,
-        updated_at,
-        topic,
-        country_id,
-        category_id,
-        education_system,
-        section_id,
-        user_id
-      `);
-    
-    if (error) {
-      throw error;
-    }
-    
-    if (!data || data.length === 0) {
-      return [];
-    }
-
-    // Get card counts for each set
-    const setsWithCounts = await Promise.all(
-      data.map(async (set) => {
-        const { count, error: countError } = await supabase
-          .from('flashcard_set_cards')
-          .select('*', { count: 'exact', head: true })
-          .eq('set_id', set.id);
-
-        return {
-          ...set,
-          flashcard_count: countError ? 0 : count || 0
-        } as FlashcardSetWithCount;
-      })
-    );
-    
-    return setsWithCounts;
-  } catch (error) {
-    console.error('Error fetching flashcard sets with count:', error);
-    return [];
-  }
-};
-
-// Clone a flashcard set for the current user
-export const cloneFlashcardSet = async (state: FlashcardState, setId: string): Promise<FlashcardSet | null> => {
-  try {
-    const { data, error } = await supabase.functions.invoke('clone-flashcard-set', {
-      body: { setId }
+    // Transform into proper FlashcardSet objects
+    const formattedSets = data.map(set => {
+      // Get card counts for the set
+      return convertToFlashcardSet(set);
     });
     
-    if (error) {
-      throw error;
-    }
-    
-    return data.flashcardSet;
+    return formattedSets;
   } catch (error) {
-    console.error('Error cloning flashcard set:', error);
-    return null;
+    console.error('Error fetching built-in sets:', error);
+    toast.error('Failed to load built-in flashcard sets');
+    return [];
+  } finally {
+    setLoading(prev => ({ ...prev, sets: false }));
   }
 };
 
-// Fetch available subjects - simplified to avoid table errors
-export const fetchSubjects = async (): Promise<string[]> => {
+/**
+ * Clone a flashcard set from the built-in library or another user's shared set
+ * to the current user's collection
+ */
+export const cloneFlashcardSet = async (
+  state: FlashcardState,
+  setId: string
+): Promise<FlashcardSet | null> => {
+  const { user, setFlashcardSets } = state;
+  
+  if (!user) {
+    toast.error('You must be logged in to clone flashcard sets');
+    return null;
+  }
+  
   try {
-    // Use flashcard_sets table which we know exists, and get unique subjects
-    const { data, error } = await supabase
+    // 1. Get the original set
+    const { data: originalSet, error: setError } = await supabase
       .from('flashcard_sets')
-      .select('subject')
-      .not('subject', 'is', null);
+      .select('*')
+      .eq('id', setId)
+      .single();
+      
+    if (setError) throw setError;
     
-    if (error) {
-      throw error;
+    // 2. Create a new set based on the original
+    const { data: newSet, error: createError } = await supabase
+      .from('flashcard_sets')
+      .insert({
+        name: `${originalSet.name} (Copy)`,
+        description: originalSet.description,
+        user_id: user.id,
+        subject: originalSet.subject,
+        topic: originalSet.topic,
+        category_id: originalSet.category_id,
+        is_built_in: false,
+      })
+      .select()
+      .single();
+      
+    if (createError) throw createError;
+    
+    // 3. Get all flashcards from the original set
+    const { data: setCards, error: cardsError } = await supabase
+      .from('flashcard_set_cards')
+      .select('flashcard_id, position')
+      .eq('set_id', setId);
+      
+    if (cardsError) throw cardsError;
+    
+    // 4. For each flashcard in the original set:
+    for (const card of setCards) {
+      // 4a. Get the flashcard data
+      const { data: flashcard, error: flashcardError } = await supabase
+        .from('flashcards')
+        .select('*')
+        .eq('id', card.flashcard_id)
+        .single();
+        
+      if (flashcardError) continue; // Skip if error
+      
+      // 4b. Create a copy of the flashcard for the user
+      const { data: newFlashcard, error: createCardError } = await supabase
+        .from('flashcards')
+        .insert({
+          front_content: flashcard.front_content,
+          back_content: flashcard.back_content,
+          front: flashcard.front_content, // For backward compatibility
+          back: flashcard.back_content, // For backward compatibility
+          difficulty: flashcard.difficulty,
+          user_id: user.id,
+          is_built_in: false,
+        })
+        .select()
+        .single();
+        
+      if (createCardError) continue; // Skip if error
+      
+      // 4c. Add the new flashcard to the new set
+      await supabase
+        .from('flashcard_set_cards')
+        .insert({
+          flashcard_id: newFlashcard.id,
+          set_id: newSet.id,
+          position: card.position,
+        });
     }
     
-    // Extract unique subjects
-    const subjects = [...new Set(data.map(item => item.subject))];
-    return subjects.filter(Boolean);
+    // 5. Get the count of cards in the new set
+    const { count: cardCount } = await supabase
+      .from('flashcard_set_cards')
+      .select('*', { count: 'exact', head: true })
+      .eq('set_id', newSet.id);
+    
+    // Create a proper FlashcardSet object
+    const formattedSet = convertToFlashcardSet({
+      ...newSet,
+      card_count: cardCount || 0
+    });
+    
+    // Update local state
+    setFlashcardSets(prev => [formattedSet, ...prev]);
+    
+    toast.success('Flashcard set cloned successfully');
+    
+    return formattedSet;
   } catch (error) {
-    console.error('Error fetching subjects:', error);
-    return [];
+    console.error('Error cloning flashcard set:', error);
+    toast.error('Failed to clone flashcard set');
+    return null;
   }
 };
