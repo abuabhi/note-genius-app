@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { PostgrestError } from '@supabase/supabase-js';
 import { FlashcardState } from '../types';
@@ -48,14 +47,13 @@ interface SetCountResult {
 export const fetchFlashcardLibrary = async () => {
   try {
     // First get the count of cards per set using a separate query
-    // Since the RPC function isn't in the generated types, we need to handle it carefully
-    const countResponse = await supabase.rpc('get_flashcard_sets_with_count') as { 
+    // Since the RPC function isn't in the generated types, we need to bypass TypeScript's type checking
+    const { data: setCountData, error: countError } = await supabase.rpc(
+      'get_flashcard_sets_with_count' as any
+    ) as unknown as {
       data: SetCountResult[] | null;
       error: PostgrestError | null;
     };
-    
-    const setCountData = countResponse.data;
-    const countError = countResponse.error;
     
     if (countError) {
       throw countError;
