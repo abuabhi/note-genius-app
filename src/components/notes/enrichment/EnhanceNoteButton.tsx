@@ -1,59 +1,80 @@
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Sparkles } from 'lucide-react';
-import { NoteEnrichmentDialog } from './NoteEnrichmentDialog';
-import { useUserTier } from '@/hooks/useUserTier';
-import { useAuth } from '@/contexts/auth'; // Updated import path
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Loader2, Sparkles } from "lucide-react";
+import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
+import { useToast } from "@/hooks/use-toast";
+import { useUserTier } from "@/hooks/useUserTier";
 
 interface EnhanceNoteButtonProps {
   noteId: string;
-  noteTitle: string;
-  noteContent: string;
-  onEnhance: (enhancedContent: string) => void;
-  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+  onEnrichmentComplete?: () => void;
 }
 
-export const EnhanceNoteButton: React.FC<EnhanceNoteButtonProps> = ({
-  noteId,
-  noteTitle,
-  noteContent,
-  onEnhance,
-  variant = "outline"
-}) => {
-  const [dialogOpen, setDialogOpen] = useState(false);
+export function EnhanceNoteButton({ noteId, onEnrichmentComplete }: EnhanceNoteButtonProps) {
+  const { userTier, isUserPremium } = useUserTier();
+  const { enrichNote, isEnriching, remainingEnrichments } = useNoteEnrichment();
+  
+  // Get the tier limits directly from the hook
   const { tierLimits } = useUserTier();
-  const { user } = useAuth();
   
-  // Only show the button if note enrichment is enabled for the user's tier
-  // or if we're in development mode for easier testing
-  const isEnabled = tierLimits?.note_enrichment_enabled || import.meta.env.DEV;
-  
-  if (!isEnabled || !user) {
-    return null;
-  }
+  const { toast } = useToast();
 
-  console.log("Rendering EnhanceNoteButton for note:", noteId);
+  const handleEnrichNote = async () => {
+    if (!isUserPremium) {
+      toast({
+        title: "Upgrade Required",
+        description: "You need to upgrade to a premium plan to use this feature.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (remainingEnrichments <= 0) {
+      toast({
+        title: "Daily Limit Reached",
+        description: "You have reached your daily limit for note enrichments. Upgrade your plan for more.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await enrichNote(noteId);
+      toast({
+        title: "Note Enriched",
+        description: "Your note has been successfully enriched with AI.",
+      });
+      if (onEnrichmentComplete) {
+        onEnrichmentComplete();
+      }
+    } catch (error) {
+      console.error("Error enriching note:", error);
+      toast({
+        title: "Enrichment Failed",
+        description: "Failed to enrich the note. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const isDisabled = isEnriching || !isUserPremium || remainingEnrichments <= 0;
 
   return (
-    <>
-      <Button
-        type="button"
-        variant={variant}
-        onClick={() => setDialogOpen(true)}
-        className="flex items-center gap-2"
-      >
-        <Sparkles className="h-4 w-4" />
-        Enhance with AI
-      </Button>
-      
-      <NoteEnrichmentDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        noteId={noteId}
-        noteTitle={noteTitle}
-        noteContent={noteContent}
-        onApplyEnhancement={onEnhance}
-      />
-    </>
+    <Button
+      onClick={handleEnrichNote}
+      disabled={isDisabled}
+    >
+      {isEnriching ? (
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Enriching...
+        </>
+      ) : (
+        <>
+          <Sparkles className="mr-2 h-4 w-4" />
+          Enrich with AI
+        </>
+      )}
+    </Button>
   );
-};
+}

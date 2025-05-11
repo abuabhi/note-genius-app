@@ -1,13 +1,15 @@
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/auth';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth";
+import { toast } from "sonner";
 
+// Define the DndSettings type
 export interface DndSettings {
   enabled: boolean;
   startTime: string | null;
   endTime: string | null;
+  enabledDays: string[] | null;
 }
 
 export const useDndMode = () => {
@@ -15,132 +17,119 @@ export const useDndMode = () => {
   const [dndSettings, setDndSettings] = useState<DndSettings>({
     enabled: false,
     startTime: null,
-    endTime: null
+    endTime: null,
+    enabledDays: null,
   });
-  const [isDndActive, setIsDndActive] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchDndSettings = async () => {
-      if (!user) {
-        setIsLoading(false);
-        return;
-      }
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
 
+    const fetchDndSettings = async () => {
+      setIsLoading(true);
       try {
         const { data, error } = await supabase
-          .from('profiles')
-          .select('do_not_disturb, dnd_start_time, dnd_end_time')
-          .eq('id', user.id)
+          .from("user_settings")
+          .select("dnd_enabled, dnd_start_time, dnd_end_time, dnd_days")
+          .eq("user_id", user.id)
           .single();
 
-        if (error) throw error;
+        if (error && error.code !== "PGRST116") {
+          console.error("Error fetching DND settings:", error);
+          toast.error("Failed to load DND settings");
+        }
 
         if (data) {
           setDndSettings({
-            enabled: data.do_not_disturb || false,
+            enabled: data.dnd_enabled || false,
             startTime: data.dnd_start_time,
-            endTime: data.dnd_end_time
+            endTime: data.dnd_end_time,
+            enabledDays: data.dnd_days,
           });
-          
-          // Check if DND is currently active based on time
-          checkIfDndActive(data.do_not_disturb, data.dnd_start_time, data.dnd_end_time);
         }
       } catch (error) {
-        console.error('Error fetching DND settings:', error);
+        console.error("Unexpected error:", error);
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     fetchDndSettings();
-    
-    // Set up interval to check DND status every minute
-    const intervalId = setInterval(() => {
-      if (dndSettings.enabled) {
-        checkIfDndActive(
-          dndSettings.enabled,
-          dndSettings.startTime,
-          dndSettings.endTime
-        );
-      }
-    }, 60000);
-    
-    return () => clearInterval(intervalId);
   }, [user]);
-  
-  // Check if current time is within DND period
-  const checkIfDndActive = (enabled: boolean, startTime: string | null, endTime: string | null) => {
-    if (!enabled || !startTime || !endTime) {
-      setIsDndActive(false);
-      return;
-    }
-    
-    const now = new Date();
-    const currentTime = now.getHours() * 60 + now.getMinutes(); // minutes since midnight
-    
-    // Convert DND times to minutes since midnight
-    const start = timeStringToMinutes(startTime);
-    const end = timeStringToMinutes(endTime);
-    
-    // Check if current time is within DND period
-    if (start <= end) {
-      // Simple case: start time is before end time
-      setIsDndActive(currentTime >= start && currentTime <= end);
-    } else {
-      // Complex case: DND period spans across midnight
-      setIsDndActive(currentTime >= start || currentTime <= end);
-    }
-  };
-  
-  const timeStringToMinutes = (timeString: string): number => {
-    const [hours, minutes] = timeString.split(':').map(Number);
-    return hours * 60 + minutes;
-  };
-  
-  const updateDndSettings = async (newSettings: DndSettings) => {
+
+  // Function to toggle DND mode
+  const toggleDnd = async () => {
     if (!user) return false;
-    
+
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          do_not_disturb: newSettings.enabled,
-          dnd_start_time: newSettings.enabled ? newSettings.startTime : null,
-          dnd_end_time: newSettings.enabled ? newSettings.endTime : null
-        })
-        .eq('id', user.id);
-        
-      if (error) throw error;
+      const newEnabledState = !dndSettings.enabled;
       
-      setDndSettings(newSettings);
-      checkIfDndActive(
-        newSettings.enabled,
-        newSettings.startTime,
-        newSettings.endTime
+      const { error } = await supabase
+        .from("user_settings")
+        .upsert({
+          user_id: user.id,
+          dnd_enabled: newEnabledState,
+          dnd_start_time: dndSettings.startTime,
+          dnd_end_time: dndSettings.endTime,
+          dnd_days: dndSettings.enabledDays,
+        })
+        .select();
+
+      if (error) throw error;
+
+      setDndSettings((prev) => ({ ...prev, enabled: newEnabledState }));
+      
+      toast.success(
+        newEnabledState ? "Do Not Disturb mode enabled" : "Do Not Disturb mode disabled"
       );
       
-      toast.success('Do Not Disturb settings updated');
       return true;
     } catch (error) {
-      console.error('Error updating DND settings:', error);
-      toast.error('Failed to update Do Not Disturb settings');
+      console.error("Error toggling DND mode:", error);
+      toast.error("Failed to update DND settings");
       return false;
     }
   };
-  
-  const toggleDnd = async () => {
-    return updateDndSettings({
-      ...dndSettings,
-      enabled: !dndSettings.enabled
-    });
+
+  // Function to update DND settings
+  const updateDndSettings = async (newSettings: DndSettings) => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from("user_settings")
+        .upsert({
+          user_id: user.id,
+          dnd_enabled: newSettings.enabled,
+          dnd_start_time: newSettings.startTime,
+          dnd_end_time: newSettings.endTime,
+          dnd_days: newSettings.enabledDays,
+        })
+        .select();
+
+      if (error) throw error;
+
+      setDndSettings(newSettings);
+      toast.success("DND settings updated");
+      return true;
+    } catch (error) {
+      console.error("Error updating DND settings:", error);
+      toast.error("Failed to update DND settings");
+      return false;
+    }
   };
-  
+
+  // Check if DND is currently active
+  const isDndActive = dndSettings.enabled;
+
   return {
     dndSettings,
     isDndActive,
     isLoading,
     updateDndSettings,
-    toggleDnd
+    toggleDnd,
   };
 };

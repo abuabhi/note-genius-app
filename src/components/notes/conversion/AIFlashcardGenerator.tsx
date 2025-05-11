@@ -1,133 +1,147 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Loader2, Brain } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { GeneratedFlashcard } from "@/services/aiService";
-import { generateFlashcardsFromNotes } from "@/services/aiService";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { useFlashcards } from "@/contexts/FlashcardContext";
-import { PremiumFeatureNotice } from "./PremiumFeatureNotice";
-import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { isPremiumTier } from "@/utils/premiumFeatures";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2, Lightbulb } from "lucide-react";
+import { useGemini } from "@/hooks/useGemini";
 
 interface AIFlashcardGeneratorProps {
   noteContent: string;
-  subject?: string;
-  onFlashcardsGenerated?: (flashcards: GeneratedFlashcard[]) => void;
+  onClose: () => void;
 }
 
-export const AIFlashcardGenerator = ({ noteContent, subject, onFlashcardsGenerated }: AIFlashcardGeneratorProps) => {
+export const AIFlashcardGenerator = ({ noteContent, onClose }: AIFlashcardGeneratorProps) => {
+  const [frontContent, setFrontContent] = useState("");
+  const [backContent, setBackContent] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedFlashcards, setGeneratedFlashcards] = useState<GeneratedFlashcard[]>([]);
-  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedSetId, setSelectedSetId] = useState("");
+
+  const { generateFlashcardContent } = useGemini();
   const { createFlashcard } = useFlashcards();
-  const { userProfile } = useRequireAuth();
-  
-  const isPremium = isPremiumTier(userProfile?.user_tier);
-  
-  const handleGenerateFlashcards = async () => {
-    if (!isPremium) {
-      toast({
-        title: "Premium Feature",
-        description: "AI flashcard generation is available for Master and Dean tier users.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (!noteContent.trim()) {
-      toast({
-        title: "Empty Content",
-        description: "Please provide note content to generate flashcards.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsGenerating(true);
-    
-    try {
-      const flashcards = await generateFlashcardsFromNotes(noteContent, 5, subject);
-      setGeneratedFlashcards(flashcards);
-      
-      if (onFlashcardsGenerated) {
-        onFlashcardsGenerated(flashcards);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const generateContent = async () => {
+      setIsGenerating(true);
+      try {
+        const generatedContent = await generateFlashcardContent(noteContent);
+        if (generatedContent) {
+          setFrontContent(generatedContent.question);
+          setBackContent(generatedContent.answer);
+        } else {
+          toast({
+            title: "Generation failed",
+            description: "Failed to generate flashcard content. Please try again.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error generating flashcard content:", error);
+        toast({
+          title: "Generation error",
+          description: "An error occurred while generating flashcard content.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsGenerating(false);
       }
-      
+    };
+
+    generateContent();
+  }, [noteContent, generateFlashcardContent, toast]);
+
+  const handleCreateFlashcard = async () => {
+    setIsSubmitting(true);
+
+    try {
+      // Create the flashcard with the generated content
+      await createFlashcard(
+        {
+          front_content: frontContent,
+          back_content: backContent,
+          // Add any other required fields
+          difficulty: 3 // Default to medium difficulty
+        },
+        selectedSetId // Pass the setId separately
+      );
+
       toast({
-        title: "Flashcards Generated",
-        description: `Successfully created ${flashcards.length} flashcards.`,
+        title: "Flashcard created",
+        description: "Flashcard has been created from the generated content.",
       });
+      onClose();
     } catch (error) {
-      console.error("Error generating flashcards:", error);
+      console.error("Error creating flashcard from AI:", error);
       toast({
-        title: "Generation Failed",
-        description: "Failed to generate flashcards. Please try again later.",
+        title: "Creation failed",
+        description: "Failed to create flashcard. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setIsGenerating(false);
+      setIsSubmitting(false);
     }
   };
-  
-  const handleSaveFlashcard = async (flashcard: GeneratedFlashcard) => {
-    try {
-      await createFlashcard({
-        front_content: flashcard.front,
-        back_content: flashcard.back,
-        difficulty: 3,
-      });
-      
-      toast({
-        title: "Flashcard Saved",
-        description: "The flashcard has been added to your collection.",
-      });
-    } catch (error) {
-      console.error("Error saving flashcard:", error);
-      toast({
-        title: "Save Failed",
-        description: "Failed to save the flashcard. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-  
+
   return (
-    <div className="space-y-4">
-      <PremiumFeatureNotice 
-        isPremium={isPremium}
-        onAIExtract={handleGenerateFlashcards}
-      />
-      
-      {generatedFlashcards.length > 0 && (
-        <div className="space-y-4 mt-4">
-          <h3 className="text-lg font-semibold">Generated Flashcards</h3>
-          <div className="grid grid-cols-1 gap-4">
-            {generatedFlashcards.map((flashcard, index) => (
-              <Card key={index} className="p-4">
-                <div className="flex flex-col space-y-2">
-                  <div className="font-medium">Front: {flashcard.front}</div>
-                  <div className="text-muted-foreground">Back: {flashcard.back}</div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="self-end"
-                    onClick={() => handleSaveFlashcard(flashcard)}
-                  >
-                    Save as Flashcard
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Lightbulb className="h-5 w-5" />
+          Generate Flashcard with AI
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div>
+          <label htmlFor="front" className="block text-sm font-medium mb-1">
+            Front (Question)
+          </label>
+          <Textarea
+            id="front"
+            value={frontContent}
+            onChange={(e) => setFrontContent(e.target.value)}
+            className="min-h-[100px]"
+            placeholder="AI generated question will appear here"
+            disabled={isGenerating || isSubmitting}
+          />
         </div>
-      )}
-      
-      {isGenerating && (
-        <div className="flex justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div>
+          <label htmlFor="back" className="block text-sm font-medium mb-1">
+            Back (Answer)
+          </label>
+          <Textarea
+            id="back"
+            value={backContent}
+            onChange={(e) => setBackContent(e.target.value)}
+            className="min-h-[100px]"
+            placeholder="AI generated answer will appear here"
+            disabled={isGenerating || isSubmitting}
+          />
         </div>
-      )}
-    </div>
+      </CardContent>
+      <CardFooter className="flex justify-between">
+        <Button type="button" variant="outline" onClick={onClose} disabled={isGenerating || isSubmitting}>
+          Cancel
+        </Button>
+        <Button type="button" onClick={handleCreateFlashcard} disabled={isGenerating || isSubmitting}>
+          {isGenerating ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Generating...
+            </>
+          ) : isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating...
+            </>
+          ) : (
+            "Create Flashcard"
+          )}
+        </Button>
+      </CardFooter>
+    </Card>
   );
 };
+

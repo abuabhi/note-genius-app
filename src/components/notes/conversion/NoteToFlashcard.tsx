@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +18,8 @@ export const NoteToFlashcard = ({ note, onSuccess, onCancel }: NoteToFlashcardPr
   const [frontContent, setFrontContent] = useState(note.title || "");
   const [backContent, setBackContent] = useState(note.content || note.description || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<number>(3);
+  const [selectedSetId, setSelectedSetId] = useState<string | undefined>(undefined);
 
   const { createFlashcard } = useFlashcards();
   const { toast } = useToast();
@@ -43,7 +44,7 @@ export const NoteToFlashcard = ({ note, onSuccess, onCancel }: NoteToFlashcardPr
         back_content: backContent.trim(),
       };
 
-      const result = await createFlashcard(cardData);
+      const result = await createFlashcard(cardData, selectedSetId);
       
       if (result) {
         toast({

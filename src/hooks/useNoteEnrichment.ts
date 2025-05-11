@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Note } from '@/types/note';
@@ -11,13 +10,17 @@ import { EnhancementFunction, EnhancementOption } from './noteEnrichment/types';
 
 export type { EnhancementFunction, EnhancementOption };
 
-export const useNoteEnrichment = (note?: Note) => {
+export function useNoteEnrichment() {
+  const { userTier } = useUserTier();
+  
+  // Get the tier limits directly from the hook
+  const { tierLimits } = useUserTier();
+  
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedEnhancement, setSelectedEnhancement] = useState<EnhancementFunction | null>(null);
   const [enhancedContent, setEnhancedContent] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { tierLimits } = useUserTier();
   
   const { 
     currentUsage,

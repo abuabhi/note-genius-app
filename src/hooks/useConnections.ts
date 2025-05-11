@@ -1,6 +1,9 @@
 import { useEffect } from "react";
-import { useAuth } from "@/contexts/auth"; // Updated import path
-import { useConnections as useChatConnections } from "./chat/useConnections";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth";
+import { toast } from "sonner";
+import { useCallback } from "react";
 
 export interface UserProfile {
   id: string;

@@ -33,7 +33,7 @@ export interface FlashcardContextType {
   fetchFlashcardsInSet: (setId: string) => Promise<Flashcard[]>;
   
   // Flashcard operations
-  fetchFlashcards: () => Promise<void>;
+  fetchFlashcards: (filters?: any) => Promise<Flashcard[]>;
   createFlashcard: (cardData: CreateFlashcardPayload, setId?: string) => Promise<Flashcard | null>;
   updateFlashcard: (id: string, cardData: Partial<CreateFlashcardPayload>) => Promise<void>;
   deleteFlashcard: (id: string) => Promise<void>;
@@ -49,7 +49,7 @@ export interface FlashcardContextType {
   
   // Library operations
   fetchBuiltInSets: () => Promise<FlashcardSet[]>;
-  cloneFlashcardSet: (setId: string) => Promise<FlashcardSet>;
+  cloneFlashcardSet: (setId: string) => Promise<FlashcardSet | null>;
   
   // Current states
   setCurrentFlashcard: (flashcard: Flashcard | null) => void;

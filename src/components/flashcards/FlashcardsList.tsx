@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,7 +22,7 @@ const FlashcardsList = () => {
     const loadFlashcards = async () => {
       setIsLoading(true);
       try {
-        await fetchFlashcards();
+        await fetchFlashcards({});
       } catch (error) {
         console.error('Error loading flashcards:', error);
         toast('Failed to load flashcards. Please try again later.');
@@ -58,7 +57,7 @@ const FlashcardsList = () => {
   };
 
   // Loading state
-  if (isLoading || loading.flashcards) {
+  if (isLoading || (loading && loading.flashcards)) {
     return (
       <div className="max-w-2xl mx-auto">
         <Card className="mb-6">
@@ -80,7 +79,7 @@ const FlashcardsList = () => {
   }
 
   // No flashcards state
-  if (flashcards.length === 0) {
+  if (!flashcards || flashcards.length === 0) {
     return (
       <div className="max-w-2xl mx-auto">
         <Card className="mb-6">

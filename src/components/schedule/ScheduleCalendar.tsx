@@ -1,173 +1,96 @@
+import React, { useState, useCallback, useEffect } from 'react';
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin, { DateClickArg, EventClickArg } from '@fullcalendar/interaction';
+import { INITIAL_EVENTS, createEventId } from './event-utils';
+import CreateEventDialog from './CreateEventDialog';
+import { useAuth } from '@/contexts/auth';
 
-import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarComponent, momentLocalizer } from 'react-big-calendar';
-import moment from 'moment';
-import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { useEvents } from '@/hooks/events';
-import { EventCard } from './EventCard';
-import { Card } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
-import { CreateEventDialog } from './CreateEventDialog';
-import { toast } from '@/components/ui/sonner';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+export default function ScheduleCalendar() {
+  const [weekendsVisible, setWeekendsVisible] = useState(true);
+  const [currentEvents, setCurrentEvents] = useState([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const { user } = useAuth();
 
-interface ScheduleCalendarProps {
-  selectedDate: Date;
-  onDateChange: (date: Date) => void;
-}
+  const handleEventCreated = useCallback((newEvent) => {
+    setCurrentEvents([...currentEvents, newEvent]);
+  }, [currentEvents]);
 
-const localizer = momentLocalizer(moment);
+  const handleDateClick = useCallback((clickInfo: DateClickArg) => {
+    setSelectedDate(clickInfo.date);
+    setIsDialogOpen(true);
+  }, []);
 
-export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ selectedDate, onDateChange }) => {
-  const { events, isLoading, error, createEvent, deleteEvent, refetchEvents } = useEvents(selectedDate);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [formattedEvents, setFormattedEvents] = useState<any[]>([]);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
-  
-  // Handle any errors from the useEvents hook
-  useEffect(() => {
-    if (error) {
-      console.error('Error fetching events:', error);
-      toast.error("Error loading events. Please try again later.", {
-        id: "events-error",
-      });
+  const handleEventClick = useCallback((clickInfo: EventClickArg) => {
+    if (window.confirm(`Are you sure you want to delete the event '${clickInfo.event.title}'`)) {
+      clickInfo.event.remove();
     }
-  }, [error]);
+  }, []);
 
-  useEffect(() => {
-    if (events) {
-      const formatted = events.map(event => ({
-        ...event,
-        start: new Date(event.start_time),
-        end: new Date(event.end_time),
-        title: event.title,
-      }));
-      setFormattedEvents(formatted);
-    }
-  }, [events]);
+  const handleEvents = useCallback((events) => {
+    setCurrentEvents(events);
+  }, []);
 
-  const handleSelectSlot = ({ start }: { start: Date }) => {
-    onDateChange(start);
-    setShowCreateDialog(true);
-  };
-  
-  const handleEventCreated = () => {
-    refetchEvents();
-    toast.success("Event created successfully");
-  };
+  const handleDatesSet = useCallback((dateInfo) => {
+    console.log("Dates Set", dateInfo);
+  }, []);
 
-  const handleDeleteEvent = (event: any) => {
-    setSelectedEvent(event);
-    setShowDeleteDialog(true);
-  };
-
-  const confirmDelete = async () => {
-    if (selectedEvent) {
-      try {
-        await deleteEvent.mutateAsync(selectedEvent.id);
-        toast.success("Event deleted successfully");
-      } catch (error) {
-        toast.error("Failed to delete event");
-        console.error("Delete event error:", error);
-      }
-      setShowDeleteDialog(false);
-    }
-  };
-
-  // Custom event styling for the calendar
-  const eventStyleGetter = (event: any) => {
-    const style = {
-      backgroundColor: event.color || '#3dc087',
-      borderRadius: '4px',
-      opacity: 0.9,
-      color: '#fff',
-      border: '0px',
-      display: 'block',
-      fontWeight: 500,
-      padding: '2px 5px',
-      fontSize: '90%',
-      boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
-    };
-    return {
-      style
-    };
-  };
-
-  if (isLoading) {
+  const renderEventContent = (eventInfo: any) => {
     return (
-      <Card className="p-4 shadow-sm border border-mint-100">
-        <div className="flex justify-between items-center mb-4">
-          <Skeleton className="h-8 w-1/3" />
-          <Skeleton className="h-8 w-20" />
-        </div>
-        <div className="space-y-4">
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-16 w-full" />
-        </div>
-      </Card>
+      <>
+        <b>{eventInfo.timeText}</b>
+        <i>{eventInfo.event.title}</i>
+      </>
     );
-  }
+  };
+
+  const renderSidebarEvent = (event: any) => {
+    return (
+      <li key={event.id}>
+        <b>{event.title}</b>
+      </li>
+    );
+  };
+
+  const events = INITIAL_EVENTS;
 
   return (
-    <>
-      <div className="flex justify-end mb-4">
-        <Button onClick={() => setShowCreateDialog(true)} className="bg-mint-500 hover:bg-mint-600 text-white">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Event
-        </Button>
-      </div>
-      
-      <Card className="p-4 h-[70vh] border border-mint-100 shadow-sm">
-        <CalendarComponent
-          localizer={localizer}
-          events={formattedEvents}
-          startAccessor="start"
-          endAccessor="end"
-          style={{ height: '100%' }}
-          date={selectedDate}
-          onNavigate={date => onDateChange(date)}
-          selectable
-          onSelectSlot={handleSelectSlot}
-          defaultView="month"
-          views={['month', 'week', 'day']}
-          popup
-          components={{
-            event: (eventProps) => <div className="truncate px-1 text-white">{eventProps.title}</div>
+    <div className="h-[calc(100vh-200px)] flex flex-col lg:h-[700px]">
+      <div className="flex-grow">
+        <FullCalendar
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+          headerToolbar={{
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
           }}
-          eventPropGetter={eventStyleGetter}
-          className="custom-calendar"
+          initialView="dayGridMonth"
+          editable={true}
+          selectable={true}
+          selectMirror={true}
+          dayMaxEvents={true}
+          weekends={weekendsVisible}
+          events={events}
+          dateClick={handleDateClick}
+          eventClick={handleEventClick}
+          eventDidMount={renderEventContent}
+          datesSet={handleDatesSet}
+          eventAdd={e => console.log("Event Added", e)}
+          eventChange={e => console.log("Event Changed", e)}
+          eventRemove={e => console.log("Event Removed", e)}
+          height="100%"
         />
-      </Card>
-
-      {showCreateDialog && (
+      </div>
+      {user && (
         <CreateEventDialog
-          open={showCreateDialog}
-          onOpenChange={setShowCreateDialog}
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
           onEventCreated={handleEventCreated}
-          // Remove the selectedDate prop if CreateEventDialog doesn't accept it
+          defaultDate={selectedDate}
         />
       )}
-
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Event</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete event "{selectedEvent?.title}"? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+    </div>
   );
-};
+}

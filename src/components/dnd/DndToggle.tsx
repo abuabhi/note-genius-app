@@ -11,7 +11,7 @@ export const DndToggle = () => {
   
   const handleToggle = async () => {
     setIsToggling(true);
-    await toggleDnd(); // Using the correct function name from the hook
+    await toggleDnd();
     setIsToggling(false);
   };
   
@@ -22,7 +22,7 @@ export const DndToggle = () => {
     return `(${dndSettings.startTime} - ${dndSettings.endTime})`;
   };
   
-  if (isLoading) { // Using isLoading instead of loading
+  if (isLoading) {
     return (
       <Button variant="ghost" size="icon" disabled className="h-9 w-9">
         <div className="h-4 w-4 border-2 border-t-transparent border-current rounded-full animate-spin" />
