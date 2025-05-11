@@ -25,11 +25,9 @@ export const combineFlashcardOperations = (
     createFlashcard: flashcardOperations.createFlashcard || (async () => null),
     updateFlashcard: flashcardOperations.updateFlashcard || (async () => {}),
     deleteFlashcard: flashcardOperations.deleteFlashcard || (async () => {}),
-    addFlashcardToSet: flashcardOperations.addFlashcard || (async () => {}),
+    addFlashcardToSet: flashcardOperations.addFlashcardToSet || (async (flashcardId: string, setId: string) => {}),
     removeFlashcardFromSet: flashcardOperations.removeFlashcardFromSet || (async () => {}),
-    fetchFlashcardsInSet: flashcardSetsOperations.fetchFlashcardSets ? 
-      (async () => []) : // Placeholder implementation if fetchFlashcardsInSet doesn't exist
-      (async () => []),
+    fetchFlashcardsInSet: flashcardSetsOperations.fetchFlashcardsInSet || (async () => []),
     recordFlashcardReview: async () => {},
     getFlashcardProgress: async () => null,
   };

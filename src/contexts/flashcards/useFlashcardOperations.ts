@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Flashcard } from "@/types/flashcard";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,6 +75,36 @@ export function useFlashcardOperations(state?: FlashcardState) {
     }
   };
   
+  // Implement the correct addFlashcardToSet method with the expected signature
+  const addFlashcardToSet = async (flashcardId: string, setId: string, position?: number) => {
+    try {
+      setIsLoading(true);
+      
+      const { error } = await supabase
+        .from('flashcard_set_cards')
+        .insert({
+          flashcard_id: flashcardId,
+          set_id: setId,
+          position: position || 0
+        });
+        
+      if (error) {
+        console.error("Error adding flashcard to set:", error);
+        toast.error("Failed to add flashcard to set");
+        throw error;
+      }
+      
+      // Update the set count
+      await updateSetCount(setId);
+      
+    } catch (error) {
+      console.error("Error adding flashcard to set:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   const fetchFlashcards = async () => {
     // Implementation to fetch all flashcards
     return [];
@@ -141,7 +172,8 @@ export function useFlashcardOperations(state?: FlashcardState) {
     createFlashcard,
     updateFlashcard,
     deleteFlashcard,
-    removeFlashcardFromSet
+    removeFlashcardFromSet,
+    addFlashcardToSet // Add the new method to the returned object
   };
 }
 
