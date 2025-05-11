@@ -11,6 +11,7 @@ import { getBestTextColor } from "@/utils/colorUtils";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useUserSubjects } from "@/hooks/useUserSubjects";
 
 interface NoteCardProps {
   note: Note;
@@ -31,6 +32,12 @@ export const NoteCard = ({
 }: NoteCardProps) => {
   const navigate = useNavigate();
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const { subjects } = useUserSubjects();
+  
+  // Find the subject name based on subject_id
+  const subjectName = note.subject_id 
+    ? subjects.find(s => s.id === note.subject_id)?.name || note.category
+    : note.category;
   
   const handleGoToStudyMode = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -100,10 +107,10 @@ export const NoteCard = ({
           <span 
             className="font-medium"
             style={{
-              color: generateColorFromString(note.category),
+              color: generateColorFromString(subjectName),
             }}
           >
-            {note.category}
+            {subjectName}
           </span>
           
           {/* Tags and status indicators */}

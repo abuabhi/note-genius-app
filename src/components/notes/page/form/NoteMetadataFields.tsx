@@ -84,15 +84,38 @@ export const NoteMetadataFields = ({
         )}
       />
 
-      {/* Subject Field */}
+      {/* Subject Field - Now directly handles subject_id */}
       <FormField
         control={control}
-        name="subject"
+        name="subject_id"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Subject</FormLabel>
             <Select 
-              onValueChange={field.onChange} 
+              onValueChange={(value) => {
+                field.onChange(value);
+                
+                // For subjects that are not user subjects (General category), set an empty string
+                if (value === "General") {
+                  field.onChange("");
+                  
+                  // Also update the category field
+                  const categoryField = control._fields.category;
+                  if (categoryField) {
+                    control.setValue("category", "General");
+                  }
+                }
+                // For user subjects, find the name and update the category field
+                else {
+                  const selectedSubject = subjects.find(s => s.id === value);
+                  if (selectedSubject) {
+                    const categoryField = control._fields.category;
+                    if (categoryField) {
+                      control.setValue("category", selectedSubject.name);
+                    }
+                  }
+                }
+              }} 
               defaultValue={field.value}
             >
               <FormControl>
@@ -129,6 +152,15 @@ export const NoteMetadataFields = ({
             </Select>
             <FormMessage />
           </FormItem>
+        )}
+      />
+      
+      {/* Hidden field to store the category (needed for backward compatibility) */}
+      <FormField
+        control={control}
+        name="category"
+        render={({ field }) => (
+          <input type="hidden" {...field} />
         )}
       />
     </>

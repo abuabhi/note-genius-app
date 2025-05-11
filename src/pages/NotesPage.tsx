@@ -56,8 +56,8 @@ const NotesPage = () => {
         addCategory(note.category);
       }
       
-      // Try to find matching subject_id for the category
-      const subject_id = findSubjectIdByName(note.category);
+      // Try to find matching subject_id for the category OR use the one directly provided
+      const subject_id = note.subject_id || findSubjectIdByName(note.category);
       
       const newNote = await addNote({
         ...note,
@@ -82,8 +82,8 @@ const NotesPage = () => {
         addCategory(note.category);
       }
       
-      // Try to find matching subject_id for the category
-      const subject_id = findSubjectIdByName(note.category);
+      // Try to find matching subject_id for the category OR use the one directly provided
+      const subject_id = note.subject_id || findSubjectIdByName(note.category);
       
       const newNote = await addNote({
         ...note,
@@ -109,8 +109,8 @@ const NotesPage = () => {
         addCategory(note.category);
       }
       
-      // Try to find matching subject_id for the category
-      const subject_id = findSubjectIdByName(note.category);
+      // Try to find matching subject_id for the category OR use the one directly provided
+      const subject_id = note.subject_id || findSubjectIdByName(note.category);
       
       const newNote = await addNote({
         ...note,

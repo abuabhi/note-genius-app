@@ -56,7 +56,8 @@ export const filterNotes = (notes: Note[], searchTerm: string, filterOptions: Fi
     }
     
     // Filter by subject ID (for subject tabs)
-    if (filterOptions.subjectId) {
+    if (filterOptions.subjectId && note.subject_id) {
+      console.log(`Comparing note subject_id: ${note.subject_id} with filter: ${filterOptions.subjectId}`);
       if (note.subject_id !== filterOptions.subjectId) {
         return false;
       }
