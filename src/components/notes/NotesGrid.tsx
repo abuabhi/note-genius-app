@@ -18,16 +18,26 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
     return <EmptyNotesState />;
   }
 
-  const handlePin = (id: string, isPinned: boolean, e: React.MouseEvent) => {
+  const handlePin = async (id: string, isPinned: boolean, e: React.MouseEvent) => {
     e.stopPropagation();
-    pinNote(id, !isPinned);
-    toast(isPinned ? "Note unpinned" : "Note pinned");
+    try {
+      await pinNote(id, !isPinned);
+      toast.success(isPinned ? "Note unpinned" : "Note pinned");
+    } catch (error) {
+      console.error("Error pinning note:", error);
+      toast.error("Failed to update note pin status");
+    }
   };
 
-  const handleDelete = (id: string, e: React.MouseEvent) => {
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    deleteNote(id);
-    toast("Note deleted");
+    try {
+      await deleteNote(id);
+      toast.success("Note deleted");
+    } catch (error) {
+      console.error("Error deleting note:", error);
+      toast.error("Failed to delete note");
+    }
   };
 
   const handleNoteClick = (note: Note) => {
@@ -40,9 +50,6 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
     setSelectedNote(note);
     setIsDetailsOpen(true);
   };
-
-  // Log the notes to help debug
-  console.log("Notes in grid:", notes.map(n => ({ id: n.id, title: n.title, subject_id: n.subject_id })));
 
   return (
     <>

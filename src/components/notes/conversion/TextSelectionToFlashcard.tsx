@@ -1,9 +1,9 @@
 
 import { useState } from "react";
-import { useFlashcardsOperations } from "@/contexts/flashcards/useFlashcards";
 import { useFlashcardState } from "@/contexts/flashcards/useFlashcardState";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useFlashcardsOperations } from "@/contexts/flashcards/useFlashcardOperations";
 
 export interface TextSelectionToFlashcardProps {
   noteContent: string;
@@ -22,7 +22,7 @@ export const TextSelectionToFlashcard = ({
 }: TextSelectionToFlashcardProps) => {
   const [selectedText, setSelectedText] = useState<string>("");
   const flashcardState = useFlashcardState();
-  const { addFlashcard } = useFlashcardsOperations(flashcardState);
+  const { addFlashcard } = useFlashcardsOperations();
 
   const handleTextSelection = () => {
     const selection = window.getSelection();

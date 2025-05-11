@@ -1,268 +1,202 @@
-import { supabase } from '@/integrations/supabase/client';
-import { PostgrestError } from '@supabase/supabase-js';
-import { FlashcardState } from '../types';
-import { FlashcardSet } from '@/types/flashcard';
-import { toast } from 'sonner';
 
-// Transform data from API format to frontend format
-export const transformLibraryData = (libraryData: any[]) => {
-  return libraryData.map(set => {
-    // Create a safe function to extract category data
-    const getCategory = () => {
-      if (!set.subject_categories) return null;
-      
-      return {
-        id: set.subject_categories.id,
-        name: set.subject_categories.name,
-        level: set.subject_categories.level,
-        parentId: set.subject_categories.parent_id
-      };
-    };
-    
-    return {
-      id: set.id,
-      name: set.name,
-      description: set.description || '',
-      numCards: set.card_count,
-      subject: set.subject || '',
-      category: getCategory(),
-      isBuiltIn: set.is_built_in || false,
-      section: set.sections ? {
-        id: set.sections.id,
-        name: set.sections.name
-      } : null,
-      createdAt: set.created_at,
-      updatedAt: set.updated_at
-    };
-  });
-};
+import { supabase } from "@/integrations/supabase/client";
+import { Flashcard, FlashcardSet } from "@/types/flashcard";
 
-// Define our custom RPC function return type
-interface SetCountResult {
-  set_id: string;
-  card_count: number;
+export interface LibraryFilters {
+  searchTerm?: string;
+  selectedSubjects?: string[];
+  selectedTags?: string[];
+  sortBy?: string;
+  filterMine?: boolean;
+  filterBuiltIn?: boolean;
+  filterShared?: boolean;
 }
 
-// Fetch flashcard sets for the library
-export const fetchFlashcardLibrary = async () => {
+export interface FlashcardSetWithCount extends FlashcardSet {
+  flashcard_count: number;
+}
+
+// Fetch all flashcard sets that are available in the library
+export const fetchLibraryFlashcardSets = async (filters?: LibraryFilters): Promise<FlashcardSet[]> => {
   try {
-    // First get the count of cards per set using a separate query
-    // Since the RPC function isn't in the generated types, we need to bypass TypeScript's type checking
-    const countResponse = await (supabase.rpc(
-      'get_flashcard_sets_with_count'
-    ) as any);
-    
-    const setCountData = countResponse.data as SetCountResult[] | null;
-    const countError = countResponse.error as PostgrestError | null;
-    
-    if (countError) {
-      throw countError;
-    }
-    
-    // Now get the actual flashcard sets with their relationships
-    const { data: setsData, error: setsError } = await supabase
+    let query = supabase
       .from('flashcard_sets')
       .select(`
-        id, 
-        name, 
-        description, 
-        subject,
+        id,
+        name,
+        description,
+        is_public,
         is_built_in,
+        subject,
         created_at,
         updated_at,
-        subject_categories (
-          id, 
-          name,
-          level,
-          parent_id
-        ),
-        sections (
-          id,
-          name
-        )
+        image_url,
+        cards_count,
+        metadata,
+        owner_id
       `)
-      .eq('is_built_in', true)
-      .order('created_at', { ascending: false });
+      .eq('is_public', true);
     
-    if (setsError) {
-      throw setsError;
+    // Apply search filter
+    if (filters?.searchTerm) {
+      query = query.or(`name.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`);
     }
     
-    // Merge the count data with the sets data
-    const combinedData = setsData.map(set => {
-      const countInfo = setCountData && Array.isArray(setCountData) ? 
-        setCountData.find(item => item.set_id === set.id) : 
-        undefined;
-      
-      return {
-        ...set,
-        card_count: countInfo ? countInfo.card_count : 0
-      };
-    });
+    // Apply subject filter
+    if (filters?.selectedSubjects && filters.selectedSubjects.length > 0) {
+      query = query.in('subject', filters.selectedSubjects);
+    }
     
-    return {
-      data: transformLibraryData(combinedData),
-      error: null
-    };
-  } catch (error) {
-    console.error('Error fetching flashcard library:', error);
-    return {
-      data: [],
-      error: error as PostgrestError
-    };
-  }
-};
-
-/**
- * Fetch built-in flashcard sets for the library
- */
-export const fetchBuiltInSets = async (state: FlashcardState) => {
-  const { setLoading } = state;
-  
-  try {
-    setLoading(prev => ({ ...prev, sets: true }));
-    
-    const { data, error } = await fetchFlashcardLibrary();
-    
-    if (error) throw error;
-    
-    return data as FlashcardSet[];
-  } catch (error) {
-    console.error('Error fetching built-in sets:', error);
-    toast.error('Failed to load library sets');
-    return [];
-  } finally {
-    setLoading(prev => ({ ...prev, sets: false }));
-  }
-};
-
-/**
- * Clone a flashcard set from the library to user's sets
- */
-export const cloneFlashcardSet = async (state: FlashcardState, setId: string): Promise<FlashcardSet | null> => {
-  const { user, setFlashcardSets } = state;
-  
-  if (!user) return null;
-  
-  try {
-    // First fetch the set to clone
-    const { data: sourceSet, error: sourceError } = await supabase
-      .from('flashcard_sets')
-      .select('*')
-      .eq('id', setId)
-      .single();
-    
-    if (sourceError) throw sourceError;
-    
-    // Create new set
-    const { data: newSet, error: createError } = await supabase
-      .from('flashcard_sets')
-      .insert({
-        name: `${sourceSet.name} (Copy)`,
-        description: sourceSet.description,
-        user_id: user.id,
-        subject: sourceSet.subject,
-        is_public: false,
-        is_built_in: false,
-        category_id: sourceSet.category_id
-      })
-      .select()
-      .single();
-    
-    if (createError) throw createError;
-    
-    // Now fetch all cards from the original set
-    const { data: cards, error: cardsError } = await supabase
-      .from('flashcard_set_cards')
-      .select('*, flashcards(*)')
-      .eq('set_id', setId);
-    
-    if (cardsError) throw cardsError;
-    
-    // Clone each card
-    if (cards && cards.length > 0) {
-      for (let i = 0; i < cards.length; i++) {
-        const card = cards[i];
-        const cardData = card.flashcards;
-        
-        // Create a new card
-        const { data: newCard, error: newCardError } = await supabase
-          .from('flashcards')
-          .insert({
-            front_content: cardData.front_content,
-            back_content: cardData.back_content,
-            user_id: user.id,
-            difficulty: cardData.difficulty || 1
-          })
-          .select()
-          .single();
-        
-        if (newCardError) throw newCardError;
-        
-        // Add the new card to the set
-        const { error: linkError } = await supabase
-          .from('flashcard_set_cards')
-          .insert({
-            set_id: newSet.id,
-            flashcard_id: newCard.id,
-            position: card.position
-          });
-        
-        if (linkError) throw linkError;
+    // Apply sorting
+    if (filters?.sortBy) {
+      switch (filters.sortBy) {
+        case 'name_asc':
+          query = query.order('name', { ascending: true });
+          break;
+        case 'name_desc':
+          query = query.order('name', { ascending: false });
+          break;
+        case 'date_asc':
+          query = query.order('created_at', { ascending: true });
+          break;
+        case 'date_desc':
+        default:
+          query = query.order('created_at', { ascending: false });
+          break;
       }
+    } else {
+      // Default sort by most recent
+      query = query.order('created_at', { ascending: false });
     }
-    
-    // Add to local state
-    const clonedSet = {
-      id: newSet.id,
-      name: newSet.name,
-      description: newSet.description || '',
-      user_id: newSet.user_id,
-      created_at: newSet.created_at,
-      updated_at: newSet.updated_at,
-      card_count: cards.length
-    } as FlashcardSet;
-    
-    setFlashcardSets(prev => [clonedSet, ...prev]);
-    
-    return clonedSet;
-  } catch (error) {
-    console.error('Error cloning flashcard set:', error);
-    toast.error('Failed to clone flashcard set');
-    return null;
-  }
-};
 
-export const fetchLibrarySetsByPage = async (
-  filters: Partial<LibraryFilters>,
-  page: number = 1,
-  pageSize: number = 10
-): Promise<{ data: FlashcardSetWithCount[]; count: number | null }> => {
-  try {
-    // Apply filters here
-    const startIndex = (page - 1) * pageSize;
-    const endIndex = startIndex + pageSize - 1;
-    
-    // Cast to any to bypass TypeScript's strict checking
-    // @ts-ignore - Supabase custom RPC function
-    const { data: setsWithCount, error } = await supabase
-      .rpc('get_flashcard_sets_with_count')
-      .range(startIndex, endIndex);
+    const { data, error } = await query;
     
     if (error) {
-      console.error("Error fetching library sets:", error);
-      throw new Error(`Error fetching library sets: ${error.message}`);
+      throw error;
     }
-
-    // Calculate the total count if available
-    const count = setsWithCount && setsWithCount.length > 0 ? parseInt(setsWithCount[0].total_count) : 0;
-
-    return {
-      data: setsWithCount as FlashcardSetWithCount[],
-      count
-    };
+    
+    return data || [];
   } catch (error) {
-    console.error("Error in fetchLibrarySetsByPage:", error);
-    return { data: [], count: 0 };
+    console.error('Error fetching library flashcard sets:', error);
+    throw error;
+  }
+};
+
+export const fetchFlashcardSetsWithCount = async (filters?: LibraryFilters): Promise<FlashcardSetWithCount[]> => {
+  try {
+    // This is using an RPC function call, replace with a standard query that matches the database schema
+    const { data, error } = await supabase
+      .from('flashcard_sets')
+      .select(`
+        id,
+        name,
+        description,
+        is_public,
+        is_built_in,
+        subject,
+        created_at,
+        updated_at,
+        image_url,
+        cards_count,
+        metadata,
+        owner_id
+      `);
+    
+    if (error) {
+      throw error;
+    }
+    
+    if (!data || data.length === 0) {
+      return [];
+    }
+    
+    // Convert data to FlashcardSetWithCount format
+    return data.map(set => ({
+      ...set,
+      flashcard_count: set.cards_count || 0
+    })) as FlashcardSetWithCount[];
+  } catch (error) {
+    console.error('Error fetching flashcard sets with count:', error);
+    return [];
+  }
+};
+
+// Clone a flashcard set for the current user
+export const cloneFlashcardSet = async (setId: string): Promise<FlashcardSet> => {
+  try {
+    const { data, error } = await supabase.functions.invoke('clone-flashcard-set', {
+      body: { setId }
+    });
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data.flashcardSet;
+  } catch (error) {
+    console.error('Error cloning flashcard set:', error);
+    throw error;
+  }
+};
+
+// Rate a flashcard set
+export const rateFlashcardSet = async (setId: string, rating: number): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from('flashcard_set_ratings')
+      .upsert(
+        { 
+          set_id: setId, 
+          rating: rating 
+        },
+        { onConflict: 'set_id' }
+      );
+    
+    if (error) {
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error rating flashcard set:', error);
+    throw error;
+  }
+};
+
+// Fetch all available subjects
+export const fetchSubjects = async (): Promise<string[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('subjects')
+      .select('name')
+      .order('name');
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data.map(subject => subject.name);
+  } catch (error) {
+    console.error('Error fetching subjects:', error);
+    return [];
+  }
+};
+
+// Fetch user's ratings
+export const fetchUserRatings = async (): Promise<Record<string, number>> => {
+  try {
+    const { data, error } = await supabase
+      .from('flashcard_set_ratings')
+      .select('set_id, rating');
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data.reduce((acc: Record<string, number>, curr) => {
+      acc[curr.set_id] = curr.rating;
+      return acc;
+    }, {});
+  } catch (error) {
+    console.error('Error fetching user ratings:', error);
+    return {};
   }
 };

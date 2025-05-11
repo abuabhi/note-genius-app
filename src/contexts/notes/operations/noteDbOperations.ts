@@ -63,13 +63,27 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
 };
 
 export const deleteNoteFromDatabase = async (id: string): Promise<void> => {
-  // The note_tags entries will be automatically deleted due to ON DELETE CASCADE
-  const { error } = await supabase
-    .from('notes')
-    .delete()
-    .eq('id', id);
+  try {
+    // First try to delete directly
+    const { error } = await supabase
+      .from('notes')
+      .delete()
+      .eq('id', id);
 
-  if (error) {
+    if (error) {
+      console.warn('Error in regular delete, trying force delete with edge function:', error);
+      
+      // If regular delete fails, try using the edge function for force delete
+      const { error: edgeError } = await supabase.functions.invoke('delete-note', {
+        body: { noteId: id }
+      });
+
+      if (edgeError) {
+        throw edgeError;
+      }
+    }
+  } catch (error) {
+    console.error('Error deleting note:', error);
     throw error;
   }
 };

@@ -37,27 +37,6 @@ export const NoteCard = ({
     navigate(`/notes/study/${note.id}`);
   };
   
-  const handleDownload = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    // Create a text file with the note content
-    const element = document.createElement("a");
-    const content = note.content || note.description || "";
-    const file = new Blob([`# ${note.title}\n\n${content}`], {type: 'text/markdown'});
-    element.href = URL.createObjectURL(file);
-    element.download = `${note.title.replace(/\s+/g, '-').toLowerCase()}.md`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-  };
-  
-  const handleEmail = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    // Create a mailto link with the note content
-    const subject = encodeURIComponent(`Note: ${note.title}`);
-    const body = encodeURIComponent(`${note.title}\n\n${note.content || note.description || ""}`);
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
-  };
-  
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     
@@ -90,13 +69,12 @@ export const NoteCard = ({
       <CardHeader className="relative p-3 pb-1">
         {/* Card actions positioned absolutely */}
         <NoteCardActions 
-          noteId={note.id} 
+          noteId={note.id}
+          noteTitle={note.title}
+          noteContent={note.content || note.description || ""}
           isPinned={!!note.pinned} 
           onPin={onPin}
           onDelete={handleDelete}
-          onDownload={handleDownload}
-          onEmail={handleEmail}
-          isConfirmingDelete={isConfirmingDelete}
           iconSize={5}
         />
         

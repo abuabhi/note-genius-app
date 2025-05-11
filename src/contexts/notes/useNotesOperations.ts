@@ -123,6 +123,7 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
         description: "Please try again later.",
         variant: "destructive",
       });
+      throw error; // Re-throw to handle in calling component
     }
   };
 
@@ -157,6 +158,7 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
         description: "Please try again later.",
         variant: "destructive",
       });
+      throw error; // Re-throw to handle in calling component
     }
   };
 
@@ -185,6 +187,7 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
         description: "Please try again later.",
         variant: "destructive",
       });
+      throw error; // Re-throw to handle in calling component
     }
   };
 
@@ -213,6 +216,7 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
         description: "Please try again later.",
         variant: "destructive",
       });
+      throw error; // Re-throw to handle in calling component
     }
   };
 

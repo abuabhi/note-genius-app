@@ -8,26 +8,25 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface NoteCardActionsProps {
   noteId: string;
+  noteTitle: string;
+  noteContent?: string;
   isPinned: boolean;
   onPin: (id: string, isPinned: boolean, e: React.MouseEvent) => void;
   onDelete: (id: string, e: React.MouseEvent) => void;
-  onDownload?: (id: string, e: React.MouseEvent) => void;
-  onEmail?: (id: string, e: React.MouseEvent) => void;
-  isConfirmingDelete: boolean;
   iconSize?: number;
 }
 
 export const NoteCardActions = ({
   noteId,
+  noteTitle,
+  noteContent = "",
   isPinned,
   onPin,
   onDelete,
-  onDownload,
-  onEmail,
-  isConfirmingDelete,
   iconSize = 4
 }: NoteCardActionsProps) => {
   const handleAction = (
@@ -36,6 +35,28 @@ export const NoteCardActions = ({
   ) => (e: React.MouseEvent) => {
     e.stopPropagation();
     action(noteId, ...args);
+  };
+
+  const handleDownload = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Create a text file with the note content
+    const element = document.createElement("a");
+    const file = new Blob([`# ${noteTitle}\n\n${noteContent}`], {type: 'text/markdown'});
+    element.href = URL.createObjectURL(file);
+    element.download = `${noteTitle.replace(/\s+/g, '-').toLowerCase()}.md`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+    toast.success("Note downloaded successfully");
+  };
+  
+  const handleEmail = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Create a mailto link with the note content
+    const subject = encodeURIComponent(`Note: ${noteTitle}`);
+    const body = encodeURIComponent(`${noteTitle}\n\n${noteContent}`);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    toast.success("Email client opened");
   };
 
   return (
@@ -67,28 +88,24 @@ export const NoteCardActions = ({
             onClick={handleAction(onDelete)}
           >
             <Trash2 className="mr-2 h-4 w-4" />
-            <span>{isConfirmingDelete ? "Click to confirm delete" : "Delete note"}</span>
+            <span>Delete note</span>
           </DropdownMenuItem>
           
-          {onDownload && (
-            <DropdownMenuItem 
-              className="flex items-center cursor-pointer" 
-              onClick={handleAction(onDownload)}
-            >
-              <Download className="mr-2 h-4 w-4" />
-              <span>Download</span>
-            </DropdownMenuItem>
-          )}
+          <DropdownMenuItem 
+            className="flex items-center cursor-pointer" 
+            onClick={handleDownload}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            <span>Download</span>
+          </DropdownMenuItem>
           
-          {onEmail && (
-            <DropdownMenuItem 
-              className="flex items-center cursor-pointer" 
-              onClick={handleAction(onEmail)}
-            >
-              <Mail className="mr-2 h-4 w-4" />
-              <span>Email</span>
-            </DropdownMenuItem>
-          )}
+          <DropdownMenuItem 
+            className="flex items-center cursor-pointer" 
+            onClick={handleEmail}
+          >
+            <Mail className="mr-2 h-4 w-4" />
+            <span>Email</span>
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
