@@ -25,11 +25,8 @@ export const NoteManagement = ({ noteId }: NoteManagementProps) => {
       setIsDeleting(true);
       
       // Call the edge function to delete the note
-      const { data, error } = await supabase.functions.invoke('manage-notes', {
-        body: { 
-          action: 'delete',
-          noteId
-        },
+      const { data, error } = await supabase.functions.invoke('delete-note', {
+        body: { noteId }
       });
       
       if (error) throw error;

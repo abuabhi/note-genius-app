@@ -7,6 +7,7 @@ import { StudyViewHeader } from "./header/StudyViewHeader";
 import { useNoteStudyEditor } from "./hooks/useNoteStudyEditor";
 import { NoteStudyViewContent } from "./viewer/NoteStudyViewContent";
 import { NoteStudyEditForm } from "./editor/NoteStudyEditForm";
+import { NoteManagement } from "../NoteManagement";
 
 interface NoteStudyViewProps {
   note: Note;
@@ -87,6 +88,9 @@ export const NoteStudyView: React.FC<NoteStudyViewProps> = ({ note }) => {
             handleEnhanceContent={handleEnhanceContent}
           />
         )}
+        
+        {/* Add note management section at the bottom */}
+        <NoteManagement noteId={note.id} />
       </CardContent>
     </Card>
   );
