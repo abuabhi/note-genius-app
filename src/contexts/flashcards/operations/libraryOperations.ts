@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { PostgrestError } from '@supabase/supabase-js';
 import { FlashcardState } from '../types';
@@ -231,5 +230,39 @@ export const cloneFlashcardSet = async (state: FlashcardState, setId: string): P
     console.error('Error cloning flashcard set:', error);
     toast.error('Failed to clone flashcard set');
     return null;
+  }
+};
+
+export const fetchLibrarySetsByPage = async (
+  filters: Partial<LibraryFilters>,
+  page: number = 1,
+  pageSize: number = 10
+): Promise<{ data: FlashcardSetWithCount[]; count: number | null }> => {
+  try {
+    // Apply filters here
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = startIndex + pageSize - 1;
+    
+    // Cast to any to bypass TypeScript's strict checking
+    // @ts-ignore - Supabase custom RPC function
+    const { data: setsWithCount, error } = await supabase
+      .rpc('get_flashcard_sets_with_count')
+      .range(startIndex, endIndex);
+    
+    if (error) {
+      console.error("Error fetching library sets:", error);
+      throw new Error(`Error fetching library sets: ${error.message}`);
+    }
+
+    // Calculate the total count if available
+    const count = setsWithCount && setsWithCount.length > 0 ? parseInt(setsWithCount[0].total_count) : 0;
+
+    return {
+      data: setsWithCount as FlashcardSetWithCount[],
+      count
+    };
+  } catch (error) {
+    console.error("Error in fetchLibrarySetsByPage:", error);
+    return { data: [], count: 0 };
   }
 };

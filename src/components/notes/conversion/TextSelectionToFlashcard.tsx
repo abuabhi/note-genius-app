@@ -1,119 +1,96 @@
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { useFlashcards } from "@/contexts/FlashcardContext";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
-import { CreateFlashcardPayload } from "@/types/flashcard";
 
-interface TextSelectionToFlashcardProps {
-  selectedText: string;
-  onClose: () => void;
+import { useState } from "react";
+import { useFlashcardsOperations } from "@/contexts/flashcards/useFlashcards";
+import { useFlashcardState } from "@/contexts/flashcards/useFlashcardState";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+
+export interface TextSelectionToFlashcardProps {
+  noteContent: string;
+  noteTitle: string;
+  flashcardSetId: string | null;
+  onFlashcardCreated?: () => void;
+  subjectName: string;
 }
 
-export const TextSelectionToFlashcard = ({ selectedText, onClose }: TextSelectionToFlashcardProps) => {
-  const [frontContent, setFrontContent] = useState("");
-  const [backContent, setBackContent] = useState(selectedText);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedDifficulty, setSelectedDifficulty] = useState<number>(3);
-  const [selectedSetId, setSelectedSetId] = useState<string | undefined>(undefined);
+export const TextSelectionToFlashcard = ({
+  noteContent,
+  noteTitle,
+  flashcardSetId,
+  onFlashcardCreated,
+  subjectName
+}: TextSelectionToFlashcardProps) => {
+  const [selectedText, setSelectedText] = useState<string>("");
+  const flashcardState = useFlashcardState();
+  const { addFlashcard } = useFlashcardsOperations(flashcardState);
 
-  const { createFlashcard } = useFlashcards();
-  const { toast } = useToast();
+  const handleTextSelection = () => {
+    const selection = window.getSelection();
+    if (selection && selection.toString().trim().length > 0) {
+      setSelectedText(selection.toString());
+    }
+  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!frontContent.trim() || !backContent.trim()) {
-      toast({
-        title: "Missing content",
-        description: "Please fill in both sides of the flashcard.",
-        variant: "destructive",
-      });
+  const handleCreateFromSelection = async () => {
+    if (!flashcardSetId) {
+      toast.error("Please select a flashcard set first");
       return;
     }
-
-    setIsSubmitting(true);
-
+    
+    if (!selectedText || selectedText.trim() === "") {
+      toast.error("No text selected");
+      return;
+    }
+    
     try {
-      const cardData: CreateFlashcardPayload = {
-        front_content: frontContent.trim(),
-        back_content: backContent.trim(),
-      };
-
-      const result = await createFlashcard(cardData, selectedSetId);
+      await addFlashcard({
+        front_content: `<p><strong>Selection from: ${noteTitle}</strong></p>`,
+        back_content: selectedText,
+        set_id: flashcardSetId,
+        subject: subjectName,
+      });
       
-      if (result) {
-        toast({
-          title: "Flashcard created",
-          description: "Selected text has been converted to a flashcard.",
-        });
-        
-        onClose();
+      toast.success("Flashcard created from selection");
+      setSelectedText("");
+      if (onFlashcardCreated) {
+        onFlashcardCreated();
       }
     } catch (error) {
       console.error("Error creating flashcard from selection:", error);
-      toast({
-        title: "Creation failed",
-        description: "Failed to create flashcard. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+      toast.error("Failed to create flashcard");
     }
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Create Flashcard from Selection</CardTitle>
-      </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
-          <div>
-            <label htmlFor="front" className="block text-sm font-medium mb-1">
-              Front (Question)
-            </label>
-            <Textarea
-              id="front"
-              value={frontContent}
-              onChange={(e) => setFrontContent(e.target.value)}
-              className="min-h-[100px]"
-              placeholder="Enter a question based on the selected text"
-              disabled={isSubmitting}
-            />
+    <div>
+      <h3 className="text-md font-medium mb-2">Create from Selection</h3>
+      <p className="text-sm text-gray-600 mb-2">
+        Select text from your note and create a flashcard from it.
+      </p>
+      
+      <div className="bg-gray-50 border rounded-md p-3 mb-3" onClick={handleTextSelection}>
+        <div 
+          className="prose max-w-none text-sm overflow-auto max-h-40" 
+          dangerouslySetInnerHTML={{ __html: noteContent }}
+        />
+      </div>
+      
+      {selectedText && (
+        <div className="mb-3">
+          <h4 className="text-sm font-medium">Selected Text:</h4>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-2 text-sm">
+            {selectedText}
           </div>
-          <div>
-            <label htmlFor="back" className="block text-sm font-medium mb-1">
-              Back (Answer)
-            </label>
-            <Textarea
-              id="back"
-              value={backContent}
-              onChange={(e) => setBackContent(e.target.value)}
-              className="min-h-[100px]"
-              placeholder="Your selected text will appear here"
-              disabled={isSubmitting}
-            />
-          </div>
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              "Create Flashcard"
-            )}
-          </Button>
-        </CardFooter>
-      </form>
-    </Card>
+        </div>
+      )}
+      
+      <Button
+        size="sm"
+        disabled={!selectedText || !flashcardSetId}
+        onClick={handleCreateFromSelection}
+      >
+        Create Card from Selection
+      </Button>
+    </div>
   );
 };

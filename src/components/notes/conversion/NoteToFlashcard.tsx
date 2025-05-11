@@ -1,15 +1,14 @@
 
-// Create a new file to handle individual note to flashcard conversion
 import { useState } from "react";
 import { Note } from "@/types/note";
-import { useFlashcards } from "@/contexts/FlashcardContext";
 import { Button } from "@/components/ui/button";
 import { TextSelectionToFlashcard } from "./TextSelectionToFlashcard";
 import { toast } from "sonner";
 import { AIFlashcardGenerator } from "./AIFlashcardGenerator";
-import { PremiumFeatureNotice } from "./PremiumFeatureNotice";
 import { usePremiumFeatures } from "@/hooks/usePremiumFeatures";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
+import { useFlashcardsOperations } from "@/contexts/flashcards/useFlashcards";
+import { useFlashcardState } from "@/contexts/flashcards/useFlashcardState";
 
 interface NoteToFlashcardProps {
   note: Note;
@@ -18,7 +17,8 @@ interface NoteToFlashcardProps {
 }
 
 export const NoteToFlashcard = ({ note, flashcardSetId, onFlashcardCreated }: NoteToFlashcardProps) => {
-  const { addFlashcard } = useFlashcards();
+  const flashcardState = useFlashcardState();
+  const { addFlashcard } = useFlashcardsOperations(flashcardState);
   const [isGenerating, setIsGenerating] = useState(false);
   const { subjects } = useUserSubjects();
   const { aiFlashcardGenerationEnabled } = usePremiumFeatures();
@@ -49,7 +49,9 @@ export const NoteToFlashcard = ({ note, flashcardSetId, onFlashcardCreated }: No
       });
       
       toast.success("Flashcard created from note");
-      onFlashcardCreated?.();
+      if (onFlashcardCreated) {
+        onFlashcardCreated();
+      }
     } catch (error) {
       console.error("Error creating flashcard from note:", error);
       toast.error("Failed to create flashcard");
@@ -75,7 +77,8 @@ export const NoteToFlashcard = ({ note, flashcardSetId, onFlashcardCreated }: No
       
       {/* Selection based conversion */}
       <TextSelectionToFlashcard 
-        note={note} 
+        noteContent={note.content || ''}
+        noteTitle={note.title}
         flashcardSetId={flashcardSetId}
         onFlashcardCreated={onFlashcardCreated}
         subjectName={subjectName}
@@ -84,7 +87,8 @@ export const NoteToFlashcard = ({ note, flashcardSetId, onFlashcardCreated }: No
       {/* AI-Based Generation */}
       {aiFlashcardGenerationEnabled ? (
         <AIFlashcardGenerator
-          note={note}
+          noteContent={note.content || ''}
+          noteTitle={note.title}
           flashcardSetId={flashcardSetId}
           onFlashcardCreated={onFlashcardCreated}
           isGenerating={isGenerating}
@@ -92,10 +96,12 @@ export const NoteToFlashcard = ({ note, flashcardSetId, onFlashcardCreated }: No
           subjectName={subjectName}
         />
       ) : (
-        <PremiumFeatureNotice
-          title="AI Flashcard Generation"
-          description="Automatically generate flashcards from your notes using AI"
-        />
+        <div className="border border-yellow-200 bg-yellow-50 rounded-md p-4">
+          <h3 className="font-medium text-amber-700">AI Flashcard Generation</h3>
+          <p className="text-sm text-amber-600 mt-1">
+            Automatically generate flashcards from your notes using AI. Upgrade to premium to access this feature.
+          </p>
+        </div>
       )}
     </div>
   );
