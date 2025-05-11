@@ -44,7 +44,7 @@ export const fetchFlashcardLibrary = async () => {
   try {
     // First get the count of cards per set using a separate query
     const { data: setCountData, error: countError } = await supabase
-      .rpc('get_flashcard_sets_with_count');
+      .rpc('get_flashcard_sets_with_count') as { data: any; error: PostgrestError | null };
     
     if (countError) {
       throw countError;
