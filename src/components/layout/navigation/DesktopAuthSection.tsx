@@ -14,13 +14,15 @@ import { DndToggle } from '@/components/dnd/DndToggle';
 import { ReminderNavPopover } from '@/components/reminders/ReminderNavPopover';
 
 interface DesktopAuthSectionProps {
-  userProfile: any | null;
   isPublicRoute: boolean;
 }
 
-export const DesktopAuthSection = ({ userProfile, isPublicRoute }: DesktopAuthSectionProps) => {
+export const DesktopAuthSection = ({ isPublicRoute }: DesktopAuthSectionProps) => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  
+  // Get user tier safely if user is logged in
+  const userProfile = user?.user_metadata;
   const isAdmin = userProfile?.user_tier === UserTier.DEAN;
 
   const handleLogout = async () => {

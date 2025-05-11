@@ -7,13 +7,15 @@ import { UserTier } from '@/hooks/useRequireAuth';
 
 interface MobileMenuProps {
   isOpen: boolean;
-  userProfile: any | null;
   isPublicRoute: boolean;
 }
 
-export const MobileMenu = ({ isOpen, userProfile, isPublicRoute }: MobileMenuProps) => {
+export const MobileMenu = ({ isOpen, isPublicRoute }: MobileMenuProps) => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  
+  // Get user tier safely if user is logged in
+  const userProfile = user?.user_metadata;
   const isAdmin = userProfile?.user_tier === UserTier.DEAN;
   
   const handleLogout = async () => {
@@ -85,4 +87,4 @@ export const MobileMenu = ({ isOpen, userProfile, isPublicRoute }: MobileMenuPro
       </div>
     </div>
   );
-};
+}

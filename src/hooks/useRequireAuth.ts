@@ -51,86 +51,97 @@ export const useRequireAuth = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
+  // Define which routes are public
+  const publicRoutes = ['/', '/about', '/pricing', '/faq', '/contact', '/blog', '/features', '/login', '/signup'];
+  const isPublicRoute = publicRoutes.includes(location.pathname);
+  
   useEffect(() => {
     // Don't do anything while the auth is still loading
     if (authLoading) return;
     
-    if (!user) {
-      // Only redirect to login if the user is not authenticated
+    // Only redirect to login if the user is not authenticated AND we're not on a public route
+    if (!user && !isPublicRoute) {
       navigate('/login');
       setLoading(false);
       return;
     }
     
-    const fetchUserData = async () => {
-      try {
-        // Fetch the user profile
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-
-        if (profileError) {
-          console.error('Error fetching user profile:', profileError);
-          throw profileError;
-        }
-
-        // Fetch tier limits based on user's tier
-        if (profileData) {
-          const { data: tierData, error: tierError } = await supabase
-            .from('tier_limits')
+    // If user is authenticated, fetch user data
+    if (user) {
+      const fetchUserData = async () => {
+        try {
+          // Fetch the user profile
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
             .select('*')
-            .eq('tier', profileData.user_tier)
+            .eq('id', user.id)
             .single();
 
-          if (tierError) {
-            console.error('Error fetching tier limits:', tierError);
-          } else {
-            setTierLimits(tierData);
+          if (profileError) {
+            console.error('Error fetching user profile:', profileError);
+            throw profileError;
           }
 
-          // Transform the profileData to match the UserProfile interface
-          const notificationPrefs = profileData.notification_preferences ? 
-            (typeof profileData.notification_preferences === 'string' 
-              ? JSON.parse(profileData.notification_preferences)
-              : profileData.notification_preferences) 
-            : { email: false, in_app: true, whatsapp: false };
+          // Fetch tier limits based on user's tier
+          if (profileData) {
+            const { data: tierData, error: tierError } = await supabase
+              .from('tier_limits')
+              .select('*')
+              .eq('tier', profileData.user_tier)
+              .single();
 
-          const typedProfile: UserProfile = {
-            id: profileData.id,
-            username: profileData.username || '',
-            avatar_url: profileData.avatar_url,
-            user_tier: profileData.user_tier as UserTier,
-            do_not_disturb: profileData.do_not_disturb || false,
-            dnd_start_time: profileData.dnd_start_time,
-            dnd_end_time: profileData.dnd_end_time,
-            notification_preferences: {
-              email: notificationPrefs.email === true,
-              in_app: notificationPrefs.in_app !== false,
-              whatsapp: notificationPrefs.whatsapp === true
-            },
-            created_at: profileData.created_at || '',
-            updated_at: profileData.updated_at || ''
-          };
+            if (tierError) {
+              console.error('Error fetching tier limits:', tierError);
+            } else {
+              setTierLimits(tierData);
+            }
 
-          setUserProfile(typedProfile);
+            // Transform the profileData to match the UserProfile interface
+            const notificationPrefs = profileData.notification_preferences ? 
+              (typeof profileData.notification_preferences === 'string' 
+                ? JSON.parse(profileData.notification_preferences)
+                : profileData.notification_preferences) 
+              : { email: false, in_app: true, whatsapp: false };
+
+            const typedProfile: UserProfile = {
+              id: profileData.id,
+              username: profileData.username || '',
+              avatar_url: profileData.avatar_url,
+              user_tier: profileData.user_tier as UserTier,
+              do_not_disturb: profileData.do_not_disturb || false,
+              dnd_start_time: profileData.dnd_start_time,
+              dnd_end_time: profileData.dnd_end_time,
+              notification_preferences: {
+                email: notificationPrefs.email === true,
+                in_app: notificationPrefs.in_app !== false,
+                whatsapp: notificationPrefs.whatsapp === true
+              },
+              created_at: profileData.created_at || '',
+              updated_at: profileData.updated_at || ''
+            };
+
+            setUserProfile(typedProfile);
+          }
+        } catch (error) {
+          console.error('Error in useRequireAuth:', error);
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        console.error('Error in useRequireAuth:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+      };
 
-    fetchUserData();
+      fetchUserData();
+    } else {
+      // If we're on a public route but not authenticated,
+      // just set loading to false without redirecting
+      setLoading(false);
+    }
     
     // Store the current path as the last visited page
     if (location.pathname !== '/login' && location.pathname !== '/signup') {
       localStorage.setItem('lastVisitedPage', location.pathname);
     }
     
-  }, [user, authLoading, navigate, location.pathname]);
+  }, [user, authLoading, navigate, location.pathname, isPublicRoute]);
 
   return { user, userProfile, loading: authLoading || loading, tierLimits };
 };

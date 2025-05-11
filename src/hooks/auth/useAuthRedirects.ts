@@ -18,6 +18,10 @@ export const useAuthRedirects = ({
   const navigate = useNavigate();
   const location = useLocation();
   
+  // Define which routes are public
+  const publicRoutes = ['/', '/about', '/pricing', '/faq', '/contact', '/blog', '/features', '/login', '/signup'];
+  const isPublicRoute = publicRoutes.includes(location.pathname);
+  
   useEffect(() => {
     // Skip redirection while still loading
     if (loading || onboardingLoading) {
@@ -40,6 +44,6 @@ export const useAuthRedirects = ({
         navigate('/dashboard', { replace: true });
       }
     }
-    // We removed the redirection to /login for non-authenticated users on public routes
+    // We don't redirect non-authenticated users on public routes
   }, [user, onboardingCompleted, onboardingLoading, navigate, location.pathname, loading]);
 };

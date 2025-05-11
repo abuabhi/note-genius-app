@@ -4,7 +4,6 @@ import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { Button } from '@/components/ui/button';
-import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { AppLogo } from './navigation/AppLogo';
 import { DesktopNavLinks } from './navigation/DesktopNavLinks';
 import { DesktopAuthSection } from './navigation/DesktopAuthSection';
@@ -14,7 +13,6 @@ export default function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { pathname } = useLocation();
   const { user } = useAuth();
-  const { userProfile } = useRequireAuth();
   
   // Define which routes are public
   const publicRoutes = ['/', '/about', '/pricing', '/faq', '/contact', '/blog', '/features', '/login', '/signup'];
@@ -38,7 +36,6 @@ export default function NavBar() {
         
         {/* Desktop Navigation - Right Side - Auth Buttons or User Menu */}
         <DesktopAuthSection 
-          userProfile={userProfile} 
           isPublicRoute={isPublicRoute} 
         />
 
@@ -52,7 +49,6 @@ export default function NavBar() {
         {/* Mobile Navigation */}
         <MobileMenu 
           isOpen={isMenuOpen}
-          userProfile={userProfile}
           isPublicRoute={isPublicRoute}
         />
       </div>

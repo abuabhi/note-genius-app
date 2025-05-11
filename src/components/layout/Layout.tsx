@@ -19,7 +19,7 @@ const Layout = ({ children }: LayoutProps) => {
   console.log("Layout rendering path:", pathname, "Public route:", isPublicRoute, "User:", !!user);
 
   // For public routes OR when user is not authenticated, use the public layout without sidebar
-  if (isPublicRoute || !user) {
+  if (isPublicRoute) {
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
         <NavBar />
