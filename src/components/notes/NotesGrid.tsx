@@ -41,9 +41,12 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
     setIsDetailsOpen(true);
   };
 
+  // Log the notes to help debug
+  console.log("Notes in grid:", notes.map(n => ({ id: n.id, title: n.title, subject_id: n.subject_id })));
+
   return (
     <>
-      <div className="flex flex-col space-y-4">
+      <div className="flex flex-col space-y-3">
         {notes.map((note) => (
           <NoteCard
             key={note.id}

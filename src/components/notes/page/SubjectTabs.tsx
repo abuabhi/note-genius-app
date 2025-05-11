@@ -28,6 +28,13 @@ export const SubjectTabs = ({ activeSubjectId, onSubjectChange }: SubjectTabsPro
     ...subjects
   ];
 
+  // Debug information
+  useEffect(() => {
+    console.log("Active subject ID:", activeSubjectId);
+    console.log("Active tab index:", activeTabIndex);
+    console.log("Available subjects:", subjects);
+  }, [activeSubjectId, activeTabIndex, subjects]);
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-4">
@@ -71,7 +78,10 @@ export const SubjectTabs = ({ activeSubjectId, onSubjectChange }: SubjectTabsPro
         {allTabs.map((tab, index) => (
           <button
             key={tab.id ?? 'all'}
-            onClick={() => onSubjectChange(tab.id)}
+            onClick={() => {
+              console.log("Tab clicked:", tab.name, "with ID:", tab.id);
+              onSubjectChange(tab.id);
+            }}
             className="flex-1 h-8 md:h-12"
           >
             <span

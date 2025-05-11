@@ -28,13 +28,24 @@ const NotesPage = () => {
     
     // Simply record that we're on the notes page - no redirection logic at all
     localStorage.setItem("lastVisitedPage", location.pathname);
-  }, [setFilterOptions, location.pathname]);
+
+    // Debug subject information
+    console.log("Available subjects:", subjects);
+  }, [setFilterOptions, location.pathname, subjects]);
 
   // Helper function to find subject_id based on category name
   const findSubjectIdByName = (categoryName: string): string | undefined => {
+    // Case insensitive matching to improve chances of finding matches
     const matchingSubject = subjects.find(subject => 
       subject.name.toLowerCase() === categoryName.toLowerCase()
     );
+    
+    if (matchingSubject) {
+      console.log(`Matched category ${categoryName} to subject ID ${matchingSubject.id}`);
+    } else {
+      console.log(`No subject match found for category: ${categoryName}`);
+    }
+    
     return matchingSubject?.id;
   };
 

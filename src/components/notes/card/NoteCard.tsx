@@ -1,7 +1,7 @@
 
 import { Note } from "@/types/note";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Archive, Camera, FileText, Tag } from "lucide-react";
+import { Archive, Book, Camera, FileText, Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { NoteCardActions } from "./NoteCardActions";
@@ -49,7 +49,7 @@ export const NoteCard = ({
       `}
       onClick={() => onNoteClick(note)}
     >
-      <CardHeader className="relative p-4 pb-2">
+      <CardHeader className="relative p-3 pb-1">
         {/* Card actions positioned absolutely */}
         <NoteCardActions 
           noteId={note.id} 
@@ -65,69 +65,45 @@ export const NoteCard = ({
             {note.title}
           </CardTitle>
         </div>
-        
-        {/* Date and Subject in same row */}
-        <div className="flex items-center justify-between mt-2 text-sm">
-          <div className="flex items-center gap-2">
-            <span className="text-mint-600">{formattedDate}</span>
-            <span className="text-mint-400">•</span>
-            <span 
-              className="font-medium"
-              style={{
-                color: generateColorFromString(note.category),
-              }}
-            >
-              {note.category}
-            </span>
-          </div>
-        </div>
       </CardHeader>
-      <CardContent className="p-4 pt-0">
-        {/* Description removed as requested */}
-      </CardContent>
-      <CardFooter className="p-4 pt-2 flex justify-between items-center">
-        {/* Tags at bottom left */}
-        <div className="flex-1">
-          {note.tags && note.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 items-center">
-              <Tag className="h-4 w-4 text-mint-700" />
-              <NoteTagList 
-                tags={note.tags
-                  .filter(tag => tag.name !== note.category) // Don't show category tag twice
-                  .slice(0, 3)
-                }
-              />
-              {note.tags.length > 4 && (
-                <Badge variant="outline" className="text-xs mt-1">
-                  +{note.tags.length - 4} more
-                </Badge>
-              )}
-            </div>
-          )}
+      
+      <CardFooter className="flex justify-between items-center px-3 py-2 pt-0">
+        {/* Date and subject on left */}
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-mint-600">{formattedDate}</span>
+          <span className="text-mint-400">•</span>
+          <span 
+            className="font-medium"
+            style={{
+              color: generateColorFromString(note.category),
+            }}
+          >
+            {note.category}
+          </span>
           
-          <div className="flex flex-wrap mt-1 gap-2">
+          {/* Tags and status indicators */}
+          <div className="flex flex-wrap gap-1 ml-2">
             {note.sourceType === 'scan' && (
               <div className="flex items-center">
-                <Camera className="h-4 w-4 text-mint-500 mr-1" />
-                <span className="text-xs text-mint-500">Scanned</span>
+                <Camera className="h-4 w-4 text-mint-500" />
               </div>
             )}
             {note.archived && (
               <div className="flex items-center">
-                <Archive className="h-4 w-4 text-mint-500 mr-1" />
-                <span className="text-xs text-mint-500">Archived</span>
+                <Archive className="h-4 w-4 text-mint-500" />
               </div>
             )}
           </div>
         </div>
         
-        {/* Study Mode button at bottom right */}
+        {/* Study Mode button at right */}
         <Button 
-          variant="ghost" 
+          variant="default" 
           size="sm" 
-          className="h-8 text-sm text-mint-600 hover:text-mint-800"
+          className="h-8 text-sm bg-mint-600 hover:bg-mint-700 flex items-center gap-1"
           onClick={handleGoToStudyMode}
         >
+          <Book className="h-4 w-4" />
           Study Mode
         </Button>
       </CardFooter>

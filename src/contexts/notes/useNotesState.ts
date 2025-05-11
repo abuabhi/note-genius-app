@@ -1,4 +1,3 @@
-
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Note } from "@/types/note";
 import { FilterOptions } from './types';
@@ -45,13 +44,21 @@ export function useNotesState() {
 
   // Apply filters and search
   const filteredNotes = useMemo(() => {
+    // Add debugging for subject filtering
+    if (filterOptions.subjectId) {
+      console.log(`Filtering by subject ID: ${filterOptions.subjectId}`);
+      // Count how many notes have this subject_id
+      const count = notes.filter(note => note.subject_id === filterOptions.subjectId).length;
+      console.log(`Notes with subject_id=${filterOptions.subjectId}: ${count} out of ${notes.length} total notes`);
+      
+      // Show each note with its subject_id
+      notes.forEach(note => {
+        console.log(`Note ID: ${note.id}, Title: ${note.title}, subject_id: ${note.subject_id}, category: ${note.category}`);
+      });
+    }
+    
     return notes
       .filter(note => {
-        // For debugging
-        if (filterOptions.subjectId) {
-          console.log(`Filtering note ${note.id}, subject_id=${note.subject_id}, filter=${filterOptions.subjectId}`);
-        }
-        
         // Filter by archived status
         if (!showArchived && note.archived) {
           return false;
@@ -87,8 +94,16 @@ export function useNotesState() {
         }
         
         // Filter by subject ID (for subject tabs)
-        if (filterOptions.subjectId && note.subject_id !== filterOptions.subjectId) {
-          return false;
+        if (filterOptions.subjectId) {
+          if (note.subject_id !== filterOptions.subjectId) {
+            // Debugging only keep when matching
+            console.log(`Filtering out note ${note.id}, subject_id=${note.subject_id}, filter=${filterOptions.subjectId}`);
+            return false;
+          } else {
+            // Debug for matching notes
+            console.log(`Note MATCHES filter: ${note.id}, subject_id=${note.subject_id}`);
+            return true;
+          }
         }
         
         // Filter by source type
