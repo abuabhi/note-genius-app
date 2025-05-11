@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PREDEFINED_SUBJECTS, GRADE_LEVELS, GradeLevel } from "@/types/subject";
 import Layout from "@/components/layout/Layout";
 import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
+import { LoadingState } from "@/components/notes/page/LoadingState";
 import {
   Select,
   SelectContent,
@@ -83,7 +84,8 @@ const OnboardingPage = () => {
         .from('profiles')
         .update({ 
           grade: grade as GradeLevel,
-          school: school.trim() || null
+          school: school.trim() || null,
+          onboarding_completed: true // Explicitly mark onboarding as completed
         })
         .eq('id', user.id);
         
@@ -101,11 +103,14 @@ const OnboardingPage = () => {
         
       if (subjectsError) throw subjectsError;
       
-      // Mark onboarding as complete
-      await markOnboardingCompleted();
+      // No need to call markOnboardingCompleted since we've already set it directly
       
       toast.success("Onboarding completed successfully!");
-      navigate('/dashboard');
+      
+      // Force a small delay before redirecting
+      setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 500);
     } catch (error: any) {
       console.error("Error completing onboarding:", error);
       toast.error("Failed to complete onboarding: " + error.message);
@@ -117,9 +122,7 @@ const OnboardingPage = () => {
   if (statusLoading) {
     return (
       <Layout>
-        <div className="min-h-[calc(100vh-16rem)] flex justify-center items-center">
-          <p className="text-lg text-muted-foreground">Loading...</p>
-        </div>
+        <LoadingState message="Setting up your account..." />
       </Layout>
     );
   }

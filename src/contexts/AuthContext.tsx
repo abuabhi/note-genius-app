@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface AuthContextType {
   user: User | null;
@@ -33,6 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [onboardingCompleted, setOnboardingCompleted] = useState<boolean | null>(null);
   const [onboardingLoading, setOnboardingLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
   
   // Check onboarding status manually instead of using the hook
   const checkOnboardingStatus = async (userId: string) => {
@@ -103,15 +104,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   // Redirect to onboarding if needed
   useEffect(() => {
-    if (user && onboardingCompleted === false && !onboardingLoading) {
-      // Only redirect if user is on a protected route and not already on onboarding page
-      if (!window.location.pathname.includes('/login') && 
-          !window.location.pathname.includes('/signup') &&
-          !window.location.pathname.includes('/onboarding')) {
-        navigate('/onboarding');
+    // Skip redirection while still loading
+    if (loading || onboardingLoading) {
+      return;
+    }
+    
+    // Only redirect if user exists and we know their onboarding status
+    if (user) {
+      // Handle onboarding redirection
+      if (onboardingCompleted === false) {
+        // Only redirect if user is not already on onboarding page 
+        // and not on pages that don't require onboarding
+        if (!location.pathname.includes('/onboarding') &&
+            !location.pathname.includes('/login') && 
+            !location.pathname.includes('/signup')) {
+          navigate('/onboarding');
+        }
+      } else if (onboardingCompleted === true && location.pathname === '/onboarding') {
+        // If onboarding is complete and user is on onboarding page, redirect to dashboard
+        navigate('/dashboard');
       }
     }
-  }, [user, onboardingCompleted, onboardingLoading, navigate]);
+  }, [user, onboardingCompleted, onboardingLoading, navigate, location.pathname, loading]);
 
   const signIn = async (email: string, password: string) => {
     return await supabase.auth.signInWithPassword({ email, password });
