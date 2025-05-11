@@ -30,6 +30,7 @@ export interface NoteContextType {
   resetFilters: () => void;
   availableCategories: string[];
   addCategory: (category: string) => void;
+  setNotes: React.Dispatch<React.SetStateAction<Note[]>>; // Add setNotes property
 }
 
 // Re-export types from state/types for backward compatibility

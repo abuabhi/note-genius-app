@@ -58,26 +58,29 @@ export const NoteManagement = ({ noteId }: NoteManagementProps) => {
       // Check note_tags
       const { data: tagData, error: tagError } = await supabase
         .from('note_tags')
-        .select('count(*)')
-        .eq('note_id', noteId);
+        .select('count')
+        .eq('note_id', noteId)
+        .single();
         
       // Check scan_data
       const { data: scanData, error: scanError } = await supabase
         .from('scan_data')
-        .select('count(*)')
-        .eq('note_id', noteId);
+        .select('count')
+        .eq('note_id', noteId)
+        .single();
         
       // Check note_enrichment_usage
       const { data: usageData, error: usageError } = await supabase
         .from('note_enrichment_usage')
-        .select('count(*)')
-        .eq('note_id', noteId);
+        .select('count')
+        .eq('note_id', noteId)
+        .single();
       
       let info = `Note found: ${noteData.title}\n`;
       info += `Related records:\n`;
-      info += `- Tags: ${tagError ? "Error checking" : (tagData?.[0]?.count || 0)}\n`;
-      info += `- Scan data: ${scanError ? "Error checking" : (scanData?.[0]?.count || 0)}\n`;
-      info += `- Enrichment usage: ${usageError ? "Error checking" : (usageData?.[0]?.count || 0)}\n`;
+      info += `- Tags: ${tagError ? "Error checking" : (tagData?.count || 0)}\n`;
+      info += `- Scan data: ${scanError ? "Error checking" : (scanData?.count || 0)}\n`;
+      info += `- Enrichment usage: ${usageError ? "Error checking" : (usageData?.count || 0)}\n`;
       
       setDiagnosticInfo(info);
     } catch (error) {
