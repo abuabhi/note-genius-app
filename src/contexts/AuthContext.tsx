@@ -1,176 +1,109 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { useNavigate, useLocation } from 'react-router-dom';
 
-type AuthContextType = {
-  session: Session | null;
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Session, User } from '@supabase/supabase-js';
+import { useNavigate } from 'react-router-dom';
+import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
+
+interface AuthContextType {
   user: User | null;
+  session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, userData?: { username?: string }) => Promise<void>;
-  signIn: (email: string, password: string) => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, metadata?: any) => Promise<{ error: any; data: any }>;
   signOut: () => Promise<void>;
-};
+  resetPassword: (email: string) => Promise<{ error: any }>;
+  updatePassword: (password: string) => Promise<{ error: any }>;
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  const location = useLocation();
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { isOnboardingCompleted, isLoading: onboardingLoading } = useOnboardingStatus();
+  
   useEffect(() => {
-    // Set up auth state listener FIRST
+    // Set up the session listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-        
-        if (event === 'SIGNED_IN' && currentSession) {
-          // Get the last visited page from localStorage
-          const lastVisitedPage = localStorage.getItem('lastVisitedPage');
-          
-          // Use setTimeout to avoid nested Supabase calls in the callback
-          setTimeout(() => {
-            // Only navigate to dashboard if not on a specific page like notes
-            if (!lastVisitedPage || lastVisitedPage === '/login' || lastVisitedPage === '/signup') {
-              navigate('/dashboard');
-            }
-          }, 0);
-        } else if (event === 'SIGNED_OUT') {
-          // Use setTimeout to avoid nested Supabase calls in the callback
-          setTimeout(() => {
-            navigate('/login');
-          }, 0);
-        }
+      (_, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
       }
     );
 
-    // THEN check for existing session
-    const initSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
       setLoading(false);
-    };
-    
-    initSession();
+    });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate, location]);
-
-  const signUp = async (email: string, password: string, userData?: { username?: string }) => {
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            username: userData?.username || email.split('@')[0],
-          }
-        }
-      });
-
-      if (error) throw error;
-      
-      toast({
-        title: "Success!",
-        description: "Check your email for the confirmation link.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to sign up",
-        variant: "destructive",
-      });
-      throw error;
+  }, []);
+  
+  // Redirect to onboarding if needed
+  useEffect(() => {
+    if (user && isOnboardingCompleted === false && !onboardingLoading) {
+      // Only redirect if user is on a protected route and not already on onboarding page
+      if (!window.location.pathname.includes('/login') && 
+          !window.location.pathname.includes('/signup') &&
+          !window.location.pathname.includes('/onboarding')) {
+        navigate('/onboarding');
+      }
     }
-  };
+  }, [user, isOnboardingCompleted, onboardingLoading, navigate]);
 
   const signIn = async (email: string, password: string) => {
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-      
-      toast({
-        title: "Welcome back!",
-        description: "You've been successfully logged in.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to sign in",
-        variant: "destructive",
-      });
-      throw error;
-    }
+    return await supabase.auth.signInWithPassword({ email, password });
   };
 
-  const signInWithGoogle = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`,
-        }
-      });
-      
-      if (error) throw error;
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to sign in with Google",
-        variant: "destructive",
-      });
-      throw error;
-    }
+  const signUp = async (email: string, password: string, metadata = {}) => {
+    return await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: metadata }
+    });
   };
 
   const signOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to sign out",
-        variant: "destructive",
-      });
-    }
+    await supabase.auth.signOut();
+    navigate('/login');
   };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        session,
-        user,
-        loading,
-        signUp,
-        signIn,
-        signInWithGoogle,
-        signOut,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
-};
+  const resetPassword = async (email: string) => {
+    return await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/update-password`
+    });
+  };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  const updatePassword = async (password: string) => {
+    return await supabase.auth.updateUser({ password });
+  };
+
+  const value = {
+    user,
+    session,
+    loading,
+    signIn,
+    signUp,
+    signOut,
+    resetPassword,
+    updatePassword
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

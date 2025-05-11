@@ -1,56 +1,51 @@
 
 import { Control } from "react-hook-form";
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { useUserSubjects } from "@/hooks/useUserSubjects";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 
 interface NoteMetadataFieldsProps {
   control: Control<any>;
   availableCategories: string[];
-  onNewCategoryAdd?: (category: string) => void;
+  onNewCategoryAdd: (category: string) => void;
 }
 
 export const NoteMetadataFields = ({
   control,
   availableCategories,
-  onNewCategoryAdd,
+  onNewCategoryAdd
 }: NoteMetadataFieldsProps) => {
-  // State to track if we're in custom input mode
-  const [isCustomInputMode, setIsCustomInputMode] = useState(false);
   const [customCategory, setCustomCategory] = useState("");
+  const { subjects, isLoading: loadingSubjects } = useUserSubjects();
+
+  const handleCustomCategorySubmit = () => {
+    if (customCategory.trim()) {
+      onNewCategoryAdd(customCategory.trim());
+      setCustomCategory("");
+    }
+  };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <>
+      {/* Title Field */}
       <FormField
         control={control}
         name="title"
         render={({ field }) => (
-          <FormItem className="md:col-span-2">
+          <FormItem>
             <FormLabel>Title</FormLabel>
             <FormControl>
-              <Input
-                placeholder="Note title"
-                className="border-mint-200 focus-visible:ring-mint-400"
-                {...field}
+              <Input 
+                placeholder="Note title" 
+                {...field} 
               />
             </FormControl>
             <FormMessage />
@@ -58,6 +53,7 @@ export const NoteMetadataFields = ({
         )}
       />
 
+      {/* Date Field */}
       <FormField
         control={control}
         name="date"
@@ -70,7 +66,7 @@ export const NoteMetadataFields = ({
                   <Button
                     variant={"outline"}
                     className={cn(
-                      "w-full border-mint-200 pl-3 text-left font-normal",
+                      "w-full pl-3 text-left font-normal",
                       !field.value && "text-muted-foreground"
                     )}
                   >
@@ -83,16 +79,12 @@ export const NoteMetadataFields = ({
                   </Button>
                 </FormControl>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 bg-white" align="start">
+              <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
                   selected={field.value}
                   onSelect={field.onChange}
-                  disabled={(date) =>
-                    date > new Date() || date < new Date("1900-01-01")
-                  }
                   initialFocus
-                  className="bg-white pointer-events-auto"
                 />
               </PopoverContent>
             </Popover>
@@ -101,86 +93,55 @@ export const NoteMetadataFields = ({
         )}
       />
 
+      {/* Subject Field */}
       <FormField
         control={control}
         name="subject"
         render={({ field }) => (
-          <FormItem className="md:col-span-1">
+          <FormItem>
             <FormLabel>Subject</FormLabel>
-            <div className="flex gap-2">
-              {!isCustomInputMode ? (
-                <Select
-                  onValueChange={(value) => {
-                    if (value === "_custom") {
-                      setIsCustomInputMode(true);
-                      setCustomCategory("");
-                      return;
-                    }
-                    field.onChange(value === "_none" ? "" : value);
-                  }}
-                  value={field.value || "_none"}
-                >
-                  <FormControl>
-                    <SelectTrigger className="border-mint-200 focus:ring-mint-400 flex-1">
-                      <SelectValue placeholder="Select subject" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent className="bg-white">
-                    <SelectItem value="_none">Select subject</SelectItem>
-                    {availableCategories.length > 0 && (
-                      availableCategories
-                        .filter(category => category && category.trim() !== '')
-                        .map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))
-                    )}
-                    <SelectItem value="_custom">Add new subject...</SelectItem>
-                  </SelectContent>
-                </Select>
-              ) : (
-                <div className="flex w-full items-center gap-2">
-                  <Input
-                    placeholder="New subject"
-                    className="border-mint-200 focus-visible:ring-mint-400"
-                    value={customCategory}
-                    onChange={(e) => setCustomCategory(e.target.value)}
-                    autoFocus
-                  />
-                  <Button 
-                    type="button" 
-                    size="sm"
-                    className="bg-mint-500 hover:bg-mint-600 text-white"
-                    onClick={() => {
-                      if (customCategory.trim() !== '') {
-                        field.onChange(customCategory);
-                        if (onNewCategoryAdd) {
-                          onNewCategoryAdd(customCategory);
-                        }
-                        setIsCustomInputMode(false);
-                      }
-                    }}
-                  >
-                    Add
-                  </Button>
-                  <Button 
-                    type="button" 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => {
-                      setIsCustomInputMode(false);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              )}
-            </div>
+            <Select 
+              onValueChange={field.onChange} 
+              defaultValue={field.value}
+            >
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a subject" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>User Subjects</SelectLabel>
+                  {loadingSubjects ? (
+                    <SelectItem value="_loading" disabled>Loading subjects...</SelectItem>
+                  ) : subjects.length > 0 ? (
+                    subjects.map((subject) => (
+                      <SelectItem key={subject.id} value={subject.id}>
+                        {subject.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="_none" disabled>No subjects found</SelectItem>
+                  )}
+                </SelectGroup>
+                
+                <SelectGroup>
+                  <SelectLabel>Other Categories</SelectLabel>
+                  <SelectItem value="General">General</SelectItem>
+                  <SelectItem value="Uncategorized">Uncategorized</SelectItem>
+                  {availableCategories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="_custom">Add Custom Category...</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
             <FormMessage />
           </FormItem>
         )}
       />
-    </div>
+    </>
   );
 };

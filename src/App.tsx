@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
@@ -44,6 +43,7 @@ import ChatPage from "./pages/ChatPage";
 import GoalsPage from "./pages/GoalsPage";
 import TodoPage from "./pages/TodoPage";
 import EditNotePage from "./pages/EditNotePage";
+import OnboardingPage from "@/pages/OnboardingPage";
 
 const App = () => {
   const { user } = useAuth();
@@ -195,6 +195,7 @@ const App = () => {
               
               {/* 404 */}
               <Route path="*" element={<NotFoundPage />} />
+              <Route path="/onboarding" element={<OnboardingPage />} />
             </Routes>
           </FeatureProvider>
         </NoteProvider>

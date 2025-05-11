@@ -12,6 +12,7 @@ import AppearanceCard from "./cards/AppearanceCard";
 import { NotificationSettingsCard } from "./cards/NotificationSettingsCard";
 import { DoNotDisturbCard } from "./cards/DoNotDisturbCard";
 import { UpgradeTierCard } from "./cards/UpgradeTierCard";
+import { SubjectsSettingsCard } from "./cards/SubjectsSettingsCard";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { settingsFormSchema, type SettingsFormValues } from "./schemas/settingsFormSchema";
@@ -20,6 +21,7 @@ import UnsavedChangesDialog from "./dialogs/UnsavedChangesDialog";
 import { useNavigate } from "react-router-dom";
 import { useUnsavedChangesPrompt } from "@/hooks/useUnsavedChangesPrompt";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const SettingsForm = () => {
   const { userTier } = useUserTier();
@@ -30,6 +32,7 @@ const SettingsForm = () => {
   
   const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("account");
   
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsFormSchema),
@@ -182,45 +185,61 @@ const SettingsForm = () => {
 
   return (
     <>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* New Upgrade Tier Card added at the top for visibility */}
-          <UpgradeTierCard />
-          
-          <AccountSettingsCard 
-            user={user}
-            userTier={userTier}
-            form={form}
-            countries={countries}
-            onCountryChange={handleCountryChange}
-          />
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
+        <TabsList className="grid grid-cols-3 mb-8">
+          <TabsTrigger value="account">Account</TabsTrigger>
+          <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger value="subjects">Subjects</TabsTrigger>
+        </TabsList>
+        
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <TabsContent value="account" className="space-y-6">
+              {/* New Upgrade Tier Card added at the top for visibility */}
+              <UpgradeTierCard />
+              
+              <AccountSettingsCard 
+                user={user}
+                userTier={userTier}
+                form={form}
+                countries={countries}
+                onCountryChange={handleCountryChange}
+              />
+              
+              <AppearanceCard form={form} />
+            </TabsContent>
+            
+            <TabsContent value="notifications" className="space-y-6">
+              <NotificationsCard form={form} />
+              
+              <NotificationSettingsCard form={form} userTier={userTier} />
+              
+              <DoNotDisturbCard form={form} />
+            </TabsContent>
+            
+            <TabsContent value="subjects" className="space-y-6">
+              <SubjectsSettingsCard />
+            </TabsContent>
 
-          <NotificationsCard form={form} />
-          
-          <NotificationSettingsCard form={form} userTier={userTier} />
-          
-          <DoNotDisturbCard form={form} />
-
-          <AppearanceCard form={form} />
-
-          <div className="flex justify-between">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => reset()}
-              disabled={!isDirty}
-            >
-              Reset
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={!isDirty || form.formState.isSubmitting}
-            >
-              {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
-            </Button>
-          </div>
-        </form>
-      </Form>
+            <div className="flex justify-between">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => reset()}
+                disabled={!isDirty}
+              >
+                Reset
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={!isDirty || form.formState.isSubmitting}
+              >
+                {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </Tabs>
 
       {/* Unsaved changes confirmation dialog */}
       <UnsavedChangesDialog 

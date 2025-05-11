@@ -6,26 +6,17 @@ export interface Note {
   date: string;
   category: string;
   content?: string;
-  sourceType?: 'manual' | 'scan' | 'import';
+  sourceType: 'manual' | 'scan' | 'import';
   archived?: boolean;
   pinned?: boolean;
-  tags?: {
-    id?: string;
-    name: string;
-    color: string;
-  }[];
-  summary?: string;
-  summary_generated_at?: string;
-  summary_status?: 'pending' | 'generating' | 'completed' | 'failed';
+  tags?: { id: string; name: string; color: string }[];
   scanData?: {
     originalImageUrl?: string;
     recognizedText?: string;
     confidence?: number;
     language?: string;
   };
-  importData?: {
-    originalFileUrl?: string;
-    fileType?: string;
-    importedAt?: string;
-  };
+  summary?: string;
+  summary_status?: 'pending' | 'generating' | 'completed' | 'failed';
+  subject_id?: string; // Add subject_id field
 }

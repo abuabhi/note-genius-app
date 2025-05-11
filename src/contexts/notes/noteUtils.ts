@@ -55,7 +55,8 @@ export const fetchNotesFromSupabase = async (): Promise<Note[]> => {
         archived: note.archived || false,
         pinned: note.pinned || false,
         tags,
-        scanData
+        scanData,
+        subject_id: note.subject_id  // Add subject_id field
       };
     });
 
@@ -85,6 +86,11 @@ const filterNotes = (notes: Note[], searchTerm: string, filterOptions: FilterOpt
     // Advanced filtering
     // Category filter
     if (filterOptions.category && note.category !== filterOptions.category) {
+      return false;
+    }
+    
+    // Subject filter (new)
+    if (filterOptions.subjectId && note.subject_id !== filterOptions.subjectId) {
       return false;
     }
     

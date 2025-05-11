@@ -1,16 +1,17 @@
 
 import { Note } from "@/types/note";
 
+export type SortType = 'newest' | 'oldest' | 'alphabetical' | 'date-desc' | 'date-asc' | 'title-asc' | 'title-desc' | 'category';
+
 export interface FilterOptions {
   dateFrom?: Date;
   dateTo?: Date;
   category?: string;
-  sourceType?: string | string[];
-  tags?: string[];
+  sourceType?: 'manual' | 'scan' | 'import' | ('manual' | 'scan' | 'import')[];
   hasTags?: boolean;
+  tags?: string[];
+  subjectId?: string; // Add subject ID filter option
 }
-
-export type SortType = 'date-desc' | 'date-asc' | 'title-asc' | 'title-desc' | 'category' | 'newest' | 'oldest' | 'alphabetical';
 
 export interface NoteContextType {
   notes: Note[];
@@ -36,7 +37,7 @@ export interface NoteContextType {
   getAllTags: () => Promise<{ id: string; name: string; color: string }[]>;
   filterByTag: (tagName: string) => void;
   filterOptions: FilterOptions;
-  setFilterOptions: (options: FilterOptions) => void;
+  setFilterOptions: React.Dispatch<React.SetStateAction<FilterOptions>>;
   resetFilters: () => void;
   availableCategories: string[];
   addCategory: (category: string) => void;

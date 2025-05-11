@@ -469,6 +469,7 @@ export type Database = {
           id: string
           pinned: boolean | null
           source_type: string
+          subject_id: string | null
           summary: string | null
           summary_generated_at: string | null
           summary_status: string | null
@@ -486,6 +487,7 @@ export type Database = {
           id?: string
           pinned?: boolean | null
           source_type?: string
+          subject_id?: string | null
           summary?: string | null
           summary_generated_at?: string | null
           summary_status?: string | null
@@ -503,6 +505,7 @@ export type Database = {
           id?: string
           pinned?: boolean | null
           source_type?: string
+          subject_id?: string | null
           summary?: string | null
           summary_generated_at?: string | null
           summary_status?: string | null
@@ -510,7 +513,15 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "notes_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "user_subjects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -520,8 +531,11 @@ export type Database = {
           dnd_end_time: string | null
           dnd_start_time: string | null
           do_not_disturb: boolean | null
+          grade: Database["public"]["Enums"]["grade_level"] | null
           id: string
           notification_preferences: Json | null
+          onboarding_completed: boolean | null
+          school: string | null
           updated_at: string | null
           user_tier: Database["public"]["Enums"]["user_tier"]
           username: string | null
@@ -534,8 +548,11 @@ export type Database = {
           dnd_end_time?: string | null
           dnd_start_time?: string | null
           do_not_disturb?: boolean | null
+          grade?: Database["public"]["Enums"]["grade_level"] | null
           id: string
           notification_preferences?: Json | null
+          onboarding_completed?: boolean | null
+          school?: string | null
           updated_at?: string | null
           user_tier?: Database["public"]["Enums"]["user_tier"]
           username?: string | null
@@ -548,8 +565,11 @@ export type Database = {
           dnd_end_time?: string | null
           dnd_start_time?: string | null
           do_not_disturb?: boolean | null
+          grade?: Database["public"]["Enums"]["grade_level"] | null
           id?: string
           notification_preferences?: Json | null
+          onboarding_completed?: boolean | null
+          school?: string | null
           updated_at?: string | null
           user_tier?: Database["public"]["Enums"]["user_tier"]
           username?: string | null
@@ -1440,6 +1460,30 @@ export type Database = {
           },
         ]
       }
+      user_subjects: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1451,6 +1495,23 @@ export type Database = {
       }
     }
     Enums: {
+      grade_level:
+        | "Kindergarten"
+        | "Grade 1"
+        | "Grade 2"
+        | "Grade 3"
+        | "Grade 4"
+        | "Grade 5"
+        | "Grade 6"
+        | "Grade 7"
+        | "Grade 8"
+        | "Grade 9"
+        | "Grade 10"
+        | "Grade 11"
+        | "Grade 12"
+        | "Undergraduate"
+        | "Graduate"
+        | "Postgraduate"
       user_tier: "SCHOLAR" | "GRADUATE" | "MASTER" | "DEAN"
     }
     CompositeTypes: {
@@ -1567,6 +1628,24 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      grade_level: [
+        "Kindergarten",
+        "Grade 1",
+        "Grade 2",
+        "Grade 3",
+        "Grade 4",
+        "Grade 5",
+        "Grade 6",
+        "Grade 7",
+        "Grade 8",
+        "Grade 9",
+        "Grade 10",
+        "Grade 11",
+        "Grade 12",
+        "Undergraduate",
+        "Graduate",
+        "Postgraduate",
+      ],
       user_tier: ["SCHOLAR", "GRADUATE", "MASTER", "DEAN"],
     },
   },

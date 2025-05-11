@@ -14,6 +14,9 @@ import { CreateNoteForm } from "./CreateNoteForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ScanNoteDialog } from "../ScanNoteDialog";
 import { ImportDialog } from "../import/ImportDialog";
+import { SubjectTabs } from "./SubjectTabs";
+import { useEffect } from "react";
+import { useUserSubjects } from "@/hooks/useUserSubjects";
 
 interface NotesContentProps {
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
@@ -30,15 +33,35 @@ export const NotesContent = ({
   tierLimits,
   userTier 
 }: NotesContentProps) => {
-  const { paginatedNotes, notes, loading } = useNotes();
+  const { paginatedNotes, notes, loading, setFilterOptions } = useNotes();
   const { toast } = useToast();
   const { user, loading: authLoading } = useRequireAuth();
   const isAuthorized = !!user;
+  const { subjects, isLoading: loadingSubjects } = useUserSubjects();
   
   // State for dialog visibility
   const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
   const [isScanDialogOpen, setIsScanDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [activeSubjectId, setActiveSubjectId] = useState<string | null>(null);
+
+  // When subject changes, update the filter
+  useEffect(() => {
+    // Set filter based on active subject
+    if (activeSubjectId) {
+      setFilterOptions(prev => ({
+        ...prev,
+        subjectId: activeSubjectId
+      }));
+    } else {
+      // Remove subject filter if "All" is selected
+      setFilterOptions(prev => {
+        const newFilters = { ...prev };
+        delete newFilters.subjectId;
+        return newFilters;
+      });
+    }
+  }, [activeSubjectId, setFilterOptions]);
 
   // Show loading state while checking authentication
   if (authLoading || loading) {
@@ -113,6 +136,16 @@ export const NotesContent = ({
         tierLimits={tierLimits}
         userTier={userTier}
       />
+      
+      {/* Subject Tabs */}
+      {!loadingSubjects && subjects.length > 0 && (
+        <div className="mb-6">
+          <SubjectTabs 
+            activeSubjectId={activeSubjectId} 
+            onSubjectChange={setActiveSubjectId} 
+          />
+        </div>
+      )}
       
       {notes.length === 0 && !loading ? (
         <div className="text-center py-10 bg-mint-50 rounded-lg border border-mint-200 shadow-sm">
