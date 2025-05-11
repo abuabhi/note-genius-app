@@ -86,21 +86,27 @@ export const CreateEventDialog: React.FC<CreateEventDialogProps> = ({
     if (!user) return;
 
     const createEvent = async () => {
+      // Create a single event object with all required fields
+      const eventData = {
+        user_id: user.id,
+        title: values.title,
+        start_time: format(values.date, "yyyy-MM-dd"),
+        end_time: format(values.date, "yyyy-MM-dd"),
+        description: values.description || "",
+        color: values.color || "#3b82f6",
+        all_day: true,
+        event_type: "task",
+        is_recurring: false,
+        subject: values.subject || ""
+      };
+
       const { data, error } = await supabase
         .from("events")
-        .insert([
-          {
-            user_id: user.id,
-            title: values.title,
-            date: format(values.date, "yyyy-MM-dd"),
-            subject: values.subject,
-            description: values.description,
-            color: values.color,
-          },
-        ])
+        .insert(eventData)
         .select();
 
       if (error) {
+        console.error("Error creating event:", error);
         toast.error("Something went wrong. Please try again.");
       } else {
         toast.success("Event created successfully!");
