@@ -224,8 +224,8 @@ export const cloneFlashcardSet = async (state: FlashcardState, setId: string): P
   }
 };
 
-// Make sure to export the functions properly
-export { 
-  fetchBuiltInSets,
-  cloneFlashcardSet
-};
+// No need for this export block since we're already exporting the functions above
+// export { 
+//   fetchBuiltInSets,
+//   cloneFlashcardSet
+// };
