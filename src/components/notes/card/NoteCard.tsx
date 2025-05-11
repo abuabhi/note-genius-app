@@ -16,8 +16,8 @@ interface NoteCardProps {
   note: Note;
   onNoteClick: (note: Note) => void;
   onShowDetails: (note: Note, e: React.MouseEvent) => void;
-  onPin: (id: string, isPinned: boolean, e: React.MouseEvent) => void;
-  onDelete: (id: string, e: React.MouseEvent) => void;
+  onPin: (id: string, isPinned: boolean) => void;
+  onDelete: (id: string) => void;
   confirmDelete: string | null;
 }
 
@@ -37,12 +37,12 @@ export const NoteCard = ({
     navigate(`/notes/study/${note.id}`);
   };
   
-  const handleDelete = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    
+  const handleDeleteWrapper = (id: string) => {
+    // This wrapper function now handles the delete confirmation logic
+    // without needing the event parameter from the actions component
     if (isConfirmingDelete) {
       // Actually delete the note
-      onDelete(id, e);
+      onDelete(id);
       setIsConfirmingDelete(false);
     } else {
       // Set confirming state
@@ -74,7 +74,7 @@ export const NoteCard = ({
           noteContent={note.content || note.description || ""}
           isPinned={!!note.pinned} 
           onPin={onPin}
-          onDelete={handleDelete}
+          onDelete={handleDeleteWrapper}
           iconSize={5}
         />
         
