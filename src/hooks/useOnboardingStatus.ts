@@ -1,12 +1,12 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { User } from '@supabase/supabase-js';
 
-export const useOnboardingStatus = () => {
+// Modified to accept user as a parameter instead of using useAuth()
+export const useOnboardingStatus = (user: User | null) => {
   const [isOnboardingCompleted, setIsOnboardingCompleted] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { user } = useAuth();
 
   const checkOnboardingStatus = async () => {
     if (!user) {

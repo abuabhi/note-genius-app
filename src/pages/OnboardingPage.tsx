@@ -23,7 +23,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 const OnboardingPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { isOnboardingCompleted, isLoading: statusLoading, markOnboardingCompleted } = useOnboardingStatus();
+  const { isOnboardingCompleted, isLoading: statusLoading, markOnboardingCompleted } = useOnboardingStatus(user);
   
   const [selectedSubjects, setSelectedSubjects] = useState<Set<string>>(new Set());
   const [customSubject, setCustomSubject] = useState("");
@@ -151,7 +151,7 @@ const OnboardingPage = () => {
                   </Label>
                   <Select 
                     value={grade} 
-                    onValueChange={setGrade}
+                    onValueChange={(value: string) => setGrade(value as GradeLevel)}
                     required
                   >
                     <SelectTrigger className="w-full">
