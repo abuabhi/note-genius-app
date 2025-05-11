@@ -27,6 +27,7 @@ export default function NavBar() {
   // Define which routes are public
   const publicRoutes = ['/', '/about', '/pricing', '/faq', '/contact', '/blog', '/features', '/login', '/signup'];
   const isPublicRoute = publicRoutes.includes(pathname);
+  const isHomePage = pathname === '/';
 
   const handleLogout = async () => {
     await signOut();
@@ -49,8 +50,8 @@ export default function NavBar() {
 
         {/* Desktop Navigation - Centered Menu Items */}
         <div className="hidden md:flex items-center justify-center flex-1">
-          {/* Public Navigation Links - Only shown to non-authenticated users or on public routes */}
-          {(!user || isPublicRoute) && (
+          {/* Public Navigation Links - Always show these links on public routes */}
+          {isPublicRoute && (
             <div className="flex items-center space-x-8">
               <Link to="/about" className="text-mint-700 hover:text-mint-900">About</Link>
               <Link to="/blog" className="text-mint-700 hover:text-mint-900">Blog</Link>
@@ -62,6 +63,7 @@ export default function NavBar() {
         
         {/* Desktop Navigation - Right Side - Auth Buttons or User Menu */}
         <div className="hidden md:flex items-center space-x-4">
+          {/* If user is not authenticated or if we're on the home page, show Login/Signup */}
           {!user ? (
             <>
               <Link to="/login" className="text-mint-700 hover:text-mint-900 font-medium">Login</Link>
@@ -114,7 +116,7 @@ export default function NavBar() {
                 </div>
               )}
               
-              {/* Show login/signup on public routes even when authenticated */}
+              {/* If we're on the home page or public route and the user is authenticated, show Dashboard/Logout */}
               {isPublicRoute && (
                 <>
                   <Link to="/dashboard" className="text-mint-700 hover:text-mint-900 font-medium">Dashboard</Link>
