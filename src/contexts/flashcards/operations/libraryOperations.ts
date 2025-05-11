@@ -30,8 +30,11 @@ export const fetchBuiltInSets = async (state: FlashcardState): Promise<Flashcard
         .from('flashcard_set_cards')
         .select('*', { count: 'exact', head: true })
         .eq('set_id', set.id);
+
+      // Create a properly typed FlashcardSet object with safe access to nested properties
+      const categoryId = set.subject_categories ? set.subject_categories.id : undefined;
+      const categoryName = set.subject_categories ? set.subject_categories.name : undefined;
         
-      // Create a properly typed FlashcardSet object
       sets.push({
         id: set.id,
         name: set.name,
@@ -47,9 +50,9 @@ export const fetchBuiltInSets = async (state: FlashcardState): Promise<Flashcard
         category_id: set.category_id,
         education_system: set.education_system,
         section_id: set.section_id,
-        subject_categories: set.subject_categories ? {
-          id: set.subject_categories.id,
-          name: set.subject_categories.name
+        subject_categories: categoryId && categoryName ? {
+          id: categoryId,
+          name: categoryName
         } : undefined
       });
     }
