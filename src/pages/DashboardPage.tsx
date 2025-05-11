@@ -11,6 +11,7 @@ import { StudyStatsChart } from "@/components/progress/StudyStatsChart";
 import { StudyStatsOverview } from "@/components/study/StudyStatsOverview";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
+import { useFeatures } from "@/contexts/FeatureContext";
 
 const DashboardPage = () => {
   const {
@@ -18,11 +19,14 @@ const DashboardPage = () => {
     userProfile,
     loading
   } = useRequireAuth();
+  const { isFeatureVisible } = useFeatures();
+  
   console.log("Dashboard rendering:", {
     user,
     userProfile,
     loading
   });
+  
   if (loading) {
     return <Layout>
         <div className="container mx-auto p-6 flex items-center justify-center h-[50vh]">
@@ -33,10 +37,20 @@ const DashboardPage = () => {
         </div>
       </Layout>;
   }
+  
   if (!user) {
     console.log("Not authorized, redirecting via useRequireAuth");
     return null; // Will redirect via the useRequireAuth hook
   }
+  
+  // Define feature keys for quick access
+  const FEATURE_KEYS = {
+    STUDY_SESSIONS: "study_sessions",
+    SCHEDULE: "schedule",
+    NOTES: "notes", // Core feature, always visible
+    SETTINGS: "settings", // Core feature, always visible
+  };
+  
   return <Layout>
       <div className="container mx-auto p-6">
         <WelcomeBanner />
@@ -62,21 +76,25 @@ const DashboardPage = () => {
         {/* Quick actions section */}
         <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="border-mint-100 shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl">Quick Start</CardTitle>
-              <CardDescription>Begin a new study session</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild className="w-full">
-                <Link to="/study-sessions">
-                  <Clock className="mr-2 h-4 w-4" />
-                  Start Studying
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+          {/* Study Sessions Card - Only show if feature is visible */}
+          {isFeatureVisible(FEATURE_KEYS.STUDY_SESSIONS) && (
+            <Card className="border-mint-100 shadow-sm hover:shadow-md transition-shadow">
+              <CardHeader className="space-y-1">
+                <CardTitle className="text-2xl">Quick Start</CardTitle>
+                <CardDescription>Begin a new study session</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button asChild className="w-full">
+                  <Link to="/study-sessions">
+                    <Clock className="mr-2 h-4 w-4" />
+                    Start Studying
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
+          {/* Notes Card - Core functionality, always visible */}
           <Card className="border-mint-100 shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl">My Notes</CardTitle>
@@ -92,21 +110,25 @@ const DashboardPage = () => {
             </CardContent>
           </Card>
 
-          <Card className="border-mint-100 shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl">Schedule</CardTitle>
-              <CardDescription>Manage your study calendar</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild variant="outline" className="w-full">
-                <Link to="/schedule">
-                  <Calendar className="mr-2 h-4 w-4" />
-                  View Schedule
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+          {/* Schedule Card - Only show if feature is visible */}
+          {isFeatureVisible(FEATURE_KEYS.SCHEDULE) && (
+            <Card className="border-mint-100 shadow-sm hover:shadow-md transition-shadow">
+              <CardHeader className="space-y-1">
+                <CardTitle className="text-2xl">Schedule</CardTitle>
+                <CardDescription>Manage your study calendar</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button asChild variant="outline" className="w-full">
+                  <Link to="/schedule">
+                    <Calendar className="mr-2 h-4 w-4" />
+                    View Schedule
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
+          {/* Settings Card - Core functionality, always visible */}
           <Card className="border-mint-100 shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl">Settings</CardTitle>

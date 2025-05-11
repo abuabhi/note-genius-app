@@ -6,9 +6,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Bell, Star, Clock } from "lucide-react";
 import { format } from "date-fns";
+import { useFeatures } from "@/contexts/FeatureContext";
 
 export function WelcomeBanner() {
   const { user } = useAuth();
+  const { isFeatureVisible } = useFeatures();
+  const showStudySessions = isFeatureVisible("study_sessions");
   
   const { data: userProfile } = useQuery({
     queryKey: ["userProfile", user?.id],
@@ -32,9 +35,9 @@ export function WelcomeBanner() {
   });
   
   const { data: recentActivity } = useQuery({
-    queryKey: ["recentActivity", user?.id],
+    queryKey: ["recentActivity", user?.id, showStudySessions],
     queryFn: async () => {
-      if (!user) return null;
+      if (!user || !showStudySessions) return null;
       
       // Fetch latest study session
       const { data: latestSession } = await supabase
@@ -59,7 +62,7 @@ export function WelcomeBanner() {
         totalStudyHours: Math.round(totalStudyHours * 10) / 10,
       };
     },
-    enabled: !!user,
+    enabled: !!user && showStudySessions,
   });
 
   const getTimeOfDay = () => {
@@ -92,7 +95,8 @@ export function WelcomeBanner() {
           </div>
           
           <div className="flex flex-wrap gap-4 md:gap-6">
-            {recentActivity?.latestSession && (
+            {/* Only show study session info if the feature is visible */}
+            {showStudySessions && recentActivity?.latestSession && (
               <div className="flex items-center gap-2">
                 <div className="p-2 bg-mint-200 rounded-full">
                   <Clock className="h-4 w-4 text-mint-700" />
@@ -106,17 +110,20 @@ export function WelcomeBanner() {
               </div>
             )}
             
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-mint-200 rounded-full">
-                <Star className="h-4 w-4 text-mint-700" />
+            {/* Only show study hours if the study sessions feature is visible */}
+            {showStudySessions && (
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-mint-200 rounded-full">
+                  <Star className="h-4 w-4 text-mint-700" />
+                </div>
+                <div>
+                  <p className="text-xs text-mint-600">Total study time</p>
+                  <p className="font-medium text-mint-800">
+                    {recentActivity?.totalStudyHours || 0} hours
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-mint-600">Total study time</p>
-                <p className="font-medium text-mint-800">
-                  {recentActivity?.totalStudyHours || 0} hours
-                </p>
-              </div>
-            </div>
+            )}
             
             <div className="flex items-center gap-2">
               <div className="p-2 bg-mint-200 rounded-full">

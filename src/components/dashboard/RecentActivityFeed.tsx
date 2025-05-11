@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { Clock, BookOpen, FileText, BarChart } from "lucide-react";
+import { useFeatures } from "@/contexts/FeatureContext";
 
 type ActivityType = "session" | "note" | "flashcard" | "quiz";
 
@@ -19,6 +20,7 @@ interface Activity {
 
 export function RecentActivityFeed() {
   const { user } = useAuth();
+  const { isFeatureVisible } = useFeatures();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,52 +29,73 @@ export function RecentActivityFeed() {
       if (!user) return;
       setLoading(true);
       
-      // Fetch last 5 study sessions
-      const { data: sessionData } = await supabase
-        .from('study_sessions')
-        .select('id, title, start_time, duration')
-        .eq('user_id', user.id)
-        .order('start_time', { ascending: false })
-        .limit(5);
-        
+      const fetchPromises = [];
+      const allActivities = [];
+      
+      // Only fetch session data if the study_sessions feature is visible
+      if (isFeatureVisible('study_sessions')) {
+        // Fetch last 5 study sessions
+        const sessionPromise = supabase
+          .from('study_sessions')
+          .select('id, title, start_time, duration')
+          .eq('user_id', user.id)
+          .order('start_time', { ascending: false })
+          .limit(5)
+          .then(({ data }) => {
+            return (data || []).map(session => ({
+              id: `session-${session.id}`,
+              type: 'session' as ActivityType,
+              title: session.title || 'Study Session',
+              created_at: session.start_time,
+              description: `Duration: ${Math.floor(session.duration / 60)} minutes`,
+              icon: <Clock className="h-4 w-4 text-blue-500" />
+            }));
+          });
+          
+        fetchPromises.push(sessionPromise);
+      }
+      
+      // Notes are always visible as a core feature
       // Fetch last 5 notes
-      const { data: notesData } = await supabase
+      const notesPromise = supabase
         .from('notes')
         .select('id, title, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(5)
+        .then(({ data }) => {
+          return (data || []).map(note => ({
+            id: `note-${note.id}`,
+            type: 'note' as ActivityType,
+            title: note.title || 'Note',
+            created_at: note.created_at,
+            description: 'Note created',
+            icon: <FileText className="h-4 w-4 text-green-500" />
+          }));
+        });
         
-      // Map to activity format
-      const sessionActivities = (sessionData || []).map(session => ({
-        id: `session-${session.id}`,
-        type: 'session' as ActivityType,
-        title: session.title || 'Study Session',
-        created_at: session.start_time,
-        description: `Duration: ${Math.floor(session.duration / 60)} minutes`,
-        icon: <Clock className="h-4 w-4 text-blue-500" />
-      }));
+      fetchPromises.push(notesPromise);
       
-      const noteActivities = (notesData || []).map(note => ({
-        id: `note-${note.id}`,
-        type: 'note' as ActivityType,
-        title: note.title || 'Note',
-        created_at: note.created_at,
-        description: 'Note created',
-        icon: <FileText className="h-4 w-4 text-green-500" />
-      }));
+      // Add more feature-specific activity fetching here as needed
+      // For example, if you have quiz activities:
+      // if (isFeatureVisible('quizzes')) { ... }
       
-      // Combine and sort by date
-      const combinedActivities = [...sessionActivities, ...noteActivities]
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        .slice(0, 5);
-      
-      setActivities(combinedActivities);
-      setLoading(false);
+      try {
+        const results = await Promise.all(fetchPromises);
+        const combinedActivities = results.flat()
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+          .slice(0, 5);
+        
+        setActivities(combinedActivities);
+      } catch (error) {
+        console.error("Error fetching activities:", error);
+      } finally {
+        setLoading(false);
+      }
     }
     
     fetchRecentActivity();
-  }, [user]);
+  }, [user, isFeatureVisible]);
 
   if (loading) {
     return (
