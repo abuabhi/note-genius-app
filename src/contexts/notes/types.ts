@@ -32,5 +32,5 @@ export interface NoteContextType {
   addCategory: (category: string) => void;
 }
 
-// Re-export types from state/types to maintain backward compatibility
+// Re-export types from state/types for backward compatibility
 export type { FilterOptions, SortType };

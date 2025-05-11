@@ -81,7 +81,10 @@ export const fetchFlashcardLibrary = async () => {
     
     // Merge the count data with the sets data
     const combinedData = setsData.map(set => {
-      const countInfo = setCountData.find((item: any) => item.set_id === set.id);
+      const countInfo = setCountData && Array.isArray(setCountData) ? 
+        setCountData.find((item: any) => item.set_id === set.id) : 
+        undefined;
+      
       return {
         ...set,
         card_count: countInfo ? countInfo.card_count : 0
@@ -219,4 +222,10 @@ export const cloneFlashcardSet = async (state: FlashcardState, setId: string): P
     toast.error('Failed to clone flashcard set');
     return null;
   }
+};
+
+// Make sure to export the functions properly
+export { 
+  fetchBuiltInSets,
+  cloneFlashcardSet
 };

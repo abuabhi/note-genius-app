@@ -10,6 +10,7 @@ import { generateColorFromString } from "@/utils/colorUtils";
 import { getBestTextColor } from "@/utils/colorUtils";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 interface NoteCardProps {
   note: Note;
@@ -29,10 +30,47 @@ export const NoteCard = ({
   confirmDelete
 }: NoteCardProps) => {
   const navigate = useNavigate();
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   
   const handleGoToStudyMode = (e: React.MouseEvent) => {
     e.stopPropagation();
     navigate(`/notes/study/${note.id}`);
+  };
+  
+  const handleDownload = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Create a text file with the note content
+    const element = document.createElement("a");
+    const content = note.content || note.description || "";
+    const file = new Blob([`# ${note.title}\n\n${content}`], {type: 'text/markdown'});
+    element.href = URL.createObjectURL(file);
+    element.download = `${note.title.replace(/\s+/g, '-').toLowerCase()}.md`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
+  
+  const handleEmail = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Create a mailto link with the note content
+    const subject = encodeURIComponent(`Note: ${note.title}`);
+    const body = encodeURIComponent(`${note.title}\n\n${note.content || note.description || ""}`);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  };
+  
+  const handleDelete = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (isConfirmingDelete) {
+      // Actually delete the note
+      onDelete(id, e);
+      setIsConfirmingDelete(false);
+    } else {
+      // Set confirming state
+      setIsConfirmingDelete(true);
+      // Reset after 3 seconds
+      setTimeout(() => setIsConfirmingDelete(false), 3000);
+    }
   };
 
   // Format date as dd-MMM-yyyy (e.g., 15-May-2023)
@@ -54,14 +92,16 @@ export const NoteCard = ({
         <NoteCardActions 
           noteId={note.id} 
           isPinned={!!note.pinned} 
-          onPin={onPin} 
-          onDelete={onDelete}
-          isConfirmingDelete={confirmDelete === note.id}
-          iconSize={5} // Increased icon size
+          onPin={onPin}
+          onDelete={handleDelete}
+          onDownload={handleDownload}
+          onEmail={handleEmail}
+          isConfirmingDelete={isConfirmingDelete}
+          iconSize={5}
         />
         
         <div className="flex flex-row items-center justify-between">
-          <CardTitle className="text-xl text-mint-800 pr-8"> {/* Add padding-right to avoid overlap with pin */}
+          <CardTitle className="text-xl text-mint-800 pr-8"> {/* Add padding-right to avoid overlap with actions */}
             {note.title}
           </CardTitle>
         </div>
@@ -100,10 +140,10 @@ export const NoteCard = ({
         <Button 
           variant="default" 
           size="sm" 
-          className="h-8 text-sm bg-mint-600 hover:bg-mint-700 flex items-center gap-1"
+          className="h-8 text-lg bg-mint-600 hover:bg-mint-700 flex items-center gap-1 px-4"
           onClick={handleGoToStudyMode}
         >
-          <Book className="h-4 w-4" />
+          <Book className="h-4 w-4 mr-1" />
           Study Mode
         </Button>
       </CardFooter>
