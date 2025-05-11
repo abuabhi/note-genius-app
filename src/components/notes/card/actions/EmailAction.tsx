@@ -55,6 +55,8 @@ export const EmailAction = ({ noteTitle, noteContent }: EmailActionProps) => {
         throw new Error(error.message || "Failed to send email");
       }
       
+      console.log("Email sent response:", data);
+      
       toast.dismiss();
       toast.success("Email sent successfully");
       setOpen(false);

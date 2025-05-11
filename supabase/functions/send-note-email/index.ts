@@ -21,6 +21,13 @@ serve(async (req) => {
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
+
+    if (!recipient || !recipient.includes('@')) {
+      return new Response(
+        JSON.stringify({ error: "Invalid recipient email" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
     
     // Format the email content
     const subject = `Note: ${noteTitle}`;
@@ -51,19 +58,21 @@ serve(async (req) => {
     console.log("Email would be sent with subject:", subject);
     console.log("Recipient:", recipient || "Not specified");
     
-    // For demonstration purposes, we'll return success
-    // In a real implementation, you would use a service like SendGrid, Mailgun, etc.
+    // Here we would typically use a service like SendGrid, Mailgun, Resend, etc.
+    // For demonstration, we'll log the details and return a success response
+    
+    // Return more comprehensive data for debugging
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: "Email prepared successfully",
-        // In a real implementation, you would return the response from the email service
         emailData: {
           subject,
           recipient,
-          recipientCount: recipient ? 1 : 0,
+          recipientCount: 1,
           contentLength: emailBody.length,
-          status: "sent"
+          status: "sent",
+          timestamp: new Date().toISOString()
         }
       }),
       { 
