@@ -2,49 +2,38 @@
 import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useFlashcardState } from "@/contexts/flashcards/useFlashcardState";
 import { useFlashcardOperations } from "@/contexts/flashcards";
 
 interface TextSelectionPopoverProps {
   selectedText: string;
-  onClose: () => void;
+  flashcardSetId: string | null;
+  onCreateFlashcard: (frontText: string, backText: string) => Promise<void>;
+  onCancel: () => void;
 }
 
-export const TextSelectionPopover = ({ selectedText, onClose }: TextSelectionPopoverProps) => {
-  const { toast } = useToast();
+export const TextSelectionPopover = ({ 
+  selectedText, 
+  flashcardSetId, 
+  onCreateFlashcard, 
+  onCancel 
+}: TextSelectionPopoverProps) => {
   const [isOpen, setIsOpen] = useState(true);
-  const flashcardState = useFlashcardState();
-  const { addFlashcard } = useFlashcardOperations(flashcardState);
 
   const handleCreateFlashcard = async () => {
     try {
-      // Implementation for direct flashcard creation
-      await addFlashcard({
-        front_content: "<p>Question</p>",
-        back_content: selectedText,
-        set_id: "default-set-id", // This would need to be dynamically set
-      });
-      
-      toast({
-        title: "Success",
-        description: "Flashcard created from selection",
-      });
-      
+      // Call the parent component's handler
+      await onCreateFlashcard("<p>Question</p>", selectedText);
       setIsOpen(false);
-      onClose();
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create flashcard",
-        variant: "destructive",
-      });
+      toast.error("Failed to create flashcard");
     }
   };
 
   const handleClose = () => {
     setIsOpen(false);
-    onClose();
+    onCancel();
   };
 
   return (
@@ -78,6 +67,7 @@ export const TextSelectionPopover = ({ selectedText, onClose }: TextSelectionPop
               size="sm"
               onClick={handleCreateFlashcard}
               className="w-full"
+              disabled={!flashcardSetId}
             >
               Create Flashcard
             </Button>

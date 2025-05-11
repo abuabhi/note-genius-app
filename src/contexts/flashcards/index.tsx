@@ -52,21 +52,22 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
   // Get all operations from our hooks
   const operations = combineFlashcardOperations(state);
 
+  // Create the context value with all required properties
+  const contextValue: FlashcardContextType = {
+    flashcards,
+    flashcardSets,
+    currentFlashcard,
+    currentSet,
+    categories,
+    setCategories,
+    loading,
+    setCurrentFlashcard,
+    setCurrentSet,
+    ...operations
+  };
+
   return (
-    <FlashcardContext.Provider
-      value={{
-        flashcards,
-        flashcardSets,
-        currentFlashcard,
-        currentSet,
-        categories,
-        setCategories,
-        loading,
-        ...operations,
-        setCurrentFlashcard,
-        setCurrentSet
-      }}
-    >
+    <FlashcardContext.Provider value={contextValue}>
       {children}
     </FlashcardContext.Provider>
   );
