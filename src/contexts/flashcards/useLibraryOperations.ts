@@ -4,18 +4,20 @@ import { FlashcardSet } from '@/types/flashcard';
 import { toast } from 'sonner';
 import { FlashcardState } from './types';
 
-export const useLibraryOperations = (
-  state: FlashcardState
-) => {
-  const { 
-    setFlashcardSets, 
-    user 
-  } = state;
+/**
+ * Hook that provides library-related operations for flashcards
+ */
+export const useLibraryOperations = (state: FlashcardState) => {
+  const { setFlashcardSets, user } = state;
 
-  // Fetch built-in flashcard sets for the library
+  /**
+   * Fetch built-in flashcard sets for the library
+   */
   const fetchBuiltInSets = async (): Promise<FlashcardSet[]> => {
     state.setLoading(prev => ({ ...prev, sets: true }));
+    
     try {
+      // Get all built-in sets
       const { data, error } = await supabase
         .from('flashcard_sets')
         .select('*')
@@ -24,25 +26,25 @@ export const useLibraryOperations = (
 
       if (error) throw error;
       
-      // Get card counts and category info for each set
-      const builtInSetsWithDetails = await Promise.all(
+      // Process each set to get card count and category info
+      const builtInSets = await Promise.all(
         data.map(async (set) => {
-          // Get card count for this set
+          // Get card count
           const { count, error: countError } = await supabase
             .from('flashcard_set_cards')
             .select('*', { count: 'exact', head: true })
             .eq('set_id', set.id);
-
-          // Get category information if available
+            
+          // Get category if available
           let categoryInfo = null;
           if (set.category_id) {
-            const { data: categoryData, error: categoryError } = await supabase
+            const { data: categoryData } = await supabase
               .from('subject_categories')
               .select('id, name')
               .eq('id', set.category_id)
               .single();
               
-            if (!categoryError && categoryData) {
+            if (categoryData) {
               categoryInfo = {
                 id: categoryData.id,
                 name: categoryData.name
@@ -50,7 +52,7 @@ export const useLibraryOperations = (
             }
           }
           
-          // Return formatted flashcard set
+          // Return the formatted set
           return {
             id: set.id,
             name: set.name,
@@ -67,11 +69,11 @@ export const useLibraryOperations = (
             education_system: set.education_system,
             section_id: set.section_id,
             subject_categories: categoryInfo
-          } as FlashcardSet;
+          };
         })
       );
       
-      return builtInSetsWithDetails;
+      return builtInSets;
     } catch (error) {
       console.error('Error fetching built-in flashcard sets:', error);
       toast.error('Failed to load flashcard sets');
@@ -81,12 +83,14 @@ export const useLibraryOperations = (
     }
   };
 
-  // Clone a flashcard set for the user
+  /**
+   * Clone a flashcard set for the current user
+   */
   const cloneFlashcardSet = async (setId: string): Promise<FlashcardSet | null> => {
     if (!user) return null;
 
     try {
-      // Get the original set
+      // Get original set
       const { data: originalSet, error: setError } = await supabase
         .from('flashcard_sets')
         .select('*')
@@ -95,7 +99,7 @@ export const useLibraryOperations = (
 
       if (setError) throw setError;
 
-      // Create a new set based on the original
+      // Create new set data
       const newSetData = {
         name: `${originalSet.name} (Copy)`,
         description: originalSet.description,
@@ -106,6 +110,7 @@ export const useLibraryOperations = (
         is_built_in: false
       };
 
+      // Insert new set
       const { data: newSet, error: createError } = await supabase
         .from('flashcard_sets')
         .insert(newSetData)
@@ -114,7 +119,7 @@ export const useLibraryOperations = (
 
       if (createError) throw createError;
 
-      // Get all cards from the original set
+      // Get all cards from original set
       const { data: originalCards, error: cardsError } = await supabase
         .from('flashcards')
         .select('*')
@@ -138,12 +143,8 @@ export const useLibraryOperations = (
 
       toast.success('Flashcard set cloned successfully');
       
-      // Update the user's sets
-      const userSets = await fetchUserSets();
-      setFlashcardSets(userSets);
-      
-      // Return the new set with simple typing to avoid recursion
-      return {
+      // Create a new FlashcardSet object without any recursive references
+      const clonedSet: FlashcardSet = {
         id: newSet.id,
         name: newSet.name,
         description: newSet.description,
@@ -154,85 +155,18 @@ export const useLibraryOperations = (
         card_count: originalCards?.length || 0,
         subject: newSet.subject,
         topic: newSet.topic,
-        category_id: newSet.category_id
-      } as FlashcardSet; // Cast to FlashcardSet to avoid type recursion
+        category_id: newSet.category_id,
+      };
+      
+      // Update app state with new set
+      // Instead of fetching all sets again, append to current state
+      setFlashcardSets(prevSets => [clonedSet, ...prevSets]);
+      
+      return clonedSet;
     } catch (error) {
       console.error('Error cloning flashcard set:', error);
       toast.error('Failed to clone flashcard set');
       return null;
-    }
-  };
-  
-  // Helper function to fetch user's flashcard sets
-  const fetchUserSets = async (): Promise<FlashcardSet[]> => {
-    if (!user) return [];
-    
-    try {
-      // Get basic set data
-      const { data: userSets, error } = await supabase
-        .from('flashcard_sets')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      
-      // If no sets, just return empty array
-      if (!userSets || userSets.length === 0) {
-        return [];
-      }
-      
-      // Process sets with counts and categories
-      const formattedSets = await Promise.all(
-        userSets.map(async (set) => {
-          // Get card count
-          const { count, error: countError } = await supabase
-            .from('flashcard_set_cards')
-            .select('*', { count: 'exact', head: true })
-            .eq('set_id', set.id);
-          
-          // Get category if available
-          let categoryInfo = null;
-          if (set.category_id) {
-            const { data: categoryData, error: categoryError } = await supabase
-              .from('subject_categories')
-              .select('id, name')
-              .eq('id', set.category_id)
-              .single();
-            
-            if (!categoryError && categoryData) {
-              categoryInfo = {
-                id: categoryData.id,
-                name: categoryData.name
-              };
-            }
-          }
-          
-          // Return formatted set with simple structure to avoid recursion
-          return {
-            id: set.id,
-            name: set.name,
-            description: set.description,
-            user_id: set.user_id,
-            created_at: set.created_at,
-            updated_at: set.updated_at,
-            is_built_in: set.is_built_in || false,
-            card_count: countError ? 0 : count || 0,
-            subject: set.subject,
-            topic: set.topic,
-            country_id: set.country_id,
-            category_id: set.category_id,
-            education_system: set.education_system,
-            section_id: set.section_id,
-            subject_categories: categoryInfo
-          } as FlashcardSet; // Cast to FlashcardSet to avoid type recursion
-        })
-      );
-      
-      return formattedSets;
-    } catch (error) {
-      console.error('Error fetching user flashcard sets:', error);
-      return [];
     }
   };
 
