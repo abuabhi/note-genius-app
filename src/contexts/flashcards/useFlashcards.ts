@@ -19,3 +19,10 @@ export const useFlashcardsOperations = (
     ...libraryOperations,
   };
 };
+
+// Export a hook that accesses the context
+export const useFlashcards = () => {
+  // This is a placeholder that will be implemented in the index.tsx file
+  // but we export it here for better module organization
+  throw new Error('useFlashcards must be used within a FlashcardProvider');
+};

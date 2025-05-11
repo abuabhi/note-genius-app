@@ -7,3 +7,4 @@ export { useFlashcardSets } from './useFlashcardSets';
 export { useCategoryOperations } from './useCategoryOperations';
 export { useStudyOperations } from './useStudyOperations';
 export { useLibraryOperations } from './useLibraryOperations';
+export { FlashcardProvider } from './index.tsx';

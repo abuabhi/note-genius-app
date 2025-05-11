@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Flashcard, FlashcardSet } from "@/types/flashcard";
+import { FlashcardSet } from "@/types/flashcard";
+import { FlashcardState } from '../types';
 
 export interface LibraryFilters {
   searchTerm?: string;
@@ -15,6 +16,54 @@ export interface LibraryFilters {
 export interface FlashcardSetWithCount extends FlashcardSet {
   flashcard_count: number;
 }
+
+// Fetch built-in sets for the library
+export const fetchBuiltInSets = async (state: FlashcardState): Promise<FlashcardSet[]> => {
+  try {
+    const { setLoading } = state;
+    if (setLoading) {
+      setLoading(prev => ({ ...prev, sets: true }));
+    }
+
+    const { data, error } = await supabase
+      .from('flashcard_sets')
+      .select(`
+        id,
+        name,
+        description,
+        is_built_in,
+        subject,
+        created_at,
+        updated_at,
+        image_url,
+        cards_count,
+        metadata,
+        owner_id,
+        topic,
+        country_id,
+        category_id,
+        education_system,
+        section_id
+      `)
+      .eq('is_built_in', true);
+    
+    if (error) {
+      throw error;
+    }
+    
+    if (setLoading) {
+      setLoading(prev => ({ ...prev, sets: false }));
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching built-in flashcard sets:', error);
+    if (state.setLoading) {
+      state.setLoading(prev => ({ ...prev, sets: false }));
+    }
+    return [];
+  }
+};
 
 // Fetch all flashcard sets that are available in the library
 export const fetchLibraryFlashcardSets = async (filters?: LibraryFilters): Promise<FlashcardSet[]> => {
@@ -33,9 +82,18 @@ export const fetchLibraryFlashcardSets = async (filters?: LibraryFilters): Promi
         image_url,
         cards_count,
         metadata,
-        owner_id
-      `)
-      .eq('is_public', true);
+        owner_id,
+        topic,
+        country_id,
+        category_id,
+        education_system,
+        section_id
+      `);
+    
+    // Apply filters as needed
+    if (filters?.filterBuiltIn) {
+      query = query.eq('is_built_in', true);
+    }
     
     // Apply search filter
     if (filters?.searchTerm) {
@@ -78,13 +136,12 @@ export const fetchLibraryFlashcardSets = async (filters?: LibraryFilters): Promi
     return data || [];
   } catch (error) {
     console.error('Error fetching library flashcard sets:', error);
-    throw error;
+    return [];
   }
 };
 
 export const fetchFlashcardSetsWithCount = async (filters?: LibraryFilters): Promise<FlashcardSetWithCount[]> => {
   try {
-    // This is using an RPC function call, replace with a standard query that matches the database schema
     const { data, error } = await supabase
       .from('flashcard_sets')
       .select(`
@@ -122,7 +179,7 @@ export const fetchFlashcardSetsWithCount = async (filters?: LibraryFilters): Pro
 };
 
 // Clone a flashcard set for the current user
-export const cloneFlashcardSet = async (setId: string): Promise<FlashcardSet> => {
+export const cloneFlashcardSet = async (state: FlashcardState, setId: string): Promise<FlashcardSet | null> => {
   try {
     const { data, error } = await supabase.functions.invoke('clone-flashcard-set', {
       body: { setId }
@@ -135,68 +192,28 @@ export const cloneFlashcardSet = async (setId: string): Promise<FlashcardSet> =>
     return data.flashcardSet;
   } catch (error) {
     console.error('Error cloning flashcard set:', error);
-    throw error;
+    return null;
   }
 };
 
-// Rate a flashcard set
-export const rateFlashcardSet = async (setId: string, rating: number): Promise<void> => {
-  try {
-    const { error } = await supabase
-      .from('flashcard_set_ratings')
-      .upsert(
-        { 
-          set_id: setId, 
-          rating: rating 
-        },
-        { onConflict: 'set_id' }
-      );
-    
-    if (error) {
-      throw error;
-    }
-  } catch (error) {
-    console.error('Error rating flashcard set:', error);
-    throw error;
-  }
-};
-
-// Fetch all available subjects
+// Fetch available subjects - simplified to avoid table errors
 export const fetchSubjects = async (): Promise<string[]> => {
   try {
+    // Use flashcard_sets table which we know exists, and get unique subjects
     const { data, error } = await supabase
-      .from('subjects')
-      .select('name')
-      .order('name');
+      .from('flashcard_sets')
+      .select('subject')
+      .not('subject', 'is', null);
     
     if (error) {
       throw error;
     }
     
-    return data.map(subject => subject.name);
+    // Extract unique subjects
+    const subjects = [...new Set(data.map(item => item.subject))];
+    return subjects.filter(Boolean);
   } catch (error) {
     console.error('Error fetching subjects:', error);
     return [];
-  }
-};
-
-// Fetch user's ratings
-export const fetchUserRatings = async (): Promise<Record<string, number>> => {
-  try {
-    const { data, error } = await supabase
-      .from('flashcard_set_ratings')
-      .select('set_id, rating');
-    
-    if (error) {
-      throw error;
-    }
-    
-    return data.reduce((acc: Record<string, number>, curr) => {
-      acc[curr.set_id] = curr.rating;
-      return acc;
-    }, {});
-  } catch (error) {
-    console.error('Error fetching user ratings:', error);
-    return {};
   }
 };

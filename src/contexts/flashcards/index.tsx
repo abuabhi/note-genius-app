@@ -5,8 +5,10 @@ import { FlashcardSet, Flashcard, SubjectCategory } from '@/types/flashcard';
 import { useFlashcardsOperations } from './useFlashcards';
 import { useAuth } from '@/contexts/auth';
 
+// Create a context that will hold our flashcard state
 const FlashcardContext = createContext<FlashcardContextType | undefined>(undefined);
 
+// Export a hook that simplifies access to the flashcard context
 export const useFlashcards = () => {
   const context = useContext(FlashcardContext);
   if (!context) {
@@ -15,6 +17,7 @@ export const useFlashcards = () => {
   return context;
 };
 
+// Define the provider that wraps parts of the app that need flashcard functionality
 export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }) => {
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [flashcardSets, setFlashcardSets] = useState<FlashcardSet[]>([]);

@@ -22,7 +22,7 @@ export const TextSelectionToFlashcard = ({
 }: TextSelectionToFlashcardProps) => {
   const [selectedText, setSelectedText] = useState<string>("");
   const flashcardState = useFlashcardState();
-  const { addFlashcard } = useFlashcardsOperations();
+  const { addFlashcard } = useFlashcardsOperations(flashcardState);
 
   const handleTextSelection = () => {
     const selection = window.getSelection();
