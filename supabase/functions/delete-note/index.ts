@@ -14,15 +14,15 @@ serve(async (req) => {
   }
 
   try {
-    // Create a Supabase client
+    // Create a Supabase client with service role key for admin privileges
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
-    const supabaseAnonKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    const supabase = createClient(supabaseUrl, supabaseAnonKey)
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     // Get the note ID from the request body
     const { noteId } = await req.json()
     
-    console.log(`Attempting to delete note with ID: ${noteId}`)
+    console.log(`Attempting to force delete note with ID: ${noteId}`)
     
     if (!noteId) {
       return new Response(
@@ -31,7 +31,9 @@ serve(async (req) => {
       )
     }
 
-    // First delete any rows in note_enrichment_usage table referencing this note
+    // Delete in this specific order to handle relationships properly
+
+    // 1. Delete any rows in note_enrichment_usage table referencing this note
     const { error: usageError } = await supabase
       .from('note_enrichment_usage')
       .delete()
@@ -41,17 +43,7 @@ serve(async (req) => {
       console.log('Warning: Error deleting note_enrichment_usage:', usageError)
     }
 
-    // Delete any associated scan data
-    const { error: scanError } = await supabase
-      .from('scan_data')
-      .delete()
-      .eq('note_id', noteId)
-    
-    if (scanError) {
-      console.log('Warning: Error deleting scan data:', scanError)
-    }
-
-    // Delete any associated tags
+    // 2. Delete any associated note tags
     const { error: tagsError } = await supabase
       .from('note_tags')
       .delete()
@@ -61,13 +53,24 @@ serve(async (req) => {
       console.log('Warning: Error deleting note tags:', tagsError)
     }
 
-    // Finally delete the note
+    // 3. Delete any associated scan data
+    const { error: scanError } = await supabase
+      .from('scan_data')
+      .delete()
+      .eq('note_id', noteId)
+    
+    if (scanError) {
+      console.log('Warning: Error deleting scan data:', scanError)
+    }
+
+    // 4. Finally delete the note
     const { error: noteError } = await supabase
       .from('notes')
       .delete()
       .eq('id', noteId)
 
     if (noteError) {
+      console.error('Error deleting note:', noteError)
       return new Response(
         JSON.stringify({ error: noteError.message }), 
         { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }

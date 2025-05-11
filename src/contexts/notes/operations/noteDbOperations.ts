@@ -64,6 +64,8 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
 
 export const deleteNoteFromDatabase = async (id: string): Promise<void> => {
   try {
+    console.log("Attempting to delete note with ID:", id);
+    
     // First try deleting just the note - this should cascade to related tables via foreign keys
     const { error } = await supabase
       .from('notes')
@@ -82,6 +84,8 @@ export const deleteNoteFromDatabase = async (id: string): Promise<void> => {
         console.error('Edge function delete error:', edgeFunctionError);
         throw edgeFunctionError;
       }
+    } else {
+      console.log("Note deleted successfully via regular delete");
     }
   } catch (error) {
     console.error('Error deleting note:', error);

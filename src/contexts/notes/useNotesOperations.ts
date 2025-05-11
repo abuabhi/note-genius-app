@@ -1,4 +1,3 @@
-
 import { useToast } from '@/hooks/use-toast';
 import { Note } from "@/types/note";
 import { 
@@ -103,7 +102,11 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
 
   const deleteNote = async (id: string): Promise<void> => {
     try {
+      // Show deletion in progress with loading indicator
+      const toastId = toast.loading("Deleting note...");
+      
       // Optimistic update - remove note from UI immediately
+      const deletedNote = notes.find(note => note.id === id);
       setNotes(prevNotes => prevNotes.filter(note => note.id !== id));
       
       // Reset to first page if we delete the last note of the page
@@ -111,31 +114,41 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
         setCurrentPage(currentPage - 1);
       }
       
-      // Show deletion in progress
-      const toastId = toast("Deleting note...", {
-        duration: 6000,
-      });
-      
-      // Attempt to delete from database
-      await deleteNoteFromDatabase(id);
-      
-      // Update toast on success
-      toast.dismiss(toastId);
-      toast.success("Note deleted successfully");
+      try {
+        // Attempt to delete from database
+        await deleteNoteFromDatabase(id);
+        
+        // Update toast on success
+        toast.dismiss(toastId);
+        toast.success("Note deleted successfully");
+      } catch (error) {
+        console.error('Error deleting note:', error);
+        
+        // Revert the optimistic update by restoring the deleted note
+        if (deletedNote) {
+          setNotes(prevNotes => [deletedNote, ...prevNotes]);
+        }
+        
+        toast.dismiss(toastId);
+        toast.error("Failed to delete note. Please try again or use force delete option.");
+        throw error;
+      }
     } catch (error) {
-      console.error('Error deleting note:', error);
-      
-      // Revert the optimistic update by refetching notes
-      // This is simplified - in a real app you might want to restore the specific note
-      toast.error("Failed to delete note. Please try again.");
-      
-      throw error; // Re-throw to handle in calling component
+      console.error('Error in delete operation:', error);
+      throw error;
     }
   };
 
   const updateNote = async (id: string, updatedNote: Partial<Note>): Promise<void> => {
     try {
       console.log("Updating note with ID:", id, "and data:", updatedNote);
+      
+      // Optimistic update - update the note in the UI immediately
+      setNotes(prevNotes => 
+        prevNotes.map(note => 
+          note.id === id ? { ...note, ...updatedNote } : note
+        )
+      );
       
       // Update the note in the database
       await updateNoteInDatabase(id, updatedNote);
@@ -146,39 +159,49 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
         await updateNoteTagsInDatabase(id, updatedNote.tags);
       }
 
-      // Update the local state with an optimistic update
-      setNotes(prevNotes => 
-        prevNotes.map(note => 
-          note.id === id ? { ...note, ...updatedNote } : note
-        )
-      );
-      
       shadcnToast({
         title: "Note updated",
         description: "Your note has been successfully updated.",
       });
     } catch (error) {
       console.error('Error updating note:', error);
+      
+      // Revert the optimistic update if there was an error
+      const originalNote = notes.find(note => note.id === id);
+      if (originalNote) {
+        setNotes(prevNotes => 
+          prevNotes.map(note => 
+            note.id === id ? originalNote : note
+          )
+        );
+      }
+      
       shadcnToast({
         title: "Failed to update note",
         description: "Please try again later.",
         variant: "destructive",
       });
-      throw error; // Re-throw to handle in calling component
+      throw error;
     }
   };
 
-  // Pin/Unpin a note
+  // Pin/Unpin a note with improved error handling
   const pinNote = async (id: string, pinned: boolean): Promise<void> => {
+    console.log(`${pinned ? 'Pinning' : 'Unpinning'} note with ID:`, id);
+    
+    // Get the original note before changes
+    const originalNote = notes.find(note => note.id === id);
+    
     try {
-      await updateNoteInDatabase(id, { pinned });
-
-      // Update the local state
+      // Optimistic update
       setNotes(prevNotes => 
         prevNotes.map(note => 
           note.id === id ? { ...note, pinned } : note
         )
       );
+      
+      // Update in database
+      await updateNoteInDatabase(id, { pinned });
       
       shadcnToast({
         title: pinned ? "Note pinned" : "Note unpinned",
@@ -188,12 +211,22 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
       });
     } catch (error) {
       console.error('Error pinning note:', error);
+      
+      // Revert optimistic update if there's an error
+      if (originalNote) {
+        setNotes(prevNotes => 
+          prevNotes.map(note => 
+            note.id === id ? originalNote : note
+          )
+        );
+      }
+      
       shadcnToast({
         title: "Failed to update note",
         description: "Please try again later.",
         variant: "destructive",
       });
-      throw error; // Re-throw to handle in calling component
+      throw error;
     }
   };
 
