@@ -81,6 +81,11 @@ export function useNotesState() {
           return false;
         }
         
+        // Filter by subject ID (for subject tabs)
+        if (filterOptions.subjectId && note.subject_id !== filterOptions.subjectId) {
+          return false;
+        }
+        
         // Filter by source type
         if (filterOptions.sourceType) {
           if (Array.isArray(filterOptions.sourceType)) {

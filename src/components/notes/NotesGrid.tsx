@@ -43,7 +43,7 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
 
   return (
     <>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="flex flex-col space-y-4">
         {notes.map((note) => (
           <NoteCard
             key={note.id}
@@ -52,7 +52,7 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
             onShowDetails={handleShowDetails}
             onPin={handlePin}
             onDelete={handleDelete}
-            confirmDelete={null} // Remove the confirmDelete state as we're using a dialog now
+            confirmDelete={null}
           />
         ))}
       </div>

@@ -31,11 +31,20 @@ export const fetchBuiltInSets = async (state: FlashcardState): Promise<Flashcard
         .select('*', { count: 'exact', head: true })
         .eq('set_id', set.id);
 
-      // Create a properly typed FlashcardSet object with safe access to nested properties
-      const categoryId = set.subject_categories ? set.subject_categories.id : undefined;
-      const categoryName = set.subject_categories ? set.subject_categories.name : undefined;
-        
-      sets.push({
+      // Handle potentially undefined nested properties safely
+      let categoryId = undefined;
+      let categoryName = undefined;
+      
+      if (set.subject_categories && typeof set.subject_categories === 'object') {
+        // Type guard to ensure subject_categories is an object with id and name properties
+        if ('id' in set.subject_categories && 'name' in set.subject_categories) {
+          categoryId = set.subject_categories.id;
+          categoryName = set.subject_categories.name;
+        }
+      }
+      
+      // Create a FlashcardSet with explicit properties
+      const flashcardSet: FlashcardSet = {
         id: set.id,
         name: set.name,
         description: set.description,
@@ -49,12 +58,18 @@ export const fetchBuiltInSets = async (state: FlashcardState): Promise<Flashcard
         country_id: set.country_id,
         category_id: set.category_id,
         education_system: set.education_system,
-        section_id: set.section_id,
-        subject_categories: categoryId && categoryName ? {
+        section_id: set.section_id
+      };
+      
+      // Only add subject_categories if both id and name are available
+      if (categoryId && categoryName) {
+        flashcardSet.subject_categories = {
           id: categoryId,
           name: categoryName
-        } : undefined
-      });
+        };
+      }
+      
+      sets.push(flashcardSet);
     }
     
     return sets;

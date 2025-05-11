@@ -53,7 +53,7 @@ export const SubjectTabs = ({ activeSubjectId, onSubjectChange }: SubjectTabsPro
               {activeTabIndex === index && (
                 <motion.div
                   layoutId="active-subject-tab"
-                  className="absolute inset-0 bg-[#efefef] dark:bg-gray-800"
+                  className="absolute inset-0 bg-mint-100 dark:bg-mint-900"
                   transition={{
                     type: "spring",
                     bounce: 0.0,
@@ -77,7 +77,7 @@ export const SubjectTabs = ({ activeSubjectId, onSubjectChange }: SubjectTabsPro
             <span
               className={`
                 w-full h-full flex items-center justify-center text-xs sm:text-sm md:text-base truncate px-1
-                ${activeTabIndex === index ? "text-black dark:text-white font-medium" : "text-muted-foreground"}
+                ${activeTabIndex === index ? "text-mint-800 dark:text-mint-100 font-medium" : "text-muted-foreground"}
               `}
             >
               {tab.name}

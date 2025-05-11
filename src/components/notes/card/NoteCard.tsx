@@ -8,7 +8,6 @@ import { NoteCardActions } from "./NoteCardActions";
 import { NoteTagList } from "../details/NoteTagList";
 import { generateColorFromString } from "@/utils/colorUtils";
 import { getBestTextColor } from "@/utils/colorUtils";
-import { NoteSummary } from "./NoteSummary";
 import { useState } from "react";
 import { updateNoteInDatabase } from "@/contexts/notes/operations";
 import { enrichNote } from "@/hooks/noteEnrichment/enrichmentService";
@@ -31,51 +30,8 @@ export const NoteCard = ({
   onDelete,
   confirmDelete
 }: NoteCardProps) => {
-  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const navigate = useNavigate();
   
-  const handleGenerateSummary = async () => {
-    try {
-      setIsGeneratingSummary(true);
-      
-      // Update note status to generating
-      await updateNoteInDatabase(note.id, {
-        summary_status: 'generating'
-      });
-      note.summary_status = 'generating';
-      
-      // Generate summary using the enrichment service
-      const content = note.content || note.description;
-      const summaryContent = await enrichNote(note, 'summarize');
-      
-      // Format as markdown and truncate if too long
-      const markdownSummary = summaryContent.length > 250 
-        ? summaryContent.substring(0, 247) + '...'
-        : summaryContent;
-        
-      // Update the note with the generated summary
-      await updateNoteInDatabase(note.id, {
-        summary: markdownSummary,
-        summary_generated_at: new Date().toISOString(),
-        summary_status: 'completed'
-      });
-      
-      // Update local state
-      note.summary = markdownSummary;
-      note.summary_generated_at = new Date().toISOString();
-      note.summary_status = 'completed';
-    } catch (error) {
-      console.error("Error generating summary:", error);
-      // Update status to failed
-      await updateNoteInDatabase(note.id, {
-        summary_status: 'failed'
-      });
-      note.summary_status = 'failed';
-    } finally {
-      setIsGeneratingSummary(false);
-    }
-  };
-
   const handleGoToStudyMode = (e: React.MouseEvent) => {
     e.stopPropagation();
     navigate(`/notes/study/${note.id}`);
@@ -125,13 +81,12 @@ export const NoteCard = ({
         </div>
       </CardHeader>
       <CardContent className="p-4 pt-0">
-        {/* Display Summary */}
-        <NoteSummary
-          summary={note.summary}
-          description={note.description}
-          status={isGeneratingSummary ? 'generating' : note.summary_status}
-          onGenerateSummary={handleGenerateSummary}
-        />
+        {/* Display Description with truncation */}
+        {note.description && (
+          <p className="text-sm line-clamp-3 text-muted-foreground">
+            {note.summary || note.description}
+          </p>
+        )}
       </CardContent>
       <CardFooter className="p-4 pt-2 flex justify-between">
         {/* Tags at bottom left */}
