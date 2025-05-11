@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState } from 'react';
 import { FlashcardContextType, FlashcardProviderProps, FlashcardState } from './types';
 import { FlashcardSet, Flashcard, SubjectCategory, FlashcardProgress, FlashcardScore, CreateFlashcardPayload, CreateFlashcardSetPayload } from '@/types/flashcard';
@@ -161,7 +162,14 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
 
       if (error) throw error;
       
-      return data as Flashcard[];
+      // Map database fields to Flashcard object structure
+      const mappedFlashcards = data.map(card => ({
+        ...card,
+        front: card.front_content,
+        back: card.back_content,
+      })) as Flashcard[];
+      
+      return mappedFlashcards;
     } catch (error) {
       console.error('Error fetching flashcards in set:', error);
       toast.error('Failed to load flashcards');
