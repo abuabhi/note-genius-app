@@ -13,7 +13,7 @@ export const useLibraryOperations = (state: FlashcardState) => {
   /**
    * Fetch built-in flashcard sets for the library
    */
-  const fetchBuiltInSets = async (): Promise<FlashcardSet[]> => {
+  const fetchBuiltInSets = async () => {
     state.setLoading(prev => ({ ...prev, sets: true }));
     
     try {
@@ -42,7 +42,7 @@ export const useLibraryOperations = (state: FlashcardState) => {
               .from('subject_categories')
               .select('id, name')
               .eq('id', set.category_id)
-              .single();
+              .maybeSingle();
               
             if (categoryData) {
               categoryInfo = {
@@ -84,22 +84,28 @@ export const useLibraryOperations = (state: FlashcardState) => {
   };
 
   /**
-   * Clone a flashcard set for the current user
+   * Clone a flashcard set for the current user - completely rewritten to avoid deep type issues
    */
-  const cloneFlashcardSet = async (setId: string): Promise<FlashcardSet | null> => {
-    if (!user) return null;
+  const cloneFlashcardSet = async (setId: string) => {
+    if (!user) {
+      toast.error("You must be logged in to clone sets");
+      return null;
+    }
 
     try {
-      // Get original set
+      // Step 1: Get original set data
       const { data: originalSet, error: setError } = await supabase
         .from('flashcard_sets')
-        .select('*')
+        .select('name, description, subject, topic, category_id')
         .eq('id', setId)
         .single();
 
-      if (setError) throw setError;
+      if (setError) {
+        toast.error("Could not find the original set");
+        return null;
+      }
 
-      // Create new set data
+      // Step 2: Create new set with basic data
       const newSetData = {
         name: `${originalSet.name} (Copy)`,
         description: originalSet.description,
@@ -110,24 +116,31 @@ export const useLibraryOperations = (state: FlashcardState) => {
         is_built_in: false
       };
 
-      // Insert new set
+      // Step 3: Insert new set
       const { data: newSet, error: createError } = await supabase
         .from('flashcard_sets')
         .insert(newSetData)
-        .select()
+        .select('id, name, description, user_id, created_at, updated_at, subject, topic, category_id')
         .single();
 
-      if (createError) throw createError;
+      if (createError || !newSet) {
+        toast.error("Failed to create new set");
+        return null;
+      }
 
-      // Get all cards from original set
+      // Step 4: Get all cards from original set
       const { data: originalCards, error: cardsError } = await supabase
         .from('flashcards')
-        .select('*')
+        .select('front_content, back_content, difficulty')
         .eq('set_id', setId);
 
-      if (cardsError) throw cardsError;
+      if (cardsError) {
+        console.error("Error fetching original cards:", cardsError);
+      }
 
-      // Clone all cards to the new set
+      // Step 5: Clone cards if there are any
+      const cardCount = originalCards?.length || 0;
+      
       if (originalCards && originalCards.length > 0) {
         const newCards = originalCards.map(card => ({
           front_content: card.front_content,
@@ -141,27 +154,17 @@ export const useLibraryOperations = (state: FlashcardState) => {
         await supabase.from('flashcards').insert(newCards);
       }
 
-      toast.success('Flashcard set cloned successfully');
-      
-      // Create a new FlashcardSet object without any recursive references
-      const clonedSet: FlashcardSet = {
-        id: newSet.id,
-        name: newSet.name,
-        description: newSet.description,
-        user_id: newSet.user_id,
-        created_at: newSet.created_at,
-        updated_at: newSet.updated_at,
+      // Step 6: Create a simple object to return and update state with
+      const clonedSet = {
+        ...newSet,
         is_built_in: false,
-        card_count: originalCards?.length || 0,
-        subject: newSet.subject,
-        topic: newSet.topic,
-        category_id: newSet.category_id,
+        card_count: cardCount
       };
       
       // Update app state with new set
-      // Instead of fetching all sets again, append to current state
       setFlashcardSets(prevSets => [clonedSet, ...prevSets]);
       
+      toast.success('Flashcard set cloned successfully');
       return clonedSet;
     } catch (error) {
       console.error('Error cloning flashcard set:', error);
