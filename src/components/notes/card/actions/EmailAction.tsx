@@ -9,7 +9,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter
+  DialogFooter,
+  DialogDescription
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,7 @@ export const EmailAction = ({ noteTitle, noteContent }: EmailActionProps) => {
   const [isSending, setIsSending] = useState(false);
   
   const handleOpenEmailDialog = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     setOpen(true);
   };
@@ -86,6 +88,10 @@ export const EmailAction = ({ noteTitle, noteContent }: EmailActionProps) => {
       <DropdownMenuItem 
         className="flex items-center cursor-pointer" 
         onClick={handleOpenEmailDialog}
+        onSelect={(e) => {
+          // Prevent the dropdown from closing and propagating the event
+          e.preventDefault();
+        }}
       >
         <Mail className="mr-2 h-4 w-4" />
         <span>Email</span>
@@ -95,6 +101,9 @@ export const EmailAction = ({ noteTitle, noteContent }: EmailActionProps) => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Email Note</DialogTitle>
+            <DialogDescription>
+              Send this note to an email address.
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">

@@ -24,7 +24,10 @@ export const NoteCardActions = ({
   return (
     <div 
       className="absolute top-2 right-2"
-      onClick={(e) => e.stopPropagation()} // Prevent card click when clicking actions
+      onClick={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+      }}
     >
       <NoteActionsMenu
         noteId={noteId}

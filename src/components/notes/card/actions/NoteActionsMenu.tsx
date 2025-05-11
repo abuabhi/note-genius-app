@@ -32,13 +32,18 @@ export const NoteActionsMenu = ({
   onDelete,
   iconSize = 4
 }: NoteActionsMenuProps) => {
+  const [open, setOpen] = React.useState(false);
+  
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
           size="icon"
           className="h-8 w-8 text-muted-foreground"
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
         >
           <MoreHorizontal className={`h-${iconSize} w-${iconSize}`} />
         </Button>
