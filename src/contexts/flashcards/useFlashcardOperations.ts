@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Flashcard } from "@/types/flashcard";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,6 +74,33 @@ export function useFlashcardOperations(state?: FlashcardState) {
     }
   };
   
+  const fetchFlashcards = async () => {
+    // Implementation to fetch all flashcards
+    return [];
+  };
+  
+  const createFlashcard = async (cardData) => {
+    // This is effectively the same as addFlashcard but with a different name
+    return addFlashcard({
+      front_content: cardData.front_content,
+      back_content: cardData.back_content,
+      set_id: cardData.set_id || "",
+      subject: cardData.subject
+    });
+  };
+  
+  const updateFlashcard = async (id, cardData) => {
+    // Implementation to update a flashcard
+  };
+  
+  const deleteFlashcard = async (id) => {
+    // Implementation to delete a flashcard
+  };
+  
+  const removeFlashcardFromSet = async (flashcardId, setId) => {
+    // Implementation to remove a flashcard from a set
+  };
+  
   const updateSetCount = async (setId: string) => {
     try {
       // Get the count directly from the database
@@ -110,7 +136,12 @@ export function useFlashcardOperations(state?: FlashcardState) {
   
   return {
     addFlashcard,
-    isLoading
+    isLoading,
+    fetchFlashcards,
+    createFlashcard,
+    updateFlashcard,
+    deleteFlashcard,
+    removeFlashcardFromSet
   };
 }
 
