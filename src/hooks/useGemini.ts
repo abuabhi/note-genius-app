@@ -31,8 +31,36 @@ export function useGemini() {
     }
   }, []);
 
+  // Add flashcard generation function
+  const generateFlashcardContent = useCallback(async (content: string) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Mock response
+      const generatedQuestion = "What is the main concept described in this note?";
+      const generatedAnswer = `The main concept is related to: ${content.substring(0, 100)}...`;
+      
+      return {
+        question: generatedQuestion,
+        answer: generatedAnswer
+      };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(errorMessage);
+      toast.error(`Failed to generate flashcard: ${errorMessage}`);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   return {
     generateContent,
+    generateFlashcardContent,
     isLoading,
     error
   };

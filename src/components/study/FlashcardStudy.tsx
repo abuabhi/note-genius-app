@@ -162,6 +162,8 @@ export const FlashcardStudy = ({ setId, mode }: FlashcardStudyProps) => {
   }
   
   const currentCard = flashcards[currentIndex];
+  const frontContent = currentCard.front_content || currentCard.front;
+  const backContent = currentCard.back_content || currentCard.back;
   
   return (
     <div>
@@ -194,7 +196,7 @@ export const FlashcardStudy = ({ setId, mode }: FlashcardStudyProps) => {
               <CardContent className="p-6 flex flex-col items-center justify-center">
                 <div className="min-h-[250px] w-full flex items-center justify-center text-center p-4">
                   <div className="text-lg md:text-xl">
-                    {isFlipped ? currentCard.back_content : currentCard.front_content}
+                    {isFlipped ? backContent : frontContent}
                   </div>
                 </div>
                 <div className="text-sm text-muted-foreground mt-4">
@@ -243,3 +245,5 @@ export const FlashcardStudy = ({ setId, mode }: FlashcardStudyProps) => {
     </div>
   );
 };
+
+export default FlashcardStudy;

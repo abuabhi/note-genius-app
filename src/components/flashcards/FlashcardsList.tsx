@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -97,6 +98,10 @@ const FlashcardsList = () => {
     );
   }
 
+  const currentCard = flashcards[currentIndex];
+  const frontContent = currentCard.front_content || currentCard.front;
+  const backContent = currentCard.back_content || currentCard.back;
+
   return (
     <div className="max-w-2xl mx-auto">
       <div className="perspective-1000 mb-6">
@@ -125,7 +130,7 @@ const FlashcardsList = () => {
               <CardContent className="p-6">
                 <div className="min-h-[200px] flex items-center justify-center text-center">
                   <p className="text-lg">
-                    {isFlipped ? flashcards[currentIndex].back_content : flashcards[currentIndex].front_content}
+                    {isFlipped ? backContent : frontContent}
                   </p>
                 </div>
               </CardContent>

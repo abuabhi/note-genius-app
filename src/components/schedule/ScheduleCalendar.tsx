@@ -3,7 +3,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin, { DateClickArg, EventClickArg } from '@fullcalendar/interaction';
+import interactionPlugin from '@fullcalendar/interaction';
 import { INITIAL_EVENTS, createEventId } from './event-utils';
 import CreateEventDialog from './CreateEventDialog';
 import { useAuth } from '@/contexts/auth';
@@ -25,7 +25,7 @@ export function ScheduleCalendar({ selectedDate, onDateChange }: ScheduleCalenda
     console.log("Event created successfully");
   }, []);
 
-  const handleDateClick = useCallback((clickInfo: DateClickArg) => {
+  const handleDateClick = useCallback((clickInfo: any) => {
     setClickedDate(clickInfo.date);
     setIsDialogOpen(true);
     if (onDateChange) {
@@ -33,7 +33,7 @@ export function ScheduleCalendar({ selectedDate, onDateChange }: ScheduleCalenda
     }
   }, [onDateChange]);
 
-  const handleEventClick = useCallback((clickInfo: EventClickArg) => {
+  const handleEventClick = useCallback((clickInfo: any) => {
     if (window.confirm(`Are you sure you want to delete the event '${clickInfo.event.title}'`)) {
       clickInfo.event.remove();
     }
