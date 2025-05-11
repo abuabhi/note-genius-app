@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/auth"; // Updated import path
+import { useAuth } from "@/contexts/auth";
 import { useScheduleColors } from "@/hooks/useScheduleColors";
 import {
   Dialog,
@@ -52,13 +52,15 @@ interface CreateEventDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onEventCreated?: () => void;
+  defaultDate?: Date | null;
 }
 
-export const CreateEventDialog: React.FC<CreateEventDialogProps> = ({
-  open,
-  onOpenChange,
-  onEventCreated
-}) => {
+export default function CreateEventDialog({ 
+  open, 
+  onOpenChange, 
+  onEventCreated,
+  defaultDate
+}: CreateEventDialogProps) {
   const { subjects } = useUserSubjects();
   const { user } = useAuth();
   const { scheduleColors } = useScheduleColors();
@@ -68,12 +70,19 @@ export const CreateEventDialog: React.FC<CreateEventDialogProps> = ({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
-      date: new Date(),
+      date: defaultDate || new Date(),
       subject: "",
       description: "",
       color: "",
     },
   });
+
+  // Update form when defaultDate changes
+  useEffect(() => {
+    if (defaultDate) {
+      form.setValue("date", defaultDate);
+    }
+  }, [defaultDate, form]);
 
   useEffect(() => {
     if (scheduleColors && scheduleColors.length > 0) {
