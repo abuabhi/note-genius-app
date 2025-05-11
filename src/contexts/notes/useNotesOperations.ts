@@ -12,7 +12,7 @@ import { enrichNote } from '@/hooks/noteEnrichment/enrichmentService';
 import { toast } from 'sonner'; // Using sonner toast for better user experience
 
 export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React.SetStateAction<Note[]>>, currentPage: number, setCurrentPage: React.Dispatch<React.SetStateAction<number>>, paginatedNotes: Note[]) {
-  const { toast } = useToast();
+  const { toast: shadcnToast } = useToast();
 
   const addNote = async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
     try {
@@ -30,7 +30,7 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
         console.log("Note added successfully:", newNote);
         // Update the local state with the new note
         setNotes(prevNotes => [newNote, ...prevNotes]);
-        toast({
+        shadcnToast({
           title: "Note added",
           description: "Your note has been successfully added.",
         });
@@ -83,7 +83,7 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
         return newNote;
       } else {
         console.error("Failed to add note: newNote is null");
-        toast({
+        shadcnToast({
           title: "Failed to add note",
           description: "Please try again later.",
           variant: "destructive",
@@ -92,7 +92,7 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
       }
     } catch (error) {
       console.error('Error adding note:', error);
-      toast({
+      shadcnToast({
         title: "Failed to add note",
         description: "Please try again later.",
         variant: "destructive",
@@ -112,15 +112,16 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
       }
       
       // Show deletion in progress
-      const toastId = toast.loading("Deleting note...");
+      const toastId = toast("Deleting note...", {
+        duration: 6000,
+      });
       
       // Attempt to delete from database
       await deleteNoteFromDatabase(id);
       
       // Update toast on success
-      toast.success("Note deleted successfully", {
-        id: toastId
-      });
+      toast.dismiss(toastId);
+      toast.success("Note deleted successfully");
     } catch (error) {
       console.error('Error deleting note:', error);
       
@@ -152,13 +153,13 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
         )
       );
       
-      toast({
+      shadcnToast({
         title: "Note updated",
         description: "Your note has been successfully updated.",
       });
     } catch (error) {
       console.error('Error updating note:', error);
-      toast({
+      shadcnToast({
         title: "Failed to update note",
         description: "Please try again later.",
         variant: "destructive",
@@ -179,7 +180,7 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
         )
       );
       
-      toast({
+      shadcnToast({
         title: pinned ? "Note pinned" : "Note unpinned",
         description: pinned 
           ? "Your note has been pinned to the top." 
@@ -187,7 +188,7 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
       });
     } catch (error) {
       console.error('Error pinning note:', error);
-      toast({
+      shadcnToast({
         title: "Failed to update note",
         description: "Please try again later.",
         variant: "destructive",
@@ -208,7 +209,7 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
         )
       );
       
-      toast({
+      shadcnToast({
         title: archived ? "Note archived" : "Note restored",
         description: archived 
           ? "Your note has been moved to the archive." 
@@ -216,7 +217,7 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
       });
     } catch (error) {
       console.error('Error archiving note:', error);
-      toast({
+      shadcnToast({
         title: "Failed to update note",
         description: "Please try again later.",
         variant: "destructive",
@@ -231,7 +232,7 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
       return await fetchTagsFromDatabase();
     } catch (error) {
       console.error('Error fetching tags:', error);
-      toast({
+      shadcnToast({
         title: "Failed to fetch tags",
         description: "Please try again later.",
         variant: "destructive",
