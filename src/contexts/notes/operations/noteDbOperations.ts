@@ -64,7 +64,7 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
 
 export const deleteNoteFromDatabase = async (id: string): Promise<void> => {
   try {
-    // First try to delete directly
+    // First try deleting just the note - this should cascade to related tables via foreign keys
     const { error } = await supabase
       .from('notes')
       .delete()
@@ -73,13 +73,14 @@ export const deleteNoteFromDatabase = async (id: string): Promise<void> => {
     if (error) {
       console.warn('Error in regular delete, trying force delete with edge function:', error);
       
-      // If regular delete fails, try using the edge function for force delete
-      const { error: edgeError } = await supabase.functions.invoke('delete-note', {
+      // If regular delete fails (due to foreign key constraints or RLS), try using the edge function
+      const { error: edgeFunctionError } = await supabase.functions.invoke('delete-note', {
         body: { noteId: id }
       });
 
-      if (edgeError) {
-        throw edgeError;
+      if (edgeFunctionError) {
+        console.error('Edge function delete error:', edgeFunctionError);
+        throw edgeFunctionError;
       }
     }
   } catch (error) {

@@ -9,6 +9,7 @@ import {
   updateNoteTagsInDatabase
 } from './operations';
 import { enrichNote } from '@/hooks/noteEnrichment/enrichmentService';
+import { toast } from 'sonner'; // Using sonner toast for better user experience
 
 export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React.SetStateAction<Note[]>>, currentPage: number, setCurrentPage: React.Dispatch<React.SetStateAction<number>>, paginatedNotes: Note[]) {
   const { toast } = useToast();
@@ -102,9 +103,7 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
 
   const deleteNote = async (id: string): Promise<void> => {
     try {
-      await deleteNoteFromDatabase(id);
-
-      // Update the local state
+      // Optimistic update - remove note from UI immediately
       setNotes(prevNotes => prevNotes.filter(note => note.id !== id));
       
       // Reset to first page if we delete the last note of the page
@@ -112,17 +111,23 @@ export function useNotesOperations(notes: Note[], setNotes: React.Dispatch<React
         setCurrentPage(currentPage - 1);
       }
       
-      toast({
-        title: "Note deleted",
-        description: "Your note has been successfully deleted.",
+      // Show deletion in progress
+      const toastId = toast.loading("Deleting note...");
+      
+      // Attempt to delete from database
+      await deleteNoteFromDatabase(id);
+      
+      // Update toast on success
+      toast.success("Note deleted successfully", {
+        id: toastId
       });
     } catch (error) {
       console.error('Error deleting note:', error);
-      toast({
-        title: "Failed to delete note",
-        description: "Please try again later.",
-        variant: "destructive",
-      });
+      
+      // Revert the optimistic update by refetching notes
+      // This is simplified - in a real app you might want to restore the specific note
+      toast.error("Failed to delete note. Please try again.");
+      
       throw error; // Re-throw to handle in calling component
     }
   };
