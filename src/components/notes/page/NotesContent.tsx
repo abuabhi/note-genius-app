@@ -33,7 +33,7 @@ export const NotesContent = ({
   tierLimits,
   userTier 
 }: NotesContentProps) => {
-  const { paginatedNotes, notes, loading, setFilterOptions } = useNotes();
+  const { paginatedNotes, notes, loading, setFilterOptions, filteredNotes } = useNotes();
   const { toast } = useToast();
   const { user, loading: authLoading } = useRequireAuth();
   const isAuthorized = !!user;
@@ -49,6 +49,10 @@ export const NotesContent = ({
   useEffect(() => {
     // Set filter based on active subject
     if (activeSubjectId) {
+      // Log for debugging
+      console.log(`Setting filter for subject: ${activeSubjectId}`);
+      console.log(`Notes with subject_id: ${notes.filter(note => note.subject_id === activeSubjectId).length}`);
+      
       setFilterOptions(prev => ({
         ...prev,
         subjectId: activeSubjectId
@@ -61,7 +65,7 @@ export const NotesContent = ({
         return newFilters;
       });
     }
-  }, [activeSubjectId, setFilterOptions]);
+  }, [activeSubjectId, setFilterOptions, notes]);
 
   // Show loading state while checking authentication
   if (authLoading || loading) {
@@ -144,6 +148,13 @@ export const NotesContent = ({
             activeSubjectId={activeSubjectId} 
             onSubjectChange={setActiveSubjectId} 
           />
+        </div>
+      )}
+      
+      {/* Debugging counts */}
+      {activeSubjectId && (
+        <div className="text-xs text-mint-500 mb-2">
+          Showing {filteredNotes.length} notes for selected subject
         </div>
       )}
       

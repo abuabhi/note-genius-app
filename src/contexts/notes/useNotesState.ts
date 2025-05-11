@@ -47,6 +47,11 @@ export function useNotesState() {
   const filteredNotes = useMemo(() => {
     return notes
       .filter(note => {
+        // For debugging
+        if (filterOptions.subjectId) {
+          console.log(`Filtering note ${note.id}, subject_id=${note.subject_id}, filter=${filterOptions.subjectId}`);
+        }
+        
         // Filter by archived status
         if (!showArchived && note.archived) {
           return false;

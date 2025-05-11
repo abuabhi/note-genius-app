@@ -8,9 +8,7 @@ import { NoteCardActions } from "./NoteCardActions";
 import { NoteTagList } from "../details/NoteTagList";
 import { generateColorFromString } from "@/utils/colorUtils";
 import { getBestTextColor } from "@/utils/colorUtils";
-import { useState } from "react";
-import { updateNoteInDatabase } from "@/contexts/notes/operations";
-import { enrichNote } from "@/hooks/noteEnrichment/enrichmentService";
+import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 
 interface NoteCardProps {
@@ -37,6 +35,9 @@ export const NoteCard = ({
     navigate(`/notes/study/${note.id}`);
   };
 
+  // Format date as dd-MMM-yyyy (e.g., 15-May-2023)
+  const formattedDate = format(new Date(note.date), "dd-MMM-yyyy");
+
   return (
     <Card 
       key={note.id}
@@ -56,6 +57,7 @@ export const NoteCard = ({
           onPin={onPin} 
           onDelete={onDelete}
           isConfirmingDelete={confirmDelete === note.id}
+          iconSize={5} // Increased icon size
         />
         
         <div className="flex flex-row items-center justify-between">
@@ -64,13 +66,13 @@ export const NoteCard = ({
           </CardTitle>
         </div>
         
-        {/* Date and Category in same row */}
-        <div className="flex items-center justify-between mt-1">
-          <span className="text-sm text-mint-600">{note.date}</span>
-          <div className="flex items-center gap-1">
-            <FileText className="h-3 w-3 text-mint-700" />
+        {/* Date and Subject in same row */}
+        <div className="flex items-center justify-between mt-2 text-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-mint-600">{formattedDate}</span>
+            <span className="text-mint-400">•</span>
             <span 
-              className="text-sm font-bold italic"
+              className="font-medium"
               style={{
                 color: generateColorFromString(note.category),
               }}
@@ -81,19 +83,14 @@ export const NoteCard = ({
         </div>
       </CardHeader>
       <CardContent className="p-4 pt-0">
-        {/* Display Description with truncation */}
-        {note.description && (
-          <p className="text-sm line-clamp-3 text-muted-foreground">
-            {note.summary || note.description}
-          </p>
-        )}
+        {/* Description removed as requested */}
       </CardContent>
-      <CardFooter className="p-4 pt-2 flex justify-between">
+      <CardFooter className="p-4 pt-2 flex justify-between items-center">
         {/* Tags at bottom left */}
         <div className="flex-1">
           {note.tags && note.tags.length > 0 && (
             <div className="flex flex-wrap gap-1 items-center">
-              <Tag className="h-3 w-3 text-mint-700" />
+              <Tag className="h-4 w-4 text-mint-700" />
               <NoteTagList 
                 tags={note.tags
                   .filter(tag => tag.name !== note.category) // Don't show category tag twice
@@ -111,13 +108,13 @@ export const NoteCard = ({
           <div className="flex flex-wrap mt-1 gap-2">
             {note.sourceType === 'scan' && (
               <div className="flex items-center">
-                <Camera className="h-3 w-3 text-mint-500 mr-1" />
+                <Camera className="h-4 w-4 text-mint-500 mr-1" />
                 <span className="text-xs text-mint-500">Scanned</span>
               </div>
             )}
             {note.archived && (
               <div className="flex items-center">
-                <Archive className="h-3 w-3 text-mint-500 mr-1" />
+                <Archive className="h-4 w-4 text-mint-500 mr-1" />
                 <span className="text-xs text-mint-500">Archived</span>
               </div>
             )}
@@ -128,7 +125,7 @@ export const NoteCard = ({
         <Button 
           variant="ghost" 
           size="sm" 
-          className="h-7 text-xs text-mint-600 hover:text-mint-800"
+          className="h-8 text-sm text-mint-600 hover:text-mint-800"
           onClick={handleGoToStudyMode}
         >
           Study Mode

@@ -1,3 +1,4 @@
+
 import Layout from "@/components/layout/Layout";
 import { NotesContent } from "@/components/notes/page/NotesContent";
 import { useNotes } from "@/contexts/NoteContext";
@@ -7,12 +8,14 @@ import { toast } from "@/components/ui/sonner";
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { FilterOptions } from "@/contexts/notes/types";
+import { useUserSubjects } from "@/hooks/useUserSubjects";
 
 const NotesPage = () => {
   const { addNote, availableCategories, setFilterOptions, addCategory } = useNotes();
   const { userProfile, tierLimits } = useRequireAuth();
   const userTier = userProfile?.user_tier;
   const location = useLocation();
+  const { subjects } = useUserSubjects();
 
   useEffect(() => {
     // Reset filters when component mounts
@@ -27,15 +30,29 @@ const NotesPage = () => {
     localStorage.setItem("lastVisitedPage", location.pathname);
   }, [setFilterOptions, location.pathname]);
 
+  // Helper function to find subject_id based on category name
+  const findSubjectIdByName = (categoryName: string): string | undefined => {
+    const matchingSubject = subjects.find(subject => 
+      subject.name.toLowerCase() === categoryName.toLowerCase()
+    );
+    return matchingSubject?.id;
+  };
+
   const handleSaveNote = async (note: Omit<Note, 'id'>): Promise<Note | null> => {
     try {
       // If a category is provided and it's not already in our list, add it
       if (note.category && note.category !== 'General' && note.category !== 'Uncategorized') {
         addCategory(note.category);
-        // We've removed the automatic tag creation based on category
       }
       
-      const newNote = await addNote(note);
+      // Try to find matching subject_id for the category
+      const subject_id = findSubjectIdByName(note.category);
+      
+      const newNote = await addNote({
+        ...note,
+        subject_id
+      });
+      
       toast("Note created successfully");
       return newNote;
     } catch (error) {
@@ -52,13 +69,17 @@ const NotesPage = () => {
       // If a category is provided and it's not already in our list, add it
       if (note.category && note.category !== 'General' && note.category !== 'Uncategorized') {
         addCategory(note.category);
-        // We've removed the automatic tag creation based on category
       }
+      
+      // Try to find matching subject_id for the category
+      const subject_id = findSubjectIdByName(note.category);
       
       const newNote = await addNote({
         ...note,
-        sourceType: 'scan'
+        sourceType: 'scan',
+        subject_id
       });
+      
       toast("Scanned note created successfully");
       return newNote;
     } catch (error) {
@@ -75,13 +96,17 @@ const NotesPage = () => {
       // If a category is provided and it's not already in our list, add it
       if (note.category && note.category !== 'General' && note.category !== 'Uncategorized') {
         addCategory(note.category);
-        // We've removed the automatic tag creation based on category
       }
+      
+      // Try to find matching subject_id for the category
+      const subject_id = findSubjectIdByName(note.category);
       
       const newNote = await addNote({
         ...note,
-        sourceType: 'import'
+        sourceType: 'import',
+        subject_id
       });
+      
       toast("Note imported successfully");
       return newNote;
     } catch (error) {
@@ -91,17 +116,6 @@ const NotesPage = () => {
       });
       return null;
     }
-  };
-
-  // Keep the utility function for generating colors but we no longer use it for automatic tag creation
-  const generateColorFromString = (str: string): string => {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    
-    const hue = Math.abs(hash) % 360;
-    return `hsl(${hue}, 70%, 60%)`;
   };
 
   return (
