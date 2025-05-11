@@ -1,7 +1,7 @@
 
 import { Note } from "@/types/note";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Archive, Book, Camera, FileText, Tag } from "lucide-react";
+import { Archive, Book, Camera, FileText, Pin, Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { NoteCardActions } from "./NoteCardActions";
@@ -67,6 +67,13 @@ export const NoteCard = ({
       onClick={() => onNoteClick(note)}
     >
       <CardHeader className="relative p-3 pb-1">
+        {/* Pin indicator for pinned notes */}
+        {note.pinned && (
+          <div className="absolute top-2 left-2 text-mint-600">
+            <Pin size={16} className="fill-mint-500" />
+          </div>
+        )}
+        
         {/* Card actions positioned absolutely */}
         <NoteCardActions 
           noteId={note.id}
@@ -79,7 +86,7 @@ export const NoteCard = ({
         />
         
         <div className="flex flex-row items-center justify-between">
-          <CardTitle className="text-xl text-mint-800 pr-8"> {/* Add padding-right to avoid overlap with actions */}
+          <CardTitle className={`text-xl text-mint-800 ${note.pinned ? 'pl-6' : ''} pr-8`}> {/* Add padding-right to avoid overlap with actions */}
             {note.title}
           </CardTitle>
         </div>
