@@ -1,101 +1,50 @@
 
-export interface SubjectCategory {
-  id: string;
-  name: string;
-  grade_id?: string;
-  parent_id?: string | null;
-  level?: number;
-  created_at?: string;
-  updated_at?: string;
-  description?: string | null;
-  subcategories?: SubjectCategory[]; // Added for hierarchy
-}
-
 export interface FlashcardSet {
   id: string;
   name: string;
-  description?: string | null;
-  user_id?: string | null;
-  category_id?: string | null;
-  section_id?: string | null;
-  country_id?: string | null;  // Added country_id property
-  education_system?: string | null; // Added education_system property
-  subject?: string | null;
-  topic?: string | null;
-  created_at: string;
-  updated_at: string;
-  is_built_in?: boolean;
-  cards_count?: number; // Original property
-  card_count?: number;  // Added for compatibility where it's already used
+  description?: string;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  is_public?: boolean;
+  card_count?: number;
+  subject_categories?: {
+    id?: string;
+    name?: string;
+  };
 }
 
 export interface Flashcard {
   id: string;
-  front_content: string;
-  back_content: string;
-  difficulty?: number;
-  user_id?: string | null;
-  created_at: string;
-  updated_at: string;
-  last_reviewed_at?: string | null;
-  next_review_at?: string | null;
-  is_built_in?: boolean;
-  position?: number; // Used when part of a set
+  front: string;
+  back: string;
+  set_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  hint?: string;
+  image_url?: string;
+  audio_url?: string;
+  position?: number;
 }
 
 export interface FlashcardProgress {
   id: string;
   user_id: string;
   flashcard_id: string;
-  last_reviewed_at: string | null;
-  next_review_at: string | null;
-  interval: number;
+  last_reviewed_at: string;
+  next_review_at: string;
   repetition: number;
   ease_factor: number;
-  last_score: number | null;
+  interval: number;
+  last_score: number;
+  created_at: string;
+  updated_at: string;
 }
 
-export enum StudyMode {
-  LEARN = 'learn',
-  REVIEW = 'review',
-  TEST = 'test',
-}
-
-export interface FlashcardTag {
+export interface Category {
   id: string;
   name: string;
-  color?: string;
-}
-
-export interface LibraryFilter {
-  grades?: string[];
-  subjects?: string[];
-  sections?: string[];
-  searchTerm?: string;
-}
-
-// Added missing types
-
-export type FlashcardDifficulty = 1 | 2 | 3 | 4 | 5;
-
-export type FlashcardScore = 0 | 1 | 2 | 3 | 4 | 5;
-
-export interface CreateFlashcardPayload {
-  front_content: string;
-  back_content: string;
-  difficulty?: FlashcardDifficulty;
-  user_id?: string;
-}
-
-export interface CreateFlashcardSetPayload {
-  name: string;
   description?: string;
-  subject?: string;
-  topic?: string;
-  category_id?: string;
-  section_id?: string;
-  country_id?: string; // Added country_id property
-  education_system?: string; // Added education_system property
-  user_id?: string;
-  is_built_in?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }

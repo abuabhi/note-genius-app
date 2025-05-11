@@ -1,80 +1,66 @@
-import React, { useState } from "react";
+
 import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles } from "lucide-react";
 import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
-import { useToast } from "@/hooks/use-toast";
+import { EnhancementFunction } from "@/hooks/noteEnrichment/types";
 import { useUserTier } from "@/hooks/useUserTier";
+import { Sparkles } from "lucide-react";
 
 interface EnhanceNoteButtonProps {
   noteId: string;
-  onEnrichmentComplete?: () => void;
+  noteContent: string;
+  noteTitle?: string; // Make this optional to accommodate both old and new callers
+  onEnhance: (enhancedContent: string) => void;
 }
 
-export function EnhanceNoteButton({ noteId, onEnrichmentComplete }: EnhanceNoteButtonProps) {
-  const { userTier, isUserPremium } = useUserTier();
-  const { enrichNote, isEnriching, remainingEnrichments } = useNoteEnrichment();
+export const EnhanceNoteButton = ({
+  noteId,
+  noteContent,
+  noteTitle = "", // Default to empty string if not provided
+  onEnhance,
+}: EnhanceNoteButtonProps) => {
+  const { 
+    isProcessing,
+    remaining, 
+    selectedEnhancement,
+    enrichNote 
+  } = useNoteEnrichment();
   
-  // Get the tier limits directly from the hook
-  const { tierLimits } = useUserTier();
+  const { userTier, isLoading } = useUserTier();
   
-  const { toast } = useToast();
-
-  const handleEnrichNote = async () => {
-    if (!isUserPremium) {
-      toast({
-        title: "Upgrade Required",
-        description: "You need to upgrade to a premium plan to use this feature.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (remainingEnrichments <= 0) {
-      toast({
-        title: "Daily Limit Reached",
-        description: "You have reached your daily limit for note enrichments. Upgrade your plan for more.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleEnhance = async () => {
+    if (!noteId || !noteContent) return;
+    
     try {
-      await enrichNote(noteId);
-      toast({
-        title: "Note Enriched",
-        description: "Your note has been successfully enriched with AI.",
-      });
-      if (onEnrichmentComplete) {
-        onEnrichmentComplete();
+      const result = await enrichNote(
+        noteId, 
+        noteContent, 
+        selectedEnhancement,
+        noteTitle || "Note" // Use provided title or default
+      );
+      
+      if (result.success) {
+        onEnhance(result.content);
       }
     } catch (error) {
-      console.error("Error enriching note:", error);
-      toast({
-        title: "Enrichment Failed",
-        description: "Failed to enrich the note. Please try again.",
-        variant: "destructive",
-      });
+      console.error("Error enhancing note:", error);
     }
   };
 
-  const isDisabled = isEnriching || !isUserPremium || remainingEnrichments <= 0;
+  if (isLoading) {
+    return <Button disabled size="sm" variant="outline"><Sparkles className="mr-2 h-4 w-4" /> Enhance</Button>;
+  }
 
   return (
     <Button
-      onClick={handleEnrichNote}
-      disabled={isDisabled}
+      onClick={handleEnhance}
+      size="sm"
+      variant="outline"
+      disabled={isProcessing}
     >
-      {isEnriching ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Enriching...
-        </>
-      ) : (
-        <>
-          <Sparkles className="mr-2 h-4 w-4" />
-          Enrich with AI
-        </>
-      )}
+      <Sparkles className="mr-2 h-4 w-4" />
+      {isProcessing ? "Enhancing..." : "Enhance"}
     </Button>
   );
-}
+};
+
+export default EnhanceNoteButton;
