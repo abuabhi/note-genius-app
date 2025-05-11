@@ -48,10 +48,14 @@ interface SetCountResult {
 export const fetchFlashcardLibrary = async () => {
   try {
     // First get the count of cards per set using a separate query
-    // We need to call the RPC function without type checking and then cast the result
-    const countResponse = await supabase.rpc('get_flashcard_sets_with_count');
-    const setCountData = countResponse.data as SetCountResult[] | null;
-    const countError = countResponse.error as PostgrestError | null;
+    // Since the RPC function isn't in the generated types, we need to handle it carefully
+    const countResponse = await supabase.rpc('get_flashcard_sets_with_count') as { 
+      data: SetCountResult[] | null;
+      error: PostgrestError | null;
+    };
+    
+    const setCountData = countResponse.data;
+    const countError = countResponse.error;
     
     if (countError) {
       throw countError;
