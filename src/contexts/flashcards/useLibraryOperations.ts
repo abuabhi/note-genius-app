@@ -139,11 +139,10 @@ export const useLibraryOperations = (
       toast.success('Flashcard set cloned successfully');
       
       // Update the user's sets
-      fetchUserSets(user.id).then(sets => {
-        setFlashcardSets(sets);
-      });
+      const userSets = await fetchUserSets();
+      setFlashcardSets(userSets);
       
-      // Return the new set
+      // Return the new set with simple typing to avoid recursion
       return {
         id: newSet.id,
         name: newSet.name,
@@ -152,11 +151,11 @@ export const useLibraryOperations = (
         created_at: newSet.created_at,
         updated_at: newSet.updated_at,
         is_built_in: false,
+        card_count: originalCards?.length || 0,
         subject: newSet.subject,
         topic: newSet.topic,
-        category_id: newSet.category_id,
-        card_count: originalCards?.length || 0
-      };
+        category_id: newSet.category_id
+      } as FlashcardSet; // Cast to FlashcardSet to avoid type recursion
     } catch (error) {
       console.error('Error cloning flashcard set:', error);
       toast.error('Failed to clone flashcard set');
@@ -165,13 +164,15 @@ export const useLibraryOperations = (
   };
   
   // Helper function to fetch user's flashcard sets
-  const fetchUserSets = async (userId: string): Promise<FlashcardSet[]> => {
+  const fetchUserSets = async (): Promise<FlashcardSet[]> => {
+    if (!user) return [];
+    
     try {
       // Get basic set data
       const { data: userSets, error } = await supabase
         .from('flashcard_sets')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -207,7 +208,7 @@ export const useLibraryOperations = (
             }
           }
           
-          // Return formatted set
+          // Return formatted set with simple structure to avoid recursion
           return {
             id: set.id,
             name: set.name,
@@ -224,7 +225,7 @@ export const useLibraryOperations = (
             education_system: set.education_system,
             section_id: set.section_id,
             subject_categories: categoryInfo
-          } as FlashcardSet;
+          } as FlashcardSet; // Cast to FlashcardSet to avoid type recursion
         })
       );
       
