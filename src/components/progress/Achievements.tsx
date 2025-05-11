@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +20,7 @@ interface UserAchievement {
   achievements: Achievement;
 }
 
-const Achievements = () => {
+export const Achievements = () => {
   const [achievements, setAchievements] = useState<UserAchievement[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
@@ -173,4 +172,5 @@ const Achievements = () => {
   );
 };
 
+// Also keep the default export for backward compatibility
 export default Achievements;
