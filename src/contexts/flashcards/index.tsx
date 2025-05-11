@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState } from 'react';
 import { FlashcardContextType, FlashcardProviderProps, FlashcardState } from './types';
 import { FlashcardSet, Flashcard, SubjectCategory, FlashcardProgress, FlashcardScore, CreateFlashcardPayload, CreateFlashcardSetPayload } from '@/types/flashcard';
@@ -150,63 +151,63 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     }
   };
 
-  // Fully rewritten implementation to avoid recursive type issues
+  // Complete rewrite of fetchFlashcardsInSet to avoid type issues
   const fetchFlashcardsInSet = async (setId: string): Promise<Flashcard[]> => {
+    if (!setId) return [];
+    
     setLoading(prev => ({ ...prev, flashcards: true }));
     
     try {
-      // First get all flashcard IDs in this set with their positions
-      const { data: setCardLinks, error: linksError } = await supabase
+      // Get all flashcard_ids linked to this set
+      const { data: linkData, error: linkError } = await supabase
         .from('flashcard_set_cards')
         .select('flashcard_id, position')
         .eq('set_id', setId)
         .order('position');
-        
-      if (linksError) throw linksError;
       
-      if (!setCardLinks || setCardLinks.length === 0) {
-        return []; // No cards in this set
+      if (linkError) throw linkError;
+      
+      if (!linkData || linkData.length === 0) {
+        return [];
       }
       
-      // Get all flashcards by their IDs
-      const flashcardIds = setCardLinks.map(link => link.flashcard_id);
+      // Extract all flashcard IDs
+      const flashcardIds = linkData.map(link => link.flashcard_id);
       
-      const { data: cardData, error: cardsError } = await supabase
+      // Create a position lookup map
+      const positionMap: Record<string, number> = {};
+      linkData.forEach(link => {
+        positionMap[link.flashcard_id] = link.position;
+      });
+      
+      // Get the actual flashcards
+      const { data: cardData, error: cardError } = await supabase
         .from('flashcards')
         .select('*')
         .in('id', flashcardIds);
-        
-      if (cardsError) throw cardsError;
       
-      // Create a map of positions by flashcard ID
-      const positionMap = setCardLinks.reduce((acc, link) => {
-        acc[link.flashcard_id] = link.position;
-        return acc;
-      }, {} as Record<string, number>);
+      if (cardError) throw cardError;
       
-      // Map the flashcards with their positions and convert to Flashcard type
-      const mappedFlashcards = cardData.map(card => {
-        return {
-          id: card.id,
-          front: card.front_content,
-          back: card.back_content,
-          front_content: card.front_content,
-          back_content: card.back_content,
-          difficulty: card.difficulty,
-          user_id: card.user_id,
-          created_at: card.created_at,
-          updated_at: card.updated_at,
-          is_built_in: card.is_built_in || false,
-          last_reviewed_at: card.last_reviewed_at,
-          next_review_at: card.next_review_at,
-          position: positionMap[card.id] || 0,
-          set_id: setId
-        } as Flashcard;
-      });
+      // Map the data to our Flashcard type
+      const result = cardData.map(card => ({
+        id: card.id,
+        front: card.front_content,
+        back: card.back_content,
+        front_content: card.front_content,
+        back_content: card.back_content,
+        difficulty: card.difficulty || 1,
+        user_id: card.user_id,
+        created_at: card.created_at,
+        updated_at: card.updated_at,
+        is_built_in: Boolean(card.is_built_in),
+        last_reviewed_at: card.last_reviewed_at,
+        next_review_at: card.next_review_at,
+        position: positionMap[card.id] || 0,
+        set_id: setId
+      }));
       
       // Sort by position
-      return mappedFlashcards.sort((a, b) => (a.position || 0) - (b.position || 0));
-      
+      return result.sort((a, b) => (a.position || 0) - (b.position || 0));
     } catch (error) {
       console.error('Error fetching flashcards in set:', error);
       toast.error('Failed to load flashcards');
