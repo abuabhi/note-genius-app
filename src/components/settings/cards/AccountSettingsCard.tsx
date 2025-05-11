@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserTier } from "@/hooks/useRequireAuth";
+import { UserTier } from "@/hooks/useUserTier";
 import { Country } from "@/hooks/useCountries";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { UseFormReturn } from "react-hook-form";
@@ -19,7 +19,7 @@ interface AccountSettingsCardProps {
   onCountryChange: (countryId: string) => Promise<void>;
 }
 
-const AccountSettingsCard = ({
+export const AccountSettingsCard = ({
   user,
   userTier,
   form,
@@ -110,4 +110,5 @@ const AccountSettingsCard = ({
   );
 };
 
+// Add a default export as well to ensure flexibility in how it can be imported
 export default AccountSettingsCard;

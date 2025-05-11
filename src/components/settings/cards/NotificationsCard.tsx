@@ -1,7 +1,9 @@
 
-import { Switch } from "@/components/ui/switch";
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FormControl, FormField, FormItem, FormLabel, FormDescription } from "@/components/ui/form";
+import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
 import { SettingsFormValues } from "../schemas/settingsFormSchema";
 
@@ -9,25 +11,25 @@ interface NotificationsCardProps {
   form: UseFormReturn<SettingsFormValues>;
 }
 
-const NotificationsCard = ({ form }: NotificationsCardProps) => {
+export const NotificationsCard: React.FC<NotificationsCardProps> = ({ form }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Notifications</CardTitle>
+        <CardTitle>Notification Settings</CardTitle>
         <CardDescription>
-          Configure how you want to receive notifications
+          Manage how and when Study Compass notifies you
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         <FormField
           control={form.control}
           name="emailNotifications"
           render={({ field }) => (
-            <FormItem className="flex items-center justify-between">
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
               <div className="space-y-0.5">
                 <FormLabel>Email Notifications</FormLabel>
                 <FormDescription>
-                  Receive email updates about your study progress
+                  Receive notifications via email
                 </FormDescription>
               </div>
               <FormControl>
@@ -39,16 +41,16 @@ const NotificationsCard = ({ form }: NotificationsCardProps) => {
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
-          name="studyReminders"
+          name="whatsappNotifications"
           render={({ field }) => (
-            <FormItem className="flex items-center justify-between">
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
               <div className="space-y-0.5">
-                <FormLabel>Study Reminders</FormLabel>
+                <FormLabel>WhatsApp Notifications</FormLabel>
                 <FormDescription>
-                  Get reminded about your scheduled study sessions
+                  Receive notifications via WhatsApp
                 </FormDescription>
               </div>
               <FormControl>
@@ -60,6 +62,27 @@ const NotificationsCard = ({ form }: NotificationsCardProps) => {
             </FormItem>
           )}
         />
+
+        {form.watch('whatsappNotifications') && (
+          <FormField
+            control={form.control}
+            name="whatsappPhone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>WhatsApp Phone Number</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="+1 (123) 456-7890"
+                  />
+                </FormControl>
+                <FormDescription>
+                  Enter your WhatsApp phone number with country code
+                </FormDescription>
+              </FormItem>
+            )}
+          />
+        )}
       </CardContent>
     </Card>
   );

@@ -1,108 +1,88 @@
 
-import { FormField, FormItem, FormLabel, FormControl, FormDescription } from "@/components/ui/form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
-import { UserTier } from "@/hooks/useRequireAuth";
-import { Badge } from "@/components/ui/badge";
+import { UseFormReturn } from "react-hook-form";
+import { SettingsFormValues } from "../schemas/settingsFormSchema";
+import { UserTier } from '@/hooks/useUserTier';
 
 interface NotificationSettingsCardProps {
-  form: any;
-  userTier: UserTier;
+  form: UseFormReturn<SettingsFormValues>;
+  userTier?: UserTier;
 }
 
-export function NotificationSettingsCard({ form, userTier }: NotificationSettingsCardProps) {
-  const isPremiumUser = userTier !== UserTier.SCHOLAR;
+export const NotificationSettingsCard: React.FC<NotificationSettingsCardProps> = ({ form, userTier }) => {
+  const isGraduateOrHigher = userTier === UserTier.GRADUATE || userTier === UserTier.MASTER || userTier === UserTier.DEAN;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Notification Settings</CardTitle>
+        <CardTitle>Notification Preferences</CardTitle>
+        <CardDescription>
+          Choose which notifications you want to receive
+        </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         <FormField
           control={form.control}
-          name="whatsappNotifications"
+          name="studyReminders"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between">
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
               <div className="space-y-0.5">
-                <FormLabel className="text-base">WhatsApp Notifications</FormLabel>
+                <FormLabel>Study Reminders</FormLabel>
                 <FormDescription>
-                  Receive notifications via WhatsApp
+                  Get notified about your upcoming study sessions
                 </FormDescription>
               </div>
               <FormControl>
-                <Switch 
-                  checked={field.value} 
+                <Switch
+                  checked={field.value}
                   onCheckedChange={field.onChange}
-                  disabled={!isPremiumUser}
                 />
               </FormControl>
-              {!isPremiumUser && (
-                <Badge variant="outline" className="ml-2">Premium</Badge>
-              )}
             </FormItem>
           )}
         />
-        
-        {form.watch("whatsappNotifications") && (
-          <FormField
-            control={form.control}
-            name="whatsappPhone"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>WhatsApp Phone Number</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="+1234567890" 
-                    {...field} 
-                    disabled={!isPremiumUser}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Enter your phone number with country code
-                </FormDescription>
-              </FormItem>
-            )}
-          />
-        )}
-        
+
         <FormField
           control={form.control}
           name="goalNotifications"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between">
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
               <div className="space-y-0.5">
-                <FormLabel className="text-base">Goal Reminders</FormLabel>
+                <FormLabel>Goal Updates</FormLabel>
                 <FormDescription>
-                  Get reminders about upcoming goal deadlines
+                  Get notified about your study goal progress
                 </FormDescription>
               </div>
               <FormControl>
-                <Switch 
-                  checked={field.value} 
+                <Switch
+                  checked={field.value}
                   onCheckedChange={field.onChange}
                 />
               </FormControl>
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="weeklyReports"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between">
+            <FormItem className={`flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm ${!isGraduateOrHigher ? "opacity-60" : ""}`}>
               <div className="space-y-0.5">
-                <FormLabel className="text-base">Weekly Reports</FormLabel>
+                <FormLabel>Weekly Reports</FormLabel>
                 <FormDescription>
-                  Receive weekly study progress reports
+                  Receive weekly study summary reports
+                  {!isGraduateOrHigher && " (Requires GRADUATE tier or higher)"}
                 </FormDescription>
               </div>
               <FormControl>
-                <Switch 
-                  checked={field.value} 
+                <Switch
+                  checked={isGraduateOrHigher && field.value}
                   onCheckedChange={field.onChange}
+                  disabled={!isGraduateOrHigher}
                 />
               </FormControl>
             </FormItem>
@@ -111,4 +91,6 @@ export function NotificationSettingsCard({ form, userTier }: NotificationSetting
       </CardContent>
     </Card>
   );
-}
+};
+
+export default NotificationSettingsCard;

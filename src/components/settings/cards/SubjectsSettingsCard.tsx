@@ -1,141 +1,115 @@
 
-import { useState } from "react";
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
-import { useUserSubjects } from "@/hooks/useUserSubjects";
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { useUserSubjects } from '@/hooks/useUserSubjects';
+import { Badge } from "@/components/ui/badge";
+import { X, Plus, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export const SubjectsSettingsCard = () => {
-  const { subjects, addSubject, removeSubject, isLoading } = useUserSubjects();
-  const [newSubjectName, setNewSubjectName] = useState("");
+  const { subjects, isLoading, addSubject, removeSubject } = useUserSubjects();
+  const [newSubject, setNewSubject] = useState('');
   const [isAdding, setIsAdding] = useState(false);
-  const [subjectToDelete, setSubjectToDelete] = useState<string | null>(null);
 
   const handleAddSubject = async () => {
-    if (!newSubjectName.trim()) return;
+    if (!newSubject.trim()) return;
     
-    setIsAdding(true);
     try {
-      const success = await addSubject(newSubjectName);
+      setIsAdding(true);
+      const success = await addSubject(newSubject);
       if (success) {
-        setNewSubjectName("");
-        toast.success("Subject added successfully");
+        setNewSubject('');
+        toast.success(`Added subject: ${newSubject}`);
       } else {
-        toast.error("Failed to add subject");
+        toast.error('Failed to add subject. It may already exist.');
       }
+    } catch (error) {
+      console.error('Error adding subject:', error);
+      toast.error('Something went wrong adding your subject');
     } finally {
       setIsAdding(false);
     }
   };
 
-  const confirmDeleteSubject = async () => {
-    if (!subjectToDelete) return;
-    
+  const handleRemoveSubject = async (id: string, name: string) => {
     try {
-      const success = await removeSubject(subjectToDelete);
+      const success = await removeSubject(id);
       if (success) {
-        toast.success("Subject removed successfully");
+        toast.success(`Removed subject: ${name}`);
       } else {
-        toast.error("Failed to remove subject");
+        toast.error('Failed to remove subject');
       }
-    } finally {
-      setSubjectToDelete(null);
+    } catch (error) {
+      console.error('Error removing subject:', error);
+      toast.error('Something went wrong removing this subject');
     }
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Subject Management</CardTitle>
+        <CardTitle>Study Subjects</CardTitle>
+        <CardDescription>
+          Manage the subjects you study and organize your notes
+        </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
-          {/* Add New Subject */}
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium">Add New Subject</h3>
-            <div className="flex space-x-2">
-              <Input
-                value={newSubjectName}
-                onChange={(e) => setNewSubjectName(e.target.value)}
-                placeholder="Enter subject name"
-                className="flex-1"
-              />
-              <Button 
-                onClick={handleAddSubject} 
-                disabled={!newSubjectName.trim() || isAdding}
-              >
-                {isAdding ? "Adding..." : "Add"}
-              </Button>
+      <CardContent className="space-y-6">
+        <div className="flex flex-wrap gap-2">
+          {isLoading ? (
+            <div className="flex items-center justify-center w-full py-4">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
-          </div>
+          ) : subjects.length > 0 ? (
+            subjects.map(subject => (
+              <Badge 
+                key={subject.id} 
+                variant="secondary"
+                className="flex items-center pl-3 pr-2 py-2 space-x-1"
+              >
+                <span>{subject.name}</span>
+                <button 
+                  className="ml-1 text-muted-foreground hover:text-destructive focus:outline-none" 
+                  onClick={() => handleRemoveSubject(subject.id, subject.name)}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            ))
+          ) : (
+            <div className="text-sm text-muted-foreground w-full py-2">
+              No subjects added yet. Add your study subjects below.
+            </div>
+          )}
+        </div>
 
-          {/* Subject List */}
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium">Your Subjects</h3>
-            {isLoading ? (
-              <p className="text-sm text-muted-foreground">Loading subjects...</p>
-            ) : subjects.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No subjects added yet.</p>
+        <div className="flex space-x-2">
+          <Input
+            value={newSubject}
+            onChange={(e) => setNewSubject(e.target.value)}
+            placeholder="Add a new subject..."
+            className="flex-1"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleAddSubject();
+              }
+            }}
+          />
+          <Button 
+            onClick={handleAddSubject} 
+            disabled={!newSubject.trim() || isAdding}
+          >
+            {isAdding ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <div className="space-y-2">
-                {subjects.map((subject) => (
-                  <div 
-                    key={subject.id} 
-                    className="flex items-center justify-between p-2 border rounded-md"
-                  >
-                    <span className="text-sm">{subject.name}</span>
-                    <AlertDialog open={subjectToDelete === subject.id} onOpenChange={(isOpen) => {
-                      if (!isOpen) setSubjectToDelete(null);
-                    }}>
-                      <AlertDialogTrigger asChild>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          className="text-red-500 hover:bg-red-50 hover:text-red-600"
-                          onClick={() => setSubjectToDelete(subject.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Subject</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to delete "{subject.name}"? 
-                            This may affect notes associated with this subject.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction 
-                            className="bg-red-500 hover:bg-red-600"
-                            onClick={confirmDeleteSubject}
-                          >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                ))}
-              </div>
+              <><Plus className="h-4 w-4 mr-1" /> Add</>
             )}
-          </div>
+          </Button>
         </div>
       </CardContent>
     </Card>
   );
 };
+
+export default SubjectsSettingsCard;

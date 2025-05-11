@@ -1,7 +1,8 @@
 
-import { Switch } from "@/components/ui/switch";
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FormControl, FormField, FormItem, FormLabel, FormDescription } from "@/components/ui/form";
+import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Switch } from "@/components/ui/switch";
 import { UseFormReturn } from "react-hook-form";
 import { SettingsFormValues } from "../schemas/settingsFormSchema";
 
@@ -9,25 +10,25 @@ interface AppearanceCardProps {
   form: UseFormReturn<SettingsFormValues>;
 }
 
-const AppearanceCard = ({ form }: AppearanceCardProps) => {
+export const AppearanceCard: React.FC<AppearanceCardProps> = ({ form }) => {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Appearance</CardTitle>
         <CardDescription>
-          Customize how the application looks
+          Customize how Study Compass looks on your device
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-6">
         <FormField
           control={form.control}
           name="darkMode"
           render={({ field }) => (
-            <FormItem className="flex items-center justify-between">
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
               <div className="space-y-0.5">
                 <FormLabel>Dark Mode</FormLabel>
                 <FormDescription>
-                  Toggle dark mode on or off
+                  Enable dark mode for a more comfortable viewing experience in low light
                 </FormDescription>
               </div>
               <FormControl>

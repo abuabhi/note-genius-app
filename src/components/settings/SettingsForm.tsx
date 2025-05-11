@@ -26,7 +26,9 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { AccountSettingsCard } from "./cards/AccountSettingsCard";
+
+// Import the component properly - if it has both named and default exports, you can use either
+import AccountSettingsCard from "./cards/AccountSettingsCard";
 import { AppearanceCard } from "./cards/AppearanceCard";
 import { NotificationsCard } from "./cards/NotificationsCard";
 import { NotificationSettingsCard } from "./cards/NotificationSettingsCard";
