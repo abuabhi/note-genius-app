@@ -4,9 +4,9 @@ import { Note } from "@/types/note";
 import { 
   addNoteToDatabase, 
   deleteNoteFromDatabase, 
-  updateNoteInDatabase, 
+  updateNoteInDatabase,
   updateNoteTagsInDatabase
-} from './';
+} from '../operations';
 import { enrichNote } from '@/hooks/noteEnrichment/enrichmentService';
 
 export const useNoteOperations = (

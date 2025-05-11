@@ -1,7 +1,7 @@
 
 import { Note } from "@/types/note";
 import { addNoteToDatabase as addNoteDb, deleteNoteFromDatabase as deleteNoteDb, updateNoteInDatabase as updateNoteDb } from "./noteDbOperations";
-import { updateNoteTagsInDatabase, addNoteTagsToDatabase } from "./tagOperations";
+import { updateNoteTagsInDatabase, addNoteTagsToDatabase, fetchTagsFromDatabase } from "./tagOperations";
 import { updateScanDataInDatabase, addScanDataToDatabase } from "./scanOperations";
 
 // Re-export functions from other modules
