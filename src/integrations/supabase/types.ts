@@ -18,6 +18,7 @@ export type Database = {
           is_enabled: boolean
           requires_tier: Database["public"]["Enums"]["user_tier"] | null
           updated_at: string
+          visibility_mode: string
         }
         Insert: {
           created_at?: string
@@ -27,6 +28,7 @@ export type Database = {
           is_enabled?: boolean
           requires_tier?: Database["public"]["Enums"]["user_tier"] | null
           updated_at?: string
+          visibility_mode?: string
         }
         Update: {
           created_at?: string
@@ -36,6 +38,7 @@ export type Database = {
           is_enabled?: boolean
           requires_tier?: Database["public"]["Enums"]["user_tier"] | null
           updated_at?: string
+          visibility_mode?: string
         }
         Relationships: []
       }
