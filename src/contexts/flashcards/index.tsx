@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState } from 'react';
 import { FlashcardContextType, FlashcardProviderProps, FlashcardState } from './types';
 import { FlashcardSet, Flashcard, SubjectCategory, FlashcardProgress, FlashcardScore, CreateFlashcardPayload, CreateFlashcardSetPayload } from '@/types/flashcard';
@@ -151,14 +150,14 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     }
   };
 
-  // Complete rewrite of fetchFlashcardsInSet to avoid type issues
+  // Completely rewritten function to avoid type recursion issues
   const fetchFlashcardsInSet = async (setId: string): Promise<Flashcard[]> => {
     if (!setId) return [];
     
     setLoading(prev => ({ ...prev, flashcards: true }));
     
     try {
-      // Get all flashcard_ids linked to this set
+      // First query: Get all flashcard_ids linked to this set
       const { data: linkData, error: linkError } = await supabase
         .from('flashcard_set_cards')
         .select('flashcard_id, position')
@@ -175,12 +174,12 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
       const flashcardIds = linkData.map(link => link.flashcard_id);
       
       // Create a position lookup map
-      const positionMap: Record<string, number> = {};
+      const positions: Record<string, number> = {};
       linkData.forEach(link => {
-        positionMap[link.flashcard_id] = link.position;
+        positions[link.flashcard_id] = link.position;
       });
       
-      // Get the actual flashcards
+      // Second query: Get the actual flashcards
       const { data: cardData, error: cardError } = await supabase
         .from('flashcards')
         .select('*')
@@ -189,25 +188,27 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
       if (cardError) throw cardError;
       
       // Map the data to our Flashcard type
-      const result = cardData.map(card => ({
-        id: card.id,
-        front: card.front_content,
-        back: card.back_content,
-        front_content: card.front_content,
-        back_content: card.back_content,
-        difficulty: card.difficulty || 1,
-        user_id: card.user_id,
-        created_at: card.created_at,
-        updated_at: card.updated_at,
-        is_built_in: Boolean(card.is_built_in),
-        last_reviewed_at: card.last_reviewed_at,
-        next_review_at: card.next_review_at,
-        position: positionMap[card.id] || 0,
-        set_id: setId
-      }));
+      const flashcardResults = cardData.map(card => {
+        return {
+          id: card.id,
+          front: card.front_content,
+          back: card.back_content,
+          front_content: card.front_content,
+          back_content: card.back_content,
+          difficulty: card.difficulty || 1,
+          user_id: card.user_id,
+          created_at: card.created_at,
+          updated_at: card.updated_at,
+          is_built_in: Boolean(card.is_built_in),
+          last_reviewed_at: card.last_reviewed_at,
+          next_review_at: card.next_review_at,
+          position: positions[card.id] || 0,
+          set_id: setId
+        };
+      });
       
       // Sort by position
-      return result.sort((a, b) => (a.position || 0) - (b.position || 0));
+      return flashcardResults.sort((a, b) => a.position - b.position);
     } catch (error) {
       console.error('Error fetching flashcards in set:', error);
       toast.error('Failed to load flashcards');
