@@ -10,7 +10,6 @@ import { CalendarIcon } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
 
 interface NoteMetadataFieldsProps {
   control: Control<any>;
@@ -23,15 +22,7 @@ export const NoteMetadataFields = ({
   availableCategories,
   onNewCategoryAdd
 }: NoteMetadataFieldsProps) => {
-  const [customCategory, setCustomCategory] = useState("");
   const { subjects, isLoading: loadingSubjects } = useUserSubjects();
-
-  const handleCustomCategorySubmit = () => {
-    if (customCategory.trim()) {
-      onNewCategoryAdd(customCategory.trim());
-      setCustomCategory("");
-    }
-  };
 
   return (
     <>
@@ -128,13 +119,11 @@ export const NoteMetadataFields = ({
                 <SelectGroup>
                   <SelectLabel>Other Categories</SelectLabel>
                   <SelectItem value="General">General</SelectItem>
-                  <SelectItem value="Uncategorized">Uncategorized</SelectItem>
                   {availableCategories.map((category) => (
                     <SelectItem key={category} value={category}>
                       {category}
                     </SelectItem>
                   ))}
-                  <SelectItem value="_custom">Add Custom Category...</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
