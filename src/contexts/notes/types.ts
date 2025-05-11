@@ -33,4 +33,4 @@ export interface NoteContextType {
 }
 
 // Re-export types from state/types to maintain backward compatibility
-export { FilterOptions, SortType };
+export type { FilterOptions, SortType };

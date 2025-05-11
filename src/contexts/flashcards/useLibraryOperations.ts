@@ -1,8 +1,8 @@
 
 import { FlashcardState } from './types';
 import { 
-  fetchBuiltInSets as fetchLibrarySets, 
-  cloneFlashcardSet as cloneSet
+  fetchBuiltInSets, 
+  cloneFlashcardSet 
 } from './operations/libraryOperations';
 
 /**
@@ -10,11 +10,11 @@ import {
  */
 export const useLibraryOperations = (state: FlashcardState) => {
   // Wrapper functions to pass state
-  const fetchBuiltInSets = () => fetchLibrarySets(state);
-  const cloneFlashcardSet = (setId: string) => cloneSet(state, setId);
+  const fetchLibraryBuiltInSets = () => fetchBuiltInSets(state);
+  const cloneFlashcardSetToUser = (setId: string) => cloneFlashcardSet(state, setId);
 
   return {
-    fetchBuiltInSets,
-    cloneFlashcardSet,
+    fetchBuiltInSets: fetchLibraryBuiltInSets,
+    cloneFlashcardSet: cloneFlashcardSetToUser,
   };
 };
