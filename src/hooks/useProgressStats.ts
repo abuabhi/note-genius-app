@@ -162,13 +162,15 @@ export const useProgressStats = () => {
     enabled: !!user && !flashcardsLoading,
     staleTime: 10 * 60 * 1000, // 10 minutes cache
     retry: 2, // Retry failed requests twice before giving up
-    onError: (error) => {
-      console.error("Error fetching progress stats:", error);
-      toast({
-        title: "Error fetching progress data",
-        description: "Please try refreshing the page",
-        variant: "destructive"
-      });
+    meta: {
+      onError: (error) => {
+        console.error("Error fetching progress stats:", error);
+        toast({
+          title: "Error fetching progress data",
+          description: "Please try refreshing the page",
+          variant: "destructive"
+        });
+      }
     }
   });
 

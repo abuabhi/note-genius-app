@@ -26,7 +26,7 @@ export interface FlashcardContextType {
   };
 
   // Set operations
-  fetchFlashcardSets: () => Promise<void>;
+  fetchFlashcardSets: () => Promise<FlashcardSet[]>;
   createFlashcardSet: (setData: CreateFlashcardSetPayload) => Promise<FlashcardSet | null>;
   updateFlashcardSet: (id: string, setData: Partial<CreateFlashcardSetPayload>) => Promise<void>;
   deleteFlashcardSet: (id: string) => Promise<void>;

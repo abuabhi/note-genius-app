@@ -1,6 +1,5 @@
 
 import { useEffect, useState } from 'react';
-import { FlashcardProvider } from '@/contexts/FlashcardContext';
 import { useToast } from '@/hooks/use-toast';
 
 interface StudyFlashcardSupportProps {
@@ -32,11 +31,11 @@ export const StudyFlashcardSupportWrapper = ({ children, sessionId, flashcardSet
   sessionId: string | null;
   flashcardSetId: string | null;
 }) => {
-  // Wrap the children with the FlashcardProvider, with proper error handling
+  // We don't need to wrap with FlashcardProvider here as it's already provided at the app level
   return (
-    <FlashcardProvider>
+    <>
       <StudyFlashcardSupport sessionId={sessionId} flashcardSetId={flashcardSetId} />
       {children}
-    </FlashcardProvider>
+    </>
   );
 };
