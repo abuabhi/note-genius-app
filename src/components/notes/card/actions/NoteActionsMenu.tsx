@@ -34,6 +34,13 @@ export const NoteActionsMenu = ({
 }: NoteActionsMenuProps) => {
   const [open, setOpen] = React.useState(false);
   
+  const handleDelete = (id: string) => {
+    // Close the dropdown menu when delete action is confirmed
+    setOpen(false);
+    // Call the provided onDelete function
+    onDelete(id);
+  };
+  
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
@@ -71,7 +78,7 @@ export const NoteActionsMenu = ({
         
         <DeleteAction 
           noteId={noteId} 
-          onDelete={onDelete} 
+          onDelete={handleDelete} 
         />
       </DropdownMenuContent>
     </DropdownMenu>

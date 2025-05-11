@@ -25,6 +25,7 @@ export const NoteCardActions = ({
     <div 
       className="absolute top-2 right-2"
       onClick={(e) => {
+        // Make sure we prevent bubbling up on any click in the actions area
         e.stopPropagation();
         e.preventDefault();
       }}
