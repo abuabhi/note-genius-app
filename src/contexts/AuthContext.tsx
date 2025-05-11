@@ -13,6 +13,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
   updatePassword: (password: string) => Promise<{ error: any }>;
+  signInWithGoogle: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -139,6 +140,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return await supabase.auth.updateUser({ password });
   };
 
+  const signInWithGoogle = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`
+      }
+    });
+  };
+
   const value = {
     user,
     session,
@@ -147,7 +157,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signUp,
     signOut,
     resetPassword,
-    updatePassword
+    updatePassword,
+    signInWithGoogle
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

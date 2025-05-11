@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Note } from '@/types/note';
@@ -130,6 +129,7 @@ export const useNoteEnrichment = (note?: Note) => {
         description: "",
         date: new Date().toISOString().split('T')[0],
         category: "General",
+        sourceType: 'manual' // Add this line to fix the error
       };
       
       const result = await enrichNote(mockNote, enhancementType);
