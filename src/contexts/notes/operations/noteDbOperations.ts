@@ -18,7 +18,8 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
         pinned: noteData.pinned || false,
         summary: noteData.summary,
         summary_generated_at: noteData.summary_generated_at,
-        summary_status: noteData.summary_status || 'generating' // Default to generating to auto-trigger summary
+        summary_status: noteData.summary_status || 'generating', // Default to generating to auto-trigger summary
+        subject_id: noteData.subject_id
       })
       .select()
       .single();
@@ -42,6 +43,7 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
       summary: noteInsertData.summary,
       summary_generated_at: noteInsertData.summary_generated_at,
       summary_status: noteInsertData.summary_status as 'pending' | 'generating' | 'completed' | 'failed',
+      subject_id: noteInsertData.subject_id,
       scanData: noteData.sourceType === 'scan' && noteData.scanData ? {
         originalImageUrl: noteData.scanData.originalImageUrl,
         recognizedText: noteData.scanData.recognizedText,
@@ -66,27 +68,14 @@ export const deleteNoteFromDatabase = async (id: string): Promise<void> => {
   try {
     console.log("Attempting to delete note with ID:", id);
     
-    // First try using the edge function which handles related records properly
+    // Always use the edge function which handles related records properly
     const { error: edgeFunctionError } = await supabase.functions.invoke('delete-note', {
       body: { noteId: id }
     });
 
     if (edgeFunctionError) {
       console.error('Edge function delete error:', edgeFunctionError);
-      
-      // If the edge function fails, try the fallback method - direct delete
-      console.log('Trying fallback delete method');
-      const { error } = await supabase
-        .from('notes')
-        .delete()
-        .eq('id', id);
-
-      if (error) {
-        console.error('Fallback delete error:', error);
-        throw error;
-      } else {
-        console.log("Note deleted successfully via fallback method");
-      }
+      throw edgeFunctionError;
     } else {
       console.log("Note deleted successfully via edge function");
     }
@@ -110,6 +99,7 @@ export const updateNoteInDatabase = async (id: string, updatedNote: Partial<Note
   if (updatedNote.summary !== undefined) noteUpdateData.summary = updatedNote.summary;
   if (updatedNote.summary_generated_at !== undefined) noteUpdateData.summary_generated_at = updatedNote.summary_generated_at;
   if (updatedNote.summary_status !== undefined) noteUpdateData.summary_status = updatedNote.summary_status;
+  if (updatedNote.subject_id !== undefined) noteUpdateData.subject_id = updatedNote.subject_id;
 
   if (Object.keys(noteUpdateData).length > 0) {
     const { error: noteError } = await supabase
