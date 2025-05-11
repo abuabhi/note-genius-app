@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { NotesGrid } from "@/components/notes/NotesGrid";
 import { NotePagination } from "@/components/notes/NotePagination";
@@ -17,6 +16,7 @@ import { ImportDialog } from "../import/ImportDialog";
 import { SubjectTabs } from "./SubjectTabs";
 import { useEffect } from "react";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
+import { AdminNoteDelete } from "../AdminNoteDelete";
 
 interface NotesContentProps {
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
@@ -158,6 +158,13 @@ export const NotesContent = ({
         </div>
       )}
       
+      {/* Admin Delete Tool - Only show for authenticated users */}
+      {isAuthorized && (
+        <div className="mb-6">
+          <AdminNoteDelete />
+        </div>
+      )}
+      
       {notes.length === 0 && !loading ? (
         <div className="text-center py-10 bg-mint-50 rounded-lg border border-mint-200 shadow-sm">
           <p className="text-lg text-mint-600 mb-2">No notes found</p>
@@ -170,7 +177,7 @@ export const NotesContent = ({
         </>
       )}
 
-      {/* Manual Entry Dialog */}
+      {/* Dialogs */}
       <Dialog open={isManualDialogOpen} onOpenChange={setIsManualDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-mint-200 bg-white">
           <DialogHeader>
