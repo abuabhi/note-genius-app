@@ -1,5 +1,6 @@
+
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Shield, Book, Info, ListChecks, DollarSign } from 'lucide-react';
+import { Menu, X, Shield } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { Button } from '@/components/ui/button';
@@ -46,57 +47,31 @@ export default function NavBar() {
           </Link>
         </div>
 
-        {/* Desktop Navigation */}
+        {/* Desktop Navigation - Centered Menu Items */}
+        <div className="hidden md:flex items-center justify-center flex-1">
+          {/* Public Navigation Links - Only shown to non-authenticated users or on public routes */}
+          {(!user || isPublicRoute) && (
+            <div className="flex items-center space-x-8">
+              <Link to="/about" className="text-mint-700 hover:text-mint-900">About</Link>
+              <Link to="/blog" className="text-mint-700 hover:text-mint-900">Blog</Link>
+              <Link to="/features" className="text-mint-700 hover:text-mint-900">Features</Link>
+              <Link to="/pricing" className="text-mint-700 hover:text-mint-900">Pricing</Link>
+            </div>
+          )}
+        </div>
+        
+        {/* Desktop Navigation - Right Side - Auth Buttons or User Menu */}
         <div className="hidden md:flex items-center space-x-4">
           {!user ? (
             <>
-              {/* Public Navigation Links - Only shown to non-authenticated users */}
-              <Link to="/about" className="flex items-center gap-1">
-                <Info className="h-4 w-4" />
-                <span>About</span>
-              </Link>
-              <Link to="/blog" className="flex items-center gap-1">
-                <Book className="h-4 w-4" />
-                <span>Blog</span>
-              </Link>
-              <Link to="/features" className="flex items-center gap-1">
-                <ListChecks className="h-4 w-4" />
-                <span>Features</span>
-              </Link>
-              <Link to="/pricing" className="flex items-center gap-1">
-                <DollarSign className="h-4 w-4" />
-                <span>Pricing</span>
-              </Link>
-              <Link to="/login" className="ml-4">Login</Link>
-              <Link to="/signup">
-                <Button>Sign Up</Button>
-              </Link>
+              <Link to="/login" className="text-mint-700 hover:text-mint-900 font-medium">Login</Link>
+              <Button asChild className="bg-mint-500 hover:bg-mint-600 text-white">
+                <Link to="/signup">Sign Up</Link>
+              </Button>
             </>
           ) : (
             <>
-              {/* Public Navigation Links - Only shown on public routes even when authenticated */}
-              {isPublicRoute && (
-                <>
-                  <Link to="/about" className="flex items-center gap-1">
-                    <Info className="h-4 w-4" />
-                    <span>About</span>
-                  </Link>
-                  <Link to="/blog" className="flex items-center gap-1">
-                    <Book className="h-4 w-4" />
-                    <span>Blog</span>
-                  </Link>
-                  <Link to="/features" className="flex items-center gap-1">
-                    <ListChecks className="h-4 w-4" />
-                    <span>Features</span>
-                  </Link>
-                  <Link to="/pricing" className="flex items-center gap-1">
-                    <DollarSign className="h-4 w-4" />
-                    <span>Pricing</span>
-                  </Link>
-                </>
-              )}
-              
-              {/* Authenticated Navigation - Only shown on non-public routes */}
+              {/* Authenticated Navigation */}
               {!isPublicRoute && (
                 <div className="flex items-center gap-4">
                   {/* Admin dropdown only for DEAN tier */}
@@ -138,6 +113,16 @@ export default function NavBar() {
                   <ReminderNavPopover />
                 </div>
               )}
+              
+              {/* Show login/signup on public routes even when authenticated */}
+              {isPublicRoute && (
+                <>
+                  <Link to="/dashboard" className="text-mint-700 hover:text-mint-900 font-medium">Dashboard</Link>
+                  <Button variant="outline" onClick={handleLogout} className="border-mint-200 hover:bg-mint-50 text-mint-700">
+                    Logout
+                  </Button>
+                </>
+              )}
             </>
           )}
         </div>
@@ -156,63 +141,43 @@ export default function NavBar() {
               {!user ? (
                 <>
                   {/* Public Navigation Links - Mobile */}
-                  <Link to="/about" className="flex items-center gap-1">
-                    <Info className="h-4 w-4" />
-                    <span>About</span>
-                  </Link>
-                  <Link to="/blog" className="flex items-center gap-1">
-                    <Book className="h-4 w-4" />
-                    <span>Blog</span>
-                  </Link>
-                  <Link to="/features" className="flex items-center gap-1">
-                    <ListChecks className="h-4 w-4" />
-                    <span>Features</span>
-                  </Link>
-                  <Link to="/pricing" className="flex items-center gap-1">
-                    <DollarSign className="h-4 w-4" />
-                    <span>Pricing</span>
-                  </Link>
-                  <Link to="/login">Login</Link>
-                  <Link to="/signup">Sign Up</Link>
+                  <Link to="/about" className="text-mint-700 hover:text-mint-900">About</Link>
+                  <Link to="/blog" className="text-mint-700 hover:text-mint-900">Blog</Link>
+                  <Link to="/features" className="text-mint-700 hover:text-mint-900">Features</Link>
+                  <Link to="/pricing" className="text-mint-700 hover:text-mint-900">Pricing</Link>
+                  <div className="flex flex-col space-y-2 mt-4 pt-4 border-t border-gray-100">
+                    <Link to="/login" className="text-mint-700 hover:text-mint-900 font-medium">Login</Link>
+                    <Button asChild className="bg-mint-500 hover:bg-mint-600 text-white w-full">
+                      <Link to="/signup">Sign Up</Link>
+                    </Button>
+                  </div>
                 </>
               ) : (
                 <>
                   {/* Public Navigation Links - Mobile - Only on public routes when authenticated */}
                   {isPublicRoute && (
                     <>
-                      <Link to="/about" className="flex items-center gap-1">
-                        <Info className="h-4 w-4" />
-                        <span>About</span>
-                      </Link>
-                      <Link to="/blog" className="flex items-center gap-1">
-                        <Book className="h-4 w-4" />
-                        <span>Blog</span>
-                      </Link>
-                      <Link to="/features" className="flex items-center gap-1">
-                        <ListChecks className="h-4 w-4" />
-                        <span>Features</span>
-                      </Link>
-                      <Link to="/pricing" className="flex items-center gap-1">
-                        <DollarSign className="h-4 w-4" />
-                        <span>Pricing</span>
-                      </Link>
-                      <Link to="/dashboard">Dashboard</Link>
+                      <Link to="/about" className="text-mint-700 hover:text-mint-900">About</Link>
+                      <Link to="/blog" className="text-mint-700 hover:text-mint-900">Blog</Link>
+                      <Link to="/features" className="text-mint-700 hover:text-mint-900">Features</Link>
+                      <Link to="/pricing" className="text-mint-700 hover:text-mint-900">Pricing</Link>
+                      <Link to="/dashboard" className="text-mint-700 hover:text-mint-900 font-medium">Dashboard</Link>
                     </>
                   )}
                   
                   {/* Authenticated Navigation - Mobile - Only on non-public routes */}
                   {!isPublicRoute && (
                     <>
-                      <Link to="/settings">Settings</Link>
+                      <Link to="/settings" className="text-mint-700 hover:text-mint-900">Settings</Link>
                       {isAdmin && (
                         <>
                           <div className="font-medium text-sm text-muted-foreground pt-2">Admin</div>
-                          <Link to="/admin/users">Users</Link>
-                          <Link to="/admin/flashcards">Flashcards</Link>
-                          <Link to="/admin/sections">Sections</Link>
-                          <Link to="/admin/grades">Grades</Link>
-                          <Link to="/admin/csv-import">CSV Import</Link>
-                          <Link to="/admin/features">Feature Management</Link>
+                          <Link to="/admin/users" className="text-mint-700 hover:text-mint-900 pl-2">Users</Link>
+                          <Link to="/admin/flashcards" className="text-mint-700 hover:text-mint-900 pl-2">Flashcards</Link>
+                          <Link to="/admin/sections" className="text-mint-700 hover:text-mint-900 pl-2">Sections</Link>
+                          <Link to="/admin/grades" className="text-mint-700 hover:text-mint-900 pl-2">Grades</Link>
+                          <Link to="/admin/csv-import" className="text-mint-700 hover:text-mint-900 pl-2">CSV Import</Link>
+                          <Link to="/admin/features" className="text-mint-700 hover:text-mint-900 pl-2">Feature Management</Link>
                         </>
                       )}
                       {/* DND Toggle for mobile */}
@@ -220,11 +185,13 @@ export default function NavBar() {
                         <span>Do Not Disturb Mode</span>
                         <DndToggle />
                       </div>
-                      <Button variant="outline" onClick={handleLogout}>
-                        Logout
-                      </Button>
                     </>
                   )}
+                  
+                  {/* Logout button always visible on mobile when logged in */}
+                  <Button variant="outline" onClick={handleLogout} className="border-mint-200 hover:bg-mint-50 text-mint-700 mt-2">
+                    Logout
+                  </Button>
                 </>
               )}
             </div>
