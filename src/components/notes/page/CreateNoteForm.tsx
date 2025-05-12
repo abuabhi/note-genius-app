@@ -93,14 +93,23 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
     console.log("Selected tags:", selectedTags);
     
     try {
-      // Convert content to left-aligned if it's a new note
-      let processedContent = values.content;
-      
+      // Process content to ensure left alignment for new notes
+      let processedContent = values.content || '';
+
       // If this is a new note (no initialData), ensure content is left-aligned
-      if (!initialData && values.content) {
-        // Simple approach to ensure left alignment without breaking existing formatting
-        if (!processedContent.includes('text-align: left')) {
+      if (!initialData && processedContent) {
+        // First, check if the content already has explicit alignment
+        const hasExplicitAlignment = processedContent.includes('text-align:');
+        
+        if (!hasExplicitAlignment) {
+          // If there's no explicit alignment, wrap the entire content with left alignment
           processedContent = `<div style="text-align: left;">${processedContent}</div>`;
+        } else {
+          // If there is already alignment styling but not left-aligned, replace it
+          processedContent = processedContent.replace(
+            /text-align:\s*(center|right|justify)/gi, 
+            'text-align: left'
+          );
         }
       }
       

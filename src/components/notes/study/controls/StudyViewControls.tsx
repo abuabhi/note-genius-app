@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   AlignCenter,
   AlignJustify,
+  AlignLeft,
   Maximize,
   Minimize,
   LayoutGrid,
@@ -57,12 +58,14 @@ export const StudyViewControls: React.FC<StudyViewControlsProps> = ({
   // Get the right alignment icon based on the current alignment
   const getAlignmentIcon = () => {
     switch (textAlign) {
+      case "left":
+        return <AlignLeft className="h-4 w-4" />;
       case "center":
         return <AlignCenter className="h-4 w-4" />;
       case "justify":
         return <AlignJustify className="h-4 w-4" />;
       default:
-        return <AlignCenter className="h-4 w-4" />;
+        return <AlignLeft className="h-4 w-4" />;
     }
   };
 
@@ -162,6 +165,10 @@ export const StudyViewControls: React.FC<StudyViewControlsProps> = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onChangeTextAlign("left")}>
+              <AlignLeft className="h-4 w-4 mr-2" />
+              <span>Align Left</span>
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onChangeTextAlign("center")}>
               <AlignCenter className="h-4 w-4 mr-2" />
               <span>Align Center</span>

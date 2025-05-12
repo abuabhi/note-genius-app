@@ -1,14 +1,14 @@
 
 import { useState, useCallback } from "react";
 
-export type TextAlignType = "center" | "justify";
+export type TextAlignType = "left" | "center" | "justify";
 
 export const useStudyViewState = () => {
   // State for font size
   const [fontSize, setFontSize] = useState(16);
   
-  // State for text alignment
-  const [textAlign, setTextAlign] = useState<TextAlignType>("center");
+  // State for text alignment, defaulting to left
+  const [textAlign, setTextAlign] = useState<TextAlignType>("left");
   
   // State for full width
   const [isFullWidth, setIsFullWidth] = useState(false);

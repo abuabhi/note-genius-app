@@ -10,6 +10,7 @@ interface NoteContentFieldProps {
   noteTitle: string;
   onEnhance: (content: string) => void;
   showGenerateButton?: boolean;
+  defaultAlignment?: 'left' | 'center' | 'right' | 'justify';
 }
 
 export const NoteContentField = ({ 
@@ -17,7 +18,8 @@ export const NoteContentField = ({
   noteId, 
   noteTitle, 
   onEnhance,
-  showGenerateButton = false
+  showGenerateButton = false,
+  defaultAlignment = 'left'
 }: NoteContentFieldProps) => {
   return (
     <FormField
@@ -37,7 +39,11 @@ export const NoteContentField = ({
             )}
           </div>
           <FormControl>
-            <RichTextEditor content={field.value || ''} onChange={field.onChange} />
+            <RichTextEditor 
+              content={field.value || ''} 
+              onChange={field.onChange} 
+              defaultAlignment={defaultAlignment}
+            />
           </FormControl>
           <FormMessage />
         </FormItem>

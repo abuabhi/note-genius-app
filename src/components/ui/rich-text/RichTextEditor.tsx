@@ -5,7 +5,7 @@ import TextAlign from '@tiptap/extension-text-align';
 import Highlight from '@tiptap/extension-highlight';
 import BulletList from '@tiptap/extension-bullet-list';
 import OrderedList from '@tiptap/extension-ordered-list';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { RichTextToolbar } from './RichTextToolbar';
 
 interface RichTextEditorProps {
@@ -14,6 +14,7 @@ interface RichTextEditorProps {
   readOnly?: boolean;
   className?: string;
   placeholder?: string;
+  defaultAlignment?: 'left' | 'center' | 'right' | 'justify';
 }
 
 export const RichTextEditor = ({
@@ -21,7 +22,8 @@ export const RichTextEditor = ({
   onChange,
   readOnly = false,
   className = '',
-  placeholder = 'Start writing...'
+  placeholder = 'Start writing...',
+  defaultAlignment = 'left'
 }: RichTextEditorProps) => {
   const [isFocused, setIsFocused] = useState(false);
   
@@ -31,6 +33,7 @@ export const RichTextEditor = ({
       TextAlign.configure({
         types: ['heading', 'paragraph'],
         alignments: ['left', 'center', 'right', 'justify'],
+        defaultAlignment,
       }),
       Highlight.configure({
         multicolor: true,
@@ -50,6 +53,13 @@ export const RichTextEditor = ({
       },
     },
   });
+  
+  // Set default alignment when editor is initialized
+  useEffect(() => {
+    if (editor && !content && defaultAlignment) {
+      editor.commands.setTextAlign(defaultAlignment);
+    }
+  }, [editor, content, defaultAlignment]);
   
   return (
     <div className="border border-input rounded-md overflow-hidden">

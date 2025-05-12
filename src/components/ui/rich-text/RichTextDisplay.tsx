@@ -23,6 +23,12 @@ export const RichTextDisplay = ({
       paragraphs.forEach(p => {
         (p as HTMLElement).style.textAlign = textAlign;
       });
+      
+      // Also check for div elements without alignment
+      const divs = containerRef.current.querySelectorAll('div:not([style*="text-align"]):not(.prose)');
+      divs.forEach(div => {
+        (div as HTMLElement).style.textAlign = textAlign;
+      });
     }
   }, [content, textAlign]);
 
@@ -34,7 +40,10 @@ export const RichTextDisplay = ({
     <div 
       ref={containerRef}
       className={`prose max-w-none ${className}`}
-      style={{ fontSize: fontSize ? `${fontSize}px` : undefined }}
+      style={{ 
+        fontSize: fontSize ? `${fontSize}px` : undefined,
+        textAlign: textAlign // Apply default text alignment to the container
+      }}
       dangerouslySetInnerHTML={{ __html: content }}
     />
   );
