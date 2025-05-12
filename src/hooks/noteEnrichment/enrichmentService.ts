@@ -6,7 +6,7 @@ import { EnhancementFunction } from './types';
 interface NoteForEnrichment {
   id: string;
   title: string;
-  content: string;
+  content?: string; // Make content optional to match Note type
   category?: string;
 }
 
@@ -23,6 +23,11 @@ interface EnrichmentResponse {
 export const enrichNote = async (note: NoteForEnrichment, enhancementType: EnhancementFunction): Promise<string> => {
   try {
     console.log(`Calling enrich-note function with type: ${enhancementType}, noteId: ${note.id}`);
+    
+    // Check if content exists and is not empty
+    if (!note.content || note.content.trim() === '') {
+      throw new Error('Cannot enrich note: Note content is empty or undefined');
+    }
     
     const { data, error } = await supabase.functions.invoke('enrich-note', {
       body: {
@@ -144,6 +149,11 @@ export const generateNoteSummary = async (note: Note): Promise<string> => {
       if ((now.getTime() - lastGenerated.getTime()) < 24 * 60 * 60 * 1000) {
         return note.summary;
       }
+    }
+    
+    // Verify note has content before attempting to generate summary
+    if (!note.content || note.content.trim() === '') {
+      throw new Error('Cannot generate summary: Note content is empty or undefined');
     }
     
     // Generate a new summary
