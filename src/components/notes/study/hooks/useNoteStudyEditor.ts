@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { updateNoteInDatabase } from "@/contexts/notes/operations";
@@ -139,26 +138,35 @@ export const useNoteStudyEditor = (note: Note) => {
           // For key points, we need to update the enhancements object
           const currentEnhancements = note.enhancements || {};
           
-          // Update using the correct database structure
-          // Use the enhancements field directly since that's what the Note type expects
-          await supabase
-            .from('notes')
-            .update({
-              enhancements: {
+          // We need to store the key points differently since 'enhancements' isn't directly accepted
+          // by the Supabase update operation. Let's work with what's acceptable in the database schema.
+          const updateData: any = {};
+          
+          // First, check if we should update the summary field
+          if (typeToApply === 'extract-key-points') {
+            // Store key points in a format compatible with the database schema
+            if (note.enhancements) {
+              // If enhancements already exist, update them in memory first
+              note.enhancements = {
                 ...currentEnhancements,
                 keyPoints: enhancedContent,
                 last_enhanced_at: new Date().toISOString()
-              }
-            })
-            .eq('id', note.id);
-          
-          // Update local note
-          note.enhancements = {
-            ...currentEnhancements,
-            keyPoints: enhancedContent,
-            last_enhanced_at: new Date().toISOString()
-          };
-          toast.success("Key points extracted successfully");
+              };
+            } else {
+              // If no enhancements yet, create a new object
+              note.enhancements = {
+                keyPoints: enhancedContent,
+                last_enhanced_at: new Date().toISOString()
+              };
+            }
+            
+            // Now update the note in the database with the full object
+            await updateNoteInDatabase(note.id, {
+              enhancements: note.enhancements
+            });
+            
+            toast.success("Key points extracted successfully");
+          }
         }
       }
     } catch (error) {
