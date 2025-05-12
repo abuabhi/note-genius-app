@@ -2,23 +2,50 @@
 import { Note } from "@/types/note";
 import { useNoteOperations } from './operations/noteOperations';
 import { usePinArchiveOperations } from './operations/pinArchiveOperations';
-import { useTagOperations } from './operations/tagOperations';
+import { fetchTagsFromDatabase } from './operations';
 
-export function useNotesOperations(
+/**
+ * Hook that provides all note operations
+ */
+export const useNotesOperations = (
   notes: Note[], 
-  setNotes: React.Dispatch<React.SetStateAction<Note[]>>, 
-  currentPage: number, 
+  setNotes: React.Dispatch<React.SetStateAction<Note[]>>,
+  currentPage: number,
   setCurrentPage: React.Dispatch<React.SetStateAction<number>>,
   paginatedNotes: Note[]
-) {
-  // Get note CRUD operations
-  const { addNote, deleteNote, updateNote } = useNoteOperations(notes, setNotes, currentPage, setCurrentPage, paginatedNotes);
-  
-  // Get pin & archive operations
+) => {
+  // Get CRUD operations from the operations hook
+  const { addNote, deleteNote, updateNote } = useNoteOperations(
+    notes, 
+    setNotes, 
+    currentPage, 
+    setCurrentPage, 
+    paginatedNotes
+  );
+
+  // Get pin and archive operations
   const { pinNote, archiveNote } = usePinArchiveOperations(notes, setNotes);
-  
-  // Get tag operations
-  const { getAllTags, filterByTag } = useTagOperations();
+
+  /**
+   * Get all available tags from the user's notes
+   */
+  const getAllTags = async (): Promise<{id: string; name: string; color: string}[]> => {
+    try {
+      const tags = await fetchTagsFromDatabase();
+      return tags;
+    } catch (error) {
+      console.error('Error fetching tags:', error);
+      return [];
+    }
+  };
+
+  /**
+   * Filter notes by tag
+   */
+  const filterByTag = (tagName: string, setSearchTerm: (term: string) => void): void => {
+    console.log('Filtering by tag:', tagName);
+    setSearchTerm(`tag:${tagName}`);
+  };
 
   return {
     addNote,
@@ -29,4 +56,4 @@ export function useNotesOperations(
     getAllTags,
     filterByTag
   };
-}
+};

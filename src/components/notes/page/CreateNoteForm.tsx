@@ -8,7 +8,7 @@ import { Note } from '@/types/note';
 import { TagSelector } from '../TagSelector';
 import { useNotes } from '@/contexts/NoteContext';
 import { useNoteEnrichment } from '@/hooks/useNoteEnrichment';
-import { useAuth } from '@/contexts/auth'; 
+import { useAuth } from '@/contexts/auth';
 import { toast } from '@/components/ui/sonner';
 import { NoteMetadataFields } from './form/NoteMetadataFields';
 import { NoteContentField } from './form/NoteContentField';
@@ -52,21 +52,8 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
   const handleNewCategoryAdd = (newCategory: string) => {
     // Add category to global state
     addCategory(newCategory);
-    
-    // We no longer automatically add the category as a tag here
   };
   
-  // Generate a color based on a string (for subject tags)
-  const generateColorFromString = (str: string): string => {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    
-    const hue = Math.abs(hash) % 360;
-    return `hsl(${hue}, 70%, 60%)`;
-  };
-
   useEffect(() => {
     // Load available tags
     const loadTags = async () => {
@@ -80,18 +67,19 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
     if (initialData?.tags) {
       setSelectedTags(initialData.tags);
     }
-    // We remove the automatic tag creation based on category here
   }, [getAllTags, initialData]);
 
   const handleEnhancedContent = (enhancedContent: string) => {
     console.log("Setting enhanced content:", enhancedContent);
     form.setValue('content', enhancedContent);
-    toast("Content enhanced", {
+    toast.success("Content enhanced", {
       description: "Your note has been enhanced with AI"
     });
   };
 
   const onSubmit = async (values: FormValues) => {
+    if (isSaving) return; // Prevent multiple submissions
+    
     setIsSaving(true);
     console.log("Submitting form with values:", values);
     console.log("Selected tags:", selectedTags);
@@ -123,14 +111,20 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
       const result = await onSave(noteData);
       console.log("Save result:", result);
       
-      if (result) {
-        toast("Note saved", {
-          description: "Your note has been successfully saved"
+      // Reset form if it's a new note (not initialData) and the save was successful
+      if (result && !initialData) {
+        form.reset({
+          title: '',
+          date: new Date(),
+          subject_id: '',
+          category: '',
+          content: '',
         });
+        setSelectedTags([]);
       }
     } catch (error) {
       console.error("Error saving note:", error);
-      toast("Failed to save note", {
+      toast.error("Failed to save note", {
         description: "An error occurred while saving your note"
       });
     } finally {

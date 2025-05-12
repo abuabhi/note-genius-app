@@ -1,79 +1,98 @@
 
 import { useState } from "react";
-import { Note } from "@/types/note";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CreateNoteForm } from "./CreateNoteForm";
 import { ScanNoteDialog } from "../ScanNoteDialog";
 import { ImportDialog } from "../import/ImportDialog";
+import { Note } from "@/types/note";
+import { TierLimits, UserTier } from "@/hooks/useRequireAuth";
 
 interface NoteCreationDialogsProps {
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
   onScanNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
   onImportNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
-  tierLimits?: { ocr_enabled?: boolean } | null;
+  tierLimits?: TierLimits | null;
 }
 
-export const NoteCreationDialogs = ({ 
-  onSaveNote, 
-  onScanNote, 
+export const NoteCreationDialogs = ({
+  onSaveNote,
+  onScanNote,
   onImportNote,
-  tierLimits,
+  tierLimits
 }: NoteCreationDialogsProps) => {
-  const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
-  const [isScanDialogOpen, setIsScanDialogOpen] = useState(false);
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  
-  // Check if OCR is enabled for the user's tier
-  const isOCREnabled = tierLimits?.ocr_enabled ?? false;
-  
-  // When passing to ScanNoteDialog, convert the return type
-  const handleScanSave = async (note: Omit<Note, 'id'>): Promise<boolean> => {
-    const result = await onScanNote(note);
-    return result !== null;
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [scanDialogOpen, setScanDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+
+  const handleSaveNote = async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
+    try {
+      const result = await onSaveNote(noteData);
+      if (result) {
+        // Only close if successful
+        setCreateDialogOpen(false);
+      }
+      return result;
+    } catch (error) {
+      console.error("Error in handleSaveNote:", error);
+      return null;
+    }
   };
 
-  // Similarly for ImportDialog
-  const handleImportSave = async (note: Omit<Note, 'id'>): Promise<boolean> => {
-    const result = await onImportNote(note);
-    return result !== null;
+  const handleScanNote = async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
+    try {
+      const result = await onScanNote(noteData);
+      if (result) {
+        // Only close if successful
+        setScanDialogOpen(false);
+      }
+      return result;
+    } catch (error) {
+      console.error("Error in handleScanNote:", error);
+      return null;
+    }
   };
-  
+
+  const handleImportNote = async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
+    try {
+      const result = await onImportNote(noteData);
+      if (result) {
+        // Only close if successful
+        setImportDialogOpen(false);
+      }
+      return result;
+    } catch (error) {
+      console.error("Error in handleImportNote:", error);
+      return null;
+    }
+  };
+
   return (
     <>
-      {/* Manual Entry Dialog */}
-      <Dialog open={isManualDialogOpen} onOpenChange={setIsManualDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-mint-200 bg-white">
+      {/* Create Note Dialog */}
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold text-mint-800">Create New Note</DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              Fill out the form below to create a new note.
-            </DialogDescription>
+            <DialogTitle>Create a New Note</DialogTitle>
           </DialogHeader>
-          <div className="py-2">
-            <CreateNoteForm 
-              onSave={async (note) => {
-                const result = await onSaveNote(note);
-                if (result) setIsManualDialogOpen(false);
-                return result;
-              }}
-            />
-          </div>
+          <CreateNoteForm onSave={handleSaveNote} />
         </DialogContent>
       </Dialog>
 
-      {/* Scan Dialog */}
-      <ScanNoteDialog 
-        onSaveNote={handleScanSave}
-        isPremiumUser={isOCREnabled}
-        isVisible={isScanDialogOpen}
-        onClose={() => setIsScanDialogOpen(false)}
+      {/* Scan Note Dialog */}
+      <ScanNoteDialog
+        open={scanDialogOpen}
+        onOpenChange={setScanDialogOpen}
+        onSave={handleScanNote}
+        tierLimits={tierLimits}
       />
-      
-      {/* Import Dialog */}
-      <ImportDialog 
-        onSaveNote={handleImportSave}
-        isVisible={isImportDialogOpen}
-        onClose={() => setIsImportDialogOpen(false)}
+
+      {/* Import Note Dialog */}
+      <ImportDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        onImport={handleImportNote}
+        tierLimits={tierLimits}
       />
     </>
   );

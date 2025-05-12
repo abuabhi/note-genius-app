@@ -68,11 +68,16 @@ const NotesPage = () => {
         subject_id
       });
       
-      toast("Note created successfully");
-      return newNote;
+      if (newNote) {
+        toast.success("Note created successfully");
+        return newNote;
+      } else {
+        toast.error("Failed to create note");
+        return null;
+      }
     } catch (error) {
       console.error("Error creating note:", error);
-      toast("Failed to create note", {
+      toast.error("Failed to create note", {
         description: "There was an error creating your note",
       });
       return null;
@@ -97,11 +102,16 @@ const NotesPage = () => {
         subject_id
       });
       
-      toast("Scanned note created successfully");
-      return newNote;
+      if (newNote) {
+        toast.success("Scanned note created successfully");
+        return newNote;
+      } else {
+        toast.error("Failed to create scanned note");
+        return null;
+      }
     } catch (error) {
       console.error("Error creating scanned note:", error);
-      toast("Failed to create scanned note", {
+      toast.error("Failed to create scanned note", {
         description: "There was an error processing your scan",
       });
       return null;
@@ -126,11 +136,16 @@ const NotesPage = () => {
         subject_id
       });
       
-      toast("Note imported successfully");
-      return newNote;
+      if (newNote) {
+        toast.success("Note imported successfully");
+        return newNote;
+      } else {
+        toast.error("Failed to import note");
+        return null;
+      }
     } catch (error) {
       console.error("Error importing note:", error);
-      toast("Failed to import note", {
+      toast.error("Failed to import note", {
         description: "There was an error importing your document",
       });
       return null;

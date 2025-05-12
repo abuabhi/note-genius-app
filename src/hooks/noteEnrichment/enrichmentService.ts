@@ -24,6 +24,10 @@ export const enrichNote = async (
   }
   
   try {
+    // Set reasonable timeout for the function call
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
     // Call the edge function
     const { data, error } = await supabase.functions.invoke('enrich-note', {
       body: {
@@ -31,8 +35,11 @@ export const enrichNote = async (
         noteTitle: note.title || 'Untitled Note',
         noteContent: note.content,
         enhancementType
-      }
+      },
+      signal: controller.signal
     });
+    
+    clearTimeout(timeoutId);
     
     if (error) {
       console.error('Error calling enrich-note function:', error);
@@ -49,7 +56,12 @@ export const enrichNote = async (
     
     // Track token usage (if available) to calculate usage limits
     if (data.tokenUsage) {
-      await trackTokenUsage(note.id, data.tokenUsage);
+      try {
+        await trackTokenUsage(note.id, data.tokenUsage);
+      } catch (trackError) {
+        // Continue even if tracking fails - don't block the main flow
+        console.error('Error tracking token usage:', trackError);
+      }
     }
 
     return enhancedContent;
@@ -92,6 +104,7 @@ const trackTokenUsage = async (noteId: string, tokenUsage: { promptTokens: numbe
     }
   } catch (err) {
     console.error('Error tracking token usage:', err);
+    // Don't re-throw - this should not block the main process
   }
 };
 
