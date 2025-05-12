@@ -183,8 +183,8 @@ export const EnhancementTabs = ({
     <Tabs 
       defaultValue="original" 
       value={activeTab} 
-      onValueChange={setActiveTab} 
-      orientation="vertical" 
+      onValueChange={setActiveTab}
+      orientation="vertical"
       className="flex w-full gap-3"
     >
       <TabsList className="flex-col gap-1 bg-transparent py-0 w-48">
