@@ -4,12 +4,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { RichTextDisplay } from "@/components/ui/rich-text/RichTextDisplay";
 import { Note } from "@/types/note";
 import { TextAlignType } from "./hooks/useStudyViewState";
-import { EnhancementType } from "@/hooks/noteEnrichment/types";
-import { Loader2, RefreshCw, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { EnhancementProcessing } from "../enrichment/EnhancementProcessing";
-import { EnhancementError } from "../enrichment/EnhancementError";
+import { EnhancementContent } from "./enhancements/EnhancementContent";
+import { EnhancementTabHeader } from "./enhancements/EnhancementTabHeader";
+import { TabStatusIndicator } from "./enhancements/TabStatusIndicator";
 
 interface EnhancementTabsProps {
   note: Note;
@@ -109,60 +106,6 @@ export const EnhancementTabs = ({
     }
   };
   
-  // Format the enhancement display with proper styling, including loading and error states
-  const renderEnhancementContent = (
-    content: string, 
-    title: string, 
-    isMarkdown: boolean = false, 
-    isLoading: boolean = false,
-    hasError: boolean = false,
-    enhancementType: string = ""
-  ) => {
-    if (isLoading || tabLoadingState[enhancementType]) {
-      return <EnhancementProcessing message={`Generating ${title.toLowerCase()}...`} enhancementType={enhancementType} />;
-    }
-    
-    if (hasError) {
-      return (
-        <EnhancementError 
-          error={`Failed to generate ${title.toLowerCase()}`}
-          onRetry={() => handleRetry(enhancementType)}
-          title={`${title} Generation Failed`}
-          enhancementType={enhancementType}
-        />
-      );
-    }
-    
-    if (!content) {
-      return (
-        <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 text-center">
-          <p className="text-muted-foreground">No {title.toLowerCase()} available</p>
-          {onRetryEnhancement && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => handleRetry(enhancementType)}
-              className="mt-2"
-            >
-              <RefreshCw className="mr-1 h-3 w-3" /> Generate
-            </Button>
-          )}
-        </div>
-      );
-    }
-    
-    return (
-      <RichTextDisplay 
-        content={content} 
-        fontSize={fontSize} 
-        textAlign={textAlign}
-        className={`prose-sm prose-headings:font-medium prose-headings:text-mint-800 prose-ul:pl-6 prose-ol:pl-6 ${
-          isMarkdown ? "font-mono" : ""
-        }`}
-      />
-    );
-  };
-  
   // Determine what tabs to show
   const availableTabs = ["original"];
   if (hasSummary || isGeneratingSummary || hasSummaryError) availableTabs.push("summary");
@@ -205,12 +148,10 @@ export const EnhancementTabs = ({
               className="w-full text-left py-3 px-4 rounded-none border-l-2 border-l-transparent data-[state=active]:border-l-mint-500 data-[state=active]:bg-mint-50 relative"
             >
               Summary
-              {isGeneratingSummary && (
-                <span className="absolute top-3 right-3 h-2 w-2 rounded-full bg-mint-500 animate-pulse"></span>
-              )}
-              {hasSummaryError && (
-                <span className="absolute top-3 right-3 h-2 w-2 rounded-full bg-red-500"></span>
-              )}
+              <TabStatusIndicator 
+                isGenerating={isGeneratingSummary} 
+                hasError={hasSummaryError} 
+              />
             </TabsTrigger>
           )}
           
@@ -247,7 +188,7 @@ export const EnhancementTabs = ({
       <div className="flex-grow p-4 overflow-y-auto">
         <TabsContent value="original" className="m-0 h-full">
           <div className="h-full">
-            <h3 className="text-lg font-medium text-foreground mb-3">Original Note</h3>
+            <EnhancementTabHeader title="Original Note" />
             <RichTextDisplay 
               content={originalContent} 
               fontSize={fontSize} 
@@ -259,15 +200,17 @@ export const EnhancementTabs = ({
         {(hasSummary || isGeneratingSummary || hasSummaryError) && (
           <TabsContent value="summary" className="m-0 h-full">
             <div className="h-full">
-              <h3 className="text-lg font-medium text-mint-800 mb-3">Summary</h3>
-              {renderEnhancementContent(
-                summaryContent, 
-                "Summary", 
-                false, 
-                isGeneratingSummary || isLoading, 
-                hasSummaryError,
-                "summary"
-              )}
+              <EnhancementTabHeader title="Summary" />
+              <EnhancementContent
+                content={summaryContent}
+                title="Summary"
+                fontSize={fontSize}
+                textAlign={textAlign}
+                isLoading={isGeneratingSummary || isLoading || tabLoadingState.summary}
+                hasError={hasSummaryError}
+                enhancementType="summary"
+                onRetry={handleRetry}
+              />
             </div>
           </TabsContent>
         )}
@@ -275,15 +218,16 @@ export const EnhancementTabs = ({
         {hasKeyPoints && (
           <TabsContent value="keyPoints" className="m-0 h-full">
             <div className="h-full">
-              <h3 className="text-lg font-medium text-mint-800 mb-3">Key Points</h3>
-              {renderEnhancementContent(
-                keyPointsContent, 
-                "Key Points", 
-                false, 
-                isLoading, 
-                false,
-                "keyPoints"
-              )}
+              <EnhancementTabHeader title="Key Points" />
+              <EnhancementContent
+                content={keyPointsContent}
+                title="Key Points"
+                fontSize={fontSize}
+                textAlign={textAlign}
+                isLoading={isLoading || tabLoadingState.keyPoints}
+                enhancementType="keyPoints"
+                onRetry={handleRetry}
+              />
             </div>
           </TabsContent>
         )}
@@ -291,15 +235,17 @@ export const EnhancementTabs = ({
         {hasMarkdown && (
           <TabsContent value="markdown" className="m-0 h-full">
             <div className="h-full">
-              <h3 className="text-lg font-medium text-mint-800 mb-3">Markdown Format</h3>
-              {renderEnhancementContent(
-                markdownContent, 
-                "Markdown Format", 
-                true, 
-                isLoading,
-                false,
-                "markdown"
-              )}
+              <EnhancementTabHeader title="Markdown Format" />
+              <EnhancementContent
+                content={markdownContent}
+                title="Markdown Format"
+                fontSize={fontSize}
+                textAlign={textAlign}
+                isMarkdown={true}
+                isLoading={isLoading || tabLoadingState.markdown}
+                enhancementType="markdown"
+                onRetry={handleRetry}
+              />
             </div>
           </TabsContent>
         )}
@@ -307,15 +253,16 @@ export const EnhancementTabs = ({
         {hasImprovedClarity && (
           <TabsContent value="improved" className="m-0 h-full">
             <div className="h-full">
-              <h3 className="text-lg font-medium text-mint-800 mb-3">Improved Clarity</h3>
-              {renderEnhancementContent(
-                improvedContent, 
-                "Improved Clarity", 
-                false, 
-                isLoading,
-                false,
-                "improved"
-              )}
+              <EnhancementTabHeader title="Improved Clarity" />
+              <EnhancementContent
+                content={improvedContent}
+                title="Improved Clarity"
+                fontSize={fontSize}
+                textAlign={textAlign}
+                isLoading={isLoading || tabLoadingState.improved}
+                enhancementType="improved"
+                onRetry={handleRetry}
+              />
             </div>
           </TabsContent>
         )}
