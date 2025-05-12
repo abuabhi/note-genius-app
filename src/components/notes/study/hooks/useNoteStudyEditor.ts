@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { updateNoteInDatabase } from "@/contexts/notes/operations";
@@ -76,7 +77,7 @@ export const useNoteStudyEditor = (note: Note) => {
         title: editableTitle,
         tags: selectedTags
       });
-      toast("Note updated successfully");
+      toast.success("Note updated successfully");
       // We need to update the note in our view
       note.content = editableContent;
       note.title = editableTitle;
@@ -84,7 +85,7 @@ export const useNoteStudyEditor = (note: Note) => {
       note.tags = selectedTags.map(tag => ({...tag}));
       setIsEditing(false);
     } catch (error) {
-      toast("Failed to save changes", {
+      toast.error("Failed to save changes", {
         description: "Please try again"
       });
     } finally {
@@ -111,62 +112,67 @@ export const useNoteStudyEditor = (note: Note) => {
       // Check if this is a replacement type enhancement
       if (enhancementDetails?.replaceContent) {
         // For enhancements that replace content
-        await supabase
-          .from('notes')
-          .update({ content: enhancedContent })
-          .eq('id', note.id);
+        await updateNoteInDatabase(note.id, { content: enhancedContent });
           
         // Update local note
         note.content = enhancedContent;
-        toast.success("Content enhanced successfully");
+        toast.success(`Content ${enhancementDetails.title.toLowerCase()} successfully`);
       } else {
         // For enhancements that create separate content
         if (typeToApply === 'summarize') {
-          await supabase
-            .from('notes')
-            .update({ 
-              summary: enhancedContent,
-              summary_generated_at: new Date().toISOString() 
-            })
-            .eq('id', note.id);
+          await updateNoteInDatabase(note.id, {
+            summary: enhancedContent,
+            summary_generated_at: new Date().toISOString()
+          });
             
           // Update local note
           note.summary = enhancedContent;
           note.summary_generated_at = new Date().toISOString();
           toast.success("Summary created successfully");
-        } else if (typeToApply === 'extract-key-points') {
-          // For key points, we need to update the enhancements object
+        } else if (typeToApply === 'extract-key-points' || 
+                  typeToApply === 'convert-to-markdown' || 
+                  typeToApply === 'improve-clarity') {
+          
+          // Get current enhancements or create new object
           const currentEnhancements = note.enhancements || {};
           
-          // We need to store the key points differently since 'enhancements' isn't directly accepted
-          // by the Supabase update operation. Let's work with what's acceptable in the database schema.
-          const updateData: any = {};
+          // Determine which field to update based on enhancement type
+          let enhancementField: string;
+          let successMessage: string;
           
-          // First, check if we should update the summary field
-          if (typeToApply === 'extract-key-points') {
-            // Store key points in a format compatible with the database schema
-            if (note.enhancements) {
-              // If enhancements already exist, update them in memory first
-              note.enhancements = {
-                ...currentEnhancements,
-                keyPoints: enhancedContent,
-                last_enhanced_at: new Date().toISOString()
-              };
-            } else {
-              // If no enhancements yet, create a new object
-              note.enhancements = {
-                keyPoints: enhancedContent,
-                last_enhanced_at: new Date().toISOString()
-              };
-            }
-            
-            // Now update the note in the database with the full object
-            await updateNoteInDatabase(note.id, {
-              enhancements: note.enhancements
-            });
-            
-            toast.success("Key points extracted successfully");
+          switch (typeToApply) {
+            case 'extract-key-points':
+              enhancementField = 'keyPoints';
+              successMessage = "Key points extracted successfully";
+              break;
+            case 'convert-to-markdown':
+              enhancementField = 'markdown';
+              successMessage = "Converted to markdown successfully";
+              break;
+            case 'improve-clarity':
+              enhancementField = 'improved';
+              successMessage = "Improved clarity generated successfully";
+              break;
+            default:
+              enhancementField = 'keyPoints';
+              successMessage = "Enhancement completed successfully";
           }
+          
+          // Create updated enhancements object
+          const updatedEnhancements = {
+            ...currentEnhancements,
+            [enhancementField]: enhancedContent,
+            last_enhanced_at: new Date().toISOString()
+          };
+          
+          // Update note in database
+          await updateNoteInDatabase(note.id, {
+            enhancements: updatedEnhancements
+          });
+          
+          // Update local note
+          note.enhancements = updatedEnhancements;
+          toast.success(successMessage);
         }
       }
     } catch (error) {

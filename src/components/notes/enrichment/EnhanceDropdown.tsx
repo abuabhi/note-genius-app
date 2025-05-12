@@ -2,7 +2,7 @@
 import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
-import { Sparkles } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -71,6 +71,10 @@ export const EnhanceDropdown = ({
   const isLimitReached = hasReachedLimit();
   const usagePercentage = monthlyLimit ? Math.min((currentUsage / monthlyLimit) * 100, 100) : 0;
 
+  // Group enhancement options by category for the dropdown
+  const nonReplacementOptions = enhancementOptions.filter(opt => !opt.replaceContent);
+  const replacementOptions = enhancementOptions.filter(opt => opt.replaceContent);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -79,9 +83,13 @@ export const EnhanceDropdown = ({
           size="icon" 
           className="h-8 w-8 relative group"
           disabled={isProcessing || isLimitReached}
-          title={isLimitReached ? "Monthly limit reached" : "Enhance note"}
+          title={isLimitReached ? "Monthly limit reached" : isProcessing ? "Processing enhancement..." : "Enhance note"}
         >
-          <Sparkles className="h-4 w-4 transition-all duration-300 group-hover:text-mint-500 group-hover:scale-110 group-hover:rotate-12" />
+          {isProcessing ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Sparkles className="h-4 w-4 transition-all duration-300 group-hover:text-mint-500 group-hover:scale-110 group-hover:rotate-12" />
+          )}
           <span className="absolute inset-0 rounded-full bg-mint-200/0 group-hover:bg-mint-100/50 transition-colors duration-300"></span>
         </Button>
       </DropdownMenuTrigger>
@@ -117,22 +125,50 @@ export const EnhanceDropdown = ({
           </div>
         ) : (
           /* Enhancement options */
-          enhancementOptions.map((option) => (
-            <DropdownMenuItem
-              key={option.id}
-              onClick={() => handleEnhancementSelect(option.value as EnhancementFunction)}
-              className={`cursor-pointer flex items-start p-2 rounded hover:bg-mint-50 focus:bg-mint-50 transition-colors ${option.value === 'create-flashcards' ? 'opacity-60' : ''}`}
-              disabled={isProcessing || option.value === 'create-flashcards'}
-            >
-              <div className="flex flex-col">
-                <span className="font-medium text-mint-800">{option.title}</span>
-                <span className="text-xs text-muted-foreground mt-0.5">{option.description}</span>
-                {option.value === 'create-flashcards' && (
-                  <span className="text-xs text-amber-600 mt-0.5 font-medium">Coming soon</span>
-                )}
-              </div>
-            </DropdownMenuItem>
-          ))
+          <>
+            {/* First category - non-replacement options */}
+            {nonReplacementOptions.map((option) => (
+              <DropdownMenuItem
+                key={option.id}
+                onClick={() => handleEnhancementSelect(option.value as EnhancementFunction)}
+                className={`cursor-pointer flex items-start p-2 rounded hover:bg-mint-50 focus:bg-mint-50 transition-colors ${option.value === 'create-flashcards' ? 'opacity-60' : ''}`}
+                disabled={isProcessing || option.value === 'create-flashcards'}
+              >
+                <div className="flex flex-col">
+                  <span className="font-medium text-mint-800">{option.title}</span>
+                  <span className="text-xs text-muted-foreground mt-0.5">{option.description}</span>
+                  {option.value === 'create-flashcards' && (
+                    <span className="text-xs text-amber-600 mt-0.5 font-medium">Coming soon</span>
+                  )}
+                </div>
+              </DropdownMenuItem>
+            ))}
+
+            {/* Separator between categories */}
+            {nonReplacementOptions.length > 0 && replacementOptions.length > 0 && (
+              <>
+                <DropdownMenuSeparator />
+                <div className="px-2 py-1 text-xs text-muted-foreground">
+                  Content Improvements
+                </div>
+              </>
+            )}
+
+            {/* Second category - replacement options */}
+            {replacementOptions.map((option) => (
+              <DropdownMenuItem
+                key={option.id}
+                onClick={() => handleEnhancementSelect(option.value as EnhancementFunction)}
+                className="cursor-pointer flex items-start p-2 rounded hover:bg-mint-50 focus:bg-mint-50 transition-colors"
+                disabled={isProcessing}
+              >
+                <div className="flex flex-col">
+                  <span className="font-medium text-mint-800">{option.title}</span>
+                  <span className="text-xs text-muted-foreground mt-0.5">{option.description}</span>
+                </div>
+              </DropdownMenuItem>
+            ))}
+          </>
         )}
       </DropdownMenuContent>
     </DropdownMenu>

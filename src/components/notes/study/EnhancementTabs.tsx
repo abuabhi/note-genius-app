@@ -5,6 +5,7 @@ import { RichTextDisplay } from "@/components/ui/rich-text/RichTextDisplay";
 import { Note } from "@/types/note";
 import { TextAlignType } from "./hooks/useStudyViewState";
 import { EnhancementType } from "@/hooks/noteEnrichment/types";
+import { Loader2 } from "lucide-react";
 
 interface EnhancementTabsProps {
   note: Note;
@@ -24,8 +25,13 @@ export const EnhancementTabs = ({
   
   // Get summary content from note if it exists
   const summaryContent = note.summary || "";
-  const hasKeyPoints = note.enhancements?.keyPoints || false;
   const keyPointsContent = note.enhancements?.keyPoints || "";
+  
+  // Check if these exist to determine which tabs to show
+  const hasSummary = !!summaryContent;
+  const hasKeyPoints = !!keyPointsContent;
+  const hasMarkdown = !!note.enhancements?.markdown;
+  const hasImprovedClarity = !!note.enhancements?.improved;
   
   // Reset to original tab when editing starts
   useEffect(() => {
@@ -34,11 +40,39 @@ export const EnhancementTabs = ({
     }
   }, [isEditing]);
 
-  // Only show tabs if we have additional content
-  const showTabs = summaryContent || hasKeyPoints;
+  // If editing, just show the original content
+  if (isEditing) {
+    return (
+      <RichTextDisplay 
+        content={originalContent} 
+        fontSize={fontSize} 
+        textAlign={textAlign}
+      />
+    );
+  }
   
-  // If no extra tabs to show, just display the content directly
-  if (!showTabs || isEditing) {
+  // Format the enhancement display with proper styling
+  const renderEnhancementContent = (content: string, title: string) => {
+    if (!content) return null;
+    
+    return (
+      <div className="p-4 bg-mint-50/50 rounded-lg border border-mint-100">
+        <h3 className="text-lg font-medium text-mint-800 mb-2">{title}</h3>
+        <RichTextDisplay 
+          content={content} 
+          fontSize={fontSize} 
+          textAlign={textAlign}
+          className="prose-sm"
+        />
+      </div>
+    );
+  };
+
+  // Only show tabs if we have additional content
+  const showTabs = hasSummary || hasKeyPoints || hasMarkdown || hasImprovedClarity;
+  
+  // If no enhancements to show, just display the content directly
+  if (!showTabs) {
     return (
       <RichTextDisplay 
         content={originalContent} 
@@ -57,8 +91,10 @@ export const EnhancementTabs = ({
     >
       <TabsList className="mb-4">
         <TabsTrigger value="original">Original</TabsTrigger>
-        {summaryContent && <TabsTrigger value="summary">Summary</TabsTrigger>}
+        {hasSummary && <TabsTrigger value="summary">Summary</TabsTrigger>}
         {hasKeyPoints && <TabsTrigger value="keyPoints">Key Points</TabsTrigger>}
+        {hasMarkdown && <TabsTrigger value="markdown">Markdown</TabsTrigger>}
+        {hasImprovedClarity && <TabsTrigger value="improved">Improved</TabsTrigger>}
       </TabsList>
       
       <TabsContent value="original" className="mt-2">
@@ -69,31 +105,27 @@ export const EnhancementTabs = ({
         />
       </TabsContent>
       
-      {summaryContent && (
+      {hasSummary && (
         <TabsContent value="summary" className="mt-2">
-          <div className="p-4 bg-mint-50/50 rounded-lg border border-mint-100">
-            <h3 className="text-lg font-medium text-mint-800 mb-2">Summary</h3>
-            <RichTextDisplay 
-              content={summaryContent} 
-              fontSize={fontSize} 
-              textAlign={textAlign}
-              className="prose-sm"
-            />
-          </div>
+          {renderEnhancementContent(summaryContent, "Summary")}
         </TabsContent>
       )}
       
       {hasKeyPoints && (
         <TabsContent value="keyPoints" className="mt-2">
-          <div className="p-4 bg-mint-50/50 rounded-lg border border-mint-100">
-            <h3 className="text-lg font-medium text-mint-800 mb-2">Key Points</h3>
-            <RichTextDisplay 
-              content={keyPointsContent} 
-              fontSize={fontSize} 
-              textAlign={textAlign}
-              className="prose-sm"
-            />
-          </div>
+          {renderEnhancementContent(keyPointsContent, "Key Points")}
+        </TabsContent>
+      )}
+
+      {hasMarkdown && (
+        <TabsContent value="markdown" className="mt-2">
+          {renderEnhancementContent(note.enhancements?.markdown || "", "Markdown Format")}
+        </TabsContent>
+      )}
+
+      {hasImprovedClarity && (
+        <TabsContent value="improved" className="mt-2">
+          {renderEnhancementContent(note.enhancements?.improved || "", "Improved Clarity")}
         </TabsContent>
       )}
     </Tabs>
