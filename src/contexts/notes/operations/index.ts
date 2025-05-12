@@ -36,7 +36,13 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
 };
 
 export const deleteNoteFromDatabase = async (id: string): Promise<void> => {
-  await deleteNoteDb(id);
+  try {
+    console.log("Operations index - Deleting note with ID:", id);
+    await deleteNoteDb(id);
+  } catch (error) {
+    console.error('Operations index - Error deleting note:', error);
+    throw error;
+  }
 };
 
 export const updateNoteInDatabase = async (id: string, updatedNote: Partial<Note>): Promise<void> => {

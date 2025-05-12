@@ -90,6 +90,8 @@ export const useNoteOperations = (
 
   const deleteNote = async (id: string): Promise<void> => {
     try {
+      console.log(`Starting note deletion process for note ID: ${id}`);
+      
       // Show deletion in progress with loading indicator
       const toastId = toast.loading("Deleting note...");
       
@@ -114,7 +116,7 @@ export const useNoteOperations = (
         
         // Revert the optimistic update by restoring the deleted note
         if (deletedNote) {
-          setNotes(prevNotes => [deletedNote, ...prevNotes]);
+          setNotes(prevNotes => [...prevNotes, deletedNote]);
         }
         
         toast.dismiss(toastId);

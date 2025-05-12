@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Note } from "@/types/note";
 
@@ -66,10 +65,10 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
 
 export const deleteNoteFromDatabase = async (id: string): Promise<void> => {
   try {
-    console.log("Attempting to delete note with ID:", id);
+    console.log("Starting delete note operation for ID:", id);
     
     // Always use the edge function which handles related records properly
-    const { error: edgeFunctionError } = await supabase.functions.invoke('delete-note', {
+    const { data, error: edgeFunctionError } = await supabase.functions.invoke('delete-note', {
       body: { noteId: id }
     });
 
@@ -77,7 +76,7 @@ export const deleteNoteFromDatabase = async (id: string): Promise<void> => {
       console.error('Edge function delete error:', edgeFunctionError);
       throw edgeFunctionError;
     } else {
-      console.log("Note deleted successfully via edge function");
+      console.log("Note deleted successfully via edge function", data);
     }
   } catch (error) {
     console.error('Error deleting note:', error);
