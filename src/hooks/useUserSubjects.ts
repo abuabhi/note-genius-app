@@ -32,6 +32,14 @@ export const useUserSubjects = () => {
         }
         
         console.log("Subjects fetched successfully:", data);
+        
+        if (data) {
+          // Log each subject for debugging
+          data.forEach((subject: UserSubject) => {
+            console.log(`Subject: ${subject.name}, ID: ${subject.id}`);
+          });
+        }
+        
         setSubjects(data as UserSubject[]);
       } catch (error) {
         console.error('Error fetching user subjects:', error);

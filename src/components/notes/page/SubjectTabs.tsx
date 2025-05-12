@@ -32,8 +32,8 @@ export const SubjectTabs = ({ activeSubjectId, onSubjectChange }: SubjectTabsPro
   useEffect(() => {
     console.log("SubjectTabs - Active subject ID:", activeSubjectId);
     console.log("SubjectTabs - Active tab index:", activeTabIndex);
-    console.log("SubjectTabs - Available subjects:", subjects.map(s => `${s.id}: ${s.name}`).join(', '));
-  }, [activeSubjectId, activeTabIndex, subjects]);
+    console.log("SubjectTabs - Available tabs:", allTabs.map(tab => `${tab.id || 'all'}: ${tab.name}`).join(', '));
+  }, [activeSubjectId, activeTabIndex, allTabs]);
 
   if (isLoading) {
     return (

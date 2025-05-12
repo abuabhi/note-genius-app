@@ -22,14 +22,17 @@ export function useFilteredNotes(
       // Count how many notes have this subject_id
       const totalNotes = notes.length;
       const matchingNotes = notes.filter(note => note.subject_id === filterOptions.subjectId).length;
-      const notesWithAnySubject = notes.filter(note => note.subject_id).length;
       
       console.log(`Notes with subject_id=${filterOptions.subjectId}: ${matchingNotes} out of ${totalNotes} total notes`);
-      console.log(`Notes with any subject_id: ${notesWithAnySubject} out of ${totalNotes} total notes`);
       
       // List all unique subject IDs in the notes
       const uniqueSubjectIds = [...new Set(notes.filter(note => note.subject_id).map(note => note.subject_id))];
       console.log(`Unique subject IDs in notes: ${uniqueSubjectIds.join(', ')}`);
+      
+      // Log all notes and their subject IDs for debugging
+      notes.forEach(note => {
+        console.log(`Note "${note.title}" has subject_id: ${note.subject_id || 'none'}`);
+      });
     }
     
     // First filter the notes

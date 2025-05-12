@@ -56,19 +56,9 @@ export const filterNotes = (notes: Note[], searchTerm: string, filterOptions: Fi
     }
     
     // Filter by subject ID (for subject tabs)
-    if (filterOptions.subjectId) {
-      console.log(`Filtering note ${note.id} (${note.title}): subject_id=${note.subject_id}, filter=${filterOptions.subjectId}, match=${note.subject_id === filterOptions.subjectId}`);
-      
-      // If the note doesn't have a subject_id, it won't match
-      if (!note.subject_id) {
-        console.log(`Note ${note.title} filtered out - no subject_id`);
-        return false;
-      }
-      
-      if (note.subject_id !== filterOptions.subjectId) {
-        console.log(`Note ${note.title} filtered out - subject_id mismatch`);
-        return false;
-      }
+    if (filterOptions.subjectId && note.subject_id !== filterOptions.subjectId) {
+      console.log(`Note "${note.title}" filtered out - subject_id: ${note.subject_id} doesn't match filter: ${filterOptions.subjectId}`);
+      return false;
     }
     
     // Filter by source type

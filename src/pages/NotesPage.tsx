@@ -30,20 +30,22 @@ const NotesPage = () => {
     localStorage.setItem("lastVisitedPage", location.pathname);
 
     // Debug subject information
-    console.log("Available subjects:", subjects);
+    console.log("NotesPage - Available subjects:", subjects.map(s => `${s.name} (${s.id})`).join(', '));
   }, [setFilterOptions, location.pathname, subjects]);
 
   // Helper function to find subject_id based on category name
   const findSubjectIdByName = (categoryName: string): string | undefined => {
+    if (!categoryName) return undefined;
+    
     // Case insensitive matching to improve chances of finding matches
     const matchingSubject = subjects.find(subject => 
       subject.name.toLowerCase() === categoryName.toLowerCase()
     );
     
     if (matchingSubject) {
-      console.log(`Matched category ${categoryName} to subject ID ${matchingSubject.id}`);
+      console.log(`NotesPage - Matched category ${categoryName} to subject ID ${matchingSubject.id}`);
     } else {
-      console.log(`No subject match found for category: ${categoryName}`);
+      console.log(`NotesPage - No subject match found for category: ${categoryName}`);
     }
     
     return matchingSubject?.id;
@@ -58,6 +60,8 @@ const NotesPage = () => {
       
       // Try to find matching subject_id for the category OR use the one directly provided
       const subject_id = note.subject_id || findSubjectIdByName(note.category);
+      
+      console.log(`NotesPage - Saving note with subject_id: ${subject_id} and category: ${note.category}`);
       
       const newNote = await addNote({
         ...note,
@@ -85,6 +89,8 @@ const NotesPage = () => {
       // Try to find matching subject_id for the category OR use the one directly provided
       const subject_id = note.subject_id || findSubjectIdByName(note.category);
       
+      console.log(`NotesPage - Saving scanned note with subject_id: ${subject_id} and category: ${note.category}`);
+      
       const newNote = await addNote({
         ...note,
         sourceType: 'scan',
@@ -111,6 +117,8 @@ const NotesPage = () => {
       
       // Try to find matching subject_id for the category OR use the one directly provided
       const subject_id = note.subject_id || findSubjectIdByName(note.category);
+      
+      console.log(`NotesPage - Importing note with subject_id: ${subject_id} and category: ${note.category}`);
       
       const newNote = await addNote({
         ...note,

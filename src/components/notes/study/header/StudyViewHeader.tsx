@@ -50,13 +50,11 @@ export const StudyViewHeader: React.FC<StudyViewHeaderProps> = ({
   const { subjects } = useUserSubjects();
   
   // Find the subject name based on subject_id or fall back to category
-  const subjectName = note.subject_id && subjects.length > 0
-    ? subjects.find(s => s.id === note.subject_id)?.name || note.category
+  const subjectName = note.subject_id 
+    ? subjects.find(s => s.id === note.subject_id)?.name || note.category 
     : note.category;
   
-  console.log("StudyViewHeader - Subject ID:", note.subject_id);
-  console.log("StudyViewHeader - Available subjects:", subjects);
-  console.log("StudyViewHeader - Selected subject name:", subjectName);
+  console.log(`StudyViewHeader - Note: ${note.title}, Subject ID: ${note.subject_id}, Subject Name: ${subjectName}`);
 
   // Generate category badge with color
   const getCategoryBadge = (category: string) => {

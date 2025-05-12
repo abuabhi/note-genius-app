@@ -35,14 +35,11 @@ export const NoteCard = ({
   const { subjects } = useUserSubjects();
   
   // Find the subject name based on subject_id or fall back to category
-  const subjectName = note.subject_id && subjects.length > 0
-    ? subjects.find(s => s.id === note.subject_id)?.name || note.category
+  const subjectName = note.subject_id 
+    ? subjects.find(s => s.id === note.subject_id)?.name || note.category 
     : note.category;
   
-  console.log("NoteCard - Note:", note.title);
-  console.log("NoteCard - Subject ID:", note.subject_id);
-  console.log("NoteCard - Available subjects:", subjects.map(s => `${s.id}: ${s.name}`).join(', '));
-  console.log("NoteCard - Selected subject name:", subjectName);
+  console.log(`NoteCard - Note: ${note.title}, Subject ID: ${note.subject_id}, Subject Name: ${subjectName}`);
   
   const handleGoToStudyMode = (e: React.MouseEvent) => {
     e.stopPropagation();

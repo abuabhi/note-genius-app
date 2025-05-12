@@ -61,7 +61,9 @@ export const SubjectsSection = ({
   }
 
   console.log(`SubjectsSection - Rendering with ${subjects.length} subjects`);
-  console.log("SubjectsSection - Available subjects:", subjects.map(s => `${s.id}: ${s.name}`).join(', '));
+  subjects.forEach(subject => {
+    console.log(`Available subject: ${subject.name} (ID: ${subject.id})`);
+  });
 
   return (
     <div className="mb-6">
