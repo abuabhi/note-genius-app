@@ -19,11 +19,7 @@ export const EnhancementUsageMeter: React.FC<EnhancementUsageMeterProps> = ({
     if (statsLoading) return null;
     
     if (monthlyLimit === null) {
-      return (
-        <div className="text-xs text-muted-foreground mb-2">
-          <span className="text-mint-700 text-xs italic">Unlimited AI enhancements available</span>
-        </div>
-      );
+      return null; // Removed the "Unlimited AI enhancements available" text
     }
     
     const percentage = Math.min(Math.round((currentUsage / monthlyLimit) * 100), 100);
