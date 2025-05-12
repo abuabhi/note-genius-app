@@ -1,14 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { EnhancementFunction } from "./types";
-import { enhancementOptions } from "./enhancementOptions";
-
-/**
- * Get enhancement details by function type
- */
-export const getEnhancementDetails = (enhancementType: EnhancementFunction) => {
-  return enhancementOptions.find(option => option.value === enhancementType);
-};
 
 /**
  * Update note with enhancement result in database

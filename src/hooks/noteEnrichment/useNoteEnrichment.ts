@@ -5,7 +5,7 @@ import { Note } from '@/types/note';
 import { supabase } from '@/integrations/supabase/client';
 import { enhancementOptions, getEnhancementDetails } from './enhancementOptions';
 import { EnhancementFunction, EnhancementResult } from './types';
-import { enrichNote } from './enrichmentService';
+import { enrichNote as enrichNoteService } from './enrichmentService';
 import { useUserTier } from '../useUserTier';
 import { useEnrichmentUsageStats } from './useEnrichmentUsageStats';
 import { updateNoteWithEnhancement } from './enhancementHelpers';
@@ -60,7 +60,7 @@ export const useNoteEnrichment = (note?: Note) => {
 
     try {
       // Call the real enrichment API
-      const enhanced = await enrichNote({
+      const enhanced = await enrichNoteService({
         id: note.id,
         title: note.title,
         content: note.content,
@@ -115,7 +115,7 @@ export const useNoteEnrichment = (note?: Note) => {
 
     try {
       // Call the enrichment service
-      const enhanced = await enrichNote({
+      const enhanced = await enrichNoteService({
         id: noteId,
         title: title,
         content: content
