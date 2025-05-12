@@ -3,14 +3,31 @@ import { Note } from "@/types/note";
 import { supabase } from "@/integrations/supabase/client";
 import { EnhancementFunction } from './types';
 
-export const enrichNote = async (note: Note, enhancementType: EnhancementFunction): Promise<string> => {
+interface NoteForEnrichment {
+  id: string;
+  title: string;
+  content: string;
+  category?: string;
+}
+
+interface EnrichmentResponse {
+  enhancedContent: string;
+  enhancementType: EnhancementFunction;
+  tokenUsage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  }
+}
+
+export const enrichNote = async (note: NoteForEnrichment, enhancementType: EnhancementFunction): Promise<string> => {
   try {
     console.log(`Calling enrich-note function with type: ${enhancementType}, noteId: ${note.id}`);
     
     const { data, error } = await supabase.functions.invoke('enrich-note', {
       body: {
         noteId: note.id,
-        noteContent: note.content || note.description,
+        noteContent: note.content,
         enhancementType: enhancementType,
         noteTitle: note.title,
         noteCategory: note.category
@@ -29,7 +46,7 @@ export const enrichNote = async (note: Note, enhancementType: EnhancementFunctio
 
     console.log("Enhanced content received, length:", data.enhancedContent.length);
     
-    // Update the usage tracking
+    // Update the usage tracking to include token usage
     await trackUsage(note.id, data.tokenUsage);
 
     return data.enhancedContent;
@@ -39,7 +56,7 @@ export const enrichNote = async (note: Note, enhancementType: EnhancementFunctio
   }
 };
 
-// Track usage of the enrichment feature
+// Track usage of the enrichment feature, now with token usage
 export const trackUsage = async (noteId: string, tokenUsage?: { prompt_tokens: number, completion_tokens: number, total_tokens: number }) => {
   try {
     const currentMonth = new Date().toISOString().slice(0, 7); // Format: YYYY-MM

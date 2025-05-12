@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from 'react';
 import { EnhancementFunction, EnhancementResult } from './noteEnrichment/types';
 import { enhancementOptions } from './noteEnrichment/enhancementOptions';
@@ -5,6 +6,7 @@ import { useUserTier } from './useUserTier';
 import { Note } from '@/types/note';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { enrichNote as callEnrichmentAPI } from './noteEnrichment/enrichmentService';
 
 export function useNoteEnrichment(note?: Note) {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -55,21 +57,21 @@ export function useNoteEnrichment(note?: Note) {
     fetchUsage();
   }, [userTier]);
 
-  const updateUsage = useCallback(async (noteId: string) => {
+  const updateUsage = useCallback(async (noteId: string, tokenUsage?: { prompt_tokens: number, completion_tokens: number }) => {
     try {
       const userId = (await supabase.auth.getUser()).data.user?.id;
       const currentMonth = new Date().toISOString().slice(0, 7);
       
-      // Insert usage record - FIX: Adding the required llm_provider field
+      // Insert usage record
       const { error } = await supabase
         .from('note_enrichment_usage')
         .insert({
           user_id: userId,
           note_id: noteId,
           month_year: currentMonth,
-          llm_provider: 'openai', // Added the required field
-          prompt_tokens: 0,       // Adding default values for required fields
-          completion_tokens: 0    // Adding default values for required fields
+          llm_provider: 'openai',
+          prompt_tokens: tokenUsage?.prompt_tokens || 0,
+          completion_tokens: tokenUsage?.completion_tokens || 0
         });
       
       if (error) throw error;
@@ -97,6 +99,7 @@ export function useNoteEnrichment(note?: Note) {
     return currentUsage >= monthlyLimit;
   }, [currentUsage, monthlyLimit]);
 
+  // Real implementation using the edge function
   const processEnhancement = useCallback(async (enhancementType: EnhancementFunction): Promise<EnhancementResult> => {
     if (!note?.content) {
       const error = 'No content to enhance';
@@ -118,11 +121,13 @@ export function useNoteEnrichment(note?: Note) {
     setSelectedEnhancement(enhancementType);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Mock enhanced content
-      const enhanced = `Enhanced: ${note.content}\n(Using ${enhancementType} on "${note.title}")`;
+      // Call the real enrichment API
+      const enhanced = await callEnrichmentAPI({
+        id: note.id,
+        title: note.title,
+        content: note.content,
+        category: note.category
+      }, enhancementType);
       
       setEnhancedContent(enhanced);
       await updateUsage(note.id);
@@ -138,6 +143,7 @@ export function useNoteEnrichment(note?: Note) {
     }
   }, [note, updateUsage, hasReachedLimit]);
 
+  // Real implementation for direct note enrichment
   const enrichNote = useCallback(async (
     noteId: string, 
     content: string, 
@@ -162,11 +168,12 @@ export function useNoteEnrichment(note?: Note) {
     setSelectedEnhancement(enhancementType);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Mock enhanced content
-      const enhanced = `Enhanced: ${content}\n(Using ${enhancementType} on "${title}")`;
+      // Call the real enrichment API
+      const enhanced = await callEnrichmentAPI({
+        id: noteId,
+        title: title,
+        content: content
+      }, enhancementType);
       
       setEnhancedContent(enhanced);
       await updateUsage(noteId);
