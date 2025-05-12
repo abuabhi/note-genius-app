@@ -5,7 +5,7 @@ import { Note } from "@/types/note";
 import { StudyViewControls } from "../controls/StudyViewControls";
 import { TextAlignType } from "../hooks/useStudyViewState";
 import { Input } from "@/components/ui/input";
-import { magicWandIcon } from "../controls/MagicWandIcon";
+import { Wand2 } from "lucide-react"; // Changed to use lucide-react directly
 
 interface StudyViewHeaderProps {
   note: Note;
