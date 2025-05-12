@@ -28,10 +28,7 @@ const NotesPage = () => {
     
     // Simply record that we're on the notes page - no redirection logic at all
     localStorage.setItem("lastVisitedPage", location.pathname);
-
-    // Debug subject information
-    console.log("NotesPage - Available subjects:", subjects.map(s => `${s.name} (${s.id})`).join(', '));
-  }, [setFilterOptions, location.pathname, subjects]);
+  }, [setFilterOptions, location.pathname]);
 
   // Helper function to find subject_id based on category name
   const findSubjectIdByName = (categoryName: string): string | undefined => {
@@ -42,26 +39,31 @@ const NotesPage = () => {
       subject.name.toLowerCase() === categoryName.toLowerCase()
     );
     
-    if (matchingSubject) {
-      console.log(`NotesPage - Matched category ${categoryName} to subject ID ${matchingSubject.id}`);
-    } else {
-      console.log(`NotesPage - No subject match found for category: ${categoryName}`);
-    }
-    
     return matchingSubject?.id;
+  };
+
+  // Check if a category already exists as a subject
+  const isCategoryExistingSubject = (categoryName: string): boolean => {
+    if (!categoryName || categoryName === 'General' || categoryName === 'Uncategorized') return false;
+    
+    return subjects.some(subject => 
+      subject.name.toLowerCase() === categoryName.toLowerCase()
+    );
   };
 
   const handleSaveNote = async (note: Omit<Note, 'id'>): Promise<Note | null> => {
     try {
-      // If a category is provided and it's not already in our list, add it
-      if (note.category && note.category !== 'General' && note.category !== 'Uncategorized') {
-        addCategory(note.category);
-      }
-      
-      // Try to find matching subject_id for the category OR use the one directly provided
+      // If a category is provided and it matches an existing subject, use that subject's ID
+      // but don't create a new category
       const subject_id = note.subject_id || findSubjectIdByName(note.category);
       
-      console.log(`NotesPage - Saving note with subject_id: ${subject_id} and category: ${note.category}`);
+      // Only add the category if it's not already an existing subject
+      if (note.category && 
+          note.category !== 'General' && 
+          note.category !== 'Uncategorized' && 
+          !isCategoryExistingSubject(note.category)) {
+        addCategory(note.category);
+      }
       
       const newNote = await addNote({
         ...note,
@@ -86,15 +88,16 @@ const NotesPage = () => {
 
   const handleScanNote = async (note: Omit<Note, 'id'>): Promise<Note | null> => {
     try {
-      // If a category is provided and it's not already in our list, add it
-      if (note.category && note.category !== 'General' && note.category !== 'Uncategorized') {
-        addCategory(note.category);
-      }
-      
-      // Try to find matching subject_id for the category OR use the one directly provided
+      // If a category is provided and it matches an existing subject, use that subject's ID
       const subject_id = note.subject_id || findSubjectIdByName(note.category);
       
-      console.log(`NotesPage - Saving scanned note with subject_id: ${subject_id} and category: ${note.category}`);
+      // Only add the category if it's not already an existing subject
+      if (note.category && 
+          note.category !== 'General' && 
+          note.category !== 'Uncategorized' && 
+          !isCategoryExistingSubject(note.category)) {
+        addCategory(note.category);
+      }
       
       const newNote = await addNote({
         ...note,
@@ -120,15 +123,16 @@ const NotesPage = () => {
 
   const handleImportNote = async (note: Omit<Note, 'id'>): Promise<Note | null> => {
     try {
-      // If a category is provided and it's not already in our list, add it
-      if (note.category && note.category !== 'General' && note.category !== 'Uncategorized') {
-        addCategory(note.category);
-      }
-      
-      // Try to find matching subject_id for the category OR use the one directly provided
+      // If a category is provided and it matches an existing subject, use that subject's ID
       const subject_id = note.subject_id || findSubjectIdByName(note.category);
       
-      console.log(`NotesPage - Importing note with subject_id: ${subject_id} and category: ${note.category}`);
+      // Only add the category if it's not already an existing subject
+      if (note.category && 
+          note.category !== 'General' && 
+          note.category !== 'Uncategorized' && 
+          !isCategoryExistingSubject(note.category)) {
+        addCategory(note.category);
+      }
       
       const newNote = await addNote({
         ...note,

@@ -7,6 +7,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FilterOption } from "./FilterOption";
+import { useUserSubjects } from "@/hooks/useUserSubjects";
 
 interface CategoryFilterProps {
   category?: string;
@@ -19,10 +20,41 @@ export const CategoryFilter = ({
   availableCategories,
   onCategoryChange
 }: CategoryFilterProps) => {
-  // Filter out empty categories and duplicates
-  const uniqueCategories = [...new Set(availableCategories)]
-    .filter(category => category && category.trim() !== '')
-    .sort();
+  const { subjects } = useUserSubjects();
+  
+  // Helper function to check if a category name already exists as a subject
+  const isCategoryExistingSubject = (categoryName: string): boolean => {
+    return subjects.some(subject => 
+      subject.name.toLowerCase() === categoryName.toLowerCase()
+    );
+  };
+  
+  // Filter out empty categories, duplicates, and categories that overlap with subjects
+  const getUniqueCategories = () => {
+    return [...new Set(availableCategories)]
+      .filter(category => 
+        category && 
+        category.trim() !== '' &&
+        !isCategoryExistingSubject(category)
+      )
+      .sort();
+  };
+  
+  const uniqueCategories = getUniqueCategories();
+  
+  // Combine user subjects and other unique categories
+  const allOptions = [
+    ...subjects.map(subject => ({ 
+      id: subject.id, 
+      name: subject.name, 
+      isSubject: true 
+    })),
+    ...uniqueCategories.map(category => ({ 
+      id: category, 
+      name: category, 
+      isSubject: false 
+    }))
+  ].sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <FilterOption label="Subject">
@@ -37,9 +69,10 @@ export const CategoryFilter = ({
         </SelectTrigger>
         <SelectContent className="bg-white">
           <SelectItem value="_any">Any subject</SelectItem>
-          {uniqueCategories.map(category => (
-            <SelectItem key={category} value={category}>
-              {category}
+          
+          {allOptions.map(option => (
+            <SelectItem key={option.id} value={option.name}>
+              {option.name}
             </SelectItem>
           ))}
         </SelectContent>

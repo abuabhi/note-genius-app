@@ -15,16 +15,34 @@ interface NoteMetadataFieldsProps {
   control: Control<any>;
   availableCategories: string[];
   onNewCategoryAdd: (category: string) => void;
-  setValue: UseFormSetValue<any>; // Add setValue from useForm
+  setValue: UseFormSetValue<any>;
 }
 
 export const NoteMetadataFields = ({
   control,
   availableCategories,
   onNewCategoryAdd,
-  setValue // Receive setValue from parent component
+  setValue
 }: NoteMetadataFieldsProps) => {
   const { subjects, isLoading: loadingSubjects } = useUserSubjects();
+  
+  // Helper function to check if a category name matches an existing subject
+  const isCategoryExistingSubject = (categoryName: string): boolean => {
+    return subjects.some(subject => 
+      subject.name.toLowerCase() === categoryName.toLowerCase()
+    );
+  };
+  
+  // Get unique categories that don't overlap with subjects
+  const getUniqueCategories = () => {
+    return availableCategories.filter(category => 
+      category && 
+      category.trim() !== '' && 
+      !isCategoryExistingSubject(category)
+    );
+  };
+  
+  const uniqueCategories = getUniqueCategories();
 
   return (
     <>
@@ -86,7 +104,7 @@ export const NoteMetadataFields = ({
         )}
       />
 
-      {/* Subject Field - Now directly handles subject_id */}
+      {/* Subject Field */}
       <FormField
         control={control}
         name="subject_id"
@@ -97,18 +115,17 @@ export const NoteMetadataFields = ({
               onValueChange={(value) => {
                 field.onChange(value);
                 
-                // For subjects that are not user subjects (General category), set an empty string
                 if (value === "General") {
                   field.onChange("");
-                  
-                  // Also update the category field
                   setValue("category", "General");
-                }
-                // For user subjects, find the name and update the category field
-                else {
+                } else {
+                  // For user subjects, find the name and update the category field
                   const selectedSubject = subjects.find(s => s.id === value);
                   if (selectedSubject) {
                     setValue("category", selectedSubject.name);
+                  } else {
+                    // For other categories without subject_id, use the value directly
+                    setValue("category", value);
                   }
                 }
               }} 
@@ -138,7 +155,7 @@ export const NoteMetadataFields = ({
                 <SelectGroup>
                   <SelectLabel>Other Categories</SelectLabel>
                   <SelectItem value="General">General</SelectItem>
-                  {availableCategories.map((category) => (
+                  {uniqueCategories.map((category) => (
                     <SelectItem key={category} value={category}>
                       {category}
                     </SelectItem>

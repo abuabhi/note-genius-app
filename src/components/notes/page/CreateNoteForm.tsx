@@ -13,6 +13,7 @@ import { toast } from '@/components/ui/sonner';
 import { NoteMetadataFields } from './form/NoteMetadataFields';
 import { NoteContentField } from './form/NoteContentField';
 import { FormSubmitButton } from './form/FormSubmitButton';
+import { useUserSubjects } from '@/hooks/useUserSubjects';
 
 // Updated schema to include subject_id
 const formSchema = z.object({
@@ -36,6 +37,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
   const [selectedTags, setSelectedTags] = useState<{ id?: string; name: string; color: string }[]>([]);
   const [availableTags, setAvailableTags] = useState<{ id: string; name: string; color: string }[]>([]);
   const { user } = useAuth();
+  const { subjects } = useUserSubjects();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -48,10 +50,16 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
     },
   });
 
-  // Handle new category creation
+  // Handle new category creation - only add if it doesn't match an existing subject
   const handleNewCategoryAdd = (newCategory: string) => {
-    // Add category to global state
-    addCategory(newCategory);
+    const isExistingSubject = subjects.some(subject => 
+      subject.name.toLowerCase() === newCategory.toLowerCase()
+    );
+    
+    if (!isExistingSubject) {
+      // Add category to global state only if it's not an existing subject
+      addCategory(newCategory);
+    }
   };
   
   useEffect(() => {
