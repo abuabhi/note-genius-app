@@ -31,17 +31,64 @@ export const AddNoteDropdown: React.FC<AddNoteDropdownProps> = ({
   const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
   const [isScanDialogOpen, setIsScanDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // When passing to ScanNoteDialog, convert the return type
   const handleScanSave = async (note: Omit<Note, 'id'>): Promise<boolean> => {
-    const result = await onScanNote(note);
-    return result !== null;
+    if (isSubmitting) return false;
+    
+    setIsSubmitting(true);
+    try {
+      const result = await onScanNote(note);
+      if (result) {
+        setIsScanDialogOpen(false);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error in scan save:", error);
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Similarly for ImportDialog
   const handleImportSave = async (note: Omit<Note, 'id'>): Promise<boolean> => {
-    const result = await onImportNote(note);
-    return result !== null;
+    if (isSubmitting) return false;
+    
+    setIsSubmitting(true);
+    try {
+      const result = await onImportNote(note);
+      if (result) {
+        setIsImportDialogOpen(false);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error in import save:", error);
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleManualSave = async (note: Omit<Note, 'id'>): Promise<Note | null> => {
+    if (isSubmitting) return null;
+    
+    setIsSubmitting(true);
+    try {
+      const result = await onSaveNote(note);
+      if (result) {
+        setIsManualDialogOpen(false);
+      }
+      return result;
+    } catch (error) {
+      console.error("Error in manual save:", error);
+      return null;
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -70,7 +117,9 @@ export const AddNoteDropdown: React.FC<AddNoteDropdownProps> = ({
       </DropdownMenu>
 
       {/* Manual Entry Dialog */}
-      <Dialog open={isManualDialogOpen} onOpenChange={setIsManualDialogOpen}>
+      <Dialog open={isManualDialogOpen} onOpenChange={(open) => {
+        if (!isSubmitting) setIsManualDialogOpen(open);
+      }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-mint-200 bg-white">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold text-mint-800">Create New Note</DialogTitle>
@@ -79,13 +128,7 @@ export const AddNoteDropdown: React.FC<AddNoteDropdownProps> = ({
             </DialogDescription>
           </DialogHeader>
           <div className="py-2">
-            <CreateNoteForm 
-              onSave={async (note) => {
-                const result = await onSaveNote(note);
-                if (result) setIsManualDialogOpen(false);
-                return result;
-              }}
-            />
+            <CreateNoteForm onSave={handleManualSave} />
           </div>
         </DialogContent>
       </Dialog>
@@ -95,14 +138,18 @@ export const AddNoteDropdown: React.FC<AddNoteDropdownProps> = ({
         onSaveNote={handleScanSave} 
         isPremiumUser={isPremiumUser} 
         isVisible={isScanDialogOpen}
-        onClose={() => setIsScanDialogOpen(false)}
+        onClose={() => {
+          if (!isSubmitting) setIsScanDialogOpen(false);
+        }}
       />
       
       {/* Import Dialog is handled by its own component */}
       <ImportDialog 
         onSaveNote={handleImportSave}
         isVisible={isImportDialogOpen}
-        onClose={() => setIsImportDialogOpen(false)}
+        onClose={() => {
+          if (!isSubmitting) setIsImportDialogOpen(false);
+        }}
       />
     </>
   );

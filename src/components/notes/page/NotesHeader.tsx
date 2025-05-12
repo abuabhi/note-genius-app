@@ -38,10 +38,11 @@ export const NotesHeader = ({
   const { filteredNotes } = useNotes();
   const navigate = useNavigate();
   
-  // State to track which dialogs are open
+  // State to track which dialogs are open and submission status
   const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
   const [isScanDialogOpen, setIsScanDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Check if OCR is enabled for the user's tier
   const isOCREnabled = tierLimits?.ocr_enabled ?? false;
@@ -49,6 +50,65 @@ export const NotesHeader = ({
   // Navigate to the note to flashcard conversion page
   const handleNoteToFlashcard = () => {
     navigate("/note-to-flashcard");
+  };
+
+  // Handle manual note save
+  const handleManualSave = async (note: Omit<Note, 'id'>): Promise<Note | null> => {
+    if (isSubmitting) return null;
+    
+    setIsSubmitting(true);
+    try {
+      const result = await onSaveNote(note);
+      if (result) {
+        setIsManualDialogOpen(false);
+      }
+      return result;
+    } catch (error) {
+      console.error("Error in manual save:", error);
+      return null;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle scan note save
+  const handleScanSave = async (note: Omit<Note, 'id'>): Promise<boolean> => {
+    if (isSubmitting) return false;
+    
+    setIsSubmitting(true);
+    try {
+      const result = await onScanNote(note);
+      if (result) {
+        setIsScanDialogOpen(false);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error in scan save:", error);
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle import note save
+  const handleImportSave = async (note: Omit<Note, 'id'>): Promise<boolean> => {
+    if (isSubmitting) return false;
+    
+    setIsSubmitting(true);
+    try {
+      const result = await onImportNote(note);
+      if (result) {
+        setIsImportDialogOpen(false);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error in import save:", error);
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -129,7 +189,9 @@ export const NotesHeader = ({
       </div>
 
       {/* Manual Entry Dialog */}
-      <Dialog open={isManualDialogOpen} onOpenChange={setIsManualDialogOpen}>
+      <Dialog open={isManualDialogOpen} onOpenChange={(open) => {
+        if (!isSubmitting) setIsManualDialogOpen(open);
+      }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-mint-200 bg-white">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold text-mint-800">Create New Note</DialogTitle>
@@ -138,38 +200,28 @@ export const NotesHeader = ({
             </DialogDescription>
           </DialogHeader>
           <div className="py-2">
-            <CreateNoteForm 
-              onSave={async (note) => {
-                const result = await onSaveNote(note);
-                if (result) setIsManualDialogOpen(false);
-                return result;
-              }}
-            />
+            <CreateNoteForm onSave={handleManualSave} />
           </div>
         </DialogContent>
       </Dialog>
 
       {/* Scan Dialog */}
       <ScanNoteDialog 
-        onSaveNote={async (note) => {
-          const result = await onScanNote(note);
-          if (result) setIsScanDialogOpen(false);
-          return result !== null;
-        }}
+        onSaveNote={handleScanSave}
         isPremiumUser={isOCREnabled}
         isVisible={isScanDialogOpen}
-        onClose={() => setIsScanDialogOpen(false)}
+        onClose={() => {
+          if (!isSubmitting) setIsScanDialogOpen(false);
+        }}
       />
       
       {/* Import Dialog */}
       <ImportDialog 
-        onSaveNote={async (note) => {
-          const result = await onImportNote(note);
-          if (result) setIsImportDialogOpen(false);
-          return result !== null;
-        }}
+        onSaveNote={handleImportSave}
         isVisible={isImportDialogOpen}
-        onClose={() => setIsImportDialogOpen(false)}
+        onClose={() => {
+          if (!isSubmitting) setIsImportDialogOpen(false);
+        }}
       />
     </div>
   );

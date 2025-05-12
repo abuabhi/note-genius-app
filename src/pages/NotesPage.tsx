@@ -55,7 +55,14 @@ const NotesPage = () => {
     try {
       // If a category is provided and it matches an existing subject, use that subject's ID
       // but don't create a new category
-      const subject_id = note.subject_id || findSubjectIdByName(note.category);
+      let subject_id = note.subject_id || findSubjectIdByName(note.category);
+      let category = note.category;
+      
+      // If category matches a subject name, set it accordingly
+      if (note.category && isCategoryExistingSubject(note.category)) {
+        // Clear the category since we're using the subject_id instead
+        category = ''; 
+      }
       
       // Only add the category if it's not already an existing subject
       if (note.category && 
@@ -67,6 +74,7 @@ const NotesPage = () => {
       
       const newNote = await addNote({
         ...note,
+        category,
         subject_id
       });
       
@@ -89,7 +97,14 @@ const NotesPage = () => {
   const handleScanNote = async (note: Omit<Note, 'id'>): Promise<Note | null> => {
     try {
       // If a category is provided and it matches an existing subject, use that subject's ID
-      const subject_id = note.subject_id || findSubjectIdByName(note.category);
+      let subject_id = note.subject_id || findSubjectIdByName(note.category);
+      let category = note.category;
+      
+      // If category matches a subject name, set it accordingly
+      if (note.category && isCategoryExistingSubject(note.category)) {
+        // Clear the category since we're using the subject_id instead
+        category = ''; 
+      }
       
       // Only add the category if it's not already an existing subject
       if (note.category && 
@@ -101,8 +116,9 @@ const NotesPage = () => {
       
       const newNote = await addNote({
         ...note,
-        sourceType: 'scan',
-        subject_id
+        category,
+        subject_id,
+        sourceType: 'scan'
       });
       
       if (newNote) {
@@ -124,7 +140,14 @@ const NotesPage = () => {
   const handleImportNote = async (note: Omit<Note, 'id'>): Promise<Note | null> => {
     try {
       // If a category is provided and it matches an existing subject, use that subject's ID
-      const subject_id = note.subject_id || findSubjectIdByName(note.category);
+      let subject_id = note.subject_id || findSubjectIdByName(note.category);
+      let category = note.category;
+      
+      // If category matches a subject name, set it accordingly
+      if (note.category && isCategoryExistingSubject(note.category)) {
+        // Clear the category since we're using the subject_id instead
+        category = ''; 
+      }
       
       // Only add the category if it's not already an existing subject
       if (note.category && 
@@ -136,8 +159,9 @@ const NotesPage = () => {
       
       const newNote = await addNote({
         ...note,
-        sourceType: 'import',
-        subject_id
+        category,
+        subject_id,
+        sourceType: 'import'
       });
       
       if (newNote) {
