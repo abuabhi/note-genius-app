@@ -29,11 +29,10 @@ export const NoteStudyViewContent: React.FC<NoteStudyViewContentProps> = ({
         />
       </div>
       <NoteContentDisplay
+        note={note}
         content={note.content || ''}
         fontSize={fontSize}
         textAlign={textAlign}
-        showScannedImage={note.sourceType === 'scan' && !!note.scanData?.originalImageUrl}
-        scannedImageUrl={note.scanData?.originalImageUrl}
       />
     </div>
   );

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { updateNoteInDatabase } from "@/contexts/notes/operations";
@@ -137,13 +136,13 @@ export const useNoteStudyEditor = (note: Note) => {
           toast.success("Summary created successfully");
         } else if (typeToApply === 'extract-key-points') {
           // For key points, we need to update the enhancements object
-          const enhancements = note.enhancements || {};
+          const currentEnhancements = note.enhancements || {};
           
           await supabase
             .from('notes')
             .update({
               enhancements: {
-                ...enhancements,
+                ...currentEnhancements,
                 keyPoints: enhancedContent,
                 last_enhanced_at: new Date().toISOString()
               }
@@ -152,7 +151,7 @@ export const useNoteStudyEditor = (note: Note) => {
           
           // Update local note
           note.enhancements = {
-            ...enhancements,
+            ...currentEnhancements,
             keyPoints: enhancedContent,
             last_enhanced_at: new Date().toISOString()
           };

@@ -21,7 +21,7 @@ export const enhancementOptions: EnhancementOption[] = [
     replaceContent: false
   },
   {
-    id: 'generate-questions',
+    id: 'create-flashcards',
     value: 'create-flashcards',
     title: 'Create Flashcards',
     description: 'Create flashcards based on your note (Coming Soon)',

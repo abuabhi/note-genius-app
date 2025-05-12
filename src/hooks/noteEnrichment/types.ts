@@ -2,7 +2,7 @@
 export type EnhancementFunction = 
   | 'summarize' 
   | 'extract-key-points' 
-  | 'generate-questions' 
+  | 'create-flashcards' 
   | 'improve-clarity' 
   | 'convert-to-markdown'
   | 'fix-spelling-grammar';
