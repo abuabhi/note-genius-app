@@ -20,9 +20,9 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
     textAlign,
     isFullWidth,
     isFullScreen,
-    increaseFontSize,
-    decreaseFontSize,
-    changeTextAlign,
+    handleIncreaseFontSize,
+    handleDecreaseFontSize,
+    handleTextAlign,
     toggleWidth,
     toggleFullScreen,
   } = useStudyViewState();
@@ -42,7 +42,18 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
     setSelectedTags
   } = useNoteStudyEditor(note);
 
-  const { tags } = useNotes();
+  // Get available tags from the notes context
+  const { getAllTags } = useNotes();
+  const [availableTags, setAvailableTags] = useState<{ id: string; name: string; color: string }[]>([]);
+  
+  // Fetch available tags when component mounts
+  useEffect(() => {
+    const loadTags = async () => {
+      const tags = await getAllTags();
+      setAvailableTags(tags);
+    };
+    loadTags();
+  }, [getAllTags]);
 
   return (
     <Card
@@ -59,9 +70,9 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
         isEditing={isEditing}
         isSaving={isSaving}
         editableTitle={editableTitle}
-        onIncreaseFontSize={increaseFontSize}
-        onDecreaseFontSize={decreaseFontSize}
-        onChangeTextAlign={changeTextAlign}
+        onIncreaseFontSize={handleIncreaseFontSize}
+        onDecreaseFontSize={handleDecreaseFontSize}
+        onChangeTextAlign={handleTextAlign}
         onToggleWidth={toggleWidth}
         onToggleFullScreen={toggleFullScreen}
         onToggleEditing={toggleEditing}
@@ -76,7 +87,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
             note={note}
             editableContent={editableContent}
             selectedTags={selectedTags}
-            availableTags={tags}
+            availableTags={availableTags}
             isSaving={isSaving}
             handleContentChange={handleContentChange}
             handleSaveContent={handleSaveContent}

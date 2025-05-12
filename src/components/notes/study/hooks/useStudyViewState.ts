@@ -1,71 +1,44 @@
 
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 
-export type TextAlignType = "left" | "center" | "right" | "justify";
+export type TextAlignType = "center" | "justify";
 
 export const useStudyViewState = () => {
+  // State for font size
   const [fontSize, setFontSize] = useState(16);
-  const [textAlign, setTextAlign] = useState<TextAlignType>("left");
+  
+  // State for text alignment
+  const [textAlign, setTextAlign] = useState<TextAlignType>("center");
+  
+  // State for full width
   const [isFullWidth, setIsFullWidth] = useState(false);
+  
+  // State for full screen
   const [isFullScreen, setIsFullScreen] = useState(false);
-
-  // Load preferences from localStorage
-  useEffect(() => {
-    const savedFontSize = localStorage.getItem("studyViewFontSize");
-    const savedTextAlign = localStorage.getItem("studyViewTextAlign");
-    const savedFullWidth = localStorage.getItem("studyViewFullWidth");
-
-    if (savedFontSize) setFontSize(parseInt(savedFontSize));
-    if (savedTextAlign) setTextAlign(savedTextAlign as TextAlignType);
-    if (savedFullWidth) setIsFullWidth(savedFullWidth === "true");
+  
+  // Handlers for font size
+  const handleIncreaseFontSize = useCallback(() => {
+    setFontSize(prev => Math.min(prev + 1, 24));
   }, []);
-
-  // Save preferences to localStorage
-  useEffect(() => {
-    localStorage.setItem("studyViewFontSize", fontSize.toString());
-    localStorage.setItem("studyViewTextAlign", textAlign);
-    localStorage.setItem("studyViewFullWidth", isFullWidth.toString());
-  }, [fontSize, textAlign, isFullWidth]);
-
-  // Toggle fullscreen
-  useEffect(() => {
-    const handleFullScreenChange = () => {
-      setIsFullScreen(!!document.fullscreenElement);
-    };
-
-    document.addEventListener("fullscreenchange", handleFullScreenChange);
-    return () => {
-      document.removeEventListener("fullscreenchange", handleFullScreenChange);
-    };
+  
+  const handleDecreaseFontSize = useCallback(() => {
+    setFontSize(prev => Math.max(prev - 1, 12));
   }, []);
-
-  // Font size handlers
-  const handleIncreaseFontSize = () => {
-    setFontSize((prev) => Math.min(prev + 1, 24));
-  };
-
-  const handleDecreaseFontSize = () => {
-    setFontSize((prev) => Math.max(prev - 1, 12));
-  };
-
-  // Text alignment
-  const handleTextAlign = (align: TextAlignType) => {
+  
+  // Handler for text alignment
+  const handleTextAlign = useCallback((align: TextAlignType) => {
     setTextAlign(align);
-  };
-
-  // Width toggle
-  const toggleWidth = () => {
-    setIsFullWidth((prev) => !prev);
-  };
-
-  // Fullscreen toggle
-  const toggleFullScreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
-    } else if (document.exitFullscreen) {
-      document.exitFullscreen();
-    }
-  };
+  }, []);
+  
+  // Handler for toggling width
+  const toggleWidth = useCallback(() => {
+    setIsFullWidth(prev => !prev);
+  }, []);
+  
+  // Handler for toggling full screen
+  const toggleFullScreen = useCallback(() => {
+    setIsFullScreen(prev => !prev);
+  }, []);
 
   return {
     fontSize,
@@ -79,3 +52,5 @@ export const useStudyViewState = () => {
     toggleFullScreen
   };
 };
+
+export default useStudyViewState;

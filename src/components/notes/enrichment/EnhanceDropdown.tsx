@@ -28,7 +28,6 @@ export const EnhanceDropdown = ({
   const {
     isProcessing,
     enhancementOptions,
-    setSelectedEnrichment,
     enrichNote,
     isEnabled,
   } = useNoteEnrichment();
@@ -37,7 +36,6 @@ export const EnhanceDropdown = ({
     if (!noteId || !noteContent) return;
     
     try {
-      setSelectedEnrichment(enhancement);
       const result = await enrichNote(noteId, noteContent, enhancement, noteTitle);
       
       if (result.success) {
@@ -74,12 +72,12 @@ export const EnhanceDropdown = ({
         {enhancementOptions.map((option) => (
           <DropdownMenuItem
             key={option.id}
-            onClick={() => handleEnhancementSelect(option.id)}
+            onClick={() => handleEnhancementSelect(option.id as EnhancementFunction)}
             className="cursor-pointer"
             disabled={isProcessing}
           >
             <div className="flex flex-col">
-              <span>{option.name}</span>
+              <span>{option.title}</span>
               <span className="text-xs text-muted-foreground">{option.description}</span>
             </div>
           </DropdownMenuItem>

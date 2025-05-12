@@ -53,6 +53,27 @@ export const NoteProvider = ({ children }: { children: ReactNode }) => {
     filterByTag(tagName, setSearchTerm);
   };
 
+  // Get all tags from the notes
+  const tags = React.useMemo(() => {
+    const tagsSet = new Set<string>();
+    const tagsWithDetails: { id: string; name: string; color: string }[] = [];
+    
+    notes.forEach(note => {
+      note.tags?.forEach(tag => {
+        if (!tagsSet.has(tag.name)) {
+          tagsSet.add(tag.name);
+          tagsWithDetails.push({
+            id: tag.id || tag.name,
+            name: tag.name,
+            color: tag.color
+          });
+        }
+      });
+    });
+    
+    return tagsWithDetails;
+  }, [notes]);
+
   return (
     <NoteContext.Provider value={{ 
       notes, 
@@ -82,7 +103,8 @@ export const NoteProvider = ({ children }: { children: ReactNode }) => {
       resetFilters,
       availableCategories,
       addCategory,
-      setNotes  // Include setNotes in the context value
+      setNotes,
+      tags  // Added tags property to context value
     }}>
       {children}
     </NoteContext.Provider>
