@@ -12,6 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 interface DeleteActionProps {
   onDelete: (id: string) => void;
@@ -20,6 +21,7 @@ interface DeleteActionProps {
 
 export const DeleteAction = ({ onDelete, noteId }: DeleteActionProps) => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -29,11 +31,19 @@ export const DeleteAction = ({ onDelete, noteId }: DeleteActionProps) => {
     setShowConfirmDialog(true);
   };
 
-  const handleConfirmDelete = () => {
-    // Call the actual delete function
-    onDelete(noteId);
-    // Close the dialog
-    setShowConfirmDialog(false);
+  const handleConfirmDelete = async () => {
+    try {
+      setIsDeleting(true);
+      // Call the actual delete function
+      await onDelete(noteId);
+      // Close the dialog
+      setShowConfirmDialog(false);
+    } catch (error) {
+      console.error("Error deleting note:", error);
+      toast.error("Failed to delete note. Please try again.");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleCancelDelete = () => {
@@ -68,8 +78,9 @@ export const DeleteAction = ({ onDelete, noteId }: DeleteActionProps) => {
             <AlertDialogAction 
               onClick={handleConfirmDelete}
               className="bg-red-500 hover:bg-red-600"
+              disabled={isDeleting}
             >
-              Delete
+              {isDeleting ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

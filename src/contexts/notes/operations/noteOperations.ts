@@ -92,6 +92,7 @@ export const useNoteOperations = (
     try {
       // Show deletion in progress with loading indicator
       const toastId = toast.loading("Deleting note...");
+      console.log("Starting deletion process for note ID:", id);
       
       // Optimistic update - remove note from UI immediately
       const deletedNote = notes.find(note => note.id === id);
@@ -104,13 +105,15 @@ export const useNoteOperations = (
       
       try {
         // Attempt to delete from database
+        console.log("Calling deleteNoteFromDatabase for ID:", id);
         await deleteNoteFromDatabase(id);
         
         // Update toast on success
         toast.dismiss(toastId);
         toast.success("Note deleted successfully");
+        console.log("Note deletion completed successfully");
       } catch (error) {
-        console.error('Error deleting note:', error);
+        console.error('Database deletion error:', error);
         
         // Revert the optimistic update by restoring the deleted note
         if (deletedNote) {

@@ -12,6 +12,7 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
   const { pinNote, archiveNote, deleteNote } = useNotes();
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   if (notes.length === 0) {
@@ -30,11 +31,15 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
 
   const handleDelete = async (id: string) => {
     try {
+      console.log("NotesGrid - Starting deletion for note ID:", id);
+      setIsDeletingId(id);
       await deleteNote(id);
       toast.success("Note deleted");
     } catch (error) {
       console.error("Error deleting note:", error);
-      toast.error("Failed to delete note");
+      toast.error("Failed to delete note. Please try again.");
+    } finally {
+      setIsDeletingId(null);
     }
   };
 
@@ -60,7 +65,7 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
             onShowDetails={handleShowDetails}
             onPin={handlePin}
             onDelete={handleDelete}
-            confirmDelete={null}
+            isDeleting={isDeletingId === note.id}
           />
         ))}
       </div>

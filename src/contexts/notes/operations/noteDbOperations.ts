@@ -68,16 +68,28 @@ export const deleteNoteFromDatabase = async (id: string): Promise<void> => {
   try {
     console.log("Attempting to delete note with ID:", id);
     
-    // Always use the edge function which handles related records properly
-    const { error: edgeFunctionError } = await supabase.functions.invoke('delete-note', {
-      body: { noteId: id }
-    });
+    // First attempt direct deletion with proper error handling
+    const { error: directDeleteError } = await supabase
+      .from('notes')
+      .delete()
+      .eq('id', id);
+      
+    if (directDeleteError) {
+      console.warn('Direct delete failed, attempting to use edge function:', directDeleteError);
+      
+      // If direct delete fails, try using the edge function
+      const { error: edgeFunctionError } = await supabase.functions.invoke('delete-note', {
+        body: { noteId: id }
+      });
 
-    if (edgeFunctionError) {
-      console.error('Edge function delete error:', edgeFunctionError);
-      throw edgeFunctionError;
+      if (edgeFunctionError) {
+        console.error('Edge function delete error:', edgeFunctionError);
+        throw edgeFunctionError;
+      } else {
+        console.log("Note deleted successfully via edge function");
+      }
     } else {
-      console.log("Note deleted successfully via edge function");
+      console.log("Note deleted successfully via direct deletion");
     }
   } catch (error) {
     console.error('Error deleting note:', error);
