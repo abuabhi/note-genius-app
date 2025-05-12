@@ -28,6 +28,7 @@ interface StudyViewControlsProps {
   isFullScreen: boolean;
   isEditing?: boolean;
   isSaving?: boolean;
+  hideAlignment?: boolean; // Added option to hide alignment controls
   onIncreaseFontSize: () => void;
   onDecreaseFontSize: () => void;
   onChangeTextAlign: (align: TextAlignType) => void;
@@ -44,6 +45,7 @@ export const StudyViewControls: React.FC<StudyViewControlsProps> = ({
   isFullScreen,
   isEditing = false,
   isSaving = false,
+  hideAlignment = false, // Default to showing the alignment control
   onIncreaseFontSize,
   onDecreaseFontSize,
   onChangeTextAlign,
@@ -146,28 +148,31 @@ export const StudyViewControls: React.FC<StudyViewControlsProps> = ({
         )}
       </Button>
       
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            title="Text alignment"
-          >
-            {getAlignmentIcon()}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => onChangeTextAlign("center")}>
-            <AlignCenter className="h-4 w-4 mr-2" />
-            <span>Align Center</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onChangeTextAlign("justify")}>
-            <AlignJustify className="h-4 w-4 mr-2" />
-            <span>Justify</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {/* Only render alignment control if not hidden */}
+      {!hideAlignment && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              title="Text alignment"
+            >
+              {getAlignmentIcon()}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onChangeTextAlign("center")}>
+              <AlignCenter className="h-4 w-4 mr-2" />
+              <span>Align Center</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onChangeTextAlign("justify")}>
+              <AlignJustify className="h-4 w-4 mr-2" />
+              <span>Justify</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </div>
   );
 };

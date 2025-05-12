@@ -1,6 +1,5 @@
 
 import React from "react";
-import { EnhanceNoteButton } from "../../enrichment/EnhanceNoteButton";
 import { RichTextEditor } from "@/components/ui/rich-text/RichTextEditor";
 import { TagSelector } from "../../TagSelector";
 import { Note } from "@/types/note";
@@ -25,20 +24,10 @@ export const NoteStudyEditForm: React.FC<NoteStudyEditFormProps> = ({
   selectedTags,
   availableTags,
   handleContentChange,
-  handleEnhanceContent,
   setSelectedTags
 }) => {
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <EnhanceNoteButton
-          noteId={note.id}
-          noteTitle={note.title}
-          noteContent={editableContent}
-          onEnhance={handleEnhanceContent}
-        />
-      </div>
-      
       <div className="space-y-4">
         <div>
           <label className="text-sm font-medium mb-1 block">Content</label>

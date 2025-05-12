@@ -1,51 +1,54 @@
 
-import React from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Note } from "@/types/note";
-import { useStudyViewState } from "./hooks/useStudyViewState";
 import { StudyViewHeader } from "./header/StudyViewHeader";
-import { useNoteStudyEditor } from "./hooks/useNoteStudyEditor";
-import { NoteStudyViewContent } from "./viewer/NoteStudyViewContent";
+import { NoteContentDisplay } from "./NoteContentDisplay";
+import { useStudyViewState } from "./hooks/useStudyViewState";
 import { NoteStudyEditForm } from "./editor/NoteStudyEditForm";
-import { NoteManagement } from "../NoteManagement";
+import { useNotes } from "@/contexts/NoteContext";
+import { useNoteStudyEditor } from "./hooks/useNoteStudyEditor";
 
 interface NoteStudyViewProps {
   note: Note;
 }
 
-export const NoteStudyView: React.FC<NoteStudyViewProps> = ({ note }) => {
+export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
+  // Use the custom hook for managing the study view state
   const {
     fontSize,
     textAlign,
     isFullWidth,
     isFullScreen,
-    handleIncreaseFontSize,
-    handleDecreaseFontSize,
-    handleTextAlign,
+    increaseFontSize,
+    decreaseFontSize,
+    changeTextAlign,
     toggleWidth,
-    toggleFullScreen
+    toggleFullScreen,
   } = useStudyViewState();
-  
+
+  // Use the custom hook for managing the edit state
   const {
     isEditing,
-    editableTitle,
-    editableContent,
-    selectedTags,
-    availableTags,
     isSaving,
-    toggleEditing,
-    handleTitleChange,
+    editableContent,
+    editableTitle,
+    selectedTags,
     handleContentChange,
+    handleTitleChange,
     handleSaveContent,
+    toggleEditing,
     handleEnhanceContent,
     setSelectedTags
   } = useNoteStudyEditor(note);
 
+  const { tags } = useNotes();
+
   return (
     <Card
-      className={`bg-white text-gray-800 border-gray-200 ${
+      className={`border-mint-100 mb-5 ${
         isFullWidth ? "max-w-none" : "max-w-4xl mx-auto"
-      } transition-all duration-300`}
+      } ${isFullScreen ? "fixed inset-0 z-50 rounded-none" : ""}`}
     >
       <StudyViewHeader
         note={note}
@@ -54,25 +57,26 @@ export const NoteStudyView: React.FC<NoteStudyViewProps> = ({ note }) => {
         isFullWidth={isFullWidth}
         isFullScreen={isFullScreen}
         isEditing={isEditing}
+        isSaving={isSaving}
         editableTitle={editableTitle}
-        onIncreaseFontSize={handleIncreaseFontSize}
-        onDecreaseFontSize={handleDecreaseFontSize}
-        onChangeTextAlign={handleTextAlign}
+        onIncreaseFontSize={increaseFontSize}
+        onDecreaseFontSize={decreaseFontSize}
+        onChangeTextAlign={changeTextAlign}
         onToggleWidth={toggleWidth}
         onToggleFullScreen={toggleFullScreen}
         onToggleEditing={toggleEditing}
         onSave={handleSaveContent}
         onTitleChange={handleTitleChange}
-        isSaving={isSaving}
+        onEnhance={handleEnhanceContent} // Pass the enhance handler
       />
 
-      <CardContent className="p-6 text-gray-800">
+      <CardContent className="p-4 md:p-6">
         {isEditing ? (
           <NoteStudyEditForm
             note={note}
             editableContent={editableContent}
             selectedTags={selectedTags}
-            availableTags={availableTags}
+            availableTags={tags}
             isSaving={isSaving}
             handleContentChange={handleContentChange}
             handleSaveContent={handleSaveContent}
@@ -81,16 +85,12 @@ export const NoteStudyView: React.FC<NoteStudyViewProps> = ({ note }) => {
             setSelectedTags={setSelectedTags}
           />
         ) : (
-          <NoteStudyViewContent
-            note={note}
+          <NoteContentDisplay
+            content={note.content || note.description || ""}
             fontSize={fontSize}
             textAlign={textAlign}
-            handleEnhanceContent={handleEnhanceContent}
           />
         )}
-        
-        {/* Add note management section at the bottom */}
-        <NoteManagement noteId={note.id} />
       </CardContent>
     </Card>
   );

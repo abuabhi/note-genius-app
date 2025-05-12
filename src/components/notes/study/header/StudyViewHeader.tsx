@@ -9,6 +9,7 @@ import { TextAlignType } from "../hooks/useStudyViewState";
 import { generateColorFromString, getBestTextColor } from "@/utils/colorUtils";
 import { Input } from "@/components/ui/input";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
+import { EnhanceDropdown } from "../../enrichment/EnhanceDropdown";
 
 interface StudyViewHeaderProps {
   note: Note;
@@ -27,6 +28,7 @@ interface StudyViewHeaderProps {
   onToggleEditing: () => void;
   onSave: () => void;
   onTitleChange?: (title: string) => void;
+  onEnhance?: (content: string) => void;
 }
 
 export const StudyViewHeader: React.FC<StudyViewHeaderProps> = ({
@@ -45,7 +47,8 @@ export const StudyViewHeader: React.FC<StudyViewHeaderProps> = ({
   onToggleFullScreen,
   onToggleEditing,
   onSave,
-  onTitleChange
+  onTitleChange,
+  onEnhance
 }) => {
   const { subjects } = useUserSubjects();
   
@@ -119,21 +122,34 @@ export const StudyViewHeader: React.FC<StudyViewHeaderProps> = ({
         </div>
       </div>
 
-      <StudyViewControls
-        fontSize={fontSize}
-        textAlign={textAlign}
-        isFullWidth={isFullWidth}
-        isFullScreen={isFullScreen}
-        onIncreaseFontSize={onIncreaseFontSize}
-        onDecreaseFontSize={onDecreaseFontSize}
-        onChangeTextAlign={onChangeTextAlign}
-        onToggleWidth={onToggleWidth}
-        onToggleFullScreen={onToggleFullScreen}
-        isEditing={isEditing}
-        onToggleEditing={onToggleEditing}
-        onSave={onSave}
-        isSaving={isSaving}
-      />
+      <div className="flex items-center gap-2">
+        {/* Add Enhance dropdown button */}
+        {onEnhance && (
+          <EnhanceDropdown 
+            noteId={note.id}
+            noteTitle={note.title}
+            noteContent={note.content || ""}
+            onEnhance={onEnhance}
+          />
+        )}
+        
+        <StudyViewControls
+          fontSize={fontSize}
+          textAlign={textAlign}
+          isFullWidth={isFullWidth}
+          isFullScreen={isFullScreen}
+          onIncreaseFontSize={onIncreaseFontSize}
+          onDecreaseFontSize={onDecreaseFontSize}
+          onChangeTextAlign={onChangeTextAlign}
+          onToggleWidth={onToggleWidth}
+          onToggleFullScreen={onToggleFullScreen}
+          isEditing={isEditing}
+          onToggleEditing={onToggleEditing}
+          onSave={onSave}
+          isSaving={isSaving}
+          hideAlignment={true} // Hide the alignment control from StudyViewControls
+        />
+      </div>
     </CardHeader>
   );
 };
