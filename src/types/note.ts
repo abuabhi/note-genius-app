@@ -27,6 +27,8 @@ export interface Note {
   subject_id?: string;
   enhancements?: {
     keyPoints?: string;
+    markdown?: string;
+    improved?: string;
     flashcards?: any[]; // For future implementation
     last_enhanced_at?: string;
   };
