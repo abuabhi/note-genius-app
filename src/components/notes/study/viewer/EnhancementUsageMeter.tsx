@@ -20,9 +20,8 @@ export const EnhancementUsageMeter: React.FC<EnhancementUsageMeterProps> = ({
     
     if (monthlyLimit === null) {
       return (
-        <div className="flex items-center text-xs text-mint-700 mb-2 gap-1">
-          <Sparkles className="w-3 h-3" />
-          <span>Unlimited enhancements</span>
+        <div className="text-xs text-muted-foreground mb-2">
+          <span className="text-mint-700 text-xs italic">Unlimited AI enhancements available</span>
         </div>
       );
     }
