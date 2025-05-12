@@ -79,7 +79,7 @@ export const EnhancementTabs = ({
           content={content} 
           fontSize={fontSize} 
           textAlign={textAlign}
-          className="prose-sm"
+          className="prose-sm prose-headings:font-medium prose-headings:text-mint-800 prose-ul:pl-6 prose-ol:pl-6"
         />
       </div>
     );

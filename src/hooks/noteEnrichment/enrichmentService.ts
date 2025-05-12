@@ -1,168 +1,135 @@
 
-import { Note } from "@/types/note";
 import { supabase } from "@/integrations/supabase/client";
-import { EnhancementFunction } from './types';
+import { EnhancementFunction } from "./types";
 
-interface NoteForEnrichment {
-  id: string;
-  title: string;
-  content?: string; // Make content optional to match Note type
-  category?: string;
-}
-
-interface EnrichmentResponse {
-  enhancedContent: string;
-  enhancementType: EnhancementFunction;
-  tokenUsage?: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
+/**
+ * Calls the edge function to enrich a note with AI
+ * @param note The note to enrich
+ * @param enhancementType The type of enhancement to perform
+ */
+export const enrichNote = async (
+  note: { 
+    id: string; 
+    title?: string; 
+    content?: string;
+    category?: string;
+  },
+  enhancementType: EnhancementFunction
+): Promise<string> => {
+  console.log(`Enriching note with ${enhancementType}`);
+  
+  // If the note doesn't have content, throw an error
+  if (!note.content) {
+    throw new Error('No content to enhance');
   }
-}
-
-export const enrichNote = async (note: NoteForEnrichment, enhancementType: EnhancementFunction): Promise<string> => {
+  
   try {
-    console.log(`Calling enrich-note function with type: ${enhancementType}, noteId: ${note.id}`);
-    
-    // Check if content exists and is not empty
-    if (!note.content || note.content.trim() === '') {
-      throw new Error('Cannot enrich note: Note content is empty or undefined');
-    }
-    
+    // Call the edge function
     const { data, error } = await supabase.functions.invoke('enrich-note', {
       body: {
         noteId: note.id,
+        noteTitle: note.title || 'Untitled Note',
         noteContent: note.content,
-        enhancementType: enhancementType,
-        noteTitle: note.title,
-        noteCategory: note.category
-      },
+        enhancementType
+      }
     });
-
-    if (error) {
-      console.error("Error invoking enrichment function:", error);
-      throw new Error(`Error invoking enrichment function: ${error.message}`);
-    }
-
-    if (!data || !data.enhancedContent) {
-      console.error("No enhanced content returned:", data);
-      throw new Error('No enhanced content returned from the function');
-    }
-
-    console.log("Enhanced content received, length:", data.enhancedContent.length);
     
-    // Update the usage tracking to include token usage
-    await trackUsage(note.id, data.tokenUsage);
+    if (error) {
+      console.error('Error calling enrich-note function:', error);
+      throw new Error('Failed to enrich note: ' + error.message);
+    }
+    
+    if (!data?.enhancedContent) {
+      throw new Error('No enhanced content returned');
+    }
+    
+    // For all enhancement types, ensure proper markdown rendering
+    // by wrapping in HTML when needed
+    let enhancedContent = data.enhancedContent;
+    
+    // Track token usage (if available) to calculate usage limits
+    if (data.tokenUsage) {
+      await trackTokenUsage(note.id, data.tokenUsage);
+    }
 
-    return data.enhancedContent;
+    return enhancedContent;
   } catch (error) {
-    console.error("Error during note enrichment:", error);
+    console.error('Error enriching note:', error);
     throw error;
   }
 };
 
-// Track usage of the enrichment feature, now with token usage
-export const trackUsage = async (noteId: string, tokenUsage?: { prompt_tokens: number, completion_tokens: number, total_tokens: number }) => {
+/**
+ * Track token usage for note enrichments
+ */
+const trackTokenUsage = async (noteId: string, tokenUsage: { promptTokens: number; completionTokens: number }) => {
   try {
-    const currentMonth = new Date().toISOString().slice(0, 7); // Format: YYYY-MM
-    const userId = (await supabase.auth.getUser()).data.user?.id;
+    // Get current month in YYYY-MM format
+    const currentMonth = new Date().toISOString().slice(0, 7);
     
-    if (!userId) {
-      console.error('Cannot track usage: No authenticated user found');
-      return;
-    }
-    
-    // Check if user has reached their monthly limit
-    const { data: userData, error: userError } = await supabase
-      .from('profiles')
-      .select('user_tier')
-      .eq('id', userId)
-      .single();
-    
-    if (userError) {
-      console.error('Error getting user tier:', userError);
-      return;
-    }
-    
-    // Get tier limits
-    const { data: tierData, error: tierError } = await supabase
-      .from('tier_limits')
-      .select('note_enrichment_limit_per_month')
-      .eq('tier', userData.user_tier)
-      .single();
-    
-    if (tierError) {
-      console.error('Error getting tier limits:', tierError);
-      return;
-    }
-    
-    // Get current usage
-    const { data: usageData, error: usageError } = await supabase
-      .from('note_enrichment_usage')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('month_year', currentMonth);
-    
-    if (usageError) {
-      console.error('Error getting current usage:', usageError);
-      return;
-    }
-    
-    // Check if we're at the limit (skip this check if tierData.note_enrichment_limit_per_month is null)
-    if (tierData.note_enrichment_limit_per_month !== null && 
-        usageData.length >= tierData.note_enrichment_limit_per_month) {
-      console.error('Monthly limit reached for user:', userId);
-      return;
-    }
-    
-    console.log(`Tracking usage for user ${userId}, note ${noteId}, month ${currentMonth}`);
-    
+    // Insert usage record
     const { error } = await supabase
       .from('note_enrichment_usage')
       .insert({
-        user_id: userId,
-        month_year: currentMonth,
         note_id: noteId,
+        month_year: currentMonth,
         llm_provider: 'openai',
-        prompt_tokens: tokenUsage?.prompt_tokens || 0,
-        completion_tokens: tokenUsage?.completion_tokens || 0
+        prompt_tokens: tokenUsage.promptTokens,
+        completion_tokens: tokenUsage.completionTokens
       });
     
     if (error) {
-      console.error('Error tracking usage:', error);
-    } else {
-      console.log('Usage tracking successful');
+      console.error('Error tracking token usage:', error);
     }
-  } catch (error) {
-    console.error('Error in trackUsage:', error);
+  } catch (err) {
+    console.error('Error tracking token usage:', err);
   }
 };
 
-// Generate a summary specifically for a note card (150 characters max)
-export const generateNoteSummary = async (note: Note): Promise<string> => {
-  try {
-    // Check if we already have a recent summary (less than a day old)
-    if (note.summary && note.summary_generated_at) {
-      const lastGenerated = new Date(note.summary_generated_at);
-      const now = new Date();
-      // If less than 24 hours and content hasn't changed, return existing summary
-      if ((now.getTime() - lastGenerated.getTime()) < 24 * 60 * 60 * 1000) {
-        return note.summary;
-      }
-    }
-    
-    // Verify note has content before attempting to generate summary
-    if (!note.content || note.content.trim() === '') {
-      throw new Error('Cannot generate summary: Note content is empty or undefined');
-    }
-    
-    // Generate a new summary
-    const summary = await enrichNote(note, 'summarize');
-    
-    // Truncate to 150 characters
-    return summary.length > 150 ? summary.substring(0, 147) + '...' : summary;
-  } catch (error) {
-    console.error('Error generating note summary:', error);
-    throw error;
-  }
+/**
+ * Shortcut function for generating note summary
+ */
+export const generateNoteSummary = async (note: { 
+  id: string; 
+  title?: string; 
+  content?: string;
+  category?: string;
+}): Promise<string> => {
+  return enrichNote(note, 'summarize');
+};
+
+/**
+ * Shortcut function for extracting key points
+ */
+export const extractKeyPoints = async (note: { 
+  id: string; 
+  title?: string; 
+  content?: string;
+  category?: string;
+}): Promise<string> => {
+  return enrichNote(note, 'extract-key-points');
+};
+
+/**
+ * Shortcut function for improving clarity
+ */
+export const improveClarity = async (note: { 
+  id: string; 
+  title?: string; 
+  content?: string;
+  category?: string;
+}): Promise<string> => {
+  return enrichNote(note, 'improve-clarity');
+};
+
+/**
+ * Shortcut function for converting to markdown
+ */
+export const convertToMarkdown = async (note: { 
+  id: string; 
+  title?: string; 
+  content?: string;
+  category?: string;
+}): Promise<string> => {
+  return enrichNote(note, 'convert-to-markdown');
 };

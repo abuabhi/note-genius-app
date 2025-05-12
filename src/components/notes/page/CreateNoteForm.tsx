@@ -97,12 +97,23 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
     console.log("Selected tags:", selectedTags);
     
     try {
+      // Convert content to left-aligned if it's a new note
+      let processedContent = values.content;
+      
+      // If this is a new note (no initialData), ensure content is left-aligned
+      if (!initialData && values.content) {
+        // Simple approach to ensure left alignment without breaking existing formatting
+        if (!processedContent.includes('text-align: left')) {
+          processedContent = `<div style="text-align: left;">${processedContent}</div>`;
+        }
+      }
+      
       const noteData: Omit<Note, 'id'> = {
         title: values.title,
         description: values.title, // Using title as description since we're removing description field
         date: values.date.toISOString().split('T')[0],
         category: values.category || '', 
-        content: values.content,
+        content: processedContent,
         subject_id: values.subject_id,
         sourceType: initialData?.sourceType || 'manual',
         tags: selectedTags,
