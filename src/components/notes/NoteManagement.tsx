@@ -1,7 +1,7 @@
-
 import { AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { NoteDiagnostics } from './management/NoteDiagnostics';
+// Keep the import but we won't render the component
 import { ForceDeleteNote } from './management/ForceDeleteNote';
 
 interface NoteManagementProps {
@@ -13,6 +13,8 @@ export const NoteManagement = ({ noteId }: NoteManagementProps) => {
   
   if (!user || !noteId) return null;
 
+  // We're keeping this component simple by just showing diagnostics
+  // ForceDeleteNote is maintained in the codebase but not displayed
   return (
     <div className="mt-4 border border-red-200 rounded-md p-4 bg-red-50">
       <div className="flex items-start space-x-2 mb-3">
@@ -20,15 +22,14 @@ export const NoteManagement = ({ noteId }: NoteManagementProps) => {
         <div>
           <h4 className="text-red-600 font-medium">Troubleshooting Options</h4>
           <p className="text-sm text-gray-600 mb-4">
-            If you're having trouble deleting this note through normal methods, you can run diagnostics or force delete it.
-            <strong className="text-red-600"> Force deletion cannot be undone.</strong>
+            If you're having trouble with this note, you can run diagnostics to help identify issues.
           </p>
         </div>
       </div>
       
       <div className="flex flex-wrap gap-2 mb-4">
         <NoteDiagnostics noteId={noteId} />
-        <ForceDeleteNote noteId={noteId} />
+        {/* ForceDeleteNote component removed from UI but kept in codebase */}
       </div>
       
       <div className="mt-3 text-xs text-gray-600">
