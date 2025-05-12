@@ -1,13 +1,15 @@
 
 import { Loader2 } from "lucide-react";
 
-export const LoadingState = ({ message = "Loading..." }: { message?: string }) => {
+interface LoadingStateProps {
+  message?: string;
+}
+
+export const LoadingState = ({ message = "Loading..." }: LoadingStateProps) => {
   return (
-    <div className="container mx-auto p-6 flex items-center justify-center h-[50vh]">
-      <div className="text-center">
-        <Loader2 className="h-8 w-8 animate-spin mx-auto text-mint-500" />
-        <p className="mt-2 text-muted-foreground">{message}</p>
-      </div>
+    <div className="flex flex-col items-center justify-center py-12">
+      <Loader2 className="h-8 w-8 animate-spin text-mint-500 mb-2" />
+      <p className="text-muted-foreground">{message}</p>
     </div>
   );
 };

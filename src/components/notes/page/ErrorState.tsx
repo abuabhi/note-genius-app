@@ -1,33 +1,28 @@
 
+import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
 
 interface ErrorStateProps {
-  title?: string;
   message?: string;
-  buttonText?: string;
+  onRetry?: () => void;
 }
 
 export const ErrorState = ({ 
-  title = "Note Not Found", 
-  message = "The note you're looking for doesn't exist or has been deleted.",
-  buttonText = "Back to Notes"
+  message = "An error occurred while loading your notes.", 
+  onRetry 
 }: ErrorStateProps) => {
-  const navigate = useNavigate();
-  
-  const handleGoBack = () => {
-    navigate(-1);
-  };
-
   return (
-    <div className="container mx-auto p-6">
-      <div className="bg-red-50 border border-red-200 rounded-md p-6 text-center">
-        <h2 className="text-xl font-semibold text-red-700 mb-2">{title}</h2>
-        <p className="mb-4 text-red-600">{message}</p>
-        <Button onClick={handleGoBack}>
-          {buttonText}
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <AlertCircle className="h-8 w-8 text-destructive mb-2" />
+      <p className="text-muted-foreground mb-4">{message}</p>
+      {onRetry && (
+        <Button 
+          variant="outline"
+          onClick={onRetry}
+        >
+          Try Again
         </Button>
-      </div>
+      )}
     </div>
   );
 };

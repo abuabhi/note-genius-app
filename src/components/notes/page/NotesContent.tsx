@@ -1,16 +1,14 @@
 
 import { useState } from "react";
 import { useNotes } from "@/contexts/NoteContext";
-import { useToast } from "@/hooks/use-toast";
-import { Note } from "@/types/note";
 import { useRequireAuth, TierLimits, UserTier } from "@/hooks/useRequireAuth";
-import { NotesHeader } from "./NotesHeader";
+import { Note } from "@/types/note";
 import { TierInfo } from "./TierInfo";
+import { NotesHeader } from "./NotesHeader";
 import { SubjectsSection } from "./SubjectsSection";
 import { NotesDisplay } from "./NotesDisplay";
 import { NoteCreationDialogs } from "./NoteCreationDialogs";
 import { LoadingState } from "./LoadingState";
-import { ErrorState } from "./ErrorState";
 
 interface NotesContentProps {
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
@@ -30,7 +28,6 @@ export const NotesContent = ({
   const { paginatedNotes, notes, loading, setFilterOptions, filteredNotes } = useNotes();
   const { user, loading: authLoading } = useRequireAuth();
   const [activeSubjectId, setActiveSubjectId] = useState<string | null>(null);
-  const { toast } = useToast();
 
   // Show loading state while checking authentication
   if (authLoading) {
