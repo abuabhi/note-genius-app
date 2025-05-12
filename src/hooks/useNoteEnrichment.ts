@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { EnhancementFunction, EnhancementResult } from './noteEnrichment/types';
 import { enhancementOptions } from './noteEnrichment/enhancementOptions';
@@ -61,13 +60,16 @@ export function useNoteEnrichment(note?: Note) {
       const userId = (await supabase.auth.getUser()).data.user?.id;
       const currentMonth = new Date().toISOString().slice(0, 7);
       
-      // Insert usage record
+      // Insert usage record - FIX: Adding the required llm_provider field
       const { error } = await supabase
         .from('note_enrichment_usage')
         .insert({
           user_id: userId,
           note_id: noteId,
-          month_year: currentMonth
+          month_year: currentMonth,
+          llm_provider: 'openai', // Added the required field
+          prompt_tokens: 0,       // Adding default values for required fields
+          completion_tokens: 0    // Adding default values for required fields
         });
       
       if (error) throw error;
