@@ -1,6 +1,6 @@
 
 import React from "react";
-import { MoreHorizontal, Loader2 } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +21,6 @@ interface NoteActionsMenuProps {
   onPin: (id: string, isPinned: boolean) => void;
   onDelete: (id: string) => void;
   iconSize?: number;
-  isDeleting?: boolean;
 }
 
 export const NoteActionsMenu = ({
@@ -31,8 +30,7 @@ export const NoteActionsMenu = ({
   isPinned,
   onPin,
   onDelete,
-  iconSize = 4,
-  isDeleting = false
+  iconSize = 4
 }: NoteActionsMenuProps) => {
   const [open, setOpen] = React.useState(false);
   
@@ -45,7 +43,7 @@ export const NoteActionsMenu = ({
   
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild disabled={isDeleting}>
+      <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
           size="icon"
@@ -54,11 +52,7 @@ export const NoteActionsMenu = ({
             e.stopPropagation();
           }}
         >
-          {isDeleting ? (
-            <Loader2 className={`h-${iconSize} w-${iconSize} animate-spin`} />
-          ) : (
-            <MoreHorizontal className={`h-${iconSize} w-${iconSize}`} />
-          )}
+          <MoreHorizontal className={`h-${iconSize} w-${iconSize}`} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="bg-white border border-mint-100 w-48">

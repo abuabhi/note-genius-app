@@ -1,17 +1,25 @@
 
-import React from "react";
 import { Note } from "@/types/note";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Archive, Book, Camera, FileText, Pin, Tag } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { NoteCardActions } from "./NoteCardActions";
-import { NoteSummary } from "./NoteSummary";
+import { NoteTagList } from "../details/NoteTagList";
+import { generateColorFromString } from "@/utils/colorUtils";
+import { getBestTextColor } from "@/utils/colorUtils";
+import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
 
 interface NoteCardProps {
   note: Note;
   onNoteClick: (note: Note) => void;
-  onShowDetails: (note: Note, event: React.MouseEvent) => void;
+  onShowDetails: (note: Note, e: React.MouseEvent) => void;
   onPin: (id: string, isPinned: boolean) => void;
   onDelete: (id: string) => void;
-  isDeleting?: boolean;
+  confirmDelete: string | null;
 }
 
 export const NoteCard = ({
@@ -20,63 +28,119 @@ export const NoteCard = ({
   onShowDetails,
   onPin,
   onDelete,
-  isDeleting = false
+  confirmDelete
 }: NoteCardProps) => {
+  const navigate = useNavigate();
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const { subjects } = useUserSubjects();
   
   // Find the subject name based on subject_id or fall back to category
   const subjectName = note.subject_id 
     ? subjects.find(s => s.id === note.subject_id)?.name || note.category 
     : note.category;
-
+  
   console.log(`NoteCard - Note: ${note.title}, Subject ID: ${note.subject_id}, Subject Name: ${subjectName}`);
+  
+  const handleGoToStudyMode = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/notes/study/${note.id}`);
+  };
+  
+  const handleDeleteWrapper = (id: string) => {
+    // This wrapper function now handles the delete confirmation logic
+    // without needing the event parameter from the actions component
+    if (isConfirmingDelete) {
+      // Actually delete the note
+      onDelete(id);
+      setIsConfirmingDelete(false);
+    } else {
+      // Set confirming state
+      setIsConfirmingDelete(true);
+      // Reset after 3 seconds
+      setTimeout(() => setIsConfirmingDelete(false), 3000);
+    }
+  };
+
+  // Format date as dd-MMM-yyyy (e.g., 15-May-2023)
+  const formattedDate = format(new Date(note.date), "dd-MMM-yyyy");
 
   return (
-    <div
+    <Card 
+      key={note.id}
       className={`
-        relative overflow-hidden rounded-lg border p-4
-        ${note.pinned ? "border-mint-200 bg-mint-50" : "border-gray-200 bg-white"}
-        hover:shadow-md cursor-pointer transition-all
-        ${isDeleting ? "opacity-50 pointer-events-none" : ""}
+        hover:shadow-lg transition-shadow cursor-pointer border-mint-200 
+        bg-white/50 backdrop-blur-sm hover:bg-mint-50/60
+        ${note.pinned ? 'ring-2 ring-mint-400 shadow-md' : ''}
+        ${note.archived ? 'opacity-75' : ''}
       `}
       onClick={() => onNoteClick(note)}
     >
-      <div className="space-y-2">
-        <div className="flex justify-between">
-          <h3 className="font-medium text-lg">{note.title}</h3>
-          <NoteCardActions
-            noteId={note.id}
-            noteTitle={note.title}
-            noteContent={note.content || ""}
-            isPinned={note.pinned || false}
-            onPin={onPin}
-            onDelete={onDelete}
-            isDeleting={isDeleting}
-          />
-        </div>
-
-        <p className="text-sm text-gray-600 line-clamp-2">
-          {note.description}
-        </p>
-
-        <div className="flex justify-between items-center text-xs text-gray-500">
-          <div className="flex gap-2 items-center">
-            <span>{note.date}</span>
-            <span className="text-mint-600">{subjectName}</span>
-            {note.archived && <span className="text-amber-600">Archived</span>}
+      <CardHeader className="relative p-3 pb-1">
+        {/* Pin indicator for pinned notes */}
+        {note.pinned && (
+          <div className="absolute top-2 left-2 text-mint-600">
+            <Pin size={16} className="fill-mint-500" />
           </div>
-          <button
-            onClick={(e) => onShowDetails(note, e)}
-            className="text-mint-700 hover:text-mint-800 font-medium"
-          >
-            Details
-          </button>
+        )}
+        
+        {/* Card actions positioned absolutely */}
+        <NoteCardActions 
+          noteId={note.id}
+          noteTitle={note.title}
+          noteContent={note.content || note.description || ""}
+          isPinned={!!note.pinned} 
+          onPin={onPin}
+          onDelete={handleDeleteWrapper}
+          iconSize={5}
+        />
+        
+        <div className="flex flex-row items-center justify-between">
+          <CardTitle className={`text-xl text-mint-800 ${note.pinned ? 'pl-6' : ''} pr-8`}> {/* Add padding-right to avoid overlap with actions */}
+            {note.title}
+          </CardTitle>
         </div>
-      </div>
-
-      {note.summary_status === "completed" && note.summary && (
-        <NoteSummary summary={note.summary} />
-      )}
-    </div>
+      </CardHeader>
+      
+      <CardFooter className="flex justify-between items-center px-3 py-2 pt-0">
+        {/* Date and subject on left */}
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-mint-600">{formattedDate}</span>
+          <span className="text-mint-400">•</span>
+          <span 
+            className="font-medium"
+            style={{
+              color: generateColorFromString(subjectName),
+            }}
+          >
+            {subjectName}
+          </span>
+          
+          {/* Tags and status indicators */}
+          <div className="flex flex-wrap gap-1 ml-2">
+            {note.sourceType === 'scan' && (
+              <div className="flex items-center">
+                <Camera className="h-4 w-4 text-mint-500" />
+              </div>
+            )}
+            {note.archived && (
+              <div className="flex items-center">
+                <Archive className="h-4 w-4 text-mint-500" />
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Study Mode button at right */}
+        <Button 
+          variant="default" 
+          size="sm" 
+          className="h-8 text-lg bg-mint-600 hover:bg-mint-700 flex items-center gap-1 px-4"
+          onClick={handleGoToStudyMode}
+        >
+          <Book className="h-4 w-4 mr-1" />
+          Study Mode
+        </Button>
+      </CardFooter>
+    </Card>
   );
 };

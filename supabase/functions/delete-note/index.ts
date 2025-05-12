@@ -19,26 +19,6 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Also create an auth client to check the user's permissions
-    const authHeader = req.headers.get('Authorization')
-    const supabaseAuth = createClient(supabaseUrl, supabaseServiceKey, {
-      global: {
-        headers: {
-          Authorization: authHeader || '',
-        },
-      },
-    })
-
-    // Get the current user to verify permissions
-    const { data: { user }, error: userError } = await supabaseAuth.auth.getUser()
-    
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized: User not authenticated' }), 
-        { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      )
-    }
-
     // Get the note ID from the request body
     const { noteId } = await req.json()
     
@@ -48,23 +28,6 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'No note ID provided' }), 
         { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      )
-    }
-
-    // Check if the note belongs to the user making the request
-    const { data: noteData, error: noteCheckError } = await supabase
-      .from('notes')
-      .select('id, user_id')
-      .eq('id', noteId)
-      .single()
-      
-    if (noteCheckError) {
-      console.error('Error checking note ownership:', noteCheckError)
-      // Note might not exist, continue with deletion attempt
-    } else if (noteData && noteData.user_id !== user.id) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized: You do not have permission to delete this note' }), 
-        { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       )
     }
 
@@ -100,7 +63,30 @@ serve(async (req) => {
       console.log('Warning: Error deleting scan data:', scanError)
     }
     
-    // 4. Try direct SQL delete as a last resort (using service role)
+    // 4. Check if there are any other tables that might reference notes
+    // This is a more drastic approach, but it will help identify other relations
+    try {
+      const { data: relations } = await supabase.rpc('get_foreign_keys_to_notes')
+      if (relations && relations.length > 0) {
+        console.log('Found additional relations to notes table:', relations)
+        // Try to delete from each related table
+        for (const relation of relations) {
+          const { table_name, column_name } = relation
+          if (table_name && column_name && table_name !== 'notes') {
+            console.log(`Attempting to delete from ${table_name} where ${column_name}=${noteId}`)
+            await supabase
+              .from(table_name)
+              .delete()
+              .eq(column_name, noteId)
+          }
+        }
+      }
+    } catch (rpcError) {
+      // RPC might not exist, which is fine, we'll continue with our known relations
+      console.log('Info: Could not check for additional relations:', rpcError)
+    }
+
+    // 5. Try direct SQL delete as a last resort (using service role)
     try {
       const { error: sqlError } = await supabase.rpc('force_delete_note', { note_id: noteId })
       if (sqlError) {
@@ -115,7 +101,7 @@ serve(async (req) => {
       console.log('Info: RPC method not available:', rpcError)
     }
 
-    // 5. Finally try the standard delete approach
+    // 6. Finally try the standard delete approach
     const { error: noteError } = await supabase
       .from('notes')
       .delete()

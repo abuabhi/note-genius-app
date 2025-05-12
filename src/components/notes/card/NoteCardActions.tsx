@@ -10,7 +10,6 @@ interface NoteCardActionsProps {
   onPin: (id: string, isPinned: boolean) => void;
   onDelete: (id: string) => void;
   iconSize?: number;
-  isDeleting?: boolean;
 }
 
 export const NoteCardActions = ({
@@ -20,8 +19,7 @@ export const NoteCardActions = ({
   isPinned,
   onPin,
   onDelete,
-  iconSize = 4,
-  isDeleting = false
+  iconSize = 4
 }: NoteCardActionsProps) => {
   return (
     <div 
@@ -40,7 +38,6 @@ export const NoteCardActions = ({
         onPin={onPin}
         onDelete={onDelete}
         iconSize={iconSize}
-        isDeleting={isDeleting}
       />
     </div>
   );
