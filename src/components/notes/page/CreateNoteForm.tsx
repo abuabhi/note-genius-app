@@ -8,17 +8,18 @@ import { Note } from '@/types/note';
 import { TagSelector } from '../TagSelector';
 import { useNotes } from '@/contexts/NoteContext';
 import { useNoteEnrichment } from '@/hooks/useNoteEnrichment';
-import { useAuth } from '@/contexts/auth'; // Updated import path
+import { useAuth } from '@/contexts/auth'; 
 import { toast } from '@/components/ui/sonner';
 import { NoteMetadataFields } from './form/NoteMetadataFields';
 import { NoteContentField } from './form/NoteContentField';
 import { FormSubmitButton } from './form/FormSubmitButton';
 
-// Updated schema to remove description
+// Updated schema to include subject_id
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   date: z.date(),
-  subject: z.string().optional(),
+  subject_id: z.string().optional(),
+  category: z.string().optional(),
   content: z.string().optional(),
 });
 
@@ -41,7 +42,8 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
     defaultValues: {
       title: initialData?.title || '',
       date: initialData?.date ? new Date(initialData.date) : new Date(),
-      subject: initialData?.category || '',
+      subject_id: initialData?.subject_id || '',
+      category: initialData?.category || '',
       content: initialData?.content || '',
     },
   });
@@ -95,18 +97,13 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
     console.log("Selected tags:", selectedTags);
     
     try {
-      // Clean up any special values
-      let processedSubject = values.subject;
-      if (processedSubject === '_none' || processedSubject === '_custom') {
-        processedSubject = '';
-      }
-      
       const noteData: Omit<Note, 'id'> = {
         title: values.title,
         description: values.title, // Using title as description since we're removing description field
         date: values.date.toISOString().split('T')[0],
-        category: processedSubject || '', // Map subject to category field, allow empty
+        category: values.category || '', 
         content: values.content,
+        subject_id: values.subject_id,
         sourceType: initialData?.sourceType || 'manual',
         tags: selectedTags,
       };
@@ -138,7 +135,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
             control={form.control} 
             availableCategories={availableCategories}
             onNewCategoryAdd={handleNewCategoryAdd}
-            setValue={form.setValue} // Pass setValue from form to the component
+            setValue={form.setValue}
           />
 
           <NoteContentField

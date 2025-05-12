@@ -24,7 +24,11 @@ export const SubjectsSection = ({
   useEffect(() => {
     // Set filter based on active subject
     if (activeSubjectId) {
-      console.log(`Setting filter for subject: ${activeSubjectId}`);
+      console.log(`Setting filter for subject ID: ${activeSubjectId}`);
+      
+      // Find subject name for logging
+      const subjectName = subjects.find(s => s.id === activeSubjectId)?.name;
+      console.log(`Selected subject: ${subjectName} (ID: ${activeSubjectId})`);
       
       setFilterOptions(prev => ({
         ...prev,
@@ -32,6 +36,7 @@ export const SubjectsSection = ({
       }));
     } else {
       // Remove subject filter if "All" is selected
+      console.log("Clearing subject filter (All selected)");
       setFilterOptions(prev => {
         const newFilters = { ...prev };
         if (newFilters.subjectId) {
@@ -40,7 +45,7 @@ export const SubjectsSection = ({
         return newFilters;
       });
     }
-  }, [activeSubjectId, setFilterOptions]);
+  }, [activeSubjectId, setFilterOptions, subjects]);
 
   if (loadingSubjects) {
     return (

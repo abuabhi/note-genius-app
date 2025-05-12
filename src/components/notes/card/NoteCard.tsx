@@ -1,4 +1,3 @@
-
 import { Note } from "@/types/note";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Archive, Book, Camera, FileText, Pin, Tag } from "lucide-react";
@@ -34,10 +33,12 @@ export const NoteCard = ({
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const { subjects } = useUserSubjects();
   
-  // Find the subject name based on subject_id
+  // Find the subject name based on subject_id or fall back to category
   const subjectName = note.subject_id 
     ? subjects.find(s => s.id === note.subject_id)?.name || note.category
     : note.category;
+  
+  console.log("Note subject_id:", note.subject_id, "Subject name:", subjectName, "Category:", note.category);
   
   const handleGoToStudyMode = (e: React.MouseEvent) => {
     e.stopPropagation();
