@@ -61,24 +61,28 @@ export const EnhanceDropdown = ({
         <Button 
           variant="ghost" 
           size="icon" 
-          className="h-8 w-8"
+          className="h-8 w-8 relative group"
           disabled={isProcessing}
           title="Enhance note"
         >
-          <Sparkles className="h-4 w-4" />
+          <Sparkles className="h-4 w-4 transition-all duration-300 group-hover:text-mint-500 group-hover:scale-110 group-hover:rotate-12" />
+          <span className="absolute inset-0 rounded-full bg-mint-200/0 group-hover:bg-mint-100/50 transition-colors duration-300"></span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="bg-white w-56">
+      <DropdownMenuContent 
+        align="end" 
+        className="bg-white border-mint-100 shadow-md rounded-md w-64 p-1"
+      >
         {enhancementOptions.map((option) => (
           <DropdownMenuItem
             key={option.id}
             onClick={() => handleEnhancementSelect(option.value as EnhancementFunction)}
-            className="cursor-pointer"
+            className="cursor-pointer flex items-start p-2 rounded hover:bg-mint-50 focus:bg-mint-50 transition-colors"
             disabled={isProcessing}
           >
             <div className="flex flex-col">
-              <span>{option.title}</span>
-              <span className="text-xs text-muted-foreground">{option.description}</span>
+              <span className="font-medium text-mint-800">{option.title}</span>
+              <span className="text-xs text-muted-foreground mt-0.5">{option.description}</span>
             </div>
           </DropdownMenuItem>
         ))}
