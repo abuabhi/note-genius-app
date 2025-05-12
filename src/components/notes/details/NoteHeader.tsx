@@ -10,10 +10,14 @@ export const NoteHeader = ({ note }: NoteHeaderProps) => {
   const { subjects } = useUserSubjects();
   
   // Find the subject name based on subject_id or fall back to category
-  const subjectName = note.subject_id 
+  const subjectName = note.subject_id && subjects.length > 0
     ? subjects.find(s => s.id === note.subject_id)?.name || note.category
     : note.category;
     
+  console.log("NoteHeader - Subject ID:", note.subject_id);
+  console.log("NoteHeader - Available subjects:", subjects);
+  console.log("NoteHeader - Selected subject name:", subjectName);
+  
   return (
     <div className="space-y-1">
       <h2 className="text-xl font-bold text-mint-800">{note.title}</h2>

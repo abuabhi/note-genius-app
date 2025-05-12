@@ -18,14 +18,20 @@ export const useUserSubjects = () => {
 
       try {
         setIsLoading(true);
+        console.log("Fetching subjects for user ID:", user.id);
+        
         const { data, error } = await supabase
           .from('user_subjects')
           .select('*')
           .eq('user_id', user.id)
           .order('name');
 
-        if (error) throw error;
+        if (error) {
+          console.error("Error fetching subjects:", error);
+          throw error;
+        }
         
+        console.log("Subjects fetched successfully:", data);
         setSubjects(data as UserSubject[]);
       } catch (error) {
         console.error('Error fetching user subjects:', error);
@@ -64,6 +70,7 @@ export const useUserSubjects = () => {
 
       if (error) throw error;
 
+      console.log("New subject added:", data[0]);
       setSubjects([...subjects, data[0] as UserSubject]);
       return true;
     } catch (error) {
@@ -84,6 +91,7 @@ export const useUserSubjects = () => {
 
       if (error) throw error;
 
+      console.log("Subject removed:", subjectId);
       setSubjects(subjects.filter(subject => subject.id !== subjectId));
       return true;
     } catch (error) {

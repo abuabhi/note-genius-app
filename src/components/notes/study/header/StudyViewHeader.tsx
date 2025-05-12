@@ -8,6 +8,7 @@ import { Note } from "@/types/note";
 import { TextAlignType } from "../hooks/useStudyViewState";
 import { generateColorFromString, getBestTextColor } from "@/utils/colorUtils";
 import { Input } from "@/components/ui/input";
+import { useUserSubjects } from "@/hooks/useUserSubjects";
 
 interface StudyViewHeaderProps {
   note: Note;
@@ -46,6 +47,17 @@ export const StudyViewHeader: React.FC<StudyViewHeaderProps> = ({
   onSave,
   onTitleChange
 }) => {
+  const { subjects } = useUserSubjects();
+  
+  // Find the subject name based on subject_id or fall back to category
+  const subjectName = note.subject_id && subjects.length > 0
+    ? subjects.find(s => s.id === note.subject_id)?.name || note.category
+    : note.category;
+  
+  console.log("StudyViewHeader - Subject ID:", note.subject_id);
+  console.log("StudyViewHeader - Available subjects:", subjects);
+  console.log("StudyViewHeader - Selected subject name:", subjectName);
+
   // Generate category badge with color
   const getCategoryBadge = (category: string) => {
     if (!category) return null;
@@ -85,7 +97,7 @@ export const StudyViewHeader: React.FC<StudyViewHeaderProps> = ({
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <span>{format(new Date(note.date), 'MMM d, yyyy')}</span>
           <span className="text-xs">•</span>
-          {note.category && getCategoryBadge(note.category)}
+          {subjectName && getCategoryBadge(subjectName)}
           {note.tags?.length > 0 && (
             <div className="hidden sm:flex flex-wrap gap-1 items-center">
               <span className="text-xs">•</span>

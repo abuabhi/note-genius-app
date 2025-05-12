@@ -24,11 +24,11 @@ export const SubjectsSection = ({
   useEffect(() => {
     // Set filter based on active subject
     if (activeSubjectId) {
-      console.log(`Setting filter for subject ID: ${activeSubjectId}`);
+      console.log(`SubjectsSection - Setting filter for subject ID: ${activeSubjectId}`);
       
       // Find subject name for logging
       const subjectName = subjects.find(s => s.id === activeSubjectId)?.name;
-      console.log(`Selected subject: ${subjectName} (ID: ${activeSubjectId})`);
+      console.log(`SubjectsSection - Selected subject: ${subjectName} (ID: ${activeSubjectId})`);
       
       setFilterOptions(prev => ({
         ...prev,
@@ -36,7 +36,7 @@ export const SubjectsSection = ({
       }));
     } else {
       // Remove subject filter if "All" is selected
-      console.log("Clearing subject filter (All selected)");
+      console.log("SubjectsSection - Clearing subject filter (All selected)");
       setFilterOptions(prev => {
         const newFilters = { ...prev };
         if (newFilters.subjectId) {
@@ -56,8 +56,12 @@ export const SubjectsSection = ({
   }
 
   if (!subjects || subjects.length === 0) {
+    console.log("SubjectsSection - No subjects available");
     return null;
   }
+
+  console.log(`SubjectsSection - Rendering with ${subjects.length} subjects`);
+  console.log("SubjectsSection - Available subjects:", subjects.map(s => `${s.id}: ${s.name}`).join(', '));
 
   return (
     <div className="mb-6">
