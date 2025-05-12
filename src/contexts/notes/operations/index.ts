@@ -3,7 +3,7 @@ import { Note } from "@/types/note";
 import { addNoteToDatabase as addNoteDb, deleteNoteFromDatabase as deleteNoteDb, updateNoteInDatabase as updateNoteDb } from "./noteDbOperations";
 import { updateNoteTagsInDatabase, addNoteTagsToDatabase, fetchTagsFromDatabase } from "./tagOperations";
 import { updateScanDataInDatabase, addScanDataToDatabase } from "./scanOperations";
-import { supabase } from "@/integrations/supabase/client"; // Fixed: proper import
+import { supabase } from "@/integrations/supabase/client";
 
 // Re-export functions from other modules
 export { fetchTagsFromDatabase } from "./tagOperations";

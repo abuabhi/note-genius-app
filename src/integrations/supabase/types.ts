@@ -461,7 +461,6 @@ export type Database = {
       notes: {
         Row: {
           archived: boolean | null
-          category: string
           content: string | null
           created_at: string
           date: string
@@ -469,6 +468,7 @@ export type Database = {
           id: string
           pinned: boolean | null
           source_type: string
+          subject: string
           subject_id: string | null
           summary: string | null
           summary_generated_at: string | null
@@ -479,7 +479,6 @@ export type Database = {
         }
         Insert: {
           archived?: boolean | null
-          category?: string
           content?: string | null
           created_at?: string
           date?: string
@@ -487,6 +486,7 @@ export type Database = {
           id?: string
           pinned?: boolean | null
           source_type?: string
+          subject?: string
           subject_id?: string | null
           summary?: string | null
           summary_generated_at?: string | null
@@ -497,7 +497,6 @@ export type Database = {
         }
         Update: {
           archived?: boolean | null
-          category?: string
           content?: string | null
           created_at?: string
           date?: string
@@ -505,6 +504,7 @@ export type Database = {
           id?: string
           pinned?: boolean | null
           source_type?: string
+          subject?: string
           subject_id?: string | null
           summary?: string | null
           summary_generated_at?: string | null
@@ -1491,6 +1491,10 @@ export type Database = {
     Functions: {
       check_user_in_conversation: {
         Args: { conversation_uuid: string }
+        Returns: boolean
+      }
+      force_delete_note: {
+        Args: { note_id: string }
         Returns: boolean
       }
     }

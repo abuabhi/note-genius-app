@@ -49,7 +49,7 @@ export const fetchNotesFromSupabase = async (): Promise<Note[]> => {
         title: note.title,
         description: note.description,
         date: new Date(note.date).toISOString().split('T')[0],
-        category: note.category,
+        category: note.subject, // Map from subject column to category field
         content: note.content,
         sourceType: note.source_type as 'manual' | 'scan' | 'import',
         archived: note.archived || false,

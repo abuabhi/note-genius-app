@@ -11,7 +11,7 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
         title: noteData.title,
         description: noteData.description,
         date: noteData.date,
-        category: noteData.category,
+        subject: noteData.category, // Map category to subject column
         content: noteData.content,
         source_type: noteData.sourceType,
         archived: noteData.archived || false,
@@ -34,7 +34,7 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
       title: noteInsertData.title,
       description: noteInsertData.description,
       date: new Date(noteInsertData.date).toISOString().split('T')[0],
-      category: noteInsertData.category,
+      category: noteInsertData.subject, // Map subject column back to category in our app model
       content: noteInsertData.content,
       sourceType: noteInsertData.source_type as 'manual' | 'scan' | 'import',
       archived: noteInsertData.archived || false,
@@ -104,7 +104,7 @@ export const updateNoteInDatabase = async (id: string, updatedNote: Partial<Note
   if (updatedNote.title !== undefined) noteUpdateData.title = updatedNote.title;
   if (updatedNote.description !== undefined) noteUpdateData.description = updatedNote.description;
   if (updatedNote.date !== undefined) noteUpdateData.date = updatedNote.date;
-  if (updatedNote.category !== undefined) noteUpdateData.category = updatedNote.category;
+  if (updatedNote.category !== undefined) noteUpdateData.subject = updatedNote.category; // Map category to subject column
   if (updatedNote.content !== undefined) noteUpdateData.content = updatedNote.content;
   if (updatedNote.sourceType !== undefined) noteUpdateData.source_type = updatedNote.sourceType;
   if (updatedNote.archived !== undefined) noteUpdateData.archived = updatedNote.archived;
