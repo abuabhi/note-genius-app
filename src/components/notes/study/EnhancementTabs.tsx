@@ -150,16 +150,14 @@ export const EnhancementTabs = ({
     }
     
     return (
-      <div className="p-4">
-        <RichTextDisplay 
-          content={content} 
-          fontSize={fontSize} 
-          textAlign={textAlign}
-          className={`prose-sm prose-headings:font-medium prose-headings:text-mint-800 prose-ul:pl-6 prose-ol:pl-6 ${
-            isMarkdown ? "font-mono" : ""
-          }`}
-        />
-      </div>
+      <RichTextDisplay 
+        content={content} 
+        fontSize={fontSize} 
+        textAlign={textAlign}
+        className={`prose-sm prose-headings:font-medium prose-headings:text-mint-800 prose-ul:pl-6 prose-ol:pl-6 ${
+          isMarkdown ? "font-mono" : ""
+        }`}
+      />
     );
   };
   
