@@ -71,17 +71,6 @@ export const TwoColumnEnhancementView = ({
       />
     );
   }
-  
-  // If no enhancements, just show the original content
-  if (!hasAnyEnhancements) {
-    return (
-      <RichTextDisplay 
-        content={note.content || note.description || ""} 
-        fontSize={fontSize} 
-        textAlign={textAlign} 
-      />
-    );
-  }
 
   return (
     <div className="flex flex-col md:flex-row w-full border border-border rounded-lg overflow-hidden min-h-[300px]">

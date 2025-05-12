@@ -114,14 +114,20 @@ export const StudyViewHeader = ({
               placeholder="Note Title"
             />
           ) : (
-            <>
-              <NoteHeader note={note} />
-              {note.tags && note.tags.length > 0 && (
+            <div className="space-y-1">
+              <h2 className="text-xl font-bold text-mint-800">{note?.title}</h2>
+              <div className="text-sm flex flex-wrap gap-2 items-center">
+                <span className="font-semibold">{note?.date}</span>
+                {note?.category && (
+                  <span className="text-mint-600">{note?.category}</span>
+                )}
+              </div>
+              {note?.tags && note?.tags.length > 0 && (
                 <div className="mt-2">
-                  <NoteTagList tags={note.tags} />
+                  <NoteTagList tags={note?.tags} />
                 </div>
               )}
-            </>
+            </div>
           )}
         </div>
 

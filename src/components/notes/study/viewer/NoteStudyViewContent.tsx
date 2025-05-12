@@ -65,6 +65,13 @@ export const NoteStudyViewContent: React.FC<NoteStudyViewContentProps> = ({
     }
   };
 
+  console.log("NoteStudyViewContent rendering with note:", { 
+    id: note.id, 
+    isEditing,
+    hasSummary: !!note.summary,
+    hasKeyPoints: !!note.key_points
+  });
+
   return (
     <CardContent className="p-4 md:p-6">
       {/* Show usage meter when not editing */}

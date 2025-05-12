@@ -23,6 +23,16 @@ export const NoteContentDisplay = ({
   isLoading = false,
   onRetryEnhancement
 }: NoteContentDisplayProps) => {
+  // Debug log to trace what's happening
+  console.log("NoteContentDisplay rendering with:", {
+    noteId: note?.id,
+    hasSummary: !!note?.summary,
+    hasKeyPoints: !!note?.key_points,
+    hasMarkdown: !!note?.markdown_content,
+    hasImproved: !!note?.improved_content,
+    isEditing
+  });
+  
   // If no note is provided, fall back to the simple display
   if (!note) {
     return (
@@ -34,6 +44,19 @@ export const NoteContentDisplay = ({
     );
   }
   
+  // If editing, just show the original content
+  if (isEditing) {
+    return (
+      <RichTextDisplay 
+        content={content} 
+        fontSize={fontSize} 
+        textAlign={textAlign} 
+      />
+    );
+  }
+  
+  // Always use the TwoColumnEnhancementView when not editing
+  // This ensures we see the tab interface even if there are no enhancements yet
   return (
     <TwoColumnEnhancementView
       note={note}
