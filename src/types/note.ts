@@ -21,10 +21,22 @@ export interface Note {
     fileType?: string;
     importedAt?: string;
   };
+  subject_id?: string;
+  
+  // Enhancement fields
   summary?: string;
   summary_status?: 'pending' | 'generating' | 'completed' | 'failed';
   summary_generated_at?: string;
-  subject_id?: string;
+  
+  // New enhancement fields
+  key_points?: string;
+  key_points_generated_at?: string;
+  markdown_content?: string;
+  markdown_content_generated_at?: string;
+  improved_content?: string;
+  improved_content_generated_at?: string;
+  
+  // Legacy enhancements field (for backward compatibility)
   enhancements?: {
     keyPoints?: string;
     markdown?: string;
