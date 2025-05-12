@@ -26,19 +26,21 @@ Present the summary in professional Markdown style with bolded section headings,
       return `${baseContext}
 Extract the key points from this note and present them as a well-organized list.
 
-Create Key Points in clean Markdown. Use one main heading, tight bullet points, bold subheadings when needed, no random blank lines, and no paragraph breaks between bullet.
+Create Key Points in clean Markdown. Use one main heading, tight bullet points, bold subheadings when needed, no random blank lines, and no paragraph breaks between bullet points. Organize key points by topic if applicable.
 `;
 
     case 'improve-clarity':
       return `${baseContext}
 Rewrite the content of this note to improve clarity, coherence, and readability while preserving all key information and meaning.
 
-Improve clarity and flow. Shorten long sentences, simplify words, remove repetition, group related ideas, and break long paragraphs into smaller ones. Keep the meaning the same but make it easier to understand and nicer to read.
+Improve clarity and flow. Shorten long sentences, simplify words, remove repetition, group related ideas, and break long paragraphs into smaller ones. Use professional formatting with clear section headings (in bold) and maintain consistent paragraph spacing. Keep the meaning the same but make it easier to understand and nicer to read.
 `;
 
     case 'convert-to-markdown':
       return `${baseContext}
-Convert the content into well-formatted markdown, optimizing for readability and structure. Use appropriate markdown elements such as headers, lists, emphasis, code blocks, and quotes. Preserve all information but enhance the formatting.
+Convert the content into well-formatted markdown, optimizing for readability and structure. Use appropriate markdown elements such as headers (# for main headings, ## for subheadings), lists (- for bullet points), emphasis (**bold** for important terms), code blocks (\`\`\` for code), and quotes (> for quotations). 
+
+Organize content with clear hierarchical headings and ensure proper spacing between sections. Keep all information from the original but enhance it with proper markdown formatting.
 `;
 
     default:
