@@ -7,10 +7,19 @@ export type EnhancementFunction =
   | 'convert-to-markdown'
   | 'fix-spelling-grammar';
 
+export type EnhancementType = 
+  | 'summary'
+  | 'keyPoints'
+  | 'flashcards'
+  | 'improved'
+  | 'fixed'
+  | 'markdown';
+
 export interface EnhancementResult {
   success: boolean;
   content: string;
   error: string;
+  enhancementType?: EnhancementType;
 }
 
 export interface EnhancementOption {
@@ -19,6 +28,8 @@ export interface EnhancementOption {
   title: string;
   description: string;
   icon: string;
+  outputType?: EnhancementType; // Type of enhancement output
+  replaceContent?: boolean; // Whether to replace original content
 }
 
 export interface EnhancementUsage {

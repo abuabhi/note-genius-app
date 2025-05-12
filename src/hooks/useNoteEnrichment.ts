@@ -1,6 +1,6 @@
 
 import { useState, useCallback, useEffect } from 'react';
-import { EnhancementFunction, EnhancementResult } from './noteEnrichment/types';
+import { EnhancementFunction, EnhancementResult, EnhancementType } from './noteEnrichment/types';
 import { enhancementOptions } from './noteEnrichment/enhancementOptions';
 import { useUserTier } from './useUserTier';
 import { Note } from '@/types/note';
@@ -99,7 +99,12 @@ export function useNoteEnrichment(note?: Note) {
     return currentUsage >= monthlyLimit;
   }, [currentUsage, monthlyLimit]);
 
-  // Real implementation using the edge function
+  // Get the enhancement details by function type
+  const getEnhancementDetails = useCallback((enhancementType: EnhancementFunction) => {
+    return enhancementOptions.find(option => option.value === enhancementType);
+  }, []);
+
+  // Process enhancement and determine how to apply it
   const processEnhancement = useCallback(async (enhancementType: EnhancementFunction): Promise<EnhancementResult> => {
     if (!note?.content) {
       const error = 'No content to enhance';
@@ -132,7 +137,16 @@ export function useNoteEnrichment(note?: Note) {
       setEnhancedContent(enhanced);
       await updateUsage(note.id);
       setIsLoading(false);
-      return { success: true, content: enhanced, error: '' };
+      
+      // Get the enhancement details
+      const enhancementDetails = getEnhancementDetails(enhancementType);
+      
+      return { 
+        success: true, 
+        content: enhanced, 
+        error: '',
+        enhancementType: enhancementDetails?.outputType 
+      };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       setError(errorMessage);
@@ -141,7 +155,7 @@ export function useNoteEnrichment(note?: Note) {
     } finally {
       setIsProcessing(false);
     }
-  }, [note, updateUsage, hasReachedLimit]);
+  }, [note, updateUsage, hasReachedLimit, getEnhancementDetails]);
 
   // Real implementation for direct note enrichment
   const enrichNote = useCallback(async (
@@ -177,8 +191,60 @@ export function useNoteEnrichment(note?: Note) {
       
       setEnhancedContent(enhanced);
       await updateUsage(noteId);
-      toast.success("Note enhanced successfully");
-      return { success: true, content: enhanced, error: '' };
+      
+      // Get the enhancement details
+      const enhancementDetails = getEnhancementDetails(enhancementType);
+      
+      // Check if we should replace content or store it separately
+      if (enhancementDetails?.replaceContent) {
+        toast.success("Note enhanced successfully");
+        return { 
+          success: true, 
+          content: enhanced, 
+          error: '',
+          enhancementType: enhancementDetails?.outputType
+        };
+      } else {
+        // This is for summary or key points which should be stored separately
+        // For this case, we need to update the database with the enhanced content in the appropriate field
+        let updateData: any = {};
+        
+        if (enhancementType === 'summarize') {
+          updateData = { 
+            summary: enhanced,
+            summary_generated_at: new Date().toISOString()
+          };
+          toast.success("Summary generated successfully");
+        } else if (enhancementType === 'extract-key-points') {
+          updateData = { 
+            enhancements: { 
+              keyPoints: enhanced, 
+              last_enhanced_at: new Date().toISOString() 
+            } 
+          };
+          toast.success("Key points extracted successfully");
+        }
+        
+        // Update the note in the database
+        try {
+          const { error } = await supabase
+            .from('notes')
+            .update(updateData)
+            .eq('id', noteId);
+            
+          if (error) throw error;
+        } catch (dbError) {
+          console.error('Error updating note with enhancement:', dbError);
+          // Even if db update fails, we can still return the enhanced content
+        }
+        
+        return { 
+          success: true, 
+          content: enhanced, 
+          error: '',
+          enhancementType: enhancementDetails?.outputType
+        };
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       setError(errorMessage);
@@ -187,7 +253,7 @@ export function useNoteEnrichment(note?: Note) {
     } finally {
       setIsProcessing(false);
     }
-  }, [updateUsage, hasReachedLimit]);
+  }, [updateUsage, hasReachedLimit, getEnhancementDetails]);
 
   return {
     isProcessing,
@@ -205,7 +271,8 @@ export function useNoteEnrichment(note?: Note) {
     updateUsage,
     selectedEnhancement,
     setSelectedEnhancement,
-    hasReachedLimit
+    hasReachedLimit,
+    getEnhancementDetails
   };
 }
 

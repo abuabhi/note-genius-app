@@ -25,4 +25,9 @@ export interface Note {
   summary_status?: 'pending' | 'generating' | 'completed' | 'failed';
   summary_generated_at?: string;
   subject_id?: string;
+  enhancements?: {
+    keyPoints?: string;
+    flashcards?: any[]; // For future implementation
+    last_enhanced_at?: string;
+  };
 }

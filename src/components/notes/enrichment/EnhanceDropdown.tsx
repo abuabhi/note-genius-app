@@ -40,6 +40,14 @@ export const EnhanceDropdown = ({
   const handleEnhancementSelect = async (enhancement: EnhancementFunction) => {
     if (!noteId || !noteContent) return;
     
+    // Check if it's the "create-flashcards" option which is coming soon
+    if (enhancement === 'generate-questions') {
+      toast.info("Coming Soon", {
+        description: "Flashcard creation from notes will be available soon!"
+      });
+      return;
+    }
+    
     try {
       const result = await enrichNote(noteId, noteContent, enhancement, noteTitle);
       
@@ -113,12 +121,15 @@ export const EnhanceDropdown = ({
             <DropdownMenuItem
               key={option.id}
               onClick={() => handleEnhancementSelect(option.value as EnhancementFunction)}
-              className="cursor-pointer flex items-start p-2 rounded hover:bg-mint-50 focus:bg-mint-50 transition-colors"
-              disabled={isProcessing}
+              className={`cursor-pointer flex items-start p-2 rounded hover:bg-mint-50 focus:bg-mint-50 transition-colors ${option.value === 'generate-questions' ? 'opacity-60' : ''}`}
+              disabled={isProcessing || option.value === 'generate-questions'}
             >
               <div className="flex flex-col">
                 <span className="font-medium text-mint-800">{option.title}</span>
                 <span className="text-xs text-muted-foreground mt-0.5">{option.description}</span>
+                {option.value === 'generate-questions' && (
+                  <span className="text-xs text-amber-600 mt-0.5 font-medium">Coming soon</span>
+                )}
               </div>
             </DropdownMenuItem>
           ))

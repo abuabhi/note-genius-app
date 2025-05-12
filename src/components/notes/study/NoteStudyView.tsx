@@ -97,9 +97,11 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
           />
         ) : (
           <NoteContentDisplay
+            note={note}
             content={note.content || note.description || ""}
             fontSize={fontSize}
             textAlign={textAlign}
+            isEditing={isEditing}
           />
         )}
       </CardContent>

@@ -4,6 +4,9 @@ import { toast } from "sonner";
 import { updateNoteInDatabase } from "@/contexts/notes/operations";
 import { Note } from "@/types/note";
 import { useNotes } from "@/contexts/NoteContext";
+import { supabase } from "@/integrations/supabase/client";
+import { EnhancementFunction } from "@/hooks/noteEnrichment/types";
+import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
 
 export const useNoteStudyEditor = (note: Note) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -15,6 +18,7 @@ export const useNoteStudyEditor = (note: Note) => {
     (note.tags || []).map(tag => ({...tag}))
   );
   const { getAllTags } = useNotes();
+  const { getEnhancementDetails } = useNoteEnrichment();
   const [availableTags, setAvailableTags] = useState<{ id: string; name: string; color: string }[]>([]);
   
   // Fetch available tags when component mounts
@@ -90,19 +94,76 @@ export const useNoteStudyEditor = (note: Note) => {
   };
   
   // Handle content enhancement
-  const handleEnhanceContent = (enhancedContent: string) => {
+  const handleEnhanceContent = async (enhancedContent: string, enhancementType?: EnhancementFunction) => {
+    // If no enhancement type is provided, assume it's improve-clarity
+    const typeToApply = enhancementType || 'improve-clarity';
+    const enhancementDetails = getEnhancementDetails?.(typeToApply);
+    
     if (isEditing) {
+      // If we're editing, just update the editable content
       setEditableContent(enhancedContent);
-    } else {
-      // Save directly
-      updateNoteInDatabase(note.id, { content: enhancedContent })
-        .then(() => {
-          note.content = enhancedContent;
-          toast("Content enhanced successfully");
-        })
-        .catch(() => {
-          toast("Failed to save enhanced content");
-        });
+      toast.success("Enhancement applied to editor. Save to keep changes.");
+      return;
+    }
+    
+    // If not editing, directly update the note based on enhancement type
+    setIsSaving(true);
+    try {
+      // Check if this is a replacement type enhancement
+      if (enhancementDetails?.replaceContent) {
+        // For enhancements that replace content
+        await supabase
+          .from('notes')
+          .update({ content: enhancedContent })
+          .eq('id', note.id);
+          
+        // Update local note
+        note.content = enhancedContent;
+        toast.success("Content enhanced successfully");
+      } else {
+        // For enhancements that create separate content
+        if (typeToApply === 'summarize') {
+          await supabase
+            .from('notes')
+            .update({ 
+              summary: enhancedContent,
+              summary_generated_at: new Date().toISOString() 
+            })
+            .eq('id', note.id);
+            
+          // Update local note
+          note.summary = enhancedContent;
+          note.summary_generated_at = new Date().toISOString();
+          toast.success("Summary created successfully");
+        } else if (typeToApply === 'extract-key-points') {
+          // For key points, we need to update the enhancements object
+          const enhancements = note.enhancements || {};
+          
+          await supabase
+            .from('notes')
+            .update({
+              enhancements: {
+                ...enhancements,
+                keyPoints: enhancedContent,
+                last_enhanced_at: new Date().toISOString()
+              }
+            })
+            .eq('id', note.id);
+          
+          // Update local note
+          note.enhancements = {
+            ...enhancements,
+            keyPoints: enhancedContent,
+            last_enhanced_at: new Date().toISOString()
+          };
+          toast.success("Key points extracted successfully");
+        }
+      }
+    } catch (error) {
+      toast.error("Failed to save enhanced content");
+      console.error("Error saving enhancement:", error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
