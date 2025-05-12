@@ -5,7 +5,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Note } from "@/types/note";
 import { useRequireAuth, TierLimits, UserTier } from "@/hooks/useRequireAuth";
 import { NotesHeader } from "./NotesHeader";
-import { AdminNoteDelete } from "../AdminNoteDelete";
 import { TierInfo } from "./TierInfo";
 import { SubjectsSection } from "./SubjectsSection";
 import { NotesDisplay } from "./NotesDisplay";
@@ -70,13 +69,6 @@ export const NotesContent = ({
         setFilterOptions={setFilterOptions}
         filteredNotesCount={filteredNotes.length}
       />
-      
-      {/* Admin Delete Tool - Only show for authenticated users */}
-      {user && (
-        <div className="mb-6">
-          <AdminNoteDelete />
-        </div>
-      )}
       
       {/* Notes Grid and Pagination */}
       <NotesDisplay 
