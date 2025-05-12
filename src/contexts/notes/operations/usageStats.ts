@@ -1,44 +1,30 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-// Get the current usage statistics for note enrichments
-export const fetchNoteEnrichmentUsage = async (): Promise<{ current: number, limit: number | null }> => {
+/**
+ * Fetches note enrichment usage data for a specified month
+ */
+export const fetchNoteEnrichmentUsage = async (monthYear: string) => {
   try {
-    const currentMonth = new Date().toISOString().slice(0, 7); // Format: YYYY-MM
+    const userId = (await supabase.auth.getUser()).data.user?.id;
     
-    // Get user tier first
-    const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .select('user_tier')
-      .eq('id', (await supabase.auth.getUser()).data.user?.id)
-      .single();
-      
-    if (profileError) throw profileError;
+    if (!userId) {
+      throw new Error('No authenticated user');
+    }
     
-    // Get tier limits
-    const { data: tierLimits, error: tierError } = await supabase
-      .from('tier_limits')
-      .select('note_enrichment_limit_per_month')
-      .eq('tier', profileData.user_tier)
-      .single();
-      
-    if (tierError) throw tierError;
-    
-    // Get current usage
-    const { data: usageData, error: usageError } = await supabase
+    const { data, error } = await supabase
       .from('note_enrichment_usage')
-      .select('id')
-      .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-      .eq('month_year', currentMonth);
+      .select('id, created_at')
+      .eq('user_id', userId)
+      .eq('month_year', monthYear);
       
-    if (usageError) throw usageError;
+    if (error) {
+      throw error;
+    }
     
-    return {
-      current: usageData.length,
-      limit: tierLimits.note_enrichment_limit_per_month
-    };
+    return data;
   } catch (error) {
     console.error('Error fetching note enrichment usage:', error);
-    return { current: 0, limit: null };
+    return [];
   }
 };
