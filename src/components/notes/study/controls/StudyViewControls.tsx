@@ -46,7 +46,7 @@ export const StudyViewControls: React.FC<StudyViewControlsProps> = ({
   isFullScreen,
   isEditing = false,
   isSaving = false,
-  hideAlignment = false, // Default to showing the alignment control
+  hideAlignment = true, // Default to hiding the alignment control
   onIncreaseFontSize,
   onDecreaseFontSize,
   onChangeTextAlign,

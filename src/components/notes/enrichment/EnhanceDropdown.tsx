@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
 import { Loader2, Sparkles } from "lucide-react";

@@ -4,6 +4,7 @@ import { CardContent } from "@/components/ui/card";
 import { NoteContentDisplay } from "../NoteContentDisplay";
 import { NoteStudyEditForm } from "../editor/NoteStudyEditForm";
 import { EnhancementUsageMeter } from "./EnhancementUsageMeter";
+import { EnhanceDropdown } from "../../enrichment/EnhanceDropdown";
 import { Note } from "@/types/note";
 import { TextAlignType } from "../hooks/useStudyViewState";
 import { EnhancementFunction } from "@/hooks/noteEnrichment/types";
@@ -65,13 +66,24 @@ export const NoteStudyViewContent: React.FC<NoteStudyViewContentProps> = ({
 
   return (
     <CardContent className="p-4 md:p-6">
-      {/* Show usage meter when not editing */}
+      {/* Show usage meter and enhancement dropdown when not editing */}
       {!isEditing && (
-        <EnhancementUsageMeter 
-          statsLoading={statsLoading}
-          currentUsage={currentUsage}
-          monthlyLimit={monthlyLimit}
-        />
+        <div className="mb-4">
+          <div className="flex justify-between items-center">
+            <EnhancementUsageMeter 
+              statsLoading={statsLoading}
+              currentUsage={currentUsage}
+              monthlyLimit={monthlyLimit}
+            />
+            
+            <EnhanceDropdown
+              noteId={note.id}
+              noteTitle={note.title || ""}
+              noteContent={note.content || ""}
+              onEnhance={handleEnhanceContent}
+            />
+          </div>
+        </div>
       )}
       
       {isEditing ? (
