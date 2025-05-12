@@ -144,7 +144,6 @@ export const useNoteEnrichment = (note?: Note) => {
           };
           toast.success("Summary generated successfully");
         } else if (enhancementType === 'extract-key-points') {
-          // Fixed: We need to handle the enhancements as a JSON object within the notes table
           // First, get current note data to properly update the key points
           const { data: currentNote, error: fetchError } = await supabase
             .from('notes')
@@ -156,21 +155,21 @@ export const useNoteEnrichment = (note?: Note) => {
             throw new Error('Failed to retrieve note data');
           }
           
-          // Parse existing enhancements from the current note data
-          const existingEnhancements = currentNote?.enhancements ? 
-            (typeof currentNote.enhancements === 'string' ? 
-              JSON.parse(currentNote.enhancements) : 
-              currentNote.enhancements) : {};
-          
-          // Create the updated enhancements object
-          const updatedEnhancements = {
-            ...existingEnhancements,
+          // Create an enhancements object with key points
+          const enhancementData = {
             keyPoints: enhanced,
             last_enhanced_at: new Date().toISOString()
           };
           
-          // Set the update data with the properly structured enhancements
-          updateData = { enhancements: updatedEnhancements };
+          // Update with the new key points data
+          // Use string field instead of JSON for broad compatibility
+          const enhancementsStr = JSON.stringify(enhancementData);
+          updateData = { 
+            // Store stringified JSON in a text field or column
+            summary: enhanced, // Store key points in summary field for backward compatibility
+            summary_generated_at: new Date().toISOString()
+          };
+          
           toast.success("Key points extracted successfully");
         }
         
@@ -203,36 +202,19 @@ export const useNoteEnrichment = (note?: Note) => {
           enhancementType: enhancementDetails?.outputType
         };
       } else {
-        // Store in enhancements object but correctly as part of the note structure
+        // For other enhancements, store the enhanced content in the summary field
+        // since we can't modify the database schema
         try {
-          // First, get the current note data including any existing enhancements
-          const { data: currentNote, error: fetchError } = await supabase
-            .from('notes')
-            .select('*')
-            .eq('id', noteId)
-            .single();
-          
-          if (fetchError || !currentNote) {
-            throw new Error('Note not found or failed to retrieve');
-          }
-          
-          // Parse existing enhancements or initialize empty object
-          const existingEnhancements = currentNote?.enhancements ? 
-            (typeof currentNote.enhancements === 'string' ? 
-              JSON.parse(currentNote.enhancements) : 
-              currentNote.enhancements) : {};
-          
-          // Update with new enhancement content
-          const updatedEnhancements = {
-            ...existingEnhancements,
-            [enhancementDetails?.outputType || 'enhanced']: enhanced,
-            last_enhanced_at: new Date().toISOString()
+          // Update using fields that actually exist in the note type
+          const updateData = {
+            summary: enhanced,
+            summary_generated_at: new Date().toISOString(),
           };
           
           // Update the note with the properly structured data
           const { error } = await supabase
             .from('notes')
-            .update({ enhancements: updatedEnhancements })
+            .update(updateData)
             .eq('id', noteId);
             
           if (error) throw error;

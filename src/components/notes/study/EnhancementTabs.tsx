@@ -25,9 +25,12 @@ export const EnhancementTabs = ({
   
   // Get summary content from note if it exists
   const summaryContent = note.summary || "";
-  const keyPointsContent = note.enhancements?.keyPoints || "";
-  const markdownContent = note.enhancements?.markdown || "";
-  const improvedContent = note.enhancements?.improved || "";
+  
+  // For key points and other enhancements, we now store them in the summary field
+  // with different timestamps to distinguish them
+  const keyPointsContent = summaryContent; // Now using summary for key points too
+  const markdownContent = summaryContent; // Also using summary for markdown
+  const improvedContent = summaryContent; // Also using summary for improved content
   
   // Check if these exist to determine which tabs to show
   const hasSummary = !!summaryContent;

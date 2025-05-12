@@ -46,8 +46,8 @@ export const useEnhancementProcessor = (note: Note, editorState: {
         toast.success(`Content ${enhancementDetails.title.toLowerCase()} successfully`);
       } else {
         // For enhancements that create separate content
-        if (typeToApply === 'summarize') {
-          // Always store summary in its dedicated field
+        if (typeToApply === 'summarize' || typeToApply === 'extract-key-points') {
+          // Store in summary field
           await updateNoteInDatabase(note.id, {
             summary: enhancedContent,
             summary_generated_at: new Date().toISOString()
@@ -56,49 +56,38 @@ export const useEnhancementProcessor = (note: Note, editorState: {
           // Update local note
           note.summary = enhancedContent;
           note.summary_generated_at = new Date().toISOString();
-          toast.success("Summary created successfully");
+          
+          // Set toast message based on enhancement type
+          const message = typeToApply === 'summarize' ? 
+            "Summary created successfully" :
+            "Key points extracted successfully";
+          
+          toast.success(message);
         } else {
-          // Get current enhancements or create new object
-          const currentEnhancements = note.enhancements || {};
-          
-          // Determine which field to update based on enhancement type
-          let enhancementField: string;
-          let successMessage: string;
-          
-          switch (typeToApply) {
-            case 'extract-key-points':
-              enhancementField = 'keyPoints';
-              successMessage = "Key points extracted successfully";
-              break;
-            case 'convert-to-markdown':
-              enhancementField = 'markdown';
-              successMessage = "Converted to markdown successfully";
-              break;
-            case 'improve-clarity':
-              enhancementField = 'improved';
-              successMessage = "Improved clarity generated successfully";
-              break;
-            default:
-              enhancementField = 'keyPoints';
-              successMessage = "Enhancement completed successfully";
-          }
-          
-          console.log(`Saving enhancement to ${enhancementField} field`);
-          
-          // Create updated enhancements object
-          const updatedEnhancements = {
-            ...currentEnhancements,
-            [enhancementField]: enhancedContent,
-            last_enhanced_at: new Date().toISOString()
-          };
-          
-          // Update note in database
+          // Store other enhancement types in summary field as well
           await updateNoteInDatabase(note.id, {
-            enhancements: updatedEnhancements
+            summary: enhancedContent,
+            summary_generated_at: new Date().toISOString()
           });
           
           // Update local note
-          note.enhancements = updatedEnhancements;
+          note.summary = enhancedContent;
+          note.summary_generated_at = new Date().toISOString();
+          
+          // Determine success message based on enhancement type
+          let successMessage: string;
+          
+          switch (typeToApply) {
+            case 'convert-to-markdown':
+              successMessage = "Converted to markdown successfully";
+              break;
+            case 'improve-clarity':
+              successMessage = "Improved clarity generated successfully";
+              break;
+            default:
+              successMessage = "Enhancement completed successfully";
+          }
+          
           toast.success(successMessage);
         }
       }
