@@ -131,18 +131,10 @@ export const useNoteEnrichment = (note?: Note) => {
       // Get the enhancement details
       const enhancementDetails = getEnhancementDetails(enhancementType);
       
-      // Check if we should replace content or store it separately
-      if (enhancementDetails?.replaceContent) {
-        toast.success("Note enhanced successfully");
-        return { 
-          success: true, 
-          content: enhanced, 
-          error: '',
-          enhancementType: enhancementDetails?.outputType
-        };
-      } else {
-        // This is for summary or key points which should be stored separately
-        // For this case, we need to update the database with the enhanced content in the appropriate field
+      // CRITICAL FIX: For summary and key points, ALWAYS store in separate fields,
+      // never replace the original content
+      if (enhancementType === 'summarize' || enhancementType === 'extract-key-points') {
+        // Always store summary and key points in their own fields
         let updateData: any = {};
         
         if (enhancementType === 'summarize') {
@@ -172,6 +164,43 @@ export const useNoteEnrichment = (note?: Note) => {
         } catch (dbError) {
           console.error('Error updating note with enhancement:', dbError);
           // Even if db update fails, we can still return the enhanced content
+        }
+        
+        return { 
+          success: true, 
+          content: enhanced, 
+          error: '',
+          enhancementType: enhancementDetails?.outputType
+        };
+      } else if (enhancementDetails?.replaceContent) {
+        // For other enhancement types that should replace content
+        toast.success("Note enhanced successfully");
+        return { 
+          success: true, 
+          content: enhanced, 
+          error: '',
+          enhancementType: enhancementDetails?.outputType
+        };
+      } else {
+        // Store in enhancements object
+        let updateData = {
+          enhancements: {
+            [enhancementDetails?.outputType || 'enhanced']: enhanced,
+            last_enhanced_at: new Date().toISOString()
+          }
+        };
+        
+        try {
+          const { error } = await supabase
+            .from('notes')
+            .update(updateData)
+            .eq('id', noteId);
+            
+          if (error) throw error;
+            
+          toast.success(`${enhancementDetails?.title || 'Enhancement'} generated successfully`);
+        } catch (dbError) {
+          console.error('Error updating note with enhancement:', dbError);
         }
         
         return { 
