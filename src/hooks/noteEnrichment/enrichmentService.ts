@@ -67,6 +67,14 @@ const trackTokenUsage = async (noteId: string, tokenUsage: { promptTokens: numbe
     // Get current month in YYYY-MM format
     const currentMonth = new Date().toISOString().slice(0, 7);
     
+    // Get the current authenticated user's ID
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      console.warn('No authenticated user found when tracking token usage');
+      return;
+    }
+    
     // Insert usage record
     const { error } = await supabase
       .from('note_enrichment_usage')
@@ -75,7 +83,8 @@ const trackTokenUsage = async (noteId: string, tokenUsage: { promptTokens: numbe
         month_year: currentMonth,
         llm_provider: 'openai',
         prompt_tokens: tokenUsage.promptTokens,
-        completion_tokens: tokenUsage.completionTokens
+        completion_tokens: tokenUsage.completionTokens,
+        user_id: user.id
       });
     
     if (error) {
