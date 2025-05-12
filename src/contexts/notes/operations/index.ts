@@ -3,6 +3,7 @@ import { Note } from "@/types/note";
 import { addNoteToDatabase as addNoteDb, deleteNoteFromDatabase as deleteNoteDb, updateNoteInDatabase as updateNoteDb } from "./noteDbOperations";
 import { updateNoteTagsInDatabase, addNoteTagsToDatabase, fetchTagsFromDatabase } from "./tagOperations";
 import { updateScanDataInDatabase, addScanDataToDatabase } from "./scanOperations";
+import { supabase } from "@/integrations/supabase/client"; // Fixed: proper import
 
 // Re-export functions from other modules
 export { fetchTagsFromDatabase } from "./tagOperations";
@@ -40,25 +41,17 @@ export const deleteNoteFromDatabase = async (id: string): Promise<void> => {
     // Log the attempt for debugging purposes
     console.log("Operations index - Deleting note with ID:", id);
     
-    // Attempt deletion with proper error handling
-    try {
-      await deleteNoteDb(id);
-      console.log("Operations index - Note successfully deleted:", id);
-    } catch (deleteError) {
-      console.error('Operations index - Initial delete attempt failed:', deleteError);
-      
-      // Try direct edge function call as backup
-      const { data, error: functionError } = await supabase.functions.invoke('delete-note', {
-        body: { noteId: id }
-      });
-      
-      if (functionError) {
-        console.error('Operations index - Edge function direct call failed:', functionError);
-        throw functionError;
-      }
-      
-      console.log("Operations index - Note deleted via direct edge function call:", data);
+    // Call the edge function directly for consistent deletion process
+    const { data, error: functionError } = await supabase.functions.invoke('delete-note', {
+      body: { noteId: id }
+    });
+    
+    if (functionError) {
+      console.error('Operations index - Edge function call failed:', functionError);
+      throw functionError;
     }
+    
+    console.log("Operations index - Note deleted via edge function call:", data);
   } catch (error) {
     console.error('Operations index - Error deleting note:', error);
     throw error;

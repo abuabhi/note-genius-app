@@ -71,7 +71,7 @@ export const deleteNoteFromDatabase = async (id: string): Promise<void> => {
     // First, verify if the note exists and log its details
     const { data: noteData, error: checkError } = await supabase
       .from('notes')
-      .select('id, title, subject_id')
+      .select('*')  // Select all columns for better debugging
       .eq('id', id)
       .single();
 

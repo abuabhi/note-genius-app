@@ -22,7 +22,7 @@ serve(async (req) => {
     // Get the note ID from the request body
     const { noteId } = await req.json()
     
-    console.log(`Attempting to force delete note with ID: ${noteId}`)
+    console.log(`Attempting to delete note with ID: ${noteId}`)
     
     if (!noteId) {
       return new Response(
@@ -31,10 +31,10 @@ serve(async (req) => {
       )
     }
 
-    // Debug info - check if the note exists first
+    // Debug info - check if the note exists first and log all its data
     const { data: noteCheck, error: noteCheckError } = await supabase
       .from('notes')
-      .select('id, title, subject_id')
+      .select('*')
       .eq('id', noteId)
       .single()
 
@@ -88,52 +88,37 @@ serve(async (req) => {
     if (noteError) {
       console.error('Error deleting note:', noteError)
       
-      // If regular delete failed, attempt direct SQL delete
+      // If regular delete failed, attempt direct SQL delete via RPC
       try {
-        // Use RPC with admin privileges to force delete the note
-        const { data: rpcData, error: rpcError } = await supabase.rpc('force_delete_note', { 
-          note_id: noteId 
+        console.log("Attempting force delete via direct SQL query")
+        
+        // Use raw SQL query to force delete the note (bypassing constraints)
+        const { data: sqlData, error: sqlError } = await supabase.rpc('force_delete_note', {
+          note_id: noteId
         })
         
-        if (rpcError) {
-          throw rpcError
+        if (sqlError) {
+          throw sqlError
         }
         
         return new Response(
           JSON.stringify({ 
             success: true, 
-            message: `Note ${noteId} deleted successfully via RPC`
+            message: `Note ${noteId} deleted successfully via direct SQL` 
           }), 
           { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
         )
-      } catch (rpcError) {
-        console.error('RPC method error:', rpcError)
+      } catch (forceError) {
+        console.error('Force delete error:', forceError)
         
-        // Last resort: Try a raw SQL query to force delete the note
-        try {
-          const { error: sqlError } = await supabase.from('notes').delete().eq('id', noteId).select()
-          
-          if (sqlError) {
-            throw sqlError
-          }
-          
-          return new Response(
-            JSON.stringify({ 
-              success: true, 
-              message: `Note ${noteId} deleted successfully via direct SQL`
-            }), 
-            { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-          )
-        } catch (sqlError) {
-          console.error('SQL delete error:', sqlError)
-          return new Response(
-            JSON.stringify({ 
-              error: 'Failed to delete note even with admin privileges',
-              details: noteError.message
-            }), 
-            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-          )
-        }
+        return new Response(
+          JSON.stringify({ 
+            error: 'Failed to delete note even with admin privileges',
+            details: noteError.message,
+            forceError: forceError.message
+          }), 
+          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        )
       }
     }
 

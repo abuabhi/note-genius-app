@@ -24,6 +24,7 @@ interface ForceDeleteNoteProps {
 
 export const ForceDeleteNote = ({ noteId }: ForceDeleteNoteProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteResults, setDeleteResults] = useState<any>(null);
   const navigate = useNavigate();
   const { setNotes } = useNotes();
 
@@ -32,6 +33,15 @@ export const ForceDeleteNote = ({ noteId }: ForceDeleteNoteProps) => {
       setIsDeleting(true);
       toast.loading("Force deleting note...");
       
+      // First log the note details for debugging
+      const { data: noteData } = await supabase
+        .from('notes')
+        .select('*')
+        .eq('id', noteId)
+        .single();
+      
+      console.log("Force deleting note with data:", noteData);
+      
       // Call the edge function directly to delete the note with admin privileges
       const { data, error } = await supabase.functions.invoke('delete-note', {
         body: { noteId }
@@ -39,6 +49,7 @@ export const ForceDeleteNote = ({ noteId }: ForceDeleteNoteProps) => {
       
       if (error) {
         console.error("Error in edge function:", error);
+        setDeleteResults({ success: false, error: error.message || "Unknown error" });
         toast.dismiss();
         toast.error(`Failed to delete note: ${error.message || "Unknown error"}`);
         throw error;
@@ -46,6 +57,7 @@ export const ForceDeleteNote = ({ noteId }: ForceDeleteNoteProps) => {
       
       // Update local state to remove the deleted note
       setNotes(prev => prev.filter(note => note.id !== noteId));
+      setDeleteResults({ success: true, data });
       
       toast.dismiss();
       toast.success('Note has been permanently deleted');
@@ -54,6 +66,7 @@ export const ForceDeleteNote = ({ noteId }: ForceDeleteNoteProps) => {
       navigate('/notes');
     } catch (error) {
       console.error('Error deleting note:', error);
+      setDeleteResults({ success: false, error: error.message || "Unknown error" });
       toast.dismiss();
       toast.error(`Failed to delete note: ${error.message || "Unknown error"}`);
     } finally {
