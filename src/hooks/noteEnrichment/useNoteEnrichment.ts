@@ -3,11 +3,12 @@ import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Note } from '@/types/note';
 import { supabase } from '@/integrations/supabase/client';
-import { enhancementOptions } from './enhancementOptions';
-import { EnhancementFunction, EnhancementResult, EnhancementType } from './types';
-import { enrichNote as callEnrichmentAPI } from './enrichmentService';
+import { enhancementOptions, getEnhancementDetails } from './enhancementOptions';
+import { EnhancementFunction, EnhancementResult } from './types';
+import { enrichNote } from './enrichmentService';
 import { useUserTier } from '../useUserTier';
 import { useEnrichmentUsageStats } from './useEnrichmentUsageStats';
+import { updateNoteWithEnhancement } from './enhancementHelpers';
 
 /**
  * Hook for managing note enrichment functionality
@@ -32,12 +33,8 @@ export const useNoteEnrichment = (note?: Note) => {
     setIsProcessing(false);
     setIsLoading(false);
     setError('');
+    setEnhancedContent('');
     setSelectedEnhancement(null);
-  }, []);
-
-  // Get the enhancement details by function type
-  const getEnhancementDetails = useCallback((enhancementType: EnhancementFunction) => {
-    return enhancementOptions.find(option => option.value === enhancementType);
   }, []);
 
   // Process enhancement and determine how to apply it
@@ -63,7 +60,7 @@ export const useNoteEnrichment = (note?: Note) => {
 
     try {
       // Call the real enrichment API
-      const enhanced = await callEnrichmentAPI({
+      const enhanced = await enrichNote({
         id: note.id,
         title: note.title,
         content: note.content,
@@ -71,7 +68,6 @@ export const useNoteEnrichment = (note?: Note) => {
       }, enhancementType);
       
       setEnhancedContent(enhanced);
-      // Usage tracking happens in enrichNote
       setIsLoading(false);
       
       // Get the enhancement details
@@ -91,7 +87,7 @@ export const useNoteEnrichment = (note?: Note) => {
     } finally {
       setIsProcessing(false);
     }
-  }, [note, hasReachedLimit, getEnhancementDetails]);
+  }, [note, hasReachedLimit]);
 
   // Direct note enrichment implementation
   const enrichNote = useCallback(async (
@@ -118,73 +114,25 @@ export const useNoteEnrichment = (note?: Note) => {
     setSelectedEnhancement(enhancementType);
 
     try {
-      // Call the real enrichment API
-      const enhanced = await callEnrichmentAPI({
+      // Call the enrichment service
+      const enhanced = await enrichNote({
         id: noteId,
         title: title,
         content: content
       }, enhancementType);
       
       setEnhancedContent(enhanced);
-      // Usage tracking happens in enrichNote
       
       // Get the enhancement details
       const enhancementDetails = getEnhancementDetails(enhancementType);
-      const now = new Date().toISOString();
       
-      // Store enrichment in the appropriate field based on type
+      // Store enrichment in the database
       try {
-        let updateData: any = {};
+        const success = await updateNoteWithEnhancement(noteId, enhanced, enhancementType);
         
-        switch (enhancementType) {
-          case 'summarize':
-            updateData = {
-              summary: enhanced,
-              summary_generated_at: now
-            };
-            toast.success("Summary generated successfully");
-            break;
-            
-          case 'extract-key-points':
-            updateData = {
-              key_points: enhanced,
-              key_points_generated_at: now
-            };
-            toast.success("Key points extracted successfully");
-            break;
-            
-          case 'convert-to-markdown':
-            updateData = {
-              markdown_content: enhanced,
-              markdown_content_generated_at: now
-            };
-            toast.success("Converted to markdown successfully");
-            break;
-            
-          case 'improve-clarity':
-            updateData = {
-              improved_content: enhanced,
-              improved_content_generated_at: now
-            };
-            toast.success("Improved clarity generated successfully");
-            break;
-            
-          default:
-            // Fallback to summary
-            updateData = {
-              summary: enhanced,
-              summary_generated_at: now
-            };
-            toast.success(`${enhancementDetails?.title || 'Enhancement'} generated successfully`);
+        if (success) {
+          toast.success(`${enhancementDetails?.title || 'Enhancement'} generated successfully`);
         }
-        
-        // Update the note with the new enhancement
-        const { error } = await supabase
-          .from('notes')
-          .update(updateData)
-          .eq('id', noteId);
-          
-        if (error) throw error;
       } catch (dbError) {
         console.error('Error updating note with enhancement:', dbError);
         // Even if db update fails, we can still return the enhanced content
@@ -206,7 +154,7 @@ export const useNoteEnrichment = (note?: Note) => {
       // Refresh usage stats after operation completes
       await fetchUsageStats();
     }
-  }, [hasReachedLimit, getEnhancementDetails, fetchUsageStats]);
+  }, [hasReachedLimit, fetchUsageStats]);
 
   return {
     isProcessing,

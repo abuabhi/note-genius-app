@@ -57,3 +57,10 @@ export const enhancementOptions: EnhancementOption[] = [
     replaceContent: true
   }
 ];
+
+/**
+ * Get enhancement details by function type
+ */
+export const getEnhancementDetails = (enhancementType: EnhancementFunction) => {
+  return enhancementOptions.find(option => option.value === enhancementType);
+};
