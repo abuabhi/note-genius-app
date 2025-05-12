@@ -8,6 +8,8 @@ import { EnhancementType } from "@/hooks/noteEnrichment/types";
 import { Loader2, RefreshCw, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { EnhancementProcessing } from "../enrichment/EnhancementProcessing";
+import { EnhancementError } from "../enrichment/EnhancementError";
 
 interface EnhancementTabsProps {
   note: Note;
@@ -61,26 +63,15 @@ export const EnhancementTabs = ({
       hasKeyPoints,
       hasMarkdown,
       hasImprovedClarity,
-      summary: summaryContent.slice(0, 50),
-      keyPoints: keyPointsContent.slice(0, 50),
-      markdown: markdownContent.slice(0, 50),
-      improved: improvedContent.slice(0, 50),
       // Debug timestamps
       summaryTimestamp: note.summary_generated_at,
       keyPointsTimestamp: note.key_points_generated_at,
       markdownTimestamp: note.markdown_content_generated_at,
       improvedTimestamp: note.improved_content_generated_at,
-      // Debug alignment
-      textAlign: textAlign,
-      contentHasAlignment: originalContent.includes('text-align'),
       // Debug status
       summaryStatus,
     });
-  }, [
-    note, hasSummary, hasKeyPoints, hasMarkdown, hasImprovedClarity, 
-    textAlign, originalContent, summaryContent, keyPointsContent, 
-    markdownContent, improvedContent, summaryStatus
-  ]);
+  }, [note, hasSummary, hasKeyPoints, hasMarkdown, hasImprovedClarity, summaryStatus]);
   
   // Reset to original tab when editing starts
   useEffect(() => {
@@ -126,34 +117,17 @@ export const EnhancementTabs = ({
     enhancementType: string = ""
   ) => {
     if (isLoading || tabLoadingState[enhancementType]) {
-      return (
-        <div className="flex flex-col items-center justify-center gap-4 py-8">
-          <Loader2 className="h-8 w-8 animate-spin text-mint-500" />
-          <p className="text-muted-foreground">Generating {title.toLowerCase()}...</p>
-        </div>
-      );
+      return <EnhancementProcessing message={`Generating ${title.toLowerCase()}...`} enhancementType={enhancementType} />;
     }
     
     if (hasError) {
       return (
-        <div className="p-4 bg-red-50 border border-red-100 rounded-lg">
-          <div className="flex items-start gap-2">
-            <AlertCircle className="h-5 w-5 text-red-500 mt-1 flex-shrink-0" />
-            <div>
-              <h3 className="text-red-700 font-medium">Enhancement failed</h3>
-              <p className="text-sm text-red-600 mb-3">There was a problem generating this enhancement.</p>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => handleRetry(enhancementType)}
-                className="text-red-600 border-red-200 hover:bg-red-50"
-              >
-                <RefreshCw className="mr-1 h-3 w-3" /> 
-                Try Again
-              </Button>
-            </div>
-          </div>
-        </div>
+        <EnhancementError 
+          error={`Failed to generate ${title.toLowerCase()}`}
+          onRetry={() => handleRetry(enhancementType)}
+          title={`${title} Generation Failed`}
+          enhancementType={enhancementType}
+        />
       );
     }
     
@@ -176,8 +150,7 @@ export const EnhancementTabs = ({
     }
     
     return (
-      <div className="p-4 bg-mint-50/50 rounded-lg border border-mint-100">
-        <h3 className="text-lg font-medium text-mint-800 mb-2">{title}</h3>
+      <div className="p-4">
         <RichTextDisplay 
           content={content} 
           fontSize={fontSize} 
@@ -189,12 +162,16 @@ export const EnhancementTabs = ({
       </div>
     );
   };
-
-  // Only show tabs if we have additional content
-  const showTabs = hasSummary || hasKeyPoints || hasMarkdown || hasImprovedClarity || isGeneratingSummary;
   
-  // If no enhancements to show, just display the content directly
-  if (!showTabs) {
+  // Determine what tabs to show
+  const availableTabs = ["original"];
+  if (hasSummary || isGeneratingSummary || hasSummaryError) availableTabs.push("summary");
+  if (hasKeyPoints) availableTabs.push("keyPoints");
+  if (hasMarkdown) availableTabs.push("markdown");
+  if (hasImprovedClarity) availableTabs.push("improved");
+  
+  // If only original content is available, just display it directly
+  if (availableTabs.length === 1) {
     return (
       <RichTextDisplay 
         content={originalContent} 
@@ -209,85 +186,136 @@ export const EnhancementTabs = ({
       defaultValue="original" 
       value={activeTab} 
       onValueChange={setActiveTab} 
-      className="w-full"
+      orientation="vertical" 
+      className="flex w-full gap-3"
     >
-      <TabsList className="mb-4">
-        <TabsTrigger value="original">Original</TabsTrigger>
+      <TabsList className="flex-col gap-1 bg-transparent py-0 w-48">
+        <TabsTrigger 
+          value="original" 
+          className="w-full justify-start data-[state=active]:bg-muted data-[state=active]:shadow-none"
+        >
+          Original
+        </TabsTrigger>
+        
         {(hasSummary || isGeneratingSummary || hasSummaryError) && (
-          <TabsTrigger value="summary" className="relative">
+          <TabsTrigger 
+            value="summary" 
+            className="w-full justify-start data-[state=active]:bg-minted data-[state=active]:shadow-none relative"
+          >
             Summary
             {isGeneratingSummary && (
-              <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-mint-500 animate-pulse"></span>
+              <span className="absolute top-1 right-2 h-2 w-2 rounded-full bg-mint-500 animate-pulse"></span>
             )}
             {hasSummaryError && (
-              <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500"></span>
+              <span className="absolute top-1 right-2 h-2 w-2 rounded-full bg-red-500"></span>
             )}
           </TabsTrigger>
         )}
-        {hasKeyPoints && <TabsTrigger value="keyPoints">Key Points</TabsTrigger>}
-        {hasMarkdown && <TabsTrigger value="markdown">Markdown</TabsTrigger>}
-        {hasImprovedClarity && <TabsTrigger value="improved">Improved</TabsTrigger>}
+        
+        {hasKeyPoints && (
+          <TabsTrigger 
+            value="keyPoints" 
+            className="w-full justify-start data-[state=active]:bg-muted data-[state=active]:shadow-none"
+          >
+            Key Points
+          </TabsTrigger>
+        )}
+        
+        {hasMarkdown && (
+          <TabsTrigger 
+            value="markdown" 
+            className="w-full justify-start data-[state=active]:bg-muted data-[state=active]:shadow-none"
+          >
+            Markdown
+          </TabsTrigger>
+        )}
+        
+        {hasImprovedClarity && (
+          <TabsTrigger 
+            value="improved" 
+            className="w-full justify-start data-[state=active]:bg-muted data-[state=active]:shadow-none"
+          >
+            Improved Clarity
+          </TabsTrigger>
+        )}
       </TabsList>
       
-      <TabsContent value="original" className="mt-2">
-        <RichTextDisplay 
-          content={originalContent} 
-          fontSize={fontSize} 
-          textAlign={textAlign}
-        />
-      </TabsContent>
-      
-      {(hasSummary || isGeneratingSummary || hasSummaryError) && (
-        <TabsContent value="summary" className="mt-2">
-          {renderEnhancementContent(
-            summaryContent, 
-            "Summary", 
-            false, 
-            isGeneratingSummary || isLoading, 
-            hasSummaryError,
-            "summary"
-          )}
+      <div className="grow rounded-lg border border-border text-start">
+        <TabsContent value="original" className="m-0">
+          <div className="p-4">
+            <h3 className="text-lg font-medium text-foreground mb-2">Original Note</h3>
+            <RichTextDisplay 
+              content={originalContent} 
+              fontSize={fontSize} 
+              textAlign={textAlign}
+            />
+          </div>
         </TabsContent>
-      )}
-      
-      {hasKeyPoints && (
-        <TabsContent value="keyPoints" className="mt-2">
-          {renderEnhancementContent(
-            keyPointsContent, 
-            "Key Points", 
-            false, 
-            isLoading, 
-            false,
-            "keyPoints"
-          )}
-        </TabsContent>
-      )}
-
-      {hasMarkdown && (
-        <TabsContent value="markdown" className="mt-2">
-          {renderEnhancementContent(
-            markdownContent, 
-            "Markdown Format", 
-            true, 
-            isLoading,
-            false,
-            "markdown"
-          )}
-        </TabsContent>
-      )}
-
-      {hasImprovedClarity && (
-        <TabsContent value="improved" className="mt-2">
-          {renderEnhancementContent(
-            improvedContent, 
-            "Improved Clarity", 
-            false, 
-            isLoading,
-            false,
-            "improved"
-          )}
-        </TabsContent>
-      )}
+        
+        {(hasSummary || isGeneratingSummary || hasSummaryError) && (
+          <TabsContent value="summary" className="m-0">
+            <div className="p-4">
+              <h3 className="text-lg font-medium text-mint-800 mb-2">Summary</h3>
+              {renderEnhancementContent(
+                summaryContent, 
+                "Summary", 
+                false, 
+                isGeneratingSummary || isLoading, 
+                hasSummaryError,
+                "summary"
+              )}
+            </div>
+          </TabsContent>
+        )}
+        
+        {hasKeyPoints && (
+          <TabsContent value="keyPoints" className="m-0">
+            <div className="p-4">
+              <h3 className="text-lg font-medium text-mint-800 mb-2">Key Points</h3>
+              {renderEnhancementContent(
+                keyPointsContent, 
+                "Key Points", 
+                false, 
+                isLoading, 
+                false,
+                "keyPoints"
+              )}
+            </div>
+          </TabsContent>
+        )}
+        
+        {hasMarkdown && (
+          <TabsContent value="markdown" className="m-0">
+            <div className="p-4">
+              <h3 className="text-lg font-medium text-mint-800 mb-2">Markdown Format</h3>
+              {renderEnhancementContent(
+                markdownContent, 
+                "Markdown Format", 
+                true, 
+                isLoading,
+                false,
+                "markdown"
+              )}
+            </div>
+          </TabsContent>
+        )}
+        
+        {hasImprovedClarity && (
+          <TabsContent value="improved" className="m-0">
+            <div className="p-4">
+              <h3 className="text-lg font-medium text-mint-800 mb-2">Improved Clarity</h3>
+              {renderEnhancementContent(
+                improvedContent, 
+                "Improved Clarity", 
+                false, 
+                isLoading,
+                false,
+                "improved"
+              )}
+            </div>
+          </TabsContent>
+        )}
+      </div>
     </Tabs>
   );
 };
