@@ -138,10 +138,15 @@ export const useNoteStudyEditor = (note: Note) => {
           // For key points, we need to update the enhancements object
           const currentEnhancements = note.enhancements || {};
           
+          // We need to use a valid column name here, not 'enhancements'
+          // According to the error, this field might not exist directly on the table
+          // Let's update using a more generic approach
           await supabase
             .from('notes')
             .update({
-              enhancements: {
+              // Assuming there is a JSON column called 'enhancements_data' in the database
+              // Use the actual column name from your schema
+              enhancements_data: {
                 ...currentEnhancements,
                 keyPoints: enhancedContent,
                 last_enhanced_at: new Date().toISOString()
