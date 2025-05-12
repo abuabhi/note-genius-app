@@ -11,6 +11,10 @@ import { useNoteStudyEditor } from "./hooks/useNoteStudyEditor";
 import { useEnrichmentUsageStats } from "@/hooks/noteEnrichment/useEnrichmentUsageStats";
 import { Progress } from "@/components/ui/progress";
 import { Sparkles } from "lucide-react";
+import { EnhancementTabs } from "./EnhancementTabs";
+import { toast } from "sonner";
+import { EnhancementFunction } from "@/hooks/noteEnrichment/types";
+import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
 
 interface NoteStudyViewProps {
   note: Note;
@@ -45,6 +49,10 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
     setSelectedTags
   } = useNoteStudyEditor(note);
 
+  // Enhancement state for retry functionality
+  const [enhancementLoading, setEnhancementLoading] = useState<boolean>(false);
+  const { enrichNote } = useNoteEnrichment();
+
   // Get usage stats for enhancements
   const { 
     currentUsage, 
@@ -71,6 +79,56 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
     };
     loadTags();
   }, [getAllTags]);
+
+  // Handle retry for enhancement failures
+  const handleRetryEnhancement = useCallback(async (enhancementType: string) => {
+    if (!note.content) {
+      toast.error("No content to enhance");
+      return;
+    }
+
+    if (hasReachedLimit()) {
+      toast.error("Monthly limit reached", {
+        description: "You've reached your monthly limit for AI enhancements"
+      });
+      return;
+    }
+
+    setEnhancementLoading(true);
+
+    try {
+      let typeToApply: EnhancementFunction;
+      
+      // Map UI enhancement type string to function type
+      switch (enhancementType) {
+        case "summary": typeToApply = "summarize"; break;
+        case "keyPoints": typeToApply = "extract-key-points"; break;
+        case "markdown": typeToApply = "convert-to-markdown"; break;
+        case "improved": typeToApply = "improve-clarity"; break;
+        default: typeToApply = "improve-clarity";
+      }
+      
+      // Call the enrichment function
+      const result = await enrichNote(
+        note.id,
+        note.content,
+        typeToApply,
+        note.title || "Note"
+      );
+      
+      if (result.success) {
+        toast.success(`${enhancementType} generated successfully`);
+        await fetchUsageStats(); // Refresh usage stats
+      }
+    } catch (error) {
+      console.error("Error retrying enhancement:", error);
+      toast.error("Failed to generate enhancement", {
+        description: error instanceof Error ? error.message : "Unknown error occurred"
+      });
+    } finally {
+      setEnhancementLoading(false);
+    }
+  }, [note, enrichNote, hasReachedLimit, fetchUsageStats]);
   
   // Render usage meter
   const renderUsageMeter = useCallback(() => {
@@ -139,7 +197,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
         onToggleEditing={toggleEditing}
         onSave={handleSaveContent}
         onTitleChange={handleTitleChange}
-        onEnhance={handleEnhanceContent} // Pass the enhance handler
+        onEnhance={handleEnhanceContent}
       />
 
       <CardContent className="p-4 md:p-6">
@@ -160,12 +218,13 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
             setSelectedTags={setSelectedTags}
           />
         ) : (
-          <NoteContentDisplay
+          <EnhancementTabs
             note={note}
-            content={note.content || note.description || ""}
             fontSize={fontSize}
             textAlign={textAlign}
             isEditing={isEditing}
+            isLoading={enhancementLoading}
+            onRetryEnhancement={handleRetryEnhancement}
           />
         )}
       </CardContent>
