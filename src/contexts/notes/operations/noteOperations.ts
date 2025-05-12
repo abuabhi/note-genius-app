@@ -1,4 +1,3 @@
-
 import { toast } from 'sonner';
 import { Note } from "@/types/note";
 import { 
@@ -7,7 +6,6 @@ import {
   updateNoteInDatabase,
   updateNoteTagsInDatabase
 } from '../operations';
-import { enrichNote } from '@/hooks/noteEnrichment/enrichmentService';
 
 export const useNoteOperations = (
   notes: Note[], 
@@ -20,10 +18,10 @@ export const useNoteOperations = (
     try {
       console.log("Adding note with data:", noteData);
       
-      // Set the summary_status to 'generating' to indicate we're going to generate a summary
+      // Set the summary_status to 'pending' instead of 'generating' to prevent auto-generation
       const noteToAdd = {
         ...noteData,
-        summary_status: 'generating' as 'pending' | 'generating' | 'completed' | 'failed'
+        summary_status: 'pending' as 'pending' | 'generating' | 'completed' | 'failed'
       };
       
       const newNote = await addNoteToDatabase(noteToAdd);
@@ -34,47 +32,7 @@ export const useNoteOperations = (
         setNotes(prevNotes => [newNote, ...prevNotes]);
         toast.success("Note added");
         
-        // Automatically generate summary in background
-        try {
-          const summaryContent = await enrichNote(newNote, 'summarize');
-          
-          // Update the note with the generated summary
-          await updateNoteInDatabase(newNote.id, {
-            summary: summaryContent,
-            summary_generated_at: new Date().toISOString(),
-            summary_status: 'completed'
-          });
-          
-          // Update the local state
-          setNotes(prevNotes => 
-            prevNotes.map(note => 
-              note.id === newNote.id ? {
-                ...note, 
-                summary: summaryContent,
-                summary_generated_at: new Date().toISOString(),
-                summary_status: 'completed'
-              } : note
-            )
-          );
-          console.log("Summary automatically generated:", summaryContent);
-        } catch (error) {
-          console.error("Error auto-generating summary:", error);
-          // Update status to failed
-          await updateNoteInDatabase(newNote.id, {
-            summary_status: 'failed'
-          });
-          
-          // Update the local state
-          setNotes(prevNotes => 
-            prevNotes.map(note => 
-              note.id === newNote.id ? {
-                ...note, 
-                summary_status: 'failed'
-              } : note
-            )
-          );
-        }
-        
+        // No longer automatically generate summary in background
         return newNote;
       } else {
         console.error("Failed to add note: newNote is null");
