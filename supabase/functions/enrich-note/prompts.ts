@@ -1,29 +1,56 @@
 
-import type { EnhancementFunction } from './types.ts';
+import { EnhancementFunction } from './types.ts';
 
-export function createPrompt(enhancementType: EnhancementFunction, noteTitle: string, noteContent: string): string {
-  const basePrompt = `TITLE: ${noteTitle}\n\nCONTENT:\n${noteContent}`;
-  
+/**
+ * Create a prompt for the OpenAI API based on the enhancement type
+ */
+export const createPrompt = (enhancementType: EnhancementFunction, noteTitle: string, noteContent: string): string => {
+  // Base context to include in all prompts
+  const baseContext = `
+The following is a note titled "${noteTitle}":
+
+${noteContent}
+
+`;
+
+  // Common instruction for all prompts to ensure output is in well-formatted markdown
+  const markdownInstruction = `Format your response in clear, well-structured markdown. Use markdown features like headers, lists, code blocks, and emphasis where appropriate to organize the content.`;
+
+  // Select prompt based on enhancement type
   switch (enhancementType) {
     case 'summarize':
-      return `${basePrompt}\n\nPlease create a concise summary of this note in 2-3 sentences. Focus on the main points and key information. Format your response as clean Markdown. The summary should be informative but brief.`;
-      
+      return `${baseContext}
+Please provide a concise summary of this note. Focus on the key ideas and main points, while keeping the summary no more than 20% of the original length.
+
+${markdownInstruction}
+`;
+
     case 'extract-key-points':
-      return `${basePrompt}\n\nPlease extract the key points from this note and format them as a Markdown bulleted list. Each point should be concise and focus on important information. Include a maximum of 7 key points.`;
-      
-    case 'generate-questions':
-      return `${basePrompt}\n\nPlease generate 5 study questions based on this note. The questions should test understanding of the key concepts and be suitable for self-testing or review. Format as a numbered list in Markdown.`;
-      
+      return `${baseContext}
+Extract the key points from this note and present them as a well-organized list. Identify the most important concepts, arguments, or facts presented in the content.
+
+${markdownInstruction}
+`;
+
     case 'improve-clarity':
-      return `${basePrompt}\n\nPlease rewrite this note to improve clarity and readability. Maintain all the original information but organize it better, use clearer language, and fix any grammar or spelling issues. Format your response as clean Markdown. The goal is to make the content easier to understand.`;
-      
+      return `${baseContext}
+Rewrite the content of this note to improve clarity, coherence, and readability while preserving all key information and meaning. Fix any grammatical issues, improve sentence structure, and organize the content logically.
+
+${markdownInstruction}
+`;
+
     case 'convert-to-markdown':
-      return `${basePrompt}\n\nPlease convert this note to well-formatted Markdown. Use appropriate Markdown syntax for headings, lists, emphasis, links, and other elements. Organize the content logically and make it easy to read.`;
-      
-    case 'fix-spelling-grammar':
-      return `${basePrompt}\n\nPlease fix any spelling or grammatical errors in this note without changing its meaning or content structure. Format your response as clean Markdown. Only make corrections to improve correctness, not to change style or content.`;
-      
+      return `${baseContext}
+Convert the content into well-formatted markdown, optimizing for readability and structure. Use appropriate markdown elements such as headers, lists, emphasis, code blocks, and quotes. Preserve all information but enhance the formatting.
+
+${markdownInstruction}
+`;
+
     default:
-      return `${basePrompt}\n\nPlease enhance this note to make it more useful for studying. Format your response as clean Markdown.`;
+      return `${baseContext}
+Please analyze this note and provide helpful insights.
+
+${markdownInstruction}
+`;
   }
-}
+};

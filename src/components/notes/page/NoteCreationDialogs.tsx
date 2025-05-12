@@ -81,18 +81,23 @@ export const NoteCreationDialogs = ({
 
       {/* Scan Note Dialog */}
       <ScanNoteDialog
-        open={scanDialogOpen}
-        onOpenChange={setScanDialogOpen}
-        onSave={handleScanNote}
-        tierLimits={tierLimits}
+        isVisible={scanDialogOpen}
+        onClose={() => setScanDialogOpen(false)}
+        onSaveNote={async (note) => {
+          const result = await handleScanNote(note);
+          return result !== null;
+        }}
+        isPremiumUser={tierLimits?.ocr_enabled ?? false}
       />
 
       {/* Import Note Dialog */}
       <ImportDialog
-        open={importDialogOpen}
-        onOpenChange={setImportDialogOpen}
-        onImport={handleImportNote}
-        tierLimits={tierLimits}
+        isVisible={importDialogOpen}
+        onClose={() => setImportDialogOpen(false)}
+        onSaveNote={async (note) => {
+          const result = await handleImportNote(note);
+          return result !== null;
+        }}
       />
     </>
   );

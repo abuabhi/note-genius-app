@@ -35,8 +35,8 @@ export const enrichNote = async (
         noteTitle: note.title || 'Untitled Note',
         noteContent: note.content,
         enhancementType
-      },
-      signal: controller.signal
+      }
+      // Remove the signal property as it's not supported in FunctionInvokeOptions
     });
     
     clearTimeout(timeoutId);
