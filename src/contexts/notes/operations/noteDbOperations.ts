@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Note } from "@/types/note";
 
@@ -66,6 +67,19 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
 export const deleteNoteFromDatabase = async (id: string): Promise<void> => {
   try {
     console.log("Starting delete note operation for ID:", id);
+    
+    // First, verify if the note exists and log its details
+    const { data: noteData, error: checkError } = await supabase
+      .from('notes')
+      .select('id, title, subject_id')
+      .eq('id', id)
+      .single();
+
+    if (checkError) {
+      console.log(`Note check error: ${checkError.message}`);
+    } else {
+      console.log(`Note to be deleted:`, noteData);
+    }
     
     // Always use the edge function which handles related records properly
     const { data, error: edgeFunctionError } = await supabase.functions.invoke('delete-note', {

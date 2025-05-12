@@ -37,8 +37,28 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
 
 export const deleteNoteFromDatabase = async (id: string): Promise<void> => {
   try {
+    // Log the attempt for debugging purposes
     console.log("Operations index - Deleting note with ID:", id);
-    await deleteNoteDb(id);
+    
+    // Attempt deletion with proper error handling
+    try {
+      await deleteNoteDb(id);
+      console.log("Operations index - Note successfully deleted:", id);
+    } catch (deleteError) {
+      console.error('Operations index - Initial delete attempt failed:', deleteError);
+      
+      // Try direct edge function call as backup
+      const { data, error: functionError } = await supabase.functions.invoke('delete-note', {
+        body: { noteId: id }
+      });
+      
+      if (functionError) {
+        console.error('Operations index - Edge function direct call failed:', functionError);
+        throw functionError;
+      }
+      
+      console.log("Operations index - Note deleted via direct edge function call:", data);
+    }
   } catch (error) {
     console.error('Operations index - Error deleting note:', error);
     throw error;

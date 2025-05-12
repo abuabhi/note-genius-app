@@ -31,25 +31,53 @@ serve(async (req) => {
       )
     }
 
-    // Delete related records first to avoid foreign key constraints
+    // Debug info - check if the note exists first
+    const { data: noteCheck, error: noteCheckError } = await supabase
+      .from('notes')
+      .select('id, title, subject_id')
+      .eq('id', noteId)
+      .single()
+
+    if (noteCheckError) {
+      console.log(`Note check error for ID ${noteId}:`, noteCheckError)
+    } else {
+      console.log(`Found note to delete:`, noteCheck)
+    }
+
+    // Delete related records first to avoid foreign key constraints - WITH ERROR HANDLING FOR EACH STEP
     
     // 1. Delete any rows in note_enrichment_usage table referencing this note
-    await supabase
+    const { error: usageError } = await supabase
       .from('note_enrichment_usage')
       .delete()
       .eq('note_id', noteId)
 
+    if (usageError) {
+      console.log(`Warning: Error deleting from note_enrichment_usage:`, usageError)
+      // Continue anyway - don't break the delete process
+    }
+
     // 2. Delete any associated note tags
-    await supabase
+    const { error: tagsError } = await supabase
       .from('note_tags')
       .delete()
       .eq('note_id', noteId)
 
+    if (tagsError) {
+      console.log(`Warning: Error deleting from note_tags:`, tagsError)
+      // Continue anyway
+    }
+
     // 3. Delete any associated scan data
-    await supabase
+    const { error: scanError } = await supabase
       .from('scan_data')
       .delete()
       .eq('note_id', noteId)
+    
+    if (scanError) {
+      console.log(`Warning: Error deleting from scan_data:`, scanError)
+      // Continue anyway
+    }
     
     // 4. Finally delete the note itself
     const { error: noteError } = await supabase
@@ -62,11 +90,13 @@ serve(async (req) => {
       
       // If regular delete failed, attempt direct SQL delete
       try {
-        // Try direct SQL delete with admin privileges
-        const { error: sqlError } = await supabase.rpc('force_delete_note', { note_id: noteId })
+        // Use RPC with admin privileges to force delete the note
+        const { data: rpcData, error: rpcError } = await supabase.rpc('force_delete_note', { 
+          note_id: noteId 
+        })
         
-        if (sqlError) {
-          throw sqlError
+        if (rpcError) {
+          throw rpcError
         }
         
         return new Response(
@@ -78,13 +108,32 @@ serve(async (req) => {
         )
       } catch (rpcError) {
         console.error('RPC method error:', rpcError)
-        return new Response(
-          JSON.stringify({ 
-            error: 'Failed to delete note even with admin privileges',
-            details: noteError.message
-          }), 
-          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        )
+        
+        // Last resort: Try a raw SQL query to force delete the note
+        try {
+          const { error: sqlError } = await supabase.from('notes').delete().eq('id', noteId).select()
+          
+          if (sqlError) {
+            throw sqlError
+          }
+          
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              message: `Note ${noteId} deleted successfully via direct SQL`
+            }), 
+            { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+          )
+        } catch (sqlError) {
+          console.error('SQL delete error:', sqlError)
+          return new Response(
+            JSON.stringify({ 
+              error: 'Failed to delete note even with admin privileges',
+              details: noteError.message
+            }), 
+            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+          )
+        }
       }
     }
 
@@ -98,7 +147,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error processing request:', error)
     return new Response(
-      JSON.stringify({ error: error.message }), 
+      JSON.stringify({ 
+        error: 'Unexpected error during note deletion',
+        details: error.message
+      }), 
       { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     )
   }
