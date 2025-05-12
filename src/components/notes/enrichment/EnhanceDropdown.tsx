@@ -72,7 +72,7 @@ export const EnhanceDropdown = ({
         {enhancementOptions.map((option) => (
           <DropdownMenuItem
             key={option.id}
-            onClick={() => handleEnhancementSelect(option.id as EnhancementFunction)}
+            onClick={() => handleEnhancementSelect(option.value as EnhancementFunction)}
             className="cursor-pointer"
             disabled={isProcessing}
           >

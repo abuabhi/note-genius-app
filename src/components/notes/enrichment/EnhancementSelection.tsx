@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { FileText, ListChecks, HelpCircle, Lightbulb, FileSymlink, Pencil } from 'lucide-react';
+import { FileText, ListChecks, HelpCircle, Lightbulb, FileSymlink, Pencil, Check, Code, Brush } from 'lucide-react';
 import { EnhancementFunction, EnhancementOption } from '@/hooks/noteEnrichment/types';
 
 interface EnhancementSelectionProps {
@@ -23,6 +23,9 @@ export const EnhancementSelection: React.FC<EnhancementSelectionProps> = ({
       case 'Lightbulb': return <Lightbulb className="h-5 w-5" />;
       case 'FileSymlink': return <FileSymlink className="h-5 w-5" />;
       case 'Pencil': return <Pencil className="h-5 w-5" />;
+      case 'Check': return <Check className="h-5 w-5" />;
+      case 'Code': return <Code className="h-5 w-5" />;
+      case 'Brush': return <Brush className="h-5 w-5" />;
       default: return <FileText className="h-5 w-5" />;
     }
   };

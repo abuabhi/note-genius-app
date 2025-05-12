@@ -11,6 +11,7 @@ export function useNoteEnrichment(note?: Note) {
   const [isLoading, setIsLoading] = useState(false);
   const [enhancedContent, setEnhancedContent] = useState('');
   const [error, setError] = useState('');
+  const [selectedEnhancement, setSelectedEnhancement] = useState<EnhancementFunction | null>(null);
   
   const { userTier, isLoading: tierLoading } = useUserTier();
   
@@ -29,6 +30,7 @@ export function useNoteEnrichment(note?: Note) {
     setIsProcessing(false);
     setIsLoading(false);
     setError('');
+    setSelectedEnhancement(null);
   }, []);
 
   const processEnhancement = useCallback(async (enhancementType: EnhancementFunction): Promise<EnhancementResult> => {
@@ -41,6 +43,7 @@ export function useNoteEnrichment(note?: Note) {
     setIsLoading(true);
     setIsProcessing(true);
     setError('');
+    setSelectedEnhancement(enhancementType);
 
     try {
       // Simulate API call
@@ -76,6 +79,7 @@ export function useNoteEnrichment(note?: Note) {
 
     setIsProcessing(true);
     setError('');
+    setSelectedEnhancement(enhancementType);
 
     try {
       // Simulate API call
@@ -113,7 +117,9 @@ export function useNoteEnrichment(note?: Note) {
     initialize,
     processEnhancement,
     enrichNote,
-    updateUsage
+    updateUsage,
+    selectedEnhancement,
+    setSelectedEnhancement
   };
 }
 
