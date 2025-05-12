@@ -182,18 +182,24 @@ export const useNoteEnrichment = (note?: Note) => {
           enhancementType: enhancementDetails?.outputType
         };
       } else {
-        // Store in enhancements object
-        let updateData = {
-          enhancements: {
-            [enhancementDetails?.outputType || 'enhanced']: enhanced,
-            last_enhanced_at: new Date().toISOString()
-          }
+        // Store in enhancements object but correctly as part of the note structure
+        // First, get the current enhancements or initialize empty object
+        const currentEnhancements = note?.enhancements || {};
+        
+        // Update with new enhancement content
+        const updatedEnhancements = {
+          ...currentEnhancements,
+          [enhancementDetails?.outputType || 'enhanced']: enhanced,
+          last_enhanced_at: new Date().toISOString()
         };
         
         try {
+          // Use updateData with the proper structure matching the Note type
           const { error } = await supabase
             .from('notes')
-            .update(updateData)
+            .update({ 
+              enhancements: updatedEnhancements 
+            })
             .eq('id', noteId);
             
           if (error) throw error;
