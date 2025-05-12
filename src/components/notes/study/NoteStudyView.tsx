@@ -11,7 +11,6 @@ import { useNoteStudyEditor } from "./hooks/useNoteStudyEditor";
 import { useEnrichmentUsageStats } from "@/hooks/noteEnrichment/useEnrichmentUsageStats";
 import { Progress } from "@/components/ui/progress";
 import { Sparkles } from "lucide-react";
-import { EnhancementTabs } from "./EnhancementTabs";
 import { toast } from "sonner";
 import { EnhancementFunction } from "@/hooks/noteEnrichment/types";
 import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
@@ -218,8 +217,9 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
             setSelectedTags={setSelectedTags}
           />
         ) : (
-          <EnhancementTabs
+          <NoteContentDisplay
             note={note}
+            content={note.content || ''}
             fontSize={fontSize}
             textAlign={textAlign}
             isEditing={isEditing}

@@ -2,7 +2,7 @@
 import { RichTextDisplay } from "@/components/ui/rich-text/RichTextDisplay";
 import { Note } from "@/types/note";
 import { TextAlignType } from "./hooks/useStudyViewState";
-import { EnhancementTabs } from "./EnhancementTabs";
+import { TwoColumnEnhancementView } from "./enhancements/TwoColumnEnhancementView";
 
 interface NoteContentDisplayProps {
   note: Note;
@@ -10,6 +10,8 @@ interface NoteContentDisplayProps {
   fontSize: number;
   textAlign: TextAlignType;
   isEditing?: boolean;
+  isLoading?: boolean;
+  onRetryEnhancement?: (enhancementType: string) => void;
 }
 
 export const NoteContentDisplay = ({ 
@@ -17,7 +19,9 @@ export const NoteContentDisplay = ({
   content, 
   fontSize, 
   textAlign,
-  isEditing = false
+  isEditing = false,
+  isLoading = false,
+  onRetryEnhancement
 }: NoteContentDisplayProps) => {
   // If no note is provided, fall back to the simple display
   if (!note) {
@@ -31,11 +35,13 @@ export const NoteContentDisplay = ({
   }
   
   return (
-    <EnhancementTabs
+    <TwoColumnEnhancementView
       note={note}
       fontSize={fontSize}
       textAlign={textAlign}
       isEditing={isEditing}
+      isLoading={isLoading}
+      onRetryEnhancement={onRetryEnhancement}
     />
   );
 };

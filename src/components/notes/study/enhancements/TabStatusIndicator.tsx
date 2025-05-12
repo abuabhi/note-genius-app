@@ -1,5 +1,5 @@
 
-import React from "react";
+import { AlertCircle, Loader2 } from "lucide-react";
 
 interface TabStatusIndicatorProps {
   isGenerating?: boolean;
@@ -10,13 +10,17 @@ export const TabStatusIndicator: React.FC<TabStatusIndicatorProps> = ({
   isGenerating = false,
   hasError = false
 }) => {
+  if (!isGenerating && !hasError) {
+    return null;
+  }
+
   if (isGenerating) {
-    return <span className="absolute top-3 right-3 h-2 w-2 rounded-full bg-mint-500 animate-pulse"></span>;
+    return <Loader2 className="h-3 w-3 animate-spin absolute right-3 text-mint-500" />;
   }
-  
+
   if (hasError) {
-    return <span className="absolute top-3 right-3 h-2 w-2 rounded-full bg-red-500"></span>;
+    return <AlertCircle className="h-3 w-3 absolute right-3 text-red-500" />;
   }
-  
+
   return null;
 };
