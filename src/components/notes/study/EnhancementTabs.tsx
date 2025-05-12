@@ -26,12 +26,29 @@ export const EnhancementTabs = ({
   // Get summary content from note if it exists
   const summaryContent = note.summary || "";
   const keyPointsContent = note.enhancements?.keyPoints || "";
+  const markdownContent = note.enhancements?.markdown || "";
+  const improvedContent = note.enhancements?.improved || "";
   
   // Check if these exist to determine which tabs to show
   const hasSummary = !!summaryContent;
   const hasKeyPoints = !!keyPointsContent;
-  const hasMarkdown = !!note.enhancements?.markdown;
-  const hasImprovedClarity = !!note.enhancements?.improved;
+  const hasMarkdown = !!markdownContent;
+  const hasImprovedClarity = !!improvedContent;
+  
+  // For debugging
+  useEffect(() => {
+    console.log("EnhancementTabs - Note data:", {
+      noteId: note.id,
+      hasSummary,
+      hasKeyPoints,
+      hasMarkdown,
+      hasImprovedClarity,
+      summary: summaryContent.slice(0, 50),
+      keyPoints: keyPointsContent.slice(0, 50),
+      markdown: markdownContent.slice(0, 50),
+      improved: improvedContent.slice(0, 50)
+    });
+  }, [note, hasSummary, hasKeyPoints, hasMarkdown, hasImprovedClarity]);
   
   // Reset to original tab when editing starts
   useEffect(() => {
@@ -119,13 +136,13 @@ export const EnhancementTabs = ({
 
       {hasMarkdown && (
         <TabsContent value="markdown" className="mt-2">
-          {renderEnhancementContent(note.enhancements?.markdown || "", "Markdown Format")}
+          {renderEnhancementContent(markdownContent, "Markdown Format")}
         </TabsContent>
       )}
 
       {hasImprovedClarity && (
         <TabsContent value="improved" className="mt-2">
-          {renderEnhancementContent(note.enhancements?.improved || "", "Improved Clarity")}
+          {renderEnhancementContent(improvedContent, "Improved Clarity")}
         </TabsContent>
       )}
     </Tabs>

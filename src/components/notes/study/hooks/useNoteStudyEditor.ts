@@ -5,7 +5,7 @@ import { updateNoteInDatabase } from "@/contexts/notes/operations";
 import { Note } from "@/types/note";
 import { useNotes } from "@/contexts/NoteContext";
 import { supabase } from "@/integrations/supabase/client";
-import { EnhancementFunction } from "@/hooks/noteEnrichment/types";
+import { EnhancementFunction, EnhancementType } from "@/hooks/noteEnrichment/types";
 import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
 
 export const useNoteStudyEditor = (note: Note) => {
@@ -99,6 +99,12 @@ export const useNoteStudyEditor = (note: Note) => {
     const typeToApply = enhancementType || 'improve-clarity';
     const enhancementDetails = getEnhancementDetails?.(typeToApply);
     
+    console.log("Handling enhancement:", {
+      typeToApply,
+      replaceContent: enhancementDetails?.replaceContent,
+      contentLength: enhancedContent.length
+    });
+    
     if (isEditing) {
       // If we're editing, just update the editable content
       setEditableContent(enhancedContent);
@@ -120,6 +126,7 @@ export const useNoteStudyEditor = (note: Note) => {
       } else {
         // For enhancements that create separate content
         if (typeToApply === 'summarize') {
+          // Always store summary in its dedicated field
           await updateNoteInDatabase(note.id, {
             summary: enhancedContent,
             summary_generated_at: new Date().toISOString()
@@ -129,10 +136,7 @@ export const useNoteStudyEditor = (note: Note) => {
           note.summary = enhancedContent;
           note.summary_generated_at = new Date().toISOString();
           toast.success("Summary created successfully");
-        } else if (typeToApply === 'extract-key-points' || 
-                  typeToApply === 'convert-to-markdown' || 
-                  typeToApply === 'improve-clarity') {
-          
+        } else {
           // Get current enhancements or create new object
           const currentEnhancements = note.enhancements || {};
           
@@ -157,6 +161,8 @@ export const useNoteStudyEditor = (note: Note) => {
               enhancementField = 'keyPoints';
               successMessage = "Enhancement completed successfully";
           }
+          
+          console.log(`Saving enhancement to ${enhancementField} field`);
           
           // Create updated enhancements object
           const updatedEnhancements = {
