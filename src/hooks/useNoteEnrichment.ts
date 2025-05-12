@@ -1,10 +1,11 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { EnhancementFunction, EnhancementResult } from './noteEnrichment/types';
 import { enhancementOptions } from './noteEnrichment/enhancementOptions';
 import { useUserTier } from './useUserTier';
 import { Note } from '@/types/note';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export function useNoteEnrichment(note?: Note) {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -12,18 +13,71 @@ export function useNoteEnrichment(note?: Note) {
   const [enhancedContent, setEnhancedContent] = useState('');
   const [error, setError] = useState('');
   const [selectedEnhancement, setSelectedEnhancement] = useState<EnhancementFunction | null>(null);
+  const [currentUsage, setCurrentUsage] = useState(0);
+  const [monthlyLimit, setMonthlyLimit] = useState<number | null>(null);
   
   const { userTier, isLoading: tierLoading } = useUserTier();
   
-  // Mock usage stats (will be replaced with real implementation)
-  const remaining = 5;
-  const total = 10;
-  const currentUsage = total - remaining;
-  const monthlyLimit = total;
-  
-  const updateUsage = useCallback(() => {
-    // Mock usage update - will be implemented with real API call
-    console.log("Usage stats updated");
+  // Fetch usage stats when hook mounts or userTier changes
+  useEffect(() => {
+    const fetchUsage = async () => {
+      if (!userTier) return;
+      
+      try {
+        // Get current month in YYYY-MM format
+        const currentMonth = new Date().toISOString().slice(0, 7);
+        
+        // Get usage count
+        const { data: usageData, error: usageError } = await supabase
+          .from('note_enrichment_usage')
+          .select('id')
+          .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+          .eq('month_year', currentMonth);
+        
+        if (usageError) throw usageError;
+        
+        // Get tier limit
+        const { data: tierData, error: tierError } = await supabase
+          .from('tier_limits')
+          .select('note_enrichment_limit_per_month')
+          .eq('tier', userTier)
+          .single();
+        
+        if (tierError) throw tierError;
+        
+        setCurrentUsage(usageData?.length || 0);
+        setMonthlyLimit(tierData?.note_enrichment_limit_per_month);
+        
+      } catch (err) {
+        console.error('Error fetching usage stats:', err);
+      }
+    };
+    
+    fetchUsage();
+  }, [userTier]);
+
+  const updateUsage = useCallback(async (noteId: string) => {
+    try {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      const currentMonth = new Date().toISOString().slice(0, 7);
+      
+      // Insert usage record
+      const { error } = await supabase
+        .from('note_enrichment_usage')
+        .insert({
+          user_id: userId,
+          note_id: noteId,
+          month_year: currentMonth
+        });
+      
+      if (error) throw error;
+      
+      // Update local count
+      setCurrentUsage(prev => prev + 1);
+      
+    } catch (err) {
+      console.error('Error updating usage:', err);
+    }
   }, []);
 
   const initialize = useCallback(() => {
@@ -33,10 +87,26 @@ export function useNoteEnrichment(note?: Note) {
     setSelectedEnhancement(null);
   }, []);
 
+  const hasReachedLimit = useCallback(() => {
+    // No limit if monthlyLimit is null (unlimited)
+    if (monthlyLimit === null) return false;
+    
+    // Has reached limit if current usage >= monthly limit
+    return currentUsage >= monthlyLimit;
+  }, [currentUsage, monthlyLimit]);
+
   const processEnhancement = useCallback(async (enhancementType: EnhancementFunction): Promise<EnhancementResult> => {
     if (!note?.content) {
       const error = 'No content to enhance';
       setError(error);
+      return { success: false, content: '', error };
+    }
+    
+    // Check if user has reached their monthly limit
+    if (hasReachedLimit()) {
+      const error = 'You have reached your monthly limit for note enhancements';
+      setError(error);
+      toast.error(error);
       return { success: false, content: '', error };
     }
 
@@ -53,7 +123,7 @@ export function useNoteEnrichment(note?: Note) {
       const enhanced = `Enhanced: ${note.content}\n(Using ${enhancementType} on "${note.title}")`;
       
       setEnhancedContent(enhanced);
-      updateUsage();
+      await updateUsage(note.id);
       setIsLoading(false);
       return { success: true, content: enhanced, error: '' };
     } catch (err) {
@@ -64,7 +134,7 @@ export function useNoteEnrichment(note?: Note) {
     } finally {
       setIsProcessing(false);
     }
-  }, [note, updateUsage]);
+  }, [note, updateUsage, hasReachedLimit]);
 
   const enrichNote = useCallback(async (
     noteId: string, 
@@ -75,6 +145,14 @@ export function useNoteEnrichment(note?: Note) {
     if (!content) {
       setError('No content to enhance');
       return { success: false, content: '', error: 'No content to enhance' };
+    }
+    
+    // Check if user has reached their monthly limit
+    if (hasReachedLimit()) {
+      const error = 'You have reached your monthly limit for note enhancements';
+      setError(error);
+      toast.error(error);
+      return { success: false, content: '', error };
     }
 
     setIsProcessing(true);
@@ -89,7 +167,7 @@ export function useNoteEnrichment(note?: Note) {
       const enhanced = `Enhanced: ${content}\n(Using ${enhancementType} on "${title}")`;
       
       setEnhancedContent(enhanced);
-      updateUsage();
+      await updateUsage(noteId);
       toast.success("Note enhanced successfully");
       return { success: true, content: enhanced, error: '' };
     } catch (err) {
@@ -100,7 +178,7 @@ export function useNoteEnrichment(note?: Note) {
     } finally {
       setIsProcessing(false);
     }
-  }, [updateUsage]);
+  }, [updateUsage, hasReachedLimit]);
 
   return {
     isProcessing,
@@ -109,17 +187,16 @@ export function useNoteEnrichment(note?: Note) {
     setEnhancedContent,
     error,
     enhancementOptions,
-    remaining,
-    total,
     currentUsage,
     monthlyLimit,
-    isEnabled: userTier && ['PROFESSOR', 'DEAN'].includes(userTier),
+    isEnabled: userTier && ['PROFESSOR', 'DEAN', 'MASTER'].includes(userTier),
     initialize,
     processEnhancement,
     enrichNote,
     updateUsage,
     selectedEnhancement,
-    setSelectedEnhancement
+    setSelectedEnhancement,
+    hasReachedLimit
   };
 }
 

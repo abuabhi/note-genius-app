@@ -11,7 +11,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { useNoteEnrichment } from '@/hooks/useNoteEnrichment';
 import { toast } from 'sonner';
-import { Progress } from "@/components/ui/progress";
 import { PremiumFeatureNotice } from './PremiumFeatureNotice';
 import { EnhancementSelection } from './EnhancementSelection';
 import { EnhancementProcessing } from './EnhancementProcessing';
@@ -20,6 +19,7 @@ import { EnhancementError } from './EnhancementError';
 import { UsageIndicator } from './UsageIndicator';
 import { Note } from '@/types/note';
 import { EnhancementFunction } from '@/hooks/noteEnrichment/types';
+import { useEnrichmentUsageStats } from '@/hooks/noteEnrichment/useEnrichmentUsageStats';
 
 interface NoteEnrichmentDialogProps {
   open: boolean;
@@ -58,20 +58,28 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
     enhancementOptions,
     processEnhancement,
     isLoading,
-    currentUsage,
-    monthlyLimit,
     isEnabled,
     initialize,
-    setEnhancedContent
+    setEnhancedContent,
+    hasReachedLimit
   } = useNoteEnrichment(mockNote);
+  
+  // Use the dedicated usage stats hook
+  const { 
+    currentUsage, 
+    monthlyLimit, 
+    isLoading: usageLoading,
+    fetchUsageStats 
+  } = useEnrichmentUsageStats();
   
   useEffect(() => {
     if (open) {
       setSelectedEnhancement(null);
       setEnhancedContent('');
       initialize();
+      fetchUsageStats();
     }
-  }, [open, initialize, setSelectedEnhancement, setEnhancedContent]);
+  }, [open, initialize, setSelectedEnhancement, setEnhancedContent, fetchUsageStats]);
   
   const handleEnhancement = async () => {
     if (!selectedEnhancement) {
@@ -84,6 +92,14 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
     if (!noteContent || noteContent.trim().length < 50) {
       toast("Content too short", {
         description: "Please add more content to enhance"
+      });
+      return;
+    }
+    
+    // Check if user has reached their monthly limit
+    if (hasReachedLimit()) {
+      toast.error("Monthly limit reached", {
+        description: "You've reached your monthly limit for note enhancements"
       });
       return;
     }
@@ -138,7 +154,11 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
         
-        <UsageIndicator currentUsage={currentUsage} monthlyLimit={monthlyLimit} />
+        <UsageIndicator 
+          currentUsage={currentUsage} 
+          monthlyLimit={monthlyLimit} 
+          isLoading={usageLoading} 
+        />
 
         {/* Error Display */}
         {error && (
@@ -176,7 +196,7 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
           {!enhancedContent && !isLoading && !error && (
             <Button 
               onClick={handleEnhancement}
-              disabled={selectedEnhancement === null || isLoading}
+              disabled={selectedEnhancement === null || isLoading || hasReachedLimit()}
               className="bg-mint-500 hover:bg-mint-600 text-white"
             >
               Generate Enhancement

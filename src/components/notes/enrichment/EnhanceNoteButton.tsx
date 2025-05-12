@@ -4,6 +4,7 @@ import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
 import { EnhancementFunction } from "@/hooks/noteEnrichment/types";
 import { useUserTier } from "@/hooks/useUserTier";
 import { Sparkles } from "lucide-react";
+import { toast } from "sonner";
 
 interface EnhanceNoteButtonProps {
   noteId: string;
@@ -20,14 +21,24 @@ export const EnhanceNoteButton = ({
 }: EnhanceNoteButtonProps) => {
   const { 
     isProcessing,
-    remaining, 
-    enrichNote
+    enrichNote,
+    hasReachedLimit,
+    currentUsage,
+    monthlyLimit
   } = useNoteEnrichment();
   
   const { userTier, isLoading } = useUserTier();
   
   const handleEnhance = async () => {
     if (!noteId || !noteContent) return;
+    
+    // Check if user has reached their monthly limit
+    if (hasReachedLimit()) {
+      toast.error("Monthly limit reached", {
+        description: "You've reached your monthly limit for note enhancements"
+      });
+      return;
+    }
     
     try {
       // Use a default enhancement function since we're not using the selectedEnrichment anymore
@@ -49,6 +60,21 @@ export const EnhanceNoteButton = ({
 
   if (isLoading) {
     return <Button disabled size="sm" variant="outline"><Sparkles className="mr-2 h-4 w-4" /> Enhance</Button>;
+  }
+
+  // Show disabled button with different message if limit reached
+  if (hasReachedLimit()) {
+    return (
+      <Button
+        size="sm"
+        variant="outline"
+        disabled
+        title={`Monthly limit reached (${currentUsage}/${monthlyLimit || "∞"})`}
+      >
+        <Sparkles className="mr-2 h-4 w-4 text-muted-foreground" />
+        Limit Reached
+      </Button>
+    );
   }
 
   return (

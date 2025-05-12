@@ -50,6 +50,49 @@ export const trackUsage = async (noteId: string, tokenUsage?: { prompt_tokens: n
       return;
     }
     
+    // Check if user has reached their monthly limit
+    const { data: userData, error: userError } = await supabase
+      .from('profiles')
+      .select('user_tier')
+      .eq('id', userId)
+      .single();
+    
+    if (userError) {
+      console.error('Error getting user tier:', userError);
+      return;
+    }
+    
+    // Get tier limits
+    const { data: tierData, error: tierError } = await supabase
+      .from('tier_limits')
+      .select('note_enrichment_limit_per_month')
+      .eq('tier', userData.user_tier)
+      .single();
+    
+    if (tierError) {
+      console.error('Error getting tier limits:', tierError);
+      return;
+    }
+    
+    // Get current usage
+    const { data: usageData, error: usageError } = await supabase
+      .from('note_enrichment_usage')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('month_year', currentMonth);
+    
+    if (usageError) {
+      console.error('Error getting current usage:', usageError);
+      return;
+    }
+    
+    // Check if we're at the limit (skip this check if tierData.note_enrichment_limit_per_month is null)
+    if (tierData.note_enrichment_limit_per_month !== null && 
+        usageData.length >= tierData.note_enrichment_limit_per_month) {
+      console.error('Monthly limit reached for user:', userId);
+      return;
+    }
+    
     console.log(`Tracking usage for user ${userId}, note ${noteId}, month ${currentMonth}`);
     
     const { error } = await supabase
