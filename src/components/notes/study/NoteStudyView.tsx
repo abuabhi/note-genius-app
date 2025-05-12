@@ -8,6 +8,9 @@ import { useStudyViewState } from "./hooks/useStudyViewState";
 import { NoteStudyEditForm } from "./editor/NoteStudyEditForm";
 import { useNotes } from "@/contexts/NoteContext";
 import { useNoteStudyEditor } from "./hooks/useNoteStudyEditor";
+import { useEnrichmentUsageStats } from "@/hooks/noteEnrichment/useEnrichmentUsageStats";
+import { Progress } from "@/components/ui/progress";
+import { Sparkles } from "lucide-react";
 
 interface NoteStudyViewProps {
   note: Note;
@@ -42,10 +45,24 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
     setSelectedTags
   } = useNoteStudyEditor(note);
 
+  // Get usage stats for enhancements
+  const { 
+    currentUsage, 
+    monthlyLimit, 
+    hasReachedLimit, 
+    isLoading: statsLoading,
+    fetchUsageStats
+  } = useEnrichmentUsageStats();
+  
   // Get available tags from the notes context
   const { getAllTags } = useNotes();
   const [availableTags, setAvailableTags] = useState<{ id: string; name: string; color: string }[]>([]);
   
+  // Fetch usage stats when component mounts
+  useEffect(() => {
+    fetchUsageStats();
+  }, [fetchUsageStats]);
+
   // Fetch available tags when component mounts
   useEffect(() => {
     const loadTags = async () => {
@@ -54,6 +71,50 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
     };
     loadTags();
   }, [getAllTags]);
+  
+  // Render usage meter
+  const renderUsageMeter = useCallback(() => {
+    if (statsLoading) return null;
+    
+    if (monthlyLimit === null) {
+      return (
+        <div className="flex items-center text-xs text-mint-700 mb-2 gap-1">
+          <Sparkles className="w-3 h-3" />
+          <span>Unlimited enhancements</span>
+        </div>
+      );
+    }
+    
+    const percentage = Math.min(Math.round((currentUsage / monthlyLimit) * 100), 100);
+    const isNearLimit = percentage > 80;
+    const isAtLimit = percentage >= 100;
+    
+    return (
+      <div className="mb-2 space-y-1">
+        <div className="flex justify-between text-xs">
+          <div className="flex items-center gap-1">
+            <Sparkles className="w-3 h-3 text-mint-600" />
+            <span className="text-mint-700">AI Usage</span>
+          </div>
+          <span className={`font-medium ${
+            isAtLimit ? 'text-red-600' : 
+            isNearLimit ? 'text-amber-600' : 
+            'text-mint-700'
+          }`}>
+            {currentUsage}/{monthlyLimit}
+          </span>
+        </div>
+        <Progress 
+          value={percentage} 
+          className={`h-1 ${
+            isAtLimit ? 'bg-red-100' : 
+            isNearLimit ? 'bg-amber-100' : 
+            'bg-mint-100'
+          }`} 
+        />
+      </div>
+    );
+  }, [currentUsage, monthlyLimit, statsLoading]);
 
   return (
     <Card
@@ -82,6 +143,9 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
       />
 
       <CardContent className="p-4 md:p-6">
+        {/* Show usage meter */}
+        {!isEditing && renderUsageMeter()}
+        
         {isEditing ? (
           <NoteStudyEditForm
             note={note}

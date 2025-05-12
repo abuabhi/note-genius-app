@@ -130,107 +130,72 @@ export const useNoteEnrichment = (note?: Note) => {
       
       // Get the enhancement details
       const enhancementDetails = getEnhancementDetails(enhancementType);
+      const now = new Date().toISOString();
       
-      // CRITICAL FIX: For summary and key points, ALWAYS store in separate fields,
-      // never replace the original content
-      if (enhancementType === 'summarize' || enhancementType === 'extract-key-points') {
-        // Always store summary and key points in their own fields
+      // Store enrichment in the appropriate field based on type
+      try {
         let updateData: any = {};
         
-        if (enhancementType === 'summarize') {
-          updateData = { 
-            summary: enhanced,
-            summary_generated_at: new Date().toISOString()
-          };
-          toast.success("Summary generated successfully");
-        } else if (enhancementType === 'extract-key-points') {
-          // First, get current note data to properly update the key points
-          const { data: currentNote, error: fetchError } = await supabase
-            .from('notes')
-            .select('*')
-            .eq('id', noteId)
-            .single();
+        switch (enhancementType) {
+          case 'summarize':
+            updateData = {
+              summary: enhanced,
+              summary_generated_at: now
+            };
+            toast.success("Summary generated successfully");
+            break;
             
-          if (fetchError) {
-            throw new Error('Failed to retrieve note data');
-          }
-          
-          // Create an enhancements object with key points
-          const enhancementData = {
-            keyPoints: enhanced,
-            last_enhanced_at: new Date().toISOString()
-          };
-          
-          // Update with the new key points data
-          // Use string field instead of JSON for broad compatibility
-          const enhancementsStr = JSON.stringify(enhancementData);
-          updateData = { 
-            // Store stringified JSON in a text field or column
-            summary: enhanced, // Store key points in summary field for backward compatibility
-            summary_generated_at: new Date().toISOString()
-          };
-          
-          toast.success("Key points extracted successfully");
+          case 'extract-key-points':
+            updateData = {
+              key_points: enhanced,
+              key_points_generated_at: now
+            };
+            toast.success("Key points extracted successfully");
+            break;
+            
+          case 'convert-to-markdown':
+            updateData = {
+              markdown_content: enhanced,
+              markdown_content_generated_at: now
+            };
+            toast.success("Converted to markdown successfully");
+            break;
+            
+          case 'improve-clarity':
+            updateData = {
+              improved_content: enhanced,
+              improved_content_generated_at: now
+            };
+            toast.success("Improved clarity generated successfully");
+            break;
+            
+          default:
+            // Fallback to summary
+            updateData = {
+              summary: enhanced,
+              summary_generated_at: now
+            };
+            toast.success(`${enhancementDetails?.title || 'Enhancement'} generated successfully`);
         }
         
-        // Update the note in the database
-        try {
-          const { error } = await supabase
-            .from('notes')
-            .update(updateData)
-            .eq('id', noteId);
-            
-          if (error) throw error;
-        } catch (dbError) {
-          console.error('Error updating note with enhancement:', dbError);
-          // Even if db update fails, we can still return the enhanced content
-        }
-        
-        return { 
-          success: true, 
-          content: enhanced, 
-          error: '',
-          enhancementType: enhancementDetails?.outputType
-        };
-      } else if (enhancementDetails?.replaceContent) {
-        // For enhancements that should replace content
-        toast.success("Note enhanced successfully");
-        return { 
-          success: true, 
-          content: enhanced, 
-          error: '',
-          enhancementType: enhancementDetails?.outputType
-        };
-      } else {
-        // For other enhancements, store the enhanced content in the summary field
-        // since we can't modify the database schema
-        try {
-          // Update using fields that actually exist in the note type
-          const updateData = {
-            summary: enhanced,
-            summary_generated_at: new Date().toISOString(),
-          };
+        // Update the note with the new enhancement
+        const { error } = await supabase
+          .from('notes')
+          .update(updateData)
+          .eq('id', noteId);
           
-          // Update the note with the properly structured data
-          const { error } = await supabase
-            .from('notes')
-            .update(updateData)
-            .eq('id', noteId);
-            
-          if (error) throw error;
-            
-          toast.success(`${enhancementDetails?.title || 'Enhancement'} generated successfully`);
-        } catch (dbError) {
-          console.error('Error updating note with enhancement:', dbError);
-        }
-        
-        return { 
-          success: true, 
-          content: enhanced, 
-          error: '',
-          enhancementType: enhancementDetails?.outputType
-        };
+        if (error) throw error;
+      } catch (dbError) {
+        console.error('Error updating note with enhancement:', dbError);
+        // Even if db update fails, we can still return the enhanced content
       }
+      
+      return { 
+        success: true, 
+        content: enhanced, 
+        error: '',
+        enhancementType: enhancementDetails?.outputType
+      };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       setError(errorMessage);

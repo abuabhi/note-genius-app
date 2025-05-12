@@ -466,6 +466,12 @@ export type Database = {
           date: string
           description: string
           id: string
+          improved_content: string | null
+          improved_content_generated_at: string | null
+          key_points: string | null
+          key_points_generated_at: string | null
+          markdown_content: string | null
+          markdown_content_generated_at: string | null
           pinned: boolean | null
           source_type: string
           subject: string
@@ -484,6 +490,12 @@ export type Database = {
           date?: string
           description: string
           id?: string
+          improved_content?: string | null
+          improved_content_generated_at?: string | null
+          key_points?: string | null
+          key_points_generated_at?: string | null
+          markdown_content?: string | null
+          markdown_content_generated_at?: string | null
           pinned?: boolean | null
           source_type?: string
           subject?: string
@@ -502,6 +514,12 @@ export type Database = {
           date?: string
           description?: string
           id?: string
+          improved_content?: string | null
+          improved_content_generated_at?: string | null
+          key_points?: string | null
+          key_points_generated_at?: string | null
+          markdown_content?: string | null
+          markdown_content_generated_at?: string | null
           pinned?: boolean | null
           source_type?: string
           subject?: string

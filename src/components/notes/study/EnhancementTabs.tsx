@@ -23,20 +23,17 @@ export const EnhancementTabs = ({
   const [activeTab, setActiveTab] = useState<string>("original");
   const originalContent = note.content || note.description || "";
   
-  // Get summary content from note if it exists
+  // Get each enhancement from its dedicated field
   const summaryContent = note.summary || "";
-  
-  // For key points and other enhancements, we now store them in the summary field
-  // with different timestamps to distinguish them
-  const keyPointsContent = summaryContent; // Now using summary for key points too
-  const markdownContent = summaryContent; // Also using summary for markdown
-  const improvedContent = summaryContent; // Also using summary for improved content
+  const keyPointsContent = note.key_points || "";
+  const markdownContent = note.markdown_content || "";
+  const improvedContent = note.improved_content || "";
   
   // Check if these exist to determine which tabs to show
-  const hasSummary = !!summaryContent;
-  const hasKeyPoints = !!keyPointsContent;
-  const hasMarkdown = !!markdownContent;
-  const hasImprovedClarity = !!improvedContent;
+  const hasSummary = !!summaryContent && !!note.summary_generated_at;
+  const hasKeyPoints = !!keyPointsContent && !!note.key_points_generated_at;
+  const hasMarkdown = !!markdownContent && !!note.markdown_content_generated_at;
+  const hasImprovedClarity = !!improvedContent && !!note.improved_content_generated_at;
   
   // For debugging
   useEffect(() => {
@@ -50,11 +47,20 @@ export const EnhancementTabs = ({
       keyPoints: keyPointsContent.slice(0, 50),
       markdown: markdownContent.slice(0, 50),
       improved: improvedContent.slice(0, 50),
+      // Debug timestamps
+      summaryTimestamp: note.summary_generated_at,
+      keyPointsTimestamp: note.key_points_generated_at,
+      markdownTimestamp: note.markdown_content_generated_at,
+      improvedTimestamp: note.improved_content_generated_at,
       // Debug alignment
       textAlign: textAlign,
       contentHasAlignment: originalContent.includes('text-align'),
     });
-  }, [note, hasSummary, hasKeyPoints, hasMarkdown, hasImprovedClarity, textAlign, originalContent]);
+  }, [
+    note, hasSummary, hasKeyPoints, hasMarkdown, hasImprovedClarity, 
+    textAlign, originalContent, summaryContent, keyPointsContent, 
+    markdownContent, improvedContent
+  ]);
   
   // Reset to original tab when editing starts
   useEffect(() => {
@@ -75,7 +81,7 @@ export const EnhancementTabs = ({
   }
   
   // Format the enhancement display with proper styling
-  const renderEnhancementContent = (content: string, title: string) => {
+  const renderEnhancementContent = (content: string, title: string, isMarkdown: boolean = false) => {
     if (!content) return null;
     
     return (
@@ -85,7 +91,9 @@ export const EnhancementTabs = ({
           content={content} 
           fontSize={fontSize} 
           textAlign={textAlign}
-          className="prose-sm prose-headings:font-medium prose-headings:text-mint-800 prose-ul:pl-6 prose-ol:pl-6"
+          className={`prose-sm prose-headings:font-medium prose-headings:text-mint-800 prose-ul:pl-6 prose-ol:pl-6 ${
+            isMarkdown ? "font-mono" : ""
+          }`}
         />
       </div>
     );
@@ -142,7 +150,7 @@ export const EnhancementTabs = ({
 
       {hasMarkdown && (
         <TabsContent value="markdown" className="mt-2">
-          {renderEnhancementContent(markdownContent, "Markdown Format")}
+          {renderEnhancementContent(markdownContent, "Markdown Format", true)}
         </TabsContent>
       )}
 
