@@ -5,7 +5,8 @@ import { Note } from "@/types/note";
 import { StudyViewControls } from "../controls/StudyViewControls";
 import { TextAlignType } from "../hooks/useStudyViewState";
 import { Input } from "@/components/ui/input";
-import { Wand2 } from "lucide-react"; // Changed to use lucide-react directly
+import { NoteHeader } from "../../details/NoteHeader";
+import { NoteTagList } from "../../details/NoteTagList";
 
 interface StudyViewHeaderProps {
   note: Note;
@@ -69,7 +70,14 @@ export const StudyViewHeader = ({
               placeholder="Note Title"
             />
           ) : (
-            <h2 className="font-medium text-xl">{note?.title}</h2>
+            <>
+              <NoteHeader note={note} />
+              {note.tags && note.tags.length > 0 && (
+                <div className="mt-2">
+                  <NoteTagList tags={note.tags} />
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -80,6 +88,7 @@ export const StudyViewHeader = ({
           isFullScreen={isFullScreen}
           isEditing={isEditing}
           isSaving={isSaving}
+          hideAlignment={true}
           onIncreaseFontSize={onIncreaseFontSize}
           onDecreaseFontSize={onDecreaseFontSize}
           onChangeTextAlign={onChangeTextAlign}
