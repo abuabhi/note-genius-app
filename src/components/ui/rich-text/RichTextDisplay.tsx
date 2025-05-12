@@ -12,23 +12,30 @@ export const RichTextDisplay = ({
   content, 
   className = '',
   fontSize,
-  textAlign = 'left'
+  textAlign = 'left'  // Default to left alignment explicitly
 }: RichTextDisplayProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     // Apply text alignment to all paragraphs that don't already have alignment
     if (containerRef.current) {
-      const paragraphs = containerRef.current.querySelectorAll('p:not([style*="text-align"])');
-      paragraphs.forEach(p => {
-        (p as HTMLElement).style.textAlign = textAlign;
-      });
+      // First, check if the content already has explicit alignment 
+      // If it does, respect that alignment instead of overriding
+      const hasExplicitAlignment = content.includes('text-align:');
       
-      // Also check for div elements without alignment
-      const divs = containerRef.current.querySelectorAll('div:not([style*="text-align"]):not(.prose)');
-      divs.forEach(div => {
-        (div as HTMLElement).style.textAlign = textAlign;
-      });
+      // Only apply our textAlign if content doesn't specify its own
+      if (!hasExplicitAlignment) {
+        const paragraphs = containerRef.current.querySelectorAll('p:not([style*="text-align"])');
+        paragraphs.forEach(p => {
+          (p as HTMLElement).style.textAlign = textAlign;
+        });
+        
+        // Also check for div elements without alignment
+        const divs = containerRef.current.querySelectorAll('div:not([style*="text-align"]):not(.prose)');
+        divs.forEach(div => {
+          (div as HTMLElement).style.textAlign = textAlign;
+        });
+      }
     }
   }, [content, textAlign]);
 
@@ -42,7 +49,8 @@ export const RichTextDisplay = ({
       className={`prose max-w-none ${className}`}
       style={{ 
         fontSize: fontSize ? `${fontSize}px` : undefined,
-        textAlign: textAlign // Apply default text alignment to the container
+        // Only apply container-level textAlign for blank content or content without explicit alignment
+        textAlign: !content.includes('text-align:') ? textAlign : undefined
       }}
       dangerouslySetInnerHTML={{ __html: content }}
     />

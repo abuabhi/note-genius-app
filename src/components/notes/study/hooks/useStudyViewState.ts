@@ -7,7 +7,7 @@ export const useStudyViewState = () => {
   // State for font size
   const [fontSize, setFontSize] = useState(16);
   
-  // State for text alignment, defaulting to left
+  // State for text alignment, explicitly defaulting to left to ensure consistency
   const [textAlign, setTextAlign] = useState<TextAlignType>("left");
   
   // State for full width

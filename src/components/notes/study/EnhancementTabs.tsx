@@ -46,9 +46,12 @@ export const EnhancementTabs = ({
       summary: summaryContent.slice(0, 50),
       keyPoints: keyPointsContent.slice(0, 50),
       markdown: markdownContent.slice(0, 50),
-      improved: improvedContent.slice(0, 50)
+      improved: improvedContent.slice(0, 50),
+      // Debug alignment
+      textAlign: textAlign,
+      contentHasAlignment: originalContent.includes('text-align'),
     });
-  }, [note, hasSummary, hasKeyPoints, hasMarkdown, hasImprovedClarity]);
+  }, [note, hasSummary, hasKeyPoints, hasMarkdown, hasImprovedClarity, textAlign, originalContent]);
   
   // Reset to original tab when editing starts
   useEffect(() => {
