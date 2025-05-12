@@ -37,6 +37,17 @@ export const EnhancementSelector = ({
   const isGeneratingSummary = summaryStatus === 'generating' || summaryStatus === 'pending';
   const hasSummaryError = summaryStatus === 'failed';
 
+  // Debug log to verify enhancement detection
+  console.log("EnhancementSelector - Enhancement detection:", {
+    noteId: note.id,
+    hasSummary,
+    hasKeyPoints,
+    hasMarkdown,
+    hasImprovedClarity,
+    summaryStatus,
+    summaryTimestamp: note.summary_generated_at
+  });
+
   // Define the enhancement options
   const enhancementOptions: EnhancementOption[] = [
     {

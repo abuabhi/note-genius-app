@@ -30,6 +30,7 @@ export const NoteContentDisplay = ({
     hasKeyPoints: !!note?.key_points,
     hasMarkdown: !!note?.markdown_content,
     hasImproved: !!note?.improved_content,
+    summaryGeneratedAt: note?.summary_generated_at,
     isEditing
   });
   
@@ -44,7 +45,7 @@ export const NoteContentDisplay = ({
     );
   }
   
-  // If editing, just show the original content
+  // If editing, just show the original content with rich text display
   if (isEditing) {
     return (
       <RichTextDisplay 

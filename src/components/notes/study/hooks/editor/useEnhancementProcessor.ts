@@ -32,7 +32,8 @@ export const useEnhancementProcessor = (note: Note, editorState: {
       console.log("Handling enhancement:", {
         typeToApply,
         replaceContent: enhancementDetails?.replaceContent,
-        contentLength: enhancedContent.length
+        contentLength: enhancedContent.length,
+        isEditing
       });
       
       if (isEditing) {
@@ -59,6 +60,12 @@ export const useEnhancementProcessor = (note: Note, editorState: {
           
           switch (typeToApply) {
             case 'summarize':
+              console.log("Storing summary in dedicated field", {
+                summary: enhancedContent,
+                summary_generated_at: now,
+                summary_status: 'completed'
+              });
+              
               // Store in dedicated summary field
               await updateNoteInDatabase(note.id, {
                 summary: enhancedContent,

@@ -34,25 +34,26 @@ export const TwoColumnEnhancementView = ({
   const isGeneratingSummary = summaryStatus === 'generating' || summaryStatus === 'pending';
   const hasSummaryError = summaryStatus === 'failed';
   
-  const hasAnyEnhancements = hasSummary || hasKeyPoints || hasMarkdown || hasImprovedClarity || 
-                            isGeneratingSummary || hasSummaryError;
+  // Debug log to trace enhancement detection
+  console.log("TwoColumnEnhancementView - Enhancement detection:", {
+    noteId: note.id,
+    hasSummary,
+    hasKeyPoints,
+    hasMarkdown,
+    hasImprovedClarity,
+    summaryStatus,
+    summaryTimestamp: note.summary_generated_at,
+    activeContentType
+  });
   
-  // For debugging
+  // If new summary is added and we're not already on a different enhancement tab,
+  // automatically switch to the summary tab when it becomes available
   useEffect(() => {
-    console.log("TwoColumnEnhancementView - Note data:", {
-      noteId: note.id,
-      hasSummary,
-      hasKeyPoints,
-      hasMarkdown,
-      hasImprovedClarity,
-      summaryTimestamp: note.summary_generated_at,
-      keyPointsTimestamp: note.key_points_generated_at,
-      markdownTimestamp: note.markdown_content_generated_at,
-      improvedTimestamp: note.improved_content_generated_at,
-      summaryStatus,
-      activeContentType
-    });
-  }, [note, hasSummary, hasKeyPoints, hasMarkdown, hasImprovedClarity, summaryStatus, activeContentType]);
+    if (hasSummary && activeContentType === 'original') {
+      console.log("Auto-switching to summary tab");
+      setActiveContentType('summary');
+    }
+  }, [hasSummary]);
   
   // Reset to original tab when editing starts
   useEffect(() => {
