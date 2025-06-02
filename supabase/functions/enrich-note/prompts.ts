@@ -26,22 +26,32 @@ Please provide a concise summary of this note in proper Markdown format. Focus o
 - Avoids bullet points or lists - write in complete sentences and paragraphs only
 - Keeps the summary to about 20% of the original length
 
-Write this as a cohesive overview using proper Markdown formatting with clear paragraph breaks. Use **bold** for emphasis when needed and ensure clean Markdown that renders well.
+Write this as a cohesive overview using proper Markdown formatting with clear paragraph breaks. Use **bold** for emphasis when needed and ensure clean Markdown that renders well. Make sure to add proper spacing between paragraphs by using double line breaks (leave an empty line between paragraphs).
 `;
 
     case 'extract-key-points':
       return `${baseContext}
-Extract the most important facts, concepts, and ideas from this note and present them as a clean Markdown bullet list. Each key point should be:
+Extract the most important facts, concepts, and ideas from this note and present them as a clean Markdown bullet list. 
 
+IMPORTANT: Format your response EXACTLY as follows:
+- Each key point must start with "- " (dash followed by space)
+- Each key point must be on its own separate line
+- No extra formatting or numbering
+- No sub-bullets or indentation
+- Each bullet point should be one complete idea
+
+Each key point should be:
 - A single, focused concept or fact
 - Written as a short, clear statement
-- Presented as individual Markdown bullet points (use "- " at the start of each line)
-- One idea per bullet point
-- No paragraph explanations or narrative flow
-- No sub-bullets or complex formatting
 - Direct and concise
+- One idea per bullet point only
 
-Format your response as a proper Markdown bulleted list with each key concept on its own line starting with "- ". Ensure each bullet point is on a separate line for proper Markdown rendering.
+Example format:
+- First key point here
+- Second key point here
+- Third key point here
+
+Make sure each line starts with "- " and contains only one key concept. Do not use any other bullet formats like * or numbers.
 `;
 
     case 'improve-clarity':
