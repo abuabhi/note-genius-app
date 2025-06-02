@@ -63,7 +63,7 @@ export const EnhanceDropdown = ({
   if (!isEnabled) {
     return (
       <Button disabled size="icon" className="h-8 w-8" title="Enhancement requires premium">
-        <Sparkles className="h-4 w-4" />
+        <Sparkles className="h-4 w-4 text-mint-500" />
       </Button>
     );
   }
@@ -86,9 +86,9 @@ export const EnhanceDropdown = ({
           title={isLimitReached ? "Monthly limit reached" : isProcessing ? "Processing enhancement..." : "Enhance note"}
         >
           {isProcessing ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin text-mint-500" />
           ) : (
-            <Sparkles className="h-4 w-4 transition-all duration-300 group-hover:text-mint-500 group-hover:scale-110 group-hover:rotate-12" />
+            <Sparkles className="h-4 w-4 text-mint-500 transition-all duration-300 group-hover:text-mint-600 group-hover:scale-110 group-hover:rotate-12" />
           )}
           <span className="absolute inset-0 rounded-full bg-mint-200/0 group-hover:bg-mint-100/50 transition-colors duration-300"></span>
         </Button>
