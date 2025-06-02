@@ -15,7 +15,7 @@ interface NoteStudyViewProps {
 export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
   const viewState = useStudyViewState();
   const editorState = useNoteStudyEditor(note);
-  const { currentUsage, monthlyLimit, hasReachedLimit, fetchUsageStats } = useNoteEnrichment();
+  const { currentUsage, monthlyLimit, hasReachedLimit } = useNoteEnrichment();
 
   const handleRetryEnhancement = async (enhancementType: string): Promise<void> => {
     // Implementation for retrying enhancement
@@ -36,9 +36,9 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
           isEditing={editorState.isEditing}
           isSaving={editorState.isSaving}
           editableTitle={editorState.editableTitle}
-          onIncreaseFontSize={viewState.increaseFontSize}
-          onDecreaseFontSize={viewState.decreaseFontSize}
-          onChangeTextAlign={viewState.setTextAlign}
+          onIncreaseFontSize={viewState.handleIncreaseFontSize}
+          onDecreaseFontSize={viewState.handleDecreaseFontSize}
+          onChangeTextAlign={viewState.handleTextAlign}
           onToggleWidth={viewState.toggleWidth}
           onToggleFullScreen={viewState.toggleFullScreen}
           onToggleEditing={editorState.toggleEditing}
@@ -65,7 +65,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
           setSelectedTags={editorState.setSelectedTags}
           handleRetryEnhancement={handleRetryEnhancement}
           hasReachedLimit={hasReachedLimit}
-          fetchUsageStats={fetchUsageStats}
+          fetchUsageStats={async () => {}}
         />
       </Card>
     </div>
