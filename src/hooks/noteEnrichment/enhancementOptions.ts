@@ -7,6 +7,7 @@ import { EnhancementOption, EnhancementFunction } from "./types";
 export const enhancementOptions: EnhancementOption[] = [
   {
     id: 'summarize',
+    value: 'summarize',
     title: 'Summarize',
     description: 'Create a concise summary of the note content',
     icon: '📄',
@@ -16,6 +17,7 @@ export const enhancementOptions: EnhancementOption[] = [
   },
   {
     id: 'extract-key-points',
+    value: 'extract-key-points',
     title: 'Extract Key Points',
     description: 'Identify and list the most important points',
     icon: '🔑',
@@ -25,6 +27,7 @@ export const enhancementOptions: EnhancementOption[] = [
   },
   {
     id: 'improve-clarity',
+    value: 'improve-clarity',
     title: 'Improve Clarity',
     description: 'Enhance readability and structure while preserving meaning',
     icon: '✨',
@@ -34,6 +37,7 @@ export const enhancementOptions: EnhancementOption[] = [
   },
   {
     id: 'convert-to-markdown',
+    value: 'convert-to-markdown',
     title: 'Convert to Markdown',
     description: 'Format the content using markdown syntax',
     icon: '📋',
@@ -43,6 +47,7 @@ export const enhancementOptions: EnhancementOption[] = [
   },
   {
     id: 'fix-spelling-grammar',
+    value: 'fix-spelling-grammar',
     title: 'Fix Spelling & Grammar',
     description: 'Correct spelling and grammar errors',
     icon: '🔤',
@@ -56,5 +61,5 @@ export const enhancementOptions: EnhancementOption[] = [
  * Get enhancement details by function ID
  */
 export const getEnhancementDetails = (enhancementFunction: EnhancementFunction): EnhancementOption | undefined => {
-  return enhancementOptions.find(option => option.id === enhancementFunction);
+  return enhancementOptions.find(option => option.value === enhancementFunction);
 };
