@@ -15,40 +15,64 @@ export const useEnhancementProcessor = (note: Note, editorState: {
   setEditableContent: (content: string) => void;
 }) => {
   const { isEditing, setEditableContent } = editorState;
-  const { getEnhancementDetails } = useNoteEnrichment();
+  const { getEnhancementDetails, enrichNote } = useNoteEnrichment();
   const { updateNote } = useNotes();
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [processingError, setProcessingError] = useState<string | null>(null);
   
   // Handle content enhancement with improved state synchronization
-  const handleEnhanceContent = async (enhancedContent: string, enhancementType?: EnhancementFunction) => {
+  const handleEnhanceContent = async (enhancedContent?: string, enhancementType?: EnhancementFunction) => {
     console.log("🚀 Starting enhancement process:", {
       noteId: note.id,
       enhancementType,
-      contentLength: enhancedContent.length,
+      hasEnhancedContent: !!enhancedContent,
+      contentLength: enhancedContent?.length || 0,
       isEditing,
-      timestamp: new Date().toISOString(),
-      enhancedContentPreview: enhancedContent.substring(0, 100)
+      timestamp: new Date().toISOString()
     });
 
     setProcessingError(null);
     setIsProcessing(true);
     
     try {
-      const typeToApply = enhancementType || 'improve-clarity';
-      const enhancementDetails = getEnhancementDetails?.(typeToApply);
+      let finalEnhancedContent = enhancedContent;
+      let finalEnhancementType = enhancementType || 'improve-clarity';
+      
+      // If no enhanced content is provided, we need to call the enrichment API
+      if (!finalEnhancedContent) {
+        console.log("🔄 No enhanced content provided, calling enrichment API...");
+        
+        // Default to spelling-grammar check if called without parameters from Original tab
+        finalEnhancementType = 'fix-spelling-grammar';
+        
+        const result = await enrichNote(
+          note.id,
+          note.content || '',
+          finalEnhancementType,
+          note.title
+        );
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Enhancement failed');
+        }
+        
+        finalEnhancedContent = result.content;
+        console.log("✅ Enhancement API call successful, content length:", finalEnhancedContent.length);
+      }
+      
+      const enhancementDetails = getEnhancementDetails?.(finalEnhancementType);
       
       console.log("📝 Enhancement details:", {
-        typeToApply,
+        finalEnhancementType,
         replaceContent: enhancementDetails?.replaceContent,
         enhancementDetails
       });
       
-      // CRITICAL FIX: Never replace content field for improve-clarity
+      // CRITICAL FIX: Never replace content field for improve-clarity or fix-spelling-grammar
       // If we're editing and it's a replacement type enhancement, update the editable content
-      if (isEditing && enhancementDetails?.replaceContent && typeToApply !== 'improve-clarity') {
+      if (isEditing && enhancementDetails?.replaceContent && finalEnhancementType !== 'improve-clarity' && finalEnhancementType !== 'fix-spelling-grammar') {
         console.log("✏️ Updating editable content in editor mode");
-        setEditableContent(enhancedContent);
+        setEditableContent(finalEnhancedContent);
         toast.success("Enhancement applied to editor. Save to keep changes.");
         return;
       }
@@ -57,11 +81,11 @@ export const useEnhancementProcessor = (note: Note, editorState: {
       const now = new Date().toISOString();
       let updateData: Partial<Note> = {};
       
-      switch (typeToApply) {
+      switch (finalEnhancementType) {
         case 'summarize':
           console.log("📄 Storing summary content");
           updateData = {
-            summary: enhancedContent,
+            summary: finalEnhancedContent,
             summary_generated_at: now,
             summary_status: 'completed'
           };
@@ -70,7 +94,7 @@ export const useEnhancementProcessor = (note: Note, editorState: {
         case 'extract-key-points':
           console.log("🔑 Storing key points content");
           updateData = {
-            key_points: enhancedContent,
+            key_points: finalEnhancedContent,
             key_points_generated_at: now
           };
           break;
@@ -78,24 +102,34 @@ export const useEnhancementProcessor = (note: Note, editorState: {
         case 'convert-to-markdown':
           console.log("📋 Storing markdown content");
           updateData = {
-            markdown_content: enhancedContent,
+            markdown_content: finalEnhancedContent,
             markdown_content_generated_at: now
           };
           break;
             
         case 'improve-clarity':
           console.log("✨ Storing improved clarity content - NEVER REPLACING ORIGINAL");
-          // CRITICAL: Always store improved clarity in improved_content field
           updateData = {
-            improved_content: enhancedContent,
-            improved_content_generated_at: now
+            improved_content: finalEnhancedContent,
+            improved_content_generated_at: now,
+            enhancement_type: 'clarity'
+          };
+          break;
+          
+        case 'fix-spelling-grammar':
+          console.log("🔤 Storing spelling & grammar fixes - NEVER REPLACING ORIGINAL");
+          updateData = {
+            improved_content: finalEnhancedContent,
+            improved_content_generated_at: now,
+            enhancement_type: 'spelling-grammar',
+            original_content_backup: note.content // Store original for diff view
           };
           break;
             
         default:
           console.log("📝 Defaulting to summary storage");
           updateData = {
-            summary: enhancedContent,
+            summary: finalEnhancedContent,
             summary_generated_at: now,
             summary_status: 'completed'
           };
@@ -104,11 +138,12 @@ export const useEnhancementProcessor = (note: Note, editorState: {
       console.log("💾 Update data prepared:", {
         updateData,
         fieldsToUpdate: Object.keys(updateData),
-        contentPreview: enhancedContent.substring(0, 100),
+        contentPreview: finalEnhancedContent.substring(0, 100),
         criticalCheck: {
-          isImproveClarity: typeToApply === 'improve-clarity',
+          isSpellingGrammar: finalEnhancementType === 'fix-spelling-grammar',
+          isImproveClarity: finalEnhancementType === 'improve-clarity',
           willReplaceOriginalContent: 'content' in updateData,
-          shouldNeverReplaceForImproveClarity: typeToApply === 'improve-clarity' && !('content' in updateData)
+          shouldNeverReplaceForThese: (finalEnhancementType === 'improve-clarity' || finalEnhancementType === 'fix-spelling-grammar') && !('content' in updateData)
         }
       });
         
@@ -127,14 +162,9 @@ export const useEnhancementProcessor = (note: Note, editorState: {
       
       console.log("🎉 Enhancement process completed successfully:", {
         noteId: note.id,
-        enhancementType: typeToApply,
+        enhancementType: finalEnhancementType,
         updateData,
-        timestamp: new Date().toISOString(),
-        verification: {
-          improvedContentStored: typeToApply === 'improve-clarity' ? enhancedContent.length : 'N/A',
-          expectedField: typeToApply === 'improve-clarity' ? 'improved_content' : 'other',
-          originalContentProtected: !('content' in updateData)
-        }
+        timestamp: new Date().toISOString()
       });
         
       // Show success message
@@ -142,15 +172,16 @@ export const useEnhancementProcessor = (note: Note, editorState: {
         'summarize': "Summary created successfully",
         'extract-key-points': "Key points extracted successfully", 
         'convert-to-markdown': "Converted to markdown successfully",
-        'improve-clarity': "Improved clarity generated successfully"
+        'improve-clarity': "Improved clarity generated successfully",
+        'fix-spelling-grammar': "Spelling & grammar fixes applied successfully"
       };
         
-      toast.success(successMessages[typeToApply] || "Enhancement completed successfully");
+      toast.success(successMessages[finalEnhancementType] || "Enhancement completed successfully");
         
     } catch (error) {
       console.error("❌ Error in enhancement process:", error);
       setProcessingError(error instanceof Error ? error.message : "An unknown error occurred");
-      toast.error(`Failed to save enhanced content: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(`Failed to enhance content: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     } finally {
       setIsProcessing(false);
