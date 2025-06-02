@@ -1,4 +1,3 @@
-
 import { useMemo } from "react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -54,10 +53,6 @@ export const RichTextDisplay = ({
     processed = processed.replace(/<p style="[^"]*">/g, '');
     processed = processed.replace(/<\/p>/g, '');
     processed = processed.replace(/<[^>]*>/g, '');
-    
-    // Handle AI_ENHANCED tags by converting them to highlighted text
-    processed = processed.replace(/\[AI_ENHANCED\]/g, '<mark class="bg-mint-100 text-mint-800 px-1 rounded">');
-    processed = processed.replace(/\[\/AI_ENHANCED\]/g, '</mark>');
     
     return processed.trim();
   }, [content, removeTitle]);

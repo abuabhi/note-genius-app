@@ -82,10 +82,13 @@ const parseEnhancedContent = (content: string): ParsedContent[] => {
     originalParts: parts.filter(p => p.type === 'original').length
   });
   
-  // If no enhancement markers found, return empty array
+  // If no enhancement markers found, return the entire content as original
   if (!hasMarkers) {
-    console.log("❌ No enhancement markers found in content");
-    return [];
+    console.log("❌ No enhancement markers found in content, returning as original");
+    return [{
+      type: 'original',
+      content: content
+    }];
   }
   
   return parts;
@@ -106,16 +109,11 @@ export const EnhancedContentRenderer = ({
     enhancedParts: parsedContent.filter(p => p.type === 'enhanced').length,
     originalParts: parsedContent.filter(p => p.type === 'original').length,
     hasMarkers,
-    shouldRender: hasMarkers && parsedContent.length > 0,
+    shouldRender: parsedContent.length > 0,
     timestamp: new Date().toISOString()
   });
   
-  // If no markers found, don't render anything - let parent handle it
-  if (!hasMarkers || parsedContent.length === 0) {
-    console.log("❌ EnhancedContentRenderer: No valid enhanced content to render");
-    return null;
-  }
-  
+  // Always render content, even if no markers
   return (
     <div className={className}>
       {parsedContent.map((part, index) => (
@@ -123,21 +121,28 @@ export const EnhancedContentRenderer = ({
           key={index}
           className={
             part.type === 'enhanced'
-              ? 'relative bg-mint-50/30 border-l-4 border-mint-300 pl-4 py-2 my-2 rounded-r-md'
+              ? 'relative bg-mint-50/50 border-l-4 border-mint-400 pl-4 py-3 my-3 rounded-r-lg shadow-sm'
               : ''
           }
         >
           {part.type === 'enhanced' && (
-            <div className="absolute -top-1 -left-1 bg-mint-500 text-white text-xs px-2 py-0.5 rounded-full font-medium shadow-sm">
-              AI Enhanced
+            <div className="absolute -top-2 -left-2 bg-mint-500 text-white text-xs px-2 py-1 rounded-full font-medium shadow-md z-10">
+              ✨ AI Enhanced
             </div>
           )}
-          <RichTextDisplay
-            content={part.content}
-            fontSize={fontSize}
-            textAlign={textAlign}
-            className={part.type === 'enhanced' ? 'mt-4' : ''}
-          />
+          <div className={part.type === 'enhanced' ? 'pt-2' : ''}>
+            <RichTextDisplay
+              content={part.content}
+              fontSize={fontSize}
+              textAlign={textAlign}
+              className={part.type === 'enhanced' ? 'prose-p:text-mint-900 prose-headings:text-mint-800 prose-li:text-mint-900 prose-strong:text-mint-900' : ''}
+            />
+          </div>
+          {part.type === 'enhanced' && (
+            <div className="mt-2 pt-2 border-t border-mint-200">
+              <span className="text-xs text-mint-600 font-medium">Enhanced by AI for better clarity and understanding</span>
+            </div>
+          )}
         </div>
       ))}
     </div>
