@@ -31,27 +31,24 @@ Write this as a cohesive overview using proper Markdown formatting with clear pa
 
     case 'extract-key-points':
       return `${baseContext}
-Extract the most important facts, concepts, and ideas from this note and present them as a clean Markdown bullet list. 
+Extract the most important facts, concepts, and ideas from this note and present them as a Markdown bullet list.
 
-IMPORTANT: Format your response EXACTLY as follows:
-- Each key point must start with "- " (dash followed by space)
-- Each key point must be on its own separate line
-- No extra formatting or numbering
-- No sub-bullets or indentation
-- Each bullet point should be one complete idea
+CRITICAL FORMATTING REQUIREMENTS:
+- Start each key point with "- " (dash followed by space)
+- Put each key point on its OWN separate line
+- Do NOT write paragraphs or long sentences
+- Each bullet point should be ONE concise statement
+- Do NOT combine multiple ideas in one bullet point
+- Use simple, direct language
+- Maximum 15-20 words per bullet point
 
-Each key point should be:
-- A single, focused concept or fact
-- Written as a short, clear statement
-- Direct and concise
-- One idea per bullet point only
+Your response should look EXACTLY like this format:
+- First key concept
+- Second key concept  
+- Third key concept
+- Fourth key concept
 
-Example format:
-- First key point here
-- Second key point here
-- Third key point here
-
-Make sure each line starts with "- " and contains only one key concept. Do not use any other bullet formats like * or numbers.
+Extract 5-10 key points maximum. Each line must start with "- " and contain only one focused idea. Do not use any other formatting, numbering, or paragraph structure.
 `;
 
     case 'improve-clarity':
