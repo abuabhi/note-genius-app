@@ -7,7 +7,7 @@ import { useStudyViewState } from "./hooks/useStudyViewState";
 import { useNoteStudyEditor } from "./hooks/useNoteStudyEditor";
 import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
 import { useNotes } from "@/contexts/NoteContext";
-import { EnhancementFunction } from "@/hooks/noteEnrichment/types";
+import { useEffect } from "react";
 
 interface NoteStudyViewProps {
   note: Note;
@@ -22,18 +22,46 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
   // Get the most up-to-date note data from context
   const currentNote = notes.find(n => n.id === note.id) || note;
   
-  console.log("NoteStudyView - Note data comparison:", {
-    originalNoteId: note.id,
-    currentNoteId: currentNote.id,
-    originalHasKeyPoints: !!note.key_points,
-    currentHasKeyPoints: !!currentNote.key_points,
-    keyPointsLength: currentNote.key_points?.length || 0,
-    keyPointsGeneratedAt: currentNote.key_points_generated_at
-  });
+  // Debug note updates
+  useEffect(() => {
+    console.log("📊 NoteStudyView - Note data tracking:", {
+      originalNoteId: note.id,
+      currentNoteId: currentNote.id,
+      timestamp: new Date().toISOString(),
+      changes: {
+        summary: {
+          original: !!note.summary,
+          current: !!currentNote.summary,
+          changed: note.summary !== currentNote.summary
+        },
+        keyPoints: {
+          original: !!note.key_points,
+          current: !!currentNote.key_points,
+          changed: note.key_points !== currentNote.key_points
+        },
+        improvedClarity: {
+          original: !!note.improved_content,
+          current: !!currentNote.improved_content,
+          changed: note.improved_content !== currentNote.improved_content
+        },
+        markdown: {
+          original: !!note.markdown_content,
+          current: !!currentNote.markdown_content,
+          changed: note.markdown_content !== currentNote.markdown_content
+        }
+      },
+      enhancementTimestamps: {
+        summary: currentNote.summary_generated_at,
+        keyPoints: currentNote.key_points_generated_at,
+        improvedClarity: currentNote.improved_content_generated_at,
+        markdown: currentNote.markdown_content_generated_at
+      }
+    });
+  }, [note, currentNote]);
 
   const handleRetryEnhancement = async (enhancementType: string): Promise<void> => {
+    console.log("🔄 Retrying enhancement:", enhancementType);
     // Implementation for retrying enhancement
-    console.log("Retrying enhancement:", enhancementType);
   };
 
   return (

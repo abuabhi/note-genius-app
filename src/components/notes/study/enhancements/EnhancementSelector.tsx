@@ -27,29 +27,47 @@ export const EnhancementSelector = ({
   className
 }: EnhancementSelectorProps) => {
   // Determine which enhancements are available based on note data - immediate detection
-  const hasSummary = !!note.summary;
-  const hasKeyPoints = !!note.key_points;
-  const hasMarkdown = !!note.markdown_content;
-  const hasImprovedClarity = !!note.improved_content;
+  const hasSummary = !!(note.summary && note.summary.trim());
+  const hasKeyPoints = !!(note.key_points && note.key_points.trim());
+  const hasMarkdown = !!(note.markdown_content && note.markdown_content.trim());
+  const hasImprovedClarity = !!(note.improved_content && note.improved_content.trim());
   
   // Check enhancement statuses
   const summaryStatus = note.summary_status || "completed";
   const isGeneratingSummary = summaryStatus === 'generating' || summaryStatus === 'pending';
   const hasSummaryError = summaryStatus === 'failed';
 
-  // Debug log to verify enhancement detection with timestamps
-  console.log("EnhancementSelector - Enhancement detection:", {
+  // Comprehensive debug log to verify enhancement detection
+  console.log("🔍 EnhancementSelector - Detailed analysis:", {
     noteId: note.id,
-    hasSummary,
-    hasKeyPoints,
-    hasMarkdown,
-    hasImprovedClarity,
-    summaryStatus,
+    timestamp: new Date().toISOString(),
+    summary: {
+      exists: hasSummary,
+      length: note.summary?.length || 0,
+      preview: note.summary?.substring(0, 50) || 'none',
+      generatedAt: note.summary_generated_at,
+      status: summaryStatus
+    },
+    keyPoints: {
+      exists: hasKeyPoints,
+      length: note.key_points?.length || 0,
+      preview: note.key_points?.substring(0, 50) || 'none',
+      generatedAt: note.key_points_generated_at
+    },
+    markdown: {
+      exists: hasMarkdown,
+      length: note.markdown_content?.length || 0,
+      preview: note.markdown_content?.substring(0, 50) || 'none',
+      generatedAt: note.markdown_content_generated_at
+    },
+    improvedClarity: {
+      exists: hasImprovedClarity,
+      length: note.improved_content?.length || 0,
+      preview: note.improved_content?.substring(0, 50) || 'none',
+      generatedAt: note.improved_content_generated_at
+    },
     activeContentType,
-    keyPointsData: note.key_points ? `${note.key_points.length} chars` : 'none',
-    keyPointsGeneratedAt: note.key_points_generated_at,
-    improvedContentData: note.improved_content ? `${note.improved_content.length} chars` : 'none',
-    improvedContentGeneratedAt: note.improved_content_generated_at
+    availableCount: [hasSummary, hasKeyPoints, hasMarkdown, hasImprovedClarity].filter(Boolean).length
   });
 
   // Define the enhancement options - show immediately when content exists
@@ -87,22 +105,31 @@ export const EnhancementSelector = ({
   const availableOptions = enhancementOptions.filter(option => option.available);
 
   // Log available options for debugging
-  console.log("EnhancementSelector - Available options:", {
-    availableOptions: availableOptions.map(opt => opt.id),
-    totalOptions: availableOptions.length
+  console.log("📋 EnhancementSelector - Available tabs:", {
+    totalOptions: enhancementOptions.length,
+    availableOptions: availableOptions.map(opt => ({
+      id: opt.id,
+      label: opt.label,
+      isGenerating: opt.isGenerating,
+      hasError: opt.hasError
+    })),
+    activeTab: activeContentType
   });
 
   return (
     <div className={cn("flex flex-col border-r border-border bg-muted/20", className)}>
       <div className="py-2 px-3 bg-muted/30 border-b border-border">
         <h3 className="text-sm font-medium text-muted-foreground">Content Views</h3>
+        <div className="text-xs text-muted-foreground mt-1">
+          {availableOptions.length} option{availableOptions.length !== 1 ? 's' : ''} available
+        </div>
       </div>
       <div className="flex flex-col py-1">
         {availableOptions.map((option) => (
           <button
             key={option.id}
             onClick={() => {
-              console.log(`EnhancementSelector - Switching to tab: ${option.id}`);
+              console.log(`🎯 EnhancementSelector - Tab clicked: ${option.id}`);
               setActiveContentType(option.id);
             }}
             className={cn(
