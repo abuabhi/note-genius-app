@@ -105,10 +105,10 @@ export const StudyViewExportDropdown = ({ note }: StudyViewExportDropdownProps) 
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:text-blue-800">
-            <Download className="mr-2 h-4 w-4 text-blue-600" />
+          <Button variant="outline" size="sm" className="bg-mint-50 border-mint-200 text-mint-700 hover:bg-mint-100 hover:text-mint-800">
+            <Download className="mr-2 h-4 w-4 text-mint-600" />
             Export
-            <ChevronDown className="ml-2 h-4 w-4 text-blue-600" />
+            <ChevronDown className="ml-2 h-4 w-4 text-mint-600" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent 
@@ -120,8 +120,8 @@ export const StudyViewExportDropdown = ({ note }: StudyViewExportDropdownProps) 
             return (
               <div key={content.type}>
                 <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="flex items-start px-4 py-3 text-sm cursor-pointer hover:bg-blue-50 focus:bg-blue-50">
-                    <Icon className="mr-3 h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <DropdownMenuSubTrigger className="flex items-start px-4 py-3 text-sm cursor-pointer hover:bg-mint-50 focus:bg-mint-50">
+                    <Icon className="mr-3 h-4 w-4 text-mint-600 mt-0.5 flex-shrink-0" />
                     <div className="flex flex-col">
                       <span className="font-medium text-gray-900">{content.label}</span>
                       <span className="text-xs text-gray-500">Download or email this content</span>

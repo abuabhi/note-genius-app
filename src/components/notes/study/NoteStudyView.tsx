@@ -71,6 +71,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
           selectedTags={editorState.selectedTags}
           availableTags={editorState.availableTags}
           isSaving={editorState.isSaving}
+          statsLoading={false}
           currentUsage={currentUsage}
           monthlyLimit={monthlyLimit}
           handleContentChange={editorState.handleContentChange}
