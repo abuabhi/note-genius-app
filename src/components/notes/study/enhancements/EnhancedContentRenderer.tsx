@@ -22,19 +22,21 @@ const parseEnhancedContent = (content: string): ParsedContent[] => {
     return [];
   }
 
+  console.log("🔍 parseEnhancedContent: Starting to parse content:", {
+    contentLength: content.length,
+    contentPreview: content.substring(0, 200),
+    hasOpenMarker: content.includes('[AI_ENHANCED]'),
+    hasCloseMarker: content.includes('[/AI_ENHANCED]')
+  });
+
   const parts: ParsedContent[] = [];
+  
+  // More robust regex that handles multiline content and whitespace
   const enhancementRegex = /\[AI_ENHANCED\]([\s\S]*?)\[\/AI_ENHANCED\]/g;
   
   let lastIndex = 0;
   let match;
   let hasMarkers = false;
-  
-  console.log("🔍 parseEnhancedContent: Starting to parse content:", {
-    contentLength: content.length,
-    contentPreview: content.substring(0, 100),
-    hasOpenMarker: content.includes('[AI_ENHANCED]'),
-    hasCloseMarker: content.includes('[/AI_ENHANCED]')
-  });
   
   while ((match = enhancementRegex.exec(content)) !== null) {
     hasMarkers = true;
@@ -42,7 +44,7 @@ const parseEnhancedContent = (content: string): ParsedContent[] => {
     console.log("🎯 Found enhancement marker:", {
       matchIndex: match.index,
       matchLength: match[0].length,
-      enhancedContent: match[1].substring(0, 50)
+      enhancedContent: match[1].substring(0, 100)
     });
     
     // Add original content before the enhancement
@@ -56,11 +58,14 @@ const parseEnhancedContent = (content: string): ParsedContent[] => {
       }
     }
     
-    // Add enhanced content
-    parts.push({
-      type: 'enhanced',
-      content: match[1]
-    });
+    // Add enhanced content (clean up any extra whitespace)
+    const enhancedContent = match[1].trim();
+    if (enhancedContent) {
+      parts.push({
+        type: 'enhanced',
+        content: enhancedContent
+      });
+    }
     
     lastIndex = match.index + match[0].length;
   }
@@ -80,7 +85,8 @@ const parseEnhancedContent = (content: string): ParsedContent[] => {
     hasMarkers,
     totalParts: parts.length,
     enhancedParts: parts.filter(p => p.type === 'enhanced').length,
-    originalParts: parts.filter(p => p.type === 'original').length
+    originalParts: parts.filter(p => p.type === 'original').length,
+    partsPreview: parts.map(p => ({ type: p.type, contentPreview: p.content.substring(0, 50) }))
   });
   
   // If no enhancement markers found, return the entire content as original
@@ -121,7 +127,7 @@ export const EnhancedContentRenderer = ({
         <div key={index}>
           {part.type === 'enhanced' ? (
             // Enhanced content styled as mint green tip/quote
-            <div className="relative bg-gradient-to-r from-mint-50 to-mint-100/50 border border-mint-200 rounded-lg p-4 my-4 shadow-sm">
+            <div className="relative bg-gradient-to-r from-mint-50 to-mint-100/50 border-l-4 border-mint-400 rounded-r-lg p-4 my-4 shadow-sm">
               <div className="flex items-center gap-2 mb-3">
                 <div className="flex items-center gap-2 bg-mint-500 text-white px-3 py-1 rounded-full text-xs font-medium shadow-sm">
                   <Sparkles className="h-3 w-3 text-white" />

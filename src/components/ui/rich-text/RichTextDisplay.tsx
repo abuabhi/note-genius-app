@@ -1,3 +1,4 @@
+
 import { useMemo } from "react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -53,6 +54,10 @@ export const RichTextDisplay = ({
     processed = processed.replace(/<p style="[^"]*">/g, '');
     processed = processed.replace(/<\/p>/g, '');
     processed = processed.replace(/<[^>]*>/g, '');
+    
+    // CRITICAL: Remove any remaining AI_ENHANCED tags that might have slipped through
+    processed = processed.replace(/\[AI_ENHANCED\]/g, '');
+    processed = processed.replace(/\[\/AI_ENHANCED\]/g, '');
     
     return processed.trim();
   }, [content, removeTitle]);
