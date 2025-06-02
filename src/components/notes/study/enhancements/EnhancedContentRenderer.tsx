@@ -16,6 +16,11 @@ interface ParsedContent {
 }
 
 const parseEnhancedContent = (content: string): ParsedContent[] => {
+  if (!content || typeof content !== 'string') {
+    console.log("⚠️ parseEnhancedContent: Invalid content provided");
+    return [];
+  }
+
   const parts: ParsedContent[] = [];
   const enhancementRegex = /\[AI_ENHANCED\]([\s\S]*?)\[\/AI_ENHANCED\]/g;
   
@@ -23,8 +28,21 @@ const parseEnhancedContent = (content: string): ParsedContent[] => {
   let match;
   let hasMarkers = false;
   
+  console.log("🔍 parseEnhancedContent: Starting to parse content:", {
+    contentLength: content.length,
+    contentPreview: content.substring(0, 100),
+    hasOpenMarker: content.includes('[AI_ENHANCED]'),
+    hasCloseMarker: content.includes('[/AI_ENHANCED]')
+  });
+  
   while ((match = enhancementRegex.exec(content)) !== null) {
     hasMarkers = true;
+    
+    console.log("🎯 Found enhancement marker:", {
+      matchIndex: match.index,
+      matchLength: match[0].length,
+      enhancedContent: match[1].substring(0, 50)
+    });
     
     // Add original content before the enhancement
     if (match.index > lastIndex) {
@@ -57,9 +75,16 @@ const parseEnhancedContent = (content: string): ParsedContent[] => {
     }
   }
   
+  console.log("📋 parseEnhancedContent: Parsing results:", {
+    hasMarkers,
+    totalParts: parts.length,
+    enhancedParts: parts.filter(p => p.type === 'enhanced').length,
+    originalParts: parts.filter(p => p.type === 'original').length
+  });
+  
   // If no enhancement markers found, return empty array
-  // This will be handled by the parent component
   if (!hasMarkers) {
+    console.log("❌ No enhancement markers found in content");
     return [];
   }
   
@@ -73,19 +98,21 @@ export const EnhancedContentRenderer = ({
   className
 }: EnhancedContentRendererProps) => {
   const parsedContent = parseEnhancedContent(content);
-  const hasMarkers = content.includes('[AI_ENHANCED]') && content.includes('[/AI_ENHANCED]');
+  const hasMarkers = content && content.includes('[AI_ENHANCED]') && content.includes('[/AI_ENHANCED]');
   
-  console.log("🎨 EnhancedContentRenderer - Parsing content:", {
-    originalLength: content.length,
+  console.log("🎨 EnhancedContentRenderer - Rendering analysis:", {
+    originalLength: content?.length || 0,
     parsedParts: parsedContent.length,
     enhancedParts: parsedContent.filter(p => p.type === 'enhanced').length,
     originalParts: parsedContent.filter(p => p.type === 'original').length,
     hasMarkers,
-    shouldRender: hasMarkers && parsedContent.length > 0
+    shouldRender: hasMarkers && parsedContent.length > 0,
+    timestamp: new Date().toISOString()
   });
   
   // If no markers found, don't render anything - let parent handle it
   if (!hasMarkers || parsedContent.length === 0) {
+    console.log("❌ EnhancedContentRenderer: No valid enhanced content to render");
     return null;
   }
   
