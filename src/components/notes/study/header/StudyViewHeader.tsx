@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { StudyViewTitleSection } from "./StudyViewTitleSection";
 import { StudyViewProcessingIndicator } from "./StudyViewProcessingIndicator";
 import { StudyViewEnhancementDropdown } from "./StudyViewEnhancementDropdown";
+import { StudyViewExportDropdown } from "./StudyViewExportDropdown";
 
 interface StudyViewHeaderProps {
   note: Note;
@@ -58,7 +59,8 @@ export const StudyViewHeader = ({
     setProcessingEnhancement(enhancement);
     
     try {
-      const result = await enrichNote(note.id, note.content, enhancement, note.title || "");
+      const originalContent = note.content || note.description || "";
+      const result = await enrichNote(note.id, originalContent, enhancement, note.title || "");
       
       if (result.success) {
         onEnhance(result.content, enhancement);
@@ -94,6 +96,8 @@ export const StudyViewHeader = ({
                 processingEnhancement={processingEnhancement}
                 onEnhancementSelect={handleEnhancementSelect}
               />
+              
+              <StudyViewExportDropdown note={note} />
             </>
           )}
 

@@ -95,7 +95,7 @@ export const StudyViewEnhancementDropdown = ({
           <Sparkles className="mr-3 h-4 w-4 text-mint-600 mt-0.5 flex-shrink-0" />
           <div className="flex flex-col">
             <span className="font-medium text-gray-900 mb-1">Fix Spelling & Grammar</span>
-            <span className="text-xs text-gray-500 leading-relaxed">Correct spelling mistakes, grammar errors, and improve sentence structure in your original content</span>
+            <span className="text-xs text-gray-500 leading-relaxed">Correct spelling mistakes, grammar errors, and improve sentence structure with visual diff highlighting</span>
           </div>
         </DropdownMenuItem>
         

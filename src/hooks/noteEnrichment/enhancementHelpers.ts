@@ -8,7 +8,8 @@ import { EnhancementFunction } from "./types";
 export const updateNoteWithEnhancement = async (
   noteId: string, 
   enhancedContent: string, 
-  enhancementType: EnhancementFunction
+  enhancementType: EnhancementFunction,
+  originalContent?: string
 ): Promise<boolean> => {
   try {
     const now = new Date().toISOString();
@@ -42,6 +43,23 @@ export const updateNoteWithEnhancement = async (
         updateData = {
           improved_content: enhancedContent,
           improved_content_generated_at: now
+        };
+        break;
+        
+      case 'fix-spelling-grammar':
+        // Special handling for spelling/grammar fixes
+        updateData = {
+          improved_content: enhancedContent,
+          improved_content_generated_at: now,
+          // Store original content backup if provided
+          ...(originalContent && {
+            original_content_backup: originalContent,
+            spelling_grammar_fixes: JSON.stringify([{
+              original: originalContent,
+              fixed: enhancedContent,
+              timestamp: now
+            }])
+          })
         };
         break;
         

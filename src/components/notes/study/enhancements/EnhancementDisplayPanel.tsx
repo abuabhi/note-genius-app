@@ -4,6 +4,7 @@ import { Note } from "@/types/note";
 import { TextAlignType } from "../hooks/useStudyViewState";
 import { RichTextDisplay } from "@/components/ui/rich-text/RichTextDisplay";
 import { EnhancedContentRenderer } from "./EnhancedContentRenderer";
+import { SpellingGrammarDiff } from "../diff/SpellingGrammarDiff";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, X, Clock, FileText, Target, List, Sparkles, Code } from "lucide-react";
 import { LoadingAnimations } from "./LoadingAnimations";
@@ -118,6 +119,9 @@ export const EnhancementDisplayPanel = ({
 
   // Check if content contains AI enhancement markers
   const hasEnhancementMarkers = content && content.includes('[AI_ENHANCED]') && content.includes('[/AI_ENHANCED]');
+  
+  // Check if this is spelling/grammar fixed content
+  const isSpellingGrammarFixed = contentType === 'improved' && note.original_content_backup && note.spelling_grammar_fixes;
 
   // Show loading state
   if (isLoading) {
@@ -231,7 +235,15 @@ export const EnhancementDisplayPanel = ({
       {/* Enhanced Content */}
       <div className="flex-1 overflow-y-auto bg-gradient-to-b from-white to-gray-50/30">
         <div className="p-6">
-          {hasEnhancementMarkers ? (
+          {isSpellingGrammarFixed && note.original_content_backup ? (
+            <SpellingGrammarDiff
+              originalContent={note.original_content_backup}
+              fixedContent={content}
+              fontSize={fontSize}
+              textAlign={textAlign}
+              className="prose-mint prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700"
+            />
+          ) : hasEnhancementMarkers ? (
             <EnhancedContentRenderer 
               content={content} 
               fontSize={fontSize} 
