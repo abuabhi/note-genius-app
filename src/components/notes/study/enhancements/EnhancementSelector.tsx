@@ -26,29 +26,30 @@ export const EnhancementSelector = ({
   setActiveContentType,
   className
 }: EnhancementSelectorProps) => {
-  // Enhanced detection with comprehensive null/undefined/empty string checking
+  // More robust detection with better null checking and string validation
   const hasSummary = Boolean(
     note.summary && 
     typeof note.summary === 'string' && 
-    note.summary.trim().length > 0
+    note.summary.trim().length > 10 // Minimum meaningful length
   );
   
   const hasKeyPoints = Boolean(
     note.key_points && 
     typeof note.key_points === 'string' && 
-    note.key_points.trim().length > 0
+    note.key_points.trim().length > 10
   );
   
   const hasMarkdown = Boolean(
     note.markdown_content && 
     typeof note.markdown_content === 'string' && 
-    note.markdown_content.trim().length > 0
+    note.markdown_content.trim().length > 10
   );
   
+  // Fixed: More robust improved content detection
   const hasImprovedClarity = Boolean(
     note.improved_content && 
     typeof note.improved_content === 'string' && 
-    note.improved_content.trim().length > 0
+    note.improved_content.trim().length > 20 // Higher threshold for improved content
   );
   
   // Check enhancement statuses
@@ -56,58 +57,31 @@ export const EnhancementSelector = ({
   const isGeneratingSummary = summaryStatus === 'generating' || summaryStatus === 'pending';
   const hasSummaryError = summaryStatus === 'failed';
 
-  // Comprehensive debug logging with strict content validation
-  console.log("🔍 EnhancementSelector - Enhanced content detection:", {
+  // Enhanced debug logging with improved validation
+  console.log("🔍 EnhancementSelector - Enhanced content detection (FIXED):", {
     noteId: note.id,
     timestamp: new Date().toISOString(),
-    rawContentAnalysis: {
-      improved_content: {
-        exists: !!note.improved_content,
-        type: typeof note.improved_content,
-        length: note.improved_content?.length || 0,
-        trimmedLength: note.improved_content?.trim()?.length || 0,
-        firstChars: note.improved_content?.substring(0, 100) || 'none',
-        isValidString: typeof note.improved_content === 'string' && note.improved_content.trim().length > 0
-      },
-      summary: {
-        exists: !!note.summary,
-        type: typeof note.summary,
-        length: note.summary?.length || 0,
-        trimmedLength: note.summary?.trim()?.length || 0,
-        isValidString: typeof note.summary === 'string' && note.summary.trim().length > 0
-      },
-      key_points: {
-        exists: !!note.key_points,
-        type: typeof note.key_points,
-        length: note.key_points?.length || 0,
-        trimmedLength: note.key_points?.trim()?.length || 0,
-        isValidString: typeof note.key_points === 'string' && note.key_points.trim().length > 0
-      },
-      markdown_content: {
-        exists: !!note.markdown_content,
-        type: typeof note.markdown_content,
-        length: note.markdown_content?.length || 0,
-        trimmedLength: note.markdown_content?.trim()?.length || 0,
-        isValidString: typeof note.markdown_content === 'string' && note.markdown_content.trim().length > 0
-      }
+    improvedContentAnalysis: {
+      rawValue: note.improved_content,
+      exists: !!note.improved_content,
+      type: typeof note.improved_content,
+      length: note.improved_content?.length || 0,
+      trimmedLength: note.improved_content?.trim()?.length || 0,
+      firstChars: note.improved_content?.substring(0, 100) || 'none',
+      passesValidation: hasImprovedClarity,
+      generatedAt: note.improved_content_generated_at
     },
-    finalDetection: {
+    allEnhancementStates: {
       hasImprovedClarity,
       hasSummary,
       hasKeyPoints,
       hasMarkdown
     },
-    timestamps: {
-      improved_content_generated_at: note.improved_content_generated_at,
-      summary_generated_at: note.summary_generated_at,
-      key_points_generated_at: note.key_points_generated_at,
-      markdown_content_generated_at: note.markdown_content_generated_at
-    },
     activeContentType,
     summaryStatus
   });
 
-  // Define enhancement options with improved availability logic
+  // Define enhancement options with corrected availability logic
   const enhancementOptions: EnhancementOption[] = [
     {
       id: 'original',
@@ -141,7 +115,7 @@ export const EnhancementSelector = ({
   // Filter to only show available options
   const availableOptions = enhancementOptions.filter(option => option.available);
 
-  console.log("📋 EnhancementSelector - Final tab availability:", {
+  console.log("📋 EnhancementSelector - Final tab availability (FIXED):", {
     totalOptions: enhancementOptions.length,
     availableCount: availableOptions.length,
     availableOptions: availableOptions.map(opt => ({
@@ -151,12 +125,10 @@ export const EnhancementSelector = ({
       hasError: opt.hasError
     })),
     activeTab: activeContentType,
-    shouldShowImprovedClarity: hasImprovedClarity,
-    improvedClarityValidation: {
-      contentExists: !!note.improved_content,
-      contentType: typeof note.improved_content,
-      contentTrimmed: note.improved_content?.trim()?.length || 0,
-      passesAllChecks: hasImprovedClarity
+    improvedClarityDetails: {
+      available: hasImprovedClarity,
+      contentLength: note.improved_content?.length || 0,
+      contentPreview: note.improved_content?.substring(0, 50) || 'none'
     }
   });
 
@@ -203,6 +175,7 @@ export const EnhancementSelector = ({
           <div className="px-4 py-2 text-xs text-gray-500 border-t border-border mt-2">
             <div>Debug: Improved={hasImprovedClarity ? '✓' : '✗'}</div>
             <div>Content Length: {note.improved_content?.length || 0}</div>
+            <div>Generated At: {note.improved_content_generated_at || 'none'}</div>
           </div>
         )}
       </div>

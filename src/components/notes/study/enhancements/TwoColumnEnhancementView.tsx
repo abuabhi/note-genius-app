@@ -41,74 +41,52 @@ export const TwoColumnEnhancementView = ({
     }
   }, [note.id]);
   
-  // Enhanced detection logic with comprehensive validation
+  // Enhanced detection logic with better validation and minimum length requirements
   const hasSummary = Boolean(
     note.summary && 
     typeof note.summary === 'string' && 
-    note.summary.trim().length > 0
+    note.summary.trim().length > 10
   );
   
   const hasKeyPoints = Boolean(
     note.key_points && 
     typeof note.key_points === 'string' && 
-    note.key_points.trim().length > 0
+    note.key_points.trim().length > 10
   );
   
   const hasMarkdown = Boolean(
     note.markdown_content && 
     typeof note.markdown_content === 'string' && 
-    note.markdown_content.trim().length > 0
+    note.markdown_content.trim().length > 10
   );
   
+  // Fixed: More robust improved content detection
   const hasImprovedClarity = Boolean(
     note.improved_content && 
     typeof note.improved_content === 'string' && 
-    note.improved_content.trim().length > 0
+    note.improved_content.trim().length > 20 &&
+    note.improved_content_generated_at // Must have generation timestamp
   );
   
   const summaryStatus = note.summary_status || "completed";
   const isGeneratingSummary = summaryStatus === 'generating' || summaryStatus === 'pending';
   const hasSummaryError = summaryStatus === 'failed';
   
-  // Comprehensive debug log to trace enhancement detection
-  console.log("🔍 TwoColumnEnhancementView - Enhanced state analysis:", {
+  // Enhanced debug log to trace improved content detection
+  console.log("🔍 TwoColumnEnhancementView - Enhanced state analysis (FIXED):", {
     noteId: note.id,
     timestamp: new Date().toISOString(),
-    contentValidation: {
-      improved_content: {
-        exists: !!note.improved_content,
-        isString: typeof note.improved_content === 'string',
-        length: note.improved_content?.length || 0,
-        trimmedLength: note.improved_content?.trim()?.length || 0,
-        validContent: hasImprovedClarity,
-        sample: note.improved_content?.substring(0, 50) || 'none'
-      },
-      summary: {
-        exists: !!note.summary,
-        isString: typeof note.summary === 'string',
-        length: note.summary?.length || 0,
-        trimmedLength: note.summary?.trim()?.length || 0,
-        validContent: hasSummary,
-        sample: note.summary?.substring(0, 50) || 'none'
-      },
-      key_points: {
-        exists: !!note.key_points,
-        isString: typeof note.key_points === 'string',
-        length: note.key_points?.length || 0,
-        trimmedLength: note.key_points?.trim()?.length || 0,
-        validContent: hasKeyPoints,
-        sample: note.key_points?.substring(0, 50) || 'none'
-      },
-      markdown_content: {
-        exists: !!note.markdown_content,
-        isString: typeof note.markdown_content === 'string',
-        length: note.markdown_content?.length || 0,
-        trimmedLength: note.markdown_content?.trim()?.length || 0,
-        validContent: hasMarkdown,
-        sample: note.markdown_content?.substring(0, 50) || 'none'
-      }
+    improvedContentValidation: {
+      rawContent: note.improved_content?.substring(0, 100) || 'none',
+      exists: !!note.improved_content,
+      isString: typeof note.improved_content === 'string',
+      length: note.improved_content?.length || 0,
+      trimmedLength: note.improved_content?.trim()?.length || 0,
+      hasTimestamp: !!note.improved_content_generated_at,
+      timestamp: note.improved_content_generated_at,
+      passesValidation: hasImprovedClarity
     },
-    enhancementStates: {
+    allContentStates: {
       summary: { valid: hasSummary, generating: isGeneratingSummary, error: hasSummaryError },
       keyPoints: { valid: hasKeyPoints },
       markdown: { valid: hasMarkdown },
@@ -119,12 +97,6 @@ export const TwoColumnEnhancementView = ({
       isEditing,
       isLoading,
       wasManuallySelected: wasManuallySelected.current
-    },
-    timestamps: {
-      summary: note.summary_generated_at,
-      keyPoints: note.key_points_generated_at,
-      markdown: note.markdown_content_generated_at,
-      improvedClarity: note.improved_content_generated_at
     }
   });
 
@@ -146,7 +118,7 @@ export const TwoColumnEnhancementView = ({
     const currentTime = Date.now();
     const timeSinceLastAutoSwitch = currentTime - lastAutoSwitchTimestamp.current;
     
-    console.log("🔄 TwoColumnEnhancementView - Auto-switch evaluation:", {
+    console.log("🔄 TwoColumnEnhancementView - Auto-switch evaluation (FIXED):", {
       isEditing,
       activeContentType,
       contentAvailability: {
@@ -162,10 +134,7 @@ export const TwoColumnEnhancementView = ({
       }
     });
 
-    // Don't auto-switch if:
-    // 1. User is editing
-    // 2. User manually selected a tab recently
-    // 3. Recent auto-switch occurred (prevent rapid switching)
+    // Don't auto-switch if user is editing, manually selected, or recent auto-switch occurred
     if (isEditing || wasManuallySelected.current || timeSinceLastAutoSwitch < 2000) {
       return;
     }
