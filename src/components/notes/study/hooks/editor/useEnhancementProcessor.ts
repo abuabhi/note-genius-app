@@ -44,8 +44,9 @@ export const useEnhancementProcessor = (note: Note, editorState: {
         enhancementDetails
       });
       
+      // CRITICAL FIX: Never replace content field for improve-clarity
       // If we're editing and it's a replacement type enhancement, update the editable content
-      if (isEditing && enhancementDetails?.replaceContent) {
+      if (isEditing && enhancementDetails?.replaceContent && typeToApply !== 'improve-clarity') {
         console.log("✏️ Updating editable content in editor mode");
         setEditableContent(enhancedContent);
         toast.success("Enhancement applied to editor. Save to keep changes.");
@@ -83,15 +84,12 @@ export const useEnhancementProcessor = (note: Note, editorState: {
           break;
             
         case 'improve-clarity':
-          console.log("✨ Storing improved clarity content");
-          if (enhancementDetails?.replaceContent) {
-            updateData = { content: enhancedContent };
-          } else {
-            updateData = {
-              improved_content: enhancedContent,
-              improved_content_generated_at: now
-            };
-          }
+          console.log("✨ Storing improved clarity content - NEVER REPLACING ORIGINAL");
+          // CRITICAL: Always store improved clarity in improved_content field
+          updateData = {
+            improved_content: enhancedContent,
+            improved_content_generated_at: now
+          };
           break;
             
         default:
@@ -106,7 +104,12 @@ export const useEnhancementProcessor = (note: Note, editorState: {
       console.log("💾 Update data prepared:", {
         updateData,
         fieldsToUpdate: Object.keys(updateData),
-        contentPreview: enhancedContent.substring(0, 100)
+        contentPreview: enhancedContent.substring(0, 100),
+        criticalCheck: {
+          isImproveClarity: typeToApply === 'improve-clarity',
+          willReplaceOriginalContent: 'content' in updateData,
+          shouldNeverReplaceForImproveClarity: typeToApply === 'improve-clarity' && !('content' in updateData)
+        }
       });
         
       // Update the database first
@@ -129,7 +132,8 @@ export const useEnhancementProcessor = (note: Note, editorState: {
         timestamp: new Date().toISOString(),
         verification: {
           improvedContentStored: typeToApply === 'improve-clarity' ? enhancedContent.length : 'N/A',
-          expectedField: typeToApply === 'improve-clarity' ? 'improved_content' : 'other'
+          expectedField: typeToApply === 'improve-clarity' ? 'improved_content' : 'other',
+          originalContentProtected: !('content' in updateData)
         }
       });
         
@@ -138,7 +142,7 @@ export const useEnhancementProcessor = (note: Note, editorState: {
         'summarize': "Summary created successfully",
         'extract-key-points': "Key points extracted successfully", 
         'convert-to-markdown': "Converted to markdown successfully",
-        'improve-clarity': enhancementDetails?.replaceContent ? "Content improved successfully" : "Improved clarity generated successfully"
+        'improve-clarity': "Improved clarity generated successfully"
       };
         
       toast.success(successMessages[typeToApply] || "Enhancement completed successfully");

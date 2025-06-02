@@ -29,12 +29,24 @@ export const EnhancementDisplayPanel = ({
   onCancelEnhancement,
   className
 }: EnhancementDisplayPanelProps) => {
-  // Helper function to clean content from AI enhancement markers
+  // Helper function to aggressively clean content from AI enhancement markers
   const cleanOriginalContent = (content: string): string => {
-    if (!content || typeof content !== 'string') return content;
+    if (!content || typeof content !== 'string') return content || '';
     
     // Remove AI enhancement markers and their content, keeping only original text
-    const cleaned = content.replace(/\[AI_ENHANCED\][\s\S]*?\[\/AI_ENHANCED\]/g, '');
+    let cleaned = content;
+    
+    // Remove everything between [AI_ENHANCED] and [/AI_ENHANCED] tags
+    cleaned = cleaned.replace(/\[AI_ENHANCED\][\s\S]*?\[\/AI_ENHANCED\]/g, '');
+    
+    // Remove any remaining standalone markers
+    cleaned = cleaned.replace(/\[AI_ENHANCED\]/g, '');
+    cleaned = cleaned.replace(/\[\/AI_ENHANCED\]/g, '');
+    
+    // Clean up any "Original:" prefixes that might have been added
+    cleaned = cleaned.replace(/^Original:\s*["""]?([^"""\n]*)["""]?\s*$/m, '$1');
+    cleaned = cleaned.replace(/^Original:\s*/gm, '');
+    
     return cleaned.trim();
   };
 
@@ -42,7 +54,7 @@ export const EnhancementDisplayPanel = ({
   const getContent = () => {
     switch (contentType) {
       case 'original':
-        // For original content, clean any AI enhancement markers that may have been mixed in
+        // For original content, aggressively clean any AI enhancement markers
         const rawContent = note.content || note.description || "";
         return cleanOriginalContent(rawContent);
       case 'summary':
@@ -85,12 +97,17 @@ export const EnhancementDisplayPanel = ({
   const title = getTitle();
   const isMarkdownFormat = contentType === 'markdown';
 
-  // More robust enhanced content marker detection
-  const hasEnhancementMarkers = content && typeof content === 'string' && 
-    content.includes('[AI_ENHANCED]') && content.includes('[/AI_ENHANCED]');
+  // Enhanced content marker detection - only for improved content
+  const hasEnhancementMarkers = contentType === 'improved' && content && 
+    typeof content === 'string' && 
+    content.includes('[AI_ENHANCED]') && 
+    content.includes('[/AI_ENHANCED]');
 
-  // Enhanced debug logging
-  console.log("🎯 EnhancementDisplayPanel - Content analysis:", {
+  // Check if improved content exists and has proper generation timestamp
+  const hasValidImprovedContent = contentType === 'improved' && 
+    Boolean(note.improved_content && note.improved_content_generated_at);
+
+  console.log("🎯 EnhancementDisplayPanel - Fixed content analysis:", {
     contentType,
     title,
     noteId: note.id,
@@ -98,9 +115,9 @@ export const EnhancementDisplayPanel = ({
     contentLength: content?.length || 0,
     contentPreview: content?.substring(0, 100) || 'none',
     hasEnhancementMarkers,
+    hasValidImprovedContent,
     isOriginalContent: contentType === 'original',
-    rawOriginalContent: contentType === 'original' ? (note.content || note.description || "") : 'N/A',
-    cleanedContent: contentType === 'original' ? content : 'N/A',
+    cleanedOriginal: contentType === 'original' ? content : 'N/A',
     isGenerating,
     hasError,
     timestamp: new Date().toISOString()
@@ -120,10 +137,10 @@ export const EnhancementDisplayPanel = ({
     <div className={className}>
       <EnhancementTabHeader 
         title={title} 
-        showAiIndicator={contentType === 'improved' && !!content}
+        showAiIndicator={contentType === 'improved' && hasValidImprovedContent}
       />
       
-      {/* Always show original content as-is without any enhancement processing */}
+      {/* Always show original content as cleaned text */}
       {contentType === 'original' ? (
         <RichTextDisplay 
           content={content} 
@@ -131,19 +148,14 @@ export const EnhancementDisplayPanel = ({
           textAlign={textAlign} 
         />
       ) : contentType === 'improved' && hasEnhancementMarkers ? (
-        // For improved content with markers, use enhanced renderer
-        <>
-          <div className="mb-4 text-xs text-gray-500">
-            Debug: Enhanced markers detected ✓
-          </div>
-          <EnhancedContentRenderer
-            content={content}
-            fontSize={fontSize}
-            textAlign={textAlign}
-          />
-        </>
-      ) : contentType === 'improved' && content && !hasEnhancementMarkers ? (
-        // For legacy improved content without markers, show as regular content with regenerate option
+        // For improved content with proper markers, use enhanced renderer
+        <EnhancedContentRenderer
+          content={content}
+          fontSize={fontSize}
+          textAlign={textAlign}
+        />
+      ) : contentType === 'improved' && hasValidImprovedContent && !hasEnhancementMarkers ? (
+        // For improved content without markers, show with regenerate option
         <div className="space-y-4">
           <div className="bg-amber-50 border-l-4 border-amber-300 p-4 rounded-r-md">
             <div className="flex items-center justify-between mb-2">

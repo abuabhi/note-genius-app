@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Note } from "@/types/note";
 import { TextAlignType } from "../hooks/useStudyViewState";
@@ -59,7 +60,7 @@ export const TwoColumnEnhancementView = ({
     note.markdown_content.trim().length > 10
   );
   
-  // Fixed: More robust improved content detection
+  // FIXED: More robust improved content detection
   const hasImprovedClarity = Boolean(
     note.improved_content && 
     typeof note.improved_content === 'string' && 

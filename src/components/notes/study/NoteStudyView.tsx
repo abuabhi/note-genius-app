@@ -9,6 +9,7 @@ import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
 import { useNotes } from "@/contexts/NoteContext";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface NoteStudyViewProps {
   note: Note;
@@ -16,10 +17,11 @@ interface NoteStudyViewProps {
 
 export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
   const viewState = useStudyViewState();
-  const { currentUsage, monthlyLimit, hasReachedLimit } = useNoteEnrichment();
+  const { currentUsage, monthlyLimit, hasReachedLimit, enrichNote } = useNoteEnrichment();
   const { notes, updateNote, setNotes } = useNotes();
   const [refreshKey, setRefreshKey] = useState(0);
   const [realtimeNote, setRealtimeNote] = useState<Note>(note);
+  const [isEnhancing, setIsEnhancing] = useState(false);
   
   // Get the most up-to-date note data from context or realtime updates
   const currentNote = notes.find(n => n.id === note.id) || realtimeNote;
@@ -97,32 +99,6 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
       timestamp: new Date().toISOString(),
       refreshKey,
       realtimeUpdateCount: refreshKey,
-      noteComparison: {
-        original: {
-          improved_content: !!note.improved_content,
-          improved_content_length: note.improved_content?.length || 0,
-          summary: !!note.summary,
-          key_points: !!note.key_points,
-          markdown_content: !!note.markdown_content,
-          summary_status: note.summary_status
-        },
-        current: {
-          improved_content: !!currentNote.improved_content,
-          improved_content_length: currentNote.improved_content?.length || 0,
-          summary: !!currentNote.summary,
-          key_points: !!currentNote.key_points,
-          markdown_content: !!currentNote.markdown_content,
-          summary_status: currentNote.summary_status
-        },
-        realtime: {
-          improved_content: !!realtimeNote.improved_content,
-          improved_content_length: realtimeNote.improved_content?.length || 0,
-          summary: !!realtimeNote.summary,
-          key_points: !!realtimeNote.key_points,
-          markdown_content: !!realtimeNote.markdown_content,
-          summary_status: realtimeNote.summary_status
-        }
-      },
       enhancementTimestamps: {
         summary: currentNote.summary_generated_at,
         keyPoints: currentNote.key_points_generated_at,
@@ -137,9 +113,39 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
     });
   }, [note, currentNote, realtimeNote, refreshKey]);
 
+  // FIXED: Implement the missing retry enhancement functionality
   const handleRetryEnhancement = async (enhancementType: string): Promise<void> => {
     console.log("🔄 Retrying enhancement:", enhancementType);
-    // Implementation for retrying enhancement
+    
+    if (hasReachedLimit()) {
+      toast.error("You have reached your monthly limit for note enhancements");
+      return;
+    }
+    
+    setIsEnhancing(true);
+    
+    try {
+      // Call the enrichment service
+      const result = await enrichNote(
+        currentNote.id,
+        currentNote.content || '',
+        enhancementType as any,
+        currentNote.title
+      );
+      
+      if (result.success) {
+        // Force immediate refresh
+        forceRefresh();
+        toast.success("Enhancement regenerated successfully");
+      } else {
+        toast.error(result.error || "Failed to regenerate enhancement");
+      }
+    } catch (error) {
+      console.error("❌ Error regenerating enhancement:", error);
+      toast.error("Failed to regenerate enhancement");
+    } finally {
+      setIsEnhancing(false);
+    }
   };
 
   // Enhanced update handler with force refresh and real-time sync
