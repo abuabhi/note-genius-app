@@ -139,7 +139,7 @@ export const EnhancementSelector = ({
 
   return (
     <div className={cn("flex flex-col border-r border-border bg-muted/20", className)}>
-      <div className="py-2 px-3 bg-muted/30 border-b border-border">
+      <div className="py-2 px-3 bg-muted/30 border-b border-border h-[73px] flex items-center">
         <h3 className="text-sm font-medium text-muted-foreground">Content Views</h3>
       </div>
       <div className="flex flex-col py-1">

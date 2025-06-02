@@ -1,12 +1,13 @@
-import { EnhancedContentRenderer } from "./EnhancedContentRenderer";
-import { RichTextDisplay } from "@/components/ui/rich-text/RichTextDisplay";
-import { EnhancementTabHeader } from "./EnhancementTabHeader";
-import { EnhancementContent } from "./EnhancementContent";
-import { TextAlignType } from "../hooks/useStudyViewState";
-import { EnhancementContentType } from "./EnhancementSelector";
+
+import { useState } from "react";
 import { Note } from "@/types/note";
+import { TextAlignType } from "../hooks/useStudyViewState";
+import { RichTextDisplay } from "@/components/ui/rich-text/RichTextDisplay";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, X } from "lucide-react";
+import { LoadingAnimations } from "./LoadingAnimations";
+import { EnhancementContentType } from "./EnhancementSelector";
+import { cn } from "@/lib/utils";
 
 interface EnhancementDisplayPanelProps {
   note: Note;
@@ -29,175 +30,147 @@ export const EnhancementDisplayPanel = ({
   onCancelEnhancement,
   className
 }: EnhancementDisplayPanelProps) => {
-  // Helper function to aggressively clean content from AI enhancement markers
-  const cleanOriginalContent = (content: string): string => {
-    if (!content || typeof content !== 'string') return content || '';
-    
-    // Remove AI enhancement markers and their content, keeping only original text
-    let cleaned = content;
-    
-    // Remove everything between [AI_ENHANCED] and [/AI_ENHANCED] tags
-    cleaned = cleaned.replace(/\[AI_ENHANCED\][\s\S]*?\[\/AI_ENHANCED\]/g, '');
-    
-    // Remove any remaining standalone markers
-    cleaned = cleaned.replace(/\[AI_ENHANCED\]/g, '');
-    cleaned = cleaned.replace(/\[\/AI_ENHANCED\]/g, '');
-    
-    // Clean up any "Original:" prefixes that might have been added
-    cleaned = cleaned.replace(/^Original:\s*["""]?([^"""\n]*)["""]?\s*$/m, '$1');
-    cleaned = cleaned.replace(/^Original:\s*/gm, '');
-    
-    return cleaned.trim();
-  };
+  const [retryLoading, setRetryLoading] = useState(false);
 
-  // Get the appropriate content based on the selected content type
   const getContent = () => {
     switch (contentType) {
       case 'original':
-        // For original content, aggressively clean any AI enhancement markers
-        const rawContent = note.content || note.description || "";
-        return cleanOriginalContent(rawContent);
+        return note.content || note.description || "";
       case 'summary':
         return note.summary || "";
       case 'keyPoints':
         return note.key_points || "";
-      case 'markdown':
-        return note.markdown_content || "";
       case 'improved':
         return note.improved_content || "";
+      case 'markdown':
+        return note.markdown_content || "";
       default:
-        return note.content || note.description || "";
+        return "";
     }
   };
 
-  // Get the appropriate title based on the selected content type
-  const getTitle = () => {
+  const getContentTitle = () => {
     switch (contentType) {
       case 'original':
-        return "Original Note";
+        return "Original Content";
       case 'summary':
         return "Summary";
       case 'keyPoints':
         return "Key Points";
-      case 'markdown':
-        return "Markdown Format";
       case 'improved':
         return "Improved Clarity";
+      case 'markdown':
+        return "Markdown Format";
       default:
-        return "Note Content";
+        return "";
     }
   };
-
-  // Determine if this content type has a status
-  const isGenerating = contentType === 'summary' && 
-    (note.summary_status === 'generating' || note.summary_status === 'pending');
-  const hasError = contentType === 'summary' && note.summary_status === 'failed';
 
   const content = getContent();
-  const title = getTitle();
-  const isMarkdownFormat = contentType === 'markdown';
+  const title = getContentTitle();
 
-  // Enhanced content marker detection - only for improved content
-  const hasEnhancementMarkers = contentType === 'improved' && content && 
-    typeof content === 'string' && 
-    content.includes('[AI_ENHANCED]') && 
-    content.includes('[/AI_ENHANCED]');
-
-  // Check if improved content exists and has proper generation timestamp
-  const hasValidImprovedContent = contentType === 'improved' && 
-    Boolean(note.improved_content && note.improved_content_generated_at);
-
-  console.log("🎯 EnhancementDisplayPanel - Fixed content analysis:", {
-    contentType,
-    title,
-    noteId: note.id,
-    hasContent: !!content,
-    contentLength: content?.length || 0,
-    contentPreview: content?.substring(0, 100) || 'none',
-    hasEnhancementMarkers,
-    hasValidImprovedContent,
-    isOriginalContent: contentType === 'original',
-    cleanedOriginal: contentType === 'original' ? content : 'N/A',
-    isGenerating,
-    hasError,
-    timestamp: new Date().toISOString()
-  });
-
-  // Handle regeneration for improved clarity
-  const handleRegenerate = () => {
-    console.log("🔄 Regenerating improved clarity content");
-    if (onRetryEnhancement) {
-      onRetryEnhancement('improve-clarity');
-    } else {
-      console.warn("⚠️ onRetryEnhancement not available");
+  const handleRetry = async (enhancementType: string) => {
+    if (!onRetryEnhancement) return;
+    
+    setRetryLoading(true);
+    try {
+      await onRetryEnhancement(enhancementType);
+    } finally {
+      setRetryLoading(false);
     }
   };
 
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className={cn("flex flex-col", className)}>
+        <div className="border-b border-border p-4 h-[73px] flex items-center">
+          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        </div>
+        <div className="flex-1 flex items-center justify-center p-8">
+          <LoadingAnimations />
+        </div>
+      </div>
+    );
+  }
+
+  // Show empty state with retry option for non-original content
+  if (!content && contentType !== 'original') {
+    return (
+      <div className={cn("flex flex-col", className)}>
+        <div className="border-b border-border p-4 h-[73px] flex items-center">
+          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        </div>
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="text-center">
+            <p className="text-gray-500 mb-4">No {title.toLowerCase()} available</p>
+            {onRetryEnhancement && (
+              <Button
+                onClick={() => handleRetry(getEnhancementTypeFromContent(contentType))}
+                disabled={retryLoading}
+                variant="outline"
+                size="sm"
+              >
+                {retryLoading ? (
+                  <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                )}
+                Generate {title}
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={className}>
-      <EnhancementTabHeader 
-        title={title} 
-        showAiIndicator={contentType === 'improved' && hasValidImprovedContent}
-      />
-      
-      {/* Always show original content as cleaned text */}
-      {contentType === 'original' ? (
+    <div className={cn("flex flex-col", className)}>
+      {/* Header with consistent height */}
+      <div className="border-b border-border p-4 h-[73px] flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        {contentType !== 'original' && onRetryEnhancement && (
+          <Button
+            onClick={() => handleRetry(getEnhancementTypeFromContent(contentType))}
+            disabled={retryLoading}
+            variant="ghost"
+            size="sm"
+          >
+            {retryLoading ? (
+              <RefreshCw className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+          </Button>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto">
         <RichTextDisplay 
           content={content} 
           fontSize={fontSize} 
-          textAlign={textAlign} 
-        />
-      ) : contentType === 'improved' && hasEnhancementMarkers ? (
-        // For improved content with proper markers, use enhanced renderer
-        <EnhancedContentRenderer
-          content={content}
-          fontSize={fontSize}
           textAlign={textAlign}
+          removeTitle={contentType !== 'original'} // Remove auto-generated titles for enhanced content
         />
-      ) : contentType === 'improved' && hasValidImprovedContent && !hasEnhancementMarkers ? (
-        // For improved content without markers, show with regenerate option
-        <div className="space-y-4">
-          <div className="bg-amber-50 border-l-4 border-amber-300 p-4 rounded-r-md">
-            <div className="flex items-center justify-between mb-2">
-              <div className="bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full font-medium">
-                Legacy AI Content
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleRegenerate}
-                disabled={isLoading || !onRetryEnhancement}
-                className="text-amber-600 hover:text-amber-700 border-amber-200 hover:border-amber-300"
-              >
-                <RefreshCw className={`mr-2 h-3 w-3 ${isLoading ? 'animate-spin' : ''}`} />
-                {isLoading ? 'Regenerating...' : 'Regenerate'}
-              </Button>
-            </div>
-            <p className="text-sm text-amber-700">
-              This content was generated with an older version. Regenerate for better highlighting of AI enhancements.
-            </p>
-          </div>
-          <RichTextDisplay 
-            content={content} 
-            fontSize={fontSize} 
-            textAlign={textAlign} 
-          />
-        </div>
-      ) : (
-        // For all other content types, use the standard enhancement content component
-        <EnhancementContent
-          content={content}
-          title={title}
-          fontSize={fontSize}
-          textAlign={textAlign}
-          isLoading={isGenerating || isLoading}
-          hasError={hasError}
-          isMarkdown={isMarkdownFormat}
-          enhancementType={contentType}
-          onRetry={onRetryEnhancement}
-          onCancel={onCancelEnhancement}
-        />
-      )}
+      </div>
     </div>
   );
+};
+
+// Helper function to map content type to enhancement type
+const getEnhancementTypeFromContent = (contentType: EnhancementContentType): string => {
+  switch (contentType) {
+    case 'summary':
+      return 'summarize';
+    case 'keyPoints':
+      return 'extract-key-points';
+    case 'improved':
+      return 'improve-clarity';
+    case 'markdown':
+      return 'convert-to-markdown';
+    default:
+      return 'summarize';
+  }
 };

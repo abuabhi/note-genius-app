@@ -1,86 +1,123 @@
 
-import { useEffect, useRef } from 'react';
+import { useMemo } from "react";
 import ReactMarkdown from 'react-markdown';
+import { TextAlignType } from "@/components/notes/study/hooks/useStudyViewState";
 
 interface RichTextDisplayProps {
   content: string;
-  className?: string;
   fontSize?: number;
-  textAlign?: 'left' | 'center' | 'right' | 'justify';
+  textAlign?: TextAlignType;
+  removeTitle?: boolean; // New prop to remove auto-generated titles
 }
 
 export const RichTextDisplay = ({ 
   content, 
-  className = '',
-  fontSize,
-  textAlign = 'left'
+  fontSize = 16, 
+  textAlign = 'left',
+  removeTitle = false 
 }: RichTextDisplayProps) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  
-  useEffect(() => {
-    if (containerRef.current) {
-      // Apply text alignment to all elements that don't already have alignment
-      const hasExplicitAlignment = content.includes('text-align:');
-      
-      if (!hasExplicitAlignment) {
-        const elements = containerRef.current.querySelectorAll('p, div, ul, ol, h1, h2, h3, h4, h5, h6');
-        elements.forEach(element => {
-          if (!(element as HTMLElement).style.textAlign) {
-            (element as HTMLElement).style.textAlign = textAlign;
-          }
-        });
-      }
-    }
-  }, [content, textAlign]);
+  // Process content to remove auto-generated titles if requested
+  const processedContent = useMemo(() => {
+    if (!removeTitle || !content) return content;
+    
+    // Remove common auto-generated title patterns
+    const titlePatterns = [
+      /^#+\s*Summary of .+?\n/i,
+      /^#+\s*Key Points of .+?\n/i,
+      /^#+\s*Improved .+?\n/i,
+      /^#+\s*Markdown Version of .+?\n/i,
+      /^Summary of .+?\n/i,
+      /^Key Points of .+?\n/i,
+      /^Improved .+?\n/i,
+      /^Markdown Version of .+?\n/i,
+    ];
+    
+    let processed = content;
+    titlePatterns.forEach(pattern => {
+      processed = processed.replace(pattern, '');
+    });
+    
+    return processed.trim();
+  }, [content, removeTitle]);
 
-  if (!content) {
-    return <p className="text-muted-foreground italic">This note has no content.</p>;
-  }
+  const textAlignClass = {
+    left: 'text-left',
+    center: 'text-center',
+    right: 'text-right',
+    justify: 'text-justify'
+  };
 
-  // Check if content contains markdown syntax
-  const containsMarkdownSyntax = /^(#|\*|-|\d+\.|>|`{3})/m.test(content);
-  
-  if (containsMarkdownSyntax) {
-    return (
-      <div 
-        ref={containerRef}
-        className={`prose max-w-none ${className}`}
-        style={{ 
-          fontSize: fontSize ? `${fontSize}px` : undefined,
-          textAlign: !content.includes('text-align:') ? textAlign : undefined
-        }}
-      >
-        <ReactMarkdown
-          components={{
-            // Ensure proper paragraph spacing
-            p: ({children}) => <p className="mb-4">{children}</p>,
-            // Ensure proper bullet point formatting
-            ul: ({children}) => <ul className="list-disc ml-6 mb-4 space-y-1">{children}</ul>,
-            li: ({children}) => <li className="text-left">{children}</li>,
-            // Headers with proper spacing
-            h1: ({children}) => <h1 className="text-2xl font-bold mb-4 mt-6">{children}</h1>,
-            h2: ({children}) => <h2 className="text-xl font-semibold mb-3 mt-5">{children}</h2>,
-            h3: ({children}) => <h3 className="text-lg font-medium mb-2 mt-4">{children}</h3>,
-            // Strong emphasis
-            strong: ({children}) => <strong className="font-semibold">{children}</strong>,
-          }}
-        >
-          {content}
-        </ReactMarkdown>
-      </div>
-    );
-  }
-
-  // For non-markdown content, use simple HTML rendering
   return (
     <div 
-      ref={containerRef}
-      className={`prose max-w-none ${className}`}
-      style={{ 
-        fontSize: fontSize ? `${fontSize}px` : undefined,
-        textAlign: !content.includes('text-align:') ? textAlign : undefined
-      }}
-      dangerouslySetInnerHTML={{ __html: content }}
-    />
+      className={`prose prose-gray max-w-none p-4 ${textAlignClass[textAlign]}`}
+      style={{ fontSize: `${fontSize}px` }}
+    >
+      <ReactMarkdown
+        components={{
+          h1: ({children, ...props}) => (
+            <h1 className="text-2xl font-bold mb-4 text-gray-900" {...props}>
+              {children}
+            </h1>
+          ),
+          h2: ({children, ...props}) => (
+            <h2 className="text-xl font-semibold mb-3 text-gray-800" {...props}>
+              {children}
+            </h2>
+          ),
+          h3: ({children, ...props}) => (
+            <h3 className="text-lg font-medium mb-2 text-gray-700" {...props}>
+              {children}
+            </h3>
+          ),
+          p: ({children, ...props}) => (
+            <p className="mb-3 leading-relaxed text-gray-600" {...props}>
+              {children}
+            </p>
+          ),
+          ul: ({children, ...props}) => (
+            <ul className="list-disc list-inside mb-3 space-y-1" {...props}>
+              {children}
+            </ul>
+          ),
+          ol: ({children, ...props}) => (
+            <ol className="list-decimal list-inside mb-3 space-y-1" {...props}>
+              {children}
+            </ol>
+          ),
+          li: ({children, ...props}) => (
+            <li className="text-gray-600" {...props}>
+              {children}
+            </li>
+          ),
+          strong: ({children, ...props}) => (
+            <strong className="font-semibold text-gray-800" {...props}>
+              {children}
+            </strong>
+          ),
+          em: ({children, ...props}) => (
+            <em className="italic" {...props}>
+              {children}
+            </em>
+          ),
+          blockquote: ({children, ...props}) => (
+            <blockquote className="border-l-4 border-mint-300 pl-4 italic text-gray-600 my-4" {...props}>
+              {children}
+            </blockquote>
+          ),
+          code: ({children, ...props}) => (
+            <code className="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono" {...props}>
+              {children}
+            </code>
+          ),
+          pre: ({children, ...props}) => (
+            <pre className="bg-gray-100 p-3 rounded overflow-x-auto text-sm" {...props}>
+              {children}
+            </pre>
+          ),
+        }}
+      >
+        {processedContent}
+      </ReactMarkdown>
+    </div>
   );
 };
