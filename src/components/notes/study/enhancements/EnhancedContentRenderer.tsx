@@ -2,6 +2,7 @@
 import { ReactNode } from 'react';
 import { RichTextDisplay } from '@/components/ui/rich-text/RichTextDisplay';
 import { TextAlignType } from '../hooks/useStudyViewState';
+import { Sparkles } from 'lucide-react';
 
 interface EnhancedContentRendererProps {
   content: string;
@@ -117,31 +118,38 @@ export const EnhancedContentRenderer = ({
   return (
     <div className={className}>
       {parsedContent.map((part, index) => (
-        <div
-          key={index}
-          className={
-            part.type === 'enhanced'
-              ? 'relative bg-mint-50/50 border-l-4 border-mint-400 pl-4 py-3 my-3 rounded-r-lg shadow-sm'
-              : ''
-          }
-        >
-          {part.type === 'enhanced' && (
-            <div className="absolute -top-2 -left-2 bg-mint-500 text-white text-xs px-2 py-1 rounded-full font-medium shadow-md z-10">
-              ✨ AI Enhanced
+        <div key={index}>
+          {part.type === 'enhanced' ? (
+            // Enhanced content styled as mint green tip/quote
+            <div className="relative bg-gradient-to-r from-mint-50 to-mint-100/50 border border-mint-200 rounded-lg p-4 my-4 shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex items-center gap-2 bg-mint-500 text-white px-3 py-1 rounded-full text-xs font-medium shadow-sm">
+                  <Sparkles className="h-3 w-3 text-white" />
+                  AI Enhanced
+                </div>
+              </div>
+              <div className="relative">
+                <RichTextDisplay
+                  content={part.content}
+                  fontSize={fontSize}
+                  textAlign={textAlign}
+                  className="prose-p:text-mint-900 prose-headings:text-mint-800 prose-li:text-mint-900 prose-strong:text-mint-900 prose-em:text-mint-800"
+                />
+              </div>
+              <div className="mt-3 pt-3 border-t border-mint-200/50">
+                <div className="flex items-center gap-2 text-xs text-mint-600">
+                  <Sparkles className="h-3 w-3 text-mint-500" />
+                  <span className="font-medium">Enhanced by AI for better clarity and understanding</span>
+                </div>
+              </div>
             </div>
-          )}
-          <div className={part.type === 'enhanced' ? 'pt-2' : ''}>
+          ) : (
+            // Original content - render normally
             <RichTextDisplay
               content={part.content}
               fontSize={fontSize}
               textAlign={textAlign}
-              className={part.type === 'enhanced' ? 'prose-p:text-mint-900 prose-headings:text-mint-800 prose-li:text-mint-900 prose-strong:text-mint-900' : ''}
             />
-          </div>
-          {part.type === 'enhanced' && (
-            <div className="mt-2 pt-2 border-t border-mint-200">
-              <span className="text-xs text-mint-600 font-medium">Enhanced by AI for better clarity and understanding</span>
-            </div>
           )}
         </div>
       ))}
