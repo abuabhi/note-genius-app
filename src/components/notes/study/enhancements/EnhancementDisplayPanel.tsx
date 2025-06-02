@@ -1,4 +1,3 @@
-
 import { EnhancedContentRenderer } from "./EnhancedContentRenderer";
 import { RichTextDisplay } from "@/components/ui/rich-text/RichTextDisplay";
 import { EnhancementTabHeader } from "./EnhancementTabHeader";
@@ -30,12 +29,22 @@ export const EnhancementDisplayPanel = ({
   onCancelEnhancement,
   className
 }: EnhancementDisplayPanelProps) => {
+  // Helper function to clean content from AI enhancement markers
+  const cleanOriginalContent = (content: string): string => {
+    if (!content || typeof content !== 'string') return content;
+    
+    // Remove AI enhancement markers and their content, keeping only original text
+    const cleaned = content.replace(/\[AI_ENHANCED\][\s\S]*?\[\/AI_ENHANCED\]/g, '');
+    return cleaned.trim();
+  };
+
   // Get the appropriate content based on the selected content type
   const getContent = () => {
     switch (contentType) {
       case 'original':
-        // For original content, ONLY show the raw content/description without any enhancements
-        return note.content || note.description || "";
+        // For original content, clean any AI enhancement markers that may have been mixed in
+        const rawContent = note.content || note.description || "";
+        return cleanOriginalContent(rawContent);
       case 'summary':
         return note.summary || "";
       case 'keyPoints':
@@ -91,6 +100,7 @@ export const EnhancementDisplayPanel = ({
     hasEnhancementMarkers,
     isOriginalContent: contentType === 'original',
     rawOriginalContent: contentType === 'original' ? (note.content || note.description || "") : 'N/A',
+    cleanedContent: contentType === 'original' ? content : 'N/A',
     isGenerating,
     hasError,
     timestamp: new Date().toISOString()
@@ -101,6 +111,8 @@ export const EnhancementDisplayPanel = ({
     console.log("🔄 Regenerating improved clarity content");
     if (onRetryEnhancement) {
       onRetryEnhancement('improve-clarity');
+    } else {
+      console.warn("⚠️ onRetryEnhancement not available");
     }
   };
 
@@ -142,7 +154,7 @@ export const EnhancementDisplayPanel = ({
                 variant="outline" 
                 size="sm" 
                 onClick={handleRegenerate}
-                disabled={isLoading}
+                disabled={isLoading || !onRetryEnhancement}
                 className="text-amber-600 hover:text-amber-700 border-amber-200 hover:border-amber-300"
               >
                 <RefreshCw className={`mr-2 h-3 w-3 ${isLoading ? 'animate-spin' : ''}`} />

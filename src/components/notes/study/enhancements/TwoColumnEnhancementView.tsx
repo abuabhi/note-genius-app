@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Note } from "@/types/note";
 import { TextAlignType } from "../hooks/useStudyViewState";
@@ -97,6 +96,10 @@ export const TwoColumnEnhancementView = ({
       isEditing,
       isLoading,
       wasManuallySelected: wasManuallySelected.current
+    },
+    retryFunction: {
+      available: !!onRetryEnhancement,
+      type: typeof onRetryEnhancement
     }
   });
 
