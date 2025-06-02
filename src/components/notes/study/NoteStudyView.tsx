@@ -114,11 +114,12 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
     });
     
     // CRITICAL FIX: If a note has summary_status of "pending" but it wasn't user-initiated,
-    // update it to "idle" to prevent automatic generation
+    // reset it to prevent automatic generation
     const preventAutomaticSummary = async () => {
       if (currentNote.summary_status === 'pending' && refreshKey === 0) {
-        console.log("⚠️ Found pending summary status on note load - resetting to idle");
-        await updateNote(currentNote.id, { summary_status: 'idle' });
+        console.log("⚠️ Found pending summary status on note load - resetting to completed to prevent auto-generation");
+        // Use 'completed' instead of 'idle' since 'idle' is not a valid status
+        await updateNote(currentNote.id, { summary_status: 'completed' });
       }
     };
     
