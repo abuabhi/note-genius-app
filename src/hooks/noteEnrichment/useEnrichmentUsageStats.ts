@@ -58,7 +58,9 @@ export const useEnrichmentUsageStats = () => {
       const rawTier = userData.user_tier;
       let normalizedTier: 'SCHOLAR' | 'GRADUATE' | 'MASTER' | 'DEAN';
       
-      if (rawTier === 'STUDENT' || !rawTier) {
+      // Convert to string for comparison to handle legacy 'STUDENT' tier
+      const tierString = String(rawTier);
+      if (tierString === 'STUDENT' || !rawTier) {
         normalizedTier = 'SCHOLAR'; // Map legacy STUDENT tier to SCHOLAR
       } else {
         normalizedTier = rawTier as 'SCHOLAR' | 'GRADUATE' | 'MASTER' | 'DEAN';
