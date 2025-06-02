@@ -120,10 +120,22 @@ export const EnhancementDisplayPanel = ({
   // Check if content contains AI enhancement markers
   const hasEnhancementMarkers = content && content.includes('[AI_ENHANCED]') && content.includes('[/AI_ENHANCED]');
   
-  // Enhanced spelling/grammar fix detection
+  // FIXED: More robust spelling/grammar fix detection
   const isSpellingGrammarFixed = contentType === 'improved' && 
-    (note.enhancement_type === 'spelling-grammar' || 
-     (note.original_content_backup && note.spelling_grammar_fixes));
+    note.enhancement_type === 'spelling-grammar' &&
+    note.original_content_backup && 
+    note.original_content_backup !== content &&
+    note.original_content_backup.length > 0;
+
+  console.log("🔍 EnhancementDisplayPanel - Spelling/Grammar Detection:", {
+    contentType,
+    enhancementType: note.enhancement_type,
+    hasOriginalBackup: !!note.original_content_backup,
+    originalLength: note.original_content_backup?.length || 0,
+    currentLength: content.length,
+    isDifferent: note.original_content_backup !== content,
+    isSpellingGrammarFixed
+  });
 
   // Show loading state with tab-specific loading animation
   if (isLoading) {

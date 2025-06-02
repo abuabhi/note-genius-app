@@ -10,6 +10,7 @@ import { useRealtimeNoteSync } from "./hooks/useRealtimeNoteSync";
 import { useNoteEnhancementRetry } from "./hooks/useNoteEnhancementRetry";
 import { useNoteUpdateHandler } from "./hooks/useNoteUpdateHandler";
 import { useAutomaticSummaryPrevention } from "./hooks/useAutomaticSummaryPrevention";
+import { useCallback } from "react";
 
 interface NoteStudyViewProps {
   note: Note;
@@ -34,13 +35,39 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
   // Editor state
   const editorState = useNoteStudyEditor(currentNote);
 
-  // Enhanced note update handler that preserves active tab
-  const handleNoteUpdateWithTabPreservation = async (updatedData: Partial<Note>) => {
-    const currentActiveTab = viewState.activeContentType;
+  // FIXED: Enhanced note update handler that preserves active tab more reliably
+  const handleNoteUpdateWithTabPreservation = useCallback(async (updatedData: Partial<Note>) => {
+    console.log("🎯 NoteStudyView - Preserving tab during update:", {
+      currentTab: viewState.activeContentType,
+      noteId: currentNote.id,
+      updatedFields: Object.keys(updatedData)
+    });
+    
+    // Store the current active tab before update
+    const preservedTab = viewState.activeContentType;
+    
     await handleNoteUpdate(updatedData);
-    // Restore the active tab after update
-    viewState.setActiveContentType(currentActiveTab);
-  };
+    
+    // Force restore the active tab after a brief delay to ensure UI has updated
+    setTimeout(() => {
+      console.log("🔄 Restoring preserved tab:", preservedTab);
+      viewState.setActiveContentType(preservedTab);
+    }, 100);
+    
+  }, [viewState.activeContentType, viewState.setActiveContentType, handleNoteUpdate, currentNote.id]);
+
+  console.log("📊 NoteStudyView - Current state:", {
+    noteId: currentNote.id,
+    activeTab: viewState.activeContentType,
+    isEditing: editorState.isEditing,
+    refreshKey,
+    hasEnhancements: {
+      summary: !!currentNote.summary,
+      keyPoints: !!currentNote.key_points,
+      improved: !!currentNote.improved_content,
+      markdown: !!currentNote.markdown_content
+    }
+  });
 
   return (
     <div 

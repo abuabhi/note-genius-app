@@ -17,6 +17,8 @@ export const useEnrichmentUsageStats = () => {
     setError(null);
     
     try {
+      console.log("📊 Fetching usage stats...");
+      
       // Get current month in YYYY-MM format
       const currentMonth = new Date().toISOString().slice(0, 7);
       
@@ -26,6 +28,8 @@ export const useEnrichmentUsageStats = () => {
       if (authError || !user) {
         throw new Error('User not authenticated');
       }
+      
+      console.log("👤 User authenticated:", user.id);
       
       // Get user's tier
       const { data: userData, error: userError } = await supabase
@@ -38,18 +42,29 @@ export const useEnrichmentUsageStats = () => {
         console.error('Error fetching user tier:', userError);
         // Set default values if we can't fetch user tier
         setCurrentUsage(0);
-        setMonthlyLimit(null);
+        setMonthlyLimit(10); // Default limit for students
         setIsLoading(false);
         return;
       }
       
+      console.log("🎓 User tier:", userData.user_tier);
+      
       // Get usage count using the imported function
       const usageData = await fetchNoteEnrichmentUsage(currentMonth);
       
-      // Normalize the tier - handle legacy STUDENT tier by mapping to SCHOLAR
-      // Cast to string to handle potential legacy values not in the current enum
+      console.log("📈 Usage data:", usageData?.length || 0);
+      
+      // FIXED: Better tier normalization with proper type handling
       const rawTier = userData.user_tier as string;
-      const normalizedTier = rawTier === 'STUDENT' ? 'SCHOLAR' : (userData.user_tier || 'SCHOLAR');
+      let normalizedTier: string;
+      
+      if (rawTier === 'STUDENT') {
+        normalizedTier = 'SCHOLAR'; // Map legacy STUDENT tier to SCHOLAR
+      } else {
+        normalizedTier = userData.user_tier || 'SCHOLAR';
+      }
+      
+      console.log("🔄 Normalized tier:", normalizedTier);
       
       // Get tier limit
       const { data: tierData, error: tierError } = await supabase
@@ -62,15 +77,21 @@ export const useEnrichmentUsageStats = () => {
         console.error('Error fetching tier limits:', tierError);
         // Set default values if we can't fetch tier limits
         setCurrentUsage(usageData?.length || 0);
-        setMonthlyLimit(10); // Default limit for students
+        setMonthlyLimit(10); // Default limit
       } else {
+        console.log("💎 Tier limits:", tierData);
         // Update state with fetched data
         setCurrentUsage(usageData?.length || 0);
         setMonthlyLimit(tierData?.note_enrichment_limit_per_month);
       }
       
+      console.log("✅ Usage stats updated:", {
+        usage: usageData?.length || 0,
+        limit: tierData?.note_enrichment_limit_per_month
+      });
+      
     } catch (err) {
-      console.error('Error fetching usage stats:', err);
+      console.error('❌ Error fetching usage stats:', err);
       setError('Failed to fetch usage statistics');
       // Set default values on error
       setCurrentUsage(0);
