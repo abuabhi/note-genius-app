@@ -8,7 +8,7 @@ import { useNotes } from "@/contexts/NoteContext";
 import { useState } from "react";
 
 /**
- * Hook to handle note enhancement processing with improved debugging
+ * Hook to handle note enhancement processing with improved state sync
  */
 export const useEnhancementProcessor = (note: Note, editorState: {
   isEditing: boolean;
@@ -20,7 +20,7 @@ export const useEnhancementProcessor = (note: Note, editorState: {
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [processingError, setProcessingError] = useState<string | null>(null);
   
-  // Handle content enhancement with comprehensive debugging
+  // Handle content enhancement with improved state synchronization
   const handleEnhanceContent = async (enhancedContent: string, enhancementType?: EnhancementFunction) => {
     console.log("🚀 Starting enhancement process:", {
       noteId: note.id,
@@ -109,20 +109,19 @@ export const useEnhancementProcessor = (note: Note, editorState: {
         contentPreview: enhancedContent.substring(0, 100)
       });
         
-      // First update the database
+      // Update the database first
       console.log("🗄️ Updating database...");
       await updateNoteInDatabase(note.id, updateData);
       console.log("✅ Database updated successfully");
         
-      // Then immediately update the context state to trigger re-renders
+      // Then update the context state to trigger re-renders
       console.log("🔄 Updating context state...");
       await updateNote(note.id, updateData);
       console.log("✅ Context state updated successfully");
         
-      // Force a small delay to ensure state propagation
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Force a short delay to ensure state propagation
+      await new Promise(resolve => setTimeout(resolve, 200));
       
-      // Additional verification log
       console.log("🎉 Enhancement process completed successfully:", {
         noteId: note.id,
         enhancementType: typeToApply,

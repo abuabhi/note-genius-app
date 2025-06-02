@@ -26,49 +26,47 @@ export const EnhancementSelector = ({
   setActiveContentType,
   className
 }: EnhancementSelectorProps) => {
-  // More aggressive detection of enhanced content
-  const hasSummary = !!(note.summary && note.summary.trim() && note.summary.length > 0);
-  const hasKeyPoints = !!(note.key_points && note.key_points.trim() && note.key_points.length > 0);
-  const hasMarkdown = !!(note.markdown_content && note.markdown_content.trim() && note.markdown_content.length > 0);
-  const hasImprovedClarity = !!(note.improved_content && note.improved_content.trim() && note.improved_content.length > 0);
+  // Enhanced detection with better null/undefined handling
+  const hasSummary = Boolean(note.summary?.trim()?.length);
+  const hasKeyPoints = Boolean(note.key_points?.trim()?.length);
+  const hasMarkdown = Boolean(note.markdown_content?.trim()?.length);
+  const hasImprovedClarity = Boolean(note.improved_content?.trim()?.length);
   
-  // Check enhancement statuses more thoroughly
+  // Check enhancement statuses
   const summaryStatus = note.summary_status || "completed";
   const isGeneratingSummary = summaryStatus === 'generating' || summaryStatus === 'pending';
   const hasSummaryError = summaryStatus === 'failed';
 
-  // Enhanced debug logging
-  console.log("🔍 EnhancementSelector - Enhanced detection:", {
+  // Debug logging with more detailed information
+  console.log("🔍 EnhancementSelector - Content detection:", {
     noteId: note.id,
     timestamp: new Date().toISOString(),
-    rawFields: {
+    rawValues: {
+      improved_content: note.improved_content,
       summary: note.summary,
-      keyPoints: note.key_points,
-      markdown: note.markdown_content,
-      improvedContent: note.improved_content
+      key_points: note.key_points,
+      markdown_content: note.markdown_content
     },
-    detectionResults: {
+    detection: {
+      hasImprovedClarity,
       hasSummary,
       hasKeyPoints,
-      hasMarkdown,
-      hasImprovedClarity
+      hasMarkdown
     },
     lengths: {
+      improved_content: note.improved_content?.length || 0,
       summary: note.summary?.length || 0,
-      keyPoints: note.key_points?.length || 0,
-      markdown: note.markdown_content?.length || 0,
-      improvedContent: note.improved_content?.length || 0
+      key_points: note.key_points?.length || 0,
+      markdown_content: note.markdown_content?.length || 0
     },
     activeContentType,
-    generatedTimestamps: {
-      summary: note.summary_generated_at,
-      keyPoints: note.key_points_generated_at,
-      markdown: note.markdown_content_generated_at,
-      improvedClarity: note.improved_content_generated_at
+    noteObject: {
+      hasAllFields: note.hasOwnProperty('improved_content'),
+      keys: Object.keys(note).filter(key => key.includes('improved') || key.includes('content'))
     }
   });
 
-  // Define the enhancement options with more explicit availability checks
+  // Define enhancement options
   const enhancementOptions: EnhancementOption[] = [
     {
       id: 'original',
@@ -102,7 +100,6 @@ export const EnhancementSelector = ({
   // Filter to only show available options
   const availableOptions = enhancementOptions.filter(option => option.available);
 
-  // Enhanced logging for available options
   console.log("📋 EnhancementSelector - Available options:", {
     totalOptions: enhancementOptions.length,
     availableCount: availableOptions.length,
@@ -113,12 +110,18 @@ export const EnhancementSelector = ({
       hasError: opt.hasError
     })),
     activeTab: activeContentType,
-    improvedClarityCheck: {
+    improvedClarityDetails: {
       hasContent: hasImprovedClarity,
       rawContent: note.improved_content,
-      trimmedLength: note.improved_content?.trim()?.length || 0
+      trimmedLength: note.improved_content?.trim()?.length || 0,
+      generatedAt: note.improved_content_generated_at
     }
   });
+
+  const handleTabClick = (contentType: EnhancementContentType) => {
+    console.log(`🎯 Tab clicked: ${contentType} (current: ${activeContentType})`);
+    setActiveContentType(contentType);
+  };
 
   return (
     <div className={cn("flex flex-col border-r border-border bg-muted/20", className)}>
@@ -129,15 +132,12 @@ export const EnhancementSelector = ({
         {availableOptions.map((option) => (
           <button
             key={option.id}
-            onClick={() => {
-              console.log(`🎯 EnhancementSelector - Tab clicked: ${option.id}`);
-              setActiveContentType(option.id);
-            }}
+            onClick={() => handleTabClick(option.id)}
             className={cn(
-              "flex items-center justify-between px-4 py-2 text-sm transition-colors",
+              "flex items-center justify-between px-4 py-2 text-sm transition-colors cursor-pointer",
               activeContentType === option.id 
                 ? "bg-mint-50 text-mint-800 font-medium border-l-2 border-l-mint-500" 
-                : "text-muted-foreground hover:bg-muted/40 border-l-2 border-l-transparent"
+                : "text-muted-foreground hover:bg-muted/40 border-l-2 border-l-transparent hover:text-foreground"
             )}
           >
             <span>{option.label}</span>

@@ -1,4 +1,3 @@
-
 import { toast } from 'sonner';
 import { Note } from "@/types/note";
 import { 
@@ -86,17 +85,11 @@ export const useNoteOperations = (
 
   const updateNote = async (id: string, updatedNote: Partial<Note>): Promise<void> => {
     try {
-      console.log("Updating note with ID:", id, "and data:", updatedNote);
+      console.log("🔄 Updating note with ID:", id, "and data:", updatedNote);
       
-      // Optimistic update - update the note in the UI immediately
-      setNotes(prevNotes => 
-        prevNotes.map(note => 
-          note.id === id ? { ...note, ...updatedNote } : note
-        )
-      );
-      
-      // Update the note in the database
+      // First update the database to ensure data persistence
       await updateNoteInDatabase(id, updatedNote);
+      console.log("✅ Database updated successfully");
       
       // If we have tags, update them separately
       if (updatedNote.tags) {
@@ -104,19 +97,44 @@ export const useNoteOperations = (
         await updateNoteTagsInDatabase(id, updatedNote.tags);
       }
 
+      // Then update the state - ensuring all enhancement fields are preserved
+      setNotes(prevNotes => 
+        prevNotes.map(note => {
+          if (note.id === id) {
+            const updatedNoteData = { 
+              ...note, 
+              ...updatedNote,
+              // Ensure enhancement fields are properly merged
+              improved_content: updatedNote.improved_content !== undefined ? updatedNote.improved_content : note.improved_content,
+              improved_content_generated_at: updatedNote.improved_content_generated_at !== undefined ? updatedNote.improved_content_generated_at : note.improved_content_generated_at,
+              summary: updatedNote.summary !== undefined ? updatedNote.summary : note.summary,
+              summary_generated_at: updatedNote.summary_generated_at !== undefined ? updatedNote.summary_generated_at : note.summary_generated_at,
+              key_points: updatedNote.key_points !== undefined ? updatedNote.key_points : note.key_points,
+              key_points_generated_at: updatedNote.key_points_generated_at !== undefined ? updatedNote.key_points_generated_at : note.key_points_generated_at,
+              markdown_content: updatedNote.markdown_content !== undefined ? updatedNote.markdown_content : note.markdown_content,
+              markdown_content_generated_at: updatedNote.markdown_content_generated_at !== undefined ? updatedNote.markdown_content_generated_at : note.markdown_content_generated_at
+            };
+            
+            console.log("🎯 Note state updated:", {
+              id,
+              hasImprovedContent: !!updatedNoteData.improved_content,
+              improvedContentLength: updatedNoteData.improved_content?.length || 0,
+              improvedContentGenerated: updatedNoteData.improved_content_generated_at,
+              updatedFields: Object.keys(updatedNote)
+            });
+            
+            return updatedNoteData;
+          }
+          return note;
+        })
+      );
+
       toast.success("Note updated");
     } catch (error) {
-      console.error('Error updating note:', error);
+      console.error('❌ Error updating note:', error);
       
-      // Revert the optimistic update if there was an error
-      const originalNote = notes.find(note => note.id === id);
-      if (originalNote) {
-        setNotes(prevNotes => 
-          prevNotes.map(note => 
-            note.id === id ? originalNote : note
-          )
-        );
-      }
+      // Don't revert the optimistic update since we want to keep the changes
+      // The user can try saving again if needed
       
       toast.error("Failed to update note");
       throw error;
