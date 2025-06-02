@@ -45,7 +45,8 @@ export const TwoColumnEnhancementView = ({
   const hasSummary = Boolean(
     note.summary && 
     typeof note.summary === 'string' && 
-    note.summary.trim().length > 10
+    note.summary.trim().length > 10 &&
+    note.summary_status === 'completed' // FIXED: Only consider completed summaries
   );
   
   const hasKeyPoints = Boolean(
@@ -68,14 +69,25 @@ export const TwoColumnEnhancementView = ({
     note.improved_content_generated_at // Must have generation timestamp
   );
   
-  const summaryStatus = note.summary_status || "completed";
+  // FIXED: Only show generating/pending status for actual processing states
+  const summaryStatus = note.summary_status || "idle";
   const isGeneratingSummary = summaryStatus === 'generating' || summaryStatus === 'pending';
   const hasSummaryError = summaryStatus === 'failed';
   
   // Enhanced debug log to trace improved content detection
-  console.log("🔍 TwoColumnEnhancementView - Enhanced state analysis (FIXED):", {
+  console.log("🔍 TwoColumnEnhancementView - Enhanced state analysis (FIXED v2):", {
     noteId: note.id,
     timestamp: new Date().toISOString(),
+    summaryValidation: {
+      rawContent: note.summary?.substring(0, 100) || 'none',
+      exists: !!note.summary,
+      isString: typeof note.summary === 'string',
+      length: note.summary?.length || 0,
+      trimmedLength: note.summary?.trim()?.length || 0,
+      status: summaryStatus,
+      isCompleted: summaryStatus === 'completed',
+      passesValidation: hasSummary
+    },
     improvedContentValidation: {
       rawContent: note.improved_content?.substring(0, 100) || 'none',
       exists: !!note.improved_content,
@@ -97,10 +109,6 @@ export const TwoColumnEnhancementView = ({
       isEditing,
       isLoading,
       wasManuallySelected: wasManuallySelected.current
-    },
-    retryFunction: {
-      available: !!onRetryEnhancement,
-      type: typeof onRetryEnhancement
     }
   });
 
@@ -122,7 +130,7 @@ export const TwoColumnEnhancementView = ({
     const currentTime = Date.now();
     const timeSinceLastAutoSwitch = currentTime - lastAutoSwitchTimestamp.current;
     
-    console.log("🔄 TwoColumnEnhancementView - Auto-switch evaluation (FIXED):", {
+    console.log("🔄 TwoColumnEnhancementView - Auto-switch evaluation (FIXED v2):", {
       isEditing,
       activeContentType,
       contentAvailability: {

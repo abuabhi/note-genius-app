@@ -105,13 +105,25 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
         improvedClarity: currentNote.improved_content_generated_at,
         markdown: currentNote.markdown_content_generated_at
       },
+      summaryStatus: currentNote.summary_status || 'none',
       rawContentSample: {
         improved_content: currentNote.improved_content?.substring(0, 100) || 'none',
         summary: currentNote.summary?.substring(0, 100) || 'none',
         key_points: currentNote.key_points?.substring(0, 100) || 'none'
       }
     });
-  }, [note, currentNote, realtimeNote, refreshKey]);
+    
+    // CRITICAL FIX: If a note has summary_status of "pending" but it wasn't user-initiated,
+    // update it to "idle" to prevent automatic generation
+    const preventAutomaticSummary = async () => {
+      if (currentNote.summary_status === 'pending' && refreshKey === 0) {
+        console.log("⚠️ Found pending summary status on note load - resetting to idle");
+        await updateNote(currentNote.id, { summary_status: 'idle' });
+      }
+    };
+    
+    preventAutomaticSummary();
+  }, [note, currentNote, realtimeNote, refreshKey, updateNote]);
 
   // FIXED: Implement the missing retry enhancement functionality
   const handleRetryEnhancement = async (enhancementType: string): Promise<void> => {
