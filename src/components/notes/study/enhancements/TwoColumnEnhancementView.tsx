@@ -212,25 +212,29 @@ export const TwoColumnEnhancementView = ({
   // If editing, just show the original content
   if (isEditing) {
     return (
-      <RichTextDisplay 
-        content={note.content || note.description || ""} 
-        fontSize={fontSize} 
-        textAlign={textAlign} 
-      />
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+        <div className="p-6">
+          <RichTextDisplay 
+            content={note.content || note.description || ""} 
+            fontSize={fontSize} 
+            textAlign={textAlign} 
+          />
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="flex flex-col md:flex-row w-full border border-border rounded-lg overflow-hidden min-h-[300px]">
-      {/* Left sidebar for content selector */}
+    <div className="flex flex-col md:flex-row w-full rounded-lg overflow-hidden shadow-sm border border-gray-200 bg-white min-h-[500px]">
+      {/* Left sidebar for content selector - Enhanced styling */}
       <EnhancementSelector
         note={note}
         activeContentType={activeContentType}
         setActiveContentType={handleManualTabChange}
-        className="w-full md:w-48 md:min-w-48"
+        className="w-full md:w-64 md:min-w-64 shrink-0"
       />
       
-      {/* Right panel for content display */}
+      {/* Right panel for content display - Enhanced styling */}
       <EnhancementDisplayPanel
         note={note}
         contentType={activeContentType}
@@ -239,7 +243,7 @@ export const TwoColumnEnhancementView = ({
         isLoading={isLoading}
         onRetryEnhancement={onRetryEnhancement}
         onCancelEnhancement={onCancelEnhancement}
-        className="flex-grow p-4 overflow-y-auto"
+        className="flex-1 min-h-0"
       />
     </div>
   );

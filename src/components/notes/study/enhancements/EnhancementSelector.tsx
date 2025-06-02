@@ -1,5 +1,5 @@
 
-import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { CheckCircle, AlertCircle, Loader2, FileText, List, Sparkles, Code, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Note } from "@/types/note";
 
@@ -8,6 +8,8 @@ export type EnhancementContentType = 'original' | 'summary' | 'keyPoints' | 'mar
 interface EnhancementOption {
   id: EnhancementContentType;
   label: string;
+  icon: React.ComponentType<any>;
+  description: string;
   available: boolean;
   isGenerating?: boolean;
   hasError?: boolean;
@@ -81,16 +83,20 @@ export const EnhancementSelector = ({
     summaryStatus
   });
 
-  // Define enhancement options with corrected availability logic
+  // Define enhancement options with improved styling and icons
   const enhancementOptions: EnhancementOption[] = [
     {
       id: 'original',
       label: 'Original',
+      icon: FileText,
+      description: 'Your original note content',
       available: true
     },
     {
       id: 'summary',
       label: 'Summary',
+      icon: Target,
+      description: 'AI-generated concise summary',
       available: hasSummary || isGeneratingSummary || hasSummaryError,
       isGenerating: isGeneratingSummary,
       hasError: hasSummaryError
@@ -98,16 +104,22 @@ export const EnhancementSelector = ({
     {
       id: 'keyPoints',
       label: 'Key Points',
+      icon: List,
+      description: 'Essential highlights extracted',
       available: hasKeyPoints
     },
     {
       id: 'improved',
       label: 'Improved Clarity',
+      icon: Sparkles,
+      description: 'Enhanced readability version',
       available: hasImprovedClarity
     },
     {
       id: 'markdown',
       label: 'Markdown',
+      icon: Code,
+      description: 'Structured markdown format',
       available: hasMarkdown
     }
   ];
@@ -138,34 +150,57 @@ export const EnhancementSelector = ({
   };
 
   return (
-    <div className={cn("flex flex-col border-r border-border bg-muted/20", className)}>
-      <div className="py-2 px-3 bg-muted/30 border-b border-border h-[73px] flex items-center">
-        <h3 className="text-sm font-medium text-muted-foreground">Content Views</h3>
+    <div className={cn("flex flex-col border-r border-border bg-gradient-to-b from-mint-50/30 to-white", className)}>
+      <div className="py-3 px-4 bg-gradient-to-r from-mint-100/50 to-mint-50/30 border-b border-mint-200/50 h-[73px] flex items-center">
+        <h3 className="text-sm font-semibold text-mint-800">Content Views</h3>
       </div>
-      <div className="flex flex-col py-1">
-        {availableOptions.map((option) => (
-          <button
-            key={option.id}
-            onClick={() => handleTabClick(option.id)}
-            className={cn(
-              "flex items-center justify-between px-4 py-2 text-sm transition-colors cursor-pointer",
-              activeContentType === option.id 
-                ? "bg-mint-50 text-mint-800 font-medium border-l-2 border-l-mint-500" 
-                : "text-muted-foreground hover:bg-muted/40 border-l-2 border-l-transparent hover:text-foreground"
-            )}
-          >
-            <span>{option.label}</span>
-            {option.isGenerating && (
-              <Loader2 className="h-3 w-3 animate-spin text-mint-500 ml-2" />
-            )}
-            {option.hasError && (
-              <AlertCircle className="h-3 w-3 text-red-500 ml-2" />
-            )}
-            {!option.isGenerating && !option.hasError && activeContentType === option.id && (
-              <CheckCircle className="h-3 w-3 text-mint-500 ml-2" />
-            )}
-          </button>
-        ))}
+      <div className="flex flex-col py-2 space-y-1">
+        {availableOptions.map((option) => {
+          const Icon = option.icon;
+          const isActive = activeContentType === option.id;
+          
+          return (
+            <button
+              key={option.id}
+              onClick={() => handleTabClick(option.id)}
+              className={cn(
+                "group flex items-center justify-between px-4 py-3 text-sm transition-all duration-200 cursor-pointer relative",
+                "hover:bg-mint-50/60 hover:shadow-sm",
+                isActive 
+                  ? "bg-mint-100/70 text-mint-900 font-semibold border-l-3 border-l-mint-500 shadow-sm" 
+                  : "text-gray-700 border-l-3 border-l-transparent hover:text-mint-800 hover:border-l-mint-300"
+              )}
+            >
+              <div className="flex items-center space-x-3">
+                <Icon className={cn(
+                  "h-4 w-4 transition-colors",
+                  isActive ? "text-mint-600" : "text-gray-500 group-hover:text-mint-500"
+                )} />
+                <div className="text-left">
+                  <div className="font-medium">{option.label}</div>
+                  <div className={cn(
+                    "text-xs mt-0.5 transition-colors",
+                    isActive ? "text-mint-700" : "text-gray-500 group-hover:text-mint-600"
+                  )}>
+                    {option.description}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-1">
+                {option.isGenerating && (
+                  <Loader2 className="h-4 w-4 animate-spin text-mint-500" />
+                )}
+                {option.hasError && (
+                  <AlertCircle className="h-4 w-4 text-red-500" />
+                )}
+                {!option.isGenerating && !option.hasError && isActive && (
+                  <CheckCircle className="h-4 w-4 text-mint-600" />
+                )}
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
