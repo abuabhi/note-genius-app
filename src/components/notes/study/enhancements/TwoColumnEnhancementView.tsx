@@ -45,17 +45,51 @@ export const TwoColumnEnhancementView = ({
     hasImprovedClarity,
     summaryStatus,
     summaryTimestamp: note.summary_generated_at,
+    keyPointsTimestamp: note.key_points_generated_at,
     activeContentType,
     isLoading
   });
   
-  // Auto-switch to summary tab when a new summary is generated
+  // Auto-switch to the appropriate tab when new content is generated
   useEffect(() => {
-    if (hasSummary && activeContentType === 'original') {
+    // Switch to summary tab when new summary is generated
+    if (hasSummary && activeContentType === 'original' && note.summary_generated_at) {
       console.log("Auto-switching to summary tab because new summary was generated");
       setActiveContentType('summary');
+      return;
     }
-  }, [hasSummary, note.summary_generated_at]);
+    
+    // Switch to key points tab when new key points are generated
+    if (hasKeyPoints && activeContentType === 'original' && note.key_points_generated_at) {
+      console.log("Auto-switching to key points tab because new key points were generated");
+      setActiveContentType('keyPoints');
+      return;
+    }
+    
+    // Switch to markdown tab when new markdown is generated
+    if (hasMarkdown && activeContentType === 'original' && note.markdown_content_generated_at) {
+      console.log("Auto-switching to markdown tab because new markdown was generated");
+      setActiveContentType('markdown');
+      return;
+    }
+    
+    // Switch to improved content tab when new improved content is generated
+    if (hasImprovedClarity && activeContentType === 'original' && note.improved_content_generated_at) {
+      console.log("Auto-switching to improved content tab because new improved content was generated");
+      setActiveContentType('improved');
+      return;
+    }
+  }, [
+    hasSummary, 
+    hasKeyPoints, 
+    hasMarkdown, 
+    hasImprovedClarity, 
+    note.summary_generated_at, 
+    note.key_points_generated_at,
+    note.markdown_content_generated_at,
+    note.improved_content_generated_at,
+    activeContentType
+  ]);
   
   // Reset to original tab when editing starts
   useEffect(() => {

@@ -3,6 +3,62 @@ import { supabase } from "@/integrations/supabase/client";
 import { EnhancementFunction } from "./types";
 
 /**
+ * Post-process enhanced content to ensure proper formatting
+ */
+const postProcessEnhancedContent = (content: string, enhancementType: EnhancementFunction): string => {
+  switch (enhancementType) {
+    case 'extract-key-points':
+      // Ensure key points are properly formatted as bullet points
+      let processedContent = content.trim();
+      
+      // If the content doesn't start with bullet points, try to convert it
+      if (!processedContent.startsWith('- ')) {
+        // Split by sentences or lines and convert to bullet points
+        const lines = processedContent.split(/[.\n]/).filter(line => line.trim().length > 0);
+        if (lines.length > 1) {
+          processedContent = lines.map(line => `- ${line.trim()}`).join('\n');
+        } else {
+          // If it's still one long text, break it into logical points
+          const sentences = processedContent.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
+          if (sentences.length > 1) {
+            processedContent = sentences.map(sentence => `- ${sentence.trim()}`).join('\n');
+          } else {
+            // Last resort: just add a bullet point
+            processedContent = `- ${processedContent}`;
+          }
+        }
+      }
+      
+      // Ensure each line starts with a bullet point
+      const lines = processedContent.split('\n');
+      processedContent = lines.map(line => {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('- ')) {
+          return `- ${trimmed}`;
+        }
+        return line;
+      }).join('\n');
+      
+      console.log('Post-processed key points:', processedContent);
+      return processedContent;
+      
+    case 'summarize':
+      // Ensure proper paragraph spacing for summaries
+      let summaryContent = content.trim();
+      
+      // Replace single line breaks with double line breaks for proper paragraph spacing
+      // But preserve existing double line breaks
+      summaryContent = summaryContent.replace(/\n(?!\n)/g, '\n\n');
+      
+      console.log('Post-processed summary with paragraph spacing');
+      return summaryContent;
+      
+    default:
+      return content;
+  }
+};
+
+/**
  * Calls the edge function to enrich a note with AI
  * @param note The note to enrich
  * @param enhancementType The type of enhancement to perform
@@ -60,6 +116,9 @@ export const enrichNote = async (
     
     console.log('Enhancement completed successfully');
     
+    // Post-process the content to ensure proper formatting
+    const processedContent = postProcessEnhancedContent(data.enhancedContent, enhancementType);
+    
     // Track token usage (if available) to calculate usage limits
     if (data.tokenUsage) {
       try {
@@ -70,7 +129,7 @@ export const enrichNote = async (
       }
     }
 
-    return data.enhancedContent;
+    return processedContent;
   } catch (error) {
     console.error('Error enriching note:', error);
     

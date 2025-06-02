@@ -26,43 +26,55 @@ Please provide a concise summary of this note in proper Markdown format. Focus o
 - Avoids bullet points or lists - write in complete sentences and paragraphs only
 - Keeps the summary to about 20% of the original length
 
-Write this as a cohesive overview using proper Markdown formatting with clear paragraph breaks. Use **bold** for emphasis when needed and ensure clean Markdown that renders well. Make sure to add proper spacing between paragraphs by using double line breaks (leave an empty line between paragraphs).
+CRITICAL FORMATTING: You MUST separate each paragraph with TWO line breaks (leave a blank line between paragraphs). This is essential for proper rendering.
+
+Example format:
+First paragraph content here.
+
+Second paragraph content here.
+
+Third paragraph content here.
+
+Write this as a cohesive overview using proper Markdown formatting with clear paragraph breaks. Use **bold** for emphasis when needed and ensure clean Markdown that renders well.
 `;
 
     case 'extract-key-points':
       return `${baseContext}
 Extract the most important facts, concepts, and ideas from this note and present them as a Markdown bullet list.
 
-CRITICAL FORMATTING REQUIREMENTS:
-- Start each key point with "- " (dash followed by space)
-- Put each key point on its OWN separate line
-- Do NOT write paragraphs or long sentences
-- Each bullet point should be ONE concise statement
-- Do NOT combine multiple ideas in one bullet point
-- Use simple, direct language
-- Maximum 15-20 words per bullet point
+YOU MUST FORMAT YOUR RESPONSE AS MULTIPLE BULLET POINTS. DO NOT WRITE A SINGLE PARAGRAPH.
 
-Your response should look EXACTLY like this format:
+ABSOLUTE REQUIREMENTS:
+- You MUST create MULTIPLE bullet points (5-10 points)
+- Each bullet point MUST start with "- " (dash followed by space)
+- Each bullet point MUST be on its OWN separate line
+- Each bullet point should be ONE concise statement (15-20 words max)
+- Do NOT combine multiple ideas in one bullet point
+- Do NOT write paragraphs or long sentences
+- Do NOT use any other formatting, numbering, or paragraph structure
+
+EXAMPLE OF CORRECT FORMAT:
 - First key concept
-- Second key concept  
+- Second key concept
 - Third key concept
 - Fourth key concept
+- Fifth key concept
 
-Extract 5-10 key points maximum. Each line must start with "- " and contain only one focused idea. Do not use any other formatting, numbering, or paragraph structure.
+Your response MUST look exactly like the example above with multiple separate bullet points. If you provide only one bullet point or write paragraphs, you are failing the task.
 `;
 
     case 'improve-clarity':
       return `${baseContext}
 Rewrite the content of this note to improve clarity, coherence, and readability while preserving all key information and meaning.
 
-Improve clarity and flow. Shorten long sentences, simplify words, remove repetition, group related ideas, and break long paragraphs into smaller ones. Use professional formatting with clear section headings (in bold) and maintain consistent paragraph spacing. Keep the meaning the same but make it easier to understand and nicer to read.
+Improve clarity and flow. Shorten long sentences, simplify words, remove repetition, group related ideas, and break long paragraphs into smaller ones. Use professional formatting with clear section headings (in bold) and maintain consistent paragraph spacing with double line breaks between paragraphs. Keep the meaning the same but make it easier to understand and nicer to read.
 `;
 
     case 'convert-to-markdown':
       return `${baseContext}
 Convert the content into well-formatted markdown, optimizing for readability and structure. Use appropriate markdown elements such as headers (# for main headings, ## for subheadings), lists (- for bullet points), emphasis (**bold** for important terms), code blocks (\`\`\` for code), and quotes (> for quotations). 
 
-Organize content with clear hierarchical headings and ensure proper spacing between sections. Keep all information from the original but enhance it with proper markdown formatting.
+Organize content with clear hierarchical headings and ensure proper spacing between sections with double line breaks. Keep all information from the original but enhance it with proper markdown formatting.
 `;
 
     default:
