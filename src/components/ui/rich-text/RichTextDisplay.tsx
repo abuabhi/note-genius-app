@@ -1,6 +1,7 @@
 
 import { useMemo } from "react";
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { TextAlignType } from "@/components/notes/study/hooks/useStudyViewState";
 import { cn } from "@/lib/utils";
 
@@ -63,11 +64,15 @@ export const RichTextDisplay = ({
         "prose-blockquote:border-l-mint-400 prose-blockquote:bg-mint-50/50 prose-blockquote:py-2",
         "prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm",
         "prose-pre:bg-gray-100 prose-pre:border prose-pre:rounded-lg",
+        "prose-table:border-collapse prose-table:border prose-table:border-gray-300",
+        "prose-th:border prose-th:border-gray-300 prose-th:bg-gray-100 prose-th:px-4 prose-th:py-2",
+        "prose-td:border prose-td:border-gray-300 prose-td:px-4 prose-td:py-2",
         className
       )}
       style={{ fontSize: `${fontSize}px` }}
     >
       <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
         components={{
           h1: ({children, ...props}) => (
             <h1 className="text-2xl font-bold mb-4 text-gray-900 border-b border-gray-200 pb-2" {...props}>
@@ -143,19 +148,29 @@ export const RichTextDisplay = ({
             </a>
           ),
           table: ({children, ...props}) => (
-            <div className="overflow-x-auto my-4">
-              <table className="min-w-full border border-gray-200 rounded-lg" {...props}>
+            <div className="overflow-x-auto my-6">
+              <table className="min-w-full border-collapse border border-gray-300 rounded-lg shadow-sm" {...props}>
                 {children}
               </table>
             </div>
           ),
+          thead: ({children, ...props}) => (
+            <thead className="bg-gray-50" {...props}>
+              {children}
+            </thead>
+          ),
+          tbody: ({children, ...props}) => (
+            <tbody className="bg-white" {...props}>
+              {children}
+            </tbody>
+          ),
           th: ({children, ...props}) => (
-            <th className="px-4 py-2 bg-gray-50 border-b border-gray-200 text-left font-semibold text-gray-900" {...props}>
+            <th className="px-4 py-3 border border-gray-300 text-left font-semibold text-gray-900 bg-gray-100" {...props}>
               {children}
             </th>
           ),
           td: ({children, ...props}) => (
-            <td className="px-4 py-2 border-b border-gray-100 text-gray-700" {...props}>
+            <td className="px-4 py-3 border border-gray-300 text-gray-700" {...props}>
               {children}
             </td>
           ),
