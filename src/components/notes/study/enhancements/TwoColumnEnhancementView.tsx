@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Note } from "@/types/note";
 import { TextAlignType } from "../hooks/useStudyViewState";
 import { RichTextDisplay } from "@/components/ui/rich-text/RichTextDisplay";
@@ -26,6 +26,8 @@ export const TwoColumnEnhancementView = ({
   onCancelEnhancement
 }: TwoColumnEnhancementViewProps) => {
   const [activeContentType, setActiveContentType] = useState<EnhancementContentType>('original');
+  const wasManuallySelected = useRef(false);
+  const lastAutoSwitchTimestamp = useRef<number>(0);
   
   // Enhanced detection logic with more explicit checks
   const hasSummary = !!(note.summary && note.summary.trim() && note.summary.length > 0);
@@ -56,6 +58,7 @@ export const TwoColumnEnhancementView = ({
     activeContentType,
     isEditing,
     isLoading,
+    wasManuallySelected: wasManuallySelected.current,
     generatedTimestamps: {
       summary: note.summary_generated_at,
       keyPoints: note.key_points_generated_at,
@@ -63,9 +66,25 @@ export const TwoColumnEnhancementView = ({
       improvedClarity: note.improved_content_generated_at
     }
   });
+
+  // Handle manual tab selection - this prevents auto-switching
+  const handleManualTabChange = (type: EnhancementContentType) => {
+    console.log(`🎯 Manual tab selection: ${type} (from: ${activeContentType})`);
+    wasManuallySelected.current = true;
+    setActiveContentType(type);
+    
+    // Reset manual flag after a delay to allow future auto-switching for new content
+    setTimeout(() => {
+      console.log("🔄 Resetting manual selection flag");
+      wasManuallySelected.current = false;
+    }, 5000);
+  };
   
   // Auto-switch to the appropriate tab when new content is generated
   useEffect(() => {
+    const currentTime = Date.now();
+    const timeSinceLastAutoSwitch = currentTime - lastAutoSwitchTimestamp.current;
+    
     console.log("🔄 TwoColumnEnhancementView - Auto-switch evaluation:", {
       isEditing,
       activeContentType,
@@ -73,35 +92,49 @@ export const TwoColumnEnhancementView = ({
       hasKeyPoints,
       hasSummary,
       hasMarkdown,
-      shouldConsiderAutoSwitch: !isEditing && activeContentType === 'original'
+      wasManuallySelected: wasManuallySelected.current,
+      timeSinceLastAutoSwitch,
+      shouldConsiderAutoSwitch: !isEditing && !wasManuallySelected.current && timeSinceLastAutoSwitch > 2000
     });
 
-    // Don't auto-switch if user is currently viewing original content or if editing
-    if (isEditing) return;
+    // Don't auto-switch if:
+    // 1. User is editing
+    // 2. User manually selected a tab recently
+    // 3. Recent auto-switch occurred (prevent rapid switching)
+    if (isEditing || wasManuallySelected.current || timeSinceLastAutoSwitch < 2000) {
+      return;
+    }
     
     // Priority order for auto-switching: Improved Clarity > Key Points > Summary > Markdown
-    if (hasImprovedClarity && activeContentType === 'original') {
-      console.log("✨ Auto-switching to improved clarity tab - content detected");
-      setActiveContentType('improved');
-      return;
-    }
-    
-    if (hasKeyPoints && activeContentType === 'original') {
-      console.log("🔑 Auto-switching to key points tab - content detected");
-      setActiveContentType('keyPoints');
-      return;
-    }
-    
-    if (hasSummary && !isGeneratingSummary && activeContentType === 'original') {
-      console.log("📄 Auto-switching to summary tab - content detected");
-      setActiveContentType('summary');
-      return;
-    }
-    
-    if (hasMarkdown && activeContentType === 'original') {
-      console.log("📋 Auto-switching to markdown tab - content detected");
-      setActiveContentType('markdown');
-      return;
+    // Only switch if currently on original tab to avoid disrupting user browsing
+    if (activeContentType === 'original') {
+      if (hasImprovedClarity) {
+        console.log("✨ Auto-switching to improved clarity tab - content detected");
+        setActiveContentType('improved');
+        lastAutoSwitchTimestamp.current = currentTime;
+        return;
+      }
+      
+      if (hasKeyPoints) {
+        console.log("🔑 Auto-switching to key points tab - content detected");
+        setActiveContentType('keyPoints');
+        lastAutoSwitchTimestamp.current = currentTime;
+        return;
+      }
+      
+      if (hasSummary && !isGeneratingSummary) {
+        console.log("📄 Auto-switching to summary tab - content detected");
+        setActiveContentType('summary');
+        lastAutoSwitchTimestamp.current = currentTime;
+        return;
+      }
+      
+      if (hasMarkdown) {
+        console.log("📋 Auto-switching to markdown tab - content detected");
+        setActiveContentType('markdown');
+        lastAutoSwitchTimestamp.current = currentTime;
+        return;
+      }
     }
   }, [
     hasImprovedClarity,
@@ -126,6 +159,7 @@ export const TwoColumnEnhancementView = ({
     if (isEditing) {
       console.log("✏️ Editing mode started - resetting to original tab");
       setActiveContentType("original");
+      wasManuallySelected.current = false;
     }
   }, [isEditing]);
 
@@ -146,7 +180,7 @@ export const TwoColumnEnhancementView = ({
       <EnhancementSelector
         note={note}
         activeContentType={activeContentType}
-        setActiveContentType={setActiveContentType}
+        setActiveContentType={handleManualTabChange}
         className="w-full md:w-48 md:min-w-48"
       />
       
