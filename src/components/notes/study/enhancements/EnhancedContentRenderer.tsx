@@ -57,13 +57,10 @@ const parseEnhancedContent = (content: string): ParsedContent[] => {
     }
   }
   
-  // If no enhancement markers found, treat entire content as enhanced
-  // This handles legacy enhanced content that doesn't have markers
-  if (parts.length === 0) {
-    parts.push({
-      type: 'enhanced',
-      content: content
-    });
+  // If no enhancement markers found, return empty array
+  // This will be handled by the parent component
+  if (!hasMarkers) {
+    return [];
   }
   
   return parts;
@@ -84,8 +81,13 @@ export const EnhancedContentRenderer = ({
     enhancedParts: parsedContent.filter(p => p.type === 'enhanced').length,
     originalParts: parsedContent.filter(p => p.type === 'original').length,
     hasMarkers,
-    isLegacyContent: !hasMarkers
+    shouldRender: hasMarkers && parsedContent.length > 0
   });
+  
+  // If no markers found, don't render anything - let parent handle it
+  if (!hasMarkers || parsedContent.length === 0) {
+    return null;
+  }
   
   return (
     <div className={className}>
@@ -100,7 +102,7 @@ export const EnhancedContentRenderer = ({
         >
           {part.type === 'enhanced' && (
             <div className="absolute -top-1 -left-1 bg-mint-500 text-white text-xs px-2 py-0.5 rounded-full font-medium shadow-sm">
-              {hasMarkers ? 'AI Enhanced' : 'AI Improved'}
+              AI Enhanced
             </div>
           )}
           <RichTextDisplay

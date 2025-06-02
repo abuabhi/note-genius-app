@@ -75,9 +75,6 @@ export const EnhancementDisplayPanel = ({
 
   // Check if content contains AI enhancement markers
   const hasEnhancementMarkers = content.includes('[AI_ENHANCED]') && content.includes('[/AI_ENHANCED]');
-  
-  // For improved clarity content, we want to show it as enhanced regardless of markers
-  const shouldUseEnhancedRenderer = contentType === 'improved' && content.length > 0;
 
   console.log("🎯 EnhancementDisplayPanel - Rendering content:", {
     contentType,
@@ -85,7 +82,6 @@ export const EnhancementDisplayPanel = ({
     hasContent: !!content,
     contentLength: content.length,
     hasEnhancementMarkers,
-    shouldUseEnhancedRenderer,
     isGenerating,
     hasError
   });
@@ -96,19 +92,42 @@ export const EnhancementDisplayPanel = ({
         title={title} 
         showAiIndicator={contentType === 'improved' && !!content}
       />
+      
+      {/* Always show original content as-is */}
       {contentType === 'original' ? (
         <RichTextDisplay 
           content={content} 
           fontSize={fontSize} 
           textAlign={textAlign} 
         />
-      ) : shouldUseEnhancedRenderer ? (
+      ) : contentType === 'improved' && hasEnhancementMarkers ? (
+        // For improved content with markers, use enhanced renderer
         <EnhancedContentRenderer
           content={content}
           fontSize={fontSize}
           textAlign={textAlign}
         />
+      ) : contentType === 'improved' && content && !hasEnhancementMarkers ? (
+        // For legacy improved content without markers, show as regular content
+        <div className="space-y-4">
+          <div className="bg-amber-50 border-l-4 border-amber-300 p-4 rounded-r-md">
+            <div className="flex items-center space-x-2 mb-2">
+              <div className="bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full font-medium">
+                Legacy AI Content
+              </div>
+            </div>
+            <p className="text-sm text-amber-700">
+              This content was generated with an older version. Re-generate for better highlighting of AI enhancements.
+            </p>
+          </div>
+          <RichTextDisplay 
+            content={content} 
+            fontSize={fontSize} 
+            textAlign={textAlign} 
+          />
+        </div>
       ) : (
+        // For all other content types, use the standard enhancement content component
         <EnhancementContent
           content={content}
           title={title}
