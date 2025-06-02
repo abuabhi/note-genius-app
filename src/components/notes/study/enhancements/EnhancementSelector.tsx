@@ -174,7 +174,7 @@ export const EnhancementSelector = ({
               <div className="flex items-center space-x-3">
                 <Icon className={cn(
                   "h-4 w-4 transition-colors",
-                  isActive ? "text-mint-600" : "text-gray-500 group-hover:text-mint-500"
+                  isActive ? "text-mint-600" : "text-mint-500 group-hover:text-mint-600"
                 )} />
                 <div className="text-left">
                   <div className="font-medium">{option.label}</div>
