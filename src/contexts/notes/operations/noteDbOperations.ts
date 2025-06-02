@@ -18,7 +18,13 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
         pinned: noteData.pinned || false,
         summary: noteData.summary,
         summary_generated_at: noteData.summary_generated_at,
-        summary_status: noteData.summary_status || 'generating', // Default to generating to auto-trigger summary
+        summary_status: noteData.summary_status || 'pending',
+        key_points: noteData.key_points,
+        key_points_generated_at: noteData.key_points_generated_at,
+        markdown_content: noteData.markdown_content,
+        markdown_content_generated_at: noteData.markdown_content_generated_at,
+        improved_content: noteData.improved_content,
+        improved_content_generated_at: noteData.improved_content_generated_at,
         subject_id: noteData.subject_id
       })
       .select()
@@ -43,6 +49,12 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
       summary: noteInsertData.summary,
       summary_generated_at: noteInsertData.summary_generated_at,
       summary_status: noteInsertData.summary_status as 'pending' | 'generating' | 'completed' | 'failed',
+      key_points: noteInsertData.key_points,
+      key_points_generated_at: noteInsertData.key_points_generated_at,
+      markdown_content: noteInsertData.markdown_content,
+      markdown_content_generated_at: noteInsertData.markdown_content_generated_at,
+      improved_content: noteInsertData.improved_content,
+      improved_content_generated_at: noteInsertData.improved_content_generated_at,
       subject_id: noteInsertData.subject_id,
       scanData: noteData.sourceType === 'scan' && noteData.scanData ? {
         originalImageUrl: noteData.scanData.originalImageUrl,
@@ -99,7 +111,18 @@ export const deleteNoteFromDatabase = async (id: string): Promise<void> => {
 };
 
 export const updateNoteInDatabase = async (id: string, updatedNote: Partial<Note>): Promise<void> => {
-  // Prepare the note data for update
+  console.log('🔄 updateNoteInDatabase called with:', {
+    id,
+    fieldsToUpdate: Object.keys(updatedNote),
+    enhancementFields: {
+      summary: updatedNote.summary?.substring(0, 50) || 'none',
+      key_points: updatedNote.key_points?.substring(0, 50) || 'none',
+      improved_content: updatedNote.improved_content?.substring(0, 50) || 'none',
+      markdown_content: updatedNote.markdown_content?.substring(0, 50) || 'none'
+    }
+  });
+
+  // Prepare the note data for update - include ALL possible enhancement fields
   const noteUpdateData: any = {};
   if (updatedNote.title !== undefined) noteUpdateData.title = updatedNote.title;
   if (updatedNote.description !== undefined) noteUpdateData.description = updatedNote.description;
@@ -109,10 +132,32 @@ export const updateNoteInDatabase = async (id: string, updatedNote: Partial<Note
   if (updatedNote.sourceType !== undefined) noteUpdateData.source_type = updatedNote.sourceType;
   if (updatedNote.archived !== undefined) noteUpdateData.archived = updatedNote.archived;
   if (updatedNote.pinned !== undefined) noteUpdateData.pinned = updatedNote.pinned;
+  if (updatedNote.subject_id !== undefined) noteUpdateData.subject_id = updatedNote.subject_id;
+
+  // Enhancement fields
   if (updatedNote.summary !== undefined) noteUpdateData.summary = updatedNote.summary;
   if (updatedNote.summary_generated_at !== undefined) noteUpdateData.summary_generated_at = updatedNote.summary_generated_at;
   if (updatedNote.summary_status !== undefined) noteUpdateData.summary_status = updatedNote.summary_status;
-  if (updatedNote.subject_id !== undefined) noteUpdateData.subject_id = updatedNote.subject_id;
+  
+  if (updatedNote.key_points !== undefined) noteUpdateData.key_points = updatedNote.key_points;
+  if (updatedNote.key_points_generated_at !== undefined) noteUpdateData.key_points_generated_at = updatedNote.key_points_generated_at;
+  
+  if (updatedNote.markdown_content !== undefined) noteUpdateData.markdown_content = updatedNote.markdown_content;
+  if (updatedNote.markdown_content_generated_at !== undefined) noteUpdateData.markdown_content_generated_at = updatedNote.markdown_content_generated_at;
+  
+  if (updatedNote.improved_content !== undefined) noteUpdateData.improved_content = updatedNote.improved_content;
+  if (updatedNote.improved_content_generated_at !== undefined) noteUpdateData.improved_content_generated_at = updatedNote.improved_content_generated_at;
+
+  console.log('📝 Database update payload:', {
+    id,
+    updateFields: Object.keys(noteUpdateData),
+    enhancementData: {
+      summary: noteUpdateData.summary?.substring(0, 50) || 'none',
+      key_points: noteUpdateData.key_points?.substring(0, 50) || 'none',
+      improved_content: noteUpdateData.improved_content?.substring(0, 50) || 'none',
+      markdown_content: noteUpdateData.markdown_content?.substring(0, 50) || 'none'
+    }
+  });
 
   if (Object.keys(noteUpdateData).length > 0) {
     const { error: noteError } = await supabase
@@ -121,7 +166,12 @@ export const updateNoteInDatabase = async (id: string, updatedNote: Partial<Note
       .eq('id', id);
 
     if (noteError) {
+      console.error('❌ Database update failed:', noteError);
       throw noteError;
     }
+
+    console.log('✅ Database update successful for note:', id);
+  } else {
+    console.log('⚠️ No fields to update for note:', id);
   }
 };

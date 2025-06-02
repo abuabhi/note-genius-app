@@ -1,184 +1,130 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Note } from "@/types/note";
-import { FilterOptions, SortType } from "./types";
 
 export const fetchNotesFromSupabase = async (): Promise<Note[]> => {
   try {
+    console.log('🔄 Fetching notes with all enhancement fields...');
+    
     const { data: notesData, error: notesError } = await supabase
       .from('notes')
       .select(`
         *,
-        tags:note_tags(
-          tag:tags(id, name, color)
-        ),
-        scanData:scan_data(*)
+        scan_data(*),
+        note_tags(
+          tags(*)
+        )
       `)
       .order('created_at', { ascending: false });
 
     if (notesError) {
+      console.error('❌ Error fetching notes:', notesError);
       throw notesError;
     }
 
-    // Transform the data into the Note format
-    const notes: Note[] = notesData.map((note) => {
-      // Extract tags from the nested structure
-      const tags = note.tags
-        ? note.tags
-            .filter((tagObj: any) => tagObj.tag)
-            .map((tagObj: any) => ({
-              id: tagObj.tag.id,
-              name: tagObj.tag.name,
-              color: tagObj.tag.color
-            }))
-        : [];
+    if (!notesData || notesData.length === 0) {
+      console.log('📝 No notes found in database');
+      return [];
+    }
 
-      // Extract scan data if present
-      const scanData = note.scanData && note.scanData.length > 0
-        ? {
-            originalImageUrl: note.scanData[0].original_image_url,
-            recognizedText: note.scanData[0].recognized_text,
-            confidence: note.scanData[0].confidence,
-            language: note.scanData[0].language
-          }
-        : undefined;
+    console.log('✅ Raw notes data from database:', {
+      count: notesData.length,
+      sampleNote: notesData[0] ? {
+        id: notesData[0].id,
+        title: notesData[0].title,
+        summary: notesData[0].summary?.substring(0, 50) || 'none',
+        key_points: notesData[0].key_points?.substring(0, 50) || 'none',
+        improved_content: notesData[0].improved_content?.substring(0, 50) || 'none',
+        markdown_content: notesData[0].markdown_content?.substring(0, 50) || 'none',
+        summary_status: notesData[0].summary_status,
+        enhancementTimestamps: {
+          summary_generated_at: notesData[0].summary_generated_at,
+          key_points_generated_at: notesData[0].key_points_generated_at,
+          improved_content_generated_at: notesData[0].improved_content_generated_at,
+          markdown_content_generated_at: notesData[0].markdown_content_generated_at
+        }
+      } : null
+    });
 
-      // Return the formatted note
-      return {
+    const transformedNotes: Note[] = notesData.map((note) => {
+      // Transform tags from the join query
+      const tags = note.note_tags?.map((noteTag: any) => ({
+        id: noteTag.tags?.id || noteTag.tag_id,
+        name: noteTag.tags?.name || '',
+        color: noteTag.tags?.color || '#94a3b8'
+      })) || [];
+
+      // Transform scan data
+      const scanData = note.scan_data && note.scan_data.length > 0 ? {
+        originalImageUrl: note.scan_data[0].original_image_url,
+        recognizedText: note.scan_data[0].recognized_text,
+        confidence: note.scan_data[0].confidence,
+        language: note.scan_data[0].language
+      } : undefined;
+
+      const transformedNote: Note = {
         id: note.id,
         title: note.title,
         description: note.description,
         date: new Date(note.date).toISOString().split('T')[0],
-        category: note.subject, // Map from subject column to category field
+        category: note.subject || 'Uncategorized',
         content: note.content,
         sourceType: note.source_type as 'manual' | 'scan' | 'import',
         archived: note.archived || false,
         pinned: note.pinned || false,
         tags,
         scanData,
-        subject_id: note.subject_id  // Add subject_id field
+        subject_id: note.subject_id,
+        
+        // Enhancement fields - ensure they're properly mapped
+        summary: note.summary || undefined,
+        summary_status: note.summary_status as 'pending' | 'generating' | 'completed' | 'failed' || 'pending',
+        summary_generated_at: note.summary_generated_at || undefined,
+        
+        key_points: note.key_points || undefined,
+        key_points_generated_at: note.key_points_generated_at || undefined,
+        
+        markdown_content: note.markdown_content || undefined,
+        markdown_content_generated_at: note.markdown_content_generated_at || undefined,
+        
+        improved_content: note.improved_content || undefined,
+        improved_content_generated_at: note.improved_content_generated_at || undefined
       };
+
+      console.log(`🔍 Transformed note ${note.id}:`, {
+        title: transformedNote.title,
+        hasEnhancements: {
+          summary: !!transformedNote.summary,
+          key_points: !!transformedNote.key_points,
+          improved_content: !!transformedNote.improved_content,
+          markdown_content: !!transformedNote.markdown_content
+        },
+        enhancementLengths: {
+          summary: transformedNote.summary?.length || 0,
+          key_points: transformedNote.key_points?.length || 0,
+          improved_content: transformedNote.improved_content?.length || 0,
+          markdown_content: transformedNote.markdown_content?.length || 0
+        },
+        rawEnhancementData: {
+          summary: note.summary?.substring(0, 50) || 'none',
+          key_points: note.key_points?.substring(0, 50) || 'none',
+          improved_content: note.improved_content?.substring(0, 50) || 'none'
+        }
+      });
+
+      return transformedNote;
     });
 
-    return notes;
+    console.log('✅ Notes transformation completed:', {
+      totalNotes: transformedNotes.length,
+      notesWithEnhancements: transformedNotes.filter(note => 
+        note.summary || note.key_points || note.improved_content || note.markdown_content
+      ).length
+    });
+
+    return transformedNotes;
   } catch (error) {
-    console.error('Error fetching notes:', error);
+    console.error('❌ Error in fetchNotesFromSupabase:', error);
     throw error;
   }
-};
-
-const filterNotes = (notes: Note[], searchTerm: string, filterOptions: FilterOptions = {}): Note[] => {
-  if (!searchTerm.trim() && Object.keys(filterOptions).length === 0) return notes;
-  
-  const lowerSearchTerm = searchTerm.toLowerCase();
-  return notes.filter(note => {
-    // Basic search term filtering
-    const matchesSearchTerm = !searchTerm.trim() || 
-      note.title.toLowerCase().includes(lowerSearchTerm) || 
-      note.description.toLowerCase().includes(lowerSearchTerm) || 
-      note.category.toLowerCase().includes(lowerSearchTerm) ||
-      (note.content && note.content.toLowerCase().includes(lowerSearchTerm)) ||
-      // Search in tags as well
-      (note.tags && note.tags.some(tag => tag.name.toLowerCase().includes(lowerSearchTerm)));
-    
-    if (!matchesSearchTerm) return false;
-    
-    // Advanced filtering
-    // Category filter
-    if (filterOptions.category && note.category !== filterOptions.category) {
-      return false;
-    }
-    
-    // Subject filter (new)
-    if (filterOptions.subjectId && note.subject_id !== filterOptions.subjectId) {
-      return false;
-    }
-    
-    // Date range filter
-    if (filterOptions.dateFrom) {
-      const fromDate = new Date(filterOptions.dateFrom);
-      const noteDate = new Date(note.date);
-      if (noteDate < fromDate) return false;
-    }
-    
-    if (filterOptions.dateTo) {
-      const toDate = new Date(filterOptions.dateTo);
-      const noteDate = new Date(note.date);
-      if (noteDate > toDate) return false;
-    }
-    
-    // Source type filter
-    if (filterOptions.sourceType && filterOptions.sourceType.length > 0) {
-      if (!note.sourceType || !filterOptions.sourceType.includes(note.sourceType)) {
-        return false;
-      }
-    }
-    
-    // Has tags filter
-    if (filterOptions.hasTags === true && (!note.tags || note.tags.length === 0)) {
-      return false;
-    }
-    
-    if (filterOptions.hasTags === false && note.tags && note.tags.length > 0) {
-      return false;
-    }
-    
-    return true;
-  });
-};
-
-const sortNotes = (notes: Note[], sortType: SortType): Note[] => {
-  return [...notes].sort((a, b) => {
-    switch (sortType) {
-      case 'date-desc':
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
-      case 'date-asc':
-        return new Date(a.date).getTime() - new Date(b.date).getTime();
-      case 'title-asc':
-        return a.title.localeCompare(b.title);
-      case 'title-desc':
-        return b.title.localeCompare(a.title);
-      case 'category':
-        return a.category.localeCompare(b.category);
-      case 'newest':
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
-      case 'oldest':
-        return new Date(a.date).getTime() - new Date(b.date).getTime();
-      case 'alphabetical':
-        return a.title.localeCompare(b.title);
-      default:
-        return 0;
-    }
-  });
-};
-
-const paginateNotes = (notes: Note[], currentPage: number, notesPerPage: number): Note[] => {
-  const startIndex = (currentPage - 1) * notesPerPage;
-  return notes.slice(startIndex, startIndex + notesPerPage);
-};
-
-const getUniqueCategories = (notes: Note[]): string[] => {
-  const categories = notes.map(note => note.category);
-  return [...new Set(categories)].sort();
-};
-
-const matchesSearchTerm = (note: Note, searchTerm: string): boolean => {
-  if (!searchTerm.trim()) return true;
-  
-  const lowerSearchTerm = searchTerm.toLowerCase();
-  return note.title.toLowerCase().includes(lowerSearchTerm) || 
-    note.description.toLowerCase().includes(lowerSearchTerm) || 
-    note.category.toLowerCase().includes(lowerSearchTerm) ||
-    (note.content && note.content.toLowerCase().includes(lowerSearchTerm)) ||
-    (note.tags && note.tags.some(tag => tag.name.toLowerCase().includes(lowerSearchTerm)));
-};
-
-// Export all functions as a single object named 'noteUtils'
-export const noteUtils = {
-  fetchNotesFromSupabase,
-  filterNotes,
-  sortNotes,
-  paginateNotes,
-  getUniqueCategories,
-  matchesSearchTerm
 };
