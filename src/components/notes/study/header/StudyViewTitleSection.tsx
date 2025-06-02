@@ -46,26 +46,29 @@ export const StudyViewTitleSection = ({
 
   if (isEditing) {
     return (
-      <div className="py-2 px-3 bg-muted/30 border-b border-border h-[49px] flex items-center">
-        <Input
-          value={title}
-          onChange={handleTitleChange}
-          className="font-medium text-sm border-mint-200 focus-visible:ring-mint-400 h-8"
-          placeholder="Note Title"
-        />
-      </div>
+      <Input
+        value={title}
+        onChange={handleTitleChange}
+        className="font-medium text-lg border-mint-200 focus-visible:ring-mint-400"
+        placeholder="Note Title"
+      />
     );
   }
 
   return (
-    <div className="py-2 px-3 bg-muted/30 border-b border-border h-[49px] flex flex-col justify-center">
-      <h2 className="text-sm font-medium text-muted-foreground truncate">{note?.title}</h2>
-      <div className="text-xs flex items-center gap-2 text-muted-foreground/80">
-        <span className="font-medium">{note?.date}</span>
+    <div className="space-y-1">
+      <h2 className="text-xl font-bold text-green-700">{note?.title}</h2>
+      <div className="text-sm flex flex-wrap gap-2 items-center">
+        <span className="font-bold text-gray-600">{note?.date}</span>
         {subjectName && (
-          <span className="text-mint-600">{subjectName}</span>
+          <span className="text-green-600 font-medium">{subjectName}</span>
         )}
       </div>
+      {note?.tags && note?.tags.length > 0 && (
+        <div className="mt-2">
+          <NoteTagList tags={note?.tags} />
+        </div>
+      )}
     </div>
   );
 };
