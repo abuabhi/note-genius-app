@@ -21,6 +21,17 @@ export const NoteCardActions = ({
   onDelete,
   iconSize = 4
 }: NoteCardActionsProps) => {
+  const handleDelete = async (id: string) => {
+    console.log("NoteCardActions - Starting delete for note ID:", id);
+    try {
+      await onDelete(id);
+      console.log("NoteCardActions - Delete completed for note ID:", id);
+    } catch (error) {
+      console.error("NoteCardActions - Delete failed for note ID:", id, error);
+      throw error;
+    }
+  };
+
   return (
     <div 
       className="absolute top-2 right-2"
@@ -36,7 +47,7 @@ export const NoteCardActions = ({
         noteContent={noteContent}
         isPinned={isPinned}
         onPin={onPin}
-        onDelete={onDelete}
+        onDelete={handleDelete}
         iconSize={iconSize}
       />
     </div>

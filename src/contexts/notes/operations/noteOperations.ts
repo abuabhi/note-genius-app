@@ -1,3 +1,4 @@
+
 import { toast } from 'sonner';
 import { Note } from "@/types/note";
 import { 
@@ -48,7 +49,7 @@ export const useNoteOperations = (
 
   const deleteNote = async (id: string): Promise<void> => {
     try {
-      console.log(`Starting note deletion process for note ID: ${id}`);
+      console.log(`useNoteOperations - Starting note deletion process for note ID: ${id}`);
       
       // Show deletion in progress with loading indicator
       const toastId = toast.loading("Deleting note...");
@@ -69,8 +70,9 @@ export const useNoteOperations = (
         // Update toast on success
         toast.dismiss(toastId);
         toast.success("Note deleted successfully");
+        console.log(`useNoteOperations - Note deletion successful for ID: ${id}`);
       } catch (error) {
-        console.error('Error deleting note:', error);
+        console.error('useNoteOperations - Error deleting note from database:', error);
         
         // Revert the optimistic update by restoring the deleted note
         if (deletedNote) {
@@ -82,7 +84,7 @@ export const useNoteOperations = (
         throw error;
       }
     } catch (error) {
-      console.error('Error in delete operation:', error);
+      console.error('useNoteOperations - Error in delete operation:', error);
       throw error;
     }
   };

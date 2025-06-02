@@ -29,12 +29,14 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
   };
 
   const handleDelete = async (id: string) => {
+    console.log("NotesGrid - Delete initiated for note ID:", id);
     try {
       await deleteNote(id);
-      toast.success("Note deleted");
+      console.log("NotesGrid - Delete completed for note ID:", id);
     } catch (error) {
-      console.error("Error deleting note:", error);
+      console.error("NotesGrid - Error deleting note:", error);
       toast.error("Failed to delete note");
+      throw error;
     }
   };
 

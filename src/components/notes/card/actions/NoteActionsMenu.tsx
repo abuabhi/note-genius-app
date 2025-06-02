@@ -19,7 +19,7 @@ interface NoteActionsMenuProps {
   noteContent: string;
   isPinned: boolean;
   onPin: (id: string, isPinned: boolean) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => Promise<void>;
   iconSize?: number;
 }
 
@@ -34,11 +34,18 @@ export const NoteActionsMenu = ({
 }: NoteActionsMenuProps) => {
   const [open, setOpen] = React.useState(false);
   
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    console.log("NoteActionsMenu - Delete triggered for note ID:", id);
     // Close the dropdown menu when delete action is confirmed
     setOpen(false);
     // Call the provided onDelete function
-    onDelete(id);
+    try {
+      await onDelete(id);
+      console.log("NoteActionsMenu - Delete successful for note ID:", id);
+    } catch (error) {
+      console.error("NoteActionsMenu - Delete failed for note ID:", id, error);
+      throw error;
+    }
   };
   
   return (
