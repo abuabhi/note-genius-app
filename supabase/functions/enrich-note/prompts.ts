@@ -17,69 +17,69 @@ ${noteContent}
   switch (enhancementType) {
     case 'summarize':
       return `${baseContext}
-Please provide a concise summary of this note in proper Markdown format. Focus on creating a brief overview that:
+Please provide a concise summary of this note in proper Markdown format.
 
-- Presents the main ideas and central message in flowing paragraphs
-- Shows how different concepts connect and relate to each other
-- Retells the content in a shorter, narrative style
-- Uses proper Markdown paragraph structure with smooth transitions between ideas
-- Avoids bullet points or lists - write in complete sentences and paragraphs only
-- Keeps the summary to about 20% of the original length
+Requirements:
+- Write in flowing paragraphs with complete sentences
+- Each paragraph should be separated by a blank line
+- Focus on the main ideas and how they connect
+- Keep the summary to about 20% of the original length
+- Use **bold** for key terms when appropriate
 
-CRITICAL FORMATTING: You MUST separate each paragraph with TWO line breaks (leave a blank line between paragraphs). This is essential for proper rendering.
-
-Example format:
-First paragraph content here.
-
-Second paragraph content here.
-
-Third paragraph content here.
-
-Write this as a cohesive overview using proper Markdown formatting with clear paragraph breaks. Use **bold** for emphasis when needed and ensure clean Markdown that renders well.
+Write a cohesive overview using proper Markdown paragraph formatting.
 `;
 
     case 'extract-key-points':
       return `${baseContext}
-Extract the most important facts, concepts, and ideas from this note and present them as a Markdown bullet list.
+Extract the most important facts, concepts, and ideas from this note.
 
-YOU MUST FORMAT YOUR RESPONSE AS MULTIPLE BULLET POINTS. DO NOT WRITE A SINGLE PARAGRAPH.
+Format as a Markdown bullet list with these requirements:
+- Start each point with "- " (dash followed by space)
+- Each point must be on its own separate line
+- Create 5-8 key points minimum
+- Each point should be one clear, concise statement
+- Keep points focused and specific
 
-ABSOLUTE REQUIREMENTS:
-- You MUST create MULTIPLE bullet points (5-10 points)
-- Each bullet point MUST start with "- " (dash followed by space)
-- Each bullet point MUST be on its OWN separate line
-- Each bullet point should be ONE concise statement (15-20 words max)
-- Do NOT combine multiple ideas in one bullet point
-- Do NOT write paragraphs or long sentences
-- Do NOT use any other formatting, numbering, or paragraph structure
+Example format:
+- First key concept here
+- Second key concept here
+- Third key concept here
+- Fourth key concept here
+- Fifth key concept here
 
-EXAMPLE OF CORRECT FORMAT:
-- First key concept
-- Second key concept
-- Third key concept
-- Fourth key concept
-- Fifth key concept
-
-Your response MUST look exactly like the example above with multiple separate bullet points. If you provide only one bullet point or write paragraphs, you are failing the task.
+Create multiple bullet points exactly like the example above.
 `;
 
     case 'improve-clarity':
       return `${baseContext}
-Rewrite the content of this note to improve clarity, coherence, and readability while preserving all key information and meaning.
+Rewrite this note to improve clarity, coherence, and readability while preserving all key information.
 
-Improve clarity and flow. Shorten long sentences, simplify words, remove repetition, group related ideas, and break long paragraphs into smaller ones. Use professional formatting with clear section headings (in bold) and maintain consistent paragraph spacing with double line breaks between paragraphs. Keep the meaning the same but make it easier to understand and nicer to read.
+Requirements:
+- Use clear, simple language
+- Break long sentences into shorter ones
+- Organize information logically with proper paragraphs
+- Use **bold** for important terms
+- Ensure proper paragraph spacing with blank lines between paragraphs
+- Maintain all original meaning and information
 `;
 
     case 'convert-to-markdown':
       return `${baseContext}
-Convert the content into well-formatted markdown, optimizing for readability and structure. Use appropriate markdown elements such as headers (# for main headings, ## for subheadings), lists (- for bullet points), emphasis (**bold** for important terms), code blocks (\`\`\` for code), and quotes (> for quotations). 
+Convert this content into well-formatted Markdown.
 
-Organize content with clear hierarchical headings and ensure proper spacing between sections with double line breaks. Keep all information from the original but enhance it with proper markdown formatting.
+Requirements:
+- Use # for main headings, ## for subheadings
+- Use - for bullet points with proper spacing
+- Use **bold** for emphasis
+- Ensure proper paragraph spacing with blank lines
+- Use > for quotes if applicable
+- Use \`code\` for technical terms if needed
+- Maintain clear hierarchy and structure
 `;
 
     default:
       return `${baseContext}
-Please analyze this note and provide helpful insights using professional Markdown formatting with clear headings and structured content.
+Please analyze this note and provide helpful insights using professional Markdown formatting.
 `;
   }
 };

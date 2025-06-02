@@ -27,11 +27,11 @@ export const TwoColumnEnhancementView = ({
 }: TwoColumnEnhancementViewProps) => {
   const [activeContentType, setActiveContentType] = useState<EnhancementContentType>('original');
   
-  // Check if there are any enhancements
-  const hasSummary = !!note.summary && !!note.summary_generated_at;
-  const hasKeyPoints = !!note.key_points && !!note.key_points_generated_at;
-  const hasMarkdown = !!note.markdown_content && !!note.markdown_content_generated_at;
-  const hasImprovedClarity = !!note.improved_content && !!note.improved_content_generated_at;
+  // Check if there are any enhancements - use more immediate detection
+  const hasSummary = !!note.summary;
+  const hasKeyPoints = !!note.key_points;
+  const hasMarkdown = !!note.markdown_content;
+  const hasImprovedClarity = !!note.improved_content;
   const summaryStatus = note.summary_status || "completed";
   const isGeneratingSummary = summaryStatus === 'generating' || summaryStatus === 'pending';
   const hasSummaryError = summaryStatus === 'failed';
@@ -44,52 +44,40 @@ export const TwoColumnEnhancementView = ({
     hasMarkdown,
     hasImprovedClarity,
     summaryStatus,
-    summaryTimestamp: note.summary_generated_at,
-    keyPointsTimestamp: note.key_points_generated_at,
     activeContentType,
     isLoading
   });
   
-  // Auto-switch to the appropriate tab when new content is generated
+  // Auto-switch to the appropriate tab when new content is generated - immediate switching
   useEffect(() => {
-    // Switch to summary tab when new summary is generated
-    if (hasSummary && activeContentType === 'original' && note.summary_generated_at) {
-      console.log("Auto-switching to summary tab because new summary was generated");
+    // Force immediate switch to summary when it becomes available
+    if (hasSummary && !isGeneratingSummary && activeContentType === 'original') {
+      console.log("Immediately switching to summary tab");
       setActiveContentType('summary');
       return;
     }
     
-    // Switch to key points tab when new key points are generated
-    if (hasKeyPoints && activeContentType === 'original' && note.key_points_generated_at) {
-      console.log("Auto-switching to key points tab because new key points were generated");
+    // Force immediate switch to key points when they become available
+    if (hasKeyPoints && activeContentType === 'original') {
+      console.log("Immediately switching to key points tab");
       setActiveContentType('keyPoints');
       return;
     }
     
-    // Switch to markdown tab when new markdown is generated
-    if (hasMarkdown && activeContentType === 'original' && note.markdown_content_generated_at) {
-      console.log("Auto-switching to markdown tab because new markdown was generated");
+    // Force immediate switch to markdown when it becomes available
+    if (hasMarkdown && activeContentType === 'original') {
+      console.log("Immediately switching to markdown tab");
       setActiveContentType('markdown');
       return;
     }
     
-    // Switch to improved content tab when new improved content is generated
-    if (hasImprovedClarity && activeContentType === 'original' && note.improved_content_generated_at) {
-      console.log("Auto-switching to improved content tab because new improved content was generated");
+    // Force immediate switch to improved content when it becomes available
+    if (hasImprovedClarity && activeContentType === 'original') {
+      console.log("Immediately switching to improved content tab");
       setActiveContentType('improved');
       return;
     }
-  }, [
-    hasSummary, 
-    hasKeyPoints, 
-    hasMarkdown, 
-    hasImprovedClarity, 
-    note.summary_generated_at, 
-    note.key_points_generated_at,
-    note.markdown_content_generated_at,
-    note.improved_content_generated_at,
-    activeContentType
-  ]);
+  }, [hasSummary, hasKeyPoints, hasMarkdown, hasImprovedClarity, activeContentType, isGeneratingSummary]);
   
   // Reset to original tab when editing starts
   useEffect(() => {

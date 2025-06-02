@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { EnhancementFunction } from "./types";
 
@@ -85,7 +84,7 @@ export const enrichNote = async (
     const timeoutId = setTimeout(() => {
       console.error('Enhancement request timed out after 90 seconds');
       controller.abort();
-    }, 90000); // 90 second timeout (increased from 30s)
+    }, 90000); // 90 second timeout
     
     console.log('Calling enrich-note function...');
     
@@ -116,8 +115,8 @@ export const enrichNote = async (
     
     console.log('Enhancement completed successfully');
     
-    // Post-process the content to ensure proper formatting
-    const processedContent = postProcessEnhancedContent(data.enhancedContent, enhancementType);
+    // Return the content directly without post-processing
+    const enhancedContent = data.enhancedContent.trim();
     
     // Track token usage (if available) to calculate usage limits
     if (data.tokenUsage) {
@@ -129,7 +128,7 @@ export const enrichNote = async (
       }
     }
 
-    return processedContent;
+    return enhancedContent;
   } catch (error) {
     console.error('Error enriching note:', error);
     

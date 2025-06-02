@@ -26,11 +26,11 @@ export const EnhancementSelector = ({
   setActiveContentType,
   className
 }: EnhancementSelectorProps) => {
-  // Determine which enhancements are available based on note data
-  const hasSummary = !!note.summary && !!note.summary_generated_at;
-  const hasKeyPoints = !!note.key_points && !!note.key_points_generated_at;
-  const hasMarkdown = !!note.markdown_content && !!note.markdown_content_generated_at;
-  const hasImprovedClarity = !!note.improved_content && !!note.improved_content_generated_at;
+  // Determine which enhancements are available based on note data - immediate detection
+  const hasSummary = !!note.summary;
+  const hasKeyPoints = !!note.key_points;
+  const hasMarkdown = !!note.markdown_content;
+  const hasImprovedClarity = !!note.improved_content;
   
   // Check enhancement statuses
   const summaryStatus = note.summary_status || "completed";
@@ -44,11 +44,10 @@ export const EnhancementSelector = ({
     hasKeyPoints,
     hasMarkdown,
     hasImprovedClarity,
-    summaryStatus,
-    summaryTimestamp: note.summary_generated_at
+    summaryStatus
   });
 
-  // Define the enhancement options
+  // Define the enhancement options - show immediately when content exists
   const enhancementOptions: EnhancementOption[] = [
     {
       id: 'original',
