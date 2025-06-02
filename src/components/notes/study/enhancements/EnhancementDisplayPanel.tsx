@@ -120,21 +120,25 @@ export const EnhancementDisplayPanel = ({
   // Check if content contains AI enhancement markers
   const hasEnhancementMarkers = content && content.includes('[AI_ENHANCED]') && content.includes('[/AI_ENHANCED]');
   
-  // FIXED: More robust spelling/grammar fix detection
-  const isSpellingGrammarFixed = contentType === 'improved' && 
+  // FIXED: Enhanced spelling/grammar detection for Original tab
+  const isSpellingGrammarFixed = contentType === 'original' && 
     note.enhancement_type === 'spelling-grammar' &&
+    note.improved_content && 
     note.original_content_backup && 
-    note.original_content_backup !== content &&
+    note.original_content_backup !== note.improved_content &&
     note.original_content_backup.length > 0;
 
   console.log("🔍 EnhancementDisplayPanel - Spelling/Grammar Detection:", {
     contentType,
     enhancementType: note.enhancement_type,
+    hasImprovedContent: !!note.improved_content,
     hasOriginalBackup: !!note.original_content_backup,
     originalLength: note.original_content_backup?.length || 0,
-    currentLength: content.length,
-    isDifferent: note.original_content_backup !== content,
-    isSpellingGrammarFixed
+    improvedLength: note.improved_content?.length || 0,
+    isDifferent: note.original_content_backup !== note.improved_content,
+    isSpellingGrammarFixed,
+    originalPreview: note.original_content_backup?.substring(0, 100) || 'none',
+    improvedPreview: note.improved_content?.substring(0, 100) || 'none'
   });
 
   // Show loading state with tab-specific loading animation
@@ -252,7 +256,7 @@ export const EnhancementDisplayPanel = ({
           {isSpellingGrammarFixed && note.original_content_backup ? (
             <SpellingGrammarDiff
               originalContent={note.original_content_backup}
-              fixedContent={content}
+              fixedContent={note.improved_content}
               fontSize={fontSize}
               textAlign={textAlign}
               className="prose-mint prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700"
