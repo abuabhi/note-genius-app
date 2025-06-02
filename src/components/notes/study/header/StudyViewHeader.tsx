@@ -37,7 +37,7 @@ interface StudyViewHeaderProps {
   onToggleEditing: () => void;
   onSave: () => void;
   onTitleChange: (title: string) => void;
-  onEnhance: (enhancedContent: string) => void;
+  onEnhance: (enhancedContent: string, enhancementType?: EnhancementFunction) => void;
 }
 
 export const StudyViewHeader = ({
@@ -60,7 +60,7 @@ export const StudyViewHeader = ({
   onEnhance,
 }: StudyViewHeaderProps) => {
   const [title, setTitle] = useState(note?.title || "");
-  const { enrichNote, enhancementOptions, isProcessing, isEnabled, hasReachedLimit } = useNoteEnrichment();
+  const { enrichNote, enhancementOptions, isProcessing } = useNoteEnrichment();
 
   useEffect(() => {
     setTitle(editableTitle || note?.title || "");
@@ -88,7 +88,7 @@ export const StudyViewHeader = ({
       const result = await enrichNote(note.id, note.content, enhancement, note.title || "");
       
       if (result.success) {
-        onEnhance(result.content);
+        onEnhance(result.content, enhancement);
       }
     } catch (error) {
       console.error("Error enhancing note:", error);
@@ -99,8 +99,6 @@ export const StudyViewHeader = ({
   // Group enhancement options by category for the dropdown
   const nonReplacementOptions = enhancementOptions.filter(opt => !opt.replaceContent);
   const replacementOptions = enhancementOptions.filter(opt => opt.replaceContent);
-
-  const isLimitReached = hasReachedLimit();
 
   return (
     <CardHeader className="border-b p-4 bg-card">
@@ -132,14 +130,14 @@ export const StudyViewHeader = ({
         </div>
 
         <div className="flex items-center gap-2">
-          {!isEditing && isEnabled && (
+          {!isEditing && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="outline" 
                   size="sm"
                   className="bg-white border border-mint-200 text-mint-700 hover:bg-mint-50 hover:text-mint-800 transition-all gap-1 group h-8"
-                  disabled={isProcessing || isLimitReached || !isEnabled}
+                  disabled={isProcessing}
                 >
                   <Brain className="h-4 w-4 mr-1 group-hover:text-mint-600 transition-colors" />
                   Use AI

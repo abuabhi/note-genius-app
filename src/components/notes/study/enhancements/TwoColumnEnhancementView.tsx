@@ -49,14 +49,13 @@ export const TwoColumnEnhancementView = ({
     isLoading
   });
   
-  // If new summary is added and we're not already on a different enhancement tab,
-  // automatically switch to the summary tab when it becomes available
+  // Auto-switch to summary tab when a new summary is generated
   useEffect(() => {
     if (hasSummary && activeContentType === 'original') {
-      console.log("Auto-switching to summary tab");
+      console.log("Auto-switching to summary tab because new summary was generated");
       setActiveContentType('summary');
     }
-  }, [hasSummary]);
+  }, [hasSummary, note.summary_generated_at]);
   
   // Reset to original tab when editing starts
   useEffect(() => {

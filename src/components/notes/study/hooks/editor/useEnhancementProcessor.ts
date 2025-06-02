@@ -45,81 +45,76 @@ export const useEnhancementProcessor = (note: Note, editorState: {
       
       // If not editing, directly update the note based on enhancement type
       try {
-        // Check if this is a replacement type enhancement
-        if (enhancementDetails?.replaceContent) {
-          // For enhancements that replace content
-          await updateNoteInDatabase(note.id, { content: enhancedContent });
+        const now = new Date().toISOString();
+        
+        switch (typeToApply) {
+          case 'summarize':
+            console.log("Storing summary in dedicated field", {
+              summary: enhancedContent,
+              summary_generated_at: now,
+              summary_status: 'completed'
+            });
             
-          // Update local note
-          note.content = enhancedContent;
-          toast.success(`Content ${enhancementDetails.title.toLowerCase()} successfully`);
-        } else {
-          // For enhancements that create separate content
-          // Store in the appropriate field based on enhancement type
-          const now = new Date().toISOString();
-          
-          switch (typeToApply) {
-            case 'summarize':
-              console.log("Storing summary in dedicated field", {
-                summary: enhancedContent,
-                summary_generated_at: now,
-                summary_status: 'completed'
-              });
-              
-              // Store in dedicated summary field
-              await updateNoteInDatabase(note.id, {
-                summary: enhancedContent,
-                summary_generated_at: now,
-                summary_status: 'completed'
-              });
-              
-              // Update local note
-              note.summary = enhancedContent;
-              note.summary_generated_at = now;
-              note.summary_status = 'completed';
-              toast.success("Summary created successfully");
-              break;
-              
-            case 'extract-key-points':
-              // Store in dedicated key_points field
-              await updateNoteInDatabase(note.id, {
-                key_points: enhancedContent,
-                key_points_generated_at: now
-              });
-              
-              // Update local note
-              note.key_points = enhancedContent;
-              note.key_points_generated_at = now;
-              toast.success("Key points extracted successfully");
-              break;
-              
-            case 'convert-to-markdown':
-              // Store in dedicated markdown_content field
-              await updateNoteInDatabase(note.id, {
-                markdown_content: enhancedContent,
-                markdown_content_generated_at: now
-              });
-              
-              // Update local note
-              note.markdown_content = enhancedContent;
-              note.markdown_content_generated_at = now;
-              toast.success("Converted to markdown successfully");
-              break;
-              
-            case 'improve-clarity':
-              // Store in dedicated improved_content field
-              await updateNoteInDatabase(note.id, {
-                improved_content: enhancedContent,
-                improved_content_generated_at: now
-              });
-              
-              // Update local note
-              note.improved_content = enhancedContent;
-              note.improved_content_generated_at = now;
-              toast.success("Improved clarity generated successfully");
-              break;
-              
-            default:
+            // Store in dedicated summary field
+            await updateNoteInDatabase(note.id, {
+              summary: enhancedContent,
+              summary_generated_at: now,
+              summary_status: 'completed'
+            });
+            
+            // Update local note
+            note.summary = enhancedContent;
+            note.summary_generated_at = now;
+            note.summary_status = 'completed';
+            toast.success("Summary created successfully");
+            break;
+            
+          case 'extract-key-points':
+            // Store in dedicated key_points field
+            await updateNoteInDatabase(note.id, {
+              key_points: enhancedContent,
+              key_points_generated_at: now
+            });
+            
+            // Update local note
+            note.key_points = enhancedContent;
+            note.key_points_generated_at = now;
+            toast.success("Key points extracted successfully");
+            break;
+            
+          case 'convert-to-markdown':
+            // Store in dedicated markdown_content field
+            await updateNoteInDatabase(note.id, {
+              markdown_content: enhancedContent,
+              markdown_content_generated_at: now
+            });
+            
+            // Update local note
+            note.markdown_content = enhancedContent;
+            note.markdown_content_generated_at = now;
+            toast.success("Converted to markdown successfully");
+            break;
+            
+          case 'improve-clarity':
+            // Store in dedicated improved_content field
+            await updateNoteInDatabase(note.id, {
+              improved_content: enhancedContent,
+              improved_content_generated_at: now
+            });
+            
+            // Update local note
+            note.improved_content = enhancedContent;
+            note.improved_content_generated_at = now;
+            toast.success("Improved clarity generated successfully");
+            break;
+            
+          default:
+            // For replacement type enhancements, replace the main content
+            if (enhancementDetails?.replaceContent) {
+              await updateNoteInDatabase(note.id, { content: enhancedContent });
+              note.content = enhancedContent;
+              toast.success(`Content ${enhancementDetails.title.toLowerCase()} successfully`);
+            } else {
               // Fallback to summary for any other enhancements
               await updateNoteInDatabase(note.id, {
                 summary: enhancedContent,
@@ -127,12 +122,11 @@ export const useEnhancementProcessor = (note: Note, editorState: {
                 summary_status: 'completed'
               });
               
-              // Update local note
               note.summary = enhancedContent;
               note.summary_generated_at = now;
               note.summary_status = 'completed';
               toast.success("Enhancement completed successfully");
-          }
+            }
         }
       } catch (error) {
         console.error("Error saving enhancement:", error);
