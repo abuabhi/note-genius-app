@@ -47,7 +47,9 @@ export const useEnrichmentUsageStats = () => {
       const usageData = await fetchNoteEnrichmentUsage(currentMonth);
       
       // Normalize the tier - handle legacy STUDENT tier by mapping to SCHOLAR
-      const normalizedTier = userData.user_tier === 'STUDENT' ? 'SCHOLAR' : (userData.user_tier || 'SCHOLAR');
+      // Cast to string to handle potential legacy values not in the current enum
+      const rawTier = userData.user_tier as string;
+      const normalizedTier = rawTier === 'STUDENT' ? 'SCHOLAR' : (userData.user_tier || 'SCHOLAR');
       
       // Get tier limit
       const { data: tierData, error: tierError } = await supabase
