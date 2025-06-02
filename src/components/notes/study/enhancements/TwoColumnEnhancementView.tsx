@@ -85,21 +85,12 @@ export const TwoColumnEnhancementView = ({
   const isGeneratingSummary = summaryStatus === 'generating' || summaryStatus === 'pending';
   const hasSummaryError = summaryStatus === 'failed';
   
-  // Enhanced debug log to trace improved content detection
   console.log("🔍 TwoColumnEnhancementView - Enhanced state analysis:", {
     noteId: note.id,
     timestamp: new Date().toISOString(),
-    isEditOperation, // NEW: Log edit operation status
-    summaryValidation: {
-      rawContent: note.summary?.substring(0, 100) || 'none',
-      exists: !!note.summary,
-      isString: typeof note.summary === 'string',
-      length: note.summary?.length || 0,
-      trimmedLength: note.summary?.trim()?.length || 0,
-      status: summaryStatus,
-      isCompleted: summaryStatus === 'completed',
-      passesValidation: hasSummary
-    },
+    isEditOperation,
+    activeContentType,
+    enhancementType: note.enhancement_type,
     improvedContentValidation: {
       rawContent: note.improved_content?.substring(0, 100) || 'none',
       exists: !!note.improved_content,
@@ -136,11 +127,17 @@ export const TwoColumnEnhancementView = ({
     }, 5000);
   };
   
-  // FIXED: Enhanced auto-switch logic that respects edit operations
+  // FIXED: Enhanced auto-switch logic that respects edit operations and spelling/grammar fixes
   useEffect(() => {
     // COMPLETELY PREVENT auto-switching during edit operations
     if (isEditOperation) {
       console.log("🚫 Auto-switching disabled during edit operation");
+      return;
+    }
+
+    // PREVENT auto-switching for spelling/grammar enhancements - stay on Original tab
+    if (note.enhancement_type === 'spelling-grammar' && activeContentType === 'original') {
+      console.log("🚫 Staying on Original tab for spelling/grammar enhancement");
       return;
     }
 
@@ -161,6 +158,7 @@ export const TwoColumnEnhancementView = ({
     console.log("🔄 TwoColumnEnhancementView - Auto-switch evaluation:", {
       activeContentType,
       isEditOperation,
+      enhancementType: note.enhancement_type,
       contentAvailability: {
         hasImprovedClarity,
         hasKeyPoints,
@@ -197,7 +195,13 @@ export const TwoColumnEnhancementView = ({
       return;
     }
     
-    // Priority-based auto-switching when new content is generated
+    // SPECIAL CASE: For spelling/grammar fixes, do NOT auto-switch away from Original tab
+    if (note.enhancement_type === 'spelling-grammar' && newImprovedGenerated) {
+      console.log("🚫 Spelling/grammar fix detected - staying on Original tab to show diff");
+      return;
+    }
+    
+    // Priority-based auto-switching when new content is generated (excluding spelling/grammar)
     if (newKeyPointsGenerated) {
       console.log("🔑 Auto-switching to key points tab - NEW content detected");
       setActiveContentType('keyPoints');
@@ -205,7 +209,7 @@ export const TwoColumnEnhancementView = ({
       return;
     }
     
-    if (newImprovedGenerated) {
+    if (newImprovedGenerated && note.enhancement_type !== 'spelling-grammar') {
       console.log("✨ Auto-switching to improved clarity tab - NEW content detected");
       setActiveContentType('improved');
       lastAutoSwitchTimestamp.current = currentTime;
@@ -226,8 +230,8 @@ export const TwoColumnEnhancementView = ({
       return;
     }
     
-    // Fallback: Priority order for auto-switching when on original tab
-    if (activeContentType === 'original') {
+    // Fallback: Priority order for auto-switching when on original tab (excluding spelling/grammar)
+    if (activeContentType === 'original' && note.enhancement_type !== 'spelling-grammar') {
       if (hasKeyPoints) {
         console.log("🔑 Auto-switching to key points tab - content available");
         setActiveContentType('keyPoints');
@@ -264,7 +268,8 @@ export const TwoColumnEnhancementView = ({
     activeContentType, 
     isGeneratingSummary,
     setActiveContentType,
-    isEditOperation, // NEW: Include edit operation in dependencies
+    isEditOperation,
+    note.enhancement_type, // NEW: Include enhancement type in dependencies
     note.improved_content_generated_at,
     note.key_points_generated_at,
     note.summary_generated_at,

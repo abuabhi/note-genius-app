@@ -36,14 +36,11 @@ export const useEnhancementProcessor = (note: Note, editorState: {
     
     try {
       let finalEnhancedContent = enhancedContent;
-      let finalEnhancementType = enhancementType || 'improve-clarity';
+      let finalEnhancementType = enhancementType || 'fix-spelling-grammar'; // Default to spelling/grammar for Original tab
       
       // If no enhanced content is provided, we need to call the enrichment API
       if (!finalEnhancedContent) {
-        console.log("🔄 No enhanced content provided, calling enrichment API...");
-        
-        // Default to spelling-grammar check if called without parameters from Original tab
-        finalEnhancementType = 'fix-spelling-grammar';
+        console.log("🔄 No enhanced content provided, calling enrichment API for spelling/grammar...");
         
         const result = await enrichNote(
           note.id,
@@ -57,7 +54,7 @@ export const useEnhancementProcessor = (note: Note, editorState: {
         }
         
         finalEnhancedContent = result.content;
-        console.log("✅ Enhancement API call successful, content length:", finalEnhancedContent.length);
+        console.log("✅ Spelling/Grammar API call successful, content length:", finalEnhancedContent.length);
       }
       
       const enhancementDetails = getEnhancementDetails?.(finalEnhancementType);
@@ -68,7 +65,6 @@ export const useEnhancementProcessor = (note: Note, editorState: {
         enhancementDetails
       });
       
-      // CRITICAL FIX: Never replace content field for improve-clarity or fix-spelling-grammar
       // If we're editing and it's a replacement type enhancement, update the editable content
       if (isEditing && enhancementDetails?.replaceContent && finalEnhancementType !== 'improve-clarity' && finalEnhancementType !== 'fix-spelling-grammar') {
         console.log("✏️ Updating editable content in editor mode");
