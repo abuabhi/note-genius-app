@@ -56,42 +56,42 @@ export const EnhancementDisplayPanel = ({
           title: "Original Content",
           icon: FileText,
           description: "Your original note content",
-          color: "text-gray-700"
+          color: "text-mint-600"
         };
       case 'summary':
         return {
           title: "Summary",
           icon: Target,
           description: "AI-generated concise summary",
-          color: "text-mint-700"
+          color: "text-mint-600"
         };
       case 'keyPoints':
         return {
           title: "Key Points",
           icon: List,
           description: "Essential highlights extracted",
-          color: "text-blue-700"
+          color: "text-mint-600"
         };
       case 'improved':
         return {
           title: "Improved Clarity",
           icon: Sparkles,
           description: "Enhanced readability version",
-          color: "text-purple-700"
+          color: "text-mint-600"
         };
       case 'markdown':
         return {
           title: "Markdown Format",
           icon: Code,
           description: "Structured markdown format",
-          color: "text-green-700"
+          color: "text-mint-600"
         };
       default:
         return {
           title: "",
           icon: FileText,
           description: "",
-          color: "text-gray-700"
+          color: "text-mint-600"
         };
     }
   };

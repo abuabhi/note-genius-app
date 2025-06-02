@@ -1,3 +1,4 @@
+
 import { useMemo } from "react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -19,32 +20,44 @@ export const RichTextDisplay = ({
   removeTitle = false,
   className 
 }: RichTextDisplayProps) => {
-  // Process content to remove auto-generated titles if requested
+  // Process content to remove auto-generated titles and clean up HTML tags
   const processedContent = useMemo(() => {
-    if (!removeTitle || !content) return content;
-    
-    // Remove common auto-generated title patterns including the specific case
-    const titlePatterns = [
-      /^#+\s*Analysis of Notes on .+?\n/i,
-      /^#+\s*Summary of .+?\n/i,
-      /^#+\s*Key Points of .+?\n/i,
-      /^#+\s*Improved .+?\n/i,
-      /^#+\s*Markdown Version of .+?\n/i,
-      /^#+\s*Formal vs Informal Language\n/i,
-      /^#+\s*.+? vs .+?\n/i,
-      /^Analysis of Notes on .+?\n/i,
-      /^Summary of .+?\n/i,
-      /^Key Points of .+?\n/i,
-      /^Improved .+?\n/i,
-      /^Markdown Version of .+?\n/i,
-      /^Formal vs Informal Language\n/i,
-      /^.+? vs .+?\n/i,
-    ];
+    if (!content) return content;
     
     let processed = content;
-    titlePatterns.forEach(pattern => {
-      processed = processed.replace(pattern, '');
-    });
+    
+    // Remove auto-generated title patterns if requested
+    if (removeTitle) {
+      const titlePatterns = [
+        /^#+\s*Analysis of Notes on .+?\n/i,
+        /^#+\s*Summary of .+?\n/i,
+        /^#+\s*Key Points of .+?\n/i,
+        /^#+\s*Improved .+?\n/i,
+        /^#+\s*Markdown Version of .+?\n/i,
+        /^#+\s*Formal vs Informal Language\n/i,
+        /^#+\s*.+? vs .+?\n/i,
+        /^Analysis of Notes on .+?\n/i,
+        /^Summary of .+?\n/i,
+        /^Key Points of .+?\n/i,
+        /^Improved .+?\n/i,
+        /^Markdown Version of .+?\n/i,
+        /^Formal vs Informal Language\n/i,
+        /^.+? vs .+?\n/i,
+      ];
+      
+      titlePatterns.forEach(pattern => {
+        processed = processed.replace(pattern, '');
+      });
+    }
+    
+    // Remove HTML tags that shouldn't be in markdown
+    processed = processed.replace(/<p style="[^"]*">/g, '');
+    processed = processed.replace(/<\/p>/g, '');
+    processed = processed.replace(/<[^>]*>/g, '');
+    
+    // Handle AI_ENHANCED tags by converting them to highlighted text
+    processed = processed.replace(/\[AI_ENHANCED\]/g, '<mark class="bg-mint-100 text-mint-800 px-1 rounded">');
+    processed = processed.replace(/\[\/AI_ENHANCED\]/g, '</mark>');
     
     return processed.trim();
   }, [content, removeTitle]);
@@ -176,6 +189,12 @@ export const RichTextDisplay = ({
             <td className="px-4 py-3 border border-gray-300 text-gray-700" {...props}>
               {children}
             </td>
+          ),
+          // Handle mark elements for AI enhanced content
+          mark: ({children, ...props}) => (
+            <mark className="bg-mint-100 text-mint-800 px-1 rounded border-b-2 border-mint-300" {...props}>
+              {children}
+            </mark>
           ),
         }}
       >
