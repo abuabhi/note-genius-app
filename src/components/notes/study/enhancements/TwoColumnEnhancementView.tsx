@@ -45,7 +45,8 @@ export const TwoColumnEnhancementView = ({
     hasImprovedClarity,
     summaryStatus,
     activeContentType,
-    isLoading
+    isLoading,
+    improvedContentLength: note.improved_content?.length || 0
   });
   
   // Auto-switch to the appropriate tab when new content is generated
@@ -53,7 +54,13 @@ export const TwoColumnEnhancementView = ({
     // Don't auto-switch if user is currently viewing original content or if editing
     if (isEditing) return;
     
-    // Priority order for auto-switching: Key Points > Summary > Markdown > Improved
+    // Priority order for auto-switching: Improved Clarity > Key Points > Summary > Markdown
+    if (hasImprovedClarity && activeContentType === 'original') {
+      console.log("Auto-switching to improved clarity tab - content detected");
+      setActiveContentType('improved');
+      return;
+    }
+    
     if (hasKeyPoints && activeContentType === 'original') {
       console.log("Auto-switching to key points tab - content detected");
       setActiveContentType('keyPoints');
@@ -71,24 +78,18 @@ export const TwoColumnEnhancementView = ({
       setActiveContentType('markdown');
       return;
     }
-    
-    if (hasImprovedClarity && activeContentType === 'original') {
-      console.log("Auto-switching to improved content tab - content detected");
-      setActiveContentType('improved');
-      return;
-    }
   }, [
+    hasImprovedClarity,
     hasKeyPoints, 
     hasSummary, 
     hasMarkdown, 
-    hasImprovedClarity, 
     activeContentType, 
     isGeneratingSummary, 
     isEditing,
+    note.improved_content_generated_at, // Track when improved content was generated
     note.key_points_generated_at, // Track when key points were generated
     note.summary_generated_at, // Track when summary was generated
-    note.markdown_content_generated_at, // Track when markdown was generated
-    note.improved_content_generated_at // Track when improved content was generated
+    note.markdown_content_generated_at // Track when markdown was generated
   ]);
   
   // Reset to original tab when editing starts

@@ -47,7 +47,9 @@ export const EnhancementSelector = ({
     summaryStatus,
     activeContentType,
     keyPointsData: note.key_points ? `${note.key_points.length} chars` : 'none',
-    keyPointsGeneratedAt: note.key_points_generated_at
+    keyPointsGeneratedAt: note.key_points_generated_at,
+    improvedContentData: note.improved_content ? `${note.improved_content.length} chars` : 'none',
+    improvedContentGeneratedAt: note.improved_content_generated_at
   });
 
   // Define the enhancement options - show immediately when content exists
@@ -70,14 +72,14 @@ export const EnhancementSelector = ({
       available: hasKeyPoints
     },
     {
-      id: 'markdown',
-      label: 'Markdown',
-      available: hasMarkdown
-    },
-    {
       id: 'improved',
       label: 'Improved Clarity',
       available: hasImprovedClarity
+    },
+    {
+      id: 'markdown',
+      label: 'Markdown',
+      available: hasMarkdown
     }
   ];
 
