@@ -47,24 +47,6 @@ export const updateNoteWithEnhancement = async (
         };
         break;
         
-      case 'fix-spelling-grammar':
-        // Special handling for spelling/grammar fixes
-        updateData = {
-          improved_content: enhancedContent,
-          improved_content_generated_at: now,
-          enhancement_type: 'spelling-grammar',
-          // Store original content backup if provided
-          ...(originalContent && {
-            original_content_backup: originalContent,
-            spelling_grammar_fixes: JSON.stringify([{
-              original: originalContent,
-              fixed: enhancedContent,
-              timestamp: now
-            }])
-          })
-        };
-        break;
-        
       default:
         // Fallback to summary
         updateData = {
