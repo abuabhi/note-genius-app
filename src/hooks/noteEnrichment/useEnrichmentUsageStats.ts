@@ -55,13 +55,13 @@ export const useEnrichmentUsageStats = () => {
       console.log("📈 Usage data:", usageData?.length || 0);
       
       // FIXED: Better tier normalization with proper type handling
-      const rawTier = userData.user_tier as string;
-      let normalizedTier: string;
+      const rawTier = userData.user_tier;
+      let normalizedTier: 'SCHOLAR' | 'GRADUATE' | 'MASTER' | 'DEAN';
       
-      if (rawTier === 'STUDENT') {
+      if (rawTier === 'STUDENT' || !rawTier) {
         normalizedTier = 'SCHOLAR'; // Map legacy STUDENT tier to SCHOLAR
       } else {
-        normalizedTier = userData.user_tier || 'SCHOLAR';
+        normalizedTier = rawTier as 'SCHOLAR' | 'GRADUATE' | 'MASTER' | 'DEAN';
       }
       
       console.log("🔄 Normalized tier:", normalizedTier);
