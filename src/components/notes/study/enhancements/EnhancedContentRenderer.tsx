@@ -21,8 +21,11 @@ const parseEnhancedContent = (content: string): ParsedContent[] => {
   
   let lastIndex = 0;
   let match;
+  let hasMarkers = false;
   
   while ((match = enhancementRegex.exec(content)) !== null) {
+    hasMarkers = true;
+    
     // Add original content before the enhancement
     if (match.index > lastIndex) {
       const originalContent = content.slice(lastIndex, match.index);
@@ -44,7 +47,7 @@ const parseEnhancedContent = (content: string): ParsedContent[] => {
   }
   
   // Add remaining original content
-  if (lastIndex < content.length) {
+  if (hasMarkers && lastIndex < content.length) {
     const remainingContent = content.slice(lastIndex);
     if (remainingContent.trim()) {
       parts.push({
@@ -54,10 +57,11 @@ const parseEnhancedContent = (content: string): ParsedContent[] => {
     }
   }
   
-  // If no enhancements found, treat entire content as original
+  // If no enhancement markers found, treat entire content as enhanced
+  // This handles legacy enhanced content that doesn't have markers
   if (parts.length === 0) {
     parts.push({
-      type: 'original',
+      type: 'enhanced',
       content: content
     });
   }
@@ -72,12 +76,15 @@ export const EnhancedContentRenderer = ({
   className
 }: EnhancedContentRendererProps) => {
   const parsedContent = parseEnhancedContent(content);
+  const hasMarkers = content.includes('[AI_ENHANCED]') && content.includes('[/AI_ENHANCED]');
   
   console.log("🎨 EnhancedContentRenderer - Parsing content:", {
     originalLength: content.length,
     parsedParts: parsedContent.length,
     enhancedParts: parsedContent.filter(p => p.type === 'enhanced').length,
-    originalParts: parsedContent.filter(p => p.type === 'original').length
+    originalParts: parsedContent.filter(p => p.type === 'original').length,
+    hasMarkers,
+    isLegacyContent: !hasMarkers
   });
   
   return (
@@ -93,7 +100,7 @@ export const EnhancedContentRenderer = ({
         >
           {part.type === 'enhanced' && (
             <div className="absolute -top-1 -left-1 bg-mint-500 text-white text-xs px-2 py-0.5 rounded-full font-medium shadow-sm">
-              AI Enhanced
+              {hasMarkers ? 'AI Enhanced' : 'AI Improved'}
             </div>
           )}
           <RichTextDisplay

@@ -75,6 +75,9 @@ export const EnhancementDisplayPanel = ({
 
   // Check if content contains AI enhancement markers
   const hasEnhancementMarkers = content.includes('[AI_ENHANCED]') && content.includes('[/AI_ENHANCED]');
+  
+  // For improved clarity content, we want to show it as enhanced regardless of markers
+  const shouldUseEnhancedRenderer = contentType === 'improved' && content.length > 0;
 
   console.log("🎯 EnhancementDisplayPanel - Rendering content:", {
     contentType,
@@ -82,20 +85,24 @@ export const EnhancementDisplayPanel = ({
     hasContent: !!content,
     contentLength: content.length,
     hasEnhancementMarkers,
+    shouldUseEnhancedRenderer,
     isGenerating,
     hasError
   });
 
   return (
     <div className={className}>
-      <EnhancementTabHeader title={title} />
+      <EnhancementTabHeader 
+        title={title} 
+        showAiIndicator={contentType === 'improved' && !!content}
+      />
       {contentType === 'original' ? (
         <RichTextDisplay 
           content={content} 
           fontSize={fontSize} 
           textAlign={textAlign} 
         />
-      ) : contentType === 'improved' && hasEnhancementMarkers ? (
+      ) : shouldUseEnhancedRenderer ? (
         <EnhancedContentRenderer
           content={content}
           fontSize={fontSize}
