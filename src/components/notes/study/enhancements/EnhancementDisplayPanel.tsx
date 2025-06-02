@@ -84,8 +84,8 @@ export const EnhancementDisplayPanel = ({
   if (isLoading) {
     return (
       <div className={cn("flex flex-col", className)}>
-        <div className="border-b border-border p-4 h-[73px] flex items-center">
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        <div className="border-b border-border py-2 px-3 bg-muted/30 h-[49px] flex items-center">
+          <h2 className="text-sm font-medium text-muted-foreground">{title}</h2>
         </div>
         <div className="flex-1 flex items-center justify-center p-8">
           <LoadingAnimations />
@@ -98,8 +98,8 @@ export const EnhancementDisplayPanel = ({
   if (!content && contentType !== 'original') {
     return (
       <div className={cn("flex flex-col", className)}>
-        <div className="border-b border-border p-4 h-[73px] flex items-center">
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        <div className="border-b border-border py-2 px-3 bg-muted/30 h-[49px] flex items-center">
+          <h2 className="text-sm font-medium text-muted-foreground">{title}</h2>
         </div>
         <div className="flex-1 flex items-center justify-center p-8">
           <div className="text-center">
@@ -127,9 +127,9 @@ export const EnhancementDisplayPanel = ({
 
   return (
     <div className={cn("flex flex-col", className)}>
-      {/* Header with consistent height */}
-      <div className="border-b border-border p-4 h-[73px] flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+      {/* Header with exact same styling as EnhancementSelector header */}
+      <div className="border-b border-border py-2 px-3 bg-muted/30 h-[49px] flex items-center justify-between">
+        <h2 className="text-sm font-medium text-muted-foreground">{title}</h2>
         {contentType !== 'original' && onRetryEnhancement && (
           <Button
             onClick={() => handleRetry(getEnhancementTypeFromContent(contentType))}
