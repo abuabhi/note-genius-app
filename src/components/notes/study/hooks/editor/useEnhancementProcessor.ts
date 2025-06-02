@@ -36,8 +36,8 @@ export const useEnhancementProcessor = (note: Note, editorState: {
         isEditing
       });
       
-      if (isEditing) {
-        // If we're editing, just update the editable content
+      // If we're editing and it's a replacement type enhancement, update the editable content
+      if (isEditing && enhancementDetails?.replaceContent) {
         setEditableContent(enhancedContent);
         toast.success("Enhancement applied to editor. Save to keep changes.");
         return;
@@ -55,14 +55,14 @@ export const useEnhancementProcessor = (note: Note, editorState: {
               summary_status: 'completed'
             });
             
-            // Store in dedicated summary field
+            // Store in dedicated summary field - DO NOT modify original content
             await updateNoteInDatabase(note.id, {
               summary: enhancedContent,
               summary_generated_at: now,
               summary_status: 'completed'
             });
             
-            // Update local note
+            // Update local note object
             note.summary = enhancedContent;
             note.summary_generated_at = now;
             note.summary_status = 'completed';
@@ -96,16 +96,23 @@ export const useEnhancementProcessor = (note: Note, editorState: {
             break;
             
           case 'improve-clarity':
-            // Store in dedicated improved_content field
-            await updateNoteInDatabase(note.id, {
-              improved_content: enhancedContent,
-              improved_content_generated_at: now
-            });
-            
-            // Update local note
-            note.improved_content = enhancedContent;
-            note.improved_content_generated_at = now;
-            toast.success("Improved clarity generated successfully");
+            // For improve-clarity, we can either replace content or store separately
+            if (enhancementDetails?.replaceContent) {
+              // Replace the main content
+              await updateNoteInDatabase(note.id, { content: enhancedContent });
+              note.content = enhancedContent;
+              toast.success("Content improved successfully");
+            } else {
+              // Store in dedicated improved_content field
+              await updateNoteInDatabase(note.id, {
+                improved_content: enhancedContent,
+                improved_content_generated_at: now
+              });
+              
+              note.improved_content = enhancedContent;
+              note.improved_content_generated_at = now;
+              toast.success("Improved clarity generated successfully");
+            }
             break;
             
           default:
