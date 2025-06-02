@@ -25,8 +25,9 @@ export const useNoteUpdateHandler = (currentNote: Note, forceRefresh: () => void
       // Force immediate refresh of the component
       forceRefresh();
       
-      // Also update local realtime state immediately
-      setRealtimeNote(prev => ({ ...prev, ...updatedData }));
+      // Also update local realtime state immediately with the merged note
+      const updatedNote = { ...currentNote, ...updatedData };
+      setRealtimeNote(updatedNote);
       
     } catch (error) {
       console.error("❌ Error updating note:", error);
