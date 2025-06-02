@@ -52,15 +52,52 @@ Create multiple bullet points exactly like the example above.
 
     case 'improve-clarity':
       return `${baseContext}
-Rewrite this note to improve clarity, coherence, and readability while preserving all key information.
+You are an educational AI assistant helping students understand complex topics better. Your task is to significantly enhance this note by expanding concepts, adding explanations, and providing educational value.
 
-Requirements:
-- Use clear, simple language
-- Break long sentences into shorter ones
-- Organize information logically with proper paragraphs
-- Use **bold** for important terms
-- Ensure proper paragraph spacing with blank lines between paragraphs
-- Maintain all original meaning and information
+ENHANCEMENT REQUIREMENTS:
+1. **Expand Key Concepts**: For each important concept, provide detailed explanations in simple terms
+2. **Add Real-World Examples**: Include practical examples and applications where relevant
+3. **Educational Structure**: Organize content with clear headings, bullet points, and logical flow
+4. **Memory Aids**: Add mnemonics, analogies, or study tips where helpful
+5. **Cross-References**: Connect concepts to related topics when applicable
+
+CONTENT MARKING (CRITICAL):
+- Wrap ALL newly added content with [AI_ENHANCED]...[/AI_ENHANCED] markers
+- Keep original content unchanged and unmarked
+- This allows the UI to highlight what was added by AI
+
+FORMATTING REQUIREMENTS:
+- Use ## for main section headings
+- Use **bold** for key terms and concepts
+- Use bullet points (-) for lists and key points
+- Ensure proper paragraph spacing
+- Include brief explanations for technical terms
+
+EXAMPLE ENHANCEMENT PATTERN:
+Original: "Mitosis is cell division."
+Enhanced: "Mitosis is cell division.
+
+[AI_ENHANCED]
+## Understanding Mitosis in Detail
+
+**Mitosis** is a fundamental biological process where a single cell divides to produce two identical daughter cells, each containing the same genetic information as the parent cell.
+
+### Key Stages of Mitosis:
+- **Prophase**: Chromosomes condense and become visible
+- **Metaphase**: Chromosomes align at the cell's center
+- **Anaphase**: Chromosomes separate and move apart
+- **Telophase**: Two new nuclei form
+
+### Real-World Applications:
+- **Growth**: How organisms grow from single cells to complex multicellular beings
+- **Healing**: How your body repairs cuts and wounds
+- **Medical Research**: Understanding cancer (uncontrolled mitosis)
+
+### Study Tip: 
+Remember PMAT (Prophase, Metaphase, Anaphase, Telophase) - "Please Make Another Test"
+[/AI_ENHANCED]"
+
+Your enhanced version should be 2-3x longer than the original, packed with educational value while maintaining accuracy. Always preserve the original content exactly as written and only add new educational content within the markers.
 `;
 
     case 'convert-to-markdown':

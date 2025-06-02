@@ -1,8 +1,9 @@
 
 import { RichTextDisplay } from "@/components/ui/rich-text/RichTextDisplay";
+import { EnhancedContentRenderer } from "./EnhancedContentRenderer";
 import { TextAlignType } from "../hooks/useStudyViewState";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Sparkles } from "lucide-react";
 import { EnhancementError } from "../../enrichment/EnhancementError";
 import { LoadingAnimations } from "./LoadingAnimations";
 
@@ -63,31 +64,53 @@ export const EnhancementContent = ({
   if (!content || content.trim() === '') {
     return (
       <div className="p-8 bg-gray-50 rounded-lg border border-gray-100 text-center">
-        <p className="text-muted-foreground mb-4">No {title.toLowerCase()} available</p>
-        {onRetry && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => onRetry(enhancementType)}
-            className="text-mint-600 hover:text-mint-700"
-          >
-            <RefreshCw className="mr-2 h-4 w-4" /> Generate {title}
-          </Button>
-        )}
+        <div className="flex flex-col items-center space-y-4">
+          <Sparkles className="h-12 w-12 text-mint-400" />
+          <div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No {title.toLowerCase()} available</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Generate AI-enhanced content to see {title.toLowerCase()} here
+            </p>
+          </div>
+          {onRetry && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => onRetry(enhancementType)}
+              className="text-mint-600 hover:text-mint-700 border-mint-200 hover:border-mint-300"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" /> Generate {title}
+            </Button>
+          )}
+        </div>
       </div>
     );
   }
+
+  // Check if content contains AI enhancement markers
+  const hasEnhancementMarkers = content.includes('[AI_ENHANCED]') && content.includes('[/AI_ENHANCED]');
   
   return (
     <div className="animate-fade-in">
-      <RichTextDisplay 
-        content={content} 
-        fontSize={fontSize} 
-        textAlign={textAlign}
-        className={`prose-sm prose-headings:font-medium prose-headings:text-mint-800 prose-ul:pl-6 prose-ol:pl-6 ${
-          isMarkdown ? "font-mono" : ""
-        }`}
-      />
+      {hasEnhancementMarkers ? (
+        <EnhancedContentRenderer
+          content={content}
+          fontSize={fontSize}
+          textAlign={textAlign}
+          className={`prose-sm prose-headings:font-medium prose-headings:text-mint-800 prose-ul:pl-6 prose-ol:pl-6 ${
+            isMarkdown ? "font-mono" : ""
+          }`}
+        />
+      ) : (
+        <RichTextDisplay 
+          content={content} 
+          fontSize={fontSize} 
+          textAlign={textAlign}
+          className={`prose-sm prose-headings:font-medium prose-headings:text-mint-800 prose-ul:pl-6 prose-ol:pl-6 ${
+            isMarkdown ? "font-mono" : ""
+          }`}
+        />
+      )}
     </div>
   );
 };

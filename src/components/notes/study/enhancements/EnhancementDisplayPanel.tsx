@@ -1,4 +1,5 @@
 
+import { EnhancedContentRenderer } from "./EnhancedContentRenderer";
 import { RichTextDisplay } from "@/components/ui/rich-text/RichTextDisplay";
 import { EnhancementTabHeader } from "./EnhancementTabHeader";
 import { EnhancementContent } from "./EnhancementContent";
@@ -72,6 +73,19 @@ export const EnhancementDisplayPanel = ({
   const title = getTitle();
   const isMarkdownFormat = contentType === 'markdown';
 
+  // Check if content contains AI enhancement markers
+  const hasEnhancementMarkers = content.includes('[AI_ENHANCED]') && content.includes('[/AI_ENHANCED]');
+
+  console.log("🎯 EnhancementDisplayPanel - Rendering content:", {
+    contentType,
+    title,
+    hasContent: !!content,
+    contentLength: content.length,
+    hasEnhancementMarkers,
+    isGenerating,
+    hasError
+  });
+
   return (
     <div className={className}>
       <EnhancementTabHeader title={title} />
@@ -80,6 +94,12 @@ export const EnhancementDisplayPanel = ({
           content={content} 
           fontSize={fontSize} 
           textAlign={textAlign} 
+        />
+      ) : contentType === 'improved' && hasEnhancementMarkers ? (
+        <EnhancedContentRenderer
+          content={content}
+          fontSize={fontSize}
+          textAlign={textAlign}
         />
       ) : (
         <EnhancementContent
