@@ -27,9 +27,8 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
     currentNoteId: currentNote.id,
     originalHasKeyPoints: !!note.key_points,
     currentHasKeyPoints: !!currentNote.key_points,
-    originalUpdatedAt: note.updated_at,
-    currentUpdatedAt: currentNote.updated_at,
-    keyPointsLength: currentNote.key_points?.length || 0
+    keyPointsLength: currentNote.key_points?.length || 0,
+    keyPointsGeneratedAt: currentNote.key_points_generated_at
   });
 
   const handleRetryEnhancement = async (enhancementType: string): Promise<void> => {

@@ -47,7 +47,6 @@ export const EnhancementSelector = ({
     summaryStatus,
     activeContentType,
     keyPointsData: note.key_points ? `${note.key_points.length} chars` : 'none',
-    noteUpdatedAt: note.updated_at,
     keyPointsGeneratedAt: note.key_points_generated_at
   });
 

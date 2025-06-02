@@ -45,8 +45,7 @@ export const TwoColumnEnhancementView = ({
     hasImprovedClarity,
     summaryStatus,
     activeContentType,
-    isLoading,
-    noteUpdatedAt: note.updated_at
+    isLoading
   });
   
   // Auto-switch to the appropriate tab when new content is generated
@@ -86,7 +85,10 @@ export const TwoColumnEnhancementView = ({
     activeContentType, 
     isGeneratingSummary, 
     isEditing,
-    note.updated_at // Add this dependency to react to note updates
+    note.key_points_generated_at, // Track when key points were generated
+    note.summary_generated_at, // Track when summary was generated
+    note.markdown_content_generated_at, // Track when markdown was generated
+    note.improved_content_generated_at // Track when improved content was generated
   ]);
   
   // Reset to original tab when editing starts
