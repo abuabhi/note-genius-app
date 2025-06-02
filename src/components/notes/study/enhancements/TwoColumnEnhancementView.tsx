@@ -28,12 +28,43 @@ export const TwoColumnEnhancementView = ({
   const [activeContentType, setActiveContentType] = useState<EnhancementContentType>('original');
   const wasManuallySelected = useRef(false);
   const lastAutoSwitchTimestamp = useRef<number>(0);
+  const previousNoteId = useRef<string>(note.id);
   
-  // Enhanced detection logic with more explicit checks
-  const hasSummary = !!(note.summary && note.summary.trim() && note.summary.length > 0);
-  const hasKeyPoints = !!(note.key_points && note.key_points.trim() && note.key_points.length > 0);
-  const hasMarkdown = !!(note.markdown_content && note.markdown_content.trim() && note.markdown_content.length > 0);
-  const hasImprovedClarity = !!(note.improved_content && note.improved_content.trim() && note.improved_content.length > 0);
+  // Reset state when note changes
+  useEffect(() => {
+    if (previousNoteId.current !== note.id) {
+      console.log("📝 Note changed, resetting enhancement view state");
+      setActiveContentType('original');
+      wasManuallySelected.current = false;
+      lastAutoSwitchTimestamp.current = 0;
+      previousNoteId.current = note.id;
+    }
+  }, [note.id]);
+  
+  // Enhanced detection logic with comprehensive validation
+  const hasSummary = Boolean(
+    note.summary && 
+    typeof note.summary === 'string' && 
+    note.summary.trim().length > 0
+  );
+  
+  const hasKeyPoints = Boolean(
+    note.key_points && 
+    typeof note.key_points === 'string' && 
+    note.key_points.trim().length > 0
+  );
+  
+  const hasMarkdown = Boolean(
+    note.markdown_content && 
+    typeof note.markdown_content === 'string' && 
+    note.markdown_content.trim().length > 0
+  );
+  
+  const hasImprovedClarity = Boolean(
+    note.improved_content && 
+    typeof note.improved_content === 'string' && 
+    note.improved_content.trim().length > 0
+  );
   
   const summaryStatus = note.summary_status || "completed";
   const isGeneratingSummary = summaryStatus === 'generating' || summaryStatus === 'pending';
@@ -43,23 +74,53 @@ export const TwoColumnEnhancementView = ({
   console.log("🔍 TwoColumnEnhancementView - Enhanced state analysis:", {
     noteId: note.id,
     timestamp: new Date().toISOString(),
-    rawContent: {
-      summary: note.summary?.substring(0, 50) || 'none',
-      keyPoints: note.key_points?.substring(0, 50) || 'none',
-      markdown: note.markdown_content?.substring(0, 50) || 'none',
-      improvedClarity: note.improved_content?.substring(0, 50) || 'none'
+    contentValidation: {
+      improved_content: {
+        exists: !!note.improved_content,
+        isString: typeof note.improved_content === 'string',
+        length: note.improved_content?.length || 0,
+        trimmedLength: note.improved_content?.trim()?.length || 0,
+        validContent: hasImprovedClarity,
+        sample: note.improved_content?.substring(0, 50) || 'none'
+      },
+      summary: {
+        exists: !!note.summary,
+        isString: typeof note.summary === 'string',
+        length: note.summary?.length || 0,
+        trimmedLength: note.summary?.trim()?.length || 0,
+        validContent: hasSummary,
+        sample: note.summary?.substring(0, 50) || 'none'
+      },
+      key_points: {
+        exists: !!note.key_points,
+        isString: typeof note.key_points === 'string',
+        length: note.key_points?.length || 0,
+        trimmedLength: note.key_points?.trim()?.length || 0,
+        validContent: hasKeyPoints,
+        sample: note.key_points?.substring(0, 50) || 'none'
+      },
+      markdown_content: {
+        exists: !!note.markdown_content,
+        isString: typeof note.markdown_content === 'string',
+        length: note.markdown_content?.length || 0,
+        trimmedLength: note.markdown_content?.trim()?.length || 0,
+        validContent: hasMarkdown,
+        sample: note.markdown_content?.substring(0, 50) || 'none'
+      }
     },
     enhancementStates: {
-      summary: { exists: hasSummary, generating: isGeneratingSummary, error: hasSummaryError },
-      keyPoints: { exists: hasKeyPoints, length: note.key_points?.length || 0 },
-      markdown: { exists: hasMarkdown, length: note.markdown_content?.length || 0 },
-      improvedClarity: { exists: hasImprovedClarity, length: note.improved_content?.length || 0 }
+      summary: { valid: hasSummary, generating: isGeneratingSummary, error: hasSummaryError },
+      keyPoints: { valid: hasKeyPoints },
+      markdown: { valid: hasMarkdown },
+      improvedClarity: { valid: hasImprovedClarity }
     },
-    activeContentType,
-    isEditing,
-    isLoading,
-    wasManuallySelected: wasManuallySelected.current,
-    generatedTimestamps: {
+    uiState: {
+      activeContentType,
+      isEditing,
+      isLoading,
+      wasManuallySelected: wasManuallySelected.current
+    },
+    timestamps: {
       summary: note.summary_generated_at,
       keyPoints: note.key_points_generated_at,
       markdown: note.markdown_content_generated_at,
@@ -80,7 +141,7 @@ export const TwoColumnEnhancementView = ({
     }, 5000);
   };
   
-  // Auto-switch to the appropriate tab when new content is generated
+  // Enhanced auto-switch logic with better content detection
   useEffect(() => {
     const currentTime = Date.now();
     const timeSinceLastAutoSwitch = currentTime - lastAutoSwitchTimestamp.current;
@@ -88,13 +149,17 @@ export const TwoColumnEnhancementView = ({
     console.log("🔄 TwoColumnEnhancementView - Auto-switch evaluation:", {
       isEditing,
       activeContentType,
-      hasImprovedClarity,
-      hasKeyPoints,
-      hasSummary,
-      hasMarkdown,
-      wasManuallySelected: wasManuallySelected.current,
-      timeSinceLastAutoSwitch,
-      shouldConsiderAutoSwitch: !isEditing && !wasManuallySelected.current && timeSinceLastAutoSwitch > 2000
+      contentAvailability: {
+        hasImprovedClarity,
+        hasKeyPoints,
+        hasSummary,
+        hasMarkdown
+      },
+      switchingConstraints: {
+        wasManuallySelected: wasManuallySelected.current,
+        timeSinceLastAutoSwitch,
+        shouldConsiderAutoSwitch: !isEditing && !wasManuallySelected.current && timeSinceLastAutoSwitch > 2000
+      }
     });
 
     // Don't auto-switch if:
