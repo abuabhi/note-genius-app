@@ -10,9 +10,10 @@ interface TwoColumnEnhancementViewProps {
   note: Note;
   fontSize: number;
   textAlign: TextAlignType;
-  isEditing: boolean;
+  activeContentType: EnhancementContentType;
+  setActiveContentType: (type: EnhancementContentType) => void;
   isLoading?: boolean;
-  onRetryEnhancement?: (enhancementType: string) => void;
+  onRetryEnhancement?: (enhancementType: string) => Promise<void>;
   onCancelEnhancement?: () => void;
 }
 
@@ -20,12 +21,12 @@ export const TwoColumnEnhancementView = ({
   note, 
   fontSize, 
   textAlign,
-  isEditing,
+  activeContentType,
+  setActiveContentType,
   isLoading = false,
   onRetryEnhancement,
   onCancelEnhancement
 }: TwoColumnEnhancementViewProps) => {
-  const [activeContentType, setActiveContentType] = useState<EnhancementContentType>('original');
   const wasManuallySelected = useRef(false);
   const lastAutoSwitchTimestamp = useRef<number>(0);
   const previousNoteId = useRef<string>(note.id);
@@ -47,7 +48,7 @@ export const TwoColumnEnhancementView = ({
       previousImprovedLength.current = note.improved_content?.length || 0;
       previousMarkdownLength.current = note.markdown_content?.length || 0;
     }
-  }, [note.id]);
+  }, [note.id, setActiveContentType]);
   
   // Enhanced detection logic with better validation and minimum length requirements
   const hasSummary = Boolean(
@@ -114,7 +115,6 @@ export const TwoColumnEnhancementView = ({
     },
     uiState: {
       activeContentType,
-      isEditing,
       isLoading,
       wasManuallySelected: wasManuallySelected.current
     }
@@ -150,7 +150,6 @@ export const TwoColumnEnhancementView = ({
     const newMarkdownGenerated = currentMarkdownLength > previousMarkdownLength.current && hasMarkdown;
     
     console.log("🔄 TwoColumnEnhancementView - Auto-switch evaluation (FIXED v3):", {
-      isEditing,
       activeContentType,
       contentAvailability: {
         hasImprovedClarity,
@@ -173,7 +172,7 @@ export const TwoColumnEnhancementView = ({
       switchingConstraints: {
         wasManuallySelected: wasManuallySelected.current,
         timeSinceLastAutoSwitch,
-        shouldConsiderAutoSwitch: !isEditing && !wasManuallySelected.current && timeSinceLastAutoSwitch > 1000
+        shouldConsiderAutoSwitch: !wasManuallySelected.current && timeSinceLastAutoSwitch > 1000
       }
     });
 
@@ -183,8 +182,8 @@ export const TwoColumnEnhancementView = ({
     previousImprovedLength.current = currentImprovedLength;
     previousMarkdownLength.current = currentMarkdownLength;
 
-    // Don't auto-switch if user is editing, manually selected, or recent auto-switch occurred
-    if (isEditing || wasManuallySelected.current || timeSinceLastAutoSwitch < 1000) {
+    // Don't auto-switch if user manually selected or recent auto-switch occurred
+    if (wasManuallySelected.current || timeSinceLastAutoSwitch < 1000) {
       return;
     }
     
@@ -253,8 +252,8 @@ export const TwoColumnEnhancementView = ({
     hasSummary, 
     hasMarkdown, 
     activeContentType, 
-    isGeneratingSummary, 
-    isEditing,
+    isGeneratingSummary,
+    setActiveContentType,
     note.improved_content_generated_at,
     note.key_points_generated_at,
     note.summary_generated_at,
@@ -264,30 +263,6 @@ export const TwoColumnEnhancementView = ({
     note.summary,
     note.markdown_content
   ]);
-  
-  // Reset to original tab when editing starts
-  useEffect(() => {
-    if (isEditing) {
-      console.log("✏️ Editing mode started - resetting to original tab");
-      setActiveContentType("original");
-      wasManuallySelected.current = false;
-    }
-  }, [isEditing]);
-
-  // If editing, just show the original content
-  if (isEditing) {
-    return (
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-        <div className="p-6">
-          <RichTextDisplay 
-            content={note.content || note.description || ""} 
-            fontSize={fontSize} 
-            textAlign={textAlign} 
-          />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col md:flex-row w-full rounded-lg overflow-hidden shadow-sm border border-gray-200 bg-white min-h-[500px]">

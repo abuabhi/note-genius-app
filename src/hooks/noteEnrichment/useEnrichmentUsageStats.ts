@@ -46,11 +46,14 @@ export const useEnrichmentUsageStats = () => {
       // Get usage count using the imported function
       const usageData = await fetchNoteEnrichmentUsage(currentMonth);
       
+      // Normalize the tier - handle legacy STUDENT tier by mapping to SCHOLAR
+      const normalizedTier = userData.user_tier === 'STUDENT' ? 'SCHOLAR' : (userData.user_tier || 'SCHOLAR');
+      
       // Get tier limit
       const { data: tierData, error: tierError } = await supabase
         .from('tier_limits')
         .select('note_enrichment_limit_per_month')
-        .eq('tier', userData.user_tier || 'STUDENT')
+        .eq('tier', normalizedTier)
         .single();
       
       if (tierError) {
