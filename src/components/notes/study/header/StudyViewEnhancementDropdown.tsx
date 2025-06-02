@@ -62,7 +62,7 @@ export const StudyViewEnhancementDropdown = ({
       >
         <DropdownMenuItem 
           onClick={() => onEnhancementSelect('summarize')}
-          className="flex items-start px-4 py-3 text-sm cursor-pointer hover:bg-gray-50 focus:bg-gray-50"
+          className="flex items-start px-4 py-3 text-sm cursor-pointer hover:bg-mint-50 focus:bg-mint-50"
         >
           <Sparkles className="mr-3 h-4 w-4 text-mint-600 mt-0.5 flex-shrink-0" />
           <div className="flex flex-col">
@@ -75,7 +75,7 @@ export const StudyViewEnhancementDropdown = ({
         
         <DropdownMenuItem 
           onClick={() => onEnhancementSelect('extract-key-points')}
-          className="flex items-start px-4 py-3 text-sm cursor-pointer hover:bg-gray-50 focus:bg-gray-50"
+          className="flex items-start px-4 py-3 text-sm cursor-pointer hover:bg-mint-50 focus:bg-mint-50"
         >
           <Sparkles className="mr-3 h-4 w-4 text-mint-600 mt-0.5 flex-shrink-0" />
           <div className="flex flex-col">
@@ -88,7 +88,7 @@ export const StudyViewEnhancementDropdown = ({
         
         <DropdownMenuItem 
           onClick={() => onEnhancementSelect('improve-clarity')}
-          className="flex items-start px-4 py-3 text-sm cursor-pointer hover:bg-gray-50 focus:bg-gray-50"
+          className="flex items-start px-4 py-3 text-sm cursor-pointer hover:bg-mint-50 focus:bg-mint-50"
         >
           <Sparkles className="mr-3 h-4 w-4 text-mint-600 mt-0.5 flex-shrink-0" />
           <div className="flex flex-col">
@@ -101,7 +101,7 @@ export const StudyViewEnhancementDropdown = ({
         
         <DropdownMenuItem 
           onClick={() => onEnhancementSelect('fix-spelling-grammar')}
-          className="flex items-start px-4 py-3 text-sm cursor-pointer hover:bg-gray-50 focus:bg-gray-50"
+          className="flex items-start px-4 py-3 text-sm cursor-pointer hover:bg-mint-50 focus:bg-mint-50"
         >
           <Sparkles className="mr-3 h-4 w-4 text-mint-600 mt-0.5 flex-shrink-0" />
           <div className="flex flex-col">
@@ -114,7 +114,7 @@ export const StudyViewEnhancementDropdown = ({
         
         <DropdownMenuItem 
           onClick={() => onEnhancementSelect('convert-to-markdown')}
-          className="flex items-start px-4 py-3 text-sm cursor-pointer hover:bg-gray-50 focus:bg-gray-50"
+          className="flex items-start px-4 py-3 text-sm cursor-pointer hover:bg-mint-50 focus:bg-mint-50"
         >
           <Sparkles className="mr-3 h-4 w-4 text-mint-600 mt-0.5 flex-shrink-0" />
           <div className="flex flex-col">
@@ -128,7 +128,7 @@ export const StudyViewEnhancementDropdown = ({
             <DropdownMenuSeparator className="my-1 border-t border-gray-100" />
             <DropdownMenuItem 
               onClick={handleRegenerate}
-              className="flex items-start px-4 py-3 text-sm cursor-pointer hover:bg-gray-50 focus:bg-gray-50"
+              className="flex items-start px-4 py-3 text-sm cursor-pointer hover:bg-mint-50 focus:bg-mint-50"
             >
               <RefreshCw className="mr-3 h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
               <div className="flex flex-col">

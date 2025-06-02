@@ -141,9 +141,6 @@ export const EnhancementSelector = ({
     <div className={cn("flex flex-col border-r border-border bg-muted/20", className)}>
       <div className="py-2 px-3 bg-muted/30 border-b border-border">
         <h3 className="text-sm font-medium text-muted-foreground">Content Views</h3>
-        <p className="text-xs text-muted-foreground mt-1">
-          {availableOptions.length} of {enhancementOptions.length} available
-        </p>
       </div>
       <div className="flex flex-col py-1">
         {availableOptions.map((option) => (
@@ -169,15 +166,6 @@ export const EnhancementSelector = ({
             )}
           </button>
         ))}
-        
-        {/* Debug info in development */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="px-4 py-2 text-xs text-gray-500 border-t border-border mt-2">
-            <div>Debug: Improved={hasImprovedClarity ? '✓' : '✗'}</div>
-            <div>Content Length: {note.improved_content?.length || 0}</div>
-            <div>Generated At: {note.improved_content_generated_at || 'none'}</div>
-          </div>
-        )}
       </div>
     </div>
   );
