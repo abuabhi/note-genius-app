@@ -34,6 +34,7 @@ export const EnhancementDisplayPanel = ({
   const getContent = () => {
     switch (contentType) {
       case 'original':
+        // For original content, ONLY show the raw content/description without any enhancements
         return note.content || note.description || "";
       case 'summary':
         return note.summary || "";
@@ -80,7 +81,7 @@ export const EnhancementDisplayPanel = ({
     content.includes('[AI_ENHANCED]') && content.includes('[/AI_ENHANCED]');
 
   // Enhanced debug logging
-  console.log("🎯 EnhancementDisplayPanel - Enhanced content detection (FIXED):", {
+  console.log("🎯 EnhancementDisplayPanel - Content analysis:", {
     contentType,
     title,
     noteId: note.id,
@@ -88,12 +89,8 @@ export const EnhancementDisplayPanel = ({
     contentLength: content?.length || 0,
     contentPreview: content?.substring(0, 100) || 'none',
     hasEnhancementMarkers,
-    markerCheck: {
-      hasOpenMarker: content?.includes('[AI_ENHANCED]') || false,
-      hasCloseMarker: content?.includes('[/AI_ENHANCED]') || false,
-      contentType: typeof content,
-      isString: typeof content === 'string'
-    },
+    isOriginalContent: contentType === 'original',
+    rawOriginalContent: contentType === 'original' ? (note.content || note.description || "") : 'N/A',
     isGenerating,
     hasError,
     timestamp: new Date().toISOString()
@@ -114,7 +111,7 @@ export const EnhancementDisplayPanel = ({
         showAiIndicator={contentType === 'improved' && !!content}
       />
       
-      {/* Always show original content as-is */}
+      {/* Always show original content as-is without any enhancement processing */}
       {contentType === 'original' ? (
         <RichTextDisplay 
           content={content} 
@@ -145,10 +142,11 @@ export const EnhancementDisplayPanel = ({
                 variant="outline" 
                 size="sm" 
                 onClick={handleRegenerate}
+                disabled={isLoading}
                 className="text-amber-600 hover:text-amber-700 border-amber-200 hover:border-amber-300"
               >
-                <RefreshCw className="mr-2 h-3 w-3" />
-                Regenerate
+                <RefreshCw className={`mr-2 h-3 w-3 ${isLoading ? 'animate-spin' : ''}`} />
+                {isLoading ? 'Regenerating...' : 'Regenerate'}
               </Button>
             </div>
             <p className="text-sm text-amber-700">
