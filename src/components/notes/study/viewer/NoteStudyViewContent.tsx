@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Note } from "@/types/note";
 import { TwoColumnEnhancementView } from "../enhancements/TwoColumnEnhancementView";
@@ -5,12 +6,14 @@ import { NoteStudyEditForm } from "../editor/NoteStudyEditForm";
 import { EnhancementUsageMeter } from "./EnhancementUsageMeter";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
+import { TextAlignType } from "../hooks/useStudyViewState";
+import { EnhancementContentType } from "../enhancements/EnhancementSelector";
 
 interface NoteStudyViewContentProps {
   note: Note;
   isEditing: boolean;
   fontSize: number;
-  textAlign: string;
+  textAlign: TextAlignType;
   editableContent: string;
   selectedTags: { id?: string; name: string; color: string }[];
   availableTags: { id: string; name: string; color: string }[];
@@ -27,8 +30,8 @@ interface NoteStudyViewContentProps {
   hasReachedLimit: boolean;
   fetchUsageStats: () => Promise<void>;
   onNoteUpdate: (updatedData: Partial<Note>) => Promise<void>;
-  activeContentType: string;
-  onActiveContentTypeChange: (type: string) => void;
+  activeContentType: EnhancementContentType;
+  onActiveContentTypeChange: (type: EnhancementContentType) => void;
   isEditOperation: boolean;
 }
 
@@ -93,13 +96,12 @@ export const NoteStudyViewContent = ({
           editableContent={editableContent}
           selectedTags={selectedTags}
           availableTags={availableTags}
-          onContentChange={handleContentChange}
-          onSave={handleSaveContent}
-          onCancel={toggleEditing}
+          handleContentChange={handleContentChange}
+          handleSaveContent={handleSaveContent}
+          toggleEditing={toggleEditing}
+          handleEnhanceContent={handleEnhanceContent}
           isSaving={isSaving}
           setSelectedTags={setSelectedTags}
-          fontSize={fontSize}
-          textAlign={textAlign}
         />
       ) : (
         <div className="relative flex-1">

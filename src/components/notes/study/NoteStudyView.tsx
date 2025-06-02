@@ -128,7 +128,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
           handleEnhanceContent={editorState.handleEnhanceContent}
           setSelectedTags={editorState.setSelectedTags}
           handleRetryEnhancement={handleRetryEnhancement}
-          hasReachedLimit={hasReachedLimit}
+          hasReachedLimit={hasReachedLimit()}
           fetchUsageStats={async () => {}}
           onNoteUpdate={handleNoteUpdateWithTabPreservation}
           activeContentType={viewState.activeContentType}
