@@ -26,51 +26,49 @@ export const EnhancementSelector = ({
   setActiveContentType,
   className
 }: EnhancementSelectorProps) => {
-  // Determine which enhancements are available based on note data - immediate detection
-  const hasSummary = !!(note.summary && note.summary.trim());
-  const hasKeyPoints = !!(note.key_points && note.key_points.trim());
-  const hasMarkdown = !!(note.markdown_content && note.markdown_content.trim());
-  const hasImprovedClarity = !!(note.improved_content && note.improved_content.trim());
+  // More aggressive detection of enhanced content
+  const hasSummary = !!(note.summary && note.summary.trim() && note.summary.length > 0);
+  const hasKeyPoints = !!(note.key_points && note.key_points.trim() && note.key_points.length > 0);
+  const hasMarkdown = !!(note.markdown_content && note.markdown_content.trim() && note.markdown_content.length > 0);
+  const hasImprovedClarity = !!(note.improved_content && note.improved_content.trim() && note.improved_content.length > 0);
   
-  // Check enhancement statuses
+  // Check enhancement statuses more thoroughly
   const summaryStatus = note.summary_status || "completed";
   const isGeneratingSummary = summaryStatus === 'generating' || summaryStatus === 'pending';
   const hasSummaryError = summaryStatus === 'failed';
 
-  // Comprehensive debug log to verify enhancement detection
-  console.log("🔍 EnhancementSelector - Detailed analysis:", {
+  // Enhanced debug logging
+  console.log("🔍 EnhancementSelector - Enhanced detection:", {
     noteId: note.id,
     timestamp: new Date().toISOString(),
-    summary: {
-      exists: hasSummary,
-      length: note.summary?.length || 0,
-      preview: note.summary?.substring(0, 50) || 'none',
-      generatedAt: note.summary_generated_at,
-      status: summaryStatus
+    rawFields: {
+      summary: note.summary,
+      keyPoints: note.key_points,
+      markdown: note.markdown_content,
+      improvedContent: note.improved_content
     },
-    keyPoints: {
-      exists: hasKeyPoints,
-      length: note.key_points?.length || 0,
-      preview: note.key_points?.substring(0, 50) || 'none',
-      generatedAt: note.key_points_generated_at
+    detectionResults: {
+      hasSummary,
+      hasKeyPoints,
+      hasMarkdown,
+      hasImprovedClarity
     },
-    markdown: {
-      exists: hasMarkdown,
-      length: note.markdown_content?.length || 0,
-      preview: note.markdown_content?.substring(0, 50) || 'none',
-      generatedAt: note.markdown_content_generated_at
-    },
-    improvedClarity: {
-      exists: hasImprovedClarity,
-      length: note.improved_content?.length || 0,
-      preview: note.improved_content?.substring(0, 50) || 'none',
-      generatedAt: note.improved_content_generated_at
+    lengths: {
+      summary: note.summary?.length || 0,
+      keyPoints: note.key_points?.length || 0,
+      markdown: note.markdown_content?.length || 0,
+      improvedContent: note.improved_content?.length || 0
     },
     activeContentType,
-    availableCount: [hasSummary, hasKeyPoints, hasMarkdown, hasImprovedClarity].filter(Boolean).length
+    generatedTimestamps: {
+      summary: note.summary_generated_at,
+      keyPoints: note.key_points_generated_at,
+      markdown: note.markdown_content_generated_at,
+      improvedClarity: note.improved_content_generated_at
+    }
   });
 
-  // Define the enhancement options - show immediately when content exists
+  // Define the enhancement options with more explicit availability checks
   const enhancementOptions: EnhancementOption[] = [
     {
       id: 'original',
@@ -104,25 +102,28 @@ export const EnhancementSelector = ({
   // Filter to only show available options
   const availableOptions = enhancementOptions.filter(option => option.available);
 
-  // Log available options for debugging
-  console.log("📋 EnhancementSelector - Available tabs:", {
+  // Enhanced logging for available options
+  console.log("📋 EnhancementSelector - Available options:", {
     totalOptions: enhancementOptions.length,
+    availableCount: availableOptions.length,
     availableOptions: availableOptions.map(opt => ({
       id: opt.id,
       label: opt.label,
       isGenerating: opt.isGenerating,
       hasError: opt.hasError
     })),
-    activeTab: activeContentType
+    activeTab: activeContentType,
+    improvedClarityCheck: {
+      hasContent: hasImprovedClarity,
+      rawContent: note.improved_content,
+      trimmedLength: note.improved_content?.trim()?.length || 0
+    }
   });
 
   return (
     <div className={cn("flex flex-col border-r border-border bg-muted/20", className)}>
       <div className="py-2 px-3 bg-muted/30 border-b border-border">
         <h3 className="text-sm font-medium text-muted-foreground">Content Views</h3>
-        <div className="text-xs text-muted-foreground mt-1">
-          {availableOptions.length} option{availableOptions.length !== 1 ? 's' : ''} available
-        </div>
       </div>
       <div className="flex flex-col py-1">
         {availableOptions.map((option) => (

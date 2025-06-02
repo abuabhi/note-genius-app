@@ -27,7 +27,8 @@ export const useEnhancementProcessor = (note: Note, editorState: {
       enhancementType,
       contentLength: enhancedContent.length,
       isEditing,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      enhancedContentPreview: enhancedContent.substring(0, 100)
     });
 
     setProcessingError(null);
@@ -58,12 +59,12 @@ export const useEnhancementProcessor = (note: Note, editorState: {
       switch (typeToApply) {
         case 'summarize':
           console.log("📄 Storing summary content");
-            updateData = {
-              summary: enhancedContent,
-              summary_generated_at: now,
-              summary_status: 'completed'
-            };
-            break;
+          updateData = {
+            summary: enhancedContent,
+            summary_generated_at: now,
+            summary_status: 'completed'
+          };
+          break;
             
         case 'extract-key-points':
           console.log("🔑 Storing key points content");
@@ -104,7 +105,8 @@ export const useEnhancementProcessor = (note: Note, editorState: {
       
       console.log("💾 Update data prepared:", {
         updateData,
-        fieldsToUpdate: Object.keys(updateData)
+        fieldsToUpdate: Object.keys(updateData),
+        contentPreview: enhancedContent.substring(0, 100)
       });
         
       // First update the database
@@ -119,12 +121,17 @@ export const useEnhancementProcessor = (note: Note, editorState: {
         
       // Force a small delay to ensure state propagation
       await new Promise(resolve => setTimeout(resolve, 100));
-        
-      console.log("🎉 Enhancement process completed:", {
+      
+      // Additional verification log
+      console.log("🎉 Enhancement process completed successfully:", {
         noteId: note.id,
-        updateData,
         enhancementType: typeToApply,
-        timestamp: new Date().toISOString()
+        updateData,
+        timestamp: new Date().toISOString(),
+        verification: {
+          improvedContentStored: typeToApply === 'improve-clarity' ? enhancedContent.length : 'N/A',
+          expectedField: typeToApply === 'improve-clarity' ? 'improved_content' : 'other'
+        }
       });
         
       // Show success message

@@ -27,19 +27,26 @@ export const TwoColumnEnhancementView = ({
 }: TwoColumnEnhancementViewProps) => {
   const [activeContentType, setActiveContentType] = useState<EnhancementContentType>('original');
   
-  // Check if there are any enhancements - use immediate detection based on note data
-  const hasSummary = !!(note.summary && note.summary.trim());
-  const hasKeyPoints = !!(note.key_points && note.key_points.trim());
-  const hasMarkdown = !!(note.markdown_content && note.markdown_content.trim());
-  const hasImprovedClarity = !!(note.improved_content && note.improved_content.trim());
+  // Enhanced detection logic with more explicit checks
+  const hasSummary = !!(note.summary && note.summary.trim() && note.summary.length > 0);
+  const hasKeyPoints = !!(note.key_points && note.key_points.trim() && note.key_points.length > 0);
+  const hasMarkdown = !!(note.markdown_content && note.markdown_content.trim() && note.markdown_content.length > 0);
+  const hasImprovedClarity = !!(note.improved_content && note.improved_content.trim() && note.improved_content.length > 0);
+  
   const summaryStatus = note.summary_status || "completed";
   const isGeneratingSummary = summaryStatus === 'generating' || summaryStatus === 'pending';
   const hasSummaryError = summaryStatus === 'failed';
   
   // Comprehensive debug log to trace enhancement detection
-  console.log("🔍 TwoColumnEnhancementView - State analysis:", {
+  console.log("🔍 TwoColumnEnhancementView - Enhanced state analysis:", {
     noteId: note.id,
     timestamp: new Date().toISOString(),
+    rawContent: {
+      summary: note.summary?.substring(0, 50) || 'none',
+      keyPoints: note.key_points?.substring(0, 50) || 'none',
+      markdown: note.markdown_content?.substring(0, 50) || 'none',
+      improvedClarity: note.improved_content?.substring(0, 50) || 'none'
+    },
     enhancementStates: {
       summary: { exists: hasSummary, generating: isGeneratingSummary, error: hasSummaryError },
       keyPoints: { exists: hasKeyPoints, length: note.key_points?.length || 0 },
@@ -104,14 +111,14 @@ export const TwoColumnEnhancementView = ({
     activeContentType, 
     isGeneratingSummary, 
     isEditing,
-    note.improved_content_generated_at, // Track when improved content was generated
-    note.key_points_generated_at, // Track when key points were generated
-    note.summary_generated_at, // Track when summary was generated
-    note.markdown_content_generated_at, // Track when markdown was generated
-    note.improved_content, // Track the actual content
-    note.key_points, // Track the actual content
-    note.summary, // Track the actual content
-    note.markdown_content // Track the actual content
+    note.improved_content_generated_at,
+    note.key_points_generated_at,
+    note.summary_generated_at,
+    note.markdown_content_generated_at,
+    note.improved_content,
+    note.key_points,
+    note.summary,
+    note.markdown_content
   ]);
   
   // Reset to original tab when editing starts
