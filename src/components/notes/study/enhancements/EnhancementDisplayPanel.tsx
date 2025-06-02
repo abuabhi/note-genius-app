@@ -166,9 +166,9 @@ export const EnhancementDisplayPanel = ({
                 className="text-mint-600 hover:text-mint-700 border-mint-200 hover:border-mint-300 bg-mint-50 hover:bg-mint-100"
               >
                 {retryLoading ? (
-                  <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                  <RefreshCw className="h-4 w-4 animate-spin mr-2 text-mint-600" />
                 ) : (
-                  <RefreshCw className="h-4 w-4 mr-2" />
+                  <RefreshCw className="h-4 w-4 mr-2 text-mint-600" />
                 )}
                 Generate {contentInfo.title}
               </Button>
@@ -216,9 +216,9 @@ export const EnhancementDisplayPanel = ({
             className="text-mint-600 hover:text-mint-700 hover:bg-mint-50"
           >
             {retryLoading ? (
-              <RefreshCw className="h-4 w-4 animate-spin" />
+              <RefreshCw className="h-4 w-4 animate-spin text-mint-600" />
             ) : (
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw className="h-4 w-4 text-mint-600" />
             )}
           </Button>
         )}
