@@ -4,7 +4,7 @@ import { Note } from "@/types/note";
 
 export const fetchNotesFromSupabase = async (): Promise<Note[]> => {
   try {
-    console.log('🔄 Fetching notes with all enhancement fields...');
+    console.log('🔄 Fetching notes with all enhancement fields and user subjects...');
     
     const { data: notesData, error: notesError } = await supabase
       .from('notes')
@@ -13,6 +13,10 @@ export const fetchNotesFromSupabase = async (): Promise<Note[]> => {
         scan_data(*),
         note_tags(
           tags(*)
+        ),
+        user_subjects!notes_subject_id_fkey(
+          id,
+          name
         )
       `)
       .order('created_at', { ascending: false });
@@ -32,6 +36,9 @@ export const fetchNotesFromSupabase = async (): Promise<Note[]> => {
       sampleNote: notesData[0] ? {
         id: notesData[0].id,
         title: notesData[0].title,
+        subject_id: notesData[0].subject_id,
+        subject_from_join: notesData[0].user_subjects?.name || 'none',
+        legacy_subject: notesData[0].subject || 'none',
         summary: notesData[0].summary?.substring(0, 50) || 'none',
         key_points: notesData[0].key_points?.substring(0, 50) || 'none',
         improved_content: notesData[0].improved_content?.substring(0, 50) || 'none',
@@ -62,12 +69,15 @@ export const fetchNotesFromSupabase = async (): Promise<Note[]> => {
         language: note.scan_data[0].language
       } : undefined;
 
+      // Resolve subject name: prioritize user_subjects join, then fall back to legacy subject field
+      const resolvedSubjectName = note.user_subjects?.name || note.subject || 'Uncategorized';
+
       const transformedNote: Note = {
         id: note.id,
         title: note.title,
         description: note.description,
         date: new Date(note.date).toISOString().split('T')[0],
-        category: note.subject || 'Uncategorized',
+        category: resolvedSubjectName, // Map resolved subject name to category for backward compatibility
         content: note.content,
         sourceType: note.source_type as 'manual' | 'scan' | 'import',
         archived: note.archived || false,
@@ -93,6 +103,9 @@ export const fetchNotesFromSupabase = async (): Promise<Note[]> => {
 
       console.log(`🔍 Transformed note ${note.id}:`, {
         title: transformedNote.title,
+        subject_id: note.subject_id,
+        resolved_subject: resolvedSubjectName,
+        category_field: transformedNote.category,
         hasEnhancements: {
           summary: !!transformedNote.summary,
           key_points: !!transformedNote.key_points,
@@ -119,6 +132,9 @@ export const fetchNotesFromSupabase = async (): Promise<Note[]> => {
       totalNotes: transformedNotes.length,
       notesWithEnhancements: transformedNotes.filter(note => 
         note.summary || note.key_points || note.improved_content || note.markdown_content
+      ).length,
+      notesWithSubjects: transformedNotes.filter(note => 
+        note.category && note.category !== 'Uncategorized'
       ).length
     });
 

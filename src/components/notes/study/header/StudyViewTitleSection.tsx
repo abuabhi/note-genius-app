@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Note } from "@/types/note";
 import { Input } from "@/components/ui/input";
 import { NoteTagList } from "../../details/NoteTagList";
+import { useUserSubjects } from "@/hooks/useUserSubjects";
 
 interface StudyViewTitleSectionProps {
   note: Note;
@@ -18,6 +19,7 @@ export const StudyViewTitleSection = ({
   onTitleChange,
 }: StudyViewTitleSectionProps) => {
   const [title, setTitle] = useState(note?.title || "");
+  const { subjects, isLoading: subjectsLoading } = useUserSubjects();
 
   useEffect(() => {
     setTitle(editableTitle || note?.title || "");
@@ -28,6 +30,19 @@ export const StudyViewTitleSection = ({
     setTitle(newTitle);
     onTitleChange(newTitle);
   };
+
+  // Find the subject name based on subject_id or fall back to category
+  const getSubjectName = () => {
+    if (note?.subject_id && !subjectsLoading) {
+      const foundSubject = subjects.find(s => s.id === note.subject_id);
+      return foundSubject?.name || note?.category || "Uncategorized";
+    }
+    return note?.category || "Uncategorized";
+  };
+
+  const subjectName = getSubjectName();
+
+  console.log(`StudyViewTitleSection - Note: ${note?.title}, Subject ID: ${note?.subject_id}, Subject Name: ${subjectName}`);
 
   if (isEditing) {
     return (
@@ -45,8 +60,8 @@ export const StudyViewTitleSection = ({
       <h2 className="text-xl font-bold text-green-700">{note?.title}</h2>
       <div className="text-sm flex flex-wrap gap-2 items-center">
         <span className="font-bold text-gray-600">{note?.date}</span>
-        {note?.category && (
-          <span className="text-green-600 font-medium">{note?.category}</span>
+        {subjectName && (
+          <span className="text-green-600 font-medium">{subjectName}</span>
         )}
       </div>
       {note?.tags && note?.tags.length > 0 && (
