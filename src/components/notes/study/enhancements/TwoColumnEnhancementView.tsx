@@ -13,6 +13,7 @@ interface TwoColumnEnhancementViewProps {
   isEditing: boolean;
   isLoading?: boolean;
   onRetryEnhancement?: (enhancementType: string) => void;
+  onCancelEnhancement?: () => void;
 }
 
 export const TwoColumnEnhancementView = ({ 
@@ -21,7 +22,8 @@ export const TwoColumnEnhancementView = ({
   textAlign,
   isEditing,
   isLoading = false,
-  onRetryEnhancement
+  onRetryEnhancement,
+  onCancelEnhancement
 }: TwoColumnEnhancementViewProps) => {
   const [activeContentType, setActiveContentType] = useState<EnhancementContentType>('original');
   
@@ -43,7 +45,8 @@ export const TwoColumnEnhancementView = ({
     hasImprovedClarity,
     summaryStatus,
     summaryTimestamp: note.summary_generated_at,
-    activeContentType
+    activeContentType,
+    isLoading
   });
   
   // If new summary is added and we're not already on a different enhancement tab,
@@ -91,6 +94,7 @@ export const TwoColumnEnhancementView = ({
         textAlign={textAlign}
         isLoading={isLoading}
         onRetryEnhancement={onRetryEnhancement}
+        onCancelEnhancement={onCancelEnhancement}
         className="flex-grow p-4 overflow-y-auto"
       />
     </div>

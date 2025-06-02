@@ -2,7 +2,7 @@
 import { RichTextDisplay } from "@/components/ui/rich-text/RichTextDisplay";
 import { TextAlignType } from "../hooks/useStudyViewState";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, X } from "lucide-react";
 import { EnhancementProcessing } from "../../enrichment/EnhancementProcessing";
 import { EnhancementError } from "../../enrichment/EnhancementError";
 
@@ -16,6 +16,7 @@ interface EnhancementContentProps {
   hasError?: boolean;
   enhancementType?: string;
   onRetry?: (enhancementType: string) => void;
+  onCancel?: () => void;
 }
 
 export const EnhancementContent = ({
@@ -27,10 +28,18 @@ export const EnhancementContent = ({
   isLoading = false,
   hasError = false,
   enhancementType = "",
-  onRetry
+  onRetry,
+  onCancel
 }: EnhancementContentProps) => {
   if (isLoading) {
-    return <EnhancementProcessing message={`Generating ${title.toLowerCase()}...`} enhancementType={enhancementType} />;
+    return (
+      <EnhancementProcessing 
+        message={`Generating ${title.toLowerCase()}...`} 
+        enhancementType={enhancementType}
+        onRetry={() => onRetry?.(enhancementType)}
+        onCancel={onCancel}
+      />
+    );
   }
   
   if (hasError) {

@@ -53,23 +53,38 @@ export const NoteStudyViewContent: React.FC<NoteStudyViewContentProps> = ({
   fetchUsageStats = async () => {}
 }) => {
   const [enhancementLoading, setEnhancementLoading] = useState<boolean>(false);
+  const [currentEnhancementType, setCurrentEnhancementType] = useState<string>("");
   const { enrichNote } = useNoteEnrichment();
 
   // Wrapper for retry enhancement to manage loading state
   const onRetryEnhancement = async (enhancementType: string) => {
     setEnhancementLoading(true);
+    setCurrentEnhancementType(enhancementType);
     try {
       await handleRetryEnhancement(enhancementType);
+    } catch (error) {
+      console.error('Retry enhancement failed:', error);
+      toast.error('Failed to retry enhancement. Please try again.');
     } finally {
       setEnhancementLoading(false);
+      setCurrentEnhancementType("");
     }
+  };
+
+  // Handle canceling enhancement
+  const onCancelEnhancement = () => {
+    setEnhancementLoading(false);
+    setCurrentEnhancementType("");
+    toast.info('Enhancement canceled');
   };
 
   console.log("NoteStudyViewContent rendering with note:", { 
     id: note.id, 
     isEditing,
     hasSummary: !!note.summary,
-    hasKeyPoints: !!note.key_points
+    hasKeyPoints: !!note.key_points,
+    enhancementLoading,
+    currentEnhancementType
   });
 
   return (
@@ -107,6 +122,7 @@ export const NoteStudyViewContent: React.FC<NoteStudyViewContentProps> = ({
           isEditing={isEditing}
           isLoading={enhancementLoading}
           onRetryEnhancement={onRetryEnhancement}
+          onCancelEnhancement={onCancelEnhancement}
         />
       )}
     </CardContent>

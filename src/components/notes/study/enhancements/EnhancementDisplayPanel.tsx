@@ -13,6 +13,7 @@ interface EnhancementDisplayPanelProps {
   textAlign: TextAlignType;
   isLoading?: boolean;
   onRetryEnhancement?: (enhancementType: string) => void;
+  onCancelEnhancement?: () => void;
   className?: string;
 }
 
@@ -23,6 +24,7 @@ export const EnhancementDisplayPanel = ({
   textAlign,
   isLoading = false,
   onRetryEnhancement,
+  onCancelEnhancement,
   className
 }: EnhancementDisplayPanelProps) => {
   // Get the appropriate content based on the selected content type
@@ -90,6 +92,7 @@ export const EnhancementDisplayPanel = ({
           isMarkdown={isMarkdownFormat}
           enhancementType={contentType}
           onRetry={onRetryEnhancement}
+          onCancel={onCancelEnhancement}
         />
       )}
     </div>

@@ -24,9 +24,14 @@ export const enrichNote = async (
   }
   
   try {
-    // Set reasonable timeout for the function call
+    // Set reasonable timeout for the function call with AbortController
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    const timeoutId = setTimeout(() => {
+      console.error('Enhancement request timed out after 90 seconds');
+      controller.abort();
+    }, 90000); // 90 second timeout (increased from 30s)
+    
+    console.log('Calling enrich-note function...');
     
     // Call the edge function
     const { data, error } = await supabase.functions.invoke('enrich-note', {
@@ -36,10 +41,13 @@ export const enrichNote = async (
         noteContent: note.content,
         enhancementType
       }
-      // Remove the signal property as it's not supported in FunctionInvokeOptions
     });
     
     clearTimeout(timeoutId);
+    
+    if (controller.signal.aborted) {
+      throw new Error('Request timed out. The AI service may be experiencing delays. Please try again.');
+    }
     
     if (error) {
       console.error('Error calling enrich-note function:', error);
@@ -47,12 +55,10 @@ export const enrichNote = async (
     }
     
     if (!data?.enhancedContent) {
-      throw new Error('No enhanced content returned');
+      throw new Error('No enhanced content returned from AI service');
     }
     
-    // For all enhancement types, ensure proper markdown rendering
-    // by wrapping in HTML when needed
-    let enhancedContent = data.enhancedContent;
+    console.log('Enhancement completed successfully');
     
     // Track token usage (if available) to calculate usage limits
     if (data.tokenUsage) {
@@ -64,9 +70,20 @@ export const enrichNote = async (
       }
     }
 
-    return enhancedContent;
+    return data.enhancedContent;
   } catch (error) {
     console.error('Error enriching note:', error);
+    
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes('timeout') || error.message.includes('aborted')) {
+        throw new Error('The AI service is taking longer than expected. Please try again in a moment.');
+      }
+      if (error.message.includes('network')) {
+        throw new Error('Network error occurred. Please check your connection and try again.');
+      }
+    }
+    
     throw error;
   }
 };

@@ -12,6 +12,7 @@ interface NoteContentDisplayProps {
   isEditing?: boolean;
   isLoading?: boolean;
   onRetryEnhancement?: (enhancementType: string) => void;
+  onCancelEnhancement?: () => void;
 }
 
 export const NoteContentDisplay = ({ 
@@ -21,7 +22,8 @@ export const NoteContentDisplay = ({
   textAlign,
   isEditing = false,
   isLoading = false,
-  onRetryEnhancement
+  onRetryEnhancement,
+  onCancelEnhancement
 }: NoteContentDisplayProps) => {
   // Debug log to trace what's happening
   console.log("NoteContentDisplay rendering with:", {
@@ -31,7 +33,8 @@ export const NoteContentDisplay = ({
     hasMarkdown: !!note?.markdown_content,
     hasImproved: !!note?.improved_content,
     summaryGeneratedAt: note?.summary_generated_at,
-    isEditing
+    isEditing,
+    isLoading
   });
   
   // If no note is provided, fall back to the simple display
@@ -66,6 +69,7 @@ export const NoteContentDisplay = ({
       isEditing={isEditing}
       isLoading={isLoading}
       onRetryEnhancement={onRetryEnhancement}
+      onCancelEnhancement={onCancelEnhancement}
     />
   );
 };
