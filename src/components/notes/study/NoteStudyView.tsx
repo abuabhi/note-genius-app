@@ -10,7 +10,7 @@ import { useRealtimeNoteSync } from "./hooks/useRealtimeNoteSync";
 import { useNoteEnhancementRetry } from "./hooks/useNoteEnhancementRetry";
 import { useNoteUpdateHandler } from "./hooks/useNoteUpdateHandler";
 import { useAutomaticSummaryPrevention } from "./hooks/useAutomaticSummaryPrevention";
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 
 interface NoteStudyViewProps {
   note: Note;
@@ -35,31 +35,44 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
   // Editor state
   const editorState = useNoteStudyEditor(currentNote);
 
-  // FIXED: Enhanced note update handler that preserves active tab more reliably
+  // Track if we're in an edit operation to prevent auto-switching
+  const isEditOperationRef = useRef(false);
+
+  // FIXED: Enhanced note update handler that completely prevents tab switching during edit operations
   const handleNoteUpdateWithTabPreservation = useCallback(async (updatedData: Partial<Note>) => {
-    console.log("🎯 NoteStudyView - Preserving tab during update:", {
+    console.log("🎯 NoteStudyView - Starting edit operation with tab preservation:", {
       currentTab: viewState.activeContentType,
       noteId: currentNote.id,
       updatedFields: Object.keys(updatedData)
     });
     
+    // Mark that we're in an edit operation to prevent any auto-switching
+    isEditOperationRef.current = true;
+    
     // Store the current active tab before update
     const preservedTab = viewState.activeContentType;
     
-    await handleNoteUpdate(updatedData);
-    
-    // Force restore the active tab after a brief delay to ensure UI has updated
-    setTimeout(() => {
-      console.log("🔄 Restoring preserved tab:", preservedTab);
+    try {
+      await handleNoteUpdate(updatedData);
+      
+      // Ensure we stay on the same tab after the update
+      console.log("🔒 Enforcing tab preservation after edit:", preservedTab);
       viewState.setActiveContentType(preservedTab);
-    }, 100);
-    
+      
+    } finally {
+      // Reset the edit operation flag after a delay to allow for UI updates
+      setTimeout(() => {
+        isEditOperationRef.current = false;
+        console.log("✅ Edit operation completed, auto-switching re-enabled");
+      }, 1000); // Longer delay to ensure all updates are processed
+    }
   }, [viewState.activeContentType, viewState.setActiveContentType, handleNoteUpdate, currentNote.id]);
 
   console.log("📊 NoteStudyView - Current state:", {
     noteId: currentNote.id,
     activeTab: viewState.activeContentType,
     isEditing: editorState.isEditing,
+    isEditOperation: isEditOperationRef.current,
     refreshKey,
     hasEnhancements: {
       summary: !!currentNote.summary,
@@ -120,6 +133,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
           onNoteUpdate={handleNoteUpdateWithTabPreservation}
           activeContentType={viewState.activeContentType}
           onActiveContentTypeChange={viewState.setActiveContentType}
+          isEditOperation={isEditOperationRef.current}
         />
       </Card>
     </div>

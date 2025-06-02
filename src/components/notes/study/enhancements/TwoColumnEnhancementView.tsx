@@ -15,6 +15,7 @@ interface TwoColumnEnhancementViewProps {
   isLoading?: boolean;
   onRetryEnhancement?: (enhancementType: string) => Promise<void>;
   onCancelEnhancement?: () => void;
+  isEditOperation?: boolean; // NEW: Flag to prevent auto-switching during edits
 }
 
 export const TwoColumnEnhancementView = ({ 
@@ -25,7 +26,8 @@ export const TwoColumnEnhancementView = ({
   setActiveContentType,
   isLoading = false,
   onRetryEnhancement,
-  onCancelEnhancement
+  onCancelEnhancement,
+  isEditOperation = false // NEW: Default to false
 }: TwoColumnEnhancementViewProps) => {
   const wasManuallySelected = useRef(false);
   const lastAutoSwitchTimestamp = useRef<number>(0);
@@ -84,9 +86,10 @@ export const TwoColumnEnhancementView = ({
   const hasSummaryError = summaryStatus === 'failed';
   
   // Enhanced debug log to trace improved content detection
-  console.log("🔍 TwoColumnEnhancementView - Enhanced state analysis (FIXED v2):", {
+  console.log("🔍 TwoColumnEnhancementView - Enhanced state analysis:", {
     noteId: note.id,
     timestamp: new Date().toISOString(),
+    isEditOperation, // NEW: Log edit operation status
     summaryValidation: {
       rawContent: note.summary?.substring(0, 100) || 'none',
       exists: !!note.summary,
@@ -133,8 +136,14 @@ export const TwoColumnEnhancementView = ({
     }, 5000);
   };
   
-  // Enhanced auto-switch logic with better content detection and new content detection
+  // FIXED: Enhanced auto-switch logic that respects edit operations
   useEffect(() => {
+    // COMPLETELY PREVENT auto-switching during edit operations
+    if (isEditOperation) {
+      console.log("🚫 Auto-switching disabled during edit operation");
+      return;
+    }
+
     const currentTime = Date.now();
     const timeSinceLastAutoSwitch = currentTime - lastAutoSwitchTimestamp.current;
     
@@ -149,8 +158,9 @@ export const TwoColumnEnhancementView = ({
     const newImprovedGenerated = currentImprovedLength > previousImprovedLength.current && hasImprovedClarity;
     const newMarkdownGenerated = currentMarkdownLength > previousMarkdownLength.current && hasMarkdown;
     
-    console.log("🔄 TwoColumnEnhancementView - Auto-switch evaluation (FIXED v3):", {
+    console.log("🔄 TwoColumnEnhancementView - Auto-switch evaluation:", {
       activeContentType,
+      isEditOperation,
       contentAvailability: {
         hasImprovedClarity,
         hasKeyPoints,
@@ -254,6 +264,7 @@ export const TwoColumnEnhancementView = ({
     activeContentType, 
     isGeneratingSummary,
     setActiveContentType,
+    isEditOperation, // NEW: Include edit operation in dependencies
     note.improved_content_generated_at,
     note.key_points_generated_at,
     note.summary_generated_at,
