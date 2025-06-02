@@ -17,16 +17,31 @@ ${noteContent}
   switch (enhancementType) {
     case 'summarize':
       return `${baseContext}
-Please provide a concise summary of this note. Focus on the key ideas and main points, while keeping the summary no more than 20% of the original length.
+Please provide a concise summary of this note in paragraph form. Focus on creating a brief overview that:
 
-Present the summary in professional Markdown style with bolded section headings, no excessive blank lines between bullets, keep bullets grouped tightly under the heading, and minimize visual clutter. Ensure a clean compact flow, only using spacing where absolutely necessary for readability.
+- Presents the main ideas and central message in flowing paragraphs
+- Shows how different concepts connect and relate to each other
+- Retells the content in a shorter, narrative style
+- Uses proper paragraph structure with smooth transitions between ideas
+- Avoids bullet points or lists - write in complete sentences and paragraphs only
+- Keeps the summary to about 20% of the original length
+
+Write this as a cohesive overview that someone could read to quickly understand the main content and how the ideas flow together.
 `;
 
     case 'extract-key-points':
       return `${baseContext}
-Extract the key points from this note and present them as a well-organized list.
+Extract the most important facts, concepts, and ideas from this note and present them as a clean bullet list. Each key point should be:
 
-Create Key Points in clean Markdown. Use one main heading, tight bullet points, bold subheadings when needed, no random blank lines, and no paragraph breaks between bullet points. Organize key points by topic if applicable.
+- A single, focused concept or fact
+- Written as a short, clear statement
+- Presented as individual bullet points (use - for bullets)
+- One idea per bullet point
+- No paragraph explanations or narrative flow
+- No sub-bullets or complex formatting
+- Direct and concise
+
+Format your response as a simple bulleted list with each key concept on its own line. Think of these as the essential checkpoints someone needs to remember from this material.
 `;
 
     case 'improve-clarity':
