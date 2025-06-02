@@ -10,41 +10,23 @@ import {
 import { ChevronDown, Sparkles, RefreshCw } from "lucide-react";
 import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
 import { Note } from "@/types/note";
+import { EnhancementFunction } from "@/hooks/noteEnrichment/types";
 
 interface StudyViewEnhancementDropdownProps {
   note: Note;
-  onEnhance: (enhancedContent: string, enhancementType?: string) => void;
-  isProcessing: boolean;
+  processingEnhancement: EnhancementFunction | null;
+  onEnhancementSelect: (enhancement: EnhancementFunction) => Promise<void>;
 }
 
 export const StudyViewEnhancementDropdown = ({
   note,
-  onEnhance,
-  isProcessing
+  processingEnhancement,
+  onEnhancementSelect
 }: StudyViewEnhancementDropdownProps) => {
-  const { enrichNote, hasReachedLimit } = useNoteEnrichment();
-
-  const handleEnhancement = async (enhancementType: string) => {
-    if (!note.content) return;
-    
-    try {
-      const result = await enrichNote(
-        note.id,
-        note.content,
-        enhancementType as any,
-        note.title
-      );
-      
-      if (result.success) {
-        onEnhance(result.content, enhancementType);
-      }
-    } catch (error) {
-      console.error("Enhancement error:", error);
-    }
-  };
+  const { hasReachedLimit } = useNoteEnrichment();
 
   const handleRegenerate = () => {
-    handleEnhancement('improve-clarity');
+    onEnhancementSelect('improve-clarity');
   };
 
   // Check if note has improved content for regeneration option
@@ -53,6 +35,8 @@ export const StudyViewEnhancementDropdown = ({
     typeof note.improved_content === 'string' && 
     note.improved_content.trim().length > 10
   );
+
+  const isProcessing = processingEnhancement !== null;
 
   if (hasReachedLimit()) {
     return (
@@ -73,19 +57,19 @@ export const StudyViewEnhancementDropdown = ({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuItem onClick={() => handleEnhancement('summarize')}>
+        <DropdownMenuItem onClick={() => onEnhancementSelect('summarize')}>
           <Sparkles className="mr-2 h-4 w-4" />
           Generate Summary
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleEnhancement('extract-key-points')}>
+        <DropdownMenuItem onClick={() => onEnhancementSelect('extract-key-points')}>
           <Sparkles className="mr-2 h-4 w-4" />
           Extract Key Points
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleEnhancement('improve-clarity')}>
+        <DropdownMenuItem onClick={() => onEnhancementSelect('improve-clarity')}>
           <Sparkles className="mr-2 h-4 w-4" />
           Improve Clarity
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleEnhancement('convert-to-markdown')}>
+        <DropdownMenuItem onClick={() => onEnhancementSelect('convert-to-markdown')}>
           <Sparkles className="mr-2 h-4 w-4" />
           Convert to Markdown
         </DropdownMenuItem>
