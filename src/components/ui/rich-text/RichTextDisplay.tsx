@@ -1,4 +1,3 @@
-
 import { useMemo } from "react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -31,11 +30,15 @@ export const RichTextDisplay = ({
       /^#+\s*Key Points of .+?\n/i,
       /^#+\s*Improved .+?\n/i,
       /^#+\s*Markdown Version of .+?\n/i,
+      /^#+\s*Formal vs Informal Language\n/i,
+      /^#+\s*.+? vs .+?\n/i,
       /^Analysis of Notes on .+?\n/i,
       /^Summary of .+?\n/i,
       /^Key Points of .+?\n/i,
       /^Improved .+?\n/i,
       /^Markdown Version of .+?\n/i,
+      /^Formal vs Informal Language\n/i,
+      /^.+? vs .+?\n/i,
     ];
     
     let processed = content;
