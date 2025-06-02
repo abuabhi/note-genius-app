@@ -44,16 +44,6 @@ export const enhancementOptions: EnhancementOption[] = [
     prompt: 'Please convert this note content to well-structured markdown format with appropriate headers, lists, and formatting.',
     outputType: 'markdown',
     replaceContent: false
-  },
-  {
-    id: 'fix-spelling-grammar',
-    value: 'fix-spelling-grammar',
-    title: 'Fix Spelling & Grammar',
-    description: 'Correct spelling and grammar errors',
-    icon: '🔤',
-    prompt: 'Please fix any spelling and grammar errors in this note content while preserving the original meaning and style.',
-    outputType: 'improved',
-    replaceContent: false
   }
 ];
 

@@ -36,11 +36,11 @@ export const useEnhancementProcessor = (note: Note, editorState: {
     
     try {
       let finalEnhancedContent = enhancedContent;
-      let finalEnhancementType = enhancementType || 'fix-spelling-grammar'; // Default to spelling/grammar for Original tab
+      let finalEnhancementType = enhancementType || 'summarize'; // Default to summarize
       
       // If no enhanced content is provided, we need to call the enrichment API
       if (!finalEnhancedContent) {
-        console.log("🔄 No enhanced content provided, calling enrichment API for spelling/grammar...");
+        console.log("🔄 No enhanced content provided, calling enrichment API...");
         
         const result = await enrichNote(
           note.id,
@@ -54,7 +54,7 @@ export const useEnhancementProcessor = (note: Note, editorState: {
         }
         
         finalEnhancedContent = result.content;
-        console.log("✅ Spelling/Grammar API call successful, content length:", finalEnhancedContent.length);
+        console.log("✅ API call successful, content length:", finalEnhancedContent.length);
       }
       
       const enhancementDetails = getEnhancementDetails?.(finalEnhancementType);
@@ -66,7 +66,7 @@ export const useEnhancementProcessor = (note: Note, editorState: {
       });
       
       // If we're editing and it's a replacement type enhancement, update the editable content
-      if (isEditing && enhancementDetails?.replaceContent && finalEnhancementType !== 'improve-clarity' && finalEnhancementType !== 'fix-spelling-grammar') {
+      if (isEditing && enhancementDetails?.replaceContent) {
         console.log("✏️ Updating editable content in editor mode");
         setEditableContent(finalEnhancedContent);
         toast.success("Enhancement applied to editor. Save to keep changes.");
@@ -104,21 +104,11 @@ export const useEnhancementProcessor = (note: Note, editorState: {
           break;
             
         case 'improve-clarity':
-          console.log("✨ Storing improved clarity content - NEVER REPLACING ORIGINAL");
+          console.log("✨ Storing improved clarity content");
           updateData = {
             improved_content: finalEnhancedContent,
             improved_content_generated_at: now,
             enhancement_type: 'clarity'
-          };
-          break;
-          
-        case 'fix-spelling-grammar':
-          console.log("🔤 Storing spelling & grammar fixes - NEVER REPLACING ORIGINAL");
-          updateData = {
-            improved_content: finalEnhancedContent,
-            improved_content_generated_at: now,
-            enhancement_type: 'spelling-grammar',
-            original_content_backup: note.content // Store original for diff view
           };
           break;
             
@@ -134,13 +124,7 @@ export const useEnhancementProcessor = (note: Note, editorState: {
       console.log("💾 Update data prepared:", {
         updateData,
         fieldsToUpdate: Object.keys(updateData),
-        contentPreview: finalEnhancedContent.substring(0, 100),
-        criticalCheck: {
-          isSpellingGrammar: finalEnhancementType === 'fix-spelling-grammar',
-          isImproveClarity: finalEnhancementType === 'improve-clarity',
-          willReplaceOriginalContent: 'content' in updateData,
-          shouldNeverReplaceForThese: (finalEnhancementType === 'improve-clarity' || finalEnhancementType === 'fix-spelling-grammar') && !('content' in updateData)
-        }
+        contentPreview: finalEnhancedContent.substring(0, 100)
       });
         
       // Update the database first
@@ -168,8 +152,7 @@ export const useEnhancementProcessor = (note: Note, editorState: {
         'summarize': "Summary created successfully",
         'extract-key-points': "Key points extracted successfully", 
         'convert-to-markdown': "Converted to markdown successfully",
-        'improve-clarity': "Improved clarity generated successfully",
-        'fix-spelling-grammar': "Spelling & grammar fixes applied successfully"
+        'improve-clarity': "Improved clarity generated successfully"
       };
         
       toast.success(successMessages[finalEnhancementType] || "Enhancement completed successfully");

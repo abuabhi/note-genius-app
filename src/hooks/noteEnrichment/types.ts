@@ -4,15 +4,13 @@ export type EnhancementFunction =
   | 'extract-key-points' 
   | 'create-flashcards' 
   | 'improve-clarity' 
-  | 'convert-to-markdown'
-  | 'fix-spelling-grammar';
+  | 'convert-to-markdown';
 
 export type EnhancementType = 
   | 'summary'
   | 'keyPoints'
   | 'flashcards'
   | 'improved'
-  | 'fixed'
   | 'markdown';
 
 export interface EnhancementResult {
@@ -24,13 +22,13 @@ export interface EnhancementResult {
 
 export interface EnhancementOption {
   id: string;
-  value?: EnhancementFunction;
+  value: EnhancementFunction;
   title: string;
   description: string;
   icon: string;
-  prompt?: string; // Add the missing prompt property
-  outputType?: EnhancementType; // Type of enhancement output
-  replaceContent?: boolean; // Whether to replace original content
+  prompt: string;
+  outputType?: EnhancementType;
+  replaceContent?: boolean;
 }
 
 export interface EnhancementUsage {

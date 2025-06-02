@@ -4,9 +4,8 @@ import { Note } from "@/types/note";
 import { TextAlignType } from "../hooks/useStudyViewState";
 import { RichTextDisplay } from "@/components/ui/rich-text/RichTextDisplay";
 import { EnhancedContentRenderer } from "./EnhancedContentRenderer";
-import { SpellingGrammarDiff } from "../diff/SpellingGrammarDiff";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, X, Clock, FileText, Target, List, Sparkles, Code } from "lucide-react";
+import { RefreshCw, Clock, FileText, Target, List, Sparkles, Code } from "lucide-react";
 import { LoadingAnimations } from "./LoadingAnimations";
 import { EnhancementContentType } from "./EnhancementSelector";
 import { cn } from "@/lib/utils";
@@ -119,27 +118,6 @@ export const EnhancementDisplayPanel = ({
 
   // Check if content contains AI enhancement markers
   const hasEnhancementMarkers = content && content.includes('[AI_ENHANCED]') && content.includes('[/AI_ENHANCED]');
-  
-  // FIXED: Enhanced spelling/grammar detection for Original tab
-  const isSpellingGrammarFixed = contentType === 'original' && 
-    note.enhancement_type === 'spelling-grammar' &&
-    note.improved_content && 
-    note.original_content_backup && 
-    note.original_content_backup !== note.improved_content &&
-    note.original_content_backup.length > 0;
-
-  console.log("🔍 EnhancementDisplayPanel - Spelling/Grammar Detection:", {
-    contentType,
-    enhancementType: note.enhancement_type,
-    hasImprovedContent: !!note.improved_content,
-    hasOriginalBackup: !!note.original_content_backup,
-    originalLength: note.original_content_backup?.length || 0,
-    improvedLength: note.improved_content?.length || 0,
-    isDifferent: note.original_content_backup !== note.improved_content,
-    isSpellingGrammarFixed,
-    originalPreview: note.original_content_backup?.substring(0, 100) || 'none',
-    improvedPreview: note.improved_content?.substring(0, 100) || 'none'
-  });
 
   // Show loading state with tab-specific loading animation
   if (isLoading) {
@@ -253,15 +231,7 @@ export const EnhancementDisplayPanel = ({
       {/* Enhanced Content */}
       <div className="flex-1 overflow-y-auto bg-gradient-to-b from-white to-gray-50/30">
         <div className="p-6">
-          {isSpellingGrammarFixed && note.original_content_backup ? (
-            <SpellingGrammarDiff
-              originalContent={note.original_content_backup}
-              fixedContent={note.improved_content}
-              fontSize={fontSize}
-              textAlign={textAlign}
-              className="prose-mint prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700"
-            />
-          ) : hasEnhancementMarkers ? (
+          {hasEnhancementMarkers ? (
             <EnhancedContentRenderer 
               content={content} 
               fontSize={fontSize} 
