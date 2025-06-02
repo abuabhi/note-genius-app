@@ -1,5 +1,6 @@
 
 import { useState, useCallback } from "react";
+import { EnhancementContentType } from "../enhancements/EnhancementSelector";
 
 export type TextAlignType = "left" | "center" | "justify";
 
@@ -15,6 +16,9 @@ export const useStudyViewState = () => {
   
   // State for full screen
   const [isFullScreen, setIsFullScreen] = useState(false);
+  
+  // State for active enhancement tab
+  const [activeContentType, setActiveContentType] = useState<EnhancementContentType>('original');
   
   // Handlers for font size
   const handleIncreaseFontSize = useCallback(() => {
@@ -40,16 +44,23 @@ export const useStudyViewState = () => {
     setIsFullScreen(prev => !prev);
   }, []);
 
+  // Handler for setting active content type
+  const setActiveContent = useCallback((contentType: EnhancementContentType) => {
+    setActiveContentType(contentType);
+  }, []);
+
   return {
     fontSize,
     textAlign,
     isFullWidth,
     isFullScreen,
+    activeContentType,
     handleIncreaseFontSize,
     handleDecreaseFontSize,
     handleTextAlign,
     toggleWidth,
-    toggleFullScreen
+    toggleFullScreen,
+    setActiveContentType: setActiveContent
   };
 };
 

@@ -8,7 +8,6 @@ import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
 import { EnhancementFunction } from "@/hooks/noteEnrichment/types";
 import { toast } from "sonner";
 import { StudyViewTitleSection } from "./StudyViewTitleSection";
-import { StudyViewProcessingIndicator } from "./StudyViewProcessingIndicator";
 import { StudyViewEnhancementDropdown } from "./StudyViewEnhancementDropdown";
 import { StudyViewExportDropdown } from "./StudyViewExportDropdown";
 
@@ -89,8 +88,6 @@ export const StudyViewHeader = ({
         <div className="flex items-center gap-2">
           {!isEditing && (
             <>
-              <StudyViewProcessingIndicator processingEnhancement={processingEnhancement} />
-              
               <StudyViewEnhancementDropdown
                 note={note}
                 processingEnhancement={processingEnhancement}

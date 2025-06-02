@@ -20,15 +20,27 @@ export const useEnrichmentUsageStats = () => {
       // Get current month in YYYY-MM format
       const currentMonth = new Date().toISOString().slice(0, 7);
       
+      // Get current user
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        throw new Error('User not authenticated');
+      }
+      
       // Get user's tier
       const { data: userData, error: userError } = await supabase
         .from('profiles')
         .select('user_tier')
-        .eq('id', (await supabase.auth.getUser()).data.user?.id)
+        .eq('id', user.id)
         .single();
       
       if (userError) {
-        throw userError;
+        console.error('Error fetching user tier:', userError);
+        // Set default values if we can't fetch user tier
+        setCurrentUsage(0);
+        setMonthlyLimit(null);
+        setIsLoading(false);
+        return;
       }
       
       // Get usage count using the imported function
@@ -38,20 +50,26 @@ export const useEnrichmentUsageStats = () => {
       const { data: tierData, error: tierError } = await supabase
         .from('tier_limits')
         .select('note_enrichment_limit_per_month')
-        .eq('tier', userData.user_tier)
+        .eq('tier', userData.user_tier || 'STUDENT')
         .single();
       
       if (tierError) {
-        throw tierError;
+        console.error('Error fetching tier limits:', tierError);
+        // Set default values if we can't fetch tier limits
+        setCurrentUsage(usageData?.length || 0);
+        setMonthlyLimit(10); // Default limit for students
+      } else {
+        // Update state with fetched data
+        setCurrentUsage(usageData?.length || 0);
+        setMonthlyLimit(tierData?.note_enrichment_limit_per_month);
       }
-      
-      // Update state
-      setCurrentUsage(usageData?.length || 0);
-      setMonthlyLimit(tierData?.note_enrichment_limit_per_month);
       
     } catch (err) {
       console.error('Error fetching usage stats:', err);
       setError('Failed to fetch usage statistics');
+      // Set default values on error
+      setCurrentUsage(0);
+      setMonthlyLimit(10);
     } finally {
       setIsLoading(false);
     }

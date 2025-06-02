@@ -17,7 +17,7 @@ interface NoteStudyViewProps {
 
 export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
   const viewState = useStudyViewState();
-  const { currentUsage, monthlyLimit, hasReachedLimit } = useNoteEnrichment();
+  const { currentUsage, monthlyLimit, hasReachedLimit, isLoading: statsLoading } = useNoteEnrichment();
   
   // Real-time note synchronization
   const { currentNote, refreshKey, forceRefresh, setRealtimeNote } = useRealtimeNoteSync(note);
@@ -25,7 +25,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
   // Enhancement retry functionality
   const { handleRetryEnhancement, isEnhancing } = useNoteEnhancementRetry(currentNote, forceRefresh);
   
-  // Note update handling
+  // Note update handling with tab preservation
   const { handleNoteUpdate } = useNoteUpdateHandler(currentNote, forceRefresh, setRealtimeNote);
   
   // Prevent automatic summary generation
@@ -33,6 +33,14 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
   
   // Editor state
   const editorState = useNoteStudyEditor(currentNote);
+
+  // Enhanced note update handler that preserves active tab
+  const handleNoteUpdateWithTabPreservation = async (updatedData: Partial<Note>) => {
+    const currentActiveTab = viewState.activeContentType;
+    await handleNoteUpdate(updatedData);
+    // Restore the active tab after update
+    viewState.setActiveContentType(currentActiveTab);
+  };
 
   return (
     <div 
@@ -71,7 +79,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
           selectedTags={editorState.selectedTags}
           availableTags={editorState.availableTags}
           isSaving={editorState.isSaving}
-          statsLoading={false}
+          statsLoading={statsLoading}
           currentUsage={currentUsage}
           monthlyLimit={monthlyLimit}
           handleContentChange={editorState.handleContentChange}
@@ -82,7 +90,9 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
           handleRetryEnhancement={handleRetryEnhancement}
           hasReachedLimit={hasReachedLimit}
           fetchUsageStats={async () => {}}
-          onNoteUpdate={handleNoteUpdate}
+          onNoteUpdate={handleNoteUpdateWithTabPreservation}
+          activeContentType={viewState.activeContentType}
+          onActiveContentTypeChange={viewState.setActiveContentType}
         />
       </Card>
     </div>

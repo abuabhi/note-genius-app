@@ -120,19 +120,21 @@ export const EnhancementDisplayPanel = ({
   // Check if content contains AI enhancement markers
   const hasEnhancementMarkers = content && content.includes('[AI_ENHANCED]') && content.includes('[/AI_ENHANCED]');
   
-  // Check if this is spelling/grammar fixed content
-  const isSpellingGrammarFixed = contentType === 'improved' && note.original_content_backup && note.spelling_grammar_fixes;
+  // Enhanced spelling/grammar fix detection
+  const isSpellingGrammarFixed = contentType === 'improved' && 
+    (note.enhancement_type === 'spelling-grammar' || 
+     (note.original_content_backup && note.spelling_grammar_fixes));
 
-  // Show loading state
+  // Show loading state with tab-specific loading animation
   if (isLoading) {
     return (
       <div className={cn("flex flex-col bg-white", className)}>
         <div className="border-b border-border py-3 px-4 bg-gradient-to-r from-mint-50/30 to-white h-[73px] flex items-center">
           <div className="flex items-center space-x-3">
-            <Icon className={cn("h-5 w-5", contentInfo.color)} />
+            <Icon className={cn("h-5 w-5 animate-pulse", contentInfo.color)} />
             <div>
               <h2 className="text-sm font-semibold text-gray-900">{contentInfo.title}</h2>
-              <p className="text-xs text-gray-500">{contentInfo.description}</p>
+              <p className="text-xs text-gray-500">Generating content...</p>
             </div>
           </div>
         </div>

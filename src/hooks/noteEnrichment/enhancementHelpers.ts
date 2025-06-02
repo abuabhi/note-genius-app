@@ -42,7 +42,8 @@ export const updateNoteWithEnhancement = async (
       case 'improve-clarity':
         updateData = {
           improved_content: enhancedContent,
-          improved_content_generated_at: now
+          improved_content_generated_at: now,
+          enhancement_type: 'clarity'
         };
         break;
         
@@ -51,6 +52,7 @@ export const updateNoteWithEnhancement = async (
         updateData = {
           improved_content: enhancedContent,
           improved_content_generated_at: now,
+          enhancement_type: 'spelling-grammar',
           // Store original content backup if provided
           ...(originalContent && {
             original_content_backup: originalContent,

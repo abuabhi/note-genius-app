@@ -36,20 +36,21 @@ export interface Note {
   improved_content?: string;
   improved_content_generated_at?: string;
   
-  // NEW: Spelling/Grammar fix tracking
+  // Enhanced spelling/grammar fix tracking
   original_content_backup?: string;
   spelling_grammar_fixes?: {
     original: string;
     fixed: string;
     timestamp: string;
   }[];
+  enhancement_type?: 'spelling-grammar' | 'clarity' | 'other';
   
   // Legacy enhancements field (for backward compatibility)
   enhancements?: {
     keyPoints?: string;
     markdown?: string;
     improved?: string;
-    flashcards?: any[]; // For future implementation
+    flashcards?: any[];
     last_enhanced_at?: string;
   };
 }

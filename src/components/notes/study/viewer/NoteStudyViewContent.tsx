@@ -8,6 +8,7 @@ import { Note } from "@/types/note";
 import { TextAlignType } from "../hooks/useStudyViewState";
 import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
 import { toast } from "sonner";
+import { EnhancementContentType } from "../enhancements/EnhancementSelector";
 
 interface NoteStudyViewContentProps {
   note: Note;
@@ -30,6 +31,8 @@ interface NoteStudyViewContentProps {
   hasReachedLimit?: () => boolean;
   fetchUsageStats?: () => Promise<void>;
   onNoteUpdate?: (updatedData: Partial<Note>) => Promise<void>;
+  activeContentType?: EnhancementContentType;
+  onActiveContentTypeChange?: (type: EnhancementContentType) => void;
 }
 
 export const NoteStudyViewContent: React.FC<NoteStudyViewContentProps> = ({
@@ -52,11 +55,12 @@ export const NoteStudyViewContent: React.FC<NoteStudyViewContentProps> = ({
   handleRetryEnhancement,
   hasReachedLimit = () => false,
   fetchUsageStats = async () => {},
-  onNoteUpdate
+  onNoteUpdate,
+  activeContentType = 'original',
+  onActiveContentTypeChange
 }) => {
   const [enhancementLoading, setEnhancementLoading] = useState<boolean>(false);
   const [currentEnhancementType, setCurrentEnhancementType] = useState<string>("");
-  const { enrichNote } = useNoteEnrichment();
 
   // Wrapper for retry enhancement to manage loading state
   const onRetryEnhancement = async (enhancementType: string) => {
@@ -86,7 +90,8 @@ export const NoteStudyViewContent: React.FC<NoteStudyViewContentProps> = ({
     hasSummary: !!note.summary,
     hasKeyPoints: !!note.key_points,
     enhancementLoading,
-    currentEnhancementType
+    currentEnhancementType,
+    activeContentType
   });
 
   return (
@@ -123,6 +128,8 @@ export const NoteStudyViewContent: React.FC<NoteStudyViewContentProps> = ({
           isLoading={enhancementLoading}
           onRetryEnhancement={onRetryEnhancement}
           onCancelEnhancement={onCancelEnhancement}
+          activeContentType={activeContentType}
+          onActiveContentTypeChange={onActiveContentTypeChange}
         />
       )}
     </CardContent>
