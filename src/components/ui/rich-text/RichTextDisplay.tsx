@@ -2,19 +2,22 @@
 import { useMemo } from "react";
 import ReactMarkdown from 'react-markdown';
 import { TextAlignType } from "@/components/notes/study/hooks/useStudyViewState";
+import { cn } from "@/lib/utils";
 
 interface RichTextDisplayProps {
   content: string;
   fontSize?: number;
   textAlign?: TextAlignType;
   removeTitle?: boolean; // New prop to remove auto-generated titles
+  className?: string; // Add className prop
 }
 
 export const RichTextDisplay = ({ 
   content, 
   fontSize = 16, 
   textAlign = 'left',
-  removeTitle = false 
+  removeTitle = false,
+  className 
 }: RichTextDisplayProps) => {
   // Process content to remove auto-generated titles if requested
   const processedContent = useMemo(() => {
@@ -49,7 +52,10 @@ export const RichTextDisplay = ({
 
   return (
     <div 
-      className={`prose prose-gray max-w-none p-4 ${textAlignClass[textAlign]}`}
+      className={cn(
+        `prose prose-gray max-w-none p-4 ${textAlignClass[textAlign]}`,
+        className
+      )}
       style={{ fontSize: `${fontSize}px` }}
     >
       <ReactMarkdown
