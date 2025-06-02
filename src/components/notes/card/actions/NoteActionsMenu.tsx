@@ -36,9 +36,7 @@ export const NoteActionsMenu = ({
   
   const handleDelete = async (id: string) => {
     console.log("NoteActionsMenu - Delete triggered for note ID:", id);
-    // Close the dropdown menu when delete action is confirmed
-    setOpen(false);
-    // Call the provided onDelete function
+    setOpen(false); // Close dropdown immediately
     try {
       await onDelete(id);
       console.log("NoteActionsMenu - Delete successful for note ID:", id);

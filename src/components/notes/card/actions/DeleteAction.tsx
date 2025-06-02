@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
@@ -14,7 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface DeleteActionProps {
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => Promise<void>;
   noteId: string;
 }
 
@@ -25,27 +24,27 @@ export const DeleteAction = ({ onDelete, noteId }: DeleteActionProps) => {
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    
-    // Open the confirmation dialog
+    console.log("DeleteAction - Opening confirmation dialog for note:", noteId);
     setShowConfirmDialog(true);
   };
 
   const handleConfirmDelete = async () => {
+    console.log("DeleteAction - Confirmed delete for note:", noteId);
     setIsDeleting(true);
     try {
-      // Call the actual delete function
       await onDelete(noteId);
-      // Close the dialog
+      console.log("DeleteAction - Delete successful for note:", noteId);
       setShowConfirmDialog(false);
     } catch (error) {
-      console.error('Delete action failed:', error);
+      console.error('DeleteAction - Delete failed:', error);
+      // Keep dialog open on error so user can try again
     } finally {
       setIsDeleting(false);
     }
   };
 
   const handleCancelDelete = () => {
-    // Just close the dialog
+    console.log("DeleteAction - Cancelled delete for note:", noteId);
     setShowConfirmDialog(false);
   };
 
@@ -55,7 +54,6 @@ export const DeleteAction = ({ onDelete, noteId }: DeleteActionProps) => {
         className="flex items-center cursor-pointer text-red-600 hover:text-red-800 focus:text-red-800" 
         onClick={handleDeleteClick}
         onSelect={(e) => {
-          // Prevent the dropdown from closing automatically
           e.preventDefault();
         }}
       >

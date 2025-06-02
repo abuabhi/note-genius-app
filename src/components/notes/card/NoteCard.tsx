@@ -10,7 +10,6 @@ import { generateColorFromString } from "@/utils/colorUtils";
 import { getBestTextColor } from "@/utils/colorUtils";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
 
 interface NoteCardProps {
@@ -18,7 +17,7 @@ interface NoteCardProps {
   onNoteClick: (note: Note) => void;
   onShowDetails: (note: Note, e: React.MouseEvent) => void;
   onPin: (id: string, isPinned: boolean) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => Promise<void>;
   confirmDelete: string | null;
 }
 
@@ -31,7 +30,6 @@ export const NoteCard = ({
   confirmDelete
 }: NoteCardProps) => {
   const navigate = useNavigate();
-  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const { subjects } = useUserSubjects();
   
   // Find the subject name based on subject_id or fall back to category
@@ -44,21 +42,6 @@ export const NoteCard = ({
   const handleGoToStudyMode = (e: React.MouseEvent) => {
     e.stopPropagation();
     navigate(`/notes/study/${note.id}`);
-  };
-  
-  const handleDeleteWrapper = (id: string) => {
-    // This wrapper function now handles the delete confirmation logic
-    // without needing the event parameter from the actions component
-    if (isConfirmingDelete) {
-      // Actually delete the note
-      onDelete(id);
-      setIsConfirmingDelete(false);
-    } else {
-      // Set confirming state
-      setIsConfirmingDelete(true);
-      // Reset after 3 seconds
-      setTimeout(() => setIsConfirmingDelete(false), 3000);
-    }
   };
 
   // Format date as dd-MMM-yyyy (e.g., 15-May-2023)
@@ -90,12 +73,12 @@ export const NoteCard = ({
           noteContent={note.content || note.description || ""}
           isPinned={!!note.pinned} 
           onPin={onPin}
-          onDelete={handleDeleteWrapper}
+          onDelete={onDelete}
           iconSize={5}
         />
         
         <div className="flex flex-row items-center justify-between">
-          <CardTitle className={`text-xl text-mint-800 ${note.pinned ? 'pl-6' : ''} pr-8`}> {/* Add padding-right to avoid overlap with actions */}
+          <CardTitle className={`text-xl text-mint-800 ${note.pinned ? 'pl-6' : ''} pr-8`}>
             {note.title}
           </CardTitle>
         </div>

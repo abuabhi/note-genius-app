@@ -19,7 +19,6 @@ export const useNoteOperations = (
     try {
       console.log("Adding note with data:", noteData);
       
-      // Set the summary_status to 'pending' instead of 'generating' to prevent auto-generation
       const noteToAdd = {
         ...noteData,
         summary_status: 'pending' as 'pending' | 'generating' | 'completed' | 'failed'
@@ -29,11 +28,8 @@ export const useNoteOperations = (
       
       if (newNote) {
         console.log("Note added successfully:", newNote);
-        // Update the local state with the new note
         setNotes(prevNotes => [newNote, ...prevNotes]);
         toast.success("Note added");
-        
-        // No longer automatically generate summary in background
         return newNote;
       } else {
         console.error("Failed to add note: newNote is null");
@@ -48,10 +44,10 @@ export const useNoteOperations = (
   };
 
   const deleteNote = async (id: string): Promise<void> => {
+    console.log(`useNoteOperations - Starting note deletion process for note ID: ${id}`);
+    
     try {
-      console.log(`useNoteOperations - Starting note deletion process for note ID: ${id}`);
-      
-      // Show deletion in progress with loading indicator
+      // Show deletion in progress 
       const toastId = toast.loading("Deleting note...");
       
       // Optimistic update - remove note from UI immediately
@@ -69,7 +65,6 @@ export const useNoteOperations = (
         
         // Update toast on success
         toast.dismiss(toastId);
-        toast.success("Note deleted successfully");
         console.log(`useNoteOperations - Note deletion successful for ID: ${id}`);
       } catch (error) {
         console.error('useNoteOperations - Error deleting note from database:', error);

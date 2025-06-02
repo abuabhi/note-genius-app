@@ -9,7 +9,7 @@ import { NoteCard } from "./card/NoteCard";
 import { EmptyNotesState } from "./EmptyNotesState";
 
 export const NotesGrid = ({ notes }: { notes: Note[] }) => {
-  const { pinNote, archiveNote, deleteNote } = useNotes();
+  const { pinNote, deleteNote } = useNotes();
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const navigate = useNavigate();
@@ -28,11 +28,12 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string): Promise<void> => {
     console.log("NotesGrid - Delete initiated for note ID:", id);
     try {
       await deleteNote(id);
       console.log("NotesGrid - Delete completed for note ID:", id);
+      toast.success("Note deleted successfully");
     } catch (error) {
       console.error("NotesGrid - Error deleting note:", error);
       toast.error("Failed to delete note");
@@ -41,7 +42,6 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
   };
 
   const handleNoteClick = (note: Note) => {
-    // Navigate directly to study mode
     navigate(`/notes/study/${note.id}`);
   };
 
