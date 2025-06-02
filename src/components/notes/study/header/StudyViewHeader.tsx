@@ -1,24 +1,15 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { CardHeader } from "@/components/ui/card";
 import { Note } from "@/types/note";
 import { StudyViewControls } from "../controls/StudyViewControls";
 import { TextAlignType } from "../hooks/useStudyViewState";
-import { Input } from "@/components/ui/input";
-import { NoteHeader } from "../../details/NoteHeader";
-import { NoteTagList } from "../../details/NoteTagList";
-import { Brain, ChevronDown, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuItem,
-  DropdownMenuSeparator
-} from "@/components/ui/dropdown-menu";
 import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
 import { EnhancementFunction } from "@/hooks/noteEnrichment/types";
 import { toast } from "sonner";
+import { StudyViewTitleSection } from "./StudyViewTitleSection";
+import { StudyViewProcessingIndicator } from "./StudyViewProcessingIndicator";
+import { StudyViewEnhancementDropdown } from "./StudyViewEnhancementDropdown";
 
 interface StudyViewHeaderProps {
   note: Note;
@@ -59,35 +50,11 @@ export const StudyViewHeader = ({
   onTitleChange,
   onEnhance,
 }: StudyViewHeaderProps) => {
-  const [title, setTitle] = useState(note?.title || "");
   const [processingEnhancement, setProcessingEnhancement] = useState<EnhancementFunction | null>(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const { enrichNote, enhancementOptions, isProcessing } = useNoteEnrichment();
-
-  useEffect(() => {
-    setTitle(editableTitle || note?.title || "");
-  }, [editableTitle, note?.title]);
-
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTitle = e.target.value;
-    setTitle(newTitle);
-    onTitleChange(newTitle);
-  };
+  const { enrichNote, enhancementOptions } = useNoteEnrichment();
 
   // Handle enhancement selection
   const handleEnhancementSelect = async (enhancement: EnhancementFunction) => {
-    if (!note.id || !note.content) return;
-    
-    // Check if it's the "create-flashcards" option which is coming soon
-    if (enhancement === 'create-flashcards') {
-      toast.info("Coming Soon", {
-        description: "Flashcard creation from notes will be available soon!"
-      });
-      return;
-    }
-    
-    // Close dropdown and set processing state
-    setDropdownOpen(false);
     setProcessingEnhancement(enhancement);
     
     try {
@@ -105,127 +72,28 @@ export const StudyViewHeader = ({
     }
   };
 
-  // Group enhancement options by category for the dropdown
-  const nonReplacementOptions = enhancementOptions.filter(opt => !opt.replaceContent);
-  const replacementOptions = enhancementOptions.filter(opt => opt.replaceContent);
-
-  // Get the title of the currently processing enhancement
-  const getProcessingTitle = () => {
-    if (!processingEnhancement) return "";
-    const option = enhancementOptions.find(opt => opt.value === processingEnhancement);
-    return option?.title || "";
-  };
-
   return (
     <CardHeader className="border-b p-4 bg-card">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex-1 w-full sm:w-auto">
-          {isEditing ? (
-            <Input
-              value={title}
-              onChange={handleTitleChange}
-              className="font-medium text-lg border-mint-200 focus-visible:ring-mint-400"
-              placeholder="Note Title"
-            />
-          ) : (
-            <div className="space-y-1">
-              <h2 className="text-xl font-bold text-green-700">{note?.title}</h2>
-              <div className="text-sm flex flex-wrap gap-2 items-center">
-                <span className="font-bold text-gray-600">{note?.date}</span>
-                {note?.category && (
-                  <span className="text-green-600 font-medium">{note?.category}</span>
-                )}
-              </div>
-              {note?.tags && note?.tags.length > 0 && (
-                <div className="mt-2">
-                  <NoteTagList tags={note?.tags} />
-                </div>
-              )}
-            </div>
-          )}
+          <StudyViewTitleSection
+            note={note}
+            isEditing={isEditing}
+            editableTitle={editableTitle}
+            onTitleChange={onTitleChange}
+          />
         </div>
 
         <div className="flex items-center gap-2">
           {!isEditing && (
             <>
-              {/* Show processing indicator when AI is working */}
-              {processingEnhancement && (
-                <div className="flex items-center gap-2 px-3 py-1 bg-mint-50 rounded-lg border border-mint-200">
-                  <Loader2 className="h-4 w-4 animate-spin text-mint-600" />
-                  <span className="text-sm text-mint-700 font-medium">
-                    {getProcessingTitle()}...
-                  </span>
-                </div>
-              )}
+              <StudyViewProcessingIndicator processingEnhancement={processingEnhancement} />
               
-              <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="bg-white border border-mint-200 text-mint-700 hover:bg-mint-50 hover:text-mint-800 transition-all gap-1 group h-8"
-                    disabled={isProcessing || !!processingEnhancement}
-                  >
-                    {processingEnhancement ? (
-                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                    ) : (
-                      <Brain className="h-4 w-4 mr-1 group-hover:text-mint-600 transition-colors" />
-                    )}
-                    Use AI
-                    <ChevronDown className="h-3 w-3 ml-1 opacity-70" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-64">
-                  {/* Non-replacement options */}
-                  {nonReplacementOptions.map((option, index) => (
-                    <div key={option.id}>
-                      <DropdownMenuItem
-                        onClick={() => handleEnhancementSelect(option.value as EnhancementFunction)}
-                        className="cursor-pointer flex items-start p-2 rounded hover:bg-mint-50 focus:bg-mint-50 transition-colors"
-                        disabled={isProcessing || option.value === 'create-flashcards' || !!processingEnhancement}
-                      >
-                        <div className="flex flex-col">
-                          <span className="font-medium text-mint-800">{option.title}</span>
-                          <span className="text-xs text-muted-foreground mt-0.5">{option.description}</span>
-                          {option.value === 'create-flashcards' && (
-                            <span className="text-xs text-amber-600 mt-0.5 font-medium">Coming soon</span>
-                          )}
-                        </div>
-                      </DropdownMenuItem>
-                      {/* Add separator after each item except the last one in this group */}
-                      {index < nonReplacementOptions.length - 1 && <DropdownMenuSeparator />}
-                    </div>
-                  ))}
-
-                  {/* Separator between categories */}
-                  {nonReplacementOptions.length > 0 && replacementOptions.length > 0 && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <div className="px-2 py-1 text-xs text-muted-foreground">
-                        Content Improvements
-                      </div>
-                    </>
-                  )}
-
-                  {/* Replacement options */}
-                  {replacementOptions.map((option, index) => (
-                    <div key={option.id}>
-                      <DropdownMenuItem
-                        onClick={() => handleEnhancementSelect(option.value as EnhancementFunction)}
-                        className="cursor-pointer flex items-start p-2 rounded hover:bg-mint-50 focus:bg-mint-50 transition-colors"
-                        disabled={isProcessing || !!processingEnhancement}
-                      >
-                        <div className="flex flex-col">
-                          <span className="font-medium text-mint-800">{option.title}</span>
-                          <span className="text-xs text-muted-foreground mt-0.5">{option.description}</span>
-                        </div>
-                      </DropdownMenuItem>
-                      {/* Add separator after each item except the last one in this group */}
-                      {index < replacementOptions.length - 1 && <DropdownMenuSeparator />}
-                    </div>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <StudyViewEnhancementDropdown
+                note={note}
+                processingEnhancement={processingEnhancement}
+                onEnhancementSelect={handleEnhancementSelect}
+              />
             </>
           )}
 
