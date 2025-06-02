@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { CardContent } from "@/components/ui/card";
 import { NoteContentDisplay } from "../NoteContentDisplay";
@@ -29,6 +28,7 @@ interface NoteStudyViewContentProps {
   handleRetryEnhancement: (enhancementType: string) => Promise<void>;
   hasReachedLimit?: () => boolean;
   fetchUsageStats?: () => Promise<void>;
+  onNoteUpdate?: (updatedData: Partial<Note>) => Promise<void>;
 }
 
 export const NoteStudyViewContent: React.FC<NoteStudyViewContentProps> = ({
@@ -50,7 +50,8 @@ export const NoteStudyViewContent: React.FC<NoteStudyViewContentProps> = ({
   setSelectedTags,
   handleRetryEnhancement,
   hasReachedLimit = () => false,
-  fetchUsageStats = async () => {}
+  fetchUsageStats = async () => {},
+  onNoteUpdate
 }) => {
   const [enhancementLoading, setEnhancementLoading] = useState<boolean>(false);
   const [currentEnhancementType, setCurrentEnhancementType] = useState<string>("");
