@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Sparkles, RefreshCw } from "lucide-react";
+import { ChevronDown, Sparkles } from "lucide-react";
 import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
 import { Note } from "@/types/note";
 import { EnhancementFunction } from "@/hooks/noteEnrichment/types";
@@ -24,17 +24,6 @@ export const StudyViewEnhancementDropdown = ({
   onEnhancementSelect
 }: StudyViewEnhancementDropdownProps) => {
   const { hasReachedLimit } = useNoteEnrichment();
-
-  const handleRegenerate = () => {
-    onEnhancementSelect('improve-clarity');
-  };
-
-  // Check if note has improved content for regeneration option
-  const hasImprovedContent = Boolean(
-    note.improved_content && 
-    typeof note.improved_content === 'string' && 
-    note.improved_content.trim().length > 10
-  );
 
   const isProcessing = processingEnhancement !== null;
 
@@ -122,22 +111,6 @@ export const StudyViewEnhancementDropdown = ({
             <span className="text-xs text-gray-500 leading-relaxed">Transform your original content into properly formatted markdown with headers, lists, and styling</span>
           </div>
         </DropdownMenuItem>
-        
-        {hasImprovedContent && (
-          <>
-            <DropdownMenuSeparator className="my-1 border-t border-gray-100" />
-            <DropdownMenuItem 
-              onClick={handleRegenerate}
-              className="flex items-start px-4 py-3 text-sm cursor-pointer hover:bg-mint-50 focus:bg-mint-50"
-            >
-              <RefreshCw className="mr-3 h-4 w-4 text-mint-600 mt-0.5 flex-shrink-0" />
-              <div className="flex flex-col">
-                <span className="font-medium text-gray-900 mb-1">Regenerate Improved Content</span>
-                <span className="text-xs text-gray-500 leading-relaxed">Generate a new version of the improved content with different phrasing and structure</span>
-              </div>
-            </DropdownMenuItem>
-          </>
-        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
