@@ -177,21 +177,24 @@ export const StudyViewHeader = ({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-64">
                   {/* Non-replacement options */}
-                  {nonReplacementOptions.map((option) => (
-                    <DropdownMenuItem
-                      key={option.id}
-                      onClick={() => handleEnhancementSelect(option.value as EnhancementFunction)}
-                      className="cursor-pointer flex items-start p-2 rounded hover:bg-mint-50 focus:bg-mint-50 transition-colors"
-                      disabled={isProcessing || option.value === 'create-flashcards' || !!processingEnhancement}
-                    >
-                      <div className="flex flex-col">
-                        <span className="font-medium text-mint-800">{option.title}</span>
-                        <span className="text-xs text-muted-foreground mt-0.5">{option.description}</span>
-                        {option.value === 'create-flashcards' && (
-                          <span className="text-xs text-amber-600 mt-0.5 font-medium">Coming soon</span>
-                        )}
-                      </div>
-                    </DropdownMenuItem>
+                  {nonReplacementOptions.map((option, index) => (
+                    <div key={option.id}>
+                      <DropdownMenuItem
+                        onClick={() => handleEnhancementSelect(option.value as EnhancementFunction)}
+                        className="cursor-pointer flex items-start p-2 rounded hover:bg-mint-50 focus:bg-mint-50 transition-colors"
+                        disabled={isProcessing || option.value === 'create-flashcards' || !!processingEnhancement}
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-medium text-mint-800">{option.title}</span>
+                          <span className="text-xs text-muted-foreground mt-0.5">{option.description}</span>
+                          {option.value === 'create-flashcards' && (
+                            <span className="text-xs text-amber-600 mt-0.5 font-medium">Coming soon</span>
+                          )}
+                        </div>
+                      </DropdownMenuItem>
+                      {/* Add separator after each item except the last one in this group */}
+                      {index < nonReplacementOptions.length - 1 && <DropdownMenuSeparator />}
+                    </div>
                   ))}
 
                   {/* Separator between categories */}
@@ -205,18 +208,21 @@ export const StudyViewHeader = ({
                   )}
 
                   {/* Replacement options */}
-                  {replacementOptions.map((option) => (
-                    <DropdownMenuItem
-                      key={option.id}
-                      onClick={() => handleEnhancementSelect(option.value as EnhancementFunction)}
-                      className="cursor-pointer flex items-start p-2 rounded hover:bg-mint-50 focus:bg-mint-50 transition-colors"
-                      disabled={isProcessing || !!processingEnhancement}
-                    >
-                      <div className="flex flex-col">
-                        <span className="font-medium text-mint-800">{option.title}</span>
-                        <span className="text-xs text-muted-foreground mt-0.5">{option.description}</span>
-                      </div>
-                    </DropdownMenuItem>
+                  {replacementOptions.map((option, index) => (
+                    <div key={option.id}>
+                      <DropdownMenuItem
+                        onClick={() => handleEnhancementSelect(option.value as EnhancementFunction)}
+                        className="cursor-pointer flex items-start p-2 rounded hover:bg-mint-50 focus:bg-mint-50 transition-colors"
+                        disabled={isProcessing || !!processingEnhancement}
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-medium text-mint-800">{option.title}</span>
+                          <span className="text-xs text-muted-foreground mt-0.5">{option.description}</span>
+                        </div>
+                      </DropdownMenuItem>
+                      {/* Add separator after each item except the last one in this group */}
+                      {index < replacementOptions.length - 1 && <DropdownMenuSeparator />}
+                    </div>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
