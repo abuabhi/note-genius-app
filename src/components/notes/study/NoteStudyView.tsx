@@ -6,6 +6,7 @@ import { NoteStudyViewContent } from "./viewer/NoteStudyViewContent";
 import { useStudyViewState } from "./hooks/useStudyViewState";
 import { useNoteStudyEditor } from "./hooks/useNoteStudyEditor";
 import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
+import { useNotes } from "@/contexts/NoteContext";
 import { EnhancementFunction } from "@/hooks/noteEnrichment/types";
 
 interface NoteStudyViewProps {
@@ -16,6 +17,20 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
   const viewState = useStudyViewState();
   const editorState = useNoteStudyEditor(note);
   const { currentUsage, monthlyLimit, hasReachedLimit } = useNoteEnrichment();
+  const { notes } = useNotes();
+  
+  // Get the most up-to-date note data from context
+  const currentNote = notes.find(n => n.id === note.id) || note;
+  
+  console.log("NoteStudyView - Note data comparison:", {
+    originalNoteId: note.id,
+    currentNoteId: currentNote.id,
+    originalHasKeyPoints: !!note.key_points,
+    currentHasKeyPoints: !!currentNote.key_points,
+    originalUpdatedAt: note.updated_at,
+    currentUpdatedAt: currentNote.updated_at,
+    keyPointsLength: currentNote.key_points?.length || 0
+  });
 
   const handleRetryEnhancement = async (enhancementType: string): Promise<void> => {
     // Implementation for retrying enhancement
@@ -28,7 +43,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
     } ${viewState.isFullScreen ? 'fixed inset-0 z-50 bg-white' : ''}`}>
       <Card className="shadow-lg border-mint-200">
         <StudyViewHeader
-          note={note}
+          note={currentNote}
           fontSize={viewState.fontSize}
           textAlign={viewState.textAlign}
           isFullWidth={viewState.isFullWidth}
@@ -48,7 +63,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
         />
         
         <NoteStudyViewContent
-          note={note}
+          note={currentNote}
           isEditing={editorState.isEditing}
           fontSize={viewState.fontSize}
           textAlign={viewState.textAlign}

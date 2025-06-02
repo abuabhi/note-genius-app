@@ -37,14 +37,18 @@ export const EnhancementSelector = ({
   const isGeneratingSummary = summaryStatus === 'generating' || summaryStatus === 'pending';
   const hasSummaryError = summaryStatus === 'failed';
 
-  // Debug log to verify enhancement detection
+  // Debug log to verify enhancement detection with timestamps
   console.log("EnhancementSelector - Enhancement detection:", {
     noteId: note.id,
     hasSummary,
     hasKeyPoints,
     hasMarkdown,
     hasImprovedClarity,
-    summaryStatus
+    summaryStatus,
+    activeContentType,
+    keyPointsData: note.key_points ? `${note.key_points.length} chars` : 'none',
+    noteUpdatedAt: note.updated_at,
+    keyPointsGeneratedAt: note.key_points_generated_at
   });
 
   // Define the enhancement options - show immediately when content exists
@@ -81,6 +85,12 @@ export const EnhancementSelector = ({
   // Filter to only show available options
   const availableOptions = enhancementOptions.filter(option => option.available);
 
+  // Log available options for debugging
+  console.log("EnhancementSelector - Available options:", {
+    availableOptions: availableOptions.map(opt => opt.id),
+    totalOptions: availableOptions.length
+  });
+
   return (
     <div className={cn("flex flex-col border-r border-border bg-muted/20", className)}>
       <div className="py-2 px-3 bg-muted/30 border-b border-border">
@@ -90,7 +100,10 @@ export const EnhancementSelector = ({
         {availableOptions.map((option) => (
           <button
             key={option.id}
-            onClick={() => setActiveContentType(option.id)}
+            onClick={() => {
+              console.log(`EnhancementSelector - Switching to tab: ${option.id}`);
+              setActiveContentType(option.id);
+            }}
             className={cn(
               "flex items-center justify-between px-4 py-2 text-sm transition-colors",
               activeContentType === option.id 

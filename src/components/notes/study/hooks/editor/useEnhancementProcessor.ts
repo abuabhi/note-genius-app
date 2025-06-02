@@ -4,6 +4,7 @@ import { Note } from "@/types/note";
 import { updateNoteInDatabase } from "@/contexts/notes/operations";
 import { EnhancementFunction } from "@/hooks/noteEnrichment/types";
 import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
+import { useNotes } from "@/contexts/NoteContext";
 import { useState } from "react";
 
 /**
@@ -15,6 +16,7 @@ export const useEnhancementProcessor = (note: Note, editorState: {
 }) => {
   const { isEditing, setEditableContent } = editorState;
   const { getEnhancementDetails } = useNoteEnrichment();
+  const { updateNote } = useNotes(); // Get updateNote from context
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [processingError, setProcessingError] = useState<string | null>(null);
   
@@ -46,6 +48,7 @@ export const useEnhancementProcessor = (note: Note, editorState: {
       // If not editing, directly update the note based on enhancement type
       try {
         const now = new Date().toISOString();
+        let updateData: Partial<Note> = {};
         
         switch (typeToApply) {
           case 'summarize':
@@ -55,91 +58,79 @@ export const useEnhancementProcessor = (note: Note, editorState: {
               summary_status: 'completed'
             });
             
-            // Store in dedicated summary field - DO NOT modify original content
-            await updateNoteInDatabase(note.id, {
+            updateData = {
               summary: enhancedContent,
               summary_generated_at: now,
               summary_status: 'completed'
-            });
-            
-            // Update local note object
-            note.summary = enhancedContent;
-            note.summary_generated_at = now;
-            note.summary_status = 'completed';
-            toast.success("Summary created successfully");
+            };
             break;
             
           case 'extract-key-points':
-            // Store in dedicated key_points field
-            await updateNoteInDatabase(note.id, {
+            console.log("Storing key points in dedicated field", {
               key_points: enhancedContent,
               key_points_generated_at: now
             });
             
-            // Update local note
-            note.key_points = enhancedContent;
-            note.key_points_generated_at = now;
-            toast.success("Key points extracted successfully");
+            updateData = {
+              key_points: enhancedContent,
+              key_points_generated_at: now
+            };
             break;
             
           case 'convert-to-markdown':
-            // Store in dedicated markdown_content field
-            await updateNoteInDatabase(note.id, {
+            updateData = {
               markdown_content: enhancedContent,
               markdown_content_generated_at: now
-            });
-            
-            // Update local note
-            note.markdown_content = enhancedContent;
-            note.markdown_content_generated_at = now;
-            toast.success("Converted to markdown successfully");
+            };
             break;
             
           case 'improve-clarity':
-            // For improve-clarity, we can either replace content or store separately
             if (enhancementDetails?.replaceContent) {
-              // Replace the main content
-              await updateNoteInDatabase(note.id, { content: enhancedContent });
-              note.content = enhancedContent;
-              toast.success("Content improved successfully");
+              updateData = { content: enhancedContent };
             } else {
-              // Store in dedicated improved_content field
-              await updateNoteInDatabase(note.id, {
+              updateData = {
                 improved_content: enhancedContent,
                 improved_content_generated_at: now
-              });
-              
-              note.improved_content = enhancedContent;
-              note.improved_content_generated_at = now;
-              toast.success("Improved clarity generated successfully");
+              };
             }
             break;
             
           default:
-            // For replacement type enhancements, replace the main content
-            if (enhancementDetails?.replaceContent) {
-              await updateNoteInDatabase(note.id, { content: enhancedContent });
-              note.content = enhancedContent;
-              toast.success(`Content ${enhancementDetails.title.toLowerCase()} successfully`);
-            } else {
-              // Fallback to summary for any other enhancements
-              await updateNoteInDatabase(note.id, {
-                summary: enhancedContent,
-                summary_generated_at: now,
-                summary_status: 'completed'
-              });
-              
-              note.summary = enhancedContent;
-              note.summary_generated_at = now;
-              note.summary_status = 'completed';
-              toast.success("Enhancement completed successfully");
-            }
+            // Fallback to summary for any other enhancements
+            updateData = {
+              summary: enhancedContent,
+              summary_generated_at: now,
+              summary_status: 'completed'
+            };
         }
+        
+        // First update the database
+        await updateNoteInDatabase(note.id, updateData);
+        
+        // Then immediately update the context state to trigger re-renders
+        await updateNote(note.id, updateData);
+        
+        console.log("Enhancement saved and context updated:", {
+          noteId: note.id,
+          updateData,
+          enhancementType: typeToApply
+        });
+        
+        // Show success message
+        const successMessages = {
+          'summarize': "Summary created successfully",
+          'extract-key-points': "Key points extracted successfully", 
+          'convert-to-markdown': "Converted to markdown successfully",
+          'improve-clarity': enhancementDetails?.replaceContent ? "Content improved successfully" : "Improved clarity generated successfully"
+        };
+        
+        toast.success(successMessages[typeToApply] || "Enhancement completed successfully");
+        
       } catch (error) {
         console.error("Error saving enhancement:", error);
         setProcessingError("Failed to save enhanced content");
         toast.error(`Failed to save enhanced content: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        throw error; // Re-throw to be caught by the outer try-catch
+        throw error;
       }
     } catch (error) {
       console.error("Error in enhancement process:", error);
