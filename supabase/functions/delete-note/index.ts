@@ -29,53 +29,41 @@ serve(async (req) => {
       );
     }
     
-    // Create Supabase client
+    // Create Supabase client with service role key for admin operations
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     
-    // Get authorization from the request
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      console.error("Edge function delete-note - No authorization header");
+    if (!supabaseServiceRoleKey) {
+      console.error("Edge function delete-note - No service role key available");
       return new Response(
-        JSON.stringify({ error: "Missing Authorization header" }),
+        JSON.stringify({ error: "Service configuration error" }),
         { 
-          status: 401, 
+          status: 500, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
         }
       );
     }
     
-    // Set auth token for the client
-    supabase.auth.setAuth(authHeader.replace("Bearer ", ""));
+    // Use service role for admin-level operations
+    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
     
-    console.log("Edge function delete-note - Starting deletion process");
+    console.log("Edge function delete-note - Starting deletion process with service role");
     
-    // First check if any note enrichment usage entries exist for this note
-    const { data: enrichmentData, error: enrichmentError } = await supabase
+    // Delete in the correct order to avoid foreign key constraint violations
+    console.log("Edge function delete-note - Step 1: Deleting note enrichment usage entries");
+    const { error: enrichmentError } = await supabase
       .from("note_enrichment_usage")
-      .select("id")
+      .delete()
       .eq("note_id", noteId);
     
     if (enrichmentError) {
-      console.error("Edge function delete-note - Error checking enrichment usage:", enrichmentError);
-    } else if (enrichmentData && enrichmentData.length > 0) {
-      console.log(`Edge function delete-note - Found ${enrichmentData.length} enrichment usage entries to delete`);
-      
-      // Delete note enrichment usage entries first
-      const { error: deleteEnrichmentError } = await supabase
-        .from("note_enrichment_usage")
-        .delete()
-        .eq("note_id", noteId);
-      
-      if (deleteEnrichmentError) {
-        console.error("Edge function delete-note - Error deleting enrichment usage:", deleteEnrichmentError);
-        // Continue with other deletions even if this fails
-      }
+      console.error("Edge function delete-note - Error deleting enrichment usage:", enrichmentError);
+      // Continue with deletion even if this fails
+    } else {
+      console.log("Edge function delete-note - Successfully deleted enrichment usage entries");
     }
     
-    // Delete note tags
+    console.log("Edge function delete-note - Step 2: Deleting note tags");
     const { error: tagError } = await supabase
       .from("note_tags")
       .delete()
@@ -83,10 +71,12 @@ serve(async (req) => {
     
     if (tagError) {
       console.error("Edge function delete-note - Error deleting note tags:", tagError);
-      // Continue with other deletions even if this fails
+      // Continue with deletion even if this fails
+    } else {
+      console.log("Edge function delete-note - Successfully deleted note tags");
     }
     
-    // Delete scan data if it exists
+    console.log("Edge function delete-note - Step 3: Deleting scan data");
     const { error: scanError } = await supabase
       .from("scan_data")
       .delete()
@@ -94,10 +84,12 @@ serve(async (req) => {
     
     if (scanError) {
       console.error("Edge function delete-note - Error deleting scan data:", scanError);
-      // Continue with other deletions even if this fails
+      // Continue with deletion even if this fails
+    } else {
+      console.log("Edge function delete-note - Successfully deleted scan data");
     }
     
-    // Finally delete the note itself
+    console.log("Edge function delete-note - Step 4: Finally deleting the note");
     const { error: noteError } = await supabase
       .from("notes")
       .delete()
@@ -106,7 +98,7 @@ serve(async (req) => {
     if (noteError) {
       console.error("Edge function delete-note - Error deleting note:", noteError);
       
-      // If all else fails, try to use the force_delete_note database function
+      // If regular deletion fails, try using the database function as fallback
       try {
         console.log("Edge function delete-note - Attempting force delete via database function");
         const { data: forceDeleteData, error: forceDeleteError } = await supabase
@@ -114,7 +106,16 @@ serve(async (req) => {
         
         if (forceDeleteError) {
           console.error("Edge function delete-note - Force delete failed:", forceDeleteError);
-          throw forceDeleteError;
+          return new Response(
+            JSON.stringify({ 
+              error: "Failed to delete note", 
+              details: forceDeleteError.message 
+            }),
+            { 
+              status: 500, 
+              headers: { ...corsHeaders, "Content-Type": "application/json" } 
+            }
+          );
         }
         
         console.log("Edge function delete-note - Force delete succeeded:", forceDeleteData);
@@ -124,7 +125,16 @@ serve(async (req) => {
         );
       } catch (forceError) {
         console.error("Edge function delete-note - All deletion attempts failed:", forceError);
-        throw noteError;
+        return new Response(
+          JSON.stringify({ 
+            error: "Failed to delete note", 
+            details: noteError.message 
+          }),
+          { 
+            status: 500, 
+            headers: { ...corsHeaders, "Content-Type": "application/json" } 
+          }
+        );
       }
     }
     
