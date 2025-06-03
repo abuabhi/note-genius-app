@@ -156,13 +156,20 @@ function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
 
   React.useEffect(() => {
-    const listener = setState
+    const listener = (newState: State) => {
+      setState(newState)
+    }
+    
     listeners.push(listener)
     
     return () => {
-      const index = listeners.indexOf(listener)
-      if (index > -1) {
-        listeners.splice(index, 1)
+      try {
+        const index = listeners.indexOf(listener)
+        if (index > -1) {
+          listeners.splice(index, 1)
+        }
+      } catch (error) {
+        console.warn('Error cleaning up toast listener:', error)
       }
     }
   }, [])
