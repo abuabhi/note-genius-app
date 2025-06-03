@@ -50,8 +50,9 @@ export const FlashcardDisplay = ({
     );
   }
 
-  // Use currentIndex and currentCard.id to ensure each card has a unique key
-  const animationKey = `card-${currentIndex}-${currentCard.id}-${isFlipped ? "back" : "front"}`;
+  // Create a more specific animation key that forces re-render
+  const animationKey = `flashcard-${currentCard.id}-${currentIndex}-${isFlipped}`;
+  const displayContent = isFlipped ? (backContent || "No back content") : (frontContent || "No front content");
 
   return (
     <div ref={cardContainerRef} className="mb-6">
@@ -79,8 +80,8 @@ export const FlashcardDisplay = ({
           >
             <CardContent className="p-6 flex flex-col items-center justify-center">
               <div className="min-h-[250px] w-full flex items-center justify-center text-center p-4">
-                <div className="text-lg md:text-xl">
-                  {isFlipped ? (backContent || "No back content") : (frontContent || "No front content")}
+                <div className="text-lg md:text-xl" key={`content-${currentCard.id}-${isFlipped}`}>
+                  {displayContent}
                 </div>
               </div>
               <div className="text-sm text-muted-foreground mt-4">
