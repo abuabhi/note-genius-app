@@ -52,67 +52,70 @@ Create multiple bullet points exactly like the example above.
 
     case 'improve-clarity':
       return `${baseContext}
-You are an educational AI assistant helping students understand complex topics better. Your task is to enhance this note by expanding it by 30-50% with additional explanations, examples, and educational content.
+You are an educational AI assistant helping students understand complex topics better. Your task is to enhance this note by adding inline educational content that flows naturally with the original text.
 
-CRITICAL MARKING REQUIREMENT - THIS IS ABSOLUTELY ESSENTIAL:
+CRITICAL INLINE ENHANCEMENT RULES - THIS IS ABSOLUTELY ESSENTIAL:
 - You MUST keep ALL original content exactly as written, unmarked
+- You MUST add enhanced content INLINE after relevant sentences or paragraphs
 - You MUST wrap ONLY newly added content with [AI_ENHANCED]...[/AI_ENHANCED] markers
-- Original content should flow naturally with new content
-- This marking is ESSENTIAL for the UI to highlight what was added by AI
+- Enhanced content should appear immediately after the relevant original content
+- Create a natural reading flow where explanations follow the concepts they explain
 
-EXPANSION REQUIREMENTS:
-1. **Expand by 30-50%**: Add educational content that increases the total length by 30-50%
-2. **Add Detailed Explanations**: For each important concept, provide deeper explanations
-3. **Include Real-World Examples**: Add practical examples and applications where relevant
-4. **Educational Structure**: Organize additional content with clear headings and formatting
-5. **Memory Aids**: Add mnemonics, analogies, or study tips where helpful
-6. **Cross-References**: Connect concepts to related topics when applicable
+INLINE ENHANCEMENT STRATEGY:
+1. **After Key Concepts**: Add detailed explanations immediately after important terms or concepts
+2. **After Complex Statements**: Provide clarification or examples right after difficult sentences
+3. **After Topic Introductions**: Insert relevant background information or context
+4. **Between Paragraphs**: Add transitional explanations that connect ideas
+5. **After Lists**: Provide additional details or real-world applications
 
-FORMATTING REQUIREMENTS:
+ENHANCEMENT CONTENT REQUIREMENTS:
+- Expand total content by 30-50%
+- Add detailed explanations for complex concepts
+- Include practical examples and applications
+- Provide memory aids and study tips
+- Connect concepts to related topics
+- Use clear headings and formatting for new sections
+
+FORMATTING FOR ENHANCED CONTENT:
 - Use ## for new section headings (mark these as enhanced)
 - Use **bold** for key terms in new content (mark as enhanced)
 - Use bullet points (-) for new lists (mark as enhanced)
 - Ensure proper paragraph spacing
-- Include brief explanations for technical terms in new content
 
-EXAMPLE OF CORRECT MARKING:
-Original: "Photosynthesis is the process by which plants make food."
+EXAMPLE OF CORRECT INLINE ENHANCEMENT:
+Original: "Photosynthesis is the process by which plants make food. It occurs in the chloroplasts of plant cells."
 
 Enhanced Output:
 "Photosynthesis is the process by which plants make food.
 
 [AI_ENHANCED]
-## Understanding Photosynthesis in Detail
+**Photosynthesis** is actually a complex two-stage process that converts light energy into chemical energy. Think of it as nature's solar panel system - plants capture sunlight and transform it into glucose (sugar) that they can use for energy.
+[/AI_ENHANCED]
 
-**Photosynthesis** is a complex biological process that occurs in two main stages:
+It occurs in the chloroplasts of plant cells.
 
-### The Light-Dependent Reactions:
-- **Chlorophyll** captures sunlight energy in the chloroplasts
-- Water molecules are split, releasing oxygen as a byproduct
-- Energy is stored in molecules called ATP and NADPH
+[AI_ENHANCED]
+**Chloroplasts** are specialized organelles found mainly in leaf cells. They contain **chlorophyll**, the green pigment that captures light energy. Each chloroplast is like a tiny factory with two main production areas:
 
-### The Calvin Cycle (Light-Independent Reactions):
-- Carbon dioxide from the air is "fixed" into organic molecules
-- ATP and NADPH from the first stage provide energy
-- Glucose is produced as the final product
+- **Thylakoids**: Where light-dependent reactions occur
+- **Stroma**: Where light-independent reactions (Calvin cycle) take place
 
-### Real-World Applications:
-- **Agriculture**: Understanding photosynthesis helps farmers optimize crop growth
-- **Environmental Science**: Photosynthesis is crucial for Earth's oxygen supply
-- **Renewable Energy**: Scientists study photosynthesis to improve solar panel efficiency
+### Real-World Connection:
+Understanding photosynthesis helps explain why plants are green, why they need sunlight, and why they're essential for life on Earth - they produce the oxygen we breathe!
 
-### Study Tip: 
-Remember "6CO₂ + 6H₂O + light energy → C₆H₁₂O₆ + 6O₂" - this equation shows the inputs and outputs of photosynthesis.
+### Study Tip:
+Remember the equation: 6CO₂ + 6H₂O + light energy → C₆H₁₂O₆ + 6O₂
 [/AI_ENHANCED]"
 
 MANDATORY REQUIREMENTS:
 1. Keep original content exactly as written and unmarked
-2. Expand total content by 30-50% with educational additions
+2. Add enhanced content INLINE after relevant original content
 3. Wrap ALL new content with [AI_ENHANCED]...[/AI_ENHANCED] markers
-4. Make additions educational and valuable for student learning
-5. Ensure smooth flow between original and enhanced content
+4. Ensure natural reading flow between original and enhanced content
+5. Expand total content by 30-50% with educational additions
+6. Make enhancements contextually relevant to what comes before them
 
-DOUBLE-CHECK: Every piece of new content must be wrapped with the markers!
+DOUBLE-CHECK: Every piece of new content must be wrapped with the markers and placed inline!
 `;
 
     case 'convert-to-markdown':

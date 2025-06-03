@@ -2,7 +2,7 @@
 import React from 'react';
 import { RichTextDisplay } from '@/components/ui/rich-text/RichTextDisplay';
 import { TextAlignType } from '../hooks/useStudyViewState';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Lightbulb } from 'lucide-react';
 
 interface EnhancedContentRendererProps {
   content: string;
@@ -50,43 +50,68 @@ export const EnhancedContentRenderer = ({
           
           if (!enhancedText) return null;
           
+          // Determine enhancement type based on content
+          const isStudyTip = enhancedText.includes('Study Tip') || enhancedText.includes('Remember:');
+          const isExample = enhancedText.includes('Example:') || enhancedText.includes('Real-World');
+          const isExplanation = !isStudyTip && !isExample;
+          
+          // Choose styling based on enhancement type
+          let containerClasses = "my-3 p-3 rounded-lg border-l-4 relative overflow-hidden transition-all duration-200 hover:shadow-sm";
+          let iconClasses = "w-4 h-4";
+          let icon = <Sparkles className={iconClasses} />;
+          let labelText = "Enhanced";
+          
+          if (isStudyTip) {
+            containerClasses += " bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-400";
+            icon = <Lightbulb className={`${iconClasses} text-amber-600`} />;
+            labelText = "Study Tip";
+          } else if (isExample) {
+            containerClasses += " bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-400";
+            icon = <Sparkles className={`${iconClasses} text-blue-600`} />;
+            labelText = "Example";
+          } else {
+            containerClasses += " bg-gradient-to-r from-mint-50 to-emerald-50 border-mint-400";
+            icon = <Sparkles className={`${iconClasses} text-mint-600`} />;
+            labelText = "Enhanced";
+          }
+          
           return (
-            <div
-              key={index}
-              className="my-4 p-4 bg-gradient-to-r from-mint-50 to-emerald-50 border-l-4 border-mint-400 rounded-r-lg shadow-sm relative overflow-hidden"
-            >
-              {/* Enhanced content indicator */}
-              <div className="flex items-center gap-2 mb-3 text-mint-700">
-                <div className="flex items-center justify-center w-6 h-6 bg-mint-100 rounded-full">
-                  <Sparkles className="w-3 h-3 text-mint-600" />
+            <div key={index} className={containerClasses}>
+              {/* Subtle enhancement indicator */}
+              <div className="flex items-center gap-2 mb-2 opacity-75">
+                <div className="flex items-center justify-center w-5 h-5 bg-white/60 rounded-full">
+                  {icon}
                 </div>
-                <span className="text-xs font-medium uppercase tracking-wide">AI Enhanced</span>
+                <span className="text-xs font-medium uppercase tracking-wide text-gray-600">
+                  {labelText}
+                </span>
               </div>
               
               {/* Enhanced content */}
               <div className="relative">
                 <RichTextDisplay
                   content={enhancedText}
-                  fontSize={fontSize}
+                  fontSize={fontSize * 0.95} // Slightly smaller for enhanced content
                   textAlign={textAlign}
                   removeTitle={true}
-                  className="prose-mint prose-sm prose-headings:text-mint-800 prose-p:text-mint-700 prose-li:text-mint-700 prose-strong:text-mint-800"
+                  className="prose-sm prose-headings:text-gray-800 prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-800 prose-p:mb-2"
                 />
               </div>
               
-              {/* Decorative gradient overlay */}
-              <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-mint-100/30 to-transparent rounded-bl-full pointer-events-none"></div>
+              {/* Subtle decorative element */}
+              <div className="absolute top-0 right-0 w-12 h-12 bg-gradient-to-bl from-white/20 to-transparent rounded-bl-full pointer-events-none"></div>
             </div>
           );
         } else if (part.trim()) {
-          // Regular content - render normally
+          // Regular content - render normally with inline integration
           return (
-            <div key={index} className="my-2">
+            <div key={index} className="leading-relaxed">
               <RichTextDisplay
                 content={part}
                 fontSize={fontSize}
                 textAlign={textAlign}
                 removeTitle={true}
+                className="prose-p:mb-3 prose-headings:mb-2 prose-headings:mt-4"
               />
             </div>
           );

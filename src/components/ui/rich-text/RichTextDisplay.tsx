@@ -1,4 +1,3 @@
-
 import { useMemo } from "react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -55,12 +54,13 @@ export const RichTextDisplay = ({
     processed = processed.replace(/<\/p>/g, '');
     processed = processed.replace(/<[^>]*>/g, '');
     
-    // IMPORTANT: Only remove AI_ENHANCED tags if we're not in an enhanced content renderer
-    // This allows the EnhancedContentRenderer to handle them properly
-    if (!content.includes('[AI_ENHANCED]')) {
-      processed = processed.replace(/\[AI_ENHANCED\]/g, '');
-      processed = processed.replace(/\[\/AI_ENHANCED\]/g, '');
-    }
+    // Clean up spacing for better inline integration
+    processed = processed.replace(/\n{3,}/g, '\n\n'); // Limit excessive spacing
+    processed = processed.replace(/^\s+|\s+$/g, ''); // Trim whitespace
+    
+    // IMPORTANT: Keep AI_ENHANCED tags for the EnhancedContentRenderer to handle
+    // They should NOT be removed here since this component may be used within
+    // the EnhancedContentRenderer context
     
     return processed.trim();
   }, [content, removeTitle]);
@@ -77,7 +77,7 @@ export const RichTextDisplay = ({
       className={cn(
         `prose prose-gray max-w-none ${textAlignClass[textAlign]}`,
         "prose-headings:scroll-mt-4 prose-headings:font-semibold",
-        "prose-p:leading-relaxed prose-p:mb-4",
+        "prose-p:leading-relaxed",
         "prose-ul:space-y-1 prose-ol:space-y-1",
         "prose-li:leading-relaxed prose-li:ml-0",
         "prose-blockquote:border-l-mint-400 prose-blockquote:bg-mint-50/50 prose-blockquote:py-2",
@@ -94,37 +94,37 @@ export const RichTextDisplay = ({
         remarkPlugins={[remarkGfm]}
         components={{
           h1: ({children, ...props}) => (
-            <h1 className="text-2xl font-bold mb-4 text-gray-900 border-b border-gray-200 pb-2" {...props}>
+            <h1 className="text-2xl font-bold mb-3 text-gray-900 border-b border-gray-200 pb-2" {...props}>
               {children}
             </h1>
           ),
           h2: ({children, ...props}) => (
-            <h2 className="text-xl font-semibold mb-3 text-gray-800 mt-6 first:mt-0" {...props}>
+            <h2 className="text-xl font-semibold mb-2 text-gray-800 mt-4 first:mt-0" {...props}>
               {children}
             </h2>
           ),
           h3: ({children, ...props}) => (
-            <h3 className="text-lg font-medium mb-2 text-gray-700 mt-4" {...props}>
+            <h3 className="text-lg font-medium mb-2 text-gray-700 mt-3" {...props}>
               {children}
             </h3>
           ),
           h4: ({children, ...props}) => (
-            <h4 className="text-base font-medium mb-2 text-gray-700 mt-3" {...props}>
+            <h4 className="text-base font-medium mb-2 text-gray-700 mt-2" {...props}>
               {children}
             </h4>
           ),
           p: ({children, ...props}) => (
-            <p className="mb-3 leading-relaxed text-gray-700 text-base" {...props}>
+            <p className="leading-relaxed text-gray-700 text-base" {...props}>
               {children}
             </p>
           ),
           ul: ({children, ...props}) => (
-            <ul className="list-disc ml-6 mb-3 space-y-1" {...props}>
+            <ul className="list-disc ml-6 space-y-1" {...props}>
               {children}
             </ul>
           ),
           ol: ({children, ...props}) => (
-            <ol className="list-decimal ml-6 mb-3 space-y-1" {...props}>
+            <ol className="list-decimal ml-6 space-y-1" {...props}>
               {children}
             </ol>
           ),
@@ -144,7 +144,7 @@ export const RichTextDisplay = ({
             </em>
           ),
           blockquote: ({children, ...props}) => (
-            <blockquote className="border-l-4 border-mint-400 pl-6 py-2 my-4 bg-mint-50/50 rounded-r-lg italic text-gray-700" {...props}>
+            <blockquote className="border-l-4 border-mint-400 pl-6 py-2 my-3 bg-mint-50/50 rounded-r-lg italic text-gray-700" {...props}>
               {children}
             </blockquote>
           ),
@@ -154,12 +154,12 @@ export const RichTextDisplay = ({
             </code>
           ),
           pre: ({children, ...props}) => (
-            <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto text-sm border shadow-sm" {...props}>
+            <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto text-sm border shadow-sm my-3" {...props}>
               {children}
             </pre>
           ),
           hr: ({...props}) => (
-            <hr className="my-6 border-gray-200" {...props} />
+            <hr className="my-4 border-gray-200" {...props} />
           ),
           a: ({children, ...props}) => (
             <a className="text-mint-600 hover:text-mint-700 underline underline-offset-2 hover:underline-offset-4 transition-all" {...props}>
@@ -167,7 +167,7 @@ export const RichTextDisplay = ({
             </a>
           ),
           table: ({children, ...props}) => (
-            <div className="overflow-x-auto my-6">
+            <div className="overflow-x-auto my-4">
               <table className="min-w-full border-collapse border border-gray-300 rounded-lg shadow-sm" {...props}>
                 {children}
               </table>
