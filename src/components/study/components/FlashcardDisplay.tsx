@@ -25,17 +25,15 @@ export const FlashcardDisplay = ({
   const backContent = currentCard.back_content || currentCard.back;
 
   return (
-    <div ref={cardContainerRef} className="mb-6 perspective-1000">
+    <div ref={cardContainerRef} className="mb-6">
       <AnimatePresence mode="wait">
         <motion.div
           key={currentIndex + (isFlipped ? "-flipped" : "")}
           initial={{ 
-            rotateY: isFlipped ? 0 : 180,
             x: direction === "right" ? 100 : -100,
             opacity: 0
           }}
           animate={{ 
-            rotateY: isFlipped ? 180 : 0,
             x: 0,
             opacity: 1
           }}
@@ -44,7 +42,6 @@ export const FlashcardDisplay = ({
             opacity: 0
           }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          style={{ transformStyle: "preserve-3d" }}
           className="w-full cursor-pointer"
           onClick={onFlip}
         >
