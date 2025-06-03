@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './contexts/auth';
@@ -82,6 +83,7 @@ const App = () => {
                 <Route path="/notes/study/:noteId" element={<NoteStudyPage />} />
                 <Route path="/flashcards" element={<FlashcardsPage />} />
                 <Route path="/study" element={<StudyPage />} />
+                <Route path="/study/:setId" element={<StudyPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/library" element={<FlashcardLibraryPage />} />
                 <Route path="/notes/edit/:noteId" element={<EditNotePage />} />
