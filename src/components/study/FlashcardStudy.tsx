@@ -138,7 +138,7 @@ export const FlashcardStudy = ({ setId, mode }: FlashcardStudyProps) => {
         isFirstTime={isFirstTime}
         
         // Test mode props
-        questionType="multiple_choice"
+        questionType="flashcard"
         frontContent={currentCard.front_content}
         backContent={currentCard.back_content}
         isAnswered={!!currentAnswer}

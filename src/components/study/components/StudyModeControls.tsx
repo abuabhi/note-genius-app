@@ -21,7 +21,7 @@ interface StudyModeControlsProps {
   isFirstTime?: boolean;
   
   // Test mode props
-  questionType?: string;
+  questionType?: "flashcard" | "multiple_choice" | "fill_blank";
   frontContent?: string;
   backContent?: string;
   isAnswered?: boolean;
@@ -74,7 +74,7 @@ export const StudyModeControls = ({
   if (mode === "test") {
     return (
       <TestModeControls
-        questionType={questionType || "multiple_choice"}
+        questionType={questionType || "flashcard"}
         frontContent={frontContent || ""}
         backContent={backContent || ""}
         isAnswered={isAnswered || false}
