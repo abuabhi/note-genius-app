@@ -29,7 +29,6 @@ interface StudyViewHeaderProps {
   onSave: () => void;
   onTitleChange: (title: string) => void;
   onEnhance: (enhancedContent: string, enhancementType?: EnhancementFunction) => void;
-  onTabSwitch?: (tabId: string) => void; // Add this prop for tab switching
 }
 
 export const StudyViewHeader = ({
@@ -50,7 +49,6 @@ export const StudyViewHeader = ({
   onSave,
   onTitleChange,
   onEnhance,
-  onTabSwitch,
 }: StudyViewHeaderProps) => {
   const [processingEnhancement, setProcessingEnhancement] = useState<EnhancementFunction | null>(null);
   const { enrichNote, enhancementOptions } = useNoteEnrichment();
@@ -65,25 +63,6 @@ export const StudyViewHeader = ({
       
       if (result.success) {
         onEnhance(result.content, enhancement);
-        
-        // Switch to the appropriate tab based on enhancement type
-        if (onTabSwitch) {
-          switch (enhancement) {
-            case 'improve-clarity':
-              onTabSwitch('improved');
-              break;
-            case 'summarize':
-              onTabSwitch('summary');
-              break;
-            case 'extract-key-points':
-              onTabSwitch('keyPoints');
-              break;
-            case 'convert-to-markdown':
-              onTabSwitch('markdown');
-              break;
-          }
-        }
-        
         toast.success(`${enhancementOptions.find(opt => opt.value === enhancement)?.title} completed successfully!`);
       }
     } catch (error) {
