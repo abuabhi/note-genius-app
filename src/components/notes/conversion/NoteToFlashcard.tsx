@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { AIFlashcardGenerator } from "./AIFlashcardGenerator";
 import { usePremiumFeatures } from "@/hooks/usePremiumFeatures";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
-import { useFlashcards } from "@/contexts/flashcards";
+import { useFlashcards } from "@/contexts/FlashcardContext";
 import { useFlashcardState } from "@/contexts/flashcards/useFlashcardState";
 import { useFlashcardOperations } from "@/contexts/flashcards/useFlashcardOperations";
 
