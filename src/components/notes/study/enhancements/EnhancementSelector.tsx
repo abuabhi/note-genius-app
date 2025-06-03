@@ -119,7 +119,7 @@ export const EnhancementSelector = ({
       id: 'improved',
       label: 'Improved Clarity',
       icon: Sparkles,
-      description: 'Enhanced readability version',
+      description: 'Enhanced notes version',
       available: hasImprovedClarity
     }
   ];
