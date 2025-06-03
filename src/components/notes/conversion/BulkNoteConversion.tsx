@@ -1,16 +1,16 @@
-import { useState } from "react";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
+
+import React, { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { useFlashcards } from "@/contexts/FlashcardContext";
 import { Note } from "@/types/note";
-import { CreateFlashcardSetPayload } from "@/types/flashcard";
-import { ArrowsUpFromLine } from "lucide-react";
 import { FlashcardSet } from "@/types/flashcard";
-import { useRequireAuth, UserTier } from "@/hooks/useRequireAuth";
-import { FlashcardSetForm } from "./FlashcardSetForm";
-import { NoteSelectionList } from "./NoteSelectionList";
-import { PremiumFeatureNotice } from "./PremiumFeatureNotice";
-import { ConversionFormFooter } from "./ConversionFormFooter";
+import { SmartContentProcessor } from "./SmartContentProcessor";
+import { FlashcardType } from "./FlashcardTypeSelector";
+import { toast } from "sonner";
 
 interface BulkNoteConversionProps {
   notes: Note[];
@@ -18,164 +18,112 @@ interface BulkNoteConversionProps {
   onCancel: () => void;
 }
 
-export const BulkNoteConversion = ({ notes, onSuccess, onCancel }: BulkNoteConversionProps) => {
-  const [selectedNotes, setSelectedNotes] = useState<string[]>([]);
-  const [setName, setSetName] = useState("");
+export const BulkNoteConversion = ({
+  notes,
+  onSuccess,
+  onCancel
+}: BulkNoteConversionProps) => {
+  const [setName, setSetName] = useState("New Flashcard Set");
   const [setDescription, setSetDescription] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { userProfile } = useRequireAuth();
-  const isPremium = userProfile?.user_tier === UserTier.MASTER || userProfile?.user_tier === UserTier.DEAN;
+  const [isConverting, setIsConverting] = useState(false);
+  const { createFlashcardSet, addFlashcard } = useFlashcards();
 
-  const { createFlashcardSet, createFlashcard } = useFlashcards();
-  const { toast } = useToast();
-
-  const handleToggleNote = (noteId: string) => {
-    setSelectedNotes(prev => 
-      prev.includes(noteId)
-        ? prev.filter(id => id !== noteId)
-        : [...prev, noteId]
-    );
-  };
-
-  const handleSelectAll = () => {
-    if (selectedNotes.length === notes.length) {
-      setSelectedNotes([]);
-    } else {
-      setSelectedNotes(notes.map(note => note.id));
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (selectedNotes.length === 0) {
-      toast({
-        title: "No notes selected",
-        description: "Please select at least one note to convert.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!setName.trim()) {
-      toast({
-        title: "Missing set name",
-        description: "Please provide a name for your flashcard set.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-
+  const handleCreateFlashcards = async (flashcards: Array<{
+    front: string;
+    back: string;
+    type: FlashcardType;
+  }>) => {
     try {
-      // Create flashcard set first
-      const setData: CreateFlashcardSetPayload = {
-        name: setName.trim(),
-        description: setDescription.trim() || "Converted from notes",
-      };
-
-      const flashcardSet = await createFlashcardSet(setData);
+      setIsConverting(true);
       
-      if (flashcardSet) {
-        // Create flashcards and add them to the set
-        const selectedNotesData = notes.filter(note => selectedNotes.includes(note.id));
-        
-        for (const note of selectedNotesData) {
-          await createFlashcard({
-            front_content: note.title,
-            back_content: note.content || note.description,
-          }, flashcardSet.id);
-        }
-        
-        toast({
-          title: "Conversion successful",
-          description: `Created flashcard set "${setName}" with ${selectedNotes.length} cards.`,
-        });
-        
-        onSuccess(flashcardSet);
-      }
-    } catch (error) {
-      console.error("Error in bulk conversion:", error);
-      toast({
-        title: "Conversion failed",
-        description: "Failed to convert notes to flashcards. Please try again.",
-        variant: "destructive",
+      // Create the flashcard set first
+      const newSet = await createFlashcardSet({
+        name: setName,
+        description: setDescription,
+        subject: notes[0]?.subject || "General",
+        is_public: false
       });
+
+      if (!newSet) {
+        throw new Error("Failed to create flashcard set");
+      }
+
+      // Create individual flashcards and add them to the set
+      for (const flashcard of flashcards) {
+        await addFlashcard({
+          front_content: flashcard.front,
+          back_content: flashcard.back,
+          set_id: newSet.id
+        });
+      }
+
+      toast.success(`Created ${flashcards.length} flashcards successfully!`);
+      onSuccess(newSet);
+      
+    } catch (error) {
+      console.error("Error creating flashcards:", error);
+      toast.error("Failed to convert notes to flashcards. Please try again.");
     } finally {
-      setIsSubmitting(false);
+      setIsConverting(false);
     }
   };
 
-  // AI-assisted content extraction for premium users
-  const handleAIExtraction = async () => {
-    if (!isPremium || selectedNotes.length === 0) return;
-    
-    // Get the selected notes
-    const selectedNotesData = notes.filter(note => selectedNotes.includes(note.id));
-    
-    // Here you would typically call an API to process the notes with AI
-    // For now, we'll simulate this with a delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Auto-generate a descriptive name if none exists
-    if (!setName.trim()) {
-      const topics = selectedNotesData.map(note => note.title.split(' ')[0]).slice(0, 3);
-      setSetName(`${topics.join(', ')} Flashcards`);
-    }
-    
-    // Generate a more detailed description
-    if (!setDescription.trim()) {
-      const noteCount = selectedNotesData.length;
-      const categories = [...new Set(selectedNotesData.map(note => note.category))];
-      setSetDescription(`Set containing ${noteCount} flashcards about ${categories.join(', ')}.`);
-    }
-    
-    toast({
-      title: "AI Processing Complete",
-      description: "Your notes have been analyzed and the flashcard set has been optimized.",
-    });
-  };
+  // For now, we'll work with the first note
+  const primaryNote = notes[0];
+
+  if (!primaryNote) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-center text-muted-foreground">No notes selected for conversion.</p>
+          <div className="flex justify-center mt-4">
+            <Button onClick={onCancel}>Back to Notes</Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ArrowsUpFromLine className="h-5 w-5" />
-          Bulk Convert Notes to Flashcards
-        </CardTitle>
-      </CardHeader>
-      <form onSubmit={handleSubmit}>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Flashcard Set Details</CardTitle>
+        </CardHeader>
         <CardContent className="space-y-4">
-          <FlashcardSetForm
-            setName={setName}
-            setDescription={setDescription}
-            onSetNameChange={setSetName}
-            onSetDescriptionChange={setSetDescription}
-            disabled={isSubmitting}
-          />
-          
-          <NoteSelectionList
-            notes={notes}
-            selectedNotes={selectedNotes}
-            onToggleNote={handleToggleNote}
-            onSelectAll={handleSelectAll}
-            disabled={isSubmitting}
-          />
-          
-          <PremiumFeatureNotice 
-            isPremium={isPremium} 
-            onAIExtract={selectedNotes.length > 0 ? handleAIExtraction : undefined}
-          />
+          <div>
+            <Label htmlFor="setName">Set Name</Label>
+            <Input
+              id="setName"
+              value={setName}
+              onChange={(e) => setSetName(e.target.value)}
+              placeholder="Enter flashcard set name"
+            />
+          </div>
+          <div>
+            <Label htmlFor="setDescription">Description (optional)</Label>
+            <Textarea
+              id="setDescription"
+              value={setDescription}
+              onChange={(e) => setSetDescription(e.target.value)}
+              placeholder="Enter a description for this flashcard set"
+              rows={3}
+            />
+          </div>
         </CardContent>
-        <CardFooter>
-          <ConversionFormFooter
-            onCancel={onCancel}
-            isSubmitting={isSubmitting}
-            selectedCount={selectedNotes.length}
-          />
-        </CardFooter>
-      </form>
-    </Card>
+      </Card>
+
+      <SmartContentProcessor
+        noteContent={primaryNote.content || primaryNote.description}
+        noteTitle={primaryNote.title}
+        onCreateFlashcards={handleCreateFlashcards}
+      />
+
+      <div className="flex justify-between pt-4">
+        <Button variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+      </div>
+    </div>
   );
 };

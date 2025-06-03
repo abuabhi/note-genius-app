@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { FlashcardType, FlashcardTypeSelector } from "./FlashcardTypeSelector";
 import { Sparkles, Eye, EyeOff, Wand2 } from "lucide-react";
@@ -35,7 +34,6 @@ export const SmartContentProcessor = ({
     setIsProcessing(true);
     
     try {
-      // Smart content processing based on type
       const processedCards = await smartProcessContent(noteContent, noteTitle, selectedType);
       setPreviewCards(processedCards);
       setShowPreview(true);
@@ -51,39 +49,48 @@ export const SmartContentProcessor = ({
     title: string, 
     type: FlashcardType
   ): Promise<Array<{ front: string; back: string; type: FlashcardType }>> => {
-    // This would be enhanced with AI processing in the future
-    // For now, we'll implement basic content splitting
+    // Enhanced content processing
+    if (!content || content.trim().length === 0) {
+      return [{
+        front: `What is the main topic of: ${title}?`,
+        back: "This note appears to be empty or has no content to process.",
+        type
+      }];
+    }
     
-    const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 20);
+    const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 10);
     const cards = [];
 
     switch (type) {
       case 'question-answer':
-        for (let i = 0; i < Math.min(sentences.length, 5); i++) {
+        const maxQA = Math.min(sentences.length, 5);
+        for (let i = 0; i < maxQA; i++) {
           const sentence = sentences[i].trim();
-          cards.push({
-            front: `What does the note "${title}" say about: ${sentence.substring(0, 50)}...?`,
-            back: sentence,
-            type
-          });
+          if (sentence.length > 10) {
+            cards.push({
+              front: `According to "${title}", what can you tell me about: ${sentence.substring(0, 50)}...?`,
+              back: sentence,
+              type
+            });
+          }
         }
         break;
         
       case 'definition':
-        // Extract key terms (simple implementation)
         const keywords = extractKeywords(content);
-        for (const keyword of keywords.slice(0, 5)) {
+        for (const keyword of keywords.slice(0, 4)) {
           const context = findContextForKeyword(content, keyword);
           cards.push({
-            front: keyword,
-            back: context || `Definition from: ${title}`,
+            front: `Define: ${keyword}`,
+            back: context || `A concept from: ${title}`,
             type
           });
         }
         break;
         
       case 'fill-blank':
-        for (let i = 0; i < Math.min(sentences.length, 3); i++) {
+        const maxFill = Math.min(sentences.length, 3);
+        for (let i = 0; i < maxFill; i++) {
           const sentence = sentences[i].trim();
           const words = sentence.split(' ');
           if (words.length > 5) {
@@ -93,7 +100,7 @@ export const SmartContentProcessor = ({
             ).join(' ');
             
             cards.push({
-              front: blankedSentence,
+              front: `Fill in the blank: ${blankedSentence}`,
               back: words[blankIndex],
               type
             });
@@ -102,25 +109,43 @@ export const SmartContentProcessor = ({
         break;
         
       case 'concept':
+        const conceptText = content.substring(0, 200) + (content.length > 200 ? '...' : '');
         cards.push({
-          front: `Main concept from: ${title}`,
-          back: content.substring(0, 200) + (content.length > 200 ? '...' : ''),
+          front: `Explain the main concept from: ${title}`,
+          back: conceptText,
           type
         });
+        
+        // Add a secondary concept card if there's more content
+        if (sentences.length > 1) {
+          cards.push({
+            front: `What are the key details mentioned in: ${title}?`,
+            back: sentences.slice(0, 3).join('. '),
+            type
+          });
+        }
         break;
+    }
+
+    // Ensure we always return at least one card
+    if (cards.length === 0) {
+      cards.push({
+        front: `What is the main topic of: ${title}?`,
+        back: content.substring(0, 150) + (content.length > 150 ? '...' : ''),
+        type
+      });
     }
 
     return cards;
   };
 
   const extractKeywords = (text: string): string[] => {
-    // Simple keyword extraction
     const words = text.toLowerCase().split(/\W+/);
     const commonWords = new Set(['the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'this', 'that', 'these', 'those', 'a', 'an']);
     
     return words
-      .filter(word => word.length > 4 && !commonWords.has(word))
-      .slice(0, 10);
+      .filter(word => word.length > 3 && !commonWords.has(word))
+      .slice(0, 8);
   };
 
   const findContextForKeyword = (text: string, keyword: string): string => {
@@ -128,14 +153,12 @@ export const SmartContentProcessor = ({
     const relevantSentence = sentences.find(sentence => 
       sentence.toLowerCase().includes(keyword.toLowerCase())
     );
-    return relevantSentence?.trim() || '';
+    return relevantSentence?.trim() || `Related to ${keyword}`;
   };
 
   const handleCreateCards = async () => {
     if (previewCards.length > 0) {
       await onCreateFlashcards(previewCards);
-      setShowPreview(false);
-      setPreviewCards([]);
     }
   };
 
@@ -185,7 +208,6 @@ export const SmartContentProcessor = ({
         </CardContent>
       </Card>
 
-      {/* Preview Cards */}
       {showPreview && previewCards.length > 0 && (
         <Card className="border-blue-200 bg-blue-50/30">
           <CardHeader>

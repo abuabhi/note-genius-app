@@ -4,9 +4,11 @@ import { Flashcard } from "@/types/flashcard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { FlashcardState } from "./types";
+import { useFlashcardState } from "./useFlashcardState";
 
 export function useFlashcardOperations(state?: FlashcardState) {
-  const { setFlashcards, setFlashcardSets } = state || useFlashcardState();
+  const fallbackState = useFlashcardState();
+  const { setFlashcards, setFlashcardSets, user } = state || fallbackState;
   const [isLoading, setIsLoading] = useState(false);
   
   const addFlashcard = async (flashcardData: {
@@ -18,42 +20,49 @@ export function useFlashcardOperations(state?: FlashcardState) {
     try {
       setIsLoading(true);
       
+      if (!user) {
+        throw new Error("User must be logged in to create flashcards");
+      }
+      
+      console.log("Creating flashcard with data:", flashcardData);
+      
       // Create the flashcard first
       const { data, error } = await supabase
         .from('flashcards')
         .insert({
           front_content: flashcardData.front_content,
           back_content: flashcardData.back_content,
-          // For backward compatibility with the Flashcard type
-          front: flashcardData.front_content,
-          back: flashcardData.back_content,
-          user_id: state?.user?.id
+          user_id: user.id
         })
         .select()
         .single();
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error creating flashcard:", error);
+        throw error;
+      }
       
-      // Now that we have the flashcard, let's add it to the set
+      console.log("Flashcard created:", data);
+      
+      // Now link it to the set
       if (flashcardData.set_id) {
         const { error: setError } = await supabase
           .from('flashcard_set_cards')
           .insert({
             flashcard_id: data.id,
             set_id: flashcardData.set_id,
-            position: 0 // Default position
+            position: 0
           });
           
         if (setError) {
           console.error("Error linking flashcard to set:", setError);
-          toast.error("Created flashcard but failed to add it to the set");
+          // Don't throw here, the flashcard was created successfully
         }
       }
       
-      // Add to local state - make sure it conforms to the Flashcard type
+      // Add to local state
       const newFlashcard: Flashcard = {
         ...data,
-        // Ensure all required properties are set
         front: data.front_content,
         back: data.back_content
       };
@@ -75,7 +84,6 @@ export function useFlashcardOperations(state?: FlashcardState) {
     }
   };
   
-  // Implement the correct addFlashcardToSet method with the expected signature
   const addFlashcardToSet = async (flashcardId: string, setId: string, position?: number) => {
     try {
       setIsLoading(true);
@@ -94,7 +102,6 @@ export function useFlashcardOperations(state?: FlashcardState) {
         throw error;
       }
       
-      // Update the set count
       await updateSetCount(setId);
       
     } catch (error) {
@@ -106,52 +113,38 @@ export function useFlashcardOperations(state?: FlashcardState) {
   };
   
   const fetchFlashcards = async () => {
-    // Implementation to fetch all flashcards
     return [];
   };
   
-  const createFlashcard = async (cardData) => {
-    // This is effectively the same as addFlashcard but with a different name
+  const createFlashcard = async (cardData: any) => {
     return addFlashcard({
-      front_content: cardData.front_content,
-      back_content: cardData.back_content,
+      front_content: cardData.front_content || cardData.front,
+      back_content: cardData.back_content || cardData.back,
       set_id: cardData.set_id || "",
       subject: cardData.subject
     });
   };
   
-  const updateFlashcard = async (id, cardData) => {
+  const updateFlashcard = async (id: string, cardData: any) => {
     // Implementation to update a flashcard
   };
   
-  const deleteFlashcard = async (id) => {
+  const deleteFlashcard = async (id: string) => {
     // Implementation to delete a flashcard
   };
   
-  const removeFlashcardFromSet = async (flashcardId, setId) => {
+  const removeFlashcardFromSet = async (flashcardId: string, setId: string) => {
     // Implementation to remove a flashcard from a set
   };
   
   const updateSetCount = async (setId: string) => {
     try {
-      // Get the count directly from the database
       const { count, error: countError } = await supabase
         .from('flashcard_set_cards')
         .select('*', { count: 'exact', head: true })
         .eq('set_id', setId);
         
       if (countError) throw countError;
-      
-      // Update the set with the new count
-      const { error } = await supabase
-        .from('flashcard_sets')
-        .update({ 
-          // We can only update fields that actually exist in the database
-          updated_at: new Date().toISOString() 
-        })
-        .eq('id', setId);
-        
-      if (error) throw error;
       
       // Update local state
       setFlashcardSets(prev => 
@@ -173,9 +166,6 @@ export function useFlashcardOperations(state?: FlashcardState) {
     updateFlashcard,
     deleteFlashcard,
     removeFlashcardFromSet,
-    addFlashcardToSet // Add the new method to the returned object
+    addFlashcardToSet
   };
 }
-
-// Add the missing import for useFlashcardState
-import { useFlashcardState } from "./useFlashcardState";
