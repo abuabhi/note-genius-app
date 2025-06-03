@@ -83,7 +83,7 @@ export const EnhancementSelector = ({
     summaryStatus
   });
 
-  // Define enhancement options with improved styling and icons
+  // Define enhancement options with improved styling and icons - reordered to put markdown below original
   const enhancementOptions: EnhancementOption[] = [
     {
       id: 'original',
@@ -91,6 +91,13 @@ export const EnhancementSelector = ({
       icon: FileText,
       description: 'Your original note content',
       available: true
+    },
+    {
+      id: 'markdown',
+      label: 'Original++',
+      icon: Code,
+      description: 'Original note formatted',
+      available: hasMarkdown
     },
     {
       id: 'summary',
@@ -114,13 +121,6 @@ export const EnhancementSelector = ({
       icon: Sparkles,
       description: 'Enhanced readability version',
       available: hasImprovedClarity
-    },
-    {
-      id: 'markdown',
-      label: 'Markdown',
-      icon: Code,
-      description: 'Structured markdown format',
-      available: hasMarkdown
     }
   ];
 

@@ -94,7 +94,7 @@ export const StudyViewEnhancementDropdown = ({
         >
           <Sparkles className="mr-3 h-4 w-4 text-mint-600 mt-0.5 flex-shrink-0" />
           <div className="flex flex-col">
-            <span className="font-medium text-gray-900 mb-1">Convert to Markdown</span>
+            <span className="font-medium text-gray-900 mb-1">Format My Note</span>
             <span className="text-xs text-gray-500 leading-relaxed">Transform your original content into properly formatted markdown with headers, lists, and styling</span>
           </div>
         </DropdownMenuItem>

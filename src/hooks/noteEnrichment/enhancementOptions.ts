@@ -38,7 +38,7 @@ export const enhancementOptions: EnhancementOption[] = [
   {
     id: 'convert-to-markdown',
     value: 'convert-to-markdown',
-    title: 'Convert to Markdown',
+    title: 'Format My Note',
     description: 'Format the content using markdown syntax',
     icon: '📋',
     prompt: 'Please convert this note content to well-structured markdown format with appropriate headers, lists, and formatting.',
