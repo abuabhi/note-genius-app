@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { Note } from '@/types/note';
@@ -56,16 +55,50 @@ class ExportService {
     }
   }
 
-  private stripMarkdown(content: string): string {
-    return content
-      .replace(/#{1,6}\s+/g, '') // Remove headers
-      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold
-      .replace(/\*(.*?)\*/g, '$1') // Remove italic
-      .replace(/`(.*?)`/g, '$1') // Remove code
-      .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Remove links
-      .replace(/^\s*[-*+]\s+/gm, '• ') // Convert lists
-      .replace(/^\s*\d+\.\s+/gm, '1. ') // Convert numbered lists
+  private stripHtmlAndFormat(content: string): string {
+    // First, handle common HTML formatting
+    let formattedContent = content
+      // Remove style attributes but keep the content
+      .replace(/<p style="[^"]*">/g, '')
+      .replace(/<\/p>/g, '\n\n')
+      // Handle headers
+      .replace(/<h([1-6])[^>]*>(.*?)<\/h[1-6]>/g, (match, level, text) => {
+        const headerPrefix = '#'.repeat(parseInt(level)) + ' ';
+        return headerPrefix + text + '\n\n';
+      })
+      // Handle bold and italic
+      .replace(/<strong[^>]*>(.*?)<\/strong>/g, '**$1**')
+      .replace(/<b[^>]*>(.*?)<\/b>/g, '**$1**')
+      .replace(/<em[^>]*>(.*?)<\/em>/g, '*$1*')
+      .replace(/<i[^>]*>(.*?)<\/i>/g, '*$1*')
+      // Handle lists
+      .replace(/<ul[^>]*>/g, '')
+      .replace(/<\/ul>/g, '\n')
+      .replace(/<ol[^>]*>/g, '')
+      .replace(/<\/ol>/g, '\n')
+      .replace(/<li[^>]*>(.*?)<\/li>/g, '• $1\n')
+      // Handle line breaks
+      .replace(/<br\s*\/?>/g, '\n')
+      // Handle divs and spans
+      .replace(/<div[^>]*>/g, '')
+      .replace(/<\/div>/g, '\n')
+      .replace(/<span[^>]*>/g, '')
+      .replace(/<\/span>/g, '')
+      // Remove any remaining HTML tags
+      .replace(/<[^>]+>/g, '')
+      // Decode HTML entities
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      // Clean up excessive whitespace
+      .replace(/\n\s*\n\s*\n/g, '\n\n')
+      .replace(/^\s+|\s+$/g, '')
       .trim();
+
+    return formattedContent;
   }
 
   async exportToPDF(options: ExportOptions): Promise<void> {
@@ -79,8 +112,11 @@ class ExportService {
 
     const pdf = new jsPDF();
     const pageWidth = pdf.internal.pageSize.width;
+    const pageHeight = pdf.internal.pageSize.height;
     const margin = 20;
     const maxLineWidth = pageWidth - (margin * 2);
+    const footerHeight = 20;
+    const contentAreaHeight = pageHeight - margin - footerHeight;
     
     // Title
     pdf.setFontSize(16);
@@ -94,12 +130,14 @@ class ExportService {
     
     // Content
     pdf.setFontSize(fontSize);
-    const strippedContent = this.stripMarkdown(content);
-    const lines = pdf.splitTextToSize(strippedContent, maxLineWidth);
+    const formattedContent = this.stripHtmlAndFormat(content);
+    const lines = pdf.splitTextToSize(formattedContent, maxLineWidth);
     
     let yPosition = 60;
     lines.forEach((line: string) => {
-      if (yPosition > pdf.internal.pageSize.height - margin) {
+      if (yPosition > contentAreaHeight) {
+        // Add footer to current page
+        this.addFooterToPDF(pdf, pageWidth, pageHeight, margin);
         pdf.addPage();
         yPosition = margin;
       }
@@ -107,12 +145,19 @@ class ExportService {
       yPosition += fontSize * 0.6;
     });
     
-    // Metadata
-    const currentDate = new Date().toLocaleDateString();
-    pdf.setFontSize(8);
-    pdf.text(`Exported on ${currentDate}`, margin, pdf.internal.pageSize.height - 10);
+    // Add footer to the last page
+    this.addFooterToPDF(pdf, pageWidth, pageHeight, margin);
     
     pdf.save(`${note.title || 'note'}-${contentType}.pdf`);
+  }
+
+  private addFooterToPDF(pdf: jsPDF, pageWidth: number, pageHeight: number, margin: number): void {
+    pdf.setFontSize(8);
+    pdf.setFont(undefined, 'italic');
+    const footerText = 'Generated with StudyApp';
+    const textWidth = pdf.getTextWidth(footerText);
+    const xPosition = (pageWidth - textWidth) / 2;
+    pdf.text(footerText, xPosition, pageHeight - 10);
   }
 
   async exportToDOCX(options: ExportOptions): Promise<void> {
@@ -124,11 +169,37 @@ class ExportService {
       throw new Error(`No ${contentTitle.toLowerCase()} available to export`);
     }
 
-    const strippedContent = this.stripMarkdown(content);
+    const formattedContent = this.stripHtmlAndFormat(content);
     
     const doc = new Document({
       sections: [{
-        properties: {},
+        properties: {
+          page: {
+            margin: {
+              top: 720,
+              right: 720,
+              bottom: 720,
+              left: 720,
+            },
+          },
+        },
+        headers: {
+          default: new Paragraph({
+            children: [],
+          }),
+        },
+        footers: {
+          default: new Paragraph({
+            children: [
+              new TextRun({
+                text: 'Generated with StudyApp',
+                size: 16,
+                italics: true,
+              }),
+            ],
+            alignment: 'center',
+          }),
+        },
         children: [
           new Paragraph({
             children: [
@@ -151,17 +222,8 @@ class ExportService {
           new Paragraph({
             children: [
               new TextRun({
-                text: strippedContent,
+                text: formattedContent,
                 size: 22, // 11pt
-              }),
-            ],
-          }),
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: `Exported on ${new Date().toLocaleDateString()}`,
-                size: 16, // 8pt
-                italics: true,
               }),
             ],
           }),
@@ -189,7 +251,7 @@ class ExportService {
       throw new Error(`No ${contentTitle.toLowerCase()} available to export`);
     }
 
-    const strippedContent = this.stripMarkdown(content);
+    const formattedContent = this.stripHtmlAndFormat(content);
     const txtContent = [
       note.title || 'Untitled Note',
       '='.repeat((note.title || 'Untitled Note').length),
@@ -197,9 +259,10 @@ class ExportService {
       contentTitle,
       '-'.repeat(contentTitle.length),
       '',
-      strippedContent,
+      formattedContent,
       '',
-      `Exported on ${new Date().toLocaleDateString()}`,
+      '',
+      'Generated with StudyApp',
     ].join('\n');
 
     const blob = new Blob([txtContent], { type: 'text/plain' });
@@ -245,7 +308,7 @@ class ExportService {
           message: message || '',
           noteTitle: note.title || 'Untitled Note',
           contentType: contentTitle,
-          content: this.stripMarkdown(content),
+          content: this.stripHtmlAndFormat(content),
         }),
       });
 
