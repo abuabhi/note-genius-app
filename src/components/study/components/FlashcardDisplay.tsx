@@ -21,8 +21,34 @@ export const FlashcardDisplay = ({
 }: FlashcardDisplayProps) => {
   const cardContainerRef = useRef<HTMLDivElement>(null);
   
-  const frontContent = currentCard.front_content || currentCard.front;
-  const backContent = currentCard.back_content || currentCard.back;
+  // Add debugging logs
+  console.log("FlashcardDisplay - currentCard:", currentCard);
+  console.log("FlashcardDisplay - currentIndex:", currentIndex);
+  console.log("FlashcardDisplay - isFlipped:", isFlipped);
+  
+  const frontContent = currentCard?.front_content || currentCard?.front;
+  const backContent = currentCard?.back_content || currentCard?.back;
+  
+  console.log("FlashcardDisplay - frontContent:", frontContent);
+  console.log("FlashcardDisplay - backContent:", backContent);
+
+  // Safety check - if no current card, show error state
+  if (!currentCard) {
+    console.error("FlashcardDisplay - No current card provided");
+    return (
+      <div className="mb-6">
+        <Card className="min-h-[300px] w-full shadow-lg">
+          <CardContent className="p-6 flex flex-col items-center justify-center">
+            <div className="min-h-[250px] w-full flex items-center justify-center text-center p-4">
+              <div className="text-lg md:text-xl text-muted-foreground">
+                No flashcard data available
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div ref={cardContainerRef} className="mb-6">
@@ -51,7 +77,7 @@ export const FlashcardDisplay = ({
             <CardContent className="p-6 flex flex-col items-center justify-center">
               <div className="min-h-[250px] w-full flex items-center justify-center text-center p-4">
                 <div className="text-lg md:text-xl">
-                  {isFlipped ? backContent : frontContent}
+                  {isFlipped ? (backContent || "No back content") : (frontContent || "No front content")}
                 </div>
               </div>
               <div className="text-sm text-muted-foreground mt-4">

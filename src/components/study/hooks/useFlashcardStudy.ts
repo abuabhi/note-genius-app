@@ -35,6 +35,7 @@ export const useFlashcardStudy = ({ setId, mode }: UseFlashcardStudyProps) => {
         console.log("Loading flashcards for set:", setId);
         const cards = await fetchFlashcardsInSet(setId);
         console.log("Loaded flashcards:", cards);
+        console.log("First card:", cards?.[0]);
         
         if (!cards || cards.length === 0) {
           setError("No flashcards found in this set");
@@ -58,6 +59,9 @@ export const useFlashcardStudy = ({ setId, mode }: UseFlashcardStudyProps) => {
             [sortedCards[i], sortedCards[j]] = [sortedCards[j], sortedCards[i]];
           }
         }
+        
+        console.log("Sorted cards:", sortedCards);
+        console.log("First sorted card:", sortedCards?.[0]);
         
         setFlashcards(sortedCards);
         setCurrentIndex(0);
