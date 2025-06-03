@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -52,9 +51,8 @@ export const BulkNoteConversion = ({
       for (const flashcard of flashcards) {
         await createFlashcard({
           front_content: flashcard.front,
-          back_content: flashcard.back,
-          set_id: newSet.id
-        });
+          back_content: flashcard.back
+        }, newSet.id);
       }
 
       toast.success(`Created ${flashcards.length} flashcards successfully!`);
