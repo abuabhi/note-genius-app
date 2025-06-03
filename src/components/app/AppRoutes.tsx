@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { allRoutes } from '@/routes/routeConfig';
 import QuizHistoryPage from "@/pages/QuizHistoryPage";
-import FeatureProtectedRoute from '@/components/FeatureProtectedRoute';
+import { FeatureProtectedRoute } from '@/components/routes/FeatureProtectedRoute';
 
 export const AppRoutes = () => {
   return (
@@ -14,7 +15,7 @@ export const AppRoutes = () => {
       <Route
         path="/quiz/history"
         element={
-          <FeatureProtectedRoute feature="quiz_taking">
+          <FeatureProtectedRoute featureKey="quiz_taking">
             <QuizHistoryPage />
           </FeatureProtectedRoute>
         }

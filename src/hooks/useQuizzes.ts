@@ -6,6 +6,8 @@ import { useQuizResults } from './quiz/useQuizResults';
 import { useSubmitQuizResult } from './quiz/useSubmitQuizResult';
 
 // Re-export all quiz hooks for backward compatibility
+export { useQuizList };
+
 export const useQuizzes = (filters?: {
   subject?: string;
   grade?: string;

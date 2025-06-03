@@ -59,7 +59,14 @@ const QuizHistoryPage = () => {
         .order('start_time', { ascending: false });
 
       if (error) throw error;
-      return data as QuizHistoryItem[];
+      
+      // Properly type the response to match our interface
+      return (data || []).map(item => ({
+        ...item,
+        flashcard_sets: Array.isArray(item.flashcard_sets) 
+          ? item.flashcard_sets[0] 
+          : item.flashcard_sets
+      })) as QuizHistoryItem[];
     },
     enabled: !!userProfile?.id
   });
