@@ -2,7 +2,7 @@
 import React from 'react';
 import { RichTextDisplay } from '@/components/ui/rich-text/RichTextDisplay';
 import { TextAlignType } from '../hooks/useStudyViewState';
-import { Sparkles, Lightbulb } from 'lucide-react';
+import { Lightbulb } from 'lucide-react';
 
 interface EnhancedContentRendererProps {
   content: string;
@@ -56,36 +56,29 @@ export const EnhancedContentRenderer = ({
           const isExplanation = !isStudyTip && !isExample;
           
           // Choose styling based on enhancement type
-          let containerClasses = "my-3 p-3 rounded-lg border-l-4 relative overflow-hidden transition-all duration-200 hover:shadow-sm";
+          let containerClasses = "my-3 p-4 rounded-lg border-l-4 relative overflow-hidden transition-all duration-200 hover:shadow-sm";
           let iconClasses = "w-4 h-4";
-          let icon = <Sparkles className={iconClasses} />;
-          let labelText = "Enhanced";
+          let icon = null;
           
           if (isStudyTip) {
             containerClasses += " bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-400";
             icon = <Lightbulb className={`${iconClasses} text-amber-600`} />;
-            labelText = "Study Tip";
           } else if (isExample) {
             containerClasses += " bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-400";
-            icon = <Sparkles className={`${iconClasses} text-blue-600`} />;
-            labelText = "Example";
           } else {
             containerClasses += " bg-gradient-to-r from-mint-50 to-emerald-50 border-mint-400";
-            icon = <Sparkles className={`${iconClasses} text-mint-600`} />;
-            labelText = "Enhanced";
           }
           
           return (
             <div key={index} className={containerClasses}>
-              {/* Subtle enhancement indicator */}
-              <div className="flex items-center gap-2 mb-2 opacity-75">
-                <div className="flex items-center justify-center w-5 h-5 bg-white/60 rounded-full">
-                  {icon}
+              {/* Optional icon for study tips */}
+              {icon && (
+                <div className="flex items-center gap-2 mb-2 opacity-75">
+                  <div className="flex items-center justify-center w-5 h-5 bg-white/60 rounded-full">
+                    {icon}
+                  </div>
                 </div>
-                <span className="text-xs font-medium uppercase tracking-wide text-gray-600">
-                  {labelText}
-                </span>
-              </div>
+              )}
               
               {/* Enhanced content */}
               <div className="relative">

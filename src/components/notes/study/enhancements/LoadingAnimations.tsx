@@ -1,5 +1,5 @@
 
-import { Loader2, Brain, Sparkles, Zap, Wand2 } from "lucide-react";
+import { Loader2, Brain, Sparkles, Zap, Wand2, Stars } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface LoadingAnimationsProps {
@@ -47,16 +47,38 @@ export const LoadingAnimations = ({
         return (
           <div className="flex flex-col items-center justify-center space-y-4">
             <div className="relative">
-              <Wand2 className="h-10 w-10 text-purple-500 animate-bounce" />
+              {/* Main wand with complex animation */}
+              <Wand2 className="h-12 w-12 text-purple-500 animate-bounce" />
+              
+              {/* Multiple pulsing rings */}
               <div className="absolute -inset-2 bg-purple-200 rounded-full animate-ping opacity-20"></div>
               <div className="absolute -inset-4 bg-purple-100 rounded-full animate-ping opacity-10 [animation-delay:0.5s]"></div>
+              <div className="absolute -inset-6 bg-purple-50 rounded-full animate-ping opacity-5 [animation-delay:1s]"></div>
+              
+              {/* Floating sparkles */}
+              <div className="absolute -top-3 -left-3">
+                <Stars className="h-3 w-3 text-yellow-400 animate-pulse [animation-delay:0.2s]" />
+              </div>
+              <div className="absolute -bottom-2 -right-4">
+                <Sparkles className="h-4 w-4 text-pink-400 animate-pulse [animation-delay:0.8s]" />
+              </div>
+              <div className="absolute -top-4 right-2">
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce [animation-delay:1.2s]"></div>
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="text-purple-600 font-medium">Enhancing clarity</div>
+            
+            <div className="flex flex-col items-center space-y-2">
+              <div className="text-purple-600 font-medium text-lg">Enhancing clarity</div>
               <div className="flex space-x-1">
-                <div className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse"></div>
-                <div className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse [animation-delay:0.2s]"></div>
-                <div className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse [animation-delay:0.4s]"></div>
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse [animation-delay:0.3s]"></div>
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse [animation-delay:0.6s]"></div>
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse [animation-delay:0.9s]"></div>
+              </div>
+              
+              {/* Animated progress text */}
+              <div className="text-sm text-purple-500 animate-pulse">
+                Adding contextual explanations...
               </div>
             </div>
           </div>
