@@ -1,6 +1,6 @@
 
 import { StudyMode } from "@/pages/study/types";
-import { BookOpen, RotateCcw, GraduationCap, Info } from "lucide-react";
+import { BookOpen, RotateCcw, GraduationCap } from "lucide-react";
 
 interface StudyModeInfoProps {
   currentMode: StudyMode;
@@ -36,19 +36,7 @@ export const StudyModeInfo = ({ currentMode }: StudyModeInfoProps) => {
         </div>
         <div className="flex-1">
           <h3 className="font-medium text-mint-800 mb-1">{info.title}</h3>
-          <p className="text-sm text-muted-foreground mb-3">{info.description}</p>
-          
-          <div className="bg-mint-50/50 rounded-md p-3 border border-mint-100/50">
-            <div className="flex items-start gap-2">
-              <Info className="h-4 w-4 text-mint-500 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-mint-700 mb-1">About "Mastered" Cards</p>
-                <p className="text-xs text-muted-foreground">
-                  Cards marked as "Know This" are considered mastered and appear less frequently in future sessions.
-                </p>
-              </div>
-            </div>
-          </div>
+          <p className="text-sm text-muted-foreground">{info.description}</p>
         </div>
       </div>
     </div>
