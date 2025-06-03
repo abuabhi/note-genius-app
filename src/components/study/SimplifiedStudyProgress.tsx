@@ -19,14 +19,14 @@ const StatCard = ({ icon: Icon, label, value, color }: {
   value: string | number;
   color: string;
 }) => (
-  <div className="bg-white/60 backdrop-blur-sm rounded-lg border border-mint-100 p-3">
+  <div className={`rounded-lg border border-mint-100 p-3 ${color}`}>
     <div className="flex items-center gap-3">
-      <div className={`p-2 rounded-md ${color}`}>
-        <Icon className="h-4 w-4 text-mint-500" />
+      <div className="p-2 rounded-md bg-mint-100">
+        <Icon className="h-4 w-4 text-mint-600" />
       </div>
       <div>
-        <p className="text-sm text-muted-foreground">{label}</p>
-        <p className="text-base font-medium text-gray-900">{value}</p>
+        <p className="text-sm text-mint-600">{label}</p>
+        <p className="text-base font-medium text-mint-800">{value}</p>
       </div>
     </div>
   </div>

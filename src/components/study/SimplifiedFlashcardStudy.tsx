@@ -174,14 +174,6 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Study stats */}
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <div className="flex items-center gap-4">
-          <span>{studiedToday} studied today</span>
-          <span>{masteredCount} mastered</span>
-        </div>
-      </div>
-
       {/* Flashcard */}
       <div className="relative min-h-[400px]">
         <AnimatePresence mode="wait">

@@ -29,14 +29,14 @@ export const StudyModeInfo = ({ currentMode }: StudyModeInfoProps) => {
   const Icon = info.icon;
 
   return (
-    <div className="bg-white/60 backdrop-blur-sm rounded-lg border border-mint-100 p-4">
+    <div className="bg-mint-50 rounded-lg border border-mint-100 p-4">
       <div className="flex items-start gap-3">
-        <div className="p-2 bg-mint-50 rounded-md">
-          <Icon className="h-4 w-4 text-mint-500" />
+        <div className="p-2 bg-mint-100 rounded-md">
+          <Icon className="h-4 w-4 text-mint-600" />
         </div>
         <div className="flex-1">
           <h3 className="font-medium text-mint-800 mb-1">{info.title}</h3>
-          <p className="text-sm text-muted-foreground">{info.description}</p>
+          <p className="text-sm text-mint-700">{info.description}</p>
         </div>
       </div>
     </div>
