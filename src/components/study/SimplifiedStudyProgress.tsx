@@ -1,11 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Target, CheckCircle, Calendar, TrendingUp, Flame, Award } from "lucide-react";
+import { Target, CheckCircle, TrendingUp, Flame, Award } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { format, startOfDay, endOfDay } from 'date-fns';
-import { motion } from "framer-motion";
 
 interface SimpleStats {
   cardsStudiedToday: number;
@@ -14,29 +13,21 @@ interface SimpleStats {
   totalSetsStarted: number;
 }
 
-const StatCard = ({ icon: Icon, label, value, color, delay = 0 }: {
+const StatCard = ({ icon: Icon, label, value, color }: {
   icon: any;
   label: string;
   value: string | number;
   color: string;
-  delay?: number;
 }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay, duration: 0.2 }}
-    className="flex items-center justify-between p-3 bg-white rounded-lg border border-mint-100 hover:shadow-sm transition-shadow"
-  >
-    <div className="flex items-center gap-3">
-      <div className={`p-2 rounded-lg ${color}`}>
-        <Icon className="h-4 w-4 text-white" />
-      </div>
-      <div>
-        <p className="text-sm font-medium text-muted-foreground">{label}</p>
-        <p className="text-lg font-semibold text-mint-800">{value}</p>
-      </div>
+  <div className="flex items-center gap-3 p-3 bg-white rounded-md border border-gray-100">
+    <div className={`p-2 rounded-md ${color}`}>
+      <Icon className="h-4 w-4 text-white" />
     </div>
-  </motion.div>
+    <div>
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="text-base font-medium text-gray-900">{value}</p>
+    </div>
+  </div>
 );
 
 export const SimplifiedStudyProgress = () => {
@@ -133,19 +124,19 @@ export const SimplifiedStudyProgress = () => {
   if (!user) {
     return (
       <div className="space-y-4">
-        <Card className="border-mint-100">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 text-mint-800">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-medium flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
               Study Progress
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-6">
-              <div className="w-12 h-12 bg-mint-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Target className="h-6 w-6 text-mint-400" />
+            <div className="text-center py-4">
+              <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Target className="h-5 w-5 text-gray-400" />
               </div>
-              <p className="text-muted-foreground text-sm">Please log in to view progress</p>
+              <p className="text-sm text-muted-foreground">Please log in to view progress</p>
             </div>
           </CardContent>
         </Card>
@@ -156,9 +147,9 @@ export const SimplifiedStudyProgress = () => {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <Card className="border-mint-100">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 text-mint-800">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-medium flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
               Study Progress
             </CardTitle>
@@ -167,10 +158,10 @@ export const SimplifiedStudyProgress = () => {
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-mint-100 rounded-lg animate-pulse" />
+                  <div className="w-8 h-8 bg-gray-100 rounded-md animate-pulse" />
                   <div className="flex-1 space-y-1">
-                    <div className="h-3 bg-mint-100 rounded animate-pulse" />
-                    <div className="h-3 bg-mint-100 rounded animate-pulse w-2/3" />
+                    <div className="h-3 bg-gray-100 rounded animate-pulse" />
+                    <div className="h-3 bg-gray-100 rounded animate-pulse w-2/3" />
                   </div>
                 </div>
               ))}
@@ -187,44 +178,36 @@ export const SimplifiedStudyProgress = () => {
   return (
     <div className="space-y-4">
       {/* Today's Progress */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.2 }}
-      >
-        <Card className="bg-mint-50 border-mint-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold flex items-center gap-2 text-mint-800">
-              <Target className="h-4 w-4" />
-              Today's Goal
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-mint-700 mb-1">
-                {stats.cardsStudiedToday}
-              </div>
-              <div className="text-sm text-mint-600 mb-3">
-                of {dailyGoal} cards studied
-              </div>
-              <Progress 
-                value={dailyProgress} 
-                className="h-2 bg-mint-100" 
-                indicatorClassName="bg-mint-500"
-              />
+      <Card className="bg-mint-50/50">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-medium flex items-center gap-2">
+            <Target className="h-4 w-4" />
+            Today's Goal
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="text-center">
+            <div className="text-xl font-semibold text-mint-700 mb-1">
+              {stats.cardsStudiedToday}
             </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+            <div className="text-sm text-muted-foreground mb-3">
+              of {dailyGoal} cards studied
+            </div>
+            <Progress 
+              value={dailyProgress} 
+              className="h-2" 
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Stats Grid */}
+      {/* Stats */}
       <div className="space-y-2">
         <StatCard
           icon={Flame}
           label="Study Streak"
           value={`${stats.currentStreak} days`}
-          color="bg-orange-400"
-          delay={0.1}
+          color="bg-orange-500"
         />
         
         <StatCard
@@ -232,38 +215,15 @@ export const SimplifiedStudyProgress = () => {
           label="Cards Mastered"
           value={stats.totalCardsMastered}
           color="bg-mint-500"
-          delay={0.2}
         />
         
         <StatCard
           icon={Award}
           label="Progress Level"
           value={stats.totalCardsMastered > 0 ? "Active Learner" : "Getting Started"}
-          color="bg-indigo-400"
-          delay={0.3}
+          color="bg-blue-500"
         />
       </div>
-
-      {/* Motivational Message */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.2 }}
-      >
-        <Card className="bg-amber-50 border-amber-200">
-          <CardContent className="p-3 text-center">
-            <div className="text-lg mb-1">🎯</div>
-            <p className="text-sm font-medium text-amber-800">
-              {stats.cardsStudiedToday === 0 
-                ? "Ready to start learning? Let's go!" 
-                : stats.cardsStudiedToday >= dailyGoal
-                ? "Amazing! You've reached your daily goal!"
-                : `${dailyGoal - stats.cardsStudiedToday} more cards to reach your goal!`
-              }
-            </p>
-          </CardContent>
-        </Card>
-      </motion.div>
     </div>
   );
 };
