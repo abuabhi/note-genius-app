@@ -1,4 +1,3 @@
-
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -278,8 +277,7 @@ const DashboardPage = () => {
                 </Link>
               </Button>
             </CardContent>
-            </Card>
-          )}
+          </Card>
         </div>
       </div>
     </Layout>
