@@ -22,88 +22,100 @@ export const useFlashcardStudy = ({ setId, mode }: UseFlashcardStudyProps) => {
   const [error, setError] = useState<string | null>(null);
   const [forceUpdate, setForceUpdate] = useState(0);
   const { user } = useRequireAuth();
-  const loadedSetId = useRef<string | null>(null);
+  
+  // Use refs to track loading state and prevent multiple concurrent loads
   const isLoadingRef = useRef(false);
+  const lastLoadedSetId = useRef<string | null>(null);
+  const lastLoadedMode = useRef<StudyMode | null>(null);
 
-  // Memoize the fetch function to prevent infinite loops
-  const loadFlashcards = useCallback(async () => {
-    // Prevent multiple concurrent loads
-    if (isLoadingRef.current || loadedSetId.current === setId) return;
-    
-    isLoadingRef.current = true;
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      console.log("useFlashcardStudy: Loading flashcards for set:", setId);
-      const cards = await fetchFlashcardsInSet(setId);
-      console.log("useFlashcardStudy: Loaded flashcards:", cards);
-      
-      if (!cards || cards.length === 0) {
-        setError("No flashcards found in this set");
-        setFlashcards([]);
+  useEffect(() => {
+    const loadFlashcards = async () => {
+      // Prevent multiple concurrent loads and avoid reloading same data
+      if (isLoadingRef.current || 
+          (lastLoadedSetId.current === setId && lastLoadedMode.current === mode)) {
         return;
       }
       
-      // Sort cards based on mode and position
-      let sortedCards = [...cards];
+      isLoadingRef.current = true;
+      setIsLoading(true);
+      setError(null);
       
-      if (mode === "review") {
-        sortedCards.sort((a, b) => {
-          if (a.position !== undefined && b.position !== undefined) {
-            if (a.position !== b.position) {
+      try {
+        console.log("useFlashcardStudy: Loading flashcards for set:", setId, "mode:", mode);
+        const cards = await fetchFlashcardsInSet(setId);
+        console.log("useFlashcardStudy: Loaded flashcards:", cards);
+        
+        if (!cards || cards.length === 0) {
+          setError("No flashcards found in this set");
+          setFlashcards([]);
+          return;
+        }
+        
+        // Sort cards based on mode and position
+        let sortedCards = [...cards];
+        
+        if (mode === "review") {
+          sortedCards.sort((a, b) => {
+            if (a.position !== undefined && b.position !== undefined) {
+              if (a.position !== b.position) {
+                return a.position - b.position;
+              }
+            }
+            if (!a.next_review_at) return -1;
+            if (!b.next_review_at) return 1;
+            return new Date(a.next_review_at).getTime() - new Date(b.next_review_at).getTime();
+          });
+        } else if (mode === "test") {
+          sortedCards.sort((a, b) => {
+            if (a.position !== undefined && b.position !== undefined) {
               return a.position - b.position;
             }
+            return 0;
+          });
+          
+          // Fisher-Yates shuffle
+          for (let i = sortedCards.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [sortedCards[i], sortedCards[j]] = [sortedCards[j], sortedCards[i]];
           }
-          if (!a.next_review_at) return -1;
-          if (!b.next_review_at) return 1;
-          return new Date(a.next_review_at).getTime() - new Date(b.next_review_at).getTime();
-        });
-      } else if (mode === "test") {
-        sortedCards.sort((a, b) => {
-          if (a.position !== undefined && b.position !== undefined) {
-            return a.position - b.position;
-          }
-          return 0;
-        });
-        
-        // Fisher-Yates shuffle
-        for (let i = sortedCards.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [sortedCards[i], sortedCards[j]] = [sortedCards[j], sortedCards[i]];
+        } else {
+          sortedCards.sort((a, b) => {
+            if (a.position !== undefined && b.position !== undefined) {
+              return a.position - b.position;
+            }
+            return 0;
+          });
         }
-      } else {
-        sortedCards.sort((a, b) => {
-          if (a.position !== undefined && b.position !== undefined) {
-            return a.position - b.position;
-          }
-          return 0;
-        });
+        
+        console.log("useFlashcardStudy: Final sorted cards:", sortedCards);
+        
+        setFlashcards(sortedCards);
+        setCurrentIndex(0);
+        setIsFlipped(false);
+        setStreak(0);
+        setForceUpdate(prev => prev + 1);
+        
+        // Mark as successfully loaded
+        lastLoadedSetId.current = setId;
+        lastLoadedMode.current = mode;
+      } catch (error) {
+        console.error("useFlashcardStudy: Error loading flashcards:", error);
+        setError("Failed to load flashcards");
+        toast.error("Failed to load flashcards");
+      } finally {
+        setIsLoading(false);
+        isLoadingRef.current = false;
       }
-      
-      console.log("useFlashcardStudy: Final sorted cards:", sortedCards);
-      
-      setFlashcards(sortedCards);
-      setCurrentIndex(0);
-      setIsFlipped(false);
-      setStreak(0);
-      setForceUpdate(prev => prev + 1);
-      loadedSetId.current = setId;
-    } catch (error) {
-      console.error("useFlashcardStudy: Error loading flashcards:", error);
-      setError("Failed to load flashcards");
-      toast.error("Failed to load flashcards");
-    } finally {
+    };
+
+    // Only load if we have a setId and it's different from what's loaded
+    if (setId && (lastLoadedSetId.current !== setId || lastLoadedMode.current !== mode)) {
+      loadFlashcards();
+    } else if (setId === lastLoadedSetId.current && mode === lastLoadedMode.current) {
+      // Data already loaded for this set and mode
       setIsLoading(false);
-      isLoadingRef.current = false;
     }
   }, [setId, mode, fetchFlashcardsInSet]);
-
-  useEffect(() => {
-    if (setId && !isLoadingRef.current) {
-      loadFlashcards();
-    }
-  }, [setId, loadFlashcards]);
 
   const handleNext = () => {
     if (flashcards.length === 0) return;
