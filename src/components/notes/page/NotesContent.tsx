@@ -26,9 +26,15 @@ export const NotesContent = ({
   tierLimits,
   userTier 
 }: NotesContentProps) => {
-  const { paginatedNotes, notes, loading, setFilterOptions, filteredNotes } = useNotes();
+  const { paginatedNotes, notes, loading, setFilterOptions, filteredNotes, searchTerm, filterOptions } = useNotes();
   const { user, loading: authLoading } = useRequireAuth();
   const [activeSubjectId, setActiveSubjectId] = useState<string | null>(null);
+
+  // Check if notes are filtered
+  const isFiltered = searchTerm.length > 0 || 
+                    filterOptions.dateFrom || 
+                    filterOptions.dateTo || 
+                    activeSubjectId;
 
   // Show loading state while checking authentication
   if (authLoading) {
@@ -85,7 +91,12 @@ export const NotesContent = ({
           <NotesDisplay 
             notes={notes} 
             paginatedNotes={paginatedNotes} 
-            loading={loading} 
+            loading={loading}
+            isFiltered={isFiltered}
+            activeSubject={activeSubjectId || 'all'}
+            onCreateNote={onSaveNote}
+            onScanNote={onScanNote}
+            onImportNote={onImportNote}
           />
         </div>
 
