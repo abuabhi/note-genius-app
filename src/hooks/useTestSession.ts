@@ -53,8 +53,14 @@ export const useTestSession = () => {
 
       if (error) throw error;
 
-      setCurrentSession(data);
-      return data;
+      // Type cast the data to ensure proper typing
+      const typedSession: TestSession = {
+        ...data,
+        status: data.status as 'in_progress' | 'completed' | 'abandoned'
+      };
+
+      setCurrentSession(typedSession);
+      return typedSession;
     } catch (error) {
       console.error('Error starting test session:', error);
       toast.error('Failed to start test session');
@@ -123,8 +129,14 @@ export const useTestSession = () => {
 
       if (error) throw error;
 
-      setCurrentSession(data);
-      return data;
+      // Type cast the data to ensure proper typing
+      const typedSession: TestSession = {
+        ...data,
+        status: data.status as 'in_progress' | 'completed' | 'abandoned'
+      };
+
+      setCurrentSession(typedSession);
+      return typedSession;
     } catch (error) {
       console.error('Error completing test session:', error);
       toast.error('Failed to complete test session');
