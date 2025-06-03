@@ -1,19 +1,14 @@
 
-import { useState, useEffect, useRef } from "react";
-import { useFlashcards } from "@/contexts/FlashcardContext";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, RotateCcw } from "lucide-react";
-import { Flashcard } from "@/types/flashcard";
-import { StudyMode } from "@/pages/StudyPage";
-import { Skeleton } from "@/components/ui/skeleton";
-import { AnimatePresence, motion } from "framer-motion";
-import { StudyControls } from "./StudyControls";
-import { toast } from "sonner";
+import { StudyMode } from "@/pages/study/types";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { FlashcardExplanation } from "./FlashcardExplanation";
+import { StudyControls } from "./StudyControls";
 import { isPremiumTier } from "@/utils/premiumFeatures";
+import { useFlashcardStudy } from "./hooks/useFlashcardStudy";
+import { FlashcardDisplay } from "./components/FlashcardDisplay";
+import { StudyProgressDisplay } from "./components/StudyProgress";
+import { StudyNavigation } from "./components/StudyNavigation";
+import { StudyLoadingState, StudyErrorState, StudyEmptyState } from "./components/StudyStates";
 
 interface FlashcardStudyProps {
   setId: string;
@@ -21,243 +16,63 @@ interface FlashcardStudyProps {
 }
 
 export const FlashcardStudy = ({ setId, mode }: FlashcardStudyProps) => {
-  const { fetchFlashcardsInSet, recordFlashcardReview } = useFlashcards();
-  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [direction, setDirection] = useState<"left" | "right">("right");
-  const [streak, setStreak] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-  const { user, userProfile } = useRequireAuth();
+  const { userProfile } = useRequireAuth();
   const isPremium = isPremiumTier(userProfile?.user_tier);
-  const cardContainerRef = useRef<HTMLDivElement>(null);
-  const loadedSetId = useRef<string | null>(null);
-
-  useEffect(() => {
-    const loadFlashcards = async () => {
-      // Prevent loading the same set multiple times
-      if (loadedSetId.current === setId) return;
-      
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        console.log("Loading flashcards for set:", setId);
-        const cards = await fetchFlashcardsInSet(setId);
-        console.log("Loaded flashcards:", cards);
-        
-        if (!cards || cards.length === 0) {
-          setError("No flashcards found in this set");
-          setFlashcards([]);
-          return;
-        }
-        
-        // Sort cards based on mode
-        let sortedCards = [...cards];
-        
-        if (mode === "review") {
-          sortedCards.sort((a, b) => {
-            if (!a.next_review_at) return -1;
-            if (!b.next_review_at) return 1;
-            return new Date(a.next_review_at).getTime() - new Date(b.next_review_at).getTime();
-          });
-        } else if (mode === "test") {
-          // Fisher-Yates shuffle
-          for (let i = sortedCards.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [sortedCards[i], sortedCards[j]] = [sortedCards[j], sortedCards[i]];
-          }
-        }
-        
-        setFlashcards(sortedCards);
-        setCurrentIndex(0);
-        setIsFlipped(false);
-        setStreak(0);
-        loadedSetId.current = setId;
-      } catch (error) {
-        console.error("Error loading flashcards:", error);
-        setError("Failed to load flashcards");
-        toast.error("Failed to load flashcards");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    if (setId) {
-      loadFlashcards();
-    }
-  }, [setId, mode, fetchFlashcardsInSet]);
   
-  const handleNext = () => {
-    if (flashcards.length === 0) return;
-    
-    setDirection("right");
-    setIsFlipped(false);
-    setTimeout(() => {
-      setCurrentIndex((prev) => (prev + 1) % flashcards.length);
-    }, 200);
-  };
-  
-  const handlePrevious = () => {
-    if (flashcards.length === 0) return;
-    
-    setDirection("left");
-    setIsFlipped(false);
-    setTimeout(() => {
-      setCurrentIndex((prev) => (prev - 1 + flashcards.length) % flashcards.length);
-    }, 200);
-  };
-  
-  const handleFlip = () => {
-    setIsFlipped(!isFlipped);
-  };
-  
-  const handleScoreCard = async (score: number) => {
-    if (!user || flashcards.length === 0) return;
-    
-    const flashcard = flashcards[currentIndex];
-    
-    try {
-      await recordFlashcardReview(flashcard.id, score as 0 | 1 | 2 | 3 | 4 | 5);
-      
-      if (score >= 3) {
-        setStreak(prev => {
-          const newStreak = prev + 1;
-          if (newStreak % 5 === 0) {
-            toast.success(`Streak of ${newStreak}! Keep going!`);
-          }
-          return newStreak;
-        });
-      } else {
-        setStreak(0);
-      }
-      
-      handleNext();
-    } catch (error) {
-      console.error("Error recording review:", error);
-      toast.error("Failed to save your progress");
-    }
-  };
+  const {
+    flashcards,
+    currentIndex,
+    isFlipped,
+    isLoading,
+    direction,
+    streak,
+    error,
+    handleNext,
+    handlePrevious,
+    handleFlip,
+    handleScoreCard,
+    setIsFlipped
+  } = useFlashcardStudy({ setId, mode });
   
   // Loading state
   if (isLoading) {
-    return (
-      <div>
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <div className="min-h-[300px] flex flex-col items-center justify-center space-y-4">
-              <Skeleton className="h-8 w-4/5" />
-              <Skeleton className="h-4 w-3/5" />
-              <Skeleton className="h-4 w-2/5" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <StudyLoadingState />;
   }
   
   // Error state
   if (error) {
-    return (
-      <div>
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <div className="min-h-[300px] flex flex-col items-center justify-center text-center">
-              <h3 className="text-lg font-semibold text-red-600">Error</h3>
-              <p className="text-muted-foreground mt-2">{error}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <StudyErrorState error={error} />;
   }
   
   // No flashcards state
   if (flashcards.length === 0) {
-    return (
-      <div>
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <div className="min-h-[300px] flex flex-col items-center justify-center text-center">
-              <h3 className="text-lg font-semibold">No flashcards in this set</h3>
-              <p className="text-muted-foreground mt-2">
-                Add some flashcards to this set to start studying.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <StudyEmptyState />;
   }
   
   const currentCard = flashcards[currentIndex];
-  const frontContent = currentCard.front_content || currentCard.front;
-  const backContent = currentCard.back_content || currentCard.back;
   
   return (
     <div>
-      <div ref={cardContainerRef} className="mb-6 perspective-1000">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentIndex + (isFlipped ? "-flipped" : "")}
-            initial={{ 
-              rotateY: isFlipped ? 0 : 180,
-              x: direction === "right" ? 100 : -100,
-              opacity: 0
-            }}
-            animate={{ 
-              rotateY: isFlipped ? 180 : 0,
-              x: 0,
-              opacity: 1
-            }}
-            exit={{ 
-              x: direction === "right" ? -100 : 100,
-              opacity: 0
-            }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            style={{ transformStyle: "preserve-3d" }}
-            className="w-full cursor-pointer"
-            onClick={handleFlip}
-          >
-            <Card 
-              className="min-h-[300px] w-full shadow-lg hover:shadow-xl transition-shadow duration-300"
-            >
-              <CardContent className="p-6 flex flex-col items-center justify-center">
-                <div className="min-h-[250px] w-full flex items-center justify-center text-center p-4">
-                  <div className="text-lg md:text-xl">
-                    {isFlipped ? backContent : frontContent}
-                  </div>
-                </div>
-                <div className="text-sm text-muted-foreground mt-4">
-                  {isFlipped ? "Click to see front" : "Click to see back"}
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </AnimatePresence>
-      </div>
+      <FlashcardDisplay
+        currentCard={currentCard}
+        currentIndex={currentIndex}
+        isFlipped={isFlipped}
+        direction={direction}
+        onFlip={handleFlip}
+      />
       
-      <Progress value={(currentIndex + 1) / flashcards.length * 100} className="mb-6" />
+      <StudyProgressDisplay
+        currentIndex={currentIndex}
+        totalCards={flashcards.length}
+        streak={streak}
+      />
       
-      <div className="flex justify-between items-center">
-        <p className="text-sm text-muted-foreground">
-          Card {currentIndex + 1} of {flashcards.length}
-          {streak > 0 && <span className="ml-2">• Streak: {streak}</span>}
-        </p>
-        
-        <div className="flex space-x-2">
-          <Button variant="outline" onClick={handlePrevious} size="sm">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" onClick={() => setIsFlipped(!isFlipped)} size="sm">
-            <RotateCcw className="h-4 w-4" />
-          </Button>
-          <Button onClick={handleNext} size="sm">
-            <span className="mr-1">Next</span>
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-        </div>
+      <div className="flex justify-end">
+        <StudyNavigation
+          onPrevious={handlePrevious}
+          onNext={handleNext}
+          onFlip={() => setIsFlipped(!isFlipped)}
+        />
       </div>
       
       {/* Score controls for review mode */}
