@@ -50,11 +50,14 @@ export const FlashcardDisplay = ({
     );
   }
 
+  // Create a unique key that ensures proper animation
+  const animationKey = `card-${currentCard.id}-${isFlipped ? "back" : "front"}`;
+
   return (
     <div ref={cardContainerRef} className="mb-6">
       <AnimatePresence mode="wait">
         <motion.div
-          key={currentIndex + (isFlipped ? "-flipped" : "")}
+          key={animationKey}
           initial={{ 
             x: direction === "right" ? 100 : -100,
             opacity: 0
