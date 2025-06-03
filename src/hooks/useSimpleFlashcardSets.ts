@@ -24,12 +24,10 @@ export const useSimpleFlashcardSets = () => {
       
       console.log('Fetching flashcard sets for user:', user.id);
       
+      // Simple query without joins to avoid relationship errors
       const { data, error } = await supabase
         .from('flashcard_sets')
-        .select(`
-          *,
-          subject_categories(id, name)
-        `)
+        .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -38,7 +36,26 @@ export const useSimpleFlashcardSets = () => {
         throw error;
       }
 
-      const sets = data || [];
+      // Transform the data to match FlashcardSet interface
+      const sets: FlashcardSet[] = (data || []).map(set => ({
+        id: set.id,
+        name: set.name,
+        description: set.description,
+        user_id: set.user_id,
+        created_at: set.created_at,
+        updated_at: set.updated_at,
+        is_built_in: set.is_built_in,
+        card_count: set.card_count || 0,
+        subject: set.subject,
+        topic: set.topic,
+        country_id: set.country_id,
+        category_id: set.category_id,
+        education_system: set.education_system,
+        section_id: set.section_id,
+        // Remove subject_categories for now since the relationship doesn't exist
+        subject_categories: undefined
+      }));
+      
       console.log('Successfully fetched flashcard sets:', sets);
       
       setFlashcardSets(sets);
