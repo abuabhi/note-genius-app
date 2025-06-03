@@ -66,17 +66,9 @@ export const SubjectsSection = ({
   });
 
   return (
-    <div className="mb-6">
-      <SubjectTabs 
-        activeSubjectId={activeSubjectId} 
-        onSubjectChange={setActiveSubjectId} 
-      />
-      
-      {activeSubjectId && (
-        <div className="text-xs text-mint-500 mt-2">
-          Showing {filteredNotesCount} notes for selected subject
-        </div>
-      )}
-    </div>
+    <SubjectTabs 
+      activeSubjectId={activeSubjectId} 
+      onSubjectChange={setActiveSubjectId} 
+    />
   );
 };

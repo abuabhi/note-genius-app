@@ -9,23 +9,15 @@ import {
 } from "@/components/ui/select";
 import { useNotes } from "@/contexts/NoteContext";
 import { SortType } from "@/contexts/notes/types";
-import { Button } from '@/components/ui/button';
-import { Archive, ArchiveX } from 'lucide-react';
 
 export const NoteSorter = () => {
   const { 
     sortType, 
-    setSortType, 
-    showArchived, 
-    setShowArchived 
+    setSortType
   } = useNotes();
 
   const handleSortChange = (value: string) => {
     setSortType(value as SortType);
-  };
-
-  const toggleArchived = () => {
-    setShowArchived(!showArchived);
   };
 
   return (
@@ -45,27 +37,6 @@ export const NoteSorter = () => {
           <SelectItem value="category">By Subject</SelectItem>
         </SelectContent>
       </Select>
-
-      <Button 
-        variant={showArchived ? "default" : "outline"} 
-        size="sm" 
-        onClick={toggleArchived}
-        className={showArchived ? 
-          "bg-mint-500 hover:bg-mint-600" : 
-          "border-mint-200 hover:bg-mint-50 hover:text-mint-700"}
-      >
-        {showArchived ? (
-          <>
-            <ArchiveX className="h-4 w-4 mr-2" />
-            Hide Archived
-          </>
-        ) : (
-          <>
-            <Archive className="h-4 w-4 mr-2" />
-            Show Archived
-          </>
-        )}
-      </Button>
     </div>
   );
 };
