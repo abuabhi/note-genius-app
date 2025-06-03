@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { PinAction } from "./PinAction";
 import { DownloadActions } from "./DownloadActions";
 import { EmailAction } from "./EmailAction";
+import { ConvertToFlashcardsAction } from "./ConvertToFlashcardsAction";
 import { DeleteAction } from "./DeleteAction";
 
 interface NoteActionsMenuProps {
@@ -69,6 +70,14 @@ export const NoteActionsMenu = ({
           noteId={noteId}
           isPinned={isPinned}
           onPin={onPin}
+        />
+        
+        <DropdownMenuSeparator className="bg-mint-100" />
+        
+        <ConvertToFlashcardsAction
+          noteId={noteId}
+          noteTitle={noteTitle}
+          noteContent={noteContent}
         />
         
         <DropdownMenuSeparator className="bg-mint-100" />

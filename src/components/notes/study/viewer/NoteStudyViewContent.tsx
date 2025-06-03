@@ -1,13 +1,13 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Note } from "@/types/note";
-import { TwoColumnEnhancementView } from "../enhancements/TwoColumnEnhancementView";
-import { NoteStudyEditForm } from "../editor/NoteStudyEditForm";
-import { EnhancementUsageMeter } from "./EnhancementUsageMeter";
-import { Button } from "@/components/ui/button";
-import { Sparkles } from "lucide-react";
 import { TextAlignType } from "../hooks/useStudyViewState";
+import { NoteContentDisplay } from "../NoteContentDisplay";
+import { NoteStudyEditForm } from "../editor/NoteStudyEditForm";
 import { EnhancementContentType } from "../enhancements/EnhancementSelector";
+import { QuickConversionPanel } from "../conversion/QuickConversionPanel";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "react-resizable-panels";
 
 interface NoteStudyViewContentProps {
   note: Note;
@@ -15,17 +15,17 @@ interface NoteStudyViewContentProps {
   fontSize: number;
   textAlign: TextAlignType;
   editableContent: string;
-  selectedTags: { id?: string; name: string; color: string }[];
+  selectedTags: string[];
   availableTags: { id: string; name: string; color: string }[];
   isSaving: boolean;
   statsLoading: boolean;
   currentUsage: number;
-  monthlyLimit: number | null;
+  monthlyLimit: number;
   handleContentChange: (content: string) => void;
-  handleSaveContent: () => void;
+  handleSaveContent: () => Promise<void>;
   toggleEditing: () => void;
-  handleEnhanceContent: () => Promise<void>;
-  setSelectedTags: (tags: { id?: string; name: string; color: string }[]) => void;
+  handleEnhanceContent: (enhancementType: string) => Promise<void>;
+  setSelectedTags: (tags: string[]) => void;
   handleRetryEnhancement: (enhancementType: string) => Promise<void>;
   hasReachedLimit: boolean;
   fetchUsageStats: () => Promise<void>;
@@ -60,85 +60,84 @@ export const NoteStudyViewContent = ({
   onActiveContentTypeChange,
   isEditOperation
 }: NoteStudyViewContentProps) => {
-  const [showFloatingButtons, setShowFloatingButtons] = useState(false);
+  const [selectedText, setSelectedText] = useState("");
+  const [showConversionPanel, setShowConversionPanel] = useState(false);
 
-  // Function to handle scrolling and show/hide the floating buttons
-  const handleScroll = useCallback(() => {
-    const scrollPosition = window.scrollY;
-    // Adjust the scroll threshold as needed
-    setShowFloatingButtons(scrollPosition > 100);
-  }, []);
+  // Handle text selection for flashcard creation
+  const handleTextSelection = () => {
+    const selection = window.getSelection();
+    if (selection && selection.toString().trim().length > 0) {
+      setSelectedText(selection.toString().trim());
+      setShowConversionPanel(true);
+    } else {
+      setSelectedText("");
+      setShowConversionPanel(false);
+    }
+  };
 
-  useEffect(() => {
-    // Add scroll event listener when the component mounts
-    window.addEventListener('scroll', handleScroll);
+  const handleTextSelectionConvert = async (frontText: string, backText: string) => {
+    // This would integrate with the flashcard creation system
+    console.log("Converting selection to flashcard:", { frontText, backText });
+    // Implementation would go here
+  };
 
-    // Clean up the event listener when the component unmounts
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [handleScroll]);
-
-  return (
-    <div className="flex flex-col">
-      {/* Enhanced Usage meter positioned above tabs */}
-      <div className="px-4 pt-4 pb-2 bg-gradient-to-r from-mint-50/30 to-white border-b border-mint-100/50">
-        <EnhancementUsageMeter
-          statsLoading={statsLoading}
-          currentUsage={currentUsage}
-          monthlyLimit={monthlyLimit}
-        />
-      </div>
-
-      {isEditing ? (
+  if (isEditing) {
+    return (
+      <CardContent className="p-8">
         <NoteStudyEditForm
           note={note}
           editableContent={editableContent}
           selectedTags={selectedTags}
           availableTags={availableTags}
+          isSaving={isSaving}
           handleContentChange={handleContentChange}
           handleSaveContent={handleSaveContent}
           toggleEditing={toggleEditing}
-          handleEnhanceContent={handleEnhanceContent}
-          isSaving={isSaving}
           setSelectedTags={setSelectedTags}
         />
-      ) : (
-        <div className="relative flex-1">
-          <TwoColumnEnhancementView
-            note={note}
-            fontSize={fontSize}
-            textAlign={textAlign}
-            activeContentType={activeContentType}
-            setActiveContentType={onActiveContentTypeChange}
-            onRetryEnhancement={handleRetryEnhancement}
-            isEditOperation={isEditOperation}
-          />
-          
-          {/* Floating action buttons for quick actions */}
-          {showFloatingButtons && (
-            <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end space-y-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="shadow-md hover:bg-mint-50 text-mint-600 hover:text-mint-800"
-                onClick={handleEnhanceContent}
-                disabled={hasReachedLimit}
-              >
-                <Sparkles className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="shadow-md hover:bg-mint-50 text-mint-600 hover:text-mint-800"
-                onClick={toggleEditing}
-              >
-                Edit
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+      </CardContent>
+    );
+  }
+
+  return (
+    <CardContent className="p-0">
+      <ResizablePanelGroup direction="horizontal" className="min-h-[600px]">
+        {/* Main Content Panel */}
+        <ResizablePanel defaultSize={showConversionPanel ? 75 : 100}>
+          <div 
+            className="p-8 h-full"
+            onMouseUp={handleTextSelection}
+            onTouchEnd={handleTextSelection}
+          >
+            <NoteContentDisplay
+              note={note}
+              content={editableContent}
+              fontSize={fontSize}
+              textAlign={textAlign}
+              isEditing={isEditing}
+              onRetryEnhancement={handleRetryEnhancement}
+              activeContentType={activeContentType}
+              onActiveContentTypeChange={onActiveContentTypeChange}
+            />
+          </div>
+        </ResizablePanel>
+
+        {/* Conversion Panel */}
+        {showConversionPanel && (
+          <>
+            <ResizableHandle className="w-2 bg-mint-100 hover:bg-mint-200 transition-colors" />
+            <ResizablePanel defaultSize={25} minSize={20} maxSize={40}>
+              <div className="p-4 h-full bg-gradient-to-br from-slate-50 to-mint-50/30">
+                <QuickConversionPanel
+                  note={note}
+                  selectedText={selectedText}
+                  onTextSelectionConvert={handleTextSelectionConvert}
+                />
+              </div>
+            </ResizablePanel>
+          </>
+        )}
+      </ResizablePanelGroup>
+    </CardContent>
   );
 };
