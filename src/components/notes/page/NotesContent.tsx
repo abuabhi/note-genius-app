@@ -30,11 +30,11 @@ export const NotesContent = ({
   const { user, loading: authLoading } = useRequireAuth();
   const [activeSubjectId, setActiveSubjectId] = useState<string | null>(null);
 
-  // Check if notes are filtered - fix the type error by ensuring boolean result
+  // Check if notes are filtered - properly handle Date types
   const isFiltered = searchTerm.length > 0 || 
-                    !!filterOptions.dateFrom || 
-                    !!filterOptions.dateTo || 
-                    !!activeSubjectId;
+                    Boolean(filterOptions.dateFrom) || 
+                    Boolean(filterOptions.dateTo) || 
+                    Boolean(activeSubjectId);
 
   // Show loading state while checking authentication
   if (authLoading) {
