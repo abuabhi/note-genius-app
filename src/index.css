@@ -80,6 +80,11 @@
   perspective: 1000px;
 }
 
+/* Enhanced shadow utilities */
+.shadow-3xl {
+  box-shadow: 0 35px 60px -12px rgba(0, 0, 0, 0.25);
+}
+
 /* Custom Calendar Styling */
 .custom-calendar .rbc-toolbar {
   @apply mb-4 flex flex-wrap justify-between items-center;

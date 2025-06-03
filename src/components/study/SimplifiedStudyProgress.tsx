@@ -2,10 +2,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Target, CheckCircle, Calendar, TrendingUp } from "lucide-react";
+import { Target, CheckCircle, Calendar, TrendingUp, Flame, Award } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { format, startOfDay, endOfDay } from 'date-fns';
+import { motion } from "framer-motion";
 
 interface SimpleStats {
   cardsStudiedToday: number;
@@ -13,6 +14,31 @@ interface SimpleStats {
   currentStreak: number;
   totalSetsStarted: number;
 }
+
+const StatCard = ({ icon: Icon, label, value, color, delay = 0 }: {
+  icon: any;
+  label: string;
+  value: string | number;
+  color: string;
+  delay?: number;
+}) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay, duration: 0.3 }}
+    className="flex items-center justify-between p-4 bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow"
+  >
+    <div className="flex items-center gap-3">
+      <div className={`p-2 rounded-lg ${color}`}>
+        <Icon className="h-5 w-5 text-white" />
+      </div>
+      <div>
+        <p className="text-sm font-medium text-gray-600">{label}</p>
+        <p className="text-2xl font-bold">{value}</p>
+      </div>
+    </div>
+  </motion.div>
+);
 
 export const SimplifiedStudyProgress = () => {
   const { user } = useAuth();
@@ -108,12 +134,18 @@ export const SimplifiedStudyProgress = () => {
   if (!user) {
     return (
       <div className="space-y-4">
-        <Card>
+        <Card className="border-2 border-dashed border-gray-200">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Study Progress</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Study Progress
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-4">
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Target className="h-8 w-8 text-gray-400" />
+              </div>
               <p className="text-muted-foreground">Please log in to view progress</p>
             </div>
           </CardContent>
@@ -127,12 +159,22 @@ export const SimplifiedStudyProgress = () => {
       <div className="space-y-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Study Progress</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Study Progress
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <div className="h-4 bg-muted rounded animate-pulse" />
-              <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gray-200 rounded-lg animate-pulse" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 bg-gray-200 rounded animate-pulse" />
+                    <div className="h-4 bg-gray-200 rounded animate-pulse w-1/2" />
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -140,57 +182,89 @@ export const SimplifiedStudyProgress = () => {
     );
   }
 
+  const dailyGoal = 20; // Can be made configurable
+  const dailyProgress = Math.min((stats.cardsStudiedToday / dailyGoal) * 100, 100);
+
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Today's Progress</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Target className="h-4 w-4 text-blue-500" />
-              <span className="text-sm">Cards Studied</span>
-            </div>
-            <span className="font-semibold">{stats.cardsStudiedToday}</span>
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-green-500" />
-              <span className="text-sm">Study Streak</span>
-            </div>
-            <span className="font-semibold">{stats.currentStreak} days</span>
-          </div>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Overall Progress</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span className="text-sm">Cards Mastered</span>
+    <div className="space-y-6">
+      {/* Today's Progress */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3 }}
+      >
+        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg font-semibold flex items-center gap-2 text-blue-800">
+              <Target className="h-5 w-5" />
+              Today's Goal
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-center">
+              <div className="text-4xl font-bold text-blue-600 mb-2">
+                {stats.cardsStudiedToday}
               </div>
-              <span className="font-semibold">{stats.totalCardsMastered}</span>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-purple-500" />
-                <span className="text-sm">Learning Progress</span>
+              <div className="text-sm text-blue-700 mb-4">
+                of {dailyGoal} cards studied
               </div>
-              <span className="font-semibold">
-                {stats.totalCardsMastered > 0 ? "Active" : "Getting Started"}
-              </span>
+              <Progress 
+                value={dailyProgress} 
+                className="h-3 bg-blue-100" 
+                indicatorClassName="bg-gradient-to-r from-blue-500 to-blue-600"
+              />
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Stats Grid */}
+      <div className="space-y-3">
+        <StatCard
+          icon={Flame}
+          label="Study Streak"
+          value={`${stats.currentStreak} days`}
+          color="bg-gradient-to-r from-orange-500 to-red-500"
+          delay={0.1}
+        />
+        
+        <StatCard
+          icon={CheckCircle}
+          label="Cards Mastered"
+          value={stats.totalCardsMastered}
+          color="bg-gradient-to-r from-green-500 to-emerald-500"
+          delay={0.2}
+        />
+        
+        <StatCard
+          icon={Award}
+          label="Progress Level"
+          value={stats.totalCardsMastered > 0 ? "Active Learner" : "Getting Started"}
+          color="bg-gradient-to-r from-purple-500 to-indigo-500"
+          delay={0.3}
+        />
+      </div>
+
+      {/* Motivational Message */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.3 }}
+      >
+        <Card className="bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200">
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl mb-2">🎯</div>
+            <p className="text-sm font-medium text-amber-800">
+              {stats.cardsStudiedToday === 0 
+                ? "Ready to start learning? Let's go!" 
+                : stats.cardsStudiedToday >= dailyGoal
+                ? "Amazing! You've reached your daily goal!"
+                : `${dailyGoal - stats.cardsStudiedToday} more cards to reach your goal!`
+              }
+            </p>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 };
