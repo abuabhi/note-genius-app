@@ -1039,7 +1039,7 @@ export type Database = {
           points: number | null
           title: string
           type: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           achieved_at?: string | null
@@ -1050,7 +1050,7 @@ export type Database = {
           points?: number | null
           title: string
           type: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           achieved_at?: string | null
@@ -1061,7 +1061,7 @@ export type Database = {
           points?: number | null
           title?: string
           type?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1507,6 +1507,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      award_achievement: {
+        Args: { p_user_id: string; p_achievement_title: string }
+        Returns: boolean
+      }
+      check_and_award_achievements: {
+        Args: { p_user_id: string }
+        Returns: {
+          new_achievement_title: string
+        }[]
+      }
       check_user_in_conversation: {
         Args: { conversation_uuid: string }
         Returns: boolean

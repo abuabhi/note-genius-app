@@ -1,8 +1,10 @@
+
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Flashcard } from "@/types/flashcard";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/auth"; // Updated import path
+import { useAuth } from "@/contexts/auth";
+import { useAchievements } from "@/hooks/useAchievements";
 
 interface StudyOperations {
   markAsCorrect: (flashcardId: string) => Promise<void>;
@@ -12,6 +14,7 @@ interface StudyOperations {
 
 export const useStudyOperations = (): StudyOperations => {
   const { user } = useAuth();
+  const { checkAndAwardAchievements } = useAchievements();
 
   const markAsCorrect = useCallback(async (flashcardId: string) => {
     if (!user) {
@@ -26,9 +29,11 @@ export const useStudyOperations = (): StudyOperations => {
           { 
             user_id: user.id, 
             flashcard_id: flashcardId, 
-            correct_count: 1,
-            incorrect_count: 0,
-            last_reviewed_at: new Date().toISOString()
+            last_score: 5, // Perfect score
+            last_reviewed_at: new Date().toISOString(),
+            ease_factor: 2.6, // Good retention
+            interval: 1,
+            repetition: 1
           },
           { onConflict: 'user_id, flashcard_id', ignoreDuplicates: false }
         )
@@ -39,12 +44,14 @@ export const useStudyOperations = (): StudyOperations => {
         toast.error("Failed to update progress. Please try again.");
       } else {
         toast.success("Flashcard marked as correct!");
+        // Check for new achievements after successful review
+        await checkAndAwardAchievements();
       }
     } catch (error: any) {
       console.error("Unexpected error marking as correct:", error);
       toast.error("An unexpected error occurred. Please try again.");
     }
-  }, [user]);
+  }, [user, checkAndAwardAchievements]);
 
   const markAsIncorrect = useCallback(async (flashcardId: string) => {
     if (!user) {
@@ -59,9 +66,11 @@ export const useStudyOperations = (): StudyOperations => {
           { 
             user_id: user.id, 
             flashcard_id: flashcardId, 
-            correct_count: 0,
-            incorrect_count: 1,
-            last_reviewed_at: new Date().toISOString()
+            last_score: 1, // Low score for incorrect
+            last_reviewed_at: new Date().toISOString(),
+            ease_factor: 1.8, // Lower retention
+            interval: 0,
+            repetition: 0
           },
           { onConflict: 'user_id, flashcard_id', ignoreDuplicates: false }
         )
@@ -72,12 +81,14 @@ export const useStudyOperations = (): StudyOperations => {
         toast.error("Failed to update progress. Please try again.");
       } else {
         toast.warning("Flashcard marked as incorrect. Review again soon!");
+        // Still check for achievements (might unlock "effort" based achievements)
+        await checkAndAwardAchievements();
       }
     } catch (error: any) {
       console.error("Unexpected error marking as incorrect:", error);
       toast.error("An unexpected error occurred. Please try again.");
     }
-  }, [user]);
+  }, [user, checkAndAwardAchievements]);
 
   const resetFlashcard = useCallback(async (flashcardId: string) => {
     if (!user) {

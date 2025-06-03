@@ -1,83 +1,15 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Award, Star, BookOpen, Target, Calendar } from "lucide-react";
+import { Trophy, Award, Star, BookOpen, Target, Calendar, Zap } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-
-interface Achievement {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  type: string;
-}
-
-interface UserAchievement {
-  id: string;
-  achievement_id: string;
-  created_at: string;
-  achievements: Achievement;
-}
+import { useAchievements } from "@/hooks/useAchievements";
 
 export const Achievements = () => {
-  const [achievements, setAchievements] = useState<UserAchievement[]>([]);
-  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-
-  useEffect(() => {
-    const fetchAchievements = async () => {
-      if (!user) return;
-      
-      setLoading(true);
-      
-      // For now, we'll use mock data instead of querying non-existent tables
-      // This simulates what we would do with real data
-      const mockAchievements: UserAchievement[] = [
-        {
-          id: "1",
-          achievement_id: "a1",
-          created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-          achievements: {
-            id: "a1",
-            name: "First Steps",
-            description: "Completed your first study session",
-            icon: "BookOpen",
-            type: "study",
-          },
-        },
-        {
-          id: "2",
-          achievement_id: "a2",
-          created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
-          achievements: {
-            id: "a2",
-            name: "Flashcard Master",
-            description: "Created 10 flashcard sets",
-            icon: "Award",
-            type: "flashcard",
-          },
-        },
-        {
-          id: "3",
-          achievement_id: "a3",
-          created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days ago
-          achievements: {
-            id: "a3",
-            name: "Goal Crusher",
-            description: "Completed 5 study goals",
-            icon: "Target",
-            type: "goal",
-          },
-        },
-      ];
-      
-      setAchievements(mockAchievements);
-      setLoading(false);
-    };
-
-    fetchAchievements();
-  }, [user]);
+  const { achievements, loading } = useAchievements();
 
   const getIcon = (iconName: string) => {
     switch (iconName) {
@@ -93,6 +25,8 @@ export const Achievements = () => {
         return <Target className="h-5 w-5" />;
       case "Calendar":
         return <Calendar className="h-5 w-5" />;
+      case "Zap":
+        return <Zap className="h-5 w-5" />;
       default:
         return <Award className="h-5 w-5" />;
     }
@@ -106,7 +40,7 @@ export const Achievements = () => {
         return "bg-green-100 text-green-800";
       case "goal":
         return "bg-purple-100 text-purple-800";
-      case "note":
+      case "streak":
         return "bg-yellow-100 text-yellow-800";
       default:
         return "bg-gray-100 text-gray-800";
@@ -134,26 +68,33 @@ export const Achievements = () => {
                 className="flex items-start gap-3 border-b pb-3"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-                  {getIcon(achievement.achievements.icon)}
+                  {getIcon(achievement.badge_image)}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-medium">{achievement.achievements.name}</h3>
-                    <span className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(achievement.created_at), {
-                        addSuffix: true,
-                      })}
-                    </span>
+                    <h3 className="font-medium">{achievement.title}</h3>
+                    {achievement.achieved_at && (
+                      <span className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(achievement.achieved_at), {
+                          addSuffix: true,
+                        })}
+                      </span>
+                    )}
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {achievement.achievements.description}
+                    {achievement.description}
                   </p>
-                  <Badge
-                    variant="outline"
-                    className={`mt-2 ${getBadgeColor(achievement.achievements.type)}`}
-                  >
-                    {achievement.achievements.type}
-                  </Badge>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Badge
+                      variant="outline"
+                      className={`${getBadgeColor(achievement.type)}`}
+                    >
+                      {achievement.type}
+                    </Badge>
+                    <Badge variant="outline" className="bg-orange-100 text-orange-800">
+                      {achievement.points} pts
+                    </Badge>
+                  </div>
                 </div>
               </div>
             ))}
@@ -172,5 +113,4 @@ export const Achievements = () => {
   );
 };
 
-// Also keep the default export for backward compatibility
 export default Achievements;
