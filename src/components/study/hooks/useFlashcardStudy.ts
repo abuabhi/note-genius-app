@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useFlashcards } from "@/contexts/FlashcardContext";
 import { Flashcard } from "@/types/flashcard";
 import { StudyMode } from "@/pages/study/types";
@@ -27,91 +27,92 @@ export const useFlashcardStudy = ({ setId, mode }: UseFlashcardStudyProps) => {
   const loadedSetIdRef = useRef<string | null>(null);
   const loadedModeRef = useRef<StudyMode | null>(null);
 
-  useEffect(() => {
-    const loadFlashcards = async () => {
-      // Only load if setId or mode has actually changed
-      if (loadedSetIdRef.current === setId && loadedModeRef.current === mode) {
-        setIsLoading(false);
+  // Memoize the loadFlashcards function to prevent recreation
+  const loadFlashcards = useCallback(async () => {
+    // Only load if setId or mode has actually changed
+    if (loadedSetIdRef.current === setId && loadedModeRef.current === mode) {
+      setIsLoading(false);
+      return;
+    }
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      console.log("useFlashcardStudy: Loading flashcards for set:", setId, "mode:", mode);
+      const cards = await fetchFlashcardsInSet(setId);
+      console.log("useFlashcardStudy: Loaded flashcards:", cards);
+      
+      if (!cards || cards.length === 0) {
+        setError("No flashcards found in this set");
+        setFlashcards([]);
         return;
       }
       
-      setIsLoading(true);
-      setError(null);
+      // Sort cards based on mode and position
+      let sortedCards = [...cards];
       
-      try {
-        console.log("useFlashcardStudy: Loading flashcards for set:", setId, "mode:", mode);
-        const cards = await fetchFlashcardsInSet(setId);
-        console.log("useFlashcardStudy: Loaded flashcards:", cards);
-        
-        if (!cards || cards.length === 0) {
-          setError("No flashcards found in this set");
-          setFlashcards([]);
-          return;
-        }
-        
-        // Sort cards based on mode and position
-        let sortedCards = [...cards];
-        
-        if (mode === "review") {
-          sortedCards.sort((a, b) => {
-            if (a.position !== undefined && b.position !== undefined) {
-              if (a.position !== b.position) {
-                return a.position - b.position;
-              }
-            }
-            if (!a.next_review_at) return -1;
-            if (!b.next_review_at) return 1;
-            return new Date(a.next_review_at).getTime() - new Date(b.next_review_at).getTime();
-          });
-        } else if (mode === "test") {
-          sortedCards.sort((a, b) => {
-            if (a.position !== undefined && b.position !== undefined) {
+      if (mode === "review") {
+        sortedCards.sort((a, b) => {
+          if (a.position !== undefined && b.position !== undefined) {
+            if (a.position !== b.position) {
               return a.position - b.position;
             }
-            return 0;
-          });
-          
-          // Fisher-Yates shuffle
-          for (let i = sortedCards.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [sortedCards[i], sortedCards[j]] = [sortedCards[j], sortedCards[i]];
           }
-        } else {
-          sortedCards.sort((a, b) => {
-            if (a.position !== undefined && b.position !== undefined) {
-              return a.position - b.position;
-            }
-            return 0;
-          });
+          if (!a.next_review_at) return -1;
+          if (!b.next_review_at) return 1;
+          return new Date(a.next_review_at).getTime() - new Date(b.next_review_at).getTime();
+        });
+      } else if (mode === "test") {
+        sortedCards.sort((a, b) => {
+          if (a.position !== undefined && b.position !== undefined) {
+            return a.position - b.position;
+          }
+          return 0;
+        });
+        
+        // Fisher-Yates shuffle
+        for (let i = sortedCards.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [sortedCards[i], sortedCards[j]] = [sortedCards[j], sortedCards[i]];
         }
-        
-        console.log("useFlashcardStudy: Final sorted cards:", sortedCards);
-        
-        setFlashcards(sortedCards);
-        setCurrentIndex(0);
-        setIsFlipped(false);
-        setStreak(0);
-        setForceUpdate(prev => prev + 1);
-        
-        // Mark as loaded
-        loadedSetIdRef.current = setId;
-        loadedModeRef.current = mode;
-        
-      } catch (error) {
-        console.error("useFlashcardStudy: Error loading flashcards:", error);
-        setError("Failed to load flashcards");
-        toast.error("Failed to load flashcards");
-      } finally {
-        setIsLoading(false);
+      } else {
+        sortedCards.sort((a, b) => {
+          if (a.position !== undefined && b.position !== undefined) {
+            return a.position - b.position;
+          }
+          return 0;
+        });
       }
-    };
-
-    if (setId) {
-      loadFlashcards();
+      
+      console.log("useFlashcardStudy: Final sorted cards:", sortedCards);
+      
+      setFlashcards(sortedCards);
+      setCurrentIndex(0);
+      setIsFlipped(false);
+      setStreak(0);
+      setForceUpdate(prev => prev + 1);
+      
+      // Mark as loaded
+      loadedSetIdRef.current = setId;
+      loadedModeRef.current = mode;
+      
+    } catch (error) {
+      console.error("useFlashcardStudy: Error loading flashcards:", error);
+      setError("Failed to load flashcards");
+      toast.error("Failed to load flashcards");
+    } finally {
+      setIsLoading(false);
     }
   }, [setId, mode, fetchFlashcardsInSet]);
 
-  const handleNext = () => {
+  useEffect(() => {
+    if (setId) {
+      loadFlashcards();
+    }
+  }, [setId, mode, loadFlashcards]);
+
+  const handleNext = useCallback(() => {
     if (flashcards.length === 0) return;
     
     setDirection("right");
@@ -119,9 +120,9 @@ export const useFlashcardStudy = ({ setId, mode }: UseFlashcardStudyProps) => {
     const nextIndex = (currentIndex + 1) % flashcards.length;
     setCurrentIndex(nextIndex);
     setForceUpdate(prev => prev + 1);
-  };
+  }, [currentIndex, flashcards.length]);
   
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     if (flashcards.length === 0) return;
     
     setDirection("left");
@@ -129,13 +130,13 @@ export const useFlashcardStudy = ({ setId, mode }: UseFlashcardStudyProps) => {
     const prevIndex = (currentIndex - 1 + flashcards.length) % flashcards.length;
     setCurrentIndex(prevIndex);
     setForceUpdate(prev => prev + 1);
-  };
+  }, [currentIndex, flashcards.length]);
   
-  const handleFlip = () => {
+  const handleFlip = useCallback(() => {
     setIsFlipped(!isFlipped);
-  };
+  }, [isFlipped]);
   
-  const handleScoreCard = async (score: number) => {
+  const handleScoreCard = useCallback(async (score: number) => {
     if (!user || flashcards.length === 0) return;
     
     const flashcard = flashcards[currentIndex];
@@ -160,7 +161,7 @@ export const useFlashcardStudy = ({ setId, mode }: UseFlashcardStudyProps) => {
       console.error("Error recording review:", error);
       toast.error("Failed to save your progress");
     }
-  };
+  }, [user, flashcards, currentIndex, recordFlashcardReview, handleNext]);
 
   return {
     flashcards,

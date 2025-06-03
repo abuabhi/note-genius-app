@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { FlashcardContextType, FlashcardProviderProps, FlashcardState } from './types';
 import { FlashcardSet, Flashcard, SubjectCategory } from '@/types/flashcard';
 import { combineFlashcardOperations } from './useFlashcards';
@@ -34,7 +34,7 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
   const { user } = useAuth();
 
   // Create state object for hooks to share
-  const state: FlashcardState = {
+  const state: FlashcardState = useMemo(() => ({
     flashcards,
     flashcardSets,
     currentFlashcard,
@@ -48,14 +48,22 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     setCategories,
     setLoading,
     user
-  };
+  }), [
+    flashcards,
+    flashcardSets,
+    currentFlashcard,
+    currentSet,
+    categories,
+    loading,
+    user
+  ]);
 
-  // Get all operations from our hooks
-  const operations = combineFlashcardOperations(state);
+  // Get all operations from our hooks and memoize them
+  const operations = useMemo(() => combineFlashcardOperations(state), [state]);
   const studyOperations = useStudyOperations();
 
-  // Create the context value with all required properties
-  const contextValue: FlashcardContextType = {
+  // Create the context value with all required properties and memoize it
+  const contextValue: FlashcardContextType = useMemo(() => ({
     flashcards,
     flashcardSets,
     currentFlashcard,
@@ -67,7 +75,16 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     setCurrentSet,
     ...operations,
     ...studyOperations
-  };
+  }), [
+    flashcards,
+    flashcardSets,
+    currentFlashcard,
+    currentSet,
+    categories,
+    loading,
+    operations,
+    studyOperations
+  ]);
 
   return (
     <FlashcardContext.Provider value={contextValue}>
