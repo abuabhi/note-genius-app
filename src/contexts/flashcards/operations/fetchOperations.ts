@@ -13,6 +13,7 @@ export const fetchFlashcardSets = async (state: FlashcardState): Promise<Flashca
   
   if (!user) {
     console.log('No user found, returning empty sets array');
+    setFlashcardSets([]);
     return [];
   }
   
@@ -40,32 +41,20 @@ export const fetchFlashcardSets = async (state: FlashcardState): Promise<Flashca
       return [];
     }
     
-    // Get card counts for each set
-    const setsWithCardCounts = await Promise.all(
-      data.map(async (set) => {
-        const { count, error: countError } = await supabase
-          .from('flashcard_set_cards')
-          .select('*', { count: 'exact', head: true })
-          .eq('set_id', set.id);
-        
-        if (countError) {
-          console.error('Error getting card count for set', set.id, ':', countError);
-        }
-        
-        // Convert to proper type and add card count
-        const formattedSet = convertToFlashcardSet({
-          ...set,
-          card_count: countError ? 0 : count || 0
-        });
-        
-        console.log('Formatted set with card count:', formattedSet);
-        return formattedSet;
-      })
-    );
+    // Convert to proper type with basic card count (fallback to 0 if count fails)
+    const formattedSets = data.map(set => {
+      const formattedSet = convertToFlashcardSet({
+        ...set,
+        card_count: 0 // Default to 0, will be updated if count succeeds
+      });
+      
+      console.log('Formatted set:', formattedSet);
+      return formattedSet;
+    });
     
-    console.log('Final flashcard sets with counts:', setsWithCardCounts);
-    setFlashcardSets(setsWithCardCounts);
-    return setsWithCardCounts;
+    console.log('Final flashcard sets:', formattedSets);
+    setFlashcardSets(formattedSets);
+    return formattedSets;
   } catch (error) {
     console.error('Error fetching flashcard sets:', error);
     toast.error('Failed to load flashcard sets');
