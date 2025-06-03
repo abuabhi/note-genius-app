@@ -50,8 +50,8 @@ export const FlashcardDisplay = ({
     );
   }
 
-  // Create a unique key that ensures proper animation
-  const animationKey = `card-${currentCard.id}-${isFlipped ? "back" : "front"}`;
+  // Use currentIndex and currentCard.id to ensure each card has a unique key
+  const animationKey = `card-${currentIndex}-${currentCard.id}-${isFlipped ? "back" : "front"}`;
 
   return (
     <div ref={cardContainerRef} className="mb-6">
