@@ -61,7 +61,7 @@ export const StudyViewExportDropdown = ({ note }: StudyViewExportDropdownProps) 
     },
     {
       type: 'markdown',
-      label: 'Markdown Format',
+      label: 'Original++',
       icon: Code,
       available: Boolean(note.markdown_content)
     }
@@ -132,21 +132,21 @@ export const StudyViewExportDropdown = ({ note }: StudyViewExportDropdownProps) 
                       onClick={() => handleExport(content.type, 'pdf')}
                       className="flex items-center px-3 py-2 text-sm cursor-pointer hover:bg-gray-50"
                     >
-                      <FileDown className="mr-2 h-4 w-4 text-red-600" />
+                      <FileDown className="mr-2 h-4 w-4 text-mint-600" />
                       Download PDF
                     </DropdownMenuItem>
                     <DropdownMenuItem 
                       onClick={() => handleExport(content.type, 'docx')}
                       className="flex items-center px-3 py-2 text-sm cursor-pointer hover:bg-gray-50"
                     >
-                      <FileDown className="mr-2 h-4 w-4 text-blue-600" />
+                      <FileDown className="mr-2 h-4 w-4 text-mint-600" />
                       Download DOCX
                     </DropdownMenuItem>
                     <DropdownMenuItem 
                       onClick={() => handleExport(content.type, 'txt')}
                       className="flex items-center px-3 py-2 text-sm cursor-pointer hover:bg-gray-50"
                     >
-                      <FileDown className="mr-2 h-4 w-4 text-gray-600" />
+                      <FileDown className="mr-2 h-4 w-4 text-mint-600" />
                       Download TXT
                     </DropdownMenuItem>
                     <DropdownMenuSeparator className="my-1 border-t border-gray-100" />
@@ -154,7 +154,7 @@ export const StudyViewExportDropdown = ({ note }: StudyViewExportDropdownProps) 
                       onClick={() => handleEmailClick(content.type)}
                       className="flex items-center px-3 py-2 text-sm cursor-pointer hover:bg-gray-50"
                     >
-                      <Mail className="mr-2 h-4 w-4 text-green-600" />
+                      <Mail className="mr-2 h-4 w-4 text-mint-600" />
                       Send via Email
                     </DropdownMenuItem>
                   </DropdownMenuSubContent>
