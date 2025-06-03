@@ -82,7 +82,7 @@ const DashboardPage = () => {
     console.error('Features context error in Dashboard, using fallbacks:', error);
     // Fallback: show core features, hide optional ones
     isFeatureVisible = (key: string) => {
-      const coreFeatures = ['notes', 'flashcards', 'settings'];
+      const coreFeatures = ['notes', 'flashcards', 'settings', 'quizzes'];
       return coreFeatures.includes(key);
     };
   }
@@ -117,6 +117,7 @@ const DashboardPage = () => {
     SCHEDULE: "schedule",
     NOTES: "notes", // Core feature, always visible
     SETTINGS: "settings", // Core feature, always visible
+    QUIZZES: "quizzes", // Add quizzes feature
   };
   
   return (
@@ -203,6 +204,32 @@ const DashboardPage = () => {
             </CardContent>
           </Card>
 
+          {/* Quizzes Card - Show if feature is visible */}
+          {isFeatureVisible(FEATURE_KEYS.QUIZZES) && (
+            <Card className="border-mint-100 shadow-sm hover:shadow-md transition-shadow">
+              <CardHeader className="space-y-1">
+                <CardTitle className="text-2xl">Quizzes</CardTitle>
+                <CardDescription>Test your knowledge</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <Button asChild variant="outline" className="w-full">
+                    <Link to="/quizzes">
+                      <GraduationCap className="mr-2 h-4 w-4" />
+                      Take Quiz
+                    </Link>
+                  </Button>
+                  <Button asChild variant="ghost" size="sm" className="w-full">
+                    <Link to="/quiz/history">
+                      <BarChart className="mr-2 h-4 w-4" />
+                      Quiz History
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Notes Card - Core functionality, always visible */}
           <Card className="border-mint-100 shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="space-y-1">
@@ -251,7 +278,8 @@ const DashboardPage = () => {
                 </Link>
               </Button>
             </CardContent>
-          </Card>
+            </Card>
+          )}
         </div>
       </div>
     </Layout>

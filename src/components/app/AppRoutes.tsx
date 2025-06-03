@@ -15,7 +15,7 @@ export const AppRoutes = () => {
       <Route
         path="/quiz/history"
         element={
-          <FeatureProtectedRoute featureKey="quiz_taking">
+          <FeatureProtectedRoute featureKey="quizzes">
             <QuizHistoryPage />
           </FeatureProtectedRoute>
         }
