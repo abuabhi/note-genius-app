@@ -9,6 +9,7 @@ interface FlashcardDisplayProps {
   currentIndex: number;
   isFlipped: boolean;
   direction: "left" | "right";
+  forceUpdate: number;
   onFlip: () => void;
 }
 
@@ -17,20 +18,20 @@ export const FlashcardDisplay = ({
   currentIndex,
   isFlipped,
   direction,
+  forceUpdate,
   onFlip
 }: FlashcardDisplayProps) => {
   const cardContainerRef = useRef<HTMLDivElement>(null);
   
   // Add debugging logs
-  console.log("FlashcardDisplay - currentCard:", currentCard);
-  console.log("FlashcardDisplay - currentIndex:", currentIndex);
-  console.log("FlashcardDisplay - isFlipped:", isFlipped);
-  
-  const frontContent = currentCard?.front_content || currentCard?.front;
-  const backContent = currentCard?.back_content || currentCard?.back;
-  
-  console.log("FlashcardDisplay - frontContent:", frontContent);
-  console.log("FlashcardDisplay - backContent:", backContent);
+  console.log("FlashcardDisplay - Rendering with:", {
+    cardId: currentCard?.id,
+    currentIndex,
+    isFlipped,
+    forceUpdate,
+    frontContent: currentCard?.front_content || currentCard?.front,
+    backContent: currentCard?.back_content || currentCard?.back
+  });
 
   // Safety check - if no current card, show error state
   if (!currentCard) {
@@ -50,9 +51,14 @@ export const FlashcardDisplay = ({
     );
   }
 
-  // Create a more specific animation key that forces re-render
-  const animationKey = `flashcard-${currentCard.id}-${currentIndex}-${isFlipped}`;
+  const frontContent = currentCard?.front_content || currentCard?.front;
+  const backContent = currentCard?.back_content || currentCard?.back;
+  
+  // Create a unique animation key that includes all relevant state
+  const animationKey = `card-${currentCard.id}-${currentIndex}-${forceUpdate}`;
   const displayContent = isFlipped ? (backContent || "No back content") : (frontContent || "No front content");
+
+  console.log("FlashcardDisplay - Final display content:", displayContent);
 
   return (
     <div ref={cardContainerRef} className="mb-6">
@@ -80,12 +86,18 @@ export const FlashcardDisplay = ({
           >
             <CardContent className="p-6 flex flex-col items-center justify-center">
               <div className="min-h-[250px] w-full flex items-center justify-center text-center p-4">
-                <div className="text-lg md:text-xl" key={`content-${currentCard.id}-${isFlipped}`}>
+                <div 
+                  className="text-lg md:text-xl" 
+                  key={`content-${currentCard.id}-${currentIndex}-${isFlipped}-${forceUpdate}`}
+                >
                   {displayContent}
                 </div>
               </div>
               <div className="text-sm text-muted-foreground mt-4">
                 {isFlipped ? "Click to see front" : "Click to see back"}
+              </div>
+              <div className="text-xs text-muted-foreground mt-2">
+                Card {currentIndex + 1} (ID: {currentCard.id.slice(0, 8)})
               </div>
             </CardContent>
           </Card>

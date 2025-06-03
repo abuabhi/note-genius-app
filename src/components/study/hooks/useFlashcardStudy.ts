@@ -20,6 +20,7 @@ export const useFlashcardStudy = ({ setId, mode }: UseFlashcardStudyProps) => {
   const [direction, setDirection] = useState<"left" | "right">("right");
   const [streak, setStreak] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [forceUpdate, setForceUpdate] = useState(0); // Force re-render when needed
   const { user } = useRequireAuth();
   const loadedSetId = useRef<string | null>(null);
 
@@ -35,7 +36,7 @@ export const useFlashcardStudy = ({ setId, mode }: UseFlashcardStudyProps) => {
         console.log("Loading flashcards for set:", setId);
         const cards = await fetchFlashcardsInSet(setId);
         console.log("Loaded flashcards:", cards);
-        console.log("First card:", cards?.[0]);
+        console.log("Number of cards:", cards?.length);
         
         if (!cards || cards.length === 0) {
           setError("No flashcards found in this set");
@@ -60,13 +61,15 @@ export const useFlashcardStudy = ({ setId, mode }: UseFlashcardStudyProps) => {
           }
         }
         
-        console.log("Sorted cards:", sortedCards);
-        console.log("First sorted card:", sortedCards?.[0]);
+        console.log("Final sorted cards:", sortedCards);
+        console.log("First card front:", sortedCards[0]?.front_content || sortedCards[0]?.front);
+        console.log("Second card front:", sortedCards[1]?.front_content || sortedCards[1]?.front);
         
         setFlashcards(sortedCards);
         setCurrentIndex(0);
         setIsFlipped(false);
         setStreak(0);
+        setForceUpdate(prev => prev + 1); // Force re-render
         loadedSetId.current = setId;
       } catch (error) {
         console.error("Error loading flashcards:", error);
@@ -85,24 +88,37 @@ export const useFlashcardStudy = ({ setId, mode }: UseFlashcardStudyProps) => {
   const handleNext = () => {
     if (flashcards.length === 0) return;
     
+    console.log("handleNext - current index:", currentIndex, "total cards:", flashcards.length);
+    
     setDirection("right");
     setIsFlipped(false);
-    setTimeout(() => {
-      setCurrentIndex((prev) => (prev + 1) % flashcards.length);
-    }, 200);
+    const nextIndex = (currentIndex + 1) % flashcards.length;
+    
+    console.log("Moving to index:", nextIndex);
+    console.log("Next card:", flashcards[nextIndex]);
+    
+    setCurrentIndex(nextIndex);
+    setForceUpdate(prev => prev + 1); // Force re-render
   };
   
   const handlePrevious = () => {
     if (flashcards.length === 0) return;
     
+    console.log("handlePrevious - current index:", currentIndex, "total cards:", flashcards.length);
+    
     setDirection("left");
     setIsFlipped(false);
-    setTimeout(() => {
-      setCurrentIndex((prev) => (prev - 1 + flashcards.length) % flashcards.length);
-    }, 200);
+    const prevIndex = (currentIndex - 1 + flashcards.length) % flashcards.length;
+    
+    console.log("Moving to index:", prevIndex);
+    console.log("Previous card:", flashcards[prevIndex]);
+    
+    setCurrentIndex(prevIndex);
+    setForceUpdate(prev => prev + 1); // Force re-render
   };
   
   const handleFlip = () => {
+    console.log("Flipping card - current state:", isFlipped);
     setIsFlipped(!isFlipped);
   };
   
@@ -141,6 +157,7 @@ export const useFlashcardStudy = ({ setId, mode }: UseFlashcardStudyProps) => {
     direction,
     streak,
     error,
+    forceUpdate,
     handleNext,
     handlePrevious,
     handleFlip,

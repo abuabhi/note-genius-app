@@ -27,12 +27,22 @@ export const FlashcardStudy = ({ setId, mode }: FlashcardStudyProps) => {
     direction,
     streak,
     error,
+    forceUpdate,
     handleNext,
     handlePrevious,
     handleFlip,
     handleScoreCard,
     setIsFlipped
   } = useFlashcardStudy({ setId, mode });
+  
+  // Add debugging for the main component
+  console.log("FlashcardStudy - Rendering with:", {
+    flashcardsCount: flashcards.length,
+    currentIndex,
+    currentCard: flashcards[currentIndex],
+    isLoading,
+    error
+  });
   
   // Loading state
   if (isLoading) {
@@ -51,6 +61,11 @@ export const FlashcardStudy = ({ setId, mode }: FlashcardStudyProps) => {
   
   const currentCard = flashcards[currentIndex];
   
+  if (!currentCard) {
+    console.error("FlashcardStudy - No current card at index:", currentIndex);
+    return <StudyErrorState error="Invalid card index" />;
+  }
+  
   return (
     <div>
       <FlashcardDisplay
@@ -58,6 +73,7 @@ export const FlashcardStudy = ({ setId, mode }: FlashcardStudyProps) => {
         currentIndex={currentIndex}
         isFlipped={isFlipped}
         direction={direction}
+        forceUpdate={forceUpdate}
         onFlip={handleFlip}
       />
       
