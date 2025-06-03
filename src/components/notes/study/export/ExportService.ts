@@ -1,6 +1,6 @@
 
 import jsPDF from 'jspdf';
-import { Document, Packer, Paragraph, TextRun, Header, Footer, Table, TableRow, TableCell, AlignmentType, HeadingLevel } from 'docx';
+import { Document, Packer, Paragraph, TextRun, Header, Footer, Table, TableRow, TableCell, AlignmentType } from 'docx';
 import { Note } from '@/types/note';
 
 export type ExportFormat = 'pdf' | 'docx' | 'txt';
@@ -132,7 +132,6 @@ class ExportService {
         const text = parts[i + 1]?.replace(/\|\|ENDHEADER\|\|/, '') || '';
         paragraphs.push(new Paragraph({
           children: [new TextRun({ text: text.trim(), bold: true, size: 28 - (level * 2) })],
-          heading: `Heading${level}` as HeadingLevel,
           spacing: { before: 240, after: 120 }
         }));
         i++; // Skip the text part
@@ -339,7 +338,6 @@ class ExportService {
                 children: [],
               }),
             ],
-            options: {}
           }),
         },
         footers: {
@@ -357,7 +355,6 @@ class ExportService {
                 alignment: AlignmentType.CENTER,
               }),
             ],
-            options: {}
           }),
         },
         children: [
