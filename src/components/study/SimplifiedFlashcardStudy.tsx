@@ -2,10 +2,13 @@
 import { StudyMode } from "@/pages/study/types";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useSimplifiedFlashcardStudy } from "@/hooks/useSimplifiedFlashcardStudy";
+import { useQuizMode } from "@/hooks/useQuizMode";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, RotateCcw, CheckCircle, XCircle, Trophy, Target, Clock } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { QuizResults } from "./QuizResults";
+import { QuizTimer } from "./QuizTimer";
 
 interface SimplifiedFlashcardStudyProps {
   setId: string;
@@ -22,7 +25,6 @@ const DonutProgress = ({ current, total }: { current: number; total: number }) =
   return (
     <div className="relative w-12 h-12">
       <svg className="w-12 h-12 transform -rotate-90" viewBox="0 0 48 48">
-        {/* Background circle */}
         <circle
           cx="24"
           cy="24"
@@ -32,7 +34,6 @@ const DonutProgress = ({ current, total }: { current: number; total: number }) =
           fill="transparent"
           className="text-mint-100"
         />
-        {/* Progress circle */}
         <circle
           cx="24"
           cy="24"
@@ -46,7 +47,6 @@ const DonutProgress = ({ current, total }: { current: number; total: number }) =
           strokeLinecap="round"
         />
       </svg>
-      {/* Center text */}
       <div className="absolute inset-0 flex items-center justify-center">
         <span className="text-xs font-medium text-mint-700">
           {current}/{total}
@@ -59,23 +59,51 @@ const DonutProgress = ({ current, total }: { current: number; total: number }) =
 export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: SimplifiedFlashcardStudyProps) => {
   const { userProfile } = useRequireAuth();
   
+  // Use different hooks based on mode
+  const studyHook = useSimplifiedFlashcardStudy({ setId, mode });
+  const quizHook = useQuizMode({ setId, mode });
+  
+  // Select which hook to use based on mode
+  const isQuizMode = mode === "test";
   const {
     flashcards,
     currentIndex,
     isFlipped,
     isLoading,
     error,
-    studiedToday,
-    masteredCount,
-    totalCards,
     isComplete,
     currentCard,
-    handleCardChoice,
     handleNext,
     handlePrevious,
     handleFlip,
-    setIsFlipped
-  } = useSimplifiedFlashcardStudy({ setId, mode });
+    setIsFlipped,
+    totalCards
+  } = isQuizMode ? quizHook : studyHook;
+
+  // Quiz-specific properties (only available in quiz mode)
+  const quizData = isQuizMode ? {
+    timeLeft: quizHook.timeLeft,
+    totalScore: quizHook.totalScore,
+    correctAnswers: quizHook.correctAnswers,
+    isTimerActive: quizHook.isTimerActive,
+    quizSession: quizHook.quizSession,
+    handleQuizAnswer: quizHook.handleQuizAnswer
+  } : null;
+
+  // Study-specific properties (only available in study modes)
+  const studyData = !isQuizMode ? {
+    studiedToday: studyHook.studiedToday,
+    masteredCount: studyHook.masteredCount,
+    handleCardChoice: studyHook.handleCardChoice
+  } : null;
+
+  const handleRestart = () => {
+    window.location.reload();
+  };
+
+  const handleBackToSets = () => {
+    window.history.back();
+  };
 
   if (isLoading) {
     return (
@@ -122,6 +150,22 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
   }
 
   if (isComplete) {
+    if (isQuizMode && quizData?.quizSession) {
+      return (
+        <QuizResults
+          totalCards={totalCards}
+          correctAnswers={quizData.correctAnswers}
+          totalScore={quizData.totalScore}
+          durationSeconds={quizData.quizSession.duration_seconds || undefined}
+          averageResponseTime={quizData.quizSession.average_response_time || undefined}
+          grade={quizData.quizSession.grade || undefined}
+          onRestart={handleRestart}
+          onBackToSets={handleBackToSets}
+        />
+      );
+    }
+
+    // Regular completion screen for study/review modes
     return (
       <div className="text-center py-12">
         <motion.div
@@ -142,16 +186,18 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
           <p className="text-muted-foreground mb-8">
             You've completed this study session successfully
           </p>
-          <div className="grid grid-cols-2 gap-4 mb-8">
-            <div className="text-center p-4 bg-white rounded-lg border border-mint-100">
-              <div className="text-2xl font-bold text-mint-600">{studiedToday}</div>
-              <div className="text-sm text-muted-foreground">Cards Today</div>
+          {studyData && (
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              <div className="text-center p-4 bg-white rounded-lg border border-mint-100">
+                <div className="text-2xl font-bold text-mint-600">{studyData.studiedToday}</div>
+                <div className="text-sm text-muted-foreground">Cards Today</div>
+              </div>
+              <div className="text-center p-4 bg-white rounded-lg border border-mint-100">
+                <div className="text-2xl font-bold text-mint-600">{studyData.masteredCount}</div>
+                <div className="text-sm text-muted-foreground">Mastered</div>
+              </div>
             </div>
-            <div className="text-center p-4 bg-white rounded-lg border border-mint-100">
-              <div className="text-2xl font-bold text-mint-600">{masteredCount}</div>
-              <div className="text-sm text-muted-foreground">Mastered</div>
-            </div>
-          </div>
+          )}
           <Button 
             onClick={() => window.history.back()}
             size="lg"
@@ -174,6 +220,24 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      {/* Quiz Header with Timer and Score */}
+      {isQuizMode && quizData && (
+        <div className="flex items-center justify-between">
+          <QuizTimer 
+            timeLeft={quizData.timeLeft} 
+            isActive={quizData.isTimerActive} 
+          />
+          <div className="flex items-center gap-4 text-sm">
+            <div className="bg-mint-50 px-3 py-1 rounded-full border border-mint-200">
+              <span className="text-mint-700 font-medium">Score: {quizData.totalScore}</span>
+            </div>
+            <div className="bg-green-50 px-3 py-1 rounded-full border border-green-200">
+              <span className="text-green-700 font-medium">Correct: {quizData.correctAnswers}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Flashcard */}
       <div className="relative min-h-[400px]">
         <AnimatePresence mode="wait">
@@ -213,39 +277,41 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
 
       {/* Controls */}
       <div className="space-y-4">
-        {/* Navigation */}
-        <div className="flex justify-between items-center">
-          <Button
-            variant="outline"
-            onClick={handlePrevious}
-            disabled={currentIndex === 0}
-            className="flex items-center gap-2 border-mint-200 text-mint-700 hover:bg-mint-50 disabled:opacity-50"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Previous
-          </Button>
+        {/* Navigation - disabled in quiz mode */}
+        {!isQuizMode && (
+          <div className="flex justify-between items-center">
+            <Button
+              variant="outline"
+              onClick={handlePrevious}
+              disabled={currentIndex === 0}
+              className="flex items-center gap-2 border-mint-200 text-mint-700 hover:bg-mint-50 disabled:opacity-50"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
 
-          <Button
-            variant="outline"
-            onClick={handleFlip}
-            className="flex items-center gap-2 bg-mint-50 border-mint-200 text-mint-700 hover:bg-mint-100"
-          >
-            <RotateCcw className="h-4 w-4" />
-            Flip Card
-          </Button>
+            <Button
+              variant="outline"
+              onClick={handleFlip}
+              className="flex items-center gap-2 bg-mint-50 border-mint-200 text-mint-700 hover:bg-mint-100"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Flip Card
+            </Button>
 
-          <Button
-            variant="outline"
-            onClick={handleNext}
-            disabled={currentIndex >= totalCards - 1}
-            className="flex items-center gap-2 border-mint-200 text-mint-700 hover:bg-mint-50 disabled:opacity-50"
-          >
-            Next
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
+            <Button
+              variant="outline"
+              onClick={handleNext}
+              disabled={currentIndex >= totalCards - 1}
+              className="flex items-center gap-2 border-mint-200 text-mint-700 hover:bg-mint-50 disabled:opacity-50"
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
 
-        {/* Study Choices */}
+        {/* Study/Quiz Choices */}
         {isFlipped && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -254,23 +320,35 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
             className="flex justify-center gap-4"
           >
             <Button
-              onClick={() => handleCardChoice('needs_practice')}
+              onClick={() => {
+                if (isQuizMode && quizData) {
+                  quizData.handleQuizAnswer('needs_practice');
+                } else if (studyData) {
+                  studyData.handleCardChoice('needs_practice');
+                }
+              }}
               size="lg"
               className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 hover:text-red-800"
               variant="outline"
             >
               <XCircle className="h-5 w-5" />
-              Need Practice
+              {isQuizMode ? "Incorrect" : "Need Practice"}
             </Button>
             
             <Button
-              onClick={() => handleCardChoice('mastered')}
+              onClick={() => {
+                if (isQuizMode && quizData) {
+                  quizData.handleQuizAnswer('mastered');
+                } else if (studyData) {
+                  studyData.handleCardChoice('mastered');
+                }
+              }}
               size="lg"
               className="flex items-center gap-2 bg-mint-50 border border-mint-200 text-mint-700 hover:bg-mint-100 hover:text-mint-800"
               variant="outline"
             >
               <CheckCircle className="h-5 w-5" />
-              Know This
+              {isQuizMode ? "Correct" : "Know This"}
             </Button>
           </motion.div>
         )}
@@ -283,7 +361,7 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
               <span className="text-sm">
                 {mode === "learn" && "Study each card carefully, then flip to see the answer"}
                 {mode === "review" && "Review cards you need to practice"}
-                {mode === "test" && "Test your knowledge on these flashcards"}
+                {mode === "test" && isQuizMode && quizData && `Quiz Mode - ${quizData.timeLeft}s remaining per card`}
               </span>
             </div>
           </div>

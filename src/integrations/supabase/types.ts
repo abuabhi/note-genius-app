@@ -659,6 +659,50 @@ export type Database = {
           },
         ]
       }
+      quiz_card_responses: {
+        Row: {
+          created_at: string
+          flashcard_id: string
+          id: string
+          is_correct: boolean
+          points_earned: number
+          quiz_session_id: string
+          response_time_seconds: number
+          time_bonus: number
+          user_answer: string
+        }
+        Insert: {
+          created_at?: string
+          flashcard_id: string
+          id?: string
+          is_correct: boolean
+          points_earned?: number
+          quiz_session_id: string
+          response_time_seconds: number
+          time_bonus?: number
+          user_answer: string
+        }
+        Update: {
+          created_at?: string
+          flashcard_id?: string
+          id?: string
+          is_correct?: boolean
+          points_earned?: number
+          quiz_session_id?: string
+          response_time_seconds?: number
+          time_bonus?: number
+          user_answer?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_card_responses_quiz_session_id_fkey"
+            columns: ["quiz_session_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quiz_options: {
         Row: {
           content: string
@@ -830,6 +874,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      quiz_sessions: {
+        Row: {
+          average_response_time: number | null
+          correct_answers: number
+          created_at: string
+          duration_seconds: number | null
+          end_time: string | null
+          flashcard_set_id: string
+          grade: string | null
+          id: string
+          mode: string
+          start_time: string
+          total_cards: number
+          total_score: number
+          user_id: string
+        }
+        Insert: {
+          average_response_time?: number | null
+          correct_answers?: number
+          created_at?: string
+          duration_seconds?: number | null
+          end_time?: string | null
+          flashcard_set_id: string
+          grade?: string | null
+          id?: string
+          mode?: string
+          start_time?: string
+          total_cards: number
+          total_score?: number
+          user_id: string
+        }
+        Update: {
+          average_response_time?: number | null
+          correct_answers?: number
+          created_at?: string
+          duration_seconds?: number | null
+          end_time?: string | null
+          flashcard_set_id?: string
+          grade?: string | null
+          id?: string
+          mode?: string
+          start_time?: string
+          total_cards?: number
+          total_score?: number
+          user_id?: string
+        }
+        Relationships: []
       }
       quizzes: {
         Row: {
