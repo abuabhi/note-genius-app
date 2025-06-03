@@ -7,7 +7,7 @@ import { NoteContentDisplay } from "../NoteContentDisplay";
 import { NoteStudyEditForm } from "../editor/NoteStudyEditForm";
 import { EnhancementContentType } from "../enhancements/EnhancementSelector";
 import { QuickConversionPanel } from "../conversion/QuickConversionPanel";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "react-resizable-panels";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 
 interface NoteStudyViewContentProps {
   note: Note;
