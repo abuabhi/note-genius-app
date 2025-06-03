@@ -1,186 +1,116 @@
 
-import { useState, useEffect, useCallback } from "react";
-import { Flashcard } from "@/types/flashcard";
-import { StudyMode } from "@/pages/study/types";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useAuth } from "@/contexts/auth";
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/auth';
+import { Flashcard } from '@/types/flashcard';
+import { StudyMode } from '@/pages/study/types';
 
 interface UseSimplifiedFlashcardStudyProps {
   setId: string;
   mode: StudyMode;
 }
 
-interface SimpleProgress {
-  flashcard_id: string;
-  status: 'needs_practice' | 'mastered';
-  review_count: number;
-}
-
 export const useSimplifiedFlashcardStudy = ({ setId, mode }: UseSimplifiedFlashcardStudyProps) => {
+  const { user } = useAuth();
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [progress, setProgress] = useState<SimpleProgress[]>([]);
   const [studiedToday, setStudiedToday] = useState(0);
   const [masteredCount, setMasteredCount] = useState(0);
-  const { user } = useAuth();
+  const [isComplete, setIsComplete] = useState(false);
 
-  // Load flashcards and progress
-  const loadData = useCallback(async () => {
-    if (!setId || !user) return;
-    
-    setIsLoading(true);
-    setError(null);
-    
+  const fetchFlashcards = useCallback(async () => {
+    if (!user || !setId) return;
+
     try {
-      // Load flashcards
-      const { data: setCards, error: setCardsError } = await supabase
+      setIsLoading(true);
+      setError(null);
+
+      // Fetch flashcards in the set
+      const { data: setCards, error: setError } = await supabase
         .from('flashcard_set_cards')
         .select(`
+          flashcard_id,
           position,
-          flashcard:flashcards(
+          flashcards (
             id,
             front_content,
             back_content,
-            difficulty,
-            created_at,
-            updated_at
+            created_at
           )
         `)
         .eq('set_id', setId)
         .order('position');
 
-      if (setCardsError) throw setCardsError;
+      if (setError) throw setError;
 
-      if (!setCards || setCards.length === 0) {
-        setError("No flashcards found in this set");
-        return;
-      }
+      const cards = (setCards || [])
+        .map(item => ({
+          ...item.flashcards,
+          position: item.position
+        }))
+        .filter(card => card.id) as Flashcard[];
 
-      const cards: Flashcard[] = setCards
-        .filter(item => item.flashcard)
-        .map((item, index) => ({
-          id: item.flashcard.id,
-          front_content: item.flashcard.front_content,
-          back_content: item.flashcard.back_content,
-          front: item.flashcard.front_content,
-          back: item.flashcard.back_content,
-          position: item.position || index,
-          difficulty: item.flashcard.difficulty,
-          created_at: item.flashcard.created_at,
-          updated_at: item.flashcard.updated_at
-        }));
+      console.log('Fetched flashcards for study:', cards);
+      setFlashcards(cards);
 
-      // Load user progress
-      const { data: progressData, error: progressError } = await supabase
-        .from('simple_flashcard_progress')
-        .select('flashcard_id, status, review_count, last_reviewed_at')
-        .eq('user_id', user.id)
-        .in('flashcard_id', cards.map(c => c.id));
-
-      if (progressError) throw progressError;
-
-      const simpleProgress: SimpleProgress[] = progressData?.map(p => ({
-        flashcard_id: p.flashcard_id,
-        status: p.status as 'needs_practice' | 'mastered',
-        review_count: p.review_count
-      })) || [];
-
-      // Filter cards based on mode
-      let filteredCards = cards;
-      if (mode === "review") {
-        // Show only cards that need practice
-        const needsPracticeIds = simpleProgress
-          .filter(p => p.status === 'needs_practice')
-          .map(p => p.flashcard_id);
-        filteredCards = cards.filter(c => needsPracticeIds.includes(c.id));
-      } else if (mode === "test") {
-        // Shuffle for test mode
-        filteredCards = [...cards].sort(() => Math.random() - 0.5);
-      }
-
-      setFlashcards(filteredCards);
-      setProgress(simpleProgress);
-      setMasteredCount(simpleProgress.filter(p => p.status === 'mastered').length);
-      
-      // Count today's reviews
+      // Fetch today's study stats
       const today = new Date().toISOString().split('T')[0];
-      const todayReviews = progressData?.filter(p => 
-        p.last_reviewed_at && p.last_reviewed_at.startsWith(today)
-      ).length || 0;
-      setStudiedToday(todayReviews);
-      
-      setCurrentIndex(0);
-      setIsFlipped(false);
-      
-    } catch (error) {
-      console.error("Error loading data:", error);
-      setError("Failed to load flashcards");
-      toast.error("Failed to load flashcards");
+      const { data: progressData } = await supabase
+        .from('simple_flashcard_progress')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('last_reviewed_at', today);
+
+      setStudiedToday(progressData?.length || 0);
+      setMasteredCount(progressData?.filter(p => p.status === 'mastered').length || 0);
+
+    } catch (err) {
+      console.error('Error fetching flashcards:', err);
+      setError('Failed to load flashcards');
     } finally {
       setIsLoading(false);
     }
-  }, [setId, mode, user]);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  }, [user, setId]);
 
   const handleCardChoice = useCallback(async (choice: 'needs_practice' | 'mastered') => {
-    if (!user || flashcards.length === 0) return;
-    
+    if (!user || !flashcards[currentIndex]) return;
+
     const currentCard = flashcards[currentIndex];
-    if (!currentCard) return;
-    
+
     try {
-      const { error } = await supabase
+      // Update progress
+      await supabase
         .from('simple_flashcard_progress')
         .upsert({
           user_id: user.id,
           flashcard_id: currentCard.id,
           status: choice,
           last_reviewed_at: new Date().toISOString(),
-          review_count: 1 // Will be incremented by database if exists
-        }, {
-          onConflict: 'user_id,flashcard_id'
+          review_count: 1
+        }, { 
+          onConflict: 'user_id,flashcard_id' 
         });
 
-      if (error) throw error;
-      
-      // Update local progress
-      setProgress(prev => {
-        const existing = prev.find(p => p.flashcard_id === currentCard.id);
-        if (existing) {
-          return prev.map(p => 
-            p.flashcard_id === currentCard.id 
-              ? { ...p, status: choice, review_count: p.review_count + 1 }
-              : p
-          );
-        } else {
-          return [...prev, { flashcard_id: currentCard.id, status: choice, review_count: 1 }];
-        }
-      });
-
-      // Update counters
+      // Update local stats
+      setStudiedToday(prev => prev + 1);
       if (choice === 'mastered') {
         setMasteredCount(prev => prev + 1);
       }
-      setStudiedToday(prev => prev + 1);
-      
-      // Move to next card
+
+      // Move to next card or complete
       handleNext();
-      
     } catch (error) {
-      console.error("Error saving progress:", error);
-      toast.error("Failed to save progress");
+      console.error('Error updating progress:', error);
     }
   }, [user, flashcards, currentIndex]);
 
   const handleNext = useCallback(() => {
-    if (currentIndex < flashcards.length - 1) {
+    if (currentIndex >= flashcards.length - 1) {
+      setIsComplete(true);
+    } else {
       setCurrentIndex(prev => prev + 1);
       setIsFlipped(false);
     }
@@ -197,11 +127,12 @@ export const useSimplifiedFlashcardStudy = ({ setId, mode }: UseSimplifiedFlashc
     setIsFlipped(prev => !prev);
   }, []);
 
-  const getCardProgress = useCallback((cardId: string) => {
-    return progress.find(p => p.flashcard_id === cardId);
-  }, [progress]);
+  useEffect(() => {
+    fetchFlashcards();
+  }, [fetchFlashcards]);
 
-  const isComplete = currentIndex >= flashcards.length;
+  const currentCard = flashcards[currentIndex];
+  const totalCards = flashcards.length;
 
   return {
     flashcards,
@@ -211,14 +142,13 @@ export const useSimplifiedFlashcardStudy = ({ setId, mode }: UseSimplifiedFlashc
     error,
     studiedToday,
     masteredCount,
-    totalCards: flashcards.length,
+    totalCards,
     isComplete,
-    currentCard: flashcards[currentIndex],
+    currentCard,
     handleCardChoice,
     handleNext,
     handlePrevious,
     handleFlip,
-    getCardProgress,
     setIsFlipped
   };
 };

@@ -11,9 +11,10 @@ import { AnimatePresence, motion } from "framer-motion";
 interface SimplifiedFlashcardStudyProps {
   setId: string;
   mode: StudyMode;
+  currentSet?: any;
 }
 
-export const SimplifiedFlashcardStudy = ({ setId, mode }: SimplifiedFlashcardStudyProps) => {
+export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: SimplifiedFlashcardStudyProps) => {
   const { userProfile } = useRequireAuth();
   
   const {

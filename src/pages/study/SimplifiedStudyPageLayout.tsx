@@ -7,12 +7,14 @@ interface SimplifiedStudyPageLayoutProps {
   isLoading: boolean;
   setId: string;
   mode: StudyMode;
+  currentSet?: any;
 }
 
 export const SimplifiedStudyPageLayout = ({
   isLoading,
   setId,
-  mode
+  mode,
+  currentSet
 }: SimplifiedStudyPageLayoutProps) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -25,7 +27,7 @@ export const SimplifiedStudyPageLayout = ({
             </div>
           </div>
         ) : (
-          <SimplifiedFlashcardStudy setId={setId} mode={mode} />
+          <SimplifiedFlashcardStudy setId={setId} mode={mode} currentSet={currentSet} />
         )}
       </div>
       

@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Navigate } from "react-router-dom";
-import { useFlashcards } from "@/contexts/FlashcardContext";
+import { useSimpleFlashcardSets } from "@/hooks/useSimpleFlashcardSets";
 import { SimplifiedStudyModeSelector } from "@/components/study/SimplifiedStudyModeSelector";
 import { Separator } from "@/components/ui/separator";
 import { StudyMode } from "./types";
@@ -11,7 +11,8 @@ import { SimplifiedStudyPageLayout } from "./SimplifiedStudyPageLayout";
 export const StudyPageContent = () => {
   const { setId } = useParams<{ setId: string }>();
   const [mode, setMode] = useState<StudyMode>("learn");
-  const { fetchFlashcardSets, currentSet, setCurrentSet, flashcardSets } = useFlashcards();
+  const { flashcardSets, loading, fetchFlashcardSets } = useSimpleFlashcardSets();
+  const [currentSet, setCurrentSet] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
@@ -48,7 +49,7 @@ export const StudyPageContent = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [setId, hasAttemptedLoad, flashcardSets, fetchFlashcardSets, setCurrentSet]);
+  }, [setId, hasAttemptedLoad, flashcardSets, fetchFlashcardSets]);
   
   useEffect(() => {
     console.log("StudyPageContent useEffect triggered", { setId, hasAttemptedLoad });
@@ -116,6 +117,7 @@ export const StudyPageContent = () => {
         isLoading={isLoading}
         setId={setId}
         mode={mode}
+        currentSet={currentSet}
       />
     </div>
   );
