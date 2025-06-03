@@ -14,7 +14,7 @@ interface SimplifiedFlashcardStudyProps {
   currentSet?: any;
 }
 
-const CircularProgress = ({ value, size = 120, strokeWidth = 8 }: { value: number; size?: number; strokeWidth?: number }) => {
+const CircularProgress = ({ value, size = 100, strokeWidth = 6 }: { value: number; size?: number; strokeWidth?: number }) => {
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const strokeDasharray = circumference;
@@ -34,7 +34,7 @@ const CircularProgress = ({ value, size = 120, strokeWidth = 8 }: { value: numbe
           stroke="currentColor"
           strokeWidth={strokeWidth}
           fill="transparent"
-          className="text-muted/20"
+          className="text-mint-100"
         />
         <circle
           cx={size / 2}
@@ -45,12 +45,12 @@ const CircularProgress = ({ value, size = 120, strokeWidth = 8 }: { value: numbe
           fill="transparent"
           strokeDasharray={strokeDasharray}
           strokeDashoffset={strokeDashoffset}
-          className="text-blue-500 transition-all duration-300 ease-in-out"
+          className="text-mint-500 transition-all duration-300 ease-in-out"
           strokeLinecap="round"
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-lg font-bold text-blue-600">{Math.round(value)}%</span>
+        <span className="text-sm font-semibold text-mint-700">{Math.round(value)}%</span>
       </div>
     </div>
   );
@@ -81,11 +81,11 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <div className="relative w-16 h-16 mx-auto mb-4">
-            <div className="absolute inset-0 border-4 border-blue-200 rounded-full"></div>
-            <div className="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+          <div className="relative w-12 h-12 mx-auto mb-4">
+            <div className="absolute inset-0 border-4 border-mint-100 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-mint-500 rounded-full border-t-transparent animate-spin"></div>
           </div>
-          <p className="text-lg font-medium">Loading flashcards...</p>
+          <p className="text-mint-700 font-medium">Loading flashcards...</p>
         </div>
       </div>
     );
@@ -94,11 +94,11 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
   if (error) {
     return (
       <div className="text-center py-12">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
-          <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-red-800 mb-2">Oops! Something went wrong</h3>
+        <div className="bg-red-50 border border-red-100 rounded-lg p-6 max-w-md mx-auto">
+          <XCircle className="h-10 w-10 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-red-800 mb-2">Something went wrong</h3>
           <p className="text-red-600 mb-4">{error}</p>
-          <Button onClick={() => window.location.reload()} className="bg-red-600 hover:bg-red-700">
+          <Button onClick={() => window.location.reload()} variant="outline" className="border-red-200 text-red-700 hover:bg-red-50">
             Try Again
           </Button>
         </div>
@@ -109,11 +109,11 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
   if (flashcards.length === 0) {
     return (
       <div className="text-center py-12">
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 max-w-md mx-auto">
-          <Target className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">No flashcards available</h3>
+        <div className="bg-mint-50 border border-mint-100 rounded-lg p-8 max-w-md mx-auto">
+          <Target className="h-12 w-12 text-mint-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-mint-800 mb-2">No flashcards available</h3>
           <p className="text-muted-foreground mb-6">This study mode doesn't have any flashcards yet.</p>
-          <Button onClick={() => window.history.back()} variant="outline">
+          <Button onClick={() => window.history.back()} variant="outline" className="border-mint-200 text-mint-700 hover:bg-mint-50">
             Go Back
           </Button>
         </div>
@@ -125,37 +125,37 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
     return (
       <div className="text-center py-12">
         <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
+          initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-8 max-w-md mx-auto"
+          className="bg-mint-50 border border-mint-100 rounded-xl p-8 max-w-md mx-auto"
         >
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
           >
-            <Trophy className="h-20 w-20 text-yellow-500 mx-auto mb-6" />
+            <Trophy className="h-16 w-16 text-mint-500 mx-auto mb-6" />
           </motion.div>
-          <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+          <h2 className="text-2xl font-bold mb-4 text-mint-800">
             Excellent Work!
           </h2>
-          <p className="text-muted-foreground mb-8 text-lg">
+          <p className="text-muted-foreground mb-8">
             You've completed this study session successfully
           </p>
-          <div className="grid grid-cols-2 gap-6 mb-8">
-            <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-              <div className="text-3xl font-bold text-blue-600">{studiedToday}</div>
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <div className="text-center p-4 bg-white rounded-lg border border-mint-100">
+              <div className="text-2xl font-bold text-mint-600">{studiedToday}</div>
               <div className="text-sm text-muted-foreground">Cards Today</div>
             </div>
-            <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-              <div className="text-3xl font-bold text-green-600">{masteredCount}</div>
+            <div className="text-center p-4 bg-white rounded-lg border border-mint-100">
+              <div className="text-2xl font-bold text-mint-600">{masteredCount}</div>
               <div className="text-sm text-muted-foreground">Mastered</div>
             </div>
           </div>
           <Button 
             onClick={() => window.history.back()}
             size="lg"
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            className="bg-mint-500 hover:bg-mint-600 text-white"
           >
             Back to Sets
           </Button>
@@ -175,60 +175,56 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
   const progressPercent = ((currentIndex + 1) / totalCards) * 100;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
-      {/* Enhanced Progress Header */}
-      <div className="space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-          <div className="flex items-center gap-6">
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Progress Header */}
+      <div className="space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="flex items-center gap-4">
             <CircularProgress value={progressPercent} />
-            <div className="space-y-2">
-              <h2 className="text-2xl font-bold">
+            <div className="space-y-1">
+              <h2 className="text-xl font-semibold text-mint-800">
                 Card {currentIndex + 1} of {totalCards}
               </h2>
-              <div className="flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-full">
-                  <Target className="h-4 w-4 text-blue-500" />
-                  <span className="font-medium text-blue-700">{studiedToday} studied today</span>
+              <div className="flex items-center gap-3 text-sm">
+                <div className="flex items-center gap-1 px-2 py-1 bg-mint-50 rounded-full">
+                  <Target className="h-3 w-3 text-mint-500" />
+                  <span className="font-medium text-mint-700">{studiedToday} studied today</span>
                 </div>
-                <div className="flex items-center gap-2 px-3 py-1 bg-green-50 rounded-full">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="font-medium text-green-700">{masteredCount} mastered</span>
+                <div className="flex items-center gap-1 px-2 py-1 bg-mint-50 rounded-full">
+                  <CheckCircle className="h-3 w-3 text-mint-500" />
+                  <span className="font-medium text-mint-700">{masteredCount} mastered</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <Progress value={progressPercent} className="h-3 bg-gray-100" indicatorClassName="bg-gradient-to-r from-blue-500 to-purple-500" />
+        <Progress value={progressPercent} className="h-2 bg-mint-100" indicatorClassName="bg-mint-500" />
       </div>
 
-      {/* Enhanced Flashcard */}
-      <div className="relative min-h-[500px] perspective-1000">
+      {/* Flashcard */}
+      <div className="relative min-h-[400px]">
         <AnimatePresence mode="wait">
           <motion.div
             key={`${currentCard.id}-${isFlipped}`}
-            initial={{ rotateY: 180, opacity: 0, scale: 0.8 }}
-            animate={{ rotateY: 0, opacity: 1, scale: 1 }}
-            exit={{ rotateY: -180, opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
-            className="cursor-pointer group"
+            initial={{ rotateY: 90, opacity: 0 }}
+            animate={{ rotateY: 0, opacity: 1 }}
+            exit={{ rotateY: -90, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="cursor-pointer"
             onClick={handleFlip}
           >
-            <Card className="min-h-[500px] shadow-2xl hover:shadow-3xl transition-all duration-300 bg-gradient-to-br from-white to-gray-50 border-2 hover:border-blue-200 group-hover:scale-[1.02]">
-              <CardContent className="p-12 flex flex-col items-center justify-center h-full relative overflow-hidden">
-                {/* Background decoration */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full opacity-20 -translate-y-16 translate-x-16"></div>
-                <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-green-100 to-blue-100 rounded-full opacity-20 translate-y-12 -translate-x-12"></div>
-                
-                <div className="text-center space-y-8 relative z-10 max-w-2xl">
-                  <div className="text-2xl md:text-3xl font-medium leading-relaxed">
+            <Card className="min-h-[400px] shadow-lg hover:shadow-xl transition-shadow duration-200 bg-white border-mint-100">
+              <CardContent className="p-8 flex flex-col items-center justify-center h-full">
+                <div className="text-center space-y-6 max-w-xl">
+                  <div className="text-lg md:text-xl leading-relaxed text-mint-800">
                     {isFlipped ? currentCard.back_content : currentCard.front_content}
                   </div>
                   <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                    <div className={`w-3 h-3 rounded-full ${isFlipped ? 'bg-purple-400' : 'bg-blue-400'}`}></div>
-                    <span className="text-lg font-medium">
+                    <div className={`w-2 h-2 rounded-full ${isFlipped ? 'bg-mint-400' : 'bg-mint-300'}`}></div>
+                    <span className="text-sm font-medium">
                       {isFlipped ? "Back" : "Front"} • Click to flip
                     </span>
-                    <RotateCcw className="h-5 w-5 opacity-60" />
+                    <RotateCcw className="h-4 w-4 opacity-60" />
                   </div>
                 </div>
               </CardContent>
@@ -237,77 +233,76 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
         </AnimatePresence>
       </div>
 
-      {/* Enhanced Controls */}
-      <div className="space-y-6">
+      {/* Controls */}
+      <div className="space-y-4">
         {/* Navigation */}
         <div className="flex justify-between items-center">
           <Button
             variant="outline"
             onClick={handlePrevious}
             disabled={currentIndex === 0}
-            size="lg"
-            className="flex items-center gap-3 px-6 py-3 disabled:opacity-50 hover:bg-gray-50"
+            className="flex items-center gap-2 border-mint-200 text-mint-700 hover:bg-mint-50 disabled:opacity-50"
           >
-            <ChevronLeft className="h-5 w-5" />
-            <span className="font-medium">Previous</span>
+            <ChevronLeft className="h-4 w-4" />
+            Previous
           </Button>
 
           <Button
             variant="outline"
             onClick={handleFlip}
-            size="lg"
-            className="flex items-center gap-3 px-8 py-3 bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border-blue-200"
+            className="flex items-center gap-2 bg-mint-50 border-mint-200 text-mint-700 hover:bg-mint-100"
           >
-            <RotateCcw className="h-5 w-5" />
-            <span className="font-medium">Flip Card</span>
+            <RotateCcw className="h-4 w-4" />
+            Flip Card
           </Button>
 
           <Button
             variant="outline"
             onClick={handleNext}
             disabled={currentIndex >= totalCards - 1}
-            size="lg"
-            className="flex items-center gap-3 px-6 py-3 disabled:opacity-50 hover:bg-gray-50"
+            className="flex items-center gap-2 border-mint-200 text-mint-700 hover:bg-mint-50 disabled:opacity-50"
           >
-            <span className="font-medium">Next</span>
-            <ChevronRight className="h-5 w-5" />
+            Next
+            <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
 
-        {/* Enhanced Study Choices */}
+        {/* Study Choices */}
         {isFlipped && (
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.3 }}
-            className="flex justify-center gap-6"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+            className="flex justify-center gap-4"
           >
             <Button
               onClick={() => handleCardChoice('needs_practice')}
               size="lg"
-              className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+              className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 hover:text-red-800"
+              variant="outline"
             >
-              <XCircle className="h-6 w-6" />
-              <span className="font-semibold text-lg">Need Practice</span>
+              <XCircle className="h-5 w-5" />
+              Need Practice
             </Button>
             
             <Button
               onClick={() => handleCardChoice('mastered')}
               size="lg"
-              className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+              className="flex items-center gap-2 bg-mint-50 border border-mint-200 text-mint-700 hover:bg-mint-100 hover:text-mint-800"
+              variant="outline"
             >
-              <CheckCircle className="h-6 w-6" />
-              <span className="font-semibold text-lg">Know This</span>
+              <CheckCircle className="h-5 w-5" />
+              Know This
             </Button>
           </motion.div>
         )}
 
-        {/* Mode-specific hints */}
+        {/* Mode hint */}
         {!isFlipped && (
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full text-blue-700">
-              <Clock className="h-4 w-4" />
-              <span className="text-sm font-medium">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-mint-50 rounded-full text-mint-700 border border-mint-100">
+              <Clock className="h-3 w-3" />
+              <span className="text-sm">
                 {mode === "learn" && "Study each card carefully, then flip to see the answer"}
                 {mode === "review" && "Review cards you need to practice"}
                 {mode === "test" && "Test your knowledge on these flashcards"}

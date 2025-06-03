@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -23,18 +22,18 @@ const StatCard = ({ icon: Icon, label, value, color, delay = 0 }: {
   delay?: number;
 }) => (
   <motion.div
-    initial={{ opacity: 0, y: 20 }}
+    initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
-    transition={{ delay, duration: 0.3 }}
-    className="flex items-center justify-between p-4 bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow"
+    transition={{ delay, duration: 0.2 }}
+    className="flex items-center justify-between p-3 bg-white rounded-lg border border-mint-100 hover:shadow-sm transition-shadow"
   >
     <div className="flex items-center gap-3">
       <div className={`p-2 rounded-lg ${color}`}>
-        <Icon className="h-5 w-5 text-white" />
+        <Icon className="h-4 w-4 text-white" />
       </div>
       <div>
-        <p className="text-sm font-medium text-gray-600">{label}</p>
-        <p className="text-2xl font-bold">{value}</p>
+        <p className="text-sm font-medium text-muted-foreground">{label}</p>
+        <p className="text-lg font-semibold text-mint-800">{value}</p>
       </div>
     </div>
   </motion.div>
@@ -134,19 +133,19 @@ export const SimplifiedStudyProgress = () => {
   if (!user) {
     return (
       <div className="space-y-4">
-        <Card className="border-2 border-dashed border-gray-200">
+        <Card className="border-mint-100">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2 text-mint-800">
               <TrendingUp className="h-4 w-4" />
               Study Progress
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Target className="h-8 w-8 text-gray-400" />
+            <div className="text-center py-6">
+              <div className="w-12 h-12 bg-mint-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Target className="h-6 w-6 text-mint-400" />
               </div>
-              <p className="text-muted-foreground">Please log in to view progress</p>
+              <p className="text-muted-foreground text-sm">Please log in to view progress</p>
             </div>
           </CardContent>
         </Card>
@@ -157,21 +156,21 @@ export const SimplifiedStudyProgress = () => {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <Card>
+        <Card className="border-mint-100">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2 text-mint-800">
               <TrendingUp className="h-4 w-4" />
               Study Progress
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gray-200 rounded-lg animate-pulse" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-3 bg-gray-200 rounded animate-pulse" />
-                    <div className="h-4 bg-gray-200 rounded animate-pulse w-1/2" />
+                  <div className="w-8 h-8 bg-mint-100 rounded-lg animate-pulse" />
+                  <div className="flex-1 space-y-1">
+                    <div className="h-3 bg-mint-100 rounded animate-pulse" />
+                    <div className="h-3 bg-mint-100 rounded animate-pulse w-2/3" />
                   </div>
                 </div>
               ))}
@@ -186,32 +185,32 @@ export const SimplifiedStudyProgress = () => {
   const dailyProgress = Math.min((stats.cardsStudiedToday / dailyGoal) * 100, 100);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Today's Progress */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
+        initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.2 }}
       >
-        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg font-semibold flex items-center gap-2 text-blue-800">
-              <Target className="h-5 w-5" />
+        <Card className="bg-mint-50 border-mint-200">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-semibold flex items-center gap-2 text-mint-800">
+              <Target className="h-4 w-4" />
               Today's Goal
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             <div className="text-center">
-              <div className="text-4xl font-bold text-blue-600 mb-2">
+              <div className="text-2xl font-bold text-mint-700 mb-1">
                 {stats.cardsStudiedToday}
               </div>
-              <div className="text-sm text-blue-700 mb-4">
+              <div className="text-sm text-mint-600 mb-3">
                 of {dailyGoal} cards studied
               </div>
               <Progress 
                 value={dailyProgress} 
-                className="h-3 bg-blue-100" 
-                indicatorClassName="bg-gradient-to-r from-blue-500 to-blue-600"
+                className="h-2 bg-mint-100" 
+                indicatorClassName="bg-mint-500"
               />
             </div>
           </CardContent>
@@ -219,12 +218,12 @@ export const SimplifiedStudyProgress = () => {
       </motion.div>
 
       {/* Stats Grid */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         <StatCard
           icon={Flame}
           label="Study Streak"
           value={`${stats.currentStreak} days`}
-          color="bg-gradient-to-r from-orange-500 to-red-500"
+          color="bg-orange-400"
           delay={0.1}
         />
         
@@ -232,7 +231,7 @@ export const SimplifiedStudyProgress = () => {
           icon={CheckCircle}
           label="Cards Mastered"
           value={stats.totalCardsMastered}
-          color="bg-gradient-to-r from-green-500 to-emerald-500"
+          color="bg-mint-500"
           delay={0.2}
         />
         
@@ -240,20 +239,20 @@ export const SimplifiedStudyProgress = () => {
           icon={Award}
           label="Progress Level"
           value={stats.totalCardsMastered > 0 ? "Active Learner" : "Getting Started"}
-          color="bg-gradient-to-r from-purple-500 to-indigo-500"
+          color="bg-indigo-400"
           delay={0.3}
         />
       </div>
 
       {/* Motivational Message */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.3 }}
+        transition={{ delay: 0.4, duration: 0.2 }}
       >
-        <Card className="bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl mb-2">🎯</div>
+        <Card className="bg-amber-50 border-amber-200">
+          <CardContent className="p-3 text-center">
+            <div className="text-lg mb-1">🎯</div>
             <p className="text-sm font-medium text-amber-800">
               {stats.cardsStudiedToday === 0 
                 ? "Ready to start learning? Let's go!" 
