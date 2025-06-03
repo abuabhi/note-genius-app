@@ -1,6 +1,6 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Target, CheckCircle, TrendingUp, Flame, Award } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
@@ -19,13 +19,15 @@ const StatCard = ({ icon: Icon, label, value, color }: {
   value: string | number;
   color: string;
 }) => (
-  <div className="flex items-center gap-3 p-3 bg-white rounded-md border border-gray-100">
-    <div className={`p-2 rounded-md ${color}`}>
-      <Icon className="h-4 w-4 text-white" />
-    </div>
-    <div>
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="text-base font-medium text-gray-900">{value}</p>
+  <div className="bg-white/60 backdrop-blur-sm rounded-lg border border-mint-100 p-3">
+    <div className="flex items-center gap-3">
+      <div className={`p-2 rounded-md ${color}`}>
+        <Icon className="h-4 w-4 text-mint-500" />
+      </div>
+      <div>
+        <p className="text-sm text-muted-foreground">{label}</p>
+        <p className="text-base font-medium text-gray-900">{value}</p>
+      </div>
     </div>
   </div>
 );
@@ -124,17 +126,17 @@ export const SimplifiedStudyProgress = () => {
   if (!user) {
     return (
       <div className="space-y-4">
-        <Card>
+        <Card className="bg-white/60 backdrop-blur-sm border-mint-100">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-medium flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
+            <CardTitle className="text-base font-medium flex items-center gap-2 text-mint-800">
+              <TrendingUp className="h-4 w-4 text-mint-500" />
               Study Progress
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-center py-4">
-              <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Target className="h-5 w-5 text-gray-400" />
+              <div className="w-10 h-10 bg-mint-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Target className="h-5 w-5 text-mint-500" />
               </div>
               <p className="text-sm text-muted-foreground">Please log in to view progress</p>
             </div>
@@ -147,10 +149,10 @@ export const SimplifiedStudyProgress = () => {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <Card>
+        <Card className="bg-white/60 backdrop-blur-sm border-mint-100">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-medium flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
+            <CardTitle className="text-base font-medium flex items-center gap-2 text-mint-800">
+              <TrendingUp className="h-4 w-4 text-mint-500" />
               Study Progress
             </CardTitle>
           </CardHeader>
@@ -158,10 +160,10 @@ export const SimplifiedStudyProgress = () => {
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gray-100 rounded-md animate-pulse" />
+                  <div className="w-8 h-8 bg-mint-50 rounded-md animate-pulse" />
                   <div className="flex-1 space-y-1">
-                    <div className="h-3 bg-gray-100 rounded animate-pulse" />
-                    <div className="h-3 bg-gray-100 rounded animate-pulse w-2/3" />
+                    <div className="h-3 bg-mint-50 rounded animate-pulse" />
+                    <div className="h-3 bg-mint-50 rounded animate-pulse w-2/3" />
                   </div>
                 </div>
               ))}
@@ -172,58 +174,38 @@ export const SimplifiedStudyProgress = () => {
     );
   }
 
-  const dailyGoal = 20; // Can be made configurable
-  const dailyProgress = Math.min((stats.cardsStudiedToday / dailyGoal) * 100, 100);
-
   return (
     <div className="space-y-4">
-      {/* Today's Progress */}
-      <Card className="bg-mint-50/50">
+      <Card className="bg-white/60 backdrop-blur-sm border-mint-100">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base font-medium flex items-center gap-2">
-            <Target className="h-4 w-4" />
-            Today's Goal
+          <CardTitle className="text-base font-medium flex items-center gap-2 text-mint-800">
+            <TrendingUp className="h-4 w-4 text-mint-500" />
+            Study Progress
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="text-center">
-            <div className="text-xl font-semibold text-mint-700 mb-1">
-              {stats.cardsStudiedToday}
-            </div>
-            <div className="text-sm text-muted-foreground mb-3">
-              of {dailyGoal} cards studied
-            </div>
-            <Progress 
-              value={dailyProgress} 
-              className="h-2" 
-            />
-          </div>
+          <StatCard
+            icon={Flame}
+            label="Study Streak"
+            value={`${stats.currentStreak} days`}
+            color="bg-mint-50"
+          />
+          
+          <StatCard
+            icon={CheckCircle}
+            label="Cards Mastered"
+            value={stats.totalCardsMastered}
+            color="bg-mint-50"
+          />
+          
+          <StatCard
+            icon={Award}
+            label="Progress Level"
+            value={stats.totalCardsMastered > 0 ? "Active Learner" : "Getting Started"}
+            color="bg-mint-50"
+          />
         </CardContent>
       </Card>
-
-      {/* Stats */}
-      <div className="space-y-2">
-        <StatCard
-          icon={Flame}
-          label="Study Streak"
-          value={`${stats.currentStreak} days`}
-          color="bg-orange-500"
-        />
-        
-        <StatCard
-          icon={CheckCircle}
-          label="Cards Mastered"
-          value={stats.totalCardsMastered}
-          color="bg-mint-500"
-        />
-        
-        <StatCard
-          icon={Award}
-          label="Progress Level"
-          value={stats.totalCardsMastered > 0 ? "Active Learner" : "Getting Started"}
-          color="bg-blue-500"
-        />
-      </div>
     </div>
   );
 };

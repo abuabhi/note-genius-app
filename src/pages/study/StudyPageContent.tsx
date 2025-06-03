@@ -1,8 +1,8 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { useSimpleFlashcardSets } from "@/hooks/useSimpleFlashcardSets";
 import { SimplifiedStudyModeSelector } from "@/components/study/SimplifiedStudyModeSelector";
+import { StudyModeInfo } from "@/components/study/StudyModeInfo";
 import { Separator } from "@/components/ui/separator";
 import { StudyMode } from "./types";
 import { StudyPageHeader } from "./StudyPageHeader";
@@ -109,6 +109,9 @@ export const StudyPageContent = () => {
             onModeChange={setMode}
           />
         </div>
+        
+        {/* Add StudyModeInfo component below mode selector */}
+        <StudyModeInfo currentMode={mode} />
       </div>
       
       <Separator className="mb-6" />
