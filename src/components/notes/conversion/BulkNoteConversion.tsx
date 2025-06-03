@@ -26,7 +26,7 @@ export const BulkNoteConversion = ({
   const [setName, setSetName] = useState("New Flashcard Set");
   const [setDescription, setSetDescription] = useState("");
   const [isConverting, setIsConverting] = useState(false);
-  const { createFlashcardSet, addFlashcard } = useFlashcards();
+  const { createFlashcardSet, createFlashcard } = useFlashcards();
 
   const handleCreateFlashcards = async (flashcards: Array<{
     front: string;
@@ -40,7 +40,7 @@ export const BulkNoteConversion = ({
       const newSet = await createFlashcardSet({
         name: setName,
         description: setDescription,
-        subject: notes[0]?.subject || "General",
+        subject: notes[0]?.title || "General",
         is_public: false
       });
 
@@ -50,7 +50,7 @@ export const BulkNoteConversion = ({
 
       // Create individual flashcards and add them to the set
       for (const flashcard of flashcards) {
-        await addFlashcard({
+        await createFlashcard({
           front_content: flashcard.front,
           back_content: flashcard.back,
           set_id: newSet.id
