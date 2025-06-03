@@ -55,9 +55,12 @@ export const RichTextDisplay = ({
     processed = processed.replace(/<\/p>/g, '');
     processed = processed.replace(/<[^>]*>/g, '');
     
-    // CRITICAL: Remove any remaining AI_ENHANCED tags that might have slipped through
-    processed = processed.replace(/\[AI_ENHANCED\]/g, '');
-    processed = processed.replace(/\[\/AI_ENHANCED\]/g, '');
+    // IMPORTANT: Only remove AI_ENHANCED tags if we're not in an enhanced content renderer
+    // This allows the EnhancedContentRenderer to handle them properly
+    if (!content.includes('[AI_ENHANCED]')) {
+      processed = processed.replace(/\[AI_ENHANCED\]/g, '');
+      processed = processed.replace(/\[\/AI_ENHANCED\]/g, '');
+    }
     
     return processed.trim();
   }, [content, removeTitle]);

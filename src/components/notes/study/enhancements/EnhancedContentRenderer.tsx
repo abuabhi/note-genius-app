@@ -2,6 +2,7 @@
 import React from 'react';
 import { RichTextDisplay } from '@/components/ui/rich-text/RichTextDisplay';
 import { TextAlignType } from '../hooks/useStudyViewState';
+import { Sparkles } from 'lucide-react';
 
 interface EnhancedContentRendererProps {
   content: string;
@@ -31,7 +32,7 @@ export const EnhancedContentRenderer = ({
     );
   }
 
-  // Split content by enhancement markers
+  // Split content by enhancement markers and process each part
   const parts = content.split(/(\[AI_ENHANCED\].*?\[\/AI_ENHANCED\])/gs);
   
   return (
@@ -45,34 +46,52 @@ export const EnhancedContentRenderer = ({
       {parts.map((part, index) => {
         if (part.match(/\[AI_ENHANCED\](.*?)\[\/AI_ENHANCED\]/s)) {
           // Extract content between markers
-          const enhancedText = part.replace(/\[AI_ENHANCED\](.*?)\[\/AI_ENHANCED\]/s, '$1');
+          const enhancedText = part.replace(/\[AI_ENHANCED\](.*?)\[\/AI_ENHANCED\]/s, '$1').trim();
+          
+          if (!enhancedText) return null;
+          
           return (
-            <span
+            <div
               key={index}
-              className="bg-mint-100 border-l-4 border-mint-400 px-2 py-1 rounded-r-md"
-              title="AI Enhanced Content"
+              className="my-4 p-4 bg-gradient-to-r from-mint-50 to-emerald-50 border-l-4 border-mint-400 rounded-r-lg shadow-sm relative overflow-hidden"
             >
-              <RichTextDisplay
-                content={enhancedText}
-                fontSize={fontSize}
-                textAlign={textAlign}
-                removeTitle={true}
-              />
-            </span>
+              {/* Enhanced content indicator */}
+              <div className="flex items-center gap-2 mb-3 text-mint-700">
+                <div className="flex items-center justify-center w-6 h-6 bg-mint-100 rounded-full">
+                  <Sparkles className="w-3 h-3 text-mint-600" />
+                </div>
+                <span className="text-xs font-medium uppercase tracking-wide">AI Enhanced</span>
+              </div>
+              
+              {/* Enhanced content */}
+              <div className="relative">
+                <RichTextDisplay
+                  content={enhancedText}
+                  fontSize={fontSize}
+                  textAlign={textAlign}
+                  removeTitle={true}
+                  className="prose-mint prose-sm prose-headings:text-mint-800 prose-p:text-mint-700 prose-li:text-mint-700 prose-strong:text-mint-800"
+                />
+              </div>
+              
+              {/* Decorative gradient overlay */}
+              <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-mint-100/30 to-transparent rounded-bl-full pointer-events-none"></div>
+            </div>
           );
-        } else {
-          // Regular content
+        } else if (part.trim()) {
+          // Regular content - render normally
           return (
-            <span key={index}>
+            <div key={index} className="my-2">
               <RichTextDisplay
                 content={part}
                 fontSize={fontSize}
                 textAlign={textAlign}
                 removeTitle={true}
               />
-            </span>
+            </div>
           );
         }
+        return null;
       })}
     </div>
   );

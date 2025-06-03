@@ -76,65 +76,86 @@ function ensureEnhancementMarkers(content: string, originalPrompt: string): stri
   console.log('Content missing enhancement markers, adding post-processing...');
   
   // Extract original content from the prompt to identify what's new
-  const originalContentMatch = originalPrompt.match(/The following is a note titled[^:]*:\s*(.*?)\s*$/s);
+  const originalContentMatch = originalPrompt.match(/The following is a note titled[^:]*:\s*(.*?)\s*You are an educational AI assistant/s);
   if (!originalContentMatch) {
-    console.log('Could not extract original content, wrapping all new content');
-    return addMarkersToNewContent(content);
+    console.log('Could not extract original content, applying intelligent marking...');
+    return addIntelligentMarkersToContent(content);
   }
   
   const originalContent = originalContentMatch[1].trim();
+  console.log('Original content extracted for comparison, length:', originalContent.length);
   
-  // Find where original content ends and new content begins
+  // Apply smart content comparison and marking
+  return compareAndMarkEnhancements(content, originalContent);
+}
+
+/**
+ * Compares enhanced content with original and marks new additions
+ */
+function compareAndMarkEnhancements(enhancedContent: string, originalContent: string): string {
+  // Split content into paragraphs/sections for better comparison
+  const enhancedLines = enhancedContent.split('\n').map(line => line.trim()).filter(line => line.length > 0);
   const originalLines = originalContent.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-  const contentLines = content.split('\n');
   
-  let enhancedContent = '';
-  let originalContentEnded = false;
+  let result = '';
+  let originalIndex = 0;
   let inEnhancedSection = false;
-  let matchedOriginalLines = 0;
   
-  for (let i = 0; i < contentLines.length; i++) {
-    const line = contentLines[i];
-    const trimmedLine = line.trim();
+  for (let i = 0; i < enhancedLines.length; i++) {
+    const enhancedLine = enhancedLines[i];
     
     // Check if this line matches original content
-    if (!originalContentEnded && matchedOriginalLines < originalLines.length) {
-      const expectedOriginalLine = originalLines[matchedOriginalLines];
+    let isOriginalContent = false;
+    
+    if (originalIndex < originalLines.length) {
+      const originalLine = originalLines[originalIndex];
       
-      // If line matches original content (allowing for minor variations)
-      if (trimmedLine === expectedOriginalLine || 
-          trimmedLine.includes(expectedOriginalLine) || 
-          expectedOriginalLine.includes(trimmedLine)) {
-        enhancedContent += line + '\n';
-        matchedOriginalLines++;
-        
-        // If we've matched all original lines, mark that original content has ended
-        if (matchedOriginalLines >= originalLines.length) {
-          originalContentEnded = true;
-        }
-        continue;
+      // Check for exact match or high similarity
+      if (enhancedLine === originalLine || 
+          enhancedLine.includes(originalLine) || 
+          originalLine.includes(enhancedLine) ||
+          calculateSimilarity(enhancedLine, originalLine) > 0.8) {
+        isOriginalContent = true;
+        originalIndex++;
       }
     }
     
-    // This is new/enhanced content
-    if (originalContentEnded || isEnhancedContent(trimmedLine)) {
-      if (!inEnhancedSection && trimmedLine.length > 0) {
-        enhancedContent += '\n[AI_ENHANCED]\n';
+    // If this is original content, close any enhanced section and add the line
+    if (isOriginalContent) {
+      if (inEnhancedSection) {
+        result += '[/AI_ENHANCED]\n\n';
+        inEnhancedSection = false;
+      }
+      result += enhancedLine + '\n\n';
+    } else {
+      // This is enhanced content
+      if (!inEnhancedSection && isEnhancedContent(enhancedLine)) {
+        result += '[AI_ENHANCED]\n';
         inEnhancedSection = true;
       }
-      enhancedContent += line + '\n';
-    } else {
-      // Still processing original content
-      enhancedContent += line + '\n';
+      result += enhancedLine + '\n\n';
     }
   }
   
-  // Close the enhanced section if it was opened
+  // Close any remaining enhanced section
   if (inEnhancedSection) {
-    enhancedContent += '[/AI_ENHANCED]';
+    result += '[/AI_ENHANCED]';
   }
   
-  return enhancedContent.trim();
+  return result.trim();
+}
+
+/**
+ * Calculates text similarity using a simple approach
+ */
+function calculateSimilarity(text1: string, text2: string): number {
+  const words1 = text1.toLowerCase().split(/\s+/);
+  const words2 = text2.toLowerCase().split(/\s+/);
+  
+  const commonWords = words1.filter(word => words2.includes(word));
+  const totalWords = Math.max(words1.length, words2.length);
+  
+  return commonWords.length / totalWords;
 }
 
 /**
@@ -150,45 +171,74 @@ function isEnhancedContent(line: string): boolean {
          line.includes('Understanding') ||
          line.includes('Example:') ||
          line.includes('Remember:') ||
+         line.includes('Key Point:') ||
+         line.includes('Important:') ||
+         line.includes('Note:') ||
          (line.startsWith('-') && line.length > 50); // Long bullet points are likely enhanced
 }
 
 /**
  * Fallback method to add markers to content that appears to be new
  */
-function addMarkersToNewContent(content: string): string {
+function addIntelligentMarkersToContent(content: string): string {
   const lines = content.split('\n');
   let result = '';
   let inEnhancedSection = false;
-  let foundEnhancedContent = false;
+  let hasAddedEnhancement = false;
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const trimmedLine = line.trim();
     
     // Skip empty lines at the beginning
-    if (!foundEnhancedContent && trimmedLine === '') {
+    if (!hasAddedEnhancement && trimmedLine === '') {
       result += line + '\n';
       continue;
     }
     
-    // Detect enhanced content
-    if (isEnhancedContent(trimmedLine) || 
-        (i > 0 && foundEnhancedContent && trimmedLine.length > 0)) {
-      
-      if (!inEnhancedSection) {
-        result += '\n[AI_ENHANCED]\n';
-        inEnhancedSection = true;
-      }
-      foundEnhancedContent = true;
+    // Check if this looks like original student content (informal, simple)
+    const looksLikeOriginal = isLikelyOriginalStudentContent(trimmedLine);
+    
+    // If this looks like enhanced content and we haven't started an enhanced section
+    if (!looksLikeOriginal && isEnhancedContent(trimmedLine) && !inEnhancedSection) {
+      result += '[AI_ENHANCED]\n';
+      inEnhancedSection = true;
+      hasAddedEnhancement = true;
+    }
+    
+    // If this looks like original content and we're in an enhanced section, close it
+    if (looksLikeOriginal && inEnhancedSection) {
+      result += '[/AI_ENHANCED]\n\n';
+      inEnhancedSection = false;
     }
     
     result += line + '\n';
   }
   
+  // Close any remaining enhanced section
   if (inEnhancedSection) {
     result += '[/AI_ENHANCED]';
   }
   
   return result.trim();
+}
+
+/**
+ * Identifies content that looks like original student writing
+ */
+function isLikelyOriginalStudentContent(line: string): boolean {
+  // Look for informal language patterns typical of student notes
+  const informalPatterns = [
+    /\bokay so\b/i,
+    /\byeah\b/i,
+    /\bguess\b/i,
+    /\bkinda\b/i,
+    /\bgonna\b/i,
+    /\banyway\b/i,
+    /\bstuff\b/i,
+    /\bthing\b/i,
+  ];
+  
+  return informalPatterns.some(pattern => pattern.test(line)) ||
+         (line.length < 100 && !line.includes('**') && !line.startsWith('#'));
 }
