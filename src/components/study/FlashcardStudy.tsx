@@ -28,18 +28,32 @@ export const FlashcardStudy = ({ setId, mode }: FlashcardStudyProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [direction, setDirection] = useState<"left" | "right">("right");
   const [streak, setStreak] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const { user, userProfile } = useRequireAuth();
   const isPremium = isPremiumTier(userProfile?.user_tier);
   const cardContainerRef = useRef<HTMLDivElement>(null);
+  const loadedSetId = useRef<string | null>(null);
 
   useEffect(() => {
     const loadFlashcards = async () => {
+      // Prevent loading the same set multiple times
+      if (loadedSetId.current === setId) return;
+      
       setIsLoading(true);
+      setError(null);
+      
       try {
+        console.log("Loading flashcards for set:", setId);
         const cards = await fetchFlashcardsInSet(setId);
+        console.log("Loaded flashcards:", cards);
         
-        // If we're in review mode, sort cards by next review date
-        // If we're in test mode, shuffle the cards
+        if (!cards || cards.length === 0) {
+          setError("No flashcards found in this set");
+          setFlashcards([]);
+          return;
+        }
+        
+        // Sort cards based on mode
         let sortedCards = [...cards];
         
         if (mode === "review") {
@@ -57,20 +71,23 @@ export const FlashcardStudy = ({ setId, mode }: FlashcardStudyProps) => {
         }
         
         setFlashcards(sortedCards);
+        setCurrentIndex(0);
+        setIsFlipped(false);
+        setStreak(0);
+        loadedSetId.current = setId;
       } catch (error) {
         console.error("Error loading flashcards:", error);
-        toast("Failed to load flashcards");
+        setError("Failed to load flashcards");
+        toast.error("Failed to load flashcards");
       } finally {
         setIsLoading(false);
       }
     };
     
-    loadFlashcards();
-    // Reset state when set ID or mode changes
-    setCurrentIndex(0);
-    setIsFlipped(false);
-    setStreak(0);
-  }, [setId, fetchFlashcardsInSet, mode]);
+    if (setId) {
+      loadFlashcards();
+    }
+  }, [setId, mode, fetchFlashcardsInSet]);
   
   const handleNext = () => {
     if (flashcards.length === 0) return;
@@ -101,11 +118,9 @@ export const FlashcardStudy = ({ setId, mode }: FlashcardStudyProps) => {
     
     const flashcard = flashcards[currentIndex];
     
-    // Record review with score
     try {
       await recordFlashcardReview(flashcard.id, score as 0 | 1 | 2 | 3 | 4 | 5);
       
-      // Update streak if score is good
       if (score >= 3) {
         setStreak(prev => {
           const newStreak = prev + 1;
@@ -118,11 +133,10 @@ export const FlashcardStudy = ({ setId, mode }: FlashcardStudyProps) => {
         setStreak(0);
       }
       
-      // Move to next card
       handleNext();
     } catch (error) {
       console.error("Error recording review:", error);
-      toast("Failed to save your progress");
+      toast.error("Failed to save your progress");
     }
   };
   
@@ -136,6 +150,22 @@ export const FlashcardStudy = ({ setId, mode }: FlashcardStudyProps) => {
               <Skeleton className="h-8 w-4/5" />
               <Skeleton className="h-4 w-3/5" />
               <Skeleton className="h-4 w-2/5" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
+  // Error state
+  if (error) {
+    return (
+      <div>
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <div className="min-h-[300px] flex flex-col items-center justify-center text-center">
+              <h3 className="text-lg font-semibold text-red-600">Error</h3>
+              <p className="text-muted-foreground mt-2">{error}</p>
             </div>
           </CardContent>
         </Card>

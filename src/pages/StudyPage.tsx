@@ -14,49 +14,66 @@ export type StudyMode = "learn" | "review" | "test";
 const StudyPageContent = () => {
   const { setId } = useParams<{ setId: string }>();
   const [mode, setMode] = useState<StudyMode>("learn");
-  const { fetchFlashcardSets, currentSet, setCurrentSet } = useFlashcards();
+  const { fetchFlashcardSets, currentSet, setCurrentSet, flashcardSets } = useFlashcards();
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
     const loadFlashcardSet = async () => {
+      if (!setId) return;
+      
       setIsLoading(true);
+      setError(null);
+      
       try {
-        // Load sets first
-        await fetchFlashcardSets();
+        console.log("Loading flashcard set with ID:", setId);
         
-        // Then find the current set if we have a setId
-        if (setId && currentSet?.id !== setId) {
-          const { fetchFlashcardSets: refetch } = useFlashcards();
-          
-          try {
-            const sets = await refetch();
-            if (Array.isArray(sets) && sets.length > 0) {
-              const foundSet = sets.find(s => s.id === setId);
-              if (foundSet) {
-                setCurrentSet(foundSet);
-              }
-            }
-          } catch (error) {
-            console.error("Error refetching flashcard sets:", error);
-          }
+        // First fetch all sets if not already loaded
+        let sets = flashcardSets;
+        if (!sets || sets.length === 0) {
+          console.log("Fetching flashcard sets...");
+          sets = await fetchFlashcardSets();
+        }
+        
+        // Find the specific set
+        const foundSet = sets.find(s => s.id === setId);
+        console.log("Found set:", foundSet);
+        
+        if (foundSet) {
+          setCurrentSet(foundSet);
+        } else {
+          setError("Flashcard set not found");
         }
       } catch (error) {
         console.error("Error loading flashcard set:", error);
+        setError("Failed to load flashcard set");
       } finally {
         setIsLoading(false);
       }
     };
     
     loadFlashcardSet();
-    
-    // Cleanup
-    return () => {
-      setCurrentSet(null);
-    };
-  }, [setId, fetchFlashcardSets, setCurrentSet, currentSet]);
+  }, [setId, fetchFlashcardSets, setCurrentSet, flashcardSets]);
   
   if (!setId) {
     return <Navigate to="/flashcards" />;
+  }
+  
+  if (error) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <button 
+            onClick={() => window.history.back()}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
   }
   
   return (
@@ -71,14 +88,23 @@ const StudyPageContent = () => {
           </p>
         </div>
         
-        <StudyModeSelector mode={mode} setMode={setMode} />
+        {!isLoading && <StudyModeSelector mode={mode} setMode={setMode} />}
       </div>
       
       <Separator className="mb-6" />
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="md:col-span-3">
-          <FlashcardStudy setId={setId} mode={mode} />
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p>Loading flashcards...</p>
+              </div>
+            </div>
+          ) : (
+            <FlashcardStudy setId={setId} mode={mode} />
+          )}
         </div>
         
         <div className="md:col-span-1">
