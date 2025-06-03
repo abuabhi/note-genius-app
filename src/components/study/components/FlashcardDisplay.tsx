@@ -104,9 +104,6 @@ export const FlashcardDisplay = ({
               <div className="text-sm text-muted-foreground mt-4">
                 {isFlipped ? "Click to see front" : "Click to see back"}
               </div>
-              <div className="text-xs text-muted-foreground mt-2">
-                Card {currentIndex + 1} (Position: {currentCard.position ?? 'N/A'})
-              </div>
             </CardContent>
           </Card>
         </motion.div>
