@@ -70,60 +70,75 @@ export const useRequireAuth = () => {
     if (user) {
       const fetchUserData = async () => {
         try {
+          // Add timeout to prevent hanging
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Profile fetch timeout')), 8000);
+          });
+
           // Fetch the user profile
-          const { data: profileData, error: profileError } = await supabase
+          const profilePromise = supabase
             .from('profiles')
             .select('*')
             .eq('id', user.id)
             .single();
 
-          if (profileError) {
+          const { data: profileData, error: profileError } = await Promise.race([
+            profilePromise,
+            timeoutPromise
+          ]) as any;
+
+          if (profileError && profileError.code !== 'PGRST116') {
             console.error('Error fetching user profile:', profileError);
-            throw profileError;
+            // Don't throw on profile errors, continue with default values
           }
 
-          // Fetch tier limits based on user's tier
+          // Fetch tier limits based on user's tier if profile exists
           if (profileData) {
-            const { data: tierData, error: tierError } = await supabase
-              .from('tier_limits')
-              .select('*')
-              .eq('tier', profileData.user_tier)
-              .single();
+            try {
+              const { data: tierData, error: tierError } = await supabase
+                .from('tier_limits')
+                .select('*')
+                .eq('tier', profileData.user_tier)
+                .single();
 
-            if (tierError) {
-              console.error('Error fetching tier limits:', tierError);
-            } else {
-              setTierLimits(tierData);
+              if (tierError) {
+                console.error('Error fetching tier limits:', tierError);
+              } else {
+                setTierLimits(tierData);
+              }
+
+              // Transform the profileData to match the UserProfile interface
+              const notificationPrefs = profileData.notification_preferences ? 
+                (typeof profileData.notification_preferences === 'string' 
+                  ? JSON.parse(profileData.notification_preferences)
+                  : profileData.notification_preferences) 
+                : { email: false, in_app: true, whatsapp: false };
+
+              const typedProfile: UserProfile = {
+                id: profileData.id,
+                username: profileData.username || '',
+                avatar_url: profileData.avatar_url,
+                user_tier: profileData.user_tier as UserTier,
+                do_not_disturb: profileData.do_not_disturb || false,
+                dnd_start_time: profileData.dnd_start_time,
+                dnd_end_time: profileData.dnd_end_time,
+                notification_preferences: {
+                  email: notificationPrefs.email === true,
+                  in_app: notificationPrefs.in_app !== false,
+                  whatsapp: notificationPrefs.whatsapp === true
+                },
+                created_at: profileData.created_at || '',
+                updated_at: profileData.updated_at || ''
+              };
+
+              setUserProfile(typedProfile);
+            } catch (tierError) {
+              console.error('Error fetching tier data:', tierError);
             }
-
-            // Transform the profileData to match the UserProfile interface
-            const notificationPrefs = profileData.notification_preferences ? 
-              (typeof profileData.notification_preferences === 'string' 
-                ? JSON.parse(profileData.notification_preferences)
-                : profileData.notification_preferences) 
-              : { email: false, in_app: true, whatsapp: false };
-
-            const typedProfile: UserProfile = {
-              id: profileData.id,
-              username: profileData.username || '',
-              avatar_url: profileData.avatar_url,
-              user_tier: profileData.user_tier as UserTier,
-              do_not_disturb: profileData.do_not_disturb || false,
-              dnd_start_time: profileData.dnd_start_time,
-              dnd_end_time: profileData.dnd_end_time,
-              notification_preferences: {
-                email: notificationPrefs.email === true,
-                in_app: notificationPrefs.in_app !== false,
-                whatsapp: notificationPrefs.whatsapp === true
-              },
-              created_at: profileData.created_at || '',
-              updated_at: profileData.updated_at || ''
-            };
-
-            setUserProfile(typedProfile);
           }
         } catch (error) {
           console.error('Error in useRequireAuth:', error);
+          // Continue without profile data rather than blocking the app
         } finally {
           setLoading(false);
         }

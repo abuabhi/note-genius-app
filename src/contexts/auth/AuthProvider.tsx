@@ -31,22 +31,56 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   });
   
   useEffect(() => {
+    let mounted = true;
+    
     // Set up the session listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_, session) => {
+        if (!mounted) return;
         setSession(session);
         setUser(session?.user ?? null);
       }
     );
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    // Get initial session with timeout and error handling
+    const getInitialSession = async () => {
+      try {
+        // Add timeout to prevent infinite hanging
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Session check timeout')), 10000);
+        });
+        
+        const sessionPromise = supabase.auth.getSession();
+        
+        const { data: { session }, error } = await Promise.race([
+          sessionPromise,
+          timeoutPromise
+        ]) as any;
+        
+        if (error) {
+          console.error('Error getting session:', error);
+        }
+        
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Failed to get initial session:', error);
+        if (mounted) {
+          // On error, assume no session and continue
+          setSession(null);
+          setUser(null);
+          setLoading(false);
+        }
+      }
+    };
+
+    getInitialSession();
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
