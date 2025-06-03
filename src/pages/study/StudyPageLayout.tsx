@@ -1,6 +1,6 @@
 
-import { FlashcardStudy } from "@/components/study/FlashcardStudy";
-import { StudyProgress } from "@/components/study/StudyProgress";
+import { SimpleFlashcardStudy } from "@/components/study/SimpleFlashcardStudy";
+import { StandaloneStudyProgress } from "@/components/study/StandaloneStudyProgress";
 import { StudyMode } from "./types";
 
 interface StudyPageLayoutProps {
@@ -25,12 +25,12 @@ export const StudyPageLayout = ({
             </div>
           </div>
         ) : (
-          <FlashcardStudy setId={setId} mode={mode} />
+          <SimpleFlashcardStudy setId={setId} mode={mode} />
         )}
       </div>
       
       <div className="md:col-span-1">
-        <StudyProgress />
+        <StandaloneStudyProgress />
       </div>
     </div>
   );
