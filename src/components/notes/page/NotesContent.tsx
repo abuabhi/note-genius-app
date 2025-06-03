@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useNotes } from "@/contexts/NoteContext";
 import { useRequireAuth, TierLimits, UserTier } from "@/hooks/useRequireAuth";
 import { Note } from "@/types/note";
-import { TierInfo } from "./TierInfo";
+import { EnhancedTierInfo } from "./EnhancedTierInfo";
+import { NotesPageBreadcrumb } from "./NotesPageBreadcrumb";
 import { NotesHeader } from "./NotesHeader";
 import { SubjectsSection } from "./SubjectsSection";
 import { NotesDisplay } from "./NotesDisplay";
@@ -41,9 +42,12 @@ export const NotesContent = ({
 
   return (
     <div className="container mx-auto p-6">
-      {/* Tier Information Section */}
+      {/* Breadcrumb Navigation */}
+      <NotesPageBreadcrumb activeSubjectId={activeSubjectId} />
+      
+      {/* Enhanced Tier Information Section */}
       {userTier && tierLimits && (
-        <TierInfo 
+        <EnhancedTierInfo 
           userTier={userTier}
           tierLimits={tierLimits}
           notesCount={notes.length}
