@@ -27,7 +27,7 @@ export const StudyPageHeader = ({
         </p>
       </div>
       
-      {!isLoading && <SimplifiedStudyModeSelector mode={mode} setMode={setMode} />}
+      {!isLoading && <SimplifiedStudyModeSelector currentMode={mode} onModeChange={setMode} />}
     </div>
   );
 };
