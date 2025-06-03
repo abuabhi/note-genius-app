@@ -1,8 +1,9 @@
 
 import { motion } from "framer-motion";
-import { Trophy, Clock, Target, TrendingUp, Award, RotateCcw } from "lucide-react";
+import { Trophy, Clock, Target, TrendingUp, Award, RotateCcw, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 
 interface QuizResultsProps {
   totalCards: number;
@@ -25,6 +26,7 @@ export const QuizResults = ({
   onRestart,
   onBackToSets
 }: QuizResultsProps) => {
+  const navigate = useNavigate();
   const percentage = Math.round((correctAnswers / totalCards) * 100);
   const incorrectAnswers = totalCards - correctAnswers;
   
@@ -145,6 +147,16 @@ export const QuizResults = ({
           >
             <RotateCcw className="h-5 w-5" />
             Take Quiz Again
+          </Button>
+          
+          <Button
+            onClick={() => navigate('/quiz/history')}
+            variant="outline"
+            size="lg"
+            className="flex items-center gap-2 border-mint-200 text-mint-700 hover:bg-mint-50"
+          >
+            <History className="h-5 w-5" />
+            View History
           </Button>
           
           <Button
