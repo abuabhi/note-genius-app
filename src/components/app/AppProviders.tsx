@@ -5,6 +5,7 @@ import { queryClient } from '@/queryClient';
 import { NavigationProvider } from '@/contexts/NavigationContext';
 import { NoteProvider } from '@/contexts/NoteContext';
 import { FeatureProvider } from '@/contexts/FeatureContext';
+import { FlashcardProvider } from '@/contexts/FlashcardContext';
 
 interface AppProvidersProps {
   children: ReactNode;
@@ -16,7 +17,9 @@ export const AppProviders = ({ children }: AppProvidersProps) => {
       <NavigationProvider>
         <NoteProvider>
           <FeatureProvider>
-            {children}
+            <FlashcardProvider>
+              {children}
+            </FlashcardProvider>
           </FeatureProvider>
         </NoteProvider>
       </NavigationProvider>

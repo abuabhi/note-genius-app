@@ -1,6 +1,5 @@
 
 import Layout from "@/components/layout/Layout";
-import { FlashcardProvider } from "@/contexts/FlashcardContext";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { StudyPageContent } from "./study/StudyPageContent";
 
@@ -12,9 +11,7 @@ const StudyPage = () => {
   
   return (
     <Layout>
-      <FlashcardProvider>
-        <StudyPageContent />
-      </FlashcardProvider>
+      <StudyPageContent />
     </Layout>
   );
 };

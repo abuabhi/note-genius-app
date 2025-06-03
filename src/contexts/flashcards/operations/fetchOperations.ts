@@ -11,19 +11,34 @@ import { convertToFlashcardSet } from '../utils/flashcardSetMappers';
 export const fetchFlashcardSets = async (state: FlashcardState): Promise<FlashcardSet[]> => {
   const { user, setLoading, setFlashcardSets } = state;
   
-  if (!user) return [];
+  if (!user) {
+    console.log('No user found, returning empty sets array');
+    return [];
+  }
   
   try {
+    console.log('Starting to fetch flashcard sets for user:', user.id);
     setLoading(prev => ({ ...prev, sets: true }));
     
-    // Remove the invalid join with subject_categories since there's no FK relationship
+    // Fetch flashcard sets
     const { data, error } = await supabase
       .from('flashcard_sets')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching flashcard sets:', error);
+      throw error;
+    }
+    
+    console.log('Fetched flashcard sets data:', data);
+    
+    if (!data || data.length === 0) {
+      console.log('No flashcard sets found for user');
+      setFlashcardSets([]);
+      return [];
+    }
     
     // Get card counts for each set
     const setsWithCardCounts = await Promise.all(
@@ -33,22 +48,28 @@ export const fetchFlashcardSets = async (state: FlashcardState): Promise<Flashca
           .select('*', { count: 'exact', head: true })
           .eq('set_id', set.id);
         
+        if (countError) {
+          console.error('Error getting card count for set', set.id, ':', countError);
+        }
+        
         // Convert to proper type and add card count
         const formattedSet = convertToFlashcardSet({
           ...set,
           card_count: countError ? 0 : count || 0
         });
         
+        console.log('Formatted set with card count:', formattedSet);
         return formattedSet;
       })
     );
     
-    console.log('Fetched flashcard sets with counts:', setsWithCardCounts);
+    console.log('Final flashcard sets with counts:', setsWithCardCounts);
     setFlashcardSets(setsWithCardCounts);
     return setsWithCardCounts;
   } catch (error) {
     console.error('Error fetching flashcard sets:', error);
     toast.error('Failed to load flashcard sets');
+    setFlashcardSets([]);
     return [];
   } finally {
     setLoading(prev => ({ ...prev, sets: false }));

@@ -10,23 +10,36 @@ import { FlashcardSet } from "@/types/flashcard";
 const FlashcardSetsList = () => {
   const { flashcardSets, loading, fetchFlashcardSets, deleteFlashcardSet } = useFlashcards();
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [hasFetched, setHasFetched] = useState(false);
   
   useEffect(() => {
-    console.log('FlashcardSetsList mounting, fetching sets...');
-    fetchFlashcardSets();
-  }, []); // Empty dependency array to prevent infinite loop
+    if (!hasFetched) {
+      console.log('FlashcardSetsList mounting, fetching sets...');
+      fetchFlashcardSets().then(() => {
+        setHasFetched(true);
+        console.log('Initial fetch completed');
+      }).catch((error) => {
+        console.error('Error during initial fetch:', error);
+        setHasFetched(true);
+      });
+    }
+  }, [fetchFlashcardSets, hasFetched]);
   
   const handleDeleteSet = async (setId: string) => {
     setIsDeleting(setId);
     try {
       await deleteFlashcardSet(setId);
+      console.log('Set deleted successfully:', setId);
+    } catch (error) {
+      console.error('Error deleting set:', error);
     } finally {
       setIsDeleting(null);
     }
   };
   
   // Loading state
-  if (loading?.sets) {
+  if (loading?.sets || !hasFetched) {
+    console.log('Showing loading state, loading:', loading?.sets, 'hasFetched:', hasFetched);
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[1, 2, 3].map((i) => (
@@ -48,7 +61,10 @@ const FlashcardSetsList = () => {
     );
   }
   
+  console.log('Current flashcardSets:', flashcardSets);
+  
   if (!flashcardSets || flashcardSets.length === 0) {
+    console.log('No flashcard sets found, showing empty state');
     return (
       <div className="text-center py-8">
         <p className="text-muted-foreground mb-4">You don't have any flashcard sets yet.</p>
@@ -56,6 +72,8 @@ const FlashcardSetsList = () => {
       </div>
     );
   }
+  
+  console.log('Rendering flashcard sets:', flashcardSets.length);
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
