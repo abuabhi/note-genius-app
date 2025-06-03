@@ -41,7 +41,7 @@ export const callOpenAI = async (prompt: string, apiKey: string): Promise<{ enha
     
     // Post-processing: Ensure improve-clarity responses have proper markers
     if (prompt.includes('improve-clarity') || prompt.includes('CRITICAL MARKING REQUIREMENT')) {
-      enhancedContent = ensureEnhancementMarkers(enhancedContent);
+      enhancedContent = ensureEnhancementMarkers(enhancedContent, prompt);
     }
 
     console.log('OpenAI API response received');
@@ -66,52 +66,129 @@ export const callOpenAI = async (prompt: string, apiKey: string): Promise<{ enha
  * Ensures that improved content has proper enhancement markers
  * This is a fallback in case the AI doesn't follow the marking instructions
  */
-function ensureEnhancementMarkers(content: string): string {
+function ensureEnhancementMarkers(content: string, originalPrompt: string): string {
   // If content already has markers, return as-is
   if (content.includes('[AI_ENHANCED]') && content.includes('[/AI_ENHANCED]')) {
+    console.log('Content already has enhancement markers');
     return content;
   }
   
-  // Split content into lines to identify original vs enhanced content
-  const lines = content.split('\n');
-  let processedContent = '';
-  let inEnhancedSection = false;
-  let originalContentEnded = false;
+  console.log('Content missing enhancement markers, adding post-processing...');
   
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
+  // Extract original content from the prompt to identify what's new
+  const originalContentMatch = originalPrompt.match(/The following is a note titled[^:]*:\s*(.*?)\s*$/s);
+  if (!originalContentMatch) {
+    console.log('Could not extract original content, wrapping all new content');
+    return addMarkersToNewContent(content);
+  }
+  
+  const originalContent = originalContentMatch[1].trim();
+  
+  // Find where original content ends and new content begins
+  const originalLines = originalContent.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+  const contentLines = content.split('\n');
+  
+  let enhancedContent = '';
+  let originalContentEnded = false;
+  let inEnhancedSection = false;
+  let matchedOriginalLines = 0;
+  
+  for (let i = 0; i < contentLines.length; i++) {
+    const line = contentLines[i];
+    const trimmedLine = line.trim();
     
-    // Detect if we're starting enhanced content (headers, detailed explanations, etc.)
-    const isEnhancedContent = line.startsWith('##') || 
-                             line.startsWith('###') ||
-                             (line.startsWith('**') && line.includes('**')) ||
-                             line.includes('Study Tip') ||
-                             line.includes('Real-World') ||
-                             line.includes('Applications') ||
-                             line.includes('Understanding') ||
-                             (originalContentEnded && line.length > 50);
-    
-    // If this looks like original content and we haven't marked it as ended
-    if (!originalContentEnded && !isEnhancedContent && line.length > 0 && line.length < 200) {
-      processedContent += lines[i] + '\n';
-      // Mark that original content has ended after the first substantial paragraph
-      if (i > 0 && lines[i + 1] && lines[i + 1].trim() === '') {
-        originalContentEnded = true;
+    // Check if this line matches original content
+    if (!originalContentEnded && matchedOriginalLines < originalLines.length) {
+      const expectedOriginalLine = originalLines[matchedOriginalLines];
+      
+      // If line matches original content (allowing for minor variations)
+      if (trimmedLine === expectedOriginalLine || 
+          trimmedLine.includes(expectedOriginalLine) || 
+          expectedOriginalLine.includes(trimmedLine)) {
+        enhancedContent += line + '\n';
+        matchedOriginalLines++;
+        
+        // If we've matched all original lines, mark that original content has ended
+        if (matchedOriginalLines >= originalLines.length) {
+          originalContentEnded = true;
+        }
+        continue;
       }
-    } else {
-      // This is enhanced content
-      if (!inEnhancedSection && isEnhancedContent) {
-        processedContent += '\n[AI_ENHANCED]\n';
+    }
+    
+    // This is new/enhanced content
+    if (originalContentEnded || isEnhancedContent(trimmedLine)) {
+      if (!inEnhancedSection && trimmedLine.length > 0) {
+        enhancedContent += '\n[AI_ENHANCED]\n';
         inEnhancedSection = true;
       }
-      processedContent += lines[i] + '\n';
+      enhancedContent += line + '\n';
+    } else {
+      // Still processing original content
+      enhancedContent += line + '\n';
     }
   }
   
   // Close the enhanced section if it was opened
   if (inEnhancedSection) {
-    processedContent += '[/AI_ENHANCED]';
+    enhancedContent += '[/AI_ENHANCED]';
   }
   
-  return processedContent.trim();
+  return enhancedContent.trim();
+}
+
+/**
+ * Identifies if a line looks like enhanced content
+ */
+function isEnhancedContent(line: string): boolean {
+  return line.startsWith('##') || 
+         line.startsWith('###') ||
+         line.startsWith('**') ||
+         line.includes('Study Tip') ||
+         line.includes('Real-World') ||
+         line.includes('Applications') ||
+         line.includes('Understanding') ||
+         line.includes('Example:') ||
+         line.includes('Remember:') ||
+         (line.startsWith('-') && line.length > 50); // Long bullet points are likely enhanced
+}
+
+/**
+ * Fallback method to add markers to content that appears to be new
+ */
+function addMarkersToNewContent(content: string): string {
+  const lines = content.split('\n');
+  let result = '';
+  let inEnhancedSection = false;
+  let foundEnhancedContent = false;
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmedLine = line.trim();
+    
+    // Skip empty lines at the beginning
+    if (!foundEnhancedContent && trimmedLine === '') {
+      result += line + '\n';
+      continue;
+    }
+    
+    // Detect enhanced content
+    if (isEnhancedContent(trimmedLine) || 
+        (i > 0 && foundEnhancedContent && trimmedLine.length > 0)) {
+      
+      if (!inEnhancedSection) {
+        result += '\n[AI_ENHANCED]\n';
+        inEnhancedSection = true;
+      }
+      foundEnhancedContent = true;
+    }
+    
+    result += line + '\n';
+  }
+  
+  if (inEnhancedSection) {
+    result += '[/AI_ENHANCED]';
+  }
+  
+  return result.trim();
 }

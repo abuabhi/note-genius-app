@@ -52,54 +52,67 @@ Create multiple bullet points exactly like the example above.
 
     case 'improve-clarity':
       return `${baseContext}
-You are an educational AI assistant helping students understand complex topics better. Your task is to significantly enhance this note by expanding concepts, adding explanations, and providing educational value.
+You are an educational AI assistant helping students understand complex topics better. Your task is to enhance this note by expanding it by 30-50% with additional explanations, examples, and educational content.
 
-CRITICAL MARKING REQUIREMENT:
-- You MUST wrap ALL newly added content with [AI_ENHANCED]...[/AI_ENHANCED] markers
-- Keep original content unchanged and unmarked
-- This is ESSENTIAL for the UI to highlight what was added by AI
+CRITICAL MARKING REQUIREMENT - THIS IS ABSOLUTELY ESSENTIAL:
+- You MUST keep ALL original content exactly as written, unmarked
+- You MUST wrap ONLY newly added content with [AI_ENHANCED]...[/AI_ENHANCED] markers
+- Original content should flow naturally with new content
+- This marking is ESSENTIAL for the UI to highlight what was added by AI
 
-ENHANCEMENT REQUIREMENTS:
-1. **Expand Key Concepts**: For each important concept, provide detailed explanations in simple terms
-2. **Add Real-World Examples**: Include practical examples and applications where relevant
-3. **Educational Structure**: Organize content with clear headings, bullet points, and logical flow
-4. **Memory Aids**: Add mnemonics, analogies, or study tips where helpful
-5. **Cross-References**: Connect concepts to related topics when applicable
+EXPANSION REQUIREMENTS:
+1. **Expand by 30-50%**: Add educational content that increases the total length by 30-50%
+2. **Add Detailed Explanations**: For each important concept, provide deeper explanations
+3. **Include Real-World Examples**: Add practical examples and applications where relevant
+4. **Educational Structure**: Organize additional content with clear headings and formatting
+5. **Memory Aids**: Add mnemonics, analogies, or study tips where helpful
+6. **Cross-References**: Connect concepts to related topics when applicable
 
 FORMATTING REQUIREMENTS:
-- Use ## for main section headings
-- Use **bold** for key terms and concepts
-- Use bullet points (-) for lists and key points
+- Use ## for new section headings (mark these as enhanced)
+- Use **bold** for key terms in new content (mark as enhanced)
+- Use bullet points (-) for new lists (mark as enhanced)
 - Ensure proper paragraph spacing
-- Include brief explanations for technical terms
+- Include brief explanations for technical terms in new content
 
-EXAMPLE ENHANCEMENT PATTERN:
-Original: "Mitosis is cell division."
-Enhanced: "Mitosis is cell division.
+EXAMPLE OF CORRECT MARKING:
+Original: "Photosynthesis is the process by which plants make food."
+
+Enhanced Output:
+"Photosynthesis is the process by which plants make food.
 
 [AI_ENHANCED]
-## Understanding Mitosis in Detail
+## Understanding Photosynthesis in Detail
 
-**Mitosis** is a fundamental biological process where a single cell divides to produce two identical daughter cells, each containing the same genetic information as the parent cell.
+**Photosynthesis** is a complex biological process that occurs in two main stages:
 
-### Key Stages of Mitosis:
-- **Prophase**: Chromosomes condense and become visible
-- **Metaphase**: Chromosomes align at the cell's center
-- **Anaphase**: Chromosomes separate and move apart
-- **Telophase**: Two new nuclei form
+### The Light-Dependent Reactions:
+- **Chlorophyll** captures sunlight energy in the chloroplasts
+- Water molecules are split, releasing oxygen as a byproduct
+- Energy is stored in molecules called ATP and NADPH
+
+### The Calvin Cycle (Light-Independent Reactions):
+- Carbon dioxide from the air is "fixed" into organic molecules
+- ATP and NADPH from the first stage provide energy
+- Glucose is produced as the final product
 
 ### Real-World Applications:
-- **Growth**: How organisms grow from single cells to complex multicellular beings
-- **Healing**: How your body repairs cuts and wounds
-- **Medical Research**: Understanding cancer (uncontrolled mitosis)
+- **Agriculture**: Understanding photosynthesis helps farmers optimize crop growth
+- **Environmental Science**: Photosynthesis is crucial for Earth's oxygen supply
+- **Renewable Energy**: Scientists study photosynthesis to improve solar panel efficiency
 
 ### Study Tip: 
-Remember PMAT (Prophase, Metaphase, Anaphase, Telophase) - "Please Make Another Test"
+Remember "6CO₂ + 6H₂O + light energy → C₆H₁₂O₆ + 6O₂" - this equation shows the inputs and outputs of photosynthesis.
 [/AI_ENHANCED]"
 
-MANDATORY: Your enhanced version should be 2-3x longer than the original, packed with educational value while maintaining accuracy. Always preserve the original content exactly as written and only add new educational content within the [AI_ENHANCED]...[/AI_ENHANCED] markers.
+MANDATORY REQUIREMENTS:
+1. Keep original content exactly as written and unmarked
+2. Expand total content by 30-50% with educational additions
+3. Wrap ALL new content with [AI_ENHANCED]...[/AI_ENHANCED] markers
+4. Make additions educational and valuable for student learning
+5. Ensure smooth flow between original and enhanced content
 
-DOUBLE-CHECK: Ensure every piece of new content you add is wrapped with the markers!
+DOUBLE-CHECK: Every piece of new content must be wrapped with the markers!
 `;
 
     case 'convert-to-markdown':
