@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Sparkles } from "lucide-react";
+import { ChevronDown, Sparkles, Loader2 } from "lucide-react";
 import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
 import { Note } from "@/types/note";
 import { EnhancementFunction } from "@/hooks/noteEnrichment/types";
@@ -39,10 +39,21 @@ export const StudyViewEnhancementDropdown = ({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" disabled={isProcessing} className="bg-mint-50 border-mint-200 text-mint-700 hover:bg-mint-100 hover:text-mint-800">
-          <Sparkles className="mr-2 h-4 w-4 text-mint-600" />
+        <Button 
+          variant="outline" 
+          size="sm" 
+          disabled={isProcessing} 
+          className={`bg-mint-50 border-mint-200 text-mint-700 hover:bg-mint-100 hover:text-mint-800 ${
+            isProcessing ? 'animate-pulse' : ''
+          }`}
+        >
+          {isProcessing ? (
+            <Loader2 className="mr-2 h-4 w-4 text-mint-600 animate-spin" />
+          ) : (
+            <Sparkles className="mr-2 h-4 w-4 text-mint-600" />
+          )}
           {isProcessing ? "Enhancing..." : "Use AI"}
-          <ChevronDown className="ml-2 h-4 w-4 text-mint-600" />
+          {!isProcessing && <ChevronDown className="ml-2 h-4 w-4 text-mint-600" />}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
