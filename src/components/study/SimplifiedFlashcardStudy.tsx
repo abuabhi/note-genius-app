@@ -1,4 +1,3 @@
-
 import { StudyMode } from "@/pages/study/types";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useSimplifiedFlashcardStudy } from "@/hooks/useSimplifiedFlashcardStudy";
@@ -213,10 +212,10 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
             className="cursor-pointer"
             onClick={handleFlip}
           >
-            <Card className="min-h-[400px] shadow-lg hover:shadow-xl transition-shadow duration-200 bg-white border-mint-100">
-              <CardContent className="p-8 flex flex-col items-center justify-center h-full">
-                <div className="text-center space-y-6 max-w-xl">
-                  <div className="text-lg md:text-xl leading-relaxed text-mint-800">
+            <Card className="min-h-[400px] shadow-md hover:shadow-lg transition-shadow duration-200 bg-white border-mint-100">
+              <CardContent className="p-8 h-full min-h-[400px] flex items-center justify-center">
+                <div className="text-center max-w-2xl w-full">
+                  <div className="text-lg md:text-xl leading-relaxed text-mint-800 mb-6">
                     {isFlipped ? currentCard.back_content : currentCard.front_content}
                   </div>
                   <div className="flex items-center justify-center gap-2 text-muted-foreground">
