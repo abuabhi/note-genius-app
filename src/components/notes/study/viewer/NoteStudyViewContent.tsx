@@ -15,7 +15,7 @@ interface NoteStudyViewContentProps {
   fontSize: number;
   textAlign: TextAlignType;
   editableContent: string;
-  selectedTags: string[];
+  selectedTags: { id?: string; name: string; color: string }[];
   availableTags: { id: string; name: string; color: string }[];
   isSaving: boolean;
   statsLoading: boolean;
@@ -25,7 +25,7 @@ interface NoteStudyViewContentProps {
   handleSaveContent: () => Promise<void>;
   toggleEditing: () => void;
   handleEnhanceContent: (enhancementType: string) => Promise<void>;
-  setSelectedTags: (tags: string[]) => void;
+  setSelectedTags: (tags: { id?: string; name: string; color: string }[]) => void;
   handleRetryEnhancement: (enhancementType: string) => Promise<void>;
   hasReachedLimit: boolean;
   fetchUsageStats: () => Promise<void>;
