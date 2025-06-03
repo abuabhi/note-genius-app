@@ -12,14 +12,33 @@ import { useAchievements } from "@/hooks/useAchievements";
 export const StudyProgress = () => {
   const { currentSet } = useFlashcards();
   const { user } = useAuth();
+  
+  // Early return if no user to prevent hook issues
+  if (!user) {
+    return (
+      <div className="space-y-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Study Progress</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-4">
+              <p className="text-muted-foreground">Please log in to view progress</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   const { streak, loading: streakLoading } = useStreakCalculation();
   const { stats, isLoading: statsLoading } = useProgressStats();
   const { achievements, loading: achievementsLoading, checkAndAwardAchievements } = useAchievements();
 
   // Check for new achievements when component loads or stats change
   useEffect(() => {
-    if (user && !statsLoading) {
-      checkAndAwardAchievements();
+    if (user && !statsLoading && checkAndAwardAchievements) {
+      checkAndAwardAchievements().catch(console.error);
     }
   }, [user, statsLoading, checkAndAwardAchievements]);
 
@@ -47,7 +66,7 @@ export const StudyProgress = () => {
     Math.min(100, (stats.totalCardsMastered / currentSet.card_count) * 100) : 0;
 
   // Get recent achievements for display (last 3)
-  const recentAchievements = achievements.slice(0, 3);
+  const recentAchievements = achievements?.slice(0, 3) || [];
   
   return (
     <div className="space-y-4">
@@ -58,7 +77,7 @@ export const StudyProgress = () => {
         <CardContent>
           <div className="flex items-center">
             <Zap className="h-5 w-5 mr-2 text-yellow-500" />
-            <span className="text-2xl font-bold">{streak} days</span>
+            <span className="text-2xl font-bold">{streak || 0} days</span>
           </div>
         </CardContent>
       </Card>
@@ -73,14 +92,14 @@ export const StudyProgress = () => {
               <Target className="h-4 w-4 text-blue-500" />
               <span className="text-sm">Cards Reviewed</span>
             </div>
-            <span className="font-semibold">{stats.cardsReviewedToday}</span>
+            <span className="font-semibold">{stats?.cardsReviewedToday || 0}</span>
           </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-green-500" />
               <span className="text-sm">Study Time</span>
             </div>
-            <span className="font-semibold">{stats.studyTimeHours}h</span>
+            <span className="font-semibold">{stats?.studyTimeHours || 0}h</span>
           </div>
         </CardContent>
       </Card>
@@ -93,17 +112,17 @@ export const StudyProgress = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm">Cards Mastered</span>
-              <span className="font-semibold">{stats.totalCardsMastered}</span>
+              <span className="font-semibold">{stats?.totalCardsMastered || 0}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm">Total Reviewed</span>
-              <span className="font-semibold">{stats.totalCardsReviewed}</span>
+              <span className="font-semibold">{stats?.totalCardsReviewed || 0}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm">Accuracy</span>
-              <span className="font-semibold">{stats.flashcardAccuracy}%</span>
+              <span className="font-semibold">{stats?.flashcardAccuracy || 0}%</span>
             </div>
-            {stats.flashcardAccuracy > 0 && (
+            {stats?.flashcardAccuracy && stats.flashcardAccuracy > 0 && (
               <Progress value={stats.flashcardAccuracy} className="h-2" />
             )}
           </div>
