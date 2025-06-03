@@ -1,3 +1,4 @@
+
 import { StudyMode } from "@/pages/study/types";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useSimplifiedFlashcardStudy } from "@/hooks/useSimplifiedFlashcardStudy";
@@ -12,48 +13,6 @@ interface SimplifiedFlashcardStudyProps {
   mode: StudyMode;
   currentSet?: any;
 }
-
-const CircularProgress = ({ value, size = 100, strokeWidth = 6 }: { value: number; size?: number; strokeWidth?: number }) => {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = radius * 2 * Math.PI;
-  const strokeDasharray = circumference;
-  const strokeDashoffset = circumference - (value / 100) * circumference;
-
-  return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg
-        className="transform -rotate-90"
-        width={size}
-        height={size}
-      >
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="currentColor"
-          strokeWidth={strokeWidth}
-          fill="transparent"
-          className="text-mint-100"
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="currentColor"
-          strokeWidth={strokeWidth}
-          fill="transparent"
-          strokeDasharray={strokeDasharray}
-          strokeDashoffset={strokeDashoffset}
-          className="text-mint-500 transition-all duration-300 ease-in-out"
-          strokeLinecap="round"
-        />
-      </svg>
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-sm font-semibold text-mint-700">{Math.round(value)}%</span>
-      </div>
-    </div>
-  );
-};
 
 export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: SimplifiedFlashcardStudyProps) => {
   const { userProfile } = useRequireAuth();
@@ -175,29 +134,18 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Progress Header */}
-      <div className="space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <CircularProgress value={progressPercent} />
-            <div className="space-y-1">
-              <h2 className="text-xl font-semibold text-mint-800">
-                Card {currentIndex + 1} of {totalCards}
-              </h2>
-              <div className="flex items-center gap-3 text-sm">
-                <div className="flex items-center gap-1 px-2 py-1 bg-mint-50 rounded-full">
-                  <Target className="h-3 w-3 text-mint-500" />
-                  <span className="font-medium text-mint-700">{studiedToday} studied today</span>
-                </div>
-                <div className="flex items-center gap-1 px-2 py-1 bg-mint-50 rounded-full">
-                  <CheckCircle className="h-3 w-3 text-mint-500" />
-                  <span className="font-medium text-mint-700">{masteredCount} mastered</span>
-                </div>
-              </div>
-            </div>
+      {/* Simplified Progress Header */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            Card {currentIndex + 1} of {totalCards}
+          </div>
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <span>{studiedToday} studied today</span>
+            <span>{masteredCount} mastered</span>
           </div>
         </div>
-        <Progress value={progressPercent} className="h-2 bg-mint-100" indicatorClassName="bg-mint-500" />
+        <Progress value={progressPercent} className="h-2" />
       </div>
 
       {/* Flashcard */}
