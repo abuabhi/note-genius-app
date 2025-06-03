@@ -10,31 +10,23 @@ import { FlashcardSet } from "@/types/flashcard";
 const FlashcardSetsList = () => {
   const { flashcardSets, loading, fetchFlashcardSets, deleteFlashcardSet } = useFlashcards();
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
-  const [hasFetched, setHasFetched] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   
   useEffect(() => {
-    const loadInitialData = async () => {
-      if (!hasFetched) {
-        console.log('FlashcardSetsList mounting, fetching sets...');
-        try {
-          await fetchFlashcardSets();
-          setHasFetched(true);
-          console.log('Initial fetch completed');
-        } catch (error) {
-          console.error('Error during initial fetch:', error);
-          setHasFetched(true);
-        } finally {
-          // Add a small delay to prevent flickering
-          setTimeout(() => {
-            setIsInitialLoad(false);
-          }, 100);
-        }
+    const loadFlashcardSets = async () => {
+      try {
+        console.log('FlashcardSetsList: Starting to fetch flashcard sets...');
+        await fetchFlashcardSets();
+        console.log('FlashcardSetsList: Fetch completed');
+      } catch (error) {
+        console.error('FlashcardSetsList: Error fetching sets:', error);
+      } finally {
+        setIsInitialLoading(false);
       }
     };
     
-    loadInitialData();
-  }, [fetchFlashcardSets, hasFetched]);
+    loadFlashcardSets();
+  }, [fetchFlashcardSets]);
   
   const handleDeleteSet = async (setId: string) => {
     setIsDeleting(setId);
@@ -48,9 +40,9 @@ const FlashcardSetsList = () => {
     }
   };
   
-  // Show skeleton loading for initial load or when explicitly loading
-  if (isInitialLoad || (loading?.sets && !hasFetched)) {
-    console.log('Showing loading state, isInitialLoad:', isInitialLoad, 'loading:', loading?.sets, 'hasFetched:', hasFetched);
+  // Show loading state only during initial load
+  if (isInitialLoading || loading?.sets) {
+    console.log('FlashcardSetsList: Showing loading state');
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[1, 2, 3].map((i) => (
@@ -72,11 +64,11 @@ const FlashcardSetsList = () => {
     );
   }
   
-  console.log('Current flashcardSets:', flashcardSets);
+  console.log('FlashcardSetsList: Current flashcardSets:', flashcardSets);
   
-  // Show empty state only after we've confirmed no sets exist
-  if (hasFetched && (!flashcardSets || flashcardSets.length === 0)) {
-    console.log('No flashcard sets found, showing empty state');
+  // Show empty state only after loading is complete and no sets exist
+  if (!flashcardSets || flashcardSets.length === 0) {
+    console.log('FlashcardSetsList: No flashcard sets found, showing empty state');
     return (
       <div className="text-center py-8">
         <p className="text-muted-foreground mb-4">You don't have any flashcard sets yet.</p>
@@ -85,7 +77,7 @@ const FlashcardSetsList = () => {
     );
   }
   
-  console.log('Rendering flashcard sets:', flashcardSets.length);
+  console.log('FlashcardSetsList: Rendering flashcard sets:', flashcardSets.length);
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

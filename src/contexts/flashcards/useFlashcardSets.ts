@@ -20,12 +20,13 @@ export const useFlashcardSets = (state: FlashcardState) => {
   const deleteFlashcardSet = (id) => deleteSet(state, id);
   const fetchCategories = () => fetchCats(state);
   
-  // Properly implement fetchFlashcardsInSet method
+  // Enhanced fetchFlashcardsInSet method with better position ordering
   const fetchFlashcardsInSet = async (setId: string): Promise<Flashcard[]> => {
     try {
-      console.log("Fetching flashcards for set:", setId);
+      console.log("useFlashcardSets: Fetching flashcards for set:", setId);
       
       // Query the flashcard_set_cards junction table to get flashcards in this set
+      // Order by position first, then by created_at as fallback
       const { data: setCards, error: setCardsError } = await supabase
         .from('flashcard_set_cards')
         .select(`
@@ -45,15 +46,16 @@ export const useFlashcardSets = (state: FlashcardState) => {
           )
         `)
         .eq('set_id', setId)
-        .order('position');
+        .order('position', { ascending: true })
+        .order('created_at', { ascending: true });
 
       if (setCardsError) {
-        console.error("Error fetching flashcards in set:", setCardsError);
+        console.error("useFlashcardSets: Error fetching flashcards in set:", setCardsError);
         throw setCardsError;
       }
 
       if (!setCards || setCards.length === 0) {
-        console.log("No flashcards found in set:", setId);
+        console.log("useFlashcardSets: No flashcards found in set:", setId);
         return [];
       }
 
@@ -81,11 +83,16 @@ export const useFlashcardSets = (state: FlashcardState) => {
           };
         });
 
-      console.log("Fetched flashcards:", flashcards);
+      console.log("useFlashcardSets: Fetched flashcards with positions:", flashcards.map(f => ({
+        id: f.id.slice(0, 8),
+        front: f.front_content?.slice(0, 20) + '...',
+        position: f.position
+      })));
+      
       return flashcards;
       
     } catch (error) {
-      console.error("Error in fetchFlashcardsInSet:", error);
+      console.error("useFlashcardSets: Error in fetchFlashcardsInSet:", error);
       throw error;
     }
   };

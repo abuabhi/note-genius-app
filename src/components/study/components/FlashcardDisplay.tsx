@@ -1,5 +1,5 @@
 
-import { useRef } from "react";
+import { useRef, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Flashcard } from "@/types/flashcard";
@@ -23,19 +23,31 @@ export const FlashcardDisplay = ({
 }: FlashcardDisplayProps) => {
   const cardContainerRef = useRef<HTMLDivElement>(null);
   
-  // Add debugging logs
-  console.log("FlashcardDisplay - Rendering with:", {
-    cardId: currentCard?.id,
-    currentIndex,
-    isFlipped,
-    forceUpdate,
-    frontContent: currentCard?.front_content || currentCard?.front,
-    backContent: currentCard?.back_content || currentCard?.back
-  });
+  // Use useCallback to ensure stable references for content
+  const getCardContent = useCallback(() => {
+    if (!currentCard) {
+      console.error("FlashcardDisplay: No current card provided");
+      return { front: "No card data", back: "No card data" };
+    }
+    
+    const frontContent = currentCard?.front_content || currentCard?.front;
+    const backContent = currentCard?.back_content || currentCard?.back;
+    
+    console.log("FlashcardDisplay: Card content:", {
+      cardId: currentCard.id,
+      currentIndex,
+      isFlipped,
+      frontContent,
+      backContent,
+      position: currentCard.position
+    });
+    
+    return { front: frontContent, back: backContent };
+  }, [currentCard, currentIndex, isFlipped]);
 
   // Safety check - if no current card, show error state
   if (!currentCard) {
-    console.error("FlashcardDisplay - No current card provided");
+    console.error("FlashcardDisplay: No current card provided");
     return (
       <div className="mb-6">
         <Card className="min-h-[300px] w-full shadow-lg">
@@ -51,14 +63,13 @@ export const FlashcardDisplay = ({
     );
   }
 
-  const frontContent = currentCard?.front_content || currentCard?.front;
-  const backContent = currentCard?.back_content || currentCard?.back;
+  const { front, back } = getCardContent();
   
-  // Create a unique animation key that includes all relevant state
-  const animationKey = `card-${currentCard.id}-${currentIndex}-${forceUpdate}`;
-  const displayContent = isFlipped ? (backContent || "No back content") : (frontContent || "No front content");
+  // Create a unique animation key that ensures proper re-rendering
+  const animationKey = `card-${currentCard.id}-${currentIndex}-${forceUpdate}-${isFlipped ? 'back' : 'front'}`;
+  const displayContent = isFlipped ? (back || "No back content") : (front || "No front content");
 
-  console.log("FlashcardDisplay - Final display content:", displayContent);
+  console.log("FlashcardDisplay: Rendering with key:", animationKey, "content:", displayContent);
 
   return (
     <div ref={cardContainerRef} className="mb-6">
@@ -86,10 +97,7 @@ export const FlashcardDisplay = ({
           >
             <CardContent className="p-6 flex flex-col items-center justify-center">
               <div className="min-h-[250px] w-full flex items-center justify-center text-center p-4">
-                <div 
-                  className="text-lg md:text-xl" 
-                  key={`content-${currentCard.id}-${currentIndex}-${isFlipped}-${forceUpdate}`}
-                >
+                <div className="text-lg md:text-xl">
                   {displayContent}
                 </div>
               </div>
@@ -97,7 +105,7 @@ export const FlashcardDisplay = ({
                 {isFlipped ? "Click to see front" : "Click to see back"}
               </div>
               <div className="text-xs text-muted-foreground mt-2">
-                Card {currentIndex + 1} (ID: {currentCard.id.slice(0, 8)})
+                Card {currentIndex + 1} (Position: {currentCard.position ?? 'N/A'})
               </div>
             </CardContent>
           </Card>
