@@ -5,12 +5,12 @@ import { useNotes } from "@/contexts/NoteContext";
 /**
  * Hook for handling note updates with real-time sync
  */
-export const useNoteUpdateHandler = (currentNote: Note) => {
+export const useNoteUpdateHandler = (currentNote: Note, forceRefresh: () => void, setRealtimeNote: (note: Note) => void) => {
   const { updateNote } = useNotes();
 
   const handleNoteUpdate = async (updatedData: Partial<Note>) => {
     try {
-      console.log("🎯 NoteStudyView - Handling note update:", {
+      console.log("🎯 NoteStudyView - Handling note update with force refresh:", {
         noteId: currentNote.id,
         updatedFields: Object.keys(updatedData),
         enhancementData: {
@@ -21,6 +21,13 @@ export const useNoteUpdateHandler = (currentNote: Note) => {
       });
       
       await updateNote(currentNote.id, updatedData);
+      
+      // Force immediate refresh of the component
+      forceRefresh();
+      
+      // Also update local realtime state immediately with the merged note
+      const updatedNote = { ...currentNote, ...updatedData };
+      setRealtimeNote(updatedNote);
       
     } catch (error) {
       console.error("❌ Error updating note:", error);
