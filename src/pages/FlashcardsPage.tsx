@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import FlashcardsList from "@/components/flashcards/FlashcardsList";
-import FlashcardSetsList from "@/components/flashcards/FlashcardSetsList";
+import SimpleFlashcardSetsList from "@/components/flashcards/SimpleFlashcardSetsList";
 import CreateFlashcard from "@/components/flashcards/CreateFlashcard";
 import CreateFlashcardSet from "@/components/flashcards/CreateFlashcardSet";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
@@ -66,7 +66,7 @@ const FlashcardsPage = () => {
           </TabsList>
           
           <TabsContent value="sets" className="mt-6">
-            <FlashcardSetsList />
+            <SimpleFlashcardSetsList />
           </TabsContent>
           
           <TabsContent value="cards" className="mt-6">
