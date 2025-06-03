@@ -28,6 +28,8 @@ export const useSimplifiedFlashcardStudy = ({ setId, mode }: UseSimplifiedFlashc
       setIsLoading(true);
       setError(null);
 
+      console.log('Fetching flashcards for setId:', setId);
+
       // Fetch flashcards in the set
       const { data: setCards, error: setError } = await supabase
         .from('flashcard_set_cards')
@@ -44,7 +46,10 @@ export const useSimplifiedFlashcardStudy = ({ setId, mode }: UseSimplifiedFlashc
         .eq('set_id', setId)
         .order('position');
 
-      if (setError) throw setError;
+      if (setError) {
+        console.error('Error fetching flashcard set cards:', setError);
+        throw setError;
+      }
 
       const cards = (setCards || [])
         .map(item => ({
