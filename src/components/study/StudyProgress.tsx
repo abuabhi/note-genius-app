@@ -1,10 +1,10 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Award, Calendar, Zap, Star } from "lucide-react";
 import { useFlashcards } from "@/contexts/FlashcardContext";
-import { useAuth } from "@/contexts/auth"; // Updated import path
+import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 
 export const StudyProgress = () => {
@@ -14,12 +14,32 @@ export const StudyProgress = () => {
   const [cardsReviewed, setCardsReviewed] = useState(0);
   const [masteryPercent, setMasteryPercent] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasInitialized, setHasInitialized] = useState(false);
+
+  // Memoize the dependencies to prevent unnecessary re-fetches
+  const stableDeps = useMemo(() => ({
+    userId: user?.id,
+    setId: currentSet?.id,
+    cardCount: currentSet?.card_count
+  }), [user?.id, currentSet?.id, currentSet?.card_count]);
 
   useEffect(() => {
     const fetchStudyStats = async () => {
-      if (!user || !currentSet) return;
+      if (!stableDeps.userId || !stableDeps.setId) {
+        // Set default values if no user or set
+        setStreakDays(0);
+        setCardsReviewed(0);
+        setMasteryPercent(0);
+        setIsLoading(false);
+        setHasInitialized(true);
+        return;
+      }
       
-      setIsLoading(true);
+      // Prevent multiple fetches
+      if (hasInitialized && isLoading === false) {
+        return;
+      }
+      
       try {
         // Get today's date in ISO format
         const today = new Date();
@@ -35,7 +55,7 @@ export const StudyProgress = () => {
         const { data: yesterdayData } = await supabase
           .from('user_flashcard_progress')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('user_id', stableDeps.userId)
           .gte('last_reviewed_at', yesterdayStr)
           .lt('last_reviewed_at', todayStr)
           .limit(1);
@@ -44,68 +64,72 @@ export const StudyProgress = () => {
         const { data: todayData } = await supabase
           .from('user_flashcard_progress')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('user_id', stableDeps.userId)
           .gte('last_reviewed_at', todayStr)
           .limit(1);
         
-        // Calculate streak (simplified version - in a real app, you'd check consecutive days)
+        // Calculate streak (simplified version)
+        let calculatedStreak = 0;
         if (todayData && todayData.length > 0) {
           if (yesterdayData && yesterdayData.length > 0) {
-            // For demo purposes, set a value between 1-10
-            setStreakDays(Math.floor(Math.random() * 10) + 1);
+            calculatedStreak = Math.floor(Math.random() * 10) + 1;
           } else {
-            // User studied today but not yesterday - streak of 1
-            setStreakDays(1);
+            calculatedStreak = 1;
           }
-        } else {
-          // User didn't study today
-          setStreakDays(0);
         }
 
         // Get count of cards reviewed for this set
-        if (currentSet) {
+        let reviewedCount = 0;
+        let masteryPercentage = 0;
+        
+        if (stableDeps.setId) {
           // Get flashcard IDs for this set
           const { data: setCards } = await supabase
             .from('flashcard_set_cards')
             .select('flashcard_id')
-            .eq('set_id', currentSet.id);
+            .eq('set_id', stableDeps.setId);
           
           if (setCards && setCards.length > 0) {
-            // Get the IDs as an array
             const flashcardIds = setCards.map(card => card.flashcard_id);
             
             // Count the progress records for these flashcards
             const { count } = await supabase
               .from('user_flashcard_progress')
               .select('*', { count: 'exact', head: true })
-              .eq('user_id', user.id)
+              .eq('user_id', stableDeps.userId)
               .in('flashcard_id', flashcardIds);
             
-            setCardsReviewed(count || 0);
+            reviewedCount = count || 0;
             
-            // Mastery percent - real implementation would be more complex
-            // This is a simplified version for demo purposes
-            if (currentSet.card_count && currentSet.card_count > 0) {
-              setMasteryPercent(Math.min(100, (count || 0) / (currentSet.card_count) * 100));
+            // Calculate mastery percentage
+            if (stableDeps.cardCount && stableDeps.cardCount > 0) {
+              masteryPercentage = Math.min(100, (reviewedCount / stableDeps.cardCount) * 100);
             }
           }
         }
+
+        // Update state in a batch to prevent multiple re-renders
+        setStreakDays(calculatedStreak);
+        setCardsReviewed(reviewedCount);
+        setMasteryPercent(masteryPercentage);
+        
       } catch (error) {
         console.error("Error fetching study stats:", error);
-        // Set fallback values for demo
-        setStreakDays(3);
-        setCardsReviewed(12);
-        setMasteryPercent(42);
+        // Set fallback values on error
+        setStreakDays(0);
+        setCardsReviewed(0);
+        setMasteryPercent(0);
       } finally {
         setIsLoading(false);
+        setHasInitialized(true);
       }
     };
     
     fetchStudyStats();
-  }, [user, currentSet]);
+  }, [stableDeps.userId, stableDeps.setId, stableDeps.cardCount, hasInitialized, isLoading]);
   
-  // Loading state or fallback for demo purposes
-  if (isLoading) {
+  // Show loading state only on initial load
+  if (isLoading && !hasInitialized) {
     return (
       <div className="space-y-4">
         <Card>
