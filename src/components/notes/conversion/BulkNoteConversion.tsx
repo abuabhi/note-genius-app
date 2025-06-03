@@ -34,21 +34,24 @@ export const BulkNoteConversion = ({
   }>) => {
     try {
       setIsConverting(true);
+      console.log("Starting flashcard creation process...");
       
       // Create the flashcard set first
       const newSet = await createFlashcardSet({
         name: setName,
         description: setDescription,
-        subject: notes[0]?.title || "General",
-        is_public: false
+        subject: notes[0]?.title || "General"
       });
 
       if (!newSet) {
         throw new Error("Failed to create flashcard set");
       }
 
+      console.log("Created flashcard set:", newSet);
+
       // Create individual flashcards and add them to the set
       for (const flashcard of flashcards) {
+        console.log("Creating flashcard:", flashcard);
         await createFlashcard({
           front_content: flashcard.front,
           back_content: flashcard.back
