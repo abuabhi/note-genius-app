@@ -7,11 +7,63 @@ import { Link } from "react-router-dom";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { StudyStatsChart } from "@/components/progress/StudyStatsChart";
-import { StudyStatsOverview } from "@/components/study/StudyStatsOverview";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
 import { useFeatures } from "@/contexts/FeatureContext";
+import { Suspense } from "react";
+
+// Lazy load components with proper error boundaries
+const StudyStatsChart = () => {
+  try {
+    const { StudyStatsChart: Chart } = require("@/components/progress/StudyStatsChart");
+    return <Chart />;
+  } catch (error) {
+    console.error('StudyStatsChart failed to load:', error);
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Study Statistics</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">Statistics temporarily unavailable</p>
+        </CardContent>
+      </Card>
+    );
+  }
+};
+
+const StudyStatsOverview = () => {
+  try {
+    const { StudyStatsOverview: Overview } = require("@/components/study/StudyStatsOverview");
+    return <Overview />;
+  } catch (error) {
+    console.error('StudyStatsOverview failed to load:', error);
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Study Overview</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">Overview temporarily unavailable</p>
+        </CardContent>
+      </Card>
+    );
+  }
+};
+
+const WelcomeBanner = () => {
+  try {
+    const { WelcomeBanner: Banner } = require("@/components/dashboard/WelcomeBanner");
+    return <Banner />;
+  } catch (error) {
+    console.error('WelcomeBanner failed to load:', error);
+    return (
+      <div className="mb-8 p-6 bg-gradient-to-r from-mint-50 to-mint-100 rounded-lg">
+        <h1 className="text-2xl font-bold text-mint-900 mb-2">Welcome to StudyBuddy</h1>
+        <p className="text-mint-700">Start your learning journey today!</p>
+      </div>
+    );
+  }
+};
 
 const DashboardPage = () => {
   const {
@@ -19,7 +71,21 @@ const DashboardPage = () => {
     userProfile,
     loading
   } = useRequireAuth();
-  const { isFeatureVisible } = useFeatures();
+  
+  // Use features with fallback
+  let isFeatureVisible: (key: string) => boolean;
+  
+  try {
+    const features = useFeatures();
+    isFeatureVisible = features.isFeatureVisible;
+  } catch (error) {
+    console.error('Features context error in Dashboard, using fallbacks:', error);
+    // Fallback: show core features, hide optional ones
+    isFeatureVisible = (key: string) => {
+      const coreFeatures = ['notes', 'flashcards', 'settings'];
+      return coreFeatures.includes(key);
+    };
+  }
   
   console.log("Dashboard rendering:", {
     user,
@@ -56,7 +122,9 @@ const DashboardPage = () => {
   return (
     <Layout>
       <div className="container mx-auto p-6">
-        <WelcomeBanner />
+        <Suspense fallback={<div>Loading welcome banner...</div>}>
+          <WelcomeBanner />
+        </Suspense>
         
         {/* Analytics Tabs */}
         <div className="mb-8">
@@ -67,11 +135,33 @@ const DashboardPage = () => {
             </TabsList>
             
             <TabsContent value="overview">
-              <StudyStatsOverview />
+              <Suspense fallback={
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-center">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                      <span className="ml-2">Loading overview...</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              }>
+                <StudyStatsOverview />
+              </Suspense>
             </TabsContent>
             
             <TabsContent value="detailed">
-              <StudyStatsChart />
+              <Suspense fallback={
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-center">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                      <span className="ml-2">Loading detailed stats...</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              }>
+                <StudyStatsChart />
+              </Suspense>
             </TabsContent>
           </Tabs>
         </div>
@@ -97,7 +187,7 @@ const DashboardPage = () => {
             </Card>
           )}
 
-          {/* Flashcards Card - Always visible as it's a core feature */}
+          {/* Flashcards Card - Core feature, always visible */}
           <Card className="border-mint-100 shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl">Flashcards</CardTitle>

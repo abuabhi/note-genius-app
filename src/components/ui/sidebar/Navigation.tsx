@@ -32,7 +32,27 @@ interface NavigationProps {
 export const Navigation = ({ isCollapsed }: NavigationProps) => {
   const { pathname } = useLocation();
   const { userProfile } = useRequireAuth();
-  const { isFeatureEnabled, isFeatureVisible } = useFeatures();
+  
+  // Use features with fallback - if context fails, default to showing core features
+  let isFeatureEnabled: (key: string) => boolean;
+  let isFeatureVisible: (key: string) => boolean;
+  
+  try {
+    const features = useFeatures();
+    isFeatureEnabled = features.isFeatureEnabled;
+    isFeatureVisible = features.isFeatureVisible;
+  } catch (error) {
+    console.error('Features context error, using fallbacks:', error);
+    // Fallback: show core features, hide optional ones
+    isFeatureEnabled = (key: string) => {
+      const coreFeatures = ['notes', 'flashcards', 'dashboard'];
+      return coreFeatures.includes(key);
+    };
+    isFeatureVisible = (key: string) => {
+      const coreFeatures = ['notes', 'flashcards', 'dashboard'];
+      return coreFeatures.includes(key);
+    };
+  }
   
   // Define feature keys for standard app features
   const FEATURE_KEYS = {
@@ -47,7 +67,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
     QUIZZES: "quizzes"
   };
   
-  // Determine if specific features are visible
+  // Determine if specific features are visible (with fallbacks)
   const isChatVisible = isFeatureVisible(FEATURE_KEYS.CHAT);
   const isCollaborationVisible = isFeatureVisible(FEATURE_KEYS.COLLABORATION);
   const isConnectionsVisible = isFeatureVisible(FEATURE_KEYS.CONNECTIONS);
@@ -70,7 +90,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
           <div className="flex grow flex-col gap-4">
             <ScrollArea className="h-16 grow p-2">
               <div className={cn("flex w-full flex-col gap-1")}>
-                {/* Main Section - replaced header with separator */}
+                {/* Main Section - Core Features Always Visible */}
                 <Separator className="my-2" />
                 <NavLink
                   to="/dashboard"
@@ -80,8 +100,8 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   isCollapsed={isCollapsed}
                 />
 
-                {/* Study Tools Section - only show separator if any items are visible */}
-                {(isAnyStudyItemVisible) && <Separator className="my-2" />}
+                {/* Study Tools Section - Core features always visible */}
+                <Separator className="my-2" />
                 <NavLink
                   to="/notes"
                   icon={FileText}
@@ -96,6 +116,8 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   isActive={pathname.includes("/flashcards")}
                   isCollapsed={isCollapsed}
                 />
+                
+                {/* Optional Study Features */}
                 {isStudySessionsVisible && (
                   <NavLink
                     to="/study-sessions"
@@ -198,9 +220,6 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                     isCollapsed={isCollapsed}
                   />
                 )}
-                
-                {/* Removed the Settings link from here as it's already in the user profile dropdown */}
-                {/* This removes the duplicate settings link */}
               </div>
             </ScrollArea>
           </div>

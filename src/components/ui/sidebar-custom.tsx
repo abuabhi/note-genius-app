@@ -13,7 +13,8 @@ import {
 } from "./sidebar/motion";
 
 export function CustomSidebar() {
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  // Start with sidebar expanded instead of collapsed
+  const [isCollapsed, setIsCollapsed] = useState(false);
   
   return (
     <motion.div
