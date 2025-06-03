@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { FileText, Plus, Tag } from "lucide-react";
+import { FileText, Plus, Tag, Sparkles, ArrowRight } from "lucide-react";
 
 interface EmptySubjectStateProps {
   subjectName: string;
@@ -10,33 +10,50 @@ interface EmptySubjectStateProps {
 
 export const EmptySubjectState = ({ subjectName, onCreateNote }: EmptySubjectStateProps) => {
   return (
-    <div className="text-center py-16 px-6">
+    <div className="text-center py-20 px-6">
       <div className="max-w-md mx-auto">
-        {/* Subject Icon */}
-        <div className="flex justify-center mb-6">
-          <div className="w-16 h-16 bg-mint-100 rounded-full flex items-center justify-center">
-            <Tag className="h-8 w-8 text-mint-600" />
+        {/* Modern subject icon with enhanced design */}
+        <div className="flex justify-center mb-8">
+          <div className="relative">
+            <div className="w-20 h-20 bg-gradient-to-br from-mint-400 to-blue-500 rounded-2xl flex items-center justify-center shadow-2xl">
+              <Tag className="h-10 w-10 text-white" />
+            </div>
+            
+            {/* Floating accent */}
+            <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg animate-pulse">
+              <Sparkles className="h-4 w-4 text-white" />
+            </div>
           </div>
         </div>
 
-        {/* Title and Description */}
-        <h3 className="text-xl font-semibold text-gray-900 mb-3">
-          No notes in {subjectName}
+        {/* Enhanced title and description */}
+        <h3 className="text-2xl font-bold text-slate-800 mb-4">
+          No notes in <span className="bg-gradient-to-r from-mint-600 to-blue-600 bg-clip-text text-transparent">{subjectName}</span>
         </h3>
-        <p className="text-gray-600 mb-6">
-          Start building your {subjectName} knowledge base by creating your first note.
+        <p className="text-slate-600 mb-8 leading-relaxed">
+          Start building your <strong>{subjectName}</strong> knowledge base by creating your first note in this subject.
         </p>
 
-        {/* Action Button */}
+        {/* Enhanced action button */}
         {onCreateNote && (
           <Button 
             onClick={onCreateNote}
-            className="bg-mint-600 hover:bg-mint-700 text-white font-medium"
+            className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border-0 group"
           >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Note to {subjectName}
+            <div className="flex items-center gap-3">
+              <Plus className="h-5 w-5 group-hover:scale-110 transition-transform" />
+              <span>Add Note to {subjectName}</span>
+              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            </div>
           </Button>
         )}
+        
+        {/* Decorative elements */}
+        <div className="mt-8 flex justify-center gap-2">
+          <div className="w-2 h-2 bg-mint-300 rounded-full animate-pulse"></div>
+          <div className="w-2 h-2 bg-blue-300 rounded-full animate-pulse delay-150"></div>
+          <div className="w-2 h-2 bg-purple-300 rounded-full animate-pulse delay-300"></div>
+        </div>
       </div>
     </div>
   );

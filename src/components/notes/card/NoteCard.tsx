@@ -1,7 +1,7 @@
 
 import { Note } from "@/types/note";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Archive, Book, Camera, FileText, Pin, Tag } from "lucide-react";
+import { Archive, Book, Camera, FileText, Pin, Tag, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { NoteCardActions } from "./NoteCardActions";
@@ -43,8 +43,6 @@ export const NoteCard = ({
 
   const subjectName = getSubjectName();
   
-  console.log(`NoteCard - Note: ${note.title}, Subject ID: ${note.subject_id}, Subject Name: ${subjectName}`);
-  
   const handleGoToStudyMode = (e: React.MouseEvent) => {
     e.stopPropagation();
     navigate(`/notes/study/${note.id}`);
@@ -57,86 +55,101 @@ export const NoteCard = ({
     <Card 
       key={note.id}
       className={`
-        hover:shadow-xl transition-all duration-300 cursor-pointer border-mint-200 
-        bg-white/60 backdrop-blur-sm hover:bg-mint-50/70 hover:scale-[1.02]
-        ${note.pinned ? 'ring-2 ring-mint-400 shadow-lg' : ''}
+        group relative overflow-hidden transition-all duration-500 cursor-pointer
+        bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-2xl
+        hover:scale-[1.02] hover:-translate-y-1
+        ${note.pinned ? 'ring-2 ring-mint-400/50 shadow-mint-500/20' : ''}
         ${note.archived ? 'opacity-75' : ''}
-        rounded-xl
+        rounded-2xl
+        before:absolute before:inset-0 before:bg-gradient-to-br before:from-mint-500/5 before:via-transparent before:to-blue-500/5 before:opacity-0 before:transition-opacity before:duration-500
+        hover:before:opacity-100
       `}
       onClick={() => onNoteClick(note)}
     >
-      <CardHeader className="relative p-4 pb-2">
-        {/* Pin indicator for pinned notes */}
-        {note.pinned && (
-          <div className="absolute top-3 left-3 text-mint-600">
-            <Pin size={18} className="fill-mint-500" />
+      {/* Subtle gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/10 to-mint-50/20 pointer-events-none" />
+      
+      {/* Floating elements for modern design */}
+      <div className="absolute top-4 right-4 flex items-center gap-2">
+        {note.sourceType === 'scan' && (
+          <div className="w-8 h-8 bg-blue-100/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg">
+            <Camera className="h-4 w-4 text-blue-600" />
           </div>
         )}
-        
+        {note.pinned && (
+          <div className="w-8 h-8 bg-mint-100/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg">
+            <Pin size={14} className="fill-mint-600 text-mint-600" />
+          </div>
+        )}
+      </div>
+
+      <CardHeader className="relative p-6 pb-4">
         {/* Card actions positioned absolutely */}
-        <NoteCardActions 
-          noteId={note.id}
-          noteTitle={note.title}
-          noteContent={note.content || note.description || ""}
-          isPinned={!!note.pinned} 
-          onPin={onPin}
-          onDelete={onDelete}
-          iconSize={5}
-        />
-        
-        <div className="flex flex-row items-center justify-between">
-          <CardTitle className={`text-xl text-mint-800 leading-relaxed ${note.pinned ? 'pl-8' : ''} pr-10`}>
-            {note.title}
-          </CardTitle>
+        <div className="absolute top-4 right-16 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <NoteCardActions 
+            noteId={note.id}
+            noteTitle={note.title}
+            noteContent={note.content || note.description || ""}
+            isPinned={!!note.pinned} 
+            onPin={onPin}
+            onDelete={onDelete}
+            iconSize={5}
+          />
         </div>
+        
+        <CardTitle className="text-xl text-slate-800 leading-relaxed pr-20 font-semibold">
+          {note.title}
+        </CardTitle>
+        
+        {/* Content preview with modern styling */}
+        {(note.content || note.description) && (
+          <p className="text-slate-600 text-sm leading-relaxed line-clamp-2 mt-3">
+            {note.content || note.description}
+          </p>
+        )}
       </CardHeader>
       
-      <CardFooter className="flex justify-between items-center px-4 py-3 pt-0">
-        {/* Date and subject on left with improved spacing */}
-        <div className="flex items-center gap-3 text-sm">
-          <span className="text-mint-600 font-medium">{formattedDate}</span>
-          <span className="text-mint-400">•</span>
+      <CardFooter className="flex justify-between items-center px-6 py-4 pt-0">
+        {/* Enhanced metadata section */}
+        <div className="flex items-center gap-4 text-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full border border-white/50 shadow-sm" 
+                 style={{ backgroundColor: generateColorFromString(subjectName) }} />
+            <span className="font-medium text-slate-700">{formattedDate}</span>
+          </div>
+          
           <div className="flex items-center gap-2">
             <div 
-              className="w-3 h-3 rounded-full border border-white shadow-sm"
-              style={{ backgroundColor: generateColorFromString(subjectName) }}
-            />
-            <span 
-              className="font-medium"
+              className="px-3 py-1 rounded-full text-xs font-medium shadow-sm border border-white/20"
               style={{
+                backgroundColor: `${generateColorFromString(subjectName)}15`,
                 color: generateColorFromString(subjectName),
               }}
             >
               {subjectName}
-            </span>
-          </div>
-          
-          {/* Tags and status indicators with better spacing */}
-          <div className="flex flex-wrap gap-2 ml-3">
-            {note.sourceType === 'scan' && (
-              <div className="flex items-center">
-                <Camera className="h-4 w-4 text-mint-500" />
-              </div>
-            )}
-            {note.archived && (
-              <div className="flex items-center">
-                <Archive className="h-4 w-4 text-mint-500" />
-              </div>
-            )}
+            </div>
           </div>
         </div>
         
-        {/* Study Mode button at right with enhanced styling */}
+        {/* Enhanced Study Mode button */}
         <Button 
           variant="default" 
           size="sm" 
-          className="h-9 text-sm bg-mint-600 hover:bg-mint-700 flex items-center gap-2 px-5 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+          className="h-9 text-sm bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 flex items-center gap-2 px-5 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border-0 group-hover:scale-105"
           onClick={handleGoToStudyMode}
         >
-          <Book className="h-4 w-4" />
+          <Sparkles className="h-4 w-4" />
           Study Mode
         </Button>
       </CardFooter>
+      
+      {/* Modern accent line */}
+      <div 
+        className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r opacity-60"
+        style={{
+          backgroundImage: `linear-gradient(90deg, ${generateColorFromString(subjectName)}, transparent)`
+        }}
+      />
     </Card>
   );
 };

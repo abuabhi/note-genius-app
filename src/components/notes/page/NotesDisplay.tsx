@@ -45,13 +45,20 @@ export const NotesDisplay = ({
   };
 
   if (loading) {
-    return <LoadingState message="Loading your notes..." />;
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="relative">
+          <div className="w-16 h-16 border-4 border-mint-200 border-t-mint-600 rounded-full animate-spin"></div>
+          <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-r-blue-300 rounded-full animate-spin animation-delay-150"></div>
+        </div>
+      </div>
+    );
   }
   
   // Show welcome onboarding for new users
   if (showWelcome && notes.length === 0) {
     return (
-      <>
+      <div className="space-y-8">
         <WelcomeOnboarding 
           onCreateNote={onCreateNote}
           onScanNote={onScanNote}
@@ -64,7 +71,7 @@ export const NotesDisplay = ({
           onImportNote={onImportNote}
           isFiltered={isFiltered}
         />
-      </>
+      </div>
     );
   }
   
@@ -72,27 +79,48 @@ export const NotesDisplay = ({
   if (notes.length === 0) {
     if (activeSubject && activeSubject !== 'all') {
       return (
-        <EmptySubjectState 
-          subjectName={activeSubject}
-          onCreateNote={onCreateNote}
-        />
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-mint-50/50 to-blue-50/30 rounded-xl blur-xl"></div>
+          <div className="relative bg-white/70 backdrop-blur-sm rounded-xl border border-mint-100/50 shadow-lg">
+            <EmptySubjectState 
+              subjectName={activeSubject}
+              onCreateNote={onCreateNote}
+            />
+          </div>
+        </div>
       );
     }
     
     return (
-      <EmptyNotesState 
-        onCreateNote={onCreateNote}
-        onScanNote={onScanNote}
-        onImportNote={onImportNote}
-        isFiltered={isFiltered}
-      />
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-mint-50/50 to-blue-50/30 rounded-xl blur-xl"></div>
+        <div className="relative bg-white/70 backdrop-blur-sm rounded-xl border border-mint-100/50 shadow-lg">
+          <EmptyNotesState 
+            onCreateNote={onCreateNote}
+            onScanNote={onScanNote}
+            onImportNote={onImportNote}
+            isFiltered={isFiltered}
+          />
+        </div>
+      </div>
     );
   }
 
   return (
-    <>
-      <NotesGrid notes={paginatedNotes} />
-      {notes.length > 0 && <NotePagination />}
-    </>
+    <div className="space-y-8">
+      {/* Modern notes grid with enhanced spacing */}
+      <div className="relative">
+        <NotesGrid notes={paginatedNotes} />
+      </div>
+      
+      {/* Enhanced pagination */}
+      {notes.length > 0 && (
+        <div className="flex justify-center pt-4">
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-mint-100/50 shadow-lg px-6 py-3">
+            <NotePagination />
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
