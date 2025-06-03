@@ -6,7 +6,7 @@ import { EnhancementTabs } from "./EnhancementTabs";
 import { useStudyViewState } from "./hooks/useStudyViewState";
 import { useNoteStudyEditor } from "./hooks/useNoteStudyEditor";
 import { useRealtimeNoteSync } from "./hooks/useRealtimeNoteSync";
-import { useNoteUpdateHandler } from "./hooks/useNoteUpdateHandler";
+import { useState } from "react";
 
 interface NoteStudyViewProps {
   note: Note;
@@ -18,13 +18,13 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
     textAlign,
     isFullWidth,
     isFullScreen,
-    activeTab,
-    setActiveTab,
-    increaseFontSize,
-    decreaseFontSize,
-    changeTextAlign,
+    activeContentType,
+    handleIncreaseFontSize,
+    handleDecreaseFontSize,
+    handleTextAlign,
     toggleWidth,
     toggleFullScreen,
+    setActiveContentType,
   } = useStudyViewState();
 
   const {
@@ -42,8 +42,13 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
     setSelectedTags,
   } = useNoteStudyEditor(note);
 
-  useRealtimeNoteSync(note.id);
-  const syncedNote = useNoteUpdateHandler(note);
+  const { currentNote } = useRealtimeNoteSync(note);
+  const [activeTab, setActiveTab] = useState<string>("original");
+
+  // Handler for tab switching when enhancement completes
+  const handleTabSwitch = (tabId: string) => {
+    setActiveTab(tabId);
+  };
 
   const containerClasses = isFullScreen
     ? "fixed inset-0 z-50 bg-background"
@@ -55,7 +60,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
     <div className={containerClasses}>
       <Card className="h-full flex flex-col bg-card border border-border shadow-lg">
         <StudyViewHeader
-          note={syncedNote}
+          note={currentNote}
           fontSize={fontSize}
           textAlign={textAlign}
           isFullWidth={isFullWidth}
@@ -63,35 +68,24 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
           isEditing={isEditing}
           isSaving={isSaving}
           editableTitle={editableTitle}
-          onIncreaseFontSize={increaseFontSize}
-          onDecreaseFontSize={decreaseFontSize}
-          onChangeTextAlign={changeTextAlign}
+          onIncreaseFontSize={handleIncreaseFontSize}
+          onDecreaseFontSize={handleDecreaseFontSize}
+          onChangeTextAlign={handleTextAlign}
           onToggleWidth={toggleWidth}
           onToggleFullScreen={toggleFullScreen}
           onToggleEditing={toggleEditing}
           onSave={handleSaveContent}
           onTitleChange={handleTitleChange}
           onEnhance={handleEnhanceContent}
-          onTabSwitch={setActiveTab}
+          onTabSwitch={handleTabSwitch}
         />
 
         <div className="flex-1 overflow-hidden">
           <EnhancementTabs
-            note={syncedNote}
+            note={currentNote}
             fontSize={fontSize}
             textAlign={textAlign}
             isEditing={isEditing}
-            editableContent={editableContent}
-            editableTitle={editableTitle}
-            selectedTags={selectedTags}
-            availableTags={availableTags}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            onContentChange={handleContentChange}
-            onTitleChange={handleTitleChange}
-            onTagsChange={setSelectedTags}
-            onSave={handleSaveContent}
-            onEnhance={handleEnhanceContent}
           />
         </div>
       </Card>
