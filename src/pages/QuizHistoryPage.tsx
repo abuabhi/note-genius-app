@@ -11,7 +11,20 @@ import { ArrowLeft, Trophy, Clock, Target, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 
-interface QuizHistoryItem {
+interface QuizResultItem {
+  id: string;
+  quiz_id: string;
+  score: number;
+  total_questions: number;
+  duration_seconds: number | null;
+  completed_at: string;
+  quiz: {
+    title: string;
+    description: string | null;
+  };
+}
+
+interface QuizSessionItem {
   id: string;
   flashcard_set_id: string;
   start_time: string;
@@ -31,10 +44,38 @@ interface QuizHistoryItem {
 const QuizHistoryPage = () => {
   const { userProfile } = useRequireAuth();
   const navigate = useNavigate();
-  const [selectedSet, setSelectedSet] = useState<string | null>(null);
+  const [selectedType, setSelectedType] = useState<'all' | 'quizzes' | 'flashcard_quizzes'>('all');
 
-  const { data: quizHistory, isLoading } = useQuery({
-    queryKey: ['quiz-history', userProfile?.id],
+  // Fetch traditional quiz results
+  const { data: quizResults, isLoading: isLoadingQuizResults } = useQuery({
+    queryKey: ['quiz-results', userProfile?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('quiz_results')
+        .select(`
+          id,
+          quiz_id,
+          score,
+          total_questions,
+          duration_seconds,
+          completed_at,
+          quiz:quizzes(
+            title,
+            description
+          )
+        `)
+        .eq('user_id', userProfile?.id)
+        .order('completed_at', { ascending: false });
+
+      if (error) throw error;
+      return data as QuizResultItem[];
+    },
+    enabled: !!userProfile?.id
+  });
+
+  // Fetch flashcard quiz sessions
+  const { data: quizSessions, isLoading: isLoadingSessions } = useQuery({
+    queryKey: ['quiz-sessions', userProfile?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('quiz_sessions')
@@ -60,36 +101,31 @@ const QuizHistoryPage = () => {
 
       if (error) throw error;
       
-      // Properly type the response to match our interface
       return (data || []).map(item => ({
         ...item,
         flashcard_sets: Array.isArray(item.flashcard_sets) 
           ? item.flashcard_sets[0] 
           : item.flashcard_sets
-      })) as QuizHistoryItem[];
+      })) as QuizSessionItem[];
     },
     enabled: !!userProfile?.id
   });
 
-  const filteredHistory = selectedSet 
-    ? quizHistory?.filter(item => item.flashcard_set_id === selectedSet)
-    : quizHistory;
-
-  const uniqueSets = quizHistory?.reduce((acc, item) => {
-    if (!acc.find(set => set.id === item.flashcard_set_id)) {
-      acc.push({
-        id: item.flashcard_set_id,
-        name: item.flashcard_sets.name,
-        subject: item.flashcard_sets.subject
-      });
-    }
-    return acc;
-  }, [] as Array<{ id: string; name: string; subject: string }>);
+  const isLoading = isLoadingQuizResults || isLoadingSessions;
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const getGradeFromScore = (score: number, total: number) => {
+    const percentage = (score / total) * 100;
+    if (percentage >= 90) return 'A';
+    if (percentage >= 80) return 'B';
+    if (percentage >= 70) return 'C';
+    if (percentage >= 60) return 'D';
+    return 'F';
   };
 
   const getGradeColor = (grade: string) => {
@@ -121,6 +157,11 @@ const QuizHistoryPage = () => {
     );
   }
 
+  const filteredQuizResults = selectedType === 'flashcard_quizzes' ? [] : (quizResults || []);
+  const filteredQuizSessions = selectedType === 'quizzes' ? [] : (quizSessions || []);
+  
+  const hasAnyHistory = (filteredQuizResults.length > 0) || (filteredQuizSessions.length > 0);
+
   return (
     <Layout>
       <div className="container mx-auto p-6">
@@ -140,37 +181,108 @@ const QuizHistoryPage = () => {
           </div>
         </div>
 
-        {/* Filter by Set */}
-        {uniqueSets && uniqueSets.length > 1 && (
-          <div className="mb-6">
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant={selectedSet === null ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedSet(null)}
-                className="mb-2"
-              >
-                All Sets
-              </Button>
-              {uniqueSets.map((set) => (
-                <Button
-                  key={set.id}
-                  variant={selectedSet === set.id ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedSet(set.id)}
-                  className="mb-2"
-                >
-                  {set.name}
-                </Button>
-              ))}
-            </div>
+        {/* Filter by Type */}
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={selectedType === 'all' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedType('all')}
+              className="mb-2"
+            >
+              All Quizzes
+            </Button>
+            <Button
+              variant={selectedType === 'quizzes' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedType('quizzes')}
+              className="mb-2"
+            >
+              Traditional Quizzes
+            </Button>
+            <Button
+              variant={selectedType === 'flashcard_quizzes' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedType('flashcard_quizzes')}
+              className="mb-2"
+            >
+              Flashcard Quizzes
+            </Button>
           </div>
-        )}
+        </div>
 
         {/* Quiz History List */}
-        {filteredHistory && filteredHistory.length > 0 ? (
+        {hasAnyHistory ? (
           <div className="space-y-4">
-            {filteredHistory.map((quiz) => (
+            {/* Traditional Quiz Results */}
+            {filteredQuizResults.map((quiz) => {
+              const grade = getGradeFromScore(quiz.score, quiz.total_questions);
+              const percentage = Math.round((quiz.score / quiz.total_questions) * 100);
+              
+              return (
+                <Card key={quiz.id} className="border-mint-100">
+                  <CardHeader className="pb-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-lg font-semibold text-mint-800">
+                          {quiz.quiz?.title || 'Quiz'}
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                          Traditional Quiz • {formatDistanceToNow(new Date(quiz.completed_at), { addSuffix: true })}
+                        </p>
+                      </div>
+                      <Badge className={`${getGradeColor(grade)} font-bold text-lg px-3 py-1`}>
+                        {grade}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="flex items-center gap-2">
+                        <Trophy className="h-4 w-4 text-mint-600" />
+                        <div>
+                          <div className="text-sm font-medium">{quiz.score}</div>
+                          <div className="text-xs text-muted-foreground">Score</div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <Target className="h-4 w-4 text-green-600" />
+                        <div>
+                          <div className="text-sm font-medium">
+                            {quiz.score}/{quiz.total_questions}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {percentage}% Correct
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-blue-600" />
+                        <div>
+                          <div className="text-sm font-medium">
+                            {quiz.duration_seconds ? formatTime(quiz.duration_seconds) : '--'}
+                          </div>
+                          <div className="text-xs text-muted-foreground">Duration</div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4 text-purple-600" />
+                        <div>
+                          <div className="text-sm font-medium">{quiz.total_questions}</div>
+                          <div className="text-xs text-muted-foreground">Questions</div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+
+            {/* Flashcard Quiz Sessions */}
+            {filteredQuizSessions.map((quiz) => (
               <Card key={quiz.id} className="border-mint-100">
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
@@ -237,7 +349,7 @@ const QuizHistoryPage = () => {
               <Trophy className="h-12 w-12 text-mint-300 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-mint-800 mb-2">No Quiz History</h3>
               <p className="text-muted-foreground mb-6">
-                {selectedSet ? "No quizzes found for this set" : "You haven't completed any quizzes yet"}
+                You haven't completed any quizzes yet
               </p>
               <Button 
                 onClick={() => navigate('/quiz')}
