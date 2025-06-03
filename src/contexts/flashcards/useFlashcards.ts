@@ -26,9 +26,15 @@ export const combineFlashcardOperations = (
     deleteFlashcard: flashcardOperations.deleteFlashcard || (async () => {}),
     addFlashcardToSet: flashcardOperations.addFlashcardToSet || (async () => {}),
     removeFlashcardFromSet: flashcardOperations.removeFlashcardFromSet || (async () => {}),
-    fetchFlashcardsInSet: flashcardSetsOperations.fetchFlashcardsInSet || (async () => []),
-    recordFlashcardReview: async () => {},
-    getFlashcardProgress: async () => null,
+    fetchFlashcardsInSet: flashcardSetsOperations.fetchFlashcardsInSet,
+    recordFlashcardReview: async (flashcardId: string, score: 0 | 1 | 2 | 3 | 4 | 5) => {
+      // Implementation for recording flashcard reviews
+      console.log("Recording flashcard review:", flashcardId, score);
+    },
+    getFlashcardProgress: async (flashcardId: string) => {
+      // Implementation for getting flashcard progress
+      return null;
+    },
   };
 
   return combinedOperations;
