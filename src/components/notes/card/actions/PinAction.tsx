@@ -17,11 +17,15 @@ export const PinAction = ({ isPinned, onPin, noteId }: PinActionProps) => {
 
   return (
     <DropdownMenuItem 
-      className="flex items-center cursor-pointer" 
+      className="flex items-center cursor-pointer p-2.5 rounded-md hover:bg-mint-50 transition-colors duration-150" 
       onClick={handlePin}
     >
-      <Pin className="mr-2 h-4 w-4" />
-      <span>{isPinned ? "Unpin note" : "Pin note"}</span>
+      <div className="flex items-center justify-center w-6 h-6 bg-mint-100 rounded-md mr-3">
+        <Pin className="h-3.5 w-3.5 text-mint-600" />
+      </div>
+      <span className="text-sm font-medium text-gray-900">
+        {isPinned ? "Unpin note" : "Pin note"}
+      </span>
     </DropdownMenuItem>
   );
 };

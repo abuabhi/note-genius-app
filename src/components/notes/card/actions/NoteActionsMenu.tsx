@@ -52,7 +52,7 @@ export const NoteActionsMenu = ({
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-muted-foreground"
+          className="h-8 w-8 text-muted-foreground hover:text-mint-700 hover:bg-mint-50 transition-all duration-200 rounded-md"
           onClick={(e) => {
             e.stopPropagation();
           }}
@@ -60,14 +60,18 @@ export const NoteActionsMenu = ({
           <MoreHorizontal className={`h-${iconSize} w-${iconSize}`} />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="bg-white border border-mint-100 w-48">
+      <DropdownMenuContent 
+        align="end" 
+        className="bg-white border border-mint-100 w-52 shadow-lg rounded-lg p-1"
+        sideOffset={4}
+      >
         <PinAction 
           noteId={noteId}
           isPinned={isPinned}
           onPin={onPin}
         />
         
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="bg-mint-100" />
         
         <DownloadActions 
           noteTitle={noteTitle} 
@@ -79,7 +83,7 @@ export const NoteActionsMenu = ({
           noteContent={noteContent} 
         />
         
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="bg-mint-100" />
         
         <DeleteAction 
           noteId={noteId} 

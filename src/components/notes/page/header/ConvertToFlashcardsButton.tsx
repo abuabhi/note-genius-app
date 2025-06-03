@@ -15,14 +15,16 @@ export const ConvertToFlashcardsButton = ({
   return (
     <Button 
       variant="outline" 
-      className="whitespace-nowrap border-mint-200 hover:bg-mint-50"
+      className="whitespace-nowrap border-mint-200 hover:bg-mint-50 shadow-sm hover:shadow-md transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
       onClick={onClick}
       disabled={disabled}
     >
-      <FileText className="mr-1 h-4 w-4" />
-      <ArrowRight className="mr-1 h-3 w-3" />
-      <Book className="mr-2 h-4 w-4" />
-      Convert to Flashcards
+      <div className="flex items-center">
+        <FileText className="mr-2 h-4 w-4 text-mint-600" />
+        <ArrowRight className="mr-2 h-3 w-3 text-mint-500" />
+        <Book className="mr-2 h-4 w-4 text-mint-600" />
+        <span>Convert to Flashcards</span>
+      </div>
     </Button>
   );
 };

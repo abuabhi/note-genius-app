@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
@@ -51,31 +52,37 @@ export const DeleteAction = ({ onDelete, noteId }: DeleteActionProps) => {
   return (
     <>
       <DropdownMenuItem 
-        className="flex items-center cursor-pointer text-red-600 hover:text-red-800 focus:text-red-800" 
+        className="flex items-center cursor-pointer p-2.5 rounded-md hover:bg-red-50 transition-colors duration-150 text-red-600 hover:text-red-700" 
         onClick={handleDeleteClick}
         onSelect={(e) => {
           e.preventDefault();
         }}
       >
-        <Trash2 className="mr-2 h-4 w-4" />
-        <span>Delete note</span>
+        <div className="flex items-center justify-center w-6 h-6 bg-red-100 rounded-md mr-3">
+          <Trash2 className="h-3.5 w-3.5 text-red-600" />
+        </div>
+        <span className="text-sm font-medium">Delete note</span>
       </DropdownMenuItem>
 
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-white border border-red-200 rounded-lg shadow-lg">
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-lg font-semibold text-gray-900">Confirm Delete</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-gray-600 mt-2">
               Are you sure you want to delete this note? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancelDelete} disabled={isDeleting}>
+          <AlertDialogFooter className="flex gap-2 mt-6">
+            <AlertDialogCancel 
+              onClick={handleCancelDelete} 
+              disabled={isDeleting}
+              className="bg-gray-100 hover:bg-gray-200 text-gray-900 border-0 font-medium"
+            >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleConfirmDelete}
-              className="bg-red-500 hover:bg-red-600"
+              className="bg-red-500 hover:bg-red-600 text-white border-0 font-medium"
               disabled={isDeleting}
             >
               {isDeleting ? 'Deleting...' : 'Delete'}

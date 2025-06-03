@@ -10,7 +10,7 @@ interface AddNoteButtonProps {
 export const AddNoteButton = ({ onOpenDialog }: AddNoteButtonProps) => {
   return (
     <Button 
-      className="rounded-s-lg bg-mint-500 hover:bg-mint-600 text-white"
+      className="rounded-s-lg bg-mint-500 hover:bg-mint-600 text-white shadow-sm hover:shadow-md transition-all duration-200 font-medium border-0"
       onClick={onOpenDialog}
     >
       <PlusCircle className="mr-2 h-4 w-4" />
