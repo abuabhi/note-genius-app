@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState } from 'react';
 import { FlashcardContextType, FlashcardProviderProps, FlashcardState } from './types';
 import { FlashcardSet, Flashcard, SubjectCategory } from '@/types/flashcard';
 import { combineFlashcardOperations } from './useFlashcards';
+import { useStudyOperations } from './useStudyOperations';
 import { useAuth } from '@/contexts/auth';
 
 // Create a context that will hold our flashcard state
@@ -51,6 +52,7 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
 
   // Get all operations from our hooks
   const operations = combineFlashcardOperations(state);
+  const studyOperations = useStudyOperations();
 
   // Create the context value with all required properties
   const contextValue: FlashcardContextType = {
@@ -63,7 +65,8 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     loading,
     setCurrentFlashcard,
     setCurrentSet,
-    ...operations
+    ...operations,
+    ...studyOperations
   };
 
   return (

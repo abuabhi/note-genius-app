@@ -2,7 +2,6 @@
 import { useFlashcardOperations } from './useFlashcardOperations';
 import { useFlashcardSets } from './useFlashcardSets';
 import { useLibraryOperations } from './useLibraryOperations';
-import { useStudyOperations } from './useStudyOperations';
 import { FlashcardState } from './types';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -14,7 +13,6 @@ export const combineFlashcardOperations = (
   const flashcardOperations = useFlashcardOperations(state);
   const flashcardSetsOperations = useFlashcardSets(state);
   const libraryOperations = useLibraryOperations(state);
-  const studyOperations = useStudyOperations();
 
   // Combine all operations
   const combinedOperations = {

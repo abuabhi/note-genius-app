@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useFlashcards } from "@/contexts/FlashcardContext";
 import { Flashcard } from "@/types/flashcard";
 import { StudyMode } from "@/pages/study/types";
@@ -23,20 +23,18 @@ export const useFlashcardStudy = ({ setId, mode }: UseFlashcardStudyProps) => {
   const [forceUpdate, setForceUpdate] = useState(0);
   const { user } = useRequireAuth();
   
-  // Use refs to track loading state and prevent multiple concurrent loads
-  const isLoadingRef = useRef(false);
-  const lastLoadedSetId = useRef<string | null>(null);
-  const lastLoadedMode = useRef<StudyMode | null>(null);
+  // Use refs to track what has been loaded to prevent re-loading
+  const loadedSetIdRef = useRef<string | null>(null);
+  const loadedModeRef = useRef<StudyMode | null>(null);
 
   useEffect(() => {
     const loadFlashcards = async () => {
-      // Prevent multiple concurrent loads and avoid reloading same data
-      if (isLoadingRef.current || 
-          (lastLoadedSetId.current === setId && lastLoadedMode.current === mode)) {
+      // Only load if setId or mode has actually changed
+      if (loadedSetIdRef.current === setId && loadedModeRef.current === mode) {
+        setIsLoading(false);
         return;
       }
       
-      isLoadingRef.current = true;
       setIsLoading(true);
       setError(null);
       
@@ -95,25 +93,21 @@ export const useFlashcardStudy = ({ setId, mode }: UseFlashcardStudyProps) => {
         setStreak(0);
         setForceUpdate(prev => prev + 1);
         
-        // Mark as successfully loaded
-        lastLoadedSetId.current = setId;
-        lastLoadedMode.current = mode;
+        // Mark as loaded
+        loadedSetIdRef.current = setId;
+        loadedModeRef.current = mode;
+        
       } catch (error) {
         console.error("useFlashcardStudy: Error loading flashcards:", error);
         setError("Failed to load flashcards");
         toast.error("Failed to load flashcards");
       } finally {
         setIsLoading(false);
-        isLoadingRef.current = false;
       }
     };
 
-    // Only load if we have a setId and it's different from what's loaded
-    if (setId && (lastLoadedSetId.current !== setId || lastLoadedMode.current !== mode)) {
+    if (setId) {
       loadFlashcards();
-    } else if (setId === lastLoadedSetId.current && mode === lastLoadedMode.current) {
-      // Data already loaded for this set and mode
-      setIsLoading(false);
     }
   }, [setId, mode, fetchFlashcardsInSet]);
 
