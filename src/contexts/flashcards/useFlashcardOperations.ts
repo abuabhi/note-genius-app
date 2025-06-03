@@ -56,8 +56,10 @@ export function useFlashcardOperations(state?: FlashcardState) {
           
         if (setError) {
           console.error("Error linking flashcard to set:", setError);
-          // Don't throw here, the flashcard was created successfully
+          throw setError; // Throw the error to prevent incomplete creation
         }
+        
+        console.log("Flashcard linked to set successfully");
       }
       
       // Add to local state
@@ -69,7 +71,7 @@ export function useFlashcardOperations(state?: FlashcardState) {
       
       setFlashcards(prev => [...prev, newFlashcard]);
       
-      // Update the set count
+      // Update the set count and wait for it to complete
       if (flashcardData.set_id) {
         await updateSetCount(flashcardData.set_id);
       }
@@ -119,6 +121,10 @@ export function useFlashcardOperations(state?: FlashcardState) {
   const createFlashcard = async (cardData: any) => {
     console.log("createFlashcard called with:", cardData);
     
+    if (!cardData.set_id) {
+      throw new Error("set_id is required to create a flashcard");
+    }
+    
     // Ensure we have the required fields and use set_id directly
     return addFlashcard({
       front_content: cardData.front_content || cardData.front,
@@ -142,24 +148,35 @@ export function useFlashcardOperations(state?: FlashcardState) {
   
   const updateSetCount = async (setId: string) => {
     try {
+      console.log(`Updating count for set ${setId}...`);
+      
       const { count, error: countError } = await supabase
         .from('flashcard_set_cards')
         .select('*', { count: 'exact', head: true })
         .eq('set_id', setId);
         
-      if (countError) throw countError;
+      if (countError) {
+        console.error("Error getting count:", countError);
+        throw countError;
+      }
       
-      console.log(`Updating set ${setId} count to:`, count);
+      const newCount = count || 0;
+      console.log(`Updating set ${setId} count to:`, newCount);
       
       // Update local state
-      setFlashcardSets(prev => 
-        prev.map(set => 
-          set.id === setId ? { ...set, card_count: count || 0 } : set
-        )
-      );
+      setFlashcardSets(prev => {
+        const updated = prev.map(set => 
+          set.id === setId ? { ...set, card_count: newCount } : set
+        );
+        console.log('Updated flashcard sets state:', updated);
+        return updated;
+      });
+      
+      return newCount;
       
     } catch (error) {
       console.error("Error updating set count:", error);
+      throw error;
     }
   };
   

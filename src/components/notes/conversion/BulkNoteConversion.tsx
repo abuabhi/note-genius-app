@@ -50,17 +50,28 @@ export const BulkNoteConversion = ({
       console.log("Created flashcard set:", newSet);
 
       // Create individual flashcards and add them to the set
+      let successCount = 0;
       for (const flashcard of flashcards) {
-        console.log("Creating flashcard:", flashcard);
-        await createFlashcard({
-          front_content: flashcard.front,
-          back_content: flashcard.back,
-          set_id: newSet.id // Pass the set ID as part of the cardData object
-        });
+        try {
+          console.log("Creating flashcard:", flashcard);
+          await createFlashcard({
+            front_content: flashcard.front,
+            back_content: flashcard.back,
+            set_id: newSet.id // Pass the set ID as part of the cardData object
+          });
+          successCount++;
+        } catch (error) {
+          console.error("Failed to create flashcard:", flashcard, error);
+          // Continue with other flashcards even if one fails
+        }
       }
 
-      toast.success(`Created ${flashcards.length} flashcards successfully!`);
-      onSuccess(newSet);
+      if (successCount > 0) {
+        toast.success(`Created ${successCount} flashcards successfully!`);
+        onSuccess(newSet);
+      } else {
+        throw new Error("No flashcards were created successfully");
+      }
       
     } catch (error) {
       console.error("Error creating flashcards:", error);

@@ -12,8 +12,9 @@ const FlashcardSetsList = () => {
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   
   useEffect(() => {
+    console.log('FlashcardSetsList mounting, fetching sets...');
     fetchFlashcardSets();
-  }, [fetchFlashcardSets]);
+  }, []); // Empty dependency array to prevent infinite loop
   
   const handleDeleteSet = async (setId: string) => {
     setIsDeleting(setId);

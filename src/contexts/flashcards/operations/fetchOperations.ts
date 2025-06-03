@@ -16,9 +16,10 @@ export const fetchFlashcardSets = async (state: FlashcardState): Promise<Flashca
   try {
     setLoading(prev => ({ ...prev, sets: true }));
     
+    // Remove the invalid join with subject_categories since there's no FK relationship
     const { data, error } = await supabase
       .from('flashcard_sets')
-      .select('*, subject_categories(id, name)')
+      .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
     
@@ -42,6 +43,7 @@ export const fetchFlashcardSets = async (state: FlashcardState): Promise<Flashca
       })
     );
     
+    console.log('Fetched flashcard sets with counts:', setsWithCardCounts);
     setFlashcardSets(setsWithCardCounts);
     return setsWithCardCounts;
   } catch (error) {
