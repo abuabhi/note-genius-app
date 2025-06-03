@@ -21,6 +21,44 @@ interface NoteCardProps {
   confirmDelete: string | null;
 }
 
+// Utility function to strip markdown formatting and return plain text
+const stripMarkdown = (text: string): string => {
+  if (!text) return '';
+  
+  return text
+    // Remove headers (# ## ###)
+    .replace(/^#+\s+/gm, '')
+    // Remove bold (**text** or __text__)
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/__(.*?)__/g, '$1')
+    // Remove italic (*text* or _text_)
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/_(.*?)_/g, '$1')
+    // Remove strikethrough (~~text~~)
+    .replace(/~~(.*?)~~/g, '$1')
+    // Remove inline code (`text`)
+    .replace(/`(.*?)`/g, '$1')
+    // Remove links [text](url)
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    // Remove images ![alt](url)
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')
+    // Remove blockquotes (> text)
+    .replace(/^>\s+/gm, '')
+    // Remove list markers (- * +)
+    .replace(/^[-*+]\s+/gm, '')
+    // Remove numbered list markers (1. 2. etc)
+    .replace(/^\d+\.\s+/gm, '')
+    // Remove horizontal rules (--- or ***)
+    .replace(/^(---|\*\*\*|___)\s*$/gm, '')
+    // Remove code blocks (```text```)
+    .replace(/```[\s\S]*?```/g, '')
+    // Remove HTML tags
+    .replace(/<[^>]*>/g, '')
+    // Clean up multiple spaces and newlines
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
 export const NoteCard = ({
   note,
   onNoteClick,
@@ -50,6 +88,9 @@ export const NoteCard = ({
 
   // Format date as dd-MMM-yyyy (e.g., 15-May-2023)
   const formattedDate = format(new Date(note.date), "dd-MMM-yyyy");
+
+  // Get plain text content without markdown formatting
+  const plainTextContent = stripMarkdown(note.content || note.description || '');
 
   return (
     <Card 
@@ -101,10 +142,10 @@ export const NoteCard = ({
           {note.title}
         </CardTitle>
         
-        {/* Content preview with modern styling */}
-        {(note.content || note.description) && (
+        {/* Content preview with plain text only */}
+        {plainTextContent && (
           <p className="text-slate-600 text-sm leading-relaxed line-clamp-2 mt-3">
-            {note.content || note.description}
+            {plainTextContent}
           </p>
         )}
       </CardHeader>
