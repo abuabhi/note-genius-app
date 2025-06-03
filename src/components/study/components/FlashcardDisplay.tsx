@@ -8,8 +8,6 @@ interface FlashcardDisplayProps {
   currentCard: Flashcard;
   currentIndex: number;
   isFlipped: boolean;
-  direction: "left" | "right";
-  forceUpdate: number;
   onFlip: () => void;
 }
 
@@ -17,8 +15,6 @@ export const FlashcardDisplay = ({
   currentCard,
   currentIndex,
   isFlipped,
-  direction,
-  forceUpdate,
   onFlip
 }: FlashcardDisplayProps) => {
   const cardContainerRef = useRef<HTMLDivElement>(null);
@@ -66,7 +62,7 @@ export const FlashcardDisplay = ({
   const { front, back } = getCardContent();
   
   // Create a unique animation key that ensures proper re-rendering
-  const animationKey = `card-${currentCard.id}-${currentIndex}-${forceUpdate}-${isFlipped ? 'back' : 'front'}`;
+  const animationKey = `card-${currentCard.id}-${currentIndex}-${isFlipped ? 'back' : 'front'}`;
   const displayContent = isFlipped ? (back || "No back content") : (front || "No front content");
 
   console.log("FlashcardDisplay: Rendering with key:", animationKey, "content:", displayContent);
@@ -76,19 +72,10 @@ export const FlashcardDisplay = ({
       <AnimatePresence mode="wait">
         <motion.div
           key={animationKey}
-          initial={{ 
-            x: direction === "right" ? 100 : -100,
-            opacity: 0
-          }}
-          animate={{ 
-            x: 0,
-            opacity: 1
-          }}
-          exit={{ 
-            x: direction === "right" ? -100 : 100,
-            opacity: 0
-          }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          initial={{ rotateY: 180, opacity: 0 }}
+          animate={{ rotateY: 0, opacity: 1 }}
+          exit={{ rotateY: -180, opacity: 0 }}
+          transition={{ duration: 0.3 }}
           className="w-full cursor-pointer"
           onClick={onFlip}
         >

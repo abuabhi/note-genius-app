@@ -1,5 +1,5 @@
 
-import { StudyModeSelector } from "@/components/study/StudyModeSelector";
+import { SimplifiedStudyModeSelector } from "@/components/study/SimplifiedStudyModeSelector";
 import { FlashcardSet } from "@/types/flashcard";
 import { StudyMode } from "./types";
 
@@ -27,7 +27,7 @@ export const StudyPageHeader = ({
         </p>
       </div>
       
-      {!isLoading && <StudyModeSelector mode={mode} setMode={setMode} />}
+      {!isLoading && <SimplifiedStudyModeSelector mode={mode} setMode={setMode} />}
     </div>
   );
 };

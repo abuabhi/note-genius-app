@@ -1,45 +1,32 @@
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 
 export const StudyLoadingState = () => {
   return (
-    <Card className="mb-6">
-      <CardContent className="p-6">
-        <div className="min-h-[300px] flex flex-col items-center justify-center space-y-4">
-          <Skeleton className="h-8 w-4/5" />
-          <Skeleton className="h-4 w-3/5" />
-          <Skeleton className="h-4 w-2/5" />
-        </div>
-      </CardContent>
-    </Card>
+    <div className="flex items-center justify-center py-12">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p>Loading flashcards...</p>
+      </div>
+    </div>
   );
 };
 
 export const StudyErrorState = ({ error }: { error: string }) => {
   return (
-    <Card className="mb-6">
-      <CardContent className="p-6">
-        <div className="min-h-[300px] flex flex-col items-center justify-center text-center">
-          <h3 className="text-lg font-semibold text-red-600">Error</h3>
-          <p className="text-muted-foreground mt-2">{error}</p>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="text-center py-12">
+      <div className="text-red-600 mb-4">{error}</div>
+      <Button onClick={() => window.location.reload()}>Try Again</Button>
+    </div>
   );
 };
 
 export const StudyEmptyState = () => {
   return (
-    <Card className="mb-6">
-      <CardContent className="p-6">
-        <div className="min-h-[300px] flex flex-col items-center justify-center text-center">
-          <h3 className="text-lg font-semibold">No flashcards in this set</h3>
-          <p className="text-muted-foreground mt-2">
-            Add some flashcards to this set to start studying.
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="text-center py-12">
+      <p className="text-muted-foreground mb-4">No flashcards available for this mode.</p>
+      <Button onClick={() => window.history.back()}>Go Back</Button>
+    </div>
   );
 };
