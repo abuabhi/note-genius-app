@@ -22,6 +22,7 @@ import {
   MessageSquare,
   Target,
   Users,
+  UserCheck,
 } from "lucide-react";
 
 interface NavigationProps {
@@ -37,6 +38,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
   const FEATURE_KEYS = {
     CHAT: "chat",
     COLLABORATION: "collaboration",
+    CONNECTIONS: "connections",
     STUDY_SESSIONS: "study_sessions",
     TODOS: "todos",
     PROGRESS: "progress",
@@ -48,6 +50,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
   // Determine if specific features are visible
   const isChatVisible = isFeatureVisible(FEATURE_KEYS.CHAT);
   const isCollaborationVisible = isFeatureVisible(FEATURE_KEYS.COLLABORATION);
+  const isConnectionsVisible = isFeatureVisible(FEATURE_KEYS.CONNECTIONS);
   const isStudySessionsVisible = isFeatureVisible(FEATURE_KEYS.STUDY_SESSIONS);
   const isTodosVisible = isFeatureVisible(FEATURE_KEYS.TODOS);
   const isProgressVisible = isFeatureVisible(FEATURE_KEYS.PROGRESS);
@@ -56,7 +59,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
   const isQuizzesVisible = isFeatureVisible(FEATURE_KEYS.QUIZZES);
   
   // Function to check if any items in a section are visible
-  const isAnyCommunicationItemVisible = isChatVisible || isCollaborationVisible;
+  const isAnyCommunicationItemVisible = isChatVisible || isCollaborationVisible || isConnectionsVisible;
   const isAnyStudyItemVisible = isStudySessionsVisible || isQuizzesVisible;
   const isAnyPlanningItemVisible = isScheduleVisible || isGoalsVisible || isTodosVisible;
   
@@ -179,10 +182,19 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                 )}
                 {isCollaborationVisible && (
                   <NavLink
-                    to="/collaborate"
+                    to="/collaboration"
                     icon={Users}
                     label="Collaboration"
-                    isActive={pathname.includes("/collaborate")}
+                    isActive={pathname.includes("/collaboration")}
+                    isCollapsed={isCollapsed}
+                  />
+                )}
+                {isConnectionsVisible && (
+                  <NavLink
+                    to="/connections"
+                    icon={UserCheck}
+                    label="Connections"
+                    isActive={pathname.includes("/connections")}
                     isCollapsed={isCollapsed}
                   />
                 )}

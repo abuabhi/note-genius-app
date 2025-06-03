@@ -28,6 +28,7 @@ import CreateQuizPage from "@/pages/CreateQuizPage";
 import TakeQuizPage from "@/pages/TakeQuizPage";
 import NoteToFlashcardPage from "@/pages/NoteToFlashcardPage";
 import CollaborationPage from "@/pages/CollaborationPage";
+import ConnectionsPage from "@/pages/ConnectionsPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 import NotionAuthCallback from '@/components/auth/NotionAuthCallback';
 import EvernoteAuthCallback from '@/components/auth/EvernoteAuthCallback';
@@ -144,7 +145,7 @@ export const featureProtectedRoutes: RouteConfig[] = [
     ),
   },
   {
-    path: "/collaborate",
+    path: "/collaboration",
     element: (
       <FeatureProtectedRoute featureKey="collaboration">
         <CollaborationPage />
@@ -152,10 +153,10 @@ export const featureProtectedRoutes: RouteConfig[] = [
     ),
   },
   {
-    path: "/collaboration",
+    path: "/connections",
     element: (
-      <FeatureProtectedRoute featureKey="collaboration">
-        <CollaborationPage />
+      <FeatureProtectedRoute featureKey="connections">
+        <ConnectionsPage />
       </FeatureProtectedRoute>
     ),
   },
@@ -166,8 +167,8 @@ export const adminRoutes: RouteConfig[] = [
   { path: "/admin/users", element: <AdminUsersPage /> },
   { path: "/admin/flashcards", element: <AdminFlashcardPage /> },
   { path: "/admin/sections", element: <AdminSectionsPage /> },
-  { path: "/admin/subjects", element: <AdminSubjectsPage /> },
   { path: "/admin/grades", element: <AdminGradesPage /> },
+  { path: "/admin/subjects", element: <AdminSubjectsPage /> },
   { path: "/admin/csv-import", element: <AdminCSVImportPage /> },
   { path: "/admin/features", element: <AdminFeaturesPage /> },
 ];
