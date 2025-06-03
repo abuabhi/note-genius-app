@@ -71,6 +71,7 @@ export type FlashcardDifficulty = 1 | 2 | 3 | 4 | 5;
 export interface CreateFlashcardPayload {
   front_content: string;
   back_content: string;
+  set_id?: string;
   difficulty?: FlashcardDifficulty;
   hint?: string;
   image_url?: string;
