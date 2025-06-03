@@ -9,9 +9,7 @@ const App = () => {
 
   return (
     <AppProviders>
-      <div>
-        <AppRoutes />
-      </div>
+      <AppRoutes />
     </AppProviders>
   );
 };

@@ -10,23 +10,25 @@ import { FlashcardSet } from "@/types/flashcard";
 const FlashcardSetsList = () => {
   const { flashcardSets, loading, fetchFlashcardSets, deleteFlashcardSet } = useFlashcards();
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [hasInitialized, setHasInitialized] = useState(false);
   
   useEffect(() => {
-    const loadFlashcardSets = async () => {
-      try {
-        console.log('FlashcardSetsList: Starting to fetch flashcard sets...');
-        await fetchFlashcardSets();
-        console.log('FlashcardSetsList: Fetch completed');
-      } catch (error) {
-        console.error('FlashcardSetsList: Error fetching sets:', error);
-      } finally {
-        setIsInitialLoading(false);
-      }
-    };
-    
-    loadFlashcardSets();
-  }, [fetchFlashcardSets]);
+    if (!hasInitialized && !loading?.sets) {
+      const loadFlashcardSets = async () => {
+        try {
+          console.log('FlashcardSetsList: Starting to fetch flashcard sets...');
+          await fetchFlashcardSets();
+          console.log('FlashcardSetsList: Fetch completed');
+        } catch (error) {
+          console.error('FlashcardSetsList: Error fetching sets:', error);
+        } finally {
+          setHasInitialized(true);
+        }
+      };
+      
+      loadFlashcardSets();
+    }
+  }, [fetchFlashcardSets, hasInitialized, loading?.sets]);
   
   const handleDeleteSet = async (setId: string) => {
     setIsDeleting(setId);
@@ -41,7 +43,7 @@ const FlashcardSetsList = () => {
   };
   
   // Show loading state only during initial load
-  if (isInitialLoading || loading?.sets) {
+  if (!hasInitialized || loading?.sets) {
     console.log('FlashcardSetsList: Showing loading state');
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -72,7 +74,9 @@ const FlashcardSetsList = () => {
     return (
       <div className="text-center py-8">
         <p className="text-muted-foreground mb-4">You don't have any flashcard sets yet.</p>
-        <Button>Create Your First Set</Button>
+        <Button asChild>
+          <Link to="/flashcards/create">Create Your First Set</Link>
+        </Button>
       </div>
     );
   }
