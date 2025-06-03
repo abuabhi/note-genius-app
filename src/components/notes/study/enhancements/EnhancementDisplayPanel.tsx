@@ -82,7 +82,7 @@ export const EnhancementDisplayPanel = ({
         };
       case 'markdown':
         return {
-          title: "Markdown Format",
+          title: "Original++",
           icon: Code,
           description: "Structured markdown format",
           color: "text-mint-600"
