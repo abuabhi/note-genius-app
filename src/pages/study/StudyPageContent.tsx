@@ -2,13 +2,11 @@
 import { useState, useEffect } from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { useFlashcards } from "@/contexts/FlashcardContext";
-import { StudyModeSelector } from "@/components/study/StudyModeSelector";
-import { FlashcardStudy } from "@/components/study/FlashcardStudy";
-import { StudyProgress } from "@/components/study/StudyProgress";
+import { SimplifiedStudyModeSelector } from "@/components/study/SimplifiedStudyModeSelector";
 import { Separator } from "@/components/ui/separator";
 import { StudyMode } from "./types";
 import { StudyPageHeader } from "./StudyPageHeader";
-import { StudyPageLayout } from "./StudyPageLayout";
+import { SimplifiedStudyPageLayout } from "./SimplifiedStudyPageLayout";
 
 export const StudyPageContent = () => {
   const { setId } = useParams<{ setId: string }>();
@@ -27,14 +25,12 @@ export const StudyPageContent = () => {
       try {
         console.log("Loading flashcard set with ID:", setId);
         
-        // First fetch all sets if not already loaded
         let sets = flashcardSets;
         if (!sets || sets.length === 0) {
           console.log("Fetching flashcard sets...");
           sets = await fetchFlashcardSets();
         }
         
-        // Find the specific set
         const foundSet = sets.find(s => s.id === setId);
         console.log("Found set:", foundSet);
         
@@ -77,16 +73,27 @@ export const StudyPageContent = () => {
   
   return (
     <div className="container mx-auto p-6">
-      <StudyPageHeader 
-        isLoading={isLoading}
-        currentSet={currentSet}
-        mode={mode}
-        setMode={setMode}
-      />
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+          <div>
+            <h1 className="text-2xl font-bold">
+              {isLoading ? "Loading..." : currentSet?.name || "Study Session"}
+            </h1>
+            {currentSet?.description && (
+              <p className="text-muted-foreground mt-1">{currentSet.description}</p>
+            )}
+          </div>
+          
+          <SimplifiedStudyModeSelector 
+            currentMode={mode}
+            onModeChange={setMode}
+          />
+        </div>
+      </div>
       
       <Separator className="mb-6" />
       
-      <StudyPageLayout
+      <SimplifiedStudyPageLayout
         isLoading={isLoading}
         setId={setId}
         mode={mode}

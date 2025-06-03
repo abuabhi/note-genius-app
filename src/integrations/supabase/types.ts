@@ -254,6 +254,7 @@ export type Database = {
       }
       flashcard_sets: {
         Row: {
+          card_count: number | null
           category_id: string | null
           country_id: string | null
           created_at: string
@@ -269,6 +270,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          card_count?: number | null
           category_id?: string | null
           country_id?: string | null
           created_at?: string
@@ -284,6 +286,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          card_count?: number | null
           category_id?: string | null
           country_id?: string | null
           created_at?: string
@@ -1081,6 +1084,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      simple_flashcard_progress: {
+        Row: {
+          created_at: string
+          flashcard_id: string
+          id: string
+          last_reviewed_at: string
+          review_count: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          flashcard_id: string
+          id?: string
+          last_reviewed_at?: string
+          review_count?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          flashcard_id?: string
+          id?: string
+          last_reviewed_at?: string
+          review_count?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       study_achievements: {
         Row: {
