@@ -18,6 +18,8 @@ export interface ProgressStats {
   totalCardsMastered: number;
   studyTimeHours: number;
   totalSets: number;
+  cardsReviewedToday: number;
+  totalCardsReviewed: number;
 }
 
 export const useProgressStats = () => {
@@ -36,7 +38,9 @@ export const useProgressStats = () => {
     streakDays: streak,
     totalCardsMastered: 0,
     studyTimeHours: 0,
-    totalSets: flashcardSets?.length || 0
+    totalSets: flashcardSets?.length || 0,
+    cardsReviewedToday: 0,
+    totalCardsReviewed: 0
   }, isLoading: isStatsLoading, error } = useQuery({
     queryKey: ["progressStats", user?.id, streak],
     queryFn: async () => {
@@ -63,10 +67,10 @@ export const useProgressStats = () => {
         console.error('Error fetching quiz results:', quizResultsError);
       }
 
-      // Get flashcard statistics
+      // Get flashcard statistics from spaced repetition progress
       const totalSets = flashcardSets?.length || 0;
 
-      // Get user flashcard progress data
+      // Get user flashcard progress data for spaced repetition
       const { data: flashcardProgress, error: flashcardProgressError } = await supabase
         .from('user_flashcard_progress')
         .select('*')
@@ -74,6 +78,22 @@ export const useProgressStats = () => {
 
       if (flashcardProgressError) {
         console.error('Error fetching flashcard progress:', flashcardProgressError);
+      }
+
+      // Get today's reviews
+      const today = new Date();
+      const startOfToday = startOfDay(today).toISOString();
+      const endOfToday = endOfDay(today).toISOString();
+
+      const { data: todayReviews, error: todayReviewsError } = await supabase
+        .from('user_flashcard_progress')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('last_reviewed_at', startOfToday)
+        .lte('last_reviewed_at', endOfToday);
+
+      if (todayReviewsError) {
+        console.error('Error fetching today reviews:', todayReviewsError);
       }
 
       // Get study session data
@@ -87,7 +107,7 @@ export const useProgressStats = () => {
         console.error('Error fetching study sessions:', studySessionsError);
       }
 
-      // Calculate flashcard accuracy
+      // Calculate flashcard accuracy from spaced repetition scores
       let flashcardAccuracy = 0;
       if (flashcardProgress && flashcardProgress.length > 0) {
         const recentReviews = flashcardProgress.filter(p => p.last_score !== null);
@@ -103,9 +123,16 @@ export const useProgressStats = () => {
         studySessions.reduce((sum, session) => sum + (session.duration || 0), 0) : 0;
       const studyTimeHours = Math.round(totalMinutes / 60 * 10) / 10;
 
-      // Calculate mastered cards (cards with good retention - ease_factor >= 2.5)
+      // Calculate mastered cards (cards with good retention - ease_factor >= 2.5 and interval >= 7)
       const masteredCards = flashcardProgress ? 
-        flashcardProgress.filter(p => p.ease_factor && p.ease_factor >= 2.5).length : 0;
+        flashcardProgress.filter(p => 
+          p.ease_factor && p.ease_factor >= 2.5 && 
+          p.interval && p.interval >= 7
+        ).length : 0;
+
+      // Count cards reviewed today and total
+      const cardsReviewedToday = todayReviews?.length || 0;
+      const totalCardsReviewed = flashcardProgress?.length || 0;
 
       return {
         completedCourses: 0, // Placeholder for future course implementation
@@ -116,7 +143,9 @@ export const useProgressStats = () => {
         streakDays: streak,
         totalCardsMastered: masteredCards,
         studyTimeHours,
-        totalSets
+        totalSets,
+        cardsReviewedToday,
+        totalCardsReviewed
       };
     },
     enabled: !!user && !flashcardsLoading,

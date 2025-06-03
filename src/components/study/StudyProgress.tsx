@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Award, Calendar, Zap, Star } from "lucide-react";
+import { Award, Calendar, Zap, Star, Target, Clock } from "lucide-react";
 import { useFlashcards } from "@/contexts/FlashcardContext";
 import { useAuth } from "@/contexts/auth";
 import { useStreakCalculation } from "@/hooks/useStreakCalculation";
@@ -62,18 +62,50 @@ export const StudyProgress = () => {
           </div>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Today's Progress</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Target className="h-4 w-4 text-blue-500" />
+              <span className="text-sm">Cards Reviewed</span>
+            </div>
+            <span className="font-semibold">{stats.cardsReviewedToday}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-green-500" />
+              <span className="text-sm">Study Time</span>
+            </div>
+            <span className="font-semibold">{stats.studyTimeHours}h</span>
+          </div>
+        </CardContent>
+      </Card>
       
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Cards Mastered</CardTitle>
+          <CardTitle className="text-sm font-medium">Overall Progress</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span>{stats.totalCardsMastered} cards</span>
-              <span>{Math.round(masteryPercent)}%</span>
+              <span className="text-sm">Cards Mastered</span>
+              <span className="font-semibold">{stats.totalCardsMastered}</span>
             </div>
-            <Progress value={masteryPercent} />
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Total Reviewed</span>
+              <span className="font-semibold">{stats.totalCardsReviewed}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Accuracy</span>
+              <span className="font-semibold">{stats.flashcardAccuracy}%</span>
+            </div>
+            {stats.flashcardAccuracy > 0 && (
+              <Progress value={stats.flashcardAccuracy} className="h-2" />
+            )}
           </div>
         </CardContent>
       </Card>
