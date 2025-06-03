@@ -1,5 +1,6 @@
+
 import jsPDF from 'jspdf';
-import { Document, Packer, Paragraph, TextRun } from 'docx';
+import { Document, Packer, Paragraph, TextRun, Header, Footer } from 'docx';
 import { Note } from '@/types/note';
 
 export type ExportFormat = 'pdf' | 'docx' | 'txt';
@@ -184,20 +185,28 @@ class ExportService {
           },
         },
         headers: {
-          default: new Paragraph({
-            children: [],
+          default: new Header({
+            children: [
+              new Paragraph({
+                children: [],
+              }),
+            ],
           }),
         },
         footers: {
-          default: new Paragraph({
+          default: new Footer({
             children: [
-              new TextRun({
-                text: 'Generated with StudyApp',
-                size: 16,
-                italics: true,
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: 'Generated with StudyApp',
+                    size: 16,
+                    italics: true,
+                  }),
+                ],
+                alignment: 'center',
               }),
             ],
-            alignment: 'center',
           }),
         },
         children: [
