@@ -81,6 +81,11 @@ export const NoteStudyViewContent = ({
     // Implementation would go here
   };
 
+  // Create a wrapper function for handleEnhanceContent with default enhancement type
+  const handleEnhanceContentWrapper = async () => {
+    await handleEnhanceContent('improve-clarity'); // Default enhancement type
+  };
+
   if (isEditing) {
     return (
       <CardContent className="p-8">
@@ -93,7 +98,7 @@ export const NoteStudyViewContent = ({
           handleContentChange={handleContentChange}
           handleSaveContent={handleSaveContent}
           toggleEditing={toggleEditing}
-          handleEnhanceContent={handleEnhanceContent}
+          handleEnhanceContent={handleEnhanceContentWrapper}
           setSelectedTags={setSelectedTags}
         />
       </CardContent>
