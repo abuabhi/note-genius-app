@@ -6,6 +6,7 @@ import { NavigationProvider } from '@/contexts/NavigationContext';
 import { NoteProvider } from '@/contexts/NoteContext';
 import { FeatureProvider } from '@/contexts/FeatureContext';
 import { FlashcardProvider } from '@/contexts/FlashcardContext';
+import { AuthProvider } from '@/contexts/auth';
 
 interface AppProvidersProps {
   children: ReactNode;
@@ -14,15 +15,17 @@ interface AppProvidersProps {
 export const AppProviders = ({ children }: AppProvidersProps) => {
   return (
     <QueryClientProvider client={queryClient}>
-      <NavigationProvider>
-        <NoteProvider>
-          <FeatureProvider>
-            <FlashcardProvider>
-              {children}
-            </FlashcardProvider>
-          </FeatureProvider>
-        </NoteProvider>
-      </NavigationProvider>
+      <AuthProvider>
+        <FeatureProvider>
+          <NavigationProvider>
+            <NoteProvider>
+              <FlashcardProvider>
+                {children}
+              </FlashcardProvider>
+            </NoteProvider>
+          </NavigationProvider>
+        </FeatureProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 };

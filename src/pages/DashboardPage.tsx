@@ -28,14 +28,16 @@ const DashboardPage = () => {
   });
   
   if (loading) {
-    return <Layout>
+    return (
+      <Layout>
         <div className="container mx-auto p-6 flex items-center justify-center h-[50vh]">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
             <p className="mt-2 text-muted-foreground">Loading your dashboard...</p>
           </div>
         </div>
-      </Layout>;
+      </Layout>
+    );
   }
   
   if (!user) {
@@ -51,7 +53,8 @@ const DashboardPage = () => {
     SETTINGS: "settings", // Core feature, always visible
   };
   
-  return <Layout>
+  return (
+    <Layout>
       <div className="container mx-auto p-6">
         <WelcomeBanner />
         
@@ -93,6 +96,22 @@ const DashboardPage = () => {
               </CardContent>
             </Card>
           )}
+
+          {/* Flashcards Card - Always visible as it's a core feature */}
+          <Card className="border-mint-100 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="space-y-1">
+              <CardTitle className="text-2xl">Flashcards</CardTitle>
+              <CardDescription>Study with flashcards</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild variant="outline" className="w-full">
+                <Link to="/flashcards">
+                  <BookOpen className="mr-2 h-4 w-4" />
+                  View Flashcards
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
 
           {/* Notes Card - Core functionality, always visible */}
           <Card className="border-mint-100 shadow-sm hover:shadow-md transition-shadow">
@@ -145,6 +164,8 @@ const DashboardPage = () => {
           </Card>
         </div>
       </div>
-    </Layout>;
+    </Layout>
+  );
 };
+
 export default DashboardPage;
