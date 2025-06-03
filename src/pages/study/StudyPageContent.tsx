@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { useFlashcards } from "@/contexts/FlashcardContext";
 import { SimplifiedStudyModeSelector } from "@/components/study/SimplifiedStudyModeSelector";
@@ -14,41 +14,48 @@ export const StudyPageContent = () => {
   const { fetchFlashcardSets, currentSet, setCurrentSet, flashcardSets } = useFlashcards();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
+  
+  const loadFlashcardSet = useCallback(async () => {
+    if (!setId || hasAttemptedLoad) return;
+    
+    console.log("Starting loadFlashcardSet for setId:", setId);
+    setIsLoading(true);
+    setError(null);
+    setHasAttemptedLoad(true);
+    
+    try {
+      // First check if we already have the set in our existing sets
+      let targetSet = flashcardSets?.find(s => s.id === setId);
+      
+      if (!targetSet) {
+        console.log("Set not found in existing sets, fetching all sets...");
+        const sets = await fetchFlashcardSets();
+        targetSet = sets?.find(s => s.id === setId);
+      }
+      
+      console.log("Target set found:", targetSet);
+      
+      if (targetSet) {
+        setCurrentSet(targetSet);
+        setError(null);
+      } else {
+        setError("Flashcard set not found");
+      }
+    } catch (fetchError) {
+      console.error("Error in loadFlashcardSet:", fetchError);
+      setError("Failed to load flashcard set. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [setId, hasAttemptedLoad, flashcardSets, fetchFlashcardSets, setCurrentSet]);
   
   useEffect(() => {
-    const loadFlashcardSet = async () => {
-      if (!setId) return;
-      
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        console.log("Loading flashcard set with ID:", setId);
-        
-        let sets = flashcardSets;
-        if (!sets || sets.length === 0) {
-          console.log("Fetching flashcard sets...");
-          sets = await fetchFlashcardSets();
-        }
-        
-        const foundSet = sets.find(s => s.id === setId);
-        console.log("Found set:", foundSet);
-        
-        if (foundSet) {
-          setCurrentSet(foundSet);
-        } else {
-          setError("Flashcard set not found");
-        }
-      } catch (error) {
-        console.error("Error loading flashcard set:", error);
-        setError("Failed to load flashcard set");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    loadFlashcardSet();
-  }, [setId, fetchFlashcardSets, setCurrentSet, flashcardSets]);
+    console.log("StudyPageContent useEffect triggered", { setId, hasAttemptedLoad });
+    if (setId && !hasAttemptedLoad) {
+      loadFlashcardSet();
+    }
+  }, [setId, loadFlashcardSet, hasAttemptedLoad]);
   
   if (!setId) {
     return <Navigate to="/flashcards" />;
@@ -60,12 +67,24 @@ export const StudyPageContent = () => {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
           <p className="text-muted-foreground mb-4">{error}</p>
-          <button 
-            onClick={() => window.history.back()}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            Go Back
-          </button>
+          <div className="flex gap-4 justify-center">
+            <button 
+              onClick={() => {
+                setHasAttemptedLoad(false);
+                setError(null);
+                loadFlashcardSet();
+              }}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              Try Again
+            </button>
+            <button 
+              onClick={() => window.history.back()}
+              className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+            >
+              Go Back
+            </button>
+          </div>
         </div>
       </div>
     );
