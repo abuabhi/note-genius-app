@@ -31,17 +31,21 @@ export const NotesHeader = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   return (
-    <div className="flex flex-col gap-4 mb-6">
-      {/* Top Section - Search and Action Buttons */}
-      <NotesHeaderTop 
-        filteredNotesLength={filteredNotes.length}
-        onOpenManualDialog={() => setIsManualDialogOpen(true)}
-        onOpenScanDialog={() => setIsScanDialogOpen(true)}
-        onOpenImportDialog={() => setIsImportDialogOpen(true)}
-      />
+    <div className="space-y-6">
+      {/* Top Section - Search and Action Buttons with improved layout */}
+      <div className="bg-white/60 backdrop-blur-sm rounded-lg border border-mint-100 p-6 shadow-sm">
+        <NotesHeaderTop 
+          filteredNotesLength={filteredNotes.length}
+          onOpenManualDialog={() => setIsManualDialogOpen(true)}
+          onOpenScanDialog={() => setIsScanDialogOpen(true)}
+          onOpenImportDialog={() => setIsImportDialogOpen(true)}
+        />
+      </div>
       
-      {/* Bottom Section - Filters and Sorting */}
-      <NotesHeaderBottom />
+      {/* Bottom Section - Filters and Sorting with better spacing */}
+      <div className="bg-white/40 backdrop-blur-sm rounded-lg border border-mint-100 p-4 shadow-sm">
+        <NotesHeaderBottom />
+      </div>
 
       {/* Dialogs for creating notes */}
       <DialogManager 

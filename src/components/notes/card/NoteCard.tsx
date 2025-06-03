@@ -57,18 +57,19 @@ export const NoteCard = ({
     <Card 
       key={note.id}
       className={`
-        hover:shadow-lg transition-shadow cursor-pointer border-mint-200 
-        bg-white/50 backdrop-blur-sm hover:bg-mint-50/60
-        ${note.pinned ? 'ring-2 ring-mint-400 shadow-md' : ''}
+        hover:shadow-xl transition-all duration-300 cursor-pointer border-mint-200 
+        bg-white/60 backdrop-blur-sm hover:bg-mint-50/70 hover:scale-[1.02]
+        ${note.pinned ? 'ring-2 ring-mint-400 shadow-lg' : ''}
         ${note.archived ? 'opacity-75' : ''}
+        rounded-xl
       `}
       onClick={() => onNoteClick(note)}
     >
-      <CardHeader className="relative p-3 pb-1">
+      <CardHeader className="relative p-4 pb-2">
         {/* Pin indicator for pinned notes */}
         {note.pinned && (
-          <div className="absolute top-2 left-2 text-mint-600">
-            <Pin size={16} className="fill-mint-500" />
+          <div className="absolute top-3 left-3 text-mint-600">
+            <Pin size={18} className="fill-mint-500" />
           </div>
         )}
         
@@ -84,28 +85,34 @@ export const NoteCard = ({
         />
         
         <div className="flex flex-row items-center justify-between">
-          <CardTitle className={`text-xl text-mint-800 ${note.pinned ? 'pl-6' : ''} pr-8`}>
+          <CardTitle className={`text-xl text-mint-800 leading-relaxed ${note.pinned ? 'pl-8' : ''} pr-10`}>
             {note.title}
           </CardTitle>
         </div>
       </CardHeader>
       
-      <CardFooter className="flex justify-between items-center px-3 py-2 pt-0">
-        {/* Date and subject on left */}
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-mint-600">{formattedDate}</span>
+      <CardFooter className="flex justify-between items-center px-4 py-3 pt-0">
+        {/* Date and subject on left with improved spacing */}
+        <div className="flex items-center gap-3 text-sm">
+          <span className="text-mint-600 font-medium">{formattedDate}</span>
           <span className="text-mint-400">•</span>
-          <span 
-            className="font-medium"
-            style={{
-              color: generateColorFromString(subjectName),
-            }}
-          >
-            {subjectName}
-          </span>
+          <div className="flex items-center gap-2">
+            <div 
+              className="w-3 h-3 rounded-full border border-white shadow-sm"
+              style={{ backgroundColor: generateColorFromString(subjectName) }}
+            />
+            <span 
+              className="font-medium"
+              style={{
+                color: generateColorFromString(subjectName),
+              }}
+            >
+              {subjectName}
+            </span>
+          </div>
           
-          {/* Tags and status indicators */}
-          <div className="flex flex-wrap gap-1 ml-2">
+          {/* Tags and status indicators with better spacing */}
+          <div className="flex flex-wrap gap-2 ml-3">
             {note.sourceType === 'scan' && (
               <div className="flex items-center">
                 <Camera className="h-4 w-4 text-mint-500" />
@@ -119,14 +126,14 @@ export const NoteCard = ({
           </div>
         </div>
         
-        {/* Study Mode button at right */}
+        {/* Study Mode button at right with enhanced styling */}
         <Button 
           variant="default" 
           size="sm" 
-          className="h-8 text-lg bg-mint-600 hover:bg-mint-700 flex items-center gap-1 px-4"
+          className="h-9 text-sm bg-mint-600 hover:bg-mint-700 flex items-center gap-2 px-5 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
           onClick={handleGoToStudyMode}
         >
-          <Book className="h-4 w-4 mr-1" />
+          <Book className="h-4 w-4" />
           Study Mode
         </Button>
       </CardFooter>

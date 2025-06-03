@@ -41,50 +41,62 @@ export const NotesContent = ({
   }
 
   return (
-    <div className="container mx-auto p-6">
-      {/* Breadcrumb Navigation */}
-      <NotesPageBreadcrumb activeSubjectId={activeSubjectId} />
-      
-      {/* Enhanced Tier Information Section */}
-      {userTier && tierLimits && (
-        <EnhancedTierInfo 
-          userTier={userTier}
-          tierLimits={tierLimits}
-          notesCount={notes.length}
-        />
-      )}
-      
-      {/* Notes Header Section */}
-      <NotesHeader 
-        onSaveNote={onSaveNote}
-        onScanNote={onScanNote}
-        onImportNote={onImportNote}
-        tierLimits={tierLimits}
-        userTier={userTier}
-      />
-      
-      {/* Subject Tabs Section */}
-      <SubjectsSection 
-        activeSubjectId={activeSubjectId}
-        setActiveSubjectId={setActiveSubjectId}
-        setFilterOptions={setFilterOptions}
-        filteredNotesCount={filteredNotes.length}
-      />
-      
-      {/* Notes Grid and Pagination */}
-      <NotesDisplay 
-        notes={notes} 
-        paginatedNotes={paginatedNotes} 
-        loading={loading} 
-      />
+    <div className="min-h-screen bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl">
+        {/* Breadcrumb Navigation - Improved spacing */}
+        <div className="mb-6">
+          <NotesPageBreadcrumb activeSubjectId={activeSubjectId} />
+        </div>
+        
+        {/* Enhanced Tier Information Section - Better visual separation */}
+        {userTier && tierLimits && (
+          <div className="mb-8">
+            <EnhancedTierInfo 
+              userTier={userTier}
+              tierLimits={tierLimits}
+              notesCount={notes.length}
+            />
+          </div>
+        )}
+        
+        {/* Notes Header Section - Improved spacing and layout */}
+        <div className="mb-8">
+          <NotesHeader 
+            onSaveNote={onSaveNote}
+            onScanNote={onScanNote}
+            onImportNote={onImportNote}
+            tierLimits={tierLimits}
+            userTier={userTier}
+          />
+        </div>
+        
+        {/* Subject Tabs Section - Better visual hierarchy */}
+        <div className="mb-8">
+          <SubjectsSection 
+            activeSubjectId={activeSubjectId}
+            setActiveSubjectId={setActiveSubjectId}
+            setFilterOptions={setFilterOptions}
+            filteredNotesCount={filteredNotes.length}
+          />
+        </div>
+        
+        {/* Notes Grid and Pagination - Improved content area */}
+        <div className="space-y-6">
+          <NotesDisplay 
+            notes={notes} 
+            paginatedNotes={paginatedNotes} 
+            loading={loading} 
+          />
+        </div>
 
-      {/* Dialogs for Creating Notes */}
-      <NoteCreationDialogs 
-        onSaveNote={onSaveNote}
-        onScanNote={onScanNote}
-        onImportNote={onImportNote}
-        tierLimits={tierLimits}
-      />
+        {/* Dialogs for Creating Notes */}
+        <NoteCreationDialogs 
+          onSaveNote={onSaveNote}
+          onScanNote={onScanNote}
+          onImportNote={onImportNote}
+          tierLimits={tierLimits}
+        />
+      </div>
     </div>
   );
 };

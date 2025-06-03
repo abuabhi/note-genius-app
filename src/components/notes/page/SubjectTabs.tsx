@@ -72,31 +72,31 @@ export const SubjectTabs = ({ activeSubjectId, onSubjectChange }: SubjectTabsPro
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-4">
+      <div className="flex justify-center py-6">
         <Loader2 className="h-5 w-5 animate-spin text-mint-500" />
       </div>
     );
   }
 
   return (
-    <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-mint-100 pb-4 mb-6">
-      <div className="relative w-full">
+    <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm">
+      <div className="relative w-full p-6">
         <GooeyFilter
           id="gooey-filter-subjects"
           strength={screenSize.lessThan("md") ? 8 : 12}
         />
 
         <div
-          className="absolute inset-0"
+          className="absolute inset-6"
           style={{ filter: isGooeyEnabled ? "url(#gooey-filter-subjects)" : "none" }}
         >
-          <div className="flex w-full">
+          <div className="flex w-full gap-2">
             {allTabs.map((_, index) => (
-              <div key={index} className="relative flex-1 h-12 md:h-14">
+              <div key={index} className="relative flex-1 h-16 md:h-18">
                 {activeTabIndex === index && (
                   <motion.div
                     layoutId="active-subject-tab"
-                    className="absolute inset-0 bg-gradient-to-r from-mint-50 to-mint-100 dark:from-mint-900 dark:to-mint-800 rounded-lg"
+                    className="absolute inset-0 bg-gradient-to-r from-mint-100 to-mint-200 dark:from-mint-900 dark:to-mint-800 rounded-xl shadow-md"
                     transition={{
                       type: "spring",
                       bounce: 0.0,
@@ -109,8 +109,8 @@ export const SubjectTabs = ({ activeSubjectId, onSubjectChange }: SubjectTabsPro
           </div>
         </div>
 
-        {/* Interactive text overlay with enhanced styling */}
-        <div className="relative flex w-full gap-1">
+        {/* Interactive text overlay with enhanced styling and spacing */}
+        <div className="relative flex w-full gap-2">
           {allTabs.map((tab, index) => (
             <button
               key={tab.id ?? 'all'}
@@ -118,35 +118,35 @@ export const SubjectTabs = ({ activeSubjectId, onSubjectChange }: SubjectTabsPro
                 console.log("Tab clicked:", tab.name, "with ID:", tab.id);
                 onSubjectChange(tab.id);
               }}
-              className="flex-1 h-12 md:h-14 relative group"
+              className="flex-1 h-16 md:h-18 relative group"
             >
               <div
                 className={`
-                  w-full h-full flex flex-col items-center justify-center px-2 py-1 rounded-lg transition-all duration-200
+                  w-full h-full flex flex-col items-center justify-center px-4 py-3 rounded-xl transition-all duration-200
                   ${activeTabIndex === index 
                     ? "text-mint-800 dark:text-mint-100 font-semibold shadow-sm" 
-                    : "text-gray-600 hover:text-mint-700 hover:bg-mint-25 font-medium"
+                    : "text-gray-600 hover:text-mint-700 hover:bg-mint-50/50 font-medium"
                   }
                 `}
               >
-                {/* Subject color indicator */}
-                <div className="flex items-center gap-2 mb-1">
+                {/* Subject color indicator and name */}
+                <div className="flex items-center gap-3 mb-2">
                   <div 
-                    className="w-3 h-3 rounded-full border-2 border-white shadow-sm"
+                    className="w-4 h-4 rounded-full border-2 border-white shadow-md"
                     style={{ backgroundColor: tab.color }}
                   />
-                  <span className="text-xs sm:text-sm md:text-base truncate max-w-[100px] md:max-w-none">
+                  <span className="text-sm sm:text-base md:text-lg font-medium truncate max-w-[120px] md:max-w-none">
                     {tab.name}
                   </span>
                 </div>
                 
-                {/* Note count badge */}
+                {/* Note count badge with improved styling */}
                 <Badge 
                   variant="secondary" 
                   className={`
-                    text-xs px-2 py-0 h-5 min-w-[20px] transition-all duration-200
+                    text-xs px-3 py-1 h-6 min-w-[24px] transition-all duration-200 font-medium
                     ${activeTabIndex === index 
-                      ? "bg-mint-200 text-mint-800 border-mint-300" 
+                      ? "bg-mint-200 text-mint-800 border-mint-300 shadow-sm" 
                       : "bg-gray-100 text-gray-600 group-hover:bg-mint-100 group-hover:text-mint-700"
                     }
                   `}

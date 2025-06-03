@@ -49,8 +49,10 @@ export const SubjectsSection = ({
 
   if (loadingSubjects) {
     return (
-      <div className="flex justify-center py-4 mb-6">
-        <Loader2 className="h-5 w-5 animate-spin text-mint-500" />
+      <div className="flex justify-center py-8">
+        <div className="bg-white/60 backdrop-blur-sm rounded-lg border border-mint-100 p-6 shadow-sm">
+          <Loader2 className="h-6 w-6 animate-spin text-mint-500" />
+        </div>
       </div>
     );
   }
@@ -66,9 +68,11 @@ export const SubjectsSection = ({
   });
 
   return (
-    <SubjectTabs 
-      activeSubjectId={activeSubjectId} 
-      onSubjectChange={setActiveSubjectId} 
-    />
+    <div className="bg-white/50 backdrop-blur-sm rounded-lg border border-mint-100 shadow-sm overflow-hidden">
+      <SubjectTabs 
+        activeSubjectId={activeSubjectId} 
+        onSubjectChange={setActiveSubjectId} 
+      />
+    </div>
   );
 };
