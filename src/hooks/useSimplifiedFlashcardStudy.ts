@@ -28,7 +28,7 @@ export const useSimplifiedFlashcardStudy = ({ setId, mode }: UseSimplifiedFlashc
       setIsLoading(true);
       setError(null);
 
-      console.log('Fetching flashcards for setId:', setId);
+      console.log('Fetching flashcards for setId:', setId, 'mode:', mode);
 
       // Fetch flashcards in the set
       const { data: setCards, error: fetchError } = await supabase
@@ -51,14 +51,38 @@ export const useSimplifiedFlashcardStudy = ({ setId, mode }: UseSimplifiedFlashc
         throw fetchError;
       }
 
-      const cards = (setCards || [])
+      let cards = (setCards || [])
         .map(item => ({
           ...item.flashcards,
           position: item.position
         }))
         .filter(card => card.id) as Flashcard[];
 
-      console.log('Fetched flashcards for study:', cards);
+      console.log('All flashcards for study:', cards);
+
+      // Filter cards based on study mode
+      if (mode === 'review') {
+        // For review mode, only show cards marked as "needs_practice"
+        const { data: progressData, error: progressError } = await supabase
+          .from('simple_flashcard_progress')
+          .select('flashcard_id')
+          .eq('user_id', user.id)
+          .eq('status', 'needs_practice');
+
+        if (progressError) {
+          console.error('Error fetching progress data:', progressError);
+          throw progressError;
+        }
+
+        const needsPracticeIds = new Set(progressData?.map(p => p.flashcard_id) || []);
+        cards = cards.filter(card => needsPracticeIds.has(card.id));
+        console.log('Filtered cards for review mode:', cards);
+      } else if (mode === 'test') {
+        // For test mode, we could add additional filtering logic if needed
+        // For now, show all cards
+      }
+      // For 'learn' mode, show all cards (default behavior)
+
       setFlashcards(cards);
 
       // Fetch today's study stats
@@ -78,7 +102,7 @@ export const useSimplifiedFlashcardStudy = ({ setId, mode }: UseSimplifiedFlashc
     } finally {
       setIsLoading(false);
     }
-  }, [user, setId]);
+  }, [user, setId, mode]);
 
   const handleCardChoice = useCallback(async (choice: 'needs_practice' | 'mastered') => {
     if (!user || !flashcards[currentIndex]) return;
