@@ -11,18 +11,29 @@ const FlashcardSetsList = () => {
   const { flashcardSets, loading, fetchFlashcardSets, deleteFlashcardSet } = useFlashcards();
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [hasFetched, setHasFetched] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   useEffect(() => {
-    if (!hasFetched) {
-      console.log('FlashcardSetsList mounting, fetching sets...');
-      fetchFlashcardSets().then(() => {
-        setHasFetched(true);
-        console.log('Initial fetch completed');
-      }).catch((error) => {
-        console.error('Error during initial fetch:', error);
-        setHasFetched(true);
-      });
-    }
+    const loadInitialData = async () => {
+      if (!hasFetched) {
+        console.log('FlashcardSetsList mounting, fetching sets...');
+        try {
+          await fetchFlashcardSets();
+          setHasFetched(true);
+          console.log('Initial fetch completed');
+        } catch (error) {
+          console.error('Error during initial fetch:', error);
+          setHasFetched(true);
+        } finally {
+          // Add a small delay to prevent flickering
+          setTimeout(() => {
+            setIsInitialLoad(false);
+          }, 100);
+        }
+      }
+    };
+    
+    loadInitialData();
   }, [fetchFlashcardSets, hasFetched]);
   
   const handleDeleteSet = async (setId: string) => {
@@ -37,9 +48,9 @@ const FlashcardSetsList = () => {
     }
   };
   
-  // Loading state
-  if (loading?.sets || !hasFetched) {
-    console.log('Showing loading state, loading:', loading?.sets, 'hasFetched:', hasFetched);
+  // Show skeleton loading for initial load or when explicitly loading
+  if (isInitialLoad || (loading?.sets && !hasFetched)) {
+    console.log('Showing loading state, isInitialLoad:', isInitialLoad, 'loading:', loading?.sets, 'hasFetched:', hasFetched);
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[1, 2, 3].map((i) => (
@@ -63,7 +74,8 @@ const FlashcardSetsList = () => {
   
   console.log('Current flashcardSets:', flashcardSets);
   
-  if (!flashcardSets || flashcardSets.length === 0) {
+  // Show empty state only after we've confirmed no sets exist
+  if (hasFetched && (!flashcardSets || flashcardSets.length === 0)) {
     console.log('No flashcard sets found, showing empty state');
     return (
       <div className="text-center py-8">
