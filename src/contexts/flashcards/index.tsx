@@ -65,7 +65,7 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
   // Get all operations from our hooks
   const flashcardOperations = useFlashcardOperations(state);
   const flashcardSetsOperations = useFlashcardSets(state);
-  const categoryOperations = useCategoryOperations(state);
+  const categoryOperations = useCategoryOperations(categories, setCategories);
   const libraryOperations = useLibraryOperations(state);
   const studyOperations = useStudyOperations(); // No arguments needed
   
