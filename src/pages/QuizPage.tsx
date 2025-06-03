@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
@@ -11,7 +12,7 @@ import { useNavigate } from "react-router-dom";
 
 const QuizPage = () => {
   const { userProfile } = useRequireAuth();
-  const { data: quizzes, isLoading, error } = useQuizList();
+  const { quizzes, isLoading, error } = useQuizList();
   const navigate = useNavigate();
 
   return (
