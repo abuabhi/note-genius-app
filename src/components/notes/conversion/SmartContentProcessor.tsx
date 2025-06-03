@@ -16,6 +16,21 @@ interface SmartContentProcessorProps {
   }>) => Promise<void>;
 }
 
+// Helper function to strip HTML tags and decode HTML entities
+const stripHtmlAndDecode = (html: string): string => {
+  // Create a temporary div element to decode HTML entities
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = html;
+  
+  // Get the text content (this strips HTML tags and decodes entities)
+  let text = tempDiv.textContent || tempDiv.innerText || '';
+  
+  // Clean up extra whitespace
+  text = text.replace(/\s+/g, ' ').trim();
+  
+  return text;
+};
+
 export const SmartContentProcessor = ({
   noteContent,
   noteTitle,
@@ -52,13 +67,17 @@ export const SmartContentProcessor = ({
     // Enhanced content processing
     if (!content || content.trim().length === 0) {
       return [{
-        front: `What is the main topic of: ${title}?`,
+        front: `What is the main topic of: ${stripHtmlAndDecode(title)}?`,
         back: "This note appears to be empty or has no content to process.",
         type
       }];
     }
     
-    const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 10);
+    // Strip HTML from content first
+    const cleanContent = stripHtmlAndDecode(content);
+    const cleanTitle = stripHtmlAndDecode(title);
+    
+    const sentences = cleanContent.split(/[.!?]+/).filter(s => s.trim().length > 10);
     const cards = [];
 
     switch (type) {
@@ -68,7 +87,7 @@ export const SmartContentProcessor = ({
           const sentence = sentences[i].trim();
           if (sentence.length > 10) {
             cards.push({
-              front: `According to "${title}", what can you tell me about: ${sentence.substring(0, 50)}...?`,
+              front: `According to "${cleanTitle}", what can you tell me about: ${sentence.substring(0, 50)}...?`,
               back: sentence,
               type
             });
@@ -77,12 +96,12 @@ export const SmartContentProcessor = ({
         break;
         
       case 'definition':
-        const keywords = extractKeywords(content);
+        const keywords = extractKeywords(cleanContent);
         for (const keyword of keywords.slice(0, 4)) {
-          const context = findContextForKeyword(content, keyword);
+          const context = findContextForKeyword(cleanContent, keyword);
           cards.push({
             front: `Define: ${keyword}`,
-            back: context || `A concept from: ${title}`,
+            back: context || `A concept from: ${cleanTitle}`,
             type
           });
         }
@@ -109,9 +128,9 @@ export const SmartContentProcessor = ({
         break;
         
       case 'concept':
-        const conceptText = content.substring(0, 200) + (content.length > 200 ? '...' : '');
+        const conceptText = cleanContent.substring(0, 200) + (cleanContent.length > 200 ? '...' : '');
         cards.push({
-          front: `Explain the main concept from: ${title}`,
+          front: `Explain the main concept from: ${cleanTitle}`,
           back: conceptText,
           type
         });
@@ -119,7 +138,7 @@ export const SmartContentProcessor = ({
         // Add a secondary concept card if there's more content
         if (sentences.length > 1) {
           cards.push({
-            front: `What are the key details mentioned in: ${title}?`,
+            front: `What are the key details mentioned in: ${cleanTitle}?`,
             back: sentences.slice(0, 3).join('. '),
             type
           });
@@ -130,8 +149,8 @@ export const SmartContentProcessor = ({
     // Ensure we always return at least one card
     if (cards.length === 0) {
       cards.push({
-        front: `What is the main topic of: ${title}?`,
-        back: content.substring(0, 150) + (content.length > 150 ? '...' : ''),
+        front: `What is the main topic of: ${cleanTitle}?`,
+        back: cleanContent.substring(0, 150) + (cleanContent.length > 150 ? '...' : ''),
         type
       });
     }

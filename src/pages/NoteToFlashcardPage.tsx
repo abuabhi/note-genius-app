@@ -44,7 +44,7 @@ const NoteToFlashcardPage = () => {
               <h2 className="text-xl font-semibold text-green-700 mb-2">Conversion Complete!</h2>
               <p className="mb-4 text-green-600">
                 Successfully created flashcard set: <strong>{convertedSet.name}</strong> with{" "}
-                <strong>{convertedSet.card_count}</strong> flashcards.
+                <strong>{convertedSet.card_count || 0}</strong> flashcards.
               </p>
               <div className="flex justify-center gap-4">
                 <Button onClick={handleViewSet}>

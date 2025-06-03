@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,7 @@ export const BulkNoteConversion = ({
   const [setName, setSetName] = useState("New Flashcard Set");
   const [setDescription, setSetDescription] = useState("");
   const [isConverting, setIsConverting] = useState(false);
-  const { createFlashcardSet, createFlashcard } = useFlashcards();
+  const { createFlashcardSet, createFlashcard, fetchFlashcardSets } = useFlashcards();
 
   const handleCreateFlashcards = async (flashcards: Array<{
     front: string;
@@ -57,7 +58,7 @@ export const BulkNoteConversion = ({
           await createFlashcard({
             front_content: flashcard.front,
             back_content: flashcard.back,
-            set_id: newSet.id // Pass the set ID as part of the cardData object
+            set_id: newSet.id
           });
           successCount++;
         } catch (error) {
@@ -67,8 +68,14 @@ export const BulkNoteConversion = ({
       }
 
       if (successCount > 0) {
+        // Refresh the flashcard sets to get updated counts
+        await fetchFlashcardSets();
+        
         toast.success(`Created ${successCount} flashcards successfully!`);
-        onSuccess(newSet);
+        
+        // Update the set with the correct count and pass it to onSuccess
+        const updatedSet = { ...newSet, card_count: successCount };
+        onSuccess(updatedSet);
       } else {
         throw new Error("No flashcards were created successfully");
       }
