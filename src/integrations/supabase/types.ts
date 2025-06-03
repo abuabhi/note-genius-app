@@ -381,6 +381,59 @@ export type Database = {
         }
         Relationships: []
       }
+      learning_progress: {
+        Row: {
+          confidence_level: number
+          created_at: string
+          first_seen_at: string
+          flashcard_id: string
+          id: string
+          is_difficult: boolean
+          is_known: boolean
+          last_seen_at: string
+          times_correct: number
+          times_seen: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          confidence_level?: number
+          created_at?: string
+          first_seen_at?: string
+          flashcard_id: string
+          id?: string
+          is_difficult?: boolean
+          is_known?: boolean
+          last_seen_at?: string
+          times_correct?: number
+          times_seen?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          confidence_level?: number
+          created_at?: string
+          first_seen_at?: string
+          flashcard_id?: string
+          id?: string
+          is_difficult?: boolean
+          is_known?: boolean
+          last_seen_at?: string
+          times_correct?: number
+          times_seen?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_progress_flashcard_id_fkey"
+            columns: ["flashcard_id"]
+            isOneToOne: false
+            referencedRelation: "flashcards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       note_enrichment_usage: {
         Row: {
           completion_tokens: number
@@ -1355,6 +1408,101 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      test_question_attempts: {
+        Row: {
+          created_at: string
+          flashcard_id: string
+          id: string
+          is_correct: boolean
+          question_type: string
+          test_session_id: string
+          time_spent_seconds: number | null
+          user_answer: string | null
+        }
+        Insert: {
+          created_at?: string
+          flashcard_id: string
+          id?: string
+          is_correct: boolean
+          question_type?: string
+          test_session_id: string
+          time_spent_seconds?: number | null
+          user_answer?: string | null
+        }
+        Update: {
+          created_at?: string
+          flashcard_id?: string
+          id?: string
+          is_correct?: boolean
+          question_type?: string
+          test_session_id?: string
+          time_spent_seconds?: number | null
+          user_answer?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_question_attempts_flashcard_id_fkey"
+            columns: ["flashcard_id"]
+            isOneToOne: false
+            referencedRelation: "flashcards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_question_attempts_test_session_id_fkey"
+            columns: ["test_session_id"]
+            isOneToOne: false
+            referencedRelation: "test_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      test_sessions: {
+        Row: {
+          correct_answers: number
+          created_at: string
+          end_time: string | null
+          flashcard_set_id: string
+          id: string
+          start_time: string
+          status: string
+          time_limit_seconds: number | null
+          total_questions: number
+          user_id: string
+        }
+        Insert: {
+          correct_answers?: number
+          created_at?: string
+          end_time?: string | null
+          flashcard_set_id: string
+          id?: string
+          start_time?: string
+          status?: string
+          time_limit_seconds?: number | null
+          total_questions: number
+          user_id: string
+        }
+        Update: {
+          correct_answers?: number
+          created_at?: string
+          end_time?: string | null
+          flashcard_set_id?: string
+          id?: string
+          start_time?: string
+          status?: string
+          time_limit_seconds?: number | null
+          total_questions?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_sessions_flashcard_set_id_fkey"
+            columns: ["flashcard_set_id"]
+            isOneToOne: false
+            referencedRelation: "flashcard_sets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tier_limits: {
         Row: {
