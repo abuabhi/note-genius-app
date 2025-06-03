@@ -7,6 +7,7 @@ import { useFlashcardSets } from './useFlashcardSets';
 import { useCategoryOperations } from './useCategoryOperations';
 import { useLibraryOperations } from './useLibraryOperations';
 import { useStudyOperations } from './useStudyOperations';
+import { combineFlashcardOperations } from './useFlashcards';
 import { useAuth } from '@/contexts/auth';
 
 // Create a context that will hold our flashcard state
@@ -61,12 +62,15 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     user
   ]);
 
-  // Get all operations from our hooks directly (not inside useMemo)
+  // Get all operations from our hooks
   const flashcardOperations = useFlashcardOperations(state);
   const flashcardSetsOperations = useFlashcardSets(state);
   const categoryOperations = useCategoryOperations(state);
   const libraryOperations = useLibraryOperations(state);
-  const studyOperations = useStudyOperations();
+  const studyOperations = useStudyOperations(); // No arguments needed
+  
+  // Get combined operations that include recordFlashcardReview and getFlashcardProgress
+  const combinedOperations = combineFlashcardOperations(state);
 
   // Create the context value with all required properties and memoize it
   const contextValue: FlashcardContextType = useMemo(() => ({
@@ -83,7 +87,10 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     ...flashcardSetsOperations,
     ...categoryOperations,
     ...libraryOperations,
-    ...studyOperations
+    ...studyOperations,
+    // Add the missing functions from combinedOperations
+    recordFlashcardReview: combinedOperations.recordFlashcardReview,
+    getFlashcardProgress: combinedOperations.getFlashcardProgress
   }), [
     flashcards,
     flashcardSets,
@@ -95,7 +102,9 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     flashcardSetsOperations,
     categoryOperations,
     libraryOperations,
-    studyOperations
+    studyOperations,
+    combinedOperations.recordFlashcardReview,
+    combinedOperations.getFlashcardProgress
   ]);
 
   return (
