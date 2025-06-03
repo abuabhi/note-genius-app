@@ -1,8 +1,11 @@
 
-import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useMemo } from 'react';
 import { FlashcardContextType, FlashcardProviderProps, FlashcardState } from './types';
 import { FlashcardSet, Flashcard, SubjectCategory } from '@/types/flashcard';
-import { combineFlashcardOperations } from './useFlashcards';
+import { useFlashcardOperations } from './useFlashcardOperations';
+import { useFlashcardSets } from './useFlashcardSets';
+import { useCategoryOperations } from './useCategoryOperations';
+import { useLibraryOperations } from './useLibraryOperations';
 import { useStudyOperations } from './useStudyOperations';
 import { useAuth } from '@/contexts/auth';
 
@@ -58,8 +61,11 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     user
   ]);
 
-  // Get all operations from our hooks and memoize them
-  const operations = useMemo(() => combineFlashcardOperations(state), [state]);
+  // Get all operations from our hooks directly (not inside useMemo)
+  const flashcardOperations = useFlashcardOperations(state);
+  const flashcardSetsOperations = useFlashcardSets(state);
+  const categoryOperations = useCategoryOperations(state);
+  const libraryOperations = useLibraryOperations(state);
   const studyOperations = useStudyOperations();
 
   // Create the context value with all required properties and memoize it
@@ -73,7 +79,10 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     loading,
     setCurrentFlashcard,
     setCurrentSet,
-    ...operations,
+    ...flashcardOperations,
+    ...flashcardSetsOperations,
+    ...categoryOperations,
+    ...libraryOperations,
     ...studyOperations
   }), [
     flashcards,
@@ -82,7 +91,10 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     currentSet,
     categories,
     loading,
-    operations,
+    flashcardOperations,
+    flashcardSetsOperations,
+    categoryOperations,
+    libraryOperations,
     studyOperations
   ]);
 
