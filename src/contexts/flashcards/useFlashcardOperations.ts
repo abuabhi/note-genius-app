@@ -117,10 +117,13 @@ export function useFlashcardOperations(state?: FlashcardState) {
   };
   
   const createFlashcard = async (cardData: any) => {
+    console.log("createFlashcard called with:", cardData);
+    
+    // Ensure we have the required fields and use set_id directly
     return addFlashcard({
       front_content: cardData.front_content || cardData.front,
       back_content: cardData.back_content || cardData.back,
-      set_id: cardData.set_id || "",
+      set_id: cardData.set_id, // Use set_id directly from the payload
       subject: cardData.subject
     });
   };
@@ -145,6 +148,8 @@ export function useFlashcardOperations(state?: FlashcardState) {
         .eq('set_id', setId);
         
       if (countError) throw countError;
+      
+      console.log(`Updating set ${setId} count to:`, count);
       
       // Update local state
       setFlashcardSets(prev => 
