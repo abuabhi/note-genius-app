@@ -1,12 +1,11 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { StudySessionList } from "@/components/study/StudySessionList";
 import { StudySessionsBreadcrumb } from "@/components/study/StudySessionsBreadcrumb";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { StudyStatsOverview } from "@/components/study/StudyStatsOverview";
-import { Calendar, TrendingUp } from "lucide-react";
+import { Calendar, History, Archive } from "lucide-react";
 import { useStudySessions } from "@/hooks/useStudySessions";
 import { FeatureDisabledAlert } from "@/components/routes/FeatureProtectedRoute";
 
@@ -52,7 +51,6 @@ const StudySessionsPage = () => {
   }
 
   if (!user) {
-    // Will redirect via useRequireAuth
     return null;
   }
 
@@ -60,7 +58,7 @@ const StudySessionsPage = () => {
     <Layout>
       <div className="min-h-screen bg-gradient-to-br from-mint-50 via-white to-mint-100/30">
         <div className="container mx-auto p-4 md:p-6 space-y-8">
-          {/* Header Section with Glass Morphism */}
+          {/* Header Section */}
           <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-mint-100 p-6 shadow-lg">
             <StudySessionsBreadcrumb 
               activeFilter={activeTab} 
@@ -73,14 +71,14 @@ const StudySessionsPage = () => {
                 <div className="flex items-center text-mint-600">
                   <Calendar className="mr-2 h-5 w-5" />
                   <span className="text-sm">
-                    Track and review your study sessions
+                    Manage and review your study session history
                   </span>
                 </div>
               </div>
               
               <div className="mt-4 md:mt-0 flex items-center gap-2">
                 <div className="bg-mint-100 p-2 rounded-lg">
-                  <TrendingUp className="h-5 w-5 text-mint-600" />
+                  <History className="h-5 w-5 text-mint-600" />
                 </div>
                 <div className="text-right">
                   <div className="text-lg font-semibold text-mint-800">
@@ -93,9 +91,6 @@ const StudySessionsPage = () => {
           </div>
 
           <FeatureDisabledAlert featureKey="study_sessions" featureDisplayName="Study Sessions" />
-
-          {/* Stats Overview */}
-          <StudyStatsOverview />
 
           {/* Sessions Content */}
           <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-mint-100 p-6 shadow-lg">
