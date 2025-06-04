@@ -46,10 +46,20 @@ const QuizHistoryPage = () => {
   const navigate = useNavigate();
   const [selectedType, setSelectedType] = useState<'all' | 'quizzes' | 'flashcard_quizzes'>('all');
 
-  // Fetch traditional quiz results
-  const { data: quizResults, isLoading: isLoadingQuizResults } = useQuery({
+  // Fetch traditional quiz results with better error handling
+  const { data: quizResults, isLoading: isLoadingQuizResults, error: quizResultsError } = useQuery({
     queryKey: ['quiz-results', userProfile?.id],
     queryFn: async () => {
+      console.log('Fetching quiz results for user:', userProfile?.id);
+      
+      const { data: currentUser } = await supabase.auth.getUser();
+      const userId = currentUser?.user?.id;
+      
+      if (!userId) {
+        console.error('No authenticated user found');
+        throw new Error('User not authenticated');
+      }
+
       const { data, error } = await supabase
         .from('quiz_results')
         .select(`
@@ -64,19 +74,36 @@ const QuizHistoryPage = () => {
             description
           )
         `)
-        .eq('user_id', userProfile?.id)
+        .eq('user_id', userId)
         .order('completed_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching quiz results:', error);
+        throw error;
+      }
+      
+      console.log('Quiz results fetched:', data?.length || 0);
       return data as QuizResultItem[];
     },
-    enabled: !!userProfile?.id
+    enabled: !!userProfile?.id,
+    retry: 3,
+    retryDelay: 1000
   });
 
-  // Fetch flashcard quiz sessions
-  const { data: quizSessions, isLoading: isLoadingSessions } = useQuery({
+  // Fetch flashcard quiz sessions with better error handling
+  const { data: quizSessions, isLoading: isLoadingSessions, error: quizSessionsError } = useQuery({
     queryKey: ['quiz-sessions', userProfile?.id],
     queryFn: async () => {
+      console.log('Fetching quiz sessions for user:', userProfile?.id);
+      
+      const { data: currentUser } = await supabase.auth.getUser();
+      const userId = currentUser?.user?.id;
+      
+      if (!userId) {
+        console.error('No authenticated user found');
+        throw new Error('User not authenticated');
+      }
+
       const { data, error } = await supabase
         .from('quiz_sessions')
         .select(`
@@ -95,11 +122,16 @@ const QuizHistoryPage = () => {
             subject
           )
         `)
-        .eq('user_id', userProfile?.id)
+        .eq('user_id', userId)
         .not('end_time', 'is', null)
         .order('start_time', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching quiz sessions:', error);
+        throw error;
+      }
+      
+      console.log('Quiz sessions fetched:', data?.length || 0);
       
       return (data || []).map(item => ({
         ...item,
@@ -108,10 +140,13 @@ const QuizHistoryPage = () => {
           : item.flashcard_sets
       })) as QuizSessionItem[];
     },
-    enabled: !!userProfile?.id
+    enabled: !!userProfile?.id,
+    retry: 3,
+    retryDelay: 1000
   });
 
   const isLoading = isLoadingQuizResults || isLoadingSessions;
+  const hasError = quizResultsError || quizSessionsError;
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -139,6 +174,29 @@ const QuizHistoryPage = () => {
     }
   };
 
+  if (hasError) {
+    return (
+      <Layout>
+        <div className="container mx-auto p-6">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="text-red-500 mb-4">
+                <Trophy className="h-12 w-12 mx-auto opacity-50" />
+              </div>
+              <h3 className="text-lg font-semibold text-red-800 mb-2">Error Loading Quiz History</h3>
+              <p className="text-red-600 mb-4">
+                {quizResultsError?.message || quizSessionsError?.message || 'Failed to load quiz history'}
+              </p>
+              <Button onClick={() => window.location.reload()}>
+                Try Again
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   if (isLoading) {
     return (
       <Layout>
@@ -162,6 +220,13 @@ const QuizHistoryPage = () => {
   
   const hasAnyHistory = (filteredQuizResults.length > 0) || (filteredQuizSessions.length > 0);
 
+  console.log('Rendering quiz history:', {
+    quizResults: quizResults?.length || 0,
+    quizSessions: quizSessions?.length || 0,
+    selectedType,
+    hasAnyHistory
+  });
+
   return (
     <Layout>
       <div className="container mx-auto p-6">
@@ -181,6 +246,12 @@ const QuizHistoryPage = () => {
           </div>
         </div>
 
+        {/* Debug Info */}
+        <div className="mb-4 p-3 bg-gray-50 rounded text-sm text-gray-600">
+          <p>Debug: Found {quizResults?.length || 0} quiz results and {quizSessions?.length || 0} quiz sessions</p>
+          <p>User ID: {userProfile?.id}</p>
+        </div>
+
         {/* Filter by Type */}
         <div className="mb-6">
           <div className="flex flex-wrap gap-2">
@@ -190,7 +261,7 @@ const QuizHistoryPage = () => {
               onClick={() => setSelectedType('all')}
               className="mb-2"
             >
-              All Quizzes
+              All Quizzes ({(quizResults?.length || 0) + (quizSessions?.length || 0)})
             </Button>
             <Button
               variant={selectedType === 'quizzes' ? "default" : "outline"}
@@ -198,7 +269,7 @@ const QuizHistoryPage = () => {
               onClick={() => setSelectedType('quizzes')}
               className="mb-2"
             >
-              Traditional Quizzes
+              Traditional Quizzes ({quizResults?.length || 0})
             </Button>
             <Button
               variant={selectedType === 'flashcard_quizzes' ? "default" : "outline"}
@@ -206,7 +277,7 @@ const QuizHistoryPage = () => {
               onClick={() => setSelectedType('flashcard_quizzes')}
               className="mb-2"
             >
-              Flashcard Quizzes
+              Flashcard Quizzes ({quizSessions?.length || 0})
             </Button>
           </div>
         </div>
