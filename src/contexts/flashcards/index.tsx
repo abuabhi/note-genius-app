@@ -130,6 +130,7 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     setCurrentFlashcard,
     setCurrentSet,
     isReady, // Add ready state to context
+    isLoading: loading.flashcards || loading.sets || loading.categories,
     ...flashcardOperations,
     ...flashcardSetsOperations,
     ...categoryOperations,

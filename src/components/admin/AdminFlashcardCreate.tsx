@@ -104,14 +104,12 @@ export function AdminFlashcardCreate() {
     }
     
     try {
-      const newCard = await createFlashcard(
-        {
-          front_content: frontContent.trim(),
-          back_content: backContent.trim(),
-          difficulty: parseInt(difficulty) as 1 | 2 | 3 | 4 | 5
-        },
-        selectedSetId || undefined
-      );
+      const newCard = await createFlashcard({
+        front_content: frontContent.trim(),
+        back_content: backContent.trim(),
+        difficulty: parseInt(difficulty) as 1 | 2 | 3 | 4 | 5,
+        set_id: selectedSetId || undefined
+      });
       
       if (newCard) {
         // Update the card to be built-in if needed
