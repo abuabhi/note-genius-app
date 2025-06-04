@@ -2,7 +2,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/auth';
-import { DndToggle } from '@/components/dnd/DndToggle';
 import { UserTier } from '@/hooks/useRequireAuth';
 
 interface MobileMenuProps {
@@ -70,11 +69,6 @@ export const MobileMenu = ({ isOpen, isPublicRoute }: MobileMenuProps) => {
                     <Link to="/admin/features" className="text-mint-700 hover:text-mint-900 pl-2">Feature Management</Link>
                   </>
                 )}
-                {/* DND Toggle for mobile */}
-                <div className="flex items-center justify-between py-2">
-                  <span>Do Not Disturb Mode</span>
-                  <DndToggle />
-                </div>
               </>
             )}
             

@@ -10,7 +10,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { UserTier } from '@/hooks/useRequireAuth';
-import { DndToggle } from '@/components/dnd/DndToggle';
 import { ReminderNavPopover } from '@/components/reminders/ReminderNavPopover';
 
 interface DesktopAuthSectionProps {
@@ -88,9 +87,6 @@ export const DesktopAuthSection = ({ isPublicRoute }: DesktopAuthSectionProps) =
           </DropdownMenuContent>
         </DropdownMenu>
       )}
-      
-      {/* DND Toggle */}
-      <DndToggle />
       
       {/* Reminders popover */}
       <ReminderNavPopover />
