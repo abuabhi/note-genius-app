@@ -613,6 +613,7 @@ export type Database = {
           updated_at: string | null
           user_tier: Database["public"]["Enums"]["user_tier"]
           username: string | null
+          weekly_study_goal_hours: number | null
           whatsapp_phone: string | null
         }
         Insert: {
@@ -630,6 +631,7 @@ export type Database = {
           updated_at?: string | null
           user_tier?: Database["public"]["Enums"]["user_tier"]
           username?: string | null
+          weekly_study_goal_hours?: number | null
           whatsapp_phone?: string | null
         }
         Update: {
@@ -647,6 +649,7 @@ export type Database = {
           updated_at?: string | null
           user_tier?: Database["public"]["Enums"]["user_tier"]
           username?: string | null
+          weekly_study_goal_hours?: number | null
           whatsapp_phone?: string | null
         }
         Relationships: [

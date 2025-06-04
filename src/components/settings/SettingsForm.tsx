@@ -35,8 +35,7 @@ import { NotificationSettingsCard } from "./cards/NotificationSettingsCard";
 import { DoNotDisturbCard } from "./cards/DoNotDisturbCard";
 import { UpgradeTierCard } from "./cards/UpgradeTierCard";
 import { SubjectsSettingsCard } from "./cards/SubjectsSettingsCard";
-
-// Now let's use these imports in the component
+import { StudyPreferencesCard } from "./cards/StudyPreferencesCard";
 
 const SettingsForm = () => {
   const { userTier } = useUserTier();
@@ -65,6 +64,7 @@ const SettingsForm = () => {
       dndEnabled: false,
       dndStartTime: "22:00",
       dndEndTime: "07:00",
+      weeklyStudyGoalHours: 5,
     },
     mode: "onBlur",
   });
@@ -86,7 +86,7 @@ const SettingsForm = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('notification_preferences, whatsapp_phone, do_not_disturb, dnd_start_time, dnd_end_time')
+          .select('notification_preferences, whatsapp_phone, do_not_disturb, dnd_start_time, dnd_end_time, weekly_study_goal_hours')
           .eq('id', user.id)
           .single();
         
@@ -110,6 +110,9 @@ const SettingsForm = () => {
           form.setValue("dndEnabled", data.do_not_disturb || false);
           form.setValue("dndStartTime", data.dnd_start_time || "22:00");
           form.setValue("dndEndTime", data.dnd_end_time || "07:00");
+          
+          // Weekly study goal
+          form.setValue("weeklyStudyGoalHours", data.weekly_study_goal_hours || 5);
         }
       } catch (error) {
         console.error("Error fetching user preferences:", error);
@@ -163,13 +166,14 @@ const SettingsForm = () => {
             whatsapp_phone: data.whatsappPhone,
             do_not_disturb: data.dndEnabled,
             dnd_start_time: data.dndEnabled ? data.dndStartTime : null,
-            dnd_end_time: data.dndEnabled ? data.dndEndTime : null
+            dnd_end_time: data.dndEnabled ? data.dndEndTime : null,
+            weekly_study_goal_hours: data.weeklyStudyGoalHours
           })
           .eq('id', user.id);
           
         if (error) {
-          console.error("Error saving notification preferences:", error);
-          toast.error("Failed to save notification preferences");
+          console.error("Error saving preferences:", error);
+          toast.error("Failed to save preferences");
           return;
         }
       }
@@ -220,6 +224,8 @@ const SettingsForm = () => {
                 countries={countries}
                 onCountryChange={handleCountryChange}
               />
+              
+              <StudyPreferencesCard form={form} />
               
               <AppearanceCard form={form} />
             </TabsContent>

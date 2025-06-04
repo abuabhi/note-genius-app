@@ -22,6 +22,8 @@ export const settingsFormSchema = z.object({
   dndEnabled: z.boolean().default(false),
   dndStartTime: z.string().default("22:00"),
   dndEndTime: z.string().default("07:00"),
+  // New weekly study goal field
+  weeklyStudyGoalHours: z.number().min(1).max(50).default(5),
 });
 
 export type SettingsFormValues = z.infer<typeof settingsFormSchema>;
