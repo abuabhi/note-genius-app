@@ -4,6 +4,7 @@ import Layout from "@/components/layout/Layout";
 import { useNotes } from "@/contexts/NoteContext";
 import { FlashcardProvider } from "@/contexts/FlashcardContext";
 import { BulkNoteConversion } from "@/components/notes/conversion/BulkNoteConversion";
+import { NoteToFlashcardBreadcrumb } from "@/components/notes/conversion/NoteToFlashcardBreadcrumb";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { FileText, Book, ArrowRight } from "lucide-react";
@@ -32,6 +33,10 @@ const NoteToFlashcardPage = () => {
     <Layout>
       <FlashcardProvider>
         <div className="container mx-auto p-6">
+          <div className="mb-6">
+            <NoteToFlashcardBreadcrumb />
+          </div>
+
           <div className="flex items-center gap-2 mb-6">
             <FileText className="h-5 w-5" />
             <ArrowRight className="h-4 w-4" />
