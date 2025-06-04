@@ -1,9 +1,8 @@
 
 import { motion } from "framer-motion";
-import { Trophy, Clock, Target, TrendingUp, Award, RotateCcw, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { useNavigate } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Trophy, Clock, Target, TrendingUp, RotateCcw, ArrowLeft, Timer } from "lucide-react";
 
 interface QuizResultsProps {
   totalCards: number;
@@ -26,150 +25,129 @@ export const QuizResults = ({
   onRestart,
   onBackToSets
 }: QuizResultsProps) => {
-  const navigate = useNavigate();
   const percentage = Math.round((correctAnswers / totalCards) * 100);
-  const incorrectAnswers = totalCards - correctAnswers;
   
-  const formatTime = (seconds?: number) => {
-    if (!seconds) return "0:00";
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
   const getGradeColor = (grade?: string) => {
     switch (grade) {
-      case 'A': return 'text-green-600 bg-green-50 border-green-200';
-      case 'B': return 'text-blue-600 bg-blue-50 border-blue-200';
-      case 'C': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'D': return 'text-orange-600 bg-orange-50 border-orange-200';
-      case 'F': return 'text-red-600 bg-red-50 border-red-200';
-      default: return 'text-mint-600 bg-mint-50 border-mint-200';
+      case 'A': return 'text-green-600';
+      case 'B': return 'text-blue-600';
+      case 'C': return 'text-yellow-600';
+      case 'D': return 'text-orange-600';
+      case 'F': return 'text-red-600';
+      default: return 'text-gray-600';
     }
   };
 
-  const getPerformanceMessage = (percentage: number) => {
-    if (percentage >= 90) return "Excellent work! You've mastered this material.";
-    if (percentage >= 80) return "Great job! You have a strong understanding.";
-    if (percentage >= 70) return "Good effort! A little more practice will help.";
-    if (percentage >= 60) return "Fair performance. Consider reviewing the material.";
-    return "Keep practicing! Review the material and try again.";
-  };
-
   return (
-    <div className="text-center py-12 max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto space-y-6">
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="space-y-8"
+        className="text-center"
       >
-        {/* Header */}
-        <div>
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-          >
-            <Trophy className="h-16 w-16 text-mint-500 mx-auto mb-6" />
-          </motion.div>
-          <h2 className="text-3xl font-bold mb-2 text-mint-800">Quiz Complete!</h2>
-          <p className="text-muted-foreground mb-4">{getPerformanceMessage(percentage)}</p>
-        </div>
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+          className="mb-6"
+        >
+          <Trophy className="h-20 w-20 text-yellow-500 mx-auto mb-4" />
+        </motion.div>
+        
+        <h1 className="text-3xl font-bold mb-2">Timed Review Complete!</h1>
+        <p className="text-muted-foreground mb-6">
+          Here's how you performed on this flashcard assessment
+        </p>
+      </motion.div>
 
-        {/* Grade Card */}
-        {grade && (
-          <Card className={`inline-block ${getGradeColor(grade)}`}>
-            <CardContent className="p-6">
-              <div className="text-4xl font-bold mb-2">{grade}</div>
-              <div className="text-sm font-medium">Grade</div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Score</CardTitle>
+            <Target className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{correctAnswers}/{totalCards}</div>
+            <p className="text-xs text-muted-foreground">
+              {percentage}% correct
+            </p>
+            {grade && (
+              <div className={`text-lg font-bold mt-1 ${getGradeColor(grade)}`}>
+                Grade: {grade}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Points Earned</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-mint-600">{totalScore}</div>
+            <p className="text-xs text-muted-foreground">
+              Including time bonuses
+            </p>
+          </CardContent>
+        </Card>
+
+        {durationSeconds && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Time</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatTime(durationSeconds)}</div>
+              <p className="text-xs text-muted-foreground">
+                Duration
+              </p>
             </CardContent>
           </Card>
         )}
 
-        {/* Score Overview */}
-        <div className="grid grid-cols-2 gap-4">
-          <Card className="bg-white border-mint-100">
-            <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-mint-600 mb-2">{percentage}%</div>
-              <div className="text-sm text-muted-foreground">Accuracy</div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {correctAnswers}/{totalCards} correct
-              </div>
+        {averageResponseTime && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Avg. Response</CardTitle>
+              <Timer className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{averageResponseTime.toFixed(1)}s</div>
+              <p className="text-xs text-muted-foreground">
+                Per card
+              </p>
             </CardContent>
           </Card>
-          
-          <Card className="bg-white border-mint-100">
-            <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-mint-600 mb-2">{totalScore}</div>
-              <div className="text-sm text-muted-foreground">Total Score</div>
-              <div className="text-xs text-muted-foreground mt-1">
-                Including time bonuses
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        )}
+      </div>
 
-        {/* Detailed Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center p-4 bg-green-50 rounded-lg border border-green-100">
-            <Target className="h-6 w-6 text-green-600 mx-auto mb-2" />
-            <div className="text-lg font-bold text-green-700">{correctAnswers}</div>
-            <div className="text-xs text-green-600">Correct</div>
-          </div>
-          
-          <div className="text-center p-4 bg-red-50 rounded-lg border border-red-100">
-            <Target className="h-6 w-6 text-red-600 mx-auto mb-2" />
-            <div className="text-lg font-bold text-red-700">{incorrectAnswers}</div>
-            <div className="text-xs text-red-600">Incorrect</div>
-          </div>
-          
-          <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-100">
-            <Clock className="h-6 w-6 text-blue-600 mx-auto mb-2" />
-            <div className="text-lg font-bold text-blue-700">{formatTime(durationSeconds)}</div>
-            <div className="text-xs text-blue-600">Total Time</div>
-          </div>
-          
-          <div className="text-center p-4 bg-purple-50 rounded-lg border border-purple-100">
-            <TrendingUp className="h-6 w-6 text-purple-600 mx-auto mb-2" />
-            <div className="text-lg font-bold text-purple-700">
-              {averageResponseTime ? `${averageResponseTime.toFixed(1)}s` : '--'}
-            </div>
-            <div className="text-xs text-purple-600">Avg. Time</div>
-          </div>
-        </div>
+      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <Button onClick={onRestart} size="lg" className="flex items-center gap-2">
+          <RotateCcw className="h-4 w-4" />
+          Try Again
+        </Button>
+        <Button 
+          onClick={onBackToSets} 
+          variant="outline" 
+          size="lg"
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Flashcards
+        </Button>
+      </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button
-            onClick={onRestart}
-            size="lg"
-            className="flex items-center gap-2 bg-mint-500 hover:bg-mint-600 text-white"
-          >
-            <RotateCcw className="h-5 w-5" />
-            Take Quiz Again
-          </Button>
-          
-          <Button
-            onClick={() => navigate('/quiz/history')}
-            variant="outline"
-            size="lg"
-            className="flex items-center gap-2 border-mint-200 text-mint-700 hover:bg-mint-50"
-          >
-            <History className="h-5 w-5" />
-            View History
-          </Button>
-          
-          <Button
-            onClick={onBackToSets}
-            variant="outline"
-            size="lg"
-            className="flex items-center gap-2 border-mint-200 text-mint-700 hover:bg-mint-50"
-          >
-            <Award className="h-5 w-5" />
-            Back to Sets
-          </Button>
-        </div>
-      </motion.div>
+      <div className="text-center text-sm text-muted-foreground">
+        <p>Want structured multiple-choice tests? Try our <strong>Formal Quizzes</strong> section!</p>
+      </div>
     </div>
   );
 };

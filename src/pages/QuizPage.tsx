@@ -7,7 +7,7 @@ import { useQuizList } from "@/hooks/useQuizzes";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, History } from "lucide-react";
+import { Plus, History, GraduationCap, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const QuizPage = () => {
@@ -20,8 +20,22 @@ const QuizPage = () => {
       <div className="container mx-auto p-6">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold">Quizzes</h1>
-            <p className="text-muted-foreground">Test your knowledge and track your progress</p>
+            <h1 className="text-3xl font-bold flex items-center gap-3">
+              <GraduationCap className="h-8 w-8 text-mint-600" />
+              Formal Quizzes
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Take comprehensive multiple-choice quizzes to test your knowledge
+            </p>
+            <div className="mt-3 p-3 bg-mint-50 rounded-lg border border-mint-100">
+              <div className="flex items-center gap-2 text-sm text-mint-700">
+                <FileText className="h-4 w-4" />
+                <span className="font-medium">Looking for flashcard practice?</span>
+              </div>
+              <p className="text-xs text-mint-600 mt-1">
+                Use the "Timed Review" feature in your flashcard sets for quick flashcard assessments
+              </p>
+            </div>
           </div>
           <div className="flex gap-2">
             <Button 
@@ -30,9 +44,10 @@ const QuizPage = () => {
               className="flex items-center gap-2"
             >
               <History className="h-4 w-4" />
-              History
+              Quiz History
             </Button>
             <Button onClick={() => navigate('/quiz/create')}>
+              <Plus className="h-4 w-4 mr-2" />
               Create Quiz
             </Button>
           </div>
@@ -64,15 +79,18 @@ const QuizPage = () => {
             {quizzes.map((quiz) => (
               <Card key={quiz.id} className="hover:shadow-md transition-shadow duration-200">
                 <CardHeader>
-                  <CardTitle>{quiz.title}</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <GraduationCap className="h-5 w-5 text-mint-600" />
+                    {quiz.title}
+                  </CardTitle>
                   <CardDescription>{quiz.description || "No description"}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    {quiz.questions?.length || 0} Questions
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {quiz.questions?.length || 0} Multiple Choice Questions
                   </p>
                   <Link to={`/quiz/take/${quiz.id}`}>
-                    <Button className="mt-4 w-full">Take Quiz</Button>
+                    <Button className="w-full">Take Quiz</Button>
                   </Link>
                 </CardContent>
               </Card>
@@ -80,11 +98,12 @@ const QuizPage = () => {
           </div>
         ) : (
           <div className="text-center py-12">
-            <h2 className="text-xl font-semibold">No quizzes found</h2>
-            <p className="text-muted-foreground">Create a quiz to get started</p>
-            <Button onClick={() => navigate('/quiz/create')} className="mt-4">
+            <GraduationCap className="h-16 w-16 text-mint-400 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold">No formal quizzes found</h2>
+            <p className="text-muted-foreground mb-6">Create your first multiple-choice quiz to get started</p>
+            <Button onClick={() => navigate('/quiz/create')} size="lg">
               <Plus className="h-4 w-4 mr-2" />
-              Create Quiz
+              Create Your First Quiz
             </Button>
           </div>
         )}

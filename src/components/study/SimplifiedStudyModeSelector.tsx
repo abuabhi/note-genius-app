@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { StudyMode } from "@/pages/study/types";
-import { BookOpen, RotateCcw, GraduationCap } from "lucide-react";
+import { BookOpen, RotateCcw, Clock } from "lucide-react";
 
 interface SimplifiedStudyModeSelectorProps {
   currentMode: StudyMode;
@@ -27,9 +27,9 @@ export const SimplifiedStudyModeSelector = ({
     },
     {
       key: "test" as StudyMode,
-      label: "Quiz",
-      icon: GraduationCap,
-      description: "Test your knowledge"
+      label: "Timed Review",
+      icon: Clock,
+      description: "Quick timed assessment"
     }
   ];
 

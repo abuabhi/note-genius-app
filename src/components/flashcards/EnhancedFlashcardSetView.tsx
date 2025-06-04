@@ -1,4 +1,3 @@
-
 import { useState, useMemo, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -217,7 +216,7 @@ const EnhancedFlashcardSetView = () => {
           <Button asChild>
             <Link to={`/study/${setId}`}>
               <Play className="h-4 w-4 mr-2" />
-              Study
+              Study Flashcards
             </Link>
           </Button>
           

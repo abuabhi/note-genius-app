@@ -1,35 +1,68 @@
 
-import {
-  LayoutDashboard,
-  FileText,
-  Activity,
-  Users,
-  Settings,
-  Clock,
+import { 
+  Home, 
+  BookOpen, 
+  StickyNote, 
+  Target, 
+  BarChart3, 
+  Calendar, 
+  Settings, 
   GraduationCap,
-  BookOpen,
-  FolderKanban,
-  Upload,
-  User,
+  Clock,
+  Users,
   MessageSquare,
-  Calendar,
-  Target,
-  ListTodo,
-  UserCheck
+  Bell
 } from "lucide-react";
-import { NavigationItemType } from "./NavigationGroup";
 
-// Main navigation items grouped by category
-export const navigationGroups = [
+export interface NavigationItem {
+  id: string;
+  title: string;
+  href: string;
+  icon: any;
+  description?: string;
+  badge?: string;
+  isNew?: boolean;
+}
+
+export interface NavigationGroup {
+  id: string;
+  title: string;
+  items: NavigationItem[];
+}
+
+export const navigationData: NavigationGroup[] = [
   {
     id: "main",
     title: "Main",
     items: [
       {
+        id: "dashboard",
         title: "Dashboard",
-        path: "/dashboard",
-        icon: LayoutDashboard,
+        href: "/dashboard",
+        icon: Home,
+        description: "Overview and quick actions"
       },
+      {
+        id: "notes",
+        title: "Notes",
+        href: "/notes",
+        icon: StickyNote,
+        description: "Manage your study notes"
+      },
+      {
+        id: "flashcards",
+        title: "Flashcards",
+        href: "/flashcards",
+        icon: BookOpen,
+        description: "Study with flashcards"
+      },
+      {
+        id: "quizzes",
+        title: "Formal Quizzes",
+        href: "/quiz",
+        icon: GraduationCap,
+        description: "Multiple-choice assessments"
+      }
     ]
   },
   {
@@ -37,122 +70,66 @@ export const navigationGroups = [
     title: "Study Tools",
     items: [
       {
-        title: "Notes",
-        path: "/notes",
-        icon: FileText,
-      },
-      {
-        title: "Flashcards",
-        path: "/flashcards",
-        icon: BookOpen,
-      },
-      {
-        title: "Study Sessions",
-        path: "/study-sessions",
-        icon: Clock,
-      },
-      {
-        title: "Quizzes",
-        path: "/quizzes",
-        icon: Activity,
-      },
-    ]
-  },
-  {
-    id: "planning",
-    title: "Planning",
-    items: [
-      {
-        title: "Schedule",
-        path: "/schedule",
-        icon: Calendar,
-      },
-      {
+        id: "goals",
         title: "Goals",
-        path: "/goals",
+        href: "/goals",
         icon: Target,
+        description: "Set and track study goals"
       },
       {
-        title: "Todos",
-        path: "/todos",
-        icon: ListTodo,
-      },
-    ]
-  },
-  {
-    id: "progress",
-    title: "Progress",
-    items: [
-      {
+        id: "progress",
         title: "Progress",
-        path: "/progress",
-        icon: Activity,
+        href: "/progress",
+        icon: BarChart3,
+        description: "View your learning analytics"
       },
+      {
+        id: "schedule",
+        title: "Schedule",
+        href: "/schedule",
+        icon: Calendar,
+        description: "Plan your study sessions"
+      },
+      {
+        id: "reminders",
+        title: "Reminders",
+        href: "/reminders",
+        icon: Bell,
+        description: "Manage study reminders"
+      }
     ]
   },
   {
-    id: "communication",
-    title: "Communication",
+    id: "social",
+    title: "Collaboration",
     items: [
       {
-        title: "Chat",
-        path: "/chat",
-        icon: MessageSquare,
-      },
-      {
-        title: "Collaboration",
-        path: "/collaboration",
+        id: "collaboration",
+        title: "Study Groups",
+        href: "/collaboration",
         icon: Users,
+        description: "Connect and study together"
       },
       {
-        title: "Connections",
-        path: "/connections",
-        icon: UserCheck,
-      },
+        id: "chat",
+        title: "Messages",
+        href: "/chat",
+        icon: MessageSquare,
+        description: "Chat with study partners"
+      }
     ]
   },
   {
-    id: "settings",
-    title: "Settings",
+    id: "account",
+    title: "Account",
     items: [
       {
+        id: "settings",
         title: "Settings",
-        path: "/settings",
+        href: "/settings",
         icon: Settings,
-      },
+        description: "Manage your preferences"
+      }
     ]
-  },
-];
-
-export const adminItems = [
-  {
-    title: "Flashcards",
-    path: "/admin/flashcards",
-    icon: FileText,
-  },
-  {
-    title: "Grades",
-    path: "/admin/grades",
-    icon: GraduationCap,
-  },
-  {
-    title: "Subjects",
-    path: "/admin/subjects",
-    icon: BookOpen,
-  },
-  {
-    title: "Sections",
-    path: "/admin/sections",
-    icon: FolderKanban,
-  },
-  {
-    title: "Users",
-    path: "/admin/users",
-    icon: User,
-  },
-  {
-    title: "CSV Import",
-    path: "/admin/csv-import",
-    icon: Upload,
-  },
+  }
 ];
