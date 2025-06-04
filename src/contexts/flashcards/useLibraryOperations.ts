@@ -14,18 +14,20 @@ export const useLibraryOperations = (state: FlashcardState) => {
   }, []);
 
   const handleCopySetFromLibrary = useCallback(async (setId: string): Promise<FlashcardSet | null> => {
-    const simpleSetter = (sets: FlashcardSet[]) => {
-      state.setFlashcardSets(sets);
+    const getCurrentSets = () => state.flashcardSets;
+    const updateSets = (newSets: FlashcardSet[]) => {
+      state.setFlashcardSets(newSets);
     };
-    return copySetFromLibrary(state.user, simpleSetter, setId);
-  }, [state.user, state.setFlashcardSets]);
+    return copySetFromLibrary(state.user, getCurrentSets, updateSets, setId);
+  }, [state.user, state.flashcardSets, state.setFlashcardSets]);
 
   const handleCloneFlashcardSet = useCallback(async (setId: string): Promise<FlashcardSet | null> => {
-    const simpleSetter = (sets: FlashcardSet[]) => {
-      state.setFlashcardSets(sets);
+    const getCurrentSets = () => state.flashcardSets;
+    const updateSets = (newSets: FlashcardSet[]) => {
+      state.setFlashcardSets(newSets);
     };
-    return cloneFlashcardSet(state.user, simpleSetter, setId);
-  }, [state.user, state.setFlashcardSets]);
+    return cloneFlashcardSet(state.user, getCurrentSets, updateSets, setId);
+  }, [state.user, state.flashcardSets, state.setFlashcardSets]);
 
   const handleFetchBuiltInSets = useCallback(async (): Promise<FlashcardSet[]> => {
     return fetchBuiltInSets();

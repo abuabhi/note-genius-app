@@ -48,7 +48,8 @@ export const fetchBuiltInSets = async (): Promise<FlashcardSet[]> => {
  */
 export const cloneFlashcardSet = async (
   user: any, 
-  setFlashcardSets: (sets: FlashcardSet[]) => void,
+  getCurrentSets: () => FlashcardSet[],
+  updateSets: (newSets: FlashcardSet[]) => void,
   setId: string
 ): Promise<FlashcardSet | null> => {
   if (!user) {
@@ -111,10 +112,9 @@ export const cloneFlashcardSet = async (
 
     const formattedSet = convertToFlashcardSet(newSet);
     
-    // Use a simpler approach to update state to avoid type inference issues
-    setFlashcardSets((currentSets: FlashcardSet[]) => {
-      return [formattedSet, ...currentSets];
-    });
+    // Update state with the new set
+    const currentSets = getCurrentSets();
+    updateSets([formattedSet, ...currentSets]);
     
     toast.success('Set cloned successfully!');
     return formattedSet;
@@ -152,8 +152,9 @@ export const searchLibrary = async (query: string): Promise<FlashcardSet[]> => {
  */
 export const copySetFromLibrary = async (
   user: any, 
-  setFlashcardSets: (sets: FlashcardSet[]) => void,
+  getCurrentSets: () => FlashcardSet[],
+  updateSets: (newSets: FlashcardSet[]) => void,
   setId: string
 ): Promise<FlashcardSet | null> => {
-  return cloneFlashcardSet(user, setFlashcardSets, setId);
+  return cloneFlashcardSet(user, getCurrentSets, updateSets, setId);
 };
