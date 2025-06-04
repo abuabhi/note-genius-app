@@ -6,9 +6,11 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CreateFlashcardSetPayload } from "@/types/flashcard";
+import { useUserSubjects } from "@/hooks/useUserSubjects";
 
 interface CreateFlashcardSetProps {
   onSuccess?: () => void;
@@ -22,6 +24,7 @@ const CreateFlashcardSet = ({ onSuccess }: CreateFlashcardSetProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { createFlashcardSet } = useFlashcards();
+  const { subjects: userSubjects, isLoading: subjectsLoading } = useUserSubjects();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,7 +45,7 @@ const CreateFlashcardSet = ({ onSuccess }: CreateFlashcardSetProps) => {
       const setData: CreateFlashcardSetPayload = {
         name: name.trim(),
         description: description.trim() || undefined,
-        subject: subject.trim() || undefined,
+        subject: subject || undefined,
         topic: topic.trim() || undefined,
       };
       
@@ -102,13 +105,19 @@ const CreateFlashcardSet = ({ onSuccess }: CreateFlashcardSetProps) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="subject">Subject (optional)</Label>
-              <Input 
-                id="subject"
-                placeholder="E.g. Mathematics"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                disabled={isSubmitting}
-              />
+              <Select value={subject} onValueChange={setSubject} disabled={isSubmitting || subjectsLoading}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a subject" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No subject</SelectItem>
+                  {userSubjects.map((userSubject) => (
+                    <SelectItem key={userSubject.id} value={userSubject.name}>
+                      {userSubject.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             
             <div className="space-y-2">

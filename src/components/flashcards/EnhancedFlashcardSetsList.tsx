@@ -47,16 +47,13 @@ import { useUserSubjects } from "@/hooks/useUserSubjects";
 
 const EnhancedFlashcardSetsList = () => {
   const { flashcardSets, loading, deleteFlashcardSet, fetchFlashcardSets } = useFlashcards();
-  const { subjects, isLoading: subjectsLoading } = useUserSubjects();
+  const { subjects: userSubjects, isLoading: subjectsLoading } = useUserSubjects();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("updated_at");
   const [subjectFilter, setSubjectFilter] = useState<string | undefined>(undefined);
   const [deletingSet, setDeletingSet] = useState<string | null>(null);
   const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
   const [setProgressData, setSetProgressData] = useState<Record<string, number>>({});
-
-  // Get user subjects for the dropdown with better loading handling
-  const userSubjects = subjects || [];
 
   // Calculate stable progress for flashcard sets (fixed to prevent infinite loop)
   useEffect(() => {
@@ -76,7 +73,7 @@ const EnhancedFlashcardSetsList = () => {
     setSetProgressData(progressMap);
   }, [flashcardSets]);
 
-  // Filter and sort flashcard sets - fixed subject filtering
+  // Filter and sort flashcard sets - updated to use user subjects for filtering
   const filteredAndSortedSets = useMemo(() => {
     if (!flashcardSets) return [];
     
@@ -85,7 +82,7 @@ const EnhancedFlashcardSetsList = () => {
         set.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         set.subject?.toLowerCase().includes(searchQuery.toLowerCase());
       
-      // Fix subject filtering - match by subject name directly
+      // Filter by selected user subject
       const matchesSubject = !subjectFilter || set.subject === subjectFilter;
       
       return matchesSearch && matchesSubject;
@@ -166,7 +163,7 @@ const EnhancedFlashcardSetsList = () => {
 
   console.log('EnhancedFlashcardSetsList: Rendering with flashcard sets:', flashcardSets?.length || 0, 'sets');
   console.log('Current subject filter:', subjectFilter);
-  console.log('Available flashcard subjects:', flashcardSets?.map(set => set.subject).filter(Boolean));
+  console.log('User subjects:', userSubjects?.map(s => s.name));
 
   return (
     <div className="space-y-6">
@@ -182,23 +179,23 @@ const EnhancedFlashcardSetsList = () => {
           />
         </div>
         
-        {/* Subject Filter - Use real user subjects but show available subjects in sets */}
+        {/* Subject Filter - Show user subjects */}
         <Select 
           value={subjectFilter || "_any"} 
           onValueChange={(value) => {
             console.log('Subject filter changed to:', value);
             setSubjectFilter(value === "_any" ? undefined : value);
           }}
+          disabled={subjectsLoading}
         >
           <SelectTrigger className="w-48">
             <SelectValue placeholder="All subjects" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="_any">All subjects</SelectItem>
-            {/* Show subjects that actually exist in flashcard sets */}
-            {Array.from(new Set(flashcardSets?.map(set => set.subject).filter(Boolean) || [])).map(subject => (
-              <SelectItem key={subject} value={subject}>
-                {subject}
+            {userSubjects.map(subject => (
+              <SelectItem key={subject.id} value={subject.name}>
+                {subject.name}
               </SelectItem>
             ))}
           </SelectContent>
