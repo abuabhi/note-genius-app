@@ -5,11 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { CreateFlashcardPayload, FlashcardDifficulty } from "@/types/flashcard";
+import { toast } from "sonner";
+import { FlashcardDifficulty } from "@/types/flashcard";
 
 interface CreateFlashcardProps {
   setId?: string;
@@ -23,35 +22,40 @@ const CreateFlashcard = ({ setId, onSuccess }: CreateFlashcardProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { createFlashcard } = useFlashcards();
-  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!frontContent.trim() || !backContent.trim()) {
-      toast({
-        title: "Missing content",
-        description: "Please fill in both sides of the flashcard.",
-        variant: "destructive",
-      });
+      toast.error("Please fill in both sides of the flashcard.");
+      return;
+    }
+
+    if (!setId) {
+      toast.error("No flashcard set specified.");
       return;
     }
     
     setIsSubmitting(true);
     
     try {
-      const cardData: CreateFlashcardPayload = {
+      const cardData = {
         front_content: frontContent.trim(),
         back_content: backContent.trim(),
         difficulty,
+        set_id: setId
       };
       
-      const result = await createFlashcard(cardData, setId);
+      console.log("Creating flashcard with data:", cardData);
+      
+      const result = await createFlashcard(cardData);
       
       if (result) {
         setFrontContent("");
         setBackContent("");
         setDifficulty(3);
+        
+        toast.success("Flashcard created successfully!");
         
         if (onSuccess) {
           onSuccess();
@@ -59,11 +63,7 @@ const CreateFlashcard = ({ setId, onSuccess }: CreateFlashcardProps) => {
       }
     } catch (error) {
       console.error("Error creating flashcard:", error);
-      toast({
-        title: "Error",
-        description: "Failed to create flashcard. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to create flashcard. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
