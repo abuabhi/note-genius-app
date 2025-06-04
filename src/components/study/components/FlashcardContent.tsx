@@ -1,7 +1,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, AlertCircle } from "lucide-react";
 import { ProgressIndicator } from "./ProgressIndicator";
 
 interface FlashcardContentProps {
@@ -19,6 +19,39 @@ export const FlashcardContent = ({
   totalCards,
   onFlip
 }: FlashcardContentProps) => {
+  // Safety check for card data
+  if (!currentCard) {
+    console.error("FlashcardContent: No current card provided");
+    return (
+      <div className="relative min-h-[400px]">
+        <Card className="min-h-[400px] shadow-md bg-red-50 border-red-200">
+          <CardContent className="p-8 h-full min-h-[400px] flex items-center justify-center">
+            <div className="text-center max-w-2xl w-full">
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <div className="text-lg text-red-700 mb-2">No Card Data Available</div>
+              <div className="text-sm text-red-600">
+                This flashcard appears to be missing content. Please check the flashcard set.
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Get content safely with fallbacks
+  const frontContent = currentCard.front_content || currentCard.front || "No front content";
+  const backContent = currentCard.back_content || currentCard.back || "No back content";
+  
+  // Verify we have valid content
+  if (!frontContent || !backContent || frontContent === "No front content" || backContent === "No back content") {
+    console.warn("FlashcardContent: Card has incomplete content:", {
+      cardId: currentCard.id,
+      frontContent,
+      backContent
+    });
+  }
+
   return (
     <div className="relative min-h-[400px]">
       <AnimatePresence mode="wait">
@@ -40,7 +73,7 @@ export const FlashcardContent = ({
             <CardContent className="p-8 h-full min-h-[400px] flex items-center justify-center">
               <div className="text-center max-w-2xl w-full">
                 <div className="text-lg md:text-xl leading-relaxed text-mint-800 mb-6">
-                  {isFlipped ? currentCard.back_content : currentCard.front_content}
+                  {isFlipped ? backContent : frontContent}
                 </div>
                 <div className="flex items-center justify-center gap-2 text-muted-foreground">
                   <div className={`w-2 h-2 rounded-full ${isFlipped ? 'bg-mint-400' : 'bg-mint-300'}`}></div>
