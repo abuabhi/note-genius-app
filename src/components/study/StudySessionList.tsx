@@ -1,8 +1,7 @@
-
 import { formatDistanceToNow } from "date-fns";
 import { StudySession } from "@/hooks/useStudySessions";
 import { formatDuration } from "@/utils/formatTime";
-import { CalendarDays, BookOpen, Clock } from "lucide-react";
+import { CalendarDays, BookOpen, Clock, Calendar } from "lucide-react";
 
 interface StudySessionListProps {
   sessions?: StudySession[];
