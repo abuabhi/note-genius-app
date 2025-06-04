@@ -4,12 +4,9 @@ import { FlashcardState } from './types';
 import { FlashcardSet } from '@/types/flashcard';
 import { 
   searchLibrary, 
-  copySetFromLibrary, 
   cloneFlashcardSet, 
   fetchBuiltInSets,
-  SimpleFlashcardSet,
-  UpdateSetsCallback,
-  GetSetsCallback
+  LibraryFlashcardSet
 } from './operations/libraryOperations';
 
 /**
@@ -19,59 +16,73 @@ export const useLibraryOperations = (state: FlashcardState) => {
   
   const handleSearchLibrary = useCallback(async (query: string): Promise<FlashcardSet[]> => {
     const results = await searchLibrary(query);
-    // Convert SimpleFlashcardSet to FlashcardSet
+    // Convert to FlashcardSet format
     return results.map(set => ({
-      ...set,
-      subject_categories: undefined // This field doesn't exist in the database
+      id: set.id,
+      name: set.name,
+      description: set.description,
+      subject: set.subject,
+      topic: set.topic,
+      category_id: set.category_id,
+      country_id: set.country_id,
+      user_id: set.user_id,
+      created_at: set.created_at,
+      updated_at: set.updated_at,
+      card_count: set.card_count,
+      is_built_in: set.is_built_in
     }));
   }, []);
 
   const handleCopySetFromLibrary = useCallback(async (setId: string): Promise<FlashcardSet | null> => {
-    const getCurrentSets: GetSetsCallback = () => state.flashcardSets;
-    const updateSets: UpdateSetsCallback = (newSets: SimpleFlashcardSet[]) => {
-      // Convert SimpleFlashcardSet back to FlashcardSet for state
-      const convertedSets = newSets.map(set => ({
-        ...set,
-        subject_categories: undefined
-      }));
-      state.setFlashcardSets(convertedSets);
-    };
+    if (!state.user) {
+      return null;
+    }
     
-    const result = await copySetFromLibrary(state.user, getCurrentSets, updateSets, setId);
+    const result = await cloneFlashcardSet(state.user.id, setId);
     if (result) {
-      return {
-        ...result,
-        subject_categories: undefined
+      // Convert to FlashcardSet and update state
+      const newSet: FlashcardSet = {
+        id: result.id,
+        name: result.name,
+        description: result.description,
+        subject: result.subject,
+        topic: result.topic,
+        category_id: result.category_id,
+        country_id: result.country_id,
+        user_id: result.user_id,
+        created_at: result.created_at,
+        updated_at: result.updated_at,
+        card_count: result.card_count,
+        is_built_in: result.is_built_in
       };
+      
+      // Update the flashcard sets state
+      state.setFlashcardSets(prev => [newSet, ...prev]);
+      
+      return newSet;
     }
     return null;
-  }, [state.user, state.flashcardSets, state.setFlashcardSets]);
+  }, [state.user, state.setFlashcardSets]);
 
   const handleCloneFlashcardSet = useCallback(async (setId: string): Promise<FlashcardSet | null> => {
-    const getCurrentSets: GetSetsCallback = () => state.flashcardSets;
-    const updateSets: UpdateSetsCallback = (newSets: SimpleFlashcardSet[]) => {
-      const convertedSets = newSets.map(set => ({
-        ...set,
-        subject_categories: undefined
-      }));
-      state.setFlashcardSets(convertedSets);
-    };
-    
-    const result = await cloneFlashcardSet(state.user, getCurrentSets, updateSets, setId);
-    if (result) {
-      return {
-        ...result,
-        subject_categories: undefined
-      };
-    }
-    return null;
-  }, [state.user, state.flashcardSets, state.setFlashcardSets]);
+    return handleCopySetFromLibrary(setId);
+  }, [handleCopySetFromLibrary]);
 
   const handleFetchBuiltInSets = useCallback(async (): Promise<FlashcardSet[]> => {
     const results = await fetchBuiltInSets();
     return results.map(set => ({
-      ...set,
-      subject_categories: undefined
+      id: set.id,
+      name: set.name,
+      description: set.description,
+      subject: set.subject,
+      topic: set.topic,
+      category_id: set.category_id,
+      country_id: set.country_id,
+      user_id: set.user_id,
+      created_at: set.created_at,
+      updated_at: set.updated_at,
+      card_count: set.card_count,
+      is_built_in: set.is_built_in
     }));
   }, []);
 

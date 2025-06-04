@@ -2,8 +2,8 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-// Simple type for library operations to avoid complex type instantiation
-export interface SimpleFlashcardSet {
+// Minimal interface for library operations
+export interface LibraryFlashcardSet {
   id: string;
   name: string;
   description?: string;
@@ -18,14 +18,10 @@ export interface SimpleFlashcardSet {
   is_built_in?: boolean;
 }
 
-// Simple callback types to avoid complex React state types
-export type UpdateSetsCallback = (sets: SimpleFlashcardSet[]) => void;
-export type GetSetsCallback = () => SimpleFlashcardSet[];
-
 /**
  * Fetch built-in flashcard sets from the library
  */
-export const fetchBuiltInSets = async (): Promise<SimpleFlashcardSet[]> => {
+export const fetchBuiltInSets = async (): Promise<LibraryFlashcardSet[]> => {
   try {
     const { data, error } = await supabase
       .from('flashcard_sets')
@@ -60,12 +56,10 @@ export const fetchBuiltInSets = async (): Promise<SimpleFlashcardSet[]> => {
  * Clone a flashcard set from the library to user's collection
  */
 export const cloneFlashcardSet = async (
-  user: any,
-  getCurrentSets: GetSetsCallback,
-  updateSets: UpdateSetsCallback,
+  userId: string,
   setId: string
-): Promise<SimpleFlashcardSet | null> => {
-  if (!user) {
+): Promise<LibraryFlashcardSet | null> => {
+  if (!userId) {
     toast.error('Please sign in to clone this set');
     return null;
   }
@@ -89,7 +83,7 @@ export const cloneFlashcardSet = async (
         subject: originalSet.subject,
         topic: originalSet.topic,
         category_id: originalSet.category_id,
-        user_id: user.id,
+        user_id: userId,
         is_built_in: false
       })
       .select()
@@ -112,7 +106,7 @@ export const cloneFlashcardSet = async (
         back_content: card.back_content,
         difficulty: card.difficulty,
         set_id: newSet.id,
-        user_id: user.id,
+        user_id: userId,
         is_built_in: false
       }));
 
@@ -123,8 +117,8 @@ export const cloneFlashcardSet = async (
       if (insertError) throw insertError;
     }
 
-    // Create simple formatted set
-    const formattedSet: SimpleFlashcardSet = {
+    // Return the formatted set
+    const result: LibraryFlashcardSet = {
       id: newSet.id,
       name: newSet.name,
       description: newSet.description,
@@ -139,12 +133,8 @@ export const cloneFlashcardSet = async (
       is_built_in: false
     };
     
-    // Update state with the new set
-    const currentSets = getCurrentSets();
-    updateSets([formattedSet, ...currentSets]);
-    
     toast.success('Set cloned successfully!');
-    return formattedSet;
+    return result;
   } catch (error) {
     console.error('cloneFlashcardSet: Error cloning set:', error);
     toast.error('Failed to clone set');
@@ -155,7 +145,7 @@ export const cloneFlashcardSet = async (
 /**
  * Search library sets by query
  */
-export const searchLibrary = async (query: string): Promise<SimpleFlashcardSet[]> => {
+export const searchLibrary = async (query: string): Promise<LibraryFlashcardSet[]> => {
   try {
     const { data, error } = await supabase
       .from('flashcard_sets')
@@ -185,16 +175,4 @@ export const searchLibrary = async (query: string): Promise<SimpleFlashcardSet[]
     toast.error('Failed to search library');
     return [];
   }
-};
-
-/**
- * Copy a set from library to user's collection (alias for cloneFlashcardSet)
- */
-export const copySetFromLibrary = async (
-  user: any,
-  getCurrentSets: GetSetsCallback,
-  updateSets: UpdateSetsCallback,
-  setId: string
-): Promise<SimpleFlashcardSet | null> => {
-  return cloneFlashcardSet(user, getCurrentSets, updateSets, setId);
 };
