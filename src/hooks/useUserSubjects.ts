@@ -52,7 +52,9 @@ export const useUserSubjects = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["userSubjects", user?.id] });
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ["userSubjects", user.id] });
+      }
     },
   });
 
@@ -66,7 +68,9 @@ export const useUserSubjects = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["userSubjects", user?.id] });
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ["userSubjects", user.id] });
+      }
     },
   });
 
