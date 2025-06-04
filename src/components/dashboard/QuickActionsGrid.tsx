@@ -1,5 +1,5 @@
 
-import { Clock, BookOpen, GraduationCap, FileText, Calendar, Settings, BarChart } from "lucide-react";
+import { BookOpen, GraduationCap, FileText, Calendar, Settings, BarChart } from "lucide-react";
 import { QuickActionCard } from "./QuickActionCard";
 
 interface QuickActionsGridProps {
@@ -8,7 +8,6 @@ interface QuickActionsGridProps {
 
 export const QuickActionsGrid = ({ isFeatureVisible }: QuickActionsGridProps) => {
   const FEATURE_KEYS = {
-    STUDY_SESSIONS: "study_sessions",
     SCHEDULE: "schedule",
     NOTES: "notes",
     SETTINGS: "settings",
@@ -19,18 +18,6 @@ export const QuickActionsGrid = ({ isFeatureVisible }: QuickActionsGridProps) =>
     <>
       <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {/* Study Sessions Card - Only show if feature is visible */}
-        {isFeatureVisible(FEATURE_KEYS.STUDY_SESSIONS) && (
-          <QuickActionCard
-            title="Quick Start"
-            description="Begin a new study session"
-            href="/study-sessions"
-            icon={Clock}
-            buttonText="Start Studying"
-            variant="default"
-          />
-        )}
-
         {/* Flashcards Card - Core feature, always visible */}
         <QuickActionCard
           title="Flashcards"
