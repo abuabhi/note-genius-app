@@ -1,6 +1,6 @@
 
 import { useLocation } from "react-router-dom";
-import { navigationGroups } from "./navigationData";
+import { navigationData } from "./navigationData";
 
 export const useDefaultAccordion = () => {
   const { pathname } = useLocation();
@@ -11,9 +11,9 @@ export const useDefaultAccordion = () => {
     const openGroups = [];
     
     // Check main navigation items
-    for (const group of navigationGroups) {
+    for (const group of navigationData) {
       for (const item of group.items) {
-        if (currentPath === item.path) {
+        if (currentPath === item.href) {
           openGroups.push(group.id);
           break;
         }

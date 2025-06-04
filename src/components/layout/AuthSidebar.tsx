@@ -3,7 +3,7 @@ import { Sidebar, SidebarContent, SidebarSeparator, SidebarFooter } from "@/comp
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { UserTierDisplay } from "./UserTierDisplay";
 import { Accordion } from "@/components/ui/accordion";
-import { navigationGroups } from "./navigation/navigationData";
+import { navigationData } from "./navigation/navigationData";
 import { NavigationGroup } from "./navigation/NavigationGroup";
 import { useDefaultAccordion } from "./navigation/useDefaultAccordion";
 
@@ -16,7 +16,7 @@ const AuthSidebar = () => {
       <SidebarContent>
         {/* Main Navigation */}
         <Accordion type="multiple" defaultValue={defaultAccordionValue} className="w-full">
-          {navigationGroups.map((group) => (
+          {navigationData.map((group) => (
             <NavigationGroup
               key={group.id}
               id={group.id}
