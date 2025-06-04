@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { useParams, Navigate } from "react-router-dom";
+import { useParams, Navigate, useSearchParams } from "react-router-dom";
 import { useSimpleFlashcardSets } from "@/hooks/useSimpleFlashcardSets";
 import { SimplifiedStudyModeSelector } from "@/components/study/SimplifiedStudyModeSelector";
 import { StudyModeInfo } from "@/components/study/StudyModeInfo";
@@ -20,7 +20,10 @@ import { Home, BookOpen } from "lucide-react";
 
 export const StudyPageContent = () => {
   const { setId } = useParams<{ setId: string }>();
-  const [mode, setMode] = useState<StudyMode>("learn");
+  const [searchParams] = useSearchParams();
+  const modeParam = searchParams.get('mode');
+  const [mode, setMode] = useState<StudyMode>(modeParam === "review" ? "review" : "learn");
+  
   const { flashcardSets, loading, fetchFlashcardSets } = useSimpleFlashcardSets();
   const [currentSet, setCurrentSet] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);

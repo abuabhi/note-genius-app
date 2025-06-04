@@ -47,27 +47,44 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useFlashcards } from "@/contexts/FlashcardContext";
 import { Flashcard } from "@/types/flashcard";
+import { useLearningProgress } from "@/hooks/useLearningProgress";
 
 const EnhancedFlashcardSetView = () => {
   const { setId } = useParams<{ setId: string }>();
   const navigate = useNavigate();
   const { currentSet, fetchFlashcardsInSet, deleteFlashcard, setCurrentSet } = useFlashcards();
+  const { progressMap, fetchLearningProgress, isLoading: progressLoading } = useLearningProgress();
   
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("position");
   const [filterDifficulty, setFilterDifficulty] = useState("all");
+  const [filterReviewStatus, setFilterReviewStatus] = useState("all");
   const [deletingCard, setDeletingCard] = useState<string | null>(null);
 
-  // Mock progress data - in real app this would come from user progress
+  // Function to get card progress from learning progress data
   const getCardProgress = (cardId: string) => {
-    const mockProgress = Math.floor(Math.random() * 100);
+    const progress = progressMap.get(cardId);
+    
+    if (!progress) {
+      return {
+        lastReviewed: null,
+        timesReviewed: 0,
+        correctPercentage: 0,
+        needsReview: true
+      };
+    }
+    
+    const correctPercentage = progress.times_seen > 0 
+      ? Math.round((progress.times_correct / progress.times_seen) * 100) 
+      : 0;
+      
     return {
-      lastReviewed: Math.random() > 0.5 ? new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000) : null,
-      timesReviewed: Math.floor(Math.random() * 10),
-      correctPercentage: mockProgress,
-      needsReview: mockProgress < 60
+      lastReviewed: progress.last_seen_at ? new Date(progress.last_seen_at) : null,
+      timesReviewed: progress.times_seen || 0,
+      correctPercentage: correctPercentage,
+      needsReview: progress.is_difficult || correctPercentage < 70 || !progress.last_seen_at
     };
   };
 
@@ -79,6 +96,11 @@ const EnhancedFlashcardSetView = () => {
         setLoading(true);
         const cards = await fetchFlashcardsInSet(setId);
         setFlashcards(cards || []);
+        
+        // Fetch learning progress for these cards
+        if (cards && cards.length > 0) {
+          await fetchLearningProgress(cards.map(card => card.id));
+        }
       } catch (error) {
         console.error("Error loading flashcards:", error);
       } finally {
@@ -87,7 +109,7 @@ const EnhancedFlashcardSetView = () => {
     };
 
     loadFlashcards();
-  }, [setId, fetchFlashcardsInSet]);
+  }, [setId, fetchFlashcardsInSet, fetchLearningProgress]);
 
   // Filter and sort flashcards
   const filteredAndSortedCards = useMemo(() => {
@@ -101,7 +123,12 @@ const EnhancedFlashcardSetView = () => {
         (filterDifficulty === "medium" && (card.difficulty || 1) === 3) ||
         (filterDifficulty === "hard" && (card.difficulty || 1) >= 4);
       
-      return matchesSearch && matchesDifficulty;
+      const progress = getCardProgress(card.id);
+      const matchesReviewStatus = filterReviewStatus === "all" ||
+        (filterReviewStatus === "needs_review" && progress.needsReview) ||
+        (filterReviewStatus === "reviewed" && !progress.needsReview);
+      
+      return matchesSearch && matchesDifficulty && matchesReviewStatus;
     });
 
     return filtered.sort((a, b) => {
@@ -112,12 +139,17 @@ const EnhancedFlashcardSetView = () => {
           return (a.difficulty || 1) - (b.difficulty || 1);
         case "created_at":
           return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+        case "review_status":
+          // Sort by review status (needs review first)
+          const aNeeds = getCardProgress(a.id).needsReview;
+          const bNeeds = getCardProgress(b.id).needsReview;
+          return bNeeds === aNeeds ? 0 : bNeeds ? 1 : -1;
         case "position":
         default:
           return (a.position || 0) - (b.position || 0);
       }
     });
-  }, [flashcards, searchQuery, sortBy, filterDifficulty]);
+  }, [flashcards, searchQuery, sortBy, filterDifficulty, filterReviewStatus, progressMap]);
 
   const handleDeleteCard = async (cardId: string) => {
     setDeletingCard(cardId);
@@ -131,21 +163,33 @@ const EnhancedFlashcardSetView = () => {
     }
   };
 
-  // Calculate set statistics
+  // Calculate set statistics based on real progress data
   const setStats = useMemo(() => {
     const totalCards = flashcards.length;
-    const reviewedCards = flashcards.filter(card => getCardProgress(card.id).lastReviewed).length;
-    const needsReviewCards = flashcards.filter(card => getCardProgress(card.id).needsReview).length;
-    const averageProgress = flashcards.reduce((sum, card) => sum + getCardProgress(card.id).correctPercentage, 0) / (totalCards || 1);
+    const reviewedCards = flashcards.filter(card => {
+      const progress = progressMap.get(card.id);
+      return progress && progress.last_seen_at;
+    }).length;
+    
+    const needsReviewCards = flashcards.filter(card => {
+      const progress = getCardProgress(card.id);
+      return progress.needsReview;
+    }).length;
+    
+    const totalProgress = flashcards.reduce((sum, card) => {
+      return sum + getCardProgress(card.id).correctPercentage;
+    }, 0);
+    
+    const avgProgress = totalCards > 0 ? Math.round(totalProgress / totalCards) : 0;
     
     return {
       totalCards,
       reviewedCards,
       needsReviewCards,
-      averageProgress: Math.round(averageProgress),
-      completionRate: Math.round((reviewedCards / (totalCards || 1)) * 100)
+      averageProgress: avgProgress,
+      completionRate: totalCards > 0 ? Math.round((reviewedCards / totalCards) * 100) : 0
     };
-  }, [flashcards]);
+  }, [flashcards, progressMap]);
 
   if (!setId) {
     return <div>Set not found</div>;
@@ -243,6 +287,18 @@ const EnhancedFlashcardSetView = () => {
           />
         </div>
         
+        <Select value={filterReviewStatus} onValueChange={setFilterReviewStatus}>
+          <SelectTrigger className="w-48">
+            <Clock className="h-4 w-4 mr-2" />
+            <SelectValue placeholder="Review status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Cards</SelectItem>
+            <SelectItem value="needs_review">Needs Review</SelectItem>
+            <SelectItem value="reviewed">Already Reviewed</SelectItem>
+          </SelectContent>
+        </Select>
+        
         <Select value={filterDifficulty} onValueChange={setFilterDifficulty}>
           <SelectTrigger className="w-48">
             <Filter className="h-4 w-4 mr-2" />
@@ -265,6 +321,7 @@ const EnhancedFlashcardSetView = () => {
             <SelectItem value="front">Front Text</SelectItem>
             <SelectItem value="difficulty">Difficulty</SelectItem>
             <SelectItem value="created_at">Date Created</SelectItem>
+            <SelectItem value="review_status">Review Status</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -287,7 +344,7 @@ const EnhancedFlashcardSetView = () => {
       </div>
 
       {/* Loading State */}
-      {loading && (
+      {(loading || progressLoading) && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <Card key={i} className="h-48">
@@ -306,7 +363,7 @@ const EnhancedFlashcardSetView = () => {
       )}
 
       {/* Empty State */}
-      {!loading && flashcards.length === 0 && (
+      {!loading && !progressLoading && flashcards.length === 0 && (
         <div className="text-center py-12">
           <div className="bg-gradient-to-br from-mint-50 to-mint-100 rounded-xl p-8 max-w-md mx-auto">
             <BookOpen className="h-16 w-16 text-mint-600 mx-auto mb-4" />
@@ -323,7 +380,7 @@ const EnhancedFlashcardSetView = () => {
       )}
 
       {/* Flashcards Grid */}
-      {!loading && filteredAndSortedCards.length > 0 && (
+      {!loading && !progressLoading && filteredAndSortedCards.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredAndSortedCards.map((card) => {
             const progress = getCardProgress(card.id);
@@ -427,7 +484,7 @@ const EnhancedFlashcardSetView = () => {
       )}
 
       {/* No Results State */}
-      {!loading && filteredAndSortedCards.length === 0 && flashcards.length > 0 && (
+      {!loading && !progressLoading && filteredAndSortedCards.length === 0 && flashcards.length > 0 && (
         <div className="text-center py-12">
           <div className="bg-gray-50 rounded-lg p-8 max-w-md mx-auto">
             <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -440,11 +497,24 @@ const EnhancedFlashcardSetView = () => {
               onClick={() => {
                 setSearchQuery("");
                 setFilterDifficulty("all");
+                setFilterReviewStatus("all");
               }}
             >
               Clear all filters
             </Button>
           </div>
+        </div>
+      )}
+
+      {/* Study Button for Needs Review Cards */}
+      {setStats.needsReviewCards > 0 && (
+        <div className="mt-6 flex justify-center">
+          <Button size="lg" asChild className="bg-orange-600 hover:bg-orange-700">
+            <Link to={`/study/${setId}?mode=review`}>
+              <Clock className="h-4 w-4 mr-2" />
+              Review {setStats.needsReviewCards} Cards That Need Practice
+            </Link>
+          </Button>
         </div>
       )}
     </div>

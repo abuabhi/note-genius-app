@@ -55,6 +55,7 @@ export const useStudyOperations = (): StudyOperations => {
           times_seen: 1, // Will be incremented by trigger if exists
           times_correct: 1, // Will be incremented by trigger if exists
           last_seen_at: new Date().toISOString(),
+          is_difficult: false // Mark as not difficult since it was answered correctly
         }, { onConflict: 'user_id,flashcard_id' });
 
       toast.success("Flashcard marked as correct!");
@@ -105,6 +106,7 @@ export const useStudyOperations = (): StudyOperations => {
           times_seen: 1, // Will be incremented by trigger if exists
           times_correct: 0, // No increment for incorrect
           last_seen_at: new Date().toISOString(),
+          is_difficult: true // Mark as difficult since it was answered incorrectly
         }, { onConflict: 'user_id,flashcard_id' });
 
       toast.warning("Flashcard marked as incorrect. Review again soon!");
