@@ -1,44 +1,72 @@
 
+import { Card, CardContent } from "@/components/ui/card";
 import { StudyMode } from "@/pages/study/types";
-import { BookOpen, RotateCcw, GraduationCap } from "lucide-react";
+import { BookOpen, RotateCcw, GraduationCap, Info } from "lucide-react";
 
 interface StudyModeInfoProps {
   currentMode: StudyMode;
 }
 
-const modeInfo = {
-  learn: {
-    icon: BookOpen,
-    title: "Study Mode",
-    description: "Learn new flashcards at your own pace. Review each card and mark whether you know it or need more practice.",
-  },
-  review: {
-    icon: RotateCcw,
-    title: "Review Mode", 
-    description: "Focus on cards you've marked as 'Need Practice'. Perfect for reinforcing difficult concepts.",
-  },
-  test: {
-    icon: GraduationCap,
-    title: "Quiz Mode",
-    description: "Test your knowledge without hints. Great for exam preparation and checking your progress.",
-  }
-};
-
 export const StudyModeInfo = ({ currentMode }: StudyModeInfoProps) => {
-  const info = modeInfo[currentMode];
-  const Icon = info.icon;
+  const getModeInfo = () => {
+    switch (currentMode) {
+      case "learn":
+        return {
+          icon: BookOpen,
+          title: "Study Mode",
+          description: "Learn new flashcards at your own pace. Mark cards as 'Got it!' or 'Need practice' to track your progress.",
+          color: "text-blue-600",
+          bgColor: "bg-blue-50",
+          borderColor: "border-blue-200"
+        };
+      case "review":
+        return {
+          icon: RotateCcw,
+          title: "Review Mode",
+          description: "Focus on cards you marked as 'Need practice'. Perfect for reinforcing difficult concepts.",
+          color: "text-orange-600",
+          bgColor: "bg-orange-50",
+          borderColor: "border-orange-200"
+        };
+      case "test":
+        return {
+          icon: GraduationCap,
+          title: "Quiz Mode",
+          description: "Test your knowledge with a timed quiz. Your performance will be scored and tracked.",
+          color: "text-green-600",
+          bgColor: "bg-green-50",
+          borderColor: "border-green-200"
+        };
+      default:
+        return {
+          icon: Info,
+          title: "Study Mode",
+          description: "Select a study mode to begin learning.",
+          color: "text-gray-600",
+          bgColor: "bg-gray-50",
+          borderColor: "border-gray-200"
+        };
+    }
+  };
+
+  const modeInfo = getModeInfo();
+  const Icon = modeInfo.icon;
 
   return (
-    <div className="bg-mint-50 rounded-lg border border-mint-100 p-4">
-      <div className="flex items-start gap-3">
-        <div className="p-2 bg-mint-100 rounded-md">
-          <Icon className="h-4 w-4 text-mint-600" />
+    <Card className={`${modeInfo.bgColor} ${modeInfo.borderColor} border`}>
+      <CardContent className="p-4">
+        <div className="flex items-start gap-3">
+          <Icon className={`h-5 w-5 ${modeInfo.color} mt-0.5 flex-shrink-0`} />
+          <div>
+            <h3 className={`font-medium ${modeInfo.color} mb-1`}>
+              {modeInfo.title}
+            </h3>
+            <p className="text-sm text-gray-600">
+              {modeInfo.description}
+            </p>
+          </div>
         </div>
-        <div className="flex-1">
-          <h3 className="font-medium text-mint-800 mb-1">{info.title}</h3>
-          <p className="text-sm text-mint-700">{info.description}</p>
-        </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };

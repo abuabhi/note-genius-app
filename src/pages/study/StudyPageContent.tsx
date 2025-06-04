@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { useSimpleFlashcardSets } from "@/hooks/useSimpleFlashcardSets";
@@ -104,14 +105,17 @@ export const StudyPageContent = () => {
             )}
           </div>
           
-          <SimplifiedStudyModeSelector 
-            currentMode={mode}
-            onModeChange={setMode}
-          />
+          {/* Add the study mode selector here */}
+          {!isLoading && (
+            <SimplifiedStudyModeSelector 
+              currentMode={mode}
+              onModeChange={setMode}
+            />
+          )}
         </div>
         
         {/* Add StudyModeInfo component below mode selector */}
-        <StudyModeInfo currentMode={mode} />
+        {!isLoading && <StudyModeInfo currentMode={mode} />}
       </div>
       
       <Separator className="mb-6" />
