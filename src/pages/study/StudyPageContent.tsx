@@ -8,6 +8,15 @@ import { Separator } from "@/components/ui/separator";
 import { StudyMode } from "./types";
 import { StudyPageHeader } from "./StudyPageHeader";
 import { SimplifiedStudyPageLayout } from "./SimplifiedStudyPageLayout";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Home, BookOpen } from "lucide-react";
 
 export const StudyPageContent = () => {
   const { setId } = useParams<{ setId: string }>();
@@ -94,6 +103,33 @@ export const StudyPageContent = () => {
   
   return (
     <div className="container mx-auto p-6">
+      {/* Breadcrumb Navigation */}
+      <div className="mb-6">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/dashboard" className="flex items-center gap-1">
+                <Home className="h-3 w-3" />
+                Dashboard
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/flashcards" className="flex items-center gap-1">
+                <BookOpen className="h-3 w-3" />
+                Flashcards
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>
+                {isLoading ? "Loading..." : currentSet?.name || "Study Session"}
+              </BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
+
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
           <div>
@@ -105,7 +141,7 @@ export const StudyPageContent = () => {
             )}
           </div>
           
-          {/* Add the study mode selector here */}
+          {/* Study mode selector */}
           {!isLoading && (
             <SimplifiedStudyModeSelector 
               currentMode={mode}
@@ -114,7 +150,7 @@ export const StudyPageContent = () => {
           )}
         </div>
         
-        {/* Add StudyModeInfo component below mode selector */}
+        {/* Study mode info */}
         {!isLoading && <StudyModeInfo currentMode={mode} />}
       </div>
       
