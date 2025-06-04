@@ -119,7 +119,6 @@ export const combineFlashcardOperations = (
     ...libraryOperations,
     
     // Ensure all required methods are available
-    fetchFlashcards: flashcardOperations.fetchFlashcards || (async () => []),
     createFlashcard: flashcardOperations.createFlashcard || (async () => null),
     updateFlashcard: flashcardOperations.updateFlashcard || (async () => {}),
     deleteFlashcard: flashcardOperations.deleteFlashcard || (async () => {}),

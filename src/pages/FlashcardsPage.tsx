@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import Layout from "@/components/layout/Layout";
-import FlashcardsList from "@/components/flashcards/FlashcardsList";
 import SimpleFlashcardSetsList from "@/components/flashcards/SimpleFlashcardSetsList";
 import CreateFlashcard from "@/components/flashcards/CreateFlashcard";
 import CreateFlashcardSet from "@/components/flashcards/CreateFlashcardSet";
@@ -22,7 +21,6 @@ const FlashcardsPage = () => {
   // Make sure the user is authenticated
   useRequireAuth();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("sets");
 
   return (
     <Layout>
@@ -59,20 +57,7 @@ const FlashcardsPage = () => {
           </Dialog>
         </div>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-          <TabsList>
-            <TabsTrigger value="sets">Sets</TabsTrigger>
-            <TabsTrigger value="cards">All Cards</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="sets" className="mt-6">
-            <SimpleFlashcardSetsList />
-          </TabsContent>
-          
-          <TabsContent value="cards" className="mt-6">
-            <FlashcardsList />
-          </TabsContent>
-        </Tabs>
+        <SimpleFlashcardSetsList />
       </div>
     </Layout>
   );
