@@ -83,7 +83,6 @@ export const EnhancedTierInfo = ({ userTier, tierLimits, notesCount }: EnhancedT
                 <Progress 
                   value={usagePercentage} 
                   className="h-2"
-                  indicatorClassName={usagePercentage > 80 ? "bg-red-500" : usagePercentage > 60 ? "bg-yellow-500" : "bg-mint-500"}
                 />
               )}
               

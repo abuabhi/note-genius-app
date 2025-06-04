@@ -8,14 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
-// Updated color scheme using mint colors from the theme
-const tierColors = {
-  [UserTier.SCHOLAR]: "bg-mint-400",
-  [UserTier.GRADUATE]: "bg-mint-500",
-  [UserTier.MASTER]: "bg-mint-600",
-  [UserTier.DEAN]: "bg-mint-700",
-};
-
 // Updated badge variants to match the mint theme
 const tierBadgeVariants = {
   [UserTier.SCHOLAR]: "outline",
@@ -133,7 +125,6 @@ export function UserTierDisplay() {
             <Progress 
               value={isLoadingUsage ? 15 : getUsagePercentage(usageStats?.notesCount || 0, tierLimits?.max_notes || 100)}
               className="h-1"
-              indicatorClassName={tierColors[userTier]} 
             />
           </div>
           
@@ -151,7 +142,6 @@ export function UserTierDisplay() {
             <Progress 
               value={isLoadingUsage ? 30 : getUsagePercentage(usageStats?.flashcardsCount || 0, tierLimits?.max_flashcard_sets || 100)}
               className="h-1"
-              indicatorClassName={tierColors[userTier]} 
             />
           </div>
           
@@ -169,7 +159,6 @@ export function UserTierDisplay() {
             <Progress 
               value={isLoadingUsage ? 45 : getUsagePercentage(usageStats?.storageUsed || 0, tierLimits?.max_storage_mb || 100)}
               className="h-1"
-              indicatorClassName={tierColors[userTier]} 
             />
           </div>
         </div>
