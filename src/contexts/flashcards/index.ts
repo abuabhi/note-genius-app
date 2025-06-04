@@ -1,6 +1,6 @@
 
 // This file serves as the entry point for the flashcards context exports
-// Removed the main context components export to avoid circular imports
+// Main context components are exported from index.tsx to avoid circular imports
 export { useFlashcardState } from './useFlashcardState';
 export { useFlashcardOperations } from './useFlashcardOperations';
 export { useFlashcardSets } from './useFlashcardSets';

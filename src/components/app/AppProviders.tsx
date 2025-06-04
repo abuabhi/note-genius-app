@@ -3,7 +3,7 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { AuthProvider } from '@/contexts/auth';
-import { FlashcardProvider } from '@/contexts/flashcards/index';
+import { FlashcardProvider } from '@/contexts/flashcards/index.tsx';
 import { FeatureProvider } from '@/contexts/FeatureContext';
 import { NavigationProvider } from '@/contexts/NavigationContext';
 import { NoteProvider } from '@/contexts/NoteContext';
