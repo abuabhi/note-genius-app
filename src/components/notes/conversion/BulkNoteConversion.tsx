@@ -26,6 +26,7 @@ export const BulkNoteConversion = ({
 }: BulkNoteConversionProps) => {
   const [setName, setSetName] = useState("New Flashcard Set");
   const [setDescription, setSetDescription] = useState("");
+  const [desiredCardCount, setDesiredCardCount] = useState(10);
   const [isConverting, setIsConverting] = useState(false);
   const { createFlashcardSet, createFlashcard, fetchFlashcardSets } = useFlashcards();
   const { subjects } = useUserSubjects();
@@ -135,6 +136,21 @@ export const BulkNoteConversion = ({
               rows={3}
             />
           </div>
+          <div>
+            <Label htmlFor="cardCount">Number of Flashcards</Label>
+            <Input
+              id="cardCount"
+              type="number"
+              min="1"
+              max="50"
+              value={desiredCardCount}
+              onChange={(e) => setDesiredCardCount(Math.max(1, Math.min(50, parseInt(e.target.value) || 1)))}
+              placeholder="How many flashcards to create"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Choose between 1-50 flashcards (actual count may vary based on content)
+            </p>
+          </div>
           <div className="bg-blue-50 p-3 rounded-md">
             <p className="text-sm font-medium text-blue-700">Subject: {noteSubject}</p>
             <p className="text-xs text-blue-600">This will be automatically assigned based on your note's subject</p>
@@ -145,6 +161,7 @@ export const BulkNoteConversion = ({
       <SmartContentProcessor
         noteContent={primaryNote.content || primaryNote.description}
         noteTitle={primaryNote.title}
+        desiredCardCount={desiredCardCount}
         onCreateFlashcards={handleCreateFlashcards}
       />
 

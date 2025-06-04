@@ -22,7 +22,7 @@ export const extractKeywords = (text: string): string[] => {
   
   return words
     .filter(word => word.length > 3 && !commonWords.has(word))
-    .slice(0, 8);
+    .slice(0, 20); // Increased to support more cards
 };
 
 export const findContextForKeyword = (text: string, keyword: string): string => {
@@ -36,9 +36,10 @@ export const findContextForKeyword = (text: string, keyword: string): string => 
 export const smartProcessContent = async (
   content: string, 
   title: string, 
-  type: FlashcardType
+  type: FlashcardType,
+  desiredCount: number = 10
 ): Promise<Array<{ front: string; back: string; type: FlashcardType }>> => {
-  // Enhanced content processing
+  // Enhanced content processing with desired count
   if (!content || content.trim().length === 0) {
     return [{
       front: `What is the main topic of: ${stripHtmlAndDecode(title)}?`,
@@ -56,7 +57,7 @@ export const smartProcessContent = async (
 
   switch (type) {
     case 'question-answer':
-      const maxQA = Math.min(sentences.length, 5);
+      const maxQA = Math.min(sentences.length, desiredCount);
       for (let i = 0; i < maxQA; i++) {
         const sentence = sentences[i].trim();
         if (sentence.length > 10) {
@@ -67,11 +68,26 @@ export const smartProcessContent = async (
           });
         }
       }
+      
+      // If we need more cards, create variations
+      while (cards.length < desiredCount && sentences.length > 0) {
+        const randomSentence = sentences[Math.floor(Math.random() * sentences.length)];
+        if (randomSentence.trim().length > 10) {
+          cards.push({
+            front: `Explain the concept: ${randomSentence.substring(0, 30)}...`,
+            back: randomSentence.trim(),
+            type
+          });
+        }
+        if (cards.length >= sentences.length) break; // Prevent infinite loop
+      }
       break;
       
     case 'definition':
       const keywords = extractKeywords(cleanContent);
-      for (const keyword of keywords.slice(0, 4)) {
+      const maxDef = Math.min(keywords.length, desiredCount);
+      for (let i = 0; i < maxDef; i++) {
+        const keyword = keywords[i];
         const context = findContextForKeyword(cleanContent, keyword);
         cards.push({
           front: `Define: ${keyword}`,
@@ -82,7 +98,7 @@ export const smartProcessContent = async (
       break;
       
     case 'fill-blank':
-      const maxFill = Math.min(sentences.length, 3);
+      const maxFill = Math.min(sentences.length, desiredCount);
       for (let i = 0; i < maxFill; i++) {
         const sentence = sentences[i].trim();
         const words = sentence.split(' ');
@@ -102,25 +118,35 @@ export const smartProcessContent = async (
       break;
       
     case 'concept':
-      const conceptText = cleanContent.substring(0, 200) + (cleanContent.length > 200 ? '...' : '');
-      cards.push({
-        front: `Explain the main concept from: ${cleanTitle}`,
-        back: conceptText,
-        type
-      });
+      // For concept cards, create multiple cards based on different aspects
+      const conceptsToCreate = Math.min(desiredCount, 5);
       
-      // Add a secondary concept card if there's more content
-      if (sentences.length > 1) {
-        cards.push({
-          front: `What are the key details mentioned in: ${cleanTitle}?`,
-          back: sentences.slice(0, 3).join('. '),
-          type
-        });
+      for (let i = 0; i < conceptsToCreate; i++) {
+        if (i === 0) {
+          const conceptText = cleanContent.substring(0, 200) + (cleanContent.length > 200 ? '...' : '');
+          cards.push({
+            front: `Explain the main concept from: ${cleanTitle}`,
+            back: conceptText,
+            type
+          });
+        } else if (i === 1 && sentences.length > 1) {
+          cards.push({
+            front: `What are the key details mentioned in: ${cleanTitle}?`,
+            back: sentences.slice(0, 3).join('. '),
+            type
+          });
+        } else if (sentences.length > i) {
+          cards.push({
+            front: `Describe this aspect of ${cleanTitle}: ${sentences[i-1].substring(0, 40)}...`,
+            back: sentences[i-1].trim(),
+            type
+          });
+        }
       }
       break;
   }
 
-  // Ensure we always return at least one card
+  // Ensure we always return at least one card and don't exceed desired count
   if (cards.length === 0) {
     cards.push({
       front: `What is the main topic of: ${cleanTitle}?`,
@@ -129,5 +155,6 @@ export const smartProcessContent = async (
     });
   }
 
-  return cards;
+  // Limit to desired count
+  return cards.slice(0, desiredCount);
 };

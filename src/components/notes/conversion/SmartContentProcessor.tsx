@@ -11,6 +11,7 @@ import { Wand2 } from "lucide-react";
 interface SmartContentProcessorProps {
   noteContent: string;
   noteTitle: string;
+  desiredCardCount: number;
   onCreateFlashcards: (flashcards: Array<{
     front: string;
     back: string;
@@ -21,6 +22,7 @@ interface SmartContentProcessorProps {
 export const SmartContentProcessor = ({
   noteContent,
   noteTitle,
+  desiredCardCount,
   onCreateFlashcards
 }: SmartContentProcessorProps) => {
   const [selectedType, setSelectedType] = useState<FlashcardType>('question-answer');
@@ -36,7 +38,7 @@ export const SmartContentProcessor = ({
     setIsProcessing(true);
     
     try {
-      const processedCards = await smartProcessContent(noteContent, noteTitle, selectedType);
+      const processedCards = await smartProcessContent(noteContent, noteTitle, selectedType, desiredCardCount);
       setPreviewCards(processedCards);
       setShowPreview(true);
     } catch (error) {
