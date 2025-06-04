@@ -94,7 +94,7 @@ export const QuizList = () => {
         </Select>
 
         <Button 
-          onClick={() => navigate('/quiz-history')}
+          onClick={() => navigate('/quiz/history')}
           variant="outline"
           className="border-mint-200 hover:bg-mint-50 text-mint-700 whitespace-nowrap"
         >
