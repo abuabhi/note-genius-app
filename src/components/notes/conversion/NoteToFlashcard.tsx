@@ -25,8 +25,8 @@ export const NoteToFlashcard = ({ note, flashcardSetId, onFlashcardCreated }: No
   
   // Find the subject name using proper lookup
   const subjectName = note.subject_id 
-    ? subjects.find(s => s.id === note.subject_id)?.name || note.subject || "General"
-    : note.subject || "General";
+    ? subjects.find(s => s.id === note.subject_id)?.name || "General"
+    : "General";
   
   // Create flashcard from the entire note content
   const handleCreateFromFullNote = async () => {
