@@ -47,7 +47,7 @@ import { useUserSubjects } from "@/hooks/useUserSubjects";
 
 const EnhancedFlashcardSetsList = () => {
   const { flashcardSets, loading, deleteFlashcardSet, fetchFlashcardSets } = useFlashcards();
-  const { subjects } = useUserSubjects();
+  const { subjects, isLoading: subjectsLoading } = useUserSubjects();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("updated_at");
   const [subjectFilter, setSubjectFilter] = useState<string | undefined>(undefined);
@@ -55,7 +55,7 @@ const EnhancedFlashcardSetsList = () => {
   const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
   const [setProgressData, setSetProgressData] = useState<Record<string, number>>({});
 
-  // Get user subjects for the dropdown
+  // Get user subjects for the dropdown with better loading handling
   const userSubjects = subjects || [];
 
   // Calculate stable progress for flashcard sets (fixed to prevent infinite loop)
@@ -74,9 +74,9 @@ const EnhancedFlashcardSetsList = () => {
     }
     
     setSetProgressData(progressMap);
-  }, [flashcardSets]); // Removed getFlashcardProgress from dependencies to prevent infinite loop
+  }, [flashcardSets]);
 
-  // Filter and sort flashcard sets
+  // Filter and sort flashcard sets - fixed subject filtering
   const filteredAndSortedSets = useMemo(() => {
     if (!flashcardSets) return [];
     
@@ -85,6 +85,7 @@ const EnhancedFlashcardSetsList = () => {
         set.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         set.subject?.toLowerCase().includes(searchQuery.toLowerCase());
       
+      // Fix subject filtering - match by subject name directly
       const matchesSubject = !subjectFilter || set.subject === subjectFilter;
       
       return matchesSearch && matchesSubject;
@@ -120,7 +121,7 @@ const EnhancedFlashcardSetsList = () => {
     };
     
     loadData();
-  }, []); // Only run on mount
+  }, []);
 
   const handleDeleteSet = async (setId: string) => {
     setDeletingSet(setId);
@@ -164,6 +165,8 @@ const EnhancedFlashcardSetsList = () => {
   }
 
   console.log('EnhancedFlashcardSetsList: Rendering with flashcard sets:', flashcardSets?.length || 0, 'sets');
+  console.log('Current subject filter:', subjectFilter);
+  console.log('Available flashcard subjects:', flashcardSets?.map(set => set.subject).filter(Boolean));
 
   return (
     <div className="space-y-6">
@@ -179,22 +182,27 @@ const EnhancedFlashcardSetsList = () => {
           />
         </div>
         
-        {/* Subject Filter - Use real user subjects */}
-        {userSubjects.length > 0 && (
-          <Select value={subjectFilter || "_any"} onValueChange={(value) => setSubjectFilter(value === "_any" ? undefined : value)}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="All subjects" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="_any">All subjects</SelectItem>
-              {userSubjects.map(subject => (
-                <SelectItem key={subject.id} value={subject.name}>
-                  {subject.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+        {/* Subject Filter - Use real user subjects but show available subjects in sets */}
+        <Select 
+          value={subjectFilter || "_any"} 
+          onValueChange={(value) => {
+            console.log('Subject filter changed to:', value);
+            setSubjectFilter(value === "_any" ? undefined : value);
+          }}
+        >
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="All subjects" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="_any">All subjects</SelectItem>
+            {/* Show subjects that actually exist in flashcard sets */}
+            {Array.from(new Set(flashcardSets?.map(set => set.subject).filter(Boolean) || [])).map(subject => (
+              <SelectItem key={subject} value={subject}>
+                {subject}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         
         <Select value={sortBy} onValueChange={setSortBy}>
           <SelectTrigger className="w-48">

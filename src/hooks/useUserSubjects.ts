@@ -1,112 +1,65 @@
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/auth';
-import { supabase } from '@/integrations/supabase/client';
-import { UserSubject } from '@/types/subject';
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth";
+import { UserSubject } from "@/types/subject";
 
 export const useUserSubjects = () => {
   const { user } = useAuth();
-  const [subjects, setSubjects] = useState<UserSubject[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchSubjects = async () => {
-      if (!user) {
-        setIsLoading(false);
-        return;
+  const { data: subjects = [], isLoading, error } = useQuery({
+    queryKey: ["userSubjects", user?.id],
+    queryFn: async () => {
+      if (!user?.id) {
+        console.log("useUserSubjects: No user ID available");
+        return [];
       }
 
-      try {
-        setIsLoading(true);
-        console.log("Fetching subjects for user ID:", user.id);
-        
-        const { data, error } = await supabase
-          .from('user_subjects')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('name');
-
-        if (error) {
-          console.error("Error fetching subjects:", error);
-          throw error;
-        }
-        
-        console.log("Subjects fetched successfully:", data);
-        
-        if (data) {
-          // Log each subject for debugging
-          data.forEach((subject: UserSubject) => {
-            console.log(`Subject: ${subject.name}, ID: ${subject.id}`);
-          });
-        }
-        
-        setSubjects(data as UserSubject[]);
-      } catch (error) {
-        console.error('Error fetching user subjects:', error);
-        setSubjects([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSubjects();
-  }, [user]);
-
-  const addSubject = async (name: string) => {
-    if (!user || !name.trim()) return false;
-
-    try {
-      // Check if subject already exists
-      const exists = subjects.some(
-        (subject) => subject.name.toLowerCase() === name.trim().toLowerCase()
-      );
-
-      if (exists) {
-        console.warn('Subject already exists');
-        return false;
-      }
-
-      const newSubject: UserSubject = {
-        user_id: user.id,
-        name: name.trim()
-      };
-
+      console.log("useUserSubjects: Fetching subjects for user:", user.id);
+      
       const { data, error } = await supabase
-        .from('user_subjects')
-        .insert(newSubject)
-        .select();
+        .from("user_subjects")
+        .select(`
+          id,
+          name,
+          color,
+          description,
+          created_at,
+          updated_at,
+          subject_categories (
+            id,
+            name,
+            description
+          )
+        `)
+        .eq("user_id", user.id)
+        .order("name");
 
-      if (error) throw error;
+      if (error) {
+        console.error("useUserSubjects: Error fetching subjects:", error);
+        throw error;
+      }
 
-      console.log("New subject added:", data[0]);
-      setSubjects([...subjects, data[0] as UserSubject]);
-      return true;
-    } catch (error) {
-      console.error('Error adding subject:', error);
-      return false;
-    }
+      console.log("useUserSubjects: Successfully fetched", data?.length || 0, "subjects");
+      
+      return (data || []).map(subject => ({
+        id: subject.id,
+        name: subject.name,
+        color: subject.color,
+        description: subject.description,
+        created_at: subject.created_at,
+        updated_at: subject.updated_at,
+        subject_category: subject.subject_categories
+      })) as UserSubject[];
+    },
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+  });
+
+  return {
+    subjects,
+    isLoading,
+    error
   };
-
-  const removeSubject = async (subjectId: string) => {
-    if (!user) return false;
-
-    try {
-      const { error } = await supabase
-        .from('user_subjects')
-        .delete()
-        .eq('id', subjectId)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      console.log("Subject removed:", subjectId);
-      setSubjects(subjects.filter(subject => subject.id !== subjectId));
-      return true;
-    } catch (error) {
-      console.error('Error removing subject:', error);
-      return false;
-    }
-  };
-
-  return { subjects, isLoading, addSubject, removeSubject };
 };
