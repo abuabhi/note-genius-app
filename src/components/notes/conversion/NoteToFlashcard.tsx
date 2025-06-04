@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { AIFlashcardGenerator } from "./AIFlashcardGenerator";
 import { usePremiumFeatures } from "@/hooks/usePremiumFeatures";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
-import { useFlashcards } from "@/contexts/FlashcardContext";
 import { useFlashcardState } from "@/contexts/flashcards/useFlashcardState";
 import { useFlashcardOperations } from "@/contexts/flashcards/useFlashcardOperations";
 
@@ -24,10 +23,10 @@ export const NoteToFlashcard = ({ note, flashcardSetId, onFlashcardCreated }: No
   const { subjects } = useUserSubjects();
   const { aiFlashcardGenerationEnabled } = usePremiumFeatures();
   
-  // Find the subject name if we have a subject_id
+  // Find the subject name using proper lookup
   const subjectName = note.subject_id 
-    ? subjects.find(s => s.id === note.subject_id)?.name || "Unknown Subject"
-    : note.category || "General";
+    ? subjects.find(s => s.id === note.subject_id)?.name || note.subject || "General"
+    : note.subject || "General";
   
   // Create flashcard from the entire note content
   const handleCreateFromFullNote = async () => {
@@ -65,6 +64,10 @@ export const NoteToFlashcard = ({ note, flashcardSetId, onFlashcardCreated }: No
     <div className="space-y-4">
       <div>
         <h3 className="text-lg font-medium mb-2">Convert Note to Flashcard</h3>
+        <div className="bg-blue-50 p-3 rounded-md mb-3">
+          <p className="text-sm font-medium text-blue-700">Note Subject: {subjectName}</p>
+          <p className="text-xs text-blue-600">Flashcards will inherit this subject</p>
+        </div>
         <div className="flex flex-wrap gap-2">
           <Button 
             onClick={handleCreateFromFullNote} 

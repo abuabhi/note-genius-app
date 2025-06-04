@@ -11,6 +11,7 @@ import { FlashcardSet } from "@/types/flashcard";
 import { SmartContentProcessor } from "./SmartContentProcessor";
 import { FlashcardType } from "./FlashcardTypeSelector";
 import { toast } from "sonner";
+import { useUserSubjects } from "@/hooks/useUserSubjects";
 
 interface BulkNoteConversionProps {
   notes: Note[];
@@ -27,6 +28,13 @@ export const BulkNoteConversion = ({
   const [setDescription, setSetDescription] = useState("");
   const [isConverting, setIsConverting] = useState(false);
   const { createFlashcardSet, createFlashcard, fetchFlashcardSets } = useFlashcards();
+  const { subjects } = useUserSubjects();
+
+  // Extract subject from the primary note
+  const primaryNote = notes[0];
+  const noteSubject = primaryNote?.subject_id 
+    ? subjects.find(s => s.id === primaryNote.subject_id)?.name || primaryNote.subject || "General"
+    : primaryNote?.subject || "General";
 
   const handleCreateFlashcards = async (flashcards: Array<{
     front: string;
@@ -37,18 +45,18 @@ export const BulkNoteConversion = ({
       setIsConverting(true);
       console.log("Starting flashcard creation process...");
       
-      // Create the flashcard set first
+      // Create the flashcard set first with the proper subject
       const newSet = await createFlashcardSet({
         name: setName,
         description: setDescription,
-        subject: notes[0]?.title || "General"
+        subject: noteSubject // Use the extracted subject from the note
       });
 
       if (!newSet) {
         throw new Error("Failed to create flashcard set");
       }
 
-      console.log("Created flashcard set:", newSet);
+      console.log("Created flashcard set with subject:", noteSubject, newSet);
 
       // Create individual flashcards and add them to the set
       let successCount = 0;
@@ -88,9 +96,6 @@ export const BulkNoteConversion = ({
     }
   };
 
-  // For now, we'll work with the first note
-  const primaryNote = notes[0];
-
   if (!primaryNote) {
     return (
       <Card>
@@ -129,6 +134,10 @@ export const BulkNoteConversion = ({
               placeholder="Enter a description for this flashcard set"
               rows={3}
             />
+          </div>
+          <div className="bg-blue-50 p-3 rounded-md">
+            <p className="text-sm font-medium text-blue-700">Subject: {noteSubject}</p>
+            <p className="text-xs text-blue-600">This will be automatically assigned based on your note's subject</p>
           </div>
         </CardContent>
       </Card>

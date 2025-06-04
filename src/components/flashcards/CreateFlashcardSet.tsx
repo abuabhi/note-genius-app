@@ -14,12 +14,13 @@ import { useUserSubjects } from "@/hooks/useUserSubjects";
 
 interface CreateFlashcardSetProps {
   onSuccess?: () => void;
+  initialSubject?: string;
 }
 
-const CreateFlashcardSet = ({ onSuccess }: CreateFlashcardSetProps) => {
+const CreateFlashcardSet = ({ onSuccess, initialSubject }: CreateFlashcardSetProps) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [subject, setSubject] = useState("");
+  const [subject, setSubject] = useState(initialSubject || "");
   const [topic, setTopic] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -48,6 +49,8 @@ const CreateFlashcardSet = ({ onSuccess }: CreateFlashcardSetProps) => {
         subject: subject || undefined,
         topic: topic.trim() || undefined,
       };
+      
+      console.log("Creating flashcard set with data:", setData);
       
       const result = await createFlashcardSet(setData);
       
@@ -104,7 +107,7 @@ const CreateFlashcardSet = ({ onSuccess }: CreateFlashcardSetProps) => {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="subject">Subject (optional)</Label>
+              <Label htmlFor="subject">Subject</Label>
               <Select value={subject} onValueChange={setSubject} disabled={isSubmitting || subjectsLoading}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a subject" />
@@ -118,6 +121,9 @@ const CreateFlashcardSet = ({ onSuccess }: CreateFlashcardSetProps) => {
                   ))}
                 </SelectContent>
               </Select>
+              {initialSubject && (
+                <p className="text-xs text-blue-600">Pre-filled from note subject</p>
+              )}
             </div>
             
             <div className="space-y-2">
