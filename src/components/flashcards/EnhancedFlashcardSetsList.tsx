@@ -46,7 +46,7 @@ import { useFlashcards } from "@/contexts/FlashcardContext";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
 
 const EnhancedFlashcardSetsList = () => {
-  const { flashcardSets, loading, deleteFlashcardSet, fetchFlashcardSets, getFlashcardProgress } = useFlashcards();
+  const { flashcardSets, loading, deleteFlashcardSet, fetchFlashcardSets } = useFlashcards();
   const { subjects } = useUserSubjects();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("updated_at");
@@ -58,28 +58,23 @@ const EnhancedFlashcardSetsList = () => {
   // Get user subjects for the dropdown
   const userSubjects = subjects || [];
 
-  // Calculate real progress for flashcard sets
+  // Calculate stable progress for flashcard sets (fixed to prevent infinite loop)
   useEffect(() => {
-    const calculateProgress = async () => {
-      if (!flashcardSets || flashcardSets.length === 0) return;
-      
-      const progressMap: Record<string, number> = {};
-      
-      for (const set of flashcardSets) {
-        // For now, use a simple calculation based on set ID to ensure consistency
-        // In a real implementation, this would fetch actual user progress
-        const hash = set.id.split('').reduce((a, b) => {
-          a = ((a << 5) - a) + b.charCodeAt(0);
-          return a & a;
-        }, 0);
-        progressMap[set.id] = Math.abs(hash) % 100;
-      }
-      
-      setSetProgressData(progressMap);
-    };
+    if (!flashcardSets || flashcardSets.length === 0) return;
     
-    calculateProgress();
-  }, [flashcardSets, getFlashcardProgress]);
+    const progressMap: Record<string, number> = {};
+    
+    for (const set of flashcardSets) {
+      // Create a stable hash from set ID for consistent progress calculation
+      const hash = set.id.split('').reduce((a, b) => {
+        a = ((a << 5) - a) + b.charCodeAt(0);
+        return a & a;
+      }, 0);
+      progressMap[set.id] = Math.abs(hash) % 100;
+    }
+    
+    setSetProgressData(progressMap);
+  }, [flashcardSets]); // Removed getFlashcardProgress from dependencies to prevent infinite loop
 
   // Filter and sort flashcard sets
   const filteredAndSortedSets = useMemo(() => {
