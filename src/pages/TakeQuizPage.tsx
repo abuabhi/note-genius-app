@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
@@ -123,18 +122,7 @@ const TakeQuizPage = () => {
               <div className="max-w-4xl mx-auto space-y-6">
                 <Card className="bg-white/60 backdrop-blur-sm border-mint-100">
                   <CardHeader className="pb-4">
-                    <div className="flex items-center gap-3 mb-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="p-2 h-8 w-8 hover:bg-mint-50" 
-                        onClick={() => navigate('/quizzes')}
-                      >
-                        <ArrowLeft className="h-4 w-4" />
-                        <span className="sr-only">Back</span>
-                      </Button>
-                      <CardTitle className="text-3xl text-mint-800">{quiz.title}</CardTitle>
-                    </div>
+                    <CardTitle className="text-3xl text-mint-800">{quiz.title}</CardTitle>
                     {quiz.description && (
                       <p className="text-mint-600 text-lg">{quiz.description}</p>
                     )}

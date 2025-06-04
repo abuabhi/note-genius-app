@@ -2,8 +2,6 @@
 import { useState } from "react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import Layout from "@/components/layout/Layout";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { QuizHistoryHeader } from "@/components/quiz/history/QuizHistoryHeader";
 import { QuizHistoryFilters } from "@/components/quiz/history/QuizHistoryFilters";
@@ -73,16 +71,7 @@ const QuizHistoryPage = () => {
             <QuizHistoryBreadcrumb />
           </div>
 
-          <div className="flex items-center gap-4 mb-6">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => navigate('/quizzes')}
-              className="flex items-center gap-2 hover:bg-mint-50"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Quizzes
-            </Button>
+          <div className="mb-6">
             <QuizHistoryHeader />
           </div>
 
