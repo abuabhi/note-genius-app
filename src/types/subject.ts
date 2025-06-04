@@ -13,10 +13,11 @@ export const PREDEFINED_SUBJECTS = [
 export type PredefinedSubject = typeof PREDEFINED_SUBJECTS[number];
 
 export interface UserSubject {
-  id?: string;
+  id: string;
   user_id: string;
   name: string;
   created_at?: string;
+  updated_at?: string;
 }
 
 export type GradeLevel = 
