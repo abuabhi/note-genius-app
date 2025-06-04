@@ -21,7 +21,7 @@ export const createFlashcardSet = async (
       .insert({
         name: setData.name,
         description: setData.description,
-        subject: setData.subject,
+        subject: setData.subject?.trim() || null, // Ensure subject is properly stored
         topic: setData.topic,
         category_id: setData.category_id,
         country_id: setData.country_id,

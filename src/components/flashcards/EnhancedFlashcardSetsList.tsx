@@ -38,15 +38,38 @@ const EnhancedFlashcardSetsList = () => {
   const filteredAndSortedSets = useMemo(() => {
     if (!flashcardSets) return [];
     
+    console.log('Filtering flashcard sets:', {
+      totalSets: flashcardSets.length,
+      subjectFilter,
+      searchQuery,
+      sampleSets: flashcardSets.slice(0, 3).map(s => ({ id: s.id.slice(0, 8), name: s.name, subject: s.subject }))
+    });
+    
     let filtered = flashcardSets.filter(set => {
-      const matchesSearch = set.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      const matchesSearch = !searchQuery || 
+        set.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         set.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         set.subject?.toLowerCase().includes(searchQuery.toLowerCase());
       
-      // Filter by selected user subject
-      const matchesSubject = !subjectFilter || set.subject === subjectFilter;
+      // Filter by selected user subject - exact match
+      const matchesSubject = !subjectFilter || 
+        (set.subject && set.subject.trim() === subjectFilter.trim());
+      
+      console.log('Filtering set:', {
+        setName: set.name,
+        setSubject: set.subject,
+        subjectFilter,
+        matchesSubject,
+        matchesSearch
+      });
       
       return matchesSearch && matchesSubject;
+    });
+
+    console.log('Filtered sets:', {
+      originalCount: flashcardSets.length,
+      filteredCount: filtered.length,
+      subjectFilter
     });
 
     return filtered.sort((a, b) => {
