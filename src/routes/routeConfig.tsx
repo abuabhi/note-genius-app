@@ -13,7 +13,8 @@ import NoteStudyPage from "@/pages/NoteStudyPage";
 import QuizPage from "@/pages/QuizPage";
 import FlashcardsPage from "@/pages/FlashcardsPage";
 import FlashcardSetPage from "@/pages/FlashcardSetPage";
-import StudyPage from "@/pages/StudyPage";
+import { StudyPageContent } from "@/pages/study/StudyPageContent";
+import Layout from "@/components/layout/Layout";
 import StudySessionsPage from "@/pages/StudySessionsPage";
 import ProgressPage from "@/pages/ProgressPage";
 import SchedulePage from "@/pages/SchedulePage";
@@ -66,8 +67,8 @@ export const standardRoutes: RouteConfig[] = [
   { path: "/notes/study/:noteId", element: <NoteStudyPage /> },
   { path: "/flashcards", element: <FlashcardsPage /> },
   { path: "/flashcards/:setId", element: <FlashcardSetPage /> },
-  { path: "/study", element: <StudyPage /> },
-  { path: "/study/:setId", element: <StudyPage /> },
+  { path: "/study", element: <Layout><StudyPageContent /></Layout> },
+  { path: "/study/:setId", element: <Layout><StudyPageContent /></Layout> },
   { path: "/settings", element: <SettingsPage /> },
   { path: "/library", element: <FlashcardLibraryPage /> },
   { path: "/notes/edit/:noteId", element: <EditNotePage /> },
