@@ -42,3 +42,17 @@ export const formatMinutes = (minutes: number): string => {
   }
   return `${hours}h ${remainingMinutes}m`;
 };
+
+/**
+ * Formats time in minutes to MM:SS or HH:MM format
+ */
+export const formatTime = (minutes: number): string => {
+  if (minutes < 60) {
+    return `${minutes.toString().padStart(2, '0')}:00`;
+  }
+  
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  
+  return `${hours.toString().padStart(2, '0')}:${remainingMinutes.toString().padStart(2, '0')}`;
+};
