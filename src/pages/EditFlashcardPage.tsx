@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
@@ -25,6 +26,14 @@ const EditFlashcardPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // Helper function to ensure difficulty is a valid FlashcardDifficulty
+  const getValidDifficulty = (value: number | undefined): FlashcardDifficulty => {
+    if (value && value >= 1 && value <= 5) {
+      return value as FlashcardDifficulty;
+    }
+    return 3; // Default fallback
+  };
+
   useEffect(() => {
     const loadFlashcard = async () => {
       if (!setId || !cardId) return;
@@ -38,7 +47,7 @@ const EditFlashcardPage = () => {
           setFlashcard(card);
           setFrontContent(card.front_content || card.front || "");
           setBackContent(card.back_content || card.back || "");
-          setDifficulty(card.difficulty || 3);
+          setDifficulty(getValidDifficulty(card.difficulty));
         } else {
           toast.error("Flashcard not found");
           navigate(`/flashcards/${setId}`);
