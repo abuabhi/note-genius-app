@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +9,6 @@ import { CheckCircle, XCircle } from "lucide-react";
 import { Progress } from '@/components/ui/progress';
 import { useUserTier } from '@/hooks/useUserTier';
 import { Separator } from '@/components/ui/separator';
-import { useState as useStateHook } from 'react';
 
 interface QuizTakingCardProps {
   questions: (QuizQuestion & { options: QuizOption[] })[];
@@ -41,7 +41,7 @@ export const QuizTakingCard = ({ questions, onQuizComplete }: QuizTakingCardProp
   const { isUserPremium } = useUserTier();
   
   const currentQuestion = questions[currentQuestionIndex];
-  const progress = ((currentQuestionIndex + (showAnswer ? 0 : 1)) / questions.length) * 100;
+  const progress = ((currentQuestionIndex + (showAnswer ? 1 : 0)) / questions.length) * 100;
   
   // Reset timer when moving to a new question
   useEffect(() => {
@@ -117,17 +117,23 @@ export const QuizTakingCard = ({ questions, onQuizComplete }: QuizTakingCardProp
   if (!currentQuestion) return null;
   
   return (
-    <Card className="w-full max-w-3xl mx-auto">
-      <CardHeader className="relative pb-2">
-        <div className="flex justify-between items-center">
-          <CardTitle>Question {currentQuestionIndex + 1} of {questions.length}</CardTitle>
-          <div className="text-sm font-medium">Time: {formatTime(totalTime)}</div>
+    <Card className="w-full max-w-4xl mx-auto bg-white/60 backdrop-blur-sm border-mint-100">
+      <CardHeader className="relative pb-4">
+        <div className="flex justify-between items-center mb-3">
+          <CardTitle className="text-mint-800">
+            Question {currentQuestionIndex + 1} of {questions.length}
+          </CardTitle>
+          <div className="text-sm font-medium text-mint-600 bg-mint-50 px-3 py-1 rounded-full">
+            Time: {formatTime(totalTime)}
+          </div>
         </div>
         <Progress value={progress} className="h-2" />
       </CardHeader>
       <CardContent className="pt-4">
-        <div className="space-y-4">
-          <div className="text-lg font-medium">{currentQuestion.question}</div>
+        <div className="space-y-6">
+          <div className="text-lg font-medium text-mint-800 leading-relaxed">
+            {currentQuestion.question}
+          </div>
           
           <RadioGroup 
             value={selectedOptionId || ""} 
@@ -138,48 +144,54 @@ export const QuizTakingCard = ({ questions, onQuizComplete }: QuizTakingCardProp
             {currentQuestion.options.map((option) => (
               <div
                 key={option.id}
-                className={`flex items-center space-x-2 border rounded-md p-3 transition-colors ${
+                className={`flex items-center space-x-3 border rounded-lg p-4 transition-all ${
                   showAnswer && option.is_correct
                     ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                    : showAnswer && selectedOptionId === option.id
+                    : showAnswer && selectedOptionId === option.id && !option.is_correct
                     ? "border-red-500 bg-red-50 dark:bg-red-900/20"
-                    : "hover:bg-gray-50 dark:hover:bg-gray-900/50"
+                    : selectedOptionId === option.id
+                    ? "border-mint-400 bg-mint-50"
+                    : "border-mint-200 hover:border-mint-300 hover:bg-mint-25"
                 }`}
               >
                 <RadioGroupItem value={option.id} id={option.id} />
-                <Label htmlFor={option.id} className="flex-grow cursor-pointer">
+                <Label htmlFor={option.id} className="flex-grow cursor-pointer text-mint-700">
                   {option.content}
                 </Label>
                 {showAnswer && option.is_correct && (
-                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
                 )}
                 {showAnswer && !option.is_correct && selectedOptionId === option.id && (
-                  <XCircle className="h-5 w-5 text-red-600" />
+                  <XCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
                 )}
               </div>
             ))}
           </RadioGroup>
           
           {showAnswer && currentQuestion.explanation && isUserPremium && (
-            <div className="mt-4">
-              <Separator className="my-2" />
-              <div className="text-sm font-medium text-muted-foreground">Explanation:</div>
-              <p className="text-sm mt-1">{currentQuestion.explanation}</p>
+            <div className="mt-6">
+              <Separator className="my-4" />
+              <div className="bg-mint-50 rounded-lg p-4 border border-mint-100">
+                <div className="text-sm font-medium text-mint-800 mb-2">Explanation:</div>
+                <p className="text-sm text-mint-700 leading-relaxed">{currentQuestion.explanation}</p>
+              </div>
             </div>
           )}
         </div>
       </CardContent>
-      <CardFooter className="flex justify-end gap-2">
+      <CardFooter className="flex justify-end gap-3 pt-6">
         {!showAnswer ? (
           <Button 
             onClick={handleCheckAnswer}
             disabled={!selectedOptionId}
+            className="bg-mint-600 hover:bg-mint-700"
           >
             Check Answer
           </Button>
         ) : (
           <Button 
             onClick={handleNextQuestion}
+            className="bg-mint-600 hover:bg-mint-700"
           >
             {currentQuestionIndex < questions.length - 1 ? "Next Question" : "Finish Quiz"}
           </Button>
