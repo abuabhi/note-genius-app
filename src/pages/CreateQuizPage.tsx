@@ -12,41 +12,49 @@ import { useNavigate } from "react-router-dom";
 const CreateQuizPage = () => {
   const { userProfile } = useRequireAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("manual");
+  const [activeTab, setActiveTab] = useState("notes");
   
   return (
     <Layout>
-      <div className="container mx-auto p-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-white border-b">
+          <div className="container mx-auto p-6">
+            <div className="flex items-center gap-4 mb-4">
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="p-0 h-8 w-8" 
+                className="p-2" 
                 onClick={() => navigate('/quiz')}
               >
                 <ArrowLeft className="h-4 w-4" />
                 <span className="sr-only">Back</span>
               </Button>
-              <h1 className="text-3xl font-bold">Create Quiz</h1>
+              <div>
+                <h1 className="text-2xl font-semibold">Create Quiz</h1>
+                <p className="text-muted-foreground">Create a new quiz manually or from your notes</p>
+              </div>
             </div>
-            <p className="text-muted-foreground">Create a new quiz manually or from your notes</p>
+            
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList>
+                <TabsTrigger value="notes">Generate from Notes</TabsTrigger>
+                <TabsTrigger value="manual">Manual Creation</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
         </div>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-          <TabsList>
-            <TabsTrigger value="manual">Manual Creation</TabsTrigger>
-            <TabsTrigger value="notes">Generate from Notes</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="manual" className="mt-6">
-            <CreateQuizForm />
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsContent value="notes" className="mt-0">
+            <NoteToQuiz />
           </TabsContent>
           
-          <TabsContent value="notes" className="mt-6">
-            <NoteToQuiz />
+          <TabsContent value="manual" className="mt-0">
+            <div className="container mx-auto p-6">
+              <div className="bg-white rounded-lg border p-6">
+                <CreateQuizForm />
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
