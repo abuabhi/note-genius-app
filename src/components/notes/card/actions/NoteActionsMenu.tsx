@@ -35,6 +35,13 @@ export const NoteActionsMenu = ({
 }: NoteActionsMenuProps) => {
   const [open, setOpen] = React.useState(false);
   
+  console.log("NoteActionsMenu rendered with:", { 
+    noteId, 
+    noteTitle, 
+    contentLength: noteContent?.length || 0,
+    isPinned 
+  });
+  
   const handleDelete = async (id: string) => {
     console.log("NoteActionsMenu - Delete triggered for note ID:", id);
     setOpen(false); // Close dropdown immediately
@@ -56,6 +63,7 @@ export const NoteActionsMenu = ({
           className="h-8 w-8 text-muted-foreground hover:text-mint-700 hover:bg-mint-50 transition-all duration-200 rounded-md"
           onClick={(e) => {
             e.stopPropagation();
+            console.log("Note actions menu trigger clicked");
           }}
         >
           <MoreHorizontal className={`h-${iconSize} w-${iconSize}`} />

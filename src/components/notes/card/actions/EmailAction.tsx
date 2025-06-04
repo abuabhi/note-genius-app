@@ -2,6 +2,7 @@
 import React from "react";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Mail } from "lucide-react";
+import { toast } from "sonner";
 
 interface EmailActionProps {
   noteTitle: string;
@@ -13,12 +14,32 @@ export const EmailAction = ({ noteTitle, noteContent }: EmailActionProps) => {
     e.stopPropagation();
     e.preventDefault();
     
-    const subject = encodeURIComponent(`Note: ${noteTitle}`);
-    const body = encodeURIComponent(noteContent);
-    const mailtoLink = `mailto:?subject=${subject}&body=${body}`;
+    console.log("Email action triggered", { noteTitle, contentLength: noteContent?.length || 0 });
     
-    // Open email client
-    window.open(mailtoLink, '_blank');
+    try {
+      const title = noteTitle || 'Untitled Note';
+      const content = noteContent || 'No content available';
+      
+      const subject = encodeURIComponent(`Note: ${title}`);
+      const body = encodeURIComponent(content);
+      const mailtoLink = `mailto:?subject=${subject}&body=${body}`;
+      
+      console.log("Opening mailto link:", mailtoLink);
+      
+      // Open email client
+      const opened = window.open(mailtoLink, '_blank');
+      
+      if (opened === null) {
+        console.warn("Popup blocked, trying direct navigation");
+        window.location.href = mailtoLink;
+      }
+      
+      toast.success("Opening email client...");
+      console.log("Email client opened successfully");
+    } catch (error) {
+      console.error("Email action failed:", error);
+      toast.error("Failed to open email client");
+    }
   };
 
   return (
