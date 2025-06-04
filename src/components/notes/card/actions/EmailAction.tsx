@@ -11,10 +11,14 @@ interface EmailActionProps {
 export const EmailAction = ({ noteTitle, noteContent }: EmailActionProps) => {
   const handleEmail = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
+    
     const subject = encodeURIComponent(`Note: ${noteTitle}`);
     const body = encodeURIComponent(noteContent);
     const mailtoLink = `mailto:?subject=${subject}&body=${body}`;
-    window.open(mailtoLink);
+    
+    // Open email client
+    window.open(mailtoLink, '_blank');
   };
 
   return (

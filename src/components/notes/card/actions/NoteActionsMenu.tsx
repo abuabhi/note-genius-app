@@ -65,6 +65,7 @@ export const NoteActionsMenu = ({
         align="end" 
         className="bg-white/95 backdrop-blur-sm border border-mint-200 w-56 shadow-xl rounded-xl p-2"
         sideOffset={8}
+        onCloseAutoFocus={(e) => e.preventDefault()}
       >
         <PinAction 
           noteId={noteId}

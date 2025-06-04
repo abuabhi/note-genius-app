@@ -9,25 +9,31 @@ interface DownloadActionsProps {
 }
 
 export const DownloadActions = ({ noteTitle, noteContent }: DownloadActionsProps) => {
-  const downloadAsText = () => {
+  const downloadAsText = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
     const blob = new Blob([noteContent], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${noteTitle}.txt`;
+    a.download = `${noteTitle || 'note'}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
 
-  const downloadAsMarkdown = () => {
+  const downloadAsMarkdown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
     const markdownContent = `# ${noteTitle}\n\n${noteContent}`;
     const blob = new Blob([markdownContent], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${noteTitle}.md`;
+    a.download = `${noteTitle || 'note'}.md`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

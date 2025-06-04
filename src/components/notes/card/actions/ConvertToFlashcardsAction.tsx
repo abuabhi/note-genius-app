@@ -19,6 +19,8 @@ export const ConvertToFlashcardsAction = ({
 
   const handleConvert = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
+    
     // Navigate to conversion page with note data
     navigate(`/note-to-flashcard?noteId=${noteId}`, {
       state: { 
