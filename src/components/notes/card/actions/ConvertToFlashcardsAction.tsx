@@ -31,14 +31,16 @@ export const ConvertToFlashcardsAction = ({
   return (
     <DropdownMenuItem 
       onClick={handleConvert}
-      className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-mint-50 focus:bg-mint-50"
+      className="flex items-center cursor-pointer px-3 py-3 rounded-lg hover:bg-mint-50 transition-colors duration-200 group"
     >
-      <div className="flex items-center gap-2">
-        <FileText className="h-4 w-4 text-mint-600" />
-        <ArrowRight className="h-3 w-3 text-mint-500" />
-        <Book className="h-4 w-4 text-mint-600" />
-        <span className="text-slate-700">Convert to Flashcards</span>
+      <div className="flex items-center justify-center w-8 h-8 bg-purple-100 rounded-lg mr-3 group-hover:bg-purple-200 transition-colors duration-200">
+        <div className="flex items-center gap-1">
+          <FileText className="h-3 w-3 text-purple-600" />
+          <ArrowRight className="h-2 w-2 text-purple-500" />
+          <Book className="h-3 w-3 text-purple-600" />
+        </div>
       </div>
+      <span className="text-sm font-medium text-gray-900">Convert to Flashcards</span>
     </DropdownMenuItem>
   );
 };

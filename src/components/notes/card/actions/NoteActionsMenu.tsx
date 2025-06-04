@@ -63,8 +63,8 @@ export const NoteActionsMenu = ({
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align="end" 
-        className="bg-white border border-mint-100 w-52 shadow-lg rounded-lg p-1"
-        sideOffset={4}
+        className="bg-white/95 backdrop-blur-sm border border-mint-200 w-56 shadow-xl rounded-xl p-2"
+        sideOffset={8}
       >
         <PinAction 
           noteId={noteId}
@@ -72,7 +72,7 @@ export const NoteActionsMenu = ({
           onPin={onPin}
         />
         
-        <DropdownMenuSeparator className="bg-mint-100" />
+        <DropdownMenuSeparator className="bg-mint-100 my-2" />
         
         <ConvertToFlashcardsAction
           noteId={noteId}
@@ -80,7 +80,7 @@ export const NoteActionsMenu = ({
           noteContent={noteContent}
         />
         
-        <DropdownMenuSeparator className="bg-mint-100" />
+        <DropdownMenuSeparator className="bg-mint-100 my-2" />
         
         <DownloadActions 
           noteTitle={noteTitle} 
@@ -92,7 +92,7 @@ export const NoteActionsMenu = ({
           noteContent={noteContent} 
         />
         
-        <DropdownMenuSeparator className="bg-mint-100" />
+        <DropdownMenuSeparator className="bg-mint-100 my-2" />
         
         <DeleteAction 
           noteId={noteId} 
