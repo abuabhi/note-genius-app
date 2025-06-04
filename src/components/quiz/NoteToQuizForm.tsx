@@ -61,9 +61,9 @@ export const NoteToQuizForm = ({
     <div className="max-w-4xl mx-auto">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Quiz Basic Info - Simplified */}
-          <div className="bg-white rounded-lg border p-6 space-y-4">
-            <h3 className="text-lg font-medium">Quiz Details</h3>
+          {/* Quiz Basic Info */}
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-mint-100 p-6 space-y-4">
+            <h3 className="text-lg font-medium text-mint-800">Quiz Details</h3>
             
             <div className="grid grid-cols-1 gap-4">
               <FormField
@@ -71,9 +71,13 @@ export const NoteToQuizForm = ({
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Quiz Title</FormLabel>
+                    <FormLabel className="text-mint-700">Quiz Title</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter quiz title" {...field} />
+                      <Input 
+                        placeholder="Enter quiz title" 
+                        className="border-mint-200 focus-visible:ring-mint-500" 
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -85,10 +89,11 @@ export const NoteToQuizForm = ({
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <FormLabel className="text-mint-700">Description</FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="Brief description of this quiz"
+                        className="border-mint-200 focus-visible:ring-mint-500"
                         {...field}
                       />
                     </FormControl>
@@ -102,13 +107,13 @@ export const NoteToQuizForm = ({
                 name="categoryId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Subject</FormLabel>
+                    <FormLabel className="text-mint-700">Subject</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="border-mint-200 focus:ring-mint-500">
                           <SelectValue placeholder="Select a subject" />
                         </SelectTrigger>
                       </FormControl>
@@ -127,19 +132,24 @@ export const NoteToQuizForm = ({
             </div>
           </div>
           
-          <Separator />
+          <Separator className="bg-mint-100" />
           
           {/* Questions Section */}
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-medium">Questions</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="text-lg font-medium text-mint-800">Questions</h3>
+                <p className="text-sm text-mint-600">
                   {form.watch("questions")?.length || 0} questions
                 </p>
               </div>
-              <Button type="button" variant="outline" onClick={addQuestion}>
-                <PlusCircleIcon className="mr-2 h-4 w-4" />
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={addQuestion}
+                className="border-mint-200 text-mint-700 hover:bg-mint-50"
+              >
+                <PlusCircleIcon className="mr-2 h-4 w-4 text-mint-600" />
                 Add Question
               </Button>
             </div>
@@ -162,12 +172,14 @@ export const NoteToQuizForm = ({
               type="button"
               variant="outline"
               onClick={() => navigate("/quiz")}
+              className="border-mint-200 text-mint-700 hover:bg-mint-50"
             >
               Cancel
             </Button>
             <Button 
               type="submit"
               disabled={isSubmitting}
+              className="bg-mint-600 hover:bg-mint-700"
             >
               {isSubmitting ? "Creating..." : "Create Quiz"}
             </Button>

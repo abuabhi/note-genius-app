@@ -27,15 +27,16 @@ export const QuizQuestion = ({
   onCorrectChange
 }: QuizQuestionProps) => {
   return (
-    <Card>
+    <Card className="border-mint-100 bg-white/80 backdrop-blur-sm shadow-sm">
       <CardContent className="pt-6">
         <div className="flex justify-between items-start mb-4">
-          <h4 className="font-medium">Question {questionIndex + 1}</h4>
+          <h4 className="font-medium text-mint-800">Question {questionIndex + 1}</h4>
           <Button
             type="button"
             variant="ghost"
             size="sm"
             onClick={() => onRemoveQuestion(questionIndex)}
+            className="text-mint-600 hover:text-red-500 hover:bg-red-50"
           >
             <Trash2Icon className="h-4 w-4" />
           </Button>
@@ -48,10 +49,11 @@ export const QuizQuestion = ({
             name={`questions.${questionIndex}.question`}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Question Text</FormLabel>
+                <FormLabel className="text-mint-700">Question Text</FormLabel>
                 <FormControl>
                   <Textarea
                     placeholder="Enter your question"
+                    className="border-mint-200 focus-visible:ring-mint-500"
                     {...field}
                   />
                 </FormControl>
@@ -66,13 +68,13 @@ export const QuizQuestion = ({
             name={`questions.${questionIndex}.difficulty`}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Difficulty (1-5)</FormLabel>
+                <FormLabel className="text-mint-700">Difficulty (1-5)</FormLabel>
                 <Select
                   onValueChange={(value) => field.onChange(Number(value))}
                   defaultValue={field.value?.toString() || "3"}
                 >
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className="border-mint-200 focus:ring-mint-500">
                       <SelectValue placeholder="Select difficulty" />
                     </SelectTrigger>
                   </FormControl>
@@ -95,10 +97,11 @@ export const QuizQuestion = ({
             name={`questions.${questionIndex}.explanation`}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Explanation (Optional)</FormLabel>
+                <FormLabel className="text-mint-700">Explanation (Optional)</FormLabel>
                 <FormControl>
                   <Textarea
                     placeholder="Provide an explanation for the correct answer"
+                    className="border-mint-200 focus-visible:ring-mint-500"
                     {...field}
                     value={field.value || ""}
                   />
@@ -111,12 +114,13 @@ export const QuizQuestion = ({
           {/* Options */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <FormLabel>Options</FormLabel>
+              <FormLabel className="text-mint-700">Options</FormLabel>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => onAddOption(questionIndex)}
+                className="border-mint-200 text-mint-700 hover:bg-mint-50"
               >
                 Add Option
               </Button>
