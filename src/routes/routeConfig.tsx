@@ -1,3 +1,4 @@
+
 import React from 'react';
 import HomePage from "@/pages/HomePage";
 import LoginPage from "@/pages/LoginPage";
@@ -11,6 +12,7 @@ import NotesPage from "@/pages/NotesPage";
 import NoteStudyPage from "@/pages/NoteStudyPage";
 import QuizPage from "@/pages/QuizPage";
 import FlashcardsPage from "@/pages/FlashcardsPage";
+import FlashcardSetPage from "@/pages/FlashcardSetPage";
 import StudyPage from "@/pages/StudyPage";
 import StudySessionsPage from "@/pages/StudySessionsPage";
 import ProgressPage from "@/pages/ProgressPage";
@@ -63,6 +65,7 @@ export const standardRoutes: RouteConfig[] = [
   { path: "/notes", element: <NotesPage /> },
   { path: "/notes/study/:noteId", element: <NoteStudyPage /> },
   { path: "/flashcards", element: <FlashcardsPage /> },
+  { path: "/flashcards/:setId", element: <FlashcardSetPage /> },
   { path: "/study", element: <StudyPage /> },
   { path: "/study/:setId", element: <StudyPage /> },
   { path: "/settings", element: <SettingsPage /> },
