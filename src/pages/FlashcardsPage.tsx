@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import EnhancedFlashcardSetsList from "@/components/flashcards/EnhancedFlashcardSetsList";
 import CreateFlashcard from "@/components/flashcards/CreateFlashcard";
@@ -25,9 +25,15 @@ const FlashcardsPage = () => {
   // Make sure the user is authenticated
   useRequireAuth();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const { flashcardSets } = useFlashcards();
+  const { flashcardSets, fetchFlashcardSets } = useFlashcards();
   const { streak } = useStreakCalculation();
   const { stats } = useProgressStats();
+
+  // Ensure fresh data when navigating to this page
+  useEffect(() => {
+    console.log('FlashcardsPage: Component mounted, ensuring fresh data...');
+    fetchFlashcardSets();
+  }, [fetchFlashcardSets]);
 
   return (
     <Layout>
@@ -59,10 +65,18 @@ const FlashcardsPage = () => {
                     <TabsTrigger value="flashcard">Single Flashcard</TabsTrigger>
                   </TabsList>
                   <TabsContent value="set" className="mt-4">
-                    <CreateFlashcardSet onSuccess={() => setCreateDialogOpen(false)} />
+                    <CreateFlashcardSet onSuccess={() => {
+                      setCreateDialogOpen(false);
+                      // Refresh the list after creating a new set
+                      fetchFlashcardSets();
+                    }} />
                   </TabsContent>
                   <TabsContent value="flashcard" className="mt-4">
-                    <CreateFlashcard onSuccess={() => setCreateDialogOpen(false)} />
+                    <CreateFlashcard onSuccess={() => {
+                      setCreateDialogOpen(false);
+                      // Refresh the list after creating a new flashcard
+                      fetchFlashcardSets();
+                    }} />
                   </TabsContent>
                 </Tabs>
               </DialogContent>

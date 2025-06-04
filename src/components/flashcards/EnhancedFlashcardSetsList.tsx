@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,6 +50,7 @@ const EnhancedFlashcardSetsList = () => {
   const [sortBy, setSortBy] = useState("updated_at");
   const [subjectFilter, setSubjectFilter] = useState<string | undefined>(undefined);
   const [deletingSet, setDeletingSet] = useState<string | null>(null);
+  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
 
   // Get unique subjects from flashcard sets
   const availableSubjects = useMemo(() => {
@@ -90,10 +91,30 @@ const EnhancedFlashcardSetsList = () => {
     });
   }, [flashcardSets, searchQuery, sortBy, subjectFilter]);
 
+  // Ensure flashcards are fetched when component mounts or when navigation occurs
+  useEffect(() => {
+    console.log('EnhancedFlashcardSetsList: Component mounted, fetching flashcard sets...');
+    const loadData = async () => {
+      try {
+        await fetchFlashcardSets();
+        setHasInitiallyLoaded(true);
+        console.log('EnhancedFlashcardSetsList: Data loaded successfully');
+      } catch (error) {
+        console.error('EnhancedFlashcardSetsList: Error loading data:', error);
+        setHasInitiallyLoaded(true);
+      }
+    };
+    
+    loadData();
+  }, []); // Only run on mount
+
   const handleDeleteSet = async (setId: string) => {
     setDeletingSet(setId);
     try {
       await deleteFlashcardSet(setId);
+      console.log('Set deleted successfully, refreshing list...');
+      // Refresh the list after deletion
+      await fetchFlashcardSets();
     } catch (error) {
       console.error("Error deleting flashcard set:", error);
     } finally {
@@ -101,13 +122,8 @@ const EnhancedFlashcardSetsList = () => {
     }
   };
 
-  // Force a refresh of flashcard sets on component mount
-  useState(() => {
-    console.log('EnhancedFlashcardSetsList: Attempting to fetch flashcard sets...');
-    fetchFlashcardSets();
-  });
-
-  if (loading.sets) {
+  // Show loading state only if we haven't initially loaded and are currently loading
+  if (!hasInitiallyLoaded && loading.sets) {
     return (
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row gap-4">
@@ -133,7 +149,7 @@ const EnhancedFlashcardSetsList = () => {
     );
   }
 
-  console.log('EnhancedFlashcardSetsList: Rendering with flashcard sets:', flashcardSets);
+  console.log('EnhancedFlashcardSetsList: Rendering with flashcard sets:', flashcardSets?.length || 0, 'sets');
 
   return (
     <div className="space-y-6">
@@ -201,7 +217,7 @@ const EnhancedFlashcardSetsList = () => {
       </div>
 
       {/* Empty State */}
-      {filteredAndSortedSets.length === 0 && !loading.sets && (
+      {filteredAndSortedSets.length === 0 && hasInitiallyLoaded && (
         <div className="text-center py-12">
           <div className="bg-gradient-to-br from-mint-50 to-mint-100 rounded-xl p-8 max-w-md mx-auto">
             <BookOpen className="h-16 w-16 text-mint-600 mx-auto mb-4" />

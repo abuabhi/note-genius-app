@@ -12,16 +12,16 @@ export const fetchFlashcardSets = async (state: FlashcardState): Promise<Flashca
   const { user, setLoading, setFlashcardSets } = state;
   
   if (!user) {
-    console.log('No user found, returning empty sets array');
+    console.log('fetchFlashcardSets: No user found, returning empty sets array');
     setFlashcardSets([]);
     return [];
   }
   
   try {
-    console.log('Starting to fetch flashcard sets for user:', user.id);
+    console.log('fetchFlashcardSets: Starting to fetch flashcard sets for user:', user.id);
     setLoading(prev => ({ ...prev, sets: true }));
     
-    // Fetch flashcard sets
+    // Fetch flashcard sets with enhanced error handling
     const { data, error } = await supabase
       .from('flashcard_sets')
       .select('*')
@@ -29,14 +29,14 @@ export const fetchFlashcardSets = async (state: FlashcardState): Promise<Flashca
       .order('created_at', { ascending: false });
     
     if (error) {
-      console.error('Error fetching flashcard sets:', error);
+      console.error('fetchFlashcardSets: Error fetching flashcard sets:', error);
       throw error;
     }
     
-    console.log('Fetched flashcard sets data:', data);
+    console.log('fetchFlashcardSets: Raw data from database:', data);
     
     if (!data || data.length === 0) {
-      console.log('No flashcard sets found for user');
+      console.log('fetchFlashcardSets: No flashcard sets found for user');
       setFlashcardSets([]);
       return [];
     }
@@ -45,18 +45,22 @@ export const fetchFlashcardSets = async (state: FlashcardState): Promise<Flashca
     const formattedSets = data.map(set => {
       const formattedSet = convertToFlashcardSet({
         ...set,
-        card_count: 0 // Default to 0, will be updated if count succeeds
+        card_count: set.card_count || 0 // Use existing card_count or default to 0
       });
       
-      console.log('Formatted set:', formattedSet);
+      console.log('fetchFlashcardSets: Formatted set:', {
+        id: formattedSet.id,
+        name: formattedSet.name,
+        card_count: formattedSet.card_count
+      });
       return formattedSet;
     });
     
-    console.log('Final flashcard sets:', formattedSets);
+    console.log('fetchFlashcardSets: Final flashcard sets count:', formattedSets.length);
     setFlashcardSets(formattedSets);
     return formattedSets;
   } catch (error) {
-    console.error('Error fetching flashcard sets:', error);
+    console.error('fetchFlashcardSets: Error in fetch operation:', error);
     toast.error('Failed to load flashcard sets');
     setFlashcardSets([]);
     return [];
@@ -84,7 +88,7 @@ export const fetchCategories = async (state: FlashcardState) => {
     setCategories(data);
     return data;
   } catch (error) {
-    console.error('Error fetching subject categories:', error);
+    console.error('fetchCategories: Error fetching subject categories:', error);
     toast.error('Failed to load categories');
     return [];
   } finally {
