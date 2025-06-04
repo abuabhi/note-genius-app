@@ -3,7 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Gem, Award, Crown } from "lucide-react";
+import { Gem, BookOpen, Award, Crown } from "lucide-react";
 
 export const UpgradeTierCard = () => {
   const navigate = useNavigate();
@@ -20,7 +20,17 @@ export const UpgradeTierCard = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="border border-mint-200 rounded-lg p-3 bg-white/80 shadow-sm">
+            <div className="flex items-center space-x-2 mb-2">
+              <div className="p-1.5 bg-mint-50 rounded-full">
+                <BookOpen className="h-4 w-4 text-mint-600" />
+              </div>
+              <span className="font-medium text-mint-700">Scholar Tier</span>
+            </div>
+            <p className="text-sm text-slate-600">Basic features for students</p>
+          </div>
+          
           <div className="border border-mint-200 rounded-lg p-3 bg-white/80 shadow-sm">
             <div className="flex items-center space-x-2 mb-2">
               <div className="p-1.5 bg-mint-100 rounded-full">
