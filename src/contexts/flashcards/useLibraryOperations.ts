@@ -1,20 +1,34 @@
 
+import { useCallback } from 'react';
 import { FlashcardState } from './types';
-import { 
-  fetchBuiltInSets, 
-  cloneFlashcardSet 
-} from './operations/libraryOperations';
+import { FlashcardSet } from '@/types/flashcard';
+import { searchLibrary, copySetFromLibrary, cloneFlashcardSet, fetchBuiltInSets } from './operations/libraryOperations';
 
 /**
  * Hook that provides library-related operations for flashcards
  */
 export const useLibraryOperations = (state: FlashcardState) => {
-  // Wrapper functions to pass state
-  const fetchLibraryBuiltInSets = () => fetchBuiltInSets(state);
-  const cloneFlashcardSetToUser = (setId: string) => cloneFlashcardSet(state, setId);
+  
+  const handleSearchLibrary = useCallback(async (query: string): Promise<FlashcardSet[]> => {
+    return searchLibrary(state, query);
+  }, [state]);
+
+  const handleCopySetFromLibrary = useCallback(async (setId: string): Promise<FlashcardSet | null> => {
+    return copySetFromLibrary(state, setId);
+  }, [state]);
+
+  const handleCloneFlashcardSet = useCallback(async (setId: string): Promise<FlashcardSet | null> => {
+    return cloneFlashcardSet(state, setId);
+  }, [state]);
+
+  const handleFetchBuiltInSets = useCallback(async (): Promise<FlashcardSet[]> => {
+    return fetchBuiltInSets(state);
+  }, [state]);
 
   return {
-    fetchBuiltInSets: fetchLibraryBuiltInSets,
-    cloneFlashcardSet: cloneFlashcardSetToUser,
+    searchLibrary: handleSearchLibrary,
+    copySetFromLibrary: handleCopySetFromLibrary,
+    cloneFlashcardSet: handleCloneFlashcardSet,
+    fetchBuiltInSets: handleFetchBuiltInSets
   };
 };

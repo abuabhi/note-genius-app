@@ -53,6 +53,7 @@ export interface FlashcardContextType extends FlashcardState {
   // Library operations
   searchLibrary: (query: string) => Promise<FlashcardSet[]>;
   copySetFromLibrary: (setId: string) => Promise<FlashcardSet | null>;
+  cloneFlashcardSet: (setId: string) => Promise<FlashcardSet | null>;
   
   // Study operations
   recordFlashcardReview: (flashcardId: string, quality: number) => Promise<void>;

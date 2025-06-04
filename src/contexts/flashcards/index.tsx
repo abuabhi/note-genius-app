@@ -120,17 +120,26 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
 
   // Create stable context value with all required properties
   const contextValue: FlashcardContextType = useMemo(() => ({
+    // State properties
     flashcards,
     flashcardSets,
     currentFlashcard,
     currentSet,
     categories,
-    setCategories,
     loading,
+    isReady,
+    isLoading: loading.flashcards || loading.sets || loading.categories,
+    
+    // State setters
+    setFlashcards,
+    setFlashcardSets: enhancedSetFlashcardSets,
     setCurrentFlashcard,
     setCurrentSet,
-    isReady, // Add ready state to context
-    isLoading: loading.flashcards || loading.sets || loading.categories,
+    setCategories,
+    setLoading: stableSetLoading,
+    user,
+    
+    // Operations from hooks
     ...flashcardOperations,
     ...flashcardSetsOperations,
     ...categoryOperations,
@@ -146,6 +155,9 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     categories,
     loading,
     isReady,
+    enhancedSetFlashcardSets,
+    stableSetLoading,
+    user,
     flashcardOperations,
     flashcardSetsOperations,
     categoryOperations,
