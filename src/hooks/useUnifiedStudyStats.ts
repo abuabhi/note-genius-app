@@ -32,8 +32,13 @@ export interface UnifiedStudyStats {
 
 export const useUnifiedStudyStats = () => {
   const { user } = useAuth();
-  const { flashcardSets, loading: flashcardsLoading } = useFlashcards();
+  const { flashcardSets, loading: flashcardsLoadingState } = useFlashcards();
   const { streak } = useStreakCalculation();
+
+  // Handle complex loading state from useFlashcards
+  const flashcardsLoading = typeof flashcardsLoadingState === 'boolean' 
+    ? flashcardsLoadingState 
+    : flashcardsLoadingState?.flashcards || false;
 
   const { data: stats = {
     totalHours: 0,
