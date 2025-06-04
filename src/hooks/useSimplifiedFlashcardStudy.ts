@@ -33,7 +33,7 @@ export const useSimplifiedFlashcardStudy = ({ setId, mode }: UseSimplifiedFlashc
     setError(null);
     
     try {
-      // Fetch all flashcards in the set
+      // Fetch all flashcards in the set first
       const allCards = await fetchFlashcardsInSet(setId);
       console.log("useSimplifiedFlashcardStudy: Fetched cards:", allCards?.length || 0);
       
@@ -44,16 +44,39 @@ export const useSimplifiedFlashcardStudy = ({ setId, mode }: UseSimplifiedFlashc
         return;
       }
 
-      // Fetch learning progress for these cards
-      const cardIds = allCards.map(card => card.id);
-      await fetchLearningProgress(cardIds);
-      
-      // Filter cards based on mode
-      let filteredCards = allCards;
-      
+      // For learn mode, show all cards
+      if (mode === "learn") {
+        const validCards = allCards.filter(card => {
+          const hasValidContent = (card.front_content || card.front) && (card.back_content || card.back);
+          if (!hasValidContent) {
+            console.warn("useSimplifiedFlashcardStudy: Card missing content:", card.id);
+          }
+          return hasValidContent;
+        });
+        
+        if (validCards.length === 0) {
+          setError("No valid flashcards with content found");
+          setFlashcards([]);
+          setIsLoading(false);
+          return;
+        }
+        
+        console.log("useSimplifiedFlashcardStudy: Valid cards loaded for learn mode:", validCards.length);
+        setFlashcards(validCards);
+        setCurrentIndex(0);
+        setIsFlipped(false);
+        setIsComplete(false);
+        setIsLoading(false);
+        return;
+      }
+
+      // For review mode, fetch progress and filter cards
       if (mode === "review") {
-        // For review mode, get cards that need practice
-        filteredCards = allCards.filter(card => {
+        const cardIds = allCards.map(card => card.id);
+        await fetchLearningProgress(cardIds);
+        
+        // Filter cards that need practice after progress is loaded
+        const filteredCards = allCards.filter(card => {
           const progress = progressMap.get(card.id);
           
           // Cards need review if:
@@ -83,29 +106,29 @@ export const useSimplifiedFlashcardStudy = ({ setId, mode }: UseSimplifiedFlashc
           setIsLoading(false);
           return;
         }
-      }
-      
-      // Ensure all cards have the required content fields
-      const validCards = filteredCards.filter(card => {
-        const hasValidContent = (card.front_content || card.front) && (card.back_content || card.back);
-        if (!hasValidContent) {
-          console.warn("useSimplifiedFlashcardStudy: Card missing content:", card.id);
+
+        // Ensure all cards have the required content fields
+        const validCards = filteredCards.filter(card => {
+          const hasValidContent = (card.front_content || card.front) && (card.back_content || card.back);
+          if (!hasValidContent) {
+            console.warn("useSimplifiedFlashcardStudy: Card missing content:", card.id);
+          }
+          return hasValidContent;
+        });
+        
+        if (validCards.length === 0) {
+          setError("No valid flashcards with content found");
+          setFlashcards([]);
+          setIsLoading(false);
+          return;
         }
-        return hasValidContent;
-      });
-      
-      if (validCards.length === 0) {
-        setError("No valid flashcards with content found");
-        setFlashcards([]);
-        setIsLoading(false);
-        return;
+        
+        console.log("useSimplifiedFlashcardStudy: Valid cards loaded for review mode:", validCards.length);
+        setFlashcards(validCards);
+        setCurrentIndex(0);
+        setIsFlipped(false);
+        setIsComplete(false);
       }
-      
-      console.log("useSimplifiedFlashcardStudy: Valid cards loaded:", validCards.length);
-      setFlashcards(validCards);
-      setCurrentIndex(0);
-      setIsFlipped(false);
-      setIsComplete(false);
       
     } catch (err) {
       console.error("useSimplifiedFlashcardStudy: Error loading flashcards:", err);
@@ -114,12 +137,20 @@ export const useSimplifiedFlashcardStudy = ({ setId, mode }: UseSimplifiedFlashc
     } finally {
       setIsLoading(false);
     }
-  }, [setId, mode, fetchFlashcardsInSet, fetchLearningProgress, progressMap]);
+  }, [setId, mode, fetchFlashcardsInSet, fetchLearningProgress]);
 
-  // Load flashcards on mount and when dependencies change
+  // Load flashcards when dependencies change, but avoid dependency on progressMap
   useEffect(() => {
     loadFlashcards();
-  }, [loadFlashcards]);
+  }, [setId, mode, fetchFlashcardsInSet, fetchLearningProgress]);
+
+  // Separate effect to handle review mode filtering when progressMap updates
+  useEffect(() => {
+    if (mode === "review" && flashcards.length === 0 && !isLoading && progressMap.size > 0) {
+      // Re-trigger loading if we're in review mode and progressMap has been populated
+      loadFlashcards();
+    }
+  }, [mode, flashcards.length, isLoading, progressMap.size, loadFlashcards]);
 
   const handleNext = useCallback(() => {
     if (currentIndex < flashcards.length - 1) {
