@@ -17,11 +17,17 @@ import {
 import { Plus, BookOpen, Target, TrendingUp } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useFlashcards } from "@/contexts/FlashcardContext";
+import { useStreakCalculation } from "@/hooks/useStreakCalculation";
+import { useProgressStats } from "@/hooks/useProgressStats";
 
 const FlashcardsPage = () => {
   // Make sure the user is authenticated
   useRequireAuth();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const { flashcardSets } = useFlashcards();
+  const { streak } = useStreakCalculation();
+  const { stats } = useProgressStats();
 
   return (
     <Layout>
@@ -63,7 +69,7 @@ const FlashcardsPage = () => {
             </Dialog>
           </div>
 
-          {/* Quick Stats Cards */}
+          {/* Real Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Card className="border-mint-100">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -71,8 +77,8 @@ const FlashcardsPage = () => {
                 <BookOpen className="h-4 w-4 text-mint-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-mint-900">12</div>
-                <p className="text-xs text-mint-600">+2 from last week</p>
+                <div className="text-2xl font-bold text-mint-900">{stats.totalSets}</div>
+                <p className="text-xs text-mint-600">Flashcard collections</p>
               </CardContent>
             </Card>
             
@@ -82,8 +88,8 @@ const FlashcardsPage = () => {
                 <Target className="h-4 w-4 text-mint-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-mint-900">7 days</div>
-                <p className="text-xs text-mint-600">Keep it up!</p>
+                <div className="text-2xl font-bold text-mint-900">{streak} days</div>
+                <p className="text-xs text-mint-600">{streak > 0 ? 'Keep it up!' : 'Start studying today!'}</p>
               </CardContent>
             </Card>
             
@@ -93,8 +99,8 @@ const FlashcardsPage = () => {
                 <TrendingUp className="h-4 w-4 text-mint-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-mint-900">78%</div>
-                <p className="text-xs text-mint-600">+5% this week</p>
+                <div className="text-2xl font-bold text-mint-900">{stats.flashcardAccuracy}%</div>
+                <p className="text-xs text-mint-600">Accuracy rate</p>
               </CardContent>
             </Card>
           </div>

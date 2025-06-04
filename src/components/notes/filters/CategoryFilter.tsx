@@ -22,40 +22,9 @@ export const CategoryFilter = ({
 }: CategoryFilterProps) => {
   const { subjects } = useUserSubjects();
   
-  // Helper function to check if a category name already exists as a subject
-  const isCategoryExistingSubject = (categoryName: string): boolean => {
-    return subjects.some(subject => 
-      subject.name.toLowerCase() === categoryName.toLowerCase()
-    );
-  };
+  // Use only user subjects, ignore availableCategories (which are note titles)
+  const userSubjects = subjects || [];
   
-  // Filter out empty categories, duplicates, and categories that overlap with subjects
-  const getUniqueCategories = () => {
-    return [...new Set(availableCategories)]
-      .filter(category => 
-        category && 
-        category.trim() !== '' &&
-        !isCategoryExistingSubject(category)
-      )
-      .sort();
-  };
-  
-  const uniqueCategories = getUniqueCategories();
-  
-  // Combine user subjects and other unique categories
-  const allOptions = [
-    ...subjects.map(subject => ({ 
-      id: subject.id, 
-      name: subject.name, 
-      isSubject: true 
-    })),
-    ...uniqueCategories.map(category => ({ 
-      id: category, 
-      name: category, 
-      isSubject: false 
-    }))
-  ].sort((a, b) => a.name.localeCompare(b.name));
-
   return (
     <FilterOption label="Subject">
       <Select
@@ -70,9 +39,9 @@ export const CategoryFilter = ({
         <SelectContent className="bg-white">
           <SelectItem value="_any">Any subject</SelectItem>
           
-          {allOptions.map(option => (
-            <SelectItem key={option.id} value={option.name}>
-              {option.name}
+          {userSubjects.map(subject => (
+            <SelectItem key={subject.id} value={subject.name}>
+              {subject.name}
             </SelectItem>
           ))}
         </SelectContent>

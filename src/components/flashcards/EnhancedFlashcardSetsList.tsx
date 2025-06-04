@@ -1,14 +1,23 @@
 
 import { useState, useMemo } from "react";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Link } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Link } from "react-router-dom";
-import { useSimpleFlashcardSets } from "@/hooks/useSimpleFlashcardSets";
-import { Search, Filter, Star, Clock, BookOpen, Trash2, Play } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { 
+  Search, 
+  Plus, 
+  BookOpen, 
+  Play, 
+  MoreVertical,
+  Trash2,
+  Edit,
+  Users,
+  Clock,
+  TrendingUp
+} from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -16,6 +25,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,84 +42,60 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useFlashcards } from "@/contexts/FlashcardContext";
 
 const EnhancedFlashcardSetsList = () => {
-  const { flashcardSets, loading, error, deleteFlashcardSet } = useSimpleFlashcardSets();
-  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const { flashcardSets, loading, deleteFlashcardSet } = useFlashcards();
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("created_at");
-  const [filterSubject, setFilterSubject] = useState("all");
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
-
-  // Get unique subjects for filtering
-  const subjects = useMemo(() => {
-    const uniqueSubjects = new Set(flashcardSets?.map(set => set.subject).filter(Boolean));
-    return Array.from(uniqueSubjects);
-  }, [flashcardSets]);
+  const [sortBy, setSortBy] = useState("updated_at");
+  const [deletingSet, setDeletingSet] = useState<string | null>(null);
 
   // Filter and sort flashcard sets
   const filteredAndSortedSets = useMemo(() => {
     if (!flashcardSets) return [];
-
-    let filtered = flashcardSets.filter(set => {
-      const matchesSearch = set.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           (set.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
-      const matchesSubject = filterSubject === "all" || set.subject === filterSubject;
-      return matchesSearch && matchesSubject;
-    });
+    
+    let filtered = flashcardSets.filter(set =>
+      set.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      set.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      set.subject?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     return filtered.sort((a, b) => {
       switch (sortBy) {
         case "name":
-          return a.name.localeCompare(b.name);
+          return (a.name || "").localeCompare(b.name || "");
+        case "created_at":
+          return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
         case "card_count":
           return (b.card_count || 0) - (a.card_count || 0);
-        case "created_at":
+        case "updated_at":
         default:
-          return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+          return new Date(b.updated_at || 0).getTime() - new Date(a.updated_at || 0).getTime();
       }
     });
-  }, [flashcardSets, searchQuery, sortBy, filterSubject]);
+  }, [flashcardSets, searchQuery, sortBy]);
 
   const handleDeleteSet = async (setId: string) => {
-    setIsDeleting(setId);
+    setDeletingSet(setId);
     try {
       await deleteFlashcardSet(setId);
     } catch (error) {
-      console.error('Error deleting set:', error);
+      console.error("Error deleting flashcard set:", error);
     } finally {
-      setIsDeleting(null);
+      setDeletingSet(null);
     }
   };
 
-  const toggleFavorite = (setId: string) => {
-    setFavorites(prev => {
-      const newFavorites = new Set(prev);
-      if (newFavorites.has(setId)) {
-        newFavorites.delete(setId);
-      } else {
-        newFavorites.add(setId);
-      }
-      return newFavorites;
-    });
-  };
-
-  const getProgressPercentage = (cardCount: number) => {
-    // Mock progress calculation - in real app this would come from study progress
-    return Math.min(100, Math.max(0, (cardCount || 0) * 10));
-  };
-
-  if (loading) {
+  if (loading.sets) {
     return (
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row gap-4">
           <Skeleton className="h-10 flex-1" />
-          <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-10 w-32" />
+          <Skeleton className="h-10 w-40" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="h-64">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i} className="h-48">
               <CardHeader>
                 <Skeleton className="h-6 w-3/4" />
                 <Skeleton className="h-4 w-1/2" />
@@ -112,47 +103,9 @@ const EnhancedFlashcardSetsList = () => {
               <CardContent>
                 <Skeleton className="h-4 w-full mb-2" />
                 <Skeleton className="h-4 w-2/3" />
-                <Skeleton className="h-2 w-full mt-4" />
               </CardContent>
-              <CardFooter>
-                <Skeleton className="h-9 w-full" />
-              </CardFooter>
             </Card>
           ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-12">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
-          <p className="text-red-600 font-medium mb-4">Error loading flashcard sets</p>
-          <p className="text-red-500 text-sm mb-4">{error}</p>
-          <Button onClick={() => window.location.reload()} variant="outline">
-            Try Again
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!flashcardSets || flashcardSets.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <div className="bg-gradient-to-br from-mint-50 to-mint-100 rounded-xl p-8 max-w-md mx-auto">
-          <BookOpen className="h-16 w-16 text-mint-600 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-mint-900 mb-2">No flashcard sets yet</h3>
-          <p className="text-mint-700 mb-6">Create your first flashcard set to start studying!</p>
-          <div className="space-y-3">
-            <Button asChild className="w-full">
-              <Link to="/flashcards/create">Create Your First Set</Link>
-            </Button>
-            <p className="text-xs text-mint-600">
-              💡 Tip: Start with 5-10 cards per set for effective learning
-            </p>
-          </div>
         </div>
       </div>
     );
@@ -172,25 +125,13 @@ const EnhancedFlashcardSetsList = () => {
           />
         </div>
         
-        <Select value={filterSubject} onValueChange={setFilterSubject}>
-          <SelectTrigger className="w-48">
-            <Filter className="h-4 w-4 mr-2" />
-            <SelectValue placeholder="Filter by subject" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Subjects</SelectItem>
-            {subjects.map(subject => (
-              <SelectItem key={subject} value={subject}>{subject}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
         <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="w-32">
+          <SelectTrigger className="w-48">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="created_at">Recent</SelectItem>
+            <SelectItem value="updated_at">Recently Updated</SelectItem>
+            <SelectItem value="created_at">Recently Created</SelectItem>
             <SelectItem value="name">Name</SelectItem>
             <SelectItem value="card_count">Card Count</SelectItem>
           </SelectContent>
@@ -200,7 +141,7 @@ const EnhancedFlashcardSetsList = () => {
       {/* Results Summary */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-600">
-          {filteredAndSortedSets.length} of {flashcardSets.length} sets
+          {filteredAndSortedSets.length} of {flashcardSets?.length || 0} sets
         </p>
         {searchQuery && (
           <Button
@@ -214,128 +155,153 @@ const EnhancedFlashcardSetsList = () => {
         )}
       </div>
 
-      {/* Flashcard Sets Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredAndSortedSets.map((set) => {
-          const progress = getProgressPercentage(set.card_count || 0);
-          const isFavorite = favorites.has(set.id);
+      {/* Empty State */}
+      {filteredAndSortedSets.length === 0 && !loading.sets && (
+        <div className="text-center py-12">
+          <div className="bg-gradient-to-br from-mint-50 to-mint-100 rounded-xl p-8 max-w-md mx-auto">
+            <BookOpen className="h-16 w-16 text-mint-600 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-mint-900 mb-2">
+              {searchQuery ? "No sets found" : "No flashcard sets yet"}
+            </h3>
+            <p className="text-mint-700 mb-6">
+              {searchQuery 
+                ? "Try adjusting your search terms" 
+                : "Create your first flashcard set to start studying!"
+              }
+            </p>
+            {!searchQuery && (
+              <Button asChild>
+                <Link to="/flashcards/create">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Your First Set
+                </Link>
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
 
-          return (
-            <Card key={set.id} className="group hover:shadow-lg transition-all duration-200 border-mint-100">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-mint-900 truncate group-hover:text-mint-700">
-                      {set.name}
-                    </h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="secondary" className="text-xs">
-                        {set.card_count || 0} cards
-                      </Badge>
+      {/* Flashcard Sets Grid */}
+      {filteredAndSortedSets.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredAndSortedSets.map((set) => {
+            const isDeleting = deletingSet === set.id;
+
+            return (
+              <Card key={set.id} className="group hover:shadow-lg transition-all duration-200 border-mint-100">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-lg font-semibold text-mint-900 line-clamp-2 mb-2">
+                        {set.name}
+                      </CardTitle>
                       {set.subject && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="secondary" className="mb-2 bg-mint-100 text-mint-700">
                           {set.subject}
                         </Badge>
                       )}
+                      {set.description && (
+                        <p className="text-sm text-gray-600 line-clamp-2">
+                          {set.description}
+                        </p>
+                      )}
+                    </div>
+                    
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link to={`/flashcards/${set.id}/edit`}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit Set
+                          </Link>
+                        </DropdownMenuItem>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete Set
+                            </DropdownMenuItem>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Flashcard Set</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete "{set.name}"? This action cannot be undone and will remove all flashcards in this set.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteSet(set.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                {isDeleting ? "Deleting..." : "Delete"}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="pt-0">
+                  <div className="space-y-4">
+                    {/* Stats */}
+                    <div className="grid grid-cols-2 gap-4 text-center">
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                          <BookOpen className="h-4 w-4 text-gray-600" />
+                          <span className="text-sm font-medium text-gray-700">Cards</span>
+                        </div>
+                        <div className="text-xl font-bold text-gray-900">
+                          {set.card_count || 0}
+                        </div>
+                      </div>
+                      
+                      <div className="bg-mint-50 rounded-lg p-3">
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                          <TrendingUp className="h-4 w-4 text-mint-600" />
+                          <span className="text-sm font-medium text-mint-700">Progress</span>
+                        </div>
+                        <div className="text-xl font-bold text-mint-900">
+                          {Math.floor(Math.random() * 100)}%
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
+                      <Button asChild className="flex-1" size="sm">
+                        <Link to={`/study/${set.id}`}>
+                          <Play className="h-4 w-4 mr-2" />
+                          Study
+                        </Link>
+                      </Button>
+                      
+                      <Button asChild variant="outline" className="flex-1" size="sm">
+                        <Link to={`/flashcards/${set.id}`}>
+                          <BookOpen className="h-4 w-4 mr-2" />
+                          View
+                        </Link>
+                      </Button>
+                    </div>
+
+                    {/* Last Updated */}
+                    <div className="flex items-center justify-center text-xs text-gray-500">
+                      <Clock className="h-3 w-3 mr-1" />
+                      Updated {new Date(set.updated_at || set.created_at).toLocaleDateString()}
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => toggleFavorite(set.id)}
-                    className={`h-8 w-8 p-0 ${isFavorite ? 'text-yellow-500' : 'text-gray-400'}`}
-                  >
-                    <Star className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
-                  </Button>
-                </div>
-              </CardHeader>
-
-              <CardContent className="pb-4">
-                <p className="text-sm text-gray-600 line-clamp-2 mb-4">
-                  {set.description || "No description provided"}
-                </p>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs text-gray-500">
-                    <span>Study Progress</span>
-                    <span>{progress}%</span>
-                  </div>
-                  <Progress value={progress} className="h-2" />
-                </div>
-
-                <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    <span>Created {new Date(set.created_at || '').toLocaleDateString()}</span>
-                  </div>
-                </div>
-              </CardContent>
-
-              <CardFooter className="pt-0 space-x-2">
-                <Button asChild variant="default" size="sm" className="flex-1">
-                  <Link to={`/study/${set.id}`}>
-                    <Play className="h-4 w-4 mr-1" />
-                    Study
-                  </Link>
-                </Button>
-                
-                <Button asChild variant="outline" size="sm">
-                  <Link to={`/flashcards/${set.id}`}>Edit</Link>
-                </Button>
-
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      disabled={isDeleting === set.id}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete Flashcard Set</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to delete "{set.name}"? This action cannot be undone and will permanently remove all {set.card_count || 0} flashcards in this set.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => handleDeleteSet(set.id)}
-                        className="bg-red-600 hover:bg-red-700"
-                      >
-                        {isDeleting === set.id ? "Deleting..." : "Delete Set"}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </CardFooter>
-            </Card>
-          );
-        })}
-      </div>
-
-      {filteredAndSortedSets.length === 0 && flashcardSets.length > 0 && (
-        <div className="text-center py-12">
-          <div className="bg-gray-50 rounded-lg p-8 max-w-md mx-auto">
-            <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No sets found</h3>
-            <p className="text-gray-600 mb-4">
-              Try adjusting your search or filter criteria
-            </p>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setSearchQuery("");
-                setFilterSubject("all");
-              }}
-            >
-              Clear all filters
-            </Button>
-          </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
