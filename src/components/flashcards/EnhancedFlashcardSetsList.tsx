@@ -45,20 +45,35 @@ import {
 import { useFlashcards } from "@/contexts/FlashcardContext";
 
 const EnhancedFlashcardSetsList = () => {
-  const { flashcardSets, loading, deleteFlashcardSet } = useFlashcards();
+  const { flashcardSets, loading, deleteFlashcardSet, fetchFlashcardSets } = useFlashcards();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("updated_at");
+  const [subjectFilter, setSubjectFilter] = useState<string | undefined>(undefined);
   const [deletingSet, setDeletingSet] = useState<string | null>(null);
+
+  // Get unique subjects from flashcard sets
+  const availableSubjects = useMemo(() => {
+    if (!flashcardSets) return [];
+    const subjects = flashcardSets
+      .map(set => set.subject)
+      .filter((subject): subject is string => Boolean(subject))
+      .filter((subject, index, arr) => arr.indexOf(subject) === index);
+    return subjects;
+  }, [flashcardSets]);
 
   // Filter and sort flashcard sets
   const filteredAndSortedSets = useMemo(() => {
     if (!flashcardSets) return [];
     
-    let filtered = flashcardSets.filter(set =>
-      set.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      set.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      set.subject?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    let filtered = flashcardSets.filter(set => {
+      const matchesSearch = set.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        set.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        set.subject?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesSubject = !subjectFilter || set.subject === subjectFilter;
+      
+      return matchesSearch && matchesSubject;
+    });
 
     return filtered.sort((a, b) => {
       switch (sortBy) {
@@ -73,7 +88,7 @@ const EnhancedFlashcardSetsList = () => {
           return new Date(b.updated_at || 0).getTime() - new Date(a.updated_at || 0).getTime();
       }
     });
-  }, [flashcardSets, searchQuery, sortBy]);
+  }, [flashcardSets, searchQuery, sortBy, subjectFilter]);
 
   const handleDeleteSet = async (setId: string) => {
     setDeletingSet(setId);
@@ -86,11 +101,18 @@ const EnhancedFlashcardSetsList = () => {
     }
   };
 
+  // Force a refresh of flashcard sets on component mount
+  useState(() => {
+    console.log('EnhancedFlashcardSetsList: Attempting to fetch flashcard sets...');
+    fetchFlashcardSets();
+  });
+
   if (loading.sets) {
     return (
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row gap-4">
           <Skeleton className="h-10 flex-1" />
+          <Skeleton className="h-10 w-40" />
           <Skeleton className="h-10 w-40" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -111,6 +133,8 @@ const EnhancedFlashcardSetsList = () => {
     );
   }
 
+  console.log('EnhancedFlashcardSetsList: Rendering with flashcard sets:', flashcardSets);
+
   return (
     <div className="space-y-6">
       {/* Search and Filter Controls */}
@@ -124,6 +148,23 @@ const EnhancedFlashcardSetsList = () => {
             className="pl-10"
           />
         </div>
+        
+        {/* Subject Filter */}
+        {availableSubjects.length > 0 && (
+          <Select value={subjectFilter || "_any"} onValueChange={(value) => setSubjectFilter(value === "_any" ? undefined : value)}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="All subjects" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="_any">All subjects</SelectItem>
+              {availableSubjects.map(subject => (
+                <SelectItem key={subject} value={subject}>
+                  {subject}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         
         <Select value={sortBy} onValueChange={setSortBy}>
           <SelectTrigger className="w-48">
@@ -142,15 +183,19 @@ const EnhancedFlashcardSetsList = () => {
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-600">
           {filteredAndSortedSets.length} of {flashcardSets?.length || 0} sets
+          {subjectFilter && ` in ${subjectFilter}`}
         </p>
-        {searchQuery && (
+        {(searchQuery || subjectFilter) && (
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setSearchQuery("")}
+            onClick={() => {
+              setSearchQuery("");
+              setSubjectFilter(undefined);
+            }}
             className="text-gray-500"
           >
-            Clear search
+            Clear filters
           </Button>
         )}
       </div>
@@ -161,15 +206,15 @@ const EnhancedFlashcardSetsList = () => {
           <div className="bg-gradient-to-br from-mint-50 to-mint-100 rounded-xl p-8 max-w-md mx-auto">
             <BookOpen className="h-16 w-16 text-mint-600 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-mint-900 mb-2">
-              {searchQuery ? "No sets found" : "No flashcard sets yet"}
+              {searchQuery || subjectFilter ? "No sets found" : "No flashcard sets yet"}
             </h3>
             <p className="text-mint-700 mb-6">
-              {searchQuery 
-                ? "Try adjusting your search terms" 
+              {searchQuery || subjectFilter 
+                ? "Try adjusting your search terms or filters" 
                 : "Create your first flashcard set to start studying!"
               }
             </p>
-            {!searchQuery && (
+            {!searchQuery && !subjectFilter && (
               <Button asChild>
                 <Link to="/flashcards/create">
                   <Plus className="h-4 w-4 mr-2" />
