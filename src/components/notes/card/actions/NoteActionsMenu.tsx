@@ -9,9 +9,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { PinAction } from "./PinAction";
-import { DownloadActions } from "./DownloadActions";
-import { EmailAction } from "./EmailAction";
 import { ConvertToFlashcardsAction } from "./ConvertToFlashcardsAction";
+import { ConvertToQuizAction } from "./ConvertToQuizAction";
 import { DeleteAction } from "./DeleteAction";
 
 interface NoteActionsMenuProps {
@@ -91,14 +90,10 @@ export const NoteActionsMenu = ({
         
         <DropdownMenuSeparator className="bg-mint-100 my-2" />
         
-        <DownloadActions 
-          noteTitle={noteTitle} 
-          noteContent={noteContent} 
-        />
-        
-        <EmailAction 
-          noteTitle={noteTitle} 
-          noteContent={noteContent} 
+        <ConvertToQuizAction
+          noteId={noteId}
+          noteTitle={noteTitle}
+          noteContent={noteContent}
         />
         
         <DropdownMenuSeparator className="bg-mint-100 my-2" />
