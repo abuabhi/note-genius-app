@@ -10,20 +10,20 @@ import { searchLibrary, copySetFromLibrary, cloneFlashcardSet, fetchBuiltInSets 
 export const useLibraryOperations = (state: FlashcardState) => {
   
   const handleSearchLibrary = useCallback(async (query: string): Promise<FlashcardSet[]> => {
-    return searchLibrary(state, query);
-  }, [state]);
+    return searchLibrary(query);
+  }, []);
 
   const handleCopySetFromLibrary = useCallback(async (setId: string): Promise<FlashcardSet | null> => {
-    return copySetFromLibrary(state, setId);
-  }, [state]);
+    return copySetFromLibrary(state.user, state.setFlashcardSets, setId);
+  }, [state.user, state.setFlashcardSets]);
 
   const handleCloneFlashcardSet = useCallback(async (setId: string): Promise<FlashcardSet | null> => {
-    return cloneFlashcardSet(state, setId);
-  }, [state]);
+    return cloneFlashcardSet(state.user, state.setFlashcardSets, setId);
+  }, [state.user, state.setFlashcardSets]);
 
   const handleFetchBuiltInSets = useCallback(async (): Promise<FlashcardSet[]> => {
-    return fetchBuiltInSets(state);
-  }, [state]);
+    return fetchBuiltInSets();
+  }, []);
 
   return {
     searchLibrary: handleSearchLibrary,

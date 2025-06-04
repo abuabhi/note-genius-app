@@ -1,7 +1,7 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { FlashcardSet } from '@/types/flashcard';
 import { toast } from 'sonner';
-import { FlashcardState } from '../types';
 
 // Simple conversion function to avoid circular imports
 const convertToFlashcardSet = (data: any): FlashcardSet => {
@@ -25,7 +25,7 @@ const convertToFlashcardSet = (data: any): FlashcardSet => {
 /**
  * Fetch built-in flashcard sets from the library
  */
-export const fetchBuiltInSets = async (state: FlashcardState): Promise<FlashcardSet[]> => {
+export const fetchBuiltInSets = async (): Promise<FlashcardSet[]> => {
   try {
     const { data, error } = await supabase
       .from('flashcard_sets')
@@ -46,9 +46,11 @@ export const fetchBuiltInSets = async (state: FlashcardState): Promise<Flashcard
 /**
  * Clone a flashcard set from the library to user's collection
  */
-export const cloneFlashcardSet = async (state: FlashcardState, setId: string): Promise<FlashcardSet | null> => {
-  const { user, setFlashcardSets } = state;
-  
+export const cloneFlashcardSet = async (
+  user: any, 
+  setFlashcardSets: (fn: (prev: FlashcardSet[]) => FlashcardSet[]) => void,
+  setId: string
+): Promise<FlashcardSet | null> => {
   if (!user) {
     toast.error('Please sign in to clone this set');
     return null;
@@ -122,7 +124,7 @@ export const cloneFlashcardSet = async (state: FlashcardState, setId: string): P
 /**
  * Search library sets by query
  */
-export const searchLibrary = async (state: FlashcardState, query: string): Promise<FlashcardSet[]> => {
+export const searchLibrary = async (query: string): Promise<FlashcardSet[]> => {
   try {
     const { data, error } = await supabase
       .from('flashcard_sets')
@@ -144,6 +146,10 @@ export const searchLibrary = async (state: FlashcardState, query: string): Promi
 /**
  * Copy a set from library to user's collection (alias for cloneFlashcardSet)
  */
-export const copySetFromLibrary = async (state: FlashcardState, setId: string): Promise<FlashcardSet | null> => {
-  return cloneFlashcardSet(state, setId);
+export const copySetFromLibrary = async (
+  user: any, 
+  setFlashcardSets: (fn: (prev: FlashcardSet[]) => FlashcardSet[]) => void,
+  setId: string
+): Promise<FlashcardSet | null> => {
+  return cloneFlashcardSet(user, setFlashcardSets, setId);
 };
