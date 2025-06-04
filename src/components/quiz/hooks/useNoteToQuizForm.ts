@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useCreateQuiz } from "./useCreateQuiz";
+import { useCreateQuiz } from "@/hooks/quiz/useCreateQuiz";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
