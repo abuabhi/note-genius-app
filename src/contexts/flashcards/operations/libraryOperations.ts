@@ -2,7 +2,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { FlashcardSet } from '@/types/flashcard';
 import { toast } from 'sonner';
-import { User } from '@supabase/supabase-js';
 
 // Simple conversion function to avoid circular imports
 const convertToFlashcardSet = (data: any): FlashcardSet => {
@@ -48,9 +47,9 @@ export const fetchBuiltInSets = async (): Promise<FlashcardSet[]> => {
  * Clone a flashcard set from the library to user's collection
  */
 export const cloneFlashcardSet = async (
-  user: User | null, 
+  user: { id: string } | null,
   getCurrentSets: () => FlashcardSet[],
-  updateSets: (newSets: FlashcardSet[]) => void,
+  updateSets: (sets: FlashcardSet[]) => void,
   setId: string
 ): Promise<FlashcardSet | null> => {
   if (!user) {
@@ -152,9 +151,9 @@ export const searchLibrary = async (query: string): Promise<FlashcardSet[]> => {
  * Copy a set from library to user's collection (alias for cloneFlashcardSet)
  */
 export const copySetFromLibrary = async (
-  user: User | null, 
+  user: { id: string } | null,
   getCurrentSets: () => FlashcardSet[],
-  updateSets: (newSets: FlashcardSet[]) => void,
+  updateSets: (sets: FlashcardSet[]) => void,
   setId: string
 ): Promise<FlashcardSet | null> => {
   return cloneFlashcardSet(user, getCurrentSets, updateSets, setId);
