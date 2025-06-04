@@ -1,12 +1,31 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { FlashcardSet } from '@/types/flashcard';
 import { toast } from 'sonner';
+
+// Simple type for library operations to avoid complex type instantiation
+export interface SimpleFlashcardSet {
+  id: string;
+  name: string;
+  description?: string;
+  subject?: string;
+  topic?: string;
+  category_id?: string;
+  country_id?: string;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  card_count?: number;
+  is_built_in?: boolean;
+}
+
+// Simple callback types to avoid complex React state types
+export type UpdateSetsCallback = (sets: SimpleFlashcardSet[]) => void;
+export type GetSetsCallback = () => SimpleFlashcardSet[];
 
 /**
  * Fetch built-in flashcard sets from the library
  */
-export const fetchBuiltInSets = async (): Promise<FlashcardSet[]> => {
+export const fetchBuiltInSets = async (): Promise<SimpleFlashcardSet[]> => {
   try {
     const { data, error } = await supabase
       .from('flashcard_sets')
@@ -42,10 +61,10 @@ export const fetchBuiltInSets = async (): Promise<FlashcardSet[]> => {
  */
 export const cloneFlashcardSet = async (
   user: any,
-  getCurrentSets: () => FlashcardSet[],
-  updateSets: (sets: FlashcardSet[]) => void,
+  getCurrentSets: GetSetsCallback,
+  updateSets: UpdateSetsCallback,
   setId: string
-): Promise<FlashcardSet | null> => {
+): Promise<SimpleFlashcardSet | null> => {
   if (!user) {
     toast.error('Please sign in to clone this set');
     return null;
@@ -104,7 +123,8 @@ export const cloneFlashcardSet = async (
       if (insertError) throw insertError;
     }
 
-    const formattedSet: FlashcardSet = {
+    // Create simple formatted set
+    const formattedSet: SimpleFlashcardSet = {
       id: newSet.id,
       name: newSet.name,
       description: newSet.description,
@@ -135,7 +155,7 @@ export const cloneFlashcardSet = async (
 /**
  * Search library sets by query
  */
-export const searchLibrary = async (query: string): Promise<FlashcardSet[]> => {
+export const searchLibrary = async (query: string): Promise<SimpleFlashcardSet[]> => {
   try {
     const { data, error } = await supabase
       .from('flashcard_sets')
@@ -172,9 +192,9 @@ export const searchLibrary = async (query: string): Promise<FlashcardSet[]> => {
  */
 export const copySetFromLibrary = async (
   user: any,
-  getCurrentSets: () => FlashcardSet[],
-  updateSets: (sets: FlashcardSet[]) => void,
+  getCurrentSets: GetSetsCallback,
+  updateSets: UpdateSetsCallback,
   setId: string
-): Promise<FlashcardSet | null> => {
+): Promise<SimpleFlashcardSet | null> => {
   return cloneFlashcardSet(user, getCurrentSets, updateSets, setId);
 };
