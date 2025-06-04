@@ -1,7 +1,5 @@
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -13,6 +11,7 @@ import { QuizHistoryList } from "@/components/quiz/history/QuizHistoryList";
 import { EmptyQuizHistory } from "@/components/quiz/history/EmptyQuizHistory";
 import { QuizHistoryError } from "@/components/quiz/history/QuizHistoryError";
 import { QuizHistoryLoading } from "@/components/quiz/history/QuizHistoryLoading";
+import { QuizHistoryBreadcrumb } from "@/components/quiz/history/QuizHistoryBreadcrumb";
 import { useQuizHistoryData } from "@/hooks/quiz/useQuizHistoryData";
 
 const QuizHistoryPage = () => {
@@ -37,10 +36,15 @@ const QuizHistoryPage = () => {
   if (hasError) {
     return (
       <Layout>
-        <div className="container mx-auto p-6">
-          <QuizHistoryError 
-            error={quizResultsError?.message || quizSessionsError?.message || 'Failed to load quiz history'} 
-          />
+        <div className="min-h-screen bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
+          <div className="container mx-auto p-6">
+            <div className="mb-6">
+              <QuizHistoryBreadcrumb />
+            </div>
+            <QuizHistoryError 
+              error={quizResultsError?.message || quizSessionsError?.message || 'Failed to load quiz history'} 
+            />
+          </div>
         </div>
       </Layout>
     );
@@ -49,8 +53,13 @@ const QuizHistoryPage = () => {
   if (isLoading) {
     return (
       <Layout>
-        <div className="container mx-auto p-6">
-          <QuizHistoryLoading />
+        <div className="min-h-screen bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
+          <div className="container mx-auto p-6">
+            <div className="mb-6">
+              <QuizHistoryBreadcrumb />
+            </div>
+            <QuizHistoryLoading />
+          </div>
         </div>
       </Layout>
     );
@@ -58,35 +67,43 @@ const QuizHistoryPage = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto p-6">
-        <div className="flex items-center gap-4 mb-6">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => navigate('/quiz')}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Quizzes
-          </Button>
-          <QuizHistoryHeader />
+      <div className="min-h-screen bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
+        <div className="container mx-auto p-6">
+          <div className="mb-6">
+            <QuizHistoryBreadcrumb />
+          </div>
+
+          <div className="flex items-center gap-4 mb-6">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate('/quizzes')}
+              className="flex items-center gap-2 hover:bg-mint-50"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Quizzes
+            </Button>
+            <QuizHistoryHeader />
+          </div>
+
+          <div className="bg-white/60 backdrop-blur-sm border border-mint-100 rounded-lg p-6 mb-6">
+            <QuizHistoryFilters
+              selectedType={selectedType}
+              onTypeChange={setSelectedType}
+              quizResultsCount={quizResults?.length || 0}
+              quizSessionsCount={quizSessions?.length || 0}
+            />
+          </div>
+
+          {hasAnyHistory ? (
+            <QuizHistoryList
+              quizResults={filteredQuizResults}
+              quizSessions={filteredQuizSessions}
+            />
+          ) : (
+            <EmptyQuizHistory onNavigateToQuiz={() => navigate('/quizzes')} />
+          )}
         </div>
-
-        <QuizHistoryFilters
-          selectedType={selectedType}
-          onTypeChange={setSelectedType}
-          quizResultsCount={quizResults?.length || 0}
-          quizSessionsCount={quizSessions?.length || 0}
-        />
-
-        {hasAnyHistory ? (
-          <QuizHistoryList
-            quizResults={filteredQuizResults}
-            quizSessions={filteredQuizSessions}
-          />
-        ) : (
-          <EmptyQuizHistory onNavigateToQuiz={() => navigate('/quiz')} />
-        )}
       </div>
     </Layout>
   );

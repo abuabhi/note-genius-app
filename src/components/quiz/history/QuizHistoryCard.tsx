@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Clock, Target, TrendingUp } from "lucide-react";
@@ -72,7 +71,7 @@ export const QuizHistoryCard = ({ quiz, type }: QuizHistoryCardProps) => {
     const percentage = Math.round((traditionalQuiz.score / traditionalQuiz.total_questions) * 100);
     
     return (
-      <Card className="border-mint-100">
+      <Card className="bg-white/60 backdrop-blur-sm border-mint-100">
         <CardHeader className="pb-3">
           <div className="flex justify-between items-start">
             <div>
@@ -135,7 +134,7 @@ export const QuizHistoryCard = ({ quiz, type }: QuizHistoryCardProps) => {
     const flashcardQuiz = quiz as QuizSessionItem;
     
     return (
-      <Card className="border-mint-100">
+      <Card className="bg-white/60 backdrop-blur-sm border-mint-100">
         <CardHeader className="pb-3">
           <div className="flex justify-between items-start">
             <div>
