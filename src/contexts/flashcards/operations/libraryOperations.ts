@@ -25,7 +25,7 @@ const convertToFlashcardSet = (data: any): FlashcardSet => {
 /**
  * Fetch built-in flashcard sets from the library
  */
-export const fetchBuiltInSets = async (): Promise<FlashcardSet[]> => {
+export const fetchBuiltInSets = async () => {
   try {
     const { data, error } = await supabase
       .from('flashcard_sets')
@@ -47,11 +47,11 @@ export const fetchBuiltInSets = async (): Promise<FlashcardSet[]> => {
  * Clone a flashcard set from the library to user's collection
  */
 export const cloneFlashcardSet = async (
-  user: { id: string } | null,
-  getCurrentSets: () => FlashcardSet[],
-  updateSets: (sets: FlashcardSet[]) => void,
+  user: any,
+  getCurrentSets: any,
+  updateSets: any,
   setId: string
-): Promise<FlashcardSet | null> => {
+) => {
   if (!user) {
     toast.error('Please sign in to clone this set');
     return null;
@@ -128,7 +128,7 @@ export const cloneFlashcardSet = async (
 /**
  * Search library sets by query
  */
-export const searchLibrary = async (query: string): Promise<FlashcardSet[]> => {
+export const searchLibrary = async (query: string) => {
   try {
     const { data, error } = await supabase
       .from('flashcard_sets')
@@ -151,10 +151,10 @@ export const searchLibrary = async (query: string): Promise<FlashcardSet[]> => {
  * Copy a set from library to user's collection (alias for cloneFlashcardSet)
  */
 export const copySetFromLibrary = async (
-  user: { id: string } | null,
-  getCurrentSets: () => FlashcardSet[],
-  updateSets: (sets: FlashcardSet[]) => void,
+  user: any,
+  getCurrentSets: any,
+  updateSets: any,
   setId: string
-): Promise<FlashcardSet | null> => {
+) => {
   return cloneFlashcardSet(user, getCurrentSets, updateSets, setId);
 };
