@@ -114,8 +114,83 @@ export function useFlashcardOperations(state?: FlashcardState) {
     }
   };
   
-  const fetchFlashcards = async () => {
-    return [];
+  const fetchFlashcards = async (filters?: { setId?: string }) => {
+    try {
+      setIsLoading(true);
+      
+      if (!user) {
+        console.log("No user, returning empty array");
+        return [];
+      }
+
+      console.log("Fetching flashcards for user:", user.id, "with filters:", filters);
+
+      let query = supabase
+        .from('flashcards')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      // If setId filter is provided, join with flashcard_set_cards
+      if (filters?.setId) {
+        const { data: setCards, error: setError } = await supabase
+          .from('flashcard_set_cards')
+          .select(`
+            flashcard_id,
+            position,
+            flashcards (*)
+          `)
+          .eq('set_id', filters.setId)
+          .order('position', { ascending: true });
+
+        if (setError) {
+          console.error("Error fetching flashcards for set:", setError);
+          throw setError;
+        }
+
+        const flashcards: Flashcard[] = (setCards || [])
+          .filter(card => card.flashcards)
+          .map(card => {
+            const flashcard = card.flashcards;
+            return {
+              ...flashcard,
+              front: flashcard.front_content,
+              back: flashcard.back_content,
+              set_id: filters.setId,
+              position: card.position
+            };
+          });
+
+        console.log("Fetched flashcards for set:", flashcards);
+        setFlashcards(flashcards);
+        return flashcards;
+      }
+
+      // Fetch all flashcards for the user
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("Error fetching flashcards:", error);
+        throw error;
+      }
+
+      const flashcards: Flashcard[] = (data || []).map(card => ({
+        ...card,
+        front: card.front_content,
+        back: card.back_content
+      }));
+
+      console.log("Fetched all flashcards:", flashcards);
+      setFlashcards(flashcards);
+      return flashcards;
+      
+    } catch (error) {
+      console.error("Error fetching flashcards:", error);
+      toast.error("Failed to load flashcards");
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   const createFlashcard = async (cardData: any) => {
