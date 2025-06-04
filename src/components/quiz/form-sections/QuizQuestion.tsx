@@ -69,7 +69,7 @@ export const QuizQuestion = ({
                 <FormLabel>Difficulty (1-5)</FormLabel>
                 <Select
                   onValueChange={(value) => field.onChange(Number(value))}
-                  defaultValue={field.value.toString()}
+                  defaultValue={field.value?.toString() || "3"}
                 >
                   <FormControl>
                     <SelectTrigger>
