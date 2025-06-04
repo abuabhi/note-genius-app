@@ -39,7 +39,10 @@ export const useQuizList = (filters?: {
     }
     
     if (filters?.userOnly) {
-      query = query.eq('user_id', (await supabase.auth.getUser()).data.user?.id);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        query = query.eq('user_id', user.id);
+      }
     }
     
     const { data, error } = await query;

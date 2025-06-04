@@ -5,20 +5,32 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuizList } from "@/hooks/quiz/useQuizList";
+import { useSubjects } from "@/hooks/useSubjects";
 import { QuizWithQuestions } from "@/types/quiz";
-import { Play, Clock, HelpCircle, Search, Plus, History } from "lucide-react";
+import { Play, Clock, HelpCircle, Search, History } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 export const QuizList = () => {
   const navigate = useNavigate();
-  const { quizzes, isLoading, error } = useQuizList();
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedSubject, setSelectedSubject] = useState<string>("");
+  
+  const { subjects } = useSubjects();
+  const { quizzes, isLoading, error } = useQuizList({
+    search: searchTerm,
+    subject: selectedSubject
+  });
 
-  const filteredQuizzes = quizzes?.filter(quiz =>
-    quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    quiz.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredQuizzes = quizzes?.filter(quiz => {
+    const matchesSearch = quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      quiz.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (!selectedSubject) return matchesSearch;
+    
+    return matchesSearch && quiz.category_id === selectedSubject;
+  }) || [];
 
   if (isLoading) {
     return (
@@ -56,7 +68,7 @@ export const QuizList = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+      <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-mint-500 h-4 w-4" />
           <Input
@@ -66,23 +78,29 @@ export const QuizList = () => {
             className="pl-10 border-mint-200 focus:border-mint-400"
           />
         </div>
-        <div className="flex gap-2">
-          <Button 
-            onClick={() => navigate('/quiz-history')}
-            variant="outline"
-            className="border-mint-200 hover:bg-mint-50 text-mint-700"
-          >
-            <History className="mr-2 h-4 w-4" />
-            Quiz History
-          </Button>
-          <Button 
-            onClick={() => navigate('/create-quiz')}
-            className="bg-mint-600 hover:bg-mint-700 text-white"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Create Quiz
-          </Button>
-        </div>
+        
+        <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+          <SelectTrigger className="w-full sm:w-48">
+            <SelectValue placeholder="All Subjects" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All Subjects</SelectItem>
+            {subjects.map((subject) => (
+              <SelectItem key={subject.id} value={subject.id}>
+                {subject.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Button 
+          onClick={() => navigate('/quiz-history')}
+          variant="outline"
+          className="border-mint-200 hover:bg-mint-50 text-mint-700 whitespace-nowrap"
+        >
+          <History className="mr-2 h-4 w-4" />
+          Quiz History
+        </Button>
       </div>
 
       {filteredQuizzes.length === 0 ? (
@@ -90,23 +108,14 @@ export const QuizList = () => {
           <CardContent className="p-12 text-center">
             <HelpCircle className="h-12 w-12 text-mint-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-mint-800 mb-2">
-              {searchTerm ? "No quizzes found" : "No quizzes yet"}
+              {searchTerm || selectedSubject ? "No quizzes found" : "No quizzes yet"}
             </h3>
             <p className="text-mint-600 mb-6">
-              {searchTerm 
-                ? "Try adjusting your search terms" 
+              {searchTerm || selectedSubject 
+                ? "Try adjusting your search terms or filters" 
                 : "Create your first quiz to get started"
               }
             </p>
-            {!searchTerm && (
-              <Button 
-                onClick={() => navigate('/create-quiz')}
-                className="bg-mint-600 hover:bg-mint-700 text-white"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Create Your First Quiz
-              </Button>
-            )}
           </CardContent>
         </Card>
       ) : (
