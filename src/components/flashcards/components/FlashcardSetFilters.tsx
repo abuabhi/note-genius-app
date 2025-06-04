@@ -54,10 +54,10 @@ const FlashcardSetFilters = ({
         
         {/* Subject Filter */}
         <Select 
-          value={subjectFilter || ""} 
+          value={subjectFilter || "all_subjects"} 
           onValueChange={(value) => {
             console.log('Subject filter changed to:', value);
-            setSubjectFilter(value === "" ? undefined : value);
+            setSubjectFilter(value === "all_subjects" ? undefined : value);
           }}
           disabled={subjectsLoading}
         >
@@ -65,7 +65,7 @@ const FlashcardSetFilters = ({
             <SelectValue placeholder="All subjects" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All subjects</SelectItem>
+            <SelectItem value="all_subjects">All subjects</SelectItem>
             {userSubjects.map(subject => (
               <SelectItem key={subject.id} value={subject.name}>
                 {subject.name}
