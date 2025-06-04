@@ -1,36 +1,44 @@
 
-export const formatTime = (seconds: number): string => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
+/**
+ * Formats duration in seconds to a human-readable string
+ */
+export const formatDuration = (seconds: number): string => {
+  if (seconds < 60) {
+    return `${seconds}s`;
   }
   
-  return `${minutes}m`;
-};
-
-export const formatTimeDetailed = (seconds: number): string => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
+  const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
   
-  if (hours > 0) {
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  if (minutes < 60) {
+    if (remainingSeconds === 0) {
+      return `${minutes}m`;
+    }
+    return `${minutes}m ${remainingSeconds}s`;
   }
   
-  return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  
+  if (remainingMinutes === 0) {
+    return `${hours}h`;
+  }
+  return `${hours}h ${remainingMinutes}m`;
 };
 
-export const formatDuration = (seconds: number | null): string => {
-  if (!seconds) return "0h 0m";
-  
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
+/**
+ * Formats duration in minutes to a human-readable string
+ */
+export const formatMinutes = (minutes: number): string => {
+  if (minutes < 60) {
+    return `${minutes}m`;
   }
   
-  return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  
+  if (remainingMinutes === 0) {
+    return `${hours}h`;
+  }
+  return `${hours}h ${remainingMinutes}m`;
 };
