@@ -48,7 +48,7 @@ export const fetchBuiltInSets = async (): Promise<FlashcardSet[]> => {
  */
 export const cloneFlashcardSet = async (
   user: any, 
-  setFlashcardSets: (fn: (prev: FlashcardSet[]) => FlashcardSet[]) => void,
+  setFlashcardSets: (updater: (prev: FlashcardSet[]) => FlashcardSet[]) => void,
   setId: string
 ): Promise<FlashcardSet | null> => {
   if (!user) {
@@ -148,7 +148,7 @@ export const searchLibrary = async (query: string): Promise<FlashcardSet[]> => {
  */
 export const copySetFromLibrary = async (
   user: any, 
-  setFlashcardSets: (fn: (prev: FlashcardSet[]) => FlashcardSet[]) => void,
+  setFlashcardSets: (updater: (prev: FlashcardSet[]) => FlashcardSet[]) => void,
   setId: string
 ): Promise<FlashcardSet | null> => {
   return cloneFlashcardSet(user, setFlashcardSets, setId);
