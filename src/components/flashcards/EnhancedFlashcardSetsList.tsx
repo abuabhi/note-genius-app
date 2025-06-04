@@ -7,7 +7,7 @@ import FlashcardSetGrid from "./components/FlashcardSetGrid";
 import FlashcardSetSkeleton from "./components/FlashcardSetSkeleton";
 
 const EnhancedFlashcardSetsList = () => {
-  const { flashcardSets, loading, deleteFlashcardSet, fetchFlashcardSets } = useFlashcards();
+  const { flashcardSets, loading, deleteFlashcardSet, fetchFlashcardSets, isReady } = useFlashcards();
   const { subjects: userSubjects, isLoading: subjectsLoading } = useUserSubjects();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("updated_at");
@@ -16,14 +16,13 @@ const EnhancedFlashcardSetsList = () => {
   const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
   const [setProgressData, setSetProgressData] = useState<Record<string, number>>({});
 
-  // Calculate stable progress for flashcard sets (fixed to prevent infinite loop)
+  // Calculate stable progress for flashcard sets
   useEffect(() => {
     if (!flashcardSets || flashcardSets.length === 0) return;
     
     const progressMap: Record<string, number> = {};
     
     for (const set of flashcardSets) {
-      // Create a stable hash from set ID for consistent progress calculation
       const hash = set.id.split('').reduce((a, b) => {
         a = ((a << 5) - a) + b.charCodeAt(0);
         return a & a;
@@ -34,11 +33,11 @@ const EnhancedFlashcardSetsList = () => {
     setSetProgressData(progressMap);
   }, [flashcardSets]);
 
-  // Filter and sort flashcard sets - updated to use user subjects for filtering
+  // Filter and sort flashcard sets
   const filteredAndSortedSets = useMemo(() => {
     if (!flashcardSets) return [];
     
-    console.log('Filtering flashcard sets:', {
+    console.log('EnhancedFlashcardSetsList: Filtering flashcard sets:', {
       totalSets: flashcardSets.length,
       subjectFilter,
       searchQuery,
@@ -51,22 +50,13 @@ const EnhancedFlashcardSetsList = () => {
         set.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         set.subject?.toLowerCase().includes(searchQuery.toLowerCase());
       
-      // Filter by selected user subject - exact match
       const matchesSubject = !subjectFilter || 
         (set.subject && set.subject.trim() === subjectFilter.trim());
-      
-      console.log('Filtering set:', {
-        setName: set.name,
-        setSubject: set.subject,
-        subjectFilter,
-        matchesSubject,
-        matchesSearch
-      });
       
       return matchesSearch && matchesSubject;
     });
 
-    console.log('Filtered sets:', {
+    console.log('EnhancedFlashcardSetsList: Filtered sets:', {
       originalCount: flashcardSets.length,
       filteredCount: filtered.length,
       subjectFilter
@@ -87,11 +77,20 @@ const EnhancedFlashcardSetsList = () => {
     });
   }, [flashcardSets, searchQuery, sortBy, subjectFilter]);
 
-  // Single effect to ensure flashcards are fetched when component mounts
+  // Enhanced data loading with authentication readiness check
   useEffect(() => {
-    console.log('EnhancedFlashcardSetsList: Component mounted');
+    console.log('EnhancedFlashcardSetsList: Effect triggered', {
+      isReady,
+      hasInitiallyLoaded,
+      timestamp: new Date().toISOString()
+    });
     
     const loadData = async () => {
+      if (!isReady) {
+        console.log('EnhancedFlashcardSetsList: Provider not ready yet, waiting...');
+        return;
+      }
+
       if (!hasInitiallyLoaded) {
         console.log('EnhancedFlashcardSetsList: Loading initial data...');
         try {
@@ -106,14 +105,13 @@ const EnhancedFlashcardSetsList = () => {
     };
     
     loadData();
-  }, []); // Empty dependency array - only run once on mount
+  }, [isReady, hasInitiallyLoaded, fetchFlashcardSets]);
 
   const handleDeleteSet = async (setId: string) => {
     setDeletingSet(setId);
     try {
       await deleteFlashcardSet(setId);
       console.log('Set deleted successfully, refreshing list...');
-      // Refresh the list after deletion
       await fetchFlashcardSets();
     } catch (error) {
       console.error("Error deleting flashcard set:", error);
@@ -127,14 +125,13 @@ const EnhancedFlashcardSetsList = () => {
     setSubjectFilter(undefined);
   };
 
-  // Show loading state only if we haven't initially loaded and are currently loading
-  if (!hasInitiallyLoaded && loading.sets) {
+  // Show loading state if provider not ready or still loading
+  if (!isReady || (!hasInitiallyLoaded && loading.sets)) {
+    console.log('EnhancedFlashcardSetsList: Showing loading state', { isReady, hasInitiallyLoaded, loadingSets: loading.sets });
     return <FlashcardSetSkeleton />;
   }
 
   console.log('EnhancedFlashcardSetsList: Rendering with flashcard sets:', flashcardSets?.length || 0, 'sets');
-  console.log('Current subject filter:', subjectFilter);
-  console.log('User subjects:', userSubjects?.map(s => s.name));
 
   return (
     <div className="space-y-6">

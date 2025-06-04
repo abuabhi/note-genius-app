@@ -6,57 +6,131 @@ import { FlashcardState } from '../types';
 import { convertToFlashcardSet } from '../utils/flashcardSetMappers';
 
 /**
- * Fetch all flashcard sets for the current user
+ * Enhanced fetch with user validation and retry logic
+ */
+const fetchWithUserValidation = async (user: any, retryCount = 0): Promise<any> => {
+  const maxRetries = 3;
+  const retryDelay = 1000; // 1 second
+
+  if (!user) {
+    if (retryCount < maxRetries) {
+      console.log(`fetchFlashcardSets: No user available, retrying in ${retryDelay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
+      return null; // Signal to retry
+    }
+    console.error('fetchFlashcardSets: No user available after maximum retries');
+    throw new Error('User authentication required');
+  }
+
+  console.log('fetchFlashcardSets: User validated', {
+    userId: user.id,
+    email: user.email,
+    attempt: retryCount + 1
+  });
+
+  return user;
+};
+
+/**
+ * Fetch all flashcard sets for the current user with enhanced error handling and user validation
  */
 export const fetchFlashcardSets = async (state: FlashcardState): Promise<FlashcardSet[]> => {
   const { user, setLoading, setFlashcardSets } = state;
   
-  if (!user) {
-    console.log('fetchFlashcardSets: No user found, returning empty sets array');
-    setFlashcardSets([]);
-    return [];
-  }
-  
   try {
-    console.log('fetchFlashcardSets: Starting to fetch flashcard sets for user:', user.id);
+    console.log('fetchFlashcardSets: Starting fetch operation', {
+      hasUser: !!user,
+      userId: user?.id || 'none',
+      timestamp: new Date().toISOString()
+    });
+
     setLoading(prev => ({ ...prev, sets: true }));
+
+    // Enhanced user validation with retry logic
+    let validatedUser = user;
+    let retryCount = 0;
+    const maxRetries = 3;
+
+    while (!validatedUser && retryCount < maxRetries) {
+      const result = await fetchWithUserValidation(validatedUser, retryCount);
+      if (result === null) {
+        retryCount++;
+        continue;
+      }
+      validatedUser = result;
+      break;
+    }
+
+    if (!validatedUser) {
+      console.log('fetchFlashcardSets: No authenticated user found after retries, returning empty sets array');
+      setFlashcardSets([]);
+      return [];
+    }
+    
+    console.log('fetchFlashcardSets: Proceeding with database query for user:', validatedUser.id);
     
     // Fetch flashcard sets with enhanced error handling
     const { data, error } = await supabase
       .from('flashcard_sets')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', validatedUser.id)
       .order('created_at', { ascending: false });
     
     if (error) {
-      console.error('fetchFlashcardSets: Error fetching flashcard sets:', error);
+      console.error('fetchFlashcardSets: Database error:', error);
       throw error;
     }
     
-    console.log('fetchFlashcardSets: Raw data from database:', data);
+    console.log('fetchFlashcardSets: Database query successful', {
+      rawDataLength: data?.length || 0,
+      rawData: data?.slice(0, 3).map(d => ({ 
+        id: d.id.slice(0, 8), 
+        name: d.name, 
+        user_id: d.user_id,
+        created_at: d.created_at 
+      })) || []
+    });
     
     if (!data || data.length === 0) {
-      console.log('fetchFlashcardSets: No flashcard sets found for user');
+      console.log('fetchFlashcardSets: No flashcard sets found for user:', validatedUser.id);
       setFlashcardSets([]);
       return [];
     }
     
-    // Convert to proper type with basic card count (fallback to 0 if count fails)
-    const formattedSets = data.map(set => {
-      const formattedSet = convertToFlashcardSet({
-        ...set,
-        card_count: set.card_count || 0 // Use existing card_count or default to 0
+    // Validate that all returned sets belong to the current user
+    const invalidSets = data.filter(set => set.user_id !== validatedUser.id);
+    if (invalidSets.length > 0) {
+      console.error('fetchFlashcardSets: Found sets that do not belong to current user:', {
+        currentUserId: validatedUser.id,
+        invalidSets: invalidSets.map(s => ({ id: s.id, user_id: s.user_id }))
       });
-      
-      console.log('fetchFlashcardSets: Formatted set:', {
-        id: formattedSet.id,
-        name: formattedSet.name,
-        card_count: formattedSet.card_count
+    }
+
+    // Convert to proper type with basic card count
+    const formattedSets = data
+      .filter(set => set.user_id === validatedUser.id) // Extra safety filter
+      .map(set => {
+        const formattedSet = convertToFlashcardSet({
+          ...set,
+          card_count: set.card_count || 0
+        });
+        
+        console.log('fetchFlashcardSets: Formatted set:', {
+          id: formattedSet.id.slice(0, 8),
+          name: formattedSet.name,
+          card_count: formattedSet.card_count,
+          user_id: formattedSet.user_id
+        });
+        return formattedSet;
       });
-      return formattedSet;
+    
+    console.log('fetchFlashcardSets: Final operation summary', {
+      userId: validatedUser.id,
+      originalDataCount: data.length,
+      finalSetsCount: formattedSets.length,
+      setNames: formattedSets.map(s => s.name)
     });
     
-    console.log('fetchFlashcardSets: Final flashcard sets count:', formattedSets.length);
     setFlashcardSets(formattedSets);
     return formattedSets;
   } catch (error) {

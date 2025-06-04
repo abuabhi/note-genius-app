@@ -22,36 +22,34 @@ import { useStreakCalculation } from "@/hooks/useStreakCalculation";
 import { useProgressStats } from "@/hooks/useProgressStats";
 
 const FlashcardsPage = () => {
-  // Make sure the user is authenticated
-  useRequireAuth();
+  // Authentication and user verification
+  const { user, loading: authLoading } = useRequireAuth();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [hasInitialLoad, setHasInitialLoad] = useState(false);
-  const { flashcardSets, fetchFlashcardSets } = useFlashcards();
+  const { flashcardSets, fetchFlashcardSets, isReady } = useFlashcards();
   const { streak } = useStreakCalculation();
   const { stats } = useProgressStats();
 
-  // Single effect to load data on mount - no dependencies to prevent loops
+  // Enhanced authentication and context debugging
   useEffect(() => {
-    console.log('FlashcardsPage: Initial mount, loading data...');
-    
-    const loadInitialData = async () => {
-      if (!hasInitialLoad) {
-        try {
-          await fetchFlashcardSets();
-          console.log('FlashcardsPage: Initial data loaded successfully');
-        } catch (error) {
-          console.error('FlashcardsPage: Error loading initial data:', error);
-        } finally {
-          setHasInitialLoad(true);
-        }
-      }
-    };
-
-    loadInitialData();
-  }, []); // Empty dependency array - only run once on mount
+    console.log('FlashcardsPage: State changed', {
+      user: user ? { id: user.id, email: user.email } : null,
+      authLoading,
+      isReady,
+      flashcardSetsCount: flashcardSets?.length || 0,
+      timestamp: new Date().toISOString()
+    });
+  }, [user, authLoading, isReady, flashcardSets]);
 
   // Handler for refreshing data after operations
   const handleDataRefresh = async () => {
+    if (!user || !isReady) {
+      console.log('FlashcardsPage: Cannot refresh data - user or context not ready', {
+        hasUser: !!user,
+        isReady
+      });
+      return;
+    }
+    
     console.log('FlashcardsPage: Refreshing flashcard sets...');
     try {
       await fetchFlashcardSets();
@@ -60,6 +58,25 @@ const FlashcardsPage = () => {
       console.error('FlashcardsPage: Error refreshing data:', error);
     }
   };
+
+  // Show loading state while authentication is being resolved
+  if (authLoading || !user) {
+    return (
+      <Layout>
+        <div className="container mx-auto p-6">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="relative w-12 h-12 mx-auto mb-4">
+                <div className="absolute inset-0 border-4 border-mint-100 rounded-full"></div>
+                <div className="absolute inset-0 border-4 border-mint-500 rounded-full border-t-transparent animate-spin"></div>
+              </div>
+              <p className="text-mint-700 font-medium">Loading...</p>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -107,7 +124,7 @@ const FlashcardsPage = () => {
             </Dialog>
           </div>
 
-          {/* Real Stats Cards */}
+          {/* Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Card className="border-mint-100">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

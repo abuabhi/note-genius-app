@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
 import { FlashcardContextType, FlashcardProviderProps, FlashcardState } from './types';
 import { FlashcardSet, Flashcard, SubjectCategory } from '@/types/flashcard';
 import { useFlashcardOperations } from './useFlashcardOperations';
@@ -34,36 +34,76 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     sets: false,
     categories: false
   });
+  const [isReady, setIsReady] = useState(false);
 
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+
+  // Enhanced authentication debugging
+  useEffect(() => {
+    console.log('FlashcardProvider: Authentication state changed', {
+      user: user ? { id: user.id, email: user.email } : null,
+      authLoading,
+      timestamp: new Date().toISOString()
+    });
+
+    // Mark provider as ready when auth is no longer loading
+    if (!authLoading) {
+      setIsReady(true);
+      console.log('FlashcardProvider: Marked as ready, user:', user?.id || 'none');
+    }
+  }, [user, authLoading]);
 
   // Stable loading setter using useCallback
   const stableSetLoading = useCallback((newLoading: typeof loading | ((prev: typeof loading) => typeof loading)) => {
     setLoading(newLoading);
   }, []);
 
-  // Create state object for hooks to share
-  const state: FlashcardState = useMemo(() => ({
+  // Enhanced setFlashcardSets with user validation
+  const enhancedSetFlashcardSets = useCallback((sets: FlashcardSet[] | ((prev: FlashcardSet[]) => FlashcardSet[])) => {
+    if (!user) {
+      console.warn('FlashcardProvider: Attempted to set flashcard sets without authenticated user');
+      return;
+    }
+    
+    const newSets = typeof sets === 'function' ? sets(flashcardSets) : sets;
+    console.log('FlashcardProvider: Setting flashcard sets', {
+      userId: user.id,
+      setsCount: newSets.length,
+      sets: newSets.map(s => ({ id: s.id.slice(0, 8), name: s.name, user_id: s.user_id }))
+    });
+    
+    setFlashcardSets(newSets);
+  }, [user, flashcardSets]);
+
+  // Create state object for hooks to share with enhanced user validation
+  const state: FlashcardState = useMemo(() => {
+    if (!user) {
+      console.log('FlashcardProvider: No user available for state creation');
+    }
+    
+    return {
+      flashcards,
+      flashcardSets,
+      currentFlashcard,
+      currentSet,
+      categories,
+      loading,
+      setFlashcards,
+      setFlashcardSets: enhancedSetFlashcardSets,
+      setCurrentFlashcard,
+      setCurrentSet,
+      setCategories,
+      setLoading: stableSetLoading,
+      user
+    };
+  }, [
     flashcards,
     flashcardSets,
     currentFlashcard,
     currentSet,
     categories,
     loading,
-    setFlashcards,
-    setFlashcardSets,
-    setCurrentFlashcard,
-    setCurrentSet,
-    setCategories,
-    setLoading: stableSetLoading,
-    user
-  }), [
-    flashcards,
-    flashcardSets,
-    currentFlashcard,
-    currentSet,
-    categories,
-    loading,
+    enhancedSetFlashcardSets,
     stableSetLoading,
     user
   ]);
@@ -89,6 +129,7 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     loading,
     setCurrentFlashcard,
     setCurrentSet,
+    isReady, // Add ready state to context
     ...flashcardOperations,
     ...flashcardSetsOperations,
     ...categoryOperations,
@@ -103,6 +144,7 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     currentSet,
     categories,
     loading,
+    isReady,
     flashcardOperations,
     flashcardSetsOperations,
     categoryOperations,
