@@ -3,29 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { FlashcardSet } from '@/types/flashcard';
 import { toast } from 'sonner';
 
-// Simple conversion function to avoid circular imports
-const convertToFlashcardSet = (data: any): FlashcardSet => {
-  return {
-    id: data.id,
-    name: data.name || '',
-    description: data.description || '',
-    subject: data.subject || '',
-    topic: data.topic || '',
-    category_id: data.category_id,
-    country_id: data.country_id,
-    user_id: data.user_id,
-    created_at: data.created_at,
-    updated_at: data.updated_at,
-    card_count: data.card_count || 0,
-    is_built_in: data.is_built_in || false,
-    subject_categories: data.subject_categories
-  };
-};
-
 /**
  * Fetch built-in flashcard sets from the library
  */
-export const fetchBuiltInSets = async () => {
+export const fetchBuiltInSets = async (): Promise<FlashcardSet[]> => {
   try {
     const { data, error } = await supabase
       .from('flashcard_sets')
@@ -35,7 +16,20 @@ export const fetchBuiltInSets = async () => {
     
     if (error) throw error;
     
-    return data ? data.map(set => convertToFlashcardSet(set)) : [];
+    return data ? data.map(set => ({
+      id: set.id,
+      name: set.name || '',
+      description: set.description || '',
+      subject: set.subject || '',
+      topic: set.topic || '',
+      category_id: set.category_id,
+      country_id: set.country_id,
+      user_id: set.user_id,
+      created_at: set.created_at,
+      updated_at: set.updated_at,
+      card_count: set.card_count || 0,
+      is_built_in: set.is_built_in || false
+    })) : [];
   } catch (error) {
     console.error('fetchBuiltInSets: Error fetching built-in sets:', error);
     toast.error('Failed to load library sets');
@@ -48,10 +42,10 @@ export const fetchBuiltInSets = async () => {
  */
 export const cloneFlashcardSet = async (
   user: any,
-  getCurrentSets: any,
-  updateSets: any,
+  getCurrentSets: () => FlashcardSet[],
+  updateSets: (sets: FlashcardSet[]) => void,
   setId: string
-) => {
+): Promise<FlashcardSet | null> => {
   if (!user) {
     toast.error('Please sign in to clone this set');
     return null;
@@ -122,8 +116,7 @@ export const cloneFlashcardSet = async (
       created_at: newSet.created_at,
       updated_at: newSet.updated_at,
       card_count: newSet.card_count || 0,
-      is_built_in: false,
-      subject_categories: newSet.subject_categories
+      is_built_in: false
     };
     
     // Update state with the new set
@@ -142,7 +135,7 @@ export const cloneFlashcardSet = async (
 /**
  * Search library sets by query
  */
-export const searchLibrary = async (query: string) => {
+export const searchLibrary = async (query: string): Promise<FlashcardSet[]> => {
   try {
     const { data, error } = await supabase
       .from('flashcard_sets')
@@ -153,7 +146,20 @@ export const searchLibrary = async (query: string) => {
     
     if (error) throw error;
     
-    return data ? data.map(set => convertToFlashcardSet(set)) : [];
+    return data ? data.map(set => ({
+      id: set.id,
+      name: set.name || '',
+      description: set.description || '',
+      subject: set.subject || '',
+      topic: set.topic || '',
+      category_id: set.category_id,
+      country_id: set.country_id,
+      user_id: set.user_id,
+      created_at: set.created_at,
+      updated_at: set.updated_at,
+      card_count: set.card_count || 0,
+      is_built_in: set.is_built_in || false
+    })) : [];
   } catch (error) {
     console.error('searchLibrary: Error searching library:', error);
     toast.error('Failed to search library');
@@ -166,9 +172,9 @@ export const searchLibrary = async (query: string) => {
  */
 export const copySetFromLibrary = async (
   user: any,
-  getCurrentSets: any,
-  updateSets: any,
+  getCurrentSets: () => FlashcardSet[],
+  updateSets: (sets: FlashcardSet[]) => void,
   setId: string
-) => {
+): Promise<FlashcardSet | null> => {
   return cloneFlashcardSet(user, getCurrentSets, updateSets, setId);
 };
