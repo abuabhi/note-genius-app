@@ -25,7 +25,7 @@ export const BulkNoteConversion = ({
   onCancel
 }: BulkNoteConversionProps) => {
   const [setName, setSetName] = useState("New Flashcard Set");
-  const [setDescription, setDescription] = useState("");
+  const [setDescription, setSetDescription] = useState("");
   const [isConverting, setIsConverting] = useState(false);
   const { createFlashcardSet, createFlashcard, fetchFlashcardSets } = useFlashcards();
   const { subjects } = useUserSubjects();
@@ -130,7 +130,7 @@ export const BulkNoteConversion = ({
             <Textarea
               id="setDescription"
               value={setDescription}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => setSetDescription(e.target.value)}
               placeholder="Enter a description for this flashcard set"
               rows={3}
             />
