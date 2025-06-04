@@ -12,10 +12,8 @@ import { Country } from "@/hooks/useCountries";
 import { User } from "@supabase/supabase-js";
 
 import AccountSettingsCard from "./cards/AccountSettingsCard";
-import { AppearanceCard } from "./cards/AppearanceCard";
 import { NotificationsCard } from "./cards/NotificationsCard";
 import { NotificationSettingsCard } from "./cards/NotificationSettingsCard";
-import { DoNotDisturbCard } from "./cards/DoNotDisturbCard";
 import { UpgradeTierCard } from "./cards/UpgradeTierCard";
 import { SubjectsSettingsCard } from "./cards/SubjectsSettingsCard";
 import { StudyPreferencesCard } from "./cards/StudyPreferencesCard";
@@ -41,39 +39,65 @@ export const SettingsFormTabs = ({
 }: SettingsFormTabsProps) => {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
-      <TabsList className="grid grid-cols-3 mb-8">
-        <TabsTrigger value="account">Account</TabsTrigger>
-        <TabsTrigger value="notifications">Notifications</TabsTrigger>
-        <TabsTrigger value="subjects">Subjects</TabsTrigger>
+      <TabsList className="grid grid-cols-3 mb-8 bg-white/60 backdrop-blur-sm border border-mint-100/50 shadow-lg">
+        <TabsTrigger value="account" className="data-[state=active]:bg-mint-100 data-[state=active]:text-mint-800">Account</TabsTrigger>
+        <TabsTrigger value="notifications" className="data-[state=active]:bg-mint-100 data-[state=active]:text-mint-800">Notifications</TabsTrigger>
+        <TabsTrigger value="subjects" className="data-[state=active]:bg-mint-100 data-[state=active]:text-mint-800">Subjects</TabsTrigger>
       </TabsList>
       
       <TabsContent value="account" className="space-y-6">
-        {/* New Upgrade Tier Card added at the top for visibility */}
-        <UpgradeTierCard />
+        {/* Upgrade Tier Card at the top for visibility */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-mint-400/10 to-blue-400/10 rounded-xl blur-xl"></div>
+          <div className="relative">
+            <UpgradeTierCard />
+          </div>
+        </div>
         
-        <AccountSettingsCard 
-          user={user}
-          userTier={userTier}
-          form={form}
-          countries={countries}
-          onCountryChange={onCountryChange}
-        />
+        <div className="relative">
+          <div className="absolute -inset-2 bg-gradient-to-r from-mint-500/5 to-blue-500/5 rounded-2xl blur-lg"></div>
+          <div className="relative">
+            <AccountSettingsCard 
+              user={user}
+              userTier={userTier}
+              form={form}
+              countries={countries}
+              onCountryChange={onCountryChange}
+            />
+          </div>
+        </div>
         
-        <StudyPreferencesCard form={form} />
-        
-        <AppearanceCard form={form} />
+        <div className="relative">
+          <div className="absolute -inset-2 bg-gradient-to-r from-mint-500/5 to-blue-500/5 rounded-2xl blur-lg"></div>
+          <div className="relative">
+            <StudyPreferencesCard form={form} />
+          </div>
+        </div>
       </TabsContent>
       
       <TabsContent value="notifications" className="space-y-6">
-        <NotificationsCard form={form} />
+        <div className="relative">
+          <div className="absolute -inset-2 bg-gradient-to-r from-mint-500/5 to-blue-500/5 rounded-2xl blur-lg"></div>
+          <div className="relative">
+            <NotificationsCard form={form} />
+          </div>
+        </div>
         
-        <NotificationSettingsCard form={form} userTier={userTier} />
-        
-        <DoNotDisturbCard form={form} />
+        <div className="relative">
+          <div className="absolute -inset-2 bg-gradient-to-r from-mint-500/5 to-blue-500/5 rounded-2xl blur-lg"></div>
+          <div className="relative">
+            <NotificationSettingsCard form={form} userTier={userTier} />
+          </div>
+        </div>
       </TabsContent>
       
       <TabsContent value="subjects" className="space-y-6">
-        <SubjectsSettingsCard />
+        <div className="relative">
+          <div className="absolute -inset-2 bg-gradient-to-r from-mint-500/5 to-blue-500/5 rounded-2xl blur-lg"></div>
+          <div className="relative">
+            <SubjectsSettingsCard />
+          </div>
+        </div>
       </TabsContent>
     </Tabs>
   );

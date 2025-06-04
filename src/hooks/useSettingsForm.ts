@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,16 +27,12 @@ export const useSettingsForm = () => {
       email: user?.email || "user@example.com",
       emailNotifications: true,
       studyReminders: true,
-      darkMode: false,
       language: "en",
       countryId: "",
       whatsappNotifications: false,
       whatsappPhone: "",
       goalNotifications: true,
       weeklyReports: false,
-      dndEnabled: false,
-      dndStartTime: "22:00",
-      dndEndTime: "07:00",
       weeklyStudyGoalHours: 5,
     },
     mode: "onBlur",
@@ -60,7 +55,7 @@ export const useSettingsForm = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('notification_preferences, whatsapp_phone, do_not_disturb, dnd_start_time, dnd_end_time, weekly_study_goal_hours')
+          .select('notification_preferences, whatsapp_phone, weekly_study_goal_hours')
           .eq('id', user.id)
           .single();
         
@@ -79,13 +74,8 @@ export const useSettingsForm = () => {
           form.setValue("goalNotifications", notificationPrefs.goalNotifications === true);
           form.setValue("weeklyReports", notificationPrefs.weeklyReports === true);
           
-          // DND settings
+          // Other settings
           form.setValue("whatsappPhone", data.whatsapp_phone || "");
-          form.setValue("dndEnabled", data.do_not_disturb || false);
-          form.setValue("dndStartTime", data.dnd_start_time || "22:00");
-          form.setValue("dndEndTime", data.dnd_end_time || "07:00");
-          
-          // Weekly study goal
           form.setValue("weeklyStudyGoalHours", data.weekly_study_goal_hours || 5);
         }
       } catch (error) {
@@ -138,9 +128,6 @@ export const useSettingsForm = () => {
           .update({
             notification_preferences: notificationPreferences,
             whatsapp_phone: data.whatsappPhone,
-            do_not_disturb: data.dndEnabled,
-            dnd_start_time: data.dndEnabled ? data.dndStartTime : null,
-            dnd_end_time: data.dndEnabled ? data.dndEndTime : null,
             weekly_study_goal_hours: data.weeklyStudyGoalHours
           })
           .eq('id', user.id);
