@@ -25,6 +25,7 @@ export const QuickActionsGrid = ({ isFeatureVisible }: QuickActionsGridProps) =>
           href="/flashcards"
           icon={BookOpen}
           buttonText="View Flashcards"
+          variant="default"
         />
 
         {/* Quizzes Card - Show if feature is visible */}
@@ -35,6 +36,7 @@ export const QuickActionsGrid = ({ isFeatureVisible }: QuickActionsGridProps) =>
             href="/quizzes"
             icon={GraduationCap}
             buttonText="Take Quiz"
+            variant="default"
             secondaryAction={{
               href: "/quiz/history",
               icon: BarChart,
@@ -50,6 +52,7 @@ export const QuickActionsGrid = ({ isFeatureVisible }: QuickActionsGridProps) =>
           href="/notes"
           icon={FileText}
           buttonText="View Notes"
+          variant="default"
         />
 
         {/* Schedule Card - Only show if feature is visible */}
@@ -60,6 +63,7 @@ export const QuickActionsGrid = ({ isFeatureVisible }: QuickActionsGridProps) =>
             href="/schedule"
             icon={Calendar}
             buttonText="View Schedule"
+            variant="default"
           />
         )}
 
@@ -70,6 +74,7 @@ export const QuickActionsGrid = ({ isFeatureVisible }: QuickActionsGridProps) =>
           href="/settings"
           icon={Settings}
           buttonText="View Settings"
+          variant="default"
         />
       </div>
     </>
