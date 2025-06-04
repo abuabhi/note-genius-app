@@ -127,12 +127,6 @@ export const NotesContent = ({
           </div>
         </div>
 
-        {/* Floating action indicator */}
-        <div className="fixed bottom-8 right-8 hidden lg:flex items-center gap-3 bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg border border-mint-100/50">
-          <div className="w-2 h-2 bg-mint-500 rounded-full animate-pulse"></div>
-          <span className="text-sm font-medium text-slate-600">Ready to create</span>
-        </div>
-
         {/* Dialogs for Creating Notes */}
         <NoteCreationDialogs 
           onSaveNote={onSaveNote}
