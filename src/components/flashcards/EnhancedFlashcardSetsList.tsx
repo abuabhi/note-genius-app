@@ -14,7 +14,6 @@ import {
   MoreVertical,
   Trash2,
   Edit,
-  Users,
   Clock,
   TrendingUp
 } from "lucide-react";
@@ -103,22 +102,26 @@ const EnhancedFlashcardSetsList = () => {
     });
   }, [flashcardSets, searchQuery, sortBy, subjectFilter]);
 
-  // Ensure flashcards are fetched when component mounts or when navigation occurs
+  // Single effect to ensure flashcards are fetched when component mounts
   useEffect(() => {
-    console.log('EnhancedFlashcardSetsList: Component mounted, fetching flashcard sets...');
+    console.log('EnhancedFlashcardSetsList: Component mounted');
+    
     const loadData = async () => {
-      try {
-        await fetchFlashcardSets();
-        setHasInitiallyLoaded(true);
-        console.log('EnhancedFlashcardSetsList: Data loaded successfully');
-      } catch (error) {
-        console.error('EnhancedFlashcardSetsList: Error loading data:', error);
-        setHasInitiallyLoaded(true);
+      if (!hasInitiallyLoaded) {
+        console.log('EnhancedFlashcardSetsList: Loading initial data...');
+        try {
+          await fetchFlashcardSets();
+          console.log('EnhancedFlashcardSetsList: Data loaded successfully');
+        } catch (error) {
+          console.error('EnhancedFlashcardSetsList: Error loading data:', error);
+        } finally {
+          setHasInitiallyLoaded(true);
+        }
       }
     };
     
     loadData();
-  }, []);
+  }, []); // Empty dependency array - only run once on mount
 
   const handleDeleteSet = async (setId: string) => {
     setDeletingSet(setId);

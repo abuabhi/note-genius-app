@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useMemo } from 'react';
+import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
 import { FlashcardContextType, FlashcardProviderProps, FlashcardState } from './types';
 import { FlashcardSet, Flashcard, SubjectCategory } from '@/types/flashcard';
 import { useFlashcardOperations } from './useFlashcardOperations';
@@ -37,6 +37,11 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
 
   const { user } = useAuth();
 
+  // Stable loading setter using useCallback
+  const stableSetLoading = useCallback((newLoading: typeof loading | ((prev: typeof loading) => typeof loading)) => {
+    setLoading(newLoading);
+  }, []);
+
   // Create state object for hooks to share
   const state: FlashcardState = useMemo(() => ({
     flashcards,
@@ -50,7 +55,7 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     setCurrentFlashcard,
     setCurrentSet,
     setCategories,
-    setLoading,
+    setLoading: stableSetLoading,
     user
   }), [
     flashcards,
@@ -59,20 +64,21 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     currentSet,
     categories,
     loading,
+    stableSetLoading,
     user
   ]);
 
-  // Get all operations from our hooks
+  // Get all operations from our hooks with stable references
   const flashcardOperations = useFlashcardOperations(state);
   const flashcardSetsOperations = useFlashcardSets(state);
   const categoryOperations = useCategoryOperations(categories, setCategories);
   const libraryOperations = useLibraryOperations(state);
-  const studyOperations = useStudyOperations(); // No arguments needed
+  const studyOperations = useStudyOperations();
   
   // Get combined operations that include recordFlashcardReview and getFlashcardProgress
   const combinedOperations = combineFlashcardOperations(state);
 
-  // Create the context value with all required properties and memoize it
+  // Create stable context value with all required properties
   const contextValue: FlashcardContextType = useMemo(() => ({
     flashcards,
     flashcardSets,
@@ -88,7 +94,6 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     ...categoryOperations,
     ...libraryOperations,
     ...studyOperations,
-    // Add the missing functions from combinedOperations
     recordFlashcardReview: combinedOperations.recordFlashcardReview,
     getFlashcardProgress: combinedOperations.getFlashcardProgress
   }), [

@@ -25,15 +25,41 @@ const FlashcardsPage = () => {
   // Make sure the user is authenticated
   useRequireAuth();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [hasInitialLoad, setHasInitialLoad] = useState(false);
   const { flashcardSets, fetchFlashcardSets } = useFlashcards();
   const { streak } = useStreakCalculation();
   const { stats } = useProgressStats();
 
-  // Ensure fresh data when navigating to this page
+  // Single effect to load data on mount - no dependencies to prevent loops
   useEffect(() => {
-    console.log('FlashcardsPage: Component mounted, ensuring fresh data...');
-    fetchFlashcardSets();
-  }, [fetchFlashcardSets]);
+    console.log('FlashcardsPage: Initial mount, loading data...');
+    
+    const loadInitialData = async () => {
+      if (!hasInitialLoad) {
+        try {
+          await fetchFlashcardSets();
+          console.log('FlashcardsPage: Initial data loaded successfully');
+        } catch (error) {
+          console.error('FlashcardsPage: Error loading initial data:', error);
+        } finally {
+          setHasInitialLoad(true);
+        }
+      }
+    };
+
+    loadInitialData();
+  }, []); // Empty dependency array - only run once on mount
+
+  // Handler for refreshing data after operations
+  const handleDataRefresh = async () => {
+    console.log('FlashcardsPage: Refreshing flashcard sets...');
+    try {
+      await fetchFlashcardSets();
+      console.log('FlashcardsPage: Data refreshed successfully');
+    } catch (error) {
+      console.error('FlashcardsPage: Error refreshing data:', error);
+    }
+  };
 
   return (
     <Layout>
@@ -67,15 +93,13 @@ const FlashcardsPage = () => {
                   <TabsContent value="set" className="mt-4">
                     <CreateFlashcardSet onSuccess={() => {
                       setCreateDialogOpen(false);
-                      // Refresh the list after creating a new set
-                      fetchFlashcardSets();
+                      handleDataRefresh();
                     }} />
                   </TabsContent>
                   <TabsContent value="flashcard" className="mt-4">
                     <CreateFlashcard onSuccess={() => {
                       setCreateDialogOpen(false);
-                      // Refresh the list after creating a new flashcard
-                      fetchFlashcardSets();
+                      handleDataRefresh();
                     }} />
                   </TabsContent>
                 </Tabs>
