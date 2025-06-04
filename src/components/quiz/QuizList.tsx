@@ -6,13 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useQuizList } from "@/hooks/quiz/useQuizList";
-import { Quiz } from "@/types/quiz";
+import { QuizWithQuestions } from "@/types/quiz";
 import { Play, Clock, HelpCircle, Search, Plus, History } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 export const QuizList = () => {
   const navigate = useNavigate();
-  const { data: quizzes, isLoading, error } = useQuizList();
+  const { quizzes, isLoading, error } = useQuizList();
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredQuizzes = quizzes?.filter(quiz =>
@@ -111,7 +111,7 @@ export const QuizList = () => {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredQuizzes.map((quiz: Quiz) => (
+          {filteredQuizzes.map((quiz: QuizWithQuestions) => (
             <QuizCard key={quiz.id} quiz={quiz} onTakeQuiz={() => navigate(`/quiz/${quiz.id}`)} />
           ))}
         </div>
@@ -121,7 +121,7 @@ export const QuizList = () => {
 };
 
 interface QuizCardProps {
-  quiz: Quiz;
+  quiz: QuizWithQuestions;
   onTakeQuiz: () => void;
 }
 
