@@ -14,16 +14,16 @@ export const useLibraryOperations = (state: FlashcardState) => {
   }, []);
 
   const handleCopySetFromLibrary = useCallback(async (setId: string): Promise<FlashcardSet | null> => {
-    const getCurrentSets = () => state.flashcardSets;
-    const updateSets = (newSets: FlashcardSet[]) => {
+    const getCurrentSets = (): FlashcardSet[] => state.flashcardSets;
+    const updateSets = (newSets: FlashcardSet[]): void => {
       state.setFlashcardSets(newSets);
     };
     return copySetFromLibrary(state.user, getCurrentSets, updateSets, setId);
   }, [state.user, state.flashcardSets, state.setFlashcardSets]);
 
   const handleCloneFlashcardSet = useCallback(async (setId: string): Promise<FlashcardSet | null> => {
-    const getCurrentSets = () => state.flashcardSets;
-    const updateSets = (newSets: FlashcardSet[]) => {
+    const getCurrentSets = (): FlashcardSet[] => state.flashcardSets;
+    const updateSets = (newSets: FlashcardSet[]): void => {
       state.setFlashcardSets(newSets);
     };
     return cloneFlashcardSet(state.user, getCurrentSets, updateSets, setId);
