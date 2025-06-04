@@ -14,11 +14,17 @@ export const useLibraryOperations = (state: FlashcardState) => {
   }, []);
 
   const handleCopySetFromLibrary = useCallback(async (setId: string): Promise<FlashcardSet | null> => {
-    return copySetFromLibrary(state.user, state.setFlashcardSets, setId);
+    const simpleSetter = (sets: FlashcardSet[]) => {
+      state.setFlashcardSets(sets);
+    };
+    return copySetFromLibrary(state.user, simpleSetter, setId);
   }, [state.user, state.setFlashcardSets]);
 
   const handleCloneFlashcardSet = useCallback(async (setId: string): Promise<FlashcardSet | null> => {
-    return cloneFlashcardSet(state.user, state.setFlashcardSets, setId);
+    const simpleSetter = (sets: FlashcardSet[]) => {
+      state.setFlashcardSets(sets);
+    };
+    return cloneFlashcardSet(state.user, simpleSetter, setId);
   }, [state.user, state.setFlashcardSets]);
 
   const handleFetchBuiltInSets = useCallback(async (): Promise<FlashcardSet[]> => {

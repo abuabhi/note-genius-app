@@ -48,7 +48,7 @@ export const fetchBuiltInSets = async (): Promise<FlashcardSet[]> => {
  */
 export const cloneFlashcardSet = async (
   user: any, 
-  setFlashcardSets: React.Dispatch<React.SetStateAction<FlashcardSet[]>>,
+  setFlashcardSets: (sets: FlashcardSet[]) => void,
   setId: string
 ): Promise<FlashcardSet | null> => {
   if (!user) {
@@ -110,7 +110,11 @@ export const cloneFlashcardSet = async (
     }
 
     const formattedSet = convertToFlashcardSet(newSet);
-    setFlashcardSets(prev => [formattedSet, ...prev]);
+    
+    // Use a simpler approach to update state to avoid type inference issues
+    setFlashcardSets((currentSets: FlashcardSet[]) => {
+      return [formattedSet, ...currentSets];
+    });
     
     toast.success('Set cloned successfully!');
     return formattedSet;
@@ -148,7 +152,7 @@ export const searchLibrary = async (query: string): Promise<FlashcardSet[]> => {
  */
 export const copySetFromLibrary = async (
   user: any, 
-  setFlashcardSets: React.Dispatch<React.SetStateAction<FlashcardSet[]>>,
+  setFlashcardSets: (sets: FlashcardSet[]) => void,
   setId: string
 ): Promise<FlashcardSet | null> => {
   return cloneFlashcardSet(user, setFlashcardSets, setId);
