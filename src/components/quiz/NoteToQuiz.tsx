@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,35 +48,37 @@ export const NoteToQuiz = () => {
         return `${note.title}\n${note.content || note.description}`;
       }).join('\n\n');
       
-      // Call edge function to generate questions
-      const { data, error } = await supabase.functions.invoke('generate-flashcards', {
+      const numberOfQuestions = Math.min(10, Math.max(3, Math.ceil(selectedNotes.length * 2)));
+      
+      // Call the generate-quiz edge function
+      const { data, error } = await supabase.functions.invoke('generate-quiz', {
         body: { 
           content: noteContents,
-          mode: 'quiz',
-          count: Math.min(10, Math.max(3, Math.ceil(selectedNotes.length * 2))) // 3-10 questions based on note count
+          numberOfQuestions,
+          difficulty: 'medium',
+          topic: selectedNotes.length === 1 ? selectedNotes[0].title : 'Multiple Topics'
         }
       });
       
       if (error) {
+        console.error('Error calling generate-quiz function:', error);
         throw new Error(error.message || 'Failed to generate quiz questions');
       }
       
-      if (!data || !Array.isArray(data)) {
+      if (!data || !data.success || !data.quiz || !Array.isArray(data.quiz.questions)) {
+        console.error('Invalid response from generate-quiz:', data);
         throw new Error('Invalid response from AI generator');
       }
       
-      // Transform the flashcard format to quiz question format
-      const questions = data.map(item => ({
-        question: item.front || item.front_content || '',
+      // Transform the quiz response to the expected format
+      const questions = data.quiz.questions.map((item: any) => ({
+        question: item.question || '',
         explanation: item.explanation || '',
-        options: [
-          { content: item.back || item.back_content || '', isCorrect: true },
-          ...(item.distractors || []).map((distractor: string) => ({
-            content: distractor,
-            isCorrect: false
-          }))
-        ]
-      })).filter(q => q.question && q.options.length >= 2);
+        options: item.options ? item.options.map((opt: string, index: number) => ({
+          content: opt,
+          isCorrect: index === item.correctAnswer
+        })) : []
+      })).filter((q: any) => q.question && q.options.length >= 2);
       
       if (questions.length === 0) {
         throw new Error('Could not generate any valid questions from these notes');
