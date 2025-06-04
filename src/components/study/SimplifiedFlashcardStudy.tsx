@@ -12,6 +12,7 @@ import { NavigationControls } from "./components/NavigationControls";
 import { StudyChoices } from "./components/StudyChoices";
 import { ModeHint } from "./components/ModeHint";
 import { QuizHeader } from "./components/QuizHeader";
+import { StudySessionTracker } from "./StudySessionTracker";
 
 interface SimplifiedFlashcardStudyProps {
   setId: string;
@@ -83,6 +84,9 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
       studyData.handleCardChoice('needs_practice');
     }
   };
+
+  // Calculate total cards studied for session tracking
+  const cardsStudied = studyData ? studyData.studiedToday : (quizData ? quizData.correctAnswers : 0);
 
   if (isLoading) {
     return (
@@ -199,6 +203,21 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      {/* Study Session Tracker - only show during active study */}
+      {setId && currentSet && !isComplete && (
+        <StudySessionTracker
+          flashcardSetId={setId}
+          flashcardSetName={currentSet?.name || "Flashcard Study"}
+          cardsStudied={cardsStudied}
+          onSessionStart={() => {
+            console.log("Study session started for:", currentSet?.name);
+          }}
+          onSessionEnd={() => {
+            console.log("Study session ended");
+          }}
+        />
+      )}
+
       {/* Quiz Header with Timer and Score */}
       {isQuizMode && quizData && (
         <QuizHeader

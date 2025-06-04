@@ -27,7 +27,11 @@ export const SimplifiedStudyPageLayout = ({
             </div>
           </div>
         ) : (
-          <SimplifiedFlashcardStudy setId={setId} mode={mode} currentSet={currentSet} />
+          <SimplifiedFlashcardStudy 
+            setId={setId} 
+            mode={mode} 
+            currentSet={currentSet} 
+          />
         )}
       </div>
       
