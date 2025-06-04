@@ -1,6 +1,6 @@
 
 import { format } from 'date-fns';
-import { CalendarClock, Clock, Edit, Trash2 } from 'lucide-react';
+import { CalendarClock, Clock, Edit, Trash2, Trophy, Zap, Star } from 'lucide-react';
 import { StudyGoal } from '@/hooks/useStudyGoals';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,17 +35,39 @@ export const GoalCard = ({ goal, onEdit, onDelete }: GoalCardProps) => {
   
   const isOverdue = daysLeft < 0 && !goal.is_completed;
   const isAlmostDue = daysLeft <= 3 && daysLeft >= 0 && !goal.is_completed;
+
+  // Gamification elements
+  const getProgressColor = () => {
+    if (goal.is_completed) return "bg-green-500";
+    if (goal.progress >= 75) return "bg-blue-500";
+    if (goal.progress >= 50) return "bg-yellow-500";
+    return "bg-gray-300";
+  };
+
+  const getMotivationalMessage = () => {
+    if (goal.is_completed) return "🎉 Goal completed! Amazing work!";
+    if (goal.progress >= 90) return "🔥 Almost there! Final push!";
+    if (goal.progress >= 75) return "⭐ Great progress! Keep it up!";
+    if (goal.progress >= 50) return "💪 Halfway there! You're doing great!";
+    if (goal.progress >= 25) return "🚀 Good start! Keep going!";
+    return "🎯 Ready to begin? You've got this!";
+  };
+
+  const getRewardPoints = () => {
+    if (goal.is_completed) return goal.target_hours * 10;
+    return Math.floor(goal.progress * goal.target_hours * 0.1);
+  };
   
   return (
     <>
       <Card className={
         goal.is_completed 
-          ? "border-green-500 bg-green-50" 
+          ? "border-green-500 bg-gradient-to-br from-green-50 to-green-100" 
           : isOverdue 
-            ? "border-red-500 bg-red-50" 
+            ? "border-red-500 bg-gradient-to-br from-red-50 to-red-100" 
             : isAlmostDue 
-              ? "border-amber-500 bg-amber-50" 
-              : ""
+              ? "border-amber-500 bg-gradient-to-br from-amber-50 to-amber-100" 
+              : "bg-gradient-to-br from-white to-gray-50"
       }>
         <CardHeader className="pb-2">
           <div className="flex justify-between items-start">
@@ -53,6 +75,7 @@ export const GoalCard = ({ goal, onEdit, onDelete }: GoalCardProps) => {
             <div className="flex space-x-1">
               {goal.is_completed && (
                 <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200">
+                  <Trophy className="h-3 w-3 mr-1" />
                   Completed
                 </Badge>
               )}
@@ -72,6 +95,13 @@ export const GoalCard = ({ goal, onEdit, onDelete }: GoalCardProps) => {
             </div>
           </div>
           <CardDescription>{goal.description}</CardDescription>
+          
+          {/* Motivational message */}
+          <div className="mt-2 p-2 bg-white/60 rounded-md border border-gray-200">
+            <p className="text-xs text-center font-medium text-gray-700">
+              {getMotivationalMessage()}
+            </p>
+          </div>
         </CardHeader>
         
         <CardContent className="space-y-3 pb-2">
@@ -80,7 +110,19 @@ export const GoalCard = ({ goal, onEdit, onDelete }: GoalCardProps) => {
               <span>Progress</span>
               <span>{goal.progress}%</span>
             </div>
-            <Progress value={goal.progress} className="h-2" />
+            <Progress value={goal.progress} className="h-3" />
+          </div>
+
+          {/* Reward points section */}
+          <div className="flex items-center justify-between p-2 bg-white/60 rounded-md border border-gray-200">
+            <div className="flex items-center gap-2">
+              <Star className="h-4 w-4 text-yellow-500" />
+              <span className="text-sm font-medium">Reward Points</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-sm font-bold text-yellow-600">{getRewardPoints()}</span>
+              <span className="text-xs text-gray-500">pts</span>
+            </div>
           </div>
           
           <div className="grid grid-cols-2 gap-2 text-sm">
@@ -104,6 +146,16 @@ export const GoalCard = ({ goal, onEdit, onDelete }: GoalCardProps) => {
             <div>From: {format(new Date(goal.start_date), 'MMM dd, yyyy')}</div>
             <div>To: {format(new Date(goal.end_date), 'MMM dd, yyyy')}</div>
           </div>
+
+          {/* Progress streak indicator */}
+          {goal.progress > 0 && (
+            <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-md border border-blue-200">
+              <Zap className="h-4 w-4 text-blue-500" />
+              <span className="text-xs text-blue-700">
+                You're making progress! Keep up the momentum!
+              </span>
+            </div>
+          )}
         </CardContent>
         
         <CardFooter className="pt-2">

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
@@ -24,10 +25,58 @@ export type GoalFormValues = Omit<StudyGoal, 'id' | 'user_id' | 'created_at' | '
   id?: string;
 };
 
+export type GoalTemplate = {
+  title: string;
+  description: string;
+  target_hours: number;
+  duration_days: number;
+  category: 'beginner' | 'intermediate' | 'advanced';
+  subject?: string;
+};
+
+export const goalTemplates: GoalTemplate[] = [
+  {
+    title: "Daily Study Habit",
+    description: "Study for 1 hour every day this week",
+    target_hours: 7,
+    duration_days: 7,
+    category: 'beginner'
+  },
+  {
+    title: "Master a Subject",
+    description: "Complete 20 hours of focused study on a specific subject",
+    target_hours: 20,
+    duration_days: 30,
+    category: 'intermediate'
+  },
+  {
+    title: "Exam Preparation Sprint",
+    description: "Intensive 40-hour study program for exam preparation",
+    target_hours: 40,
+    duration_days: 14,
+    category: 'advanced'
+  },
+  {
+    title: "Weekend Warrior",
+    description: "Study 5 hours over the weekend",
+    target_hours: 5,
+    duration_days: 2,
+    category: 'beginner'
+  },
+  {
+    title: "Monthly Challenge",
+    description: "Achieve 50 hours of study this month",
+    target_hours: 50,
+    duration_days: 30,
+    category: 'advanced'
+  }
+];
+
 export const useStudyGoals = () => {
   const { user } = useAuth();
   const [goals, setGoals] = useState<StudyGoal[]>([]);
   const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   const fetchGoals = async () => {
     if (!user) return;
@@ -68,7 +117,11 @@ export const useStudyGoals = () => {
       if (error) throw error;
       
       setGoals((prev) => [...prev, data]);
-      toast.success('Study goal created successfully');
+      toast.success('🎯 Study goal created successfully! Let\'s achieve it together!');
+      
+      // Trigger achievement check
+      await checkGoalAchievements();
+      
       return data;
     } catch (error) {
       console.error('Error creating study goal:', error);
@@ -158,9 +211,14 @@ export const useStudyGoals = () => {
       );
       
       if (isCompleted) {
-        toast.success('Congratulations! Study goal completed');
+        toast.success('🎉 Congratulations! Goal completed! You\'re amazing!');
+        await checkGoalAchievements();
+      } else if (newProgress >= 50 && goal.progress < 50) {
+        toast.success('🔥 You\'re halfway there! Keep up the great work!');
+      } else if (newProgress >= 75 && goal.progress < 75) {
+        toast.success('⭐ Almost there! You\'re in the final stretch!');
       } else {
-        toast.success('Study goal progress updated');
+        toast.success('📈 Goal progress updated - you\'re doing great!');
       }
       
       return true;
@@ -169,6 +227,77 @@ export const useStudyGoals = () => {
       toast.error('Failed to update goal progress');
       return false;
     }
+  };
+
+  const checkGoalAchievements = async () => {
+    if (!user) return;
+
+    try {
+      // This would trigger the achievement system
+      const { data, error } = await supabase.rpc('check_and_award_achievements', {
+        p_user_id: user.id
+      });
+
+      if (error) {
+        console.error('Error checking achievements:', error);
+        return;
+      }
+
+      // Show achievement notifications
+      if (data && data.length > 0) {
+        data.forEach((achievement: { new_achievement_title: string }) => {
+          toast.success(`🏆 Achievement Unlocked: ${achievement.new_achievement_title}!`);
+        });
+      }
+    } catch (error) {
+      console.error('Error checking goal achievements:', error);
+    }
+  };
+
+  const createGoalFromTemplate = async (template: GoalTemplate, customizations?: Partial<GoalFormValues>) => {
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setDate(startDate.getDate() + template.duration_days);
+
+    const goalData: GoalFormValues = {
+      title: template.title,
+      description: template.description,
+      target_hours: template.target_hours,
+      start_date: startDate.toISOString().split('T')[0],
+      end_date: endDate.toISOString().split('T')[0],
+      subject: template.subject || null,
+      flashcard_set_id: null,
+      ...customizations
+    };
+
+    return createGoal(goalData);
+  };
+
+  const getGoalSuggestions = () => {
+    const completedGoalsCount = goals.filter(g => g.is_completed).length;
+    const currentActiveGoals = goals.filter(g => !g.is_completed).length;
+    
+    if (currentActiveGoals >= 3) {
+      return [];
+    }
+
+    if (completedGoalsCount === 0) {
+      return goalTemplates.filter(t => t.category === 'beginner');
+    } else if (completedGoalsCount < 3) {
+      return goalTemplates.filter(t => t.category === 'intermediate');
+    } else {
+      return goalTemplates.filter(t => t.category === 'advanced');
+    }
+  };
+
+  const getStreakBonus = () => {
+    // This would calculate streak bonus based on consecutive goal completions
+    const recentCompletions = goals
+      .filter(g => g.is_completed)
+      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+      .slice(0, 7);
+    
+    return recentCompletions.length;
   };
 
   useEffect(() => {
@@ -184,6 +313,10 @@ export const useStudyGoals = () => {
     createGoal,
     updateGoal,
     deleteGoal,
-    updateGoalProgress
+    updateGoalProgress,
+    createGoalFromTemplate,
+    getGoalSuggestions,
+    getStreakBonus,
+    goalTemplates
   };
 };

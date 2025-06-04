@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { PlusCircle, Search, Filter, Target } from 'lucide-react';
+import { PlusCircle, Search, Filter, Target, Zap, Trophy, Star } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { GoalCard } from '@/components/goals/GoalCard';
 import { GoalFormDialog } from '@/components/goals/GoalFormDialog';
@@ -12,10 +12,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FeatureDisabledAlert } from '@/components/routes/FeatureProtectedRoute';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 const GoalsPage = () => {
   const { loading: authLoading } = useRequireAuth();
-  const { goals, loading: goalsLoading, createGoal, updateGoal, deleteGoal } = useStudyGoals();
+  const { 
+    goals, 
+    loading: goalsLoading, 
+    createGoal, 
+    updateGoal, 
+    deleteGoal,
+    createGoalFromTemplate,
+    getGoalSuggestions,
+    getStreakBonus,
+    goalTemplates
+  } = useStudyGoals();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState('all');
@@ -36,6 +48,10 @@ const GoalsPage = () => {
   const handleEditGoal = (goal: StudyGoal) => {
     setSelectedGoal(goal);
     setFormOpen(true);
+  };
+
+  const handleCreateFromTemplate = async (template: any) => {
+    await createGoalFromTemplate(template);
   };
   
   const filteredGoals = goals.filter(goal => {
@@ -70,7 +86,11 @@ const GoalsPage = () => {
   });
 
   const loading = authLoading || goalsLoading;
-  
+  const completedGoalsCount = goals.filter(g => g.is_completed).length;
+  const activeGoalsCount = goals.filter(g => !g.is_completed).length;
+  const streakBonus = getStreakBonus();
+  const suggestions = getGoalSuggestions();
+
   return (
     <Layout>
       <div className="container mx-auto p-6">
@@ -89,6 +109,82 @@ const GoalsPage = () => {
             <PlusCircle className="mr-2 h-4 w-4" /> Create Goal
           </Button>
         </div>
+
+        {/* Gamification Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Target className="h-4 w-4 text-blue-600" />
+                Active Goals
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-800">{activeGoalsCount}</div>
+              <p className="text-xs text-blue-600">Currently pursuing</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Trophy className="h-4 w-4 text-green-600" />
+                Completed Goals
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-800">{completedGoalsCount}</div>
+              <p className="text-xs text-green-600">Successfully achieved</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Zap className="h-4 w-4 text-orange-600" />
+                Goal Streak
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-800">{streakBonus}</div>
+              <p className="text-xs text-orange-600">Consecutive completions</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Goal Suggestions */}
+        {suggestions.length > 0 && (
+          <Card className="mb-6 bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Star className="h-5 w-5 text-purple-600" />
+                Suggested Goals for You
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {suggestions.slice(0, 3).map((template, index) => (
+                  <div 
+                    key={index}
+                    className="p-4 bg-white rounded-lg border border-purple-200 hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => handleCreateFromTemplate(template)}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <h4 className="font-medium text-sm">{template.title}</h4>
+                      <Badge variant="outline" className="text-xs">
+                        {template.category}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-2">{template.description}</p>
+                    <div className="text-xs text-purple-600">
+                      {template.target_hours}h • {template.duration_days} days
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
         
         <FeatureDisabledAlert featureKey="goals" featureDisplayName="Study Goals" />
         
@@ -164,7 +260,7 @@ const GoalsPage = () => {
                   <p className="text-muted-foreground text-sm mb-4">
                     {searchQuery || filter !== 'all' 
                       ? "No goals match your current filters. Try adjusting your search." 
-                      : "Start by creating your first study goal."}
+                      : "Start by creating your first study goal or try a suggested goal above."}
                   </p>
                   <Button 
                     onClick={() => {
