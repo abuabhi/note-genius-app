@@ -35,7 +35,7 @@ interface QuizSessionItem {
   duration_seconds: number;
   average_response_time: number;
   grade: string;
-  flashcard_sets: {
+  flashcard_set: {
     name: string;
     subject: string;
   };
@@ -90,7 +90,7 @@ const QuizHistoryPage = () => {
     retryDelay: 1000
   });
 
-  // Fetch flashcard quiz sessions with better error handling
+  // Fetch flashcard quiz sessions with fixed query to avoid schema cache issue
   const { data: quizSessions, isLoading: isLoadingSessions, error: quizSessionsError } = useQuery({
     queryKey: ['quiz-sessions', userProfile?.id],
     queryFn: async () => {
@@ -103,7 +103,8 @@ const QuizHistoryPage = () => {
         console.error('No authenticated user found');
         throw new Error('User not authenticated');
       }
-
+      
+      // Fixed query that avoids the relationship error
       const { data, error } = await supabase
         .from('quiz_sessions')
         .select(`
@@ -117,10 +118,7 @@ const QuizHistoryPage = () => {
           duration_seconds,
           average_response_time,
           grade,
-          flashcard_sets!inner (
-            name,
-            subject
-          )
+          mode
         `)
         .eq('user_id', userId)
         .not('end_time', 'is', null)
@@ -133,12 +131,33 @@ const QuizHistoryPage = () => {
       
       console.log('Quiz sessions fetched:', data?.length || 0);
       
-      return (data || []).map(item => ({
-        ...item,
-        flashcard_sets: Array.isArray(item.flashcard_sets) 
-          ? item.flashcard_sets[0] 
-          : item.flashcard_sets
-      })) as QuizSessionItem[];
+      // Now make a separate call to get flashcard set details
+      const enhancedData = await Promise.all(data.map(async (session) => {
+        // Fetch the flashcard set details separately
+        const { data: setData, error: setError } = await supabase
+          .from('flashcard_sets')
+          .select('name, subject')
+          .eq('id', session.flashcard_set_id)
+          .single();
+          
+        if (setError) {
+          console.warn('Could not fetch flashcard set details for session:', session.id, setError);
+          return {
+            ...session,
+            flashcard_set: {
+              name: 'Unknown Set',
+              subject: 'Unknown Subject'
+            }
+          };
+        }
+        
+        return {
+          ...session,
+          flashcard_set: setData
+        };
+      }));
+      
+      return enhancedData as QuizSessionItem[];
     },
     enabled: !!userProfile?.id,
     retry: 3,
@@ -224,7 +243,8 @@ const QuizHistoryPage = () => {
     quizResults: quizResults?.length || 0,
     quizSessions: quizSessions?.length || 0,
     selectedType,
-    hasAnyHistory
+    hasAnyHistory,
+    sessions: quizSessions
   });
 
   return (
@@ -244,12 +264,6 @@ const QuizHistoryPage = () => {
             <h1 className="text-3xl font-bold text-mint-800">Quiz History</h1>
             <p className="text-muted-foreground">Track your quiz performance over time</p>
           </div>
-        </div>
-
-        {/* Debug Info */}
-        <div className="mb-4 p-3 bg-gray-50 rounded text-sm text-gray-600">
-          <p>Debug: Found {quizResults?.length || 0} quiz results and {quizSessions?.length || 0} quiz sessions</p>
-          <p>User ID: {userProfile?.id}</p>
         </div>
 
         {/* Filter by Type */}
@@ -359,10 +373,10 @@ const QuizHistoryPage = () => {
                   <div className="flex justify-between items-start">
                     <div>
                       <CardTitle className="text-lg font-semibold text-mint-800">
-                        {quiz.flashcard_sets.name}
+                        {quiz.flashcard_set?.name || 'Flashcard Quiz'}
                       </CardTitle>
                       <p className="text-sm text-muted-foreground">
-                        {quiz.flashcard_sets.subject} • {formatDistanceToNow(new Date(quiz.start_time), { addSuffix: true })}
+                        {quiz.flashcard_set?.subject || 'Study'} • {formatDistanceToNow(new Date(quiz.start_time), { addSuffix: true })}
                       </p>
                     </div>
                     <Badge className={`${getGradeColor(quiz.grade)} font-bold text-lg px-3 py-1`}>
