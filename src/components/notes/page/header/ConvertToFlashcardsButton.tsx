@@ -15,7 +15,7 @@ export const ConvertToFlashcardsButton = ({
   return (
     <Button 
       variant="outline" 
-      className="whitespace-nowrap border-mint-200 hover:bg-mint-50 shadow-sm hover:shadow-md transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+      className="whitespace-nowrap border-mint-200 hover:bg-mint-50 text-mint-700 shadow-sm hover:shadow-md transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
       onClick={onClick}
       disabled={disabled}
     >

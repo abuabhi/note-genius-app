@@ -13,7 +13,7 @@ export const EmptyQuizHistory = ({ onNavigateToQuiz }: EmptyQuizHistoryProps) =>
       <CardContent className="text-center py-12">
         <Trophy className="h-12 w-12 text-mint-300 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-mint-800 mb-2">No Quiz History</h3>
-        <p className="text-muted-foreground mb-6">
+        <p className="text-mint-600 mb-6">
           You haven't completed any quizzes yet
         </p>
         <Button 

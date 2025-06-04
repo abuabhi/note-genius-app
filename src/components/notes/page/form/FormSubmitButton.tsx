@@ -12,7 +12,7 @@ export const FormSubmitButton = ({ isSaving, isUpdate }: FormSubmitButtonProps) 
     <Button 
       type="submit" 
       disabled={isSaving} 
-      className="w-full bg-mint-500 hover:bg-mint-600 text-white"
+      className="w-full bg-mint-600 hover:bg-mint-700 text-white"
     >
       {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
       {isSaving ? 'Saving...' : isUpdate ? 'Update Note' : 'Create Note'}
