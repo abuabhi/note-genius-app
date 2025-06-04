@@ -50,7 +50,7 @@ export const useQuizFormSubmission = ({
       if (onSuccess) {
         onSuccess();
       } else {
-        navigate("/quiz");
+        navigate("/quizzes");
       }
     } catch (error) {
       console.error("Error creating quiz:", error);

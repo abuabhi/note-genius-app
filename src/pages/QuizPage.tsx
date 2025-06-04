@@ -89,7 +89,7 @@ const QuizPage = () => {
                   <p className="text-sm text-muted-foreground mb-4">
                     {quiz.questions?.length || 0} Multiple Choice Questions
                   </p>
-                  <Link to={`/quiz/take/${quiz.id}`}>
+                  <Link to={`/quizzes/${quiz.id}`}>
                     <Button className="w-full">Take Quiz</Button>
                   </Link>
                 </CardContent>

@@ -138,7 +138,7 @@ const QuizList = () => {
               <CardFooter>
                 <Button 
                   className="w-full" 
-                  onClick={() => navigate(`/quiz/take/${quiz.id}`)}
+                  onClick={() => navigate(`/quizzes/${quiz.id}`)}
                 >
                   Take Quiz
                 </Button>
