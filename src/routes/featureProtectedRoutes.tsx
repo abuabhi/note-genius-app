@@ -65,7 +65,7 @@ export const featureProtectedRoutes: RouteConfig[] = [
     ),
   },
   {
-    path: "/quiz/create",
+    path: "/create-quiz",
     element: (
       <FeatureProtectedRoute featureKey="quizzes">
         <CreateQuizPage />
@@ -73,7 +73,7 @@ export const featureProtectedRoutes: RouteConfig[] = [
     ),
   },
   {
-    path: "/quizzes/:quizId",
+    path: "/quiz/take/:quizId",
     element: (
       <FeatureProtectedRoute featureKey="quizzes">
         <TakeQuizPage />
