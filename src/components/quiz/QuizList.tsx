@@ -15,19 +15,19 @@ import { formatDistanceToNow } from "date-fns";
 export const QuizList = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedSubject, setSelectedSubject] = useState<string>("");
+  const [selectedSubject, setSelectedSubject] = useState<string>("all");
   
   const { subjects } = useSubjects();
   const { quizzes, isLoading, error } = useQuizList({
     search: searchTerm,
-    subject: selectedSubject
+    subject: selectedSubject === "all" ? undefined : selectedSubject
   });
 
   const filteredQuizzes = quizzes?.filter(quiz => {
     const matchesSearch = quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       quiz.description?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    if (!selectedSubject) return matchesSearch;
+    if (selectedSubject === "all") return matchesSearch;
     
     return matchesSearch && quiz.category_id === selectedSubject;
   }) || [];
@@ -84,7 +84,7 @@ export const QuizList = () => {
             <SelectValue placeholder="All Subjects" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Subjects</SelectItem>
+            <SelectItem value="all">All Subjects</SelectItem>
             {subjects.map((subject) => (
               <SelectItem key={subject.id} value={subject.id}>
                 {subject.name}
@@ -108,10 +108,10 @@ export const QuizList = () => {
           <CardContent className="p-12 text-center">
             <HelpCircle className="h-12 w-12 text-mint-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-mint-800 mb-2">
-              {searchTerm || selectedSubject ? "No quizzes found" : "No quizzes yet"}
+              {searchTerm || selectedSubject !== "all" ? "No quizzes found" : "No quizzes yet"}
             </h3>
             <p className="text-mint-600 mb-6">
-              {searchTerm || selectedSubject 
+              {searchTerm || selectedSubject !== "all"
                 ? "Try adjusting your search terms or filters" 
                 : "Create your first quiz to get started"
               }
