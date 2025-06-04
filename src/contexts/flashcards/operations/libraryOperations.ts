@@ -35,7 +35,7 @@ export const fetchBuiltInSets = async () => {
     
     if (error) throw error;
     
-    return data?.map(set => convertToFlashcardSet(set)) || [];
+    return data ? data.map(set => convertToFlashcardSet(set)) : [];
   } catch (error) {
     console.error('fetchBuiltInSets: Error fetching built-in sets:', error);
     toast.error('Failed to load library sets');
@@ -110,7 +110,21 @@ export const cloneFlashcardSet = async (
       if (insertError) throw insertError;
     }
 
-    const formattedSet = convertToFlashcardSet(newSet);
+    const formattedSet: FlashcardSet = {
+      id: newSet.id,
+      name: newSet.name,
+      description: newSet.description,
+      subject: newSet.subject,
+      topic: newSet.topic,
+      category_id: newSet.category_id,
+      country_id: newSet.country_id,
+      user_id: newSet.user_id,
+      created_at: newSet.created_at,
+      updated_at: newSet.updated_at,
+      card_count: newSet.card_count || 0,
+      is_built_in: false,
+      subject_categories: newSet.subject_categories
+    };
     
     // Update state with the new set
     const currentSets = getCurrentSets();
@@ -139,7 +153,7 @@ export const searchLibrary = async (query: string) => {
     
     if (error) throw error;
     
-    return data?.map(set => convertToFlashcardSet(set)) || [];
+    return data ? data.map(set => convertToFlashcardSet(set)) : [];
   } catch (error) {
     console.error('searchLibrary: Error searching library:', error);
     toast.error('Failed to search library');
