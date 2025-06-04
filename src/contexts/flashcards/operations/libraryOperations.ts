@@ -91,30 +91,57 @@ export const cloneFlashcardSet = async (
 
     if (createError) throw createError;
 
-    // Get flashcards from the original set
-    const { data: originalFlashcards, error: flashcardsError } = await supabase
-      .from('flashcards')
-      .select('*')
-      .eq('set_id', setId);
+    // Get flashcards from the original set using the junction table
+    const { data: originalFlashcardRelations, error: flashcardsError } = await supabase
+      .from('flashcard_set_cards')
+      .select(`
+        flashcard_id,
+        position,
+        flashcards (
+          front_content,
+          back_content,
+          difficulty
+        )
+      `)
+      .eq('set_id', setId)
+      .order('position', { ascending: true });
 
     if (flashcardsError) throw flashcardsError;
 
     // Clone the flashcards to the new set
-    if (originalFlashcards && originalFlashcards.length > 0) {
-      const newFlashcards = originalFlashcards.map(card => ({
-        front_content: card.front_content,
-        back_content: card.back_content,
-        difficulty: card.difficulty,
-        set_id: newSet.id,
-        user_id: userId,
-        is_built_in: false
-      }));
+    if (originalFlashcardRelations && originalFlashcardRelations.length > 0) {
+      // First, create the new flashcards
+      const newFlashcardsData = originalFlashcardRelations
+        .filter(relation => relation.flashcards)
+        .map(relation => ({
+          front_content: relation.flashcards.front_content,
+          back_content: relation.flashcards.back_content,
+          difficulty: relation.flashcards.difficulty,
+          user_id: userId,
+          is_built_in: false
+        }));
 
-      const { error: insertError } = await supabase
+      const { data: newFlashcards, error: insertFlashcardsError } = await supabase
         .from('flashcards')
-        .insert(newFlashcards);
+        .insert(newFlashcardsData)
+        .select('id');
 
-      if (insertError) throw insertError;
+      if (insertFlashcardsError) throw insertFlashcardsError;
+
+      // Then create the junction table relationships
+      if (newFlashcards && newFlashcards.length > 0) {
+        const junctionData = newFlashcards.map((flashcard, index) => ({
+          flashcard_id: flashcard.id,
+          set_id: newSet.id,
+          position: index + 1
+        }));
+
+        const { error: junctionError } = await supabase
+          .from('flashcard_set_cards')
+          .insert(junctionData);
+
+        if (junctionError) throw junctionError;
+      }
     }
 
     // Return the formatted set
@@ -129,7 +156,7 @@ export const cloneFlashcardSet = async (
       user_id: newSet.user_id,
       created_at: newSet.created_at,
       updated_at: newSet.updated_at,
-      card_count: newSet.card_count || 0,
+      card_count: originalFlashcardRelations?.length || 0,
       is_built_in: false
     };
     
