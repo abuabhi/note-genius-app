@@ -125,8 +125,8 @@ export const NoteCard = ({
       </div>
 
       <CardHeader className="relative p-6 pb-4">
-        {/* Card actions positioned absolutely */}
-        <div className="absolute top-4 right-16 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        {/* Card actions positioned absolutely - now always visible */}
+        <div className="absolute top-4 right-16">
           <NoteCardActions 
             noteId={note.id}
             noteTitle={note.title}
