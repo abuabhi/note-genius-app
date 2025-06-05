@@ -32,9 +32,9 @@ export const useTodoFilters = (allTodos: Todo[]) => {
     filter,
     filteredTodos: todos.map(t => ({ id: t.id, title: t.title, status: t.status })),
     statusBreakdown: {
+      new: allTodos.filter(t => t.status === 'new').length,
       pending: allTodos.filter(t => t.status === 'pending').length,
-      completed: allTodos.filter(t => t.status === 'completed').length,
-      cancelled: allTodos.filter(t => t.status === 'cancelled').length
+      completed: allTodos.filter(t => t.status === 'completed').length
     }
   });
 
