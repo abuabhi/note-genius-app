@@ -21,7 +21,12 @@ export const useTemplates = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as TodoTemplate[];
+      
+      // Cast the template_items from Json to TemplateItem[]
+      return data.map(template => ({
+        ...template,
+        template_items: template.template_items as unknown as TemplateItem[]
+      })) as TodoTemplate[];
     },
     enabled: !!user,
   });

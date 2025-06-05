@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { useTemplates } from "@/hooks/todos/useTemplates";
-import { Template, Plus, Briefcase, User, Zap } from "lucide-react";
+import { FileText, Plus, Briefcase, User, Zap } from "lucide-react";
 
 export const TemplateSelector: React.FC = () => {
   const { templates, createFromTemplate } = useTemplates();
@@ -15,7 +15,7 @@ export const TemplateSelector: React.FC = () => {
       case 'work': return <Briefcase className="h-4 w-4" />;
       case 'personal': return <User className="h-4 w-4" />;
       case 'productivity': return <Zap className="h-4 w-4" />;
-      default: return <Template className="h-4 w-4" />;
+      default: return <FileText className="h-4 w-4" />;
     }
   };
 
@@ -32,7 +32,7 @@ export const TemplateSelector: React.FC = () => {
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className="h-8">
-          <Template className="h-4 w-4 mr-2" />
+          <FileText className="h-4 w-4 mr-2" />
           Use Template
         </Button>
       </PopoverTrigger>
