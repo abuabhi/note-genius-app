@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth'; // Updated import path
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +14,8 @@ export const useReminderNotifications = () => {
 
     try {
       setLoading(true);
+      console.log('📥 Fetching pending reminders for user:', user.id);
+      
       const { data, error } = await supabase
         .from('reminders')
         .select('*')
@@ -24,6 +25,8 @@ export const useReminderNotifications = () => {
         .limit(10);
 
       if (error) throw error;
+      
+      console.log('📥 Raw reminders from database:', data);
       
       // Transform to ensure it matches our Reminder type
       const typedReminders = data?.map(item => ({
@@ -36,12 +39,22 @@ export const useReminderNotifications = () => {
           ['in_app' as DeliveryMethod])
       })) || [];
       
+      console.log('📥 Processed reminders:', typedReminders);
+      
+      // Check which reminders are due
+      const now = new Date();
+      const dueReminders = typedReminders.filter(r => new Date(r.reminder_time) <= now);
+      console.log('⏰ Due reminders (should show notifications):', dueReminders);
+      
       setPendingReminders(typedReminders);
       
       // Count unread (sent but not dismissed)
-      setUnreadCount(typedReminders.filter(r => r.status === 'sent').length);
+      const unreadReminders = typedReminders.filter(r => r.status === 'sent');
+      setUnreadCount(unreadReminders.length);
+      
+      console.log('🔔 Unread count for bell badge:', unreadReminders.length);
     } catch (error) {
-      console.error('Error fetching pending reminders:', error);
+      console.error('❌ Error fetching pending reminders:', error);
     } finally {
       setLoading(false);
     }
@@ -103,6 +116,30 @@ export const useReminderNotifications = () => {
     }
   };
 
+  // Manual function to process due reminders (for testing)
+  const processReminders = async () => {
+    if (!user) return;
+    
+    try {
+      console.log('🔄 Manually processing reminders...');
+      const response = await fetch(`https://zuhcmwujzfddmafozubd.supabase.co/functions/v1/process-reminders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1aGNtd3VqemZkZG1hZm96dWJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1MjUxOTQsImV4cCI6MjA2MjEwMTE5NH0.oz_MnWdGGh76eOjQ2k69OhQhqBh4KXG0Wq_cN-VJwzw`
+        }
+      });
+      
+      const result = await response.json();
+      console.log('🔄 Process reminders result:', result);
+      
+      // Refresh reminders after processing
+      await fetchPendingReminders();
+    } catch (error) {
+      console.error('❌ Error processing reminders:', error);
+    }
+  };
+
   // Set up real-time subscription for new reminders
   useEffect(() => {
     if (!user) return;
@@ -121,6 +158,7 @@ export const useReminderNotifications = () => {
           filter: `user_id=eq.${user.id}`,
         },
         () => {
+          console.log('🔄 Real-time reminder change detected, refreshing...');
           // Refresh reminders when changes occur
           fetchPendingReminders();
         }
@@ -128,11 +166,21 @@ export const useReminderNotifications = () => {
       .subscribe();
       
     // Run the fetchPendingReminders function every 60 seconds to keep it updated
-    const intervalId = setInterval(fetchPendingReminders, 60000);
+    const intervalId = setInterval(() => {
+      console.log('🔄 Periodic reminder check...');
+      fetchPendingReminders();
+    }, 60000);
+
+    // Also run manual processing every 2 minutes to ensure reminders get processed
+    const processingIntervalId = setInterval(() => {
+      console.log('🔄 Periodic reminder processing...');
+      processReminders();
+    }, 120000); // 2 minutes
 
     return () => {
       supabase.removeChannel(channel);
       clearInterval(intervalId);
+      clearInterval(processingIntervalId);
     };
   }, [user]);
 
@@ -143,5 +191,6 @@ export const useReminderNotifications = () => {
     dismissReminder,
     dismissAll,
     refresh: fetchPendingReminders,
+    processReminders, // Export for manual testing
   };
 };

@@ -23,14 +23,20 @@ export const useReminderToasts = () => {
   };
 
   useEffect(() => {
+    console.log('🔔 useReminderToasts - All pending reminders:', pendingReminders);
+    
     // Check for newly sent reminders (status = 'sent')
     const newReminders = pendingReminders.filter(reminder => 
       reminder.status === 'sent' && 
       new Date(reminder.reminder_time) <= new Date()
     );
 
+    console.log('🔔 useReminderToasts - Reminders to show as toast:', newReminders);
+
     newReminders.forEach(reminder => {
       const Icon = getReminderIcon(reminder.type);
+      
+      console.log('🔔 Showing toast for reminder:', reminder.title);
       
       toast(reminder.title, {
         description: reminder.description || 'You have a new reminder',
@@ -45,6 +51,17 @@ export const useReminderToasts = () => {
         }
       });
     });
+
+    // Also check for due reminders that are still pending (should be processed)
+    const dueButPendingReminders = pendingReminders.filter(reminder => 
+      reminder.status === 'pending' && 
+      new Date(reminder.reminder_time) <= new Date()
+    );
+
+    if (dueButPendingReminders.length > 0) {
+      console.log('⚠️ Found due reminders that are still pending (need processing):', dueButPendingReminders);
+    }
+
   }, [pendingReminders]);
 
   return { pendingReminders };
