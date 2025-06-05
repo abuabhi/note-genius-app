@@ -1270,6 +1270,54 @@ export type Database = {
         }
         Relationships: []
       }
+      study_analytics: {
+        Row: {
+          analytics_data: Json | null
+          consistency_score: number | null
+          created_at: string | null
+          date: string
+          flashcard_accuracy: number | null
+          id: string
+          learning_velocity: number | null
+          optimal_study_time: string | null
+          quiz_average_score: number | null
+          subjects_studied: string[] | null
+          total_study_time: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          analytics_data?: Json | null
+          consistency_score?: number | null
+          created_at?: string | null
+          date?: string
+          flashcard_accuracy?: number | null
+          id?: string
+          learning_velocity?: number | null
+          optimal_study_time?: string | null
+          quiz_average_score?: number | null
+          subjects_studied?: string[] | null
+          total_study_time?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          analytics_data?: Json | null
+          consistency_score?: number | null
+          created_at?: string | null
+          date?: string
+          flashcard_accuracy?: number | null
+          id?: string
+          learning_velocity?: number | null
+          optimal_study_time?: string | null
+          quiz_average_score?: number | null
+          subjects_studied?: string[] | null
+          total_study_time?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       study_goals: {
         Row: {
           created_at: string | null
@@ -1423,9 +1471,57 @@ export type Database = {
         }
         Relationships: []
       }
+      study_session_activities: {
+        Row: {
+          activity_type: string
+          created_at: string | null
+          duration_seconds: number | null
+          end_time: string | null
+          id: string
+          performance_data: Json | null
+          resource_id: string | null
+          session_id: string | null
+          start_time: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string | null
+          duration_seconds?: number | null
+          end_time?: string | null
+          id?: string
+          performance_data?: Json | null
+          resource_id?: string | null
+          session_id?: string | null
+          start_time?: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string | null
+          duration_seconds?: number | null
+          end_time?: string | null
+          id?: string
+          performance_data?: Json | null
+          resource_id?: string | null
+          session_id?: string | null
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_session_activities_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "study_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       study_sessions: {
         Row: {
+          activity_type: string | null
+          auto_created: boolean | null
           break_time: number | null
+          cards_correct: number | null
+          cards_reviewed: number | null
           created_at: string | null
           duration: number | null
           end_time: string | null
@@ -1433,7 +1529,13 @@ export type Database = {
           focus_time: number | null
           id: string
           is_active: boolean | null
+          learning_velocity: number | null
           notes: string | null
+          notes_created: number | null
+          notes_reviewed: number | null
+          quiz_score: number | null
+          quiz_total_questions: number | null
+          session_quality: string | null
           start_time: string
           subject: string | null
           title: string
@@ -1441,7 +1543,11 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          activity_type?: string | null
+          auto_created?: boolean | null
           break_time?: number | null
+          cards_correct?: number | null
+          cards_reviewed?: number | null
           created_at?: string | null
           duration?: number | null
           end_time?: string | null
@@ -1449,7 +1555,13 @@ export type Database = {
           focus_time?: number | null
           id?: string
           is_active?: boolean | null
+          learning_velocity?: number | null
           notes?: string | null
+          notes_created?: number | null
+          notes_reviewed?: number | null
+          quiz_score?: number | null
+          quiz_total_questions?: number | null
+          session_quality?: string | null
           start_time?: string
           subject?: string | null
           title: string
@@ -1457,7 +1569,11 @@ export type Database = {
           user_id: string
         }
         Update: {
+          activity_type?: string | null
+          auto_created?: boolean | null
           break_time?: number | null
+          cards_correct?: number | null
+          cards_reviewed?: number | null
           created_at?: string | null
           duration?: number | null
           end_time?: string | null
@@ -1465,7 +1581,13 @@ export type Database = {
           focus_time?: number | null
           id?: string
           is_active?: boolean | null
+          learning_velocity?: number | null
           notes?: string | null
+          notes_created?: number | null
+          notes_reviewed?: number | null
+          quiz_score?: number | null
+          quiz_total_questions?: number | null
+          session_quality?: string | null
           start_time?: string
           subject?: string | null
           title?: string
@@ -1849,6 +1971,16 @@ export type Database = {
       award_achievement: {
         Args: { p_user_id: string; p_achievement_title: string }
         Returns: boolean
+      }
+      calculate_session_quality: {
+        Args: {
+          p_duration: number
+          p_cards_reviewed: number
+          p_cards_correct: number
+          p_quiz_score: number
+          p_quiz_total: number
+        }
+        Returns: string
       }
       check_and_award_achievements: {
         Args: { p_user_id: string }
