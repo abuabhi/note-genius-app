@@ -87,7 +87,7 @@ export const useTodaysFocusData = () => {
         console.log('📝 DEBUG - All todos for user:', allUserTodos?.length || 0);
         
         if (allUserTodos && allUserTodos.length > 0) {
-          console.log('📝 DEBUG - All todos with dates:');
+          console.log('📝 DEBUG - All todos with details:');
           allUserTodos.forEach((todo, index) => {
             console.log(`📝 Todo ${index + 1}:`, {
               id: todo.id,
@@ -106,37 +106,33 @@ export const useTodaysFocusData = () => {
           console.error('❌ Error fetching all todos:', allTodosError);
         }
 
-        // Now let's get todos that should be shown in today's focus
-        // Include both 'pending' and 'dismissed' todos to show them in today's focus
-        console.log('📝 Fetching todos for today\'s focus...');
+        // Simplified approach: Get ALL todos regardless of status and filter later
+        console.log('📝 Fetching todos for today\'s focus (all statuses)...');
         const { data: todos, error: todosError } = await supabase
           .from('reminders')
           .select('*')
           .eq('user_id', user.id)
           .eq('type', 'todo')
-          .in('status', ['pending', 'dismissed']) // Include dismissed todos
           .order('due_date', { ascending: true });
+
+        console.log('📝 Raw todos data received:', todos);
+        console.log('📝 Number of todos:', todos?.length || 0);
 
         let filteredTodos = [];
         if (todos && todos.length > 0) {
-          // Filter todos: show if due today, overdue, or no due date set
-          filteredTodos = todos.filter(todo => {
-            const isDueToday = todo.due_date === today;
-            const isOverdue = todo.due_date && todo.due_date < today;
-            const hasNoDueDate = !todo.due_date;
-            const shouldShow = isDueToday || isOverdue || hasNoDueDate;
-            
-            console.log(`📝 Todo "${todo.title}": due_date=${todo.due_date}, status=${todo.status}, isDueToday=${isDueToday}, isOverdue=${isOverdue}, hasNoDueDate=${hasNoDueDate}, shouldShow=${shouldShow}`);
-            
-            return shouldShow;
-          }).slice(0, 5); // Limit to 5
+          console.log('📝 Processing todos...');
+          // For now, let's show ALL todos to see if they appear
+          filteredTodos = todos.slice(0, 5); // Show first 5 todos regardless of due date
+          
+          console.log('📝 Filtered todos (showing all):', filteredTodos);
+        } else {
+          console.log('📝 No todos found or todos array is empty');
         }
 
         if (todosError) {
           console.error('❌ Error fetching todos:', todosError);
         } else {
-          console.log('✅ Fetched and filtered todos:', filteredTodos?.length || 0);
-          console.log('📋 Final todos to display:', filteredTodos);
+          console.log('✅ Final todos to display:', filteredTodos?.length || 0);
         }
 
         const result = {
@@ -146,8 +142,14 @@ export const useTodaysFocusData = () => {
           todos: filteredTodos || []
         };
 
-        console.log('📊 Final result:', result);
-        console.log('📝 Final todos count in result:', result.todos.length);
+        console.log('📊 Final result summary:', {
+          reminders: result.reminders.length,
+          goals: result.goals.length,
+          overdue: result.overdue.length,
+          todos: result.todos.length
+        });
+        
+        console.log('📊 Complete final result:', result);
         return result;
       } catch (error) {
         console.error('💥 Error fetching today\'s items:', error);

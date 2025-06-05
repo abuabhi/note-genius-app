@@ -16,11 +16,23 @@ interface TodaysFocusTodosProps {
 }
 
 export const TodaysFocusTodos = ({ todos }: TodaysFocusTodosProps) => {
-  console.log('📝 TodaysFocusTodos received todos:', todos);
+  console.log('📝 TodaysFocusTodos component received todos:', todos);
+  console.log('📝 Todos is array?:', Array.isArray(todos));
   console.log('📝 Todos length:', todos?.length);
+  console.log('📝 Raw todos object:', JSON.stringify(todos, null, 2));
   
-  if (!todos || todos.length === 0) {
-    console.log('📝 No todos to display');
+  if (!todos) {
+    console.log('📝 Todos is null/undefined');
+    return null;
+  }
+
+  if (!Array.isArray(todos)) {
+    console.log('📝 Todos is not an array, type:', typeof todos);
+    return null;
+  }
+
+  if (todos.length === 0) {
+    console.log('📝 No todos to display (empty array)');
     return null;
   }
 
@@ -43,6 +55,7 @@ export const TodaysFocusTodos = ({ todos }: TodaysFocusTodosProps) => {
   };
 
   console.log('📝 Rendering', todos.length, 'todos');
+  console.log('📝 First todo details:', todos[0]);
 
   return (
     <div>
@@ -51,34 +64,37 @@ export const TodaysFocusTodos = ({ todos }: TodaysFocusTodosProps) => {
         <span className="font-medium text-gray-800">To-dos ({todos.length})</span>
       </div>
       <div className="space-y-2">
-        {todos.slice(0, 3).map((todo) => (
-          <div key={todo.id} className="flex items-center justify-between bg-green-50 rounded p-3">
-            <div>
-              <div className="font-medium text-green-800">{todo.title}</div>
-              {todo.description && (
-                <div className="text-sm text-green-600">{todo.description}</div>
-              )}
-              <div className="text-xs text-green-500 mt-1">
-                {todo.due_date ? (
-                  isOverdue(todo.due_date) ? (
-                    <span className="text-red-600 font-medium">
-                      Overdue by {formatDistanceToNow(parseISO(todo.due_date))}
-                    </span>
-                  ) : isToday(parseISO(todo.due_date)) ? (
-                    'Due today'
-                  ) : (
-                    `Due ${formatDistanceToNow(parseISO(todo.due_date), { addSuffix: true })}`
-                  )
-                ) : (
-                  'No due date'
+        {todos.slice(0, 3).map((todo) => {
+          console.log('📝 Rendering individual todo:', todo);
+          return (
+            <div key={todo.id} className="flex items-center justify-between bg-green-50 rounded p-3">
+              <div>
+                <div className="font-medium text-green-800">{todo.title}</div>
+                {todo.description && (
+                  <div className="text-sm text-green-600">{todo.description}</div>
                 )}
+                <div className="text-xs text-green-500 mt-1">
+                  {todo.due_date ? (
+                    isOverdue(todo.due_date) ? (
+                      <span className="text-red-600 font-medium">
+                        Overdue by {formatDistanceToNow(parseISO(todo.due_date))}
+                      </span>
+                    ) : isToday(parseISO(todo.due_date)) ? (
+                      'Due today'
+                    ) : (
+                      `Due ${formatDistanceToNow(parseISO(todo.due_date), { addSuffix: true })}`
+                    )
+                  ) : (
+                    'No due date'
+                  )}
+                </div>
               </div>
+              <Badge variant="outline" className={getPriorityColor(todo.priority || 'medium')}>
+                {(todo.priority || 'medium')} priority
+              </Badge>
             </div>
-            <Badge variant="outline" className={getPriorityColor(todo.priority || 'medium')}>
-              {(todo.priority || 'medium')} priority
-            </Badge>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
