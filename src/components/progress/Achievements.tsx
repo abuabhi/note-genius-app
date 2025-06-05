@@ -1,7 +1,7 @@
 
 import { useAuth } from "@/contexts/auth";
 import { useAchievements } from "@/hooks/useAchievements";
-import { useAchievementProgress } from "@/hooks/useAchievementProgress";
+import { useAchievementProgress } from "@/hooks/achievements/useAchievementProgress";
 import { AchievementStats } from "./achievements/AchievementStats";
 import { AchievementProgressSection } from "./achievements/AchievementProgressSection";
 import { EarnedAchievementsSection } from "./achievements/EarnedAchievementsSection";
