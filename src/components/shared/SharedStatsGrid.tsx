@@ -1,5 +1,6 @@
 
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Clock, Calendar, BookOpen, Flame, Target, TrendingUp } from 'lucide-react';
 import { formatDuration } from '@/utils/formatTime';
 
@@ -9,6 +10,7 @@ interface StatItem {
   icon: React.ReactNode;
   bgColor: string;
   borderColor: string;
+  tooltip: string;
 }
 
 interface SharedStatsGridProps {
@@ -48,6 +50,7 @@ export const SharedStatsGrid = ({ stats, isLoading, variant = 'overview' }: Shar
         icon: <Clock className="h-6 w-6 text-blue-500" />,
         bgColor: "bg-blue-50",
         borderColor: "border-blue-100",
+        tooltip: "Total time spent in completed study sessions"
       },
       {
         label: "Average Session",
@@ -55,6 +58,7 @@ export const SharedStatsGrid = ({ stats, isLoading, variant = 'overview' }: Shar
         icon: <Flame className="h-6 w-6 text-orange-500" />,
         bgColor: "bg-orange-50",
         borderColor: "border-orange-100",
+        tooltip: "Average duration of your study sessions"
       },
       {
         label: "Total Sessions",
@@ -62,6 +66,7 @@ export const SharedStatsGrid = ({ stats, isLoading, variant = 'overview' }: Shar
         icon: <Calendar className="h-6 w-6 text-mint-500" />,
         bgColor: "bg-mint-50",
         borderColor: "border-mint-100",
+        tooltip: "Total number of study sessions created"
       },
       {
         label: "Active Sessions",
@@ -69,6 +74,7 @@ export const SharedStatsGrid = ({ stats, isLoading, variant = 'overview' }: Shar
         icon: <BookOpen className="h-6 w-6 text-purple-500" />,
         bgColor: "bg-purple-50",
         borderColor: "border-purple-100",
+        tooltip: "Currently active study sessions"
       }
     ];
 
@@ -80,6 +86,7 @@ export const SharedStatsGrid = ({ stats, isLoading, variant = 'overview' }: Shar
           icon: <Flame className="h-6 w-6 text-orange-500" />,
           bgColor: "bg-orange-50",
           borderColor: "border-orange-100",
+          tooltip: "Consecutive days with study activity"
         },
         {
           label: "Today's Study Time",
@@ -87,6 +94,7 @@ export const SharedStatsGrid = ({ stats, isLoading, variant = 'overview' }: Shar
           icon: <Clock className="h-6 w-6 text-blue-500" />,
           bgColor: "bg-blue-50",
           borderColor: "border-blue-100",
+          tooltip: "Minutes studied today across all sessions"
         },
         {
           label: "Cards Mastered",
@@ -94,6 +102,7 @@ export const SharedStatsGrid = ({ stats, isLoading, variant = 'overview' }: Shar
           icon: <Target className="h-6 w-6 text-green-500" />,
           bgColor: "bg-green-50",
           borderColor: "border-green-100",
+          tooltip: "Flashcards with high retention rate (well learned)"
         },
         {
           label: "Cards Today",
@@ -101,6 +110,7 @@ export const SharedStatsGrid = ({ stats, isLoading, variant = 'overview' }: Shar
           icon: <TrendingUp className="h-6 w-6 text-mint-500" />,
           bgColor: "bg-mint-50",
           borderColor: "border-mint-100",
+          tooltip: "Flashcards reviewed today"
         }
       ];
     }
@@ -114,6 +124,7 @@ export const SharedStatsGrid = ({ stats, isLoading, variant = 'overview' }: Shar
           icon: <Flame className="h-6 w-6 text-orange-500" />,
           bgColor: "bg-orange-50",
           borderColor: "border-orange-100",
+          tooltip: "Consecutive days with study activity"
         },
         {
           label: "Cards Mastered",
@@ -121,6 +132,7 @@ export const SharedStatsGrid = ({ stats, isLoading, variant = 'overview' }: Shar
           icon: <Target className="h-6 w-6 text-green-500" />,
           bgColor: "bg-green-50",
           borderColor: "border-green-100",
+          tooltip: "Flashcards with high retention rate (well learned)"
         }
       ];
     }
@@ -132,21 +144,29 @@ export const SharedStatsGrid = ({ stats, isLoading, variant = 'overview' }: Shar
   const gridCols = variant === 'detailed' ? 'lg:grid-cols-3' : 'lg:grid-cols-4';
 
   return (
-    <div className={`grid grid-cols-1 md:grid-cols-2 ${gridCols} gap-6`}>
-      {statItems.map((item, index) => (
-        <div 
-          key={index} 
-          className={`bg-white/70 backdrop-blur-sm rounded-xl border ${item.borderColor} p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105`}
-        >
-          <div className={`inline-flex items-center justify-center p-3 rounded-lg ${item.bgColor} mb-4`}>
-            {item.icon}
-          </div>
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-600">{item.label}</p>
-            <p className="text-2xl font-bold text-gray-900">{item.value}</p>
-          </div>
-        </div>
-      ))}
-    </div>
+    <TooltipProvider>
+      <div className={`grid grid-cols-1 md:grid-cols-2 ${gridCols} gap-6`}>
+        {statItems.map((item, index) => (
+          <Tooltip key={index}>
+            <TooltipTrigger asChild>
+              <div 
+                className={`bg-white/70 backdrop-blur-sm rounded-xl border ${item.borderColor} p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-help`}
+              >
+                <div className={`inline-flex items-center justify-center p-3 rounded-lg ${item.bgColor} mb-4`}>
+                  {item.icon}
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-600">{item.label}</p>
+                  <p className="text-2xl font-bold text-gray-900">{item.value}</p>
+                </div>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{item.tooltip}</p>
+            </TooltipContent>
+          </Tooltip>
+        ))}
+      </div>
+    </TooltipProvider>
   );
 };
