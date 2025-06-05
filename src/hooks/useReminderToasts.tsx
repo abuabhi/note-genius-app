@@ -15,6 +15,8 @@ export const useReminderToasts = () => {
         return CalendarClock;
       case 'flashcard_review':
         return BrainCircuit;
+      case 'todo':
+        return Bell;
       default:
         return Bell;
     }
@@ -33,12 +35,12 @@ export const useReminderToasts = () => {
       toast(reminder.title, {
         description: reminder.description || 'You have a new reminder',
         icon: <Icon className="h-4 w-4" />,
-        duration: 5000,
+        duration: 8000, // Show for 8 seconds
         action: {
-          label: 'View',
+          label: 'Dismiss',
           onClick: () => {
-            // This could navigate to a specific page or open a dialog
-            console.log('Navigate to reminder details:', reminder.id);
+            // Mark as dismissed - this could be enhanced to call a dismiss API
+            console.log('Reminder dismissed:', reminder.id);
           }
         }
       });

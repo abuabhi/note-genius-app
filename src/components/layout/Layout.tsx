@@ -17,10 +17,8 @@ export default function Layout({ children, showSidebar = true, showFooter = true
   const { user } = useAuth();
   const location = useLocation();
   
-  // Initialize reminder toasts for authenticated users
-  if (user) {
-    useReminderToasts();
-  }
+  // Initialize reminder toasts for authenticated users on all pages
+  useReminderToasts();
 
   // Define which routes are public
   const publicRoutes = ['/', '/about', '/pricing', '/faq', '/contact', '/blog', '/features', '/login', '/signup'];

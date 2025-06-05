@@ -2,7 +2,6 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/auth';
-import { useReminderToasts } from '@/hooks/useReminderToasts';
 import { UserSection } from '@/components/ui/sidebar/UserSection';
 
 interface DesktopAuthSectionProps {
@@ -11,9 +10,6 @@ interface DesktopAuthSectionProps {
 
 export const DesktopAuthSection = ({ isPublicRoute }: DesktopAuthSectionProps) => {
   const { user } = useAuth();
-  
-  // Initialize reminder toasts
-  useReminderToasts();
 
   if (!user) {
     return (
