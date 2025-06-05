@@ -75,6 +75,90 @@ export const goalTemplates: GoalTemplate[] = [
     target_hours: 6,
     duration_days: 7,
     category: 'beginner'
+  },
+  {
+    title: "Morning Study Routine",
+    description: "Study for 30 minutes every morning for 2 weeks",
+    target_hours: 7,
+    duration_days: 14,
+    category: 'beginner'
+  },
+  {
+    title: "Deep Dive Learning",
+    description: "Dedicate 15 hours to mastering one challenging topic",
+    target_hours: 15,
+    duration_days: 21,
+    category: 'intermediate'
+  },
+  {
+    title: "Study Streak Builder",
+    description: "Study at least 1 hour daily for 10 consecutive days",
+    target_hours: 10,
+    duration_days: 10,
+    category: 'intermediate'
+  },
+  {
+    title: "Power Study Week",
+    description: "Complete 25 hours of intensive study in one week",
+    target_hours: 25,
+    duration_days: 7,
+    category: 'advanced'
+  },
+  {
+    title: "Subject Mastery Path",
+    description: "Achieve 35 hours in your most challenging subject",
+    target_hours: 35,
+    duration_days: 45,
+    category: 'advanced'
+  },
+  {
+    title: "Evening Study Block",
+    description: "Study 2 hours every evening for 5 days",
+    target_hours: 10,
+    duration_days: 5,
+    category: 'intermediate'
+  },
+  {
+    title: "Mini Marathon",
+    description: "Complete 4 hours of focused study in one day",
+    target_hours: 4,
+    duration_days: 1,
+    category: 'beginner'
+  },
+  {
+    title: "Consistency Builder",
+    description: "Study 45 minutes daily for 3 weeks",
+    target_hours: 16,
+    duration_days: 21,
+    category: 'intermediate'
+  },
+  {
+    title: "Study Champion",
+    description: "Achieve 60 hours of study over 2 months",
+    target_hours: 60,
+    duration_days: 60,
+    category: 'advanced'
+  },
+  {
+    title: "Lunch Break Learning",
+    description: "Use lunch breaks for study - 30 min daily for 10 days",
+    target_hours: 5,
+    duration_days: 10,
+    category: 'beginner'
+  },
+  {
+    title: "Review & Refresh",
+    description: "Spend 12 hours reviewing previous materials",
+    target_hours: 12,
+    duration_days: 14,
+    category: 'intermediate'
+  },
+  {
+    title: "Focus Intensive",
+    description: "Complete 30 hours of distraction-free study",
+    target_hours: 30,
+    duration_days: 20,
+    category: 'advanced'
   }
 ];
 
@@ -83,6 +167,7 @@ export const useStudyGoals = () => {
   const [goals, setGoals] = useState<StudyGoal[]>([]);
   const [loading, setLoading] = useState(true);
   const [dismissedSuggestions, setDismissedSuggestions] = useState<string[]>([]);
+  const [suggestionsEnabled, setSuggestionsEnabled] = useState(true);
   const queryClient = useQueryClient();
 
   const fetchGoals = async () => {
@@ -292,30 +377,77 @@ export const useStudyGoals = () => {
     toast.success('Suggestion dismissed');
   };
 
+  const toggleSuggestions = () => {
+    setSuggestionsEnabled(prev => {
+      const newValue = !prev;
+      localStorage.setItem('goalSuggestionsEnabled', newValue.toString());
+      toast.success(newValue ? 'Goal suggestions enabled' : 'Goal suggestions disabled');
+      return newValue;
+    });
+  };
+
+  const refreshSuggestions = () => {
+    setDismissedSuggestions([]);
+    toast.success('Suggestions refreshed');
+  };
+
   const getGoalSuggestions = () => {
+    if (!suggestionsEnabled) return [];
+
     const completedGoalsCount = goals.filter(g => g.is_completed).length;
     const currentActiveGoals = goals.filter(g => !g.is_completed).length;
     const existingGoalTitles = new Set(goals.map(g => g.title));
     
-    if (currentActiveGoals >= 3) {
+    // Don't suggest if user has too many active goals
+    if (currentActiveGoals >= 5) {
       return [];
     }
 
-    let suggestedTemplates: GoalTemplate[] = [];
-    
-    if (completedGoalsCount === 0) {
-      suggestedTemplates = goalTemplates.filter(t => t.category === 'beginner');
-    } else if (completedGoalsCount < 3) {
-      suggestedTemplates = goalTemplates.filter(t => t.category === 'intermediate');
-    } else {
-      suggestedTemplates = goalTemplates.filter(t => t.category === 'advanced');
+    // Determine user level based on completed goals
+    let userLevel: 'beginner' | 'intermediate' | 'advanced' = 'beginner';
+    if (completedGoalsCount >= 5) {
+      userLevel = 'advanced';
+    } else if (completedGoalsCount >= 2) {
+      userLevel = 'intermediate';
     }
 
-    // Filter out templates that are already created as goals or dismissed
-    return suggestedTemplates.filter(template => 
+    // Get available templates
+    const availableTemplates = goalTemplates.filter(template => 
       !existingGoalTitles.has(template.title) && 
       !dismissedSuggestions.includes(template.title)
     );
+
+    // If we have less than 3 available templates, reset some dismissed ones
+    if (availableTemplates.length < 3 && dismissedSuggestions.length > 0) {
+      const oldestDismissed = dismissedSuggestions.slice(0, Math.min(5, dismissedSuggestions.length));
+      setDismissedSuggestions(prev => prev.filter(title => !oldestDismissed.includes(title)));
+      
+      // Recalculate available templates
+      const refreshedTemplates = goalTemplates.filter(template => 
+        !existingGoalTitles.has(template.title) && 
+        !dismissedSuggestions.filter(title => !oldestDismissed.includes(title)).includes(template.title)
+      );
+      
+      return selectBestSuggestions(refreshedTemplates, userLevel, 3);
+    }
+
+    return selectBestSuggestions(availableTemplates, userLevel, 3);
+  };
+
+  const selectBestSuggestions = (
+    availableTemplates: GoalTemplate[], 
+    userLevel: 'beginner' | 'intermediate' | 'advanced', 
+    count: number
+  ): GoalTemplate[] => {
+    // Prioritize templates based on user level
+    const priorityTemplates = availableTemplates.filter(t => t.category === userLevel);
+    const otherTemplates = availableTemplates.filter(t => t.category !== userLevel);
+    
+    // Combine prioritized templates with others
+    const orderedTemplates = [...priorityTemplates, ...otherTemplates];
+    
+    // Return the requested count
+    return orderedTemplates.slice(0, count);
   };
 
   const getStreakBonus = () => {
@@ -331,6 +463,11 @@ export const useStudyGoals = () => {
   useEffect(() => {
     if (user) {
       fetchGoals();
+      // Load suggestions preference from localStorage
+      const savedPreference = localStorage.getItem('goalSuggestionsEnabled');
+      if (savedPreference !== null) {
+        setSuggestionsEnabled(savedPreference === 'true');
+      }
     }
   }, [user]);
 
@@ -346,6 +483,9 @@ export const useStudyGoals = () => {
     dismissSuggestion,
     getGoalSuggestions,
     getStreakBonus,
-    goalTemplates
+    goalTemplates,
+    suggestionsEnabled,
+    toggleSuggestions,
+    refreshSuggestions
   };
 };
