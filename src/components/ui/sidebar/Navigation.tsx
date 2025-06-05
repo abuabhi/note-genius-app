@@ -1,89 +1,38 @@
 
-import { useLocation } from "react-router-dom";
-import { NavLink } from "./NavLink";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion } from "framer-motion";
 import { staggerVariants } from "./motion";
-import { useRequireAuth, UserTier } from "@/hooks/useRequireAuth";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Separator } from "@/components/ui/separator";
-import { useFeatures } from "@/contexts/FeatureContext";
-
-// Import all icons we need
-import {
-  Activity,
-  BookOpen,
-  Calendar,
-  Clock,
-  FileText,
-  LayoutDashboard,
-  ListTodo,
-  MessageSquare,
-  Target,
-  Users,
-  UserCheck,
-  Bell,
-  Settings,
-} from "lucide-react";
+import { useNavigationFeatures } from "./hooks/useNavigationFeatures";
+import { CoreNavigationSection } from "./sections/CoreNavigationSection";
+import { StudyNavigationSection } from "./sections/StudyNavigationSection";
+import { PlanningNavigationSection } from "./sections/PlanningNavigationSection";
+import { ProgressNavigationSection } from "./sections/ProgressNavigationSection";
+import { CommunicationNavigationSection } from "./sections/CommunicationNavigationSection";
+import { SettingsNavigationSection } from "./sections/SettingsNavigationSection";
 
 interface NavigationProps {
   isCollapsed: boolean;
 }
 
 export const Navigation = ({ isCollapsed }: NavigationProps) => {
-  const { pathname } = useLocation();
   const { userProfile } = useRequireAuth();
-  
-  // Use features with fallback - if context fails, default to showing core features
-  let isFeatureEnabled: (key: string) => boolean;
-  let isFeatureVisible: (key: string) => boolean;
-  
-  try {
-    const features = useFeatures();
-    isFeatureEnabled = features.isFeatureEnabled;
-    isFeatureVisible = features.isFeatureVisible;
-  } catch (error) {
-    console.error('Features context error, using fallbacks:', error);
-    // Fallback: show core features, hide optional ones
-    isFeatureEnabled = (key: string) => {
-      const coreFeatures = ['notes', 'flashcards', 'dashboard'];
-      return coreFeatures.includes(key);
-    };
-    isFeatureVisible = (key: string) => {
-      const coreFeatures = ['notes', 'flashcards', 'dashboard'];
-      return coreFeatures.includes(key);
-    };
-  }
-  
-  // Define feature keys for standard app features
-  const FEATURE_KEYS = {
-    CHAT: "chat",
-    COLLABORATION: "collaboration",
-    CONNECTIONS: "connections",
-    STUDY_SESSIONS: "study_sessions",
-    TODOS: "todos",
-    PROGRESS: "progress",
-    GOALS: "goals", 
-    SCHEDULE: "schedule",
-    QUIZZES: "quizzes"
-  };
-  
-  // Determine if specific features are visible (with fallbacks)
-  const isChatVisible = isFeatureVisible(FEATURE_KEYS.CHAT);
-  const isCollaborationVisible = isFeatureVisible(FEATURE_KEYS.COLLABORATION);
-  const isConnectionsVisible = isFeatureVisible(FEATURE_KEYS.CONNECTIONS);
-  const isStudySessionsVisible = isFeatureVisible(FEATURE_KEYS.STUDY_SESSIONS);
-  const isTodosVisible = isFeatureVisible(FEATURE_KEYS.TODOS);
-  const isProgressVisible = isFeatureVisible(FEATURE_KEYS.PROGRESS);
-  const isGoalsVisible = isFeatureVisible(FEATURE_KEYS.GOALS);
-  const isScheduleVisible = isFeatureVisible(FEATURE_KEYS.SCHEDULE);
-  const isQuizzesVisible = isFeatureVisible(FEATURE_KEYS.QUIZZES);
-  
-  // Function to check if any items in a section are visible
-  const isAnyCommunicationItemVisible = isChatVisible || isCollaborationVisible || isConnectionsVisible;
-  const isAnyStudyItemVisible = isStudySessionsVisible || isQuizzesVisible;
-  const isAnyPlanningItemVisible = isScheduleVisible || isGoalsVisible || isTodosVisible;
+  const {
+    isChatVisible,
+    isCollaborationVisible,
+    isConnectionsVisible,
+    isStudySessionsVisible,
+    isTodosVisible,
+    isProgressVisible,
+    isGoalsVisible,
+    isScheduleVisible,
+    isQuizzesVisible,
+    isAnyCommunicationItemVisible,
+    isAnyStudyItemVisible,
+    isAnyPlanningItemVisible
+  } = useNavigationFeatures();
   
   return (
     <motion.ul variants={staggerVariants} className="flex h-full flex-col">
@@ -94,151 +43,48 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
               <div className={cn("flex w-full flex-col gap-1")}>
                 {/* Main Section - Core Features Always Visible */}
                 <Separator className="my-2" />
-                <NavLink
-                  to="/dashboard"
-                  icon={LayoutDashboard}
-                  label="Dashboard"
-                  isActive={pathname === "/dashboard"}
-                  isCollapsed={isCollapsed}
-                />
-
-                {/* Study Tools Section - Core features always visible */}
-                <Separator className="my-2" />
-                <NavLink
-                  to="/notes"
-                  icon={FileText}
-                  label="Notes"
-                  isActive={pathname.includes("/notes")}
-                  isCollapsed={isCollapsed}
-                />
-                <NavLink
-                  to="/flashcards"
-                  icon={BookOpen}
-                  label="Flashcards"
-                  isActive={pathname.includes("/flashcards")}
-                  isCollapsed={isCollapsed}
-                />
+                <CoreNavigationSection isCollapsed={isCollapsed} />
                 
-                {/* Optional Study Features */}
-                {isStudySessionsVisible && (
-                  <NavLink
-                    to="/study-sessions"
-                    icon={Clock}
-                    label="Study Sessions"
-                    isActive={pathname.includes("/study-sessions")}
-                    isCollapsed={isCollapsed}
-                  />
-                )}
-                {isQuizzesVisible && (
-                  <NavLink
-                    to="/quizzes"
-                    icon={Activity}
-                    label="Quizzes"
-                    isActive={pathname.includes("/quizzes")}
-                    isCollapsed={isCollapsed}
-                  />
-                )}
+                {/* Study Tools Section - Optional features */}
+                {isAnyStudyItemVisible && <Separator className="my-2" />}
+                <StudyNavigationSection 
+                  isCollapsed={isCollapsed}
+                  isStudySessionsVisible={isStudySessionsVisible}
+                  isQuizzesVisible={isQuizzesVisible}
+                />
 
                 {/* Planning Section - only show if any planning items are visible */}
                 {isAnyPlanningItemVisible && <Separator className="my-2" />}
-                {isScheduleVisible && (
-                  <NavLink
-                    to="/schedule"
-                    icon={Calendar}
-                    label="Schedule"
-                    isActive={pathname.includes("/schedule")}
-                    isCollapsed={isCollapsed}
-                  />
-                )}
-                {isGoalsVisible && (
-                  <NavLink
-                    to="/goals"
-                    icon={Target}
-                    label="Goals"
-                    isActive={pathname.includes("/goals")}
-                    isCollapsed={isCollapsed}
-                  />
-                )}
-                {isTodosVisible && (
-                  <NavLink
-                    to="/todos"
-                    icon={ListTodo}
-                    label="Todos"
-                    isActive={pathname.includes("/todos")}
-                    isCollapsed={isCollapsed}
-                  />
-                )}
+                <PlanningNavigationSection 
+                  isCollapsed={isCollapsed}
+                  isScheduleVisible={isScheduleVisible}
+                  isGoalsVisible={isGoalsVisible}
+                  isTodosVisible={isTodosVisible}
+                />
 
                 {/* Progress Section - only show if visible */}
                 {isProgressVisible && (
                   <>
                     <Separator className="my-2" />
-                    <NavLink
-                      to="/progress"
-                      icon={Activity}
-                      label="Progress"
-                      isActive={pathname.includes("/progress")}
+                    <ProgressNavigationSection 
                       isCollapsed={isCollapsed}
+                      isProgressVisible={isProgressVisible}
                     />
                   </>
                 )}
 
                 {/* Communication Section - only show if any comm items are visible */}
                 {isAnyCommunicationItemVisible && <Separator className="my-2" />}
-                {isChatVisible && (
-                  <NavLink
-                    to="/chat"
-                    icon={MessageSquare}
-                    label="Chat"
-                    isActive={pathname.includes("/chat")}
-                    isCollapsed={isCollapsed}
-                    badge={
-                      <Badge
-                        className={cn(
-                          "flex h-fit w-fit items-center gap-1.5 rounded border-none bg-mint-50 px-1.5 text-mint-600 dark:bg-mint-700 dark:text-mint-300",
-                        )}
-                        variant="outline"
-                      >
-                        BETA
-                      </Badge>
-                    }
-                  />
-                )}
-                {isCollaborationVisible && (
-                  <NavLink
-                    to="/collaboration"
-                    icon={Users}
-                    label="Collaboration"
-                    isActive={pathname.includes("/collaboration")}
-                    isCollapsed={isCollapsed}
-                  />
-                )}
-                {isConnectionsVisible && (
-                  <NavLink
-                    to="/connections"
-                    icon={UserCheck}
-                    label="Connections"
-                    isActive={pathname.includes("/connections")}
-                    isCollapsed={isCollapsed}
-                  />
-                )}
+                <CommunicationNavigationSection 
+                  isCollapsed={isCollapsed}
+                  isChatVisible={isChatVisible}
+                  isCollaborationVisible={isCollaborationVisible}
+                  isConnectionsVisible={isConnectionsVisible}
+                />
 
                 {/* Settings & Notifications Section */}
                 <Separator className="my-2" />
-                <NavLink
-                  to="/notifications"
-                  icon={Bell}
-                  label="Notifications"
-                  isActive={pathname.includes("/notifications")}
-                  isCollapsed={isCollapsed}
-                />
-                <NavLink
-                  to="/settings"
-                  icon={Settings}
-                  label="Settings"
-                  isActive={pathname.includes("/settings")}
-                  isCollapsed={isCollapsed}
-                />
+                <SettingsNavigationSection isCollapsed={isCollapsed} />
               </div>
             </ScrollArea>
           </div>
