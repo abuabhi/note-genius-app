@@ -4,6 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { GoalCard } from '@/components/goals/GoalCard';
 import { GoalFormDialog } from '@/components/goals/GoalFormDialog';
 import { useStudyGoals, StudyGoal, GoalFormValues } from '@/hooks/useStudyGoals';
+import { useGoalTracking } from '@/hooks/useGoalTracking';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,6 +32,9 @@ const GoalsPage = () => {
     toggleSuggestions,
     refreshSuggestions
   } = useStudyGoals();
+  
+  // Initialize automatic goal tracking
+  useGoalTracking();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState('all');
@@ -61,6 +65,22 @@ const GoalsPage = () => {
     dismissSuggestion(templateTitle);
   };
   
+  // Calculate total reward points from all goals
+  const getTotalRewardPoints = () => {
+    return goals.reduce((total, goal) => {
+      let goalPoints = 0;
+      if (goal.is_completed) {
+        goalPoints = goal.target_hours * 10;
+        // Add bonus calculations
+        if (goal.target_hours >= 40) goalPoints += 50;
+        else if (goal.target_hours >= 20) goalPoints += 25;
+      } else {
+        goalPoints = Math.floor(goal.progress / 25) * (goal.target_hours * 2);
+      }
+      return total + goalPoints;
+    }, 0);
+  };
+
   const filteredGoals = goals.filter(goal => {
     // Text search
     const matchesSearch = 
@@ -104,7 +124,7 @@ const GoalsPage = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold mb-1">Study Goals</h1>
-            <p className="text-muted-foreground">Set, track, and achieve your study objectives</p>
+            <p className="text-muted-foreground">Set, track, and achieve your study objectives automatically</p>
           </div>
           <Button 
             onClick={() => {
@@ -117,8 +137,8 @@ const GoalsPage = () => {
           </Button>
         </div>
 
-        {/* Gamification Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {/* Enhanced Gamification Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
@@ -128,7 +148,7 @@ const GoalsPage = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-800">{activeGoalsCount}</div>
-              <p className="text-xs text-blue-600">Currently pursuing</p>
+              <p className="text-xs text-blue-600">Auto-tracked from study sessions</p>
             </CardContent>
           </Card>
 
@@ -155,6 +175,19 @@ const GoalsPage = () => {
             <CardContent>
               <div className="text-2xl font-bold text-orange-800">{streakBonus}</div>
               <p className="text-xs text-orange-600">Consecutive completions</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Star className="h-4 w-4 text-purple-600" />
+                Total Points
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-purple-800">{getTotalRewardPoints()}</div>
+              <p className="text-xs text-purple-600">Reward points earned</p>
             </CardContent>
           </Card>
         </div>
@@ -324,7 +357,7 @@ const GoalsPage = () => {
                   <p className="text-muted-foreground text-sm mb-4">
                     {searchQuery || filter !== 'all' 
                       ? "No goals match your current filters. Try adjusting your search." 
-                      : "Start by creating your first study goal or try a suggested goal above."}
+                      : "Start by creating your first study goal or try a suggested goal above. Progress will be tracked automatically!"}
                   </p>
                   <Button 
                     onClick={() => {

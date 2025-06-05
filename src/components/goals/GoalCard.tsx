@@ -36,27 +36,56 @@ export const GoalCard = ({ goal, onEdit, onDelete }: GoalCardProps) => {
   const isOverdue = daysLeft < 0 && !goal.is_completed;
   const isAlmostDue = daysLeft <= 3 && daysLeft >= 0 && !goal.is_completed;
 
-  // Gamification elements
-  const getProgressColor = () => {
-    if (goal.is_completed) return "bg-green-500";
-    if (goal.progress >= 75) return "bg-blue-500";
-    if (goal.progress >= 50) return "bg-yellow-500";
-    return "bg-gray-300";
-  };
-
+  // Enhanced motivational message that doesn't show for 0% progress
   const getMotivationalMessage = () => {
     if (goal.is_completed) return "🎉 Goal completed! Amazing work!";
     if (goal.progress >= 90) return "🔥 Almost there! Final push!";
     if (goal.progress >= 75) return "⭐ Great progress! Keep it up!";
     if (goal.progress >= 50) return "💪 Halfway there! You're doing great!";
     if (goal.progress >= 25) return "🚀 Good start! Keep going!";
-    return "🎯 Ready to begin? You've got this!";
+    return null; // No message for 0% progress
   };
 
+  // Enhanced reward points with milestone bonuses
   const getRewardPoints = () => {
-    if (goal.is_completed) return goal.target_hours * 10;
-    return Math.floor(goal.progress * goal.target_hours * 0.1);
+    let basePoints = 0;
+    
+    if (goal.is_completed) {
+      basePoints = goal.target_hours * 10;
+      
+      // Early completion bonus
+      if (daysLeft > 0) {
+        basePoints += Math.floor(daysLeft * 2); // 2 bonus points per day early
+      }
+      
+      // Goal difficulty bonus
+      if (goal.target_hours >= 40) {
+        basePoints += 50; // Advanced goal bonus
+      } else if (goal.target_hours >= 20) {
+        basePoints += 25; // Intermediate goal bonus
+      }
+    } else {
+      // Progressive points for milestones
+      const milestonePoints = Math.floor(goal.progress / 25) * (goal.target_hours * 2);
+      basePoints = milestonePoints;
+    }
+    
+    return basePoints;
   };
+
+  const getMilestoneIndicator = () => {
+    if (goal.progress >= 75 && goal.progress < 100) {
+      return "🏆 Final stretch!";
+    } else if (goal.progress >= 50 && goal.progress < 75) {
+      return "⭐ Halfway champion!";
+    } else if (goal.progress >= 25 && goal.progress < 50) {
+      return "🚀 Great start!";
+    }
+    return null;
+  };
+
+  const motivationalMessage = getMotivationalMessage();
+  const milestoneIndicator = getMilestoneIndicator();
   
   return (
     <>
@@ -96,24 +125,26 @@ export const GoalCard = ({ goal, onEdit, onDelete }: GoalCardProps) => {
           </div>
           <CardDescription>{goal.description}</CardDescription>
           
-          {/* Motivational message */}
-          <div className="mt-2 p-2 bg-white/60 rounded-md border border-gray-200">
-            <p className="text-xs text-center font-medium text-gray-700">
-              {getMotivationalMessage()}
-            </p>
-          </div>
+          {/* Motivational message - only show if not null */}
+          {motivationalMessage && (
+            <div className="mt-2 p-2 bg-white/60 rounded-md border border-gray-200">
+              <p className="text-xs text-center font-medium text-gray-700">
+                {motivationalMessage}
+              </p>
+            </div>
+          )}
         </CardHeader>
         
         <CardContent className="space-y-3 pb-2">
           <div>
             <div className="flex justify-between mb-1 text-xs text-gray-500">
-              <span>Progress</span>
+              <span>Progress {milestoneIndicator && `• ${milestoneIndicator}`}</span>
               <span>{goal.progress}%</span>
             </div>
             <Progress value={goal.progress} className="h-3" />
           </div>
 
-          {/* Reward points section */}
+          {/* Enhanced reward points section */}
           <div className="flex items-center justify-between p-2 bg-white/60 rounded-md border border-gray-200">
             <div className="flex items-center gap-2">
               <Star className="h-4 w-4 text-yellow-500" />
@@ -122,6 +153,11 @@ export const GoalCard = ({ goal, onEdit, onDelete }: GoalCardProps) => {
             <div className="flex items-center gap-1">
               <span className="text-sm font-bold text-yellow-600">{getRewardPoints()}</span>
               <span className="text-xs text-gray-500">pts</span>
+              {goal.is_completed && daysLeft > 0 && (
+                <Badge variant="outline" className="ml-1 text-xs bg-green-50 text-green-700">
+                  +{Math.floor(daysLeft * 2)} early bonus
+                </Badge>
+              )}
             </div>
           </div>
           
@@ -147,12 +183,12 @@ export const GoalCard = ({ goal, onEdit, onDelete }: GoalCardProps) => {
             <div>To: {format(new Date(goal.end_date), 'MMM dd, yyyy')}</div>
           </div>
 
-          {/* Progress streak indicator */}
-          {goal.progress > 0 && (
+          {/* Progress encouragement - only show if there's actual progress */}
+          {goal.progress > 0 && goal.progress < 100 && (
             <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-md border border-blue-200">
               <Zap className="h-4 w-4 text-blue-500" />
               <span className="text-xs text-blue-700">
-                You're making progress! Keep up the momentum!
+                Automatically tracked from your study sessions!
               </span>
             </div>
           )}

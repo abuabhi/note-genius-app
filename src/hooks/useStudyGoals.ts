@@ -209,7 +209,7 @@ export const useStudyGoals = () => {
       if (error) throw error;
       
       setGoals((prev) => [...prev, data]);
-      toast.success('🎯 Study goal created successfully! Let\'s achieve it together!');
+      toast.success('🎯 Study goal created successfully! Progress will be tracked automatically!');
       
       // Trigger achievement check
       await checkGoalAchievements();
@@ -267,56 +267,6 @@ export const useStudyGoals = () => {
     } catch (error) {
       console.error('Error deleting study goal:', error);
       toast.error('Failed to delete study goal');
-      return false;
-    }
-  };
-
-  const updateGoalProgress = async (id: string, progressHours: number) => {
-    if (!user) return false;
-
-    const goal = goals.find(g => g.id === id);
-    if (!goal) return false;
-
-    const newProgress = Math.min(100, Math.round((progressHours / goal.target_hours) * 100));
-    const isCompleted = newProgress >= 100;
-
-    try {
-      const { error } = await supabase
-        .from('study_goals')
-        .update({ 
-          progress: newProgress,
-          is_completed: isCompleted 
-        })
-        .eq('id', id)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      setGoals((prev) => 
-        prev.map((goal) => 
-          goal.id === id ? { 
-            ...goal, 
-            progress: newProgress,
-            is_completed: isCompleted 
-          } : goal
-        )
-      );
-      
-      if (isCompleted) {
-        toast.success('🎉 Congratulations! Goal completed! You\'re amazing!');
-        await checkGoalAchievements();
-      } else if (newProgress >= 50 && goal.progress < 50) {
-        toast.success('🔥 You\'re halfway there! Keep up the great work!');
-      } else if (newProgress >= 75 && goal.progress < 75) {
-        toast.success('⭐ Almost there! You\'re in the final stretch!');
-      } else {
-        toast.success('📈 Goal progress updated - you\'re doing great!');
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error updating goal progress:', error);
-      toast.error('Failed to update goal progress');
       return false;
     }
   };
@@ -478,7 +428,6 @@ export const useStudyGoals = () => {
     createGoal,
     updateGoal,
     deleteGoal,
-    updateGoalProgress,
     createGoalFromTemplate,
     dismissSuggestion,
     getGoalSuggestions,
