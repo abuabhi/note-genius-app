@@ -54,29 +54,7 @@ export const MobileMenu = ({ isOpen, isPublicRoute }: MobileMenuProps) => {
               </>
             )}
             
-            {/* Authenticated Navigation - Mobile - Only on non-public routes */}
-            {!isPublicRoute && (
-              <>
-                <Link to="/notifications" className="text-mint-700 hover:text-mint-900">Notifications</Link>
-                <Link to="/settings" className="text-mint-700 hover:text-mint-900">Settings</Link>
-                {isAdmin && (
-                  <>
-                    <div className="font-medium text-sm text-muted-foreground pt-2">Admin</div>
-                    <Link to="/admin/users" className="text-mint-700 hover:text-mint-900 pl-2">Users</Link>
-                    <Link to="/admin/flashcards" className="text-mint-700 hover:text-mint-900 pl-2">Flashcards</Link>
-                    <Link to="/admin/sections" className="text-mint-700 hover:text-mint-900 pl-2">Sections</Link>
-                    <Link to="/admin/grades" className="text-mint-700 hover:text-mint-900 pl-2">Grades</Link>
-                    <Link to="/admin/csv-import" className="text-mint-700 hover:text-mint-900 pl-2">CSV Import</Link>
-                    <Link to="/admin/features" className="text-mint-700 hover:text-mint-900 pl-2">Feature Management</Link>
-                  </>
-                )}
-              </>
-            )}
-            
-            {/* Logout button always visible on mobile when logged in */}
-            <Button variant="outline" onClick={handleLogout} className="border-mint-200 hover:bg-mint-50 text-mint-700 mt-2">
-              Logout
-            </Button>
+            {/* Note: Profile functionality moved to sidebar - mobile users will use sidebar for profile menu */}
           </>
         )}
       </div>
