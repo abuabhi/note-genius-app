@@ -67,10 +67,11 @@ export const TodoList: React.FC<TodoListProps> = ({
   };
 
   const getNextStatus = (currentStatus: TodoStatus): TodoStatus => {
+    // Fixed status cycling to only use valid database statuses
     switch (currentStatus) {
       case 'new': return 'pending';
       case 'pending': return 'completed';
-      case 'completed': return 'new';
+      case 'completed': return 'pending'; // Changed: cycle back to pending instead of new
       default: return 'pending';
     }
   };
