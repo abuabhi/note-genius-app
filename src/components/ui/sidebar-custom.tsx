@@ -32,11 +32,13 @@ export function CustomSidebar() {
         className={`relative z-40 flex text-muted-foreground h-full shrink-0 flex-col bg-white dark:bg-black transition-all`}
         variants={contentVariants}
       >
-        {/* User Avatar Section */}
-        <UserSection isCollapsed={isCollapsed} />
+        {/* Main Navigation - takes up available space */}
+        <div className="flex-1">
+          <Navigation isCollapsed={isCollapsed} />
+        </div>
         
-        {/* Main Navigation */}
-        <Navigation isCollapsed={isCollapsed} />
+        {/* User Avatar Section - moved to bottom */}
+        <UserSection isCollapsed={isCollapsed} />
       </motion.div>
     </motion.div>
   );
