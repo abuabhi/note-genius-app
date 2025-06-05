@@ -31,6 +31,13 @@ export const AchievementProgressSection = ({
   progressLoading, 
   onCheckProgress 
 }: AchievementProgressSectionProps) => {
+  console.log('AchievementProgressSection render:', { 
+    achievementProgressLength: achievementProgress.length, 
+    loading, 
+    progressLoading,
+    achievementProgress 
+  });
+
   return (
     <Card>
       <CardHeader>
@@ -60,7 +67,7 @@ export const AchievementProgressSection = ({
               </div>
             ))}
           </div>
-        ) : achievementProgress.length > 0 ? (
+        ) : achievementProgress && achievementProgress.length > 0 ? (
           achievementProgress.map((achievement) => (
             <div key={achievement.id} className="space-y-3 p-4 rounded-lg border bg-gradient-to-r from-gray-50 to-white">
               <div className="flex items-start justify-between">
@@ -99,7 +106,7 @@ export const AchievementProgressSection = ({
           <div className="text-center py-4">
             <Trophy className="h-8 w-8 text-gray-300 mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">
-              All available achievements completed! Great job!
+              No achievements available. Check your progress to unlock achievements!
             </p>
           </div>
         )}

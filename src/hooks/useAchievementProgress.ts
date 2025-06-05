@@ -24,6 +24,7 @@ export const useAchievementProgress = () => {
 
   const calculateProgress = async () => {
     if (!user) {
+      console.log('No user found, setting empty achievement progress');
       setAchievementProgress([]);
       setLoading(false);
       return;
@@ -32,6 +33,7 @@ export const useAchievementProgress = () => {
     try {
       setLoading(true);
       console.log('Calculating achievement progress for user:', user.id);
+      console.log('Current stats:', stats);
       
       // Get all achievement templates (achievements with user_id = null)
       const { data: templates, error: templatesError } = await supabase
@@ -159,6 +161,7 @@ export const useAchievementProgress = () => {
   };
 
   useEffect(() => {
+    console.log('useAchievementProgress effect triggered, user:', user?.id, 'stats:', stats);
     calculateProgress();
   }, [user, stats]);
 
