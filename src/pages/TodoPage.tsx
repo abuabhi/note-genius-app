@@ -3,8 +3,10 @@ import { useState } from "react";
 import { Check, CheckCheck, Clock, ListTodo, Plus } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { TodoList } from "@/components/todos/TodoList";
-import { TodoForm } from "@/components/todos/TodoForm";
-import { useTodos, TodoStatus } from "@/hooks/useTodos";
+import { TodoFormDialog } from "@/components/todos/TodoFormDialog";
+import { TodoStats } from "@/components/todos/TodoStats";
+import { TodoSuggestions } from "@/components/todos/TodoSuggestions";
+import { useTodos, TodoStatus, CreateTodoData } from "@/hooks/useTodos";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -24,14 +26,19 @@ const TodoPage = () => {
     filter,
     setFilter
   } = useTodos();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: CreateTodoData) => {
+    await createTodo.mutateAsync(data);
+  };
+
+  const handleCreateFromTemplate = async (templateTodos: CreateTodoData[]) => {
     try {
-      setIsSubmitting(true);
-      await createTodo.mutateAsync(data);
-    } finally {
-      setIsSubmitting(false);
+      for (const todoData of templateTodos) {
+        await createTodo.mutateAsync(todoData);
+      }
+    } catch (error) {
+      console.error("Error creating todos from template:", error);
     }
   };
 
@@ -60,58 +67,74 @@ const TodoPage = () => {
   return (
     <Layout>
       <div className="container mx-auto p-4 md:p-6">
+        {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <ListTodo className="h-7 w-7" />
-            Todo List
-          </h1>
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <ListTodo className="h-7 w-7" />
+              Todo List
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Organize and track your tasks and assignments
+            </p>
+          </div>
+          <Button onClick={() => setShowCreateDialog(true)} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Create Todo
+          </Button>
         </div>
 
         <FeatureDisabledAlert featureKey="todos" featureDisplayName="Todo Lists" />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-1">
-            <TodoForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
-          </div>
+        {/* Stats */}
+        <TodoStats todos={todos} />
 
-          <div className="md:col-span-2">
-            <Card className="p-4">
-              <Tabs 
-                defaultValue="all" 
-                value={filter}
-                onValueChange={(value: any) => setFilter(value)}
-                className="w-full"
-              >
-                <TabsList className="grid grid-cols-4 mb-6">
-                  <TabsTrigger value="all" className="flex items-center gap-1">
-                    <CheckCheck className="h-4 w-4" />
-                    <span>All</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="new" className="flex items-center gap-1">
-                    <Plus className="h-4 w-4" />
-                    <span>New</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="pending" className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    <span>Pending</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="completed" className="flex items-center gap-1">
-                    <Check className="h-4 w-4" />
-                    <span>Completed</span>
-                  </TabsTrigger>
-                </TabsList>
+        {/* Quick Start Templates */}
+        <TodoSuggestions onCreateFromTemplate={handleCreateFromTemplate} />
 
-                <TodoList
-                  todos={todos}
-                  isLoading={isLoading}
-                  onUpdate={handleUpdateTodoStatus}
-                  onDelete={deleteTodo.mutate}
-                  formatDate={formatDate}
-                />
-              </Tabs>
-            </Card>
-          </div>
-        </div>
+        {/* Main Content */}
+        <Card className="p-6">
+          <Tabs 
+            defaultValue="all" 
+            value={filter}
+            onValueChange={(value: any) => setFilter(value)}
+            className="w-full"
+          >
+            <TabsList className="grid grid-cols-4 mb-6">
+              <TabsTrigger value="all" className="flex items-center gap-1">
+                <CheckCheck className="h-4 w-4" />
+                <span>All</span>
+              </TabsTrigger>
+              <TabsTrigger value="new" className="flex items-center gap-1">
+                <Plus className="h-4 w-4" />
+                <span>New</span>
+              </TabsTrigger>
+              <TabsTrigger value="pending" className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                <span>Pending</span>
+              </TabsTrigger>
+              <TabsTrigger value="completed" className="flex items-center gap-1">
+                <Check className="h-4 w-4" />
+                <span>Completed</span>
+              </TabsTrigger>
+            </TabsList>
+
+            <TodoList
+              todos={todos}
+              isLoading={isLoading}
+              onUpdate={handleUpdateTodoStatus}
+              onDelete={deleteTodo.mutate}
+              formatDate={formatDate}
+            />
+          </Tabs>
+        </Card>
+
+        {/* Create Todo Dialog */}
+        <TodoFormDialog
+          open={showCreateDialog}
+          onOpenChange={setShowCreateDialog}
+          onSubmit={handleSubmit}
+        />
       </div>
     </Layout>
   );
