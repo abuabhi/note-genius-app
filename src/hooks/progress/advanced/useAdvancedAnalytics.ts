@@ -1,0 +1,112 @@
+
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth";
+import { useProgressAnalytics } from "../useProgressAnalytics";
+import { subMonths, format } from 'date-fns';
+import { AdvancedAnalytics, StudySession } from './types';
+import { calculatePerformancePrediction } from './performancePredictionCalculations';
+import { calculateComparativeMetrics } from './comparativeMetricsCalculations';
+import { generateStudyRecommendations } from './studyRecommendationCalculations';
+import { calculateLearningVelocityTrend, calculateOptimalStudyDuration } from './learningVelocityCalculations';
+
+export const useAdvancedAnalytics = () => {
+  const { user } = useAuth();
+  const { overviewStats, gradeProgression, studyTimeAnalytics } = useProgressAnalytics();
+
+  const { data: advancedAnalytics, isLoading } = useQuery({
+    queryKey: ['advanced-analytics', user?.id],
+    queryFn: async () => {
+      if (!user) throw new Error('User not authenticated');
+
+      // Get extended historical data for predictions
+      const sixMonthsAgo = format(subMonths(new Date(), 6), 'yyyy-MM-dd');
+      
+      const [historicalSessions, allUsersComparison, userGoals] = await Promise.all([
+        supabase
+          .from('study_sessions')
+          .select('*')
+          .eq('user_id', user.id)
+          .gte('start_time', `${sixMonthsAgo}T00:00:00Z`)
+          .not('duration', 'is', null),
+        
+        supabase
+          .from('study_sessions')
+          .select('user_id, duration')
+          .not('duration', 'is', null)
+          .gte('start_time', `${sixMonthsAgo}T00:00:00Z`),
+        
+        supabase
+          .from('study_goals')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+      ]);
+
+      const sessions = (historicalSessions.data || []) as StudySession[];
+      const allSessions = (allUsersComparison.data || []) as Array<{ user_id: string; duration: number }>;
+      const goals = userGoals.data || [];
+
+      // Calculate Performance Predictions
+      const performancePrediction = calculatePerformancePrediction(
+        sessions,
+        overviewStats,
+        studyTimeAnalytics
+      );
+
+      // Calculate Comparative Metrics
+      const comparativeMetrics = calculateComparativeMetrics(
+        sessions,
+        allSessions,
+        gradeProgression
+      );
+
+      // Generate Study Recommendations
+      const studyRecommendations = generateStudyRecommendations(
+        overviewStats,
+        gradeProgression,
+        studyTimeAnalytics,
+        performancePrediction,
+        goals
+      );
+
+      // Calculate Learning Velocity Trend
+      const learningVelocityTrend = calculateLearningVelocityTrend(sessions);
+
+      // Calculate Optimal Study Duration
+      const optimalStudyDuration = calculateOptimalStudyDuration(sessions);
+
+      return {
+        performancePrediction,
+        comparativeMetrics,
+        studyRecommendations,
+        learningVelocityTrend,
+        optimalStudyDuration
+      } as AdvancedAnalytics;
+    },
+    enabled: !!user,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  });
+
+  return {
+    advancedAnalytics: advancedAnalytics || {
+      performancePrediction: {
+        weeklyGoalLikelihood: 0,
+        optimalStudyTimes: [],
+        difficultyProgression: 'optimal' as const,
+        burnoutRisk: 'low' as const,
+        recommendedBreakFrequency: 25
+      },
+      comparativeMetrics: {
+        performancePercentile: 50,
+        averagePeerStudyTime: 0,
+        streakComparison: 'average' as const,
+        subjectRankings: []
+      },
+      studyRecommendations: [],
+      learningVelocityTrend: 'stable' as const,
+      optimalStudyDuration: 25
+    },
+    isLoading
+  };
+};

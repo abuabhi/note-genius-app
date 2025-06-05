@@ -1,8 +1,7 @@
-
 import { ProgressCard } from "../shared/ProgressCard";
 import { Badge } from "@/components/ui/badge";
 import { Activity, TrendingUp, TrendingDown, Minus } from "lucide-react";
-import { useAdvancedAnalytics } from "@/hooks/progress/useAdvancedAnalytics";
+import { useAdvancedAnalytics } from "@/hooks/progress/advanced";
 
 export const LearningVelocityCard = () => {
   const { advancedAnalytics, isLoading } = useAdvancedAnalytics();

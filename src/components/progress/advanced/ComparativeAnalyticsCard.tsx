@@ -1,9 +1,8 @@
-
 import { ProgressCard } from "../shared/ProgressCard";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Users, Trophy, TrendingUp } from "lucide-react";
-import { useAdvancedAnalytics } from "@/hooks/progress/useAdvancedAnalytics";
+import { useAdvancedAnalytics } from "@/hooks/progress/advanced";
 
 export const ComparativeAnalyticsCard = () => {
   const { advancedAnalytics, isLoading } = useAdvancedAnalytics();
