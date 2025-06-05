@@ -63,7 +63,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                 
                 {/* Quiz */}
                 <NavLink
-                  to="/quiz"
+                  to="/quizzes"
                   icon={Activity}
                   label="Quiz"
                   isActive={pathname.includes("/quiz")}

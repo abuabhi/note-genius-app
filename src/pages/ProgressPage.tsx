@@ -6,6 +6,8 @@ import { StudyStatsChart } from "@/components/progress/StudyStatsChart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Achievements } from "@/components/progress/Achievements";
 import { FeatureDisabledAlert } from "@/components/routes/FeatureProtectedRoute";
+import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
+import { BarChart3 } from "lucide-react";
 
 const ProgressPage = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -13,6 +15,8 @@ const ProgressPage = () => {
   return (
     <Layout>
       <div className="container mx-auto p-6">
+        <PageBreadcrumb pageName="Progress" pageIcon={<BarChart3 className="h-3 w-3" />} />
+        
         <h1 className="text-3xl font-bold mb-2">Progress Tracking</h1>
         <p className="text-muted-foreground mb-6">
           Track your learning progress and achievements

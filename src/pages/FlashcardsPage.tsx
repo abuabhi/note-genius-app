@@ -15,7 +15,7 @@ const FlashcardsPage = () => {
       <div className="container mx-auto p-4 md:p-6">
         <PageBreadcrumb pageName="Flashcards" pageIcon={<BookOpen className="h-3 w-3" />} />
         <FlashcardProvider>
-          <EnhancedFlashcardSetsList fromNoteConversion={fromNoteConversion} />
+          <EnhancedFlashcardSetsList />
         </FlashcardProvider>
       </div>
     </Layout>
