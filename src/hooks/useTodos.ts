@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
@@ -140,10 +139,16 @@ export const useTodos = () => {
 
       console.log('📝 Updating todo status:', { id, status, userId: user.id });
 
+      // Map our status values to the database constraint values
+      let dbStatus = status;
+      if (status === 'completed') {
+        dbStatus = 'sent'; // Use 'sent' instead of 'completed' based on database constraint
+      }
+
       const { data, error } = await supabase
         .from('reminders')
         .update({ 
-          status: status,
+          status: dbStatus,
           updated_at: new Date().toISOString() 
         })
         .eq('id', id)
