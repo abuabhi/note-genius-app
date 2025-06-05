@@ -50,7 +50,7 @@ export const TodoFormDialog = ({ open, onOpenChange, onSubmit }: TodoFormProps) 
       priority: "medium",
       due_date: undefined,
       due_time: "",
-      reminder_minutes: "",
+      reminder_minutes: "none",
       recurrence: "none",
       recurrence_end_date: undefined,
       depends_on_todo_id: undefined,
@@ -77,7 +77,7 @@ export const TodoFormDialog = ({ open, onOpenChange, onSubmit }: TodoFormProps) 
   };
 
   const calculateReminderTime = (dueDateTime?: Date, reminderMinutes?: string): Date | undefined => {
-    if (!dueDateTime || !reminderMinutes) return undefined;
+    if (!dueDateTime || !reminderMinutes || reminderMinutes === "none") return undefined;
     
     const minutes = parseInt(reminderMinutes);
     const reminderTime = new Date(dueDateTime.getTime() - (minutes * 60 * 1000));
@@ -262,7 +262,7 @@ export const TodoFormDialog = ({ open, onOpenChange, onSubmit }: TodoFormProps) 
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">No reminder</SelectItem>
+                          <SelectItem value="none">No reminder</SelectItem>
                           {reminderOptions.map((option) => (
                             <SelectItem key={option.value} value={option.value}>
                               {option.label}
