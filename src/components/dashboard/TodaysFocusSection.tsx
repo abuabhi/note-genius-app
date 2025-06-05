@@ -12,6 +12,7 @@ import {
 import { TodaysFocusOverdueItems } from "./TodaysFocusOverdueItems";
 import { TodaysFocusGoals } from "./TodaysFocusGoals";
 import { TodaysFocusReminders } from "./TodaysFocusReminders";
+import { TodaysFocusTodos } from "./TodaysFocusTodos";
 import { useTodaysFocusData } from "./hooks/useTodaysFocusData";
 import { TodaysFocusEmptyState } from "./TodaysFocusEmptyState";
 import { TodaysFocusQuickActions } from "./TodaysFocusQuickActions";
@@ -52,6 +53,7 @@ export const TodaysFocusSection = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         <TodaysFocusOverdueItems overdueItems={todaysItems.overdue} />
+        <TodaysFocusTodos todos={todaysItems.todos} />
         <TodaysFocusGoals goals={todaysItems.goals} />
         <TodaysFocusReminders reminders={todaysItems.reminders} />
         <TodaysFocusQuickActions />

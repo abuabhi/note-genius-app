@@ -6,10 +6,10 @@ import { useAuth } from "@/contexts/auth";
 export const useTodaysFocusData = () => {
   const { user } = useAuth();
 
-  const { data: todaysItems = { reminders: [], goals: [], overdue: [] }, isLoading } = useQuery({
+  const { data: todaysItems = { reminders: [], goals: [], overdue: [], todos: [] }, isLoading } = useQuery({
     queryKey: ['todays-focus', user?.id],
     queryFn: async () => {
-      if (!user) return { reminders: [], goals: [], overdue: [] };
+      if (!user) return { reminders: [], goals: [], overdue: [], todos: [] };
 
       const today = new Date().toISOString().split('T')[0];
       
@@ -45,21 +45,33 @@ export const useTodaysFocusData = () => {
           .order('due_date', { ascending: true })
           .limit(3);
 
+        // Get pending todos due today or overdue
+        const { data: todos } = await supabase
+          .from('reminders')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('type', 'todo')
+          .eq('status', 'pending')
+          .or(`due_date.eq.${today},due_date.lt.${today}`)
+          .order('due_date', { ascending: true })
+          .limit(5);
+
         return {
           reminders: reminders || [],
           goals: goals || [],
-          overdue: overdue || []
+          overdue: overdue || [],
+          todos: todos || []
         };
       } catch (error) {
         console.error('Error fetching today\'s items:', error);
-        return { reminders: [], goals: [], overdue: [] };
+        return { reminders: [], goals: [], overdue: [], todos: [] };
       }
     },
     enabled: !!user,
     staleTime: 1 * 60 * 1000, // 1 minute
   });
 
-  const totalItems = todaysItems.reminders.length + todaysItems.goals.length + todaysItems.overdue.length;
+  const totalItems = todaysItems.reminders.length + todaysItems.goals.length + todaysItems.overdue.length + todaysItems.todos.length;
 
   return { todaysItems, isLoading, totalItems };
 };
