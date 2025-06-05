@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Check, CheckCheck, Clock, ListTodo } from "lucide-react";
+import { Check, CheckCheck, Clock, ListTodo, Plus } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { TodoList } from "@/components/todos/TodoList";
 import { TodoForm } from "@/components/todos/TodoForm";
@@ -82,10 +82,14 @@ const TodoPage = () => {
                 onValueChange={(value: any) => setFilter(value)}
                 className="w-full"
               >
-                <TabsList className="grid grid-cols-3 mb-6">
+                <TabsList className="grid grid-cols-4 mb-6">
                   <TabsTrigger value="all" className="flex items-center gap-1">
                     <CheckCheck className="h-4 w-4" />
                     <span>All</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="new" className="flex items-center gap-1">
+                    <Plus className="h-4 w-4" />
+                    <span>New</span>
                   </TabsTrigger>
                   <TabsTrigger value="pending" className="flex items-center gap-1">
                     <Clock className="h-4 w-4" />

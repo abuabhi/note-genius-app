@@ -28,7 +28,7 @@ export const useTodoMutations = () => {
         description: todoData.description,
         reminder_time: todoData.reminder_time ? todoData.reminder_time.toISOString() : null,
         type: 'todo',
-        status: 'pending',
+        status: 'new', // Always start with 'new' status
         priority: todoData.priority,
         delivery_methods: ['in_app'],
       };
@@ -64,7 +64,7 @@ export const useTodoMutations = () => {
 
       console.log('📝 Updating todo status:', { id, status, userId: user.id });
 
-      // Map TodoStatus to database status
+      // Use 1:1 mapping for status
       const databaseStatus = mapTodoStatusToDatabaseStatus(status);
       console.log('📝 Status mapping:', { todoStatus: status, databaseStatus });
 

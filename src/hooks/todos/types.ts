@@ -1,6 +1,6 @@
 
 export type TodoPriority = "low" | "medium" | "high";
-export type TodoStatus = "pending" | "completed" | "cancelled";
+export type TodoStatus = "new" | "pending" | "completed";
 
 export interface Todo {
   id: string;
