@@ -32,11 +32,93 @@ interface UserStats {
   flashcardAccuracy: number;
 }
 
+// Achievement templates to seed if they don't exist
+const ACHIEVEMENT_TEMPLATES = [
+  {
+    title: 'First Steps',
+    description: 'Review your first flashcard',
+    type: 'flashcard',
+    points: 10,
+    badge_image: 'first-steps'
+  },
+  {
+    title: 'Getting Started',
+    description: 'Create your first flashcard set',
+    type: 'flashcard',
+    points: 15,
+    badge_image: 'getting-started'
+  },
+  {
+    title: 'Study Streak',
+    description: 'Study for 3 consecutive days',
+    type: 'streak',
+    points: 25,
+    badge_image: 'study-streak'
+  },
+  {
+    title: 'Week Warrior',
+    description: 'Study for 7 consecutive days',
+    type: 'streak',
+    points: 50,
+    badge_image: 'week-warrior'
+  },
+  {
+    title: 'Flashcard Master',
+    description: 'Create 10 flashcard sets',
+    type: 'flashcard',
+    points: 75,
+    badge_image: 'flashcard-master'
+  },
+  {
+    title: 'Goal Crusher',
+    description: 'Complete 5 study goals',
+    type: 'goal',
+    points: 100,
+    badge_image: 'goal-crusher'
+  },
+  {
+    title: 'Century Club',
+    description: 'Master 100 flashcards',
+    type: 'flashcard',
+    points: 150,
+    badge_image: 'century-club'
+  },
+  {
+    title: 'Study Session Champion',
+    description: 'Complete 20 study sessions',
+    type: 'study',
+    points: 200,
+    badge_image: 'session-champion'
+  }
+];
+
 export const SimpleAchievementProgress = () => {
   const { user } = useAuth();
   const [achievements, setAchievements] = useState<AchievementWithProgress[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  const seedAchievementTemplates = async () => {
+    console.log('Seeding achievement templates...');
+    
+    try {
+      // Insert achievement templates
+      const { error } = await supabase
+        .from('study_achievements')
+        .insert(ACHIEVEMENT_TEMPLATES.map(template => ({
+          ...template,
+          user_id: null, // Template achievements have null user_id
+        })));
+
+      if (error) {
+        console.error('Error seeding achievement templates:', error);
+      } else {
+        console.log('Achievement templates seeded successfully');
+      }
+    } catch (error) {
+      console.error('Error in seedAchievementTemplates:', error);
+    }
+  };
 
   const calculateProgress = (title: string, stats: UserStats, isEarned: boolean) => {
     let current = 0;
@@ -62,6 +144,10 @@ export const SimpleAchievementProgress = () => {
       case 'Flashcard Master':
         current = Math.min(stats.totalSets, 10);
         target = 10;
+        break;
+      case 'Goal Crusher':
+        current = 0; // Placeholder for goals
+        target = 5;
         break;
       case 'Century Club':
         current = Math.min(stats.totalCardsMastered, 100);
@@ -93,7 +179,20 @@ export const SimpleAchievementProgress = () => {
     try {
       console.log('=== SimpleAchievementProgress: Starting fetch ===');
       
-      // 1. Fetch achievement templates
+      // 1. First check what's in the study_achievements table
+      console.log('Checking all study_achievements entries...');
+      const { data: allAchievements, error: allError } = await supabase
+        .from('study_achievements')
+        .select('*');
+
+      console.log('All achievements in table:', allAchievements?.length || 0);
+      console.log('Sample achievements:', allAchievements?.slice(0, 3));
+
+      if (allError) {
+        console.error('Error fetching all achievements:', allError);
+      }
+
+      // 2. Fetch achievement templates
       console.log('Fetching achievement templates...');
       const { data: templates, error: templatesError } = await supabase
         .from('study_achievements')
@@ -107,13 +206,35 @@ export const SimpleAchievementProgress = () => {
 
       console.log('Templates fetched:', templates?.length || 0);
 
+      // If no templates exist, seed them
       if (!templates || templates.length === 0) {
-        console.log('No templates found');
-        setAchievements([]);
-        return;
+        console.log('No templates found, seeding...');
+        await seedAchievementTemplates();
+        
+        // Fetch again after seeding
+        const { data: newTemplates, error: newError } = await supabase
+          .from('study_achievements')
+          .select('*')
+          .is('user_id', null);
+
+        if (newError) {
+          console.error('Error fetching templates after seeding:', newError);
+          return;
+        }
+
+        console.log('Templates after seeding:', newTemplates?.length || 0);
+        
+        if (!newTemplates || newTemplates.length === 0) {
+          console.error('Still no templates after seeding!');
+          setAchievements([]);
+          return;
+        }
+
+        // Use the newly seeded templates
+        templates = newTemplates;
       }
 
-      // 2. Fetch earned achievements
+      // 3. Fetch earned achievements
       console.log('Fetching earned achievements...');
       const { data: earnedAchievements, error: earnedError } = await supabase
         .from('study_achievements')
@@ -127,7 +248,7 @@ export const SimpleAchievementProgress = () => {
       const earnedTitles = new Set(earnedAchievements?.map(a => a.title) || []);
       console.log('Earned achievements:', Array.from(earnedTitles));
 
-      // 3. Fetch user stats directly
+      // 4. Fetch user stats directly
       console.log('Fetching user stats...');
       
       // Get flashcard sets count
@@ -164,7 +285,7 @@ export const SimpleAchievementProgress = () => {
 
       console.log('User stats calculated:', stats);
 
-      // 4. Create achievements with progress
+      // 5. Create achievements with progress
       const achievementsWithProgress: AchievementWithProgress[] = templates.map(template => {
         const isEarned = earnedTitles.has(template.title);
         const { current, target, progress } = calculateProgress(template.title, stats, isEarned);
