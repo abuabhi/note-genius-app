@@ -12,12 +12,24 @@ export const AnalyticsSection = () => {
   const weeklyGoalHours = 5;
   const weeklyProgress = Math.min(100, (stats.studyTimeHours / weeklyGoalHours) * 100);
 
+  // Transform stats to match SharedStatsGrid interface
+  const transformedStats = {
+    totalHours: stats.studyTimeHours,
+    averageDuration: stats.averageSessionTime,
+    totalSessions: stats.totalSessions,
+    activeSessions: 0, // We don't track active sessions in unified stats
+    streakDays: stats.streakDays,
+    totalCardsMastered: stats.totalCardsMastered,
+    cardsReviewedToday: 0, // We don't track today's cards in unified stats
+    todayStudyMinutes: 0, // We don't track today's study time in unified stats
+  };
+
   return (
     <div className="space-y-8">
       {/* Quick Overview Stats */}
       <div>
         <h2 className="text-xl font-semibold mb-4 text-mint-900">Your Learning Overview</h2>
-        <SharedStatsGrid stats={stats} isLoading={isLoading} variant="dashboard" />
+        <SharedStatsGrid stats={transformedStats} isLoading={isLoading} variant="dashboard" />
       </div>
       
       {/* Weekly Goal Progress */}

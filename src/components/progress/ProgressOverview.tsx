@@ -29,6 +29,18 @@ const ProgressOverview = () => {
     );
   }
 
+  // Transform stats to match SharedStatsGrid interface
+  const transformedStats = {
+    totalHours: stats.studyTimeHours,
+    averageDuration: stats.averageSessionTime,
+    totalSessions: stats.totalSessions,
+    activeSessions: 0, // We don't track active sessions in unified stats
+    streakDays: stats.streakDays,
+    totalCardsMastered: stats.totalCardsMastered,
+    cardsReviewedToday: 0, // We don't track today's cards in unified stats
+    todayStudyMinutes: 0, // We don't track today's study time in unified stats
+  };
+
   // For debugging - let's always show the progress sections to see real data
   console.log('Progress Overview Stats:', stats);
 
@@ -57,7 +69,7 @@ const ProgressOverview = () => {
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Study Statistics</h2>
           <p className="text-gray-600">Overview of your study sessions and activity</p>
         </div>
-        <SharedStatsGrid stats={stats} isLoading={isLoading} variant="detailed" />
+        <SharedStatsGrid stats={transformedStats} isLoading={isLoading} variant="detailed" />
       </div>
 
       {/* Learning Summary Section */}
