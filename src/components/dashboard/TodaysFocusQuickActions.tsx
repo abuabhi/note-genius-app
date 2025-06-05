@@ -7,9 +7,9 @@ export const TodaysFocusQuickActions = () => {
   return (
     <div className="flex flex-wrap gap-2 pt-4 border-t">
       <Button asChild variant="outline">
-        <Link to="/reminders">
+        <Link to="/todos">
           <Calendar className="h-4 w-4 mr-2" />
-          View All Reminders
+          View All Tasks
         </Link>
       </Button>
       <Button asChild variant="outline">
