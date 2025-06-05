@@ -114,7 +114,7 @@ export const useTodaysFocusData = () => {
           .eq('user_id', user.id)
           .eq('type', 'todo')
           .in('status', ['pending'])
-          .order('due_date', { ascending: true, nullsLast: false });
+          .order('due_date', { ascending: true });
 
         let filteredTodos = [];
         if (todos && todos.length > 0) {
