@@ -81,25 +81,29 @@ export const useRecentActivity = () => {
           });
         }
 
-        // Get recent notes
+        // Get recent notes with subject information
         const { data: notes } = await supabase
           .from('notes')
-          .select('*')
+          .select(`
+            *,
+            user_subjects(name)
+          `)
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(3);
 
         if (notes) {
           notes.forEach(note => {
+            const subjectName = note.user_subjects?.name || note.subject || 'Unknown Subject';
             activities.push({
               id: note.id,
               type: 'note_created',
               title: `Note: ${note.title}`,
-              description: `Created in ${note.subject}`,
+              description: `Created in ${subjectName}`,
               timestamp: note.created_at,
               relativeTime: formatDistanceToNow(new Date(note.created_at), { addSuffix: true }),
               metadata: {
-                subject: note.subject
+                subject: subjectName
               }
             });
           });
