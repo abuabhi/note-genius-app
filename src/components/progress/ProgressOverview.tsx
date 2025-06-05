@@ -82,8 +82,8 @@ const ProgressOverview = () => {
         <StudyConsistency />
       </div>
 
-      {/* Empty State Encouragement Card - Only show if no activity */}
-      {stats.totalSessions === 0 && stats.totalCardsMastered === 0 && stats.streakDays === 0 && stats.totalSets === 0 && (
+      {/* Empty State Encouragement Card - Only show if no flashcard sets */}
+      {stats.totalSets === 0 && (
         <Card className="bg-gradient-to-br from-mint-50 to-blue-50 border-mint-200">
           <CardContent className="flex flex-col items-center justify-center py-12 px-6 text-center">
             <div className="mb-6">
