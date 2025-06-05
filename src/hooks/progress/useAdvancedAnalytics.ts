@@ -36,6 +36,25 @@ export interface AdvancedAnalytics {
   optimalStudyDuration: number; // minutes
 }
 
+interface StudySession {
+  start_time: string;
+  duration: number;
+  cards_correct?: number;
+  cards_reviewed?: number;
+}
+
+interface FlashcardProgress {
+  grade: string;
+  mastery_level: number;
+  flashcard?: {
+    flashcard_set_cards?: Array<{
+      flashcard_sets?: {
+        subject: string;
+      };
+    }>;
+  };
+}
+
 export const useAdvancedAnalytics = () => {
   const { user } = useAuth();
   const { overviewStats, gradeProgression, studyTimeAnalytics } = useProgressAnalytics();
@@ -69,17 +88,21 @@ export const useAdvancedAnalytics = () => {
           .order('created_at', { ascending: false })
       ]);
 
+      const sessions = (historicalSessions.data || []) as StudySession[];
+      const allSessions = (allUsersComparison.data || []) as Array<{ user_id: string; duration: number }>;
+      const goals = userGoals.data || [];
+
       // Calculate Performance Predictions
       const performancePrediction = calculatePerformancePrediction(
-        historicalSessions.data || [],
+        sessions,
         overviewStats,
         studyTimeAnalytics
       );
 
       // Calculate Comparative Metrics
       const comparativeMetrics = calculateComparativeMetrics(
-        historicalSessions.data || [],
-        allUsersComparison.data || [],
+        sessions,
+        allSessions,
         gradeProgression
       );
 
@@ -89,14 +112,14 @@ export const useAdvancedAnalytics = () => {
         gradeProgression,
         studyTimeAnalytics,
         performancePrediction,
-        userGoals.data || []
+        goals
       );
 
       // Calculate Learning Velocity Trend
-      const learningVelocityTrend = calculateLearningVelocityTrend(historicalSessions.data || []);
+      const learningVelocityTrend = calculateLearningVelocityTrend(sessions);
 
       // Calculate Optimal Study Duration
-      const optimalStudyDuration = calculateOptimalStudyDuration(historicalSessions.data || []);
+      const optimalStudyDuration = calculateOptimalStudyDuration(sessions);
 
       return {
         performancePrediction,
@@ -135,7 +158,7 @@ export const useAdvancedAnalytics = () => {
 
 // Helper Functions for Analytics Calculations
 
-function calculatePerformancePrediction(sessions: any[], overviewStats: any, studyTimeAnalytics: any): PerformancePrediction {
+function calculatePerformancePrediction(sessions: StudySession[], overviewStats: any, studyTimeAnalytics: any): PerformancePrediction {
   const recentSessions = sessions.slice(-14); // Last 2 weeks
   
   // Calculate weekly goal likelihood based on recent performance
@@ -165,7 +188,7 @@ function calculatePerformancePrediction(sessions: any[], overviewStats: any, stu
     });
 
   // Calculate burnout risk based on study patterns
-  const recentIntensity = recentSessions.reduce((sum, s) => sum + (s.duration || 0), 0) / (recentSessions.length || 1);
+  const recentIntensity = recentSessions.reduce((sum, s) => sum + (s.duration || 0), 0) / Math.max(recentSessions.length, 1);
   const burnoutRisk = recentIntensity > 120 ? 'high' : recentIntensity > 60 ? 'medium' : 'low';
 
   return {
@@ -177,9 +200,8 @@ function calculatePerformancePrediction(sessions: any[], overviewStats: any, stu
   };
 }
 
-function calculateComparativeMetrics(userSessions: any[], allSessions: any[], gradeProgression: any[]): ComparativeMetrics {
+function calculateComparativeMetrics(userSessions: StudySession[], allSessions: Array<{ user_id: string; duration: number }>, gradeProgression: any[]): ComparativeMetrics {
   const userTotalTime = userSessions.reduce((sum, s) => sum + (s.duration || 0), 0);
-  const userSessionCount = userSessions.length;
 
   // Group all sessions by user
   const userStats = allSessions.reduce((acc: Record<string, number>, session) => {
@@ -201,9 +223,9 @@ function calculateComparativeMetrics(userSessions: any[], allSessions: any[], gr
                           performancePercentile > 25 ? 'average' : 'below_average';
 
   // Subject rankings based on mastery levels
-  const subjectRankings = gradeProgression.map(subject => ({
-    subject: subject.subject,
-    percentile: Math.min(95, Math.max(5, subject.masteryLevel))
+  const subjectRankings = (gradeProgression || []).map(subject => ({
+    subject: subject.subject || 'Unknown',
+    percentile: Math.min(95, Math.max(5, subject.masteryLevel || 0))
   }));
 
   return {
@@ -224,13 +246,13 @@ function generateStudyRecommendations(
   const recommendations: StudyRecommendation[] = [];
 
   // Check if user needs to focus on weak subjects
-  const weakSubjects = gradeProgression.filter(subject => subject.masteryLevel < 60);
+  const weakSubjects = (gradeProgression || []).filter(subject => (subject.masteryLevel || 0) < 60);
   if (weakSubjects.length > 0) {
     recommendations.push({
       type: 'focus_subject',
       subject: weakSubjects[0].subject,
       priority: 'high',
-      message: `Focus on ${weakSubjects[0].subject} - currently at ${weakSubjects[0].masteryLevel}% mastery`,
+      message: `Focus on ${weakSubjects[0].subject} - currently at ${weakSubjects[0].masteryLevel || 0}% mastery`,
       estimatedImpact: '+15% mastery in 2 weeks'
     });
   }
@@ -251,13 +273,13 @@ function generateStudyRecommendations(
       type: 'maintain_pace',
       priority: 'medium',
       message: 'Increase daily study time to meet weekly goals',
-      estimatedImpact: `+${Math.ceil((5 - studyTimeAnalytics.weeklyComparison.thisWeek) / 7 * 60)} min/day needed`
+      estimatedImpact: `+${Math.ceil((5 - (studyTimeAnalytics?.weeklyComparison?.thisWeek || 0)) / 7 * 60)} min/day needed`
     });
   }
 
   // Review weak areas recommendation
-  const lowGradeSubjects = gradeProgression.filter(s => 
-    s.gradeDistribution.find(g => g.grade === 'C')?.percentage > 40
+  const lowGradeSubjects = (gradeProgression || []).filter(s => 
+    s.gradeDistribution?.find((g: any) => g.grade === 'C')?.percentage > 40
   );
   if (lowGradeSubjects.length > 0) {
     recommendations.push({
@@ -271,13 +293,13 @@ function generateStudyRecommendations(
   return recommendations.slice(0, 4); // Limit to top 4 recommendations
 }
 
-function calculateLearningVelocityTrend(sessions: any[]): 'accelerating' | 'stable' | 'declining' {
+function calculateLearningVelocityTrend(sessions: StudySession[]): 'accelerating' | 'stable' | 'declining' {
   if (sessions.length < 10) return 'stable';
 
   const recentSessions = sessions.slice(-7);
   const olderSessions = sessions.slice(-14, -7);
 
-  const recentAvg = recentSessions.reduce((sum, s) => sum + (s.duration || 0), 0) / recentSessions.length;
+  const recentAvg = recentSessions.reduce((sum, s) => sum + (s.duration || 0), 0) / Math.max(recentSessions.length, 1);
   const olderAvg = olderSessions.reduce((sum, s) => sum + (s.duration || 0), 0) / Math.max(olderSessions.length, 1);
 
   const change = (recentAvg - olderAvg) / Math.max(olderAvg, 1);
@@ -287,7 +309,7 @@ function calculateLearningVelocityTrend(sessions: any[]): 'accelerating' | 'stab
   return 'stable';
 }
 
-function calculateOptimalStudyDuration(sessions: any[]): number {
+function calculateOptimalStudyDuration(sessions: StudySession[]): number {
   if (sessions.length === 0) return 25;
 
   const sessionDurations = sessions
