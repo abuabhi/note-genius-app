@@ -53,6 +53,13 @@ export const useReminderNotifications = () => {
       setUnreadCount(unreadReminders.length);
       
       console.log('🔔 Unread count for bell badge:', unreadReminders.length);
+
+      // Auto-process due reminders if any are still pending
+      const duePendingReminders = dueReminders.filter(r => r.status === 'pending');
+      if (duePendingReminders.length > 0) {
+        console.log('🔄 Auto-processing due pending reminders:', duePendingReminders);
+        setTimeout(() => processReminders(), 1000); // Small delay to avoid rapid calls
+      }
     } catch (error) {
       console.error('❌ Error fetching pending reminders:', error);
     } finally {
@@ -116,25 +123,51 @@ export const useReminderNotifications = () => {
     }
   };
 
-  // Manual function to process due reminders (for testing)
+  // Enhanced function to process due reminders
   const processReminders = async () => {
     if (!user) return;
     
     try {
-      console.log('🔄 Manually processing reminders...');
-      const response = await fetch(`https://zuhcmwujzfddmafozubd.supabase.co/functions/v1/process-reminders`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1aGNtd3VqemZkZG1hZm96dWJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1MjUxOTQsImV4cCI6MjA2MjEwMTE5NH0.oz_MnWdGGh76eOjQ2k69OhQhqBh4KXG0Wq_cN-VJwzw`
-        }
-      });
+      console.log('🔄 Processing reminders...');
       
-      const result = await response.json();
-      console.log('🔄 Process reminders result:', result);
+      // First try the edge function
+      try {
+        const response = await fetch(`https://zuhcmwujzfddmafozubd.supabase.co/functions/v1/process-reminders`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1aGNtd3VqemZkZG1hZm96dWJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1MjUxOTQsImV4cCI6MjA2MjEwMTE5NH0.oz_MnWdGGh76eOjQ2k69OhQhqBh4KXG0Wq_cN-VJwzw`
+          }
+        });
+        
+        const result = await response.json();
+        console.log('🔄 Process reminders result:', result);
+      } catch (edgeFunctionError) {
+        console.log('⚠️ Edge function failed, processing locally:', edgeFunctionError);
+        
+        // Fallback: process locally by updating status directly
+        const now = new Date();
+        const dueReminders = pendingReminders.filter(r => 
+          r.status === 'pending' && new Date(r.reminder_time) <= now
+        );
+        
+        if (dueReminders.length > 0) {
+          console.log('🔄 Processing locally:', dueReminders);
+          
+          for (const reminder of dueReminders) {
+            await supabase
+              .from('reminders')
+              .update({ status: 'sent' as ReminderStatus })
+              .eq('id', reminder.id)
+              .eq('user_id', user.id);
+          }
+          
+          console.log('✅ Local processing completed');
+        }
+      }
       
       // Refresh reminders after processing
-      await fetchPendingReminders();
+      setTimeout(() => fetchPendingReminders(), 2000);
     } catch (error) {
       console.error('❌ Error processing reminders:', error);
     }
@@ -165,22 +198,15 @@ export const useReminderNotifications = () => {
       )
       .subscribe();
       
-    // Run the fetchPendingReminders function every 60 seconds to keep it updated
+    // Run the fetchPendingReminders function every 30 seconds to keep it updated
     const intervalId = setInterval(() => {
       console.log('🔄 Periodic reminder check...');
       fetchPendingReminders();
-    }, 60000);
-
-    // Also run manual processing every 2 minutes to ensure reminders get processed
-    const processingIntervalId = setInterval(() => {
-      console.log('🔄 Periodic reminder processing...');
-      processReminders();
-    }, 120000); // 2 minutes
+    }, 30000);
 
     return () => {
       supabase.removeChannel(channel);
       clearInterval(intervalId);
-      clearInterval(processingIntervalId);
     };
   }, [user]);
 

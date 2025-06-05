@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { format, isToday, isYesterday, formatDistanceToNow } from 'date-fns';
-import { Bell, X, CheckCircle, Clock, CalendarClock, BrainCircuit } from 'lucide-react';
+import { Bell, X, CheckCircle, Clock, CalendarClock, BrainCircuit, RefreshCw } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 export function ReminderNavPopover() {
   const [open, setOpen] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const { pendingReminders, unreadCount, loading, dismissReminder, dismissAll } = useReminderNotifications();
+  const { pendingReminders, unreadCount, loading, dismissReminder, dismissAll, processReminders } = useReminderNotifications();
   const { createReminder } = useReminders();
 
   const getFormattedDate = (dateString: string) => {
@@ -61,6 +61,16 @@ export function ReminderNavPopover() {
     return true;
   };
 
+  const handleProcessReminders = async () => {
+    await processReminders();
+  };
+
+  // Count due pending reminders for debugging
+  const now = new Date();
+  const duePendingReminders = pendingReminders.filter(r => 
+    r.status === 'pending' && new Date(r.reminder_time) <= now
+  );
+
   return (
     <>
       <Popover open={open} onOpenChange={setOpen}>
@@ -81,6 +91,17 @@ export function ReminderNavPopover() {
           <div className="flex items-center justify-between px-4 py-2 border-b">
             <h3 className="font-medium">Reminders</h3>
             <div className="flex gap-1">
+              {duePendingReminders.length > 0 && (
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={handleProcessReminders}
+                  className="text-orange-600 hover:text-orange-700"
+                >
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                  Process ({duePendingReminders.length})
+                </Button>
+              )}
               <Button 
                 variant="ghost" 
                 size="sm"
@@ -113,12 +134,19 @@ export function ReminderNavPopover() {
                     key={reminder.id} 
                     className={`p-3 border-b flex justify-between hover:bg-gray-50 dark:hover:bg-gray-900 ${
                       reminder.status === 'sent' ? 'bg-blue-50 dark:bg-blue-950/20' : ''
+                    } ${
+                      reminder.status === 'pending' && new Date(reminder.reminder_time) <= now ? 'bg-orange-50 dark:bg-orange-950/20' : ''
                     }`}
                   >
                     <div className="flex-1">
                       <div className="flex items-center">
                         {getReminderIcon(reminder.type)}
                         <span className="font-medium">{reminder.title}</span>
+                        {reminder.status === 'pending' && new Date(reminder.reminder_time) <= now && (
+                          <Badge variant="outline" className="ml-2 text-xs border-orange-300 text-orange-600">
+                            Due
+                          </Badge>
+                        )}
                       </div>
                       {reminder.description && (
                         <p className="text-sm text-muted-foreground line-clamp-2 ml-6">
