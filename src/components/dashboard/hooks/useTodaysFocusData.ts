@@ -107,13 +107,14 @@ export const useTodaysFocusData = () => {
         }
 
         // Now let's get todos that should be shown in today's focus
+        // Include both 'pending' and 'dismissed' todos to show them in today's focus
         console.log('📝 Fetching todos for today\'s focus...');
         const { data: todos, error: todosError } = await supabase
           .from('reminders')
           .select('*')
           .eq('user_id', user.id)
           .eq('type', 'todo')
-          .in('status', ['pending'])
+          .in('status', ['pending', 'dismissed']) // Include dismissed todos
           .order('due_date', { ascending: true });
 
         let filteredTodos = [];
@@ -125,7 +126,7 @@ export const useTodaysFocusData = () => {
             const hasNoDueDate = !todo.due_date;
             const shouldShow = isDueToday || isOverdue || hasNoDueDate;
             
-            console.log(`📝 Todo "${todo.title}": due_date=${todo.due_date}, isDueToday=${isDueToday}, isOverdue=${isOverdue}, hasNoDueDate=${hasNoDueDate}, shouldShow=${shouldShow}`);
+            console.log(`📝 Todo "${todo.title}": due_date=${todo.due_date}, status=${todo.status}, isDueToday=${isDueToday}, isOverdue=${isOverdue}, hasNoDueDate=${hasNoDueDate}, shouldShow=${shouldShow}`);
             
             return shouldShow;
           }).slice(0, 5); // Limit to 5
