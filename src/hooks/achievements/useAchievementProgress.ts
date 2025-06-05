@@ -35,11 +35,14 @@ export const useAchievementProgress = () => {
       setLoading(true);
       console.log('Calculating achievement progress for user:', user.id);
       
+      // Test the fixed query
+      console.log('About to fetch achievement templates...');
       const templates = await fetchAchievementTemplates();
+      console.log('Templates fetched successfully:', templates?.length || 0);
 
       // If no templates exist, show empty state
       if (!templates || templates.length === 0) {
-        console.log('No achievement templates found in database');
+        console.log('No achievement templates found in database - setting empty progress');
         setAchievementProgress([]);
         setLoading(false);
         return;
