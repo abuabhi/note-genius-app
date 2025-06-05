@@ -19,8 +19,8 @@ export const mapDatabaseStatusToTodoStatus = (dbStatus: string): TodoStatus => {
       console.log('✅ Mapped dismissed to cancelled');
       return 'cancelled';
     case 'cancelled':
-      console.log('✅ Mapped to cancelled');
-      return 'cancelled';
+      console.log('✅ Mapped cancelled to pending (treating as pending for display)');
+      return 'pending'; // Map 'cancelled' to 'pending' since user expects these to show as pending
     default:
       console.log('⚠️ Unknown status, defaulting to pending:', dbStatus);
       return 'pending'; // Default fallback
