@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { format, isToday, isYesterday, startOfDay, subDays } from 'date-fns';
-import { Bell, Clock, CalendarClock, BrainCircuit, Check, X, Search, Filter } from 'lucide-react';
+import { Bell, Clock, CalendarClock, BrainCircuit, Check, X, Search, Filter, History } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
