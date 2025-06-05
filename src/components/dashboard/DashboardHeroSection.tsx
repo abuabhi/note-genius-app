@@ -3,12 +3,48 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Flame, Target, Clock, TrendingUp, BookOpen, Brain } from "lucide-react";
+import { Flame, Target, Clock, TrendingUp, BookOpen, Brain, CheckSquare, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useDashboardAnalytics } from "@/hooks/useDashboardAnalytics";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth";
+import { useNavigationFeatures } from "@/components/ui/sidebar/hooks/useNavigationFeatures";
 
 export const DashboardHeroSection = () => {
   const { todaysActivity, currentStreak, weeklyComparison, isLoading } = useDashboardAnalytics();
+  const { user } = useAuth();
+  const {
+    isGoalsVisible,
+    isTodosVisible,
+    isProgressVisible,
+  } = useNavigationFeatures();
+
+  // Get counts for dynamic button text
+  const { data: counts = { flashcardSets: 0, notes: 0, quizzes: 0, goals: 0, todos: 0 } } = useQuery({
+    queryKey: ['dashboard-action-counts', user?.id],
+    queryFn: async () => {
+      if (!user) return { flashcardSets: 0, notes: 0, quizzes: 0, goals: 0, todos: 0 };
+
+      const [flashcardSets, notes, quizzes, goals, todos] = await Promise.all([
+        supabase.from('flashcard_sets').select('id').eq('user_id', user.id),
+        supabase.from('notes').select('id').eq('user_id', user.id),
+        supabase.from('quizzes').select('id').eq('user_id', user.id),
+        supabase.from('study_goals').select('id').eq('user_id', user.id),
+        supabase.from('reminders').select('id').eq('user_id', user.id).eq('type', 'todo')
+      ]);
+
+      return {
+        flashcardSets: flashcardSets.data?.length || 0,
+        notes: notes.data?.length || 0,
+        quizzes: quizzes.data?.length || 0,
+        goals: goals.data?.length || 0,
+        todos: todos.data?.length || 0
+      };
+    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
   if (isLoading) {
     return (
@@ -91,27 +127,54 @@ export const DashboardHeroSection = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="mt-6 flex flex-wrap gap-3">
+        <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-3">
           <Button asChild variant="default" size="sm" className="bg-mint-600 text-white hover:bg-mint-700">
             <Link to="/flashcards">
               <BookOpen className="h-4 w-4 mr-2" />
-              Study Flashcards
+              {counts.flashcardSets > 0 ? "Study Flashcards" : "Add Flashcards"}
             </Link>
           </Button>
           
           <Button asChild variant="outline" size="sm" className="border-mint-600 text-mint-700 bg-white hover:bg-mint-50">
             <Link to="/quizzes">
               <Brain className="h-4 w-4 mr-2" />
-              Take Quiz
+              {counts.quizzes > 0 ? "Take Quiz" : "Add Quiz"}
             </Link>
           </Button>
           
           <Button asChild variant="outline" size="sm" className="border-mint-600 text-mint-700 bg-white hover:bg-mint-50">
             <Link to="/notes">
               <BookOpen className="h-4 w-4 mr-2" />
-              View Notes
+              {counts.notes > 0 ? "View Notes" : "Add Notes"}
             </Link>
           </Button>
+
+          {isGoalsVisible && (
+            <Button asChild variant="outline" size="sm" className="border-mint-600 text-mint-700 bg-white hover:bg-mint-50">
+              <Link to="/goals">
+                <Target className="h-4 w-4 mr-2" />
+                {counts.goals > 0 ? "View Goals" : "Add Goals"}
+              </Link>
+            </Button>
+          )}
+
+          {isTodosVisible && (
+            <Button asChild variant="outline" size="sm" className="border-mint-600 text-mint-700 bg-white hover:bg-mint-50">
+              <Link to="/todos">
+                <CheckSquare className="h-4 w-4 mr-2" />
+                {counts.todos > 0 ? "View ToDo's" : "Add ToDo's"}
+              </Link>
+            </Button>
+          )}
+
+          {isProgressVisible && (
+            <Button asChild variant="outline" size="sm" className="border-mint-600 text-mint-700 bg-white hover:bg-mint-50">
+              <Link to="/progress">
+                <BarChart3 className="h-4 w-4 mr-2" />
+                View Progress
+              </Link>
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
