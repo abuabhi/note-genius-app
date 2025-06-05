@@ -7,13 +7,7 @@ import {
   BookOpen, 
   GraduationCap, 
   FileText, 
-  Calendar, 
-  Settings, 
-  BarChart,
-  Plus,
-  Clock,
-  Target,
-  Zap
+  BarChart
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -133,120 +127,6 @@ export const EnhancedQuickActionsGrid = () => {
           icon={FileText}
           badge={counts.notes > 0 ? `${counts.notes} notes` : "Create first"}
         />
-      </div>
-
-      {/* Secondary Actions - Planning & Analytics */}
-      <div>
-        <h3 className="text-lg font-medium text-gray-800 mb-4">Planning & Progress</h3>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-50 rounded-lg">
-                  <Calendar className="h-5 w-5 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-gray-900">Schedule</h4>
-                  <p className="text-sm text-gray-600">Plan study sessions</p>
-                </div>
-              </div>
-              <Button asChild variant="ghost" size="sm" className="w-full mt-3">
-                <Link to="/schedule">Open Calendar</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-50 rounded-lg">
-                  <Target className="h-5 w-5 text-green-600" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-gray-900">Goals</h4>
-                  <p className="text-sm text-gray-600">
-                    {counts.activeGoals > 0 ? `${counts.activeGoals} active` : 'Set targets'}
-                  </p>
-                </div>
-              </div>
-              <Button asChild variant="ghost" size="sm" className="w-full mt-3">
-                <Link to="/goals">Manage Goals</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-50 rounded-lg">
-                  <Clock className="h-5 w-5 text-purple-600" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-gray-900">Sessions</h4>
-                  <p className="text-sm text-gray-600">Track study time</p>
-                </div>
-              </div>
-              <Button asChild variant="ghost" size="sm" className="w-full mt-3">
-                <Link to="/study-sessions">View History</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-orange-50 rounded-lg">
-                  <Settings className="h-5 w-5 text-orange-600" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-gray-900">Settings</h4>
-                  <p className="text-sm text-gray-600">Customize app</p>
-                </div>
-              </div>
-              <Button asChild variant="ghost" size="sm" className="w-full mt-3">
-                <Link to="/settings">Configure</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Quick Create Actions */}
-      <div className="bg-gradient-to-r from-mint-50 to-blue-50 rounded-lg p-6 border border-mint-200">
-        <div className="flex items-center gap-2 mb-4">
-          <Plus className="h-5 w-5 text-mint-600" />
-          <h3 className="text-lg font-medium text-mint-800">Create New</h3>
-        </div>
-        
-        <div className="flex flex-wrap gap-3">
-          <Button asChild variant="outline" size="sm" className="border-mint-300 text-mint-700 hover:bg-mint-100">
-            <Link to="/flashcards/create">
-              <BookOpen className="h-4 w-4 mr-2" />
-              Flashcard Set
-            </Link>
-          </Button>
-          
-          <Button asChild variant="outline" size="sm" className="border-mint-300 text-mint-700 hover:bg-mint-100">
-            <Link to="/notes/create">
-              <FileText className="h-4 w-4 mr-2" />
-              Note
-            </Link>
-          </Button>
-          
-          <Button asChild variant="outline" size="sm" className="border-mint-300 text-mint-700 hover:bg-mint-100">
-            <Link to="/quizzes/create">
-              <GraduationCap className="h-4 w-4 mr-2" />
-              Quiz
-            </Link>
-          </Button>
-          
-          <Button asChild variant="outline" size="sm" className="border-mint-300 text-mint-700 hover:bg-mint-100">
-            <Link to="/goals/create">
-              <Target className="h-4 w-4 mr-2" />
-              Study Goal
-            </Link>
-          </Button>
-        </div>
       </div>
     </div>
   );
