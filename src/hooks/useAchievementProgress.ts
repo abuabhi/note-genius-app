@@ -31,6 +31,7 @@ export const useAchievementProgress = () => {
 
     try {
       setLoading(true);
+      console.log('Calculating achievement progress for user:', user.id);
       
       // Get all achievement templates (achievements with user_id = null)
       const { data: templates, error: templatesError } = await supabase
@@ -38,8 +39,17 @@ export const useAchievementProgress = () => {
         .select('*')
         .is('user_id', null);
 
+      console.log('Achievement templates fetched:', templates);
+
       if (templatesError) {
         console.error('Error fetching achievement templates:', templatesError);
+        setAchievementProgress([]);
+        return;
+      }
+
+      // If no templates exist, show empty state
+      if (!templates || templates.length === 0) {
+        console.log('No achievement templates found');
         setAchievementProgress([]);
         return;
       }
@@ -50,6 +60,8 @@ export const useAchievementProgress = () => {
         .select('title')
         .eq('user_id', user.id);
 
+      console.log('Earned achievements:', earnedAchievements);
+
       if (earnedError) {
         console.error('Error fetching earned achievements:', earnedError);
         setAchievementProgress([]);
@@ -57,14 +69,10 @@ export const useAchievementProgress = () => {
       }
 
       const earnedTitles = new Set(earnedAchievements?.map(a => a.title) || []);
+      console.log('Earned titles set:', earnedTitles);
 
-      // Filter out already earned achievements
-      const unearnedTemplates = templates?.filter(template => 
-        !earnedTitles.has(template.title)
-      ) || [];
-
-      // Calculate progress for each unearned achievement
-      const progressData: AchievementProgress[] = unearnedTemplates.map(template => {
+      // Show ALL achievements (both earned and unearned) with progress
+      const progressData: AchievementProgress[] = templates.map(template => {
         let current = 0;
         let target = 1;
         let progress = 0;
@@ -111,6 +119,14 @@ export const useAchievementProgress = () => {
 
         progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
 
+        // If already earned, show 100% progress
+        if (earnedTitles.has(template.title)) {
+          progress = 100;
+          current = target;
+        }
+
+        console.log(`Achievement ${template.title}: progress=${progress}%, current=${current}, target=${target}, earned=${earnedTitles.has(template.title)}`);
+
         return {
           id: template.id,
           title: template.title,
@@ -124,9 +140,15 @@ export const useAchievementProgress = () => {
         };
       });
 
-      // Sort by progress (highest first) to show closest achievements first
-      const sortedProgress = progressData.sort((a, b) => b.progress - a.progress);
+      // Sort by progress (lowest first to show what needs work), then by title
+      const sortedProgress = progressData.sort((a, b) => {
+        if (a.progress !== b.progress) {
+          return a.progress - b.progress; // Show incomplete achievements first
+        }
+        return a.title.localeCompare(b.title);
+      });
 
+      console.log('Final sorted progress data:', sortedProgress);
       setAchievementProgress(sortedProgress);
     } catch (error) {
       console.error('Error calculating achievement progress:', error);
