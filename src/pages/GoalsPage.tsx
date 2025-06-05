@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Target } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { GoalFormDialog } from '@/components/goals/GoalFormDialog';
 import { GoalStats } from '@/components/goals/GoalStats';
@@ -13,6 +13,7 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FeatureDisabledAlert } from '@/components/routes/FeatureProtectedRoute';
+import { PageBreadcrumb } from '@/components/ui/page-breadcrumb';
 
 const GoalsPage = () => {
   const { loading: authLoading } = useRequireAuth();
@@ -106,6 +107,8 @@ const GoalsPage = () => {
   return (
     <Layout>
       <div className="container mx-auto p-6">
+        <PageBreadcrumb pageName="Study Goals" pageIcon={<Target className="h-3 w-3" />} />
+        
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold mb-1">Study Goals</h1>

@@ -1,167 +1,22 @@
 
-import { useState, useEffect } from "react";
-import Layout from "@/components/layout/Layout";
-import EnhancedFlashcardSetsList from "@/components/flashcards/EnhancedFlashcardSetsList";
-import CreateFlashcard from "@/components/flashcards/CreateFlashcard";
-import CreateFlashcardSet from "@/components/flashcards/CreateFlashcardSet";
-import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { Button } from "@/components/ui/button";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
-} from "@/components/ui/dialog";
-import { Plus, BookOpen, Target, TrendingUp } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useFlashcards } from "@/contexts/FlashcardContext";
-import { useStreakCalculation } from "@/hooks/useStreakCalculation";
-import { useProgressStats } from "@/hooks/useProgressStats";
+import { useSearchParams } from 'react-router-dom';
+import Layout from '@/components/layout/Layout';
+import { FlashcardProvider } from '@/contexts/FlashcardContext';
+import { EnhancedFlashcardSetsList } from '@/components/flashcards/EnhancedFlashcardSetsList';
+import { PageBreadcrumb } from '@/components/ui/page-breadcrumb';
+import { BookOpen } from 'lucide-react';
 
 const FlashcardsPage = () => {
-  // Authentication and user verification
-  const { user, loading: authLoading } = useRequireAuth();
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const { flashcardSets, fetchFlashcardSets, isReady } = useFlashcards();
-  const { streak } = useStreakCalculation();
-  const { stats } = useProgressStats();
-
-  // Enhanced authentication and context debugging
-  useEffect(() => {
-    console.log('FlashcardsPage: State changed', {
-      user: user ? { id: user.id, email: user.email } : null,
-      authLoading,
-      isReady,
-      flashcardSetsCount: flashcardSets?.length || 0,
-      timestamp: new Date().toISOString()
-    });
-  }, [user, authLoading, isReady, flashcardSets]);
-
-  // Handler for refreshing data after operations
-  const handleDataRefresh = async () => {
-    if (!user || !isReady) {
-      console.log('FlashcardsPage: Cannot refresh data - user or context not ready', {
-        hasUser: !!user,
-        isReady
-      });
-      return;
-    }
-    
-    console.log('FlashcardsPage: Refreshing flashcard sets...');
-    try {
-      await fetchFlashcardSets();
-      console.log('FlashcardsPage: Data refreshed successfully');
-    } catch (error) {
-      console.error('FlashcardsPage: Error refreshing data:', error);
-    }
-  };
-
-  // Show loading state while authentication is being resolved
-  if (authLoading || !user) {
-    return (
-      <Layout>
-        <div className="container mx-auto p-6">
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="relative w-12 h-12 mx-auto mb-4">
-                <div className="absolute inset-0 border-4 border-mint-100 rounded-full"></div>
-                <div className="absolute inset-0 border-4 border-mint-500 rounded-full border-t-transparent animate-spin"></div>
-              </div>
-              <p className="text-mint-700 font-medium">Loading...</p>
-            </div>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
+  const [searchParams] = useSearchParams();
+  const fromNoteConversion = searchParams.get('from') === 'note-conversion';
 
   return (
     <Layout>
-      <div className="container mx-auto p-6">
-        {/* Enhanced Header */}
-        <div className="flex flex-col space-y-6 mb-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-mint-900 mb-2">Flashcards</h1>
-              <p className="text-mint-700">Organize your study materials into effective learning sets</p>
-            </div>
-            <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-mint-600 hover:bg-mint-700">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create New
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[550px]">
-                <DialogHeader>
-                  <DialogTitle>Create New</DialogTitle>
-                  <DialogDescription>
-                    Create a new flashcard or flashcard set to help you study.
-                  </DialogDescription>
-                </DialogHeader>
-                <Tabs defaultValue="set" className="mt-4">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="set">Flashcard Set</TabsTrigger>
-                    <TabsTrigger value="flashcard">Single Flashcard</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="set" className="mt-4">
-                    <CreateFlashcardSet onSuccess={() => {
-                      setCreateDialogOpen(false);
-                      handleDataRefresh();
-                    }} />
-                  </TabsContent>
-                  <TabsContent value="flashcard" className="mt-4">
-                    <CreateFlashcard onSuccess={() => {
-                      setCreateDialogOpen(false);
-                      handleDataRefresh();
-                    }} />
-                  </TabsContent>
-                </Tabs>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Card className="border-mint-100">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-mint-700">Total Sets</CardTitle>
-                <BookOpen className="h-4 w-4 text-mint-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-mint-900">{stats.totalSets}</div>
-                <p className="text-xs text-mint-600">Flashcard collections</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="border-mint-100">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-mint-700">Study Streak</CardTitle>
-                <Target className="h-4 w-4 text-mint-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-mint-900">{streak} days</div>
-                <p className="text-xs text-mint-600">{streak > 0 ? 'Keep it up!' : 'Start studying today!'}</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="border-mint-100">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-mint-700">Avg. Progress</CardTitle>
-                <TrendingUp className="h-4 w-4 text-mint-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-mint-900">{stats.flashcardAccuracy}%</div>
-                <p className="text-xs text-mint-600">Accuracy rate</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-        
-        <EnhancedFlashcardSetsList />
+      <div className="container mx-auto p-4 md:p-6">
+        <PageBreadcrumb pageName="Flashcards" pageIcon={<BookOpen className="h-3 w-3" />} />
+        <FlashcardProvider>
+          <EnhancedFlashcardSetsList fromNoteConversion={fromNoteConversion} />
+        </FlashcardProvider>
       </div>
     </Layout>
   );

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FeatureDisabledAlert } from "@/components/routes/FeatureProtectedRoute";
+import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
 
 const TodoPage = () => {
   const { user, loading } = useRequireAuth();
@@ -84,6 +85,8 @@ const TodoPage = () => {
   return (
     <Layout>
       <div className="container mx-auto p-4 md:p-6">
+        <PageBreadcrumb pageName="Todo List" pageIcon={<ListTodo className="h-3 w-3" />} />
+        
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
