@@ -194,7 +194,7 @@ export const SimpleAchievementProgress = () => {
 
       // 2. Fetch achievement templates
       console.log('Fetching achievement templates...');
-      const { data: templates, error: templatesError } = await supabase
+      let { data: templates, error: templatesError } = await supabase
         .from('study_achievements')
         .select('*')
         .is('user_id', null);
