@@ -12,6 +12,7 @@ import Layout from "@/components/layout/Layout";
 import SettingsPage from "@/pages/SettingsPage";
 import FlashcardLibraryPage from "@/pages/FlashcardLibraryPage";
 import EditNotePage from "@/pages/EditNotePage";
+import NotificationsPage from "@/pages/NotificationsPage";
 import { RouteConfig } from './publicRoutes';
 
 // Standard protected routes - always available to authenticated users
@@ -28,4 +29,5 @@ export const standardRoutes: RouteConfig[] = [
   { path: "/settings", element: <SettingsPage /> },
   { path: "/library", element: <FlashcardLibraryPage /> },
   { path: "/notes/edit/:noteId", element: <EditNotePage /> },
+  { path: "/notifications", element: <NotificationsPage /> },
 ];

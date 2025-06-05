@@ -23,6 +23,8 @@ import {
   Target,
   Users,
   UserCheck,
+  Bell,
+  Settings,
 } from "lucide-react";
 
 interface NavigationProps {
@@ -220,6 +222,23 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                     isCollapsed={isCollapsed}
                   />
                 )}
+
+                {/* Settings & Notifications Section */}
+                <Separator className="my-2" />
+                <NavLink
+                  to="/notifications"
+                  icon={Bell}
+                  label="Notifications"
+                  isActive={pathname.includes("/notifications")}
+                  isCollapsed={isCollapsed}
+                />
+                <NavLink
+                  to="/settings"
+                  icon={Settings}
+                  label="Settings"
+                  isActive={pathname.includes("/settings")}
+                  isCollapsed={isCollapsed}
+                />
               </div>
             </ScrollArea>
           </div>
