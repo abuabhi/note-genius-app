@@ -5,6 +5,7 @@ import { GradeProgressionChart } from "./grades/GradeProgressionChart";
 import { FlashcardMasteryLevels } from "./grades/FlashcardMasteryLevels";
 import { DailyStudyTrends } from "./time/DailyStudyTrends";
 import { ConsistencyScore } from "./time/ConsistencyScore";
+import { AdvancedAnalyticsDashboard } from "./AdvancedAnalyticsDashboard";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const EnhancedProgressOverview = () => {
@@ -30,6 +31,15 @@ export const EnhancedProgressOverview = () => {
     <div className="space-y-8">
       {/* Hero Overview Card */}
       <ProgressOverviewCard />
+      
+      {/* Advanced AI Analytics Section */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">AI-Powered Insights</h2>
+          <p className="text-gray-600">Advanced analytics and personalized recommendations</p>
+        </div>
+        <AdvancedAnalyticsDashboard />
+      </div>
       
       {/* Grade Progression Section */}
       <div className="space-y-6">
