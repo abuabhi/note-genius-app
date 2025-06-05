@@ -140,15 +140,15 @@ export const useTodos = () => {
       console.log('📝 Updating todo status:', { id, status, userId: user.id });
 
       // Map our status values to the database constraint values
-      let dbStatus = status;
+      let databaseStatus: string = status;
       if (status === 'completed') {
-        dbStatus = 'sent'; // Use 'sent' instead of 'completed' based on database constraint
+        databaseStatus = 'sent'; // Use 'sent' instead of 'completed' based on database constraint
       }
 
       const { data, error } = await supabase
         .from('reminders')
         .update({ 
-          status: dbStatus,
+          status: databaseStatus,
           updated_at: new Date().toISOString() 
         })
         .eq('id', id)
