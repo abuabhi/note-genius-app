@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/auth';
 import { useReminderToasts } from '@/hooks/useReminderToasts';
+import { UserSection } from '@/components/ui/sidebar/UserSection';
 
 interface DesktopAuthSectionProps {
   isPublicRoute: boolean;
@@ -35,6 +36,9 @@ export const DesktopAuthSection = ({ isPublicRoute }: DesktopAuthSectionProps) =
           Dashboard
         </Link>
       )}
+      
+      {/* User Profile Section */}
+      <UserSection isCollapsed={false} />
     </div>
   );
 };

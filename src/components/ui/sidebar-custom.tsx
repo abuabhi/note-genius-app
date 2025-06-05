@@ -4,7 +4,6 @@
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { UserSection } from "./sidebar/UserSection";
 import { Navigation } from "./sidebar/Navigation";
 import { 
   sidebarVariants, 
@@ -32,14 +31,9 @@ export function CustomSidebar() {
         className={`relative z-40 flex text-muted-foreground h-screen shrink-0 flex-col bg-white dark:bg-black transition-all`}
         variants={contentVariants}
       >
-        {/* Main Navigation - Takes up available space */}
-        <div className="flex-1 overflow-auto pb-[54px]">
+        {/* Main Navigation - Takes up full space */}
+        <div className="flex-1 overflow-auto">
           <Navigation isCollapsed={isCollapsed} />
-        </div>
-        
-        {/* User Avatar Section - Fixed at absolute bottom of sidebar panel */}
-        <div className="absolute bottom-0 left-0 right-0 border-t bg-white dark:bg-black">
-          <UserSection isCollapsed={isCollapsed} />
         </div>
       </motion.div>
     </motion.div>
