@@ -76,61 +76,75 @@ export const useTodaysFocusData = () => {
           console.log('✅ Fetched overdue items:', overdue?.length || 0);
         }
 
-        // Get todos that are due today or overdue - let's try a more comprehensive query
-        console.log('📝 Fetching todos...');
-        console.log('📝 DEBUG - About to query todos for user:', user.id);
-        console.log('📝 DEBUG - Today date for todos query:', today);
-        
-        // First, let's see if there are ANY todos for this user
+        // Get ALL todos for this user first to debug
+        console.log('📝 Fetching ALL todos for debugging...');
         const { data: allUserTodos, error: allTodosError } = await supabase
           .from('reminders')
           .select('*')
           .eq('user_id', user.id)
           .eq('type', 'todo');
 
-        console.log('📝 DEBUG - All todos for user:', allUserTodos?.length || 0, allUserTodos);
+        console.log('📝 DEBUG - All todos for user:', allUserTodos?.length || 0);
         
-        if (allTodosError) {
-          console.error('❌ Error fetching all todos:', allTodosError);
-        }
-
-        // Now get the filtered todos
-        const { data: todos, error: todosError } = await supabase
-          .from('reminders')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('type', 'todo')
-          .eq('status', 'pending')
-          .or(`due_date.eq.${today},due_date.lt.${today}`)
-          .order('due_date', { ascending: true })
-          .limit(5);
-
-        if (todosError) {
-          console.error('❌ Error fetching todos:', todosError);
-        } else {
-          console.log('✅ Fetched filtered todos:', todos?.length || 0);
-          console.log('📋 Todos data:', todos);
-          console.log('📝 DEBUG - Each todo details:');
-          todos?.forEach((todo, index) => {
+        if (allUserTodos && allUserTodos.length > 0) {
+          console.log('📝 DEBUG - All todos with dates:');
+          allUserTodos.forEach((todo, index) => {
             console.log(`📝 Todo ${index + 1}:`, {
               id: todo.id,
               title: todo.title,
               due_date: todo.due_date,
               status: todo.status,
-              type: todo.type
+              type: todo.type,
+              is_due_today: todo.due_date === today,
+              is_overdue: todo.due_date && todo.due_date < today
             });
           });
+        }
+
+        if (allTodosError) {
+          console.error('❌ Error fetching all todos:', allTodosError);
+        }
+
+        // Now let's try a simpler query to get todos for today
+        console.log('📝 Fetching todos with simpler query...');
+        const { data: todos, error: todosError } = await supabase
+          .from('reminders')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('type', 'todo')
+          .in('status', ['pending'])
+          .order('due_date', { ascending: true });
+
+        let filteredTodos = [];
+        if (todos && todos.length > 0) {
+          // Filter in JavaScript to be more explicit
+          filteredTodos = todos.filter(todo => {
+            const isDueToday = todo.due_date === today;
+            const isOverdue = todo.due_date && todo.due_date < today;
+            const shouldShow = isDueToday || isOverdue;
+            
+            console.log(`📝 Todo "${todo.title}": due_date=${todo.due_date}, isDueToday=${isDueToday}, isOverdue=${isOverdue}, shouldShow=${shouldShow}`);
+            
+            return shouldShow;
+          }).slice(0, 5); // Limit to 5
+        }
+
+        if (todosError) {
+          console.error('❌ Error fetching todos:', todosError);
+        } else {
+          console.log('✅ Fetched and filtered todos:', filteredTodos?.length || 0);
+          console.log('📋 Final todos to display:', filteredTodos);
         }
 
         const result = {
           reminders: reminders || [],
           goals: goals || [],
           overdue: overdue || [],
-          todos: todos || []
+          todos: filteredTodos || []
         };
 
         console.log('📊 Final result:', result);
-        console.log('📝 Final todos in result:', result.todos);
+        console.log('📝 Final todos count in result:', result.todos.length);
         return result;
       } catch (error) {
         console.error('💥 Error fetching today\'s items:', error);
