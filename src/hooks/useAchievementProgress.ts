@@ -66,14 +66,13 @@ export const useAchievementProgress = () => {
 
       if (earnedError) {
         console.error('Error fetching earned achievements:', earnedError);
-        setAchievementProgress([]);
-        return;
+        // Continue even if we can't fetch earned achievements
       }
 
       const earnedTitles = new Set(earnedAchievements?.map(a => a.title) || []);
       console.log('Earned titles set:', earnedTitles);
 
-      // Show ALL achievements (both earned and unearned) with progress
+      // Create progress data for ALL achievements
       const progressData: AchievementProgress[] = templates.map(template => {
         let current = 0;
         let target = 1;
@@ -82,11 +81,11 @@ export const useAchievementProgress = () => {
         // Calculate progress based on achievement type and title
         switch (template.title) {
           case 'First Steps':
-            current = Math.min(stats.totalCardsMastered > 0 ? 1 : 0, 1);
+            current = stats.totalCardsMastered > 0 ? 1 : 0;
             target = 1;
             break;
           case 'Getting Started':
-            current = Math.min(stats.totalSets, 1);
+            current = stats.totalSets > 0 ? 1 : 0;
             target = 1;
             break;
           case 'Study Streak':
@@ -119,12 +118,12 @@ export const useAchievementProgress = () => {
             target = 1;
         }
 
-        progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
-
         // If already earned, show 100% progress
         if (earnedTitles.has(template.title)) {
           progress = 100;
           current = target;
+        } else {
+          progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
         }
 
         console.log(`Achievement ${template.title}: progress=${progress}%, current=${current}, target=${target}, earned=${earnedTitles.has(template.title)}`);
@@ -142,7 +141,7 @@ export const useAchievementProgress = () => {
         };
       });
 
-      // Sort by progress (lowest first to show what needs work), then by title
+      // Sort by progress (incomplete first), then by title
       const sortedProgress = progressData.sort((a, b) => {
         if (a.progress !== b.progress) {
           return a.progress - b.progress; // Show incomplete achievements first

@@ -89,6 +89,11 @@ export const AchievementProgressSection = ({
                         <Star className="h-3 w-3 mr-1" />
                         {achievement.points} pts
                       </Badge>
+                      {achievement.progress === 100 && (
+                        <Badge className="bg-green-100 text-green-800 border-green-300">
+                          ✓ Completed
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -106,7 +111,7 @@ export const AchievementProgressSection = ({
           <div className="text-center py-4">
             <Trophy className="h-8 w-8 text-gray-300 mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">
-              No achievements available. Check your progress to unlock achievements!
+              No achievements found. Make sure achievement templates are set up in the database.
             </p>
           </div>
         )}
