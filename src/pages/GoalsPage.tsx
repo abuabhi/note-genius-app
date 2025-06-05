@@ -1,19 +1,18 @@
+
 import { useState } from 'react';
-import { PlusCircle, Search, Filter, Target, Zap, Trophy, Star, X, RefreshCw, Settings } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
-import { GoalCard } from '@/components/goals/GoalCard';
 import { GoalFormDialog } from '@/components/goals/GoalFormDialog';
+import { GoalStats } from '@/components/goals/GoalStats';
+import { GoalSuggestions } from '@/components/goals/GoalSuggestions';
+import { GoalFilters } from '@/components/goals/GoalFilters';
+import { GoalsGrid } from '@/components/goals/GoalsGrid';
 import { useStudyGoals, StudyGoal, GoalFormValues } from '@/hooks/useStudyGoals';
 import { useGoalTracking } from '@/hooks/useGoalTracking';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Skeleton } from '@/components/ui/skeleton';
 import { FeatureDisabledAlert } from '@/components/routes/FeatureProtectedRoute';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 
 const GoalsPage = () => {
   const { loading: authLoading } = useRequireAuth();
@@ -27,7 +26,6 @@ const GoalsPage = () => {
     dismissSuggestion,
     getGoalSuggestions,
     getStreakBonus,
-    goalTemplates,
     suggestionsEnabled,
     toggleSuggestions,
     refreshSuggestions
@@ -64,22 +62,6 @@ const GoalsPage = () => {
   const handleDismissSuggestion = (templateTitle: string) => {
     dismissSuggestion(templateTitle);
   };
-  
-  // Calculate total reward points from all goals
-  const getTotalRewardPoints = () => {
-    return goals.reduce((total, goal) => {
-      let goalPoints = 0;
-      if (goal.is_completed) {
-        goalPoints = goal.target_hours * 10;
-        // Add bonus calculations
-        if (goal.target_hours >= 40) goalPoints += 50;
-        else if (goal.target_hours >= 20) goalPoints += 25;
-      } else {
-        goalPoints = Math.floor(goal.progress / 25) * (goal.target_hours * 2);
-      }
-      return total + goalPoints;
-    }, 0);
-  };
 
   const filteredGoals = goals.filter(goal => {
     // Text search
@@ -113,10 +95,13 @@ const GoalsPage = () => {
   });
 
   const loading = authLoading || goalsLoading;
-  const completedGoalsCount = goals.filter(g => g.is_completed).length;
-  const activeGoalsCount = goals.filter(g => !g.is_completed).length;
   const streakBonus = getStreakBonus();
   const suggestions = getGoalSuggestions();
+
+  const openCreateGoalDialog = () => {
+    setSelectedGoal(undefined);
+    setFormOpen(true);
+  };
 
   return (
     <Layout>
@@ -127,161 +112,23 @@ const GoalsPage = () => {
             <p className="text-muted-foreground">Set, track, and achieve your study objectives automatically</p>
           </div>
           <Button 
-            onClick={() => {
-              setSelectedGoal(undefined);
-              setFormOpen(true);
-            }}
+            onClick={openCreateGoalDialog}
             className="mt-4 md:mt-0"
           >
             <PlusCircle className="mr-2 h-4 w-4" /> Create Goal
           </Button>
         </div>
 
-        {/* Enhanced Gamification Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Target className="h-4 w-4 text-blue-600" />
-                Active Goals
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-800">{activeGoalsCount}</div>
-              <p className="text-xs text-blue-600">Auto-tracked from study sessions</p>
-            </CardContent>
-          </Card>
+        <GoalStats goals={goals} streakBonus={streakBonus} />
 
-          <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Trophy className="h-4 w-4 text-green-600" />
-                Completed Goals
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-800">{completedGoalsCount}</div>
-              <p className="text-xs text-green-600">Successfully achieved</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Zap className="h-4 w-4 text-orange-600" />
-                Goal Streak
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-orange-800">{streakBonus}</div>
-              <p className="text-xs text-orange-600">Consecutive completions</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Star className="h-4 w-4 text-purple-600" />
-                Total Points
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-purple-800">{getTotalRewardPoints()}</div>
-              <p className="text-xs text-purple-600">Reward points earned</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Goal Suggestions */}
-        {suggestionsEnabled && suggestions.length > 0 && (
-          <Card className="mb-6 bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Star className="h-5 w-5 text-purple-600" />
-                  Suggested Goals for You
-                  <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
-                    {suggestions.length} available
-                  </Badge>
-                </CardTitle>
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={refreshSuggestions}
-                    className="h-8 text-xs border-purple-200 hover:bg-purple-50"
-                  >
-                    <RefreshCw className="h-3 w-3 mr-1" />
-                    Refresh
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={toggleSuggestions}
-                    className="h-8 text-xs border-purple-200 hover:bg-purple-50 text-purple-600"
-                  >
-                    <Settings className="h-3 w-3 mr-1" />
-                    Stop suggesting
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {suggestions.map((template, index) => (
-                  <div 
-                    key={index}
-                    className="p-4 bg-white rounded-lg border border-purple-200 hover:shadow-md transition-shadow relative"
-                  >
-                    <button
-                      onClick={() => dismissSuggestion(template.title)}
-                      className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 transition-colors"
-                      aria-label="Dismiss suggestion"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                    <div 
-                      className="cursor-pointer"
-                      onClick={() => handleCreateFromTemplate(template)}
-                    >
-                      <div className="flex items-start justify-between mb-2 pr-6">
-                        <h4 className="font-medium text-sm">{template.title}</h4>
-                        <Badge variant="outline" className="text-xs">
-                          {template.category}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground mb-2">{template.description}</p>
-                      <div className="text-xs text-purple-600">
-                        {template.target_hours}h • {template.duration_days} days
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-        
-        {!suggestionsEnabled && (
-          <Card className="mb-6 bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-medium text-gray-800 mb-1">Goal Suggestions Disabled</h3>
-                  <p className="text-sm text-gray-600">Enable suggestions to get personalized goal recommendations</p>
-                </div>
-                <Button
-                  onClick={toggleSuggestions}
-                  variant="outline"
-                  className="border-gray-300 hover:bg-gray-50"
-                >
-                  <Star className="h-4 w-4 mr-2" />
-                  Enable Suggestions
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        <GoalSuggestions
+          suggestions={suggestions}
+          suggestionsEnabled={suggestionsEnabled}
+          onCreateFromTemplate={handleCreateFromTemplate}
+          onDismissSuggestion={handleDismissSuggestion}
+          onToggleSuggestions={toggleSuggestions}
+          onRefreshSuggestions={refreshSuggestions}
+        />
         
         <FeatureDisabledAlert featureKey="goals" featureDisplayName="Study Goals" />
         
@@ -295,81 +142,24 @@ const GoalsPage = () => {
                 <TabsTrigger value="recent">Recent</TabsTrigger>
               </TabsList>
               
-              <div className="flex flex-1 gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search goals..."
-                    className="pl-8 w-full"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-                
-                <Select value={filter} onValueChange={setFilter}>
-                  <SelectTrigger className="w-[160px]">
-                    <Filter className="mr-2 h-4 w-4" />
-                    <SelectValue placeholder="Filter" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="in-progress">In Progress</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <GoalFilters
+                searchQuery={searchQuery}
+                filter={filter}
+                onSearchChange={setSearchQuery}
+                onFilterChange={setFilter}
+              />
             </div>
             
             <TabsContent value={activeTab} className="mt-0">
-              {loading ? (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="border rounded-md p-4">
-                      <Skeleton className="h-6 w-3/4 mb-2" />
-                      <Skeleton className="h-4 w-full mb-4" />
-                      <Skeleton className="h-2 w-full mb-2" />
-                      <div className="grid grid-cols-2 gap-2 mb-4">
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-full" />
-                      </div>
-                      <div className="flex justify-end gap-2">
-                        <Skeleton className="h-8 w-16" />
-                        <Skeleton className="h-8 w-16" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : sortedGoals.length > 0 ? (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {sortedGoals.map(goal => (
-                    <GoalCard
-                      key={goal.id}
-                      goal={goal}
-                      onEdit={handleEditGoal}
-                      onDelete={deleteGoal}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center p-8 text-center border rounded-lg bg-muted/20">
-                  <Target className="h-12 w-12 text-muted-foreground mb-2" />
-                  <h3 className="font-medium text-lg mb-1">No goals found</h3>
-                  <p className="text-muted-foreground text-sm mb-4">
-                    {searchQuery || filter !== 'all' 
-                      ? "No goals match your current filters. Try adjusting your search." 
-                      : "Start by creating your first study goal or try a suggested goal above. Progress will be tracked automatically!"}
-                  </p>
-                  <Button 
-                    onClick={() => {
-                      setSelectedGoal(undefined);
-                      setFormOpen(true);
-                    }}
-                    variant="outline"
-                  >
-                    <PlusCircle className="mr-2 h-4 w-4" /> Create Goal
-                  </Button>
-                </div>
-              )}
+              <GoalsGrid
+                goals={sortedGoals}
+                loading={loading}
+                searchQuery={searchQuery}
+                filter={filter}
+                onEditGoal={handleEditGoal}
+                onDeleteGoal={deleteGoal}
+                onCreateGoal={openCreateGoalDialog}
+              />
             </TabsContent>
           </Tabs>
         </div>
