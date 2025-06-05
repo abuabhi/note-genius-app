@@ -18,9 +18,22 @@ import { TodaysFocusEmptyState } from "./TodaysFocusEmptyState";
 import { TodaysFocusQuickActions } from "./TodaysFocusQuickActions";
 
 export const TodaysFocusSection = () => {
+  console.log('🎯 TodaysFocusSection rendering');
+  
   const { todaysItems, isLoading, totalItems } = useTodaysFocusData();
+  
+  console.log('📊 TodaysFocus data:', { 
+    todaysItems, 
+    isLoading, 
+    totalItems,
+    hasOverdue: todaysItems?.overdue?.length || 0,
+    hasTodos: todaysItems?.todos?.length || 0,
+    hasGoals: todaysItems?.goals?.length || 0,
+    hasReminders: todaysItems?.reminders?.length || 0
+  });
 
   if (isLoading) {
+    console.log('⏳ TodaysFocus is loading');
     return (
       <Card className="animate-pulse">
         <CardContent className="p-6">
@@ -35,9 +48,11 @@ export const TodaysFocusSection = () => {
   }
 
   if (totalItems === 0) {
+    console.log('📋 No items to show, showing empty state');
     return <TodaysFocusEmptyState />;
   }
 
+  console.log('✅ Rendering TodaysFocus with items');
   return (
     <Card>
       <CardHeader>

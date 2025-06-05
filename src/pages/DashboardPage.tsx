@@ -10,11 +10,19 @@ import { RecentActivityTimeline } from "@/components/dashboard/RecentActivityTim
 import { EnhancedQuickActionsGrid } from "@/components/dashboard/EnhancedQuickActionsGrid";
 
 const DashboardPage = () => {
+  console.log('🏠 DashboardPage component rendering');
+  
   const {
     user,
     userProfile,
     loading
   } = useRequireAuth();
+  
+  console.log('👤 Dashboard auth state:', {
+    user: user?.id,
+    userProfile: userProfile?.id,
+    loading
+  });
   
   // Use features with fallback
   let isFeatureVisible: (key: string) => boolean;
@@ -22,8 +30,9 @@ const DashboardPage = () => {
   try {
     const features = useFeatures();
     isFeatureVisible = features.isFeatureVisible;
+    console.log('✅ Features context loaded successfully');
   } catch (error) {
-    console.error('Features context error in Dashboard, using fallbacks:', error);
+    console.error('❌ Features context error in Dashboard, using fallbacks:', error);
     // Fallback: show core features, hide optional ones
     isFeatureVisible = (key: string) => {
       const coreFeatures = ['notes', 'flashcards', 'settings', 'quizzes'];
@@ -31,13 +40,8 @@ const DashboardPage = () => {
     };
   }
   
-  console.log("Dashboard rendering:", {
-    user,
-    userProfile,
-    loading
-  });
-  
   if (loading) {
+    console.log('⏳ Dashboard is loading...');
     return (
       <Layout>
         <div className="container mx-auto p-6 flex items-center justify-center h-[50vh]">
@@ -51,31 +55,43 @@ const DashboardPage = () => {
   }
   
   if (!user) {
-    console.log("Not authorized, redirecting via useRequireAuth");
+    console.log("❌ Not authorized, redirecting via useRequireAuth");
     return null; // Will redirect via the useRequireAuth hook
   }
+
+  console.log('✅ Dashboard rendering main content');
   
   return (
     <Layout>
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
         <div className="container mx-auto p-6 space-y-8">
           {/* Hero Section - Daily Overview */}
-          <DashboardHeroSection />
+          <div>
+            <DashboardHeroSection />
+          </div>
           
           {/* Learning Analytics */}
-          <LearningAnalyticsDashboard />
+          <div>
+            <LearningAnalyticsDashboard />
+          </div>
           
           {/* Two Column Layout for Focus and Activity */}
           <div className="grid gap-8 lg:grid-cols-2">
             {/* Today's Focus - Goals, Reminders, ToDos */}
-            <TodaysFocusSection />
+            <div>
+              <TodaysFocusSection />
+            </div>
             
             {/* Recent Activity Timeline */}
-            <RecentActivityTimeline />
+            <div>
+              <RecentActivityTimeline />
+            </div>
           </div>
           
           {/* Enhanced Quick Actions Grid */}
-          <EnhancedQuickActionsGrid />
+          <div>
+            <EnhancedQuickActionsGrid />
+          </div>
         </div>
       </div>
     </Layout>
