@@ -70,27 +70,53 @@ const ProgressOverview = () => {
 
   return (
     <div className="space-y-8">
-      {/* Main Progress Stats */}
-      <MainProgressStats stats={{
-        completedCourses: 0, // Placeholder for future course implementation
-        totalCourses: 0,     // Placeholder for future course implementation
-        completedQuizzes: 0, // Will be calculated from quiz_results
-        totalQuizzes: 0,     // Will be calculated from quizzes
-        flashcardAccuracy: stats.flashcardAccuracy,
-        streakDays: stats.streakDays
-      }} />
+      {/* Main Progress Stats Section */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Progress Overview</h2>
+          <p className="text-gray-600">Track your learning achievements and performance</p>
+        </div>
+        
+        <MainProgressStats stats={{
+          completedCourses: 0, // Placeholder for future course implementation
+          totalCourses: 0,     // Placeholder for future course implementation
+          completedQuizzes: 0, // Will be calculated from quiz_results
+          totalQuizzes: 0,     // Will be calculated from quizzes
+          flashcardAccuracy: stats.flashcardAccuracy,
+          streakDays: stats.streakDays
+        }} />
+      </div>
 
-      {/* Detailed Stats Grid */}
-      <SharedStatsGrid stats={stats} isLoading={isLoading} variant="detailed" />
+      {/* Detailed Stats Grid Section */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Study Statistics</h2>
+          <p className="text-gray-600">Overview of your study sessions and activity</p>
+        </div>
+        <SharedStatsGrid stats={stats} isLoading={isLoading} variant="detailed" />
+      </div>
 
-      <h2 className="text-xl font-semibold mt-8 mb-4">Learning Summary</h2>
-      <LearningSummary 
-        totalCardsMastered={stats.totalCardsMastered} 
-        studyTimeHours={stats.studyTimeHours} 
-        totalSets={stats.totalSets} 
-      />
+      {/* Learning Summary Section */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Learning Summary</h2>
+          <p className="text-gray-600">Your overall learning achievements and milestones</p>
+        </div>
+        <LearningSummary 
+          totalCardsMastered={stats.totalCardsMastered} 
+          studyTimeHours={stats.studyTimeHours} 
+          totalSets={stats.totalSets} 
+        />
+      </div>
       
-      <StudyConsistency />
+      {/* Study Consistency Section */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Study Consistency</h2>
+          <p className="text-gray-600">Your daily study habits over the past month</p>
+        </div>
+        <StudyConsistency />
+      </div>
     </div>
   );
 };
