@@ -29,7 +29,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
       <div className="flex grow flex-col items-center">
         <div className="flex h-full w-full flex-col">
           <div className="flex grow flex-col gap-4">
-            <ScrollArea className="h-16 grow p-2">
+            <ScrollArea className="h-full grow p-2">
               <div className={cn("flex w-full flex-col gap-1")}>
                 {/* Dashboard */}
                 <NavLink
