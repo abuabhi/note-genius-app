@@ -45,12 +45,12 @@ export const useAchievementProgress = () => {
       setLoading(true);
       console.log('Calculating achievement progress for user:', user.id);
       
-      // Get all achievement templates (achievements with user_id = null)
+      // Get all achievement templates - using a different query approach
       console.log('Fetching achievement templates...');
       const { data: templates, error: templatesError } = await supabase
         .from('study_achievements')
         .select('*')
-        .is('user_id', null);
+        .filter('user_id', 'is', null);
 
       console.log('Raw templates response:', { templates, templatesError });
 
