@@ -23,6 +23,10 @@ export const useAchievementProgress = () => {
   const { stats } = useUnifiedStudyStats();
 
   const calculateProgress = async () => {
+    console.log('=== calculateProgress START ===');
+    console.log('User:', user?.id);
+    console.log('Stats:', stats);
+    
     if (!user) {
       console.log('No user found, setting empty achievement progress');
       setAchievementProgress([]);
@@ -33,28 +37,32 @@ export const useAchievementProgress = () => {
     try {
       setLoading(true);
       console.log('Calculating achievement progress for user:', user.id);
-      console.log('Current stats:', stats);
       
       // Get all achievement templates (achievements with user_id = null)
+      console.log('Fetching achievement templates...');
       const { data: templates, error: templatesError } = await supabase
         .from('study_achievements')
         .select('*')
         .is('user_id', null);
 
-      console.log('Achievement templates fetched:', templates);
+      console.log('Raw templates response:', { templates, templatesError });
 
       if (templatesError) {
         console.error('Error fetching achievement templates:', templatesError);
         setAchievementProgress([]);
+        setLoading(false);
         return;
       }
 
       // If no templates exist, show empty state
       if (!templates || templates.length === 0) {
-        console.log('No achievement templates found');
+        console.log('No achievement templates found in database');
         setAchievementProgress([]);
+        setLoading(false);
         return;
       }
+
+      console.log(`Found ${templates.length} achievement templates:`, templates.map(t => t.title));
 
       // Get user's already earned achievements
       const { data: earnedAchievements, error: earnedError } = await supabase
@@ -62,18 +70,15 @@ export const useAchievementProgress = () => {
         .select('title')
         .eq('user_id', user.id);
 
-      console.log('Earned achievements:', earnedAchievements);
-
-      if (earnedError) {
-        console.error('Error fetching earned achievements:', earnedError);
-        // Continue even if we can't fetch earned achievements
-      }
+      console.log('Earned achievements response:', { earnedAchievements, earnedError });
 
       const earnedTitles = new Set(earnedAchievements?.map(a => a.title) || []);
       console.log('Earned titles set:', earnedTitles);
 
       // Create progress data for ALL achievements
       const progressData: AchievementProgress[] = templates.map(template => {
+        console.log(`Processing template: ${template.title}`);
+        
         let current = 0;
         let target = 1;
         let progress = 0;
@@ -150,7 +155,9 @@ export const useAchievementProgress = () => {
       });
 
       console.log('Final sorted progress data:', sortedProgress);
+      console.log('Setting achievementProgress to:', sortedProgress.length, 'items');
       setAchievementProgress(sortedProgress);
+      console.log('=== calculateProgress END ===');
     } catch (error) {
       console.error('Error calculating achievement progress:', error);
       setAchievementProgress([]);
@@ -160,9 +167,17 @@ export const useAchievementProgress = () => {
   };
 
   useEffect(() => {
-    console.log('useAchievementProgress effect triggered, user:', user?.id, 'stats:', stats);
-    calculateProgress();
+    console.log('useAchievementProgress effect triggered, user:', user?.id, 'stats available:', !!stats);
+    if (user && stats) {
+      calculateProgress();
+    }
   }, [user, stats]);
+
+  console.log('useAchievementProgress returning:', {
+    achievementProgressLength: achievementProgress.length,
+    loading,
+    firstFewTitles: achievementProgress.slice(0, 3).map(a => a.title)
+  });
 
   return {
     achievementProgress,
