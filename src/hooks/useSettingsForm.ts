@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,14 +26,8 @@ export const useSettingsForm = () => {
     resolver: zodResolver(settingsFormSchema),
     defaultValues: {
       email: user?.email || "user@example.com",
-      emailNotifications: true,
-      studyReminders: true,
       language: "en",
       countryId: "",
-      whatsappNotifications: false,
-      whatsappPhone: "",
-      goalNotifications: true,
-      weeklyReports: false,
       weeklyStudyGoalHours: 5,
     },
     mode: "onBlur",
@@ -47,7 +42,7 @@ export const useSettingsForm = () => {
     setPendingNavigation
   );
   
-  // Fetch initial user notification preferences
+  // Fetch initial user preferences
   useEffect(() => {
     const fetchUserPreferences = async () => {
       if (!user) return;
@@ -55,27 +50,13 @@ export const useSettingsForm = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('notification_preferences, whatsapp_phone, weekly_study_goal_hours')
+          .select('weekly_study_goal_hours')
           .eq('id', user.id)
           .single();
         
         if (error) throw error;
         
         if (data) {
-          // Parse notification preferences safely
-          const notificationPrefs = data.notification_preferences ? 
-            (typeof data.notification_preferences === 'object' && !Array.isArray(data.notification_preferences) ? 
-              data.notification_preferences : {}) : 
-            {};
-          
-          form.setValue("emailNotifications", notificationPrefs.email === true);
-          form.setValue("whatsappNotifications", notificationPrefs.whatsapp === true);
-          form.setValue("studyReminders", notificationPrefs.studyReminders === true);
-          form.setValue("goalNotifications", notificationPrefs.goalNotifications === true);
-          form.setValue("weeklyReports", notificationPrefs.weeklyReports === true);
-          
-          // Other settings
-          form.setValue("whatsappPhone", data.whatsapp_phone || "");
           form.setValue("weeklyStudyGoalHours", data.weekly_study_goal_hours || 5);
         }
       } catch (error) {
@@ -112,22 +93,11 @@ export const useSettingsForm = () => {
         }
       }
       
-      // Save notification preferences to user profile
+      // Save study preferences to user profile
       if (user) {
-        const notificationPreferences = {
-          email: data.emailNotifications,
-          whatsapp: data.whatsappNotifications,
-          in_app: true, // Always enabled
-          studyReminders: data.studyReminders,
-          goalNotifications: data.goalNotifications,
-          weeklyReports: data.weeklyReports
-        };
-        
         const { error } = await supabase
           .from('profiles')
           .update({
-            notification_preferences: notificationPreferences,
-            whatsapp_phone: data.whatsappPhone,
             weekly_study_goal_hours: data.weeklyStudyGoalHours
           })
           .eq('id', user.id);
