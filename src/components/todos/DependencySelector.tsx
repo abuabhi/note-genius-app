@@ -43,7 +43,6 @@ export const DependencySelector: React.FC<DependencySelectorProps> = ({
             <SelectItem key={todo.id} value={todo.id}>
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${
-                  todo.status === 'new' ? 'bg-gray-400' : 
                   todo.status === 'pending' ? 'bg-yellow-400' : 'bg-green-400'
                 }`} />
                 <span className="truncate max-w-48">{todo.title}</span>

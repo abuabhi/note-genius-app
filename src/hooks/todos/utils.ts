@@ -32,9 +32,6 @@ export const mapTodoStatusToDatabaseStatus = (todoStatus: TodoStatus): string =>
     case 'completed':
       console.log('✅ Mapped to completed');
       return 'completed';
-    case 'new':
-      console.log('✅ Mapped to pending (from new)');
-      return 'pending'; // Map 'new' from UI to 'pending' in database
     default:
       console.log('⚠️ Unknown status, defaulting to pending:', todoStatus);
       return 'pending';
