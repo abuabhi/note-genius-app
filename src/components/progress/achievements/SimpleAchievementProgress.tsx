@@ -230,7 +230,6 @@ export const SimpleAchievementProgress = () => {
           return;
         }
 
-        // Use the newly seeded templates
         templates = newTemplates;
       }
 
@@ -336,30 +335,30 @@ export const SimpleAchievementProgress = () => {
   };
 
   const getIcon = (badgeImage: string) => {
-    return <Trophy className="h-5 w-5 text-yellow-500" />;
+    return <Trophy className="h-4 w-4 text-yellow-500" />;
   };
 
   const getBadgeColor = (type: string) => {
     const colors = {
-      'flashcard': 'bg-blue-100 text-blue-800 border-blue-300',
-      'study': 'bg-green-100 text-green-800 border-green-300',
-      'streak': 'bg-purple-100 text-purple-800 border-purple-300',
-      'goal': 'bg-orange-100 text-orange-800 border-orange-300'
+      'flashcard': 'bg-blue-50 text-blue-700 border-blue-200',
+      'study': 'bg-green-50 text-green-700 border-green-200',
+      'streak': 'bg-purple-50 text-purple-700 border-purple-200',
+      'goal': 'bg-orange-50 text-orange-700 border-orange-200'
     };
-    return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800 border-gray-300';
+    return colors[type as keyof typeof colors] || 'bg-gray-50 text-gray-700 border-gray-200';
   };
 
   if (loading) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
             <Target className="h-5 w-5 text-blue-500" />
             Achievement Progress
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="animate-pulse space-y-2">
                 <div className="h-4 bg-gray-200 rounded w-1/3"></div>
@@ -375,9 +374,9 @@ export const SimpleAchievementProgress = () => {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-lg">
             <Target className="h-5 w-5 text-blue-500" />
             Achievement Progress
           </CardTitle>
@@ -386,58 +385,67 @@ export const SimpleAchievementProgress = () => {
             variant="outline"
             onClick={handleRefresh}
             disabled={refreshing}
+            className="h-8 text-xs"
           >
             {refreshing ? 'Refreshing...' : 'Refresh'}
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="pt-0">
         {achievements.length > 0 ? (
-          <>
+          <div className="space-y-3">
             {achievements.map((achievement) => (
-              <div key={achievement.id} className="space-y-3 p-4 rounded-lg border bg-gradient-to-r from-gray-50 to-white">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200">
+              <div key={achievement.id} className="group p-3 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100">
                       {getIcon(achievement.badge_image)}
                     </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium">{achievement.title}</h4>
-                      <p className="text-sm text-muted-foreground">{achievement.description}</p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge
-                          variant="outline"
-                          className={getBadgeColor(achievement.type)}
-                        >
-                          {achievement.type}
-                        </Badge>
-                        <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-300">
-                          <Star className="h-3 w-3 mr-1" />
-                          {achievement.points} pts
-                        </Badge>
-                        {achievement.isEarned && (
-                          <Badge className="bg-green-100 text-green-800 border-green-300">
-                            ✓ Completed
-                          </Badge>
-                        )}
-                      </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-sm truncate">{achievement.title}</h4>
+                      <p className="text-xs text-gray-600 line-clamp-1">{achievement.description}</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-sm font-medium">{Math.round(achievement.progress)}%</div>
-                    <div className="text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1 text-right">
+                    <span className="text-sm font-medium">{Math.round(achievement.progress)}%</span>
+                    <span className="text-xs text-gray-500">
                       {achievement.current}/{achievement.target}
-                    </div>
+                    </span>
                   </div>
                 </div>
-                <Progress value={achievement.progress} className="h-2" />
+                
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1">
+                    <Badge
+                      variant="outline"
+                      className={`text-xs h-5 ${getBadgeColor(achievement.type)}`}
+                    >
+                      {achievement.type}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs h-5 bg-amber-50 text-amber-700 border-amber-200">
+                      <Star className="h-3 w-3 mr-1" />
+                      {achievement.points}
+                    </Badge>
+                    {achievement.isEarned && (
+                      <Badge className="text-xs h-5 bg-green-50 text-green-700 border-green-300">
+                        ✓ Earned
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                
+                <Progress 
+                  value={achievement.progress} 
+                  className="h-1.5" 
+                  indicatorClassName={achievement.isEarned ? "bg-green-500" : "bg-blue-500"}
+                />
               </div>
             ))}
-          </>
+          </div>
         ) : (
-          <div className="text-center py-4">
+          <div className="text-center py-6">
             <Trophy className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-500">
               No achievements available. Please try refreshing.
             </p>
           </div>
