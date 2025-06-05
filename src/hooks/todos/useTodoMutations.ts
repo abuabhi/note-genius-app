@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { CreateTodoData, TodoStatus } from "./types";
-import { mapTodoStatusToDatabaseStatus } from "./utils";
 
 export const useTodoMutations = () => {
   const { user } = useAuth();
@@ -24,7 +23,7 @@ export const useTodoMutations = () => {
         reminder_time: todoData.reminder_time ? todoData.reminder_time.toISOString() : new Date().toISOString(),
         due_date: todoData.due_date ? todoData.due_date.toISOString().split('T')[0] : null,
         type: 'todo',
-        status: 'pending', // Always create as pending
+        status: 'pending', // Always create as pending - this should be valid
         priority: todoData.priority,
         recurrence: todoData.recurrence || 'none',
         recurrence_end_date: todoData.recurrence_end_date ? todoData.recurrence_end_date.toISOString().split('T')[0] : null,
@@ -62,10 +61,24 @@ export const useTodoMutations = () => {
     mutationFn: async ({ id, status }: { id: string, status: TodoStatus }) => {
       if (!user) throw new Error('User not authenticated');
 
-      console.log('📝 Updating todo status:', { id, status, userId: user.id });
+      console.log('🔄 Starting todo status update:', { id, status, userId: user.id });
 
-      const databaseStatus = mapTodoStatusToDatabaseStatus(status);
-      console.log('📝 Status mapping:', { todoStatus: status, databaseStatus });
+      // Map our UI status to the exact database status values
+      let databaseStatus: string;
+      if (status === 'completed') {
+        databaseStatus = 'completed';
+      } else {
+        databaseStatus = 'pending'; // For any other status, use 'pending'
+      }
+
+      console.log('📝 Final status mapping:', { 
+        uiStatus: status, 
+        databaseStatus,
+        updatePayload: {
+          status: databaseStatus,
+          updated_at: new Date().toISOString()
+        }
+      });
 
       const { data, error } = await supabase
         .from('reminders')
@@ -79,11 +92,22 @@ export const useTodoMutations = () => {
         .select();
 
       if (error) {
-        console.error('Error updating todo status:', error);
+        console.error('❌ Database error details:', {
+          error,
+          errorMessage: error.message,
+          errorCode: error.code,
+          errorDetails: error.details,
+          attemptedStatus: databaseStatus,
+          todoId: id
+        });
         throw error;
       }
 
-      console.log('✅ Todo status updated successfully:', data);
+      console.log('✅ Todo status updated successfully:', {
+        data,
+        updatedStatus: databaseStatus,
+        todoId: id
+      });
       return data;
     },
     onSuccess: (data, variables) => {
@@ -92,8 +116,12 @@ export const useTodoMutations = () => {
       queryClient.invalidateQueries({ queryKey: ['todos'] });
       queryClient.invalidateQueries({ queryKey: ['reminders'] });
     },
-    onError: (error: Error) => {
-      console.error('❌ Todo status update error:', error);
+    onError: (error: Error, variables) => {
+      console.error('❌ Todo status update error:', {
+        error,
+        variables,
+        errorMessage: error.message
+      });
       toast.error(`Failed to update todo: ${error.message}`);
     },
   });
