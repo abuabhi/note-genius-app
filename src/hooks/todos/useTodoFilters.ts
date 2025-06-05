@@ -5,6 +5,13 @@ import { Todo, TodoStatus } from "./types";
 export const useTodoFilters = (allTodos: Todo[]) => {
   const [filter, setFilter] = useState<TodoStatus | 'all'>('all');
 
+  console.log('🎯 Filter state:', filter);
+  console.log('📋 All todos for filtering:', allTodos.map(t => ({
+    id: t.id,
+    title: t.title,
+    status: t.status
+  })));
+
   // Filter todos based on the current filter
   const todos = allTodos.filter(todo => {
     console.log('🔍 Filtering todo:', { 
@@ -19,11 +26,16 @@ export const useTodoFilters = (allTodos: Todo[]) => {
     return todo.status === filter;
   });
 
-  console.log('📋 Final todos for display:', {
+  console.log('📋 Final filtered todos:', {
     allTodosCount: allTodos.length,
     filteredTodosCount: todos.length,
     filter,
-    allStatuses: allTodos.map(t => ({ id: t.id, status: t.status }))
+    filteredTodos: todos.map(t => ({ id: t.id, title: t.title, status: t.status })),
+    statusBreakdown: {
+      pending: allTodos.filter(t => t.status === 'pending').length,
+      completed: allTodos.filter(t => t.status === 'completed').length,
+      cancelled: allTodos.filter(t => t.status === 'cancelled').length
+    }
   });
 
   return {

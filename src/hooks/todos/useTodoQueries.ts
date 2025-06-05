@@ -18,6 +18,8 @@ export const useTodoQueries = () => {
     queryFn: async () => {
       if (!user) return [];
 
+      console.log('🔍 Fetching todos for user:', user.id);
+
       const { data, error } = await supabase
         .from('reminders')
         .select('*')
@@ -26,14 +28,16 @@ export const useTodoQueries = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching todos:', error);
+        console.error('❌ Error fetching todos:', error);
         throw error;
       }
 
+      console.log('📥 Raw todos from database:', data);
+
       // Transform the data and properly map database status to TodoStatus
-      return data.map(item => {
+      const transformedTodos = data.map(item => {
         const typedItem = item as any;
-        console.log('📋 Todo fetched from DB:', {
+        console.log('🔄 Processing todo:', {
           id: typedItem.id,
           title: typedItem.title,
           priority: typedItem.priority,
@@ -42,7 +46,11 @@ export const useTodoQueries = () => {
         });
         
         const mappedStatus = mapDatabaseStatusToTodoStatus(typedItem.status);
-        console.log('📋 Mapped status:', { dbStatus: typedItem.status, mappedStatus });
+        console.log('📋 Status mapping result:', { 
+          dbStatus: typedItem.status, 
+          mappedStatus,
+          title: typedItem.title 
+        });
         
         return {
           ...typedItem,
@@ -50,9 +58,23 @@ export const useTodoQueries = () => {
           priority: (typedItem.priority as TodoPriority) || 'medium',
         } as Todo;
       });
+
+      console.log('✅ Final transformed todos:', transformedTodos.map(t => ({
+        id: t.id,
+        title: t.title,
+        status: t.status
+      })));
+
+      return transformedTodos;
     },
     enabled: !!user,
   });
+
+  console.log('📊 Final allTodos in hook:', allTodos.map(t => ({
+    id: t.id,
+    title: t.title,
+    status: t.status
+  })));
 
   return {
     allTodos,
