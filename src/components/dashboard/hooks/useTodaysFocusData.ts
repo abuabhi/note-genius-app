@@ -76,8 +76,25 @@ export const useTodaysFocusData = () => {
           console.log('✅ Fetched overdue items:', overdue?.length || 0);
         }
 
-        // Get todos that are due today or overdue
+        // Get todos that are due today or overdue - let's try a more comprehensive query
         console.log('📝 Fetching todos...');
+        console.log('📝 DEBUG - About to query todos for user:', user.id);
+        console.log('📝 DEBUG - Today date for todos query:', today);
+        
+        // First, let's see if there are ANY todos for this user
+        const { data: allUserTodos, error: allTodosError } = await supabase
+          .from('reminders')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('type', 'todo');
+
+        console.log('📝 DEBUG - All todos for user:', allUserTodos?.length || 0, allUserTodos);
+        
+        if (allTodosError) {
+          console.error('❌ Error fetching all todos:', allTodosError);
+        }
+
+        // Now get the filtered todos
         const { data: todos, error: todosError } = await supabase
           .from('reminders')
           .select('*')
@@ -91,8 +108,18 @@ export const useTodaysFocusData = () => {
         if (todosError) {
           console.error('❌ Error fetching todos:', todosError);
         } else {
-          console.log('✅ Fetched todos:', todos?.length || 0);
+          console.log('✅ Fetched filtered todos:', todos?.length || 0);
           console.log('📋 Todos data:', todos);
+          console.log('📝 DEBUG - Each todo details:');
+          todos?.forEach((todo, index) => {
+            console.log(`📝 Todo ${index + 1}:`, {
+              id: todo.id,
+              title: todo.title,
+              due_date: todo.due_date,
+              status: todo.status,
+              type: todo.type
+            });
+          });
         }
 
         const result = {
@@ -103,6 +130,7 @@ export const useTodaysFocusData = () => {
         };
 
         console.log('📊 Final result:', result);
+        console.log('📝 Final todos in result:', result.todos);
         return result;
       } catch (error) {
         console.error('💥 Error fetching today\'s items:', error);
@@ -119,6 +147,7 @@ export const useTodaysFocusData = () => {
     todaysItems, 
     isLoading, 
     totalItems,
+    todosCount: todaysItems?.todos?.length || 0,
     error: error?.message 
   });
 

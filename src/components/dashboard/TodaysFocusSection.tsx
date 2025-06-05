@@ -32,6 +32,11 @@ export const TodaysFocusSection = () => {
     hasReminders: todaysItems?.reminders?.length || 0
   });
 
+  // Add specific debugging for todos
+  console.log('📝 DEBUG - Todos from useTodaysFocusData:', todaysItems?.todos);
+  console.log('📝 DEBUG - Todos type:', typeof todaysItems?.todos);
+  console.log('📝 DEBUG - Todos array?:', Array.isArray(todaysItems?.todos));
+
   if (isLoading) {
     console.log('⏳ TodaysFocus is loading');
     return (
@@ -53,6 +58,8 @@ export const TodaysFocusSection = () => {
   }
 
   console.log('✅ Rendering TodaysFocus with items');
+  console.log('📝 About to render TodaysFocusTodos with:', todaysItems?.todos);
+  
   return (
     <Card>
       <CardHeader>
