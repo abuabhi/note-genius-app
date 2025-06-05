@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
@@ -27,6 +28,36 @@ export interface CreateTodoData {
   priority: TodoPriority;
 }
 
+// Helper function to map database status to TodoStatus
+const mapDatabaseStatusToTodoStatus = (dbStatus: string): TodoStatus => {
+  switch (dbStatus) {
+    case 'pending':
+      return 'pending';
+    case 'sent':
+      return 'completed'; // Map 'sent' back to 'completed' for frontend
+    case 'dismissed':
+      return 'cancelled';
+    case 'cancelled':
+      return 'cancelled';
+    default:
+      return 'pending'; // Default fallback
+  }
+};
+
+// Helper function to map TodoStatus to database status
+const mapTodoStatusToDatabaseStatus = (todoStatus: TodoStatus): string => {
+  switch (todoStatus) {
+    case 'pending':
+      return 'pending';
+    case 'completed':
+      return 'sent'; // Map 'completed' to 'sent' for database
+    case 'cancelled':
+      return 'cancelled';
+    default:
+      return 'pending';
+  }
+};
+
 export const useTodos = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -54,18 +85,23 @@ export const useTodos = () => {
         throw error;
       }
 
-      // Transform the data to include a priority property since it might not exist in all records
+      // Transform the data and properly map database status to TodoStatus
       return data.map(item => {
-        // Type assertion for the item with an optional priority field
         const typedItem = item as any;
         console.log('📋 Todo fetched from DB:', {
           id: typedItem.id,
           title: typedItem.title,
           priority: typedItem.priority,
+          dbStatus: typedItem.status,
           rawItem: typedItem
         });
+        
+        const mappedStatus = mapDatabaseStatusToTodoStatus(typedItem.status);
+        console.log('📋 Mapped status:', { dbStatus: typedItem.status, mappedStatus });
+        
         return {
           ...typedItem,
+          status: mappedStatus,
           priority: (typedItem.priority as TodoPriority) || 'medium',
         } as Todo;
       });
@@ -73,16 +109,25 @@ export const useTodos = () => {
     enabled: !!user,
   });
 
-  // Filter todos based on the current filter and due status
+  // Filter todos based on the current filter
   const todos = allTodos.filter(todo => {
+    console.log('🔍 Filtering todo:', { 
+      id: todo.id, 
+      title: todo.title, 
+      status: todo.status, 
+      filter, 
+      willShow: filter === 'all' || todo.status === filter 
+    });
+    
     if (filter === 'all') return true;
-    
-    if (filter === 'pending') {
-      // Include all pending todos, regardless of due status
-      return todo.status === 'pending';
-    }
-    
     return todo.status === filter;
+  });
+
+  console.log('📋 Final todos for display:', {
+    allTodosCount: allTodos.length,
+    filteredTodosCount: todos.length,
+    filter,
+    allStatuses: allTodos.map(t => ({ id: t.id, status: t.status }))
   });
 
   // Mutation to create a todo
@@ -139,11 +184,9 @@ export const useTodos = () => {
 
       console.log('📝 Updating todo status:', { id, status, userId: user.id });
 
-      // Map our status values to the database constraint values
-      let databaseStatus: string = status;
-      if (status === 'completed') {
-        databaseStatus = 'sent'; // Use 'sent' instead of 'completed' based on database constraint
-      }
+      // Map TodoStatus to database status
+      const databaseStatus = mapTodoStatusToDatabaseStatus(status);
+      console.log('📝 Status mapping:', { todoStatus: status, databaseStatus });
 
       const { data, error } = await supabase
         .from('reminders')
