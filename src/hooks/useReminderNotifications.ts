@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/integrations/supabase/client';
-import { Reminder, ReminderStatus, ReminderRecurrence, ReminderType, DeliveryMethod } from '@/hooks/useReminders';
+import { Reminder, ReminderStatus, ReminderRecurrence, ReminderType, DeliveryMethod } from './reminders/types';
 
 export const useReminderNotifications = () => {
   const { user } = useAuth();
