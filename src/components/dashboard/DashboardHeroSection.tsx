@@ -127,7 +127,7 @@ export const DashboardHeroSection = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="mt-6 flex flex-wrap gap-3">
           <Button asChild variant="default" size="sm" className="bg-mint-600 text-white hover:bg-mint-700">
             <Link to="/flashcards">
               <BookOpen className="h-4 w-4 mr-2" />
