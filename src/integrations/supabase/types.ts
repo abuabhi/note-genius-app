@@ -1014,6 +1014,7 @@ export type Database = {
           event_id: string | null
           goal_id: string | null
           id: string
+          priority: string
           recurrence: string | null
           reminder_time: string
           status: string
@@ -1029,6 +1030,7 @@ export type Database = {
           event_id?: string | null
           goal_id?: string | null
           id?: string
+          priority?: string
           recurrence?: string | null
           reminder_time: string
           status?: string
@@ -1044,6 +1046,7 @@ export type Database = {
           event_id?: string | null
           goal_id?: string | null
           id?: string
+          priority?: string
           recurrence?: string | null
           reminder_time?: string
           status?: string

@@ -63,6 +63,12 @@ export const useTodos = () => {
       return data.map(item => {
         // Type assertion for the item with an optional priority field
         const typedItem = item as any;
+        console.log('📋 Todo fetched from DB:', {
+          id: typedItem.id,
+          title: typedItem.title,
+          priority: typedItem.priority,
+          rawItem: typedItem
+        });
         return {
           ...typedItem,
           priority: (typedItem.priority as TodoPriority) || 'medium',
@@ -77,18 +83,29 @@ export const useTodos = () => {
     mutationFn: async (todoData: CreateTodoData) => {
       if (!user) throw new Error('User not authenticated');
 
+      console.log('📝 Creating todo with data:', {
+        title: todoData.title,
+        priority: todoData.priority,
+        reminder_time: todoData.reminder_time,
+        fullData: todoData
+      });
+
+      const insertData = {
+        user_id: user.id,
+        title: todoData.title,
+        description: todoData.description,
+        reminder_time: todoData.reminder_time ? todoData.reminder_time.toISOString() : null,
+        type: 'todo',
+        status: 'pending',
+        priority: todoData.priority,
+        delivery_methods: ['in_app'],
+      };
+
+      console.log('🗄️ Inserting into database:', insertData);
+
       const { data, error } = await supabase
         .from('reminders')
-        .insert({
-          user_id: user.id,
-          title: todoData.title,
-          description: todoData.description,
-          reminder_time: todoData.reminder_time ? todoData.reminder_time.toISOString() : null,
-          type: 'todo',
-          status: 'pending',
-          priority: todoData.priority || 'medium',
-          delivery_methods: ['in_app'],
-        })
+        .insert(insertData)
         .select();
 
       if (error) {
@@ -96,6 +113,7 @@ export const useTodos = () => {
         throw error;
       }
 
+      console.log('✅ Todo created successfully:', data);
       return data;
     },
     onSuccess: () => {

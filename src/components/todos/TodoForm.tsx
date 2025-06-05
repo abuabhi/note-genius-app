@@ -41,18 +41,24 @@ export const TodoForm: React.FC<TodoFormProps> = ({ onSubmit, isSubmitting }) =>
   });
 
   const handleSubmit = (values: TodoFormValues) => {
+    console.log('🎯 Form submitted with values:', values);
+    
     let reminderTime: Date | null = null;
     
     if (values.reminderDate && values.reminderTime) {
       reminderTime = new Date(`${values.reminderDate}T${values.reminderTime}`);
     }
     
-    onSubmit({
+    const todoData = {
       title: values.title,
       description: values.description,
       reminder_time: reminderTime,
       priority: values.priority as TodoPriority,
-    });
+    };
+
+    console.log('📤 Sending todo data:', todoData);
+    
+    onSubmit(todoData);
     
     form.reset();
   };
@@ -147,8 +153,11 @@ export const TodoForm: React.FC<TodoFormProps> = ({ onSubmit, isSubmitting }) =>
                   <FormLabel>Priority</FormLabel>
                   <FormControl>
                     <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      onValueChange={(value) => {
+                        console.log('🎯 Priority changed to:', value);
+                        field.onChange(value);
+                      }}
+                      value={field.value}
                       className="flex space-x-2"
                     >
                       <FormItem className="flex items-center space-x-1 space-y-0">
