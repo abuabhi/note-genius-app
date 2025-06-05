@@ -6,11 +6,9 @@ import {
   Clock, 
   Brain, 
   Target, 
-  BookOpen, 
-  TrendingUp, 
-  Award,
   Calendar,
-  BarChart3
+  TrendingUp, 
+  Award
 } from "lucide-react";
 import { useDashboardAnalytics } from "@/hooks/useDashboardAnalytics";
 
@@ -20,7 +18,6 @@ export const LearningAnalyticsDashboard = () => {
     totalStudyTime, 
     totalCardsMastered, 
     flashcardAccuracy, 
-    totalSets,
     weeklyComparison,
     isLoading 
   } = useDashboardAnalytics();
@@ -128,74 +125,6 @@ export const LearningAnalyticsDashboard = () => {
             </CardContent>
           </Card>
         </div>
-      </div>
-
-      {/* Secondary Stats */}
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Flashcard Collection */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-mint-600" />
-              Flashcard Collection
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700">Total Sets</span>
-              <span className="text-lg font-semibold text-gray-900">{totalSets}</span>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700">Cards Mastered</span>
-              <span className="text-lg font-semibold text-green-600">{totalCardsMastered}</span>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Mastery Progress</span>
-                <span className="text-gray-600">{totalCardsMastered} cards</span>
-              </div>
-              <Progress value={Math.min((totalCardsMastered / Math.max(totalSets * 10, 1)) * 100, 100)} className="h-2" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Weekly Performance */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-blue-600" />
-              This Week's Performance
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700">Study Time</span>
-              <div className="text-right">
-                <span className="text-lg font-semibold text-gray-900">{weeklyComparison.thisWeek}h</span>
-                <div className="text-xs text-gray-500">vs {weeklyComparison.lastWeek}h last week</div>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Weekly Goal (5h)</span>
-                <span className="text-gray-600">{Math.round((weeklyComparison.thisWeek / 5) * 100)}%</span>
-              </div>
-              <Progress value={Math.min((weeklyComparison.thisWeek / 5) * 100, 100)} className="h-2" />
-            </div>
-
-            {weeklyComparison.trend !== 'stable' && (
-              <div className="flex items-center gap-2 pt-2">
-                {getTrendIndicator(weeklyComparison.trend)}
-                <span className="text-sm text-gray-600">
-                  {weeklyComparison.trend === 'up' ? 'Great progress!' : 'Keep pushing!'}
-                </span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
