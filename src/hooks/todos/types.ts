@@ -1,6 +1,6 @@
 
 export type TodoPriority = "low" | "medium" | "high";
-export type TodoStatus = "new" | "pending" | "completed";
+export type TodoStatus = "pending" | "completed"; // Simplified to match database constraint
 export type RecurrenceType = "none" | "daily" | "weekly" | "monthly" | "yearly";
 
 export interface Todo {

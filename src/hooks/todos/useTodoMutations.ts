@@ -24,7 +24,7 @@ export const useTodoMutations = () => {
         reminder_time: todoData.reminder_time ? todoData.reminder_time.toISOString() : new Date().toISOString(),
         due_date: todoData.due_date ? todoData.due_date.toISOString().split('T')[0] : null,
         type: 'todo',
-        status: 'pending', // Changed from 'new' to 'pending' to match constraint
+        status: 'pending', // Always create as pending
         priority: todoData.priority,
         recurrence: todoData.recurrence || 'none',
         recurrence_end_date: todoData.recurrence_end_date ? todoData.recurrence_end_date.toISOString().split('T')[0] : null,
