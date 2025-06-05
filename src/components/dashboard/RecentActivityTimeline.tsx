@@ -43,6 +43,13 @@ export const RecentActivityTimeline = () => {
     }
   };
 
+  const getActivityDescription = (activity: any) => {
+    if (activity.type === 'note_created' && activity.metadata?.subject) {
+      return `Created in ${activity.metadata.subject}`;
+    }
+    return activity.description;
+  };
+
   if (isLoading) {
     return (
       <Card className="animate-pulse">
@@ -115,7 +122,7 @@ export const RecentActivityTimeline = () => {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900 truncate">{activity.title}</h4>
-                    <p className="text-sm text-gray-600 mt-1">{activity.description}</p>
+                    <p className="text-sm text-gray-600 mt-1">{getActivityDescription(activity)}</p>
                   </div>
                   
                   <div className="ml-4 text-right flex-shrink-0">
@@ -140,7 +147,7 @@ export const RecentActivityTimeline = () => {
                     {activity.metadata.score && activity.metadata.totalQuestions && (
                       <span>🎯 {Math.round((activity.metadata.score / activity.metadata.totalQuestions) * 100)}%</span>
                     )}
-                    {activity.metadata.subject && (
+                    {activity.metadata.subject && activity.type !== 'note_created' && (
                       <span>📚 {activity.metadata.subject}</span>
                     )}
                   </div>
