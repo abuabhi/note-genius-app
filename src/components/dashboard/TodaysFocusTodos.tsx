@@ -16,7 +16,13 @@ interface TodaysFocusTodosProps {
 }
 
 export const TodaysFocusTodos = ({ todos }: TodaysFocusTodosProps) => {
-  if (todos.length === 0) return null;
+  console.log('📝 TodaysFocusTodos received todos:', todos);
+  console.log('📝 Todos length:', todos?.length);
+  
+  if (!todos || todos.length === 0) {
+    console.log('📝 No todos to display');
+    return null;
+  }
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -36,11 +42,13 @@ export const TodaysFocusTodos = ({ todos }: TodaysFocusTodosProps) => {
     return dueDate < today;
   };
 
+  console.log('📝 Rendering', todos.length, 'todos');
+
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
         <CheckCircle className="h-4 w-4 text-green-600" />
-        <span className="font-medium text-gray-800">To-dos</span>
+        <span className="font-medium text-gray-800">To-dos ({todos.length})</span>
       </div>
       <div className="space-y-2">
         {todos.slice(0, 3).map((todo) => (

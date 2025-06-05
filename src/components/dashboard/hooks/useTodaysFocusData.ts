@@ -22,12 +22,13 @@ export const useTodaysFocusData = () => {
       console.log('📅 Today date:', today);
       
       try {
-        // Get due reminders
+        // Get due reminders (excluding todos)
         console.log('🔔 Fetching reminders...');
         const { data: reminders, error: remindersError } = await supabase
           .from('reminders')
           .select('*')
           .eq('user_id', user.id)
+          .neq('type', 'todo') // Exclude todos from reminders
           .in('status', ['pending', 'sent'])
           .or(`due_date.eq.${today},reminder_time.gte.${today}T00:00:00,reminder_time.lte.${today}T23:59:59`)
           .order('reminder_time', { ascending: true })
@@ -57,12 +58,13 @@ export const useTodaysFocusData = () => {
           console.log('✅ Fetched goals:', goals?.length || 0);
         }
 
-        // Get overdue items
+        // Get overdue items (excluding todos)
         console.log('⚠️ Fetching overdue items...');
         const { data: overdue, error: overdueError } = await supabase
           .from('reminders')
           .select('*')
           .eq('user_id', user.id)
+          .neq('type', 'todo') // Exclude todos from overdue
           .eq('status', 'pending')
           .lt('due_date', today)
           .order('due_date', { ascending: true })
@@ -74,7 +76,7 @@ export const useTodaysFocusData = () => {
           console.log('✅ Fetched overdue items:', overdue?.length || 0);
         }
 
-        // Get pending todos due today or overdue
+        // Get todos that are due today or overdue
         console.log('📝 Fetching todos...');
         const { data: todos, error: todosError } = await supabase
           .from('reminders')
@@ -90,6 +92,7 @@ export const useTodaysFocusData = () => {
           console.error('❌ Error fetching todos:', todosError);
         } else {
           console.log('✅ Fetched todos:', todos?.length || 0);
+          console.log('📋 Todos data:', todos);
         }
 
         const result = {
