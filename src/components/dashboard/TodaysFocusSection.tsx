@@ -4,18 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { 
-  Clock, 
-  Bell, 
   Target, 
   CheckCircle, 
-  AlertCircle,
   Calendar,
   ArrowRight
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
-import { formatDistanceToNow, isToday, parseISO } from 'date-fns';
+import { TodaysFocusOverdueItems } from "./TodaysFocusOverdueItems";
+import { TodaysFocusGoals } from "./TodaysFocusGoals";
+import { TodaysFocusReminders } from "./TodaysFocusReminders";
 
 export const TodaysFocusSection = () => {
   const { user } = useAuth();
@@ -28,42 +27,47 @@ export const TodaysFocusSection = () => {
 
       const today = new Date().toISOString().split('T')[0];
       
-      // Get due reminders
-      const { data: reminders } = await supabase
-        .from('reminders')
-        .select('*')
-        .eq('user_id', user.id)
-        .in('status', ['pending', 'sent'])
-        .or(`due_date.eq.${today},reminder_time.gte.${today}T00:00:00,reminder_time.lte.${today}T23:59:59`)
-        .order('reminder_time', { ascending: true })
-        .limit(5);
+      try {
+        // Get due reminders
+        const { data: reminders } = await supabase
+          .from('reminders')
+          .select('*')
+          .eq('user_id', user.id)
+          .in('status', ['pending', 'sent'])
+          .or(`due_date.eq.${today},reminder_time.gte.${today}T00:00:00,reminder_time.lte.${today}T23:59:59`)
+          .order('reminder_time', { ascending: true })
+          .limit(5);
 
-      // Get active goals that should be worked on today
-      const { data: goals } = await supabase
-        .from('study_goals')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_completed', false)
-        .lte('start_date', today)
-        .gte('end_date', today)
-        .order('end_date', { ascending: true })
-        .limit(3);
+        // Get active goals that should be worked on today
+        const { data: goals } = await supabase
+          .from('study_goals')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('is_completed', false)
+          .lte('start_date', today)
+          .gte('end_date', today)
+          .order('end_date', { ascending: true })
+          .limit(3);
 
-      // Get overdue items
-      const { data: overdue } = await supabase
-        .from('reminders')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('status', 'pending')
-        .lt('due_date', today)
-        .order('due_date', { ascending: true })
-        .limit(3);
+        // Get overdue items
+        const { data: overdue } = await supabase
+          .from('reminders')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('status', 'pending')
+          .lt('due_date', today)
+          .order('due_date', { ascending: true })
+          .limit(3);
 
-      return {
-        reminders: reminders || [],
-        goals: goals || [],
-        overdue: overdue || []
-      };
+        return {
+          reminders: reminders || [],
+          goals: goals || [],
+          overdue: overdue || []
+        };
+      } catch (error) {
+        console.error('Error fetching today\'s items:', error);
+        return { reminders: [], goals: [], overdue: [] };
+      }
     },
     enabled: !!user,
     staleTime: 1 * 60 * 1000, // 1 minute
@@ -117,88 +121,14 @@ export const TodaysFocusSection = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Overdue Items - High Priority */}
-        {todaysItems.overdue.length > 0 && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <AlertCircle className="h-4 w-4 text-red-600" />
-              <span className="font-medium text-red-800">Overdue Items</span>
-            </div>
-            <div className="space-y-2">
-              {todaysItems.overdue.map((item: any) => (
-                <div key={item.id} className="flex items-center justify-between bg-white rounded p-2">
-                  <div>
-                    <div className="font-medium text-red-800">{item.title}</div>
-                    <div className="text-xs text-red-600">
-                      Due {formatDistanceToNow(parseISO(item.due_date), { addSuffix: true })}
-                    </div>
-                  </div>
-                  <Badge variant="destructive">Overdue</Badge>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Overdue Items */}
+        <TodaysFocusOverdueItems overdueItems={todaysItems.overdue} />
 
         {/* Today's Goals */}
-        {todaysItems.goals.length > 0 && (
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Target className="h-4 w-4 text-blue-600" />
-              <span className="font-medium text-gray-800">Active Goals</span>
-            </div>
-            <div className="space-y-2">
-              {todaysItems.goals.map((goal: any) => (
-                <div key={goal.id} className="flex items-center justify-between bg-blue-50 rounded p-3">
-                  <div>
-                    <div className="font-medium text-blue-800">{goal.title}</div>
-                    <div className="text-sm text-blue-600">{goal.description}</div>
-                    <div className="text-xs text-blue-500 mt-1">
-                      Target: {goal.target_hours}h | Progress: {goal.progress}%
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <Badge variant="outline" className="border-blue-300 text-blue-700">
-                      {goal.target_hours}h goal
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <TodaysFocusGoals goals={todaysItems.goals} />
 
         {/* Today's Reminders */}
-        {todaysItems.reminders.length > 0 && (
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Bell className="h-4 w-4 text-purple-600" />
-              <span className="font-medium text-gray-800">Due Today</span>
-            </div>
-            <div className="space-y-2">
-              {todaysItems.reminders.slice(0, 3).map((reminder: any) => (
-                <div key={reminder.id} className="flex items-center justify-between bg-purple-50 rounded p-3">
-                  <div>
-                    <div className="font-medium text-purple-800">{reminder.title}</div>
-                    {reminder.description && (
-                      <div className="text-sm text-purple-600">{reminder.description}</div>
-                    )}
-                    <div className="text-xs text-purple-500 mt-1">
-                      {reminder.reminder_time ? (
-                        `Due at ${new Date(reminder.reminder_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                      ) : (
-                        'Due today'
-                      )}
-                    </div>
-                  </div>
-                  <Badge variant="outline" className="border-purple-300 text-purple-700">
-                    {reminder.type}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <TodaysFocusReminders reminders={todaysItems.reminders} />
 
         {/* Quick Actions */}
         <div className="flex flex-wrap gap-2 pt-4 border-t">
