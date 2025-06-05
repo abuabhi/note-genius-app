@@ -6,12 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { Trophy, Award, Star, BookOpen, Target, Calendar, Zap, Gift } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useAchievements } from "@/hooks/useAchievements";
+import { useAchievementProgress } from "@/hooks/useAchievementProgress";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 
 export const Achievements = () => {
   const { user } = useAuth();
   const { achievements, loading, checkAndAwardAchievements } = useAchievements();
+  const { achievementProgress, loading: progressLoading, refreshProgress } = useAchievementProgress();
 
   const getIcon = (iconName: string) => {
     switch (iconName) {
@@ -51,15 +53,13 @@ export const Achievements = () => {
     }
   };
 
+  const handleCheckProgress = async () => {
+    await checkAndAwardAchievements();
+    await refreshProgress();
+  };
+
   const totalPoints = achievements.reduce((sum, achievement) => sum + achievement.points, 0);
   const recentAchievements = achievements.filter(a => a.achieved_at).slice(0, 3);
-
-  // Mock progress towards next achievements
-  const nextAchievements = [
-    { title: "Study Marathon", description: "Complete 50 study sessions", progress: 75, target: 50 },
-    { title: "Flashcard Expert", description: "Master 500 flashcards", progress: 40, target: 500 },
-    { title: "Goal Setter", description: "Create 10 study goals", progress: 60, target: 10 }
-  ];
 
   return (
     <div className="space-y-6">
@@ -113,30 +113,50 @@ export const Achievements = () => {
             <Button 
               size="sm" 
               variant="outline"
-              onClick={checkAndAwardAchievements}
+              onClick={handleCheckProgress}
+              disabled={loading || progressLoading}
             >
               Check Progress
             </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {nextAchievements.map((achievement, index) => (
-            <div key={index} className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium">{achievement.title}</h4>
-                  <p className="text-sm text-muted-foreground">{achievement.description}</p>
+          {progressLoading ? (
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="animate-pulse space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                  <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                  <div className="h-2 bg-gray-200 rounded w-full"></div>
                 </div>
-                <div className="text-right">
-                  <div className="text-sm font-medium">{achievement.progress}%</div>
-                  <div className="text-xs text-muted-foreground">
-                    {Math.floor(achievement.target * achievement.progress / 100)}/{achievement.target}
+              ))}
+            </div>
+          ) : achievementProgress.length > 0 ? (
+            achievementProgress.map((achievement) => (
+              <div key={achievement.id} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">{achievement.title}</h4>
+                    <p className="text-sm text-muted-foreground">{achievement.description}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-medium">{Math.round(achievement.progress)}%</div>
+                    <div className="text-xs text-muted-foreground">
+                      {achievement.current}/{achievement.target}
+                    </div>
                   </div>
                 </div>
+                <Progress value={achievement.progress} className="h-2" />
               </div>
-              <Progress value={achievement.progress} className="h-2" />
+            ))
+          ) : (
+            <div className="text-center py-4">
+              <Trophy className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">
+                All available achievements completed! Great job!
+              </p>
             </div>
-          ))}
+          )}
         </CardContent>
       </Card>
 
