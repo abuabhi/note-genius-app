@@ -124,10 +124,8 @@ export const useAchievementProgress = () => {
         };
       });
 
-      // Sort by progress (highest first) and take top 5
-      const sortedProgress = progressData
-        .sort((a, b) => b.progress - a.progress)
-        .slice(0, 5);
+      // Sort by progress (highest first) to show closest achievements first
+      const sortedProgress = progressData.sort((a, b) => b.progress - a.progress);
 
       setAchievementProgress(sortedProgress);
     } catch (error) {

@@ -93,22 +93,22 @@ export const Achievements = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-green-800">Recent</p>
-                <p className="text-2xl font-bold text-green-900">{recentAchievements.length}</p>
+                <p className="text-sm font-medium text-green-800">Available</p>
+                <p className="text-2xl font-bold text-green-900">{achievementProgress.length}</p>
               </div>
-              <Star className="h-8 w-8 text-green-600" />
+              <Target className="h-8 w-8 text-green-600" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Progress Towards Next Achievements */}
+      {/* All Available Achievements with Progress */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Target className="h-5 w-5 text-blue-500" />
-              Progress Towards Next Achievements
+              Achievement Progress
             </CardTitle>
             <Button 
               size="sm" 
@@ -133,11 +133,28 @@ export const Achievements = () => {
             </div>
           ) : achievementProgress.length > 0 ? (
             achievementProgress.map((achievement) => (
-              <div key={achievement.id} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-medium">{achievement.title}</h4>
-                    <p className="text-sm text-muted-foreground">{achievement.description}</p>
+              <div key={achievement.id} className="space-y-3 p-4 rounded-lg border bg-gradient-to-r from-gray-50 to-white">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200">
+                      {getIcon(achievement.badge_image)}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium">{achievement.title}</h4>
+                      <p className="text-sm text-muted-foreground">{achievement.description}</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Badge
+                          variant="outline"
+                          className={getBadgeColor(achievement.type)}
+                        >
+                          {achievement.type}
+                        </Badge>
+                        <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-300">
+                          <Star className="h-3 w-3 mr-1" />
+                          {achievement.points} pts
+                        </Badge>
+                      </div>
+                    </div>
                   </div>
                   <div className="text-right">
                     <div className="text-sm font-medium">{Math.round(achievement.progress)}%</div>
@@ -161,32 +178,22 @@ export const Achievements = () => {
       </Card>
 
       {/* Earned Achievements */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-yellow-500" />
-            Your Achievements
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="space-y-2">
-              <p>Loading achievements...</p>
-            </div>
-          ) : achievements.length > 0 ? (
+      {achievements.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-yellow-500" />
+              Your Achievements ({achievements.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="space-y-4">
               {achievements.map((achievement) => (
                 <div
                   key={achievement.id}
-                  className={`flex items-start gap-3 p-4 rounded-lg border-2 ${
-                    achievement.achieved_at 
-                      ? "bg-gradient-to-r from-yellow-50 to-yellow-100 border-yellow-200" 
-                      : "bg-gray-50 border-gray-200"
-                  }`}
+                  className="flex items-start gap-3 p-4 rounded-lg border-2 bg-gradient-to-r from-yellow-50 to-yellow-100 border-yellow-200"
                 >
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-full ${
-                    achievement.achieved_at ? "bg-yellow-200" : "bg-gray-200"
-                  }`}>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-200">
                     {getIcon(achievement.badge_image)}
                   </div>
                   <div className="flex-1">
@@ -214,30 +221,31 @@ export const Achievements = () => {
                         <Star className="h-3 w-3 mr-1" />
                         {achievement.points} pts
                       </Badge>
-                      {achievement.achieved_at && (
-                        <Badge className="bg-green-100 text-green-800 border-green-300">
-                          ✓ Earned
-                        </Badge>
-                      )}
+                      <Badge className="bg-green-100 text-green-800 border-green-300">
+                        ✓ Earned
+                      </Badge>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-          ) : (
-            <div className="text-center py-8">
-              <Award className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Start Your Journey!</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Begin studying to unlock your first achievements and earn points!
-              </p>
-              <Button onClick={checkAndAwardAchievements}>
-                Check for Achievements
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Empty State for New Users */}
+      {achievements.length === 0 && achievementProgress.length === 0 && !loading && !progressLoading && (
+        <div className="text-center py-8">
+          <Award className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold mb-2">Start Your Journey!</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Begin studying to unlock achievements and track your progress!
+          </p>
+          <Button onClick={checkAndAwardAchievements}>
+            Check for Achievements
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
