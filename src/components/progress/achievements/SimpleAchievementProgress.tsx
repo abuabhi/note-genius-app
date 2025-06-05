@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -333,10 +332,10 @@ export const SimpleAchievementProgress = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-3 overflow-hidden">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="flex-shrink-0 w-64 animate-pulse">
-                <div className="h-24 bg-gray-200 rounded-lg"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="h-32 bg-gray-200 rounded-lg"></div>
               </div>
             ))}
           </div>
@@ -366,11 +365,11 @@ export const SimpleAchievementProgress = () => {
       </CardHeader>
       <CardContent className="pt-0">
         {achievements.length > 0 ? (
-          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {achievements.map((achievement) => (
               <div 
                 key={achievement.id} 
-                className="flex-shrink-0 w-64 p-3 rounded-lg border border-mint-100 bg-white hover:bg-mint-50 transition-colors"
+                className="p-3 rounded-lg border border-mint-100 bg-white hover:bg-mint-50 transition-colors"
               >
                 <div className="flex items-start gap-3 mb-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-mint-100 flex-shrink-0">
