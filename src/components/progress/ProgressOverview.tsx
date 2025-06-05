@@ -29,49 +29,8 @@ const ProgressOverview = () => {
     );
   }
 
-  // Check if user has any meaningful activity - be more lenient with the check
-  const hasActivity = stats.totalSessions > 0 || 
-                     stats.totalCardsMastered > 0 || 
-                     stats.streakDays > 0 || 
-                     stats.totalSets > 0 ||
-                     stats.cardsReviewedToday > 0 ||
-                     stats.totalCardsReviewed > 0;
-
-  if (!hasActivity) {
-    return (
-      <div className="space-y-8">
-        <Card className="bg-gradient-to-br from-mint-50 to-blue-50 border-mint-200">
-          <CardContent className="flex flex-col items-center justify-center py-12 px-6 text-center">
-            <div className="mb-6">
-              <div className="flex items-center justify-center space-x-2 mb-4">
-                <BookOpen className="h-12 w-12 text-mint-500" />
-                <TrendingUp className="h-8 w-8 text-mint-400" />
-              </div>
-              <h2 className="text-2xl font-bold text-mint-800 mb-2">Start Your Learning Journey!</h2>
-              <p className="text-mint-600 max-w-md mx-auto">
-                Your progress will appear here as you start studying. Create flashcard sets, review cards, and track your learning journey.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button 
-                onClick={() => navigate('/flashcards')}
-                className="bg-mint-500 hover:bg-mint-600 text-white"
-              >
-                Browse Flashcard Sets
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => navigate('/flashcards/create')}
-                className="border-mint-200 hover:bg-mint-50 text-mint-700"
-              >
-                Create Your First Set
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // For debugging - let's always show the progress sections to see real data
+  console.log('Progress Overview Stats:', stats);
 
   return (
     <div className="space-y-8">
@@ -122,6 +81,39 @@ const ProgressOverview = () => {
         </div>
         <StudyConsistency />
       </div>
+
+      {/* Empty State Encouragement Card - Only show if no activity */}
+      {stats.totalSessions === 0 && stats.totalCardsMastered === 0 && stats.streakDays === 0 && stats.totalSets === 0 && (
+        <Card className="bg-gradient-to-br from-mint-50 to-blue-50 border-mint-200">
+          <CardContent className="flex flex-col items-center justify-center py-12 px-6 text-center">
+            <div className="mb-6">
+              <div className="flex items-center justify-center space-x-2 mb-4">
+                <BookOpen className="h-12 w-12 text-mint-500" />
+                <TrendingUp className="h-8 w-8 text-mint-400" />
+              </div>
+              <h2 className="text-2xl font-bold text-mint-800 mb-2">Start Your Learning Journey!</h2>
+              <p className="text-mint-600 max-w-md mx-auto">
+                Your progress will appear above as you start studying. Create flashcard sets, review cards, and track your learning journey.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button 
+                onClick={() => navigate('/flashcards')}
+                className="bg-mint-500 hover:bg-mint-600 text-white"
+              >
+                Browse Flashcard Sets
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => navigate('/flashcards/create')}
+                className="border-mint-200 hover:bg-mint-50 text-mint-700"
+              >
+                Create Your First Set
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
