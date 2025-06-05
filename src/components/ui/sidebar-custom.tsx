@@ -33,12 +33,12 @@ export function CustomSidebar() {
         variants={contentVariants}
       >
         {/* Main Navigation - Takes up available space */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto pb-[54px]">
           <Navigation isCollapsed={isCollapsed} />
         </div>
         
-        {/* User Avatar Section - Fixed at very bottom of screen */}
-        <div className="border-t">
+        {/* User Avatar Section - Fixed at absolute bottom of sidebar panel */}
+        <div className="absolute bottom-0 left-0 right-0 border-t bg-white dark:bg-black">
           <UserSection isCollapsed={isCollapsed} />
         </div>
       </motion.div>
