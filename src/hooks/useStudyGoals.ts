@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
@@ -69,6 +68,13 @@ export const goalTemplates: GoalTemplate[] = [
     target_hours: 50,
     duration_days: 30,
     category: 'advanced'
+  },
+  {
+    title: "Quick Study Session",
+    description: "Complete 3 focused study sessions of 2 hours each",
+    target_hours: 6,
+    duration_days: 7,
+    category: 'beginner'
   }
 ];
 
@@ -76,6 +82,7 @@ export const useStudyGoals = () => {
   const { user } = useAuth();
   const [goals, setGoals] = useState<StudyGoal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dismissedSuggestions, setDismissedSuggestions] = useState<string[]>([]);
   const queryClient = useQueryClient();
 
   const fetchGoals = async () => {
@@ -270,24 +277,45 @@ export const useStudyGoals = () => {
       ...customizations
     };
 
-    return createGoal(goalData);
+    const result = await createGoal(goalData);
+    
+    // Add the template title to dismissed suggestions to remove it from the list
+    if (result) {
+      setDismissedSuggestions(prev => [...prev, template.title]);
+    }
+    
+    return result;
+  };
+
+  const dismissSuggestion = (templateTitle: string) => {
+    setDismissedSuggestions(prev => [...prev, templateTitle]);
+    toast.success('Suggestion dismissed');
   };
 
   const getGoalSuggestions = () => {
     const completedGoalsCount = goals.filter(g => g.is_completed).length;
     const currentActiveGoals = goals.filter(g => !g.is_completed).length;
+    const existingGoalTitles = new Set(goals.map(g => g.title));
     
     if (currentActiveGoals >= 3) {
       return [];
     }
 
+    let suggestedTemplates: GoalTemplate[] = [];
+    
     if (completedGoalsCount === 0) {
-      return goalTemplates.filter(t => t.category === 'beginner');
+      suggestedTemplates = goalTemplates.filter(t => t.category === 'beginner');
     } else if (completedGoalsCount < 3) {
-      return goalTemplates.filter(t => t.category === 'intermediate');
+      suggestedTemplates = goalTemplates.filter(t => t.category === 'intermediate');
     } else {
-      return goalTemplates.filter(t => t.category === 'advanced');
+      suggestedTemplates = goalTemplates.filter(t => t.category === 'advanced');
     }
+
+    // Filter out templates that are already created as goals or dismissed
+    return suggestedTemplates.filter(template => 
+      !existingGoalTitles.has(template.title) && 
+      !dismissedSuggestions.includes(template.title)
+    );
   };
 
   const getStreakBonus = () => {
@@ -315,6 +343,7 @@ export const useStudyGoals = () => {
     deleteGoal,
     updateGoalProgress,
     createGoalFromTemplate,
+    dismissSuggestion,
     getGoalSuggestions,
     getStreakBonus,
     goalTemplates

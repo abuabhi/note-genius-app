@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { PlusCircle, Search, Filter, Target, Zap, Trophy, Star } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
@@ -24,6 +23,7 @@ const GoalsPage = () => {
     updateGoal, 
     deleteGoal,
     createGoalFromTemplate,
+    dismissSuggestion,
     getGoalSuggestions,
     getStreakBonus,
     goalTemplates
@@ -52,6 +52,10 @@ const GoalsPage = () => {
 
   const handleCreateFromTemplate = async (template: any) => {
     await createGoalFromTemplate(template);
+  };
+  
+  const handleDismissSuggestion = (templateTitle: string) => {
+    dismissSuggestion(templateTitle);
   };
   
   const filteredGoals = goals.filter(goal => {
@@ -166,18 +170,29 @@ const GoalsPage = () => {
                 {suggestions.slice(0, 3).map((template, index) => (
                   <div 
                     key={index}
-                    className="p-4 bg-white rounded-lg border border-purple-200 hover:shadow-md transition-shadow cursor-pointer"
-                    onClick={() => handleCreateFromTemplate(template)}
+                    className="p-4 bg-white rounded-lg border border-purple-200 hover:shadow-md transition-shadow relative"
                   >
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-medium text-sm">{template.title}</h4>
-                      <Badge variant="outline" className="text-xs">
-                        {template.category}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-2">{template.description}</p>
-                    <div className="text-xs text-purple-600">
-                      {template.target_hours}h • {template.duration_days} days
+                    <button
+                      onClick={() => handleDismissSuggestion(template.title)}
+                      className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 transition-colors"
+                      aria-label="Dismiss suggestion"
+                    >
+                      ×
+                    </button>
+                    <div 
+                      className="cursor-pointer"
+                      onClick={() => handleCreateFromTemplate(template)}
+                    >
+                      <div className="flex items-start justify-between mb-2 pr-6">
+                        <h4 className="font-medium text-sm">{template.title}</h4>
+                        <Badge variant="outline" className="text-xs">
+                          {template.category}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-2">{template.description}</p>
+                      <div className="text-xs text-purple-600">
+                        {template.target_hours}h • {template.duration_days} days
+                      </div>
                     </div>
                   </div>
                 ))}
