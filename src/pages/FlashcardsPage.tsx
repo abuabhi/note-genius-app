@@ -2,7 +2,7 @@
 import { useSearchParams } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { FlashcardProvider } from '@/contexts/FlashcardContext';
-import { EnhancedFlashcardSetsList } from '@/components/flashcards/EnhancedFlashcardSetsList';
+import EnhancedFlashcardSetsList from '@/components/flashcards/EnhancedFlashcardSetsList';
 import { PageBreadcrumb } from '@/components/ui/page-breadcrumb';
 import { BookOpen } from 'lucide-react';
 

@@ -3,10 +3,9 @@ import React from 'react';
 import { PlusCircle, Activity } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { QuizList } from '@/components/quiz/QuizList';
-import { QuizStats } from '@/components/quiz/QuizStats';
-import { QuizProgressChart } from '@/components/quiz/QuizProgressChart';
-import { QuizAchievements } from '@/components/quiz/QuizAchievements';
-import { useQuizzes } from '@/hooks/useQuizzes';
+import QuizStats from '@/components/quiz/QuizStats';
+import QuizProgressChart from '@/components/quiz/QuizProgressChart';
+import QuizAchievements from '@/components/quiz/QuizAchievements';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -16,7 +15,6 @@ import { PageBreadcrumb } from '@/components/ui/page-breadcrumb';
 
 const QuizPage = () => {
   const { loading: authLoading } = useRequireAuth();
-  const { quizzes, isLoading } = useQuizzes();
 
   if (authLoading) {
     return (
@@ -67,7 +65,7 @@ const QuizPage = () => {
 
           <TabsContent value="quizzes">
             <Card className="p-6">
-              <QuizList quizzes={quizzes} isLoading={isLoading} />
+              <QuizList />
             </Card>
           </TabsContent>
 

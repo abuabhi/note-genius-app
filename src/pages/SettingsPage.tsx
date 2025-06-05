@@ -1,7 +1,6 @@
 
 import Layout from '@/components/layout/Layout';
 import { SettingsFormProvider } from '@/components/settings/SettingsFormProvider';
-import { SettingsForm } from '@/components/settings/SettingsForm';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { PageBreadcrumb } from '@/components/ui/page-breadcrumb';
 import { Settings } from 'lucide-react';
@@ -25,9 +24,7 @@ const SettingsPage = () => {
     <Layout>
       <div className="container mx-auto p-4 md:p-6">
         <PageBreadcrumb pageName="Settings" pageIcon={<Settings className="h-3 w-3" />} />
-        <SettingsFormProvider>
-          <SettingsForm />
-        </SettingsFormProvider>
+        <SettingsFormProvider />
       </div>
     </Layout>
   );
