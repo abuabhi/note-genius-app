@@ -87,35 +87,27 @@ export function ReminderNavPopover() {
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-80 p-0" align="end">
-          <div className="flex items-center justify-between px-4 py-2 border-b">
-            <h3 className="font-medium">Reminders</h3>
-            <div className="flex gap-1">
+        <PopoverContent className="w-80 p-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg" align="end">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+            <h3 className="font-semibold text-gray-900 dark:text-white">Reminders</h3>
+            <div className="flex gap-2">
               {duePendingReminders.length > 0 && (
                 <Button 
                   variant="ghost" 
                   size="sm"
                   onClick={handleProcessReminders}
-                  className="text-orange-600 hover:text-orange-700"
+                  className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-950/20 text-xs"
                 >
                   <RefreshCw className="h-3 w-3 mr-1" />
                   Process ({duePendingReminders.length})
                 </Button>
               )}
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => {
-                  setShowCreateDialog(true);
-                }}
-              >
-                New
-              </Button>
               {unreadCount > 0 && (
                 <Button 
                   variant="ghost" 
                   size="sm"
                   onClick={handleDismissAll}
+                  className="text-gray-600 hover:text-gray-800 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700 text-xs"
                 >
                   Dismiss All
                 </Button>
@@ -124,7 +116,7 @@ export function ReminderNavPopover() {
           </div>
           <ScrollArea className="h-[300px] p-0">
             {loading ? (
-              <div className="flex items-center justify-center h-[200px] text-muted-foreground">
+              <div className="flex items-center justify-center h-[200px] text-gray-500 dark:text-gray-400">
                 Loading...
               </div>
             ) : pendingReminders.length > 0 ? (
@@ -132,7 +124,7 @@ export function ReminderNavPopover() {
                 {pendingReminders.map((reminder) => (
                   <div 
                     key={reminder.id} 
-                    className={`p-3 border-b flex justify-between hover:bg-gray-50 dark:hover:bg-gray-900 ${
+                    className={`p-3 border-b border-gray-100 dark:border-gray-700 flex justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 ${
                       reminder.status === 'sent' ? 'bg-blue-50 dark:bg-blue-950/20' : ''
                     } ${
                       reminder.status === 'pending' && new Date(reminder.reminder_time) <= now ? 'bg-orange-50 dark:bg-orange-950/20' : ''
@@ -141,26 +133,26 @@ export function ReminderNavPopover() {
                     <div className="flex-1">
                       <div className="flex items-center">
                         {getReminderIcon(reminder.type)}
-                        <span className="font-medium">{reminder.title}</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{reminder.title}</span>
                         {reminder.status === 'pending' && new Date(reminder.reminder_time) <= now && (
-                          <Badge variant="outline" className="ml-2 text-xs border-orange-300 text-orange-600">
+                          <Badge variant="outline" className="ml-2 text-xs border-orange-300 text-orange-600 bg-orange-100 dark:bg-orange-950/50 dark:border-orange-600 dark:text-orange-400">
                             Due
                           </Badge>
                         )}
                       </div>
                       {reminder.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-2 ml-6">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 ml-6">
                           {reminder.description}
                         </p>
                       )}
-                      <div className="text-xs text-muted-foreground mt-1 ml-6">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-6">
                         {getFormattedDate(reminder.reminder_time)} • {getRelativeTimeString(reminder.reminder_time)}
                       </div>
                     </div>
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      className="h-8 w-8 p-0 ml-2 self-center"
+                      className="h-8 w-8 p-0 ml-2 self-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                       onClick={() => handleDismiss(reminder.id)}
                     >
                       <X className="h-4 w-4" />
@@ -170,9 +162,9 @@ export function ReminderNavPopover() {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-10 text-center">
-                <CheckCircle className="h-10 w-10 text-muted-foreground mb-2" />
-                <p className="text-muted-foreground">You're all caught up!</p>
-                <p className="text-xs text-muted-foreground">No pending reminders</p>
+                <CheckCircle className="h-10 w-10 text-gray-400 dark:text-gray-500 mb-2" />
+                <p className="text-gray-600 dark:text-gray-400">You're all caught up!</p>
+                <p className="text-xs text-gray-500 dark:text-gray-500">No pending reminders</p>
               </div>
             )}
           </ScrollArea>
