@@ -26,8 +26,7 @@ const todoSchema = z.object({
   priority: z.enum(["low", "medium", "high"]),
   due_date: z.date().optional(),
   due_time: z.string().optional(),
-  reminder_time: z.date().optional(),
-  reminder_time_clock: z.string().optional(),
+  reminder_minutes: z.string().optional(),
   recurrence: z.enum(["none", "daily", "weekly", "monthly", "yearly"]).optional(),
   recurrence_end_date: z.date().optional(),
   depends_on_todo_id: z.string().optional(),
@@ -37,54 +36,6 @@ type TodoFormProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: CreateTodoData) => Promise<void>;
-};
-
-const DateTimePicker = ({ 
-  date, 
-  time, 
-  onDateChange, 
-  onTimeChange, 
-  placeholder 
-}: {
-  date?: Date;
-  time?: string;
-  onDateChange: (date: Date | undefined) => void;
-  onTimeChange: (time: string) => void;
-  placeholder: string;
-}) => {
-  return (
-    <div className="space-y-2">
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            className="w-full justify-start text-left font-normal"
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {date ? format(date, "PPP") : <span>{placeholder}</span>}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={date}
-            onSelect={onDateChange}
-            initialFocus
-          />
-        </PopoverContent>
-      </Popover>
-      
-      <div className="flex items-center space-x-2">
-        <Clock className="h-4 w-4 text-muted-foreground" />
-        <Input
-          type="time"
-          value={time || ""}
-          onChange={(e) => onTimeChange(e.target.value)}
-          className="flex-1"
-        />
-      </div>
-    </div>
-  );
 };
 
 export const TodoFormDialog = ({ open, onOpenChange, onSubmit }: TodoFormProps) => {
@@ -99,8 +50,7 @@ export const TodoFormDialog = ({ open, onOpenChange, onSubmit }: TodoFormProps) 
       priority: "medium",
       due_date: undefined,
       due_time: "",
-      reminder_time: undefined,
-      reminder_time_clock: "",
+      reminder_minutes: "",
       recurrence: "none",
       recurrence_end_date: undefined,
       depends_on_todo_id: undefined,
@@ -126,11 +76,19 @@ export const TodoFormDialog = ({ open, onOpenChange, onSubmit }: TodoFormProps) 
     return date;
   };
 
+  const calculateReminderTime = (dueDateTime?: Date, reminderMinutes?: string): Date | undefined => {
+    if (!dueDateTime || !reminderMinutes) return undefined;
+    
+    const minutes = parseInt(reminderMinutes);
+    const reminderTime = new Date(dueDateTime.getTime() - (minutes * 60 * 1000));
+    return reminderTime;
+  };
+
   const handleSubmit = async (data: z.infer<typeof todoSchema>) => {
     setIsSubmitting(true);
     try {
       const dueDateTime = combineDateTime(data.due_date, data.due_time);
-      const reminderDateTime = combineDateTime(data.reminder_time, data.reminder_time_clock);
+      const reminderDateTime = calculateReminderTime(dueDateTime, data.reminder_minutes);
       
       const todoData: CreateTodoData = {
         title: data.title,
@@ -151,6 +109,14 @@ export const TodoFormDialog = ({ open, onOpenChange, onSubmit }: TodoFormProps) 
       setIsSubmitting(false);
     }
   };
+
+  const reminderOptions = [
+    { value: "15", label: "15 minutes before" },
+    { value: "30", label: "30 minutes before" },
+    { value: "60", label: "1 hour before" },
+    { value: "240", label: "4 hours before" },
+    { value: "1440", label: "1 day before" },
+  ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -246,14 +212,64 @@ export const TodoFormDialog = ({ open, onOpenChange, onSubmit }: TodoFormProps) 
                     <FormItem>
                       <FormLabel>Due Date & Time</FormLabel>
                       <FormControl>
-                        <DateTimePicker
-                          date={field.value}
-                          time={form.watch("due_time")}
-                          onDateChange={field.onChange}
-                          onTimeChange={(time) => form.setValue("due_time", time)}
-                          placeholder="Pick a due date"
-                        />
+                        <div className="flex gap-2">
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className="flex-1 justify-start text-left font-normal"
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          
+                          <div className="flex items-center gap-2 w-32">
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                            <Input
+                              type="time"
+                              value={form.watch("due_time") || ""}
+                              onChange={(e) => form.setValue("due_time", e.target.value)}
+                              className="flex-1"
+                            />
+                          </div>
+                        </div>
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="reminder_minutes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Reminder</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Set reminder time" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="">No reminder</SelectItem>
+                          {reminderOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -261,26 +277,6 @@ export const TodoFormDialog = ({ open, onOpenChange, onSubmit }: TodoFormProps) 
               </TabsContent>
               
               <TabsContent value="advanced" className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="reminder_time"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Reminder Date & Time</FormLabel>
-                      <FormControl>
-                        <DateTimePicker
-                          date={field.value}
-                          time={form.watch("reminder_time_clock")}
-                          onDateChange={field.onChange}
-                          onTimeChange={(time) => form.setValue("reminder_time_clock", time)}
-                          placeholder="Set reminder date"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
                 <RecurrenceSelector
                   value={form.watch("recurrence") || "none"}
                   onValueChange={(value) => form.setValue("recurrence", value)}
