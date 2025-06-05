@@ -109,10 +109,10 @@ export const useProgressAnalytics = (): ProgressAnalytics => {
       const todaysQuizzes = todayQuizResults.data?.length || 0;
 
       // Calculate weekly study time
-      const thisWeekSessions = studySessions?.data?.filter(s => 
+      const thisWeekSessions = studySessions?.filter(s => 
         s.start_time >= `${thisWeekStart}T00:00:00Z`
       ) || [];
-      const lastWeekSessions = studySessions?.data?.filter(s => 
+      const lastWeekSessions = studySessions?.filter(s => 
         s.start_time >= `${lastWeekStart}T00:00:00Z` && 
         s.start_time <= `${lastWeekEnd}T23:59:59Z`
       ) || [];
@@ -131,19 +131,19 @@ export const useProgressAnalytics = (): ProgressAnalytics => {
       const currentStreak = todaysCardsReviewed > 0 ? 1 : 0;
 
       // Calculate total cards mastered (mastery_level >= 3 or grade 'A')
-      const totalCardsMastered = flashcardProgress?.data?.filter(p => 
+      const totalCardsMastered = flashcardProgress?.filter(p => 
         p.mastery_level >= 3 || p.grade === 'A'
       ).length || 0;
 
       // Calculate grade progression by subject
-      const subjectGroups = flashcardProgress?.data?.reduce((acc, progress) => {
+      const subjectGroups = flashcardProgress?.reduce((acc: Record<string, any[]>, progress) => {
         const subject = progress.flashcard?.flashcard_set_cards?.[0]?.flashcard_sets?.subject || 'Unknown';
         if (!acc[subject]) {
           acc[subject] = [];
         }
         acc[subject].push(progress);
         return acc;
-      }, {} as Record<string, any[]>) || {};
+      }, {}) || {};
 
       const gradeProgression: GradeProgression[] = Object.entries(subjectGroups).map(([subject, cards]) => {
         const gradeDistribution = ['A', 'B', 'C'].map(grade => {
@@ -178,10 +178,10 @@ export const useProgressAnalytics = (): ProgressAnalytics => {
       // Calculate study time analytics
       const dailyTrends = Array.from({ length: 30 }, (_, i) => {
         const date = format(subDays(today, 29 - i), 'yyyy-MM-dd');
-        const daySessions = studySessions?.data?.filter(s => 
+        const daySessions = studySessions?.filter(s => 
           s.start_time?.startsWith(date)
         ) || [];
-        const dayReviews = flashcardProgress?.data?.filter(p => 
+        const dayReviews = flashcardProgress?.filter(p => 
           p.last_reviewed_at?.startsWith(date)
         ) || [];
 
