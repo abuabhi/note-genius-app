@@ -3,6 +3,7 @@ import { useUnifiedStudyStats } from "@/hooks/useUnifiedStudyStats";
 import { SharedStatsGrid } from "@/components/shared/SharedStatsGrid";
 import LearningSummary from "./overview/LearningSummary";
 import StudyConsistency from "./overview/StudyConsistency";
+import MainProgressStats from "./overview/MainProgressStats";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, TrendingUp } from "lucide-react";
@@ -69,6 +70,16 @@ const ProgressOverview = () => {
 
   return (
     <div className="space-y-8">
+      {/* Main Progress Stats */}
+      <MainProgressStats stats={{
+        completedCourses: 0, // Placeholder for future course implementation
+        totalCourses: 0,     // Placeholder for future course implementation
+        completedQuizzes: 0, // Will be calculated from quiz_results
+        totalQuizzes: 0,     // Will be calculated from quizzes
+        flashcardAccuracy: stats.flashcardAccuracy,
+        streakDays: stats.streakDays
+      }} />
+
       {/* Detailed Stats Grid */}
       <SharedStatsGrid stats={stats} isLoading={isLoading} variant="detailed" />
 
