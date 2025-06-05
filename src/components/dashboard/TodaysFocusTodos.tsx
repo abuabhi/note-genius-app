@@ -3,16 +3,16 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle } from "lucide-react";
 import { formatDistanceToNow, parseISO, isToday } from 'date-fns';
 
-interface Todo {
+interface TodoItem {
   id: string;
   title: string;
   description?: string;
   due_date?: string;
-  priority?: 'low' | 'medium' | 'high';
+  priority?: string;
 }
 
 interface TodaysFocusTodosProps {
-  todos: Todo[];
+  todos: TodoItem[];
 }
 
 export const TodaysFocusTodos = ({ todos }: TodaysFocusTodosProps) => {
