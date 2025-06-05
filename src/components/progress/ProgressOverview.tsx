@@ -29,8 +29,13 @@ const ProgressOverview = () => {
     );
   }
 
-  // Check if user has any activity
-  const hasActivity = stats.totalSessions > 0 || stats.totalCardsMastered > 0 || stats.streakDays > 0;
+  // Check if user has any meaningful activity - be more lenient with the check
+  const hasActivity = stats.totalSessions > 0 || 
+                     stats.totalCardsMastered > 0 || 
+                     stats.streakDays > 0 || 
+                     stats.totalSets > 0 ||
+                     stats.cardsReviewedToday > 0 ||
+                     stats.totalCardsReviewed > 0;
 
   if (!hasActivity) {
     return (
