@@ -3,9 +3,11 @@ import Layout from "@/components/layout/Layout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Loader2 } from "lucide-react";
 import { useFeatures } from "@/contexts/FeatureContext";
-import { DashboardWelcomeBanner } from "@/components/dashboard/DashboardWelcomeBanner";
-import { AnalyticsSection } from "@/components/dashboard/AnalyticsSection";
-import { QuickActionsGrid } from "@/components/dashboard/QuickActionsGrid";
+import { DashboardHeroSection } from "@/components/dashboard/DashboardHeroSection";
+import { LearningAnalyticsDashboard } from "@/components/dashboard/LearningAnalyticsDashboard";
+import { TodaysFocusSection } from "@/components/dashboard/TodaysFocusSection";
+import { RecentActivityTimeline } from "@/components/dashboard/RecentActivityTimeline";
+import { EnhancedQuickActionsGrid } from "@/components/dashboard/EnhancedQuickActionsGrid";
 
 const DashboardPage = () => {
   const {
@@ -55,12 +57,26 @@ const DashboardPage = () => {
   
   return (
     <Layout>
-      <div className="container mx-auto p-6">
-        <DashboardWelcomeBanner />
-        
-        <AnalyticsSection />
-
-        <QuickActionsGrid isFeatureVisible={isFeatureVisible} />
+      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+        <div className="container mx-auto p-6 space-y-8">
+          {/* Hero Section - Daily Overview */}
+          <DashboardHeroSection />
+          
+          {/* Learning Analytics */}
+          <LearningAnalyticsDashboard />
+          
+          {/* Two Column Layout for Focus and Activity */}
+          <div className="grid gap-8 lg:grid-cols-2">
+            {/* Today's Focus - Goals, Reminders, ToDos */}
+            <TodaysFocusSection />
+            
+            {/* Recent Activity Timeline */}
+            <RecentActivityTimeline />
+          </div>
+          
+          {/* Enhanced Quick Actions Grid */}
+          <EnhancedQuickActionsGrid />
+        </div>
       </div>
     </Layout>
   );
