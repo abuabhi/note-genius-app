@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/auth';
 import { UserSection } from '@/components/ui/sidebar/UserSection';
+import { ReminderNavPopover } from '@/components/reminders/ReminderNavPopover';
 
 interface DesktopAuthSectionProps {
   isPublicRoute: boolean;
@@ -32,6 +33,9 @@ export const DesktopAuthSection = ({ isPublicRoute }: DesktopAuthSectionProps) =
           Dashboard
         </Link>
       )}
+      
+      {/* Reminder Bell Icon */}
+      <ReminderNavPopover />
       
       {/* User Profile Section */}
       <UserSection isCollapsed={false} />

@@ -1,8 +1,8 @@
 
-import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
-import { UserTier } from '@/hooks/useRequireAuth';
+import { Button } from '@/components/ui/button';
+import { ReminderNavPopover } from '@/components/reminders/ReminderNavPopover';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -10,54 +10,45 @@ interface MobileMenuProps {
 }
 
 export const MobileMenu = ({ isOpen, isPublicRoute }: MobileMenuProps) => {
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
-  
-  // Get user tier safely if user is logged in
-  const userProfile = user?.user_metadata;
-  const isAdmin = userProfile?.user_tier === UserTier.DEAN;
-  
-  const handleLogout = async () => {
-    await signOut();
-    navigate('/');
-  };
-  
+  const { user } = useAuth();
+
   if (!isOpen) return null;
 
   return (
-    <div className="absolute top-full left-0 w-full bg-white border-b shadow-md z-10">
-      <div className="container mx-auto p-6 flex flex-col space-y-4">
+    <div className="md:hidden absolute top-full left-0 right-0 bg-white border-t shadow-lg z-50">
+      <div className="px-6 py-4 space-y-4">
         {!user ? (
           <>
-            {/* Public Navigation Links - Mobile */}
-            <Link to="/about" className="text-mint-700 hover:text-mint-900">About</Link>
-            <Link to="/blog" className="text-mint-700 hover:text-mint-900">Blog</Link>
-            <Link to="/features" className="text-mint-700 hover:text-mint-900">Features</Link>
-            <Link to="/pricing" className="text-mint-700 hover:text-mint-900">Pricing</Link>
-            <div className="flex flex-col space-y-2 mt-4 pt-4 border-t border-gray-100">
-              <Link to="/login" className="text-mint-700 hover:text-mint-900 font-medium">Login</Link>
-              <Button asChild className="bg-mint-500 hover:bg-mint-600 text-white w-full">
-                <Link to="/signup">Sign Up</Link>
-              </Button>
-            </div>
+            <Link 
+              to="/login" 
+              className="block text-mint-700 hover:text-mint-900 font-medium py-2"
+            >
+              Login
+            </Link>
+            <Button asChild className="w-full bg-mint-500 hover:bg-mint-600 text-white">
+              <Link to="/signup">Sign Up</Link>
+            </Button>
           </>
         ) : (
           <>
-            {/* Public Navigation Links - Mobile - Only on public routes when authenticated */}
+            {/* Public Routes Navigation for Authenticated Users */}
             {isPublicRoute && (
-              <>
-                <Link to="/about" className="text-mint-700 hover:text-mint-900">About</Link>
-                <Link to="/blog" className="text-mint-700 hover:text-mint-900">Blog</Link>
-                <Link to="/features" className="text-mint-700 hover:text-mint-900">Features</Link>
-                <Link to="/pricing" className="text-mint-700 hover:text-mint-900">Pricing</Link>
-                <Link to="/dashboard" className="text-mint-700 hover:text-mint-900 font-medium">Dashboard</Link>
-              </>
+              <Link 
+                to="/dashboard" 
+                className="block text-mint-700 hover:text-mint-900 font-medium py-2"
+              >
+                Dashboard
+              </Link>
             )}
             
-            {/* Note: Profile functionality moved to sidebar - mobile users will use sidebar for profile menu */}
+            {/* Reminder Bell for Mobile */}
+            <div className="flex items-center justify-start py-2">
+              <span className="text-sm font-medium text-gray-700 mr-3">Reminders:</span>
+              <ReminderNavPopover />
+            </div>
           </>
         )}
       </div>
     </div>
   );
-}
+};
