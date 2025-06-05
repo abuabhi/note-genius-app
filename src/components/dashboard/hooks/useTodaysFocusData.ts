@@ -96,7 +96,8 @@ export const useTodaysFocusData = () => {
               status: todo.status,
               type: todo.type,
               is_due_today: todo.due_date === today,
-              is_overdue: todo.due_date && todo.due_date < today
+              is_overdue: todo.due_date && todo.due_date < today,
+              has_no_due_date: !todo.due_date
             });
           });
         }
@@ -105,25 +106,26 @@ export const useTodaysFocusData = () => {
           console.error('❌ Error fetching all todos:', allTodosError);
         }
 
-        // Now let's try a simpler query to get todos for today
-        console.log('📝 Fetching todos with simpler query...');
+        // Now let's get todos that should be shown in today's focus
+        console.log('📝 Fetching todos for today\'s focus...');
         const { data: todos, error: todosError } = await supabase
           .from('reminders')
           .select('*')
           .eq('user_id', user.id)
           .eq('type', 'todo')
           .in('status', ['pending'])
-          .order('due_date', { ascending: true });
+          .order('due_date', { ascending: true, nullsLast: false });
 
         let filteredTodos = [];
         if (todos && todos.length > 0) {
-          // Filter in JavaScript to be more explicit
+          // Filter todos: show if due today, overdue, or no due date set
           filteredTodos = todos.filter(todo => {
             const isDueToday = todo.due_date === today;
             const isOverdue = todo.due_date && todo.due_date < today;
-            const shouldShow = isDueToday || isOverdue;
+            const hasNoDueDate = !todo.due_date;
+            const shouldShow = isDueToday || isOverdue || hasNoDueDate;
             
-            console.log(`📝 Todo "${todo.title}": due_date=${todo.due_date}, isDueToday=${isDueToday}, isOverdue=${isOverdue}, shouldShow=${shouldShow}`);
+            console.log(`📝 Todo "${todo.title}": due_date=${todo.due_date}, isDueToday=${isDueToday}, isOverdue=${isOverdue}, hasNoDueDate=${hasNoDueDate}, shouldShow=${shouldShow}`);
             
             return shouldShow;
           }).slice(0, 5); // Limit to 5
