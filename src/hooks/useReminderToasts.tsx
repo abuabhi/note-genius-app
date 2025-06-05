@@ -1,11 +1,12 @@
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { useReminderNotifications } from './useReminderNotifications';
 import { Bell, Clock, CalendarClock, BrainCircuit } from 'lucide-react';
 
 export const useReminderToasts = () => {
-  const { pendingReminders } = useReminderNotifications();
+  const { pendingReminders, dismissReminder } = useReminderNotifications();
+  const shownReminders = useRef(new Set<string>());
 
   const getReminderIcon = (type: string) => {
     switch (type) {
@@ -25,18 +26,22 @@ export const useReminderToasts = () => {
   useEffect(() => {
     console.log('🔔 useReminderToasts - All pending reminders:', pendingReminders);
     
-    // Check for newly sent reminders (status = 'sent')
+    // Check for newly sent reminders (status = 'sent') that haven't been shown yet
     const newReminders = pendingReminders.filter(reminder => 
       reminder.status === 'sent' && 
-      new Date(reminder.reminder_time) <= new Date()
+      new Date(reminder.reminder_time) <= new Date() &&
+      !shownReminders.current.has(reminder.id)
     );
 
-    console.log('🔔 useReminderToasts - Reminders to show as toast:', newReminders);
+    console.log('🔔 useReminderToasts - New reminders to show as toast:', newReminders);
 
     newReminders.forEach(reminder => {
       const Icon = getReminderIcon(reminder.type);
       
       console.log('🔔 Showing toast for reminder:', reminder.title);
+      
+      // Mark this reminder as shown
+      shownReminders.current.add(reminder.id);
       
       toast(reminder.title, {
         description: reminder.description || 'You have a new reminder',
@@ -44,25 +49,20 @@ export const useReminderToasts = () => {
         duration: 8000, // Show for 8 seconds
         action: {
           label: 'Dismiss',
-          onClick: () => {
-            // Mark as dismissed - this could be enhanced to call a dismiss API
-            console.log('Reminder dismissed:', reminder.id);
+          onClick: async () => {
+            console.log('Reminder dismissed via toast:', reminder.id);
+            await dismissReminder(reminder.id);
           }
         }
       });
     });
 
-    // Also check for due reminders that are still pending (should be processed)
-    const dueButPendingReminders = pendingReminders.filter(reminder => 
-      reminder.status === 'pending' && 
-      new Date(reminder.reminder_time) <= new Date()
-    );
+    // Clean up shown reminders that are no longer in pending list
+    const currentReminderIds = new Set(pendingReminders.map(r => r.id));
+    const toRemove = Array.from(shownReminders.current).filter(id => !currentReminderIds.has(id));
+    toRemove.forEach(id => shownReminders.current.delete(id));
 
-    if (dueButPendingReminders.length > 0) {
-      console.log('⚠️ Found due reminders that are still pending (need processing):', dueButPendingReminders);
-    }
-
-  }, [pendingReminders]);
+  }, [pendingReminders, dismissReminder]);
 
   return { pendingReminders };
 };

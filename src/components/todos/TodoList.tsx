@@ -73,7 +73,9 @@ export const TodoList: React.FC<TodoListProps> = ({
                 <Checkbox
                   checked={todo.status === 'completed'}
                   onCheckedChange={(checked) => {
-                    onUpdate(todo.id, checked ? 'completed' : 'pending');
+                    console.log('🎯 Checkbox clicked:', { todoId: todo.id, checked, currentStatus: todo.status });
+                    const newStatus: TodoStatus = checked ? 'completed' : 'pending';
+                    onUpdate(todo.id, newStatus);
                   }}
                 />
                 

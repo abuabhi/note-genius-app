@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
@@ -130,9 +131,14 @@ export const useTodos = () => {
     mutationFn: async ({ id, status }: { id: string, status: TodoStatus }) => {
       if (!user) throw new Error('User not authenticated');
 
+      console.log('📝 Updating todo status:', { id, status, userId: user.id });
+
       const { data, error } = await supabase
         .from('reminders')
-        .update({ status, updated_at: new Date().toISOString() })
+        .update({ 
+          status: status,
+          updated_at: new Date().toISOString() 
+        })
         .eq('id', id)
         .eq('user_id', user.id)
         .eq('type', 'todo')
@@ -143,13 +149,19 @@ export const useTodos = () => {
         throw error;
       }
 
+      console.log('✅ Todo status updated successfully:', data);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      console.log('🎉 Todo status update success:', variables);
+      toast.success(`Todo marked as ${variables.status}`);
       queryClient.invalidateQueries({ queryKey: ['todos'] });
+      // Also invalidate reminders to update notification status
+      queryClient.invalidateQueries({ queryKey: ['reminders'] });
     },
-    onError: () => {
-      toast.error('Failed to update todo status');
+    onError: (error: Error) => {
+      console.error('❌ Todo status update error:', error);
+      toast.error(`Failed to update todo: ${error.message}`);
     },
   });
 
