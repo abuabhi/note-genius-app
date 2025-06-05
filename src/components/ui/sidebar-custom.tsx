@@ -19,7 +19,7 @@ export function CustomSidebar() {
   return (
     <motion.div
       className={cn(
-        "sidebar fixed left-0 z-40 h-full shrink-0 border-r"
+        "sidebar fixed left-0 z-40 h-screen shrink-0 border-r"
       )}
       initial={isCollapsed ? "closed" : "open"}
       animate={isCollapsed ? "closed" : "open"}
@@ -29,7 +29,7 @@ export function CustomSidebar() {
       onMouseLeave={() => setIsCollapsed(true)}
     >
       <motion.div
-        className={`relative z-40 flex text-muted-foreground h-full shrink-0 flex-col bg-white dark:bg-black transition-all`}
+        className={`relative z-40 flex text-muted-foreground h-screen shrink-0 flex-col bg-white dark:bg-black transition-all`}
         variants={contentVariants}
       >
         {/* Main Navigation - Takes up available space */}
@@ -37,8 +37,8 @@ export function CustomSidebar() {
           <Navigation isCollapsed={isCollapsed} />
         </div>
         
-        {/* User Avatar Section - Fixed at bottom */}
-        <div className="mt-auto">
+        {/* User Avatar Section - Fixed at very bottom of screen */}
+        <div className="border-t">
           <UserSection isCollapsed={isCollapsed} />
         </div>
       </motion.div>
