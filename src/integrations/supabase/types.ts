@@ -437,6 +437,39 @@ export type Database = {
           },
         ]
       }
+      learning_velocity_metrics: {
+        Row: {
+          cards_mastered: number | null
+          created_at: string | null
+          date: string | null
+          id: string
+          learning_acceleration: number | null
+          retention_rate: number | null
+          review_efficiency: number | null
+          user_id: string
+        }
+        Insert: {
+          cards_mastered?: number | null
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          learning_acceleration?: number | null
+          retention_rate?: number | null
+          review_efficiency?: number | null
+          user_id: string
+        }
+        Update: {
+          cards_mastered?: number | null
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          learning_acceleration?: number | null
+          retention_rate?: number | null
+          review_efficiency?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       note_enrichment_usage: {
         Row: {
           completion_tokens: number
@@ -737,6 +770,50 @@ export type Database = {
             columns: ["question_id"]
             isOneToOne: false
             referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_performance_history: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          difficulty_level: number | null
+          id: string
+          quiz_id: string | null
+          score_percentage: number | null
+          subject: string | null
+          time_per_question_avg: number | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          difficulty_level?: number | null
+          id?: string
+          quiz_id?: string | null
+          score_percentage?: number | null
+          subject?: string | null
+          time_per_question_avg?: number | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          difficulty_level?: number | null
+          id?: string
+          quiz_id?: string | null
+          score_percentage?: number | null
+          subject?: string | null
+          time_per_question_avg?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_performance_history_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
             referencedColumns: ["id"]
           },
         ]
@@ -1894,12 +1971,15 @@ export type Database = {
           created_at: string
           ease_factor: number | null
           flashcard_id: string | null
+          grade: string | null
           id: string
           interval: number | null
           last_reviewed_at: string | null
           last_score: number | null
+          mastery_level: number | null
           next_review_at: string | null
           repetition: number | null
+          time_to_master_days: number | null
           updated_at: string
           user_id: string | null
         }
@@ -1907,12 +1987,15 @@ export type Database = {
           created_at?: string
           ease_factor?: number | null
           flashcard_id?: string | null
+          grade?: string | null
           id?: string
           interval?: number | null
           last_reviewed_at?: string | null
           last_score?: number | null
+          mastery_level?: number | null
           next_review_at?: string | null
           repetition?: number | null
+          time_to_master_days?: number | null
           updated_at?: string
           user_id?: string | null
         }
@@ -1920,12 +2003,15 @@ export type Database = {
           created_at?: string
           ease_factor?: number | null
           flashcard_id?: string | null
+          grade?: string | null
           id?: string
           interval?: number | null
           last_reviewed_at?: string | null
           last_score?: number | null
+          mastery_level?: number | null
           next_review_at?: string | null
           repetition?: number | null
+          time_to_master_days?: number | null
           updated_at?: string
           user_id?: string | null
         }

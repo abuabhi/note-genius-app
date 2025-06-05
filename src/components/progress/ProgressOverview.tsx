@@ -1,6 +1,6 @@
 
 import { useUnifiedStudyStats } from "@/hooks/useUnifiedStudyStats";
-import { SharedStatsGrid } from "@/components/shared/SharedStatsGrid";
+import { EnhancedProgressOverview } from "./EnhancedProgressOverview";
 import LearningSummary from "./overview/LearningSummary";
 import StudyConsistency from "./overview/StudyConsistency";
 import MainProgressStats from "./overview/MainProgressStats";
@@ -29,21 +29,12 @@ const ProgressOverview = () => {
     );
   }
 
-  // Transform stats to match SharedStatsGrid interface
-  const transformedStats = {
-    totalHours: stats.studyTimeHours,
-    averageDuration: stats.averageSessionTime,
-    totalSessions: stats.totalSessions,
-    activeSessions: 0, // We don't track active sessions in unified stats
-    streakDays: stats.streakDays,
-    totalCardsMastered: stats.totalCardsMastered,
-    cardsReviewedToday: 0, // We don't track today's cards in unified stats
-    todayStudyMinutes: 0, // We don't track today's study time in unified stats
-  };
+  // Show enhanced progress overview if user has data
+  if (stats.totalSets > 0 || stats.totalSessions > 0) {
+    return <EnhancedProgressOverview />;
+  }
 
-  // For debugging - let's always show the progress sections to see real data
-  console.log('Progress Overview Stats:', stats);
-
+  // Show original overview for new users with empty state encouragement
   return (
     <div className="space-y-8">
       {/* Main Progress Stats Section */}
@@ -54,22 +45,13 @@ const ProgressOverview = () => {
         </div>
         
         <MainProgressStats stats={{
-          completedCourses: 0, // Placeholder for future course implementation
-          totalCourses: 0,     // Placeholder for future course implementation
-          completedQuizzes: 0, // Will be calculated from quiz_results
-          totalQuizzes: 0,     // Will be calculated from quizzes
+          completedCourses: 0,
+          totalCourses: 0,
+          completedQuizzes: 0,
+          totalQuizzes: 0,
           flashcardAccuracy: stats.flashcardAccuracy,
           streakDays: stats.streakDays
         }} />
-      </div>
-
-      {/* Detailed Stats Grid Section */}
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Study Statistics</h2>
-          <p className="text-gray-600">Overview of your study sessions and activity</p>
-        </div>
-        <SharedStatsGrid stats={transformedStats} isLoading={isLoading} variant="detailed" />
       </div>
 
       {/* Learning Summary Section */}
@@ -94,38 +76,36 @@ const ProgressOverview = () => {
         <StudyConsistency />
       </div>
 
-      {/* Empty State Encouragement Card - Only show if no flashcard sets */}
-      {stats.totalSets === 0 && (
-        <Card className="bg-gradient-to-br from-mint-50 to-blue-50 border-mint-200">
-          <CardContent className="flex flex-col items-center justify-center py-12 px-6 text-center">
-            <div className="mb-6">
-              <div className="flex items-center justify-center space-x-2 mb-4">
-                <BookOpen className="h-12 w-12 text-mint-500" />
-                <TrendingUp className="h-8 w-8 text-mint-400" />
-              </div>
-              <h2 className="text-2xl font-bold text-mint-800 mb-2">Start Your Learning Journey!</h2>
-              <p className="text-mint-600 max-w-md mx-auto">
-                Your progress will appear above as you start studying. Create flashcard sets, review cards, and track your learning journey.
-              </p>
+      {/* Empty State Encouragement Card */}
+      <Card className="bg-gradient-to-br from-mint-50 to-blue-50 border-mint-200">
+        <CardContent className="flex flex-col items-center justify-center py-12 px-6 text-center">
+          <div className="mb-6">
+            <div className="flex items-center justify-center space-x-2 mb-4">
+              <BookOpen className="h-12 w-12 text-mint-500" />
+              <TrendingUp className="h-8 w-8 text-mint-400" />
             </div>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button 
-                onClick={() => navigate('/flashcards')}
-                className="bg-mint-500 hover:bg-mint-600 text-white"
-              >
-                Browse Flashcard Sets
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => navigate('/flashcards/create')}
-                className="border-mint-200 hover:bg-mint-50 text-mint-700"
-              >
-                Create Your First Set
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            <h2 className="text-2xl font-bold text-mint-800 mb-2">Start Your Learning Journey!</h2>
+            <p className="text-mint-600 max-w-md mx-auto">
+              Your progress will appear above as you start studying. Create flashcard sets, review cards, and track your learning journey.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Button 
+              onClick={() => navigate('/flashcards')}
+              className="bg-mint-500 hover:bg-mint-600 text-white"
+            >
+              Browse Flashcard Sets
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => navigate('/flashcards/create')}
+              className="border-mint-200 hover:bg-mint-50 text-mint-700"
+            >
+              Create Your First Set
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
