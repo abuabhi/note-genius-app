@@ -15,6 +15,7 @@ import AccountSettingsCard from "./cards/AccountSettingsCard";
 import { UpgradeTierCard } from "./cards/UpgradeTierCard";
 import { SubjectsSettingsCard } from "./cards/SubjectsSettingsCard";
 import { StudyPreferencesCard } from "./cards/StudyPreferencesCard";
+import { PasswordChangeCard } from "./cards/PasswordChangeCard";
 
 interface SettingsFormTabsProps {
   activeTab: string;
@@ -61,6 +62,13 @@ export const SettingsFormTabs = ({
               countries={countries}
               onCountryChange={onCountryChange}
             />
+          </div>
+        </div>
+        
+        <div className="relative">
+          <div className="absolute -inset-2 bg-gradient-to-r from-mint-500/5 to-blue-500/5 rounded-2xl blur-lg"></div>
+          <div className="relative">
+            <PasswordChangeCard />
           </div>
         </div>
         
