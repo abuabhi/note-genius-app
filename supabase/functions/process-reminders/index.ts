@@ -22,21 +22,44 @@ serve(async (req) => {
     
     // Get current time
     const now = new Date()
+    const today = now.toISOString().split('T')[0] // Today's date in YYYY-MM-DD format
     
-    // Find reminders that are due and still pending
-    const { data: dueReminders, error: fetchError } = await supabase
+    console.log(`Processing reminders at ${now.toISOString()}`)
+    
+    // Find reminders that are due based on reminder_time and still pending
+    const { data: timeBasedReminders, error: fetchTimeError } = await supabase
       .from('reminders')
       .select('*')
       .eq('status', 'pending')
       .lte('reminder_time', now.toISOString())
     
-    if (fetchError) {
-      throw fetchError
+    if (fetchTimeError) {
+      throw fetchTimeError
     }
     
-    console.log(`Found ${dueReminders?.length || 0} due reminders to process`)
+    // Find todos that are due today based on due_date and still pending
+    const { data: dueDateTodos, error: fetchDueDateError } = await supabase
+      .from('reminders')
+      .select('*')
+      .eq('status', 'pending')
+      .eq('type', 'todo')
+      .eq('due_date', today)
     
-    if (!dueReminders || dueReminders.length === 0) {
+    if (fetchDueDateError) {
+      throw fetchDueDateError
+    }
+    
+    // Combine and deduplicate reminders (in case a todo has both reminder_time and due_date on same day)
+    const allDueReminders = [...(timeBasedReminders || []), ...(dueDateTodos || [])]
+    const uniqueReminders = allDueReminders.filter((reminder, index, self) => 
+      index === self.findIndex(r => r.id === reminder.id)
+    )
+    
+    console.log(`Found ${uniqueReminders.length} due reminders to process`)
+    console.log(`Time-based reminders: ${timeBasedReminders?.length || 0}`)
+    console.log(`Due date todos: ${dueDateTodos?.length || 0}`)
+    
+    if (uniqueReminders.length === 0) {
       return new Response(
         JSON.stringify({ message: 'No due reminders to process' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -47,8 +70,18 @@ serve(async (req) => {
     const failedReminders = []
     
     // Process each reminder
-    for (const reminder of dueReminders) {
+    for (const reminder of uniqueReminders) {
       try {
+        // Determine notification title and body based on reminder type and trigger
+        let notificationTitle = reminder.title
+        let notificationBody = reminder.description || reminder.title
+        
+        // Check if this is a due date notification for todos
+        if (reminder.type === 'todo' && reminder.due_date === today) {
+          notificationTitle = `Due Today: ${reminder.title}`
+          notificationBody = `Your todo "${reminder.title}" is due today!`
+        }
+        
         // Send notification for each delivery method
         for (const method of reminder.delivery_methods) {
           if (method === 'in_app') {
@@ -60,8 +93,8 @@ serve(async (req) => {
               body: { 
                 userId: reminder.user_id,
                 type: method,
-                subject: `Reminder: ${reminder.title}`,
-                body: reminder.description || reminder.title
+                subject: notificationTitle,
+                body: notificationBody
               }
             })
             
@@ -83,8 +116,8 @@ serve(async (req) => {
           throw updateError
         }
         
-        // Handle recurrence - create next reminder if needed
-        if (reminder.recurrence !== 'none') {
+        // Handle recurrence - create next reminder if needed (only for time-based reminders, not due date todos)
+        if (reminder.recurrence !== 'none' && reminder.recurrence && reminder.reminder_time) {
           const nextReminderTime = calculateNextReminderTime(reminder.reminder_time, reminder.recurrence)
           
           // Create next recurring reminder
@@ -101,6 +134,9 @@ serve(async (req) => {
               event_id: reminder.event_id,
               goal_id: reminder.goal_id,
               user_id: reminder.user_id,
+              // Don't copy due_date for recurring reminders as it's a different concept
+              priority: reminder.priority,
+              auto_tags: reminder.auto_tags,
             })
           
           if (recurrenceError) {
@@ -122,7 +158,9 @@ serve(async (req) => {
         success: true, 
         processed: processedReminders.length,
         failed: failedReminders.length,
-        failedIds: failedReminders
+        failedIds: failedReminders,
+        timeBasedCount: timeBasedReminders?.length || 0,
+        dueDateCount: dueDateTodos?.length || 0
       }),
       { 
         status: 200, 

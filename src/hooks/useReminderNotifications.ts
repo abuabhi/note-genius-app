@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/auth'; // Updated import path
+import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { Reminder, ReminderStatus, ReminderRecurrence, ReminderType, DeliveryMethod } from '@/hooks/useReminders';
 
@@ -22,7 +23,7 @@ export const useReminderNotifications = () => {
         .eq('user_id', user.id)
         .in('status', ['pending', 'sent'])
         .order('reminder_time', { ascending: false })
-        .limit(10);
+        .limit(20); // Increased limit to show more notifications
 
       if (error) throw error;
       
@@ -41,10 +42,22 @@ export const useReminderNotifications = () => {
       
       console.log('📥 Processed reminders:', typedReminders);
       
-      // Check which reminders are due
+      // Check which reminders are due (both reminder_time and due_date based)
       const now = new Date();
-      const dueReminders = typedReminders.filter(r => new Date(r.reminder_time) <= now);
+      const today = now.toISOString().split('T')[0];
+      
+      const dueReminders = typedReminders.filter(r => {
+        // Due if reminder_time has passed
+        const reminderTimeDue = r.reminder_time && new Date(r.reminder_time) <= now;
+        
+        // Due if it's a todo with due_date today or overdue
+        const dueDateDue = r.type === 'todo' && r.due_date && r.due_date <= today;
+        
+        return reminderTimeDue || dueDateDue;
+      });
+      
       console.log('⏰ Due reminders (should show notifications):', dueReminders);
+      console.log('📅 Checking due dates - today:', today);
       
       setPendingReminders(typedReminders);
       
@@ -58,7 +71,7 @@ export const useReminderNotifications = () => {
       const duePendingReminders = dueReminders.filter(r => r.status === 'pending');
       if (duePendingReminders.length > 0) {
         console.log('🔄 Auto-processing due pending reminders:', duePendingReminders);
-        setTimeout(() => processReminders(), 1000); // Small delay to avoid rapid calls
+        setTimeout(() => processReminders(), 1000);
       }
     } catch (error) {
       console.error('❌ Error fetching pending reminders:', error);
@@ -147,9 +160,16 @@ export const useReminderNotifications = () => {
         
         // Fallback: process locally by updating status directly
         const now = new Date();
-        const dueReminders = pendingReminders.filter(r => 
-          r.status === 'pending' && new Date(r.reminder_time) <= now
-        );
+        const today = now.toISOString().split('T')[0];
+        
+        const dueReminders = pendingReminders.filter(r => {
+          if (r.status !== 'pending') return false;
+          
+          const reminderTimeDue = r.reminder_time && new Date(r.reminder_time) <= now;
+          const dueDateDue = r.type === 'todo' && r.due_date && r.due_date <= today;
+          
+          return reminderTimeDue || dueDateDue;
+        });
         
         if (dueReminders.length > 0) {
           console.log('🔄 Processing locally:', dueReminders);
@@ -192,7 +212,6 @@ export const useReminderNotifications = () => {
         },
         () => {
           console.log('🔄 Real-time reminder change detected, refreshing...');
-          // Refresh reminders when changes occur
           fetchPendingReminders();
         }
       )
@@ -217,6 +236,6 @@ export const useReminderNotifications = () => {
     dismissReminder,
     dismissAll,
     refresh: fetchPendingReminders,
-    processReminders, // Export for manual testing
+    processReminders,
   };
 };
