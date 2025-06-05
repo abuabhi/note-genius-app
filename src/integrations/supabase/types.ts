@@ -1008,51 +1008,66 @@ export type Database = {
       }
       reminders: {
         Row: {
+          auto_tags: string[] | null
           created_at: string | null
           delivery_methods: Json
+          depends_on_todo_id: string | null
           description: string | null
+          due_date: string | null
           event_id: string | null
           goal_id: string | null
           id: string
           notification_status: string | null
           priority: string
           recurrence: string | null
+          recurrence_end_date: string | null
           reminder_time: string
           status: string
+          template_id: string | null
           title: string
           type: string
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          auto_tags?: string[] | null
           created_at?: string | null
           delivery_methods?: Json
+          depends_on_todo_id?: string | null
           description?: string | null
+          due_date?: string | null
           event_id?: string | null
           goal_id?: string | null
           id?: string
           notification_status?: string | null
           priority?: string
           recurrence?: string | null
+          recurrence_end_date?: string | null
           reminder_time: string
           status?: string
+          template_id?: string | null
           title: string
           type: string
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          auto_tags?: string[] | null
           created_at?: string | null
           delivery_methods?: Json
+          depends_on_todo_id?: string | null
           description?: string | null
+          due_date?: string | null
           event_id?: string | null
           goal_id?: string | null
           id?: string
           notification_status?: string | null
           priority?: string
           recurrence?: string | null
+          recurrence_end_date?: string | null
           reminder_time?: string
           status?: string
+          template_id?: string | null
           title?: string
           type?: string
           updated_at?: string | null
@@ -1683,6 +1698,45 @@ export type Database = {
           ocr_enabled?: boolean
           priority_support?: boolean
           tier?: Database["public"]["Enums"]["user_tier"]
+        }
+        Relationships: []
+      }
+      todo_templates: {
+        Row: {
+          category: string
+          created_at: string | null
+          default_priority: string | null
+          description: string | null
+          id: string
+          is_public: boolean | null
+          name: string
+          template_items: Json
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          default_priority?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name: string
+          template_items?: Json
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          default_priority?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name?: string
+          template_items?: Json
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }

@@ -15,21 +15,21 @@ export const useTodoMutations = () => {
     mutationFn: async (todoData: CreateTodoData) => {
       if (!user) throw new Error('User not authenticated');
 
-      console.log('📝 Creating todo with data:', {
-        title: todoData.title,
-        priority: todoData.priority,
-        reminder_time: todoData.reminder_time,
-        fullData: todoData
-      });
+      console.log('📝 Creating todo with data:', todoData);
 
       const insertData = {
         user_id: user.id,
         title: todoData.title,
         description: todoData.description,
-        reminder_time: todoData.reminder_time ? todoData.reminder_time.toISOString() : null,
+        reminder_time: todoData.reminder_time ? todoData.reminder_time.toISOString() : new Date().toISOString(),
+        due_date: todoData.due_date ? todoData.due_date.toISOString().split('T')[0] : null,
         type: 'todo',
-        status: 'new', // Always start with 'new' status
+        status: 'new',
         priority: todoData.priority,
+        recurrence: todoData.recurrence || 'none',
+        recurrence_end_date: todoData.recurrence_end_date ? todoData.recurrence_end_date.toISOString().split('T')[0] : null,
+        depends_on_todo_id: todoData.depends_on_todo_id,
+        template_id: todoData.template_id,
         delivery_methods: ['in_app'],
       };
 
@@ -64,7 +64,6 @@ export const useTodoMutations = () => {
 
       console.log('📝 Updating todo status:', { id, status, userId: user.id });
 
-      // Use 1:1 mapping for status
       const databaseStatus = mapTodoStatusToDatabaseStatus(status);
       console.log('📝 Status mapping:', { todoStatus: status, databaseStatus });
 
@@ -91,7 +90,6 @@ export const useTodoMutations = () => {
       console.log('🎉 Todo status update success:', variables);
       toast.success(`Todo marked as ${variables.status}`);
       queryClient.invalidateQueries({ queryKey: ['todos'] });
-      // Also invalidate reminders to update notification status
       queryClient.invalidateQueries({ queryKey: ['reminders'] });
     },
     onError: (error: Error) => {
