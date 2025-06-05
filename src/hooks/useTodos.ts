@@ -35,25 +35,20 @@ export const useTodos = () => {
 
   // Query for todos
   const { 
-    data: todos = [], 
+    data: allTodos = [], 
     isLoading, 
     error 
   } = useQuery({
-    queryKey: ["todos", user?.id, filter],
+    queryKey: ["todos", user?.id],
     queryFn: async () => {
       if (!user) return [];
 
-      const query = supabase
+      const { data, error } = await supabase
         .from('reminders')
         .select('*')
         .eq('user_id', user.id)
-        .eq('type', 'todo');
-      
-      if (filter !== 'all') {
-        query.eq('status', filter);
-      }
-      
-      const { data, error } = await query.order('created_at', { ascending: false });
+        .eq('type', 'todo')
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching todos:', error);
@@ -77,6 +72,18 @@ export const useTodos = () => {
       });
     },
     enabled: !!user,
+  });
+
+  // Filter todos based on the current filter and due status
+  const todos = allTodos.filter(todo => {
+    if (filter === 'all') return true;
+    
+    if (filter === 'pending') {
+      // Include all pending todos, regardless of due status
+      return todo.status === 'pending';
+    }
+    
+    return todo.status === filter;
   });
 
   // Mutation to create a todo
