@@ -20,17 +20,24 @@ export const useAchievementProgress = () => {
   const [achievementProgress, setAchievementProgress] = useState<AchievementProgress[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  const { stats } = useUnifiedStudyStats();
+  const { stats, isLoading: statsLoading } = useUnifiedStudyStats();
 
   const calculateProgress = async () => {
     console.log('=== calculateProgress START ===');
     console.log('User:', user?.id);
     console.log('Stats:', stats);
+    console.log('Stats loading:', statsLoading);
     
     if (!user) {
       console.log('No user found, setting empty achievement progress');
       setAchievementProgress([]);
       setLoading(false);
+      return;
+    }
+
+    // Don't calculate progress if stats are still loading
+    if (statsLoading) {
+      console.log('Stats still loading, skipping progress calculation');
       return;
     }
 
@@ -75,7 +82,18 @@ export const useAchievementProgress = () => {
       const earnedTitles = new Set(earnedAchievements?.map(a => a.title) || []);
       console.log('Earned titles set:', earnedTitles);
 
-      // Create progress data for ALL achievements
+      // Create progress data for ALL achievements - Use default stats if stats is null
+      const safeStats = stats || {
+        totalCardsMastered: 0,
+        totalSets: 0,
+        streakDays: 0,
+        totalSessions: 0,
+        flashcardAccuracy: 0,
+        studyTimeHours: 0
+      };
+
+      console.log('Using stats for calculation:', safeStats);
+
       const progressData: AchievementProgress[] = templates.map(template => {
         console.log(`Processing template: ${template.title}`);
         
@@ -86,23 +104,23 @@ export const useAchievementProgress = () => {
         // Calculate progress based on achievement type and title
         switch (template.title) {
           case 'First Steps':
-            current = stats.totalCardsMastered > 0 ? 1 : 0;
+            current = safeStats.totalCardsMastered > 0 ? 1 : 0;
             target = 1;
             break;
           case 'Getting Started':
-            current = stats.totalSets > 0 ? 1 : 0;
+            current = safeStats.totalSets > 0 ? 1 : 0;
             target = 1;
             break;
           case 'Study Streak':
-            current = Math.min(stats.streakDays, 3);
+            current = Math.min(safeStats.streakDays, 3);
             target = 3;
             break;
           case 'Week Warrior':
-            current = Math.min(stats.streakDays, 7);
+            current = Math.min(safeStats.streakDays, 7);
             target = 7;
             break;
           case 'Flashcard Master':
-            current = Math.min(stats.totalSets, 10);
+            current = Math.min(safeStats.totalSets, 10);
             target = 10;
             break;
           case 'Goal Crusher':
@@ -111,11 +129,11 @@ export const useAchievementProgress = () => {
             target = 5;
             break;
           case 'Century Club':
-            current = Math.min(stats.totalCardsMastered, 100);
+            current = Math.min(safeStats.totalCardsMastered, 100);
             target = 100;
             break;
           case 'Study Session Champion':
-            current = Math.min(stats.totalSessions, 20);
+            current = Math.min(safeStats.totalSessions, 20);
             target = 20;
             break;
           default:
@@ -167,11 +185,20 @@ export const useAchievementProgress = () => {
   };
 
   useEffect(() => {
-    console.log('useAchievementProgress effect triggered, user:', user?.id, 'stats available:', !!stats);
-    if (user && stats) {
+    console.log('useAchievementProgress effect triggered');
+    console.log('- user:', user?.id);
+    console.log('- statsLoading:', statsLoading);
+    console.log('- stats available:', !!stats);
+    
+    if (user && !statsLoading) {
+      console.log('Conditions met, calling calculateProgress');
       calculateProgress();
+    } else {
+      console.log('Conditions not met, not calling calculateProgress');
+      if (!user) console.log('  - No user');
+      if (statsLoading) console.log('  - Stats still loading');
     }
-  }, [user, stats]);
+  }, [user, stats, statsLoading]);
 
   console.log('useAchievementProgress returning:', {
     achievementProgressLength: achievementProgress.length,

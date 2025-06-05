@@ -40,10 +40,13 @@ export const AchievementProgressSection = ({
   });
 
   const hasAchievements = achievementProgress && achievementProgress.length > 0;
+  const isLoading = loading || progressLoading;
+  
   console.log('hasAchievements:', hasAchievements);
-  console.log('Will show loading:', progressLoading);
-  console.log('Will show achievements:', !progressLoading && hasAchievements);
-  console.log('Will show empty state:', !progressLoading && !hasAchievements);
+  console.log('isLoading:', isLoading);
+  console.log('Will show loading:', isLoading);
+  console.log('Will show achievements:', !isLoading && hasAchievements);
+  console.log('Will show empty state:', !isLoading && !hasAchievements);
 
   return (
     <Card>
@@ -57,14 +60,14 @@ export const AchievementProgressSection = ({
             size="sm" 
             variant="outline"
             onClick={onCheckProgress}
-            disabled={loading || progressLoading}
+            disabled={isLoading}
           >
             Check Progress
           </Button>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {progressLoading ? (
+        {isLoading ? (
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="animate-pulse space-y-2">
@@ -121,7 +124,7 @@ export const AchievementProgressSection = ({
           <div className="text-center py-4">
             <Trophy className="h-8 w-8 text-gray-300 mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">
-              No achievement templates found in the database. Check if achievement templates are properly set up.
+              No achievements available. Please try refreshing or check your data.
             </p>
           </div>
         )}
