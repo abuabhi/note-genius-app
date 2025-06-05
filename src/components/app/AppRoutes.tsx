@@ -4,8 +4,11 @@ import { Routes, Route } from 'react-router-dom';
 import { allRoutes } from '@/routes/routeConfig';
 import QuizHistoryPage from "@/pages/QuizHistoryPage";
 import { FeatureProtectedRoute } from '@/components/routes/FeatureProtectedRoute';
+import { useRouteEffects } from '@/hooks/useRouteEffects';
 
 export const AppRoutes = () => {
+  useRouteEffects();
+  
   return (
     <Routes>
       {allRoutes.map((route) => (
