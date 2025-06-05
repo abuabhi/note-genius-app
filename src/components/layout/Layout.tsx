@@ -1,49 +1,44 @@
 
-import { ReactNode } from "react";
-import { useLocation } from "react-router-dom";
-import NavBar from "./NavBar";
-import Footer from "./Footer";
-import { CustomSidebar } from "../ui/sidebar-custom";
-import { useAuth } from "@/contexts/auth";
+import { ReactNode, useEffect } from 'react';
+import NavBar from './NavBar';
+import Footer from './Footer';
+import { CustomSidebar } from '@/components/ui/sidebar-custom';
+import { useAuth } from '@/contexts/auth';
+import { useLocation } from 'react-router-dom';
+import { useReminderToasts } from '@/hooks/useReminderToasts';
 
 interface LayoutProps {
   children: ReactNode;
+  showSidebar?: boolean;
+  showFooter?: boolean;
 }
 
-const Layout = ({ children }: LayoutProps) => {
-  const { pathname } = useLocation();
+export default function Layout({ children, showSidebar = true, showFooter = true }: LayoutProps) {
   const { user } = useAuth();
-  const publicRoutes = ['/', '/about', '/pricing', '/faq', '/contact', '/blog', '/features', '/login', '/signup'];
-  const isPublicRoute = publicRoutes.includes(pathname);
+  const location = useLocation();
   
-  console.log("Layout rendering path:", pathname, "Public route:", isPublicRoute, "User:", !!user);
-
-  // For public routes, use the public layout without sidebar
-  if (isPublicRoute) {
-    return (
-      <div className="min-h-screen flex flex-col bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
-        <NavBar />
-        <main className="flex-grow pt-16">
-          {children}
-        </main>
-        <Footer />
-      </div>
-    );
+  // Initialize reminder toasts for authenticated users
+  if (user) {
+    useReminderToasts();
   }
 
-  // For authenticated users on non-public routes, use the layout with sidebar
+  // Define which routes are public
+  const publicRoutes = ['/', '/about', '/pricing', '/faq', '/contact', '/blog', '/features', '/login', '/signup'];
+  const isPublicRoute = publicRoutes.includes(location.pathname);
+  
+  // Show sidebar only for authenticated users on non-public routes
+  const shouldShowSidebar = showSidebar && user && !isPublicRoute;
+
   return (
-    <div className="min-h-screen flex w-full bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
-      <CustomSidebar />
-      <div className="flex flex-col flex-1 ml-[3.05rem] transition-all">
-        <NavBar />
-        <main className="flex-grow p-4">
+    <div className="min-h-screen flex flex-col">
+      <NavBar />
+      <div className="flex flex-1">
+        {shouldShowSidebar && <CustomSidebar />}
+        <main className={`flex-1 ${shouldShowSidebar ? 'ml-16' : ''}`}>
           {children}
         </main>
-        <Footer />
       </div>
+      {showFooter && <Footer />}
     </div>
   );
-};
-
-export default Layout;
+}
