@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarIcon, Clock } from "lucide-react";
 import { format } from "date-fns";
-import { CreateTodoData, TodoPriority, RecurrenceType } from "@/hooks/todos/types";
+import { CreateTodoData, TodoPriority, RecurrenceType, Todo } from "@/hooks/todos/types";
 import { useTodos } from "@/hooks/useTodos";
 
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -36,9 +35,10 @@ type TodoFormProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: CreateTodoData) => Promise<void>;
+  editingTodo?: Todo;
 };
 
-export const TodoFormDialog = ({ open, onOpenChange, onSubmit }: TodoFormProps) => {
+export const TodoFormDialog = ({ open, onOpenChange, onSubmit, editingTodo }: TodoFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { todos } = useTodos();
 
@@ -58,10 +58,23 @@ export const TodoFormDialog = ({ open, onOpenChange, onSubmit }: TodoFormProps) 
   });
 
   useEffect(() => {
-    if (!open) {
+    if (editingTodo) {
+      // Pre-populate form with editing todo data
+      form.reset({
+        title: editingTodo.title,
+        description: editingTodo.description || "",
+        priority: editingTodo.priority,
+        due_date: editingTodo.due_date ? new Date(editingTodo.due_date) : undefined,
+        due_time: editingTodo.due_date ? format(new Date(editingTodo.due_date), 'HH:mm') : "",
+        reminder_minutes: editingTodo.reminder_time ? "15" : "none", // Simplified for now
+        recurrence: editingTodo.recurrence || "none",
+        recurrence_end_date: editingTodo.recurrence_end_date ? new Date(editingTodo.recurrence_end_date) : undefined,
+        depends_on_todo_id: editingTodo.depends_on_todo_id || undefined,
+      });
+    } else if (!open) {
       form.reset();
     }
-  }, [open, form]);
+  }, [open, editingTodo, form]);
 
   const combineDateTime = (date?: Date, time?: string): Date | undefined => {
     if (!date) return undefined;
@@ -118,11 +131,13 @@ export const TodoFormDialog = ({ open, onOpenChange, onSubmit }: TodoFormProps) 
     { value: "1440", label: "1 day before" },
   ];
 
+  const isEditing = !!editingTodo;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create New Todo</DialogTitle>
+          <DialogTitle>{isEditing ? 'Edit Todo' : 'Create New Todo'}</DialogTitle>
         </DialogHeader>
         
         <Form {...form}>
@@ -285,7 +300,7 @@ export const TodoFormDialog = ({ open, onOpenChange, onSubmit }: TodoFormProps) 
                 />
                 
                 <DependencySelector
-                  todos={todos}
+                  todos={todos.filter(t => t.id !== editingTodo?.id)} // Exclude current todo from dependencies
                   value={form.watch("depends_on_todo_id")}
                   onValueChange={(value) => form.setValue("depends_on_todo_id", value)}
                 />
@@ -302,7 +317,7 @@ export const TodoFormDialog = ({ open, onOpenChange, onSubmit }: TodoFormProps) 
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create Todo"}
+                {isSubmitting ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update Todo" : "Create Todo")}
               </Button>
             </DialogFooter>
           </form>

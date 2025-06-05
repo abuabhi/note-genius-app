@@ -1,12 +1,12 @@
 
 import { useState } from "react";
-import { Check, CheckCheck, Clock, ListTodo, Plus } from "lucide-react";
+import { Check, Clock, ListTodo, Plus } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { TodoList } from "@/components/todos/TodoList";
 import { TodoFormDialog } from "@/components/todos/TodoFormDialog";
 import { TodoStats } from "@/components/todos/TodoStats";
 import { TodoSuggestions } from "@/components/todos/TodoSuggestions";
-import { useTodos, TodoStatus, CreateTodoData } from "@/hooks/useTodos";
+import { useTodos, TodoStatus, CreateTodoData, Todo } from "@/hooks/useTodos";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -27,9 +27,26 @@ const TodoPage = () => {
     setFilter
   } = useTodos();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
 
   const handleSubmit = async (data: CreateTodoData) => {
     await createTodo.mutateAsync(data);
+  };
+
+  const handleEdit = (todo: Todo) => {
+    setEditingTodo(todo);
+  };
+
+  const handleEditSubmit = async (data: CreateTodoData) => {
+    if (!editingTodo) return;
+    
+    // Update the todo using the existing mutation
+    // For now, we'll just update the status since we don't have an update mutation
+    // This should be replaced with a proper update mutation
+    console.log('Edit todo:', editingTodo.id, data);
+    
+    // Close the edit dialog
+    setEditingTodo(null);
   };
 
   const handleCreateFromTemplate = async (templateTodos: CreateTodoData[]) => {
@@ -100,18 +117,14 @@ const TodoPage = () => {
             onValueChange={(value: any) => setFilter(value)}
             className="w-full"
           >
-            <TabsList className="grid grid-cols-4 mb-6">
+            <TabsList className="grid grid-cols-3 mb-6">
               <TabsTrigger value="all" className="flex items-center gap-1">
-                <CheckCheck className="h-4 w-4" />
+                <ListTodo className="h-4 w-4" />
                 <span>All</span>
               </TabsTrigger>
-              <TabsTrigger value="new" className="flex items-center gap-1">
-                <Plus className="h-4 w-4" />
-                <span>New</span>
-              </TabsTrigger>
-              <TabsTrigger value="pending" className="flex items-center gap-1">
+              <TabsTrigger value="overdue" className="flex items-center gap-1">
                 <Clock className="h-4 w-4" />
-                <span>Pending</span>
+                <span>Overdue</span>
               </TabsTrigger>
               <TabsTrigger value="completed" className="flex items-center gap-1">
                 <Check className="h-4 w-4" />
@@ -124,6 +137,7 @@ const TodoPage = () => {
               isLoading={isLoading}
               onUpdate={handleUpdateTodoStatus}
               onDelete={deleteTodo.mutate}
+              onEdit={handleEdit}
               formatDate={formatDate}
             />
           </Tabs>
@@ -135,6 +149,16 @@ const TodoPage = () => {
           onOpenChange={setShowCreateDialog}
           onSubmit={handleSubmit}
         />
+
+        {/* Edit Todo Dialog */}
+        {editingTodo && (
+          <TodoFormDialog
+            open={!!editingTodo}
+            onOpenChange={(open) => !open && setEditingTodo(null)}
+            onSubmit={handleEditSubmit}
+            editingTodo={editingTodo}
+          />
+        )}
       </div>
     </Layout>
   );

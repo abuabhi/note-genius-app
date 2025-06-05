@@ -11,10 +11,14 @@ interface TodoStatsProps {
 export const TodoStats = ({ todos }: TodoStatsProps) => {
   const activeTodos = todos.filter(t => t.status !== 'completed').length;
   const completedTodos = todos.filter(t => t.status === 'completed').length;
-  const overdueTodos = todos.filter(t => {
-    if (!t.due_date || t.status === 'completed') return false;
-    return new Date(t.due_date) < new Date();
-  }).length;
+  
+  const isOverdue = (todo: Todo) => {
+    if (!todo.due_date || todo.status === 'completed') return false;
+    return new Date(todo.due_date) < new Date();
+  };
+  
+  const overdueTodos = todos.filter(isOverdue).length;
+  
   const dueTodayTodos = todos.filter(t => {
     if (!t.due_date || t.status === 'completed') return false;
     const today = new Date().toDateString();
