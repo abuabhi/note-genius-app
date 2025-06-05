@@ -31,12 +31,12 @@ export const DependencySelector: React.FC<DependencySelectorProps> = ({
         <Label>Depends On</Label>
       </div>
       
-      <Select value={value || ""} onValueChange={(val) => onValueChange(val || undefined)}>
+      <Select value={value || "none"} onValueChange={(val) => onValueChange(val === "none" ? undefined : val)}>
         <SelectTrigger>
           <SelectValue placeholder="Select a dependency (optional)" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">
+          <SelectItem value="none">
             <span>No dependency</span>
           </SelectItem>
           {availableTodos.map((todo) => (
