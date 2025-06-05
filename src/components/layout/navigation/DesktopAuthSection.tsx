@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { LogOut, Settings, User } from 'lucide-react';
+import { LogOut, Settings, User, Bell } from 'lucide-react';
 
 interface DesktopAuthSectionProps {
   isPublicRoute: boolean;
@@ -55,9 +55,6 @@ export const DesktopAuthSection = ({ isPublicRoute }: DesktopAuthSectionProps) =
         </Link>
       )}
       
-      {/* Reminder bell - Only on non-public routes */}
-      {!isPublicRoute && <ReminderNavPopover />}
-      
       {/* User Menu */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -81,6 +78,12 @@ export const DesktopAuthSection = ({ isPublicRoute }: DesktopAuthSectionProps) =
             </div>
           </div>
           <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link to="/notifications" className="w-full cursor-pointer">
+              <Bell className="mr-2 h-4 w-4" />
+              Notifications
+            </Link>
+          </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link to="/settings" className="w-full cursor-pointer">
               <Settings className="mr-2 h-4 w-4" />

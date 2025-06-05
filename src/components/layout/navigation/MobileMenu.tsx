@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/auth';
 import { UserTier } from '@/hooks/useRequireAuth';
-import { ReminderNavPopover } from '@/components/reminders/ReminderNavPopover';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -58,12 +57,7 @@ export const MobileMenu = ({ isOpen, isPublicRoute }: MobileMenuProps) => {
             {/* Authenticated Navigation - Mobile - Only on non-public routes */}
             {!isPublicRoute && (
               <>
-                {/* Reminder bell for mobile */}
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-mint-700 font-medium">Reminders</span>
-                  <ReminderNavPopover />
-                </div>
-                
+                <Link to="/notifications" className="text-mint-700 hover:text-mint-900">Notifications</Link>
                 <Link to="/settings" className="text-mint-700 hover:text-mint-900">Settings</Link>
                 {isAdmin && (
                   <>

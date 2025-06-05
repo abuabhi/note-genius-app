@@ -1,7 +1,7 @@
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { ChevronsUpDown, Settings, Shield, LogOut } from "lucide-react";
+import { ChevronsUpDown, Settings, Shield, LogOut, Bell } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { 
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useRequireAuth, UserTier } from "@/hooks/useRequireAuth";
 import { itemVariants } from "./motion";
-import { useAuth } from "@/contexts/auth"; // Updated import path
+import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -71,19 +71,30 @@ export const UserSection = ({ isCollapsed }: UserSectionProps) => {
               asChild
               className="flex items-center gap-2"
             >
+              <Link to="/notifications">
+                <Bell className="h-4 w-4" /> Notifications
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              asChild
+              className="flex items-center gap-2"
+            >
               <Link to="/settings">
                 <Settings className="h-4 w-4" /> Settings
               </Link>
             </DropdownMenuItem>
             {isAdmin && (
-              <DropdownMenuItem
-                asChild
-                className="flex items-center gap-2"
-              >
-                <Link to="/admin/users">
-                  <Shield className="h-4 w-4" /> Admin Panel
-                </Link>
-              </DropdownMenuItem>
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  asChild
+                  className="flex items-center gap-2"
+                >
+                  <Link to="/admin/users">
+                    <Shield className="h-4 w-4" /> Admin Panel
+                  </Link>
+                </DropdownMenuItem>
+              </>
             )}
             <DropdownMenuSeparator />
             <DropdownMenuItem

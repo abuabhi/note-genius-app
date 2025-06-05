@@ -6,12 +6,9 @@ import { staggerVariants } from "./motion";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Separator } from "@/components/ui/separator";
 import { useNavigationFeatures } from "./hooks/useNavigationFeatures";
-import { CoreNavigationSection } from "./sections/CoreNavigationSection";
-import { StudyNavigationSection } from "./sections/StudyNavigationSection";
-import { PlanningNavigationSection } from "./sections/PlanningNavigationSection";
-import { ProgressNavigationSection } from "./sections/ProgressNavigationSection";
-import { CommunicationNavigationSection } from "./sections/CommunicationNavigationSection";
-import { SettingsNavigationSection } from "./sections/SettingsNavigationSection";
+import { NavLink } from "./NavLink";
+import { useLocation } from "react-router-dom";
+import { LayoutDashboard, FileText, BookOpen, Activity, Target, CheckSquare, BarChart3, Clock } from "lucide-react";
 
 interface NavigationProps {
   isCollapsed: boolean;
@@ -19,19 +16,12 @@ interface NavigationProps {
 
 export const Navigation = ({ isCollapsed }: NavigationProps) => {
   const { userProfile } = useRequireAuth();
+  const { pathname } = useLocation();
   const {
-    isChatVisible,
-    isCollaborationVisible,
-    isConnectionsVisible,
-    isStudySessionsVisible,
+    isGoalsVisible,
     isTodosVisible,
     isProgressVisible,
-    isGoalsVisible,
-    isScheduleVisible,
-    isQuizzesVisible,
-    isAnyCommunicationItemVisible,
-    isAnyStudyItemVisible,
-    isAnyPlanningItemVisible
+    isStudySessionsVisible
   } = useNavigationFeatures();
   
   return (
@@ -41,50 +31,98 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
           <div className="flex grow flex-col gap-4">
             <ScrollArea className="h-16 grow p-2">
               <div className={cn("flex w-full flex-col gap-1")}>
-                {/* Main Section - Core Features Always Visible */}
+                {/* Dashboard */}
+                <NavLink
+                  to="/dashboard"
+                  icon={LayoutDashboard}
+                  label="Dashboard"
+                  isActive={pathname === "/dashboard"}
+                  isCollapsed={isCollapsed}
+                />
                 <Separator className="my-2" />
-                <CoreNavigationSection isCollapsed={isCollapsed} />
                 
-                {/* Study Tools Section - Optional features */}
-                {isAnyStudyItemVisible && <Separator className="my-2" />}
-                <StudyNavigationSection 
+                {/* Notes */}
+                <NavLink
+                  to="/notes"
+                  icon={FileText}
+                  label="Notes"
+                  isActive={pathname.includes("/notes")}
                   isCollapsed={isCollapsed}
-                  isStudySessionsVisible={isStudySessionsVisible}
-                  isQuizzesVisible={isQuizzesVisible}
                 />
-
-                {/* Planning Section - only show if any planning items are visible */}
-                {isAnyPlanningItemVisible && <Separator className="my-2" />}
-                <PlanningNavigationSection 
+                <Separator className="my-2" />
+                
+                {/* Flashcards */}
+                <NavLink
+                  to="/flashcards"
+                  icon={BookOpen}
+                  label="Flashcards"
+                  isActive={pathname.includes("/flashcards")}
                   isCollapsed={isCollapsed}
-                  isScheduleVisible={isScheduleVisible}
-                  isGoalsVisible={isGoalsVisible}
-                  isTodosVisible={isTodosVisible}
                 />
-
-                {/* Progress Section - only show if visible */}
-                {isProgressVisible && (
+                <Separator className="my-2" />
+                
+                {/* Quiz */}
+                <NavLink
+                  to="/quiz"
+                  icon={Activity}
+                  label="Quiz"
+                  isActive={pathname.includes("/quiz")}
+                  isCollapsed={isCollapsed}
+                />
+                <Separator className="my-2" />
+                
+                {/* Goals - only show if visible */}
+                {isGoalsVisible && (
                   <>
-                    <Separator className="my-2" />
-                    <ProgressNavigationSection 
+                    <NavLink
+                      to="/goals"
+                      icon={Target}
+                      label="Goals"
+                      isActive={pathname.includes("/goals")}
                       isCollapsed={isCollapsed}
-                      isProgressVisible={isProgressVisible}
                     />
+                    <Separator className="my-2" />
                   </>
                 )}
-
-                {/* Communication Section - only show if any comm items are visible */}
-                {isAnyCommunicationItemVisible && <Separator className="my-2" />}
-                <CommunicationNavigationSection 
-                  isCollapsed={isCollapsed}
-                  isChatVisible={isChatVisible}
-                  isCollaborationVisible={isCollaborationVisible}
-                  isConnectionsVisible={isConnectionsVisible}
-                />
-
-                {/* Settings & Notifications Section */}
-                <Separator className="my-2" />
-                <SettingsNavigationSection isCollapsed={isCollapsed} />
+                
+                {/* ToDo - only show if visible */}
+                {isTodosVisible && (
+                  <>
+                    <NavLink
+                      to="/todos"
+                      icon={CheckSquare}
+                      label="ToDo"
+                      isActive={pathname.includes("/todos")}
+                      isCollapsed={isCollapsed}
+                    />
+                    <Separator className="my-2" />
+                  </>
+                )}
+                
+                {/* Progress - only show if visible */}
+                {isProgressVisible && (
+                  <>
+                    <NavLink
+                      to="/progress"
+                      icon={BarChart3}
+                      label="Progress"
+                      isActive={pathname.includes("/progress")}
+                      isCollapsed={isCollapsed}
+                    />
+                    <Separator className="my-2" />
+                  </>
+                )}
+                
+                {/* Study Sessions - only show if visible */}
+                {isStudySessionsVisible && (
+                  <NavLink
+                    to="/study-sessions"
+                    icon={Clock}
+                    label="Study Sessions"
+                    isActive={pathname.includes("/study-sessions")}
+                    isCollapsed={isCollapsed}
+                  />
+                )}
               </div>
             </ScrollArea>
           </div>
