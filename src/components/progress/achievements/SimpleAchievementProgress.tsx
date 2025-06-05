@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Target, Star, Trophy } from "lucide-react";
+import { Target, Star, Trophy, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 
@@ -102,12 +102,11 @@ export const SimpleAchievementProgress = () => {
     console.log('Seeding achievement templates...');
     
     try {
-      // Insert achievement templates
       const { error } = await supabase
         .from('study_achievements')
         .insert(ACHIEVEMENT_TEMPLATES.map(template => ({
           ...template,
-          user_id: null, // Template achievements have null user_id
+          user_id: null,
         })));
 
       if (error) {
@@ -146,7 +145,7 @@ export const SimpleAchievementProgress = () => {
         target = 10;
         break;
       case 'Goal Crusher':
-        current = 0; // Placeholder for goals
+        current = 0;
         target = 5;
         break;
       case 'Century Club':
@@ -179,21 +178,7 @@ export const SimpleAchievementProgress = () => {
     try {
       console.log('=== SimpleAchievementProgress: Starting fetch ===');
       
-      // 1. First check what's in the study_achievements table
-      console.log('Checking all study_achievements entries...');
-      const { data: allAchievements, error: allError } = await supabase
-        .from('study_achievements')
-        .select('*');
-
-      console.log('All achievements in table:', allAchievements?.length || 0);
-      console.log('Sample achievements:', allAchievements?.slice(0, 3));
-
-      if (allError) {
-        console.error('Error fetching all achievements:', allError);
-      }
-
-      // 2. Fetch achievement templates
-      console.log('Fetching achievement templates...');
+      // Fetch achievement templates
       let { data: templates, error: templatesError } = await supabase
         .from('study_achievements')
         .select('*')
@@ -204,14 +189,11 @@ export const SimpleAchievementProgress = () => {
         return;
       }
 
-      console.log('Templates fetched:', templates?.length || 0);
-
       // If no templates exist, seed them
       if (!templates || templates.length === 0) {
         console.log('No templates found, seeding...');
         await seedAchievementTemplates();
         
-        // Fetch again after seeding
         const { data: newTemplates, error: newError } = await supabase
           .from('study_achievements')
           .select('*')
@@ -222,8 +204,6 @@ export const SimpleAchievementProgress = () => {
           return;
         }
 
-        console.log('Templates after seeding:', newTemplates?.length || 0);
-        
         if (!newTemplates || newTemplates.length === 0) {
           console.error('Still no templates after seeding!');
           setAchievements([]);
@@ -233,8 +213,7 @@ export const SimpleAchievementProgress = () => {
         templates = newTemplates;
       }
 
-      // 3. Fetch earned achievements
-      console.log('Fetching earned achievements...');
+      // Fetch earned achievements
       const { data: earnedAchievements, error: earnedError } = await supabase
         .from('study_achievements')
         .select('title')
@@ -245,24 +224,18 @@ export const SimpleAchievementProgress = () => {
       }
 
       const earnedTitles = new Set(earnedAchievements?.map(a => a.title) || []);
-      console.log('Earned achievements:', Array.from(earnedTitles));
 
-      // 4. Fetch user stats directly
-      console.log('Fetching user stats...');
-      
-      // Get flashcard sets count
+      // Fetch user stats directly
       const { data: flashcardSets } = await supabase
         .from('flashcard_sets')
         .select('id')
         .eq('user_id', user.id);
 
-      // Get flashcard progress for mastered cards
       const { data: progress } = await supabase
         .from('user_flashcard_progress')
         .select('last_score, ease_factor, interval')
         .eq('user_id', user.id);
 
-      // Get study sessions
       const { data: sessions } = await supabase
         .from('study_sessions')
         .select('id')
@@ -279,33 +252,37 @@ export const SimpleAchievementProgress = () => {
         flashcardAccuracy: progress && progress.length > 0 
           ? Math.round((progress.reduce((sum, p) => sum + (p.last_score || 0), 0) / (progress.length * 5)) * 100)
           : 0,
-        streakDays: 0 // Simplified for now
+        streakDays: 0
       };
 
-      console.log('User stats calculated:', stats);
+      // Create achievements with progress and filter out duplicates and completed ones
+      const seenTitles = new Set();
+      const achievementsWithProgress: AchievementWithProgress[] = templates
+        .filter(template => {
+          // Remove duplicates by title
+          if (seenTitles.has(template.title)) {
+            return false;
+          }
+          seenTitles.add(template.title);
+          return true;
+        })
+        .map(template => {
+          const isEarned = earnedTitles.has(template.title);
+          const { current, target, progress } = calculateProgress(template.title, stats, isEarned);
 
-      // 5. Create achievements with progress
-      const achievementsWithProgress: AchievementWithProgress[] = templates.map(template => {
-        const isEarned = earnedTitles.has(template.title);
-        const { current, target, progress } = calculateProgress(template.title, stats, isEarned);
+          return {
+            ...template,
+            progress,
+            current,
+            target,
+            isEarned
+          };
+        })
+        .filter(achievement => achievement.progress < 100); // Filter out completed achievements
 
-        console.log(`${template.title}: progress=${progress}%, current=${current}, target=${target}, earned=${isEarned}`);
-
-        return {
-          ...template,
-          progress,
-          current,
-          target,
-          isEarned
-        };
-      });
-
-      // Sort by progress (incomplete first), then by title
+      // Sort by progress (closest to completion first)
       const sortedAchievements = achievementsWithProgress.sort((a, b) => {
-        if (a.progress !== b.progress) {
-          return a.progress - b.progress;
-        }
-        return a.title.localeCompare(b.title);
+        return b.progress - a.progress;
       });
 
       console.log('Final achievements with progress:', sortedAchievements.length);
@@ -319,10 +296,8 @@ export const SimpleAchievementProgress = () => {
 
   useEffect(() => {
     if (user) {
-      console.log('SimpleAchievementProgress: User found, fetching data');
       fetchAchievementsData();
     } else {
-      console.log('SimpleAchievementProgress: No user, clearing achievements');
       setAchievements([]);
     }
     setLoading(false);
@@ -358,12 +333,10 @@ export const SimpleAchievementProgress = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
+          <div className="flex gap-3 overflow-hidden">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="animate-pulse space-y-2">
-                <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-                <div className="h-2 bg-gray-200 rounded w-full"></div>
+              <div key={i} className="flex-shrink-0 w-64 animate-pulse">
+                <div className="h-24 bg-gray-200 rounded-lg"></div>
               </div>
             ))}
           </div>
@@ -393,32 +366,40 @@ export const SimpleAchievementProgress = () => {
       </CardHeader>
       <CardContent className="pt-0">
         {achievements.length > 0 ? (
-          <div className="space-y-3">
+          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
             {achievements.map((achievement) => (
-              <div key={achievement.id} className="group p-3 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100">
-                      {getIcon(achievement.badge_image)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-sm truncate">{achievement.title}</h4>
-                      <p className="text-xs text-gray-600 line-clamp-1">{achievement.description}</p>
-                    </div>
+              <div 
+                key={achievement.id} 
+                className="flex-shrink-0 w-64 p-3 rounded-lg border border-mint-100 bg-white hover:bg-mint-50 transition-colors"
+              >
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-mint-100 flex-shrink-0">
+                    {getIcon(achievement.badge_image)}
                   </div>
-                  <div className="flex items-center gap-1 text-right">
-                    <span className="text-sm font-medium">{Math.round(achievement.progress)}%</span>
-                    <span className="text-xs text-gray-500">
-                      {achievement.current}/{achievement.target}
-                    </span>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-sm truncate text-mint-800">{achievement.title}</h4>
+                    <p className="text-xs text-mint-600 line-clamp-2">{achievement.description}</p>
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-1">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-mint-700">{Math.round(achievement.progress)}%</span>
+                    <span className="text-xs text-mint-500">
+                      {achievement.current}/{achievement.target}
+                    </span>
+                  </div>
+                  
+                  <Progress 
+                    value={achievement.progress} 
+                    className="h-2" 
+                    indicatorClassName="bg-mint-600"
+                  />
+                  
+                  <div className="flex items-center justify-between">
                     <Badge
                       variant="outline"
-                      className={`text-xs h-5 ${getBadgeColor(achievement.type)}`}
+                      className="text-xs h-5 bg-mint-50 text-mint-700 border-mint-200"
                     >
                       {achievement.type}
                     </Badge>
@@ -426,27 +407,16 @@ export const SimpleAchievementProgress = () => {
                       <Star className="h-3 w-3 mr-1" />
                       {achievement.points}
                     </Badge>
-                    {achievement.isEarned && (
-                      <Badge className="text-xs h-5 bg-green-50 text-green-700 border-green-300">
-                        ✓ Earned
-                      </Badge>
-                    )}
                   </div>
                 </div>
-                
-                <Progress 
-                  value={achievement.progress} 
-                  className="h-1.5" 
-                  indicatorClassName={achievement.isEarned ? "bg-green-500" : "bg-blue-500"}
-                />
               </div>
             ))}
           </div>
         ) : (
           <div className="text-center py-6">
-            <Trophy className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-            <p className="text-sm text-gray-500">
-              No achievements available. Please try refreshing.
+            <Trophy className="h-8 w-8 text-mint-300 mx-auto mb-2" />
+            <p className="text-sm text-mint-500">
+              Great job! All achievements completed or no achievements available.
             </p>
           </div>
         )}
