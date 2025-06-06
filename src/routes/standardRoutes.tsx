@@ -1,14 +1,15 @@
 
+
 import { lazy } from 'react';
 import { FeatureProtectedRoute } from '@/components/routes/FeatureProtectedRoute';
 import { RouteConfig } from './publicRoutes';
 
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const NotesPage = lazy(() => import('@/pages/NotesPage'));
-const NoteStudyView = lazy(() => import('@/components/notes/study/NoteStudyView'));
+const NoteStudyView = lazy(() => import('@/components/notes/study/NoteStudyView').then(module => ({ default: module.NoteStudyView })));
 const FlashcardsPage = lazy(() => import('@/pages/FlashcardsPage'));
 const CreateFlashcardPage = lazy(() => import('@/pages/CreateFlashcardPage'));
-const FlashcardStudyPage = lazy(() => import('@/pages/study/SimplifiedStudyPageLayout'));
+const FlashcardStudyPage = lazy(() => import('@/pages/study/SimplifiedStudyPageLayout').then(module => ({ default: module.SimplifiedStudyPageLayout })));
 const QuizPage = lazy(() => import('@/pages/QuizPage'));
 const QuizTakingPage = lazy(() => import('@/pages/TakeQuizPage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
@@ -60,3 +61,4 @@ export const standardRoutes: RouteConfig[] = [
     element: <ReferralsPage />
   }
 ];
+
