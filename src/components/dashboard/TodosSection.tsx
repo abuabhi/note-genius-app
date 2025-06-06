@@ -61,7 +61,7 @@ export const TodosSection = () => {
 
   if (isLoading) {
     return (
-      <Card className="animate-pulse">
+      <Card className="h-[500px] animate-pulse">
         <CardContent className="p-6">
           <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
           <div className="space-y-2">
@@ -75,30 +75,34 @@ export const TodosSection = () => {
 
   if (sortedTodos.length === 0) {
     return (
-      <Card className="bg-green-50 border-green-200">
+      <Card className="h-[500px] bg-green-50 border-green-200 flex flex-col">
         <CardHeader>
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
             <Calendar className="h-5 w-5 text-green-600" />
             Today's Tasks
           </CardTitle>
         </CardHeader>
-        <CardContent className="text-center py-8">
-          <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-green-800 mb-2">All caught up!</h3>
-          <p className="text-green-600 mb-4">No tasks due today. Great job staying organized!</p>
-          <Button asChild className="text-white">
-            <Link to="/todos">
-              View All Tasks
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Link>
-          </Button>
+        <CardContent className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col justify-center text-center py-8">
+            <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-green-800 mb-2">All caught up!</h3>
+            <p className="text-green-600 mb-4">No tasks due today. Great job staying organized!</p>
+          </div>
+          <div className="pt-4 border-t mt-auto">
+            <Button asChild className="w-full text-white">
+              <Link to="/todos">
+                <Calendar className="h-4 w-4 mr-2" />
+                View All Tasks
+              </Link>
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card>
+    <Card className="h-[500px] flex flex-col">
       <CardHeader>
         <CardTitle className="text-lg font-semibold flex items-center gap-2">
           <Calendar className="h-5 w-5 text-blue-600" />
@@ -110,8 +114,8 @@ export const TodosSection = () => {
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-3">
+      <CardContent className="flex-1 flex flex-col space-y-4">
+        <div className="flex-1 space-y-3 overflow-y-auto">
           {sortedTodos.map((todo) => (
             <div 
               key={todo.id} 
@@ -148,7 +152,7 @@ export const TodosSection = () => {
           ))}
         </div>
 
-        <div className="pt-4 border-t">
+        <div className="pt-4 border-t mt-auto">
           <Button asChild className="w-full text-white">
             <Link to="/todos">
               <Calendar className="h-4 w-4 mr-2" />
