@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, BookOpen, Target, ChevronRight } from "lucide-react";
+import { Calendar, Clock, BookOpen, Target, ChevronRight, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export const StudyScheduleCard = () => {
@@ -20,6 +20,7 @@ export const StudyScheduleCard = () => {
           <Calendar className="h-5 w-5 text-blue-600" />
           AI Study Schedule
         </CardTitle>
+        <p className="text-gray-600 text-sm">Intelligent scheduling and study optimization</p>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Today's Schedule */}
@@ -76,8 +77,22 @@ export const StudyScheduleCard = () => {
           </div>
         </div>
 
-        <div className="text-xs text-gray-500 text-center pt-4 border-t">
-          Schedule adapts to your learning patterns and optimal study times.
+        {/* Fancy Notification */}
+        <div className="relative bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <Sparkles className="h-5 w-5 text-blue-600 animate-pulse" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-blue-900 mb-1">
+                AI-Powered Personalization
+              </p>
+              <p className="text-xs text-blue-700">
+                Learning paths will be personalized based on your study patterns and performance.
+              </p>
+            </div>
+          </div>
+          <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-blue-200/20 to-indigo-200/20 rounded-full -mr-8 -mt-8 opacity-50"></div>
         </div>
       </CardContent>
     </Card>
