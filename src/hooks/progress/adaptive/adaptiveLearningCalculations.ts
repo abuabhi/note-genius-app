@@ -14,7 +14,7 @@ export function generateAdaptiveLearningPath(
   subject: string
 ): LearningPath {
   const subjectSessions = userSessions.filter(s => 
-    s.subject?.toLowerCase() === subject.toLowerCase()
+    s.flashcard_set_id && subject // Filter by flashcard_set_id since StudySession doesn't have subject
   );
   
   const subjectProgress = gradeProgression.filter(p => 

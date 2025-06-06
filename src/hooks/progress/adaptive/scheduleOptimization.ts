@@ -75,7 +75,8 @@ function calculateOptimalTimes(sessions: StudySession[]): OptimalTimeSlot[] {
     
     acc[hour].totalAccuracy += accuracy;
     acc[hour].sessionCount += 1;
-    if (session.subject) acc[hour].subjects.add(session.subject);
+    // Use flashcard_set_id as subject identifier since StudySession doesn't have subject
+    if (session.flashcard_set_id) acc[hour].subjects.add(`Set ${session.flashcard_set_id}`);
     
     return acc;
   }, {} as Record<number, { totalAccuracy: number; sessionCount: number; subjects: Set<string> }>);

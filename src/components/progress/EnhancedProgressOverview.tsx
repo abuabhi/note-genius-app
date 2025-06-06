@@ -1,3 +1,4 @@
+
 import { useProgressAnalytics } from "@/hooks/progress/useProgressAnalytics";
 import { ProgressOverviewCard } from "./overview/ProgressOverviewCard";
 import { GradeProgressionChart } from "./grades/GradeProgressionChart";
@@ -5,7 +6,7 @@ import { FlashcardMasteryLevels } from "./grades/FlashcardMasteryLevels";
 import { DailyStudyTrends } from "./time/DailyStudyTrends";
 import { ConsistencyScore } from "./time/ConsistencyScore";
 import { AdvancedAnalyticsDashboard } from "./AdvancedAnalyticsDashboard";
-import { AdaptiveLearningDashboard } from "./AdaptiveLearningDashboard";
+import { AdaptiveLearningDashboard } from "./adaptive/AdaptiveLearningDashboard";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const EnhancedProgressOverview = () => {

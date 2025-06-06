@@ -63,13 +63,13 @@ function groupDataBySubject(
     gradeProgression: FlashcardProgress[] 
   }> = {};
 
-  // Group sessions by subject
+  // Group sessions by flashcard_set_id since StudySession doesn't have subject directly
   sessions.forEach(session => {
-    const subject = session.subject || 'General';
-    if (!subjectData[subject]) {
-      subjectData[subject] = { sessions: [], gradeProgression: [] };
+    const sessionKey = session.flashcard_set_id ? `set_${session.flashcard_set_id}` : 'General';
+    if (!subjectData[sessionKey]) {
+      subjectData[sessionKey] = { sessions: [], gradeProgression: [] };
     }
-    subjectData[subject].sessions.push(session);
+    subjectData[sessionKey].sessions.push(session);
   });
 
   // Group grade progression by subject

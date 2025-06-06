@@ -30,17 +30,24 @@ export const useAdaptiveLearning = (preferences?: Partial<StudyPreferences>) => 
 
       const userSessions = sessions || [];
 
-      // Generate adaptive learning paths for different subjects
-      const subjects = [...new Set(userSessions.map(s => s.subject).filter(Boolean))];
-      const learningPaths = subjects.length > 0 
-        ? subjects.map(subject => generateAdaptiveLearningPath(userSessions, gradeProgression, subject))
+      // Convert gradeProgression to FlashcardProgress format
+      const flashcardProgress = gradeProgression.map(gp => ({
+        ...gp,
+        grade: gp.grade || 'C',
+        mastery_level: gp.mastery_level || 0
+      }));
+
+      // Generate adaptive learning paths for different subjects based on flashcard sets
+      const subjectSets = [...new Set(userSessions.map(s => s.flashcard_set_id).filter(Boolean))];
+      const learningPaths = subjectSets.length > 0 
+        ? subjectSets.map(setId => generateAdaptiveLearningPath(userSessions, flashcardProgress, `Set ${setId}`))
         : [];
 
       // Generate optimal study schedule
       const studySchedule = generateOptimalSchedule(userSessions, preferences);
 
       // Generate performance forecast
-      const performanceForecast = generatePerformanceForecast(userSessions, gradeProgression);
+      const performanceForecast = generatePerformanceForecast(userSessions, flashcardProgress);
 
       // Analyze behavioral patterns
       const behavioralPatterns = analyzeStudyPatterns(userSessions);
