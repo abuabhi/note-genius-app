@@ -2110,6 +2110,10 @@ export type Database = {
         Args: { target_date?: string }
         Returns: number
       }
+      calculate_dau_enhanced: {
+        Args: { target_date?: string }
+        Returns: number
+      }
       calculate_mau: {
         Args: { target_month?: string }
         Returns: number

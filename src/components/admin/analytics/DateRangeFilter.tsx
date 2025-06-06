@@ -41,6 +41,11 @@ export const DateRangeFilter = ({ dateRange, setDateRange }: DateRangeFilterProp
     }
   ];
 
+  const isPresetActive = (preset: typeof presetRanges[0]) => {
+    return dateRange.start.getTime() === preset.range.start.getTime() &&
+           dateRange.end.getTime() === preset.range.end.getTime();
+  };
+
   return (
     <div className="flex items-center space-x-2">
       <span className="text-sm font-medium">Date Range:</span>
@@ -48,14 +53,13 @@ export const DateRangeFilter = ({ dateRange, setDateRange }: DateRangeFilterProp
         {presetRanges.map((preset) => (
           <Button
             key={preset.label}
-            variant="outline"
+            variant={isPresetActive(preset) ? "default" : "outline"}
             size="sm"
             onClick={() => setDateRange(preset.range)}
             className={
-              dateRange.start.getTime() === preset.range.start.getTime() &&
-              dateRange.end.getTime() === preset.range.end.getTime()
-                ? "bg-primary text-primary-foreground"
-                : ""
+              isPresetActive(preset)
+                ? "bg-primary text-primary-foreground shadow-md ring-2 ring-primary/20"
+                : "hover:bg-primary/10 hover:border-primary/30 transition-all duration-200"
             }
           >
             {preset.label}
@@ -64,12 +68,18 @@ export const DateRangeFilter = ({ dateRange, setDateRange }: DateRangeFilterProp
       </div>
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="hover:bg-primary/10 hover:border-primary/30 transition-all duration-200 pointer-events-auto"
+          >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {format(dateRange.start, "MMM dd")} - {format(dateRange.end, "MMM dd")}
+            <span className="font-medium">
+              {format(dateRange.start, "MMM dd")} - {format(dateRange.end, "MMM dd")}
+            </span>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent className="w-auto p-0 pointer-events-auto" align="start">
           <Calendar
             mode="range"
             selected={{
@@ -82,6 +92,7 @@ export const DateRangeFilter = ({ dateRange, setDateRange }: DateRangeFilterProp
               }
             }}
             numberOfMonths={2}
+            className="pointer-events-auto"
           />
         </PopoverContent>
       </Popover>

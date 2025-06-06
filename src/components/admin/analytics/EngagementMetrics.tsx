@@ -91,7 +91,7 @@ export const EngagementMetrics = ({ dateRange }: EngagementMetricsProps) => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatTime(engagementData?.avgSessionLength || 0)}</div>
-            <p className="text-xs text-muted-foreground">Last 30 days</p>
+            <p className="text-xs text-green-600 font-medium">✓ Live Data</p>
           </CardContent>
         </Card>
 
@@ -102,7 +102,7 @@ export const EngagementMetrics = ({ dateRange }: EngagementMetricsProps) => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{engagementData?.totalSessions || 0}</div>
-            <p className="text-xs text-muted-foreground">In selected period</p>
+            <p className="text-xs text-green-600 font-medium">✓ Live Data</p>
           </CardContent>
         </Card>
 
@@ -117,7 +117,7 @@ export const EngagementMetrics = ({ dateRange }: EngagementMetricsProps) => {
                 (prev.usage > current.usage) ? prev : current
               )?.feature || 'N/A'}
             </div>
-            <p className="text-xs text-muted-foreground">By usage count</p>
+            <p className="text-xs text-green-600 font-medium">✓ Live Data</p>
           </CardContent>
         </Card>
 
@@ -130,7 +130,7 @@ export const EngagementMetrics = ({ dateRange }: EngagementMetricsProps) => {
             <div className="text-2xl font-bold">
               {engagementData?.featureUsage?.filter(f => f.usage > 0).length || 0}/4
             </div>
-            <p className="text-xs text-muted-foreground">Features in use</p>
+            <p className="text-xs text-green-600 font-medium">✓ Live Data</p>
           </CardContent>
         </Card>
       </div>
@@ -139,7 +139,10 @@ export const EngagementMetrics = ({ dateRange }: EngagementMetricsProps) => {
         <Card>
           <CardHeader>
             <CardTitle>Feature Usage</CardTitle>
-            <CardDescription>Usage count by feature in selected period</CardDescription>
+            <CardDescription>
+              Usage count by feature in selected period
+              <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">✓ Live Data</span>
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -157,7 +160,10 @@ export const EngagementMetrics = ({ dateRange }: EngagementMetricsProps) => {
         <Card>
           <CardHeader>
             <CardTitle>Daily Session Frequency</CardTitle>
-            <CardDescription>Number of study sessions per day</CardDescription>
+            <CardDescription>
+              Number of study sessions per day
+              <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Mock Data</span>
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
