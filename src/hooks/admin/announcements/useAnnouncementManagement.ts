@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,14 +20,29 @@ export const useAnnouncementManagement = () => {
 
       if (error) throw error;
       
-      // Ensure text_align field exists with default value and proper typing
-      return (data || []).map(announcement => ({
-        ...announcement,
-        text_align: announcement.text_align || 'center',
-        target_pages: Array.isArray(announcement.target_pages) 
-          ? announcement.target_pages 
-          : JSON.parse(announcement.target_pages || '["all"]')
-      })) as Announcement[];
+      // Ensure proper type conversion and defaults
+      return (data || []).map(announcement => {
+        let target_pages: string[];
+        
+        // Handle target_pages conversion safely
+        if (typeof announcement.target_pages === 'string') {
+          try {
+            target_pages = JSON.parse(announcement.target_pages);
+          } catch {
+            target_pages = [announcement.target_pages];
+          }
+        } else if (Array.isArray(announcement.target_pages)) {
+          target_pages = announcement.target_pages;
+        } else {
+          target_pages = ['all'];
+        }
+
+        return {
+          ...announcement,
+          text_align: announcement.text_align || 'center',
+          target_pages
+        } as Announcement;
+      });
     }
   });
 

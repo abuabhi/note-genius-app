@@ -11,11 +11,11 @@ const root = createRoot(document.getElementById('root')!)
 
 root.render(
   <StrictMode>
-    <BrowserRouter>
-      <ThemeProvider defaultTheme="light" storageKey="ui-theme">
+    <ThemeProvider defaultTheme="light" storageKey="ui-theme">
+      <BrowserRouter>
         <App />
         <Toaster />
-      </ThemeProvider>
-    </BrowserRouter>
+      </BrowserRouter>
+    </ThemeProvider>
   </StrictMode>,
 )
