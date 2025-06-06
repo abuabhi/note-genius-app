@@ -4,6 +4,8 @@ import Layout from "@/components/layout/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminSubjectList } from "@/components/admin/AdminSubjectList";
 import { FlashcardProvider } from "@/contexts/FlashcardContext";
+import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
+import { BookOpen } from "lucide-react";
 
 const AdminSubjectsPage = () => {
   // Set document title using React's useEffect
@@ -14,6 +16,7 @@ const AdminSubjectsPage = () => {
   return (
     <Layout>
       <div className="container mx-auto py-6 space-y-6">
+        <PageBreadcrumb pageName="Subjects" pageIcon={<BookOpen className="h-4 w-4" />} />
         <h1 className="text-2xl font-bold">Subject Management</h1>
         
         <Tabs defaultValue="subjects">

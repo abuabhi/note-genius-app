@@ -8,7 +8,8 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Home } from "lucide-react";
+import { Home, Shield } from "lucide-react";
+import { useLocation } from "react-router-dom";
 
 interface PageBreadcrumbProps {
   pageName: string;
@@ -16,6 +17,9 @@ interface PageBreadcrumbProps {
 }
 
 export const PageBreadcrumb = ({ pageName, pageIcon }: PageBreadcrumbProps) => {
+  const location = useLocation();
+  const isAdminPage = location.pathname.startsWith('/admin');
+
   return (
     <div className="mb-4">
       <Breadcrumb>
@@ -27,12 +31,30 @@ export const PageBreadcrumb = ({ pageName, pageIcon }: PageBreadcrumbProps) => {
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage className="flex items-center gap-1">
-              {pageIcon}
-              {pageName}
-            </BreadcrumbPage>
-          </BreadcrumbItem>
+          {isAdminPage ? (
+            <>
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/admin" className="flex items-center gap-1">
+                  <Shield className="h-3 w-3" />
+                  Administration
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage className="flex items-center gap-1">
+                  {pageIcon}
+                  {pageName}
+                </BreadcrumbPage>
+              </BreadcrumbItem>
+            </>
+          ) : (
+            <BreadcrumbItem>
+              <BreadcrumbPage className="flex items-center gap-1">
+                {pageIcon}
+                {pageName}
+              </BreadcrumbPage>
+            </BreadcrumbItem>
+          )}
         </BreadcrumbList>
       </Breadcrumb>
     </div>

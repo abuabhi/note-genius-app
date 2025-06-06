@@ -1,4 +1,3 @@
-
 import { 
   Home, 
   BookOpen, 
@@ -126,6 +125,13 @@ export const navigationData: NavigationGroup[] = [
     id: "admin",
     title: "Administration",
     items: [
+      {
+        id: "admin-dashboard",
+        title: "Admin Dashboard",
+        href: "/admin",
+        icon: Shield,
+        description: "Administration overview"
+      },
       {
         id: "admin-users",
         title: "User Management",

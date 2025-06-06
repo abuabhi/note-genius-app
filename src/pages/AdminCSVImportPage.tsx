@@ -2,9 +2,10 @@
 import Layout from "@/components/layout/Layout";
 import { useRequireAuth, UserTier } from "@/hooks/useRequireAuth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert, Upload } from "lucide-react";
 import { CSVImport } from "@/components/admin/CSVImport";
 import { FlashcardProvider } from "@/contexts/FlashcardContext";
+import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
 
 const AdminCSVImportPage = () => {
   const { userProfile, loading } = useRequireAuth();
@@ -41,6 +42,7 @@ const AdminCSVImportPage = () => {
     <Layout>
       <FlashcardProvider>
         <div className="container mx-auto p-6">
+          <PageBreadcrumb pageName="CSV Import" pageIcon={<Upload className="h-4 w-4" />} />
           <div className="mb-6">
             <h1 className="text-3xl font-bold mb-2">CSV Import</h1>
             <p className="text-muted-foreground">

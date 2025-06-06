@@ -3,8 +3,9 @@ import React from "react";
 import Layout from "@/components/layout/Layout";
 import { useRequireAuth, UserTier } from "@/hooks/useRequireAuth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader, ShieldAlert } from "lucide-react";
+import { Loader, ShieldAlert, Users } from "lucide-react";
 import UserTierManagement from "@/components/admin/users/UserTierManagement";
+import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
 
 const AdminUsersPage = () => {
   const { userProfile, loading } = useRequireAuth();
@@ -41,6 +42,7 @@ const AdminUsersPage = () => {
   return (
     <Layout>
       <div className="container mx-auto p-6">
+        <PageBreadcrumb pageName="User Management" pageIcon={<Users className="h-4 w-4" />} />
         <h1 className="text-3xl font-bold mb-6">User Management</h1>
         <UserTierManagement />
       </div>
