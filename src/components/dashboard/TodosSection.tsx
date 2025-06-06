@@ -86,7 +86,7 @@ export const TodosSection = () => {
           <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-green-800 mb-2">All caught up!</h3>
           <p className="text-green-600 mb-4">No tasks due today. Great job staying organized!</p>
-          <Button asChild variant="outline" className="border-green-300 text-green-700 hover:bg-green-100">
+          <Button asChild className="text-white">
             <Link to="/todos">
               View All Tasks
               <ArrowRight className="h-4 w-4 ml-2" />
@@ -149,7 +149,7 @@ export const TodosSection = () => {
         </div>
 
         <div className="pt-4 border-t">
-          <Button asChild variant="outline" className="w-full">
+          <Button asChild className="w-full text-white">
             <Link to="/todos">
               <Calendar className="h-4 w-4 mr-2" />
               View All Tasks

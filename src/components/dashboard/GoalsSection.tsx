@@ -88,7 +88,7 @@ export const GoalsSection = () => {
           <Trophy className="h-12 w-12 text-blue-500 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-blue-800 mb-2">Set Your First Goal!</h3>
           <p className="text-blue-600 mb-4">Create study goals to track your progress and stay motivated.</p>
-          <Button asChild variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-100">
+          <Button asChild className="text-white">
             <Link to="/goals">
               Manage Goals
               <ArrowRight className="h-4 w-4 ml-2" />
@@ -153,7 +153,7 @@ export const GoalsSection = () => {
         </div>
 
         <div className="pt-4 border-t">
-          <Button asChild variant="outline" className="w-full">
+          <Button asChild className="w-full text-white">
             <Link to="/goals">
               <Target className="h-4 w-4 mr-2" />
               Manage Goals
