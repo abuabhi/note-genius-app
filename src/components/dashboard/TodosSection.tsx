@@ -75,20 +75,20 @@ export const TodosSection = () => {
 
   if (sortedTodos.length === 0) {
     return (
-      <Card className="h-[500px] bg-green-50 border-green-200 flex flex-col">
+      <Card className="h-[500px] bg-green-50 border-green-200">
         <CardHeader className="pb-4">
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
             <Calendar className="h-5 w-5 text-green-600" />
             Today's Tasks
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 flex flex-col p-6 pt-0">
+        <CardContent className="p-6 pt-0 h-[calc(100%-80px)] flex flex-col">
           <div className="flex-1 flex flex-col justify-center text-center">
             <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-green-800 mb-2">All caught up!</h3>
             <p className="text-green-600 mb-4">No tasks due today. Great job staying organized!</p>
           </div>
-          <div className="mt-auto">
+          <div className="mt-4">
             <Button asChild className="w-full bg-green-700 hover:bg-green-800 text-white">
               <Link to="/todos">
                 <Calendar className="h-4 w-4 mr-2" />
@@ -102,7 +102,7 @@ export const TodosSection = () => {
   }
 
   return (
-    <Card className="h-[500px] flex flex-col">
+    <Card className="h-[500px]">
       <CardHeader className="pb-4">
         <CardTitle className="text-lg font-semibold flex items-center gap-2">
           <Calendar className="h-5 w-5 text-blue-600" />
@@ -114,7 +114,7 @@ export const TodosSection = () => {
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col p-6 pt-0">
+      <CardContent className="p-6 pt-0 h-[calc(100%-80px)] flex flex-col">
         <div className="flex-1 space-y-3 overflow-y-auto mb-4">
           {sortedTodos.map((todo) => (
             <div 
@@ -152,7 +152,7 @@ export const TodosSection = () => {
           ))}
         </div>
 
-        <div className="mt-auto">
+        <div className="mt-4">
           <Button asChild className="w-full bg-green-700 hover:bg-green-800 text-white">
             <Link to="/todos">
               <Calendar className="h-4 w-4 mr-2" />
