@@ -6,8 +6,7 @@ import { Link } from "react-router-dom";
 import { 
   BookOpen, 
   GraduationCap, 
-  FileText, 
-  BarChart
+  FileText
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -92,12 +91,6 @@ export const EnhancedQuickActionsGrid = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-mint-900">Quick Actions</h2>
-        <Button asChild variant="outline" size="sm">
-          <Link to="/study-sessions">
-            <BarChart className="h-4 w-4 mr-2" />
-            View Analytics
-          </Link>
-        </Button>
       </div>
 
       {/* Primary Actions - Study Tools */}
