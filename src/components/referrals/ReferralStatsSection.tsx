@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Users, Target, Loader2, AlertCircle } from 'lucide-react';
 import { useReferralData } from '@/hooks/referrals/useReferralData';
+import { Suspense } from 'react';
 
-export const ReferralStatsSection = () => {
+const ReferralStatsContent = () => {
   const { 
     referralStats, 
     contests, 
@@ -139,5 +140,24 @@ export const ReferralStatsSection = () => {
         </Card>
       )}
     </div>
+  );
+};
+
+const ReferralStatsLoading = () => (
+  <Card className="border-gray-200 bg-white shadow-sm">
+    <CardContent className="p-8">
+      <div className="flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-mint-500" />
+        <span className="ml-2 text-gray-600">Loading referral stats...</span>
+      </div>
+    </CardContent>
+  </Card>
+);
+
+export const ReferralStatsSection = () => {
+  return (
+    <Suspense fallback={<ReferralStatsLoading />}>
+      <ReferralStatsContent />
+    </Suspense>
   );
 };

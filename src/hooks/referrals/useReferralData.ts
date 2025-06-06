@@ -15,10 +15,15 @@ export const useReferralData = () => {
   const isLoading = statsLoading || contestsLoading || entriesLoading;
   const hasError = !!statsError;
 
+  // Don't return data if still loading to prevent suspension
+  const safeReferralStats = isLoading ? null : referralStats;
+  const safeContests = isLoading ? [] : contests;
+  const safeContestEntries = isLoading ? [] : contestEntries;
+
   return {
-    referralStats,
-    contests,
-    contestEntries,
+    referralStats: safeReferralStats,
+    contests: safeContests,
+    contestEntries: safeContestEntries,
     isLoading,
     hasError,
     joinContest,
