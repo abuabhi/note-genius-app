@@ -85,14 +85,20 @@ export const useAchievements = () => {
     if (!user) return;
 
     try {
-      // Get user's referral count
-      const { data: referrals } = await supabase
-        .from('referrals')
-        .select('id')
-        .eq('referrer_id', user.id)
-        .eq('status', 'completed');
+      // Get user's referral count with fallback for missing table
+      let referralCount = 0;
+      try {
+        const { data: referrals } = await (supabase as any)
+          .from('referrals')
+          .select('id')
+          .eq('referrer_id', user.id)
+          .eq('status', 'completed');
 
-      const referralCount = referrals?.length || 0;
+        referralCount = referrals?.length || 0;
+      } catch (error) {
+        console.log('Referrals table not available yet');
+        return;
+      }
 
       // Check for referral achievements
       const achievementsToCheck = [

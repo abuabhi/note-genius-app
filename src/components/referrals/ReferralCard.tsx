@@ -115,7 +115,7 @@ export const ReferralCard = () => {
         <div className="bg-white/60 rounded-lg p-4 border border-purple-200">
           <div className="text-sm text-purple-700 mb-2">Your referral code:</div>
           <div className="font-mono text-lg font-bold text-purple-800 mb-3">
-            {referralStats.referralCode}
+            {referralStats.referralCode || 'LOADING...'}
           </div>
           
           <div className="flex gap-2">
@@ -123,6 +123,7 @@ export const ReferralCard = () => {
               size="sm"
               variant="outline"
               onClick={() => copyReferralLink(referralStats.referralCode)}
+              disabled={!referralStats.referralCode || referralStats.referralCode === 'LOADING...'}
               className="flex-1 border-purple-300 text-purple-700 hover:bg-purple-50"
             >
               <Copy className="h-4 w-4 mr-2" />
@@ -132,6 +133,7 @@ export const ReferralCard = () => {
             <Button
               size="sm"
               onClick={() => shareViaWhatsApp(referralStats.referralCode)}
+              disabled={!referralStats.referralCode || referralStats.referralCode === 'LOADING...'}
               className="flex-1 bg-green-600 hover:bg-green-700 text-white"
             >
               <MessageCircle className="h-4 w-4 mr-2" />

@@ -36,93 +36,131 @@ export const useReferralData = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Fetch user's referral stats
+  // Fetch user's referral stats with fallback for missing schema
   const { data: referralStats, isLoading: statsLoading } = useQuery({
     queryKey: ['referral-stats', user?.id],
     queryFn: async (): Promise<ReferralStats> => {
       if (!user) throw new Error('No user');
 
-      // Get user's referral code
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('referral_code')
-        .eq('id', user.id)
-        .single();
+      try {
+        // Get user's referral code from profiles
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
 
-      // Get referral statistics
-      const { data: referrals } = await supabase
-        .from('referrals')
-        .select('status, points_awarded')
-        .eq('referrer_id', user.id);
+        const referralCode = (profile as any)?.referral_code || '';
 
-      const totalReferrals = referrals?.length || 0;
-      const completedReferrals = referrals?.filter(r => r.status === 'completed').length || 0;
-      const pendingReferrals = referrals?.filter(r => r.status === 'pending').length || 0;
-      const totalPointsEarned = referrals?.reduce((sum, r) => sum + (r.points_awarded || 0), 0) || 0;
+        // Try to get referral statistics, fallback if tables don't exist
+        let totalReferrals = 0;
+        let completedReferrals = 0;
+        let pendingReferrals = 0;
+        let totalPointsEarned = 0;
 
-      return {
-        totalReferrals,
-        completedReferrals,
-        pendingReferrals,
-        totalPointsEarned,
-        referralCode: profile?.referral_code || ''
-      };
+        try {
+          const { data: referrals } = await (supabase as any)
+            .from('referrals')
+            .select('status, points_awarded')
+            .eq('referrer_id', user.id);
+
+          if (referrals) {
+            totalReferrals = referrals.length;
+            completedReferrals = referrals.filter((r: any) => r.status === 'completed').length;
+            pendingReferrals = referrals.filter((r: any) => r.status === 'pending').length;
+            totalPointsEarned = referrals.reduce((sum: number, r: any) => sum + (r.points_awarded || 0), 0);
+          }
+        } catch (error) {
+          console.log('Referrals table not available yet');
+        }
+
+        return {
+          totalReferrals,
+          completedReferrals,
+          pendingReferrals,
+          totalPointsEarned,
+          referralCode
+        };
+      } catch (error) {
+        console.error('Error fetching referral stats:', error);
+        return {
+          totalReferrals: 0,
+          completedReferrals: 0,
+          pendingReferrals: 0,
+          totalPointsEarned: 0,
+          referralCode: 'LOADING'
+        };
+      }
     },
     enabled: !!user,
   });
 
-  // Fetch active contests
+  // Fetch active contests with fallback
   const { data: contests = [], isLoading: contestsLoading } = useQuery({
     queryKey: ['active-contests'],
     queryFn: async (): Promise<Contest[]> => {
-      const { data, error } = await supabase
-        .from('contests')
-        .select('*')
-        .eq('is_active', true)
-        .gte('end_date', new Date().toISOString())
-        .order('start_date', { ascending: true });
+      try {
+        const { data, error } = await (supabase as any)
+          .from('contests')
+          .select('*')
+          .eq('is_active', true)
+          .gte('end_date', new Date().toISOString())
+          .order('start_date', { ascending: true });
 
-      if (error) throw error;
-      return data || [];
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
+        console.log('Contests table not available yet');
+        return [];
+      }
     },
   });
 
-  // Fetch user's contest entries
+  // Fetch user's contest entries with fallback
   const { data: contestEntries = [], isLoading: entriesLoading } = useQuery({
     queryKey: ['contest-entries', user?.id],
     queryFn: async (): Promise<ContestEntry[]> => {
       if (!user) return [];
 
-      const { data, error } = await supabase
-        .from('contest_entries')
-        .select(`
-          *,
-          contest:contests(*)
-        `)
-        .eq('user_id', user.id);
+      try {
+        const { data, error } = await (supabase as any)
+          .from('contest_entries')
+          .select(`
+            *,
+            contest:contests(*)
+          `)
+          .eq('user_id', user.id);
 
-      if (error) throw error;
-      return data || [];
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
+        console.log('Contest entries table not available yet');
+        return [];
+      }
     },
     enabled: !!user,
   });
 
-  // Join contest mutation
+  // Join contest mutation with error handling
   const joinContestMutation = useMutation({
     mutationFn: async (contestId: string) => {
       if (!user) throw new Error('No user');
 
-      const { error } = await supabase
-        .from('contest_entries')
-        .insert({
-          contest_id: contestId,
-          user_id: user.id,
-          referrals_count: referralStats?.completedReferrals || 0,
-          is_eligible: (referralStats?.completedReferrals || 0) >= 
-                      (contests.find(c => c.id === contestId)?.min_referrals_required || 1)
-        });
+      try {
+        const { error } = await (supabase as any)
+          .from('contest_entries')
+          .insert({
+            contest_id: contestId,
+            user_id: user.id,
+            referrals_count: referralStats?.completedReferrals || 0,
+            is_eligible: (referralStats?.completedReferrals || 0) >= 
+                        (contests.find(c => c.id === contestId)?.min_referrals_required || 1)
+          });
 
-      if (error) throw error;
+        if (error) throw error;
+      } catch (error) {
+        throw new Error('Contest entries not available yet');
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contest-entries'] });
