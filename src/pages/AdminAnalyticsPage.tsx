@@ -7,9 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { AnalyticsDashboard } from "@/components/admin/analytics/AnalyticsDashboard";
 
 const AdminAnalyticsPage = () => {
-  const { user, userTier } = useRequireAuth([UserTier.DEAN]);
+  const { user, userProfile } = useRequireAuth();
 
-  if (!user || userTier !== UserTier.DEAN) {
+  if (!user || userProfile?.user_tier !== UserTier.DEAN) {
     return (
       <Layout>
         <div className="container mx-auto p-6">

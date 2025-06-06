@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
@@ -17,9 +16,9 @@ import {
 } from "lucide-react";
 
 const AdminDashboardPage = () => {
-  const { user, userTier } = useRequireAuth([UserTier.DEAN]);
+  const { user, userProfile } = useRequireAuth();
 
-  if (!user || userTier !== UserTier.DEAN) {
+  if (!user || userProfile?.user_tier !== UserTier.DEAN) {
     return (
       <Layout>
         <div className="container mx-auto p-6">
