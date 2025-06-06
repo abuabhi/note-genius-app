@@ -1,11 +1,12 @@
 
+import { Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Share2, Copy, MessageCircle, Trophy, Users, Gift } from 'lucide-react';
+import { Share2, Copy, MessageCircle, Trophy, Users, Gift, Loader2 } from 'lucide-react';
 import { useReferralData } from '@/hooks/referrals/useReferralData';
 
-export const ReferralCard = () => {
+const ReferralCardContent = () => {
   const { 
     referralStats, 
     contests, 
@@ -17,20 +18,28 @@ export const ReferralCard = () => {
     copyReferralLink
   } = useReferralData();
 
-  if (isLoading) {
+  if (isLoading || !referralStats) {
     return (
       <Card className="bg-gradient-to-r from-purple-100 to-pink-100 border-purple-200">
         <CardContent className="p-6">
-          <div className="animate-pulse">
+          <div className="animate-pulse space-y-4">
             <div className="h-6 bg-purple-200/50 rounded w-48 mb-4"></div>
-            <div className="h-4 bg-purple-200/50 rounded w-32"></div>
+            <div className="grid grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-white/60 rounded-lg p-3 border border-purple-200">
+                  <div className="h-5 bg-purple-200/50 rounded w-6 mx-auto mb-2"></div>
+                  <div className="h-6 bg-purple-200/50 rounded w-8 mx-auto mb-1"></div>
+                  <div className="h-3 bg-purple-200/50 rounded w-12 mx-auto"></div>
+                </div>
+              ))}
+            </div>
+            <div className="h-32 bg-white/60 rounded-lg border border-purple-200"></div>
+            <div className="h-24 bg-white/60 rounded-lg border border-purple-200"></div>
           </div>
         </CardContent>
       </Card>
     );
   }
-
-  if (!referralStats) return null;
 
   const activeContest = contests[0]; // Get the first active contest
   const userEntry = contestEntries.find(entry => entry.contest_id === activeContest?.id);
@@ -105,7 +114,14 @@ export const ReferralCard = () => {
                 disabled={isJoiningContest}
                 className="bg-purple-600 hover:bg-purple-700 text-white"
               >
-                Join Contest
+                {isJoiningContest ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Joining...
+                  </>
+                ) : (
+                  'Join Contest'
+                )}
               </Button>
             )}
           </div>
@@ -150,5 +166,22 @@ export const ReferralCard = () => {
         </div>
       </CardContent>
     </Card>
+  );
+};
+
+export const ReferralCard = () => {
+  return (
+    <Suspense fallback={
+      <Card className="bg-gradient-to-r from-purple-100 to-pink-100 border-purple-200">
+        <CardContent className="p-6">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto text-purple-600 mb-4" />
+            <p className="text-purple-700">Loading referral data...</p>
+          </div>
+        </CardContent>
+      </Card>
+    }>
+      <ReferralCardContent />
+    </Suspense>
   );
 };
