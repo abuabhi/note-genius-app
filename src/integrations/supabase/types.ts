@@ -470,6 +470,39 @@ export type Database = {
         }
         Relationships: []
       }
+      mock_subscriptions: {
+        Row: {
+          cancelled_at: string | null
+          created_at: string
+          id: string
+          mrr_amount: number
+          plan_name: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          cancelled_at?: string | null
+          created_at?: string
+          id?: string
+          mrr_amount?: number
+          plan_name?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          cancelled_at?: string | null
+          created_at?: string
+          id?: string
+          mrr_amount?: number
+          plan_name?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       note_enrichment_usage: {
         Row: {
           completion_tokens: number
@@ -2060,6 +2093,30 @@ export type Database = {
       award_achievement: {
         Args: { p_user_id: string; p_achievement_title: string }
         Returns: boolean
+      }
+      calculate_arr: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      calculate_avg_session_length: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      calculate_churn_rate: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      calculate_dau: {
+        Args: { target_date?: string }
+        Returns: number
+      }
+      calculate_mau: {
+        Args: { target_month?: string }
+        Returns: number
+      }
+      calculate_mrr: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       calculate_session_quality: {
         Args: {

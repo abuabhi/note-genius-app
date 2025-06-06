@@ -1,129 +1,129 @@
 
-import React from "react";
-import Layout from "@/components/layout/Layout";
-import { useRequireAuth, UserTier } from "@/hooks/useRequireAuth";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Loader, ShieldAlert, Users, Upload, Database, BookOpen, Settings, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
-import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
+import Layout from "@/components/layout/Layout";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { UserTier } from "@/hooks/useRequireAuth";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { 
+  Users, 
+  CreditCard, 
+  BookOpen, 
+  Layers, 
+  GraduationCap, 
+  Award,
+  Upload,
+  Settings,
+  BarChart3
+} from "lucide-react";
 
 const AdminDashboardPage = () => {
-  const { userProfile, loading } = useRequireAuth();
-  
-  // Check if user is admin (DEAN tier)
-  if (loading) {
+  const { user, userTier } = useRequireAuth([UserTier.DEAN]);
+
+  if (!user || userTier !== UserTier.DEAN) {
     return (
       <Layout>
         <div className="container mx-auto p-6">
-          <div className="flex flex-col justify-center items-center h-64">
-            <Loader className="h-8 w-8 animate-spin mb-4" />
-            <span className="text-muted-foreground">Loading user profile...</span>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-  
-  if (userProfile?.user_tier !== UserTier.DEAN) {
-    return (
-      <Layout>
-        <div className="container mx-auto p-6">
-          <Alert variant="destructive">
-            <ShieldAlert className="h-4 w-4" />
-            <AlertDescription>
-              You don't have permission to access this page.
-            </AlertDescription>
-          </Alert>
+          <Card>
+            <CardHeader>
+              <CardTitle>Access Denied</CardTitle>
+              <CardDescription>
+                You need Dean-tier access to view the admin dashboard.
+              </CardDescription>
+            </CardHeader>
+          </Card>
         </div>
       </Layout>
     );
   }
 
-  const adminSections = [
+  const adminCards = [
     {
       title: "User Management",
       description: "Manage user accounts, tiers, and permissions",
       icon: Users,
       href: "/admin/users",
-      color: "bg-blue-500"
+      color: "text-blue-600"
     },
     {
-      title: "CSV Import",
-      description: "Bulk import data from CSV files",
-      icon: Upload,
-      href: "/admin/csv-import",
-      color: "bg-green-500"
+      title: "Analytics & KPIs",
+      description: "View business metrics, revenue, and user analytics",
+      icon: BarChart3,
+      href: "/admin/analytics",
+      color: "text-green-600"
     },
     {
-      title: "Grades Management",
-      description: "Manage grade levels and academic years",
-      icon: Database,
-      href: "/admin/grades",
-      color: "bg-purple-500"
-    },
-    {
-      title: "Subjects Management",
-      description: "Manage subjects and curriculum",
-      icon: BookOpen,
-      href: "/admin/subjects",
-      color: "bg-orange-500"
+      title: "Flashcard Management",
+      description: "Manage flashcard sets and content",
+      icon: CreditCard,
+      href: "/admin/flashcards",
+      color: "text-purple-600"
     },
     {
       title: "Sections Management",
-      description: "Manage course sections and topics",
-      icon: Settings,
+      description: "Organize and manage subject sections",
+      icon: Layers,
       href: "/admin/sections",
-      color: "bg-indigo-500"
+      color: "text-orange-600"
+    },
+    {
+      title: "Subjects Management",
+      description: "Manage academic subjects and categories",
+      icon: BookOpen,
+      href: "/admin/subjects",
+      color: "text-indigo-600"
+    },
+    {
+      title: "Grades Management",
+      description: "Manage grade levels and academic standards",
+      icon: GraduationCap,
+      href: "/admin/grades",
+      color: "text-teal-600"
+    },
+    {
+      title: "CSV Import",
+      description: "Import data from CSV files",
+      icon: Upload,
+      href: "/admin/csv-import",
+      color: "text-amber-600"
     },
     {
       title: "Feature Management",
-      description: "Manage application features and toggles",
-      icon: Shield,
+      description: "Enable/disable app features and manage access",
+      icon: Settings,
       href: "/admin/features",
-      color: "bg-red-500"
+      color: "text-red-600"
     }
   ];
 
   return (
     <Layout>
       <div className="container mx-auto p-6">
-        <PageBreadcrumb pageName="Administration" pageIcon={<Shield className="h-4 w-4" />} />
-        
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Administration Dashboard</h1>
+          <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
           <p className="text-muted-foreground">
-            Manage users, content, and system settings from this central hub.
+            Manage your application's users, content, and settings
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {adminSections.map((section) => {
-            const IconComponent = section.icon;
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {adminCards.map((card) => {
+            const IconComponent = card.icon;
             return (
-              <Card key={section.href} className="hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${section.color} text-white`}>
-                      <IconComponent className="h-5 w-5" />
+              <Link key={card.href} to={card.href}>
+                <Card className="hover:shadow-lg transition-all duration-200 hover:scale-105">
+                  <CardHeader>
+                    <div className="flex items-center space-x-3">
+                      <IconComponent className={`h-8 w-8 ${card.color}`} />
+                      <div>
+                        <CardTitle className="text-lg">{card.title}</CardTitle>
+                      </div>
                     </div>
-                    <div>
-                      <CardTitle className="text-lg">{section.title}</CardTitle>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="mb-4">
-                    {section.description}
-                  </CardDescription>
-                  <Button asChild className="w-full">
-                    <Link to={section.href}>
-                      Access {section.title}
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription>{card.description}</CardDescription>
+                  </CardContent>
+                </Card>
+              </Link>
             );
           })}
         </div>

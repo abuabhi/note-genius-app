@@ -8,6 +8,7 @@ import AdminSubjectsPage from "@/pages/AdminSubjectsPage";
 import AdminGradesPage from "@/pages/AdminGradesPage";
 import AdminCSVImportPage from "@/pages/AdminCSVImportPage";
 import AdminFeaturesPage from "@/pages/AdminFeaturesPage";
+import AdminAnalyticsPage from "@/pages/AdminAnalyticsPage";
 import { RouteConfig } from './publicRoutes';
 
 // Admin routes
@@ -20,4 +21,5 @@ export const adminRoutes: RouteConfig[] = [
   { path: "/admin/subjects", element: <AdminSubjectsPage /> },
   { path: "/admin/csv-import", element: <AdminCSVImportPage /> },
   { path: "/admin/features", element: <AdminFeaturesPage /> },
+  { path: "/admin/analytics", element: <AdminAnalyticsPage /> },
 ];
