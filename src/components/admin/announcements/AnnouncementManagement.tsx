@@ -31,6 +31,16 @@ export const AnnouncementManagement = () => {
     );
   }
 
+  const handleEditDialogClose = (open: boolean) => {
+    if (!open) {
+      setEditingAnnouncement(null);
+    }
+  };
+
+  const handleCreateDialogClose = (open: boolean) => {
+    setIsCreateDialogOpen(open);
+  };
+
   return (
     <div>
       <AnnouncementHeader onCreateNew={() => setIsCreateDialogOpen(true)} />
@@ -47,13 +57,13 @@ export const AnnouncementManagement = () => {
 
       <AnnouncementFormDialog
         open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
+        onOpenChange={handleCreateDialogClose}
         announcement={null}
       />
 
       <AnnouncementFormDialog
         open={!!editingAnnouncement}
-        onOpenChange={(open) => !open && setEditingAnnouncement(null)}
+        onOpenChange={handleEditDialogClose}
         announcement={editingAnnouncement}
       />
 

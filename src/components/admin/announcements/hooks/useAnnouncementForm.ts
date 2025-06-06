@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 import { announcementFormSchema } from '../schema';
 import { AnnouncementFormData, Announcement } from '../types';
+import { useEffect } from 'react';
 
 // Helper function to convert priority string to number
 const priorityToNumber = (priority: string): number => {
@@ -28,28 +29,70 @@ export const useAnnouncementForm = (
   const form = useForm<AnnouncementFormData>({
     resolver: zodResolver(announcementFormSchema),
     defaultValues: {
-      title: announcement?.title || '',
-      content: announcement?.content || '',
-      cta_text: announcement?.cta_text || '',
-      cta_url: announcement?.cta_url || '',
-      background_color: announcement?.background_color || '#14b8a6',
-      text_color: announcement?.text_color || '#ffffff',
-      is_active: announcement?.is_active || false,
-      start_date: announcement?.start_date ? 
-        new Date(announcement.start_date).toISOString().slice(0, 16) : 
-        new Date().toISOString().slice(0, 16),
-      end_date: announcement?.end_date ? 
-        new Date(announcement.end_date).toISOString().slice(0, 16) : 
-        new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
-      target_tier: announcement?.target_tier || 'all',
-      target_pages: announcement?.target_pages ? 
-        JSON.stringify(announcement.target_pages) : '["all"]',
-      mobile_layout: announcement?.mobile_layout || 'default',
-      priority: announcement?.priority || 'medium',
-      dismissible: announcement?.dismissible ?? true,
-      text_align: announcement?.text_align || 'center',
+      title: '',
+      content: '',
+      cta_text: '',
+      cta_url: '',
+      background_color: '#14b8a6',
+      text_color: '#ffffff',
+      is_active: false,
+      start_date: new Date().toISOString().slice(0, 16),
+      end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
+      target_tier: 'all',
+      target_pages: '["all"]',
+      mobile_layout: 'default',
+      priority: 'medium',
+      dismissible: true,
+      text_align: 'center',
     },
   });
+
+  // Reset form when announcement changes
+  useEffect(() => {
+    if (announcement) {
+      form.reset({
+        title: announcement.title || '',
+        content: announcement.content || '',
+        cta_text: announcement.cta_text || '',
+        cta_url: announcement.cta_url || '',
+        background_color: announcement.background_color || '#14b8a6',
+        text_color: announcement.text_color || '#ffffff',
+        is_active: announcement.is_active || false,
+        start_date: announcement.start_date ? 
+          new Date(announcement.start_date).toISOString().slice(0, 16) : 
+          new Date().toISOString().slice(0, 16),
+        end_date: announcement.end_date ? 
+          new Date(announcement.end_date).toISOString().slice(0, 16) : 
+          new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
+        target_tier: announcement.target_tier || 'all',
+        target_pages: announcement.target_pages ? 
+          JSON.stringify(announcement.target_pages) : '["all"]',
+        mobile_layout: announcement.mobile_layout || 'default',
+        priority: announcement.priority || 'medium',
+        dismissible: announcement.dismissible ?? true,
+        text_align: announcement.text_align || 'center',
+      });
+    } else {
+      // Reset to default values when creating new announcement
+      form.reset({
+        title: '',
+        content: '',
+        cta_text: '',
+        cta_url: '',
+        background_color: '#14b8a6',
+        text_color: '#ffffff',
+        is_active: false,
+        start_date: new Date().toISOString().slice(0, 16),
+        end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
+        target_tier: 'all',
+        target_pages: '["all"]',
+        mobile_layout: 'default',
+        priority: 'medium',
+        dismissible: true,
+        text_align: 'center',
+      });
+    }
+  }, [announcement, form]);
 
   const createMutation = useMutation({
     mutationFn: async (data: AnnouncementFormData) => {
@@ -89,7 +132,6 @@ export const useAnnouncementForm = (
       queryClient.invalidateQueries({ queryKey: ['admin-announcements'] });
       toast.success(`Announcement ${announcement ? 'updated' : 'created'} successfully`);
       onOpenChange?.(false);
-      form.reset();
     },
     onError: (error) => {
       toast.error(`Failed to ${announcement ? 'update' : 'create'} announcement`);
