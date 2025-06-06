@@ -8,8 +8,9 @@ import { ReferralSharingSection } from "@/components/referrals/ReferralSharingSe
 import { ReferralPrizesSection } from "@/components/referrals/ReferralPrizesSection";
 import { ReferralFAQSection } from "@/components/referrals/ReferralFAQSection";
 import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
+import { Suspense } from "react";
 
-const ReferralsPage = () => {
+const ReferralsPageContent = () => {
   console.log('🎯 ReferralsPage component rendering');
   
   const { user, loading } = useRequireAuth();
@@ -42,13 +43,44 @@ const ReferralsPage = () => {
           <PageBreadcrumb pageName="Refer & Win" pageIcon={<Gift className="h-4 w-4" />} />
           
           <ReferralHeroSection />
-          <ReferralStatsSection />
-          <ReferralSharingSection />
+          <Suspense fallback={
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-mint-500" />
+              <span className="ml-2 text-gray-600">Loading stats...</span>
+            </div>
+          }>
+            <ReferralStatsSection />
+          </Suspense>
+          <Suspense fallback={
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-mint-500" />
+              <span className="ml-2 text-gray-600">Loading sharing options...</span>
+            </div>
+          }>
+            <ReferralSharingSection />
+          </Suspense>
           <ReferralPrizesSection />
           <ReferralFAQSection />
         </div>
       </div>
     </Layout>
+  );
+};
+
+const ReferralsPage = () => {
+  return (
+    <Suspense fallback={
+      <Layout>
+        <div className="container mx-auto p-6 flex items-center justify-center h-[50vh]">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto text-mint-500" />
+            <p className="mt-2 text-gray-600">Loading referrals...</p>
+          </div>
+        </div>
+      </Layout>
+    }>
+      <ReferralsPageContent />
+    </Suspense>
   );
 };
 

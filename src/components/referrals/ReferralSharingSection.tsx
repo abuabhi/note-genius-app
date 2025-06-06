@@ -1,160 +1,179 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Copy, Mail, Share2, QrCode, MessageCircle, Linkedin, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Copy, Share2, MessageCircle, Mail, Linkedin, Twitter, QrCode, Loader2 } from 'lucide-react';
 import { useReferralData } from '@/hooks/referrals/useReferralData';
-import { toast } from 'sonner';
+import { Suspense } from 'react';
 
-export const ReferralSharingSection = () => {
-  const { referralStats, copyReferralLink } = useReferralData();
+const ReferralSharingSectionContent = () => {
+  const { 
+    referralStats, 
+    generateReferralLink, 
+    shareViaWhatsApp, 
+    copyReferralLink, 
+    shareViaEmail, 
+    shareViaLinkedIn, 
+    shareViaTwitter, 
+    generateQRCode,
+    isLoading 
+  } = useReferralData();
 
-  const generateReferralLink = () => {
-    if (!referralStats?.referralCode) return '';
-    return `${window.location.origin}?ref=${referralStats.referralCode}`;
-  };
+  if (isLoading || !referralStats) {
+    return (
+      <Card className="border-gray-200 bg-white shadow-sm">
+        <CardContent className="p-8">
+          <div className="flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-mint-500" />
+            <span className="ml-2 text-gray-600">Loading sharing options...</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
-  const shareViaEmail = () => {
-    const link = generateReferralLink();
-    const subject = "Try StudyBuddy - Great Study Platform";
-    const body = `Hi there!
+  const referralLink = generateReferralLink(referralStats.referralCode);
 
-I've been using StudyBuddy for my studies and thought you might find it helpful too. It's a comprehensive platform with smart flashcards, note organization, and progress tracking.
-
-Here's my referral link to get started:
-${link}
-
-Best regards!`;
-
-    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  };
-
-  const shareViaLinkedIn = () => {
-    const link = generateReferralLink();
-    const text = "Discovered an excellent study platform that's been helping me stay organized and improve my learning efficiency. Check out StudyBuddy:";
-    
-    const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(link)}&summary=${encodeURIComponent(text)}`;
-    window.open(linkedinUrl, '_blank');
-  };
-
-  const shareViaTwitter = () => {
-    const link = generateReferralLink();
-    const text = "Found a great study platform that's been helping me stay organized and learn more effectively. Check out StudyBuddy:";
-    
-    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(link)}`;
-    window.open(twitterUrl, '_blank');
-  };
-
-  const generateQRCode = () => {
-    const link = generateReferralLink();
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(link)}`;
-    
-    const newWindow = window.open('', '_blank');
-    if (newWindow) {
-      newWindow.document.write(`
-        <html>
-          <head><title>StudyBuddy Referral QR Code</title></head>
-          <body style="display: flex; flex-direction: column; align-items: center; padding: 20px; font-family: Arial, sans-serif;">
-            <h2>Scan to Join StudyBuddy</h2>
-            <img src="${qrUrl}" alt="QR Code" style="border: 1px solid #ccc; padding: 10px; border-radius: 8px;" />
-            <p style="margin-top: 20px; text-align: center; color: #666;">
-              Share this QR code for easy mobile access
-            </p>
-          </body>
-        </html>
-      `);
+  const sharingOptions = [
+    {
+      icon: MessageCircle,
+      label: 'WhatsApp',
+      color: 'bg-green-600 hover:bg-green-700',
+      onClick: () => shareViaWhatsApp(referralStats.referralCode)
+    },
+    {
+      icon: Mail,
+      label: 'Email',
+      color: 'bg-blue-600 hover:bg-blue-700',
+      onClick: () => shareViaEmail(referralStats.referralCode)
+    },
+    {
+      icon: Linkedin,
+      label: 'LinkedIn',
+      color: 'bg-blue-700 hover:bg-blue-800',
+      onClick: () => shareViaLinkedIn(referralStats.referralCode)
+    },
+    {
+      icon: Twitter,
+      label: 'Twitter',
+      color: 'bg-sky-500 hover:bg-sky-600',
+      onClick: () => shareViaTwitter(referralStats.referralCode)
+    },
+    {
+      icon: QrCode,
+      label: 'QR Code',
+      color: 'bg-gray-600 hover:bg-gray-700',
+      onClick: () => generateQRCode(referralStats.referralCode)
     }
-  };
-
-  const referralCode = referralStats?.referralCode;
-  const isCodeLoading = !referralCode || referralCode === 'LOADING';
+  ];
 
   return (
     <Card className="border-gray-200 bg-white shadow-sm">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <Share2 className="h-6 w-6" />
+        <CardTitle className="text-2xl font-bold text-gray-900 flex items-center">
+          <Share2 className="h-6 w-6 text-mint-600 mr-3" />
           Share Your Referral Code
         </CardTitle>
-        <p className="text-gray-600">Choose how you'd like to share StudyBuddy with your friends</p>
+        <p className="text-gray-600">Invite friends and earn rewards together!</p>
       </CardHeader>
       
       <CardContent className="space-y-6">
-        {/* Referral Code Display */}
-        <div className="bg-gray-50 rounded-xl p-6 text-center border border-gray-200">
-          <div className="text-sm text-gray-700 mb-2 font-medium">Your Referral Code:</div>
-          <div className="font-mono text-2xl font-bold text-gray-900 bg-white rounded-lg py-3 px-4 border border-gray-300">
-            {isCodeLoading ? (
-              <div className="flex items-center justify-center gap-2">
-                <Loader2 className="w-5 h-5 animate-spin text-mint-500" />
-                <span className="text-lg">Loading...</span>
-              </div>
-            ) : (
-              referralCode
-            )}
+        {/* Referral Code Section */}
+        <div className="bg-mint-50 rounded-xl p-6 border border-mint-200">
+          <div className="text-center mb-4">
+            <h3 className="text-lg font-semibold text-mint-900">Your Referral Code</h3>
+            <p className="text-mint-700 text-sm">Share this code or link with friends</p>
           </div>
-          <p className="text-xs text-gray-500 mt-2">Share this code or use the sharing options below</p>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="referral-code" className="text-mint-800 font-medium">Referral Code</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  id="referral-code"
+                  value={referralStats.referralCode}
+                  readOnly
+                  className="font-mono text-center text-lg font-bold bg-white border-mint-300"
+                />
+                <Button
+                  onClick={() => copyReferralLink(referralStats.referralCode)}
+                  className="bg-mint-600 hover:bg-mint-700 text-white"
+                  size="icon"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="referral-link" className="text-mint-800 font-medium">Referral Link</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  id="referral-link"
+                  value={referralLink}
+                  readOnly
+                  className="text-sm bg-white border-mint-300"
+                />
+                <Button
+                  onClick={() => copyReferralLink(referralStats.referralCode)}
+                  className="bg-mint-600 hover:bg-mint-700 text-white"
+                  size="icon"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Sharing Options */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Button
-            onClick={() => copyReferralLink(referralCode || '')}
-            disabled={isCodeLoading}
-            className="h-20 bg-mint-600 hover:bg-mint-700 text-white flex flex-col gap-2"
-          >
-            <Copy className="h-5 w-5" />
-            <span className="text-sm">Copy Link</span>
-          </Button>
-          
-          <Button
-            onClick={shareViaEmail}
-            disabled={isCodeLoading}
-            variant="outline"
-            className="h-20 border-gray-300 text-gray-700 hover:bg-gray-50 flex flex-col gap-2"
-          >
-            <Mail className="h-5 w-5" />
-            <span className="text-sm">Email</span>
-          </Button>
-          
-          <Button
-            onClick={shareViaLinkedIn}
-            disabled={isCodeLoading}
-            variant="outline"
-            className="h-20 border-blue-300 text-blue-700 hover:bg-blue-50 flex flex-col gap-2"
-          >
-            <Linkedin className="h-5 w-5" />
-            <span className="text-sm">LinkedIn</span>
-          </Button>
-          
-          <Button
-            onClick={shareViaTwitter}
-            disabled={isCodeLoading}
-            variant="outline"
-            className="h-20 border-sky-300 text-sky-700 hover:bg-sky-50 flex flex-col gap-2"
-          >
-            <MessageCircle className="h-5 w-5" />
-            <span className="text-sm">Twitter</span>
-          </Button>
+        {/* Quick Share Options */}
+        <div>
+          <h4 className="font-semibold text-gray-900 mb-4">Quick Share Options</h4>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            {sharingOptions.map((option) => (
+              <Button
+                key={option.label}
+                onClick={option.onClick}
+                className={`${option.color} text-white flex flex-col items-center gap-2 h-auto py-4`}
+              >
+                <option.icon className="h-6 w-6" />
+                <span className="text-sm font-medium">{option.label}</span>
+              </Button>
+            ))}
+          </div>
         </div>
 
-        <div className="flex justify-center">
-          <Button
-            onClick={generateQRCode}
-            disabled={isCodeLoading}
-            variant="outline"
-            className="border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-          >
-            <QrCode className="h-5 w-5" />
-            Generate QR Code
-          </Button>
-        </div>
-
+        {/* Tips */}
         <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-          <p className="text-center text-sm text-blue-800">
-            <strong>Tip:</strong> Personal recommendations work best! Tell your friends why StudyBuddy has helped you succeed.
-          </p>
+          <h4 className="font-semibold text-blue-900 mb-2">💡 Sharing Tips</h4>
+          <ul className="text-blue-800 text-sm space-y-1">
+            <li>• Share with friends who are students or educators</li>
+            <li>• Mention the benefits they'll get by joining</li>
+            <li>• Use social media to reach more people</li>
+            <li>• QR codes work great for in-person sharing</li>
+          </ul>
         </div>
       </CardContent>
     </Card>
+  );
+};
+
+const ReferralSharingSectionLoading = () => (
+  <Card className="border-gray-200 bg-white shadow-sm">
+    <CardContent className="p-8">
+      <div className="flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-mint-500" />
+        <span className="ml-2 text-gray-600">Loading sharing options...</span>
+      </div>
+    </CardContent>
+  </Card>
+);
+
+export const ReferralSharingSection = () => {
+  return (
+    <Suspense fallback={<ReferralSharingSectionLoading />}>
+      <ReferralSharingSectionContent />
+    </Suspense>
   );
 };

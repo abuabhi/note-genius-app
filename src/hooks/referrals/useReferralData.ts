@@ -15,10 +15,17 @@ export const useReferralData = () => {
   const isLoading = statsLoading || contestsLoading || entriesLoading;
   const hasError = !!statsError;
 
-  // Don't return data if still loading to prevent suspension
-  const safeReferralStats = isLoading ? null : referralStats;
-  const safeContests = isLoading ? [] : contests;
-  const safeContestEntries = isLoading ? [] : contestEntries;
+  // Always return consistent data structure, never return null/undefined for arrays
+  const safeReferralStats = isLoading ? {
+    totalReferrals: 0,
+    completedReferrals: 0,
+    pendingReferrals: 0,
+    totalPointsEarned: 0,
+    referralCode: 'LOADING'
+  } : referralStats;
+  
+  const safeContests = contests || [];
+  const safeContestEntries = contestEntries || [];
 
   return {
     referralStats: safeReferralStats,
