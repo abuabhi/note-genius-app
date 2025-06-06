@@ -1,9 +1,13 @@
 
-import { startTransition } from 'react';
 import Layout from "@/components/layout/Layout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { Loader2 } from "lucide-react";
-import { ReferralCard } from "@/components/referrals/ReferralCard";
+import { Loader2, Gift } from "lucide-react";
+import { ReferralHeroSection } from "@/components/referrals/ReferralHeroSection";
+import { ReferralStatsSection } from "@/components/referrals/ReferralStatsSection";
+import { ReferralSharingSection } from "@/components/referrals/ReferralSharingSection";
+import { ReferralPrizesSection } from "@/components/referrals/ReferralPrizesSection";
+import { ReferralFAQSection } from "@/components/referrals/ReferralFAQSection";
+import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
 
 const ReferralsPage = () => {
   console.log('🎯 ReferralsPage component rendering');
@@ -16,7 +20,7 @@ const ReferralsPage = () => {
       <Layout>
         <div className="container mx-auto p-6 flex items-center justify-center h-[50vh]">
           <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+            <Loader2 className="h-8 w-8 animate-spin mx-auto text-mint-500" />
             <p className="mt-2 text-muted-foreground">Loading referrals...</p>
           </div>
         </div>
@@ -33,18 +37,15 @@ const ReferralsPage = () => {
   
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
-        <div className="container mx-auto p-6 space-y-8">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-mint-800 mb-4">Refer & Win</h1>
-            <p className="text-lg text-mint-700 max-w-2xl mx-auto">
-              Share StudyBuddy with your friends and earn amazing rewards! The more you refer, the more you win.
-            </p>
-          </div>
+      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-mint-100/20">
+        <div className="container mx-auto p-6 space-y-12">
+          <PageBreadcrumb pageName="Refer & Win" pageIcon={<Gift className="h-4 w-4" />} />
           
-          <div className="max-w-2xl mx-auto">
-            <ReferralCard />
-          </div>
+          <ReferralHeroSection />
+          <ReferralStatsSection />
+          <ReferralSharingSection />
+          <ReferralPrizesSection />
+          <ReferralFAQSection />
         </div>
       </div>
     </Layout>
