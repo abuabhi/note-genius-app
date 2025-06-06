@@ -34,7 +34,7 @@ export const useAdaptiveLearning = (preferences?: Partial<StudyPreferences>) => 
       const flashcardProgress = gradeProgression.map(gp => ({
         ...gp,
         grade: gp.grade || 'C',
-        mastery_level: gp.mastery_level || 0
+        mastery_level: gp.masteryLevel || 0
       }));
 
       // Generate adaptive learning paths for different subjects based on flashcard sets

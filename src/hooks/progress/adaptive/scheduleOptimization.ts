@@ -1,4 +1,3 @@
-
 import { StudySession } from '../advanced/types';
 import { 
   StudySchedule, 
@@ -75,7 +74,7 @@ function calculateOptimalTimes(sessions: StudySession[]): OptimalTimeSlot[] {
     
     acc[hour].totalAccuracy += accuracy;
     acc[hour].sessionCount += 1;
-    // Use flashcard_set_id as subject identifier since StudySession doesn't have subject
+    // Use flashcard_set_id as subject identifier from study_sessions table
     if (session.flashcard_set_id) acc[hour].subjects.add(`Set ${session.flashcard_set_id}`);
     
     return acc;
