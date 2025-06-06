@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, Users, Gift, Loader2, Crown, Target } from 'lucide-react';
+import { Trophy, Users, Target, Loader2 } from 'lucide-react';
 import { useReferralData } from '@/hooks/referrals/useReferralData';
 
 export const ReferralStatsSection = () => {
@@ -14,19 +14,11 @@ export const ReferralStatsSection = () => {
 
   if (isLoading || !referralStats) {
     return (
-      <Card className="border-mint-200 bg-gradient-to-r from-mint-50 to-white">
+      <Card className="border-gray-200 bg-white shadow-sm">
         <CardContent className="p-8">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-mint-200/50 rounded w-64 mx-auto"></div>
-            <div className="grid grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white/80 rounded-xl p-6 border border-mint-200">
-                  <div className="h-6 bg-mint-200/50 rounded w-8 mx-auto mb-3"></div>
-                  <div className="h-8 bg-mint-200/50 rounded w-12 mx-auto mb-2"></div>
-                  <div className="h-4 bg-mint-200/50 rounded w-16 mx-auto"></div>
-                </div>
-              ))}
-            </div>
+          <div className="flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-mint-500" />
+            <span className="ml-2 text-gray-600">Loading your referral stats...</span>
           </div>
         </CardContent>
       </Card>
@@ -39,83 +31,76 @@ export const ReferralStatsSection = () => {
   const isEligibleForPrize = userEntry?.is_eligible || false;
 
   return (
-    <div className="space-y-8">
-      <Card className="border-mint-200 bg-gradient-to-r from-mint-50 to-white shadow-lg">
-        <CardHeader className="text-center pb-4">
-          <CardTitle className="text-2xl font-bold text-mint-800 flex items-center justify-center gap-3">
-            <Crown className="h-6 w-6 text-yellow-600" />
-            Your Referral Kingdom
-            <Crown className="h-6 w-6 text-yellow-600" />
+    <div className="space-y-6">
+      <Card className="border-gray-200 bg-white shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold text-gray-900 text-center">
+            Your Referral Progress
           </CardTitle>
-          <p className="text-mint-600">Look at you go! Building your study empire one friend at a time! 🏰</p>
+          <p className="text-gray-600 text-center">Track your success and see your impact</p>
         </CardHeader>
         
-        <CardContent className="pb-8">
+        <CardContent>
           <div className="grid md:grid-cols-3 gap-6">
-            <div className="text-center bg-white/80 rounded-xl p-6 border border-mint-200 shadow-sm">
-              <div className="w-12 h-12 bg-mint-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <div className="text-center bg-gray-50 rounded-xl p-6">
+              <div className="w-12 h-12 bg-mint-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                 <Users className="h-6 w-6 text-mint-600" />
               </div>
-              <div className="text-3xl font-bold text-mint-800 mb-1">{referralStats.completedReferrals}</div>
-              <div className="text-sm text-mint-600 font-medium">Friends Recruited</div>
-              <div className="text-xs text-mint-500 mt-1">You're a natural! 🌟</div>
+              <div className="text-3xl font-bold text-gray-900 mb-1">{referralStats.completedReferrals}</div>
+              <div className="text-sm text-gray-600 font-medium">Successful Referrals</div>
             </div>
             
-            <div className="text-center bg-white/80 rounded-xl p-6 border border-mint-200 shadow-sm">
-              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <div className="text-center bg-gray-50 rounded-xl p-6">
+              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                 <Trophy className="h-6 w-6 text-orange-600" />
               </div>
-              <div className="text-3xl font-bold text-mint-800 mb-1">{referralStats.totalPointsEarned}</div>
-              <div className="text-sm text-mint-600 font-medium">Points Earned</div>
-              <div className="text-xs text-mint-500 mt-1">Cha-ching! 💰</div>
+              <div className="text-3xl font-bold text-gray-900 mb-1">{referralStats.totalPointsEarned}</div>
+              <div className="text-sm text-gray-600 font-medium">Points Earned</div>
             </div>
             
-            <div className="text-center bg-white/80 rounded-xl p-6 border border-mint-200 shadow-sm">
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Target className="h-6 w-6 text-purple-600" />
+            <div className="text-center bg-gray-50 rounded-xl p-6">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <Target className="h-6 w-6 text-blue-600" />
               </div>
-              <div className="text-3xl font-bold text-mint-800 mb-1">
+              <div className="text-3xl font-bold text-gray-900 mb-1">
                 {activeContest ? (userEntry?.referrals_count || 0) : 0}
               </div>
-              <div className="text-sm text-mint-600 font-medium">Contest Progress</div>
-              <div className="text-xs text-mint-500 mt-1">Keep going! 🎯</div>
+              <div className="text-sm text-gray-600 font-medium">Contest Progress</div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Contest Section */}
       {activeContest && (
-        <Card className="border-mint-200 bg-gradient-to-r from-yellow-50 to-orange-50 shadow-lg">
+        <Card className="border-orange-200 bg-orange-50/30 shadow-sm">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-xl font-bold text-orange-800 flex items-center gap-2">
-                <Gift className="h-5 w-5" />
-                🔥 {activeContest.title}
+              <CardTitle className="text-xl font-bold text-orange-900">
+                Active Contest: {activeContest.title}
               </CardTitle>
               {isEligibleForPrize && (
-                <Badge className="bg-green-600 text-white animate-pulse">
-                  🏆 You're Eligible!
+                <Badge className="bg-green-100 text-green-800 border-green-200">
+                  Eligible for Prize
                 </Badge>
               )}
             </div>
           </CardHeader>
           
           <CardContent>
-            <p className="text-orange-700 mb-4 text-lg">{activeContest.description}</p>
+            <p className="text-orange-800 mb-4">{activeContest.description}</p>
             
             {hasJoinedContest ? (
-              <div className="bg-white/60 rounded-lg p-4 border border-orange-200">
+              <div className="bg-white rounded-lg p-4 border border-orange-200">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="font-semibold text-orange-800">Your Progress:</span>
-                  <span className="text-lg font-bold text-orange-800">
+                  <span className="font-semibold text-orange-900">Progress:</span>
+                  <span className="text-lg font-bold text-orange-900">
                     {userEntry?.referrals_count || 0} / {activeContest.min_referrals_required}
                   </span>
                 </div>
                 
-                <div className="w-full bg-orange-200 rounded-full h-3 mb-2">
+                <div className="w-full bg-orange-200 rounded-full h-2 mb-2">
                   <div 
-                    className="bg-gradient-to-r from-orange-500 to-orange-600 h-3 rounded-full transition-all duration-500"
+                    className="bg-orange-500 h-2 rounded-full transition-all duration-500"
                     style={{ 
                       width: `${Math.min(((userEntry?.referrals_count || 0) / activeContest.min_referrals_required) * 100, 100)}%` 
                     }}
@@ -123,15 +108,14 @@ export const ReferralStatsSection = () => {
                 </div>
                 
                 {!isEligibleForPrize && (
-                  <p className="text-sm text-orange-600">
-                    🎯 Just {activeContest.min_referrals_required - (userEntry?.referrals_count || 0)} more referrals to win!
+                  <p className="text-sm text-orange-700">
+                    {activeContest.min_referrals_required - (userEntry?.referrals_count || 0)} more referrals needed to win
                   </p>
                 )}
               </div>
             ) : (
-              <div className="text-center">
-                <p className="text-orange-600 mb-4">🚀 Ready to compete for amazing prizes?</p>
-                <p className="text-sm text-orange-500">Join the contest to start tracking your progress!</p>
+              <div className="text-center bg-white rounded-lg p-4 border border-orange-200">
+                <p className="text-orange-700">Join this contest to start competing for amazing prizes!</p>
               </div>
             )}
           </CardContent>

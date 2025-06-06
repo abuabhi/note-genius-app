@@ -6,39 +6,39 @@ import { HelpCircle } from 'lucide-react';
 export const ReferralFAQSection = () => {
   const faqs = [
     {
-      question: "How does the referral program work? 🤔",
-      answer: "It's super simple! Share your unique referral code with friends. When they sign up and complete their onboarding, you both get rewards! They get a great study platform, you get points and prizes. Everyone wins! 🎉"
+      question: "How does the referral program work?",
+      answer: "Share your unique referral code with friends. When they sign up using your code and complete their onboarding, you both receive rewards. It's that simple!"
     },
     {
-      question: "When do I get my rewards? ⏰",
-      answer: "Rewards are automatically added to your account within 24 hours of your friend completing their onboarding. No waiting around, no manual claims - we've got you covered! ⚡"
+      question: "When do I receive my rewards?",
+      answer: "Rewards are automatically added to your account within 24 hours of your friend completing their onboarding process. No manual claims needed."
     },
     {
-      question: "Is there a limit to how many friends I can refer? 🚀",
-      answer: "Absolutely not! The sky's the limit! Refer 5 friends, 50 friends, or 500 friends - we love the enthusiasm! The more you refer, the more legendary rewards you unlock. Go wild! 🌟"
+      question: "Is there a limit to how many people I can refer?",
+      answer: "No limits! You can refer as many friends as you'd like. The more successful referrals you make, the more rewards you'll earn."
     },
     {
-      question: "What if my friend doesn't use my code? 😅",
-      answer: "No worries! As long as they mention your username during signup or within their first week, our team can manually link the referral. Just drop us a message with both usernames and we'll sort it out! 🛠️"
+      question: "What if my friend forgets to use my referral code?",
+      answer: "If they mention your username during signup or within their first week, our support team can manually link the referral. Just contact us with both usernames."
     },
     {
-      question: "Can I refer family members? 👨‍👩‍👧‍👦",
-      answer: "Of course! Family, friends, study buddies, that random person you met at the coffee shop who mentioned studying - everyone's welcome! Just make sure they're genuine users who'll actually use StudyBuddy. 📚"
+      question: "Can I refer family members?",
+      answer: "Absolutely! Family members, friends, classmates, or anyone who would benefit from StudyBuddy is welcome. Just ensure they're genuine users."
     },
     {
-      question: "Do referral points expire? 📅",
-      answer: "Never! Your points are yours forever. Think of them as your study legacy - they'll be there whenever you want to redeem them for awesome rewards! 💎"
+      question: "Do my referral points expire?",
+      answer: "Never! Your referral points are permanent and will remain in your account indefinitely. You can redeem them whenever you choose."
     }
   ];
 
   return (
-    <Card className="border-mint-200 bg-gradient-to-br from-mint-50 to-white shadow-lg">
+    <Card className="border-gray-200 bg-white shadow-sm">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-bold text-mint-800 flex items-center justify-center gap-2">
+        <CardTitle className="text-2xl font-bold text-gray-900 flex items-center justify-center gap-2">
           <HelpCircle className="h-6 w-6" />
-          Got Questions? We've Got Answers! 💡
+          Frequently Asked Questions
         </CardTitle>
-        <p className="text-mint-600">Everything you need to know about becoming a referral rockstar!</p>
+        <p className="text-gray-600">Everything you need to know about our referral program</p>
       </CardHeader>
       
       <CardContent>
@@ -47,24 +47,23 @@ export const ReferralFAQSection = () => {
             <AccordionItem 
               key={index} 
               value={`item-${index}`}
-              className="bg-white/60 rounded-lg border border-mint-200 px-4"
+              className="bg-gray-50 rounded-lg border border-gray-200 px-4"
             >
-              <AccordionTrigger className="text-left font-medium text-mint-800 hover:text-mint-900">
+              <AccordionTrigger className="text-left font-medium text-gray-900 hover:text-gray-700 [&[data-state=open]>svg]:rotate-180">
                 {faq.question}
               </AccordionTrigger>
-              <AccordionContent className="text-mint-700 pb-4">
+              <AccordionContent className="text-gray-700 pb-4">
                 {faq.answer}
               </AccordionContent>
             </AccordionItem>
           ))}
         </Accordion>
         
-        <div className="mt-8 bg-mint-100/50 rounded-lg p-6 border border-mint-200 text-center">
-          <h3 className="text-lg font-semibold text-mint-800 mb-2">Still have questions? 🤷‍♀️</h3>
-          <p className="text-mint-600">
-            We're here to help! Reach out to our friendly support team and we'll get you sorted faster than you can say "referral bonus"! 
+        <div className="mt-8 bg-mint-50 rounded-lg p-6 border border-mint-200 text-center">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Still have questions?</h3>
+          <p className="text-gray-700">
+            Our support team is here to help! Contact us and we'll get back to you promptly.
           </p>
-          <div className="mt-3 text-2xl">📧✨</div>
         </div>
       </CardContent>
     </Card>

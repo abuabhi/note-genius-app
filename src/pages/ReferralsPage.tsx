@@ -21,7 +21,7 @@ const ReferralsPage = () => {
         <div className="container mx-auto p-6 flex items-center justify-center h-[50vh]">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto text-mint-500" />
-            <p className="mt-2 text-muted-foreground">Loading referrals...</p>
+            <p className="mt-2 text-gray-600">Loading referrals...</p>
           </div>
         </div>
       </Layout>
@@ -37,8 +37,8 @@ const ReferralsPage = () => {
   
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-mint-100/20">
-        <div className="container mx-auto p-6 space-y-12">
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto p-6 space-y-8">
           <PageBreadcrumb pageName="Refer & Win" pageIcon={<Gift className="h-4 w-4" />} />
           
           <ReferralHeroSection />

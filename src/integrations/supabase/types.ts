@@ -745,6 +745,7 @@ export type Database = {
           id: string
           notification_preferences: Json | null
           onboarding_completed: boolean | null
+          referral_code: string | null
           school: string | null
           updated_at: string | null
           user_tier: Database["public"]["Enums"]["user_tier"]
@@ -764,6 +765,7 @@ export type Database = {
           id: string
           notification_preferences?: Json | null
           onboarding_completed?: boolean | null
+          referral_code?: string | null
           school?: string | null
           updated_at?: string | null
           user_tier?: Database["public"]["Enums"]["user_tier"]
@@ -783,6 +785,7 @@ export type Database = {
           id?: string
           notification_preferences?: Json | null
           onboarding_completed?: boolean | null
+          referral_code?: string | null
           school?: string | null
           updated_at?: string | null
           user_tier?: Database["public"]["Enums"]["user_tier"]
