@@ -54,8 +54,13 @@ export const useAdvancedAnalytics = () => {
       console.log('All user sessions for comparison:', allSessions.length);
       console.log('User goals:', goals.length);
 
-      // Only calculate analytics if we have sufficient data
-      const hasMinimumData = sessions.length > 0 || (overviewStats && overviewStats.totalSessions > 0);
+      // Check if user has meaningful study data
+      const hasMinimumData = sessions.length > 0 || 
+                            (overviewStats && (
+                              overviewStats.todaysCardsReviewed > 0 || 
+                              overviewStats.weeklyStudyTime > 0 || 
+                              overviewStats.totalCardsMastered > 0
+                            ));
 
       if (!hasMinimumData) {
         console.log('Insufficient data for analytics, returning defaults');
