@@ -10,6 +10,7 @@ import { QuizHeader } from "./components/QuizHeader";
 import { StudySessionTracker } from "./StudySessionTracker";
 import { StudySessionManager } from "./components/StudySessionManager";
 import { StudyLoadingState, StudyErrorState, StudyEmptyState, StudyCompletionState } from "./components/StudyStates";
+import { useState } from "react";
 
 interface SimplifiedFlashcardStudyProps {
   setId: string;
@@ -19,6 +20,7 @@ interface SimplifiedFlashcardStudyProps {
 
 export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: SimplifiedFlashcardStudyProps) => {
   const { userProfile } = useRequireAuth();
+  const [hasUserStartedStudying, setHasUserStartedStudying] = useState(false);
 
   const handleRestart = () => {
     window.location.reload();
@@ -26,6 +28,12 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
 
   const handleBackToSets = () => {
     window.history.back();
+  };
+
+  const handleFirstStudyAction = () => {
+    if (!hasUserStartedStudying) {
+      setHasUserStartedStudying(true);
+    }
   };
 
   return (
@@ -96,6 +104,27 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
           );
         }
 
+        // Enhanced handlers that trigger session start
+        const enhancedHandleFlip = () => {
+          handleFirstStudyAction();
+          handleFlip();
+        };
+
+        const enhancedHandleCorrect = () => {
+          handleFirstStudyAction();
+          handleCorrectAnswer();
+        };
+
+        const enhancedHandleIncorrect = () => {
+          handleFirstStudyAction();
+          handleIncorrectAnswer();
+        };
+
+        const enhancedHandleNext = () => {
+          handleFirstStudyAction();
+          handleNext();
+        };
+
         return (
           <div className="max-w-4xl mx-auto space-y-6">
             {/* Study Session Tracker - only show during active study */}
@@ -110,6 +139,7 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
                 onSessionEnd={() => {
                   console.log("Study session ended");
                 }}
+                triggerStudyActivity={hasUserStartedStudying}
               />
             )}
 
@@ -129,7 +159,7 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
               isFlipped={isFlipped}
               currentIndex={currentIndex}
               totalCards={totalCards}
-              onFlip={handleFlip}
+              onFlip={enhancedHandleFlip}
             />
 
             {/* Controls */}
@@ -139,8 +169,8 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
                 currentIndex={currentIndex}
                 totalCards={totalCards}
                 onPrevious={handlePrevious}
-                onNext={handleNext}
-                onFlip={handleFlip}
+                onNext={enhancedHandleNext}
+                onFlip={enhancedHandleFlip}
                 isQuizMode={isQuizMode}
               />
 
@@ -148,8 +178,8 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
               <StudyChoices
                 isFlipped={isFlipped}
                 isQuizMode={isQuizMode}
-                onCorrect={handleCorrectAnswer}
-                onIncorrect={handleIncorrectAnswer}
+                onCorrect={enhancedHandleCorrect}
+                onIncorrect={enhancedHandleIncorrect}
               />
 
               {/* Mode hint */}

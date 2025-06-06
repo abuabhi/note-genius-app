@@ -1,5 +1,4 @@
 
-import { useEffect } from 'react';
 import { EnhancedStudySessionTracker } from './EnhancedStudySessionTracker';
 
 interface StudySessionTrackerProps {
@@ -9,6 +8,7 @@ interface StudySessionTrackerProps {
   correctAnswers?: number;
   onSessionStart?: () => void;
   onSessionEnd?: () => void;
+  triggerStudyActivity?: boolean; // New prop to control when session starts
 }
 
 export const StudySessionTracker = ({ 
@@ -17,7 +17,8 @@ export const StudySessionTracker = ({
   cardsStudied,
   correctAnswers = 0,
   onSessionStart,
-  onSessionEnd 
+  onSessionEnd,
+  triggerStudyActivity = false
 }: StudySessionTrackerProps) => {
   // Use the enhanced tracker for flashcard activities with adaptive learning integration
   return (
@@ -30,6 +31,7 @@ export const StudySessionTracker = ({
       correctAnswers={correctAnswers}
       onSessionStart={onSessionStart}
       onSessionEnd={onSessionEnd}
+      triggerStudyActivity={triggerStudyActivity}
     />
   );
 };

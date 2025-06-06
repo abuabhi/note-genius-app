@@ -19,6 +19,7 @@ interface EnhancedStudySessionTrackerProps {
   totalQuestions?: number;
   onSessionStart?: () => void;
   onSessionEnd?: () => void;
+  triggerStudyActivity?: boolean; // New prop to trigger session start
 }
 
 export const EnhancedStudySessionTracker = ({
@@ -31,7 +32,8 @@ export const EnhancedStudySessionTracker = ({
   quizScore = 0,
   totalQuestions = 0,
   onSessionStart,
-  onSessionEnd
+  onSessionEnd,
+  triggerStudyActivity = false
 }: EnhancedStudySessionTrackerProps) => {
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
   const [adaptationsApplied, setAdaptationsApplied] = useState<any[]>([]);
@@ -39,8 +41,9 @@ export const EnhancedStudySessionTracker = ({
   const {
     currentSession,
     isSessionActive,
+    hasStartedStudying,
     updateSessionWithPerformance,
-    recordActivity
+    recordStudyActivity
   } = useAutoSessionManager({
     activityType,
     resourceId,
@@ -52,6 +55,17 @@ export const EnhancedStudySessionTracker = ({
     createLearningPathFromActivity,
     updateLearningPathProgress
   } = useAdaptiveLearningIntegration();
+
+  // Trigger session start when study activity begins
+  useEffect(() => {
+    if (triggerStudyActivity && !hasStartedStudying) {
+      recordStudyActivity({
+        initial_activity: true,
+        activity_type: activityType,
+        resource_id: resourceId
+      });
+    }
+  }, [triggerStudyActivity, hasStartedStudying, recordStudyActivity, activityType, resourceId]);
 
   // Set session start time when session becomes active
   useEffect(() => {
@@ -80,7 +94,7 @@ export const EnhancedStudySessionTracker = ({
 
   // Update session performance when metrics change
   useEffect(() => {
-    if (isSessionActive && currentSession) {
+    if (isSessionActive && currentSession && (cardsStudied > 0 || totalQuestions > 0)) {
       updateSessionWithPerformance({
         cards_reviewed: cardsStudied,
         cards_correct: correctAnswers,
@@ -89,7 +103,7 @@ export const EnhancedStudySessionTracker = ({
       });
 
       // Record activity to reset inactivity timer
-      recordActivity({
+      recordStudyActivity({
         cards_studied: cardsStudied,
         correct_answers: correctAnswers,
         quiz_score: quizScore,
@@ -110,18 +124,19 @@ export const EnhancedStudySessionTracker = ({
         });
       }
     }
-  }, [cardsStudied, correctAnswers, quizScore, totalQuestions, isSessionActive, currentSession, updateSessionWithPerformance, recordActivity, updateLearningPathProgress, subject, sessionStartTime]);
+  }, [cardsStudied, correctAnswers, quizScore, totalQuestions, isSessionActive, currentSession, updateSessionWithPerformance, recordStudyActivity, updateLearningPathProgress, subject, sessionStartTime]);
 
   const handleAdaptationAccepted = (adaptation: any) => {
     setAdaptationsApplied(prev => [...prev, adaptation]);
     
     // Record the adaptation acceptance
-    recordActivity({
+    recordStudyActivity({
       adaptation_applied: adaptation,
       timestamp: new Date().toISOString()
     });
   };
 
+  // Don't show tracker until session is actually active
   if (!currentSession || !isSessionActive) {
     return null;
   }
@@ -131,7 +146,6 @@ export const EnhancedStudySessionTracker = ({
 
   const accuracy = cardsStudied > 0 ? Math.round((correctAnswers / cardsStudied) * 100) : 0;
   const quizAccuracy = totalQuestions > 0 ? Math.round((quizScore / totalQuestions) * 100) : 0;
-  const timeSpentSeconds = sessionStartTime ? (Date.now() - sessionStartTime.getTime()) / 1000 : 0;
 
   const getActivityIcon = () => {
     switch (activityType) {
@@ -236,7 +250,7 @@ export const EnhancedStudySessionTracker = ({
         sessionData={{
           subject,
           accuracy: cardsStudied > 0 ? accuracy / 100 : 0,
-          timeSpent: timeSpentSeconds,
+          timeSpent: sessionStartTime ? (Date.now() - sessionStartTime.getTime()) / 1000 : 0,
           cardsReviewed: cardsStudied,
           isActive: isSessionActive
         }}

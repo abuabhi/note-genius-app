@@ -23,15 +23,16 @@ interface SessionPerformanceUpdate {
 export const useAutoSessionManager = (config: AutoSessionConfig) => {
   const [currentSession, setCurrentSession] = useState<any>(null);
   const [isSessionActive, setIsSessionActive] = useState(false);
-  const [lastActivityTime, setLastActivityTime] = useState<Date>(new Date());
+  const [lastActivityTime, setLastActivityTime] = useState<Date | null>(null);
+  const [hasStartedStudying, setHasStartedStudying] = useState(false);
   
   const { user } = useAuth();
   const { createAutoSession, updateSessionPerformance, endSession } = useEnhancedStudySessions();
   const { adaptiveLearningInsights } = useAdaptiveLearning();
 
-  // Auto-create session when component mounts with activity
-  const initializeSession = useCallback(async () => {
-    if (!user || isSessionActive) return;
+  // Create session only when study activity actually begins
+  const startStudySession = useCallback(async () => {
+    if (!user || isSessionActive || hasStartedStudying) return;
 
     try {
       const sessionTitle = `${config.activityType.charAt(0).toUpperCase() + config.activityType.slice(1)} Session: ${config.resourceName || 'Study'}`;
@@ -46,12 +47,13 @@ export const useAutoSessionManager = (config: AutoSessionConfig) => {
       setCurrentSession(result);
       setIsSessionActive(true);
       setLastActivityTime(new Date());
+      setHasStartedStudying(true);
       
-      console.log('Auto-created study session:', result.id);
+      console.log('Auto-created study session on first study action:', result.id);
     } catch (error) {
       console.error('Failed to create auto session:', error);
     }
-  }, [user, config, isSessionActive, createAutoSession]);
+  }, [user, config, isSessionActive, hasStartedStudying, createAutoSession]);
 
   // Update session performance data
   const updateSessionWithPerformance = useCallback(async (performanceData: SessionPerformanceUpdate) => {
@@ -69,22 +71,27 @@ export const useAutoSessionManager = (config: AutoSessionConfig) => {
     }
   }, [currentSession, isSessionActive, updateSessionPerformance]);
 
-  // Record activity to reset inactivity timer
-  const recordActivity = useCallback((activityData?: Record<string, any>) => {
+  // Record study activity - this triggers session creation on first call
+  const recordStudyActivity = useCallback(async (activityData?: Record<string, any>) => {
+    // Start session on first study activity
+    if (!hasStartedStudying && !isSessionActive) {
+      await startStudySession();
+    }
+    
     setLastActivityTime(new Date());
     
     // Log activity for adaptive learning analysis
-    console.log('Activity recorded:', {
+    console.log('Study activity recorded:', {
       sessionId: currentSession?.id,
       activityType: config.activityType,
       timestamp: new Date().toISOString(),
       data: activityData
     });
-  }, [currentSession, config.activityType]);
+  }, [hasStartedStudying, isSessionActive, startStudySession, currentSession, config.activityType]);
 
   // Auto-end session after inactivity
   useEffect(() => {
-    if (!isSessionActive || !currentSession) return;
+    if (!isSessionActive || !currentSession || !lastActivityTime) return;
 
     const inactivityTimer = setInterval(() => {
       const timeSinceLastActivity = Date.now() - lastActivityTime.getTime();
@@ -95,18 +102,12 @@ export const useAutoSessionManager = (config: AutoSessionConfig) => {
         endSession.mutate(currentSession.id);
         setIsSessionActive(false);
         setCurrentSession(null);
+        setHasStartedStudying(false);
       }
     }, 60000); // Check every minute
 
     return () => clearInterval(inactivityTimer);
   }, [isSessionActive, currentSession, lastActivityTime, endSession]);
-
-  // Initialize session on mount
-  useEffect(() => {
-    if (user && !isSessionActive) {
-      initializeSession();
-    }
-  }, [user, initializeSession, isSessionActive]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -120,14 +121,16 @@ export const useAutoSessionManager = (config: AutoSessionConfig) => {
   return {
     currentSession,
     isSessionActive,
-    initializeSession,
+    hasStartedStudying,
+    startStudySession,
     updateSessionWithPerformance,
-    recordActivity,
+    recordStudyActivity,
     endSessionManually: () => {
       if (currentSession) {
         endSession.mutate(currentSession.id);
         setIsSessionActive(false);
         setCurrentSession(null);
+        setHasStartedStudying(false);
       }
     }
   };

@@ -2,14 +2,19 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { 
   Clock, 
   Brain, 
   Target, 
   Calendar,
   TrendingUp, 
-  Award
+  Award,
+  BookOpen,
+  Activity,
+  FileText
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useDashboardAnalytics } from "@/hooks/useDashboardAnalytics";
 
 export const LearningAnalyticsDashboard = () => {
@@ -124,6 +129,42 @@ export const LearningAnalyticsDashboard = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Quick Study Actions */}
+        <div className="mt-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-3">Quick Study Actions</h3>
+          <div className="grid gap-4 md:grid-cols-3">
+            <Button asChild className="h-auto p-4 bg-mint-600 hover:bg-mint-700">
+              <Link to="/flashcards" className="flex flex-col items-center gap-2">
+                <BookOpen className="h-6 w-6" />
+                <div className="text-center">
+                  <div className="font-semibold">Study Flashcards</div>
+                  <div className="text-xs opacity-90">Review and learn with spaced repetition</div>
+                </div>
+              </Link>
+            </Button>
+
+            <Button asChild variant="outline" className="h-auto p-4 border-mint-600 text-mint-700 hover:bg-mint-50">
+              <Link to="/quizzes" className="flex flex-col items-center gap-2">
+                <Activity className="h-6 w-6" />
+                <div className="text-center">
+                  <div className="font-semibold">Take Quiz</div>
+                  <div className="text-xs opacity-90">Test your knowledge with timed quizzes</div>
+                </div>
+              </Link>
+            </Button>
+
+            <Button asChild variant="outline" className="h-auto p-4 border-mint-600 text-mint-700 hover:bg-mint-50">
+              <Link to="/notes" className="flex flex-col items-center gap-2">
+                <FileText className="h-6 w-6" />
+                <div className="text-center">
+                  <div className="font-semibold">Review Notes</div>
+                  <div className="text-xs opacity-90">Create and review your study notes</div>
+                </div>
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
     </div>
