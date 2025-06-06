@@ -8,6 +8,7 @@ import { LearningAnalyticsDashboard } from "@/components/dashboard/LearningAnaly
 import { TodaysFocusSection } from "@/components/dashboard/TodaysFocusSection";
 import { RecentActivityTimeline } from "@/components/dashboard/RecentActivityTimeline";
 import { EnhancedQuickActionsGrid } from "@/components/dashboard/EnhancedQuickActionsGrid";
+import { ReferralSignupHandler } from "@/components/referrals/ReferralSignupHandler";
 
 const DashboardPage = () => {
   console.log('🏠 DashboardPage component rendering');
@@ -63,9 +64,10 @@ const DashboardPage = () => {
   
   return (
     <Layout>
+      <ReferralSignupHandler />
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
         <div className="container mx-auto p-6 space-y-8">
-          {/* Hero Section - Daily Overview */}
+          {/* Hero Section - Daily Overview and Referral Card */}
           <div>
             <DashboardHeroSection />
           </div>

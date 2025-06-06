@@ -81,6 +81,76 @@ export const useAchievements = () => {
     }
   };
 
+  const checkReferralAchievements = async () => {
+    if (!user) return;
+
+    try {
+      // Get user's referral count
+      const { data: referrals } = await supabase
+        .from('referrals')
+        .select('id')
+        .eq('referrer_id', user.id)
+        .eq('status', 'completed');
+
+      const referralCount = referrals?.length || 0;
+
+      // Check for referral achievements
+      const achievementsToCheck = [
+        { count: 1, title: 'First Referral' },
+        { count: 5, title: 'Referral Master' },
+        { count: 10, title: 'Campus Ambassador' },
+        { count: 25, title: 'Viral Champion' }
+      ];
+
+      for (const achievement of achievementsToCheck) {
+        if (referralCount >= achievement.count) {
+          // Check if user already has this achievement
+          const { data: existing } = await supabase
+            .from('study_achievements')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('title', achievement.title)
+            .single();
+
+          if (!existing) {
+            // Award the achievement
+            const { data: template } = await supabase
+              .from('study_achievements')
+              .select('*')
+              .eq('title', achievement.title)
+              .is('user_id', null)
+              .single();
+
+            if (template) {
+              await supabase
+                .from('study_achievements')
+                .insert({
+                  user_id: user.id,
+                  title: template.title,
+                  description: template.description,
+                  type: template.type,
+                  achieved_at: new Date().toISOString(),
+                  points: template.points,
+                  badge_image: template.badge_image
+                });
+
+              toast({
+                title: "🎉 Achievement Unlocked!",
+                description: `You've earned: ${achievement.title}`,
+                duration: 5000,
+              });
+            }
+          }
+        }
+      }
+
+      // Refresh achievements list
+      await fetchUserAchievements();
+    } catch (error) {
+      console.error('Error checking referral achievements:', error);
+    }
+  };
+
   useEffect(() => {
     fetchUserAchievements();
   }, [user]);
@@ -89,6 +159,7 @@ export const useAchievements = () => {
     achievements,
     loading,
     fetchUserAchievements,
-    checkAndAwardAchievements
+    checkAndAwardAchievements,
+    checkReferralAchievements
   };
 };
