@@ -44,9 +44,13 @@ export const GoalsSection = () => {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  const getProgressPercentage = (goal: any) => {
+  const getCurrentHours = (goal: any) => {
     if (!goal.target_hours || goal.target_hours <= 0) return 0;
-    return Math.min(Math.round((goal.current_hours / goal.target_hours) * 100), 100);
+    return Math.round((goal.progress / 100) * goal.target_hours * 100) / 100;
+  };
+
+  const getProgressPercentage = (goal: any) => {
+    return Math.min(goal.progress || 0, 100);
   };
 
   const getGoalStatus = (goal: any) => {
@@ -109,6 +113,7 @@ export const GoalsSection = () => {
       <CardContent className="space-y-4">
         <div className="space-y-4">
           {goals.map((goal) => {
+            const currentHours = getCurrentHours(goal);
             const progress = getProgressPercentage(goal);
             const status = getGoalStatus(goal);
             
@@ -129,17 +134,17 @@ export const GoalsSection = () => {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">
-                      {goal.current_hours}h / {goal.target_hours}h
+                      {currentHours}h / {goal.target_hours}h
                     </span>
                     <span className="font-medium text-gray-900">{progress}%</span>
                   </div>
                   <Progress value={progress} className="h-2" />
                 </div>
 
-                {goal.target_date && (
+                {goal.end_date && (
                   <div className="flex items-center gap-1 mt-2 text-xs text-gray-500">
                     <Calendar className="h-3 w-3" />
-                    Target: {formatDistanceToNow(parseISO(goal.target_date), { addSuffix: true })}
+                    Target: {formatDistanceToNow(parseISO(goal.end_date), { addSuffix: true })}
                   </div>
                 )}
               </div>
