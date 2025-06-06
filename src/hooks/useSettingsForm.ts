@@ -29,6 +29,25 @@ export const useSettingsForm = () => {
       language: "en",
       countryId: "",
       weeklyStudyGoalHours: 5,
+      // Adaptive Learning defaults
+      adaptiveDifficulty: "adaptive",
+      studyStyle: "distributed", 
+      preferredSessionLength: 45,
+      maxDailyStudyTime: 180,
+      breakFrequency: "moderate",
+      adaptationSensitivity: "normal",
+      enableRealTimeAdaptations: true,
+      enableLearningPaths: true,
+      // Notification defaults
+      emailNotifications: true,
+      inAppNotifications: true,
+      adaptiveNotifications: true,
+      studySessionReminders: true,
+      goalDeadlineReminders: true,
+      reminderFrequency: "15min",
+      quietHoursEnabled: false,
+      quietHoursStart: "22:00",
+      quietHoursEnd: "08:00",
     },
     mode: "onBlur",
   });
@@ -50,7 +69,7 @@ export const useSettingsForm = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('weekly_study_goal_hours')
+          .select('weekly_study_goal_hours, notification_preferences')
           .eq('id', user.id)
           .single();
         
@@ -58,6 +77,17 @@ export const useSettingsForm = () => {
         
         if (data) {
           form.setValue("weeklyStudyGoalHours", data.weekly_study_goal_hours || 5);
+          
+          // Load notification preferences if they exist
+          if (data.notification_preferences) {
+            const notifPrefs = typeof data.notification_preferences === 'string' 
+              ? JSON.parse(data.notification_preferences) 
+              : data.notification_preferences;
+            
+            form.setValue("emailNotifications", notifPrefs.email ?? true);
+            form.setValue("inAppNotifications", notifPrefs.in_app ?? true);
+            form.setValue("adaptiveNotifications", notifPrefs.adaptive ?? true);
+          }
         }
       } catch (error) {
         console.error("Error fetching user preferences:", error);
@@ -93,12 +123,38 @@ export const useSettingsForm = () => {
         }
       }
       
-      // Save study preferences to user profile
+      // Save preferences to user profile
       if (user) {
+        const notificationPreferences = {
+          email: data.emailNotifications,
+          in_app: data.inAppNotifications,
+          adaptive: data.adaptiveNotifications,
+          study_session_reminders: data.studySessionReminders,
+          goal_deadline_reminders: data.goalDeadlineReminders,
+          reminder_frequency: data.reminderFrequency,
+          quiet_hours_enabled: data.quietHoursEnabled,
+          quiet_hours_start: data.quietHoursStart,
+          quiet_hours_end: data.quietHoursEnd,
+        };
+
+        const adaptiveLearningPreferences = {
+          difficulty: data.adaptiveDifficulty,
+          study_style: data.studyStyle,
+          session_length: data.preferredSessionLength,
+          max_daily_time: data.maxDailyStudyTime,
+          break_frequency: data.breakFrequency,
+          adaptation_sensitivity: data.adaptationSensitivity,
+          real_time_adaptations: data.enableRealTimeAdaptations,
+          learning_paths: data.enableLearningPaths,
+        };
+
         const { error } = await supabase
           .from('profiles')
           .update({
-            weekly_study_goal_hours: data.weeklyStudyGoalHours
+            weekly_study_goal_hours: data.weeklyStudyGoalHours,
+            notification_preferences: notificationPreferences,
+            // Store adaptive learning preferences in a JSONB column
+            adaptive_learning_preferences: adaptiveLearningPreferences
           })
           .eq('id', user.id);
           
