@@ -44,9 +44,9 @@ export const AnnouncementItem = ({
     ? announcement.compact_text
     : announcement.content;
 
-  const textAlignClass = announcement.text_align === 'left' ? 'text-left' : 
-                        announcement.text_align === 'right' ? 'text-right' : 
-                        'text-center';
+  const textAlignValue = announcement.text_align === 'left' ? 'left' : 
+                        announcement.text_align === 'right' ? 'right' : 
+                        'center';
 
   return (
     <motion.div
@@ -64,11 +64,10 @@ export const AnnouncementItem = ({
       onTouchMove={isMobile ? onTouchMove : undefined}
       onTouchEnd={isMobile ? onTouchEnd : undefined}
     >
-      <div className={`px-4 py-3 ${isMobile ? 'text-sm' : 'text-base'} ${textAlignClass} flex items-center`}>
-        <div className={`flex items-center justify-between gap-3 w-full ${isMobile ? 'flex-col' : 'flex-row'}`}>
-          <div className={`flex-1 ${isMobile ? 'w-full' : ''}`}>
-            <div className={`flex items-center gap-2 ${isMobile ? 'flex-col' : 'flex-row'} ${textAlignClass}`}>
-              {/* Title removed as it's only for admin reference */}
+      <div className={`px-4 py-3 ${isMobile ? 'text-sm' : 'text-base'} flex items-center justify-center min-h-[60px]`}>
+        <div className={`flex items-center justify-between gap-3 w-full max-w-7xl ${isMobile ? 'flex-col' : 'flex-row'}`}>
+          <div className={`flex-1 ${isMobile ? 'w-full' : ''} flex items-center justify-center`}>
+            <div className={`flex items-center gap-2 ${isMobile ? 'flex-col' : 'flex-row'}`}>
               {isMobile && announcement.mobile_layout === 'compact' && announcement.compact_text && (
                 <Button
                   variant="ghost"
@@ -80,12 +79,13 @@ export const AnnouncementItem = ({
                 </Button>
               )}
             </div>
-            <div className={`mt-1 ${isMobile ? 'text-xs' : 'text-sm'} opacity-90`}>
+            <div className={`${isMobile ? 'text-xs' : 'text-sm'} flex-1`}>
               <RichTextDisplay 
                 content={displayText}
                 removeTitle={true}
-                textAlign={announcement.text_align as any || 'center'}
-                className="text-current"
+                textAlign={textAlignValue as any}
+                className="text-current [&_*]:text-current [&_mark]:bg-yellow-200 [&_mark]:text-gray-900 [&_mark]:px-1 [&_mark]:rounded"
+                fontSize={isMobile ? 14 : 16}
               />
             </div>
           </div>
