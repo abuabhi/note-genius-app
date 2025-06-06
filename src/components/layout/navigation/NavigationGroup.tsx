@@ -8,6 +8,8 @@ export interface NavigationItemType {
   title: string;
   href: string;
   icon: any;
+  isNew?: boolean;
+  isAnimated?: boolean;
 }
 
 interface NavigationGroupProps {
@@ -38,6 +40,8 @@ export const NavigationGroup = ({ id, title, items, isOpen }: NavigationGroupPro
                   path={item.href}
                   icon={item.icon}
                   isActive={isActive}
+                  isNew={item.isNew}
+                  isAnimated={item.isAnimated}
                 />
               );
             })}

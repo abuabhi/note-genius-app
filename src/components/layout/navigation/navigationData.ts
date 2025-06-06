@@ -1,3 +1,4 @@
+
 import { 
   Home, 
   BookOpen, 
@@ -13,7 +14,8 @@ import {
   Bell,
   Shield,
   Upload,
-  Database
+  Database,
+  Gift
 } from "lucide-react";
 
 export interface NavigationItem {
@@ -24,6 +26,7 @@ export interface NavigationItem {
   description?: string;
   badge?: string;
   isNew?: boolean;
+  isAnimated?: boolean;
 }
 
 export interface NavigationGroup {
@@ -98,6 +101,21 @@ export const navigationData: NavigationGroup[] = [
         href: "/reminders",
         icon: Bell,
         description: "Manage study reminders"
+      }
+    ]
+  },
+  {
+    id: "rewards",
+    title: "Rewards",
+    items: [
+      {
+        id: "referrals",
+        title: "Refer & Win",
+        href: "/referrals",
+        icon: Gift,
+        description: "Refer friends and earn rewards",
+        isNew: true,
+        isAnimated: true
       }
     ]
   },

@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,7 +9,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { useNavigationFeatures } from "@/components/ui/sidebar/hooks/useNavigationFeatures";
-import { ReferralCard } from "@/components/referrals/ReferralCard";
 
 export const DashboardHeroSection = () => {
   const { todaysActivity, currentStreak, weeklyComparison, isLoading } = useDashboardAnalytics();
@@ -58,9 +56,6 @@ export const DashboardHeroSection = () => {
             </div>
           </CardContent>
         </Card>
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div className="h-48 bg-gray-100 rounded-lg animate-pulse"></div>
-        </div>
       </div>
     );
   }
@@ -186,11 +181,6 @@ export const DashboardHeroSection = () => {
           </div>
         </CardContent>
       </Card>
-
-      {/* Referral Card */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <ReferralCard />
-      </div>
     </div>
   );
 };

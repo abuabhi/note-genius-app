@@ -1,4 +1,3 @@
-
 import Layout from "@/components/layout/Layout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Loader2 } from "lucide-react";
@@ -67,7 +66,7 @@ const DashboardPage = () => {
       <ReferralSignupHandler />
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
         <div className="container mx-auto p-6 space-y-8">
-          {/* Hero Section - Daily Overview and Referral Card */}
+          {/* Hero Section - Daily Overview */}
           <div>
             <DashboardHeroSection />
           </div>
