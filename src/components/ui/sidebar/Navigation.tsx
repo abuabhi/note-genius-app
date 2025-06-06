@@ -18,9 +18,7 @@ import {
   CheckSquare, 
   BarChart3, 
   Clock,
-  Gift,
-  Users,
-  Calendar
+  Gift
 } from "lucide-react";
 
 interface NavigationProps {
@@ -44,7 +42,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
           <div className="flex grow flex-col gap-4">
             <ScrollArea className="h-full grow p-2">
               <div className={cn("flex w-full flex-col gap-1")}>
-                {/* Main Navigation */}
+                {/* Dashboard */}
                 <NavLink
                   to="/dashboard"
                   icon={LayoutDashboard}
@@ -54,6 +52,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                 />
                 <Separator className="my-2" />
                 
+                {/* Notes */}
                 <NavLink
                   to="/notes"
                   icon={FileText}
@@ -63,6 +62,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                 />
                 <Separator className="my-2" />
                 
+                {/* Flashcards */}
                 <NavLink
                   to="/flashcards"
                   icon={BookOpen}
@@ -72,6 +72,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                 />
                 <Separator className="my-2" />
                 
+                {/* Quiz */}
                 <NavLink
                   to="/quizzes"
                   icon={Activity}
@@ -81,7 +82,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                 />
                 <Separator className="my-2" />
                 
-                {/* Study Tools */}
+                {/* Goals */}
                 {isGoalsVisible && (
                   <>
                     <NavLink
@@ -95,6 +96,35 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   </>
                 )}
                 
+                {/* Todo */}
+                {isTodosVisible && (
+                  <>
+                    <NavLink
+                      to="/todos"
+                      icon={CheckSquare}
+                      label="ToDo"
+                      isActive={pathname.includes("/todos")}
+                      isCollapsed={isCollapsed}
+                    />
+                    <Separator className="my-2" />
+                  </>
+                )}
+                
+                {/* Study Sessions */}
+                {isStudySessionsVisible && (
+                  <>
+                    <NavLink
+                      to="/study-sessions"
+                      icon={Clock}
+                      label="Study Sessions"
+                      isActive={pathname.includes("/study-sessions")}
+                      isCollapsed={isCollapsed}
+                    />
+                    <Separator className="my-2" />
+                  </>
+                )}
+                
+                {/* Progress */}
                 <NavLink
                   to="/progress"
                   icon={BarChart3}
@@ -104,16 +134,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                 />
                 <Separator className="my-2" />
                 
-                <NavLink
-                  to="/schedule"
-                  icon={Calendar}
-                  label="Schedule"
-                  isActive={pathname.includes("/schedule")}
-                  isCollapsed={isCollapsed}
-                />
-                <Separator className="my-2" />
-                
-                {/* Rewards Section */}
+                {/* Refer & Win */}
                 <NavLink
                   to="/referrals"
                   icon={Gift}
@@ -129,44 +150,6 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                     </Badge>
                   }
                 />
-                <Separator className="my-2" />
-                
-                {/* Social Features */}
-                <NavLink
-                  to="/collaboration"
-                  icon={Users}
-                  label="Study Groups"
-                  isActive={pathname.includes("/collaboration")}
-                  isCollapsed={isCollapsed}
-                />
-                <Separator className="my-2" />
-                
-                {/* Additional Features */}
-                {isTodosVisible && (
-                  <>
-                    <NavLink
-                      to="/todos"
-                      icon={CheckSquare}
-                      label="ToDo"
-                      isActive={pathname.includes("/todos")}
-                      isCollapsed={isCollapsed}
-                    />
-                    <Separator className="my-2" />
-                  </>
-                )}
-                
-                {isStudySessionsVisible && (
-                  <>
-                    <NavLink
-                      to="/study-sessions"
-                      icon={Clock}
-                      label="Study Sessions"
-                      isActive={pathname.includes("/study-sessions")}
-                      isCollapsed={isCollapsed}
-                    />
-                    <Separator className="my-2" />
-                  </>
-                )}
               </div>
             </ScrollArea>
           </div>
