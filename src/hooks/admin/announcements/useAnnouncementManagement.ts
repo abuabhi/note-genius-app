@@ -36,6 +36,13 @@ export const useAnnouncementManagement = () => {
     return 'center';
   };
 
+  // Helper function to ensure mobile_layout is a valid enum value
+  const ensureValidMobileLayout = (value: string): 'default' | 'condensed' | 'expanded' => {
+    if (value === 'default' || value === 'condensed' || value === 'expanded') return value;
+    // Default to 'default' for any invalid or unknown values
+    return 'default';
+  };
+
   const { data: announcements, isLoading } = useQuery({
     queryKey: ['admin-announcements'],
     queryFn: async () => {
@@ -70,6 +77,7 @@ export const useAnnouncementManagement = () => {
         return {
           ...announcement,
           text_align: ensureValidTextAlign(announcement.text_align || 'center'),
+          mobile_layout: ensureValidMobileLayout(announcement.mobile_layout || 'default'),
           target_pages,
           // Convert numeric priority to our enum type
           priority: convertPriorityToString(announcement.priority),
