@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,7 +31,10 @@ export const useAnnouncementManagement = () => {
             target_pages = [announcement.target_pages];
           }
         } else if (Array.isArray(announcement.target_pages)) {
-          target_pages = announcement.target_pages;
+          // Convert Json[] to string[] safely
+          target_pages = announcement.target_pages.map(page => 
+            typeof page === 'string' ? page : String(page)
+          );
         } else {
           target_pages = ['all'];
         }
