@@ -8,7 +8,23 @@ import { Separator } from "@/components/ui/separator";
 import { useNavigationFeatures } from "./hooks/useNavigationFeatures";
 import { NavLink } from "./NavLink";
 import { useLocation } from "react-router-dom";
-import { LayoutDashboard, FileText, BookOpen, Activity, Target, CheckSquare, BarChart3, Clock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { 
+  LayoutDashboard, 
+  FileText, 
+  BookOpen, 
+  Activity, 
+  Target, 
+  CheckSquare, 
+  BarChart3, 
+  Clock,
+  Gift,
+  Users,
+  MessageSquare,
+  Settings,
+  Calendar,
+  Bell
+} from "lucide-react";
 
 interface NavigationProps {
   isCollapsed: boolean;
@@ -31,7 +47,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
           <div className="flex grow flex-col gap-4">
             <ScrollArea className="h-full grow p-2">
               <div className={cn("flex w-full flex-col gap-1")}>
-                {/* Dashboard */}
+                {/* Main Navigation */}
                 <NavLink
                   to="/dashboard"
                   icon={LayoutDashboard}
@@ -41,7 +57,6 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                 />
                 <Separator className="my-2" />
                 
-                {/* Notes */}
                 <NavLink
                   to="/notes"
                   icon={FileText}
@@ -51,7 +66,6 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                 />
                 <Separator className="my-2" />
                 
-                {/* Flashcards */}
                 <NavLink
                   to="/flashcards"
                   icon={BookOpen}
@@ -61,7 +75,6 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                 />
                 <Separator className="my-2" />
                 
-                {/* Quiz */}
                 <NavLink
                   to="/quizzes"
                   icon={Activity}
@@ -71,7 +84,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                 />
                 <Separator className="my-2" />
                 
-                {/* Goals - only show if visible */}
+                {/* Study Tools */}
                 {isGoalsVisible && (
                   <>
                     <NavLink
@@ -85,7 +98,71 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   </>
                 )}
                 
-                {/* ToDo - only show if visible */}
+                <NavLink
+                  to="/progress"
+                  icon={BarChart3}
+                  label="Progress"
+                  isActive={pathname.includes("/progress")}
+                  isCollapsed={isCollapsed}
+                />
+                <Separator className="my-2" />
+                
+                <NavLink
+                  to="/schedule"
+                  icon={Calendar}
+                  label="Schedule"
+                  isActive={pathname.includes("/schedule")}
+                  isCollapsed={isCollapsed}
+                />
+                <Separator className="my-2" />
+                
+                <NavLink
+                  to="/reminders"
+                  icon={Bell}
+                  label="Reminders"
+                  isActive={pathname.includes("/reminders")}
+                  isCollapsed={isCollapsed}
+                />
+                <Separator className="my-2" />
+                
+                {/* Rewards Section */}
+                <NavLink
+                  to="/referrals"
+                  icon={Gift}
+                  label="Refer & Win"
+                  isActive={pathname.includes("/referrals")}
+                  isCollapsed={isCollapsed}
+                  badge={
+                    <Badge 
+                      variant="secondary" 
+                      className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs animate-pulse ml-2"
+                    >
+                      NEW
+                    </Badge>
+                  }
+                />
+                <Separator className="my-2" />
+                
+                {/* Social Features */}
+                <NavLink
+                  to="/collaboration"
+                  icon={Users}
+                  label="Study Groups"
+                  isActive={pathname.includes("/collaboration")}
+                  isCollapsed={isCollapsed}
+                />
+                <Separator className="my-2" />
+                
+                <NavLink
+                  to="/chat"
+                  icon={MessageSquare}
+                  label="Messages"
+                  isActive={pathname.includes("/chat")}
+                  isCollapsed={isCollapsed}
+                />
+                <Separator className="my-2" />
+                
+                {/* Additional Features */}
                 {isTodosVisible && (
                   <>
                     <NavLink
@@ -99,30 +176,27 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   </>
                 )}
                 
-                {/* Progress - only show if visible */}
-                {isProgressVisible && (
+                {isStudySessionsVisible && (
                   <>
                     <NavLink
-                      to="/progress"
-                      icon={BarChart3}
-                      label="Progress"
-                      isActive={pathname.includes("/progress")}
+                      to="/study-sessions"
+                      icon={Clock}
+                      label="Study Sessions"
+                      isActive={pathname.includes("/study-sessions")}
                       isCollapsed={isCollapsed}
                     />
                     <Separator className="my-2" />
                   </>
                 )}
                 
-                {/* Study Sessions - only show if visible */}
-                {isStudySessionsVisible && (
-                  <NavLink
-                    to="/study-sessions"
-                    icon={Clock}
-                    label="Study Sessions"
-                    isActive={pathname.includes("/study-sessions")}
-                    isCollapsed={isCollapsed}
-                  />
-                )}
+                {/* Settings */}
+                <NavLink
+                  to="/settings"
+                  icon={Settings}
+                  label="Settings"
+                  isActive={pathname.includes("/settings")}
+                  isCollapsed={isCollapsed}
+                />
               </div>
             </ScrollArea>
           </div>
