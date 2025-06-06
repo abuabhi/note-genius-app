@@ -3,6 +3,7 @@ import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
 import Highlight from '@tiptap/extension-highlight';
+import Underline from '@tiptap/extension-underline';
 import BulletList from '@tiptap/extension-bullet-list';
 import OrderedList from '@tiptap/extension-ordered-list';
 import { useState, useEffect } from 'react';
@@ -38,6 +39,7 @@ export const RichTextEditor = ({
       Highlight.configure({
         multicolor: true,
       }),
+      Underline,
       BulletList,
       OrderedList,
     ],

@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Eye, EyeOff, Smartphone, CalendarClock, Target, Flag } from 'lucide-react';
+import { Edit, Trash2, Eye, EyeOff, Smartphone, CalendarClock, Target } from 'lucide-react';
 import { format } from 'date-fns';
 import { Announcement } from './types';
 import { RichTextDisplay } from '@/components/ui/rich-text/RichTextDisplay';
@@ -75,10 +76,6 @@ export const AnnouncementCard = ({
             <Badge variant="outline" className="flex items-center gap-1 text-xs">
               <Smartphone className="h-3 w-3" />
               {announcement.mobile_layout}
-            </Badge>
-            <Badge variant="outline" className="flex items-center gap-1 text-xs">
-              <Flag className="h-3 w-3" />
-              {announcement.priority}
             </Badge>
           </div>
         </div>

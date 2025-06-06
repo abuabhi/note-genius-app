@@ -28,7 +28,8 @@ export const RichTextToolbar = ({ editor }: RichTextToolbarProps) => {
   }
 
   const setFontSize = (size: string) => {
-    editor.chain().focus().setFontSize(size).run();
+    // Apply font size using CSS styling since TipTap doesn't have a built-in fontSize extension
+    editor.chain().focus().setMark('textStyle', { fontSize: size }).run();
   };
 
   return (
