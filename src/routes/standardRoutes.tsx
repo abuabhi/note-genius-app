@@ -1,15 +1,14 @@
 
-
 import { lazy } from 'react';
 import { FeatureProtectedRoute } from '@/components/routes/FeatureProtectedRoute';
 import { RouteConfig } from './publicRoutes';
 
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const NotesPage = lazy(() => import('@/pages/NotesPage'));
-const NoteStudyView = lazy(() => import('@/components/notes/study/NoteStudyView').then(module => ({ default: module.NoteStudyView })));
+const NoteStudyPage = lazy(() => import('@/pages/NoteStudyPage'));
 const FlashcardsPage = lazy(() => import('@/pages/FlashcardsPage'));
 const CreateFlashcardPage = lazy(() => import('@/pages/CreateFlashcardPage'));
-const FlashcardStudyPage = lazy(() => import('@/pages/study/SimplifiedStudyPageLayout').then(module => ({ default: module.SimplifiedStudyPageLayout })));
+const FlashcardStudyPage = lazy(() => import('@/pages/FlashcardStudyPage'));
 const QuizPage = lazy(() => import('@/pages/QuizPage'));
 const QuizTakingPage = lazy(() => import('@/pages/TakeQuizPage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
@@ -26,7 +25,7 @@ export const standardRoutes: RouteConfig[] = [
   },
   {
     path: "/notes/:id",
-    element: <NoteStudyView />
+    element: <NoteStudyPage />
   },
   {
     path: "/flashcards",
@@ -61,4 +60,3 @@ export const standardRoutes: RouteConfig[] = [
     element: <ReferralsPage />
   }
 ];
-
