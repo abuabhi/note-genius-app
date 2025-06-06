@@ -15,8 +15,8 @@ interface Announcement {
   background_color: string;
   text_color: string;
   mobile_layout: string;
-  priority: number;
   dismissible: boolean;
+  text_align?: string;
 }
 
 export const useAnnouncementData = () => {

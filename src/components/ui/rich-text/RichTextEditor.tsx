@@ -54,6 +54,9 @@ export const RichTextEditor = ({
         placeholder,
       },
     },
+    parseOptions: {
+      preserveWhitespace: 'full',
+    },
   });
   
   // Set default alignment when editor is initialized

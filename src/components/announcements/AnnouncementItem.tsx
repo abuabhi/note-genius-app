@@ -3,6 +3,7 @@ import React from 'react';
 import { X, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
+import { RichTextDisplay } from '@/components/ui/rich-text/RichTextDisplay';
 
 interface Announcement {
   id: string;
@@ -14,7 +15,6 @@ interface Announcement {
   background_color: string;
   text_color: string;
   mobile_layout: string;
-  priority: number;
   dismissible: boolean;
   text_align?: string;
 }
@@ -64,13 +64,11 @@ export const AnnouncementItem = ({
       onTouchMove={isMobile ? onTouchMove : undefined}
       onTouchEnd={isMobile ? onTouchEnd : undefined}
     >
-      <div className={`px-4 py-3 ${isMobile ? 'text-sm' : 'text-base'} ${textAlignClass}`}>
-        <div className={`flex items-center justify-between gap-3 ${isMobile ? 'flex-col' : 'flex-row'}`}>
+      <div className={`px-4 py-3 ${isMobile ? 'text-sm' : 'text-base'} ${textAlignClass} flex items-center`}>
+        <div className={`flex items-center justify-between gap-3 w-full ${isMobile ? 'flex-col' : 'flex-row'}`}>
           <div className={`flex-1 ${isMobile ? 'w-full' : ''}`}>
-            <div className={`flex items-start gap-2 ${isMobile ? 'flex-col' : 'flex-row items-center'} ${textAlignClass}`}>
-              <div className={`font-medium ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                {announcement.title}
-              </div>
+            <div className={`flex items-center gap-2 ${isMobile ? 'flex-col' : 'flex-row'} ${textAlignClass}`}>
+              {/* Title removed as it's only for admin reference */}
               {isMobile && announcement.mobile_layout === 'compact' && announcement.compact_text && (
                 <Button
                   variant="ghost"
@@ -83,7 +81,12 @@ export const AnnouncementItem = ({
               )}
             </div>
             <div className={`mt-1 ${isMobile ? 'text-xs' : 'text-sm'} opacity-90`}>
-              {displayText}
+              <RichTextDisplay 
+                content={displayText}
+                removeTitle={true}
+                textAlign={announcement.text_align as any || 'center'}
+                className="text-current"
+              />
             </div>
           </div>
 

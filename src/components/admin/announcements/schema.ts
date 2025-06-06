@@ -7,7 +7,7 @@ export const announcementFormSchema = z.object({
   is_active: z.boolean().default(false),
   start_date: z.string(), // Changed from z.date() to z.string()
   end_date: z.string(),   // Changed from z.date() to z.string()
-  background_color: z.string().default("#14b8a6"), // Default to mint-600
+  background_color: z.string().default("#14b8a6"), // Default to mint-600 (matches the button green)
   text_color: z.string().default("#ffffff"),
   text_align: z.enum(["left", "center", "right"]).default("center"),
   mobile_layout: z.enum(["default", "condensed", "expanded"]).default("default"),

@@ -28,11 +28,29 @@ export const RichTextToolbar = ({ editor }: RichTextToolbarProps) => {
   }
 
   const setFontSize = (size: string) => {
-    // Apply font size using direct HTML manipulation since TipTap's textStyle extension might not be available
-    const selection = editor.view.state.selection;
-    if (selection.empty) return;
-    
-    editor.chain().focus().setMark('span', { style: `font-size: ${size}` }).run();
+    // Fixed implementation to prevent blank page issue
+    // This approach uses a safer method to apply font size
+    editor.chain()
+      .focus()
+      .command(({ tr, commands }) => {
+        // Get the current selection
+        const { from, to } = tr.selection;
+        
+        // If selection is not empty, apply font size
+        if (from !== to) {
+          // Create a span with style attribute
+          const node = document.createElement('span');
+          node.style.fontSize = size;
+          
+          // Get the selected text
+          const text = tr.doc.textBetween(from, to, ' ');
+          
+          // Replace the selection with the span containing the text
+          commands.insertContent(`<span style="font-size: ${size}">${text}</span>`);
+        }
+        return true;
+      })
+      .run();
   };
 
   return (
