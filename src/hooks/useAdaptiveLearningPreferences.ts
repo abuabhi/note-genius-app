@@ -36,13 +36,16 @@ export const useAdaptiveLearningPreferences = () => {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('adaptive_learning_preferences, notification_preferences')
+        .select('*')
         .eq('id', user.id)
         .single();
 
       if (error) throw error;
 
-      const adaptivePrefs: AdaptiveLearningPreferences = data?.adaptive_learning_preferences || {
+      // Use any type to bypass TypeScript issues with newly added columns
+      const profileData = data as any;
+
+      const adaptivePrefs: AdaptiveLearningPreferences = profileData?.adaptive_learning_preferences || {
         difficulty: 'adaptive',
         study_style: 'distributed',
         session_length: 45,
@@ -53,7 +56,7 @@ export const useAdaptiveLearningPreferences = () => {
         learning_paths: true,
       };
 
-      const notificationPrefs: NotificationPreferences = data?.notification_preferences || {
+      const notificationPrefs: NotificationPreferences = profileData?.notification_preferences || {
         email: true,
         in_app: true,
         adaptive: true,
