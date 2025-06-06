@@ -35,12 +35,6 @@ const AdminAnnouncementsPage = () => {
           pageName="Announcement Management" 
           pageIcon={<Megaphone className="h-4 w-4" />} 
         />
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">Announcement Management</h1>
-          <p className="text-muted-foreground">
-            Create and manage announcement bars for users across the application
-          </p>
-        </div>
         <AnnouncementManagement />
       </div>
     </Layout>

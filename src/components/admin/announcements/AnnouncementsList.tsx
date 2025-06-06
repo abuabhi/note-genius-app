@@ -3,6 +3,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { AnnouncementCard } from './AnnouncementCard';
 import { Announcement } from './types';
+import { PackageOpen } from 'lucide-react';
 
 interface AnnouncementsListProps {
   announcements: Announcement[];
@@ -25,10 +26,12 @@ export const AnnouncementsList = ({
 }: AnnouncementsListProps) => {
   if (announcements.length === 0) {
     return (
-      <Card>
+      <Card className="border-dashed border-2 border-mint-200">
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <p className="text-muted-foreground text-center">
-            No announcements created yet. Create your first announcement to get started.
+          <PackageOpen className="h-12 w-12 text-mint-400 mb-3" />
+          <h3 className="text-lg font-medium mb-2">No announcements yet</h3>
+          <p className="text-muted-foreground text-center max-w-md">
+            Create your first announcement to start engaging with users across your application.
           </p>
         </CardContent>
       </Card>
@@ -36,7 +39,7 @@ export const AnnouncementsList = ({
   }
 
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-5">
       {announcements.map((announcement) => (
         <AnnouncementCard
           key={announcement.id}

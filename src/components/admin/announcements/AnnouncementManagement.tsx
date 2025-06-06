@@ -5,6 +5,7 @@ import { AnnouncementsList } from './AnnouncementsList';
 import { AnnouncementFormDialog } from './AnnouncementFormDialog';
 import { AnnouncementPreview } from './AnnouncementPreview';
 import { useAnnouncementManagement } from '@/hooks/admin/announcements/useAnnouncementManagement';
+import { Loader2 } from 'lucide-react';
 
 export const AnnouncementManagement = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -22,11 +23,16 @@ export const AnnouncementManagement = () => {
   } = useAnnouncementManagement();
 
   if (isLoading) {
-    return <div>Loading announcements...</div>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 text-mint-600 animate-spin" />
+        <span className="ml-2 text-mint-800">Loading announcements...</span>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6">
+    <div>
       <AnnouncementHeader onCreateNew={() => setIsCreateDialogOpen(true)} />
 
       <AnnouncementsList

@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Eye, EyeOff, Smartphone } from 'lucide-react';
+import { Edit, Trash2, Eye, EyeOff, Smartphone, CalendarClock, Target, Flag } from 'lucide-react';
 import { format } from 'date-fns';
 import { Announcement } from './types';
 
@@ -36,65 +36,80 @@ export const AnnouncementCard = ({
     }
     
     if (now < startDate) {
-      return <Badge variant="outline">Scheduled</Badge>;
+      return <Badge variant="outline" className="border-amber-300 text-amber-600 bg-amber-50">Scheduled</Badge>;
     }
     
     if (now > endDate) {
       return <Badge variant="destructive">Expired</Badge>;
     }
     
-    return <Badge variant="default">Active</Badge>;
+    return <Badge variant="default" className="bg-mint-600 hover:bg-mint-700">Active</Badge>;
   };
 
+  const isActive = announcement.is_active;
+  const now = new Date();
+  const startDate = new Date(announcement.start_date);
+  const endDate = new Date(announcement.end_date);
+  const isScheduled = now < startDate && isActive;
+  const isExpired = now > endDate && isActive;
+  
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <CardTitle className="text-lg">{announcement.title}</CardTitle>
-            <CardDescription>
+    <Card className="overflow-hidden transition-all hover:shadow-md border-mint-100">
+      <div className={`h-1.5 w-full ${isActive ? 'bg-mint-600' : 'bg-gray-200'}`}></div>
+      <div className="p-6">
+        <div className="flex items-start justify-between mb-3">
+          <div className="space-y-1 flex-1">
+            <div className="flex items-center space-x-2">
+              <h3 className="text-lg font-medium text-mint-800">{announcement.title}</h3>
+              <div>{getStatusBadge(announcement)}</div>
+            </div>
+            <p className="text-muted-foreground text-sm">
               {announcement.content.slice(0, 100)}
               {announcement.content.length > 100 ? '...' : ''}
-            </CardDescription>
+            </p>
           </div>
-          <div className="flex items-center gap-2">
-            {getStatusBadge(announcement)}
-            <Badge variant="outline" className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5 ml-4">
+            <Badge variant="outline" className="flex items-center gap-1 text-xs">
               <Smartphone className="h-3 w-3" />
               {announcement.mobile_layout}
             </Badge>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
-          <div>
-            <span className="font-medium">Target Tier:</span>
-            <p className="text-muted-foreground">{announcement.target_tier}</p>
-          </div>
-          <div>
-            <span className="font-medium">Priority:</span>
-            <p className="text-muted-foreground">{announcement.priority}</p>
-          </div>
-          <div>
-            <span className="font-medium">Start Date:</span>
-            <p className="text-muted-foreground">
-              {format(new Date(announcement.start_date), 'MMM dd, yyyy HH:mm')}
-            </p>
-          </div>
-          <div>
-            <span className="font-medium">End Date:</span>
-            <p className="text-muted-foreground">
-              {format(new Date(announcement.end_date), 'MMM dd, yyyy HH:mm')}
-            </p>
+            <Badge variant="outline" className="flex items-center gap-1 text-xs">
+              <Flag className="h-3 w-3" />
+              {announcement.priority}
+            </Badge>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-4">
+          <div className="flex items-center space-x-2">
+            <CalendarClock className="h-4 w-4 text-mint-600" />
+            <div>
+              <div className="text-xs text-muted-foreground">Start</div>
+              <div>{format(new Date(announcement.start_date), 'MMM dd, yyyy HH:mm')}</div>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <CalendarClock className="h-4 w-4 text-mint-600" />
+            <div>
+              <div className="text-xs text-muted-foreground">End</div>
+              <div>{format(new Date(announcement.end_date), 'MMM dd, yyyy HH:mm')}</div>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Target className="h-4 w-4 text-mint-600" />
+            <div>
+              <div className="text-xs text-muted-foreground">Target</div>
+              <div>{announcement.target_tier || 'All tiers'}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => onPreview(announcement)}
+            className="border-mint-200 text-mint-700 hover:bg-mint-50"
           >
             <Eye className="h-4 w-4 mr-2" />
             Preview
@@ -103,6 +118,7 @@ export const AnnouncementCard = ({
             variant="outline"
             size="sm"
             onClick={() => onEdit(announcement)}
+            className="border-mint-200 text-mint-700 hover:bg-mint-50"
           >
             <Edit className="h-4 w-4 mr-2" />
             Edit
@@ -112,6 +128,7 @@ export const AnnouncementCard = ({
             size="sm"
             onClick={() => onToggleActive(announcement)}
             disabled={isToggling}
+            className={isActive ? "border-amber-200 text-amber-700 hover:bg-amber-50" : "border-mint-200 text-mint-700 hover:bg-mint-50"}
           >
             {announcement.is_active ? (
               <>
@@ -135,7 +152,7 @@ export const AnnouncementCard = ({
             Delete
           </Button>
         </div>
-      </CardContent>
+      </div>
     </Card>
   );
 };
