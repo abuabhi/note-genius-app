@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
@@ -12,7 +11,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const SignupPage = () => {
   const [searchParams] = useSearchParams();
-  const urlReferralCode = searchParams.get('ref');
+  const [urlReferralCode, setUrlReferralCode] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -20,12 +20,27 @@ const SignupPage = () => {
     password: "",
     confirmPassword: "",
     acceptTerms: false,
-    referralCode: urlReferralCode || "", // Pre-fill if coming from referral link
+    referralCode: "", // Start empty to avoid hydration mismatch
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { signUp, signInWithGoogle, user } = useAuth();
+
+  // Handle client-side hydration
+  useEffect(() => {
+    setIsClient(true);
+    const refCode = searchParams.get('ref');
+    setUrlReferralCode(refCode);
+    
+    // Pre-fill referral code after hydration
+    if (refCode) {
+      setFormData(prev => ({
+        ...prev,
+        referralCode: refCode
+      }));
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     // Redirect if user is already logged in
@@ -183,10 +198,10 @@ const SignupPage = () => {
                     onChange={handleChange}
                     className="block w-full"
                     placeholder="Enter referral code"
-                    disabled={!!urlReferralCode} // Disable if pre-filled from URL
+                    disabled={isClient && !!urlReferralCode} // Only disable after hydration
                   />
                 </div>
-                {urlReferralCode && (
+                {isClient && urlReferralCode && (
                   <p className="mt-1 text-sm text-mint-600">
                     Referral code automatically applied from your invitation link
                   </p>
