@@ -63,7 +63,7 @@ export const GoalsSection = () => {
 
   if (isLoading) {
     return (
-      <Card className="h-[500px] animate-pulse">
+      <Card className="h-[550px] animate-pulse">
         <CardContent className="p-6">
           <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
           <div className="space-y-2">
@@ -77,21 +77,21 @@ export const GoalsSection = () => {
 
   if (goals.length === 0) {
     return (
-      <Card className="h-[500px] bg-blue-50 border-blue-200 flex flex-col">
+      <Card className="h-[550px] bg-blue-50 border-blue-200 flex flex-col">
         <CardHeader>
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
             <Target className="h-5 w-5 text-blue-600" />
             Active Goals
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 flex flex-col">
+        <CardContent className="flex-1 flex flex-col p-6">
           <div className="flex-1 flex flex-col justify-center text-center py-8">
             <Trophy className="h-12 w-12 text-blue-500 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-blue-800 mb-2">Set Your First Goal!</h3>
             <p className="text-blue-600 mb-4">Create study goals to track your progress and stay motivated.</p>
           </div>
           <div className="pt-4 border-t mt-auto">
-            <Button asChild className="w-full text-white">
+            <Button asChild className="w-full bg-green-700 hover:bg-green-800 text-white">
               <Link to="/goals">
                 <Target className="h-4 w-4 mr-2" />
                 Manage Goals
@@ -104,7 +104,7 @@ export const GoalsSection = () => {
   }
 
   return (
-    <Card className="h-[500px] flex flex-col">
+    <Card className="h-[550px] flex flex-col">
       <CardHeader>
         <CardTitle className="text-lg font-semibold flex items-center gap-2">
           <Target className="h-5 w-5 text-blue-600" />
@@ -114,8 +114,8 @@ export const GoalsSection = () => {
           </Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col space-y-4">
-        <div className="flex-1 space-y-4 overflow-y-auto">
+      <CardContent className="flex-1 flex flex-col p-6">
+        <div className="flex-1 space-y-4 overflow-y-auto mb-6">
           {goals.map((goal) => {
             const currentHours = getCurrentHours(goal);
             const progress = getProgressPercentage(goal);
@@ -157,7 +157,7 @@ export const GoalsSection = () => {
         </div>
 
         <div className="pt-4 border-t mt-auto">
-          <Button asChild className="w-full text-white">
+          <Button asChild className="w-full bg-green-700 hover:bg-green-800 text-white">
             <Link to="/goals">
               <Target className="h-4 w-4 mr-2" />
               Manage Goals
