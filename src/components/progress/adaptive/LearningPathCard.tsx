@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Brain, BookOpen, Target, TrendingUp, ChevronRight } from "lucide-react";
+import { Brain, BookOpen, Target, TrendingUp, ChevronRight, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export const LearningPathCard = () => {
@@ -69,8 +69,22 @@ export const LearningPathCard = () => {
           </div>
         </div>
 
-        <div className="text-xs text-gray-500 text-center pt-4 border-t">
-          Learning paths will be personalized based on your study patterns and performance.
+        {/* Fancy Notification */}
+        <div className="relative bg-gradient-to-r from-mint-50 to-green-50 border border-mint-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <Sparkles className="h-5 w-5 text-mint-600 animate-pulse" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-mint-900 mb-1">
+                AI-Powered Personalization
+              </p>
+              <p className="text-xs text-mint-700">
+                Learning paths will be personalized based on your study patterns and performance.
+              </p>
+            </div>
+          </div>
+          <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-mint-200/20 to-green-200/20 rounded-full -mr-8 -mt-8 opacity-50"></div>
         </div>
       </CardContent>
     </Card>

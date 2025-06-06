@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Eye, BookOpen, Target, ChevronRight } from "lucide-react";
+import { Brain, Eye, BookOpen, Target, ChevronRight, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export const BehavioralInsightsCard = () => {
@@ -72,8 +72,22 @@ export const BehavioralInsightsCard = () => {
           </div>
         </div>
 
-        <div className="text-xs text-gray-500 text-center pt-4 border-t">
-          Insights develop over time as AI learns your unique patterns.
+        {/* Fancy Notification */}
+        <div className="relative bg-gradient-to-r from-purple-50 to-violet-50 border border-purple-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <Sparkles className="h-5 w-5 text-purple-600 animate-pulse" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-purple-900 mb-1">
+                AI Learning Analytics
+              </p>
+              <p className="text-xs text-purple-700">
+                Insights develop over time as AI learns your unique patterns.
+              </p>
+            </div>
+          </div>
+          <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-purple-200/20 to-violet-200/20 rounded-full -mr-8 -mt-8 opacity-50"></div>
         </div>
       </CardContent>
     </Card>

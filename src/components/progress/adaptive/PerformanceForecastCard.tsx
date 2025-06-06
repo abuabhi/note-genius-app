@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, BarChart3, BookOpen, Target, ChevronRight } from "lucide-react";
+import { TrendingUp, BarChart3, BookOpen, Target, ChevronRight, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export const PerformanceForecastCard = () => {
@@ -69,8 +69,22 @@ export const PerformanceForecastCard = () => {
           </div>
         </div>
 
-        <div className="text-xs text-gray-500 text-center pt-4 border-t">
-          Forecasts become more accurate with consistent study activity.
+        {/* Fancy Notification */}
+        <div className="relative bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <Sparkles className="h-5 w-5 text-green-600 animate-pulse" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-green-900 mb-1">
+                AI-Powered Accuracy
+              </p>
+              <p className="text-xs text-green-700">
+                Forecasts become more accurate with consistent study activity.
+              </p>
+            </div>
+          </div>
+          <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-green-200/20 to-emerald-200/20 rounded-full -mr-8 -mt-8 opacity-50"></div>
         </div>
       </CardContent>
     </Card>
