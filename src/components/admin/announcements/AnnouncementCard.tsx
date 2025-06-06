@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Edit, Trash2, Eye, EyeOff, Smartphone, CalendarClock, Target, Flag } from 'lucide-react';
 import { format } from 'date-fns';
 import { Announcement } from './types';
+import { RichTextDisplay } from '@/components/ui/rich-text/RichTextDisplay';
 
 interface AnnouncementCardProps {
   announcement: Announcement;
@@ -63,10 +63,13 @@ export const AnnouncementCard = ({
               <h3 className="text-lg font-medium text-mint-800">{announcement.title}</h3>
               <div>{getStatusBadge(announcement)}</div>
             </div>
-            <p className="text-muted-foreground text-sm">
-              {announcement.content.slice(0, 100)}
-              {announcement.content.length > 100 ? '...' : ''}
-            </p>
+            <div className="text-muted-foreground text-sm max-h-20 overflow-hidden">
+              <RichTextDisplay 
+                content={announcement.content.slice(0, 150)} 
+                removeTitle={true}
+              />
+              {announcement.content.length > 150 ? '...' : ''}
+            </div>
           </div>
           <div className="flex items-center gap-1.5 ml-4">
             <Badge variant="outline" className="flex items-center gap-1 text-xs">

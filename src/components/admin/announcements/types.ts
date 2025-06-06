@@ -1,46 +1,38 @@
 
-export interface AnnouncementFormData {
-  title: string;
-  content: string;
-  compact_text?: string;
-  cta_text?: string;
-  cta_url?: string;
-  background_color: string;
-  text_color: string;
-  is_active: boolean;
-  start_date: string;
-  end_date: string;
-  target_tier: string;
-  target_pages: string;
-  mobile_layout: string;
-  priority: number;
-  dismissible: boolean;
-  text_align: string;
-}
-
 export interface Announcement {
   id: string;
   title: string;
-  content: string;
-  compact_text?: string;
-  cta_text?: string;
-  cta_url?: string;
-  background_color: string;
-  text_color: string;
+  content: string; // Can contain HTML for rich text
   is_active: boolean;
   start_date: string;
   end_date: string;
-  target_tier: string;
+  background_color: string;
+  text_color: string;
+  text_align: 'left' | 'center' | 'right';
+  mobile_layout: 'default' | 'condensed' | 'expanded';
+  priority: 'high' | 'medium' | 'low';
+  target_tier: string | null;
   target_pages: string[];
-  mobile_layout: string;
-  priority: number;
   dismissible: boolean;
-  created_at: string;
-  text_align: string;
+  cta_text?: string | null;
+  cta_url?: string | null;
+  created_at?: string;
 }
 
-export interface AnnouncementFormDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  announcement?: Announcement;
+export interface AnnouncementFormData {
+  title: string;
+  content: string; // Can contain HTML for rich text
+  is_active: boolean;
+  start_date: Date;
+  end_date: Date;
+  background_color: string;
+  text_color: string;
+  text_align: 'left' | 'center' | 'right';
+  mobile_layout: 'default' | 'condensed' | 'expanded';
+  priority: 'high' | 'medium' | 'low';
+  target_tier: string | null;
+  target_pages: string[];
+  dismissible: boolean;
+  cta_text?: string | null;
+  cta_url?: string | null;
 }
