@@ -93,10 +93,21 @@ export const AnnouncementFormDialog = ({
   const createMutation = useMutation({
     mutationFn: async (data: AnnouncementFormData) => {
       const announcementData = {
-        ...data,
-        target_pages: JSON.parse(data.target_pages),
+        title: data.title,
+        content: data.content,
+        compact_text: data.compact_text || null,
+        cta_text: data.cta_text || null,
+        cta_url: data.cta_url || null,
+        background_color: data.background_color,
+        text_color: data.text_color,
+        is_active: data.is_active,
         start_date: new Date(data.start_date).toISOString(),
         end_date: new Date(data.end_date).toISOString(),
+        target_tier: data.target_tier,
+        target_pages: JSON.parse(data.target_pages),
+        mobile_layout: data.mobile_layout,
+        priority: data.priority,
+        dismissible: data.dismissible,
         created_by: user?.id,
       };
 
@@ -109,7 +120,7 @@ export const AnnouncementFormDialog = ({
       } else {
         const { error } = await supabase
           .from('announcements')
-          .insert([announcementData]);
+          .insert(announcementData);
         if (error) throw error;
       }
     },

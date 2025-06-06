@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { X, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
-import { useMobile } from '@/hooks/use-mobile';
+import { useMobile } from '@/hooks/useMobile';
 import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -24,21 +23,41 @@ interface Announcement {
 }
 
 export const AnnouncementBar = () => {
-  const { user, userProfile } = useAuth();
+  const { user } = useAuth();
   const isMobile = useMobile();
   const location = useLocation();
   const queryClient = useQueryClient();
   const [expandedAnnouncements, setExpandedAnnouncements] = useState<Set<string>>(new Set());
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [userTier, setUserTier] = useState<string>('SCHOLAR');
+
+  // Fetch user profile to get user tier
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from('profiles')
+        .select('user_tier')
+        .eq('id', user.id)
+        .single();
+      
+      if (data) {
+        setUserTier(data.user_tier);
+      }
+    };
+
+    fetchUserProfile();
+  }, [user]);
 
   const { data: announcements, isLoading } = useQuery({
-    queryKey: ['active-announcements', userProfile?.user_tier, location.pathname],
+    queryKey: ['active-announcements', userTier, location.pathname],
     queryFn: async () => {
       if (!user) return [];
       
       const { data, error } = await supabase.rpc('get_active_announcements', {
-        user_tier_param: userProfile?.user_tier || 'SCHOLAR',
+        user_tier_param: userTier,
         current_page: location.pathname
       });
 
