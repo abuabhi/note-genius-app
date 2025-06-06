@@ -9,16 +9,6 @@ import { announcementFormSchema } from '../schema';
 import { AnnouncementFormData, Announcement } from '../types';
 import { useEffect } from 'react';
 
-// Helper function to convert priority string to number
-const priorityToNumber = (priority: string): number => {
-  switch (priority) {
-    case 'high': return 10;
-    case 'medium': return 5;
-    case 'low': return 1;
-    default: return 5; // Default to medium
-  }
-};
-
 export const useAnnouncementForm = (
   announcement?: Announcement | null,
   onOpenChange?: (open: boolean) => void
@@ -41,7 +31,6 @@ export const useAnnouncementForm = (
       target_tier: 'all',
       target_pages: '["all"]',
       mobile_layout: 'default',
-      priority: 'medium',
       dismissible: true,
       text_align: 'center',
     },
@@ -68,7 +57,6 @@ export const useAnnouncementForm = (
         target_pages: announcement.target_pages ? 
           JSON.stringify(announcement.target_pages) : '["all"]',
         mobile_layout: announcement.mobile_layout || 'default',
-        priority: announcement.priority || 'medium',
         dismissible: announcement.dismissible ?? true,
         text_align: announcement.text_align || 'center',
       });
@@ -87,7 +75,6 @@ export const useAnnouncementForm = (
         target_tier: 'all',
         target_pages: '["all"]',
         mobile_layout: 'default',
-        priority: 'medium',
         dismissible: true,
         text_align: 'center',
       });
@@ -109,7 +96,6 @@ export const useAnnouncementForm = (
         target_tier: data.target_tier,
         target_pages: JSON.parse(data.target_pages),
         mobile_layout: data.mobile_layout,
-        priority: priorityToNumber(data.priority), // Convert string priority to number
         dismissible: data.dismissible,
         text_align: data.text_align,
         created_by: user?.id,

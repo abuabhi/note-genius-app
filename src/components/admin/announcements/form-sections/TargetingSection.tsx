@@ -126,32 +126,6 @@ export const TargetingSection = ({ control }: TargetingSectionProps) => {
           )}
         />
       </div>
-
-      <FormField
-        control={control}
-        name="priority"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Priority</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value || "medium"}>
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select priority" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="low">Low</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-              </SelectContent>
-            </Select>
-            <FormDescription>
-              Higher priority announcements appear first
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
     </div>
   );
 };

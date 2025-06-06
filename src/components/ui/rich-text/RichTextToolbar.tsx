@@ -1,155 +1,155 @@
 
 import { Editor } from '@tiptap/react';
-import { 
-  Bold, 
-  Italic, 
-  List, 
-  ListOrdered, 
-  AlignLeft, 
-  AlignCenter, 
-  AlignRight, 
-  Highlighter
-} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuItem,
-} from '@/components/ui/dropdown-menu';
+import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Bold,
+  Italic,
+  Underline,
+  Strikethrough,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+  List,
+  ListOrdered,
+  Highlighter,
+  Type,
+} from 'lucide-react';
 
 interface RichTextToolbarProps {
   editor: Editor;
 }
 
-const highlightColors = [
-  { name: 'Yellow', color: '#FEF7CD' },
-  { name: 'Green', color: '#F2FCE2' },
-  { name: 'Blue', color: '#D3E4FD' },
-  { name: 'Pink', color: '#FFDEE2' },
-  { name: 'Purple', color: '#E5DEFF' },
-  { name: 'Orange', color: '#FDE1D3' },
-];
-
 export const RichTextToolbar = ({ editor }: RichTextToolbarProps) => {
-  if (!editor) return null;
+  if (!editor) {
+    return null;
+  }
 
-  const isHighlightActive = () => {
-    return editor.isActive('highlight') || highlightColors.some(({ color }) => 
-      editor.isActive('highlight', { color })
-    );
-  };
-
-  const toggleHighlight = (color?: string) => {
-    if (color) {
-      editor.chain().focus().toggleHighlight({ color }).run();
-    } else {
-      editor.chain().focus().toggleHighlight().run();
-    }
+  const setFontSize = (size: string) => {
+    editor.chain().focus().setFontSize(size).run();
   };
 
   return (
-    <div className="border-b border-input bg-background p-1 flex flex-wrap gap-1 items-center">
+    <div className="border-b border-input p-2 flex flex-wrap items-center gap-1">
+      {/* Font Size Selector */}
+      <Select onValueChange={setFontSize}>
+        <SelectTrigger className="w-20 h-8">
+          <SelectValue placeholder="Size" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="12px">12px</SelectItem>
+          <SelectItem value="14px">14px</SelectItem>
+          <SelectItem value="16px">16px</SelectItem>
+          <SelectItem value="18px">18px</SelectItem>
+          <SelectItem value="20px">20px</SelectItem>
+          <SelectItem value="24px">24px</SelectItem>
+          <SelectItem value="28px">28px</SelectItem>
+          <SelectItem value="32px">32px</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Separator orientation="vertical" className="h-6" />
+
+      {/* Text Formatting */}
       <Button
-        variant="ghost"
-        size="icon"
+        variant={editor.isActive('bold') ? 'default' : 'ghost'}
+        size="sm"
         onClick={() => editor.chain().focus().toggleBold().run()}
-        className={editor.isActive('bold') ? 'bg-accent' : ''}
-        title="Bold"
+        disabled={!editor.can().chain().focus().toggleBold().run()}
       >
         <Bold className="h-4 w-4" />
       </Button>
+      
       <Button
-        variant="ghost"
-        size="icon"
+        variant={editor.isActive('italic') ? 'default' : 'ghost'}
+        size="sm"
         onClick={() => editor.chain().focus().toggleItalic().run()}
-        className={editor.isActive('italic') ? 'bg-accent' : ''}
-        title="Italic"
+        disabled={!editor.can().chain().focus().toggleItalic().run()}
       >
         <Italic className="h-4 w-4" />
       </Button>
-      
-      <div className="h-4 w-px bg-border mx-1" />
-      
+
       <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => editor.chain().focus().toggleBulletList().run()}
-        className={editor.isActive('bulletList') ? 'bg-accent' : ''}
-        title="Bullet List"
+        variant={editor.isActive('underline') ? 'default' : 'ghost'}
+        size="sm"
+        onClick={() => editor.chain().focus().toggleUnderline().run()}
+        disabled={!editor.can().chain().focus().toggleUnderline().run()}
       >
-        <List className="h-4 w-4" />
+        <Underline className="h-4 w-4" />
       </Button>
+
       <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        className={editor.isActive('orderedList') ? 'bg-accent' : ''}
-        title="Ordered List"
+        variant={editor.isActive('strike') ? 'default' : 'ghost'}
+        size="sm"
+        onClick={() => editor.chain().focus().toggleStrike().run()}
+        disabled={!editor.can().chain().focus().toggleStrike().run()}
       >
-        <ListOrdered className="h-4 w-4" />
+        <Strikethrough className="h-4 w-4" />
       </Button>
-      
-      <div className="h-4 w-px bg-border mx-1" />
-      
+
       <Button
-        variant="ghost"
-        size="icon"
+        variant={editor.isActive('highlight') ? 'default' : 'ghost'}
+        size="sm"
+        onClick={() => editor.chain().focus().toggleHighlight().run()}
+      >
+        <Highlighter className="h-4 w-4" />
+      </Button>
+
+      <Separator orientation="vertical" className="h-6" />
+
+      {/* Text Alignment */}
+      <Button
+        variant={editor.isActive({ textAlign: 'left' }) ? 'default' : 'ghost'}
+        size="sm"
         onClick={() => editor.chain().focus().setTextAlign('left').run()}
-        className={editor.isActive({ textAlign: 'left' }) ? 'bg-accent' : ''}
-        title="Align Left"
       >
         <AlignLeft className="h-4 w-4" />
       </Button>
+
       <Button
-        variant="ghost"
-        size="icon"
+        variant={editor.isActive({ textAlign: 'center' }) ? 'default' : 'ghost'}
+        size="sm"
         onClick={() => editor.chain().focus().setTextAlign('center').run()}
-        className={editor.isActive({ textAlign: 'center' }) ? 'bg-accent' : ''}
-        title="Align Center"
       >
         <AlignCenter className="h-4 w-4" />
       </Button>
+
       <Button
-        variant="ghost"
-        size="icon"
+        variant={editor.isActive({ textAlign: 'right' }) ? 'default' : 'ghost'}
+        size="sm"
         onClick={() => editor.chain().focus().setTextAlign('right').run()}
-        className={editor.isActive({ textAlign: 'right' }) ? 'bg-accent' : ''}
-        title="Align Right"
       >
         <AlignRight className="h-4 w-4" />
       </Button>
-      
-      <div className="h-4 w-px bg-border mx-1" />
-      
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={isHighlightActive() ? 'bg-accent' : ''}
-            title="Highlight"
-          >
-            <Highlighter className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => toggleHighlight()}>
-            <div className="h-4 w-4 bg-yellow-100 rounded mr-2"></div>
-            <span>Default</span>
-          </DropdownMenuItem>
-          {highlightColors.map(({ name, color }) => (
-            <DropdownMenuItem key={color} onClick={() => toggleHighlight(color)}>
-              <div className="h-4 w-4 rounded mr-2" style={{ backgroundColor: color }}></div>
-              <span>{name}</span>
-            </DropdownMenuItem>
-          ))}
-          <DropdownMenuItem onClick={() => editor.chain().focus().unsetHighlight().run()}>
-            <div className="h-4 w-4 mr-2 border border-gray-300"></div>
-            <span>No Highlight</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+
+      <Button
+        variant={editor.isActive({ textAlign: 'justify' }) ? 'default' : 'ghost'}
+        size="sm"
+        onClick={() => editor.chain().focus().setTextAlign('justify').run()}
+      >
+        <AlignJustify className="h-4 w-4" />
+      </Button>
+
+      <Separator orientation="vertical" className="h-6" />
+
+      {/* Lists */}
+      <Button
+        variant={editor.isActive('bulletList') ? 'default' : 'ghost'}
+        size="sm"
+        onClick={() => editor.chain().focus().toggleBulletList().run()}
+      >
+        <List className="h-4 w-4" />
+      </Button>
+
+      <Button
+        variant={editor.isActive('orderedList') ? 'default' : 'ghost'}
+        size="sm"
+        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+      >
+        <ListOrdered className="h-4 w-4" />
+      </Button>
     </div>
   );
 };

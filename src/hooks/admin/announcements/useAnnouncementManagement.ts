@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,25 +8,6 @@ export const useAnnouncementManagement = () => {
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
   const [previewAnnouncement, setPreviewAnnouncement] = useState<Announcement | null>(null);
   const queryClient = useQueryClient();
-
-  // Helper function to convert numeric priority to string type
-  const convertPriorityToString = (priority: number | string): 'high' | 'medium' | 'low' => {
-    if (typeof priority === 'string') {
-      if (priority === 'high' || priority === 'medium' || priority === 'low') {
-        return priority;
-      }
-    }
-    
-    // Convert numeric priority to string
-    if (typeof priority === 'number') {
-      if (priority >= 8) return 'high';
-      if (priority >= 4) return 'medium';
-      return 'low';
-    }
-    
-    // Default
-    return 'medium';
-  };
 
   // Helper function to ensure text_align is a valid enum value
   const ensureValidTextAlign = (value: string): 'left' | 'center' | 'right' => {
@@ -79,8 +59,6 @@ export const useAnnouncementManagement = () => {
           text_align: ensureValidTextAlign(announcement.text_align || 'center'),
           mobile_layout: ensureValidMobileLayout(announcement.mobile_layout || 'default'),
           target_pages,
-          // Convert numeric priority to our enum type
-          priority: convertPriorityToString(announcement.priority),
         };
       });
     }

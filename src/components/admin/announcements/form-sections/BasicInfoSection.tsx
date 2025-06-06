@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { RichTextEditor } from '@/components/ui/rich-text/RichTextEditor';
+import { SchedulingSection } from './SchedulingSection';
 import { AnnouncementFormData } from '../types';
 
 interface BasicInfoSectionProps {
@@ -19,7 +20,7 @@ interface BasicInfoSectionProps {
 
 export const BasicInfoSection = ({ control }: BasicInfoSectionProps) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <FormField
         control={control}
         name="title"
@@ -58,6 +59,11 @@ export const BasicInfoSection = ({ control }: BasicInfoSectionProps) => {
           </FormItem>
         )}
       />
+
+      <div>
+        <h4 className="text-md font-medium mb-4">Schedule</h4>
+        <SchedulingSection control={control} />
+      </div>
     </div>
   );
 };

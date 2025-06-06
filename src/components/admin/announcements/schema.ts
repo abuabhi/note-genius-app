@@ -11,7 +11,6 @@ export const announcementFormSchema = z.object({
   text_color: z.string().default("#ffffff"),
   text_align: z.enum(["left", "center", "right"]).default("center"),
   mobile_layout: z.enum(["default", "condensed", "expanded"]).default("default"),
-  priority: z.enum(["high", "medium", "low"]).default("medium"),
   target_tier: z.string().nullable().optional(),
   target_pages: z.string().default('["all"]'), // Store as JSON string
   dismissible: z.boolean().default(true),

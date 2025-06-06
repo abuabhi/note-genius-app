@@ -10,7 +10,6 @@ export interface Announcement {
   text_color: string;
   text_align: 'left' | 'center' | 'right';
   mobile_layout: 'default' | 'condensed' | 'expanded';
-  priority: 'high' | 'medium' | 'low';
   target_tier: string | null;
   target_pages: string[];
   dismissible: boolean;
@@ -29,7 +28,6 @@ export interface AnnouncementFormData {
   text_color: string;
   text_align: 'left' | 'center' | 'right';
   mobile_layout: 'default' | 'condensed' | 'expanded';
-  priority: 'high' | 'medium' | 'low';
   target_tier: string | null;
   target_pages: string;  // This will be stringified JSON
   dismissible: boolean;
