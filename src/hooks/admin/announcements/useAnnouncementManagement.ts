@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,6 +27,13 @@ export const useAnnouncementManagement = () => {
     
     // Default
     return 'medium';
+  };
+
+  // Helper function to ensure text_align is a valid enum value
+  const ensureValidTextAlign = (value: string): 'left' | 'center' | 'right' => {
+    if (value === 'left' || value === 'right') return value;
+    // Default to center for any invalid or unknown values
+    return 'center';
   };
 
   const { data: announcements, isLoading } = useQuery({
@@ -61,7 +69,7 @@ export const useAnnouncementManagement = () => {
         // Convert raw data to match our Announcement type
         return {
           ...announcement,
-          text_align: announcement.text_align || 'center',
+          text_align: ensureValidTextAlign(announcement.text_align || 'center'),
           target_pages,
           // Convert numeric priority to our enum type
           priority: convertPriorityToString(announcement.priority),
