@@ -5,9 +5,8 @@ import { Loader2 } from "lucide-react";
 import { useFeatures } from "@/contexts/FeatureContext";
 import { DashboardHeroSection } from "@/components/dashboard/DashboardHeroSection";
 import { LearningAnalyticsDashboard } from "@/components/dashboard/LearningAnalyticsDashboard";
-import { TodaysFocusSection } from "@/components/dashboard/TodaysFocusSection";
-import { RecentActivityTimeline } from "@/components/dashboard/RecentActivityTimeline";
-import { EnhancedQuickActionsGrid } from "@/components/dashboard/EnhancedQuickActionsGrid";
+import { TodosSection } from "@/components/dashboard/TodosSection";
+import { GoalsSection } from "@/components/dashboard/GoalsSection";
 import { ReferralSignupHandler } from "@/components/referrals/ReferralSignupHandler";
 import { ReferralSignupErrorBoundary } from "@/components/referrals/ReferralSignupErrorBoundary";
 
@@ -80,22 +79,17 @@ const DashboardPage = () => {
             <LearningAnalyticsDashboard />
           </div>
           
-          {/* Two Column Layout for Focus and Activity */}
+          {/* Two Column Layout for Todos and Goals */}
           <div className="grid gap-8 lg:grid-cols-2">
-            {/* Today's Focus - Goals, Reminders, ToDos */}
+            {/* Today's Todos */}
             <div>
-              <TodaysFocusSection />
+              <TodosSection />
             </div>
             
-            {/* Recent Activity Timeline */}
+            {/* Active Goals */}
             <div>
-              <RecentActivityTimeline />
+              <GoalsSection />
             </div>
-          </div>
-          
-          {/* Enhanced Quick Actions Grid */}
-          <div>
-            <EnhancedQuickActionsGrid />
           </div>
         </div>
       </div>
