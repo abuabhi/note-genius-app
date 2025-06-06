@@ -2,7 +2,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
-import { useFlashcardSets } from "@/contexts/flashcards/useFlashcardSets";
+import { useFlashcards } from "@/contexts/flashcards/index.tsx";
 import { Button } from "@/components/ui/button";
 import { SimplifiedStudyPageLayout } from "@/pages/study/SimplifiedStudyPageLayout";
 import { StudyMode } from "@/pages/study/types";
@@ -12,9 +12,9 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 const FlashcardStudyPage = () => {
   const { setId } = useParams();
   const navigate = useNavigate();
-  const { flashcardSets } = useFlashcardSets();
+  const { flashcardSets } = useFlashcards();
   const [loading, setLoading] = useState(true);
-  const [mode] = useState<StudyMode>("study"); // Default to study mode
+  const [mode] = useState<StudyMode>("learn"); // Use valid StudyMode value
   useRequireAuth();
 
   const currentSet = flashcardSets.find(set => set.id === setId);
