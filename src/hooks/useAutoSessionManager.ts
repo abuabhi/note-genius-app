@@ -1,6 +1,8 @@
 
-import { useEffect, useRef, useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useEnhancedStudySessions } from './useEnhancedStudySessions';
+import { useAdaptiveLearning } from './progress/adaptive';
+import { useAuth } from '@/contexts/auth';
 
 interface AutoSessionConfig {
   activityType: 'flashcard' | 'quiz' | 'note';
@@ -9,141 +11,124 @@ interface AutoSessionConfig {
   subject?: string;
 }
 
-export const useAutoSessionManager = (config?: AutoSessionConfig) => {
+interface SessionPerformanceUpdate {
+  cards_reviewed?: number;
+  cards_correct?: number;
+  quiz_score?: number;
+  quiz_total_questions?: number;
+  notes_created?: number;
+  notes_reviewed?: number;
+}
+
+export const useAutoSessionManager = (config: AutoSessionConfig) => {
   const [currentSession, setCurrentSession] = useState<any>(null);
   const [isSessionActive, setIsSessionActive] = useState(false);
-  const sessionTimeoutRef = useRef<NodeJS.Timeout>();
-  const { createAutoSession, trackActivity, updateSessionPerformance, endSession } = useEnhancedStudySessions();
+  const [lastActivityTime, setLastActivityTime] = useState<Date>(new Date());
+  
+  const { user } = useAuth();
+  const { createAutoSession, updateSessionPerformance, endSession } = useEnhancedStudySessions();
+  const { adaptiveLearningInsights } = useAdaptiveLearning();
 
-  // Auto-start session when component mounts with config
-  useEffect(() => {
-    if (config && !isSessionActive) {
-      startAutoSession();
-    }
-
-    // Cleanup on unmount
-    return () => {
-      if (sessionTimeoutRef.current) {
-        clearTimeout(sessionTimeoutRef.current);
-      }
-      if (isSessionActive && currentSession) {
-        endCurrentSession();
-      }
-    };
-  }, [config]);
-
-  const startAutoSession = async () => {
-    if (!config || isSessionActive) return;
+  // Auto-create session when component mounts with activity
+  const initializeSession = useCallback(async () => {
+    if (!user || isSessionActive) return;
 
     try {
-      const sessionTitle = `${config.activityType.charAt(0).toUpperCase() + config.activityType.slice(1)} Session`;
-      const title = config.resourceName ? `${sessionTitle}: ${config.resourceName}` : sessionTitle;
-
-      const session = await createAutoSession.mutateAsync({
+      const sessionTitle = `${config.activityType.charAt(0).toUpperCase() + config.activityType.slice(1)} Session: ${config.resourceName || 'Study'}`;
+      
+      const result = await createAutoSession.mutateAsync({
         activity_type: config.activityType,
-        title,
+        title: sessionTitle,
         subject: config.subject,
         resource_id: config.resourceId
       });
 
-      setCurrentSession(session);
+      setCurrentSession(result);
       setIsSessionActive(true);
-
-      // Track the activity start
-      await trackActivity.mutateAsync({
-        session_id: session.id,
-        activity_type: config.activityType,
-        resource_id: config.resourceId,
-        performance_data: {
-          started_at: new Date().toISOString()
-        }
-      });
-
-      console.log('Auto session started:', session);
+      setLastActivityTime(new Date());
+      
+      console.log('Auto-created study session:', result.id);
     } catch (error) {
-      console.error('Failed to start auto session:', error);
+      console.error('Failed to create auto session:', error);
     }
-  };
+  }, [user, config, isSessionActive, createAutoSession]);
 
-  const endCurrentSession = async () => {
+  // Update session performance data
+  const updateSessionWithPerformance = useCallback(async (performanceData: SessionPerformanceUpdate) => {
     if (!currentSession || !isSessionActive) return;
-
-    try {
-      await endSession.mutateAsync(currentSession.id);
-      setCurrentSession(null);
-      setIsSessionActive(false);
-    } catch (error) {
-      console.error('Failed to end session:', error);
-    }
-  };
-
-  const updateSessionWithPerformance = async (performanceData: {
-    cards_reviewed?: number;
-    cards_correct?: number;
-    quiz_score?: number;
-    quiz_total_questions?: number;
-    notes_created?: number;
-    notes_reviewed?: number;
-  }) => {
-    if (!currentSession) return;
 
     try {
       await updateSessionPerformance.mutateAsync({
         sessionId: currentSession.id,
         ...performanceData
       });
+      
+      setLastActivityTime(new Date());
     } catch (error) {
       console.error('Failed to update session performance:', error);
     }
-  };
+  }, [currentSession, isSessionActive, updateSessionPerformance]);
 
-  const trackActivityEvent = async (eventData: {
-    performance_data?: Record<string, any>;
-    duration_seconds?: number;
-  }) => {
-    if (!currentSession || !config) return;
+  // Record activity to reset inactivity timer
+  const recordActivity = useCallback((activityData?: Record<string, any>) => {
+    setLastActivityTime(new Date());
+    
+    // Log activity for adaptive learning analysis
+    console.log('Activity recorded:', {
+      sessionId: currentSession?.id,
+      activityType: config.activityType,
+      timestamp: new Date().toISOString(),
+      data: activityData
+    });
+  }, [currentSession, config.activityType]);
 
-    try {
-      await trackActivity.mutateAsync({
-        session_id: currentSession.id,
-        activity_type: config.activityType,
-        resource_id: config.resourceId,
-        ...eventData
-      });
-    } catch (error) {
-      console.error('Failed to track activity:', error);
-    }
-  };
+  // Auto-end session after inactivity
+  useEffect(() => {
+    if (!isSessionActive || !currentSession) return;
 
-  // Auto-end session after period of inactivity
-  const resetInactivityTimer = () => {
-    if (sessionTimeoutRef.current) {
-      clearTimeout(sessionTimeoutRef.current);
-    }
+    const inactivityTimer = setInterval(() => {
+      const timeSinceLastActivity = Date.now() - lastActivityTime.getTime();
+      const inactivityThreshold = 10 * 60 * 1000; // 10 minutes
 
-    // End session after 30 minutes of inactivity
-    sessionTimeoutRef.current = setTimeout(() => {
-      if (isSessionActive) {
-        endCurrentSession();
+      if (timeSinceLastActivity > inactivityThreshold) {
+        console.log('Auto-ending session due to inactivity');
+        endSession.mutate(currentSession.id);
+        setIsSessionActive(false);
+        setCurrentSession(null);
       }
-    }, 30 * 60 * 1000);
-  };
+    }, 60000); // Check every minute
 
-  // Call this whenever user interacts with the activity
-  const recordActivity = (activityData?: any) => {
-    resetInactivityTimer();
-    if (activityData) {
-      trackActivityEvent({ performance_data: activityData });
+    return () => clearInterval(inactivityTimer);
+  }, [isSessionActive, currentSession, lastActivityTime, endSession]);
+
+  // Initialize session on mount
+  useEffect(() => {
+    if (user && !isSessionActive) {
+      initializeSession();
     }
-  };
+  }, [user, initializeSession, isSessionActive]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (isSessionActive && currentSession) {
+        endSession.mutate(currentSession.id);
+      }
+    };
+  }, []);
 
   return {
     currentSession,
     isSessionActive,
-    startAutoSession,
-    endCurrentSession,
+    initializeSession,
     updateSessionWithPerformance,
-    trackActivityEvent,
-    recordActivity
+    recordActivity,
+    endSessionManually: () => {
+      if (currentSession) {
+        endSession.mutate(currentSession.id);
+        setIsSessionActive(false);
+        setCurrentSession(null);
+      }
+    }
   };
 };
