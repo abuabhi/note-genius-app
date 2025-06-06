@@ -11,7 +11,10 @@ import {
   Clock,
   Users,
   MessageSquare,
-  Bell
+  Bell,
+  Shield,
+  Upload,
+  Database
 } from "lucide-react";
 
 export interface NavigationItem {
@@ -116,6 +119,54 @@ export const navigationData: NavigationGroup[] = [
         href: "/chat",
         icon: MessageSquare,
         description: "Chat with study partners"
+      }
+    ]
+  },
+  {
+    id: "admin",
+    title: "Administration",
+    items: [
+      {
+        id: "admin-users",
+        title: "User Management",
+        href: "/admin/users",
+        icon: Users,
+        description: "Manage user accounts and permissions"
+      },
+      {
+        id: "admin-csv-import",
+        title: "CSV Import",
+        href: "/admin/csv-import",
+        icon: Upload,
+        description: "Bulk import data from CSV files"
+      },
+      {
+        id: "admin-grades",
+        title: "Grades",
+        href: "/admin/grades",
+        icon: Database,
+        description: "Manage grade levels"
+      },
+      {
+        id: "admin-subjects",
+        title: "Subjects",
+        href: "/admin/subjects",
+        icon: BookOpen,
+        description: "Manage subjects"
+      },
+      {
+        id: "admin-sections",
+        title: "Sections",
+        href: "/admin/sections",
+        icon: Settings,
+        description: "Manage sections"
+      },
+      {
+        id: "admin-features",
+        title: "Features",
+        href: "/admin/features",
+        icon: Shield,
+        description: "Manage feature toggles"
       }
     ]
   },

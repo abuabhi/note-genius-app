@@ -11,6 +11,7 @@ import { RouteConfig } from './publicRoutes';
 
 // Admin routes
 export const adminRoutes: RouteConfig[] = [
+  { path: "/admin", element: <AdminUsersPage /> }, // Default admin page
   { path: "/admin/users", element: <AdminUsersPage /> },
   { path: "/admin/flashcards", element: <AdminFlashcardPage /> },
   { path: "/admin/sections", element: <AdminSectionsPage /> },
