@@ -1,4 +1,3 @@
-
 import { useProgressAnalytics } from "@/hooks/progress/useProgressAnalytics";
 import { ProgressOverviewCard } from "./overview/ProgressOverviewCard";
 import { GradeProgressionChart } from "./grades/GradeProgressionChart";
@@ -6,6 +5,7 @@ import { FlashcardMasteryLevels } from "./grades/FlashcardMasteryLevels";
 import { DailyStudyTrends } from "./time/DailyStudyTrends";
 import { ConsistencyScore } from "./time/ConsistencyScore";
 import { AdvancedAnalyticsDashboard } from "./AdvancedAnalyticsDashboard";
+import { AdaptiveLearningDashboard } from "./AdaptiveLearningDashboard";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const EnhancedProgressOverview = () => {
@@ -32,11 +32,20 @@ export const EnhancedProgressOverview = () => {
       {/* Hero Overview Card */}
       <ProgressOverviewCard />
       
+      {/* AI-Powered Adaptive Learning Section */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">AI-Powered Adaptive Learning</h2>
+          <p className="text-gray-600">Personalized learning paths and intelligent study optimization</p>
+        </div>
+        <AdaptiveLearningDashboard />
+      </div>
+      
       {/* Advanced AI Analytics Section */}
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">AI-Powered Insights</h2>
-          <p className="text-gray-600">Advanced analytics and personalized recommendations</p>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Advanced Analytics</h2>
+          <p className="text-gray-600">Performance predictions and comparative insights</p>
         </div>
         <AdvancedAnalyticsDashboard />
       </div>
