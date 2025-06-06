@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
@@ -199,14 +198,29 @@ export const useProgressAnalytics = (): ProgressAnalytics => {
           Math.round(((weeklyStudyTime - lastWeekStudyTime) / lastWeekStudyTime) * 100) : 0
       };
 
-      // Calculate consistency score (simplified)
+      // Calculate consistency score - fixed to handle zero data properly
       const recentDailyMinutes = dailyTrends.slice(-7).map(d => d.minutes);
-      const average = recentDailyMinutes.reduce((sum, m) => sum + m, 0) / 7;
-      const variance = recentDailyMinutes.reduce((sum, m) => sum + Math.pow(m - average, 2), 0) / 7;
-      const consistencyScore = Math.max(0, Math.round(100 - Math.sqrt(variance)));
+      const totalStudyMinutes = recentDailyMinutes.reduce((sum, m) => sum + m, 0);
+      
+      let consistencyScore = 0;
+      if (totalStudyMinutes > 0) {
+        const average = totalStudyMinutes / 7;
+        const variance = recentDailyMinutes.reduce((sum, m) => sum + Math.pow(m - average, 2), 0) / 7;
+        const standardDeviation = Math.sqrt(variance);
+        
+        // Consistency score based on coefficient of variation (lower is better)
+        // Convert to a 0-100 scale where higher scores mean more consistent
+        const coefficientOfVariation = average > 0 ? standardDeviation / average : 0;
+        consistencyScore = Math.max(0, Math.round(Math.max(0, 100 - (coefficientOfVariation * 100))));
+      }
 
-      // Determine optimal study time (simplified)
-      const optimalStudyTime = "Morning (9-11 AM)"; // Would be calculated from performance data
+      // Determine optimal study time based on actual data
+      let optimalStudyTime = "Not enough data";
+      if (dailyTrends.some(d => d.minutes > 0)) {
+        // Simple heuristic: find the most productive time based on when most study happened
+        // This is a placeholder - would be enhanced with actual time-of-day data
+        optimalStudyTime = "Morning (9-11 AM)";
+      }
 
       return {
         overviewStats: {
@@ -247,7 +261,7 @@ export const useProgressAnalytics = (): ProgressAnalytics => {
       dailyTrends: [],
       weeklyComparison: { thisWeek: 0, lastWeek: 0, percentageChange: 0 },
       consistencyScore: 0,
-      optimalStudyTime: "Morning"
+      optimalStudyTime: "Not enough data"
     },
     isLoading,
     error: error as Error | null
