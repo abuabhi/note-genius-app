@@ -49,14 +49,7 @@ export const useNotesImport = () => {
             throw new Error('User email is required');
           }
 
-          // Look up user by email
-          const { data: userData, error: userError } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('id', supabase.auth.getUser().then(u => u.data.user?.email === row.user_email.trim() ? u.data.user.id : null))
-            .single();
-
-          // Alternative approach: get user by email from auth.users (requires service role)
+          // Look up user by email using the edge function
           const { data: authUsers, error: authError } = await supabase.functions.invoke('get-user-by-email', {
             body: { email: row.user_email.trim() }
           });

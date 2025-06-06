@@ -25,3 +25,65 @@ export interface NoteCSVRow {
   tags: string;
   user_email: string;
 }
+
+// Restore missing types that other components depend on
+export interface Grade {
+  id: string;
+  name: string;
+  level: number;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CSVGradeRow {
+  name: string;
+  level: number;
+  description?: string;
+}
+
+export interface Subject {
+  id: string;
+  name: string;
+  grade_id: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+  grade?: Grade;
+}
+
+export interface CSVSubjectRow {
+  name: string;
+  grade_name: string;
+  description?: string;
+}
+
+export interface Section {
+  id: string;
+  name: string;
+  subject_id: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+  subject?: Subject;
+}
+
+export interface CSVSectionRow {
+  name: string;
+  subject_name: string;
+  grade_name: string;
+  description?: string;
+}
+
+export interface CSVFlashcardRow {
+  set_name: string;
+  front_content: string;
+  back_content: string;
+  subject_name: string;
+  grade_name: string;
+  section_name?: string;
+  difficulty?: number;
+  country_code?: string;
+  country_name?: string;
+  education_system?: string;
+}
