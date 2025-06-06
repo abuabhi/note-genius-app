@@ -1,28 +1,9 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
-interface Announcement {
-  id: string;
-  title: string;
-  content: string;
-  compact_text?: string;
-  cta_text?: string;
-  cta_url?: string;
-  background_color: string;
-  text_color: string;
-  is_active: boolean;
-  start_date: string;
-  end_date: string;
-  target_tier: string;
-  target_pages: string[];
-  mobile_layout: string;
-  priority: number;
-  dismissible: boolean;
-  created_at: string;
-  text_align: string;
-}
+import { Announcement } from '@/components/admin/announcements/types';
 
 export const useAnnouncementManagement = () => {
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
@@ -38,7 +19,12 @@ export const useAnnouncementManagement = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Announcement[];
+      
+      // Ensure text_align field exists with default value
+      return (data || []).map(announcement => ({
+        ...announcement,
+        text_align: announcement.text_align || 'center'
+      })) as Announcement[];
     }
   });
 

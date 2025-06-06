@@ -2,26 +2,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { AnnouncementCard } from './AnnouncementCard';
-
-interface Announcement {
-  id: string;
-  title: string;
-  content: string;
-  compact_text?: string;
-  cta_text?: string;
-  cta_url?: string;
-  background_color: string;
-  text_color: string;
-  is_active: boolean;
-  start_date: string;
-  end_date: string;
-  target_tier: string;
-  target_pages: string[];
-  mobile_layout: string;
-  priority: number;
-  dismissible: boolean;
-  created_at: string;
-}
+import { Announcement } from './types';
 
 interface AnnouncementsListProps {
   announcements: Announcement[];

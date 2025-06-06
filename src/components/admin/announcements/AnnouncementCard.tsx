@@ -5,26 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2, Eye, EyeOff, Smartphone } from 'lucide-react';
 import { format } from 'date-fns';
-
-interface Announcement {
-  id: string;
-  title: string;
-  content: string;
-  compact_text?: string;
-  cta_text?: string;
-  cta_url?: string;
-  background_color: string;
-  text_color: string;
-  is_active: boolean;
-  start_date: string;
-  end_date: string;
-  target_tier: string;
-  target_pages: string[];
-  mobile_layout: string;
-  priority: number;
-  dismissible: boolean;
-  created_at: string;
-}
+import { Announcement } from './types';
 
 interface AnnouncementCardProps {
   announcement: Announcement;
