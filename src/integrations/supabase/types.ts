@@ -632,6 +632,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          adaptive_learning_preferences: Json | null
           avatar_url: string | null
           country_id: string | null
           created_at: string | null
@@ -650,6 +651,7 @@ export type Database = {
           whatsapp_phone: string | null
         }
         Insert: {
+          adaptive_learning_preferences?: Json | null
           avatar_url?: string | null
           country_id?: string | null
           created_at?: string | null
@@ -668,6 +670,7 @@ export type Database = {
           whatsapp_phone?: string | null
         }
         Update: {
+          adaptive_learning_preferences?: Json | null
           avatar_url?: string | null
           country_id?: string | null
           created_at?: string | null
