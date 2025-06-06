@@ -16,6 +16,7 @@ interface Announcement {
   mobile_layout: string;
   priority: number;
   dismissible: boolean;
+  text_align?: string;
 }
 
 interface AnnouncementItemProps {
@@ -43,6 +44,10 @@ export const AnnouncementItem = ({
     ? announcement.compact_text
     : announcement.content;
 
+  const textAlignClass = announcement.text_align === 'left' ? 'text-left' : 
+                        announcement.text_align === 'right' ? 'text-right' : 
+                        'text-center';
+
   return (
     <motion.div
       key={announcement.id}
@@ -59,10 +64,10 @@ export const AnnouncementItem = ({
       onTouchMove={isMobile ? onTouchMove : undefined}
       onTouchEnd={isMobile ? onTouchEnd : undefined}
     >
-      <div className={`px-4 py-3 ${isMobile ? 'text-sm' : 'text-base'}`}>
+      <div className={`px-4 py-3 ${isMobile ? 'text-sm' : 'text-base'} ${textAlignClass}`}>
         <div className={`flex items-center justify-between gap-3 ${isMobile ? 'flex-col' : 'flex-row'}`}>
           <div className={`flex-1 ${isMobile ? 'w-full' : ''}`}>
-            <div className={`flex items-start gap-2 ${isMobile ? 'flex-col' : 'flex-row items-center'}`}>
+            <div className={`flex items-start gap-2 ${isMobile ? 'flex-col' : 'flex-row items-center'} ${textAlignClass}`}>
               <div className={`font-medium ${isMobile ? 'text-xs' : 'text-sm'}`}>
                 {announcement.title}
               </div>

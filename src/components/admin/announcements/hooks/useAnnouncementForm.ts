@@ -38,6 +38,7 @@ export const useAnnouncementForm = (
       mobile_layout: announcement?.mobile_layout || 'compact',
       priority: announcement?.priority || 1,
       dismissible: announcement?.dismissible ?? true,
+      text_align: announcement?.text_align || 'center',
     },
   });
 
@@ -59,6 +60,7 @@ export const useAnnouncementForm = (
         mobile_layout: data.mobile_layout,
         priority: data.priority,
         dismissible: data.dismissible,
+        text_align: data.text_align,
         created_by: user?.id,
       };
 

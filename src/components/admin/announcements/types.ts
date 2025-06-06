@@ -15,6 +15,7 @@ export interface AnnouncementFormData {
   mobile_layout: string;
   priority: number;
   dismissible: boolean;
+  text_align: string;
 }
 
 export interface Announcement {
@@ -35,6 +36,7 @@ export interface Announcement {
   priority: number;
   dismissible: boolean;
   created_at: string;
+  text_align: string;
 }
 
 export interface AnnouncementFormDialogProps {

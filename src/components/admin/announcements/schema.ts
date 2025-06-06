@@ -17,4 +17,5 @@ export const announcementSchema = z.object({
   mobile_layout: z.string(),
   priority: z.number().min(1).max(10),
   dismissible: z.boolean(),
+  text_align: z.string(),
 });
