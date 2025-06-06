@@ -18,7 +18,7 @@ export const parseCSV = (file: File): Promise<any[]> => {
 };
 
 // Generate template CSV content based on type
-export const getTemplateCSV = (type: 'grades' | 'subjects' | 'sections' | 'flashcards'): string => {
+export const getTemplateCSV = (type: 'grades' | 'subjects' | 'sections' | 'flashcards' | 'notes'): string => {
   switch (type) {
     case 'grades':
       return 'name,level,description\nGrade 1,1,"First grade"\nGrade 2,2,"Second grade"';
@@ -28,6 +28,8 @@ export const getTemplateCSV = (type: 'grades' | 'subjects' | 'sections' | 'flash
       return 'name,subject_name,grade_name,description,country_code\nAlgebra,Math,Grade 1,"Algebra section",AU\nGeometry,Math,Grade 1,"Geometry section",AU';
     case 'flashcards':
       return 'set_name,front_content,back_content,subject_name,grade_name,section_name,difficulty,country_code,education_system\n"English Literature","What is the setting of To Kill a Mockingbird?","Maycomb, Alabama during the Great Depression","English","Grade 10","Literature",2,"AU","Australian Curriculum"\n"English Literature","Who wrote Pride and Prejudice?","Jane Austen","English","Grade 10","Literature",1,"AU","Australian Curriculum"';
+    case 'notes':
+      return 'title,description,content,subject,category,source_type,tags,user_email\n"Mathematics Study Notes","Notes on algebra basics","Algebra is a branch of mathematics dealing with symbols and rules for manipulating symbols...","Mathematics","Study Notes","import","algebra,math,basics","student@example.com"\n"History Essay Notes","World War II overview","World War II was a global war that lasted from 1939 to 1945...","History","Research Notes","import","wwii,history,essay","student@example.com"';
     default:
       return '';
   }

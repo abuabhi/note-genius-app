@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FlashcardsCSVImport } from "./FlashcardsCSVImport";
+import { NotesCSVImport } from "./NotesCSVImport";
 import { useCSVImport } from "@/hooks/useCSVImport";
 import { FileUploader } from "./FileUploader";
 import { ImportResults } from "./ImportResults";
@@ -40,11 +41,12 @@ export function TabContent() {
 
   return (
     <Tabs defaultValue="grades">
-      <TabsList className="grid grid-cols-4 mb-4">
+      <TabsList className="grid grid-cols-5 mb-4">
         <TabsTrigger value="grades">Grades</TabsTrigger>
         <TabsTrigger value="subjects">Subjects</TabsTrigger>
         <TabsTrigger value="sections">Sections</TabsTrigger>
         <TabsTrigger value="flashcards">Flashcards</TabsTrigger>
+        <TabsTrigger value="notes">Notes</TabsTrigger>
       </TabsList>
 
       <TabsContent value="grades">
@@ -91,6 +93,10 @@ export function TabContent() {
 
       <TabsContent value="flashcards">
         <FlashcardsCSVImport />
+      </TabsContent>
+
+      <TabsContent value="notes">
+        <NotesCSVImport />
       </TabsContent>
     </Tabs>
   );

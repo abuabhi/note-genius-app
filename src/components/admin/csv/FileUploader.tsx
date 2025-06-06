@@ -6,10 +6,10 @@ import { Download, Upload } from "lucide-react";
 interface FileUploaderProps {
   selectedFile?: File | null;
   isImporting?: boolean;
-  templateType?: 'grades' | 'subjects' | 'sections' | 'flashcards';
+  templateType?: 'grades' | 'subjects' | 'sections' | 'flashcards' | 'notes';
   onFileChange?: (file: File | null) => void;
   onImport?: () => void;
-  getTemplateCSV?: (type?: 'grades' | 'subjects' | 'sections' | 'flashcards') => string;
+  getTemplateCSV?: (type?: 'grades' | 'subjects' | 'sections' | 'flashcards' | 'notes') => string;
   onFileSelect?: (file: File | null) => void; // For compatibility
   acceptedTypes: string;
   description: string;
