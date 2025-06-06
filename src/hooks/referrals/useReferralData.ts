@@ -5,21 +5,30 @@ import { useContestActions } from './useContestActions';
 import { useSharingUtils } from './useSharingUtils';
 
 export const useReferralData = () => {
-  const { data: referralStats, isLoading: statsLoading } = useReferralStats();
+  const { data: referralStats, isLoading: statsLoading, error: statsError } = useReferralStats();
   const { data: contests = [], isLoading: contestsLoading } = useContests();
   const { data: contestEntries = [], isLoading: entriesLoading } = useContestEntries();
   const { joinContest, isJoiningContest } = useContestActions();
-  const { generateReferralLink, shareViaWhatsApp, copyReferralLink } = useSharingUtils();
+  const { generateReferralLink, shareViaWhatsApp, copyReferralLink, shareViaEmail, shareViaLinkedIn, shareViaTwitter, generateQRCode } = useSharingUtils();
+
+  // Handle error states gracefully
+  const isLoading = statsLoading || contestsLoading || entriesLoading;
+  const hasError = !!statsError;
 
   return {
     referralStats,
     contests,
     contestEntries,
-    isLoading: statsLoading || contestsLoading || entriesLoading,
+    isLoading,
+    hasError,
     joinContest,
     isJoiningContest,
     generateReferralLink,
     shareViaWhatsApp,
-    copyReferralLink
+    copyReferralLink,
+    shareViaEmail,
+    shareViaLinkedIn,
+    shareViaTwitter,
+    generateQRCode
   };
 };

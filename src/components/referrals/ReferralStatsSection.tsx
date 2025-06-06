@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, Users, Target, Loader2 } from 'lucide-react';
+import { Trophy, Users, Target, Loader2, AlertCircle } from 'lucide-react';
 import { useReferralData } from '@/hooks/referrals/useReferralData';
 
 export const ReferralStatsSection = () => {
@@ -10,7 +10,24 @@ export const ReferralStatsSection = () => {
     contests, 
     contestEntries,
     isLoading,
+    hasError
   } = useReferralData();
+
+  if (hasError) {
+    return (
+      <Card className="border-red-200 bg-red-50 shadow-sm">
+        <CardContent className="p-8">
+          <div className="flex items-center justify-center text-center">
+            <AlertCircle className="h-8 w-8 text-red-500 mr-3" />
+            <div>
+              <p className="text-red-700 font-medium">Unable to load referral stats</p>
+              <p className="text-red-600 text-sm">Please try refreshing the page</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (isLoading || !referralStats) {
     return (
