@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,6 +21,7 @@ interface Announcement {
   priority: number;
   dismissible: boolean;
   created_at: string;
+  text_align: string;
 }
 
 export const useAnnouncementManagement = () => {
