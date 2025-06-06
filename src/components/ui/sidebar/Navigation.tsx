@@ -20,10 +20,7 @@ import {
   Clock,
   Gift,
   Users,
-  MessageSquare,
-  Settings,
-  Calendar,
-  Bell
+  Calendar
 } from "lucide-react";
 
 interface NavigationProps {
@@ -116,15 +113,6 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                 />
                 <Separator className="my-2" />
                 
-                <NavLink
-                  to="/reminders"
-                  icon={Bell}
-                  label="Reminders"
-                  isActive={pathname.includes("/reminders")}
-                  isCollapsed={isCollapsed}
-                />
-                <Separator className="my-2" />
-                
                 {/* Rewards Section */}
                 <NavLink
                   to="/referrals"
@@ -149,15 +137,6 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   icon={Users}
                   label="Study Groups"
                   isActive={pathname.includes("/collaboration")}
-                  isCollapsed={isCollapsed}
-                />
-                <Separator className="my-2" />
-                
-                <NavLink
-                  to="/chat"
-                  icon={MessageSquare}
-                  label="Messages"
-                  isActive={pathname.includes("/chat")}
                   isCollapsed={isCollapsed}
                 />
                 <Separator className="my-2" />
@@ -188,15 +167,6 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                     <Separator className="my-2" />
                   </>
                 )}
-                
-                {/* Settings */}
-                <NavLink
-                  to="/settings"
-                  icon={Settings}
-                  label="Settings"
-                  isActive={pathname.includes("/settings")}
-                  isCollapsed={isCollapsed}
-                />
               </div>
             </ScrollArea>
           </div>
