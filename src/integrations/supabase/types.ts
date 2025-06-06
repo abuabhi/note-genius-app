@@ -9,6 +9,72 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          background_color: string | null
+          compact_text: string | null
+          content: string
+          created_at: string | null
+          created_by: string
+          cta_text: string | null
+          cta_url: string | null
+          dismissible: boolean | null
+          end_date: string
+          id: string
+          is_active: boolean | null
+          mobile_layout: string | null
+          priority: number | null
+          start_date: string
+          target_pages: Json | null
+          target_tier: string | null
+          text_color: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          background_color?: string | null
+          compact_text?: string | null
+          content: string
+          created_at?: string | null
+          created_by: string
+          cta_text?: string | null
+          cta_url?: string | null
+          dismissible?: boolean | null
+          end_date: string
+          id?: string
+          is_active?: boolean | null
+          mobile_layout?: string | null
+          priority?: number | null
+          start_date: string
+          target_pages?: Json | null
+          target_tier?: string | null
+          text_color?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          background_color?: string | null
+          compact_text?: string | null
+          content?: string
+          created_at?: string | null
+          created_by?: string
+          cta_text?: string | null
+          cta_url?: string | null
+          dismissible?: boolean | null
+          end_date?: string
+          id?: string
+          is_active?: boolean | null
+          mobile_layout?: string | null
+          priority?: number | null
+          start_date?: string
+          target_pages?: Json | null
+          target_tier?: string | null
+          text_color?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       app_features: {
         Row: {
           created_at: string
@@ -2002,6 +2068,35 @@ export type Database = {
         }
         Relationships: []
       }
+      user_dismissed_announcements: {
+        Row: {
+          announcement_id: string
+          dismissed_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          announcement_id: string
+          dismissed_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          announcement_id?: string
+          dismissed_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_dismissed_announcements_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "announcements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_flashcard_progress: {
         Row: {
           created_at: string
@@ -2142,9 +2237,29 @@ export type Database = {
         Args: { conversation_uuid: string }
         Returns: boolean
       }
+      dismiss_announcement: {
+        Args: { announcement_uuid: string }
+        Returns: boolean
+      }
       force_delete_note: {
         Args: { note_id: string }
         Returns: boolean
+      }
+      get_active_announcements: {
+        Args: { user_tier_param?: string; current_page?: string }
+        Returns: {
+          id: string
+          title: string
+          content: string
+          compact_text: string
+          cta_text: string
+          cta_url: string
+          background_color: string
+          text_color: string
+          mobile_layout: string
+          priority: number
+          dismissible: boolean
+        }[]
       }
     }
     Enums: {

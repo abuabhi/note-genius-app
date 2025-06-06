@@ -6,6 +6,7 @@ import { CustomSidebar } from '@/components/ui/sidebar-custom';
 import { useAuth } from '@/contexts/auth';
 import { useLocation } from 'react-router-dom';
 import { useReminderToasts } from '@/hooks/useReminderToasts';
+import { AnnouncementBar } from '@/components/announcements/AnnouncementBar';
 
 interface LayoutProps {
   children: ReactNode;
@@ -30,6 +31,8 @@ export default function Layout({ children, showSidebar = true, showFooter = true
   return (
     <div className="min-h-screen flex flex-col">
       <NavBar />
+      {/* Announcement Bar - shows for authenticated users */}
+      {user && <AnnouncementBar />}
       <div className="flex flex-1">
         {shouldShowSidebar && <CustomSidebar />}
         <main className={`flex-1 ${shouldShowSidebar ? 'ml-16' : ''}`}>

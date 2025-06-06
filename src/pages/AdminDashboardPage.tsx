@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
@@ -12,7 +13,8 @@ import {
   Award,
   Upload,
   Settings,
-  BarChart3
+  BarChart3,
+  Megaphone
 } from "lucide-react";
 
 const AdminDashboardPage = () => {
@@ -49,6 +51,13 @@ const AdminDashboardPage = () => {
       icon: BarChart3,
       href: "/admin/analytics",
       color: "text-green-600"
+    },
+    {
+      title: "Announcements",
+      description: "Create and manage announcement bars for users",
+      icon: Megaphone,
+      href: "/admin/announcements",
+      color: "text-yellow-600"
     },
     {
       title: "Flashcard Management",
