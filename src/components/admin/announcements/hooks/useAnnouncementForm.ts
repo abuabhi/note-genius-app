@@ -8,6 +8,16 @@ import { toast } from 'sonner';
 import { announcementFormSchema } from '../schema';
 import { AnnouncementFormData, Announcement } from '../types';
 
+// Helper function to convert priority string to number
+const priorityToNumber = (priority: string): number => {
+  switch (priority) {
+    case 'high': return 10;
+    case 'medium': return 5;
+    case 'low': return 1;
+    default: return 5; // Default to medium
+  }
+};
+
 export const useAnnouncementForm = (
   announcement?: Announcement | null,
   onOpenChange?: (open: boolean) => void
@@ -56,7 +66,7 @@ export const useAnnouncementForm = (
         target_tier: data.target_tier,
         target_pages: JSON.parse(data.target_pages),
         mobile_layout: data.mobile_layout,
-        priority: data.priority,
+        priority: priorityToNumber(data.priority), // Convert string priority to number
         dismissible: data.dismissible,
         text_align: data.text_align,
         created_by: user?.id,
