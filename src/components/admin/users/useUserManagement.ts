@@ -22,7 +22,7 @@ export const useUserManagement = () => {
       // Fetch user profiles from the profiles table
       const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('id, username, user_tier, created_at, avatar_url');
+        .select('id, username, user_tier, created_at, avatar_url, onboarding_completed');
         
       if (error) throw error;
       
@@ -40,6 +40,7 @@ export const useUserManagement = () => {
           username: profile.username || '',
           user_tier: profile.user_tier as UserTier,
           created_at: profile.created_at || new Date().toISOString(),
+          onboarding_completed: profile.onboarding_completed ?? false,
         };
       });
       
@@ -84,6 +85,34 @@ export const useUserManagement = () => {
     }
   };
 
+  const updateOnboardingStatus = async (userId: string, completed: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ onboarding_completed: completed })
+        .eq('id', userId);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setUsers(users.map(user => 
+        user.id === userId ? { ...user, onboarding_completed: completed } : user
+      ));
+      
+      toast({
+        title: "Onboarding status updated",
+        description: `User's onboarding has been ${completed ? 'completed' : 'reset'}.`,
+      });
+    } catch (error) {
+      console.error("Error updating onboarding status:", error);
+      toast({
+        title: "Error updating onboarding status",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Filter users by search term and tier
   const filteredUsers = users.filter(user => {
     // Filter by search term
@@ -105,6 +134,7 @@ export const useUserManagement = () => {
     filter, 
     setFilter, 
     fetchUsers,
-    updateUserTier 
+    updateUserTier,
+    updateOnboardingStatus
   };
 };

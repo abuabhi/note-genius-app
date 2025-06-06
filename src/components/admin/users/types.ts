@@ -7,4 +7,5 @@ export interface User {
   username?: string;
   user_tier: UserTier;
   created_at: string;
+  onboarding_completed?: boolean;
 }

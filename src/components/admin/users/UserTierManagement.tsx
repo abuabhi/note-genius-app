@@ -17,7 +17,8 @@ const UserTierManagement: React.FC = () => {
     filter, 
     setFilter, 
     fetchUsers,
-    updateUserTier 
+    updateUserTier,
+    updateOnboardingStatus
   } = useUserManagement();
 
   if (loading) {
@@ -44,7 +45,11 @@ const UserTierManagement: React.FC = () => {
         <FilterDropdown filter={filter} setFilter={setFilter} />
       </div>
       
-      <UserTable users={filteredUsers} updateUserTier={updateUserTier} />
+      <UserTable 
+        users={filteredUsers} 
+        updateUserTier={updateUserTier}
+        updateOnboardingStatus={updateOnboardingStatus}
+      />
 
       <div className="flex justify-end">
         <Button 
