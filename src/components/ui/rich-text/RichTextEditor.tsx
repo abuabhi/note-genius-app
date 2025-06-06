@@ -6,6 +6,8 @@ import Highlight from '@tiptap/extension-highlight';
 import Underline from '@tiptap/extension-underline';
 import BulletList from '@tiptap/extension-bullet-list';
 import OrderedList from '@tiptap/extension-ordered-list';
+import TextStyle from '@tiptap/extension-text-style';
+import Color from '@tiptap/extension-color';
 import { useState, useEffect } from 'react';
 import { RichTextToolbar } from './RichTextToolbar';
 
@@ -30,7 +32,14 @@ export const RichTextEditor = ({
   
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        // Configure StarterKit to ensure bold works properly
+        bold: {
+          HTMLAttributes: {
+            class: 'font-bold',
+          },
+        },
+      }),
       TextAlign.configure({
         types: ['heading', 'paragraph'],
         alignments: ['left', 'center', 'right', 'justify'],
@@ -38,8 +47,15 @@ export const RichTextEditor = ({
       }),
       Highlight.configure({
         multicolor: true,
+        HTMLAttributes: {
+          class: 'bg-yellow-200 px-1 rounded',
+        },
       }),
       Underline,
+      TextStyle,
+      Color.configure({
+        types: ['textStyle'],
+      }),
       BulletList,
       OrderedList,
     ],
@@ -52,6 +68,20 @@ export const RichTextEditor = ({
       attributes: {
         class: `prose max-w-none focus:outline-none min-h-[200px] ${isFocused ? 'focused' : ''} ${className}`,
         placeholder,
+      },
+      // Prevent form submission on text selection
+      handleDOMEvents: {
+        mouseup: (view, event) => {
+          event.stopPropagation();
+          return false;
+        },
+        keydown: (view, event) => {
+          // Prevent Enter from submitting form when in editor
+          if (event.key === 'Enter' && !event.shiftKey) {
+            event.stopPropagation();
+          }
+          return false;
+        },
       },
     },
     parseOptions: {
@@ -75,6 +105,8 @@ export const RichTextEditor = ({
         className={`p-3 min-h-[200px] ${readOnly ? 'bg-muted/30' : ''}`}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
+        onMouseDown={(e) => e.stopPropagation()}
+        onMouseUp={(e) => e.stopPropagation()}
       >
         <EditorContent editor={editor} />
       </div>

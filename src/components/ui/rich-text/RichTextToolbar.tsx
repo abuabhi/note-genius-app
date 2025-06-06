@@ -15,7 +15,7 @@ import {
   List,
   ListOrdered,
   Highlighter,
-  Type,
+  Palette,
 } from 'lucide-react';
 
 interface RichTextToolbarProps {
@@ -28,29 +28,28 @@ export const RichTextToolbar = ({ editor }: RichTextToolbarProps) => {
   }
 
   const setFontSize = (size: string) => {
-    // Fixed implementation to prevent blank page issue
-    // This approach uses a safer method to apply font size
+    // Safer font size implementation
+    const { from, to } = editor.state.selection;
+    
+    if (from === to) return; // No selection
+    
     editor.chain()
       .focus()
-      .command(({ tr, commands }) => {
-        // Get the current selection
-        const { from, to } = tr.selection;
-        
-        // If selection is not empty, apply font size
-        if (from !== to) {
-          // Create a span with style attribute
-          const node = document.createElement('span');
-          node.style.fontSize = size;
-          
-          // Get the selected text
-          const text = tr.doc.textBetween(from, to, ' ');
-          
-          // Replace the selection with the span containing the text
-          commands.insertContent(`<span style="font-size: ${size}">${text}</span>`);
-        }
-        return true;
-      })
+      .setMark('textStyle', { fontSize: size })
       .run();
+  };
+
+  const setTextColor = (color: string) => {
+    editor.chain().focus().setColor(color).run();
+  };
+
+  // Prevent event bubbling that might trigger form submission
+  const handleButtonClick = (callback: () => void) => {
+    return (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      callback();
+    };
   };
 
   return (
@@ -74,12 +73,31 @@ export const RichTextToolbar = ({ editor }: RichTextToolbarProps) => {
 
       <Separator orientation="vertical" className="h-6" />
 
+      {/* Text Color Selector */}
+      <Select onValueChange={setTextColor}>
+        <SelectTrigger className="w-20 h-8">
+          <Palette className="h-4 w-4" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="#000000">Black</SelectItem>
+          <SelectItem value="#ef4444">Red</SelectItem>
+          <SelectItem value="#22c55e">Green</SelectItem>
+          <SelectItem value="#3b82f6">Blue</SelectItem>
+          <SelectItem value="#a855f7">Purple</SelectItem>
+          <SelectItem value="#f59e0b">Orange</SelectItem>
+          <SelectItem value="#14b8a6">Teal</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Separator orientation="vertical" className="h-6" />
+
       {/* Text Formatting */}
       <Button
         variant={editor.isActive('bold') ? 'default' : 'ghost'}
         size="sm"
-        onClick={() => editor.chain().focus().toggleBold().run()}
+        onClick={handleButtonClick(() => editor.chain().focus().toggleBold().run())}
         disabled={!editor.can().chain().focus().toggleBold().run()}
+        type="button"
       >
         <Bold className="h-4 w-4" />
       </Button>
@@ -87,8 +105,9 @@ export const RichTextToolbar = ({ editor }: RichTextToolbarProps) => {
       <Button
         variant={editor.isActive('italic') ? 'default' : 'ghost'}
         size="sm"
-        onClick={() => editor.chain().focus().toggleItalic().run()}
+        onClick={handleButtonClick(() => editor.chain().focus().toggleItalic().run())}
         disabled={!editor.can().chain().focus().toggleItalic().run()}
+        type="button"
       >
         <Italic className="h-4 w-4" />
       </Button>
@@ -96,8 +115,9 @@ export const RichTextToolbar = ({ editor }: RichTextToolbarProps) => {
       <Button
         variant={editor.isActive('underline') ? 'default' : 'ghost'}
         size="sm"
-        onClick={() => editor.chain().focus().toggleUnderline().run()}
+        onClick={handleButtonClick(() => editor.chain().focus().toggleUnderline().run())}
         disabled={!editor.can().chain().focus().toggleUnderline().run()}
+        type="button"
       >
         <Underline className="h-4 w-4" />
       </Button>
@@ -105,8 +125,9 @@ export const RichTextToolbar = ({ editor }: RichTextToolbarProps) => {
       <Button
         variant={editor.isActive('strike') ? 'default' : 'ghost'}
         size="sm"
-        onClick={() => editor.chain().focus().toggleStrike().run()}
+        onClick={handleButtonClick(() => editor.chain().focus().toggleStrike().run())}
         disabled={!editor.can().chain().focus().toggleStrike().run()}
+        type="button"
       >
         <Strikethrough className="h-4 w-4" />
       </Button>
@@ -114,7 +135,8 @@ export const RichTextToolbar = ({ editor }: RichTextToolbarProps) => {
       <Button
         variant={editor.isActive('highlight') ? 'default' : 'ghost'}
         size="sm"
-        onClick={() => editor.chain().focus().toggleHighlight().run()}
+        onClick={handleButtonClick(() => editor.chain().focus().toggleHighlight().run())}
+        type="button"
       >
         <Highlighter className="h-4 w-4" />
       </Button>
@@ -125,7 +147,8 @@ export const RichTextToolbar = ({ editor }: RichTextToolbarProps) => {
       <Button
         variant={editor.isActive({ textAlign: 'left' }) ? 'default' : 'ghost'}
         size="sm"
-        onClick={() => editor.chain().focus().setTextAlign('left').run()}
+        onClick={handleButtonClick(() => editor.chain().focus().setTextAlign('left').run())}
+        type="button"
       >
         <AlignLeft className="h-4 w-4" />
       </Button>
@@ -133,7 +156,8 @@ export const RichTextToolbar = ({ editor }: RichTextToolbarProps) => {
       <Button
         variant={editor.isActive({ textAlign: 'center' }) ? 'default' : 'ghost'}
         size="sm"
-        onClick={() => editor.chain().focus().setTextAlign('center').run()}
+        onClick={handleButtonClick(() => editor.chain().focus().setTextAlign('center').run())}
+        type="button"
       >
         <AlignCenter className="h-4 w-4" />
       </Button>
@@ -141,7 +165,8 @@ export const RichTextToolbar = ({ editor }: RichTextToolbarProps) => {
       <Button
         variant={editor.isActive({ textAlign: 'right' }) ? 'default' : 'ghost'}
         size="sm"
-        onClick={() => editor.chain().focus().setTextAlign('right').run()}
+        onClick={handleButtonClick(() => editor.chain().focus().setTextAlign('right').run())}
+        type="button"
       >
         <AlignRight className="h-4 w-4" />
       </Button>
@@ -149,7 +174,8 @@ export const RichTextToolbar = ({ editor }: RichTextToolbarProps) => {
       <Button
         variant={editor.isActive({ textAlign: 'justify' }) ? 'default' : 'ghost'}
         size="sm"
-        onClick={() => editor.chain().focus().setTextAlign('justify').run()}
+        onClick={handleButtonClick(() => editor.chain().focus().setTextAlign('justify').run())}
+        type="button"
       >
         <AlignJustify className="h-4 w-4" />
       </Button>
@@ -160,7 +186,8 @@ export const RichTextToolbar = ({ editor }: RichTextToolbarProps) => {
       <Button
         variant={editor.isActive('bulletList') ? 'default' : 'ghost'}
         size="sm"
-        onClick={() => editor.chain().focus().toggleBulletList().run()}
+        onClick={handleButtonClick(() => editor.chain().focus().toggleBulletList().run())}
+        type="button"
       >
         <List className="h-4 w-4" />
       </Button>
@@ -168,7 +195,8 @@ export const RichTextToolbar = ({ editor }: RichTextToolbarProps) => {
       <Button
         variant={editor.isActive('orderedList') ? 'default' : 'ghost'}
         size="sm"
-        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+        onClick={handleButtonClick(() => editor.chain().focus().toggleOrderedList().run())}
+        type="button"
       >
         <ListOrdered className="h-4 w-4" />
       </Button>
