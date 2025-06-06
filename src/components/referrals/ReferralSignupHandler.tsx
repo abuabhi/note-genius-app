@@ -8,11 +8,11 @@ import { toast } from 'sonner';
 export const ReferralSignupHandler = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
-  const referralCode = searchParams.get('ref');
+  const urlReferralCode = searchParams.get('ref');
 
   useEffect(() => {
     const processReferral = async () => {
-      if (!user || !referralCode) return;
+      if (!user) return;
 
       try {
         // Check if this user was already processed for referrals
@@ -24,6 +24,14 @@ export const ReferralSignupHandler = () => {
 
         if (existingReferral) {
           console.log('User already processed for referrals');
+          return;
+        }
+
+        // Get referral code from URL or user metadata
+        const referralCode = urlReferralCode || user.user_metadata?.referral_code;
+        
+        if (!referralCode) {
+          console.log('No referral code found');
           return;
         }
 
@@ -41,10 +49,12 @@ export const ReferralSignupHandler = () => {
         if (data) {
           toast.success('Welcome! You\'ve been successfully referred by a friend! 🎉');
           
-          // Remove the referral code from URL
-          const newUrl = new URL(window.location.href);
-          newUrl.searchParams.delete('ref');
-          window.history.replaceState({}, '', newUrl.toString());
+          // Remove the referral code from URL if it was there
+          if (urlReferralCode) {
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.delete('ref');
+            window.history.replaceState({}, '', newUrl.toString());
+          }
         } else {
           console.log('Invalid or expired referral code');
         }
@@ -57,7 +67,7 @@ export const ReferralSignupHandler = () => {
     // Add a small delay to ensure the user profile is fully created
     const timer = setTimeout(processReferral, 2000);
     return () => clearTimeout(timer);
-  }, [user, referralCode]);
+  }, [user, urlReferralCode]);
 
   return null;
 };

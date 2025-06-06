@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,12 +11,16 @@ import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const SignupPage = () => {
+  const [searchParams] = useSearchParams();
+  const urlReferralCode = searchParams.get('ref');
+  
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
     confirmPassword: "",
     acceptTerms: false,
+    referralCode: urlReferralCode || "", // Pre-fill if coming from referral link
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -59,6 +63,7 @@ const SignupPage = () => {
     try {
       await signUp(formData.email, formData.password, {
         username: formData.name || formData.email.split('@')[0],
+        referral_code: formData.referralCode.trim() || null, // Include referral code in metadata
       });
       // Navigation will occur after email verification
     } catch (error: any) {
@@ -165,6 +170,27 @@ const SignupPage = () => {
                     className="block w-full"
                   />
                 </div>
+              </div>
+
+              <div>
+                <Label htmlFor="referralCode">Referral code (optional)</Label>
+                <div className="mt-1">
+                  <Input
+                    id="referralCode"
+                    name="referralCode"
+                    type="text"
+                    value={formData.referralCode}
+                    onChange={handleChange}
+                    className="block w-full"
+                    placeholder="Enter referral code"
+                    disabled={!!urlReferralCode} // Disable if pre-filled from URL
+                  />
+                </div>
+                {urlReferralCode && (
+                  <p className="mt-1 text-sm text-mint-600">
+                    Referral code automatically applied from your invitation link
+                  </p>
+                )}
               </div>
 
               <div className="flex items-center space-x-2">
