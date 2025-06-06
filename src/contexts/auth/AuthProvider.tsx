@@ -1,4 +1,3 @@
-
 import React, { ReactNode, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -7,6 +6,7 @@ import AuthContext from './AuthContext';
 import { signOutAndCleanup } from '@/utils/authUtils';
 import { useOnboardingCheck } from '@/hooks/auth/useOnboardingCheck';
 import { useAuthRedirects } from '@/hooks/auth/useAuthRedirects';
+import { ReferralSignupHandler } from '@/components/referrals/ReferralSignupHandler';
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -139,5 +139,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signInWithGoogle
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      <ReferralSignupHandler />
+      {children}
+    </AuthContext.Provider>
+  );
 };

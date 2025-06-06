@@ -16,21 +16,17 @@ export const useContestActions = () => {
     mutationFn: async (contestId: string) => {
       if (!user) throw new Error('No user');
 
-      try {
-        const { error } = await (supabase as any)
-          .from('contest_entries')
-          .insert({
-            contest_id: contestId,
-            user_id: user.id,
-            referrals_count: referralStats?.completedReferrals || 0,
-            is_eligible: (referralStats?.completedReferrals || 0) >= 
-                        (contests.find(c => c.id === contestId)?.min_referrals_required || 1)
-          });
+      const { error } = await supabase
+        .from('contest_entries')
+        .insert({
+          contest_id: contestId,
+          user_id: user.id,
+          referrals_count: referralStats?.completedReferrals || 0,
+          is_eligible: (referralStats?.completedReferrals || 0) >= 
+                      (contests.find(c => c.id === contestId)?.min_referrals_required || 1)
+        });
 
-        if (error) throw error;
-      } catch (error) {
-        throw new Error('Contest entries not available yet');
-      }
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contest-entries'] });

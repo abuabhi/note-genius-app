@@ -1,5 +1,6 @@
 
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useSharingUtils = () => {
   const generateReferralLink = (referralCode: string) => {
@@ -34,10 +35,27 @@ Let's ace our studies together! 🚀`;
     }
   };
 
-  const shareViaEmail = (referralCode: string) => {
+  const shareViaEmail = async (referralCode: string) => {
     const link = generateReferralLink(referralCode);
-    const subject = "Try StudyBuddy - Great Study Platform";
-    const body = `Hi there!
+    
+    try {
+      // Call the send-referral-email edge function
+      const { error } = await supabase.functions.invoke('send-referral-email', {
+        body: {
+          referralCode,
+          referralLink: link,
+          // Add user's email to track who sent it (optional)
+        }
+      });
+
+      if (error) throw error;
+      
+      toast.success('Email sharing form opened! 📧');
+    } catch (error) {
+      console.error('Error with email service:', error);
+      // Fallback to mailto if the service fails
+      const subject = "Try StudyBuddy - Great Study Platform";
+      const body = `Hi there!
 
 I've been using StudyBuddy for my studies and thought you might find it helpful too. It's a comprehensive platform with smart flashcards, note organization, and progress tracking.
 
@@ -46,7 +64,8 @@ ${link}
 
 Best regards!`;
 
-    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    }
   };
 
   const shareViaLinkedIn = (referralCode: string) => {

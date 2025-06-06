@@ -24,10 +24,8 @@ export const useReferralStats = () => {
 
         // Generate referral code if it doesn't exist
         if (!referralCode) {
-          // Generate a random 8-character code
           referralCode = Math.random().toString(36).substring(2, 10).toUpperCase();
           
-          // Update the profile with the new referral code
           const { error: updateError } = await supabase
             .from('profiles')
             .update({ referral_code: referralCode })
@@ -35,35 +33,20 @@ export const useReferralStats = () => {
 
           if (updateError) {
             console.error('Error updating referral code:', updateError);
-            // If update fails, use a temporary code
             referralCode = 'TEMP' + Math.random().toString(36).substring(2, 6).toUpperCase();
           }
         }
 
-        // Try to get referral statistics, fallback if tables don't exist
-        let totalReferrals = 0;
-        let completedReferrals = 0;
-        let pendingReferrals = 0;
-        let totalPointsEarned = 0;
+        // Get referral statistics from the new referrals table
+        const { data: referrals } = await supabase
+          .from('referrals')
+          .select('status, points_awarded')
+          .eq('referrer_id', user.id);
 
-        try {
-          const { data: referrals } = await (supabase as any)
-            .from('referrals')
-            .select('status, points_awarded')
-            .eq('referrer_id', user.id);
-
-          if (referrals) {
-            totalReferrals = referrals.length;
-            completedReferrals = referrals.filter((r: any) => r.status === 'completed').length;
-            pendingReferrals = referrals.filter((r: any) => r.status === 'pending').length;
-            totalPointsEarned = referrals.reduce((sum: number, r: any) => sum + (r.points_awarded || 0), 0);
-          }
-        } catch (error) {
-          console.log('Referrals table not available yet');
-          // Set some mock data for demo purposes
-          completedReferrals = Math.floor(Math.random() * 5);
-          totalPointsEarned = completedReferrals * 100;
-        }
+        const totalReferrals = referrals?.length || 0;
+        const completedReferrals = referrals?.filter(r => r.status === 'completed').length || 0;
+        const pendingReferrals = referrals?.filter(r => r.status === 'pending').length || 0;
+        const totalPointsEarned = referrals?.reduce((sum, r) => sum + (r.points_awarded || 0), 0) || 0;
 
         return {
           totalReferrals,
@@ -84,7 +67,7 @@ export const useReferralStats = () => {
       }
     },
     enabled: !!user,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 };

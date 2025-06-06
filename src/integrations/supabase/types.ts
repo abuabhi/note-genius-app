@@ -167,6 +167,80 @@ export type Database = {
           },
         ]
       }
+      contest_entries: {
+        Row: {
+          contest_id: string
+          created_at: string
+          id: string
+          is_eligible: boolean
+          referrals_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contest_id: string
+          created_at?: string
+          id?: string
+          is_eligible?: boolean
+          referrals_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contest_id?: string
+          created_at?: string
+          id?: string
+          is_eligible?: boolean
+          referrals_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contest_entries_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contests: {
+        Row: {
+          created_at: string
+          description: string
+          end_date: string
+          id: string
+          is_active: boolean
+          min_referrals_required: number
+          prize_description: string
+          start_date: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          end_date: string
+          id?: string
+          is_active?: boolean
+          min_referrals_required?: number
+          prize_description: string
+          start_date: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          end_date?: string
+          id?: string
+          is_active?: boolean
+          min_referrals_required?: number
+          prize_description?: string
+          start_date?: string
+          title?: string
+        }
+        Relationships: []
+      }
       conversation_participants: {
         Row: {
           conversation_id: string
@@ -1190,6 +1264,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      referrals: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          points_awarded: number | null
+          referral_code: string
+          referred_user_id: string
+          referrer_id: string
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          points_awarded?: number | null
+          referral_code: string
+          referred_user_id: string
+          referrer_id: string
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          points_awarded?: number | null
+          referral_code?: string
+          referred_user_id?: string
+          referrer_id?: string
+          status?: string
+        }
+        Relationships: []
       }
       reminders: {
         Row: {
@@ -2266,6 +2373,10 @@ export type Database = {
           priority: number
           dismissible: boolean
         }[]
+      }
+      process_referral_signup: {
+        Args: { referred_user_id: string; referral_code_used: string }
+        Returns: boolean
       }
     }
     Enums: {
