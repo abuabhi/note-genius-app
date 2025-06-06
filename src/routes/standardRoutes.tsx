@@ -8,9 +8,9 @@ const NotesPage = lazy(() => import('@/pages/NotesPage'));
 const NoteStudyView = lazy(() => import('@/components/notes/study/NoteStudyView'));
 const FlashcardsPage = lazy(() => import('@/pages/FlashcardsPage'));
 const CreateFlashcardPage = lazy(() => import('@/pages/CreateFlashcardPage'));
-const FlashcardStudyPage = lazy(() => import('@/pages/FlashcardStudyPage'));
+const FlashcardStudyPage = lazy(() => import('@/pages/study/SimplifiedStudyPageLayout'));
 const QuizPage = lazy(() => import('@/pages/QuizPage'));
-const QuizTakingPage = lazy(() => import('@/pages/QuizTakingPage'));
+const QuizTakingPage = lazy(() => import('@/pages/TakeQuizPage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
 const ReferralsPage = lazy(() => import('@/pages/ReferralsPage'));
 
