@@ -1,4 +1,4 @@
-import { StudySession } from '../../../hooks/useStudySessions';
+import { EnhancedStudySession } from '../../../hooks/useEnhancedStudySessions';
 import { 
   StudySchedule, 
   ScheduleSlot, 
@@ -8,7 +8,7 @@ import {
 } from './types';
 
 export function generateOptimalSchedule(
-  userSessions: StudySession[],
+  userSessions: EnhancedStudySession[],
   preferences: Partial<StudyPreferences> = {}
 ): StudySchedule {
   const defaultPreferences: StudyPreferences = {
@@ -34,7 +34,7 @@ export function generateOptimalSchedule(
   };
 }
 
-function calculateOptimalTimes(sessions: StudySession[]): OptimalTimeSlot[] {
+function calculateOptimalTimes(sessions: EnhancedStudySession[]): OptimalTimeSlot[] {
   if (sessions.length < 5) {
     // Default optimal times for new users
     return [
@@ -65,7 +65,7 @@ function calculateOptimalTimes(sessions: StudySession[]): OptimalTimeSlot[] {
   // Analyze session performance by hour
   const hourlyPerformance = sessions.reduce((acc, session) => {
     const hour = new Date(session.start_time).getHours();
-    const accuracy = session.cards_reviewed > 0 ? 
+    const accuracy = session.cards_reviewed && session.cards_reviewed > 0 ? 
       (session.cards_correct || 0) / session.cards_reviewed : 0;
     
     if (!acc[hour]) {
@@ -101,7 +101,7 @@ function calculateOptimalTimes(sessions: StudySession[]): OptimalTimeSlot[] {
 }
 
 function generateWeeklyPattern(
-  sessions: StudySession[], 
+  sessions: EnhancedStudySession[], 
   preferences: StudyPreferences
 ): ScheduleSlot[] {
   const pattern: ScheduleSlot[] = [];

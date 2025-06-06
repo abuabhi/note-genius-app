@@ -1,4 +1,4 @@
-import { StudySession } from '../../../hooks/useStudySessions';
+import { EnhancedStudySession } from '../../../hooks/useEnhancedStudySessions';
 import { FlashcardProgress } from '../advanced/types';
 import { 
   LearningPath, 
@@ -9,7 +9,7 @@ import {
 } from './types';
 
 export function generateAdaptiveLearningPath(
-  userSessions: StudySession[],
+  userSessions: EnhancedStudySession[],
   gradeProgression: FlashcardProgress[],
   subject: string
 ): LearningPath {
@@ -49,7 +49,7 @@ export function generateAdaptiveLearningPath(
 function generateAdaptiveSteps(
   difficulty: 'beginner' | 'intermediate' | 'advanced',
   progress: FlashcardProgress[],
-  sessions: StudySession[]
+  sessions: EnhancedStudySession[]
 ): AdaptiveStep[] {
   const steps: AdaptiveStep[] = [];
   let stepNumber = 1;
@@ -96,7 +96,7 @@ function createStep(
   };
 }
 
-export function analyzeStudyPatterns(sessions: StudySession[]): BehavioralPattern[] {
+export function analyzeStudyPatterns(sessions: EnhancedStudySession[]): BehavioralPattern[] {
   const patterns: BehavioralPattern[] = [];
 
   // Analyze study timing patterns
@@ -114,7 +114,7 @@ export function analyzeStudyPatterns(sessions: StudySession[]): BehavioralPatter
   return patterns;
 }
 
-function analyzeTimingPattern(sessions: StudySession[]): BehavioralPattern | null {
+function analyzeTimingPattern(sessions: EnhancedStudySession[]): BehavioralPattern | null {
   if (sessions.length < 5) return null;
 
   const hourCounts = sessions.reduce((acc, session) => {
@@ -141,7 +141,7 @@ function analyzeTimingPattern(sessions: StudySession[]): BehavioralPattern | nul
   };
 }
 
-function analyzeSessionLengthPattern(sessions: StudySession[]): BehavioralPattern | null {
+function analyzeSessionLengthPattern(sessions: EnhancedStudySession[]): BehavioralPattern | null {
   if (sessions.length < 3) return null;
 
   const avgDuration = sessions
@@ -161,7 +161,7 @@ function analyzeSessionLengthPattern(sessions: StudySession[]): BehavioralPatter
   };
 }
 
-function analyzeBreakPattern(sessions: StudySession[]): BehavioralPattern | null {
+function analyzeBreakPattern(sessions: EnhancedStudySession[]): BehavioralPattern | null {
   // This would analyze break_time data if available
   // For now, return a default pattern
   return {
@@ -181,7 +181,7 @@ function getTimeRange(hour: number): string {
   return 'late night/early morning';
 }
 
-function calculateTimingEffectiveness(sessions: StudySession[], peakHour: number): number {
+function calculateTimingEffectiveness(sessions: EnhancedStudySession[], peakHour: number): number {
   const peakSessions = sessions.filter(s => 
     new Date(s.start_time).getHours() === peakHour
   );

@@ -1,4 +1,4 @@
-import { StudySession } from '../../../hooks/useStudySessions';
+import { EnhancedStudySession } from '../../../hooks/useEnhancedStudySessions';
 import { FlashcardProgress } from '../advanced/types';
 import { 
   PerformanceForecast, 
@@ -9,7 +9,7 @@ import {
 } from './types';
 
 export function generatePerformanceForecast(
-  userSessions: StudySession[],
+  userSessions: EnhancedStudySession[],
   gradeProgression: FlashcardProgress[]
 ): PerformanceForecast {
   const subjectForecasts = generateSubjectForecasts(userSessions, gradeProgression);
@@ -28,7 +28,7 @@ export function generatePerformanceForecast(
 }
 
 function generateSubjectForecasts(
-  sessions: StudySession[],
+  sessions: EnhancedStudySession[],
   gradeProgression: FlashcardProgress[]
 ): SubjectForecast[] {
   // Group data by subject
@@ -55,11 +55,11 @@ function generateSubjectForecasts(
 }
 
 function groupDataBySubject(
-  sessions: StudySession[],
+  sessions: EnhancedStudySession[],
   gradeProgression: FlashcardProgress[]
 ) {
   const subjectData: Record<string, { 
-    sessions: StudySession[]; 
+    sessions: EnhancedStudySession[]; 
     gradeProgression: FlashcardProgress[] 
   }> = {};
 
@@ -92,7 +92,7 @@ function calculateCurrentMastery(gradeProgression: FlashcardProgress[]): number 
   ) / gradeProgression.length;
 }
 
-function projectFutureMastery(sessions: StudySession[], currentMastery: number): number {
+function projectFutureMastery(sessions: EnhancedStudySession[], currentMastery: number): number {
   if (sessions.length < 3) {
     // Not enough data, assume slow improvement
     return Math.min(100, currentMastery + 10);
@@ -113,7 +113,7 @@ function projectFutureMastery(sessions: StudySession[], currentMastery: number):
   return Math.min(100, currentMastery + improvementRate);
 }
 
-function identifyInfluencingFactors(sessions: StudySession[]): string[] {
+function identifyInfluencingFactors(sessions: EnhancedStudySession[]): string[] {
   const factors: string[] = [];
   
   if (sessions.length === 0) return ['Insufficient data'];
@@ -160,7 +160,7 @@ function calculateExamReadiness(subjectForecasts: SubjectForecast[]): ExamReadin
 }
 
 function identifyRiskAreas(
-  sessions: StudySession[],
+  sessions: EnhancedStudySession[],
   gradeProgression: FlashcardProgress[]
 ): RiskArea[] {
   const risks: RiskArea[] = [];
