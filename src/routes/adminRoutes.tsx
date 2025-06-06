@@ -1,5 +1,6 @@
 
 import React from 'react';
+import AdminDashboardPage from "@/pages/AdminDashboardPage";
 import AdminUsersPage from "@/pages/AdminUsersPage";
 import AdminFlashcardPage from "@/pages/AdminFlashcardPage";
 import AdminSectionsPage from "@/pages/AdminSectionsPage";
@@ -11,7 +12,7 @@ import { RouteConfig } from './publicRoutes';
 
 // Admin routes
 export const adminRoutes: RouteConfig[] = [
-  { path: "/admin", element: <AdminUsersPage /> }, // Default admin page
+  { path: "/admin", element: <AdminDashboardPage /> }, // Main admin dashboard
   { path: "/admin/users", element: <AdminUsersPage /> },
   { path: "/admin/flashcards", element: <AdminFlashcardPage /> },
   { path: "/admin/sections", element: <AdminSectionsPage /> },
