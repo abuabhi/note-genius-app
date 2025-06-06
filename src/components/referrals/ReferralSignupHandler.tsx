@@ -67,15 +67,14 @@ export const ReferralSignupHandler = () => {
       }
     };
 
-    // Wrap the entire async operation in startTransition to prevent suspension
-    startTransition(() => {
-      // Add a small delay to ensure the user profile is fully created
-      const timer = setTimeout(() => {
+    // Add a small delay to ensure the user profile is fully created
+    const timer = setTimeout(() => {
+      startTransition(() => {
         processReferral();
-      }, 2000);
-      
-      return () => clearTimeout(timer);
-    });
+      });
+    }, 2000);
+    
+    return () => clearTimeout(timer);
   }, [user, urlReferralCode]);
 
   return null;
