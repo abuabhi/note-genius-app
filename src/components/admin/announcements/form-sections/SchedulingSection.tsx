@@ -25,7 +25,12 @@ export const SchedulingSection = ({ control }: SchedulingSectionProps) => {
           <FormItem>
             <FormLabel>Start Date & Time</FormLabel>
             <FormControl>
-              <Input {...field} type="datetime-local" />
+              <Input 
+                type="datetime-local" 
+                value={field.value} 
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -39,7 +44,12 @@ export const SchedulingSection = ({ control }: SchedulingSectionProps) => {
           <FormItem>
             <FormLabel>End Date & Time</FormLabel>
             <FormControl>
-              <Input {...field} type="datetime-local" />
+              <Input 
+                type="datetime-local" 
+                value={field.value} 
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>

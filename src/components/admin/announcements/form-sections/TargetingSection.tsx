@@ -70,7 +70,7 @@ export const TargetingSection = ({ control }: TargetingSectionProps) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Target Tier</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value || "all"}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select target tier" />
@@ -95,7 +95,10 @@ export const TargetingSection = ({ control }: TargetingSectionProps) => {
             <FormItem>
               <FormLabel>Target Pages</FormLabel>
               <Select 
-                onValueChange={(value) => field.onChange(JSON.stringify([value]))} 
+                onValueChange={(value) => {
+                  // Convert to JSON string with a single value array
+                  field.onChange(JSON.stringify([value]));
+                }}
                 defaultValue={
                   field.value 
                     ? JSON.parse(field.value)[0] || 'all'
@@ -129,19 +132,17 @@ export const TargetingSection = ({ control }: TargetingSectionProps) => {
         name="priority"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Priority (1-10)</FormLabel>
-            <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
+            <FormLabel>Priority</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value || "medium"}>
               <FormControl>
                 <SelectTrigger>
                   <SelectValue placeholder="Select priority" />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
-                  <SelectItem key={num} value={num.toString()}>
-                    {num} {num <= 3 ? '(Low)' : num <= 7 ? '(Medium)' : '(High)'}
-                  </SelectItem>
-                ))}
+                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="high">High</SelectItem>
               </SelectContent>
             </Select>
             <FormDescription>

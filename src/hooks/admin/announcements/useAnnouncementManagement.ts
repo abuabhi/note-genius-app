@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -39,14 +40,36 @@ export const useAnnouncementManagement = () => {
           target_pages = ['all'];
         }
 
+        // Convert raw data to match our Announcement type
         return {
           ...announcement,
           text_align: announcement.text_align || 'center',
-          target_pages
-        } as Announcement;
+          target_pages,
+          // Convert numeric priority to our enum type
+          priority: convertPriorityToString(announcement.priority),
+        } as unknown as Announcement;
       });
     }
   });
+
+  // Helper function to convert numeric priority to string type
+  const convertPriorityToString = (priority: number | string): 'high' | 'medium' | 'low' => {
+    if (typeof priority === 'string') {
+      if (priority === 'high' || priority === 'medium' || priority === 'low') {
+        return priority;
+      }
+    }
+    
+    // Convert numeric priority to string
+    if (typeof priority === 'number') {
+      if (priority >= 8) return 'high';
+      if (priority >= 4) return 'medium';
+      return 'low';
+    }
+    
+    // Default
+    return 'medium';
+  };
 
   const toggleActiveMutation = useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {

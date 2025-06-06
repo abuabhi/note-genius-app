@@ -5,25 +5,24 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
-import { announcementSchema } from '../schema';
+import { announcementFormSchema } from '../schema';
 import { AnnouncementFormData, Announcement } from '../types';
 
 export const useAnnouncementForm = (
-  announcement?: Announcement,
+  announcement?: Announcement | null,
   onOpenChange?: (open: boolean) => void
 ) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const form = useForm<AnnouncementFormData>({
-    resolver: zodResolver(announcementSchema),
+    resolver: zodResolver(announcementFormSchema),
     defaultValues: {
       title: announcement?.title || '',
       content: announcement?.content || '',
-      compact_text: announcement?.compact_text || '',
       cta_text: announcement?.cta_text || '',
       cta_url: announcement?.cta_url || '',
-      background_color: announcement?.background_color || '#3b82f6',
+      background_color: announcement?.background_color || '#14b8a6',
       text_color: announcement?.text_color || '#ffffff',
       is_active: announcement?.is_active || false,
       start_date: announcement?.start_date ? 
@@ -35,8 +34,8 @@ export const useAnnouncementForm = (
       target_tier: announcement?.target_tier || 'all',
       target_pages: announcement?.target_pages ? 
         JSON.stringify(announcement.target_pages) : '["all"]',
-      mobile_layout: announcement?.mobile_layout || 'compact',
-      priority: announcement?.priority || 1,
+      mobile_layout: announcement?.mobile_layout || 'default',
+      priority: announcement?.priority || 'medium',
       dismissible: announcement?.dismissible ?? true,
       text_align: announcement?.text_align || 'center',
     },
@@ -47,7 +46,6 @@ export const useAnnouncementForm = (
       const announcementData = {
         title: data.title,
         content: data.content,
-        compact_text: data.compact_text || null,
         cta_text: data.cta_text || null,
         cta_url: data.cta_url || null,
         background_color: data.background_color,
