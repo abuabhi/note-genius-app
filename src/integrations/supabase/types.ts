@@ -27,6 +27,7 @@ export type Database = {
           start_date: string
           target_pages: Json | null
           target_tier: string | null
+          text_align: string | null
           text_color: string | null
           title: string
           updated_at: string | null
@@ -48,6 +49,7 @@ export type Database = {
           start_date: string
           target_pages?: Json | null
           target_tier?: string | null
+          text_align?: string | null
           text_color?: string | null
           title: string
           updated_at?: string | null
@@ -69,6 +71,7 @@ export type Database = {
           start_date?: string
           target_pages?: Json | null
           target_tier?: string | null
+          text_align?: string | null
           text_color?: string | null
           title?: string
           updated_at?: string | null

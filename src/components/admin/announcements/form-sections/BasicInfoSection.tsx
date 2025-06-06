@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { AnnouncementFormData } from '../types';
 
 interface BasicInfoSectionProps {
@@ -18,8 +19,8 @@ interface BasicInfoSectionProps {
 
 export const BasicInfoSection = ({ control }: BasicInfoSectionProps) => {
   return (
-    <>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-4">
         <FormField
           control={control}
           name="title"
@@ -27,7 +28,7 @@ export const BasicInfoSection = ({ control }: BasicInfoSectionProps) => {
             <FormItem>
               <FormLabel>Title</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="Announcement title" />
+                <Input {...field} placeholder="Enter announcement title" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -36,52 +37,73 @@ export const BasicInfoSection = ({ control }: BasicInfoSectionProps) => {
 
         <FormField
           control={control}
-          name="priority"
+          name="content"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Priority (1-10)</FormLabel>
+              <FormLabel>Content</FormLabel>
               <FormControl>
-                <Input 
+                <Textarea 
                   {...field} 
-                  type="number" 
-                  min="1" 
-                  max="10"
-                  onChange={e => field.onChange(parseInt(e.target.value))}
+                  placeholder="Enter announcement content"
+                  rows={3}
                 />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={control}
+            name="start_date"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Start Date</FormLabel>
+                <FormControl>
+                  <Input {...field} type="datetime-local" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={control}
+            name="end_date"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>End Date</FormLabel>
+                <FormControl>
+                  <Input {...field} type="datetime-local" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          control={control}
+          name="is_active"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">Active</FormLabel>
+                <p className="text-sm text-muted-foreground">
+                  Enable this announcement to display it to users
+                </p>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
       </div>
-
-      <FormField
-        control={control}
-        name="content"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Content</FormLabel>
-            <FormControl>
-              <Textarea {...field} placeholder="Full announcement content" rows={3} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={control}
-        name="compact_text"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Mobile Compact Text</FormLabel>
-            <FormControl>
-              <Textarea {...field} placeholder="Shorter version for mobile (optional)" rows={2} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-    </>
+    </div>
   );
 };

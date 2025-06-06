@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,10 +19,13 @@ export const useAnnouncementManagement = () => {
 
       if (error) throw error;
       
-      // Ensure text_align field exists with default value
+      // Ensure text_align field exists with default value and proper typing
       return (data || []).map(announcement => ({
         ...announcement,
-        text_align: announcement.text_align || 'center'
+        text_align: announcement.text_align || 'center',
+        target_pages: Array.isArray(announcement.target_pages) 
+          ? announcement.target_pages 
+          : JSON.parse(announcement.target_pages || '["all"]')
       })) as Announcement[];
     }
   });

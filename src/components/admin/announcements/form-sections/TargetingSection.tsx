@@ -3,13 +3,12 @@ import React from 'react';
 import { Control } from 'react-hook-form';
 import {
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AnnouncementFormData } from '../types';
 
@@ -17,21 +16,48 @@ interface TargetingSectionProps {
   control: Control<AnnouncementFormData>;
 }
 
-const PAGE_OPTIONS = [
-  { value: '["all"]', label: 'All Pages' },
-  { value: '["/dashboard"]', label: 'Dashboard' },
-  { value: '["/notes"]', label: 'Notes' },
-  { value: '["/flashcards"]', label: 'Flashcards' },
-  { value: '["/quiz"]', label: 'Quiz' },
-  { value: '["/study-sessions"]', label: 'Study Sessions' },
-  { value: '["/progress"]', label: 'Progress' },
-  { value: '["/schedule"]', label: 'Schedule' },
-  { value: '["/settings"]', label: 'Settings' },
-  { value: '["/goals"]', label: 'Goals' },
-  { value: '["/todos"]', label: 'Todos' },
-  { value: '["/chat"]', label: 'Chat' },
-  { value: '["/library"]', label: 'Library' },
-  { value: '["/collaboration"]', label: 'Collaboration' },
+// Comprehensive list of all pages in the application
+const ALL_PAGES = [
+  { value: 'all', label: 'All Pages' },
+  { value: '/', label: 'Home' },
+  { value: '/dashboard', label: 'Dashboard' },
+  { value: '/notes', label: 'Notes' },
+  { value: '/flashcards', label: 'Flashcards' },
+  { value: '/quiz', label: 'Quiz' },
+  { value: '/study-sessions', label: 'Study Sessions' },
+  { value: '/progress', label: 'Progress' },
+  { value: '/goals', label: 'Goals' },
+  { value: '/todos', label: 'Todos' },
+  { value: '/reminders', label: 'Reminders' },
+  { value: '/schedule', label: 'Schedule' },
+  { value: '/collaboration', label: 'Collaboration' },
+  { value: '/chat', label: 'Chat' },
+  { value: '/connections', label: 'Connections' },
+  { value: '/flashcard-library', label: 'Flashcard Library' },
+  { value: '/settings', label: 'Settings' },
+  { value: '/notifications', label: 'Notifications' },
+  { value: '/admin', label: 'Admin Dashboard' },
+  { value: '/admin/users', label: 'Admin Users' },
+  { value: '/admin/announcements', label: 'Admin Announcements' },
+  { value: '/admin/features', label: 'Admin Features' },
+  { value: '/admin/analytics', label: 'Admin Analytics' },
+  { value: '/admin/csv-import', label: 'Admin CSV Import' },
+  { value: '/admin/subjects', label: 'Admin Subjects' },
+  { value: '/admin/sections', label: 'Admin Sections' },
+  { value: '/admin/grades', label: 'Admin Grades' },
+  { value: '/admin/flashcards', label: 'Admin Flashcards' },
+  { value: '/create-flashcard', label: 'Create Flashcard' },
+  { value: '/create-quiz', label: 'Create Quiz' },
+  { value: '/note-to-flashcard', label: 'Note to Flashcard' },
+  { value: '/quiz-history', label: 'Quiz History' },
+  { value: '/note-study', label: 'Note Study' },
+  { value: '/edit-note', label: 'Edit Note' },
+  { value: '/edit-flashcard', label: 'Edit Flashcard' },
+  { value: '/take-quiz', label: 'Take Quiz' },
+  { value: '/about', label: 'About' },
+  { value: '/contact', label: 'Contact' },
+  { value: '/faq', label: 'FAQ' },
+  { value: '/pricing', label: 'Pricing' },
 ];
 
 export const TargetingSection = ({ control }: TargetingSectionProps) => {
@@ -43,18 +69,18 @@ export const TargetingSection = ({ control }: TargetingSectionProps) => {
           name="target_tier"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Target User Tier</FormLabel>
+              <FormLabel>Target Tier</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Select target tier" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="all">All Users</SelectItem>
+                  <SelectItem value="all">All Tiers</SelectItem>
                   <SelectItem value="SCHOLAR">Scholar</SelectItem>
-                  <SelectItem value="DEAN">Dean</SelectItem>
                   <SelectItem value="PROFESSOR">Professor</SelectItem>
+                  <SelectItem value="DEAN">Dean</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -68,21 +94,30 @@ export const TargetingSection = ({ control }: TargetingSectionProps) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Target Pages</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select 
+                onValueChange={(value) => field.onChange(JSON.stringify([value]))} 
+                defaultValue={
+                  field.value 
+                    ? JSON.parse(field.value)[0] || 'all'
+                    : 'all'
+                }
+              >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select target pages" />
+                    <SelectValue placeholder="Select target page" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
-                  {PAGE_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
+                <SelectContent className="max-h-60">
+                  {ALL_PAGES.map((page) => (
+                    <SelectItem key={page.value} value={page.value}>
+                      {page.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <FormDescription>Select which pages to show this announcement on</FormDescription>
+              <FormDescription>
+                Choose which page(s) should display this announcement
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -91,14 +126,27 @@ export const TargetingSection = ({ control }: TargetingSectionProps) => {
 
       <FormField
         control={control}
-        name="target_pages"
+        name="priority"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Custom Target Pages (Advanced)</FormLabel>
-            <FormControl>
-              <Input {...field} placeholder='Custom JSON array: ["/custom-page", "/another-page"]' />
-            </FormControl>
-            <FormDescription>Override with custom JSON array of page paths</FormDescription>
+            <FormLabel>Priority (1-10)</FormLabel>
+            <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
+                  <SelectItem key={num} value={num.toString()}>
+                    {num} {num <= 3 ? '(Low)' : num <= 7 ? '(Medium)' : '(High)'}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormDescription>
+              Higher priority announcements appear first
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
