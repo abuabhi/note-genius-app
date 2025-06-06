@@ -33,7 +33,7 @@ export const useAdaptiveLearning = (preferences?: Partial<StudyPreferences>) => 
       // Convert gradeProgression to FlashcardProgress format
       const flashcardProgress = gradeProgression.map(gp => ({
         ...gp,
-        grade: gp.grade || 'C',
+        grade: 'C', // Default grade since GradeProgression doesn't have this field
         mastery_level: gp.masteryLevel || 0
       }));
 

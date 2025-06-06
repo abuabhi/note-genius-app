@@ -1,5 +1,5 @@
-
-import { StudySession, FlashcardProgress } from '../advanced/types';
+import { StudySession } from '../../../hooks/useStudySessions';
+import { FlashcardProgress } from '../advanced/types';
 import { 
   PerformanceForecast, 
   SubjectForecast, 

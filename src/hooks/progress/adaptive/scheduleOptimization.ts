@@ -1,4 +1,4 @@
-import { StudySession } from '../advanced/types';
+import { StudySession } from '../../../hooks/useStudySessions';
 import { 
   StudySchedule, 
   ScheduleSlot, 
