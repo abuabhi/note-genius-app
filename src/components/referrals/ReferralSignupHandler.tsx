@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, startTransition } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
@@ -11,9 +11,9 @@ export const ReferralSignupHandler = () => {
   const urlReferralCode = searchParams.get('ref');
 
   useEffect(() => {
-    const processReferral = async () => {
-      if (!user) return;
+    if (!user) return;
 
+    const processReferral = async () => {
       try {
         // Check if this user was already processed for referrals
         const { data: existingReferral } = await supabase
@@ -47,7 +47,10 @@ export const ReferralSignupHandler = () => {
         }
 
         if (data) {
-          toast.success('Welcome! You\'ve been successfully referred by a friend! 🎉');
+          // Use startTransition for UI updates that might cause suspension
+          startTransition(() => {
+            toast.success('Welcome! You\'ve been successfully referred by a friend! 🎉');
+          });
           
           // Remove the referral code from URL if it was there
           if (urlReferralCode) {
@@ -64,9 +67,15 @@ export const ReferralSignupHandler = () => {
       }
     };
 
-    // Add a small delay to ensure the user profile is fully created
-    const timer = setTimeout(processReferral, 2000);
-    return () => clearTimeout(timer);
+    // Wrap the entire async operation in startTransition to prevent suspension
+    startTransition(() => {
+      // Add a small delay to ensure the user profile is fully created
+      const timer = setTimeout(() => {
+        processReferral();
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    });
   }, [user, urlReferralCode]);
 
   return null;
