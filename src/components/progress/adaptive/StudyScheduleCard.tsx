@@ -1,140 +1,85 @@
 
-import { ProgressCard } from "../shared/ProgressCard";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, Zap, Settings } from "lucide-react";
-import { useAdaptiveLearning } from "@/hooks/progress/adaptive";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, Clock, BookOpen, Target, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export const StudyScheduleCard = () => {
-  const { adaptiveLearningInsights, isLoading } = useAdaptiveLearning();
-
-  if (isLoading) {
-    return (
-      <ProgressCard title="Optimized Study Schedule" icon={Calendar}>
-        <div className="h-64 animate-pulse bg-gray-200 rounded"></div>
-      </ProgressCard>
-    );
-  }
-
-  const { studySchedule } = adaptiveLearningInsights;
-
-  const getDayName = (dayOfWeek: number) => {
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    return days[dayOfWeek];
-  };
-
-  const getIntensityColor = (intensity: string) => {
-    switch (intensity) {
-      case 'intensive': return 'bg-red-100 text-red-800 border-red-200';
-      case 'moderate': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default: return 'bg-green-100 text-green-800 border-green-200';
-    }
-  };
+  const today = new Date();
+  const todayStr = today.toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    month: 'short', 
+    day: 'numeric' 
+  });
 
   return (
-    <ProgressCard 
-      title="Optimized Study Schedule" 
-      icon={Calendar}
-      headerAction={
-        <Button variant="outline" size="sm">
-          <Settings className="h-3 w-3 mr-1" />
-          Customize
-        </Button>
-      }
-    >
-      <div className="space-y-6">
-        {/* Optimal Time Slots */}
-        <div className="space-y-3">
-          <h4 className="font-medium text-gray-800 flex items-center gap-2">
-            <Zap className="h-4 w-4 text-mint-600" />
-            Peak Performance Times
-          </h4>
-          <div className="grid gap-2">
-            {studySchedule.optimizedTimes.slice(0, 3).map((slot, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-mint-50 rounded-lg border border-mint-200">
-                <div className="flex items-center gap-3">
-                  <Clock className="h-4 w-4 text-mint-600" />
-                  <span className="font-medium text-mint-800">
-                    {slot.startTime} - {slot.endTime}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs">
-                    {Math.round(slot.efficiencyScore * 100)}% efficiency
-                  </Badge>
-                  <Badge className="text-xs bg-mint-100 text-mint-700">
-                    {slot.cognitiveLoad} focus
-                  </Badge>
-                </div>
-              </div>
-            ))}
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Calendar className="h-5 w-5 text-blue-600" />
+          AI Study Schedule
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Today's Schedule */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-medium text-gray-900">Today, {todayStr}</h3>
+            <Badge variant="outline" className="text-xs">Optimized</Badge>
+          </div>
+          
+          {/* Empty State - Before User Starts Studying */}
+          <div className="text-center py-6">
+            <Clock className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-600 mb-4">
+              Your personalized study schedule will appear here once you begin studying.
+            </p>
+            
+            {/* Quick Start Actions */}
+            <div className="space-y-2">
+              <Button asChild size="sm" className="w-full bg-blue-600 hover:bg-blue-700">
+                <Link to="/flashcards" className="flex items-center justify-center gap-2">
+                  <BookOpen className="h-4 w-4" />
+                  Start with Flashcards
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              
+              <Button asChild variant="outline" size="sm" className="w-full border-blue-200 hover:bg-blue-50">
+                <Link to="/quizzes" className="flex items-center justify-center gap-2">
+                  <Target className="h-4 w-4" />
+                  Begin with Quiz
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Weekly Pattern */}
-        <div className="space-y-3">
-          <h4 className="font-medium text-gray-800">Weekly Pattern</h4>
-          <div className="grid grid-cols-7 gap-1">
-            {studySchedule.weeklyPattern.map((slot, index) => (
-              <div key={index} className="text-center">
-                <div className="text-xs font-medium text-gray-600 mb-1">
-                  {getDayName(slot.dayOfWeek)}
-                </div>
-                <div className="p-2 bg-gray-50 rounded text-xs">
-                  <div className="font-medium">{slot.startTime}</div>
-                  <Badge 
-                    className={`mt-1 text-xs ${getIntensityColor(slot.intensity)}`}
-                  >
-                    {slot.intensity}
-                  </Badge>
-                </div>
-              </div>
-            ))}
+        {/* Preview Schedule Items (shown dimmed) */}
+        <div className="space-y-3 opacity-40">
+          <div className="border border-gray-200 rounded-lg p-3">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sm font-medium">Mathematics Review</span>
+              <span className="text-xs text-gray-500">20 min</span>
+            </div>
+            <div className="text-xs text-gray-600">Recommended based on your progress</div>
+          </div>
+          
+          <div className="border border-gray-200 rounded-lg p-3">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sm font-medium">Science Quiz</span>
+              <span className="text-xs text-gray-500">15 min</span>
+            </div>
+            <div className="text-xs text-gray-600">Optimal difficulty level</div>
           </div>
         </div>
 
-        {/* Break Recommendations */}
-        <div className="space-y-3">
-          <h4 className="font-medium text-gray-800">Smart Break Schedule</h4>
-          <div className="space-y-2">
-            {studySchedule.adaptiveBreaks.map((breakRec, index) => (
-              <div key={index} className="flex items-center justify-between p-2 bg-blue-50 rounded border border-blue-200">
-                <div className="text-sm">
-                  <span className="font-medium text-blue-800">
-                    {breakRec.durationMinutes} min break
-                  </span>
-                  <span className="text-blue-600"> after {breakRec.afterMinutes} min</span>
-                </div>
-                <span className="text-xs text-blue-600">
-                  {breakRec.suggestedActivity}
-                </span>
-              </div>
-            ))}
-          </div>
+        <div className="text-xs text-gray-500 text-center pt-4 border-t">
+          Schedule adapts to your learning patterns and optimal study times.
         </div>
-
-        {/* Preferences Summary */}
-        <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-gray-600">Session Length:</span>
-              <div className="font-medium">{studySchedule.preferences.preferredStudyDuration} min</div>
-            </div>
-            <div>
-              <span className="text-gray-600">Daily Max:</span>
-              <div className="font-medium">{Math.round(studySchedule.preferences.maxDailyStudyTime / 60)} hours</div>
-            </div>
-            <div>
-              <span className="text-gray-600">Study Style:</span>
-              <div className="font-medium capitalize">{studySchedule.preferences.studyStyle}</div>
-            </div>
-            <div>
-              <span className="text-gray-600">Break Style:</span>
-              <div className="font-medium capitalize">{studySchedule.preferences.breakFrequency}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </ProgressCard>
+      </CardContent>
+    </Card>
   );
 };

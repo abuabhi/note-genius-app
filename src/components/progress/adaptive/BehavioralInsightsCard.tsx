@@ -1,155 +1,81 @@
 
-import { ProgressCard } from "../shared/ProgressCard";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Brain, Clock, Zap, CheckCircle } from "lucide-react";
-import { useAdaptiveLearning } from "@/hooks/progress/adaptive";
+import { Badge } from "@/components/ui/badge";
+import { Brain, Eye, BookOpen, Target, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export const BehavioralInsightsCard = () => {
-  const { adaptiveLearningInsights, isLoading } = useAdaptiveLearning();
-
-  if (isLoading) {
-    return (
-      <ProgressCard title="Behavioral Insights" icon={Brain}>
-        <div className="h-64 animate-pulse bg-gray-200 rounded"></div>
-      </ProgressCard>
-    );
-  }
-
-  const { behavioralPatterns, optimizationSuggestions } = adaptiveLearningInsights;
-
-  const getPatternIcon = (patternType: string) => {
-    switch (patternType) {
-      case 'study_timing': return <Clock className="h-4 w-4" />;
-      case 'session_length': return <Zap className="h-4 w-4" />;
-      default: return <Brain className="h-4 w-4" />;
-    }
-  };
-
-  const getImpactColor = (impact: string) => {
-    switch (impact) {
-      case 'positive': return 'text-green-600 bg-green-100';
-      case 'negative': return 'text-red-600 bg-red-100';
-      default: return 'text-blue-600 bg-blue-100';
-    }
-  };
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'easy': return 'bg-green-100 text-green-800 border-green-200';
-      case 'moderate': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default: return 'bg-red-100 text-red-800 border-red-200';
-    }
-  };
-
-  if (behavioralPatterns.length === 0 && optimizationSuggestions.length === 0) {
-    return (
-      <ProgressCard title="Behavioral Insights" icon={Brain}>
-        <div className="text-center py-8">
-          <Brain className="h-12 w-12 mx-auto mb-4 text-mint-400" />
-          <h3 className="text-lg font-medium text-gray-800 mb-2">Building Your Profile</h3>
-          <p className="text-gray-600">
-            Continue studying to unlock personalized behavioral insights and optimization recommendations.
-          </p>
-        </div>
-      </ProgressCard>
-    );
-  }
-
   return (
-    <ProgressCard title="Behavioral Insights" icon={Brain}>
-      <div className="space-y-6">
-        {/* Study Patterns */}
-        {behavioralPatterns.length > 0 && (
-          <div className="space-y-3">
-            <h4 className="font-medium text-gray-800">Discovered Patterns</h4>
-            {behavioralPatterns.map((pattern, index) => (
-              <div key={index} className="p-3 border border-gray-200 rounded-lg">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-mint-100 rounded-lg text-mint-600">
-                    {getPatternIcon(pattern.patternType)}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-gray-800 capitalize">
-                        {pattern.patternType.replace('_', ' ')}
-                      </span>
-                      <Badge className={getImpactColor(pattern.impact)}>
-                        {pattern.impact}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">{pattern.pattern}</p>
-                    <p className="text-xs text-mint-700 font-medium">{pattern.recommendation}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <div className="text-xs text-gray-500">
-                        Frequency: {Math.round(pattern.frequency * 100)}%
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        Effectiveness: {Math.round(pattern.effectiveness * 100)}%
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Eye className="h-5 w-5 text-purple-600" />
+          Behavioral Insights
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Insights Preview */}
+        <div className="text-center py-8">
+          <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Brain className="h-8 w-8 text-purple-600" />
           </div>
-        )}
-
-        {/* Optimization Suggestions */}
-        {optimizationSuggestions.length > 0 && (
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Discover Your Learning Style</h3>
+          <p className="text-gray-600 mb-6">
+            AI will analyze your study patterns and provide personalized insights to optimize your learning.
+          </p>
+          
+          {/* Start Learning Buttons */}
           <div className="space-y-3">
-            <h4 className="font-medium text-gray-800">Optimization Suggestions</h4>
-            {optimizationSuggestions
-              .sort((a, b) => a.priority - b.priority)
-              .slice(0, 3)
-              .map((suggestion, index) => (
-                <div key={index} className="p-4 bg-gradient-to-r from-mint-50 to-blue-50 rounded-lg border border-mint-200">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-mint-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
-                        {suggestion.priority}
-                      </div>
-                      <Badge variant="outline" className="text-xs capitalize">
-                        {suggestion.category}
-                      </Badge>
-                    </div>
-                    <Badge className={getDifficultyColor(suggestion.implementationDifficulty)}>
-                      {suggestion.implementationDifficulty}
-                    </Badge>
-                  </div>
-                  
-                  <h5 className="font-medium text-mint-800 mb-1">{suggestion.suggestion}</h5>
-                  <p className="text-sm text-mint-700 mb-2">{suggestion.rationale}</p>
-                  <p className="text-xs text-mint-600 mb-3">
-                    <strong>Expected Benefit:</strong> {suggestion.expectedBenefit}
-                  </p>
-                  
-                  <Button 
-                    size="sm" 
-                    className="bg-mint-500 hover:bg-mint-600 text-white"
-                  >
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                    Apply Suggestion
-                  </Button>
-                </div>
-              ))}
-          </div>
-        )}
-
-        {/* Quick Stats */}
-        <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-          <div className="grid grid-cols-2 gap-4 text-center">
-            <div>
-              <div className="text-lg font-bold text-mint-600">{behavioralPatterns.length}</div>
-              <div className="text-xs text-gray-600">Patterns Identified</div>
-            </div>
-            <div>
-              <div className="text-lg font-bold text-blue-600">{optimizationSuggestions.length}</div>
-              <div className="text-xs text-gray-600">Optimizations Available</div>
-            </div>
+            <Button asChild className="w-full bg-purple-600 hover:bg-purple-700">
+              <Link to="/flashcards" className="flex items-center justify-center gap-2">
+                <BookOpen className="h-4 w-4" />
+                Start Learning Journey
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </Button>
+            
+            <Button asChild variant="outline" className="w-full border-purple-200 hover:bg-purple-50">
+              <Link to="/quizzes" className="flex items-center justify-center gap-2">
+                <Target className="h-4 w-4" />
+                Take Learning Assessment
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </Button>
           </div>
         </div>
-      </div>
-    </ProgressCard>
+
+        {/* Preview Insights (shown dimmed) */}
+        <div className="space-y-4 opacity-40">
+          <div className="p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Peak Performance Time</span>
+              <Badge variant="outline" className="text-xs">Morning</Badge>
+            </div>
+            <div className="text-xs text-gray-600">You perform 23% better between 9-11 AM</div>
+          </div>
+          
+          <div className="p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Preferred Learning Style</span>
+              <Badge variant="outline" className="text-xs">Visual</Badge>
+            </div>
+            <div className="text-xs text-gray-600">Responds well to diagrams and flashcards</div>
+          </div>
+          
+          <div className="p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Optimal Session Length</span>
+              <Badge variant="outline" className="text-xs">25 minutes</Badge>
+            </div>
+            <div className="text-xs text-gray-600">Best retention with focused study bursts</div>
+          </div>
+        </div>
+
+        <div className="text-xs text-gray-500 text-center pt-4 border-t">
+          Insights develop over time as AI learns your unique patterns.
+        </div>
+      </CardContent>
+    </Card>
   );
 };
