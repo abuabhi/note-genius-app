@@ -1,6 +1,6 @@
 
 import React, { Suspense } from 'react';
-import { useFlashcardSets } from '@/contexts/flashcards';
+import { useFlashcards } from '@/contexts/flashcards';
 import { useOptimizedQuery } from '@/hooks/performance/useOptimizedQueries';
 import Layout from '@/components/layout/Layout';
 
@@ -9,12 +9,11 @@ const FlashcardSetFilters = React.lazy(() => import('@/components/flashcards/com
 const FlashcardSetGrid = React.lazy(() => import('@/components/flashcards/components/FlashcardSetGrid'));
 
 const OptimizedFlashcardsPage = () => {
-  const flashcardContext = useFlashcardSets();
+  const { flashcardSets, loading } = useFlashcards();
   const { prefetchData } = useOptimizedQuery();
 
   // Extract data and loading state from context
-  const flashcardSets = flashcardContext?.flashcardSets || [];
-  const isLoading = flashcardContext?.loading || false;
+  const isLoading = loading.sets || false;
 
   // Prefetch related data
   React.useEffect(() => {
@@ -79,7 +78,7 @@ const OptimizedFlashcardsPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {flashcardSets.map((set: any) => (
                 <div key={set.id} className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
-                  <h3 className="font-semibold text-lg mb-2">{set.title}</h3>
+                  <h3 className="font-semibold text-lg mb-2">{set.name}</h3>
                   <p className="text-gray-600 mb-4">{set.description}</p>
                   <div className="flex gap-2">
                     <button 

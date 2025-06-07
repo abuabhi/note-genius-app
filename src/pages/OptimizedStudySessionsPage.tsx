@@ -3,9 +3,11 @@ import React, { Suspense } from 'react';
 import { useOptimizedStudySessions } from '@/hooks/performance/useOptimizedStudySessions';
 import Layout from '@/components/layout/Layout';
 
-// Lazy load components - simplified approach
+// Lazy load components - simplified approach with proper default export handling
 const LearningAnalyticsDashboard = React.lazy(() => 
-  import('@/components/dashboard/LearningAnalyticsDashboard')
+  import('@/components/dashboard/LearningAnalyticsDashboard').then(module => ({
+    default: module.LearningAnalyticsDashboard
+  }))
 );
 
 const OptimizedStudySessionsPage = () => {
@@ -45,7 +47,7 @@ const OptimizedStudySessionsPage = () => {
 
         <div className="space-y-8">
           <Suspense fallback={<div className="h-64 bg-gray-100 rounded animate-pulse" />}>
-            <LearningAnalyticsDashboard data={data} />
+            <LearningAnalyticsDashboard />
           </Suspense>
 
           {/* Recent Sessions */}

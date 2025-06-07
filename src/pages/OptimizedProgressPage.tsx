@@ -3,12 +3,16 @@ import React, { Suspense } from 'react';
 import { useOptimizedProgress } from '@/hooks/performance/useOptimizedProgress';
 import Layout from '@/components/layout/Layout';
 
-// Lazy load components - simplified approach
+// Lazy load components - simplified approach with proper default export handling
 const AnalyticsSection = React.lazy(() => 
-  import('@/components/dashboard/AnalyticsSection')
+  import('@/components/dashboard/AnalyticsSection').then(module => ({
+    default: module.AnalyticsSection
+  }))
 );
 const GoalsGrid = React.lazy(() => 
-  import('@/components/goals/GoalsGrid')
+  import('@/components/goals/GoalsGrid').then(module => ({
+    default: module.GoalsGrid
+  }))
 );
 
 const OptimizedProgressPage = () => {
