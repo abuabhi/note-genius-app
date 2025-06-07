@@ -1,4 +1,3 @@
-
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -61,12 +60,12 @@ export const UnifiedContentRenderer = ({
               </p>
             ),
             ul: ({ children }) => (
-              <ul className="mb-6 space-y-2 pl-6">
+              <ul className="mb-6 space-y-2 pl-6 list-disc">
                 {children}
               </ul>
             ),
             ol: ({ children }) => (
-              <ol className="mb-6 space-y-2 pl-6">
+              <ol className="mb-6 space-y-2 pl-6 list-decimal">
                 {children}
               </ol>
             ),
@@ -191,12 +190,12 @@ export const UnifiedContentRenderer = ({
                       </p>
                     ),
                     ul: ({ children }) => (
-                      <ul className="mb-4 space-y-1 pl-4">
+                      <ul className="mb-4 space-y-1 pl-4 list-disc">
                         {children}
                       </ul>
                     ),
                     ol: ({ children }) => (
-                      <ol className="mb-4 space-y-1 pl-4">
+                      <ol className="mb-4 space-y-1 pl-4 list-decimal">
                         {children}
                       </ol>
                     ),
@@ -258,12 +257,12 @@ export const UnifiedContentRenderer = ({
                     </p>
                   ),
                   ul: ({ children }) => (
-                    <ul className="mb-6 space-y-2 pl-6">
+                    <ul className="mb-6 space-y-2 pl-6 list-disc">
                       {children}
                     </ul>
                   ),
                   ol: ({ children }) => (
-                    <ol className="mb-6 space-y-2 pl-6">
+                    <ol className="mb-6 space-y-2 pl-6 list-decimal">
                       {children}
                     </ol>
                   ),
