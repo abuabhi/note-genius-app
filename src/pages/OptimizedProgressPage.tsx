@@ -1,5 +1,5 @@
 
-import React, { Suspense } from 'react';
+import React, { Suspense, useState } from 'react';
 import { useOptimizedProgress } from '@/hooks/performance/useOptimizedProgress';
 import Layout from '@/components/layout/Layout';
 
@@ -17,6 +17,8 @@ const GoalsGrid = React.lazy(() =>
 
 const OptimizedProgressPage = () => {
   const { data, isLoading } = useOptimizedProgress();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filter, setFilter] = useState('all');
 
   // Prefetch next data on scroll
   React.useEffect(() => {
@@ -30,6 +32,19 @@ const OptimizedProgressPage = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleEditGoal = (goal: any) => {
+    console.log('Editing goal:', goal);
+  };
+
+  const handleDeleteGoal = async (goalId: string) => {
+    console.log('Deleting goal:', goalId);
+    return true;
+  };
+
+  const handleCreateGoal = () => {
+    console.log('Creating new goal');
+  };
 
   if (isLoading) {
     return (
@@ -61,7 +76,15 @@ const OptimizedProgressPage = () => {
           </Suspense>
 
           <Suspense fallback={<div className="h-64 bg-gray-100 rounded animate-pulse" />}>
-            <GoalsGrid />
+            <GoalsGrid 
+              goals={[]}
+              loading={false}
+              searchQuery={searchQuery}
+              filter={filter}
+              onEditGoal={handleEditGoal}
+              onDeleteGoal={handleDeleteGoal}
+              onCreateGoal={handleCreateGoal}
+            />
           </Suspense>
         </div>
       </div>
