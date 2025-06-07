@@ -40,6 +40,7 @@ export const SettingsFormProvider = () => {
             form={form}
             isDirty={isDirty}
             onReset={() => reset()}
+            activeTab={activeTab}
           />
         </form>
       </Form>

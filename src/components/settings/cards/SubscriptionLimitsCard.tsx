@@ -1,4 +1,3 @@
-
 import React, { Suspense } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +7,7 @@ import { useUserTier, UserTier } from "@/hooks/useUserTier";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader, Crown, Zap, Shield, Check, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { MockStripeIntegration } from "./MockStripeIntegration";
 
 const tierBadgeVariants = {
   [UserTier.SCHOLAR]: "outline",
@@ -122,12 +121,14 @@ export const SubscriptionLimitsCard = () => {
                 </CardDescription>
               </div>
             </div>
-            <Button asChild>
-              <Link to="/pricing">Upgrade Plan</Link>
-            </Button>
           </div>
         </CardHeader>
       </Card>
+
+      {/* Mock Stripe Integration - Upgrade and Billing Management */}
+      {userTier && (
+        <MockStripeIntegration userTier={userTier} />
+      )}
 
       {/* Usage Overview */}
       {tierLimits && userTier && (
@@ -221,28 +222,6 @@ export const SubscriptionLimitsCard = () => {
                 )}
                 <span className="text-sm">Priority Support</span>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Upgrade Call-to-Action */}
-      {userTier !== UserTier.DEAN && (
-        <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-secondary/5">
-          <CardHeader>
-            <CardTitle>Unlock More Features</CardTitle>
-            <CardDescription>
-              Upgrade your plan to access advanced features and higher limits
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button asChild className="flex-1">
-                <Link to="/pricing">View All Plans</Link>
-              </Button>
-              <Button variant="outline" asChild className="flex-1">
-                <Link to="/pricing">Compare Features</Link>
-              </Button>
             </div>
           </CardContent>
         </Card>

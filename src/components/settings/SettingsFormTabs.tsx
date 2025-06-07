@@ -12,7 +12,6 @@ import { Country } from "@/hooks/useCountries";
 import { User } from "@supabase/supabase-js";
 
 import AccountSettingsCard from "./cards/AccountSettingsCard";
-import { UpgradeTierCard } from "./cards/UpgradeTierCard";
 import { SubjectsSettingsCard } from "./cards/SubjectsSettingsCard";
 import { StudyPreferencesCard } from "./cards/StudyPreferencesCard";
 import { PasswordChangeCard } from "./cards/PasswordChangeCard";
@@ -50,14 +49,6 @@ export const SettingsFormTabs = ({
       </TabsList>
       
       <TabsContent value="account" className="space-y-6">
-        {/* Upgrade Tier Card at the top for visibility */}
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-mint-400/10 to-blue-400/10 rounded-xl blur-xl"></div>
-          <div className="relative">
-            <UpgradeTierCard />
-          </div>
-        </div>
-        
         <div className="relative">
           <div className="absolute -inset-2 bg-gradient-to-r from-mint-500/5 to-blue-500/5 rounded-2xl blur-lg"></div>
           <div className="relative">

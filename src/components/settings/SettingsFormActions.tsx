@@ -8,9 +8,15 @@ interface SettingsFormActionsProps {
   form: UseFormReturn<SettingsFormValues>;
   isDirty: boolean;
   onReset: () => void;
+  activeTab: string;
 }
 
-export const SettingsFormActions = ({ form, isDirty, onReset }: SettingsFormActionsProps) => {
+export const SettingsFormActions = ({ form, isDirty, onReset, activeTab }: SettingsFormActionsProps) => {
+  // Don't show form actions on subscription tab since it doesn't have editable form fields
+  if (activeTab === "subscription") {
+    return null;
+  }
+
   return (
     <div className="flex justify-between items-center p-6 bg-gradient-to-r from-mint-50/30 to-blue-50/20 rounded-xl border border-mint-100/50">
       <Button 
