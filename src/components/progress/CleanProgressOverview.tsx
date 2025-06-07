@@ -28,21 +28,26 @@ export const CleanProgressOverview = () => {
     
     try {
       const today = new Date();
-      const formatter = new Intl.DateTimeFormat('en-AU', {
+      
+      // Get today's date in the user's timezone
+      const todayInTimezone = new Intl.DateTimeFormat('en-CA', {
         timeZone: timezone,
         year: 'numeric',
         month: '2-digit',
         day: '2-digit'
-      });
+      }).format(today);
       
-      const todayString = formatter.format(today);
+      console.log('Today in timezone:', todayInTimezone);
       
-      // Validate the date string before using it
-      if (!todayString || todayString === 'Invalid Date') {
+      if (!todayInTimezone || todayInTimezone === 'Invalid Date') {
         return 'Week information unavailable';
       }
       
-      const todayDate = new Date(`${todayString}T00:00:00`);
+      // Create a date object from the timezone-formatted string
+      const [year, month, day] = todayInTimezone.split('-').map(Number);
+      const todayDate = new Date(year, month - 1, day); // month is 0-indexed
+      
+      console.log('Parsed today date:', todayDate);
       
       // Check if the date is valid
       if (isNaN(todayDate.getTime())) {
@@ -50,14 +55,16 @@ export const CleanProgressOverview = () => {
       }
       
       // Get Monday of this week (proper calculation)
-      const dayOfWeek = todayDate.getDay();
-      const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      const dayOfWeek = todayDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+      const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // If Sunday, go back 6 days
       const monday = new Date(todayDate);
-      monday.setDate(monday.getDate() - daysToMonday);
+      monday.setDate(todayDate.getDate() - daysToMonday);
       
       // Get Sunday of this week (exactly 6 days after Monday)
       const sunday = new Date(monday);
       sunday.setDate(monday.getDate() + 6);
+      
+      console.log('Week boundaries:', { monday, sunday });
       
       const weekFormatter = new Intl.DateTimeFormat('en-AU', {
         day: 'numeric',

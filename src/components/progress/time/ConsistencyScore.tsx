@@ -3,37 +3,66 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Calendar, Clock, TrendingUp } from "lucide-react";
 import { useTimezoneAwareAnalytics } from "@/hooks/useTimezoneAwareAnalytics";
-import { debugTimezone, getWeekStartInTimezone, getWeekEndInTimezone } from "@/utils/timezoneUtils";
 
 export const ConsistencyScore = () => {
   const { analytics, isLoading, timezone } = useTimezoneAwareAnalytics();
 
-  // Debug timezone calculations for Melbourne users
-  if (timezone && (timezone.includes('Melbourne') || timezone.includes('Australia'))) {
-    debugTimezone(timezone);
-  }
-
-  // Calculate week display info
+  // Calculate week display info using proper date calculations
   const getWeekInfo = () => {
     if (!timezone) return { current: '', previous: '' };
     
-    const formatter = new Intl.DateTimeFormat('en-AU', {
-      month: 'short',
-      day: 'numeric'
-    });
-    
-    // Current week (Monday to Sunday)
-    const thisWeekStart = getWeekStartInTimezone(timezone, 0);
-    const thisWeekEnd = getWeekEndInTimezone(timezone, 0);
-    
-    // Previous week (Monday to Sunday)
-    const lastWeekStart = getWeekStartInTimezone(timezone, 1);
-    const lastWeekEnd = getWeekEndInTimezone(timezone, 1);
-    
-    return {
-      current: `${formatter.format(thisWeekStart)} - ${formatter.format(thisWeekEnd)}`,
-      previous: `${formatter.format(lastWeekStart)} - ${formatter.format(lastWeekEnd)}`
-    };
+    try {
+      const today = new Date();
+      
+      // Get today's date in the user's timezone
+      const todayInTimezone = new Intl.DateTimeFormat('en-CA', {
+        timeZone: timezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).format(today);
+      
+      const [year, month, day] = todayInTimezone.split('-').map(Number);
+      const todayDate = new Date(year, month - 1, day);
+      
+      const formatter = new Intl.DateTimeFormat('en-AU', {
+        month: 'short',
+        day: 'numeric'
+      });
+      
+      // Current week (Monday to Sunday)
+      const dayOfWeek = todayDate.getDay();
+      const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      
+      const thisWeekMonday = new Date(todayDate);
+      thisWeekMonday.setDate(todayDate.getDate() - daysToMonday);
+      
+      const thisWeekSunday = new Date(thisWeekMonday);
+      thisWeekSunday.setDate(thisWeekMonday.getDate() + 6);
+      
+      // Previous week (Monday to Sunday)
+      const lastWeekMonday = new Date(thisWeekMonday);
+      lastWeekMonday.setDate(thisWeekMonday.getDate() - 7);
+      
+      const lastWeekSunday = new Date(lastWeekMonday);
+      lastWeekSunday.setDate(lastWeekMonday.getDate() + 6);
+      
+      console.log('Week calculations:', {
+        today: todayDate,
+        thisWeekMonday,
+        thisWeekSunday,
+        lastWeekMonday,
+        lastWeekSunday
+      });
+      
+      return {
+        current: `${formatter.format(thisWeekMonday)} - ${formatter.format(thisWeekSunday)}`,
+        previous: `${formatter.format(lastWeekMonday)} - ${formatter.format(lastWeekSunday)}`
+      };
+    } catch (error) {
+      console.error('Error calculating week info:', error);
+      return { current: 'Week calculation error', previous: 'Week calculation error' };
+    }
   };
 
   const formatTime = (minutes: number) => {
