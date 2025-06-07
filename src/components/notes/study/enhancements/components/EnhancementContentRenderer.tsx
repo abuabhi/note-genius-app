@@ -25,15 +25,15 @@ export const EnhancementContentRenderer = ({
   // Enhanced markdown styles with proper spacing and formatting
   const markdownClasses = `
     prose prose-mint max-w-none prose-lg
-    prose-headings:text-gray-900 prose-headings:font-semibold prose-headings:mb-4 prose-headings:mt-6
+    prose-headings:text-gray-900 prose-headings:font-semibold 
     prose-h1:text-2xl prose-h1:mb-6 prose-h1:mt-8 prose-h1:font-bold
-    prose-h2:text-xl prose-h2:mb-4 prose-h2:mt-6 prose-h2:font-semibold
-    prose-h3:text-lg prose-h3:mb-3 prose-h3:mt-5 prose-h3:font-medium
-    prose-h4:text-base prose-h4:mb-2 prose-h4:mt-4
-    prose-p:text-gray-700 prose-p:leading-7 prose-p:mb-4 prose-p:text-base
-    prose-li:text-gray-700 prose-li:mb-1 prose-li:leading-6
-    prose-ul:mb-4 prose-ol:mb-4 prose-ul:space-y-1 prose-ol:space-y-1
-    prose-ul:pl-0 prose-ol:pl-0
+    prose-h2:text-xl prose-h2:mb-5 prose-h2:mt-7 prose-h2:font-semibold
+    prose-h3:text-lg prose-h3:mb-4 prose-h3:mt-6 prose-h3:font-medium
+    prose-h4:text-base prose-h4:mb-3 prose-h4:mt-5
+    prose-p:text-gray-700 prose-p:leading-7 prose-p:mb-5 prose-p:text-base
+    prose-li:text-gray-700 prose-li:mb-2 prose-li:leading-7
+    prose-ul:mb-6 prose-ol:mb-6 prose-ul:space-y-2 prose-ol:space-y-2
+    prose-ul:pl-6 prose-ol:pl-6
     prose-li:marker:text-mint-500 prose-li:marker:font-medium
     prose-strong:text-gray-900 prose-strong:font-semibold
     prose-em:text-gray-700 prose-em:italic
@@ -74,7 +74,7 @@ export const EnhancementContentRenderer = ({
         style={{ 
           fontSize: `${fontSize}px`,
           textAlign: textAlign === 'left' ? 'left' : textAlign === 'center' ? 'center' : 'justify',
-          lineHeight: '1.6'
+          lineHeight: '1.7'
         }}
       >
         <ReactMarkdown remarkPlugins={[remarkGfm]}>

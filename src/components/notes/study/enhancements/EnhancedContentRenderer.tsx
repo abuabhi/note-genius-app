@@ -3,6 +3,8 @@ import React from 'react';
 import { RichTextDisplay } from '@/components/ui/rich-text/RichTextDisplay';
 import { TextAlignType } from '../hooks/useStudyViewState';
 import { Lightbulb } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface EnhancedContentRendererProps {
   content: string;
@@ -35,6 +37,22 @@ export const EnhancedContentRenderer = ({
   // Split content by enhancement markers and process each part
   const parts = content.split(/(\[AI_ENHANCED\].*?\[\/AI_ENHANCED\])/gs);
   
+  // Enhanced markdown styles for AI content
+  const enhancedMarkdownClasses = `
+    prose prose-mint max-w-none prose-sm
+    prose-headings:text-gray-800 prose-headings:font-medium prose-headings:mb-3 prose-headings:mt-4
+    prose-h1:text-lg prose-h1:mb-4 prose-h1:mt-5 prose-h1:font-semibold
+    prose-h2:text-base prose-h2:mb-3 prose-h2:mt-4 prose-h2:font-medium
+    prose-h3:text-sm prose-h3:mb-2 prose-h3:mt-3 prose-h3:font-medium
+    prose-p:text-gray-700 prose-p:leading-6 prose-p:mb-3 prose-p:text-sm
+    prose-li:text-gray-700 prose-li:mb-1 prose-li:leading-6 prose-li:text-sm
+    prose-ul:mb-4 prose-ol:mb-4 prose-ul:space-y-1 prose-ol:space-y-1
+    prose-ul:pl-4 prose-ol:pl-4
+    prose-li:marker:text-mint-600 prose-li:marker:font-medium
+    prose-strong:text-gray-800 prose-strong:font-semibold
+    prose-em:text-gray-700 prose-em:italic
+  `;
+  
   return (
     <div 
       className={`prose max-w-none ${className || ''}`}
@@ -53,10 +71,9 @@ export const EnhancedContentRenderer = ({
           // Determine enhancement type based on content
           const isStudyTip = enhancedText.includes('Study Tip') || enhancedText.includes('Remember:');
           const isExample = enhancedText.includes('Example:') || enhancedText.includes('Real-World');
-          const isExplanation = !isStudyTip && !isExample;
           
           // Choose styling based on enhancement type
-          let containerClasses = "my-3 p-4 rounded-lg border-l-4 relative overflow-hidden transition-all duration-200 hover:shadow-sm";
+          let containerClasses = "my-4 p-4 rounded-lg border-l-4 relative overflow-hidden transition-all duration-200 hover:shadow-sm";
           let iconClasses = "w-4 h-4";
           let icon = null;
           
@@ -73,22 +90,18 @@ export const EnhancedContentRenderer = ({
             <div key={index} className={containerClasses}>
               {/* Optional icon for study tips */}
               {icon && (
-                <div className="flex items-center gap-2 mb-2 opacity-75">
+                <div className="flex items-center gap-2 mb-3 opacity-75">
                   <div className="flex items-center justify-center w-5 h-5 bg-white/60 rounded-full">
                     {icon}
                   </div>
                 </div>
               )}
               
-              {/* Enhanced content */}
-              <div className="relative">
-                <RichTextDisplay
-                  content={enhancedText}
-                  fontSize={fontSize * 0.95} // Slightly smaller for enhanced content
-                  textAlign={textAlign}
-                  removeTitle={true}
-                  className="prose-sm prose-headings:text-gray-800 prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-800 prose-p:mb-2"
-                />
+              {/* Enhanced content with proper markdown rendering */}
+              <div className={`relative ${enhancedMarkdownClasses}`}>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {enhancedText}
+                </ReactMarkdown>
               </div>
               
               {/* Subtle decorative element */}
@@ -98,13 +111,13 @@ export const EnhancedContentRenderer = ({
         } else if (part.trim()) {
           // Regular content - render normally with inline integration
           return (
-            <div key={index} className="leading-relaxed">
+            <div key={index} className="leading-relaxed mb-4">
               <RichTextDisplay
                 content={part}
                 fontSize={fontSize}
                 textAlign={textAlign}
                 removeTitle={true}
-                className="prose-p:mb-3 prose-headings:mb-2 prose-headings:mt-4"
+                className="prose-p:mb-4 prose-headings:mb-3 prose-headings:mt-5"
               />
             </div>
           );
