@@ -1,5 +1,5 @@
 
-import { useState, useCallback, startTransition } from 'react';
+import { useState, useCallback } from 'react';
 import { Note } from "@/types/note";
 import { FilterOptions } from './types';
 import { useFilteredNotes } from './useFilteredNotes';
@@ -7,7 +7,7 @@ import { usePaginatedNotes } from './usePaginatedNotes';
 import { useCategoriesState } from './useCategoriesState';
 
 /**
- * Main hook for managing notes state with proper async handling
+ * Main hook for managing notes state with stable updates
  */
 export function useNotesState() {
   // Core state
@@ -42,37 +42,27 @@ export function useNotesState() {
     paginatedNotes
   } = usePaginatedNotes(filteredNotes);
   
-  // Wrap state updates in transitions to prevent suspense
+  // Simple state updates without transitions to prevent suspension
   const updateSearchTerm = useCallback((term: string) => {
-    startTransition(() => {
-      setSearchTerm(term);
-    });
+    setSearchTerm(term);
   }, []);
 
   const updateFilterOptions = useCallback((options: FilterOptions) => {
-    startTransition(() => {
-      setFilterOptions(options);
-    });
+    setFilterOptions(options);
   }, []);
 
   const updateSortType = useCallback((type: string) => {
-    startTransition(() => {
-      setSortType(type);
-    });
+    setSortType(type);
   }, []);
 
   const updateShowArchived = useCallback((show: boolean) => {
-    startTransition(() => {
-      setShowArchived(show);
-    });
+    setShowArchived(show);
   }, []);
   
   // Reset filters
   const resetFilters = useCallback(() => {
-    startTransition(() => {
-      setFilterOptions({});
-      setSearchTerm('');
-    });
+    setFilterOptions({});
+    setSearchTerm('');
   }, []);
 
   return {

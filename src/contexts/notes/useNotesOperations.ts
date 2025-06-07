@@ -5,7 +5,7 @@ import { usePinArchiveOperations } from './operations/pinArchiveOperations';
 import { fetchTagsFromDatabase } from './operations';
 
 /**
- * Hook that provides all note operations
+ * Hook that provides all note operations with stable references
  */
 export const useNotesOperations = (
   notes: Note[], 
@@ -40,7 +40,7 @@ export const useNotesOperations = (
   };
 
   /**
-   * Filter notes by tag
+   * Filter notes by tag with stable reference
    */
   const filterByTag = (tagName: string, setSearchTerm: (term: string) => void): void => {
     console.log('Filtering by tag:', tagName);

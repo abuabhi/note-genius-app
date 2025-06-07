@@ -1,5 +1,5 @@
 
-import { useState, useTransition, useDeferredValue } from "react";
+import { useState } from "react";
 import { useNotes } from "@/contexts/NoteContext";
 import { useRequireAuth, TierLimits, UserTier } from "@/hooks/useRequireAuth";
 import { Note } from "@/types/note";
@@ -26,11 +26,7 @@ export const NotesContent = ({
   tierLimits,
   userTier 
 }: NotesContentProps) => {
-  const [isPending, startTransition] = useTransition();
   const [activeSubjectId, setActiveSubjectId] = useState<string | null>(null);
-  
-  // Defer the subject ID to prevent suspension during updates
-  const deferredActiveSubjectId = useDeferredValue(activeSubjectId);
   
   // Safely get notes data with fallbacks
   const notesContext = useNotes();
@@ -52,10 +48,10 @@ export const NotesContent = ({
   const isFiltered = searchTerm.length > 0 || 
                     Boolean(filterOptions.dateFrom) || 
                     Boolean(filterOptions.dateTo) || 
-                    Boolean(deferredActiveSubjectId);
+                    Boolean(activeSubjectId);
 
-  // Show loading state while checking authentication or during transitions
-  if (authLoading || isPending || loading) {
+  // Show loading state while checking authentication
+  if (authLoading || loading) {
     return <LoadingState message="Loading..." />;
   }
 
@@ -64,18 +60,13 @@ export const NotesContent = ({
     return null;
   }
 
-  // Wrap subject change in transition to prevent suspension
+  // Simple state handlers without transitions to prevent suspension
   const handleSubjectChange = (subjectId: string | null) => {
-    startTransition(() => {
-      setActiveSubjectId(subjectId);
-    });
+    setActiveSubjectId(subjectId);
   };
 
-  // Wrap filter options change in transition
   const handleFilterOptionsChange = (options: any) => {
-    startTransition(() => {
-      setFilterOptions(options);
-    });
+    setFilterOptions(options);
   };
 
   return (
@@ -86,7 +77,7 @@ export const NotesContent = ({
           
           {/* Breadcrumb with modern styling */}
           <div className="flex items-center justify-between">
-            <NotesPageBreadcrumb activeSubjectId={deferredActiveSubjectId} />
+            <NotesPageBreadcrumb activeSubjectId={activeSubjectId} />
             <div className="hidden sm:flex items-center gap-2 text-sm text-slate-500">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
               <span>Live sync enabled</span>
@@ -124,7 +115,7 @@ export const NotesContent = ({
           {/* Subject Tabs with modern design */}
           <div className="relative">
             <SubjectsSection 
-              activeSubjectId={deferredActiveSubjectId}
+              activeSubjectId={activeSubjectId}
               setActiveSubjectId={handleSubjectChange}
               setFilterOptions={handleFilterOptionsChange}
               filteredNotesCount={filteredNotes.length}
@@ -138,7 +129,7 @@ export const NotesContent = ({
               paginatedNotes={paginatedNotes} 
               loading={false}
               isFiltered={isFiltered}
-              activeSubject={deferredActiveSubjectId || 'all'}
+              activeSubject={activeSubjectId || 'all'}
               onCreateNote={() => {}}
               onScanNote={() => {}}
               onImportNote={() => {}}
