@@ -1,19 +1,9 @@
 
-import { Skeleton } from '@/components/ui/skeleton';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Clock, Calendar, BookOpen, Flame, Target, TrendingUp } from 'lucide-react';
-import { formatDuration } from '@/utils/formatTime';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BookOpen, Clock, Target, TrendingUp, Award, CheckCircle, Calendar, Timer } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
-interface StatItem {
-  label: string;
-  value: string | number;
-  icon: React.ReactNode;
-  bgColor: string;
-  borderColor: string;
-  tooltip: string;
-}
-
-interface SharedStatsGridProps {
+interface StatsGridProps {
   stats: {
     totalHours: number;
     averageDuration: number;
@@ -24,149 +14,109 @@ interface SharedStatsGridProps {
     cardsReviewedToday: number;
     todayStudyMinutes: number;
   };
-  isLoading: boolean;
-  variant?: 'dashboard' | 'overview' | 'detailed';
+  isLoading?: boolean;
+  variant?: 'dashboard' | 'progress' | 'sessions';
 }
 
-export const SharedStatsGrid = ({ stats, isLoading, variant = 'overview' }: SharedStatsGridProps) => {
+export const SharedStatsGrid = ({ stats, isLoading, variant = 'dashboard' }: StatsGridProps) => {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="bg-white/60 backdrop-blur-sm rounded-xl border border-mint-100 p-6 shadow-lg">
-            <Skeleton className="h-4 w-20 mb-3 bg-mint-100" />
-            <Skeleton className="h-8 w-20 bg-mint-200" />
-          </div>
+          <Card key={i}>
+            <CardHeader className="pb-2">
+              <Skeleton className="h-4 w-24" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-8 w-16 mb-2" />
+              <Skeleton className="h-3 w-20" />
+            </CardContent>
+          </Card>
         ))}
       </div>
     );
   }
 
-  const getStatItems = (): StatItem[] => {
-    const baseStats: StatItem[] = [
+  // Format time helper
+  const formatTime = (minutes: number) => {
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+  };
+
+  // Define stats based on variant
+  const getStatsConfig = () => {
+    const baseStats = [
       {
-        label: "Total Study Hours",
-        value: `${stats.totalHours} hours`,
-        icon: <Clock className="h-6 w-6 text-blue-500" />,
-        bgColor: "bg-blue-50",
-        borderColor: "border-blue-100",
-        tooltip: "Total time spent in completed study sessions"
+        title: "Total Sessions",
+        value: stats.totalSessions.toString(),
+        icon: Calendar,
+        description: "Study sessions completed",
+        color: "text-blue-600"
       },
       {
-        label: "Average Session",
-        value: formatDuration(stats.averageDuration),
-        icon: <Flame className="h-6 w-6 text-orange-500" />,
-        bgColor: "bg-orange-50",
-        borderColor: "border-orange-100",
-        tooltip: "Average duration of your study sessions"
+        title: "Total Study Time", 
+        value: formatTime(stats.todayStudyMinutes > 0 ? stats.todayStudyMinutes * stats.totalSessions : stats.totalHours * 60),
+        icon: Clock,
+        description: "Time spent learning",
+        color: "text-green-600"
       },
       {
-        label: "Total Sessions",
-        value: stats.totalSessions,
-        icon: <Calendar className="h-6 w-6 text-mint-500" />,
-        bgColor: "bg-mint-50",
-        borderColor: "border-mint-100",
-        tooltip: "Total number of study sessions created"
+        title: "Average Session",
+        value: `${stats.averageDuration}m`,
+        icon: Timer,
+        description: "Per session duration",
+        color: "text-purple-600"
       },
       {
-        label: "Active Sessions",
-        value: stats.activeSessions,
-        icon: <BookOpen className="h-6 w-6 text-purple-500" />,
-        bgColor: "bg-purple-50",
-        borderColor: "border-purple-100",
-        tooltip: "Currently active study sessions"
+        title: "Cards Mastered",
+        value: stats.totalCardsMastered.toString(),
+        icon: Award,
+        description: "Flashcards learned",
+        color: "text-orange-600"
       }
     ];
 
     if (variant === 'dashboard') {
       return [
         {
-          label: "Study Streak",
-          value: `${stats.streakDays} days`,
-          icon: <Flame className="h-6 w-6 text-orange-500" />,
-          bgColor: "bg-orange-50",
-          borderColor: "border-orange-100",
-          tooltip: "Consecutive days with study activity"
+          title: "Today's Study",
+          value: formatTime(stats.todayStudyMinutes),
+          icon: Clock,
+          description: "Minutes studied today",
+          color: "text-blue-600"
         },
-        {
-          label: "Today's Study Time",
-          value: `${stats.todayStudyMinutes}m`,
-          icon: <Clock className="h-6 w-6 text-blue-500" />,
-          bgColor: "bg-blue-50",
-          borderColor: "border-blue-100",
-          tooltip: "Minutes studied today across all sessions"
-        },
-        {
-          label: "Cards Mastered",
-          value: stats.totalCardsMastered,
-          icon: <Target className="h-6 w-6 text-green-500" />,
-          bgColor: "bg-green-50",
-          borderColor: "border-green-100",
-          tooltip: "Flashcards with high retention rate (well learned)"
-        },
-        {
-          label: "Cards Today",
-          value: stats.cardsReviewedToday,
-          icon: <TrendingUp className="h-6 w-6 text-mint-500" />,
-          bgColor: "bg-mint-50",
-          borderColor: "border-mint-100",
-          tooltip: "Flashcards reviewed today"
-        }
-      ];
-    }
-
-    if (variant === 'detailed') {
-      return [
-        ...baseStats,
-        {
-          label: "Study Streak",
-          value: `${stats.streakDays} days`,
-          icon: <Flame className="h-6 w-6 text-orange-500" />,
-          bgColor: "bg-orange-50",
-          borderColor: "border-orange-100",
-          tooltip: "Consecutive days with study activity"
-        },
-        {
-          label: "Cards Mastered",
-          value: stats.totalCardsMastered,
-          icon: <Target className="h-6 w-6 text-green-500" />,
-          bgColor: "bg-green-50",
-          borderColor: "border-green-100",
-          tooltip: "Flashcards with high retention rate (well learned)"
-        }
+        ...baseStats.slice(0, 3)
       ];
     }
 
     return baseStats;
   };
 
-  const statItems = getStatItems();
-  const gridCols = variant === 'detailed' ? 'lg:grid-cols-3' : 'lg:grid-cols-4';
+  const statsConfig = getStatsConfig();
 
   return (
-    <TooltipProvider>
-      <div className={`grid grid-cols-1 md:grid-cols-2 ${gridCols} gap-6`}>
-        {statItems.map((item, index) => (
-          <Tooltip key={index}>
-            <TooltipTrigger asChild>
-              <div 
-                className={`bg-white/70 backdrop-blur-sm rounded-xl border ${item.borderColor} p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-help`}
-              >
-                <div className={`inline-flex items-center justify-center p-3 rounded-lg ${item.bgColor} mb-4`}>
-                  {item.icon}
-                </div>
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-600">{item.label}</p>
-                  <p className="text-2xl font-bold text-gray-900">{item.value}</p>
-                </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {statsConfig.map((stat) => {
+        const Icon = stat.icon;
+        return (
+          <Card key={stat.title} className="hover:shadow-md transition-shadow">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                <Icon className={`h-4 w-4 ${stat.color}`} />
+                {stat.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-1">
+                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                <p className="text-xs text-gray-500">{stat.description}</p>
               </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{item.tooltip}</p>
-            </TooltipContent>
-          </Tooltip>
-        ))}
-      </div>
-    </TooltipProvider>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
   );
 };

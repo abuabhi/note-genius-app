@@ -1,111 +1,111 @@
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Flame, Target, TrendingUp, Calendar } from "lucide-react";
-import { useProgressAnalytics } from "@/hooks/progress/useProgressAnalytics";
-import { MetricDisplay } from "../shared/MetricDisplay";
+import { Clock, Target, TrendingUp, Award } from "lucide-react";
+import { useUnifiedStudyStats } from "@/hooks/useUnifiedStudyStats";
 
 export const ProgressOverviewCard = () => {
-  const { overviewStats, studyTimeAnalytics, isLoading } = useProgressAnalytics();
+  const { stats, isLoading } = useUnifiedStudyStats();
 
   if (isLoading) {
     return (
-      <Card className="bg-gradient-to-r from-mint-100 to-blue-100 animate-pulse">
-        <CardContent className="p-6">
-          <div className="h-8 bg-mint-200/50 rounded w-64 mb-4"></div>
-          <div className="h-4 bg-mint-200/50 rounded w-48"></div>
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="animate-pulse bg-gray-200 h-6 w-48 rounded"></CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="animate-pulse">
+              <div className="h-4 bg-gray-200 rounded mb-2"></div>
+              <div className="h-2 bg-gray-200 rounded"></div>
+            </div>
+          ))}
         </CardContent>
       </Card>
     );
   }
 
-  const { weeklyComparison } = studyTimeAnalytics;
-  const isWeeklyTrendPositive = weeklyComparison.percentageChange > 0;
+  // Format time helper
+  const formatTime = (minutes: number) => {
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+  };
+
+  // Calculate streaks and achievements
+  const isOnTrack = stats.weeklyGoalProgress >= 50; // At least 50% of weekly goal
+  const weeklyTarget = formatTime(stats.weeklyGoalMinutes);
+  const weeklyProgress = formatTime(stats.weeklyStudyTimeMinutes);
 
   return (
-    <Card className="bg-gradient-to-r from-mint-100 to-blue-100 text-mint-900 overflow-hidden relative border-mint-200">
-      <div className="absolute inset-0 bg-white/20"></div>
-      <CardContent className="p-6 relative z-10">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-          {/* Welcome & Streak */}
-          <div className="space-y-4">
-            <div>
-              <h1 className="text-3xl font-bold mb-2 text-mint-800">Your Learning Journey</h1>
-              <p className="text-mint-700">Making great progress every day!</p>
+    <Card className="w-full bg-gradient-to-br from-mint-50 to-blue-50 border-mint-200">
+      <CardHeader>
+        <CardTitle className="text-2xl font-bold text-mint-800 flex items-center gap-2">
+          <Award className="h-6 w-6" />
+          Your Learning Journey
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Overall Progress */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="text-center">
+            <div className="flex items-center justify-center mb-2">
+              <Clock className="h-5 w-5 text-blue-600 mr-2" />
+              <span className="text-sm font-medium text-gray-600">Total Study Time</span>
             </div>
-            
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 bg-mint-200/50 px-4 py-2 rounded-full">
-                <Flame className="h-5 w-5 text-orange-600" />
-                <span className="font-semibold text-mint-800">
-                  {overviewStats.currentStreak} day streak
-                </span>
-              </div>
-              
-              {isWeeklyTrendPositive && (
-                <Badge variant="secondary" className="bg-green-600 text-white border-green-600">
-                  <TrendingUp className="h-3 w-3 mr-1" />
-                  +{weeklyComparison.percentageChange}% this week
-                </Badge>
-              )}
-            </div>
+            <p className="text-3xl font-bold text-gray-900">{formatTime(stats.studyTimeMinutes)}</p>
+            <p className="text-sm text-gray-500">{stats.totalSessions} sessions completed</p>
           </div>
-
-          {/* Today's Progress Grid */}
-          <div className="grid grid-cols-3 gap-4 w-full lg:w-auto">
-            <MetricDisplay
-              label="Cards Today"
-              value={overviewStats.todaysCardsReviewed}
-              color="blue"
-              size="sm"
-              className="text-center bg-white/60 rounded-lg p-4 border border-mint-200"
-            />
-            
-            <MetricDisplay
-              label="Minutes Today"
-              value={overviewStats.todaysStudyTime}
-              color="green"
-              size="sm"
-              className="text-center bg-white/60 rounded-lg p-4 border border-mint-200"
-            />
-            
-            <MetricDisplay
-              label="Quizzes Today"
-              value={overviewStats.todaysQuizzes}
-              color="mint"
-              size="sm"
-              className="text-center bg-white/60 rounded-lg p-4 border border-mint-200"
-            />
+          
+          <div className="text-center">
+            <div className="flex items-center justify-center mb-2">
+              <Target className="h-5 w-5 text-green-600 mr-2" />
+              <span className="text-sm font-medium text-gray-600">Cards Mastered</span>
+            </div>
+            <p className="text-3xl font-bold text-gray-900">{stats.totalCardsMastered}</p>
+            <p className="text-sm text-gray-500">{stats.flashcardAccuracy}% accuracy</p>
+          </div>
+          
+          <div className="text-center">
+            <div className="flex items-center justify-center mb-2">
+              <TrendingUp className="h-5 w-5 text-purple-600 mr-2" />
+              <span className="text-sm font-medium text-gray-600">Study Streak</span>
+            </div>
+            <p className="text-3xl font-bold text-gray-900">{stats.streakDays}</p>
+            <p className="text-sm text-gray-500">{stats.streakDays === 1 ? 'day' : 'days'} in a row</p>
           </div>
         </div>
 
         {/* Weekly Goal Progress */}
-        <div className="mt-6 space-y-3">
-          <div className="flex items-center justify-between text-sm text-mint-800">
-            <span className="flex items-center gap-2">
-              <Target className="h-4 w-4" />
-              Weekly Study Goal
-            </span>
-            <span>{overviewStats.weeklyStudyTime}h / 5h</span>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">Weekly Goal Progress</h3>
+            <span className="text-sm text-gray-600">{weeklyProgress} / {weeklyTarget}</span>
           </div>
-          <Progress 
-            value={overviewStats.weeklyGoalProgress} 
-            className="h-2 bg-white/50"
-          />
-          <p className="text-xs text-mint-700">
-            {overviewStats.weeklyGoalProgress >= 100 
-              ? "🎉 Goal achieved! Keep up the excellent work!" 
-              : `${Math.round(5 - (overviewStats.weeklyStudyTime / 60))}h left to reach your weekly goal`
-            }
-          </p>
+          <Progress value={stats.weeklyGoalProgress} className="h-3" />
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium text-gray-700">
+              {stats.weeklyGoalProgress}% Complete
+            </span>
+            <span className={`text-sm font-medium ${isOnTrack ? 'text-green-600' : 'text-orange-600'}`}>
+              {isOnTrack ? '✅ On Track' : '⚠️ Needs Attention'}
+            </span>
+          </div>
         </div>
 
-        {/* Achievement Badge */}
-        {overviewStats.totalCardsMastered > 0 && (
-          <div className="mt-4 flex items-center gap-2 text-sm text-mint-700">
-            <Calendar className="h-4 w-4" />
-            <span>🏆 {overviewStats.totalCardsMastered} cards mastered</span>
+        {/* Weekly Comparison */}
+        {stats.weeklyChange !== 0 && (
+          <div className="p-4 bg-white/50 rounded-lg">
+            <div className="flex items-center gap-2">
+              <TrendingUp className={`h-4 w-4 ${stats.weeklyChange > 0 ? 'text-green-600' : 'text-red-600'}`} />
+              <span className="text-sm font-medium text-gray-700">
+                {stats.weeklyChange > 0 ? '📈 Great improvement!' : '📉 Slight dip this week'}
+              </span>
+            </div>
+            <p className="text-sm text-gray-600 mt-1">
+              {stats.weeklyChange > 0 ? '+' : ''}{stats.weeklyChange}% compared to last week
+            </p>
           </div>
         )}
       </CardContent>

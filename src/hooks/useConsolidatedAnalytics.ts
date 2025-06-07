@@ -3,6 +3,22 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 
+// Validation helpers
+const validateDuration = (duration: number | null): number => {
+  if (!duration || duration < 60 || duration > 14400) return 0; // 1 min to 4 hours
+  return duration;
+};
+
+const validateHours = (hours: number): number => {
+  if (hours > 1000) return Math.round(hours / 3600); // Convert seconds to hours if needed
+  return Math.max(0, hours);
+};
+
+const safePercentage = (current: number, previous: number): number => {
+  if (previous === 0) return current > 0 ? 100 : 0;
+  return Math.round(((current - previous) / previous) * 100);
+};
+
 export const useConsolidatedAnalytics = () => {
   const { user } = useAuth();
 
@@ -11,9 +27,9 @@ export const useConsolidatedAnalytics = () => {
     queryFn: async () => {
       if (!user) return null;
 
-      console.log('Fetching consolidated analytics for user:', user.id);
+      console.log('🔄 Fetching consolidated analytics for user:', user.id);
 
-      // Get study sessions with proper filtering - only completed, realistic sessions
+      // Get study sessions with strict filtering - only completed, realistic sessions
       const { data: sessions, error: sessionsError } = await supabase
         .from('study_sessions')
         .select('*')
@@ -25,11 +41,11 @@ export const useConsolidatedAnalytics = () => {
         .order('start_time', { ascending: false });
 
       if (sessionsError) {
-        console.error('Error fetching sessions:', sessionsError);
+        console.error('❌ Error fetching sessions:', sessionsError);
         throw sessionsError;
       }
 
-      console.log('Filtered sessions data:', sessions);
+      console.log(`📊 Found ${sessions?.length || 0} valid sessions`);
 
       // Get flashcard sets
       const { data: flashcardSets, error: setsError } = await supabase
@@ -38,7 +54,7 @@ export const useConsolidatedAnalytics = () => {
         .eq('user_id', user.id);
 
       if (setsError) {
-        console.error('Error fetching flashcard sets:', setsError);
+        console.error('❌ Error fetching flashcard sets:', setsError);
       }
 
       // Get flashcard progress
@@ -48,7 +64,7 @@ export const useConsolidatedAnalytics = () => {
         .eq('user_id', user.id);
 
       if (progressError) {
-        console.error('Error fetching flashcard progress:', progressError);
+        console.error('❌ Error fetching flashcard progress:', progressError);
       }
 
       // Calculate statistics from completed sessions only
@@ -56,7 +72,8 @@ export const useConsolidatedAnalytics = () => {
       
       // Calculate total study time (duration is in seconds)
       const totalStudyTimeSeconds = allSessions.reduce((sum, session) => {
-        return sum + (session.duration || 0);
+        const validDuration = validateDuration(session.duration);
+        return sum + validDuration;
       }, 0);
 
       // Convert to hours with proper rounding
@@ -87,19 +104,22 @@ export const useConsolidatedAnalytics = () => {
       // Recent sessions for dashboard
       const recentSessions = allSessions.slice(0, 5);
 
-      // Today's statistics - only from completed sessions
-      const today = new Date().toISOString().split('T')[0];
+      // Today's statistics - using consistent timezone
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
       const todaySessions = allSessions.filter(s => 
         s.start_time && s.start_time.startsWith(today)
       );
 
       const todayStudyTimeSeconds = todaySessions.reduce((sum, session) => {
-        return sum + (session.duration || 0);
+        const validDuration = validateDuration(session.duration);
+        return sum + validDuration;
       }, 0);
 
       const todayStudyTimeHours = Math.round((todayStudyTimeSeconds / 3600) * 10) / 10;
+      const todayStudyTimeMinutes = Math.round(todayStudyTimeSeconds / 60);
 
-      // Weekly statistics - last 7 days of completed sessions
+      // Weekly statistics - last 7 days from now
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       
@@ -108,94 +128,144 @@ export const useConsolidatedAnalytics = () => {
       );
 
       const weeklyStudyTimeSeconds = weeklySessions.reduce((sum, session) => {
-        return sum + (session.duration || 0);
+        const validDuration = validateDuration(session.duration);
+        return sum + validDuration;
       }, 0);
 
       const weeklyStudyTimeHours = Math.round((weeklyStudyTimeSeconds / 3600) * 10) / 10;
+      const weeklyStudyTimeMinutes = Math.round(weeklyStudyTimeSeconds / 60);
+
+      // Previous week for comparison
+      const fourteenDaysAgo = new Date();
+      fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+      
+      const previousWeekSessions = allSessions.filter(s => 
+        s.start_time && 
+        new Date(s.start_time) >= fourteenDaysAgo && 
+        new Date(s.start_time) < sevenDaysAgo
+      );
+
+      const previousWeekTimeSeconds = previousWeekSessions.reduce((sum, session) => {
+        const validDuration = validateDuration(session.duration);
+        return sum + validDuration;
+      }, 0);
+
+      const previousWeekTimeMinutes = Math.round(previousWeekTimeSeconds / 60);
+
+      // Calculate week-over-week change
+      const weeklyChange = safePercentage(weeklyStudyTimeMinutes, previousWeekTimeMinutes);
+
+      // Weekly goal progress (default 5 hours = 300 minutes)
+      const weeklyGoalMinutes = 300;
+      const weeklyGoalProgress = Math.min(100, Math.round((weeklyStudyTimeMinutes / weeklyGoalMinutes) * 100));
 
       const result = {
-        // Overall statistics
+        // Session counts
         totalSessions: allSessions.length,
-        totalStudyTime: totalStudyTimeHours,
+        todaySessions: todaySessions.length,
+        weeklySessions: weeklySessions.length,
+        
+        // Study time in multiple formats for different uses
+        totalStudyTime: validateHours(totalStudyTimeHours), // Total hours
+        totalStudyTimeMinutes: Math.round(totalStudyTimeSeconds / 60), // Total minutes
+        
+        todayStudyTime: validateHours(todayStudyTimeHours), // Today hours
+        todayStudyTimeMinutes: todayStudyTimeMinutes, // Today minutes
+        
+        weeklyStudyTime: validateHours(weeklyStudyTimeHours), // Weekly hours  
+        weeklyStudyTimeMinutes: weeklyStudyTimeMinutes, // Weekly minutes
+        
+        previousWeekTimeMinutes,
+        weeklyChange, // Week-over-week percentage change
+        
+        // Session metrics
         averageSessionTime: averageSessionTimeMinutes,
+        
+        // Goal tracking
+        weeklyGoalProgress,
+        weeklyGoalMinutes,
+        
+        // Flashcard metrics
         totalSets,
         totalCardsReviewed,
         totalCardsMastered,
         flashcardAccuracy,
         
-        // Today's statistics
-        todayStudyTime: todayStudyTimeHours,
-        todaySessions: todaySessions.length,
-        
-        // Weekly statistics
-        weeklyStudyTime: weeklyStudyTimeHours,
-        weeklySessions: weeklySessions.length,
-        
-        // Recent data
+        // Data for components
         recentSessions,
         activeSessions: [], // No active sessions in this calculation
         
         // Streak calculation (simplified)
-        streakDays: 0, // TODO: Implement proper streak calculation
+        streakDays: todaySessions.length > 0 ? 1 : 0,
         
-        // For backward compatibility
-        studyTimeHours: totalStudyTimeHours,
+        // Legacy compatibility
+        studyTimeHours: validateHours(totalStudyTimeHours),
         stats: {
           totalSessions: allSessions.length,
-          totalStudyTime: totalStudyTimeHours,
+          totalStudyTime: validateHours(totalStudyTimeHours),
           averageSessionTime: averageSessionTimeMinutes,
           totalCardsMastered,
           totalSets,
           flashcardAccuracy,
-          streakDays: 0,
-          studyTimeHours: totalStudyTimeHours
+          streakDays: todaySessions.length > 0 ? 1 : 0,
+          studyTimeHours: validateHours(totalStudyTimeHours)
         }
       };
 
-      console.log('Consolidated analytics result:', result);
-      console.log('Study time calculation:', {
-        totalSeconds: totalStudyTimeSeconds,
-        totalHours: totalStudyTimeHours,
-        todayHours: todayStudyTimeHours,
-        weeklyHours: weeklyStudyTimeHours,
-        sessionsCount: allSessions.length
+      console.log('📈 Analytics calculation summary:', {
+        totalSessions: result.totalSessions,
+        totalMinutes: result.totalStudyTimeMinutes,
+        todayMinutes: result.todayStudyTimeMinutes,
+        weeklyMinutes: result.weeklyStudyTimeMinutes,
+        previousWeekMinutes: result.previousWeekTimeMinutes,
+        weeklyChange: result.weeklyChange,
+        goalProgress: result.weeklyGoalProgress
       });
       
       return result;
     },
     enabled: !!user,
     staleTime: 30 * 1000, // 30 seconds
-    refetchInterval: false, // Remove auto-refetch to prevent inconsistencies
+    refetchInterval: false,
   });
 
-  return { 
-    analytics: analytics || {
+  const defaultAnalytics = {
+    totalSessions: 0,
+    todaySessions: 0,
+    weeklySessions: 0,
+    totalStudyTime: 0,
+    totalStudyTimeMinutes: 0,
+    todayStudyTime: 0,
+    todayStudyTimeMinutes: 0,
+    weeklyStudyTime: 0,
+    weeklyStudyTimeMinutes: 0,
+    previousWeekTimeMinutes: 0,
+    weeklyChange: 0,
+    averageSessionTime: 0,
+    weeklyGoalProgress: 0,
+    weeklyGoalMinutes: 300,
+    totalSets: 0,
+    totalCardsReviewed: 0,
+    totalCardsMastered: 0,
+    flashcardAccuracy: 0,
+    recentSessions: [],
+    activeSessions: [],
+    streakDays: 0,
+    studyTimeHours: 0,
+    stats: {
       totalSessions: 0,
       totalStudyTime: 0,
       averageSessionTime: 0,
-      totalSets: 0,
-      totalCardsReviewed: 0,
       totalCardsMastered: 0,
+      totalSets: 0,
       flashcardAccuracy: 0,
-      todayStudyTime: 0,
-      todaySessions: 0,
-      weeklyStudyTime: 0,
-      weeklySessions: 0,
-      recentSessions: [],
-      activeSessions: [],
       streakDays: 0,
-      studyTimeHours: 0,
-      stats: {
-        totalSessions: 0,
-        totalStudyTime: 0,
-        averageSessionTime: 0,
-        totalCardsMastered: 0,
-        totalSets: 0,
-        flashcardAccuracy: 0,
-        streakDays: 0,
-        studyTimeHours: 0
-      }
-    }, 
+      studyTimeHours: 0
+    }
+  };
+
+  return { 
+    analytics: analytics || defaultAnalytics, 
     isLoading 
   };
 };

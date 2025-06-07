@@ -8,20 +8,24 @@ import { TrendingUp, Target } from "lucide-react";
 export const AnalyticsSection = () => {
   const { stats, isLoading } = useUnifiedStudyStats();
 
-  // Calculate weekly goal progress (assume 5 hours per week goal)
-  const weeklyGoalHours = 5;
-  const weeklyProgress = Math.min(100, (stats.studyTimeHours / weeklyGoalHours) * 100);
-
   // Transform stats to match SharedStatsGrid interface
   const transformedStats = {
     totalHours: stats.studyTimeHours,
     averageDuration: stats.averageSessionTime,
     totalSessions: stats.totalSessions,
-    activeSessions: 0, // We don't track active sessions in unified stats
+    activeSessions: stats.activeSessions.length,
     streakDays: stats.streakDays,
     totalCardsMastered: stats.totalCardsMastered,
-    cardsReviewedToday: 0, // We don't track today's cards in unified stats
-    todayStudyMinutes: 0, // We don't track today's study time in unified stats
+    cardsReviewedToday: 0, // Not tracked in unified stats
+    todayStudyMinutes: stats.todayStudyTimeMinutes,
+  };
+
+  // Format time helper
+  const formatTime = (minutes: number) => {
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
   };
 
   return (
@@ -32,7 +36,7 @@ export const AnalyticsSection = () => {
         <SharedStatsGrid stats={transformedStats} isLoading={isLoading} variant="dashboard" />
       </div>
       
-      {/* Weekly Goal Progress */}
+      {/* Weekly Goal Progress and Streak */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
@@ -45,12 +49,12 @@ export const AnalyticsSection = () => {
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-gray-700">Progress</span>
               <span className="text-sm text-gray-600">
-                {stats.studyTimeHours}h / {weeklyGoalHours}h
+                {formatTime(stats.weeklyStudyTimeMinutes)} / {formatTime(stats.weeklyGoalMinutes)}
               </span>
             </div>
-            <Progress value={weeklyProgress} className="h-3" />
+            <Progress value={stats.weeklyGoalProgress} className="h-3" />
             <p className="text-xs text-gray-500">
-              {Math.round(weeklyProgress)}% of weekly goal completed
+              {stats.weeklyGoalProgress}% of weekly goal completed
             </p>
           </CardContent>
         </Card>
@@ -59,19 +63,19 @@ export const AnalyticsSection = () => {
           <CardHeader>
             <CardTitle className="text-lg font-semibold flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-mint-600" />
-              Learning Streak
+              Study Trend
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-center py-4">
               <div className="text-4xl font-bold text-mint-600 mb-2">
-                {stats.streakDays}
+                {stats.weeklyChange > 0 ? '+' : ''}{stats.weeklyChange}%
               </div>
               <p className="text-sm text-gray-600">
-                {stats.streakDays === 1 ? 'day' : 'days'} in a row
+                vs last week
               </p>
               <p className="text-xs text-gray-500 mt-2">
-                Keep studying to maintain your streak!
+                {stats.weeklyStudyTimeMinutes > 0 ? 'Keep up the momentum!' : 'Time to get back on track!'}
               </p>
             </div>
           </CardContent>
