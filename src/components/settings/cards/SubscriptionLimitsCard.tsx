@@ -1,7 +1,7 @@
-import React, { Suspense } from "react";
+
+import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useUserTier, UserTier } from "@/hooks/useUserTier";
 import { useQuery } from "@tanstack/react-query";
@@ -36,8 +36,10 @@ interface UsageStats {
   storageUsed: number;
 }
 
-// Separate component for usage data to isolate suspense boundary
-const UsageDisplay = ({ userTier }: { userTier: UserTier }) => {
+export const SubscriptionLimitsCard = () => {
+  const { userTier, tierLimits, isLoading } = useUserTier();
+  
+  // Move the usage query directly into this component instead of using Suspense
   const { data: usageStats, isLoading: isLoadingUsage } = useQuery({
     queryKey: ["userUsageStats"],
     queryFn: async () => {
@@ -45,7 +47,6 @@ const UsageDisplay = ({ userTier }: { userTier: UserTier }) => {
         .from('notes')
         .select('*', { count: 'exact', head: true });
       
-      // Fix: Query flashcard_sets table instead of flashcards table
       const { count: flashcardSetsCount } = await supabase
         .from('flashcard_sets')
         .select('*', { count: 'exact', head: true });
@@ -70,12 +71,6 @@ const UsageDisplay = ({ userTier }: { userTier: UserTier }) => {
     staleTime: 5 * 60 * 1000, // 5 minutes cache
     refetchOnWindowFocus: false,
   });
-
-  return { usageStats, isLoadingUsage };
-};
-
-export const SubscriptionLimitsCard = () => {
-  const { userTier, tierLimits, isLoading } = useUserTier();
 
   const getUsagePercentage = (used: number, limit: number) => {
     if (limit === -1 || limit === 0) return 0;
@@ -130,23 +125,67 @@ export const SubscriptionLimitsCard = () => {
         <MockStripeIntegration userTier={userTier} />
       )}
 
-      {/* Usage Overview */}
+      {/* Usage Overview - No Suspense boundary, handle loading inline */}
       {tierLimits && userTier && (
-        <Suspense fallback={
-          <Card>
-            <CardHeader>
-              <CardTitle>Current Usage</CardTitle>
-              <CardDescription>Loading usage data...</CardDescription>
-            </CardHeader>
-            <CardContent>
+        <Card>
+          <CardHeader>
+            <CardTitle>Current Usage</CardTitle>
+            <CardDescription>
+              Monitor your usage against your plan limits
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {isLoadingUsage ? (
               <div className="flex items-center justify-center h-32">
                 <Loader className="h-6 w-6 animate-spin" />
               </div>
-            </CardContent>
-          </Card>
-        }>
-          <UsageCard userTier={userTier} tierLimits={tierLimits} />
-        </Suspense>
+            ) : (
+              <>
+                {/* Notes Usage */}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="font-medium">Notes</span>
+                    <span className="text-muted-foreground">
+                      {usageStats?.notesCount || 0} / {formatLimitDisplay(tierLimits.max_notes)}
+                    </span>
+                  </div>
+                  <Progress 
+                    value={getUsagePercentage(usageStats?.notesCount || 0, tierLimits.max_notes)}
+                    className="h-2"
+                  />
+                </div>
+
+                {/* Flashcard Sets Usage */}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="font-medium">Flashcard Sets</span>
+                    <span className="text-muted-foreground">
+                      {usageStats?.flashcardSetsCount || 0} / {formatLimitDisplay(tierLimits.max_flashcard_sets)}
+                    </span>
+                  </div>
+                  <Progress 
+                    value={getUsagePercentage(usageStats?.flashcardSetsCount || 0, tierLimits.max_flashcard_sets)}
+                    className="h-2"
+                  />
+                </div>
+
+                {/* Storage Usage */}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="font-medium">Storage</span>
+                    <span className="text-muted-foreground">
+                      {usageStats?.storageUsed || 0} MB / {formatLimitDisplay(tierLimits.max_storage_mb)} MB
+                    </span>
+                  </div>
+                  <Progress 
+                    value={getUsagePercentage(usageStats?.storageUsed || 0, tierLimits.max_storage_mb)}
+                    className="h-2"
+                  />
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* Feature Access */}
@@ -227,74 +266,5 @@ export const SubscriptionLimitsCard = () => {
         </Card>
       )}
     </div>
-  );
-};
-
-// Separate component for usage card to handle data fetching
-const UsageCard = ({ userTier, tierLimits }: { userTier: UserTier, tierLimits: any }) => {
-  const { usageStats, isLoadingUsage } = UsageDisplay({ userTier });
-
-  const getUsagePercentage = (used: number, limit: number) => {
-    if (limit === -1 || limit === 0) return 0;
-    return Math.min(Math.round((used / limit) * 100), 100);
-  };
-
-  const formatLimitDisplay = (limit: number) => {
-    if (limit === -1) return "Unlimited";
-    return limit.toString();
-  };
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Current Usage</CardTitle>
-        <CardDescription>
-          Monitor your usage against your plan limits
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Notes Usage */}
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="font-medium">Notes</span>
-            <span className="text-muted-foreground">
-              {isLoadingUsage ? '...' : `${usageStats?.notesCount || 0} / ${formatLimitDisplay(tierLimits.max_notes)}`}
-            </span>
-          </div>
-          <Progress 
-            value={isLoadingUsage ? 0 : getUsagePercentage(usageStats?.notesCount || 0, tierLimits.max_notes)}
-            className="h-2"
-          />
-        </div>
-
-        {/* Flashcard Sets Usage - Fixed to show correct count */}
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="font-medium">Flashcard Sets</span>
-            <span className="text-muted-foreground">
-              {isLoadingUsage ? '...' : `${usageStats?.flashcardSetsCount || 0} / ${formatLimitDisplay(tierLimits.max_flashcard_sets)}`}
-            </span>
-          </div>
-          <Progress 
-            value={isLoadingUsage ? 0 : getUsagePercentage(usageStats?.flashcardSetsCount || 0, tierLimits.max_flashcard_sets)}
-            className="h-2"
-          />
-        </div>
-
-        {/* Storage Usage */}
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="font-medium">Storage</span>
-            <span className="text-muted-foreground">
-              {isLoadingUsage ? '...' : `${usageStats?.storageUsed || 0} MB / ${formatLimitDisplay(tierLimits.max_storage_mb)} MB`}
-            </span>
-          </div>
-          <Progress 
-            value={isLoadingUsage ? 0 : getUsagePercentage(usageStats?.storageUsed || 0, tierLimits.max_storage_mb)}
-            className="h-2"
-          />
-        </div>
-      </CardContent>
-    </Card>
   );
 };
