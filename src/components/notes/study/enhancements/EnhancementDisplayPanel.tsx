@@ -105,6 +105,35 @@ export const EnhancementDisplayPanel = ({
     }
   };
 
+  // Clean content function to strip HTML and fix formatting
+  const cleanMarkdownContent = (content: string): string => {
+    if (!content) return "";
+    
+    // Remove HTML tags and decode HTML entities
+    let cleaned = content
+      .replace(/<[^>]*>/g, '') // Remove HTML tags
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, ' ');
+    
+    // Remove [AI_ENHANCED] markers if present
+    cleaned = cleaned.replace(/\[AI_ENHANCED\]/g, '').replace(/\[\/AI_ENHANCED\]/g, '');
+    
+    // Fix line breaks and paragraphs
+    cleaned = cleaned
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n')
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .join('\n\n');
+    
+    return cleaned;
+  };
+
   const content = getContent();
   const contentInfo = getContentInfo();
   const Icon = contentInfo.icon;
@@ -194,23 +223,26 @@ export const EnhancementDisplayPanel = ({
   // Enhanced markdown styles with proper spacing
   const markdownClasses = `
     prose prose-mint max-w-none prose-lg
-    prose-headings:text-gray-900 prose-headings:font-semibold prose-headings:mb-4 prose-headings:mt-6
-    prose-h1:text-2xl prose-h1:mb-6 prose-h1:mt-8
-    prose-h2:text-xl prose-h2:mb-4 prose-h2:mt-6
-    prose-h3:text-lg prose-h3:mb-3 prose-h3:mt-5
-    prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4
-    prose-li:text-gray-700 prose-li:mb-1
-    prose-ul:mb-4 prose-ol:mb-4 prose-ul:space-y-1 prose-ol:space-y-1
-    prose-li:marker:text-mint-500
+    prose-headings:text-gray-900 prose-headings:font-semibold prose-headings:mb-6 prose-headings:mt-8
+    prose-h1:text-3xl prose-h1:mb-8 prose-h1:mt-10 prose-h1:font-bold
+    prose-h2:text-2xl prose-h2:mb-6 prose-h2:mt-8 prose-h2:font-semibold
+    prose-h3:text-xl prose-h3:mb-4 prose-h3:mt-6 prose-h3:font-medium
+    prose-h4:text-lg prose-h4:mb-3 prose-h4:mt-5
+    prose-p:text-gray-700 prose-p:leading-8 prose-p:mb-6 prose-p:text-base
+    prose-li:text-gray-700 prose-li:mb-2 prose-li:leading-7
+    prose-ul:mb-6 prose-ol:mb-6 prose-ul:space-y-2 prose-ol:space-y-2
+    prose-ul:pl-6 prose-ol:pl-6
+    prose-li:marker:text-mint-500 prose-li:marker:font-medium
     prose-strong:text-gray-900 prose-strong:font-semibold
     prose-em:text-gray-700 prose-em:italic
-    prose-blockquote:border-mint-200 prose-blockquote:text-gray-600 prose-blockquote:bg-mint-50/30 prose-blockquote:p-4 prose-blockquote:my-4
-    prose-code:text-mint-700 prose-code:bg-mint-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
-    prose-pre:bg-gray-50 prose-pre:border prose-pre:border-gray-200 prose-pre:p-4 prose-pre:rounded-lg prose-pre:my-4
-    prose-hr:border-gray-200 prose-hr:my-6
-    prose-table:border-collapse prose-table:border prose-table:border-gray-200
-    prose-th:border prose-th:border-gray-200 prose-th:bg-gray-50 prose-th:p-2
-    prose-td:border prose-td:border-gray-200 prose-td:p-2
+    prose-blockquote:border-mint-200 prose-blockquote:text-gray-600 prose-blockquote:bg-mint-50/30 prose-blockquote:p-6 prose-blockquote:my-8 prose-blockquote:rounded-lg
+    prose-code:text-mint-700 prose-code:bg-mint-50 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-sm prose-code:font-mono
+    prose-pre:bg-gray-50 prose-pre:border prose-pre:border-gray-200 prose-pre:p-6 prose-pre:rounded-lg prose-pre:my-8 prose-pre:overflow-x-auto
+    prose-hr:border-gray-200 prose-hr:my-10 prose-hr:border-t-2
+    prose-table:border-collapse prose-table:border prose-table:border-gray-200 prose-table:my-8
+    prose-th:border prose-th:border-gray-200 prose-th:bg-gray-50 prose-th:p-3 prose-th:font-semibold
+    prose-td:border prose-td:border-gray-200 prose-td:p-3
+    prose-img:rounded-lg prose-img:shadow-md prose-img:my-8
   `;
 
   return (
@@ -260,18 +292,18 @@ export const EnhancementDisplayPanel = ({
 
       {/* Enhanced Content */}
       <div className="flex-1 overflow-y-auto bg-gradient-to-b from-white to-gray-50/30">
-        <div className="p-6">
+        <div className="p-8">
           {contentInfo.isMarkdown ? (
             <div 
               className={markdownClasses}
               style={{ 
                 fontSize: `${fontSize}px`,
                 textAlign: textAlign === 'left' ? 'left' : textAlign === 'center' ? 'center' : 'justify',
-                lineHeight: '1.6'
+                lineHeight: '1.8'
               }}
             >
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {content}
+                {cleanMarkdownContent(content)}
               </ReactMarkdown>
             </div>
           ) : hasEnhancementMarkers ? (
