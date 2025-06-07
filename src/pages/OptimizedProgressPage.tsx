@@ -10,9 +10,9 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 
-// Lazy load heavy components with proper default exports
-const AnalyticsSection = lazy(() => import('@/components/dashboard/AnalyticsSection').then(module => ({ default: module.AnalyticsSection || module.default })));
-const GoalsGrid = lazy(() => import('@/components/goals/GoalsGrid').then(module => ({ default: module.GoalsGrid || module.default })));
+// Lazy load heavy components
+const AnalyticsSection = lazy(() => import('@/components/dashboard/AnalyticsSection'));
+const GoalsGrid = lazy(() => import('@/components/goals/GoalsGrid'));
 
 const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) => (
   <div className="container mx-auto p-4 md:p-6">

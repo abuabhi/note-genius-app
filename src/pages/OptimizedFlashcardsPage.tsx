@@ -3,8 +3,8 @@ import Layout from '@/components/layout/Layout';
 import { LazyLoadWrapper } from '@/components/performance/LazyLoadWrapper';
 import { ProgressiveLoader } from '@/components/performance/ProgressiveLoader';
 import { useOptimizedFlashcards } from '@/hooks/performance/useOptimizedFlashcards';
-import { FlashcardSetFilters } from '@/components/flashcards/components/FlashcardSetFilters';
-import { FlashcardSetGrid } from '@/components/flashcards/components/FlashcardSetGrid';
+import FlashcardSetFilters from '@/components/flashcards/components/FlashcardSetFilters';
+import FlashcardSetGrid from '@/components/flashcards/components/FlashcardSetGrid';
 import { Button } from '@/components/ui/button';
 import { Plus, BookOpen } from 'lucide-react';
 import { PageBreadcrumb } from '@/components/ui/page-breadcrumb';
@@ -111,7 +111,7 @@ const OptimizedFlashcardsContent = () => {
         )}
       </ProgressiveLoader>
 
-      {/* Pagination would go here */}
+      {/* Pagination */}
       {data.totalPages > 1 && (
         <div className="flex justify-center">
           <div className="flex gap-2">

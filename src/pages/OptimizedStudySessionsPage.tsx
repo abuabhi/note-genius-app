@@ -10,8 +10,8 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 
-// Lazy load heavy components with proper default exports
-const LearningAnalyticsDashboard = lazy(() => import('@/components/dashboard/LearningAnalyticsDashboard').then(module => ({ default: module.LearningAnalyticsDashboard || module.default })));
+// Lazy load heavy components
+const LearningAnalyticsDashboard = lazy(() => import('@/components/dashboard/LearningAnalyticsDashboard'));
 
 const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) => (
   <div className="container mx-auto p-4 md:p-6">
@@ -202,8 +202,8 @@ const OptimizedStudySessionsContent = () => {
 
       {/* Advanced Dashboard - Load Last */}
       <ProgressiveLoader
-        isLoading={loadingStates.advanced}
-        isPartiallyLoaded={!loadingStates.advanced}
+        isLoading={loadingStates.analytics}
+        isPartiallyLoaded={!loadingStates.analytics}
         skeletonCount={1}
       >
         <LazyLoadWrapper>
