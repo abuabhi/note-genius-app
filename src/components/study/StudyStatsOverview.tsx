@@ -17,5 +17,5 @@ export const StudyStatsOverview = () => {
     todayStudyMinutes: 0, // We don't track today's study time in unified stats
   };
 
-  return <SharedStatsGrid stats={transformedStats} isLoading={isLoading} variant="overview" />;
+  return <SharedStatsGrid stats={transformedStats} isLoading={isLoading} variant="sessions" />;
 };
