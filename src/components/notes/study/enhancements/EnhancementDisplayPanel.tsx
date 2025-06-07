@@ -191,19 +191,26 @@ export const EnhancementDisplayPanel = ({
     );
   }
 
-  // Custom markdown styles
+  // Enhanced markdown styles with proper spacing
   const markdownClasses = `
-    prose prose-mint max-w-none
-    prose-headings:text-gray-900 prose-headings:font-semibold
-    prose-p:text-gray-700 prose-p:leading-relaxed
-    prose-li:text-gray-700 
-    prose-strong:text-gray-900 prose-strong:font-semibold
-    prose-em:text-gray-700
-    prose-blockquote:border-mint-200 prose-blockquote:text-gray-600
-    prose-code:text-mint-700 prose-code:bg-mint-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded
-    prose-pre:bg-gray-50 prose-pre:border prose-pre:border-gray-200
-    prose-ul:space-y-1 prose-ol:space-y-1
+    prose prose-mint max-w-none prose-lg
+    prose-headings:text-gray-900 prose-headings:font-semibold prose-headings:mb-4 prose-headings:mt-6
+    prose-h1:text-2xl prose-h1:mb-6 prose-h1:mt-8
+    prose-h2:text-xl prose-h2:mb-4 prose-h2:mt-6
+    prose-h3:text-lg prose-h3:mb-3 prose-h3:mt-5
+    prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4
+    prose-li:text-gray-700 prose-li:mb-1
+    prose-ul:mb-4 prose-ol:mb-4 prose-ul:space-y-1 prose-ol:space-y-1
     prose-li:marker:text-mint-500
+    prose-strong:text-gray-900 prose-strong:font-semibold
+    prose-em:text-gray-700 prose-em:italic
+    prose-blockquote:border-mint-200 prose-blockquote:text-gray-600 prose-blockquote:bg-mint-50/30 prose-blockquote:p-4 prose-blockquote:my-4
+    prose-code:text-mint-700 prose-code:bg-mint-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+    prose-pre:bg-gray-50 prose-pre:border prose-pre:border-gray-200 prose-pre:p-4 prose-pre:rounded-lg prose-pre:my-4
+    prose-hr:border-gray-200 prose-hr:my-6
+    prose-table:border-collapse prose-table:border prose-table:border-gray-200
+    prose-th:border prose-th:border-gray-200 prose-th:bg-gray-50 prose-th:p-2
+    prose-td:border prose-td:border-gray-200 prose-td:p-2
   `;
 
   return (
@@ -259,7 +266,8 @@ export const EnhancementDisplayPanel = ({
               className={markdownClasses}
               style={{ 
                 fontSize: `${fontSize}px`,
-                textAlign: textAlign === 'left' ? 'left' : textAlign === 'center' ? 'center' : 'justify'
+                textAlign: textAlign === 'left' ? 'left' : textAlign === 'center' ? 'center' : 'justify',
+                lineHeight: '1.6'
               }}
             >
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
