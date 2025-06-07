@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useStudyViewState } from './hooks/useStudyViewState';
 import { useNoteStudyEditor } from './hooks/useNoteStudyEditor';
-import { useRealtimeNoteSync } from './hooks/useRealtimeNoteSync';
+import { useOptimizedRealtimeSync } from './hooks/useOptimizedRealtimeSync';
 import { StudyViewHeader } from './header/StudyViewHeader';
 import { NoteStudyViewContent } from './viewer/NoteStudyViewContent';
 import { EnhancementContentType } from './enhancements/EnhancementSelector';
@@ -22,8 +22,8 @@ interface NoteStudyViewProps {
 export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
   const [studyStarted, setStudyStarted] = useState(false);
 
-  // Get real-time synced note data
-  const { currentNote, refreshKey, forceRefresh } = useRealtimeNoteSync(note);
+  // Get optimized real-time synced note data
+  const { currentNote, refreshKey, forceRefresh } = useOptimizedRealtimeSync(note);
 
   // Study view state management
   const {
@@ -65,7 +65,7 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
     isProcessing
   } = useNoteEnrichment(currentNote);
 
-  // Handle AI enhancement
+  // Handle AI enhancement with optimized caching
   const handleEnhanceContent = async (enhancementType: string) => {
     try {
       if (hasReachedLimit()) {
@@ -88,6 +88,14 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
           enhancement_type: getEnhancementType(enhancementType) as 'clarity' | 'other' | 'spelling-grammar'
         });
         
+        // Update session cache
+        const cacheKey = `note_${currentNote.id}`;
+        const updatedNote = { 
+          ...currentNote, 
+          [getEnhancementFieldName(enhancementType)]: result.content 
+        };
+        sessionStorage.setItem(cacheKey, JSON.stringify(updatedNote));
+        
         // Force refresh to update UI
         forceRefresh();
         
@@ -104,7 +112,7 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
     await handleEnhanceContent(enhancementType);
   };
 
-  // Handle content type change
+  // Handle content type change with study session tracking
   const handleActiveContentTypeChange = (type: EnhancementContentType) => {
     // Start study session when user switches to study-focused tabs
     if (['summary', 'keyPoints', 'improved', 'markdown'].includes(type) && !studyStarted) {
@@ -120,10 +128,9 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
     forceRefresh();
   };
 
-  // Mock fetchUsageStats function since it's not available in the hook
+  // Mock fetchUsageStats function
   const fetchUsageStats = async () => {
     console.log('Fetching usage stats...');
-    // This functionality needs to be implemented in the useNoteEnrichment hook
   };
 
   if (!currentNote) {
@@ -229,7 +236,7 @@ const getEnhancementType = (enhancementType: string): 'clarity' | 'other' | 'spe
     case 'improve-clarity':
       return 'clarity';
     case 'summarize':
-      return 'other'; // Map summary to 'other' since 'summary' is not allowed
+      return 'other';
     default:
       return 'other';
   }
