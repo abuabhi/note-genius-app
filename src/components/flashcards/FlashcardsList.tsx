@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,12 +8,14 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { motion, AnimatePresence } from "framer-motion";
+import { StudyTimeDonutCounter } from "@/components/StudyTimeDonutCounter";
 
 const FlashcardsList = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [direction, setDirection] = useState<"left" | "right">("right");
+  const [studyStarted, setStudyStarted] = useState(false);
   
   const { flashcards, fetchFlashcards, loading } = useFlashcards();
   const { userProfile } = useRequireAuth();
@@ -37,6 +38,12 @@ const FlashcardsList = () => {
 
   const handleNext = () => {
     if (flashcards.length === 0) return;
+    
+    // Start study session on first card interaction
+    if (!studyStarted) {
+      setStudyStarted(true);
+    }
+    
     setDirection("right");
     setIsFlipped(false);
     setTimeout(() => {
@@ -46,6 +53,12 @@ const FlashcardsList = () => {
 
   const handlePrevious = () => {
     if (flashcards.length === 0) return;
+    
+    // Start study session on first card interaction
+    if (!studyStarted) {
+      setStudyStarted(true);
+    }
+    
     setDirection("left");
     setIsFlipped(false);
     setTimeout(() => {
@@ -54,6 +67,11 @@ const FlashcardsList = () => {
   };
 
   const handleFlip = () => {
+    // Start study session on first card flip
+    if (!studyStarted) {
+      setStudyStarted(true);
+    }
+    
     setIsFlipped(!isFlipped);
   };
 
@@ -103,7 +121,19 @@ const FlashcardsList = () => {
   const backContent = currentCard.back_content || currentCard.back;
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-4xl mx-auto">
+      {/* Study Time Tracker */}
+      {studyStarted && (
+        <div className="mb-6">
+          <StudyTimeDonutCounter
+            activityType="flashcard"
+            isActive={true}
+            size="small"
+            className="w-fit mx-auto"
+          />
+        </div>
+      )}
+
       <div className="perspective-1000 mb-6">
         <AnimatePresence mode="wait">
           <motion.div

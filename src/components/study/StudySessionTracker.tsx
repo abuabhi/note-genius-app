@@ -1,5 +1,5 @@
 
-import { EnhancedStudySessionTracker } from './EnhancedStudySessionTracker';
+import { StudySessionWithDonutTracker } from './StudySessionWithDonutTracker';
 
 interface StudySessionTrackerProps {
   flashcardSetId: string;
@@ -8,7 +8,9 @@ interface StudySessionTrackerProps {
   correctAnswers?: number;
   onSessionStart?: () => void;
   onSessionEnd?: () => void;
-  triggerStudyActivity?: boolean; // New prop to control when session starts
+  triggerStudyActivity?: boolean;
+  showDonutCounter?: boolean; // New prop to control donut visibility
+  donutSize?: 'small' | 'medium' | 'large'; // New prop for donut size
 }
 
 export const StudySessionTracker = ({ 
@@ -18,20 +20,24 @@ export const StudySessionTracker = ({
   correctAnswers = 0,
   onSessionStart,
   onSessionEnd,
-  triggerStudyActivity = false
+  triggerStudyActivity = false,
+  showDonutCounter = true,
+  donutSize = 'medium'
 }: StudySessionTrackerProps) => {
-  // Use the enhanced tracker for flashcard activities with adaptive learning integration
   return (
-    <EnhancedStudySessionTracker
+    <StudySessionWithDonutTracker
       activityType="flashcard"
       resourceId={flashcardSetId}
       resourceName={flashcardSetName}
-      subject="Flashcards" // Could be extracted from flashcard set data
+      subject="Flashcards"
       cardsStudied={cardsStudied}
       correctAnswers={correctAnswers}
       onSessionStart={onSessionStart}
       onSessionEnd={onSessionEnd}
       triggerStudyActivity={triggerStudyActivity}
+      showDonutCounter={showDonutCounter}
+      donutSize={donutSize}
+      donutPosition="side"
     />
   );
 };

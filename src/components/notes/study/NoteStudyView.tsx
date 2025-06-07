@@ -1,141 +1,79 @@
-
-import { Card } from "@/components/ui/card";
-import { Note } from "@/types/note";
-import { StudyViewHeader } from "./header/StudyViewHeader";
-import { NoteStudyViewContent } from "./viewer/NoteStudyViewContent";
-import { useStudyViewState } from "./hooks/useStudyViewState";
-import { useNoteStudyEditor } from "./hooks/useNoteStudyEditor";
-import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
-import { useRealtimeNoteSync } from "./hooks/useRealtimeNoteSync";
-import { useNoteEnhancementRetry } from "./hooks/useNoteEnhancementRetry";
-import { useNoteUpdateHandler } from "./hooks/useNoteUpdateHandler";
-import { useAutomaticSummaryPrevention } from "./hooks/useAutomaticSummaryPrevention";
-import { useCallback, useRef } from "react";
+import { useState } from 'react';
+import { Note } from '@/types/note';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { StudyViewHeader } from '@/components/notes/StudyViewHeader';
+import { NoteSummary } from '@/components/notes/NoteSummary';
+import { NoteKeyPoints } from '@/components/notes/NoteKeyPoints';
+import { NoteEnhancedView } from '@/components/notes/NoteEnhancedView';
+import { Skeleton } from '@/components/ui/skeleton';
+import { NoteStudyTracker } from './NoteStudyTracker';
 
 interface NoteStudyViewProps {
   note: Note;
+  isLoading?: boolean;
 }
 
 export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
-  const viewState = useStudyViewState();
-  const { currentUsage, monthlyLimit, hasReachedLimit, isLoading: statsLoading } = useNoteEnrichment();
-  
-  // Real-time note synchronization
-  const { currentNote, refreshKey, forceRefresh, setRealtimeNote } = useRealtimeNoteSync(note);
-  
-  // Enhancement retry functionality
-  const { handleRetryEnhancement, isEnhancing } = useNoteEnhancementRetry(currentNote, forceRefresh);
-  
-  // Note update handling with tab preservation
-  const { handleNoteUpdate } = useNoteUpdateHandler(currentNote, forceRefresh, setRealtimeNote);
-  
-  // Prevent automatic summary generation
-  useAutomaticSummaryPrevention(currentNote, refreshKey);
-  
-  // Editor state
-  const editorState = useNoteStudyEditor(currentNote);
+  const [activeTab, setActiveTab] = useState('summary');
+  const [studyStarted, setStudyStarted] = useState(false);
 
-  // Track if we're in an edit operation to prevent auto-switching
-  const isEditOperationRef = useRef(false);
-
-  // FIXED: Enhanced note update handler that completely prevents tab switching during edit operations
-  const handleNoteUpdateWithTabPreservation = useCallback(async (updatedData: Partial<Note>) => {
-    console.log("🎯 NoteStudyView - Starting edit operation with tab preservation:", {
-      currentTab: viewState.activeContentType,
-      noteId: currentNote.id,
-      updatedFields: Object.keys(updatedData)
-    });
-    
-    // Mark that we're in an edit operation to prevent any auto-switching
-    isEditOperationRef.current = true;
-    
-    // Store the current active tab before update
-    const preservedTab = viewState.activeContentType;
-    
-    try {
-      await handleNoteUpdate(updatedData);
-      
-      // Ensure we stay on the same tab after the update
-      console.log("🔒 Enforcing tab preservation after edit:", preservedTab);
-      viewState.setActiveContentType(preservedTab);
-      
-    } finally {
-      // Reset the edit operation flag after a delay to allow for UI updates
-      setTimeout(() => {
-        isEditOperationRef.current = false;
-        console.log("✅ Edit operation completed, auto-switching re-enabled");
-      }, 1000); // Longer delay to ensure all updates are processed
+  const handleTabChange = (value: string) => {
+    // Start study session when user switches to study-focused tabs
+    if (['summary', 'key-points', 'enhanced'].includes(value) && !studyStarted) {
+      setStudyStarted(true);
     }
-  }, [viewState.activeContentType, viewState.setActiveContentType, handleNoteUpdate, currentNote.id]);
+    
+    setActiveTab(value);
+  };
 
-  console.log("📊 NoteStudyView - Current state:", {
-    noteId: currentNote.id,
-    activeTab: viewState.activeContentType,
-    isEditing: editorState.isEditing,
-    isEditOperation: isEditOperationRef.current,
-    refreshKey,
-    hasEnhancements: {
-      summary: !!currentNote.summary,
-      keyPoints: !!currentNote.key_points,
-      improved: !!currentNote.improved_content,
-      markdown: !!currentNote.markdown_content
-    }
-  });
+  if (!note) {
+    return (
+      <div className="flex flex-col items-center justify-center h-48">
+        <Skeleton className="w-32 h-8 mb-4" />
+        <Skeleton className="w-48 h-6" />
+      </div>
+    );
+  }
 
   return (
-    <div 
-      key={`note-study-${currentNote.id}-${refreshKey}`}
-      className={`mx-auto transition-all duration-300 ${
-        viewState.isFullWidth ? 'max-w-full' : 'max-w-4xl'
-      } ${viewState.isFullScreen ? 'fixed inset-0 z-50 bg-white' : ''}`}
-    >
-      <Card className="shadow-lg border-mint-200">
-        <StudyViewHeader
-          note={currentNote}
-          fontSize={viewState.fontSize}
-          textAlign={viewState.textAlign}
-          isFullWidth={viewState.isFullWidth}
-          isFullScreen={viewState.isFullScreen}
-          isEditing={editorState.isEditing}
-          isSaving={editorState.isSaving}
-          editableTitle={editorState.editableTitle}
-          onIncreaseFontSize={viewState.handleIncreaseFontSize}
-          onDecreaseFontSize={viewState.handleDecreaseFontSize}
-          onChangeTextAlign={viewState.handleTextAlign}
-          onToggleWidth={viewState.toggleWidth}
-          onToggleFullScreen={viewState.toggleFullScreen}
-          onToggleEditing={editorState.toggleEditing}
-          onSave={editorState.handleSaveContent}
-          onTitleChange={editorState.handleTitleChange}
-          onEnhance={editorState.handleEnhanceContent}
+    <div className="max-w-6xl mx-auto space-y-6">
+      {/* Study Time Tracker */}
+      {studyStarted && (
+        <NoteStudyTracker
+          noteId={note.id}
+          noteName={note.title}
+          subject={note.subject || undefined}
+          triggerStudyActivity={studyStarted}
+          showDonutCounter={true}
+          donutSize="small"
+          donutPosition="top"
         />
-        
-        <NoteStudyViewContent
-          note={currentNote}
-          isEditing={editorState.isEditing}
-          fontSize={viewState.fontSize}
-          textAlign={viewState.textAlign}
-          editableContent={editorState.editableContent}
-          selectedTags={editorState.selectedTags}
-          availableTags={editorState.availableTags}
-          isSaving={editorState.isSaving}
-          statsLoading={statsLoading}
-          currentUsage={currentUsage}
-          monthlyLimit={monthlyLimit}
-          handleContentChange={editorState.handleContentChange}
-          handleSaveContent={editorState.handleSaveContent}
-          toggleEditing={editorState.toggleEditing}
-          handleEnhanceContent={editorState.handleEnhanceContent}
-          setSelectedTags={editorState.setSelectedTags}
-          handleRetryEnhancement={handleRetryEnhancement}
-          hasReachedLimit={hasReachedLimit()}
-          fetchUsageStats={async () => {}}
-          onNoteUpdate={handleNoteUpdateWithTabPreservation}
-          activeContentType={viewState.activeContentType}
-          onActiveContentTypeChange={viewState.setActiveContentType}
-          isEditOperation={isEditOperationRef.current}
-        />
-      </Card>
+      )}
+
+      {/* StudyViewHeader */}
+      <StudyViewHeader
+        title={note.title}
+        subject={note.subject}
+        createdAt={note.created_at}
+        updatedAt={note.updated_at}
+      />
+
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        <TabsList>
+          <TabsTrigger value="summary">Summary</TabsTrigger>
+          <TabsTrigger value="key-points">Key Points</TabsTrigger>
+          <TabsTrigger value="enhanced">Enhanced View</TabsTrigger>
+        </TabsList>
+        <TabsContent value="summary" className="space-y-4">
+          <NoteSummary noteContent={note.content} />
+        </TabsContent>
+        <TabsContent value="key-points" className="space-y-4">
+          <NoteKeyPoints noteContent={note.content} />
+        </TabsContent>
+        <TabsContent value="enhanced" className="space-y-4">
+          <NoteEnhancedView noteContent={note.content} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
