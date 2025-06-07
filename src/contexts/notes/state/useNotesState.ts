@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, startTransition } from 'react';
 import { Note } from "@/types/note";
 import { FilterOptions } from './types';
 import { useFilteredNotes } from './useFilteredNotes';
@@ -7,7 +7,7 @@ import { usePaginatedNotes } from './usePaginatedNotes';
 import { useCategoriesState } from './useCategoriesState';
 
 /**
- * Main hook for managing notes state
+ * Main hook for managing notes state with proper async handling
  */
 export function useNotesState() {
   // Core state
@@ -42,10 +42,37 @@ export function useNotesState() {
     paginatedNotes
   } = usePaginatedNotes(filteredNotes);
   
+  // Wrap state updates in transitions to prevent suspense
+  const updateSearchTerm = useCallback((term: string) => {
+    startTransition(() => {
+      setSearchTerm(term);
+    });
+  }, []);
+
+  const updateFilterOptions = useCallback((options: FilterOptions) => {
+    startTransition(() => {
+      setFilterOptions(options);
+    });
+  }, []);
+
+  const updateSortType = useCallback((type: string) => {
+    startTransition(() => {
+      setSortType(type);
+    });
+  }, []);
+
+  const updateShowArchived = useCallback((show: boolean) => {
+    startTransition(() => {
+      setShowArchived(show);
+    });
+  }, []);
+  
   // Reset filters
   const resetFilters = useCallback(() => {
-    setFilterOptions({});
-    setSearchTerm('');
+    startTransition(() => {
+      setFilterOptions({});
+      setSearchTerm('');
+    });
   }, []);
 
   return {
@@ -53,17 +80,17 @@ export function useNotesState() {
     notes,
     setNotes,
     searchTerm,
-    setSearchTerm,
+    setSearchTerm: updateSearchTerm,
     sortType,
-    setSortType,
+    setSortType: updateSortType,
     loading,
     setLoading,
     showArchived,
-    setShowArchived,
+    setShowArchived: updateShowArchived,
     
     // Filter options
     filterOptions,
-    setFilterOptions,
+    setFilterOptions: updateFilterOptions,
     
     // Categories
     availableCategories,

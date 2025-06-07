@@ -16,8 +16,9 @@ import { TodaysFocusTodos } from "./TodaysFocusTodos";
 import { useTodaysFocusData } from "./hooks/useTodaysFocusData";
 import { TodaysFocusEmptyState } from "./TodaysFocusEmptyState";
 import { TodaysFocusQuickActions } from "./TodaysFocusQuickActions";
+import { Suspense } from "react";
 
-export const TodaysFocusSection = () => {
+const TodaysFocusContent = () => {
   console.log('🎯 TodaysFocusSection rendering');
   
   const { todaysItems, isLoading, totalItems } = useTodaysFocusData();
@@ -81,5 +82,23 @@ export const TodaysFocusSection = () => {
         <TodaysFocusQuickActions />
       </CardContent>
     </Card>
+  );
+};
+
+export const TodaysFocusSection = () => {
+  return (
+    <Suspense fallback={
+      <Card className="animate-pulse">
+        <CardContent className="p-6">
+          <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+          <div className="space-y-2">
+            <div className="h-3 bg-gray-200 rounded"></div>
+            <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+          </div>
+        </CardContent>
+      </Card>
+    }>
+      <TodaysFocusContent />
+    </Suspense>
   );
 };

@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,8 +10,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { useNavigationFeatures } from "@/components/ui/sidebar/hooks/useNavigationFeatures";
+import { Suspense } from "react";
 
-export const DashboardHeroSection = () => {
+const DashboardContent = () => {
   const { todaysActivity, currentStreak, weeklyComparison, isLoading } = useDashboardAnalytics();
   const { user } = useAuth();
   const {
@@ -25,24 +27,30 @@ export const DashboardHeroSection = () => {
     queryFn: async () => {
       if (!user) return { flashcardSets: 0, notes: 0, quizzes: 0, goals: 0, todos: 0 };
 
-      const [flashcardSets, notes, quizzes, goals, todos] = await Promise.all([
-        supabase.from('flashcard_sets').select('id').eq('user_id', user.id),
-        supabase.from('notes').select('id').eq('user_id', user.id),
-        supabase.from('quizzes').select('id').eq('user_id', user.id),
-        supabase.from('study_goals').select('id').eq('user_id', user.id),
-        supabase.from('reminders').select('id').eq('user_id', user.id).eq('type', 'todo')
-      ]);
+      try {
+        const [flashcardSets, notes, quizzes, goals, todos] = await Promise.all([
+          supabase.from('flashcard_sets').select('id').eq('user_id', user.id),
+          supabase.from('notes').select('id').eq('user_id', user.id),
+          supabase.from('quizzes').select('id').eq('user_id', user.id),
+          supabase.from('study_goals').select('id').eq('user_id', user.id),
+          supabase.from('reminders').select('id').eq('user_id', user.id).eq('type', 'todo')
+        ]);
 
-      return {
-        flashcardSets: flashcardSets.data?.length || 0,
-        notes: notes.data?.length || 0,
-        quizzes: quizzes.data?.length || 0,
-        goals: goals.data?.length || 0,
-        todos: todos.data?.length || 0
-      };
+        return {
+          flashcardSets: flashcardSets.data?.length || 0,
+          notes: notes.data?.length || 0,
+          quizzes: quizzes.data?.length || 0,
+          goals: goals.data?.length || 0,
+          todos: todos.data?.length || 0
+        };
+      } catch (error) {
+        console.error('Error fetching counts:', error);
+        return { flashcardSets: 0, notes: 0, quizzes: 0, goals: 0, todos: 0 };
+      }
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: false
   });
 
   if (isLoading) {
@@ -182,5 +190,24 @@ export const DashboardHeroSection = () => {
         </CardContent>
       </Card>
     </div>
+  );
+};
+
+export const DashboardHeroSection = () => {
+  return (
+    <Suspense fallback={
+      <div className="space-y-6">
+        <Card className="bg-gradient-to-r from-mint-100 to-blue-100 text-mint-900">
+          <CardContent className="p-6">
+            <div className="animate-pulse">
+              <div className="h-8 bg-mint-200/50 rounded w-64 mb-4"></div>
+              <div className="h-4 bg-mint-200/50 rounded w-48"></div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 };

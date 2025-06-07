@@ -11,11 +11,18 @@ export function useFetchNotes(
   const { toast } = useToast();
   
   useEffect(() => {
+    let isMounted = true;
+    
     const loadNotes = async () => {
       try {
+        if (!isMounted) return;
+        
         setLoading(true);
         console.log('🔄 Fetching notes from database...');
+        
         const fetchedNotes = await fetchNotesFromSupabase();
+        
+        if (!isMounted) return;
         
         if (!fetchedNotes || fetchedNotes.length === 0) {
           console.log('No notes found or unable to fetch notes');
@@ -37,6 +44,8 @@ export function useFetchNotes(
           setNotes(fetchedNotes);
         }
       } catch (error) {
+        if (!isMounted) return;
+        
         console.error('Error fetching notes:', error);
         setNotes([]);
         toast({
@@ -44,10 +53,20 @@ export function useFetchNotes(
           variant: "destructive",
         });
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
-    loadNotes();
+    // Use a small delay to prevent immediate suspension
+    const timeoutId = setTimeout(() => {
+      loadNotes();
+    }, 0);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
   }, [setNotes, setLoading, toast]);
 }
