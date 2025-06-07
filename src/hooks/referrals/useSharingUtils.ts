@@ -8,21 +8,26 @@ export const useSharingUtils = () => {
 
   const shareViaWhatsApp = (referralCode: string) => {
     const link = generateReferralLink(referralCode);
-    const message = `🎓 Hey! I've been using StudyBuddy for my studies and it's incredible! 
+    const message = `🎓 Hey! I've been using StudyBuddy for my studies and it's absolutely incredible! 
 
-✨ It's helped me:
-• Organize my notes better
-• Create smart flashcards instantly
-• Track my study progress
-• Ace my exams with AI-powered insights
+✨ It's transformed how I learn:
+• Smart AI flashcards that adapt to my style
+• Instant note organization with AI insights
+• Progress tracking that keeps me motivated
+• Study with friends through collaboration features
+
+📈 My grades have improved significantly since I started using it!
 
 🎁 Join using my code: ${referralCode}
-👉 Or click here: ${link}
+👉 Direct link: ${link}
 
-We'll both get awesome rewards! Let's study smarter together! 🚀📚`;
+We'll both get awesome rewards when you sign up! Let's study smarter together! 🚀📚
+
+#StudyBuddy #SmartLearning`;
     
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
+    toast.success('WhatsApp opened! Your message is ready to share 📱');
   };
 
   const copyReferralLink = async (referralCode: string) => {
@@ -35,248 +40,167 @@ We'll both get awesome rewards! Let's study smarter together! 🚀📚`;
     }
   };
 
-  const shareViaEmail = (referralCode: string) => {
+  const shareViaLinkedIn = (referralCode: string) => {
     const link = generateReferralLink(referralCode);
+    const text = `🎓 Excited to share StudyBuddy - a game-changing platform that's revolutionized my learning approach!
+
+🚀 Key transformations I've experienced:
+✅ AI-powered flashcard generation that adapts to my learning patterns
+✅ Intelligent note organization with automated insights
+✅ Comprehensive progress analytics and goal tracking
+✅ Seamless collaboration features for group study sessions
+
+📊 The impact on my academic performance has been remarkable - improved efficiency, better retention, and higher grades.
+
+Perfect for students, professionals, and lifelong learners seeking to optimize their study experience with cutting-edge AI technology.
+
+🔗 Experience it yourself: ${link}
+
+#StudyBuddy #EdTech #ArtificialIntelligence #LearningOptimization #StudentSuccess #ProfessionalDevelopment #EducationInnovation`;
     
-    const subject = "Join me on StudyBuddy - Transform your learning experience!";
-    const body = `Hi there!
+    const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(link)}&summary=${encodeURIComponent(text)}`;
+    window.open(linkedinUrl, '_blank');
+    toast.success('LinkedIn opened! Your professional post is ready 💼');
+  };
 
-I wanted to share something that's been a game-changer for my studies - StudyBuddy!
+  const shareViaTwitter = (referralCode: string) => {
+    const link = generateReferralLink(referralCode);
+    const text = `🎓 Game-changer alert! @StudyBuddy has completely transformed my learning experience 
 
-🎯 What makes it special:
-• Smart flashcards that adapt to your learning style
-• AI-powered note organization and insights
-• Progress tracking that keeps you motivated
-• Collaborative study features
+🔥 What's amazing:
+✨ AI flashcards that adapt to YOU
+📝 Smart note organization
+📊 Progress tracking that motivates
+🤝 Collaborative study features
 
-I've seen real improvements in my grades and study efficiency since I started using it.
+📈 My grades have never been better!
 
-🎁 Get started with my referral link:
-${link}
+Try it: ${link}
 
-Use my code: ${referralCode}
-
-When you sign up, we both get rewards! It's a win-win 🎉
-
-Give it a try - I think you'll love it as much as I do!
-
-Best regards`;
-
-    // Create a modal popup with pre-filled email content
-    const emailWindow = window.open('', '_blank', 'width=600,height=700,scrollbars=yes,resizable=yes');
+#StudyBuddy #EdTech #AI #StudentLife #LearningHacks #StudyTips #Education`;
     
-    if (emailWindow) {
-      emailWindow.document.write(`
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+    window.open(twitterUrl, '_blank');
+    toast.success('Twitter opened! Your tweet is ready to share 🐦');
+  };
+
+  const generateQRCode = (referralCode: string) => {
+    const link = generateReferralLink(referralCode);
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&format=png&margin=20&data=${encodeURIComponent(link)}`;
+    
+    const newWindow = window.open('', '_blank', 'width=500,height=600,scrollbars=no,resizable=yes,location=no');
+    if (newWindow) {
+      newWindow.document.write(`
         <!DOCTYPE html>
         <html>
           <head>
-            <title>Share StudyBuddy via Email</title>
+            <title>StudyBuddy Referral QR Code</title>
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <style>
               body {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                max-width: 100%;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
                 margin: 0;
-                padding: 20px;
-                background: #f8fafc;
+                padding: 30px;
+                background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                min-height: 100vh;
+                box-sizing: border-box;
               }
               .container {
                 background: white;
                 padding: 30px;
-                border-radius: 12px;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                border-radius: 16px;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+                text-align: center;
+                max-width: 400px;
+                width: 100%;
               }
               h1 {
-                color: #1f2937;
-                margin-bottom: 20px;
-                text-align: center;
+                color: #065f46;
+                margin-bottom: 10px;
+                font-size: 24px;
               }
-              .form-group {
-                margin-bottom: 20px;
-              }
-              label {
-                display: block;
-                margin-bottom: 8px;
-                font-weight: 600;
-                color: #374151;
-              }
-              input, textarea {
-                width: 100%;
-                padding: 12px;
-                border: 1px solid #d1d5db;
-                border-radius: 8px;
+              .subtitle {
+                color: #059669;
+                margin-bottom: 25px;
                 font-size: 14px;
-                font-family: inherit;
-                box-sizing: border-box;
               }
-              textarea {
-                height: 200px;
-                resize: vertical;
+              img {
+                border: 3px solid #d1fae5;
+                border-radius: 12px;
+                margin: 20px 0;
+                width: 100%;
+                max-width: 300px;
+                height: auto;
               }
-              .btn {
+              .info {
+                background: #f0fdf4;
+                padding: 15px;
+                border-radius: 8px;
+                margin: 20px 0;
+                border-left: 4px solid #10b981;
+              }
+              .code {
+                font-family: 'Courier New', monospace;
+                font-weight: bold;
+                color: #059669;
+                font-size: 16px;
+              }
+              .instructions {
+                color: #374151;
+                font-size: 14px;
+                line-height: 1.5;
+                margin: 15px 0;
+              }
+              button {
                 background: #10b981;
                 color: white;
-                padding: 12px 24px;
                 border: none;
+                padding: 12px 24px;
                 border-radius: 8px;
                 font-size: 16px;
                 font-weight: 600;
                 cursor: pointer;
-                width: 100%;
-                margin-top: 10px;
-              }
-              .btn:hover {
-                background: #059669;
-              }
-              .btn-secondary {
-                background: #6b7280;
-                margin-right: 10px;
-                width: auto;
-              }
-              .btn-secondary:hover {
-                background: #4b5563;
-              }
-              .referral-info {
-                background: #ecfdf5;
-                border: 1px solid #a7f3d0;
-                padding: 16px;
-                border-radius: 8px;
-                margin-bottom: 20px;
-              }
-              .button-group {
-                display: flex;
-                gap: 10px;
                 margin-top: 20px;
+                transition: background 0.2s;
+              }
+              button:hover {
+                background: #059669;
               }
             </style>
           </head>
           <body>
             <div class="container">
-              <h1>📧 Share StudyBuddy via Email</h1>
+              <h1>📱 Scan to Join StudyBuddy</h1>
+              <p class="subtitle">Share this QR code for instant access</p>
               
-              <div class="referral-info">
-                <h3>Your Referral Details:</h3>
-                <p><strong>Code:</strong> ${referralCode}</p>
-                <p><strong>Link:</strong> ${link}</p>
+              <img src="${qrUrl}" alt="StudyBuddy Referral QR Code" />
+              
+              <div class="info">
+                <div class="instructions">
+                  📲 <strong>How to use:</strong><br>
+                  Point your phone's camera at this QR code or use any QR scanner app
+                </div>
+                <div class="code">Referral Code: ${referralCode}</div>
               </div>
-
-              <form id="emailForm">
-                <div class="form-group">
-                  <label for="recipients">Email Recipients (separate with commas):</label>
-                  <input type="email" id="recipients" name="recipients" 
-                         placeholder="friend1@example.com, friend2@example.com" required>
-                </div>
-                
-                <div class="form-group">
-                  <label for="subject">Subject:</label>
-                  <input type="text" id="subject" name="subject" 
-                         value="${subject}" required>
-                </div>
-                
-                <div class="form-group">
-                  <label for="message">Message:</label>
-                  <textarea id="message" name="message" required>${body}</textarea>
-                </div>
-                
-                <div class="button-group">
-                  <button type="button" class="btn btn-secondary" onclick="window.close()">Cancel</button>
-                  <button type="submit" class="btn">Send Email</button>
-                </div>
-              </form>
+              
+              <p class="instructions">
+                Perfect for sharing at study groups, libraries, or with classmates!
+              </p>
+              
+              <button onclick="window.close()">Close</button>
             </div>
-
-            <script>
-              document.getElementById('emailForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const recipients = document.getElementById('recipients').value;
-                const subject = document.getElementById('subject').value;
-                const message = document.getElementById('message').value;
-                
-                const mailtoLink = 'mailto:' + recipients + 
-                                 '?subject=' + encodeURIComponent(subject) + 
-                                 '&body=' + encodeURIComponent(message);
-                
-                window.location.href = mailtoLink;
-                
-                alert('Email client opened! Your referral email is ready to send.');
-                
-                setTimeout(() => {
-                  window.close();
-                }, 2000);
-              });
-            </script>
           </body>
         </html>
       `);
       
-      toast.success('Email sharing form opened! 📧');
+      toast.success('QR code generated! Perfect for in-person sharing 📱');
     } else {
-      toast.error('Please allow popups to use email sharing');
-    }
-  };
-
-  const shareViaLinkedIn = (referralCode: string) => {
-    const link = generateReferralLink(referralCode);
-    const text = `🎓 Excited to share StudyBuddy - a platform that's revolutionizing how I approach learning!
-
-Key benefits I've experienced:
-✅ Smart flashcard generation with AI
-✅ Organized note-taking system  
-✅ Progress tracking & analytics
-✅ Collaborative study features
-
-It's significantly improved my study efficiency and results. Highly recommend for students and professionals looking to enhance their learning experience.
-
-Check it out: ${link}
-
-#StudyBuddy #Learning #Education #ProductivityTools #StudentLife #AI #StudyTips`;
-    
-    const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(link)}&summary=${encodeURIComponent(text)}`;
-    window.open(linkedinUrl, '_blank');
-  };
-
-  const shareViaTwitter = (referralCode: string) => {
-    const link = generateReferralLink(referralCode);
-    const text = `🎓 Just discovered @StudyBuddy - game-changing study platform! 
-
-✨ AI flashcards
-📝 Smart notes  
-📊 Progress tracking
-🤝 Collaboration
-
-Boosted my grades significantly! 
-
-Try it: ${link}
-
-#StudyBuddy #EdTech #StudentLife #AI #Learning`;
-    
-    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
-    window.open(twitterUrl, '_blank');
-  };
-
-  const generateQRCode = (referralCode: string) => {
-    const link = generateReferralLink(referralCode);
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(link)}`;
-    
-    const newWindow = window.open('', '_blank', 'width=400,height=500');
-    if (newWindow) {
-      newWindow.document.write(`
-        <html>
-          <head><title>StudyBuddy Referral QR Code</title></head>
-          <body style="display: flex; flex-direction: column; align-items: center; padding: 20px; font-family: Arial, sans-serif;">
-            <h2>📱 Scan to Join StudyBuddy</h2>
-            <img src="${qrUrl}" alt="QR Code" style="border: 1px solid #ccc; padding: 10px; border-radius: 8px;" />
-            <p style="margin-top: 20px; text-align: center; color: #666;">
-              Share this QR code for easy mobile access<br>
-              Referral Code: <strong>${referralCode}</strong>
-            </p>
-            <button onclick="window.close()" style="margin-top: 20px; padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer;">
-              Close
-            </button>
-          </body>
-        </html>
-      `);
+      toast.error('Please allow popups to generate QR code', {
+        description: 'Enable popups in your browser settings to use this feature'
+      });
     }
   };
 
@@ -284,7 +208,6 @@ Try it: ${link}
     generateReferralLink,
     shareViaWhatsApp,
     copyReferralLink,
-    shareViaEmail,
     shareViaLinkedIn,
     shareViaTwitter,
     generateQRCode
