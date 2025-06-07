@@ -84,12 +84,14 @@ export const useEnrichmentUsageStats = () => {
         console.log("💎 Tier limits:", tierData);
         // Update state with fetched data
         setCurrentUsage(usageData?.length || 0);
-        setMonthlyLimit(tierData?.note_enrichment_limit_per_month);
+        // FIXED: Properly handle unlimited tiers (DEAN should have null limit)
+        const limit = tierData?.note_enrichment_limit_per_month;
+        setMonthlyLimit(limit === -1 ? null : limit); // Convert -1 to null for unlimited
       }
       
       console.log("✅ Usage stats updated:", {
         usage: usageData?.length || 0,
-        limit: tierData?.note_enrichment_limit_per_month
+        limit: tierData?.note_enrichment_limit_per_month === -1 ? 'unlimited' : tierData?.note_enrichment_limit_per_month
       });
       
     } catch (err) {
@@ -109,11 +111,16 @@ export const useEnrichmentUsageStats = () => {
   }, [fetchUsageStats]);
   
   const hasReachedLimit = useCallback(() => {
-    // No limit if monthlyLimit is null (unlimited)
-    if (monthlyLimit === null) return false;
+    // FIXED: No limit if monthlyLimit is null (unlimited) - this is key for DEAN tier
+    if (monthlyLimit === null) {
+      console.log("🚀 Unlimited tier - no limit reached");
+      return false;
+    }
     
     // Has reached limit if current usage >= monthly limit
-    return currentUsage >= monthlyLimit;
+    const limitReached = currentUsage >= monthlyLimit;
+    console.log("🔍 Limit check:", { currentUsage, monthlyLimit, limitReached });
+    return limitReached;
   }, [currentUsage, monthlyLimit]);
 
   return {

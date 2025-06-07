@@ -45,7 +45,7 @@ export const useNoteEnrichment = (note?: Note) => {
       return { success: false, content: '', error };
     }
     
-    // Check if user has reached their monthly limit
+    // FIXED: Check if user has reached their monthly limit with proper unlimited handling
     if (hasReachedLimit()) {
       const error = 'You have reached your monthly limit for note enhancements';
       setError(error);
@@ -101,8 +101,16 @@ export const useNoteEnrichment = (note?: Note) => {
       return { success: false, content: '', error: 'No content to enhance' };
     }
     
-    // Check if user has reached their monthly limit
-    if (hasReachedLimit()) {
+    // FIXED: Check if user has reached their monthly limit with debug logging
+    const limitReached = hasReachedLimit();
+    console.log("🔍 Enhancement limit check:", { 
+      currentUsage, 
+      monthlyLimit, 
+      limitReached,
+      userTier 
+    });
+    
+    if (limitReached) {
       const error = 'You have reached your monthly limit for note enhancements';
       setError(error);
       toast.error(error);
@@ -154,7 +162,7 @@ export const useNoteEnrichment = (note?: Note) => {
       // Refresh usage stats after operation completes
       await fetchUsageStats();
     }
-  }, [hasReachedLimit, fetchUsageStats]);
+  }, [hasReachedLimit, fetchUsageStats, currentUsage, monthlyLimit, userTier]);
 
   return {
     isProcessing,
