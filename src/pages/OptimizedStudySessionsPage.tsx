@@ -1,230 +1,230 @@
 
-import { lazy, Suspense } from 'react';
+import { lazy } from 'react';
 import Layout from '@/components/layout/Layout';
-import { PageBreadcrumb } from '@/components/ui/page-breadcrumb';
-import { Clock } from 'lucide-react';
-import { useOptimizedStudySessions } from '@/hooks/performance/useOptimizedStudySessions';
+import { LazyLoadWrapper } from '@/components/performance/LazyLoadWrapper';
 import { ProgressiveLoader } from '@/components/performance/ProgressiveLoader';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { useOptimizedStudySessions } from '@/hooks/performance/useOptimizedStudySessions';
+import { PageBreadcrumb } from '@/components/ui/page-breadcrumb';
+import { Clock, Play, Pause, BarChart3 } from 'lucide-react';
+import { ErrorBoundary } from 'react-error-boundary';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-// Lazy load heavy components
-const SessionCharts = lazy(() => import('@/components/dashboard/LearningAnalyticsDashboard'));
+// Lazy load heavy components with proper default exports
+const LearningAnalyticsDashboard = lazy(() => import('@/components/dashboard/LearningAnalyticsDashboard').then(module => ({ default: module.LearningAnalyticsDashboard || module.default })));
+
+const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) => (
+  <div className="container mx-auto p-4 md:p-6">
+    <Alert variant="destructive">
+      <AlertTitle>Study Sessions Page Error</AlertTitle>
+      <AlertDescription className="mt-2 space-y-2">
+        <p><strong>Error:</strong> {error.message}</p>
+        <div className="flex gap-2 mt-4">
+          <Button variant="outline" size="sm" onClick={resetErrorBoundary}>
+            Try again
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+            Refresh page
+          </Button>
+        </div>
+      </AlertDescription>
+    </Alert>
+  </div>
+);
+
+// Quick session overview (loads first)
+const SessionOverview = ({ data }: { data: any }) => {
+  const recentSessions = data.basic.recentSessions || [];
+  const sessionStats = data.basic.sessionStats;
+
+  return (
+    <div className="space-y-6">
+      {/* Session Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white rounded-lg border p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Total Sessions</p>
+              <p className="text-2xl font-bold">{sessionStats?.total_sessions || 0}</p>
+            </div>
+            <Clock className="h-8 w-8 text-blue-500" />
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg border p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Total Time</p>
+              <p className="text-2xl font-bold">{sessionStats?.total_time || '0h'}</p>
+            </div>
+            <Play className="h-8 w-8 text-green-500" />
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg border p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Avg Session</p>
+              <p className="text-2xl font-bold">{sessionStats?.avg_session || '0m'}</p>
+            </div>
+            <BarChart3 className="h-8 w-8 text-purple-500" />
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg border p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">This Week</p>
+              <p className="text-2xl font-bold">{sessionStats?.week_sessions || 0}</p>
+            </div>
+            <Pause className="h-8 w-8 text-orange-500" />
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Sessions */}
+      <div className="bg-white rounded-lg border p-6">
+        <h3 className="text-lg font-semibold mb-4">Recent Sessions</h3>
+        {recentSessions.length > 0 ? (
+          <div className="space-y-3">
+            {recentSessions.map((session: any) => (
+              <div key={session.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                <div>
+                  <p className="font-medium">{session.subject || 'General Study'}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(session.started_at).toLocaleDateString()} • {session.session_type}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium">{session.duration}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {session.cards_studied} cards
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h4 className="text-lg font-medium mb-2">No study sessions yet</h4>
+            <p className="text-muted-foreground mb-4">
+              Start your first study session to track your progress
+            </p>
+            <Button>
+              <Play className="h-4 w-4 mr-2" />
+              Start Studying
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Detailed analytics (loads after basic data)
+const DetailedAnalytics = ({ data, loadingStates }: { data: any; loadingStates: any }) => {
+  return (
+    <ProgressiveLoader
+      isLoading={loadingStates.analytics}
+      isPartiallyLoaded={data.analytics.monthlyData.length > 0}
+      skeletonCount={2}
+    >
+      <div className="space-y-6">
+        {/* Weekly Trends */}
+        <div className="bg-white rounded-lg border p-6">
+          <h3 className="text-lg font-semibold mb-4">Weekly Study Trends</h3>
+          {data.analytics.weeklyData.length > 0 ? (
+            <div className="grid grid-cols-7 gap-2">
+              {data.analytics.weeklyData.map((day: any, index: number) => (
+                <div key={index} className="text-center">
+                  <p className="text-xs text-muted-foreground mb-1">
+                    {new Date(day.date).toLocaleDateString('en', { weekday: 'short' })}
+                  </p>
+                  <div className="bg-blue-100 rounded p-2">
+                    <p className="text-sm font-medium">{day.study_time || '0m'}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted-foreground">No study data for this week yet.</p>
+          )}
+        </div>
+
+        {/* Subject Performance */}
+        <div className="bg-white rounded-lg border p-6">
+          <h3 className="text-lg font-semibold mb-4">Subject Performance</h3>
+          {data.analytics.subjectStats.length > 0 ? (
+            <div className="space-y-3">
+              {data.analytics.subjectStats.map((subject: any, index: number) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                  <div>
+                    <p className="font-medium">{subject.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {subject.session_count} sessions
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium">{subject.total_time}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Avg: {subject.avg_accuracy}%
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted-foreground">Study different subjects to see performance breakdown.</p>
+          )}
+        </div>
+      </div>
+    </ProgressiveLoader>
+  );
+};
+
+const OptimizedStudySessionsContent = () => {
+  const { data, isLoading, isPartiallyLoaded, loadingStates } = useOptimizedStudySessions();
+
+  return (
+    <div className="space-y-8">
+      {/* Session Overview - Load First */}
+      <ProgressiveLoader
+        isLoading={!isPartiallyLoaded}
+        isPartiallyLoaded={isPartiallyLoaded}
+        skeletonCount={4}
+      >
+        <SessionOverview data={data} />
+      </ProgressiveLoader>
+
+      {/* Detailed Analytics - Load Second */}
+      <DetailedAnalytics data={data} loadingStates={loadingStates} />
+
+      {/* Advanced Dashboard - Load Last */}
+      <ProgressiveLoader
+        isLoading={loadingStates.advanced}
+        isPartiallyLoaded={!loadingStates.advanced}
+        skeletonCount={1}
+      >
+        <LazyLoadWrapper>
+          <LearningAnalyticsDashboard />
+        </LazyLoadWrapper>
+      </ProgressiveLoader>
+    </div>
+  );
+};
 
 const OptimizedStudySessionsPage = () => {
-  const {
-    data,
-    isLoading,
-    isPartiallyLoaded,
-    loadingStates,
-    dateFilter,
-    handlePageChange,
-    handleDateFilterChange,
-    prefetchNextPage
-  } = useOptimizedStudySessions();
-
-  const formatDuration = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`;
-    }
-    return `${minutes}m`;
-  };
-
-  const getQualityColor = (quality: string) => {
-    const colors = {
-      excellent: 'bg-green-500',
-      good: 'bg-blue-500',
-      needs_improvement: 'bg-yellow-500',
-      poor: 'bg-red-500'
-    };
-    return colors[quality as keyof typeof colors] || 'bg-gray-500';
-  };
-
   return (
     <Layout>
       <div className="container mx-auto p-4 md:p-6">
         <PageBreadcrumb pageName="Study Sessions" pageIcon={<Clock className="h-3 w-3" />} />
-        
-        <ProgressiveLoader
-          isLoading={isLoading}
-          isPartiallyLoaded={isPartiallyLoaded}
-          loadingStates={loadingStates}
-          skeletonCount={5}
+        <ErrorBoundary
+          FallbackComponent={ErrorFallback}
+          onReset={() => console.log('Resetting study sessions page error boundary')}
         >
-          <div className="space-y-6">
-            {/* Active Sessions */}
-            {data.activeSessions.length > 0 && (
-              <Card className="border-green-200 bg-green-50">
-                <CardHeader>
-                  <CardTitle className="text-green-800">Active Study Sessions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {data.activeSessions.map((session) => (
-                      <div key={session.id} className="flex items-center justify-between p-4 bg-white rounded-lg border">
-                        <div>
-                          <h3 className="font-medium">{session.title}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Started: {new Date(session.start_time).toLocaleTimeString()}
-                          </p>
-                          {session.subject && (
-                            <Badge variant="outline" className="mt-1">{session.subject}</Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                          <span className="text-sm font-medium text-green-600">Active</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Stats Overview */}
-            {!loadingStates.stats && (
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">Total Sessions</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{data.stats.totalSessions}</div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">Total Time</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {formatDuration(data.stats.totalDuration)}
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">Avg Duration</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {formatDuration(data.stats.averageDuration)}
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">Accuracy</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{data.stats.accuracy}%</div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {/* Filters and Controls */}
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle>Session History</CardTitle>
-                  <Select value={dateFilter} onValueChange={handleDateFilterChange}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="week">This Week</SelectItem>
-                      <SelectItem value="month">This Month</SelectItem>
-                      <SelectItem value="all">All Time</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {data.sessionHistory.map((session) => (
-                    <div key={session.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-medium">{session.title}</h3>
-                          {session.session_quality && (
-                            <div 
-                              className={`w-2 h-2 rounded-full ${getQualityColor(session.session_quality)}`}
-                              title={`Quality: ${session.session_quality}`}
-                            />
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(session.start_time).toLocaleDateString()} • {formatDuration(session.duration || 0)}
-                        </p>
-                        <div className="flex gap-2 mt-2">
-                          {session.subject && (
-                            <Badge variant="outline">{session.subject}</Badge>
-                          )}
-                          {session.activity_type && (
-                            <Badge variant="secondary">{session.activity_type}</Badge>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="text-right text-sm">
-                        {session.cards_reviewed > 0 && (
-                          <div>
-                            {session.cards_correct}/{session.cards_reviewed} cards
-                            <div className="text-muted-foreground">
-                              {Math.round((session.cards_correct / session.cards_reviewed) * 100)}% accuracy
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Pagination */}
-                {data.pagination.totalPages > 1 && (
-                  <div className="flex justify-center gap-2 mt-6">
-                    <Button
-                      variant="outline"
-                      onClick={() => handlePageChange(data.pagination.currentPage - 1)}
-                      disabled={data.pagination.currentPage === 1}
-                    >
-                      Previous
-                    </Button>
-                    
-                    <span className="flex items-center px-4 text-sm text-muted-foreground">
-                      Page {data.pagination.currentPage} of {data.pagination.totalPages}
-                    </span>
-                    
-                    <Button
-                      variant="outline"
-                      onClick={() => handlePageChange(data.pagination.currentPage + 1)}
-                      disabled={data.pagination.currentPage === data.pagination.totalPages}
-                      onMouseEnter={prefetchNextPage}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Charts */}
-            {!loadingStates.stats && data.stats.totalSessions > 0 && (
-              <Suspense fallback={<div className="h-64 bg-gray-200 rounded animate-pulse" />}>
-                <SessionCharts />
-              </Suspense>
-            )}
-          </div>
-        </ProgressiveLoader>
+          <OptimizedStudySessionsContent />
+        </ErrorBoundary>
       </div>
     </Layout>
   );

@@ -1,13 +1,12 @@
 import { Routes, Route } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
-import Layout from '@/components/layout/Layout';
 import { LazyLoadWrapper } from '@/components/performance/LazyLoadWrapper';
 
 // Import optimized routes
 import { OptimizedAppRoutes } from '@/components/optimized/OptimizedAppRoutes';
 
 // Keep existing routes for non-optimized pages
-const LandingPage = lazy(() => import('@/pages/LandingPage'));
+const HomePage = lazy(() => import('@/pages/HomePage'));
 const LoginPage = lazy(() => import('@/pages/LoginPage'));
 const SignupPage = lazy(() => import('@/pages/SignupPage'));
 
@@ -17,7 +16,7 @@ const AppRoutes = () => {
       {/* Public routes */}
       <Route path="/" element={
         <LazyLoadWrapper>
-          <LandingPage />
+          <HomePage />
         </LazyLoadWrapper>
       } />
       <Route path="/login" element={
