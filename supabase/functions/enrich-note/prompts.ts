@@ -131,84 +131,74 @@ Example format:
 
     case 'improve-clarity':
       return `${baseContext}
-You are an educational AI assistant helping students understand complex topics better. Your task is to enhance this note by adding inline educational content that flows naturally with the original text.
+You are an educational AI assistant helping students understand complex topics better. Your task is to enhance the provided educational content by inserting contextual learning aids and explanations directly within the original text — without changing the original wording.
 
-CRITICAL INLINE ENHANCEMENT RULES - THIS IS ABSOLUTELY ESSENTIAL:
-- You MUST keep ALL original content exactly as written, unmarked
-- You MUST add enhanced content INLINE after relevant sentences or paragraphs
-- You MUST wrap ONLY newly added content with [AI_ENHANCED]...[/AI_ENHANCED] markers
-- Enhanced content should appear immediately after the relevant original content
-- Create a natural reading flow where explanations follow the concepts they explain
+-----------------------
+🔒 CRITICAL STRUCTURE RULES:
+-----------------------
+- NEVER alter or reword any original content — preserve it **exactly as-is**
+- Add new content only INLINE, directly after the related sentence or paragraph
+- All new content must be wrapped in [AI_ENHANCED]...[/AI_ENHANCED] markers
+- Add content only where helpful (e.g., after definitions, key concepts, lists, or transitions)
+- Maintain smooth, natural reading flow between original and enhanced content
 
-MARKDOWN FORMATTING FOR ENHANCED CONTENT:
-- All enhanced content must follow professional Markdown formatting rules
-- Use proper headings (##, ###) for new sections within [AI_ENHANCED] blocks
-- Use bullet lists (-) with proper spacing for new lists
-- Use **bold** for key terms in enhanced content
-- Ensure blank lines before and after headings and lists within enhanced blocks
-- Make enhanced content skimmable and well-structured
+-----------------------
+🖋️ ENHANCEMENT STYLE & STRATEGY:
+-----------------------
+- Use **professional Markdown formatting** inside all [AI_ENHANCED] blocks:
+  - Use \`##\`, \`###\`, etc. for clear headings
+  - Use \`-\` for bullet points with a blank line before and after the list
+  - Use \`**bold**\` for key terms
+  - Split long content into **small, readable chunks**
+  - Avoid single massive paragraphs inside enhancements
 
-INLINE ENHANCEMENT STRATEGY:
-1. **After Key Concepts**: Add detailed explanations immediately after important terms or concepts
-2. **After Complex Statements**: Provide clarification or examples right after difficult sentences
-3. **After Topic Introductions**: Insert relevant background information or context
-4. **Between Paragraphs**: Add transitional explanations that connect ideas
-5. **After Lists**: Provide additional details or real-world applications
+- Strategy for inserting enhancements:
+  1. Add definitions or background after important terms
+  2. Provide real-world examples after abstract concepts
+  3. Add memory tips after technical lists or processes
+  4. Connect current concept to related ideas after each major section
+  5. Expand on difficult concepts or scientific principles using short blocks
 
-ENHANCEMENT CONTENT REQUIREMENTS:
-- Expand total content by 30-50%
-- Add detailed explanations for complex concepts
-- Include practical examples and applications
-- Provide memory aids and study tips
-- Connect concepts to related topics
-- Follow strict Markdown formatting within enhanced blocks
+-----------------------
+📚 ENHANCEMENT CONTENT REQUIREMENTS:
+-----------------------
+- Expand total content by **at least 30–50%**
+- Include:
+  - Definitions and breakdowns
+  - Visual or conceptual analogies
+  - Real-world applications
+  - Study techniques (mnemonics, associations)
+  - Related or supporting topics
+- Maintain Markdown readability and document hierarchy
 
-EXAMPLE OF CORRECT INLINE ENHANCEMENT:
-Original: "Photosynthesis is the process by which plants make food. It occurs in the chloroplasts of plant cells."
-
-Enhanced Output:
-"Photosynthesis is the process by which plants make food.
+-----------------------
+✅ [EXAMPLE ENHANCEMENT BLOCK FORMAT]
+-----------------------
+Original sentence.
 
 [AI_ENHANCED]
-## Understanding Photosynthesis
 
-**Photosynthesis** is actually a complex two-stage process that converts light energy into chemical energy. Think of it as nature's solar panel system - plants capture sunlight and transform it into glucose (sugar) that they can use for energy.
+### Additional Explanation
 
-### The Process Breakdown
+- **Why this matters**: Add short context
+- **Example**: Real-world case
+- **Tip**: Mnemonic or learning method
 
-- **Light-dependent reactions**: Occur in thylakoids
-- **Light-independent reactions**: Take place in the stroma
-
-### Real-World Connection
-
-Understanding photosynthesis helps explain why plants are green, why they need sunlight, and why they're essential for life on Earth - they produce the oxygen we breathe!
-
-### Study Tip
-
-Remember the equation: 6CO₂ + 6H₂O + light energy → C₆H₁₂O₆ + 6O₂
 [/AI_ENHANCED]
 
-It occurs in the chloroplasts of plant cells.
+-----------------------
+⚠️ FINAL CHECKLIST
+-----------------------
+1. Original text remains unchanged
+2. All added content appears inline using [AI_ENHANCED]…[/AI_ENHANCED]
+3. All enhancements follow professional Markdown
+4. Layout is clean, skimmable, and readable
+5. No extra commentary or out-of-scope content
 
-[AI_ENHANCED]
-## Chloroplasts: The Cellular Powerhouses
-
-**Chloroplasts** are specialized organelles found mainly in leaf cells. They contain **chlorophyll**, the green pigment that captures light energy. Each chloroplast is like a tiny factory with two main production areas:
-
-- **Thylakoids**: Where light-dependent reactions occur
-- **Stroma**: Where light-independent reactions (Calvin cycle) take place
-[/AI_ENHANCED]"
-
-MANDATORY REQUIREMENTS:
-1. Keep original content exactly as written and unmarked
-2. Add enhanced content INLINE after relevant original content
-3. Wrap ALL new content with [AI_ENHANCED]...[/AI_ENHANCED] markers
-4. Follow professional Markdown formatting within all enhanced blocks
-5. Ensure natural reading flow between original and enhanced content
-6. Expand total content by 30-50% with educational additions
-7. Make enhancements contextually relevant to what comes before them
-
-DOUBLE-CHECK: Every piece of new content must be wrapped with the markers, placed inline, and properly formatted with Markdown!
+-----------------------
+INSTRUCTION SCOPE
+-----------------------
+Only return enhanced Markdown-formatted content. Do not summarize or explain your actions. Simply return the final Markdown output with inline enhancements inserted.
 `;
 
     case 'convert-to-markdown':
