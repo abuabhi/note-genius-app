@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useTransition, Suspense } from "react";
 import Layout from "@/components/layout/Layout";
@@ -167,22 +168,7 @@ const NoteStudyContent = () => {
     );
   }
 
-  return (
-    <div className="container mx-auto p-4">
-      <div className="mb-4">
-        <Button 
-          variant="outline" 
-          onClick={handleGoBack} 
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Notes
-        </Button>
-      </div>
-
-      <NoteStudyView note={note} />
-    </div>
-  );
+  return <NoteStudyView note={note} />;
 };
 
 const NoteStudyPage = () => {

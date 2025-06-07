@@ -3,7 +3,6 @@ import { useState, useTransition, Suspense } from 'react';
 import { Note } from '@/types/note';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { NoteStudyTracker } from './NoteStudyTracker';
 import { useStudyViewState } from './hooks/useStudyViewState';
 import { useNoteStudyEditor } from './hooks/useNoteStudyEditor';
 import { useRealtimeNoteSync } from './hooks/useRealtimeNoteSync';
@@ -12,6 +11,8 @@ import { NoteStudyViewContent } from './viewer/NoteStudyViewContent';
 import { EnhancementContentType } from './enhancements/EnhancementSelector';
 import { useNoteEnrichment } from '@/hooks/useNoteEnrichment';
 import { toast } from 'sonner';
+import { CompactStudyTimer } from './timer/CompactStudyTimer';
+import { StudyBreadcrumb } from './navigation/StudyBreadcrumb';
 
 interface NoteStudyViewProps {
   note: Note;
@@ -138,73 +139,74 @@ const MainStudyViewContent = ({ note, isLoading }: NoteStudyViewProps) => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Study Time Tracker */}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-mint-50/20">
+      {/* Compact Study Timer */}
       {studyStarted && (
-        <NoteStudyTracker
+        <CompactStudyTimer
           noteId={currentNote.id}
           noteName={currentNote.title}
-          subject={currentNote.category || undefined}
           triggerStudyActivity={studyStarted}
-          showDonutCounter={true}
-          donutSize="small"
-          donutPosition="top"
         />
       )}
 
-      {/* Main Study View Card */}
-      <Card className={`overflow-hidden transition-all duration-300 ${
-        isFullScreen ? 'fixed inset-0 z-50 rounded-none' : 'rounded-lg shadow-lg'
-      } ${isFullWidth ? 'w-full' : 'max-w-6xl mx-auto'}`}>
-        
-        {/* Enhanced Header */}
-        <StudyViewHeader
-          note={currentNote}
-          fontSize={fontSize}
-          textAlign={textAlign}
-          isFullWidth={isFullWidth}
-          isFullScreen={isFullScreen}
-          isEditing={isEditing}
-          isSaving={isSaving}
-          editableTitle={editableTitle}
-          onIncreaseFontSize={handleIncreaseFontSize}
-          onDecreaseFontSize={handleDecreaseFontSize}
-          onChangeTextAlign={handleTextAlign}
-          onToggleWidth={toggleWidth}
-          onToggleFullScreen={toggleFullScreen}
-          onToggleEditing={toggleEditing}
-          onSave={handleSaveContent}
-          onTitleChange={handleTitleChange}
-          onEnhance={handleEnhancement}
-        />
+      <div className="max-w-7xl mx-auto p-4 space-y-6">
+        {/* Breadcrumb Navigation */}
+        <StudyBreadcrumb note={currentNote} />
 
-        {/* Enhanced Content View */}
-        <NoteStudyViewContent
-          note={currentNote}
-          isEditing={isEditing}
-          fontSize={fontSize}
-          textAlign={textAlign}
-          editableContent={editableContent}
-          selectedTags={selectedTags}
-          availableTags={availableTags}
-          isSaving={isSaving}
-          statsLoading={false}
-          currentUsage={currentUsage}
-          monthlyLimit={monthlyLimit}
-          handleContentChange={handleContentChange}
-          handleSaveContent={handleSaveContent}
-          toggleEditing={toggleEditing}
-          handleEnhanceContent={handleEnhanceContent}
-          setSelectedTags={setSelectedTags}
-          handleRetryEnhancement={handleRetryEnhancement}
-          hasReachedLimit={hasReachedLimit()}
-          fetchUsageStats={fetchUsageStats}
-          onNoteUpdate={onNoteUpdate}
-          activeContentType={activeContentType}
-          onActiveContentTypeChange={handleActiveContentTypeChange}
-          isEditOperation={isProcessing}
-        />
-      </Card>
+        {/* Main Study View Card */}
+        <Card className={`overflow-hidden transition-all duration-300 ${
+          isFullScreen ? 'fixed inset-0 z-50 rounded-none' : 'rounded-lg shadow-lg'
+        } ${isFullWidth ? 'w-full' : 'max-w-6xl mx-auto'} bg-white/95 backdrop-blur-sm border-mint-100`}>
+          
+          {/* Enhanced Header */}
+          <StudyViewHeader
+            note={currentNote}
+            fontSize={fontSize}
+            textAlign={textAlign}
+            isFullWidth={isFullWidth}
+            isFullScreen={isFullScreen}
+            isEditing={isEditing}
+            isSaving={isSaving}
+            editableTitle={editableTitle}
+            onIncreaseFontSize={handleIncreaseFontSize}
+            onDecreaseFontSize={handleDecreaseFontSize}
+            onChangeTextAlign={handleTextAlign}
+            onToggleWidth={toggleWidth}
+            onToggleFullScreen={toggleFullScreen}
+            onToggleEditing={toggleEditing}
+            onSave={handleSaveContent}
+            onTitleChange={handleTitleChange}
+            onEnhance={handleEnhancement}
+          />
+
+          {/* Enhanced Content View */}
+          <NoteStudyViewContent
+            note={currentNote}
+            isEditing={isEditing}
+            fontSize={fontSize}
+            textAlign={textAlign}
+            editableContent={editableContent}
+            selectedTags={selectedTags}
+            availableTags={availableTags}
+            isSaving={isSaving}
+            statsLoading={false}
+            currentUsage={currentUsage}
+            monthlyLimit={monthlyLimit}
+            handleContentChange={handleContentChange}
+            handleSaveContent={handleSaveContent}
+            toggleEditing={toggleEditing}
+            handleEnhanceContent={handleEnhanceContent}
+            setSelectedTags={setSelectedTags}
+            handleRetryEnhancement={handleRetryEnhancement}
+            hasReachedLimit={hasReachedLimit()}
+            fetchUsageStats={fetchUsageStats}
+            onNoteUpdate={onNoteUpdate}
+            activeContentType={activeContentType}
+            onActiveContentTypeChange={handleActiveContentTypeChange}
+            isEditOperation={isProcessing}
+          />
+        </Card>
+      </div>
     </div>
   );
 };

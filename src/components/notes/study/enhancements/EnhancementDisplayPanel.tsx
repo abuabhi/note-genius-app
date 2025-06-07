@@ -9,6 +9,8 @@ import { RefreshCw, Clock, FileText, Target, List, Sparkles, Code } from "lucide
 import { LoadingAnimations } from "./LoadingAnimations";
 import { EnhancementContentType } from "./EnhancementSelector";
 import { cn } from "@/lib/utils";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface EnhancementDisplayPanelProps {
   note: Note;
@@ -57,42 +59,48 @@ export const EnhancementDisplayPanel = ({
           title: "Original Content",
           icon: FileText,
           description: "Your original note content",
-          color: "text-mint-600"
+          color: "text-mint-600",
+          isMarkdown: false
         };
       case 'summary':
         return {
           title: "Summary",
           icon: Target,
           description: "AI-generated concise summary",
-          color: "text-mint-600"
+          color: "text-mint-600",
+          isMarkdown: true
         };
       case 'keyPoints':
         return {
           title: "Key Points",
           icon: List,
           description: "Essential highlights extracted",
-          color: "text-mint-600"
+          color: "text-mint-600",
+          isMarkdown: true
         };
       case 'improved':
         return {
           title: "Improved Clarity",
           icon: Sparkles,
           description: "Enhanced readability version",
-          color: "text-mint-600"
+          color: "text-mint-600",
+          isMarkdown: true
         };
       case 'markdown':
         return {
           title: "Original++",
           icon: Code,
           description: "Structured markdown format",
-          color: "text-mint-600"
+          color: "text-mint-600",
+          isMarkdown: true
         };
       default:
         return {
           title: "",
           icon: FileText,
           description: "",
-          color: "text-mint-600"
+          color: "text-mint-600",
+          isMarkdown: false
         };
     }
   };
@@ -183,6 +191,21 @@ export const EnhancementDisplayPanel = ({
     );
   }
 
+  // Custom markdown styles
+  const markdownClasses = `
+    prose prose-mint max-w-none
+    prose-headings:text-gray-900 prose-headings:font-semibold
+    prose-p:text-gray-700 prose-p:leading-relaxed
+    prose-li:text-gray-700 
+    prose-strong:text-gray-900 prose-strong:font-semibold
+    prose-em:text-gray-700
+    prose-blockquote:border-mint-200 prose-blockquote:text-gray-600
+    prose-code:text-mint-700 prose-code:bg-mint-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded
+    prose-pre:bg-gray-50 prose-pre:border prose-pre:border-gray-200
+    prose-ul:space-y-1 prose-ol:space-y-1
+    prose-li:marker:text-mint-500
+  `;
+
   return (
     <div className={cn("flex flex-col bg-white", className)}>
       {/* Enhanced Header */}
@@ -231,7 +254,19 @@ export const EnhancementDisplayPanel = ({
       {/* Enhanced Content */}
       <div className="flex-1 overflow-y-auto bg-gradient-to-b from-white to-gray-50/30">
         <div className="p-6">
-          {hasEnhancementMarkers ? (
+          {contentInfo.isMarkdown ? (
+            <div 
+              className={markdownClasses}
+              style={{ 
+                fontSize: `${fontSize}px`,
+                textAlign: textAlign === 'left' ? 'left' : textAlign === 'center' ? 'center' : 'justify'
+              }}
+            >
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {content}
+              </ReactMarkdown>
+            </div>
+          ) : hasEnhancementMarkers ? (
             <EnhancedContentRenderer 
               content={content} 
               fontSize={fontSize} 
