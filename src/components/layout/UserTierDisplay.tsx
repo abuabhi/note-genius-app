@@ -23,22 +23,7 @@ interface UsageStats {
 }
 
 export function UserTierDisplay() {
-  const { userTier, isLoading } = useUserTier();
-  
-  // Fetch tier limits data separately
-  const { data: tierLimits } = useQuery({
-    queryKey: ["tierLimits", userTier],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('tier_limits')
-        .select('*')
-        .eq('tier', userTier)
-        .single();
-      
-      return data;
-    },
-    enabled: !!userTier,
-  });
+  const { userTier, tierLimits, isLoading } = useUserTier();
   
   const { data: usageStats, isLoading: isLoadingUsage } = useQuery({
     queryKey: ["userUsageStats"],
@@ -65,7 +50,6 @@ export function UserTierDisplay() {
       if (contentError) console.error('Error fetching notes content:', contentError);
       
       // Calculate storage used by the notes content
-      // A better implementation would track actual storage usage across all files
       const contentSize = notes?.reduce((total, note) => {
         // Calculate bytes in content: 2 bytes per character (UTF-16)
         return total + (note.content ? note.content.length * 2 : 0);
@@ -93,8 +77,13 @@ export function UserTierDisplay() {
   }
 
   const getUsagePercentage = (used: number, limit: number) => {
-    if (limit === Infinity || limit === 0) return 100;
+    if (limit === -1 || limit === 0) return 0; // Unlimited or zero limit
     return Math.min(Math.round((used / limit) * 100), 100);
+  };
+
+  const formatLimitDisplay = (limit: number) => {
+    if (limit === -1) return "∞";
+    return limit.toString();
   };
 
   return (
@@ -119,11 +108,11 @@ export function UserTierDisplay() {
               </div>
               <span className="text-xs font-medium">
                 {isLoadingUsage ? '...' : usageStats?.notesCount || 0}/
-                {tierLimits?.max_notes === Infinity ? "∞" : tierLimits?.max_notes}
+                {formatLimitDisplay(tierLimits.max_notes)}
               </span>
             </div>
             <Progress 
-              value={isLoadingUsage ? 15 : getUsagePercentage(usageStats?.notesCount || 0, tierLimits?.max_notes || 100)}
+              value={isLoadingUsage ? 15 : getUsagePercentage(usageStats?.notesCount || 0, tierLimits.max_notes)}
               className="h-1"
             />
           </div>
@@ -132,15 +121,15 @@ export function UserTierDisplay() {
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-1.5">
                 <CirclePercent className="h-3 w-3 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Flashcards</span>
+                <span className="text-xs text-muted-foreground">Flashcard Sets</span>
               </div>
               <span className="text-xs font-medium">
                 {isLoadingUsage ? '...' : usageStats?.flashcardsCount || 0}/
-                {tierLimits?.max_flashcard_sets === Infinity ? "∞" : tierLimits?.max_flashcard_sets}
+                {formatLimitDisplay(tierLimits.max_flashcard_sets)}
               </span>
             </div>
             <Progress 
-              value={isLoadingUsage ? 30 : getUsagePercentage(usageStats?.flashcardsCount || 0, tierLimits?.max_flashcard_sets || 100)}
+              value={isLoadingUsage ? 30 : getUsagePercentage(usageStats?.flashcardsCount || 0, tierLimits.max_flashcard_sets)}
               className="h-1"
             />
           </div>
@@ -152,12 +141,12 @@ export function UserTierDisplay() {
                 <span className="text-xs text-muted-foreground">Storage</span>
               </div>
               <span className="text-xs font-medium">
-                {isLoadingUsage ? '...' : `${usageStats?.storageUsed} MB`}/
-                {tierLimits?.max_storage_mb === Infinity ? "∞" : `${tierLimits?.max_storage_mb} MB`}
+                {isLoadingUsage ? '...' : `${usageStats?.storageUsed || 0} MB`}/
+                {formatLimitDisplay(tierLimits.max_storage_mb)} MB
               </span>
             </div>
             <Progress 
-              value={isLoadingUsage ? 45 : getUsagePercentage(usageStats?.storageUsed || 0, tierLimits?.max_storage_mb || 100)}
+              value={isLoadingUsage ? 45 : getUsagePercentage(usageStats?.storageUsed || 0, tierLimits.max_storage_mb)}
               className="h-1"
             />
           </div>

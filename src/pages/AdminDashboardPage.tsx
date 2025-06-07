@@ -14,7 +14,8 @@ import {
   Upload,
   Settings,
   BarChart3,
-  Megaphone
+  Megaphone,
+  Shield
 } from "lucide-react";
 
 const AdminDashboardPage = () => {
@@ -44,6 +45,13 @@ const AdminDashboardPage = () => {
       icon: Users,
       href: "/admin/users",
       color: "text-blue-600"
+    },
+    {
+      title: "Tier Limits Management",
+      description: "Configure usage limits and features for each tier",
+      icon: Shield,
+      href: "/admin/tier-limits",
+      color: "text-purple-600"
     },
     {
       title: "Analytics & KPIs",

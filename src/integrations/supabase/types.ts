@@ -2076,6 +2076,9 @@ export type Database = {
           ai_flashcard_generation: boolean | null
           chat_enabled: boolean
           collaboration_enabled: boolean
+          max_ai_flashcard_generations_per_month: number | null
+          max_cards_per_set: number | null
+          max_collaborations: number | null
           max_flashcard_sets: number | null
           max_notes: number
           max_storage_mb: number
@@ -2090,6 +2093,9 @@ export type Database = {
           ai_flashcard_generation?: boolean | null
           chat_enabled?: boolean
           collaboration_enabled?: boolean
+          max_ai_flashcard_generations_per_month?: number | null
+          max_cards_per_set?: number | null
+          max_collaborations?: number | null
           max_flashcard_sets?: number | null
           max_notes: number
           max_storage_mb: number
@@ -2104,6 +2110,9 @@ export type Database = {
           ai_flashcard_generation?: boolean | null
           chat_enabled?: boolean
           collaboration_enabled?: boolean
+          max_ai_flashcard_generations_per_month?: number | null
+          max_cards_per_set?: number | null
+          max_collaborations?: number | null
           max_flashcard_sets?: number | null
           max_notes?: number
           max_storage_mb?: number

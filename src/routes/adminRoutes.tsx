@@ -10,6 +10,7 @@ import AdminCSVImportPage from "@/pages/AdminCSVImportPage";
 import AdminFeaturesPage from "@/pages/AdminFeaturesPage";
 import AdminAnalyticsPage from "@/pages/AdminAnalyticsPage";
 import AdminAnnouncementsPage from "@/pages/AdminAnnouncementsPage";
+import AdminTierLimitsPage from "@/pages/AdminTierLimitsPage";
 import { RouteConfig } from './publicRoutes';
 
 // Admin routes
@@ -24,4 +25,5 @@ export const adminRoutes: RouteConfig[] = [
   { path: "/admin/subjects", element: <AdminSubjectsPage /> },
   { path: "/admin/csv-import", element: <AdminCSVImportPage /> },
   { path: "/admin/features", element: <AdminFeaturesPage /> },
+  { path: "/admin/tier-limits", element: <AdminTierLimitsPage /> },
 ];
