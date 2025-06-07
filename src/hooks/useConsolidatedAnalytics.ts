@@ -52,27 +52,36 @@ export const useConsolidatedAnalytics = () => {
       const completedSessions = allSessions.filter(s => !s.is_active && s.duration);
       const activeSessions = allSessions.filter(s => s.is_active);
 
-      // Calculate total study time (including active sessions)
-      let totalStudyTimeMinutes = 0;
+      // Calculate total study time with proper validation
+      let totalStudyTimeSeconds = 0;
       
-      // Add time from completed sessions
+      // Add time from completed sessions (duration is in seconds)
       completedSessions.forEach(session => {
-        if (session.duration) {
-          totalStudyTimeMinutes += session.duration / 60;
+        if (session.duration && session.duration > 0) {
+          // Filter out unrealistic sessions (more than 12 hours = 43200 seconds)
+          const sessionDuration = Math.min(session.duration, 43200);
+          totalStudyTimeSeconds += sessionDuration;
         }
       });
 
-      // Add time from active sessions
+      // Add time from active sessions (calculate from start_time)
       activeSessions.forEach(session => {
         if (session.start_time) {
-          const sessionMinutes = (Date.now() - new Date(session.start_time).getTime()) / (1000 * 60);
-          totalStudyTimeMinutes += sessionMinutes;
+          const sessionSeconds = (Date.now() - new Date(session.start_time).getTime()) / 1000;
+          // Cap active sessions at 12 hours maximum
+          const cappedSeconds = Math.min(sessionSeconds, 43200);
+          if (cappedSeconds > 0) {
+            totalStudyTimeSeconds += cappedSeconds;
+          }
         }
       });
 
-      const totalStudyTimeHours = Math.round(totalStudyTimeMinutes / 60 * 10) / 10;
-      const averageSessionTime = completedSessions.length > 0 
-        ? Math.round(totalStudyTimeMinutes / completedSessions.length) 
+      // Convert to hours with proper rounding
+      const totalStudyTimeHours = Math.round((totalStudyTimeSeconds / 3600) * 10) / 10;
+      
+      // Calculate average session time in minutes
+      const averageSessionTimeMinutes = completedSessions.length > 0 
+        ? Math.round((totalStudyTimeSeconds / completedSessions.length) / 60) 
         : 0;
 
       // Calculate flashcard statistics
@@ -101,28 +110,35 @@ export const useConsolidatedAnalytics = () => {
         s.start_time && s.start_time.startsWith(today)
       );
 
-      let todayStudyTimeMinutes = 0;
+      let todayStudyTimeSeconds = 0;
       todaySessions.forEach(session => {
         if (session.duration && !session.is_active) {
-          todayStudyTimeMinutes += session.duration / 60;
+          // Cap at 12 hours for realistic data
+          const sessionDuration = Math.min(session.duration, 43200);
+          todayStudyTimeSeconds += sessionDuration;
         } else if (session.is_active && session.start_time) {
-          const sessionMinutes = (Date.now() - new Date(session.start_time).getTime()) / (1000 * 60);
-          todayStudyTimeMinutes += sessionMinutes;
+          const sessionSeconds = (Date.now() - new Date(session.start_time).getTime()) / 1000;
+          const cappedSeconds = Math.min(sessionSeconds, 43200);
+          if (cappedSeconds > 0) {
+            todayStudyTimeSeconds += cappedSeconds;
+          }
         }
       });
+
+      const todayStudyTimeHours = Math.round((todayStudyTimeSeconds / 3600) * 10) / 10;
 
       const result = {
         // Overall statistics
         totalSessions: allSessions.length,
         totalStudyTime: totalStudyTimeHours,
-        averageSessionTime,
+        averageSessionTime: averageSessionTimeMinutes,
         totalSets,
         totalCardsReviewed,
         totalCardsMastered,
         flashcardAccuracy,
         
         // Today's statistics
-        todayStudyTime: Math.round(todayStudyTimeMinutes / 60 * 10) / 10, // Convert to hours
+        todayStudyTime: todayStudyTimeHours,
         todaySessions: todaySessions.length,
         
         // Recent data
@@ -137,7 +153,7 @@ export const useConsolidatedAnalytics = () => {
         stats: {
           totalSessions: allSessions.length,
           totalStudyTime: totalStudyTimeHours,
-          averageSessionTime,
+          averageSessionTime: averageSessionTimeMinutes,
           totalCardsMastered,
           totalSets,
           flashcardAccuracy,
@@ -147,6 +163,13 @@ export const useConsolidatedAnalytics = () => {
       };
 
       console.log('Consolidated analytics result:', result);
+      console.log('Total study time calculation:', {
+        totalSeconds: totalStudyTimeSeconds,
+        totalHours: totalStudyTimeHours,
+        completedSessions: completedSessions.length,
+        activeSessions: activeSessions.length
+      });
+      
       return result;
     },
     enabled: !!user,
