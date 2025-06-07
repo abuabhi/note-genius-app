@@ -85,7 +85,7 @@ const MainStudyViewContent = ({ note, isLoading }: NoteStudyViewProps) => {
         await onNoteUpdate({
           [getEnhancementFieldName(enhancementType)]: result.content,
           [`${getEnhancementFieldName(enhancementType)}_generated_at`]: new Date().toISOString(),
-          enhancement_type: getEnhancementType(enhancementType) as 'clarity' | 'summary' | 'other'
+          enhancement_type: getEnhancementType(enhancementType) as 'clarity' | 'other' | 'spelling-grammar'
         });
         
         // Force refresh to update UI
@@ -225,12 +225,12 @@ const getEnhancementFieldName = (enhancementType: string): string => {
   }
 };
 
-const getEnhancementType = (enhancementType: string): 'clarity' | 'summary' | 'other' => {
+const getEnhancementType = (enhancementType: string): 'clarity' | 'other' | 'spelling-grammar' => {
   switch (enhancementType) {
     case 'improve-clarity':
       return 'clarity';
     case 'summarize':
-      return 'summary';
+      return 'other'; // Map summary to 'other' since 'summary' is not allowed
     default:
       return 'other';
   }
