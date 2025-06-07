@@ -19,7 +19,7 @@ const tierBadgeVariants = {
 
 interface UsageStats {
   notesCount: number;
-  flashcardsCount: number;
+  flashcardSetsCount: number;
   storageUsed: number;
 }
 
@@ -37,12 +37,12 @@ export function UserTierDisplay() {
       
       if (notesError) console.error('Error fetching notes count:', notesError);
       
-      // Get flashcards count
-      const { count: flashcardsCount, error: flashcardsError } = await supabase
-        .from('flashcards')
+      // Fix: Get flashcard sets count instead of flashcards count
+      const { count: flashcardSetsCount, error: flashcardSetsError } = await supabase
+        .from('flashcard_sets')
         .select('*', { count: 'exact', head: true });
       
-      if (flashcardsError) console.error('Error fetching flashcards count:', flashcardsError);
+      if (flashcardSetsError) console.error('Error fetching flashcard sets count:', flashcardSetsError);
       
       // Get actual storage used - calculate based on note content size
       const { data: notes, error: contentError } = await supabase
@@ -62,7 +62,7 @@ export function UserTierDisplay() {
       
       return {
         notesCount: notesCount || 0,
-        flashcardsCount: flashcardsCount || 0,
+        flashcardSetsCount: flashcardSetsCount || 0,
         storageUsed: storageMB || 0,
       };
     },
@@ -142,12 +142,12 @@ export function UserTierDisplay() {
                 <span className="text-xs text-muted-foreground">Flashcard Sets</span>
               </div>
               <span className="text-xs font-medium">
-                {isLoadingUsage ? '...' : usageStats?.flashcardsCount || 0}/
+                {isLoadingUsage ? '...' : usageStats?.flashcardSetsCount || 0}/
                 {formatLimitDisplay(tierLimits.max_flashcard_sets)}
               </span>
             </div>
             <Progress 
-              value={isLoadingUsage ? 30 : getUsagePercentage(usageStats?.flashcardsCount || 0, tierLimits.max_flashcard_sets)}
+              value={isLoadingUsage ? 30 : getUsagePercentage(usageStats?.flashcardSetsCount || 0, tierLimits.max_flashcard_sets)}
               className="h-1"
             />
           </div>

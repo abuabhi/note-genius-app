@@ -33,7 +33,7 @@ const tierIcons = {
 
 interface UsageStats {
   notesCount: number;
-  flashcardsCount: number;
+  flashcardSetsCount: number;
   storageUsed: number;
 }
 
@@ -46,8 +46,9 @@ const UsageDisplay = ({ userTier }: { userTier: UserTier }) => {
         .from('notes')
         .select('*', { count: 'exact', head: true });
       
-      const { count: flashcardsCount } = await supabase
-        .from('flashcards')
+      // Fix: Query flashcard_sets table instead of flashcards table
+      const { count: flashcardSetsCount } = await supabase
+        .from('flashcard_sets')
         .select('*', { count: 'exact', head: true });
       
       const { data: notes } = await supabase
@@ -62,7 +63,7 @@ const UsageDisplay = ({ userTier }: { userTier: UserTier }) => {
       
       return {
         notesCount: notesCount || 0,
-        flashcardsCount: flashcardsCount || 0,
+        flashcardSetsCount: flashcardSetsCount || 0,
         storageUsed: storageMB || 0,
       };
     },
@@ -287,16 +288,16 @@ const UsageCard = ({ userTier, tierLimits }: { userTier: UserTier, tierLimits: a
           />
         </div>
 
-        {/* Flashcard Sets Usage */}
+        {/* Flashcard Sets Usage - Fixed to show correct count */}
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span className="font-medium">Flashcard Sets</span>
             <span className="text-muted-foreground">
-              {isLoadingUsage ? '...' : `${usageStats?.flashcardsCount || 0} / ${formatLimitDisplay(tierLimits.max_flashcard_sets)}`}
+              {isLoadingUsage ? '...' : `${usageStats?.flashcardSetsCount || 0} / ${formatLimitDisplay(tierLimits.max_flashcard_sets)}`}
             </span>
           </div>
           <Progress 
-            value={isLoadingUsage ? 0 : getUsagePercentage(usageStats?.flashcardsCount || 0, tierLimits.max_flashcard_sets)}
+            value={isLoadingUsage ? 0 : getUsagePercentage(usageStats?.flashcardSetsCount || 0, tierLimits.max_flashcard_sets)}
             className="h-2"
           />
         </div>
