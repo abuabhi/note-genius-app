@@ -1,6 +1,6 @@
 
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect, useTransition, Suspense } from "react";
+import { useState, useEffect, useTransition, Suspense, startTransition } from "react";
 import Layout from "@/components/layout/Layout";
 import { useNotes } from "@/contexts/NoteContext";
 import { Button } from "@/components/ui/button";
@@ -23,8 +23,10 @@ const NoteStudyContent = () => {
   useEffect(() => {
     const loadNote = async () => {
       if (!id) {
-        setError("No note ID provided");
-        setLoading(false);
+        startTransition(() => {
+          setError("No note ID provided");
+          setLoading(false);
+        });
         return;
       }
 
@@ -36,9 +38,11 @@ const NoteStudyContent = () => {
       
       if (foundNote) {
         console.log("✅ Found note in context:", foundNote.title);
-        setNote(foundNote);
-        setError(null);
-        setLoading(false);
+        startTransition(() => {
+          setNote(foundNote);
+          setError(null);
+          setLoading(false);
+        });
         return;
       }
 
@@ -54,15 +58,19 @@ const NoteStudyContent = () => {
 
         if (fetchError) {
           console.error("❌ Error fetching note:", fetchError);
-          setError("Failed to load note from database");
-          setLoading(false);
+          startTransition(() => {
+            setError("Failed to load note from database");
+            setLoading(false);
+          });
           return;
         }
 
         if (!noteData) {
           console.log("❌ No note data returned");
-          setError("Note not found");
-          setLoading(false);
+          startTransition(() => {
+            setError("Note not found");
+            setLoading(false);
+          });
           return;
         }
 
@@ -92,10 +100,14 @@ const NoteStudyContent = () => {
         };
 
         console.log("✅ Successfully fetched and transformed note:", transformedNote.title);
-        setNote(transformedNote);
         
-        // Add to notes context to avoid future fetches
+        // Wrap all state updates in transitions
         startTransition(() => {
+          setNote(transformedNote);
+          setError(null);
+          setLoading(false);
+          
+          // Add to notes context to avoid future fetches
           setNotes(prevNotes => {
             const exists = prevNotes.find(n => n.id === id);
             if (!exists) {
@@ -105,22 +117,22 @@ const NoteStudyContent = () => {
           });
         });
         
-        setError(null);
       } catch (err) {
         console.error("❌ Unexpected error fetching note:", err);
-        setError("An unexpected error occurred while loading the note");
-      } finally {
-        setLoading(false);
+        startTransition(() => {
+          setError("An unexpected error occurred while loading the note");
+          setLoading(false);
+        });
       }
     };
 
-    // Use requestAnimationFrame to prevent suspension during synchronous updates
-    const frameId = requestAnimationFrame(() => {
+    // Use setTimeout instead of requestAnimationFrame to prevent suspension issues
+    const timeoutId = setTimeout(() => {
       loadNote();
-    });
+    }, 0);
 
     return () => {
-      cancelAnimationFrame(frameId);
+      clearTimeout(timeoutId);
     };
   }, [id, notes, setNotes]);
 
