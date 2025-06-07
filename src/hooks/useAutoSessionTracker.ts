@@ -18,9 +18,9 @@ interface AutoSessionState {
 // Define study routes where auto-session tracking should be active
 const STUDY_ROUTES = [
   '/flashcards',
-  '/notes',
-  '/quizzes',
+  '/notes', 
   '/quiz',
+  '/quizzes',
   '/study-sessions'
 ];
 
@@ -36,7 +36,15 @@ export const useAutoSessionTracker = () => {
   // Add user activity detection - only for study activities
   const lastActivityRef = useRef(Date.now());
   const activityListenersSetup = useRef(false);
+  const autoStartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isOnStudyPage = STUDY_ROUTES.some(route => location.pathname.startsWith(route));
+
+  console.log('🎯 Auto-session tracker status:', {
+    isOnStudyPage,
+    currentPath: location.pathname,
+    isTracking: improvedTracker.isTracking,
+    shouldTrack: shouldTrackSessions()
+  });
 
   // Record user activity - only on study pages
   const recordUserActivity = useCallback(() => {
@@ -47,6 +55,48 @@ export const useAutoSessionTracker = () => {
       improvedTracker.recordActivity();
     }
   }, [improvedTracker, isOnStudyPage]);
+
+  // Auto-start session with delay when entering study pages
+  useEffect(() => {
+    if (isOnStudyPage && !improvedTracker.isTracking && shouldTrackSessions()) {
+      console.log('🚀 Scheduling auto-session start for study page:', location.pathname);
+      
+      // Clear any existing timeout
+      if (autoStartTimeoutRef.current) {
+        clearTimeout(autoStartTimeoutRef.current);
+      }
+      
+      // Start session after 3 seconds of being on study page
+      autoStartTimeoutRef.current = setTimeout(() => {
+        if (isOnStudyPage && !improvedTracker.isTracking && shouldTrackSessions()) {
+          console.log('✨ Auto-starting study session on page:', location.pathname);
+          
+          let activityType: 'flashcard_study' | 'note_review' | 'quiz_taking' | 'general' = 'general';
+          let title = 'Study Session';
+          
+          if (location.pathname.startsWith('/flashcards')) {
+            activityType = 'flashcard_study';
+            title = 'Flashcard Study Session';
+          } else if (location.pathname.startsWith('/notes')) {
+            activityType = 'note_review';
+            title = 'Note Review Session';
+          } else if (location.pathname.startsWith('/quiz')) {
+            activityType = 'quiz_taking';
+            title = 'Quiz Session';
+          }
+          
+          improvedTracker.startSession(activityType, title, 'Auto-detected');
+        }
+      }, 3000); // 3 second delay
+    }
+
+    return () => {
+      if (autoStartTimeoutRef.current) {
+        clearTimeout(autoStartTimeoutRef.current);
+        autoStartTimeoutRef.current = null;
+      }
+    };
+  }, [isOnStudyPage, improvedTracker.isTracking, shouldTrackSessions, location.pathname, improvedTracker]);
 
   // Setup activity listeners only for study pages
   useEffect(() => {
@@ -81,7 +131,7 @@ export const useAutoSessionTracker = () => {
   // Auto-end session when leaving study pages
   useEffect(() => {
     if (!isOnStudyPage && improvedTracker.isTracking) {
-      console.log('Left study area, ending auto session');
+      console.log('🛑 Left study area, ending auto session');
       improvedTracker.endSession();
     }
   }, [isOnStudyPage, improvedTracker]);
@@ -93,20 +143,22 @@ export const useAutoSessionTracker = () => {
     subject?: string
   ) => {
     if (!shouldTrackSessions()) {
-      console.log('Another tab is tracking sessions, not starting session here');
+      console.log('🚫 Another tab is tracking sessions, not starting session here');
       return null;
     }
 
     if (!isOnStudyPage) {
-      console.log('Not on study page, not starting session');
+      console.log('🚫 Not on study page, not starting session');
       return null;
     }
     
+    console.log('✅ Starting manual session:', { activityType, title, subject });
     return improvedTracker.startSession(activityType, title, subject);
   }, [improvedTracker, shouldTrackSessions, isOnStudyPage]);
 
   // Enhanced endSession
   const endSession = useCallback(async () => {
+    console.log('🔚 Ending session');
     return improvedTracker.endSession();
   }, [improvedTracker]);
 

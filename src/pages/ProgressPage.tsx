@@ -25,8 +25,8 @@ const ProgressPage = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="ai-insights">AI Insights</TabsTrigger>
             <TabsTrigger value="achievements">Achievements</TabsTrigger>
+            <TabsTrigger value="ai-insights">AI Insights</TabsTrigger>
             <TabsTrigger value="detailed-stats">Detailed Stats</TabsTrigger>
           </TabsList>
           
@@ -34,12 +34,12 @@ const ProgressPage = () => {
             <CleanProgressOverview />
           </TabsContent>
           
-          <TabsContent value="ai-insights" className="mt-6">
-            <AIInsightsTab />
-          </TabsContent>
-          
           <TabsContent value="achievements" className="mt-6">
             <Achievements />
+          </TabsContent>
+          
+          <TabsContent value="ai-insights" className="mt-6">
+            <AIInsightsTab />
           </TabsContent>
           
           <TabsContent value="detailed-stats" className="mt-6">

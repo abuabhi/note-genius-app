@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
@@ -8,7 +7,7 @@ import {
   getStartOfDayInTimezone, 
   getEndOfDayInTimezone,
   getWeekStartInTimezone,
-  isDateInTimezone 
+  debugTimezone
 } from '@/utils/timezoneUtils';
 
 // Validation helpers
@@ -37,6 +36,11 @@ export const useTimezoneAwareAnalytics = () => {
       if (!user || !timezone) return null;
 
       console.log('🔄 Fetching timezone-aware analytics for user:', user.id, 'timezone:', timezone);
+      
+      // Debug timezone calculations for Melbourne users
+      if (timezone.includes('Melbourne') || timezone.includes('Australia')) {
+        debugTimezone(timezone);
+      }
 
       // Get study sessions with strict filtering - only completed, realistic sessions
       const { data: sessions, error: sessionsError } = await supabase
@@ -95,16 +99,35 @@ export const useTimezoneAwareAnalytics = () => {
         p.interval && p.interval >= 7
       ).length || 0;
 
-      // Timezone-aware date calculations
+      // Timezone-aware date calculations using improved utilities
       const todayString = getTodayInTimezone(timezone);
       const startOfToday = getStartOfDayInTimezone(timezone);
       const endOfToday = getEndOfDayInTimezone(timezone);
+      
+      console.log(`🌏 Melbourne Timezone Boundaries:`, {
+        todayString,
+        startOfToday: startOfToday.toISOString(),
+        endOfToday: endOfToday.toISOString(),
+        currentTime: new Date().toISOString()
+      });
       
       // Today's sessions using proper timezone boundaries
       const todaySessions = allSessions.filter(s => {
         if (!s.start_time) return false;
         const sessionDate = new Date(s.start_time);
-        return sessionDate >= startOfToday && sessionDate <= endOfToday;
+        const isToday = sessionDate >= startOfToday && sessionDate <= endOfToday;
+        
+        // Debug session timezone classification
+        if (timezone.includes('Melbourne') || timezone.includes('Australia')) {
+          console.log(`📅 Session ${s.id}:`, {
+            startTime: s.start_time,
+            sessionDate: sessionDate.toISOString(),
+            isToday,
+            duration: s.duration
+          });
+        }
+        
+        return isToday;
       });
 
       const todayStudyTimeSeconds = todaySessions.reduce((sum, session) => {
@@ -115,7 +138,7 @@ export const useTimezoneAwareAnalytics = () => {
       const todayStudyTimeHours = Math.round((todayStudyTimeSeconds / 3600) * 10) / 10;
       const todayStudyTimeMinutes = Math.round(todayStudyTimeSeconds / 60);
 
-      // Weekly statistics - last 7 days from start of today
+      // Weekly statistics - current week
       const weekStart = getWeekStartInTimezone(timezone, 0);
       const weeklySessions = allSessions.filter(s => {
         if (!s.start_time) return false;
@@ -212,7 +235,7 @@ export const useTimezoneAwareAnalytics = () => {
         }
       };
 
-      console.log('📈 Timezone-aware analytics summary:', {
+      console.log('📈 Melbourne Timezone-aware analytics summary:', {
         timezone,
         todayString,
         totalSessions: result.totalSessions,
