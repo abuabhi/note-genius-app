@@ -2,11 +2,11 @@
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useUserTier, UserTier } from "@/hooks/useUserTier";
-import { CirclePercent, BarChart } from "lucide-react";
+import { CirclePercent, BarChart, ArrowRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 // Updated badge variants to match the mint theme
 const tierBadgeVariants = {
@@ -24,6 +24,7 @@ interface UsageStats {
 
 export function UserTierDisplay() {
   const { userTier, tierLimits, isLoading } = useUserTier();
+  const navigate = useNavigate();
   
   const { data: usageStats, isLoading: isLoadingUsage } = useQuery({
     queryKey: ["userUsageStats"],
@@ -86,12 +87,24 @@ export function UserTierDisplay() {
     return limit.toString();
   };
 
+  const handleTierClick = () => {
+    navigate('/settings?tab=subscription');
+  };
+
   return (
     <div className="px-3 py-3 space-y-4">
       <div className="flex items-center justify-between">
-        <Badge variant={tierBadgeVariants[userTier] as any} className="px-2 py-1">
-          {userTier}
-        </Badge>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleTierClick}
+          className="p-0 h-auto hover:bg-sidebar-accent/50 transition-colors cursor-pointer"
+        >
+          <Badge variant={tierBadgeVariants[userTier] as any} className="px-2 py-1 hover:shadow-sm transition-shadow">
+            {userTier}
+            <ArrowRight className="h-3 w-3 ml-1 opacity-60" />
+          </Badge>
+        </Button>
         
         <Button variant="ghost" size="sm" asChild className="text-xs px-2">
           <Link to="/pricing">Upgrade</Link>

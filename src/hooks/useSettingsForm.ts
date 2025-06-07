@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useUserTier, UserTier } from "@/hooks/useUserTier";
 import { useCountries } from "@/hooks/useCountries";
 import { useUnsavedChangesPrompt } from "@/hooks/useUnsavedChangesPrompt";
@@ -12,6 +12,7 @@ export const useSettingsForm = () => {
   const { userTier } = useUserTier();
   const { countries, userCountry, updateUserCountry } = useCountries();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   
   const {
     user,
@@ -26,6 +27,14 @@ export const useSettingsForm = () => {
 
   const { reset, formState: { isDirty, isSubmitSuccessful } } = form;
   const isDeanUser = userTier === UserTier.DEAN;
+
+  // Handle tab parameter from URL
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['account', 'subjects', 'adaptive', 'notifications', 'subscription'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams, setActiveTab]);
 
   // Load user preferences data
   useSettingsFormData(user, form);

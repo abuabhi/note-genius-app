@@ -18,6 +18,7 @@ import { StudyPreferencesCard } from "./cards/StudyPreferencesCard";
 import { PasswordChangeCard } from "./cards/PasswordChangeCard";
 import { AdaptiveLearningCard } from "./cards/AdaptiveLearningCard";
 import { NotificationPreferencesCard } from "./cards/NotificationPreferencesCard";
+import { SubscriptionLimitsCard } from "./cards/SubscriptionLimitsCard";
 
 interface SettingsFormTabsProps {
   activeTab: string;
@@ -40,11 +41,12 @@ export const SettingsFormTabs = ({
 }: SettingsFormTabsProps) => {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
-      <TabsList className="grid grid-cols-4 mb-8 bg-white/60 backdrop-blur-sm border border-mint-100/50 shadow-lg">
+      <TabsList className="grid grid-cols-5 mb-8 bg-white/60 backdrop-blur-sm border border-mint-100/50 shadow-lg">
         <TabsTrigger value="account" className="data-[state=active]:bg-mint-100 data-[state=active]:text-mint-800">Account</TabsTrigger>
         <TabsTrigger value="subjects" className="data-[state=active]:bg-mint-100 data-[state=active]:text-mint-800">Subjects</TabsTrigger>
         <TabsTrigger value="adaptive" className="data-[state=active]:bg-mint-100 data-[state=active]:text-mint-800">AI Learning</TabsTrigger>
         <TabsTrigger value="notifications" className="data-[state=active]:bg-mint-100 data-[state=active]:text-mint-800">Notifications</TabsTrigger>
+        <TabsTrigger value="subscription" className="data-[state=active]:bg-mint-100 data-[state=active]:text-mint-800">Subscription</TabsTrigger>
       </TabsList>
       
       <TabsContent value="account" className="space-y-6">
@@ -107,6 +109,15 @@ export const SettingsFormTabs = ({
           <div className="absolute -inset-2 bg-gradient-to-r from-blue-500/5 to-mint-500/5 rounded-2xl blur-lg"></div>
           <div className="relative">
             <NotificationPreferencesCard form={form} />
+          </div>
+        </div>
+      </TabsContent>
+
+      <TabsContent value="subscription" className="space-y-6">
+        <div className="relative">
+          <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/5 to-mint-500/5 rounded-2xl blur-lg"></div>
+          <div className="relative">
+            <SubscriptionLimitsCard />
           </div>
         </div>
       </TabsContent>
