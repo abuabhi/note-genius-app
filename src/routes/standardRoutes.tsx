@@ -12,6 +12,14 @@ const QuizPage = lazy(() => import('@/pages/QuizPage'));
 const QuizTakingPage = lazy(() => import('@/pages/TakeQuizPage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
 const ReferralsPage = lazy(() => import('@/pages/ReferralsPage'));
+const GoalsPage = lazy(() => import('@/pages/GoalsPage'));
+const TodoPage = lazy(() => import('@/pages/TodoPage'));
+const StudySessionsPage = lazy(() => import('@/pages/StudySessionsPage'));
+const ProgressPage = lazy(() => import('@/pages/ProgressPage'));
+const SchedulePage = lazy(() => import('@/pages/SchedulePage'));
+const ChatPage = lazy(() => import('@/pages/ChatPage'));
+const CollaborationPage = lazy(() => import('@/pages/CollaborationPage'));
+const ConnectionsPage = lazy(() => import('@/pages/ConnectionsPage'));
 
 export const standardRoutes: RouteConfig[] = [
   {
@@ -49,6 +57,38 @@ export const standardRoutes: RouteConfig[] = [
   {
     path: "/quiz/:id",
     element: <QuizTakingPage />
+  },
+  {
+    path: "/goals",
+    element: <GoalsPage />
+  },
+  {
+    path: "/todos",
+    element: <TodoPage />
+  },
+  {
+    path: "/study-sessions",
+    element: <StudySessionsPage />
+  },
+  {
+    path: "/progress",
+    element: <ProgressPage />
+  },
+  {
+    path: "/schedule",
+    element: <SchedulePage />
+  },
+  {
+    path: "/chat",
+    element: <ChatPage />
+  },
+  {
+    path: "/collaboration",
+    element: <CollaborationPage />
+  },
+  {
+    path: "/connections",
+    element: <ConnectionsPage />
   },
   {
     path: "/settings",

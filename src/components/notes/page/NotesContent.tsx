@@ -4,7 +4,6 @@ import { useNotes } from "@/contexts/NoteContext";
 import { useRequireAuth, TierLimits, UserTier } from "@/hooks/useRequireAuth";
 import { Note } from "@/types/note";
 import { EnhancedTierInfo } from "./EnhancedTierInfo";
-import { NotesPageBreadcrumb } from "./NotesPageBreadcrumb";
 import { NotesHeader } from "./NotesHeader";
 import { SubjectsSection } from "./SubjectsSection";
 import { NotesDisplay } from "./NotesDisplay";
@@ -99,10 +98,9 @@ export const NotesContent = ({
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl">
         <div className="backdrop-blur-sm bg-white/40 rounded-2xl border border-white/20 shadow-xl shadow-mint-500/5 p-8 space-y-10">
           
-          {/* Breadcrumb */}
-          <div className="flex items-center justify-between">
-            <NotesPageBreadcrumb activeSubjectId={activeSubjectId} />
-            <div className="hidden sm:flex items-center gap-2 text-sm text-slate-500">
+          {/* Live sync indicator */}
+          <div className="flex items-center justify-end">
+            <div className="flex items-center gap-2 text-sm text-slate-500">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
               <span>Live sync enabled</span>
             </div>
