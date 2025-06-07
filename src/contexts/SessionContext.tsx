@@ -22,6 +22,7 @@ interface SessionContextType {
     notes_created?: number;
     notes_reviewed?: number;
   }) => Promise<void>;
+  isOnStudyPage: boolean;
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -42,7 +43,10 @@ export const SessionProvider = ({ children }: SessionProviderProps) => {
   const sessionTracker = useAutoSessionTracker();
 
   return (
-    <SessionContext.Provider value={sessionTracker}>
+    <SessionContext.Provider value={{
+      ...sessionTracker,
+      isOnStudyPage: sessionTracker.isOnStudyPage || false
+    }}>
       {children}
     </SessionContext.Provider>
   );

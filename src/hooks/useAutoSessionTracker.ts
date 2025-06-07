@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useImprovedSessionTracker } from './useImprovedSessionTracker';
 import { useRealtimeSessionSync } from './useRealtimeSessionSync';
+import { useLocation } from 'react-router-dom';
 
 interface AutoSessionState {
   isTracking: boolean;
@@ -14,29 +15,52 @@ interface AutoSessionState {
   elapsedSeconds: number;
 }
 
+// Define study routes where auto-session tracking should be active
+const STUDY_ROUTES = [
+  '/flashcards',
+  '/notes',
+  '/quizzes',
+  '/quiz',
+  '/study-sessions'
+];
+
 export const useAutoSessionTracker = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { shouldTrackSessions } = useRealtimeSessionSync();
+  const location = useLocation();
   
   // Use the improved session tracker as the core implementation
   const improvedTracker = useImprovedSessionTracker();
   
-  // Add user activity detection
+  // Add user activity detection - only for study activities
   const lastActivityRef = useRef(Date.now());
   const activityListenersSetup = useRef(false);
+  const isOnStudyPage = STUDY_ROUTES.some(route => location.pathname.startsWith(route));
 
-  // Record user activity
+  // Record user activity - only on study pages
   const recordUserActivity = useCallback(() => {
+    if (!isOnStudyPage) return;
+    
     lastActivityRef.current = Date.now();
     if (improvedTracker.isTracking) {
       improvedTracker.recordActivity();
     }
-  }, [improvedTracker]);
+  }, [improvedTracker, isOnStudyPage]);
 
-  // Setup activity listeners
+  // Setup activity listeners only for study pages
   useEffect(() => {
-    if (activityListenersSetup.current) return;
+    // Clean up existing listeners
+    if (activityListenersSetup.current) {
+      const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+      events.forEach(event => {
+        document.removeEventListener(event, recordUserActivity);
+      });
+      activityListenersSetup.current = false;
+    }
+
+    // Only set up listeners on study pages
+    if (!isOnStudyPage) return;
     
     const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
     
@@ -52,7 +76,15 @@ export const useAutoSessionTracker = () => {
       });
       activityListenersSetup.current = false;
     };
-  }, [recordUserActivity]);
+  }, [recordUserActivity, isOnStudyPage]);
+
+  // Auto-end session when leaving study pages
+  useEffect(() => {
+    if (!isOnStudyPage && improvedTracker.isTracking) {
+      console.log('Left study area, ending auto session');
+      improvedTracker.endSession();
+    }
+  }, [isOnStudyPage, improvedTracker]);
 
   // Enhanced startSession that only works if this tab should track sessions
   const startSession = useCallback(async (
@@ -64,9 +96,14 @@ export const useAutoSessionTracker = () => {
       console.log('Another tab is tracking sessions, not starting session here');
       return null;
     }
+
+    if (!isOnStudyPage) {
+      console.log('Not on study page, not starting session');
+      return null;
+    }
     
     return improvedTracker.startSession(activityType, title, subject);
-  }, [improvedTracker, shouldTrackSessions]);
+  }, [improvedTracker, shouldTrackSessions, isOnStudyPage]);
 
   // Enhanced endSession
   const endSession = useCallback(async () => {
@@ -82,12 +119,14 @@ export const useAutoSessionTracker = () => {
     notes_created?: number;
     notes_reviewed?: number;
   }) => {
+    if (!isOnStudyPage) return;
+    
     recordUserActivity();
     return improvedTracker.updateSessionActivity(activityData);
-  }, [improvedTracker, recordUserActivity]);
+  }, [improvedTracker, recordUserActivity, isOnStudyPage]);
 
   return {
-    isTracking: improvedTracker.isTracking,
+    isTracking: improvedTracker.isTracking && isOnStudyPage,
     currentSessionId: improvedTracker.currentSessionId,
     activityType: improvedTracker.activityType,
     startTime: improvedTracker.startTime,
@@ -95,6 +134,7 @@ export const useAutoSessionTracker = () => {
     startSession,
     endSession,
     updateSessionActivity,
-    autoSaveSession: improvedTracker.autoSaveSession
+    autoSaveSession: improvedTracker.autoSaveSession,
+    isOnStudyPage
   };
 };

@@ -7,6 +7,7 @@ const STUDY_ROUTES = {
   '/flashcards': 'flashcard_study',
   '/notes': 'note_review',
   '/quiz': 'quiz_taking',
+  '/quizzes': 'quiz_taking',
   '/study-sessions': 'general'
 } as const;
 
@@ -37,7 +38,7 @@ export const useStudyActivityDetector = () => {
       } else if (currentPath.includes('/notes/')) {
         title = 'Note Review Session';
         subject = 'Notes';
-      } else if (currentPath.includes('/quiz/')) {
+      } else if (currentPath.includes('/quiz')) {
         title = 'Quiz Session';
         subject = 'Quiz';
       }

@@ -13,11 +13,15 @@ export const useConsolidatedAnalytics = () => {
 
       console.log('Fetching consolidated analytics for user:', user.id);
 
-      // Get study sessions with proper filtering
+      // Get study sessions with proper filtering - only completed, realistic sessions
       const { data: sessions, error: sessionsError } = await supabase
         .from('study_sessions')
         .select('*')
         .eq('user_id', user.id)
+        .eq('is_active', false) // Only completed sessions
+        .not('duration', 'is', null)
+        .gte('duration', 60) // At least 1 minute
+        .lte('duration', 14400) // At most 4 hours
         .order('start_time', { ascending: false });
 
       if (sessionsError) {
@@ -25,7 +29,7 @@ export const useConsolidatedAnalytics = () => {
         throw sessionsError;
       }
 
-      console.log('Raw sessions data:', sessions);
+      console.log('Filtered sessions data:', sessions);
 
       // Get flashcard sets
       const { data: flashcardSets, error: setsError } = await supabase
@@ -47,41 +51,20 @@ export const useConsolidatedAnalytics = () => {
         console.error('Error fetching flashcard progress:', progressError);
       }
 
-      // Calculate statistics
+      // Calculate statistics from completed sessions only
       const allSessions = sessions || [];
-      const completedSessions = allSessions.filter(s => !s.is_active && s.duration);
-      const activeSessions = allSessions.filter(s => s.is_active);
-
-      // Calculate total study time with proper validation
-      let totalStudyTimeSeconds = 0;
       
-      // Add time from completed sessions (duration is in seconds)
-      completedSessions.forEach(session => {
-        if (session.duration && session.duration > 0) {
-          // Filter out unrealistic sessions (more than 12 hours = 43200 seconds)
-          const sessionDuration = Math.min(session.duration, 43200);
-          totalStudyTimeSeconds += sessionDuration;
-        }
-      });
-
-      // Add time from active sessions (calculate from start_time)
-      activeSessions.forEach(session => {
-        if (session.start_time) {
-          const sessionSeconds = (Date.now() - new Date(session.start_time).getTime()) / 1000;
-          // Cap active sessions at 12 hours maximum
-          const cappedSeconds = Math.min(sessionSeconds, 43200);
-          if (cappedSeconds > 0) {
-            totalStudyTimeSeconds += cappedSeconds;
-          }
-        }
-      });
+      // Calculate total study time (duration is in seconds)
+      const totalStudyTimeSeconds = allSessions.reduce((sum, session) => {
+        return sum + (session.duration || 0);
+      }, 0);
 
       // Convert to hours with proper rounding
       const totalStudyTimeHours = Math.round((totalStudyTimeSeconds / 3600) * 10) / 10;
       
       // Calculate average session time in minutes
-      const averageSessionTimeMinutes = completedSessions.length > 0 
-        ? Math.round((totalStudyTimeSeconds / completedSessions.length) / 60) 
+      const averageSessionTimeMinutes = allSessions.length > 0 
+        ? Math.round((totalStudyTimeSeconds / allSessions.length) / 60) 
         : 0;
 
       // Calculate flashcard statistics
@@ -104,28 +87,31 @@ export const useConsolidatedAnalytics = () => {
       // Recent sessions for dashboard
       const recentSessions = allSessions.slice(0, 5);
 
-      // Today's statistics
+      // Today's statistics - only from completed sessions
       const today = new Date().toISOString().split('T')[0];
       const todaySessions = allSessions.filter(s => 
         s.start_time && s.start_time.startsWith(today)
       );
 
-      let todayStudyTimeSeconds = 0;
-      todaySessions.forEach(session => {
-        if (session.duration && !session.is_active) {
-          // Cap at 12 hours for realistic data
-          const sessionDuration = Math.min(session.duration, 43200);
-          todayStudyTimeSeconds += sessionDuration;
-        } else if (session.is_active && session.start_time) {
-          const sessionSeconds = (Date.now() - new Date(session.start_time).getTime()) / 1000;
-          const cappedSeconds = Math.min(sessionSeconds, 43200);
-          if (cappedSeconds > 0) {
-            todayStudyTimeSeconds += cappedSeconds;
-          }
-        }
-      });
+      const todayStudyTimeSeconds = todaySessions.reduce((sum, session) => {
+        return sum + (session.duration || 0);
+      }, 0);
 
       const todayStudyTimeHours = Math.round((todayStudyTimeSeconds / 3600) * 10) / 10;
+
+      // Weekly statistics - last 7 days of completed sessions
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      const weeklySessions = allSessions.filter(s => 
+        s.start_time && new Date(s.start_time) >= sevenDaysAgo
+      );
+
+      const weeklyStudyTimeSeconds = weeklySessions.reduce((sum, session) => {
+        return sum + (session.duration || 0);
+      }, 0);
+
+      const weeklyStudyTimeHours = Math.round((weeklyStudyTimeSeconds / 3600) * 10) / 10;
 
       const result = {
         // Overall statistics
@@ -141,9 +127,13 @@ export const useConsolidatedAnalytics = () => {
         todayStudyTime: todayStudyTimeHours,
         todaySessions: todaySessions.length,
         
+        // Weekly statistics
+        weeklyStudyTime: weeklyStudyTimeHours,
+        weeklySessions: weeklySessions.length,
+        
         // Recent data
         recentSessions,
-        activeSessions,
+        activeSessions: [], // No active sessions in this calculation
         
         // Streak calculation (simplified)
         streakDays: 0, // TODO: Implement proper streak calculation
@@ -163,18 +153,19 @@ export const useConsolidatedAnalytics = () => {
       };
 
       console.log('Consolidated analytics result:', result);
-      console.log('Total study time calculation:', {
+      console.log('Study time calculation:', {
         totalSeconds: totalStudyTimeSeconds,
         totalHours: totalStudyTimeHours,
-        completedSessions: completedSessions.length,
-        activeSessions: activeSessions.length
+        todayHours: todayStudyTimeHours,
+        weeklyHours: weeklyStudyTimeHours,
+        sessionsCount: allSessions.length
       });
       
       return result;
     },
     enabled: !!user,
     staleTime: 30 * 1000, // 30 seconds
-    refetchInterval: 60 * 1000, // Refetch every minute to catch active sessions
+    refetchInterval: false, // Remove auto-refetch to prevent inconsistencies
   });
 
   return { 
@@ -188,6 +179,8 @@ export const useConsolidatedAnalytics = () => {
       flashcardAccuracy: 0,
       todayStudyTime: 0,
       todaySessions: 0,
+      weeklyStudyTime: 0,
+      weeklySessions: 0,
       recentSessions: [],
       activeSessions: [],
       streakDays: 0,
