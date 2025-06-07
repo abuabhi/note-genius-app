@@ -83,7 +83,7 @@ export const NoteCard = ({
   
   const handleGoToStudyMode = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/notes/study/${note.id}`);
+    navigate(`/notes/${note.id}`);
   };
 
   // Format date as dd-MMM-yyyy (e.g., 15-May-2023)

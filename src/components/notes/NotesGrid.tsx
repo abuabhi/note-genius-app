@@ -42,7 +42,7 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
   };
 
   const handleNoteClick = (note: Note) => {
-    navigate(`/notes/study/${note.id}`);
+    navigate(`/notes/${note.id}`);
   };
 
   const handleShowDetails = (note: Note, e: React.MouseEvent) => {
