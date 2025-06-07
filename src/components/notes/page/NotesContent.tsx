@@ -1,5 +1,5 @@
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useDeferredValue } from "react";
 import { useNotes } from "@/contexts/NoteContext";
 import { useRequireAuth, TierLimits, UserTier } from "@/hooks/useRequireAuth";
 import { Note } from "@/types/note";
@@ -29,30 +29,34 @@ export const NotesContent = ({
   const [isPending, startTransition] = useTransition();
   const [activeSubjectId, setActiveSubjectId] = useState<string | null>(null);
   
-  // Wrap hooks in try-catch to prevent suspension errors
-  let notesData;
-  let authData;
+  // Defer the subject ID to prevent suspension during updates
+  const deferredActiveSubjectId = useDeferredValue(activeSubjectId);
   
-  try {
-    notesData = useNotes();
-    authData = useRequireAuth();
-  } catch (error) {
-    console.error("Error in hooks:", error);
-    return <LoadingState message="Loading application..." />;
-  }
+  // Safely get notes data with fallbacks
+  const notesContext = useNotes();
+  const { 
+    paginatedNotes = [], 
+    notes = [], 
+    loading = true, 
+    setFilterOptions, 
+    filteredNotes = [], 
+    searchTerm = '', 
+    filterOptions = {} 
+  } = notesContext || {};
 
-  const { paginatedNotes, notes, loading, setFilterOptions, filteredNotes, searchTerm, filterOptions } = notesData;
-  const { user, loading: authLoading } = authData;
+  // Safely get auth data with fallbacks
+  const authContext = useRequireAuth();
+  const { user, loading: authLoading = true } = authContext || {};
 
   // Check if notes are filtered - properly handle Date types
   const isFiltered = searchTerm.length > 0 || 
                     Boolean(filterOptions.dateFrom) || 
                     Boolean(filterOptions.dateTo) || 
-                    Boolean(activeSubjectId);
+                    Boolean(deferredActiveSubjectId);
 
-  // Show loading state while checking authentication
-  if (authLoading || isPending) {
-    return <LoadingState message="Checking authentication..." />;
+  // Show loading state while checking authentication or during transitions
+  if (authLoading || isPending || loading) {
+    return <LoadingState message="Loading..." />;
   }
 
   // If not authenticated, the useRequireAuth hook will redirect
@@ -60,20 +64,7 @@ export const NotesContent = ({
     return null;
   }
 
-  // Create wrapper functions that don't expect arguments
-  const handleCreateNote = () => {
-    // This will be handled by the dialog opening
-  };
-
-  const handleScanNote = () => {
-    // This will be handled by the dialog opening
-  };
-
-  const handleImportNote = () => {
-    // This will be handled by the dialog opening
-  };
-
-  // Wrap subject change in transition
+  // Wrap subject change in transition to prevent suspension
   const handleSubjectChange = (subjectId: string | null) => {
     startTransition(() => {
       setActiveSubjectId(subjectId);
@@ -88,7 +79,7 @@ export const NotesContent = ({
           
           {/* Breadcrumb with modern styling */}
           <div className="flex items-center justify-between">
-            <NotesPageBreadcrumb activeSubjectId={activeSubjectId} />
+            <NotesPageBreadcrumb activeSubjectId={deferredActiveSubjectId} />
             <div className="hidden sm:flex items-center gap-2 text-sm text-slate-500">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
               <span>Live sync enabled</span>
@@ -126,7 +117,7 @@ export const NotesContent = ({
           {/* Subject Tabs with modern design */}
           <div className="relative">
             <SubjectsSection 
-              activeSubjectId={activeSubjectId}
+              activeSubjectId={deferredActiveSubjectId}
               setActiveSubjectId={handleSubjectChange}
               setFilterOptions={setFilterOptions}
               filteredNotesCount={filteredNotes.length}
@@ -138,12 +129,12 @@ export const NotesContent = ({
             <NotesDisplay 
               notes={notes} 
               paginatedNotes={paginatedNotes} 
-              loading={loading}
+              loading={false}
               isFiltered={isFiltered}
-              activeSubject={activeSubjectId || 'all'}
-              onCreateNote={handleCreateNote}
-              onScanNote={handleScanNote}
-              onImportNote={handleImportNote}
+              activeSubject={deferredActiveSubjectId || 'all'}
+              onCreateNote={() => {}}
+              onScanNote={() => {}}
+              onImportNote={() => {}}
             />
           </div>
         </div>

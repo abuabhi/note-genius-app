@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface NoteSummaryProps {
   noteContent: string;
@@ -10,15 +10,28 @@ interface NoteSummaryProps {
 export const NoteSummary = ({ noteContent }: NoteSummaryProps) => {
   const [summary, setSummary] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
+  const timeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
-    // Simulate summary generation
-    const timer = setTimeout(() => {
-      setSummary(`This is a summary of the note content. Key points and main ideas are highlighted here for quick review and study.`);
-      setIsLoading(false);
-    }, 1000);
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
 
-    return () => clearTimeout(timer);
+    // Use requestAnimationFrame to prevent suspension during synchronous updates
+    const frameId = requestAnimationFrame(() => {
+      timeoutRef.current = setTimeout(() => {
+        setSummary(`This is a summary of the note content. Key points and main ideas are highlighted here for quick review and study.`);
+        setIsLoading(false);
+      }, 1000);
+    });
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
   }, [noteContent]);
 
   if (isLoading) {

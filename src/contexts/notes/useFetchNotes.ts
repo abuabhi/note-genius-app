@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { fetchNotesFromSupabase } from './noteUtils';
 import { Note } from '@/types/note';
@@ -9,15 +9,21 @@ export function useFetchNotes(
   setLoading: React.Dispatch<React.SetStateAction<boolean>>
 ) {
   const { toast } = useToast();
+  const hasFetchedRef = useRef(false);
   
   useEffect(() => {
+    // Prevent multiple fetches
+    if (hasFetchedRef.current) return;
+    
     let isMounted = true;
     
     const loadNotes = async () => {
       try {
         if (!isMounted) return;
         
-        setLoading(true);
+        // Mark as fetched before starting to prevent race conditions
+        hasFetchedRef.current = true;
+        
         console.log('🔄 Fetching notes from database...');
         
         const fetchedNotes = await fetchNotesFromSupabase();
@@ -59,14 +65,14 @@ export function useFetchNotes(
       }
     };
 
-    // Use a small delay to prevent immediate suspension
-    const timeoutId = setTimeout(() => {
+    // Use requestAnimationFrame to defer the fetch and prevent suspension
+    const frameId = requestAnimationFrame(() => {
       loadNotes();
-    }, 0);
+    });
 
     return () => {
       isMounted = false;
-      clearTimeout(timeoutId);
+      cancelAnimationFrame(frameId);
     };
-  }, [setNotes, setLoading, toast]);
+  }, []); // Remove dependencies to prevent re-fetching
 }

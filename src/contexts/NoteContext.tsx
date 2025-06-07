@@ -53,13 +53,17 @@ export const NoteProvider = ({ children }: { children: ReactNode }) => {
     filterByTag(tagName, setSearchTerm);
   };
 
-  // Get all tags from the notes
+  // Get all tags from the notes - memoize to prevent recalculation
   const tags = React.useMemo(() => {
+    if (!notes || notes.length === 0) return [];
+    
     const tagsSet = new Set<string>();
     const tagsWithDetails: { id: string; name: string; color: string }[] = [];
     
     notes.forEach(note => {
-      note.tags?.forEach(tag => {
+      if (!note.tags) return;
+      
+      note.tags.forEach(tag => {
         if (!tagsSet.has(tag.name)) {
           tagsSet.add(tag.name);
           tagsWithDetails.push({
@@ -74,38 +78,40 @@ export const NoteProvider = ({ children }: { children: ReactNode }) => {
     return tagsWithDetails;
   }, [notes]);
 
+  const contextValue: NoteContextType = { 
+    notes, 
+    filteredNotes, 
+    paginatedNotes,
+    searchTerm, 
+    setSearchTerm, 
+    addNote, 
+    deleteNote, 
+    updateNote,
+    pinNote,
+    archiveNote,
+    sortType,
+    setSortType,
+    showArchived,
+    setShowArchived,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    notesPerPage,
+    setNotesPerPage,
+    loading,
+    getAllTags,
+    filterByTag: handleFilterByTag,
+    filterOptions,
+    setFilterOptions,
+    resetFilters,
+    availableCategories,
+    addCategory,
+    setNotes,
+    tags
+  };
+
   return (
-    <NoteContext.Provider value={{ 
-      notes, 
-      filteredNotes, 
-      paginatedNotes,
-      searchTerm, 
-      setSearchTerm, 
-      addNote, 
-      deleteNote, 
-      updateNote,
-      pinNote,
-      archiveNote,
-      sortType,
-      setSortType,
-      showArchived,
-      setShowArchived,
-      currentPage,
-      setCurrentPage,
-      totalPages,
-      notesPerPage,
-      setNotesPerPage,
-      loading,
-      getAllTags,
-      filterByTag: handleFilterByTag,
-      filterOptions,
-      setFilterOptions,
-      resetFilters,
-      availableCategories,
-      addCategory,
-      setNotes,
-      tags  // Added tags property to context value
-    }}>
+    <NoteContext.Provider value={contextValue}>
       {children}
     </NoteContext.Provider>
   );
