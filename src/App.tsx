@@ -1,7 +1,8 @@
+
 import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/auth';
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { publicRoutes } from './routes/publicRoutes';
 import { standardRoutes } from './routes/standardRoutes';
@@ -13,6 +14,9 @@ import { OptimizedAppRoutes } from './components/optimized/OptimizedAppRoutes';
 import { SessionProvider } from '@/contexts/SessionContext';
 import { useStudyActivityDetector } from '@/hooks/useStudyActivityDetector';
 
+// Create a QueryClient instance
+const queryClient = new QueryClient();
+
 // Component to handle study activity detection
 const StudyActivityHandler = () => {
   useStudyActivityDetector();
@@ -21,7 +25,7 @@ const StudyActivityHandler = () => {
 
 function App() {
   return (
-    <QueryClient>
+    <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
           <SessionProvider>
@@ -55,7 +59,7 @@ function App() {
           </SessionProvider>
         </AuthProvider>
       </BrowserRouter>
-    </QueryClient>
+    </QueryClientProvider>
   );
 }
 

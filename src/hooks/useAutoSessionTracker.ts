@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/integrations/supabase/client';
@@ -181,10 +180,16 @@ export const useAutoSessionTracker = () => {
           updated_at: new Date().toISOString()
         };
         
-        navigator.sendBeacon(
-          `${supabase.supabaseUrl}/rest/v1/study_sessions?id=eq.${sessionState.currentSessionId}`,
-          JSON.stringify(sessionData)
-        );
+        // Use fetch with keepalive instead of accessing protected supabaseUrl
+        fetch(`https://zuhcmwujzfddmafozubd.supabase.co/rest/v1/study_sessions?id=eq.${sessionState.currentSessionId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1aGNtd3VqemZkZG1hZm96dWJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1MjUxOTQsImV4cCI6MjA2MjEwMTE5NH0.oz_MnWdGGh76eOjQ2k69OhQhqBh4KXG0Wq_cN-VJwzw'
+          },
+          body: JSON.stringify(sessionData),
+          keepalive: true
+        }).catch(error => console.error('Failed to save session on unload:', error));
       }
     };
 
