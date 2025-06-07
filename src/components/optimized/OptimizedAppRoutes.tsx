@@ -9,6 +9,8 @@ import { NoteProvider } from '@/contexts/NoteContext';
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const NotesPage = lazy(() => import('@/pages/NotesPage'));
 const NoteStudyPage = lazy(() => import('@/pages/NoteStudyPage'));
+const EditNotePage = lazy(() => import('@/pages/EditNotePage'));
+const NoteToFlashcardPage = lazy(() => import('@/pages/NoteToFlashcardPage'));
 const FlashcardsPage = lazy(() => import('@/pages/FlashcardsPage'));
 const CreateFlashcardPage = lazy(() => import('@/pages/CreateFlashcardPage'));
 const FlashcardStudyPage = lazy(() => import('@/pages/FlashcardStudyPage'));
@@ -157,6 +159,26 @@ export const OptimizedAppRoutes = () => {
           <NoteProvider>
             <LazyLoadWrapper fallback={<PageLoadingSkeleton type="notes" />}>
               <NoteStudyPage />
+            </LazyLoadWrapper>
+          </NoteProvider>
+        } 
+      />
+      <Route 
+        path="/edit-note/:noteId" 
+        element={
+          <NoteProvider>
+            <LazyLoadWrapper fallback={<PageLoadingSkeleton type="notes" />}>
+              <EditNotePage />
+            </LazyLoadWrapper>
+          </NoteProvider>
+        } 
+      />
+      <Route 
+        path="/note-to-flashcard" 
+        element={
+          <NoteProvider>
+            <LazyLoadWrapper fallback={<PageLoadingSkeleton type="notes" />}>
+              <NoteToFlashcardPage />
             </LazyLoadWrapper>
           </NoteProvider>
         } 

@@ -5,6 +5,8 @@ import { RouteConfig } from './publicRoutes';
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const NotesPage = lazy(() => import('@/pages/NotesPage'));
 const NoteStudyPage = lazy(() => import('@/pages/NoteStudyPage'));
+const EditNotePage = lazy(() => import('@/pages/EditNotePage'));
+const NoteToFlashcardPage = lazy(() => import('@/pages/NoteToFlashcardPage'));
 const FlashcardsPage = lazy(() => import('@/pages/FlashcardsPage'));
 const CreateFlashcardPage = lazy(() => import('@/pages/CreateFlashcardPage'));
 const FlashcardStudyPage = lazy(() => import('@/pages/FlashcardStudyPage'));
@@ -33,6 +35,14 @@ export const standardRoutes: RouteConfig[] = [
   {
     path: "/notes/:id",
     element: <NoteStudyPage />
+  },
+  {
+    path: "/edit-note/:noteId",
+    element: <EditNotePage />
+  },
+  {
+    path: "/note-to-flashcard",
+    element: <NoteToFlashcardPage />
   },
   {
     path: "/flashcards",

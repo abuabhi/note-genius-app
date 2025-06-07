@@ -1,6 +1,5 @@
 
 import Layout from '@/components/layout/Layout';
-import { NoteProvider } from '@/contexts/NoteContext';
 import { NotesContent } from '@/components/notes/page/NotesContent';
 import { PageBreadcrumb } from '@/components/ui/page-breadcrumb';
 import { FileText } from 'lucide-react';
@@ -71,13 +70,11 @@ const NotesPage = () => {
             console.error('Notes page error caught by boundary:', error, errorInfo);
           }}
         >
-          <NoteProvider>
-            <NotesContent 
-              onSaveNote={handleSaveNote}
-              onScanNote={handleScanNote}
-              onImportNote={handleImportNote}
-            />
-          </NoteProvider>
+          <NotesContent 
+            onSaveNote={handleSaveNote}
+            onScanNote={handleScanNote}
+            onImportNote={handleImportNote}
+          />
         </ErrorBoundary>
       </div>
     </Layout>
