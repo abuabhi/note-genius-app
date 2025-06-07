@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
@@ -62,8 +61,7 @@ const StudySessionsPage = () => {
           {/* Header Section */}
           <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-mint-100 p-6 shadow-lg">
             <StudySessionsBreadcrumb 
-              activeFilter={activeTab} 
-              sessionCount={currentSessions.length} 
+              activeFilter={activeTab}
             />
             
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between mt-4">
@@ -96,7 +94,7 @@ const StudySessionsPage = () => {
                   </div>
                   <div className="mt-2">
                     <div className="text-lg font-semibold text-blue-800">
-                      {analytics.totalStudyTime}h
+                      {Math.round(analytics.totalStudyTimeMinutes / 60 * 10) / 10}h
                     </div>
                     <div className="text-xs text-blue-600">Total Time</div>
                   </div>
