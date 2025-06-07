@@ -1,0 +1,120 @@
+
+.unified-content-renderer {
+  line-height: 1.7;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+}
+
+.unified-content-renderer h1,
+.unified-content-renderer h2,
+.unified-content-renderer h3,
+.unified-content-renderer h4,
+.unified-content-renderer h5,
+.unified-content-renderer h6 {
+  font-weight: 600;
+  line-height: 1.25;
+  margin-top: 1.5em;
+  margin-bottom: 0.75em;
+}
+
+.unified-content-renderer h1:first-child,
+.unified-content-renderer h2:first-child,
+.unified-content-renderer h3:first-child,
+.unified-content-renderer h4:first-child {
+  margin-top: 0;
+}
+
+.unified-content-renderer p {
+  margin-bottom: 1.25em;
+  line-height: 1.7;
+}
+
+.unified-content-renderer p:last-child {
+  margin-bottom: 0;
+}
+
+.unified-content-renderer ul,
+.unified-content-renderer ol {
+  margin-bottom: 1.5em;
+  padding-left: 1.5em;
+}
+
+.unified-content-renderer li {
+  margin-bottom: 0.5em;
+  line-height: 1.6;
+}
+
+.unified-content-renderer li:last-child {
+  margin-bottom: 0;
+}
+
+.unified-content-renderer strong {
+  font-weight: 600;
+}
+
+.unified-content-renderer blockquote {
+  margin: 1.5em 0;
+  padding: 1em 1.5em;
+  border-left: 4px solid;
+  font-style: italic;
+}
+
+.unified-content-renderer code {
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  font-size: 0.9em;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+}
+
+.unified-content-renderer pre {
+  margin: 1.5em 0;
+  padding: 1em;
+  overflow-x: auto;
+  border-radius: 6px;
+}
+
+.unified-content-renderer pre code {
+  padding: 0;
+  background: transparent;
+}
+
+/* Enhanced content specific styles */
+.unified-content-renderer .enhanced-block {
+  margin: 1.5em 0;
+  padding: 1.25em;
+  border-radius: 8px;
+  border-left: 4px solid;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.unified-content-renderer .enhanced-block:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.unified-content-renderer .enhanced-block h1,
+.unified-content-renderer .enhanced-block h2,
+.unified-content-renderer .enhanced-block h3,
+.unified-content-renderer .enhanced-block h4 {
+  margin-top: 0.75em;
+  margin-bottom: 0.5em;
+}
+
+.unified-content-renderer .enhanced-block h1:first-child,
+.unified-content-renderer .enhanced-block h2:first-child,
+.unified-content-renderer .enhanced-block h3:first-child,
+.unified-content-renderer .enhanced-block h4:first-child {
+  margin-top: 0;
+}
+
+.unified-content-renderer .enhanced-block p {
+  margin-bottom: 0.75em;
+}
+
+.unified-content-renderer .enhanced-block ul,
+.unified-content-renderer .enhanced-block ol {
+  margin-bottom: 1em;
+}
+
+.unified-content-renderer .enhanced-block li {
+  margin-bottom: 0.25em;
+}
