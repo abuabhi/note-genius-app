@@ -3,7 +3,7 @@ import { StudyStatsOverview } from './StudyStatsOverview';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useUnifiedStudyStats } from '@/hooks/useUnifiedStudyStats';
-import { TrendingUp, Target, Clock, Calendar } from "lucide-react";
+import { TrendingUp, Target, Clock, Calendar, Globe } from "lucide-react";
 
 export const StudyAnalyticsDashboard = () => {
   const { stats, isLoading } = useUnifiedStudyStats();
@@ -38,6 +38,23 @@ export const StudyAnalyticsDashboard = () => {
 
   return (
     <div className="space-y-8">
+      {/* Timezone Info Banner */}
+      <Card className="bg-blue-50 border-blue-200">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-3 text-blue-800">
+            <Globe className="h-5 w-5" />
+            <div>
+              <p className="font-medium">Timezone-Aware Analytics</p>
+              <p className="text-sm text-blue-600">
+                Statistics calculated for your timezone: {stats.timezone} • 
+                Today: {stats.todayString} • 
+                Current time: {new Date().toLocaleString(undefined, { timeZone: stats.timezone })}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Overview Stats */}
       <div>
         <h2 className="text-xl font-semibold mb-4 text-mint-900">Study Analytics Overview</h2>

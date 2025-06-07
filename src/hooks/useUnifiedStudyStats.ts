@@ -1,10 +1,10 @@
 
-import { useConsolidatedAnalytics } from './useConsolidatedAnalytics';
+import { useTimezoneAwareAnalytics } from './useTimezoneAwareAnalytics';
 
 export const useUnifiedStudyStats = () => {
-  const { analytics, isLoading } = useConsolidatedAnalytics();
+  const { analytics, isLoading } = useTimezoneAwareAnalytics();
 
-  // Transform consolidated analytics to unified format
+  // Transform timezone-aware analytics to unified format
   const stats = {
     // Session metrics
     totalSessions: analytics.totalSessions,
@@ -34,7 +34,11 @@ export const useUnifiedStudyStats = () => {
     
     // Session data
     recentSessions: analytics.recentSessions,
-    activeSessions: analytics.activeSessions
+    activeSessions: analytics.activeSessions,
+    
+    // Timezone info
+    timezone: analytics.timezone,
+    todayString: analytics.todayString
   };
 
   return { stats, isLoading };
