@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
+import { startTransition } from "react";
 
 // Updated badge variants to match the mint theme
 const tierBadgeVariants = {
@@ -66,6 +67,8 @@ export function UserTierDisplay() {
       };
     },
     enabled: !!userTier,
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    refetchOnWindowFocus: false, // Prevent automatic refetch on focus
   });
   
   if (isLoading || !userTier) {
@@ -88,7 +91,9 @@ export function UserTierDisplay() {
   };
 
   const handleTierClick = () => {
-    navigate('/settings?tab=subscription');
+    startTransition(() => {
+      navigate('/settings?tab=subscription');
+    });
   };
 
   return (

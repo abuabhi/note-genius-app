@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, startTransition } from "react";
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useUserTier, UserTier } from "@/hooks/useUserTier";
 import { useCountries } from "@/hooks/useCountries";
@@ -32,7 +32,9 @@ export const useSettingsForm = () => {
   useEffect(() => {
     const tabParam = searchParams.get('tab');
     if (tabParam && ['account', 'subjects', 'adaptive', 'notifications', 'subscription'].includes(tabParam)) {
-      setActiveTab(tabParam);
+      startTransition(() => {
+        setActiveTab(tabParam);
+      });
     }
   }, [searchParams, setActiveTab]);
 
@@ -80,7 +82,9 @@ export const useSettingsForm = () => {
   const confirmNavigation = () => {
     setShowUnsavedChangesDialog(false);
     if (pendingNavigation) {
-      navigate(pendingNavigation);
+      startTransition(() => {
+        navigate(pendingNavigation);
+      });
       setPendingNavigation(null);
     }
   };
