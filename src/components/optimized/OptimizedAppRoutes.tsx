@@ -3,6 +3,7 @@ import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { LazyLoadWrapper } from '@/components/performance/LazyLoadWrapper';
+import { NoteProvider } from '@/contexts/NoteContext';
 
 // Lazy load all major pages for code splitting
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
@@ -12,12 +13,21 @@ const OptimizedProgressPage = lazy(() => import('@/pages/OptimizedProgressPage')
 const OptimizedStudySessionsPage = lazy(() => import('@/pages/OptimizedStudySessionsPage'));
 const OptimizedNoteStudyPage = lazy(() => import('@/pages/OptimizedNoteStudyPage'));
 
-// Add missing pages
+// Standard pages that don't have optimized versions yet
 const GoalsPage = lazy(() => import('@/pages/GoalsPage'));
 const TodoPage = lazy(() => import('@/pages/TodoPage'));
+const StudySessionsPage = lazy(() => import('@/pages/StudySessionsPage'));
+const ProgressPage = lazy(() => import('@/pages/ProgressPage'));
+const SchedulePage = lazy(() => import('@/pages/SchedulePage'));
+const QuizPage = lazy(() => import('@/pages/QuizPage'));
+const CreateQuizPage = lazy(() => import('@/pages/CreateQuizPage'));
+const TakeQuizPage = lazy(() => import('@/pages/TakeQuizPage'));
+const ChatPage = lazy(() => import('@/pages/ChatPage'));
+const CollaborationPage = lazy(() => import('@/pages/CollaborationPage'));
+const ConnectionsPage = lazy(() => import('@/pages/ConnectionsPage'));
 
 // Loading components for each page type
-const PageLoadingSkeleton = ({ type }: { type: 'dashboard' | 'notes' | 'flashcards' | 'progress' | 'sessions' | 'goals' | 'todos' }) => {
+const PageLoadingSkeleton = ({ type }: { type: 'dashboard' | 'notes' | 'flashcards' | 'progress' | 'sessions' | 'goals' | 'todos' | 'standard' }) => {
   const skeletons = {
     dashboard: (
       <Layout>
@@ -101,6 +111,14 @@ const PageLoadingSkeleton = ({ type }: { type: 'dashboard' | 'notes' | 'flashcar
           </div>
         </div>
       </Layout>
+    ),
+    standard: (
+      <Layout>
+        <div className="container mx-auto p-6 space-y-6">
+          <div className="h-8 bg-gray-200 rounded animate-pulse" />
+          <div className="h-64 bg-gray-200 rounded animate-pulse" />
+        </div>
+      </Layout>
     )
   };
 
@@ -110,6 +128,7 @@ const PageLoadingSkeleton = ({ type }: { type: 'dashboard' | 'notes' | 'flashcar
 export const OptimizedAppRoutes = () => {
   return (
     <Routes>
+      {/* Dashboard */}
       <Route 
         path="/dashboard" 
         element={
@@ -118,22 +137,30 @@ export const OptimizedAppRoutes = () => {
           </LazyLoadWrapper>
         } 
       />
+      
+      {/* Notes routes - wrapped with NoteProvider */}
       <Route 
         path="/notes" 
         element={
-          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="notes" />}>
-            <OptimizedNotesPage />
-          </LazyLoadWrapper>
+          <NoteProvider>
+            <LazyLoadWrapper fallback={<PageLoadingSkeleton type="notes" />}>
+              <OptimizedNotesPage />
+            </LazyLoadWrapper>
+          </NoteProvider>
         } 
       />
       <Route 
         path="/notes/:id" 
         element={
-          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="notes" />}>
-            <OptimizedNoteStudyPage />
-          </LazyLoadWrapper>
+          <NoteProvider>
+            <LazyLoadWrapper fallback={<PageLoadingSkeleton type="notes" />}>
+              <OptimizedNoteStudyPage />
+            </LazyLoadWrapper>
+          </NoteProvider>
         } 
       />
+      
+      {/* Flashcards */}
       <Route 
         path="/flashcards" 
         element={
@@ -142,6 +169,8 @@ export const OptimizedAppRoutes = () => {
           </LazyLoadWrapper>
         } 
       />
+      
+      {/* Progress */}
       <Route 
         path="/progress" 
         element={
@@ -150,6 +179,8 @@ export const OptimizedAppRoutes = () => {
           </LazyLoadWrapper>
         } 
       />
+      
+      {/* Study Sessions */}
       <Route 
         path="/study-sessions" 
         element={
@@ -158,6 +189,8 @@ export const OptimizedAppRoutes = () => {
           </LazyLoadWrapper>
         } 
       />
+      
+      {/* Goals */}
       <Route 
         path="/goals" 
         element={
@@ -166,11 +199,75 @@ export const OptimizedAppRoutes = () => {
           </LazyLoadWrapper>
         } 
       />
+      
+      {/* Todos */}
       <Route 
         path="/todos" 
         element={
           <LazyLoadWrapper fallback={<PageLoadingSkeleton type="todos" />}>
             <TodoPage />
+          </LazyLoadWrapper>
+        } 
+      />
+      
+      {/* Quiz routes */}
+      <Route 
+        path="/quizzes" 
+        element={
+          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="standard" />}>
+            <QuizPage />
+          </LazyLoadWrapper>
+        } 
+      />
+      <Route 
+        path="/create-quiz" 
+        element={
+          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="standard" />}>
+            <CreateQuizPage />
+          </LazyLoadWrapper>
+        } 
+      />
+      <Route 
+        path="/quiz/take/:quizId" 
+        element={
+          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="standard" />}>
+            <TakeQuizPage />
+          </LazyLoadWrapper>
+        } 
+      />
+      
+      {/* Communication and Collaboration */}
+      <Route 
+        path="/chat" 
+        element={
+          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="standard" />}>
+            <ChatPage />
+          </LazyLoadWrapper>
+        } 
+      />
+      <Route 
+        path="/collaboration" 
+        element={
+          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="standard" />}>
+            <CollaborationPage />
+          </LazyLoadWrapper>
+        } 
+      />
+      <Route 
+        path="/connections" 
+        element={
+          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="standard" />}>
+            <ConnectionsPage />
+          </LazyLoadWrapper>
+        } 
+      />
+      
+      {/* Schedule */}
+      <Route 
+        path="/schedule" 
+        element={
+          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="standard" />}>
+            <SchedulePage />
           </LazyLoadWrapper>
         } 
       />

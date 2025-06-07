@@ -1,3 +1,4 @@
+
 import { Routes, Route } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { LazyLoadWrapper } from '@/components/performance/LazyLoadWrapper';
@@ -30,7 +31,7 @@ const AppRoutes = () => {
         </LazyLoadWrapper>
       } />
       
-      {/* Optimized application routes */}
+      {/* Optimized application routes - all features now available */}
       <Route path="/*" element={<OptimizedAppRoutes />} />
     </Routes>
   );

@@ -5,15 +5,13 @@ import { useAuth } from "./auth/useAuth";
 export function usePremiumFeatures() {
   const { user } = useAuth();
   
-  // Check if the user has premium features based on their tier
-  // We'll use a hardcoded value for now since userProfile isn't available
-  // This should be replaced with actual user profile data when available
-  const isPremium = false; // Default to false for now
+  // All features are now permanently enabled - no more feature flag checking
+  const isPremium = true; // Enable all premium features
   
-  // Define which features are enabled
-  const aiFlashcardGenerationEnabled = isPremium;
-  const enhancedNotesEnabled = isPremium;
-  const unlimitedFlashcardsEnabled = isPremium;
+  // All features are now enabled
+  const aiFlashcardGenerationEnabled = true;
+  const enhancedNotesEnabled = true;
+  const unlimitedFlashcardsEnabled = true;
   
   return {
     isPremium,

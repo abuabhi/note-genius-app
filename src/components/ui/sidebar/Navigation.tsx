@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { staggerVariants } from "./motion";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Separator } from "@/components/ui/separator";
-import { useNavigationFeatures } from "./hooks/useNavigationFeatures";
 import { NavLink } from "./NavLink";
 import { useLocation } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
@@ -28,12 +27,6 @@ interface NavigationProps {
 export const Navigation = ({ isCollapsed }: NavigationProps) => {
   const { userProfile } = useRequireAuth();
   const { pathname } = useLocation();
-  const {
-    isGoalsVisible,
-    isTodosVisible,
-    isProgressVisible,
-    isStudySessionsVisible
-  } = useNavigationFeatures();
   
   return (
     <motion.ul variants={staggerVariants} className="flex h-full flex-col">
@@ -72,7 +65,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                 />
                 <Separator className="my-2" />
                 
-                {/* Quiz */}
+                {/* Quiz - now always visible */}
                 <NavLink
                   to="/quizzes"
                   icon={Activity}
@@ -82,47 +75,35 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                 />
                 <Separator className="my-2" />
                 
-                {/* Goals */}
-                {isGoalsVisible && (
-                  <>
-                    <NavLink
-                      to="/goals"
-                      icon={Target}
-                      label="Goals"
-                      isActive={pathname.includes("/goals")}
-                      isCollapsed={isCollapsed}
-                    />
-                    <Separator className="my-2" />
-                  </>
-                )}
+                {/* Goals - now always visible */}
+                <NavLink
+                  to="/goals"
+                  icon={Target}
+                  label="Goals"
+                  isActive={pathname.includes("/goals")}
+                  isCollapsed={isCollapsed}
+                />
+                <Separator className="my-2" />
                 
-                {/* Todo */}
-                {isTodosVisible && (
-                  <>
-                    <NavLink
-                      to="/todos"
-                      icon={CheckSquare}
-                      label="ToDo"
-                      isActive={pathname.includes("/todos")}
-                      isCollapsed={isCollapsed}
-                    />
-                    <Separator className="my-2" />
-                  </>
-                )}
+                {/* Todo - now always visible */}
+                <NavLink
+                  to="/todos"
+                  icon={CheckSquare}
+                  label="ToDo"
+                  isActive={pathname.includes("/todos")}
+                  isCollapsed={isCollapsed}
+                />
+                <Separator className="my-2" />
                 
-                {/* Study Sessions */}
-                {isStudySessionsVisible && (
-                  <>
-                    <NavLink
-                      to="/study-sessions"
-                      icon={Clock}
-                      label="Study Sessions"
-                      isActive={pathname.includes("/study-sessions")}
-                      isCollapsed={isCollapsed}
-                    />
-                    <Separator className="my-2" />
-                  </>
-                )}
+                {/* Study Sessions - now always visible */}
+                <NavLink
+                  to="/study-sessions"
+                  icon={Clock}
+                  label="Study Sessions"
+                  isActive={pathname.includes("/study-sessions")}
+                  isCollapsed={isCollapsed}
+                />
+                <Separator className="my-2" />
                 
                 {/* Progress */}
                 <NavLink

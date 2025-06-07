@@ -1,7 +1,6 @@
 
 import { publicRoutes, RouteConfig } from './publicRoutes';
 import { standardRoutes } from './standardRoutes';
-import { featureProtectedRoutes } from './featureProtectedRoutes';
 import { adminRoutes } from './adminRoutes';
 import { authCallbackRoutes } from './authCallbackRoutes';
 import { miscRoutes } from './miscRoutes';
@@ -13,17 +12,15 @@ export type { RouteConfig };
 export {
   publicRoutes,
   standardRoutes,
-  featureProtectedRoutes,
   adminRoutes,
   authCallbackRoutes,
   miscRoutes,
 };
 
-// All routes combined
+// All routes combined - removed featureProtectedRoutes since all features are now permanently available
 export const allRoutes: RouteConfig[] = [
   ...publicRoutes,
   ...standardRoutes,
-  ...featureProtectedRoutes,
   ...adminRoutes,
   ...authCallbackRoutes,
   ...miscRoutes,
