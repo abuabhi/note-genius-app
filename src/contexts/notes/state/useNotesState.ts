@@ -7,10 +7,10 @@ import { usePaginatedNotes } from './usePaginatedNotes';
 import { useCategoriesState } from './useCategoriesState';
 
 /**
- * Main hook for managing notes state with stable updates
+ * Main hook for managing notes state with stable updates and error handling
  */
 export function useNotesState() {
-  // Core state
+  // Core state with proper initialization
   const [notes, setNotes] = useState<Note[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortType, setSortType] = useState('newest');
@@ -20,19 +20,21 @@ export function useNotesState() {
   // Filter options
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({});
   
-  // Get categories state
-  const { availableCategories, addCategory } = useCategoriesState(notes);
+  // Get categories state with error handling
+  const categoriesState = useCategoriesState(notes);
+  const { availableCategories, addCategory } = categoriesState || { availableCategories: [], addCategory: () => {} };
   
-  // Get filtered notes
+  // Get filtered notes with error handling
   const filteredNotes = useFilteredNotes(
     notes, 
     searchTerm, 
     sortType, 
     filterOptions, 
     showArchived
-  );
+  ) || [];
   
-  // Get paginated notes
+  // Get paginated notes with error handling
+  const paginationState = usePaginatedNotes(filteredNotes);
   const {
     currentPage,
     setCurrentPage,
@@ -40,9 +42,16 @@ export function useNotesState() {
     setNotesPerPage,
     totalPages,
     paginatedNotes
-  } = usePaginatedNotes(filteredNotes);
+  } = paginationState || {
+    currentPage: 1,
+    setCurrentPage: () => {},
+    notesPerPage: 10,
+    setNotesPerPage: () => {},
+    totalPages: 1,
+    paginatedNotes: []
+  };
   
-  // Simple state updates without transitions to prevent suspension
+  // Stable state update functions
   const updateSearchTerm = useCallback((term: string) => {
     setSearchTerm(term);
   }, []);

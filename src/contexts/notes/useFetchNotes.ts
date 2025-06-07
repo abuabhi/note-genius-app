@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { fetchNotesFromSupabase } from './noteUtils';
 import { Note } from '@/types/note';
@@ -10,68 +10,61 @@ export function useFetchNotes(
 ) {
   const { toast } = useToast();
   const hasFetchedRef = useRef(false);
+  const [error, setError] = useState<string | null>(null);
+  const retryCountRef = useRef(0);
+  const maxRetries = 3;
   
-  useEffect(() => {
-    // Prevent multiple fetches
-    if (hasFetchedRef.current) return;
+  const loadNotes = async (isRetry = false) => {
+    if (hasFetchedRef.current && !isRetry) return;
     
-    let isMounted = true;
-    
-    const loadNotes = async () => {
-      try {
-        if (!isMounted) return;
-        
-        // Mark as fetched before starting to prevent race conditions
+    try {
+      if (!isRetry) {
         hasFetchedRef.current = true;
-        
-        console.log('🔄 Fetching notes from database...');
-        
-        const fetchedNotes = await fetchNotesFromSupabase();
-        
-        if (!isMounted) return;
-        
-        // Update state without transitions to prevent suspension
-        if (!fetchedNotes || fetchedNotes.length === 0) {
-          console.log('No notes found or unable to fetch notes');
-          setNotes([]);
-        } else {
-          console.log('✅ Notes fetched successfully:', {
-            count: fetchedNotes.length,
-            notesWithEnhancements: fetchedNotes.filter(note => 
-              note.improved_content || note.summary || note.key_points || note.markdown_content
-            ).length,
-            sampleNote: fetchedNotes[0] ? {
-              id: fetchedNotes[0].id,
-              hasImprovedContent: !!fetchedNotes[0].improved_content,
-              hasSummary: !!fetchedNotes[0].summary,
-              hasKeyPoints: !!fetchedNotes[0].key_points,
-              hasMarkdown: !!fetchedNotes[0].markdown_content
-            } : null
-          });
-          setNotes(fetchedNotes);
-        }
-        
-        setLoading(false);
-      } catch (error) {
-        if (!isMounted) return;
-        
-        console.error('Error fetching notes:', error);
-        
-        setNotes([]);
-        setLoading(false);
-        
-        toast({
-          description: "Failed to load notes. Please check your connection and try again.",
-          variant: "destructive",
-        });
       }
-    };
+      
+      console.log('🔄 Loading notes...', isRetry ? '(retry)' : '(initial)');
+      setError(null);
+      
+      const fetchedNotes = await fetchNotesFromSupabase();
+      
+      console.log('✅ Notes loaded successfully:', fetchedNotes.length);
+      setNotes(fetchedNotes);
+      setLoading(false);
+      retryCountRef.current = 0;
+      
+    } catch (error) {
+      console.error('❌ Error loading notes:', error);
+      setError(error instanceof Error ? error.message : 'Unknown error');
+      
+      // Auto-retry logic
+      if (retryCountRef.current < maxRetries) {
+        retryCountRef.current++;
+        console.log(`🔄 Auto-retrying... (${retryCountRef.current}/${maxRetries})`);
+        setTimeout(() => loadNotes(true), 1000 * retryCountRef.current);
+        return;
+      }
+      
+      // Final failure
+      setNotes([]);
+      setLoading(false);
+      
+      toast({
+        description: "Failed to load notes. Please refresh the page or try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
-    // Use direct call instead of setTimeout to prevent delays
+  const retryManually = () => {
+    retryCountRef.current = 0;
+    hasFetchedRef.current = false;
+    setLoading(true);
+    loadNotes(true);
+  };
+
+  useEffect(() => {
     loadNotes();
+  }, []);
 
-    return () => {
-      isMounted = false;
-    };
-  }, []); // Keep empty dependencies to prevent re-fetching
+  return { error, retryManually };
 }

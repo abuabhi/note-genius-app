@@ -10,6 +10,7 @@ import { SubjectsSection } from "./SubjectsSection";
 import { NotesDisplay } from "./NotesDisplay";
 import { NoteCreationDialogs } from "./NoteCreationDialogs";
 import { LoadingState } from "./LoadingState";
+import { ErrorState } from "./ErrorState";
 
 interface NotesContentProps {
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
@@ -28,8 +29,30 @@ export const NotesContent = ({
 }: NotesContentProps) => {
   const [activeSubjectId, setActiveSubjectId] = useState<string | null>(null);
   
-  // Safely get notes data with fallbacks
+  // Get notes data with proper error handling
   const notesContext = useNotes();
+  
+  // Get auth data with proper error handling
+  const authContext = useRequireAuth();
+  
+  if (!notesContext) {
+    return (
+      <ErrorState 
+        message="Notes system is not available. Please refresh the page."
+        onRetry={() => window.location.reload()}
+      />
+    );
+  }
+
+  if (!authContext) {
+    return (
+      <ErrorState 
+        message="Authentication system is not available. Please refresh the page."
+        onRetry={() => window.location.reload()}
+      />
+    );
+  }
+
   const { 
     paginatedNotes = [], 
     notes = [], 
@@ -38,21 +61,17 @@ export const NotesContent = ({
     filteredNotes = [], 
     searchTerm = '', 
     filterOptions = {} 
-  } = notesContext || {};
+  } = notesContext;
 
-  // Safely get auth data with fallbacks
-  const authContext = useRequireAuth();
-  const { user, loading: authLoading = true } = authContext || {};
+  const { user, loading: authLoading = true } = authContext;
 
-  // Check if notes are filtered - properly handle Date types
-  const isFiltered = searchTerm.length > 0 || 
-                    Boolean(filterOptions.dateFrom) || 
-                    Boolean(filterOptions.dateTo) || 
-                    Boolean(activeSubjectId);
+  // Show loading state while checking authentication or loading notes
+  if (authLoading) {
+    return <LoadingState message="Checking authentication..." />;
+  }
 
-  // Show loading state while checking authentication
-  if (authLoading || loading) {
-    return <LoadingState message="Loading..." />;
+  if (loading) {
+    return <LoadingState message="Loading your notes..." />;
   }
 
   // If not authenticated, the useRequireAuth hook will redirect
@@ -60,7 +79,13 @@ export const NotesContent = ({
     return null;
   }
 
-  // Simple state handlers without transitions to prevent suspension
+  // Check if notes are filtered
+  const isFiltered = searchTerm.length > 0 || 
+                    Boolean(filterOptions.dateFrom) || 
+                    Boolean(filterOptions.dateTo) || 
+                    Boolean(activeSubjectId);
+
+  // Simple state handlers
   const handleSubjectChange = (subjectId: string | null) => {
     setActiveSubjectId(subjectId);
   };
@@ -72,10 +97,9 @@ export const NotesContent = ({
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-mint-50/30">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl">
-        {/* Glass morphism container with modern spacing */}
         <div className="backdrop-blur-sm bg-white/40 rounded-2xl border border-white/20 shadow-xl shadow-mint-500/5 p-8 space-y-10">
           
-          {/* Breadcrumb with modern styling */}
+          {/* Breadcrumb */}
           <div className="flex items-center justify-between">
             <NotesPageBreadcrumb activeSubjectId={activeSubjectId} />
             <div className="hidden sm:flex items-center gap-2 text-sm text-slate-500">
@@ -84,7 +108,7 @@ export const NotesContent = ({
             </div>
           </div>
           
-          {/* Enhanced Tier Information with modern card design */}
+          {/* Enhanced Tier Information */}
           {userTier && tierLimits && (
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-mint-400/10 to-blue-400/10 rounded-xl blur-xl"></div>
@@ -98,7 +122,7 @@ export const NotesContent = ({
             </div>
           )}
           
-          {/* Notes Header with enhanced design */}
+          {/* Notes Header */}
           <div className="relative">
             <div className="absolute -inset-4 bg-gradient-to-r from-mint-500/5 to-blue-500/5 rounded-2xl blur-xl"></div>
             <div className="relative bg-white/60 backdrop-blur-sm rounded-xl border border-mint-100/50 shadow-lg">
@@ -112,7 +136,7 @@ export const NotesContent = ({
             </div>
           </div>
           
-          {/* Subject Tabs with modern design */}
+          {/* Subject Tabs */}
           <div className="relative">
             <SubjectsSection 
               activeSubjectId={activeSubjectId}
@@ -122,7 +146,7 @@ export const NotesContent = ({
             />
           </div>
           
-          {/* Notes Display with enhanced container */}
+          {/* Notes Display */}
           <div className="relative min-h-[400px]">
             <NotesDisplay 
               notes={notes} 

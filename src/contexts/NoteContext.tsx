@@ -4,11 +4,40 @@ import { NoteContextType } from './notes/types';
 import { useNotesState } from './notes/state/useNotesState';
 import { useNotesOperations } from './notes/useNotesOperations';
 import { useFetchNotes } from './notes/useFetchNotes';
+import { ErrorBoundary } from 'react-error-boundary';
+import { ErrorState } from '@/components/notes/page/ErrorState';
 
 const NoteContext = createContext<NoteContextType | undefined>(undefined);
 
+// Error fallback component for the context
+const NoteContextErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) => (
+  <ErrorState 
+    message={`Notes system error: ${error.message}`}
+    onRetry={resetErrorBoundary}
+  />
+);
+
 export const NoteProvider = ({ children }: { children: ReactNode }) => {
+  return (
+    <ErrorBoundary
+      FallbackComponent={NoteContextErrorFallback}
+      onReset={() => window.location.reload()}
+    >
+      <NoteProviderInner>
+        {children}
+      </NoteProviderInner>
+    </ErrorBoundary>
+  );
+};
+
+const NoteProviderInner = ({ children }: { children: ReactNode }) => {
   // Get state management from refactored hook
+  const notesState = useNotesState();
+  
+  if (!notesState) {
+    throw new Error('Notes state could not be initialized');
+  }
+
   const {
     notes,
     setNotes,
@@ -32,9 +61,15 @@ export const NoteProvider = ({ children }: { children: ReactNode }) => {
     availableCategories,
     addCategory,
     resetFilters
-  } = useNotesState();
+  } = notesState;
 
   // Get CRUD operations
+  const notesOperations = useNotesOperations(notes, setNotes, currentPage, setCurrentPage, paginatedNotes);
+  
+  if (!notesOperations) {
+    throw new Error('Notes operations could not be initialized');
+  }
+
   const {
     addNote,
     deleteNote,
@@ -43,10 +78,10 @@ export const NoteProvider = ({ children }: { children: ReactNode }) => {
     archiveNote,
     getAllTags,
     filterByTag
-  } = useNotesOperations(notes, setNotes, currentPage, setCurrentPage, paginatedNotes);
+  } = notesOperations;
 
-  // Fetch notes from Supabase on component mount
-  useFetchNotes(setNotes, setLoading);
+  // Fetch notes from Supabase on component mount with error handling
+  const { error: fetchError, retryManually } = useFetchNotes(setNotes, setLoading);
 
   // Create a wrapper for filterByTag that uses our setSearchTerm directly
   const handleFilterByTag = (tagName: string) => {
