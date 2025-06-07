@@ -5,7 +5,6 @@ import ProgressOverview from "@/components/progress/ProgressOverview";
 import { StudyStatsChart } from "@/components/progress/StudyStatsChart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Achievements } from "@/components/progress/Achievements";
-import { FeatureDisabledAlert } from "@/components/routes/FeatureProtectedRoute";
 import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
 import { BarChart3 } from "lucide-react";
 
@@ -21,8 +20,6 @@ const ProgressPage = () => {
         <p className="text-muted-foreground mb-6">
           Track your learning progress and achievements
         </p>
-        
-        <FeatureDisabledAlert featureKey="progress" featureDisplayName="Progress Tracking" />
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
           <TabsList>

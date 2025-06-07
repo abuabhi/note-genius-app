@@ -11,7 +11,6 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FeatureDisabledAlert } from "@/components/routes/FeatureProtectedRoute";
 import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
 
 const TodoPage = () => {
@@ -103,8 +102,6 @@ const TodoPage = () => {
             Create Todo
           </Button>
         </div>
-
-        <FeatureDisabledAlert featureKey="todos" featureDisplayName="Todo Lists" />
 
         {/* Stats */}
         <TodoStats todos={todos} />

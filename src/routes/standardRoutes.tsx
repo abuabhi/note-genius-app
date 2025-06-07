@@ -1,6 +1,5 @@
 
 import { lazy } from 'react';
-import { FeatureProtectedRoute } from '@/components/routes/FeatureProtectedRoute';
 import { RouteConfig } from './publicRoutes';
 
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));

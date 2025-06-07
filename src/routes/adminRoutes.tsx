@@ -7,13 +7,12 @@ import AdminSectionsPage from "@/pages/AdminSectionsPage";
 import AdminSubjectsPage from "@/pages/AdminSubjectsPage";
 import AdminGradesPage from "@/pages/AdminGradesPage";
 import AdminCSVImportPage from "@/pages/AdminCSVImportPage";
-import AdminFeaturesPage from "@/pages/AdminFeaturesPage";
 import AdminAnalyticsPage from "@/pages/AdminAnalyticsPage";
 import AdminAnnouncementsPage from "@/pages/AdminAnnouncementsPage";
 import AdminTierLimitsPage from "@/pages/AdminTierLimitsPage";
 import { RouteConfig } from './publicRoutes';
 
-// Admin routes
+// Admin routes - removed AdminFeaturesPage since feature toggles are removed
 export const adminRoutes: RouteConfig[] = [
   { path: "/admin", element: <AdminDashboardPage /> }, // Main admin dashboard
   { path: "/admin/users", element: <AdminUsersPage /> },
@@ -24,6 +23,5 @@ export const adminRoutes: RouteConfig[] = [
   { path: "/admin/grades", element: <AdminGradesPage /> },
   { path: "/admin/subjects", element: <AdminSubjectsPage /> },
   { path: "/admin/csv-import", element: <AdminCSVImportPage /> },
-  { path: "/admin/features", element: <AdminFeaturesPage /> },
   { path: "/admin/tier-limits", element: <AdminTierLimitsPage /> },
 ];

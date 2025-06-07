@@ -2,7 +2,6 @@
 import Layout from "@/components/layout/Layout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Loader2 } from "lucide-react";
-import { useFeatures } from "@/contexts/FeatureContext";
 import { DashboardHeroSection } from "@/components/dashboard/DashboardHeroSection";
 import { LearningAnalyticsDashboard } from "@/components/dashboard/LearningAnalyticsDashboard";
 import { TodosSection } from "@/components/dashboard/TodosSection";
@@ -25,21 +24,8 @@ const DashboardPage = () => {
     loading
   });
   
-  // Use features with fallback
-  let isFeatureVisible: (key: string) => boolean;
-  
-  try {
-    const features = useFeatures();
-    isFeatureVisible = features.isFeatureVisible;
-    console.log('✅ Features context loaded successfully');
-  } catch (error) {
-    console.error('❌ Features context error in Dashboard, using fallbacks:', error);
-    // Fallback: show core features, hide optional ones
-    isFeatureVisible = (key: string) => {
-      const coreFeatures = ['notes', 'flashcards', 'settings', 'quizzes'];
-      return coreFeatures.includes(key);
-    };
-  }
+  // All features are now permanently visible
+  const isFeatureVisible = (key: string) => true;
   
   if (loading) {
     console.log('⏳ Dashboard is loading...');

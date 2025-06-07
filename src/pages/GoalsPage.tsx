@@ -12,7 +12,6 @@ import { useGoalTracking } from '@/hooks/useGoalTracking';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FeatureDisabledAlert } from '@/components/routes/FeatureProtectedRoute';
 import { PageBreadcrumb } from '@/components/ui/page-breadcrumb';
 
 const GoalsPage = () => {
@@ -132,8 +131,6 @@ const GoalsPage = () => {
           onToggleSuggestions={toggleSuggestions}
           onRefreshSuggestions={refreshSuggestions}
         />
-        
-        <FeatureDisabledAlert featureKey="goals" featureDisplayName="Study Goals" />
         
         <div className="mb-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>

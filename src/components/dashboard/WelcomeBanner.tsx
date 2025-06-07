@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useAuth } from "@/contexts/auth"; // Updated import path
 import { Button } from "@/components/ui/button";
@@ -7,12 +8,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Bell, Star, Clock } from "lucide-react";
 import { format } from "date-fns";
-import { useFeatures } from "@/contexts/FeatureContext";
 
 export function WelcomeBanner() {
   const { user } = useAuth();
-  const { isFeatureVisible } = useFeatures();
-  const showStudySessions = isFeatureVisible("study_sessions");
+  // All study sessions are now always visible
+  const showStudySessions = true;
   
   const { data: userProfile } = useQuery({
     queryKey: ["userProfile", user?.id],

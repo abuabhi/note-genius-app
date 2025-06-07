@@ -7,7 +7,6 @@ import { UpcomingEventsList } from "@/components/schedule/UpcomingEventsList";
 import { useEvents } from "@/hooks/events";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { toast } from "sonner";
-import { FeatureDisabledAlert } from "@/components/routes/FeatureProtectedRoute";
 
 const SchedulePage = () => {
   const { user, loading } = useRequireAuth();
@@ -54,8 +53,6 @@ const SchedulePage = () => {
     <Layout>
       <div className="container mx-auto p-4 md:p-6">
         <ScheduleHeader selectedDate={date} onDateChange={setDate} />
-        
-        <FeatureDisabledAlert featureKey="schedule" featureDisplayName="Schedule" />
         
         <div className="mt-6">
           <ScheduleCalendar selectedDate={date} onDateChange={setDate} />

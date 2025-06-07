@@ -8,7 +8,6 @@ import { StudyAnalyticsDashboard } from "@/components/study/StudyAnalyticsDashbo
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, History, Archive, BarChart3, Brain } from "lucide-react";
 import { useEnhancedStudySessions } from "@/hooks/useEnhancedStudySessions";
-import { FeatureDisabledAlert } from "@/components/routes/FeatureProtectedRoute";
 
 const StudySessionsPage = () => {
   const { user, loading } = useRequireAuth();
@@ -100,8 +99,6 @@ const StudySessionsPage = () => {
               </div>
             </div>
           </div>
-
-          <FeatureDisabledAlert featureKey="study_sessions" featureDisplayName="Study Sessions" />
 
           {/* Enhanced Sessions Content */}
           <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-mint-100 p-6 shadow-lg">
