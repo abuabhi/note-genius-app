@@ -49,22 +49,22 @@ export const CleanProgressOverview = () => {
         return 'Week information unavailable';
       }
       
-      // Get Monday of this week
+      // Get Monday of this week (proper calculation)
       const dayOfWeek = todayDate.getDay();
       const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
       const monday = new Date(todayDate);
       monday.setDate(monday.getDate() - daysToMonday);
       
-      // Get Sunday of this week
+      // Get Sunday of this week (exactly 6 days after Monday)
       const sunday = new Date(monday);
-      sunday.setDate(sunday.getDate() + 6);
+      sunday.setDate(monday.getDate() + 6);
       
       const weekFormatter = new Intl.DateTimeFormat('en-AU', {
-        month: 'short',
-        day: 'numeric'
+        day: 'numeric',
+        month: 'short'
       });
       
-      return `Week of ${weekFormatter.format(monday)} - ${weekFormatter.format(sunday)}`;
+      return `${weekFormatter.format(monday)} - ${weekFormatter.format(sunday)}`;
     } catch (error) {
       console.error('Error calculating week display:', error);
       return 'Week information unavailable';
@@ -93,7 +93,7 @@ export const CleanProgressOverview = () => {
             <div className="flex items-center gap-3 text-blue-800">
               <Calendar className="h-5 w-5" />
               <div>
-                <p className="font-medium">{getWeekDisplay()} • {timezone || 'Loading timezone...'}</p>
+                <p className="font-medium">Week of {getWeekDisplay()} • {timezone || 'Loading timezone...'}</p>
                 <p className="text-sm text-blue-600">
                   Weekly goal progress: {analytics.weeklyStudyTimeMinutes} minutes of {analytics.weeklyGoalMinutes} minutes
                   {analytics.weeklyChange !== 0 && ` • ${analytics.weeklyChange > 0 ? '+' : ''}${analytics.weeklyChange}% vs last week`}
@@ -104,7 +104,7 @@ export const CleanProgressOverview = () => {
         </Card>
 
         {/* Hero Overview Card */}
-        <ProgressOverviewCard />
+        <ProgressOverviewCard weekDisplay={getWeekDisplay()} />
         
         {/* Grade Progression Section */}
         <div className="space-y-6">
@@ -144,7 +144,7 @@ export const CleanProgressOverview = () => {
           <div className="flex items-center gap-3 text-blue-800">
             <Calendar className="h-5 w-5" />
             <div>
-              <p className="font-medium">{getWeekDisplay()} • {timezone || 'Loading timezone...'}</p>
+              <p className="font-medium">Week of {getWeekDisplay()} • {timezone || 'Loading timezone...'}</p>
               <p className="text-sm text-blue-600">
                 Start studying to see your weekly progress here!
               </p>

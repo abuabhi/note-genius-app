@@ -1,12 +1,16 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Clock, Target, TrendingUp, Award } from "lucide-react";
+import { Clock, Target, TrendingUp, Award, Calendar } from "lucide-react";
 import { useTimezoneAwareAnalytics } from "@/hooks/useTimezoneAwareAnalytics";
 import { MetricDisplay } from "../shared/MetricDisplay";
 
-export const ProgressOverviewCard = () => {
-  const { analytics, isLoading } = useTimezoneAwareAnalytics();
+interface ProgressOverviewCardProps {
+  weekDisplay?: string;
+}
+
+export const ProgressOverviewCard = ({ weekDisplay }: ProgressOverviewCardProps) => {
+  const { analytics, isLoading, timezone } = useTimezoneAwareAnalytics();
 
   if (isLoading) {
     return (
@@ -47,6 +51,12 @@ export const ProgressOverviewCard = () => {
           <Award className="h-6 w-6 text-mint-600" />
           Your Learning Journey
         </CardTitle>
+        {weekDisplay && (
+          <div className="flex items-center gap-2 text-sm text-mint-600">
+            <Calendar className="h-4 w-4" />
+            <span>Week of {weekDisplay} • {timezone}</span>
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Overall Progress */}
