@@ -12,8 +12,12 @@ const OptimizedProgressPage = lazy(() => import('@/pages/OptimizedProgressPage')
 const OptimizedStudySessionsPage = lazy(() => import('@/pages/OptimizedStudySessionsPage'));
 const OptimizedNoteStudyPage = lazy(() => import('@/pages/OptimizedNoteStudyPage'));
 
+// Add missing pages
+const GoalsPage = lazy(() => import('@/pages/GoalsPage'));
+const TodoPage = lazy(() => import('@/pages/TodoPage'));
+
 // Loading components for each page type
-const PageLoadingSkeleton = ({ type }: { type: 'dashboard' | 'notes' | 'flashcards' | 'progress' | 'sessions' }) => {
+const PageLoadingSkeleton = ({ type }: { type: 'dashboard' | 'notes' | 'flashcards' | 'progress' | 'sessions' | 'goals' | 'todos' }) => {
   const skeletons = {
     dashboard: (
       <Layout>
@@ -73,6 +77,30 @@ const PageLoadingSkeleton = ({ type }: { type: 'dashboard' | 'notes' | 'flashcar
           </div>
         </div>
       </Layout>
+    ),
+    goals: (
+      <Layout>
+        <div className="container mx-auto p-6 space-y-6">
+          <div className="h-8 bg-gray-200 rounded animate-pulse" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-32 bg-gray-200 rounded animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </Layout>
+    ),
+    todos: (
+      <Layout>
+        <div className="container mx-auto p-6 space-y-6">
+          <div className="h-8 bg-gray-200 rounded animate-pulse" />
+          <div className="space-y-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="h-12 bg-gray-200 rounded animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </Layout>
     )
   };
 
@@ -127,6 +155,22 @@ export const OptimizedAppRoutes = () => {
         element={
           <LazyLoadWrapper fallback={<PageLoadingSkeleton type="sessions" />}>
             <OptimizedStudySessionsPage />
+          </LazyLoadWrapper>
+        } 
+      />
+      <Route 
+        path="/goals" 
+        element={
+          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="goals" />}>
+            <GoalsPage />
+          </LazyLoadWrapper>
+        } 
+      />
+      <Route 
+        path="/todos" 
+        element={
+          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="todos" />}>
+            <TodoPage />
           </LazyLoadWrapper>
         } 
       />
