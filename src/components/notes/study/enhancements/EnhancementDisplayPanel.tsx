@@ -105,7 +105,7 @@ export const EnhancementDisplayPanel = ({
     }
   };
 
-  // Clean content function to strip HTML and fix formatting
+  // Clean content function for pure markdown without AI markers
   const cleanMarkdownContent = (content: string): string => {
     if (!content) return "";
     
@@ -119,10 +119,10 @@ export const EnhancementDisplayPanel = ({
       .replace(/&#39;/g, "'")
       .replace(/&nbsp;/g, ' ');
     
-    // Remove [AI_ENHANCED] markers if present
+    // Remove [AI_ENHANCED] markers for clean markdown
     cleaned = cleaned.replace(/\[AI_ENHANCED\]/g, '').replace(/\[\/AI_ENHANCED\]/g, '');
     
-    // Fix line breaks and paragraphs
+    // Fix line breaks and paragraphs - ensure double line breaks for proper markdown parsing
     cleaned = cleaned
       .replace(/\r\n/g, '\n')
       .replace(/\r/g, '\n')
@@ -132,6 +132,25 @@ export const EnhancementDisplayPanel = ({
       .join('\n\n');
     
     return cleaned;
+  };
+
+  // Process key points to ensure proper bullet formatting
+  const processKeyPoints = (content: string): string => {
+    if (!content) return "";
+    
+    const lines = content.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    
+    return lines.map(line => {
+      // If line doesn't start with bullet or number, add bullet
+      if (!line.match(/^[\-\*\+\d\.]/)) {
+        return `• ${line}`;
+      }
+      // Convert dashes to bullets for consistency
+      if (line.startsWith('-')) {
+        return line.replace(/^-\s*/, '• ');
+      }
+      return line;
+    }).join('\n\n');
   };
 
   const content = getContent();
@@ -220,7 +239,7 @@ export const EnhancementDisplayPanel = ({
     );
   }
 
-  // Enhanced markdown styles with proper spacing
+  // Enhanced markdown styles with proper spacing and formatting
   const markdownClasses = `
     prose prose-mint max-w-none prose-lg
     prose-headings:text-gray-900 prose-headings:font-semibold prose-headings:mb-6 prose-headings:mt-8
@@ -293,7 +312,17 @@ export const EnhancementDisplayPanel = ({
       {/* Enhanced Content */}
       <div className="flex-1 overflow-y-auto bg-gradient-to-b from-white to-gray-50/30">
         <div className="p-8">
-          {contentInfo.isMarkdown ? (
+          {/* Route content based on type and AI enhancement markers */}
+          {hasEnhancementMarkers ? (
+            // Content with AI enhancement markers - use EnhancedContentRenderer for green highlighting
+            <EnhancedContentRenderer 
+              content={content} 
+              fontSize={fontSize} 
+              textAlign={textAlign}
+              className="prose-mint prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700"
+            />
+          ) : contentInfo.isMarkdown ? (
+            // Pure markdown content without AI markers
             <div 
               className={markdownClasses}
               style={{ 
@@ -303,17 +332,11 @@ export const EnhancementDisplayPanel = ({
               }}
             >
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {cleanMarkdownContent(content)}
+                {contentType === 'keyPoints' ? processKeyPoints(cleanMarkdownContent(content)) : cleanMarkdownContent(content)}
               </ReactMarkdown>
             </div>
-          ) : hasEnhancementMarkers ? (
-            <EnhancedContentRenderer 
-              content={content} 
-              fontSize={fontSize} 
-              textAlign={textAlign}
-              className="prose-mint prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700"
-            />
           ) : (
+            // Original content - use RichTextDisplay
             <RichTextDisplay 
               content={content} 
               fontSize={fontSize} 
