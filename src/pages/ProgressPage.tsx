@@ -1,8 +1,9 @@
 
 import { useState } from "react";
 import Layout from "@/components/layout/Layout";
-import ProgressOverview from "@/components/progress/ProgressOverview";
-import { StudyStatsChart } from "@/components/progress/StudyStatsChart";
+import { CleanProgressOverview } from "@/components/progress/CleanProgressOverview";
+import { AIInsightsTab } from "@/components/progress/AIInsightsTab";
+import { DetailedStatsPlaceholder } from "@/components/progress/DetailedStatsPlaceholder";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Achievements } from "@/components/progress/Achievements";
 import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
@@ -24,20 +25,25 @@ const ProgressPage = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="stats">Detailed Stats</TabsTrigger>
+            <TabsTrigger value="ai-insights">AI Insights</TabsTrigger>
             <TabsTrigger value="achievements">Achievements</TabsTrigger>
+            <TabsTrigger value="detailed-stats">Detailed Stats</TabsTrigger>
           </TabsList>
           
           <TabsContent value="overview" className="mt-6">
-            <ProgressOverview />
+            <CleanProgressOverview />
           </TabsContent>
           
-          <TabsContent value="stats" className="mt-6">
-            <StudyStatsChart />
+          <TabsContent value="ai-insights" className="mt-6">
+            <AIInsightsTab />
           </TabsContent>
           
           <TabsContent value="achievements" className="mt-6">
             <Achievements />
+          </TabsContent>
+          
+          <TabsContent value="detailed-stats" className="mt-6">
+            <DetailedStatsPlaceholder />
           </TabsContent>
         </Tabs>
       </div>
