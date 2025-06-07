@@ -1,6 +1,6 @@
 
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect, useTransition, Suspense, startTransition } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { useNotes } from "@/contexts/NoteContext";
 import { Button } from "@/components/ui/button";
@@ -10,23 +10,23 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Note } from "@/types/note";
 
-const NoteStudyContent = () => {
+const NoteStudyPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { notes, setNotes } = useNotes();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<Note | null>(null);
-  const [isPending, startTransition] = useTransition();
+
+  // Require authentication
+  useRequireAuth();
 
   // Try to find note in context first, then fetch from database if needed
   useEffect(() => {
     const loadNote = async () => {
       if (!id) {
-        startTransition(() => {
-          setError("No note ID provided");
-          setLoading(false);
-        });
+        setError("No note ID provided");
+        setLoading(false);
         return;
       }
 
@@ -38,11 +38,9 @@ const NoteStudyContent = () => {
       
       if (foundNote) {
         console.log("✅ Found note in context:", foundNote.title);
-        startTransition(() => {
-          setNote(foundNote);
-          setError(null);
-          setLoading(false);
-        });
+        setNote(foundNote);
+        setError(null);
+        setLoading(false);
         return;
       }
 
@@ -58,19 +56,15 @@ const NoteStudyContent = () => {
 
         if (fetchError) {
           console.error("❌ Error fetching note:", fetchError);
-          startTransition(() => {
-            setError("Failed to load note from database");
-            setLoading(false);
-          });
+          setError("Failed to load note from database");
+          setLoading(false);
           return;
         }
 
         if (!noteData) {
           console.log("❌ No note data returned");
-          startTransition(() => {
-            setError("Note not found");
-            setLoading(false);
-          });
+          setError("Note not found");
+          setLoading(false);
           return;
         }
 
@@ -101,103 +95,78 @@ const NoteStudyContent = () => {
 
         console.log("✅ Successfully fetched and transformed note:", transformedNote.title);
         
-        // Wrap all state updates in transitions
-        startTransition(() => {
-          setNote(transformedNote);
-          setError(null);
-          setLoading(false);
-          
-          // Add to notes context to avoid future fetches
-          setNotes(prevNotes => {
-            const exists = prevNotes.find(n => n.id === id);
-            if (!exists) {
-              return [transformedNote, ...prevNotes];
-            }
-            return prevNotes;
-          });
+        setNote(transformedNote);
+        setError(null);
+        setLoading(false);
+        
+        // Add to notes context to avoid future fetches
+        setNotes(prevNotes => {
+          const exists = prevNotes.find(n => n.id === id);
+          if (!exists) {
+            return [transformedNote, ...prevNotes];
+          }
+          return prevNotes;
         });
         
       } catch (err) {
         console.error("❌ Unexpected error fetching note:", err);
-        startTransition(() => {
-          setError("An unexpected error occurred while loading the note");
-          setLoading(false);
-        });
+        setError("An unexpected error occurred while loading the note");
+        setLoading(false);
       }
     };
 
-    // Use setTimeout instead of requestAnimationFrame to prevent suspension issues
-    const timeoutId = setTimeout(() => {
-      loadNote();
-    }, 0);
-
-    return () => {
-      clearTimeout(timeoutId);
-    };
+    loadNote();
   }, [id, notes, setNotes]);
 
   const handleGoBack = () => {
-    startTransition(() => {
-      navigate('/notes');
-    });
+    navigate('/notes');
   };
 
-  if (loading || isPending) {
+  if (loading) {
     return (
-      <div className="container mx-auto p-6 flex items-center justify-center h-[50vh]">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-mint-500" />
-          <p className="mt-2 text-muted-foreground">Loading note...</p>
+      <Layout>
+        <div className="container mx-auto p-6 flex items-center justify-center h-[50vh]">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto text-mint-500" />
+            <p className="mt-2 text-muted-foreground">Loading note...</p>
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   if (error || !note) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="bg-red-50 border border-red-200 rounded-md p-6 text-center">
-          <AlertCircle className="h-8 w-8 text-red-600 mx-auto mb-2" />
-          <h2 className="text-xl font-semibold text-red-700 mb-2">
-            {error || "Note Not Found"}
-          </h2>
-          <p className="mb-4 text-red-600">
-            {error || "The note you're looking for doesn't exist or has been deleted."}
-          </p>
-          <div className="flex gap-2 justify-center">
-            <Button onClick={handleGoBack}>
-              Back to Notes
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => window.location.reload()}
-            >
-              Retry
-            </Button>
+      <Layout>
+        <div className="container mx-auto p-6">
+          <div className="bg-red-50 border border-red-200 rounded-md p-6 text-center">
+            <AlertCircle className="h-8 w-8 text-red-600 mx-auto mb-2" />
+            <h2 className="text-xl font-semibold text-red-700 mb-2">
+              {error || "Note Not Found"}
+            </h2>
+            <p className="mb-4 text-red-600">
+              {error || "The note you're looking for doesn't exist or has been deleted."}
+            </p>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={handleGoBack}>
+                Back to Notes
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => window.location.reload()}
+              >
+                Retry
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
-  return <NoteStudyView note={note} />;
-};
-
-const NoteStudyPage = () => {
-  useRequireAuth();
-
   return (
     <Layout>
-      <Suspense fallback={
-        <div className="container mx-auto p-6 flex items-center justify-center h-[50vh]">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto text-mint-500" />
-            <p className="mt-2 text-muted-foreground">Loading study mode...</p>
-          </div>
-        </div>
-      }>
-        <NoteStudyContent />
-      </Suspense>
+      <NoteStudyView note={note} />
     </Layout>
   );
 };

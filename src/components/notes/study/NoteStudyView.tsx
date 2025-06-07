@@ -1,5 +1,5 @@
 
-import { useState, useTransition, Suspense } from 'react';
+import { useState } from 'react';
 import { Note } from '@/types/note';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,9 +19,8 @@ interface NoteStudyViewProps {
   isLoading?: boolean;
 }
 
-const MainStudyViewContent = ({ note, isLoading }: NoteStudyViewProps) => {
+export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
   const [studyStarted, setStudyStarted] = useState(false);
-  const [isPending, startTransition] = useTransition();
 
   // Get real-time synced note data
   const { currentNote, refreshKey, forceRefresh } = useRealtimeNoteSync(note);
@@ -107,14 +106,12 @@ const MainStudyViewContent = ({ note, isLoading }: NoteStudyViewProps) => {
 
   // Handle content type change
   const handleActiveContentTypeChange = (type: EnhancementContentType) => {
-    startTransition(() => {
-      // Start study session when user switches to study-focused tabs
-      if (['summary', 'keyPoints', 'improved', 'markdown'].includes(type) && !studyStarted) {
-        setStudyStarted(true);
-      }
-      
-      setActiveContentType(type);
-    });
+    // Start study session when user switches to study-focused tabs
+    if (['summary', 'keyPoints', 'improved', 'markdown'].includes(type) && !studyStarted) {
+      setStudyStarted(true);
+    }
+    
+    setActiveContentType(type);
   };
 
   // Handle enhancement from header
@@ -236,17 +233,4 @@ const getEnhancementType = (enhancementType: string): 'clarity' | 'other' | 'spe
     default:
       return 'other';
   }
-};
-
-export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
-  return (
-    <Suspense fallback={
-      <div className="flex flex-col items-center justify-center h-48">
-        <Skeleton className="w-32 h-8 mb-4" />
-        <Skeleton className="w-48 h-6" />
-      </div>
-    }>
-      <MainStudyViewContent note={note} isLoading={isLoading} />
-    </Suspense>
-  );
 };

@@ -1,5 +1,5 @@
 
-import { useState, useTransition, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Note } from "@/types/note";
 import { TextAlignType } from "../hooks/useStudyViewState";
@@ -62,23 +62,17 @@ export const NoteStudyViewContent = ({
 }: NoteStudyViewContentProps) => {
   const [selectedText, setSelectedText] = useState("");
   const [showConversionPanel, setShowConversionPanel] = useState(false);
-  const [isPending, startTransition] = useTransition();
 
-  // Handle text selection for flashcard creation with async handling
+  // Handle text selection for flashcard creation
   const handleTextSelection = useCallback(() => {
-    // Use requestAnimationFrame to defer the selection handling
-    requestAnimationFrame(() => {
-      startTransition(() => {
-        const selection = window.getSelection();
-        if (selection && selection.toString().trim().length > 0) {
-          setSelectedText(selection.toString().trim());
-          setShowConversionPanel(true);
-        } else {
-          setSelectedText("");
-          setShowConversionPanel(false);
-        }
-      });
-    });
+    const selection = window.getSelection();
+    if (selection && selection.toString().trim().length > 0) {
+      setSelectedText(selection.toString().trim());
+      setShowConversionPanel(true);
+    } else {
+      setSelectedText("");
+      setShowConversionPanel(false);
+    }
   }, []);
 
   const handleTextSelectionConvert = useCallback(async (frontText: string, backText: string) => {
@@ -130,7 +124,7 @@ export const NoteStudyViewContent = ({
               onRetryEnhancement={handleRetryEnhancement}
               activeContentType={activeContentType}
               onActiveContentTypeChange={onActiveContentTypeChange}
-              isLoading={isPending}
+              isLoading={false}
             />
           </div>
         </ResizablePanel>
