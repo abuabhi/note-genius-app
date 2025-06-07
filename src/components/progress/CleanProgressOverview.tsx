@@ -22,37 +22,53 @@ export const CleanProgressOverview = () => {
   // Clean up orphaned sessions on component mount
   useSessionCleanup();
 
-  // Calculate week boundaries for display
+  // Calculate week boundaries for display - with proper error handling
   const getWeekDisplay = () => {
-    if (!timezone) return '';
+    if (!timezone) return 'Loading...';
     
-    const today = new Date();
-    const formatter = new Intl.DateTimeFormat('en-AU', {
-      timeZone: timezone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    });
-    
-    const todayString = formatter.format(today);
-    const todayDate = new Date(`${todayString}T00:00:00`);
-    
-    // Get Monday of this week
-    const dayOfWeek = todayDate.getDay();
-    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    const monday = new Date(todayDate);
-    monday.setDate(monday.getDate() - daysToMonday);
-    
-    // Get Sunday of this week
-    const sunday = new Date(monday);
-    sunday.setDate(sunday.getDate() + 6);
-    
-    const weekFormatter = new Intl.DateTimeFormat('en-AU', {
-      month: 'short',
-      day: 'numeric'
-    });
-    
-    return `Week of ${weekFormatter.format(monday)} - ${weekFormatter.format(sunday)}`;
+    try {
+      const today = new Date();
+      const formatter = new Intl.DateTimeFormat('en-AU', {
+        timeZone: timezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      
+      const todayString = formatter.format(today);
+      
+      // Validate the date string before using it
+      if (!todayString || todayString === 'Invalid Date') {
+        return 'Week information unavailable';
+      }
+      
+      const todayDate = new Date(`${todayString}T00:00:00`);
+      
+      // Check if the date is valid
+      if (isNaN(todayDate.getTime())) {
+        return 'Week information unavailable';
+      }
+      
+      // Get Monday of this week
+      const dayOfWeek = todayDate.getDay();
+      const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      const monday = new Date(todayDate);
+      monday.setDate(monday.getDate() - daysToMonday);
+      
+      // Get Sunday of this week
+      const sunday = new Date(monday);
+      sunday.setDate(sunday.getDate() + 6);
+      
+      const weekFormatter = new Intl.DateTimeFormat('en-AU', {
+        month: 'short',
+        day: 'numeric'
+      });
+      
+      return `Week of ${weekFormatter.format(monday)} - ${weekFormatter.format(sunday)}`;
+    } catch (error) {
+      console.error('Error calculating week display:', error);
+      return 'Week information unavailable';
+    }
   };
 
   if (isLoading) {
@@ -77,7 +93,7 @@ export const CleanProgressOverview = () => {
             <div className="flex items-center gap-3 text-blue-800">
               <Calendar className="h-5 w-5" />
               <div>
-                <p className="font-medium">{getWeekDisplay()} • {timezone}</p>
+                <p className="font-medium">{getWeekDisplay()} • {timezone || 'Loading timezone...'}</p>
                 <p className="text-sm text-blue-600">
                   Weekly goal progress: {analytics.weeklyStudyTimeMinutes} minutes of {analytics.weeklyGoalMinutes} minutes
                   {analytics.weeklyChange !== 0 && ` • ${analytics.weeklyChange > 0 ? '+' : ''}${analytics.weeklyChange}% vs last week`}
@@ -107,7 +123,7 @@ export const CleanProgressOverview = () => {
         <div className="space-y-6">
           <div className="border-b border-mint-200 pb-4">
             <h2 className="text-2xl font-semibold text-mint-800 mb-2">Study Time Analytics</h2>
-            <p className="text-mint-600">Analyze your study patterns and consistency • Week runs Monday-Sunday in {timezone}</p>
+            <p className="text-mint-600">Analyze your study patterns and consistency • Week runs Monday-Sunday in {timezone || 'your timezone'}</p>
           </div>
           
           <div className="grid gap-8 lg:grid-cols-2">
@@ -128,7 +144,7 @@ export const CleanProgressOverview = () => {
           <div className="flex items-center gap-3 text-blue-800">
             <Calendar className="h-5 w-5" />
             <div>
-              <p className="font-medium">{getWeekDisplay()} • {timezone}</p>
+              <p className="font-medium">{getWeekDisplay()} • {timezone || 'Loading timezone...'}</p>
               <p className="text-sm text-blue-600">
                 Start studying to see your weekly progress here!
               </p>
