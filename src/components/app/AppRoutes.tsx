@@ -1,27 +1,38 @@
-
 import { Routes, Route } from 'react-router-dom';
-import { allRoutes } from '@/routes/routeConfig';
-import QuizHistoryPage from "@/pages/QuizHistoryPage";
-import { FeatureProtectedRoute } from '@/components/routes/FeatureProtectedRoute';
-import { useRouteEffects } from '@/hooks/useRouteEffects';
+import { lazy, Suspense } from 'react';
+import Layout from '@/components/layout/Layout';
+import { LazyLoadWrapper } from '@/components/performance/LazyLoadWrapper';
 
-export const AppRoutes = () => {
-  useRouteEffects();
-  
+// Import optimized routes
+import { OptimizedAppRoutes } from '@/components/optimized/OptimizedAppRoutes';
+
+// Keep existing routes for non-optimized pages
+const LandingPage = lazy(() => import('@/pages/LandingPage'));
+const LoginPage = lazy(() => import('@/pages/LoginPage'));
+const SignupPage = lazy(() => import('@/pages/SignupPage'));
+
+const AppRoutes = () => {
   return (
     <Routes>
-      {allRoutes.map((route) => (
-        <Route key={route.path} path={route.path} element={route.element} />
-      ))}
+      {/* Public routes */}
+      <Route path="/" element={
+        <LazyLoadWrapper>
+          <LandingPage />
+        </LazyLoadWrapper>
+      } />
+      <Route path="/login" element={
+        <LazyLoadWrapper>
+          <LoginPage />
+        </LazyLoadWrapper>
+      } />
+      <Route path="/signup" element={
+        <LazyLoadWrapper>
+          <SignupPage />
+        </LazyLoadWrapper>
+      } />
       
-      <Route
-        path="/quiz/history"
-        element={
-          <FeatureProtectedRoute featureKey="quizzes">
-            <QuizHistoryPage />
-          </FeatureProtectedRoute>
-        }
-      />
+      {/* Optimized application routes */}
+      <Route path="/*" element={<OptimizedAppRoutes />} />
     </Routes>
   );
 };
