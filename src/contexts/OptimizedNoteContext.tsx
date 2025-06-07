@@ -26,8 +26,8 @@ interface OptimizedNoteContextType {
   addNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
   updateNote: (id: string, updates: Partial<Note>) => Promise<void>;
   deleteNote: (id: string) => Promise<void>;
-  pinNote: (id: string) => Promise<void>;
-  archiveNote: (id: string) => Promise<void>;
+  pinNote: (id: string, pinned: boolean) => Promise<void>;
+  archiveNote: (id: string, archived: boolean) => Promise<void>;
 }
 
 const OptimizedNoteContext = createContext<OptimizedNoteContextType | undefined>(undefined);
