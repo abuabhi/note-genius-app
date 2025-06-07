@@ -1,5 +1,6 @@
 
 import { useConsolidatedAnalytics } from "@/hooks/useConsolidatedAnalytics";
+import { useSessionCleanup } from "@/hooks/useSessionCleanup";
 import { EnhancedProgressOverview } from "./EnhancedProgressOverview";
 import LearningSummary from "./overview/LearningSummary";
 import StudyConsistency from "./overview/StudyConsistency";
@@ -13,6 +14,9 @@ import { useNavigate } from "react-router-dom";
 const ProgressOverview = () => {
   const { analytics, isLoading } = useConsolidatedAnalytics();
   const navigate = useNavigate();
+  
+  // Clean up orphaned sessions on component mount
+  useSessionCleanup();
 
   if (isLoading) {
     return (
@@ -29,8 +33,8 @@ const ProgressOverview = () => {
     );
   }
 
-  // Show enhanced progress overview if user has data
-  if (analytics.totalSets > 0 || analytics.totalSessions > 0) {
+  // Show enhanced progress overview if user has meaningful data
+  if (analytics.totalSessions > 0 || analytics.totalStudyTime > 0 || analytics.totalSets > 0) {
     return <EnhancedProgressOverview />;
   }
 
@@ -62,7 +66,7 @@ const ProgressOverview = () => {
         </div>
         <LearningSummary 
           totalCardsMastered={analytics.totalCardsMastered} 
-          studyTimeHours={analytics.studyTimeHours} 
+          studyTimeHours={analytics.totalStudyTime} 
           totalSets={analytics.totalSets} 
         />
       </div>

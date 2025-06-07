@@ -8,11 +8,17 @@ import { StudyAnalyticsDashboard } from "@/components/study/StudyAnalyticsDashbo
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, History, Archive, BarChart3, Brain } from "lucide-react";
 import { useEnhancedStudySessions } from "@/hooks/useEnhancedStudySessions";
+import { useConsolidatedAnalytics } from "@/hooks/useConsolidatedAnalytics";
+import { useSessionCleanup } from "@/hooks/useSessionCleanup";
 
 const StudySessionsPage = () => {
   const { user, loading } = useRequireAuth();
   const [activeTab, setActiveTab] = useState("analytics");
-  const { getFilteredSessions, getSessionStatistics, isLoading } = useEnhancedStudySessions();
+  const { getFilteredSessions, isLoading } = useEnhancedStudySessions();
+  const { analytics } = useConsolidatedAnalytics();
+  
+  // Clean up orphaned sessions on component mount
+  useSessionCleanup();
 
   const getTabSessions = (tab: string) => {
     switch(tab) {
@@ -27,7 +33,6 @@ const StudySessionsPage = () => {
   };
 
   const currentSessions = getTabSessions(activeTab === 'analytics' ? 'all' : activeTab);
-  const stats = getSessionStatistics;
 
   if (loading) {
     return (
@@ -79,7 +84,7 @@ const StudySessionsPage = () => {
                   </div>
                   <div className="mt-2">
                     <div className="text-lg font-semibold text-mint-800">
-                      {stats.totalSessions}
+                      {analytics.totalSessions}
                     </div>
                     <div className="text-xs text-mint-600">Total Sessions</div>
                   </div>
@@ -91,9 +96,9 @@ const StudySessionsPage = () => {
                   </div>
                   <div className="mt-2">
                     <div className="text-lg font-semibold text-blue-800">
-                      {stats.averageAccuracy}%
+                      {analytics.totalStudyTime}h
                     </div>
-                    <div className="text-xs text-blue-600">Avg Accuracy</div>
+                    <div className="text-xs text-blue-600">Total Time</div>
                   </div>
                 </div>
               </div>

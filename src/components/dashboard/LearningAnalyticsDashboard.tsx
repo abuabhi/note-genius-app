@@ -15,17 +15,10 @@ import {
   FileText
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useDashboardAnalytics } from "@/hooks/useDashboardAnalytics";
+import { useConsolidatedAnalytics } from "@/hooks/useConsolidatedAnalytics";
 
 export const LearningAnalyticsDashboard = () => {
-  const { 
-    totalSessions, 
-    totalStudyTime, 
-    totalCardsMastered, 
-    flashcardAccuracy, 
-    weeklyComparison,
-    isLoading 
-  } = useDashboardAnalytics();
+  const { analytics, isLoading } = useConsolidatedAnalytics();
 
   if (isLoading) {
     return (
@@ -48,15 +41,9 @@ export const LearningAnalyticsDashboard = () => {
     return "text-red-600 bg-red-50";
   };
 
-  const getTrendIndicator = (trend: string) => {
-    switch (trend) {
-      case 'up':
-        return <TrendingUp className="h-4 w-4 text-green-500" />;
-      case 'down':
-        return <TrendingUp className="h-4 w-4 text-red-500 rotate-180" />;
-      default:
-        return <TrendingUp className="h-4 w-4 text-gray-400" />;
-    }
+  const getTrendIndicator = (value: number) => {
+    if (value > 0) return <TrendingUp className="h-4 w-4 text-green-500" />;
+    return <TrendingUp className="h-4 w-4 text-gray-400" />;
   };
 
   return (
@@ -73,11 +60,11 @@ export const LearningAnalyticsDashboard = () => {
               <Clock className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{totalStudyTime}h</div>
+              <div className="text-2xl font-bold text-gray-900">{analytics.totalStudyTime}h</div>
               <div className="flex items-center mt-2 text-sm">
-                {getTrendIndicator(weeklyComparison.trend)}
+                {getTrendIndicator(analytics.todayStudyTime)}
                 <span className="ml-1 text-gray-600">
-                  {weeklyComparison.thisWeek}h this week
+                  {analytics.todayStudyTime}h today
                 </span>
               </div>
             </CardContent>
@@ -90,7 +77,7 @@ export const LearningAnalyticsDashboard = () => {
               <Brain className="h-4 w-4 text-mint-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{totalCardsMastered}</div>
+              <div className="text-2xl font-bold text-gray-900">{analytics.totalCardsMastered}</div>
               <div className="mt-2">
                 <Badge variant="outline" className="text-xs">
                   <Award className="h-3 w-3 mr-1" />
@@ -107,10 +94,10 @@ export const LearningAnalyticsDashboard = () => {
               <Target className="h-4 w-4 text-purple-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{flashcardAccuracy}%</div>
+              <div className="text-2xl font-bold text-gray-900">{analytics.flashcardAccuracy}%</div>
               <div className="mt-2">
-                <Badge className={getAccuracyColor(flashcardAccuracy)}>
-                  {flashcardAccuracy >= 80 ? 'Excellent' : flashcardAccuracy >= 60 ? 'Good' : 'Needs Work'}
+                <Badge className={getAccuracyColor(analytics.flashcardAccuracy)}>
+                  {analytics.flashcardAccuracy >= 80 ? 'Excellent' : analytics.flashcardAccuracy >= 60 ? 'Good' : 'Needs Work'}
                 </Badge>
               </div>
             </CardContent>
@@ -123,9 +110,9 @@ export const LearningAnalyticsDashboard = () => {
               <Calendar className="h-4 w-4 text-orange-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{totalSessions}</div>
+              <div className="text-2xl font-bold text-gray-900">{analytics.totalSessions}</div>
               <div className="text-sm text-gray-600 mt-2">
-                Avg: {totalSessions > 0 ? Math.round(totalStudyTime / totalSessions * 60) : 0} min/session
+                Avg: {analytics.averageSessionTime} min/session
               </div>
             </CardContent>
           </Card>
@@ -160,7 +147,7 @@ export const LearningAnalyticsDashboard = () => {
                 <FileText className="h-6 w-6" />
                 <div className="text-center">
                   <div className="font-semibold">Review Notes</div>
-                  <div className="text-xs opacity-90">Create and review your study notes</div>
+                  <div className="text-xs opacity-90">Access your study materials</div>
                 </div>
               </Link>
             </Button>

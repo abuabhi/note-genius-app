@@ -49,12 +49,13 @@ export const useConsolidatedAnalytics = () => {
 
       // Calculate statistics
       const allSessions = sessions || [];
-      const completedSessions = allSessions.filter(s => !s.is_active);
+      const completedSessions = allSessions.filter(s => !s.is_active && s.duration);
       const activeSessions = allSessions.filter(s => s.is_active);
 
       // Calculate total study time (including active sessions)
       let totalStudyTimeMinutes = 0;
       
+      // Add time from completed sessions
       completedSessions.forEach(session => {
         if (session.duration) {
           totalStudyTimeMinutes += session.duration / 60;
@@ -100,14 +101,15 @@ export const useConsolidatedAnalytics = () => {
         s.start_time && s.start_time.startsWith(today)
       );
 
-      const todayStudyTime = todaySessions.reduce((sum, session) => {
-        if (session.duration) return sum + session.duration / 60;
-        if (session.is_active && session.start_time) {
+      let todayStudyTimeMinutes = 0;
+      todaySessions.forEach(session => {
+        if (session.duration && !session.is_active) {
+          todayStudyTimeMinutes += session.duration / 60;
+        } else if (session.is_active && session.start_time) {
           const sessionMinutes = (Date.now() - new Date(session.start_time).getTime()) / (1000 * 60);
-          return sum + sessionMinutes;
+          todayStudyTimeMinutes += sessionMinutes;
         }
-        return sum;
-      }, 0);
+      });
 
       const result = {
         // Overall statistics
@@ -120,7 +122,7 @@ export const useConsolidatedAnalytics = () => {
         flashcardAccuracy,
         
         // Today's statistics
-        todayStudyTime: Math.round(todayStudyTime / 60 * 10) / 10, // Convert to hours
+        todayStudyTime: Math.round(todayStudyTimeMinutes / 60 * 10) / 10, // Convert to hours
         todaySessions: todaySessions.length,
         
         // Recent data
