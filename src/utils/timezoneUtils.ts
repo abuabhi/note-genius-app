@@ -103,9 +103,45 @@ export const getWeekStartInTimezone = (timezone: string, weeksAgo: number = 0): 
   const monday = new Date(todayDate);
   monday.setDate(monday.getDate() - daysToMonday - (weeksAgo * 7));
   
-  // Convert Monday in target timezone to UTC equivalent
-  const mondayString = monday.toISOString().split('T')[0];
-  return getStartOfDayInTimezone(timezone);
+  // Get the Monday date string in the target timezone
+  const mondayString = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(monday);
+  
+  // Find the UTC time that represents Monday midnight in the target timezone
+  let testDate = new Date(`${mondayString}T00:00:00Z`);
+  
+  const targetFormatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+  
+  // Adjust until we find the UTC time that shows as Monday midnight in target timezone
+  for (let i = 0; i < 25; i++) {
+    const targetTime = targetFormatter.format(testDate);
+    if (targetTime.includes(`${mondayString} 00:00:00`)) {
+      return testDate;
+    }
+    testDate = new Date(testDate.getTime() - 60 * 60 * 1000);
+  }
+  
+  // Fallback
+  return new Date(`${mondayString}T00:00:00Z`);
+};
+
+export const getWeekEndInTimezone = (timezone: string, weeksAgo: number = 0): Date => {
+  // Get end of the week (Sunday 23:59:59.999) in the specified timezone
+  const weekStart = getWeekStartInTimezone(timezone, weeksAgo);
+  return new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000 - 1);
 };
 
 export const isDateInTimezone = (utcDateString: string, targetDate: string, timezone: string): boolean => {
@@ -121,12 +157,20 @@ export const debugTimezone = (timezone: string) => {
   const today = getTodayInTimezone(timezone);
   const startOfDay = getStartOfDayInTimezone(timezone);
   const endOfDay = getEndOfDayInTimezone(timezone);
+  const weekStart = getWeekStartInTimezone(timezone, 0);
+  const weekEnd = getWeekEndInTimezone(timezone, 0);
+  const lastWeekStart = getWeekStartInTimezone(timezone, 1);
+  const lastWeekEnd = getWeekEndInTimezone(timezone, 1);
   
   console.log(`🌏 Timezone Debug for ${timezone}:`, {
     now: now.toISOString(),
     todayInTimezone: today,
     startOfDayUTC: startOfDay.toISOString(),
     endOfDayUTC: endOfDay.toISOString(),
+    thisWeekStartUTC: weekStart.toISOString(),
+    thisWeekEndUTC: weekEnd.toISOString(),
+    lastWeekStartUTC: lastWeekStart.toISOString(),
+    lastWeekEndUTC: lastWeekEnd.toISOString(),
     nowInTimezone: new Intl.DateTimeFormat('en-AU', {
       timeZone: timezone,
       year: 'numeric',

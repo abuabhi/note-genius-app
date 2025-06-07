@@ -7,6 +7,7 @@ import {
   getStartOfDayInTimezone, 
   getEndOfDayInTimezone,
   getWeekStartInTimezone,
+  getWeekEndInTimezone,
   debugTimezone
 } from '@/utils/timezoneUtils';
 
@@ -104,7 +105,7 @@ export const useTimezoneAwareAnalytics = () => {
       const startOfToday = getStartOfDayInTimezone(timezone);
       const endOfToday = getEndOfDayInTimezone(timezone);
       
-      console.log(`🌏 Melbourne Timezone Boundaries:`, {
+      console.log(`🌏 ${timezone} Timezone Boundaries:`, {
         todayString,
         startOfToday: startOfToday.toISOString(),
         endOfToday: endOfToday.toISOString(),
@@ -138,12 +139,30 @@ export const useTimezoneAwareAnalytics = () => {
       const todayStudyTimeHours = Math.round((todayStudyTimeSeconds / 3600) * 10) / 10;
       const todayStudyTimeMinutes = Math.round(todayStudyTimeSeconds / 60);
 
-      // Weekly statistics - current week
+      // Weekly statistics - current week (Monday to Sunday)
       const weekStart = getWeekStartInTimezone(timezone, 0);
+      const weekEnd = getWeekEndInTimezone(timezone, 0);
+      
+      console.log(`📅 Week boundaries for ${timezone}:`, {
+        weekStart: weekStart.toISOString(),
+        weekEnd: weekEnd.toISOString()
+      });
+      
       const weeklySessions = allSessions.filter(s => {
         if (!s.start_time) return false;
         const sessionDate = new Date(s.start_time);
-        return sessionDate >= weekStart && sessionDate <= endOfToday;
+        const isThisWeek = sessionDate >= weekStart && sessionDate <= weekEnd;
+        
+        if (timezone.includes('Melbourne') || timezone.includes('Australia')) {
+          console.log(`📅 Weekly Session ${s.id}:`, {
+            startTime: s.start_time,
+            sessionDate: sessionDate.toISOString(),
+            isThisWeek,
+            duration: s.duration
+          });
+        }
+        
+        return isThisWeek;
       });
 
       const weeklyStudyTimeSeconds = weeklySessions.reduce((sum, session) => {
@@ -154,14 +173,14 @@ export const useTimezoneAwareAnalytics = () => {
       const weeklyStudyTimeHours = Math.round((weeklyStudyTimeSeconds / 3600) * 10) / 10;
       const weeklyStudyTimeMinutes = Math.round(weeklyStudyTimeSeconds / 60);
 
-      // Previous week for comparison
+      // Previous week for comparison (Monday to Sunday)
       const previousWeekStart = getWeekStartInTimezone(timezone, 1);
-      const previousWeekEnd = getWeekStartInTimezone(timezone, 0);
+      const previousWeekEnd = getWeekEndInTimezone(timezone, 1);
       
       const previousWeekSessions = allSessions.filter(s => {
         if (!s.start_time) return false;
         const sessionDate = new Date(s.start_time);
-        return sessionDate >= previousWeekStart && sessionDate < previousWeekEnd;
+        return sessionDate >= previousWeekStart && sessionDate <= previousWeekEnd;
       });
 
       const previousWeekTimeSeconds = previousWeekSessions.reduce((sum, session) => {
@@ -235,7 +254,7 @@ export const useTimezoneAwareAnalytics = () => {
         }
       };
 
-      console.log('📈 Melbourne Timezone-aware analytics summary:', {
+      console.log('📈 Timezone-aware analytics summary:', {
         timezone,
         todayString,
         totalSessions: result.totalSessions,
@@ -244,7 +263,9 @@ export const useTimezoneAwareAnalytics = () => {
         weeklyMinutes: result.weeklyStudyTimeMinutes,
         previousWeekMinutes: result.previousWeekTimeMinutes,
         weeklyChange: result.weeklyChange,
-        goalProgress: result.weeklyGoalProgress
+        goalProgress: result.weeklyGoalProgress,
+        weekStart: weekStart.toISOString(),
+        weekEnd: weekEnd.toISOString()
       });
       
       return result;

@@ -1,5 +1,5 @@
 
-import { useConsolidatedAnalytics } from "@/hooks/useConsolidatedAnalytics";
+import { useTimezoneAwareAnalytics } from "@/hooks/useTimezoneAwareAnalytics";
 import { useSessionCleanup } from "@/hooks/useSessionCleanup";
 import { ProgressOverviewCard } from "./overview/ProgressOverviewCard";
 import { GradeProgressionChart } from "./grades/GradeProgressionChart";
@@ -11,16 +11,49 @@ import StudyConsistency from "./overview/StudyConsistency";
 import MainProgressStats from "./overview/MainProgressStats";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
-import { BookOpen, TrendingUp } from "lucide-react";
+import { BookOpen, TrendingUp, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 export const CleanProgressOverview = () => {
-  const { analytics, isLoading } = useConsolidatedAnalytics();
+  const { analytics, isLoading, timezone } = useTimezoneAwareAnalytics();
   const navigate = useNavigate();
   
   // Clean up orphaned sessions on component mount
   useSessionCleanup();
+
+  // Calculate week boundaries for display
+  const getWeekDisplay = () => {
+    if (!timezone) return '';
+    
+    const today = new Date();
+    const formatter = new Intl.DateTimeFormat('en-AU', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+    
+    const todayString = formatter.format(today);
+    const todayDate = new Date(`${todayString}T00:00:00`);
+    
+    // Get Monday of this week
+    const dayOfWeek = todayDate.getDay();
+    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const monday = new Date(todayDate);
+    monday.setDate(monday.getDate() - daysToMonday);
+    
+    // Get Sunday of this week
+    const sunday = new Date(monday);
+    sunday.setDate(sunday.getDate() + 6);
+    
+    const weekFormatter = new Intl.DateTimeFormat('en-AU', {
+      month: 'short',
+      day: 'numeric'
+    });
+    
+    return `Week of ${weekFormatter.format(monday)} - ${weekFormatter.format(sunday)}`;
+  };
 
   if (isLoading) {
     return (
@@ -38,6 +71,22 @@ export const CleanProgressOverview = () => {
   if (analytics.totalSessions > 0 || analytics.totalStudyTime > 0 || analytics.totalSets > 0) {
     return (
       <div className="space-y-8">
+        {/* Week Information Banner */}
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3 text-blue-800">
+              <Calendar className="h-5 w-5" />
+              <div>
+                <p className="font-medium">{getWeekDisplay()} • {timezone}</p>
+                <p className="text-sm text-blue-600">
+                  Weekly goal progress: {analytics.weeklyStudyTimeMinutes} minutes of {analytics.weeklyGoalMinutes} minutes
+                  {analytics.weeklyChange !== 0 && ` • ${analytics.weeklyChange > 0 ? '+' : ''}${analytics.weeklyChange}% vs last week`}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Hero Overview Card */}
         <ProgressOverviewCard />
         
@@ -58,7 +107,7 @@ export const CleanProgressOverview = () => {
         <div className="space-y-6">
           <div className="border-b border-mint-200 pb-4">
             <h2 className="text-2xl font-semibold text-mint-800 mb-2">Study Time Analytics</h2>
-            <p className="text-mint-600">Analyze your study patterns and consistency</p>
+            <p className="text-mint-600">Analyze your study patterns and consistency • Week runs Monday-Sunday in {timezone}</p>
           </div>
           
           <div className="grid gap-8 lg:grid-cols-2">
@@ -73,6 +122,21 @@ export const CleanProgressOverview = () => {
   // Show simplified overview for new users
   return (
     <div className="space-y-8">
+      {/* Week Information Banner */}
+      <Card className="bg-blue-50 border-blue-200">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-3 text-blue-800">
+            <Calendar className="h-5 w-5" />
+            <div>
+              <p className="font-medium">{getWeekDisplay()} • {timezone}</p>
+              <p className="text-sm text-blue-600">
+                Start studying to see your weekly progress here!
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Main Progress Stats Section */}
       <div className="space-y-6">
         <div className="border-b border-mint-200 pb-4">

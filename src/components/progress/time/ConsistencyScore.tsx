@@ -1,170 +1,165 @@
 
-import { ProgressCard } from "../shared/ProgressCard";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Target, TrendingUp, TrendingDown } from "lucide-react";
+import { Calendar, Clock, TrendingUp } from "lucide-react";
 import { useTimezoneAwareAnalytics } from "@/hooks/useTimezoneAwareAnalytics";
+import { debugTimezone, getWeekStartInTimezone, getWeekEndInTimezone } from "@/utils/timezoneUtils";
 
 export const ConsistencyScore = () => {
-  const { analytics, isLoading } = useTimezoneAwareAnalytics();
+  const { analytics, isLoading, timezone } = useTimezoneAwareAnalytics();
+
+  // Debug timezone calculations for Melbourne users
+  if (timezone && (timezone.includes('Melbourne') || timezone.includes('Australia'))) {
+    debugTimezone(timezone);
+  }
+
+  // Calculate week display info
+  const getWeekInfo = () => {
+    if (!timezone) return { current: '', previous: '' };
+    
+    const formatter = new Intl.DateTimeFormat('en-AU', {
+      month: 'short',
+      day: 'numeric'
+    });
+    
+    // Current week (Monday to Sunday)
+    const thisWeekStart = getWeekStartInTimezone(timezone, 0);
+    const thisWeekEnd = getWeekEndInTimezone(timezone, 0);
+    
+    // Previous week (Monday to Sunday)
+    const lastWeekStart = getWeekStartInTimezone(timezone, 1);
+    const lastWeekEnd = getWeekEndInTimezone(timezone, 1);
+    
+    return {
+      current: `${formatter.format(thisWeekStart)} - ${formatter.format(thisWeekEnd)}`,
+      previous: `${formatter.format(lastWeekStart)} - ${formatter.format(lastWeekEnd)}`
+    };
+  };
+
+  const formatTime = (minutes: number) => {
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+  };
 
   if (isLoading) {
     return (
-      <ProgressCard title="Study Consistency" icon={Target}>
-        <div className="h-60 animate-pulse bg-gray-200 rounded"></div>
-      </ProgressCard>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            Study Consistency Analysis
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-200 rounded mb-2"></div>
+            <div className="h-2 bg-gray-200 rounded mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded mb-2"></div>
+            <div className="h-4 bg-gray-200 rounded"></div>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
-  // Calculate real consistency score based on actual data
-  const calculateConsistencyScore = () => {
-    const weeklyMinutes = analytics.weeklyStudyTimeMinutes || 0;
-    const previousWeekMinutes = analytics.previousWeekTimeMinutes || 0;
-    const totalSessions = analytics.totalSessions || 0;
-    
-    // Base score calculation
-    let score = 0;
-    
-    // Score based on weekly activity (0-40 points)
-    if (weeklyMinutes > 0) {
-      score += Math.min(40, (weeklyMinutes / 180) * 40); // 180 min = 3 hours target
-    }
-    
-    // Score based on consistency (0-30 points)
-    if (totalSessions > 1) {
-      const avgSessionTime = weeklyMinutes / Math.max(analytics.weeklySessions, 1);
-      if (avgSessionTime > 15 && avgSessionTime < 120) { // Good session length
-        score += 30;
-      } else if (avgSessionTime > 5) {
-        score += 15;
-      }
-    }
-    
-    // Score based on improvement (0-30 points)
-    if (previousWeekMinutes > 0 && weeklyMinutes >= previousWeekMinutes) {
-      score += 30;
-    } else if (weeklyMinutes > 0) {
-      score += 15;
-    }
-    
-    return Math.min(100, Math.round(score));
-  };
-
-  const consistencyScore = calculateConsistencyScore();
-  const weeklyComparison = {
-    thisWeek: Math.round((analytics.weeklyStudyTimeMinutes || 0) / 60 * 10) / 10,
-    lastWeek: Math.round((analytics.previousWeekTimeMinutes || 0) / 60 * 10) / 10,
-    percentageChange: analytics.weeklyChange || 0
-  };
-
-  // Calculate optimal study time based on actual patterns
-  const calculateOptimalStudyTime = () => {
-    const avgSessionTime = analytics.averageSessionTime || 0;
-    const totalSessions = analytics.totalSessions || 0;
-    
-    if (totalSessions === 0) {
-      return "Start studying to get personalized recommendations";
-    }
-    
-    if (avgSessionTime < 20) {
-      return "Try longer sessions (20-45 minutes) for better focus";
-    } else if (avgSessionTime > 90) {
-      return "Consider shorter sessions (45-60 minutes) to maintain concentration";
-    } else if (avgSessionTime >= 25 && avgSessionTime <= 45) {
-      return "Your current session length is optimal! Keep it up.";
-    } else {
-      return "Morning sessions (9-11 AM) tend to be most effective";
-    }
-  };
-
-  const optimalStudyTime = calculateOptimalStudyTime();
-
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-yellow-600';
-    if (score >= 40) return 'text-orange-600';
-    return 'text-red-600';
-  };
-
-  const getScoreLabel = (score: number) => {
-    if (score >= 80) return 'Excellent';
-    if (score >= 60) return 'Good';
-    if (score >= 40) return 'Fair';
-    return 'Needs Improvement';
-  };
-
-  const isWeeklyTrendPositive = weeklyComparison.percentageChange > 0;
+  const weekInfo = getWeekInfo();
+  const consistencyPercentage = Math.min(100, Math.round((analytics.weeklyStudyTimeMinutes / analytics.weeklyGoalMinutes) * 100));
 
   return (
-    <ProgressCard title="Study Consistency Analysis" icon={Target}>
-      <div className="space-y-6">
-        {/* Consistency Score Display */}
-        <div className="text-center space-y-4">
-          <div className={`text-6xl font-bold ${getScoreColor(consistencyScore)}`}>
-            {consistencyScore}
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-purple-600" />
+          Study Consistency Analysis
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Week Information */}
+        <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+          <div className="flex items-center gap-2 mb-2">
+            <Calendar className="h-4 w-4 text-purple-600" />
+            <span className="text-sm font-medium text-purple-800">Week Boundaries ({timezone})</span>
           </div>
-          <div className="space-y-2">
-            <div className="text-lg font-semibold text-gray-800">
-              {getScoreLabel(consistencyScore)}
-            </div>
-            <Progress value={consistencyScore} className="h-3" />
-          </div>
-        </div>
-
-        {/* Weekly Comparison */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600">
-              {weeklyComparison.thisWeek}h
-            </div>
-            <div className="text-sm text-gray-600">This Week</div>
-          </div>
-          <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <div className="text-2xl font-bold text-gray-600">
-              {weeklyComparison.lastWeek}h
-            </div>
-            <div className="text-sm text-gray-600">Last Week</div>
+          <div className="text-sm text-purple-700 space-y-1">
+            <div>This week: {weekInfo.current}</div>
+            <div>Last week: {weekInfo.previous}</div>
           </div>
         </div>
 
-        {/* Weekly Trend */}
-        {weeklyComparison.percentageChange !== 0 && (
-          <div className={`flex items-center justify-center gap-2 p-3 rounded-lg ${
-            isWeeklyTrendPositive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-          }`}>
-            {isWeeklyTrendPositive ? (
-              <TrendingUp className="h-5 w-5" />
-            ) : (
-              <TrendingDown className="h-5 w-5" />
-            )}
-            <span className="font-medium">
-              {isWeeklyTrendPositive ? '+' : ''}{weeklyComparison.percentageChange}% vs last week
+        {/* Current Week Progress */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">This Week's Progress</span>
+            <span className="text-sm text-gray-600">
+              {formatTime(analytics.weeklyStudyTimeMinutes)} / {formatTime(analytics.weeklyGoalMinutes)}
             </span>
           </div>
+          <Progress value={consistencyPercentage} className="h-3" />
+          <div className="flex justify-between text-xs text-gray-500">
+            <span>{consistencyPercentage}% of weekly goal</span>
+            <span>{analytics.weeklySessions} sessions</span>
+          </div>
+        </div>
+
+        {/* Week-over-Week Comparison */}
+        <div className="space-y-3">
+          <h4 className="text-sm font-medium">Weekly Comparison</h4>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="text-center p-3 bg-gray-50 rounded">
+              <div className="text-lg font-bold text-gray-800">
+                {formatTime(analytics.weeklyStudyTimeMinutes)}
+              </div>
+              <div className="text-xs text-gray-600">This Week</div>
+            </div>
+            <div className="text-center p-3 bg-gray-50 rounded">
+              <div className="text-lg font-bold text-gray-800">
+                {formatTime(analytics.previousWeekTimeMinutes)}
+              </div>
+              <div className="text-xs text-gray-600">Last Week</div>
+            </div>
+          </div>
+          
+          {analytics.weeklyChange !== 0 && (
+            <div className="text-center p-3 rounded-lg border">
+              <div className={`text-lg font-bold ${analytics.weeklyChange > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {analytics.weeklyChange > 0 ? '+' : ''}{analytics.weeklyChange}%
+              </div>
+              <div className="text-xs text-gray-600">Change from last week</div>
+            </div>
+          )}
+        </div>
+
+        {/* Today's Activity */}
+        <div className="border-t pt-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Clock className="h-4 w-4 text-blue-600" />
+            <span className="text-sm font-medium">Today's Activity</span>
+          </div>
+          <div className="text-sm text-gray-600">
+            {analytics.todayStudyTimeMinutes > 0 ? (
+              <span>{formatTime(analytics.todayStudyTimeMinutes)} studied today ({analytics.todaySessions} sessions)</span>
+            ) : (
+              <span>No study time recorded today</span>
+            )}
+          </div>
+        </div>
+
+        {/* Debug Info for Development */}
+        {timezone && (timezone.includes('Melbourne') || timezone.includes('Australia')) && (
+          <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200 text-xs">
+            <div className="font-medium text-yellow-800 mb-1">Debug Info (Melbourne timezone)</div>
+            <div className="text-yellow-700 space-y-1">
+              <div>Total sessions: {analytics.totalSessions}</div>
+              <div>Weekly minutes: {analytics.weeklyStudyTimeMinutes}</div>
+              <div>Today minutes: {analytics.todayStudyTimeMinutes}</div>
+              <div>Timezone: {timezone}</div>
+              <div>Today string: {analytics.todayString}</div>
+            </div>
+          </div>
         )}
-
-        {/* Optimal Study Time Recommendation */}
-        <div className="p-4 bg-mint-50 rounded-lg">
-          <div className="font-semibold text-mint-800 mb-2">
-            🎯 Personalized Recommendation
-          </div>
-          <div className="text-mint-700 text-sm">
-            {optimalStudyTime}
-          </div>
-        </div>
-
-        {/* Consistency Tips */}
-        <div className="p-4 bg-blue-50 rounded-lg">
-          <div className="font-semibold text-blue-800 mb-2">
-            💡 Consistency Tips
-          </div>
-          <ul className="text-blue-700 text-sm space-y-1">
-            <li>• Study at the same time each day</li>
-            <li>• Set realistic daily goals (20-45 minutes)</li>
-            <li>• Take breaks every 25-30 minutes</li>
-            <li>• Track your progress regularly</li>
-          </ul>
-        </div>
-      </div>
-    </ProgressCard>
+      </CardContent>
+    </Card>
   );
 };
