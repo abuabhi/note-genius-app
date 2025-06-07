@@ -1,6 +1,5 @@
-
 import React, { Suspense } from 'react';
-import { useFlashcards } from '@/contexts/flashcards/index';
+import { useFlashcards } from '@/contexts/FlashcardContext';
 import { useOptimizedQuery } from '@/hooks/performance/useOptimizedQueries';
 import Layout from '@/components/layout/Layout';
 
