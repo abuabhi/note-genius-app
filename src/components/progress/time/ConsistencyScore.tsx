@@ -2,10 +2,10 @@
 import { ProgressCard } from "../shared/ProgressCard";
 import { Progress } from "@/components/ui/progress";
 import { Target, TrendingUp, TrendingDown } from "lucide-react";
-import { useProgressAnalytics } from "@/hooks/progress/useProgressAnalytics";
+import { useTimezoneAwareAnalytics } from "@/hooks/useTimezoneAwareAnalytics";
 
 export const ConsistencyScore = () => {
-  const { studyTimeAnalytics, isLoading } = useProgressAnalytics();
+  const { analytics, isLoading } = useTimezoneAwareAnalytics();
 
   if (isLoading) {
     return (
@@ -15,7 +15,68 @@ export const ConsistencyScore = () => {
     );
   }
 
-  const { consistencyScore, weeklyComparison, optimalStudyTime } = studyTimeAnalytics;
+  // Calculate real consistency score based on actual data
+  const calculateConsistencyScore = () => {
+    const weeklyMinutes = analytics.weeklyStudyTimeMinutes || 0;
+    const previousWeekMinutes = analytics.previousWeekTimeMinutes || 0;
+    const totalSessions = analytics.totalSessions || 0;
+    
+    // Base score calculation
+    let score = 0;
+    
+    // Score based on weekly activity (0-40 points)
+    if (weeklyMinutes > 0) {
+      score += Math.min(40, (weeklyMinutes / 180) * 40); // 180 min = 3 hours target
+    }
+    
+    // Score based on consistency (0-30 points)
+    if (totalSessions > 1) {
+      const avgSessionTime = weeklyMinutes / Math.max(analytics.weeklySessions, 1);
+      if (avgSessionTime > 15 && avgSessionTime < 120) { // Good session length
+        score += 30;
+      } else if (avgSessionTime > 5) {
+        score += 15;
+      }
+    }
+    
+    // Score based on improvement (0-30 points)
+    if (previousWeekMinutes > 0 && weeklyMinutes >= previousWeekMinutes) {
+      score += 30;
+    } else if (weeklyMinutes > 0) {
+      score += 15;
+    }
+    
+    return Math.min(100, Math.round(score));
+  };
+
+  const consistencyScore = calculateConsistencyScore();
+  const weeklyComparison = {
+    thisWeek: Math.round((analytics.weeklyStudyTimeMinutes || 0) / 60 * 10) / 10,
+    lastWeek: Math.round((analytics.previousWeekTimeMinutes || 0) / 60 * 10) / 10,
+    percentageChange: analytics.weeklyChange || 0
+  };
+
+  // Calculate optimal study time based on actual patterns
+  const calculateOptimalStudyTime = () => {
+    const avgSessionTime = analytics.averageSessionTime || 0;
+    const totalSessions = analytics.totalSessions || 0;
+    
+    if (totalSessions === 0) {
+      return "Start studying to get personalized recommendations";
+    }
+    
+    if (avgSessionTime < 20) {
+      return "Try longer sessions (20-45 minutes) for better focus";
+    } else if (avgSessionTime > 90) {
+      return "Consider shorter sessions (45-60 minutes) to maintain concentration";
+    } else if (avgSessionTime >= 25 && avgSessionTime <= 45) {
+      return "Your current session length is optimal! Keep it up.";
+    } else {
+      return "Morning sessions (9-11 AM) tend to be most effective";
+    }
+  };
+
+  const optimalStudyTime = calculateOptimalStudyTime();
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600';
@@ -29,13 +90,6 @@ export const ConsistencyScore = () => {
     if (score >= 60) return 'Good';
     if (score >= 40) return 'Fair';
     return 'Needs Improvement';
-  };
-
-  const getProgressColor = (score: number) => {
-    if (score >= 80) return 'bg-green-500';
-    if (score >= 60) return 'bg-yellow-500';
-    if (score >= 40) return 'bg-orange-500';
-    return 'bg-red-500';
   };
 
   const isWeeklyTrendPositive = weeklyComparison.percentageChange > 0;
@@ -91,11 +145,10 @@ export const ConsistencyScore = () => {
         {/* Optimal Study Time Recommendation */}
         <div className="p-4 bg-mint-50 rounded-lg">
           <div className="font-semibold text-mint-800 mb-2">
-            🎯 Optimal Study Time
+            🎯 Personalized Recommendation
           </div>
-          <div className="text-mint-700">
-            Based on your performance data, you study most effectively during{' '}
-            <strong>{optimalStudyTime}</strong>
+          <div className="text-mint-700 text-sm">
+            {optimalStudyTime}
           </div>
         </div>
 
@@ -106,8 +159,8 @@ export const ConsistencyScore = () => {
           </div>
           <ul className="text-blue-700 text-sm space-y-1">
             <li>• Study at the same time each day</li>
-            <li>• Set realistic daily goals</li>
-            <li>• Use short, focused sessions</li>
+            <li>• Set realistic daily goals (20-45 minutes)</li>
+            <li>• Take breaks every 25-30 minutes</li>
             <li>• Track your progress regularly</li>
           </ul>
         </div>

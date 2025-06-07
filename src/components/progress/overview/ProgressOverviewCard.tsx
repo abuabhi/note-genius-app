@@ -2,10 +2,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Clock, Target, TrendingUp, Award } from "lucide-react";
-import { useUnifiedStudyStats } from "@/hooks/useUnifiedStudyStats";
+import { useTimezoneAwareAnalytics } from "@/hooks/useTimezoneAwareAnalytics";
 
 export const ProgressOverviewCard = () => {
-  const { stats, isLoading } = useUnifiedStudyStats();
+  const { analytics, isLoading } = useTimezoneAwareAnalytics();
 
   if (isLoading) {
     return (
@@ -34,9 +34,10 @@ export const ProgressOverviewCard = () => {
   };
 
   // Calculate streaks and achievements
-  const isOnTrack = stats.weeklyGoalProgress >= 50; // At least 50% of weekly goal
-  const weeklyTarget = formatTime(stats.weeklyGoalMinutes);
-  const weeklyProgress = formatTime(stats.weeklyStudyTimeMinutes);
+  const isOnTrack = analytics.weeklyGoalProgress >= 50; // At least 50% of weekly goal
+  const weeklyTarget = formatTime(analytics.weeklyGoalMinutes);
+  const weeklyProgress = formatTime(analytics.weeklyStudyTimeMinutes);
+  const totalHours = Math.round((analytics.totalStudyTimeMinutes || 0) / 60 * 10) / 10;
 
   return (
     <Card className="w-full bg-gradient-to-br from-mint-50 to-blue-50 border-mint-200">
@@ -54,8 +55,8 @@ export const ProgressOverviewCard = () => {
               <Clock className="h-5 w-5 text-blue-600 mr-2" />
               <span className="text-sm font-medium text-gray-600">Total Study Time</span>
             </div>
-            <p className="text-3xl font-bold text-gray-900">{formatTime(stats.studyTimeMinutes)}</p>
-            <p className="text-sm text-gray-500">{stats.totalSessions} sessions completed</p>
+            <p className="text-3xl font-bold text-gray-900">{totalHours}h</p>
+            <p className="text-sm text-gray-500">{analytics.totalSessions} sessions completed</p>
           </div>
           
           <div className="text-center">
@@ -63,8 +64,8 @@ export const ProgressOverviewCard = () => {
               <Target className="h-5 w-5 text-green-600 mr-2" />
               <span className="text-sm font-medium text-gray-600">Cards Mastered</span>
             </div>
-            <p className="text-3xl font-bold text-gray-900">{stats.totalCardsMastered}</p>
-            <p className="text-sm text-gray-500">{stats.flashcardAccuracy}% accuracy</p>
+            <p className="text-3xl font-bold text-gray-900">{analytics.totalCardsMastered}</p>
+            <p className="text-sm text-gray-500">{analytics.flashcardAccuracy}% accuracy</p>
           </div>
           
           <div className="text-center">
@@ -72,8 +73,8 @@ export const ProgressOverviewCard = () => {
               <TrendingUp className="h-5 w-5 text-purple-600 mr-2" />
               <span className="text-sm font-medium text-gray-600">Study Streak</span>
             </div>
-            <p className="text-3xl font-bold text-gray-900">{stats.streakDays}</p>
-            <p className="text-sm text-gray-500">{stats.streakDays === 1 ? 'day' : 'days'} in a row</p>
+            <p className="text-3xl font-bold text-gray-900">{analytics.streakDays}</p>
+            <p className="text-sm text-gray-500">{analytics.streakDays === 1 ? 'day' : 'days'} in a row</p>
           </div>
         </div>
 
@@ -83,10 +84,10 @@ export const ProgressOverviewCard = () => {
             <h3 className="text-lg font-semibold text-gray-900">Weekly Goal Progress</h3>
             <span className="text-sm text-gray-600">{weeklyProgress} / {weeklyTarget}</span>
           </div>
-          <Progress value={stats.weeklyGoalProgress} className="h-3" />
+          <Progress value={analytics.weeklyGoalProgress} className="h-3" />
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium text-gray-700">
-              {stats.weeklyGoalProgress}% Complete
+              {analytics.weeklyGoalProgress}% Complete
             </span>
             <span className={`text-sm font-medium ${isOnTrack ? 'text-green-600' : 'text-orange-600'}`}>
               {isOnTrack ? '✅ On Track' : '⚠️ Needs Attention'}
@@ -95,16 +96,31 @@ export const ProgressOverviewCard = () => {
         </div>
 
         {/* Weekly Comparison */}
-        {stats.weeklyChange !== 0 && (
+        {analytics.weeklyChange !== 0 && (
           <div className="p-4 bg-white/50 rounded-lg">
             <div className="flex items-center gap-2">
-              <TrendingUp className={`h-4 w-4 ${stats.weeklyChange > 0 ? 'text-green-600' : 'text-red-600'}`} />
+              <TrendingUp className={`h-4 w-4 ${analytics.weeklyChange > 0 ? 'text-green-600' : 'text-red-600'}`} />
               <span className="text-sm font-medium text-gray-700">
-                {stats.weeklyChange > 0 ? '📈 Great improvement!' : '📉 Slight dip this week'}
+                {analytics.weeklyChange > 0 ? '📈 Great improvement!' : '📉 Slight dip this week'}
               </span>
             </div>
             <p className="text-sm text-gray-600 mt-1">
-              {stats.weeklyChange > 0 ? '+' : ''}{stats.weeklyChange}% compared to last week
+              {analytics.weeklyChange > 0 ? '+' : ''}{analytics.weeklyChange}% compared to last week
+            </p>
+          </div>
+        )}
+
+        {/* Today's Activity */}
+        {analytics.todayStudyTimeMinutes > 0 && (
+          <div className="p-4 bg-green-50 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-green-600" />
+              <span className="text-sm font-medium text-green-800">
+                Today's Progress: {formatTime(analytics.todayStudyTimeMinutes)}
+              </span>
+            </div>
+            <p className="text-sm text-green-600 mt-1">
+              {analytics.todaySessions} sessions completed today
             </p>
           </div>
         )}

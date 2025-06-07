@@ -1,5 +1,5 @@
 
-import { useProgressAnalytics } from "@/hooks/progress/useProgressAnalytics";
+import { useTimezoneAwareAnalytics } from "@/hooks/useTimezoneAwareAnalytics";
 import { ProgressOverviewCard } from "./overview/ProgressOverviewCard";
 import { GradeProgressionChart } from "./grades/GradeProgressionChart";
 import { FlashcardMasteryLevels } from "./grades/FlashcardMasteryLevels";
@@ -10,7 +10,7 @@ import { AdaptiveLearningDashboard } from "./adaptive/AdaptiveLearningDashboard"
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const EnhancedProgressOverview = () => {
-  const { isLoading } = useProgressAnalytics();
+  const { isLoading } = useTimezoneAwareAnalytics();
 
   if (isLoading) {
     return (
@@ -33,6 +33,15 @@ export const EnhancedProgressOverview = () => {
       {/* Hero Overview Card */}
       <ProgressOverviewCard />
       
+      {/* Advanced AI Analytics Section */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Performance Analytics</h2>
+          <p className="text-gray-600">AI-powered insights and comparative analysis</p>
+        </div>
+        <AdvancedAnalyticsDashboard />
+      </div>
+      
       {/* AI-Powered Adaptive Learning Section */}
       <div className="space-y-6">
         <div>
@@ -40,15 +49,6 @@ export const EnhancedProgressOverview = () => {
           <p className="text-gray-600">Personalized learning paths and intelligent study optimization</p>
         </div>
         <AdaptiveLearningDashboard />
-      </div>
-      
-      {/* Advanced AI Analytics Section */}
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Advanced Analytics</h2>
-          <p className="text-gray-600">Performance predictions and comparative insights</p>
-        </div>
-        <AdvancedAnalyticsDashboard />
       </div>
       
       {/* Grade Progression Section */}
