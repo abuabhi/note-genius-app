@@ -1,61 +1,85 @@
 
-import { useEffect, useState } from "react";
-import { Note } from "@/types/note";
-import { useNotes } from "@/contexts/NoteContext";
-import { EnhancementFunction } from "@/hooks/noteEnrichment/types";
-import { useEditorState } from "./editor/useEditorState";
-import { useNoteSave } from "./editor/useNoteSave";
-import { useEnhancementProcessor } from "./editor/useEnhancementProcessor";
+import { useState, useEffect, useCallback } from 'react';
+import { Note } from '@/types/note';
+import { useNotes } from '@/contexts/NoteContext';
+import { toast } from 'sonner';
 
-/**
- * Main hook for note study editor functionality
- */
-export const useNoteStudyEditor = (note: Note) => {
-  // Editor state management
-  const editorState = useEditorState(note);
-  
-  // Save functionality
-  const { handleSaveContent } = useNoteSave(note, {
-    isEditing: editorState.isEditing,
-    editableContent: editorState.editableContent,
-    editableTitle: editorState.editableTitle,
-    selectedTags: editorState.selectedTags,
-    setIsEditing: editorState.setIsEditing,
-    setIsSaving: editorState.setIsSaving
-  });
-  
-  // Enhancement functionality
-  const { handleEnhanceContent } = useEnhancementProcessor(note, {
-    isEditing: editorState.isEditing,
-    setEditableContent: editorState.setEditableContent
-  });
-  
-  // Tag management
-  const { getAllTags } = useNotes();
-  const [availableTags, setAvailableTags] = useState<{ id: string; name: string; color: string }[]>([]);
-  
-  // Fetch available tags when component mounts
+export const useNoteStudyEditor = (note: Note, forceRefresh: () => void) => {
+  const { updateNote, tags } = useNotes();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editableContent, setEditableContent] = useState(note.content || note.description || '');
+  const [editableTitle, setEditableTitle] = useState(note.title);
+  const [selectedTags, setSelectedTags] = useState(note.tags || []);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Update editable content when note changes
   useEffect(() => {
-    const loadTags = async () => {
-      const tags = await getAllTags();
-      setAvailableTags(tags);
-    };
-    loadTags();
-  }, [getAllTags]);
+    setEditableContent(note.content || note.description || '');
+    setEditableTitle(note.title);
+    setSelectedTags(note.tags || []);
+  }, [note.id, note.content, note.description, note.title, note.tags]);
 
-  // Return all needed props and functions
+  const handleContentChange = useCallback((content: string) => {
+    setEditableContent(content);
+  }, []);
+
+  const handleTitleChange = useCallback((title: string) => {
+    setEditableTitle(title);
+  }, []);
+
+  const handleSaveContent = useCallback(async () => {
+    setIsSaving(true);
+    try {
+      await updateNote(note.id, {
+        title: editableTitle,
+        content: editableContent,
+        description: editableContent, // Keep description in sync
+        tags: selectedTags
+      });
+      
+      setIsEditing(false);
+      forceRefresh();
+      toast.success('Note saved successfully');
+    } catch (error) {
+      console.error('Error saving note:', error);
+      toast.error('Failed to save note');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [note.id, editableTitle, editableContent, selectedTags, updateNote, forceRefresh]);
+
+  const toggleEditing = useCallback(() => {
+    if (isEditing) {
+      // Reset to original content if canceling
+      setEditableContent(note.content || note.description || '');
+      setEditableTitle(note.title);
+      setSelectedTags(note.tags || []);
+    }
+    setIsEditing(!isEditing);
+  }, [isEditing, note.content, note.description, note.title, note.tags]);
+
+  const onNoteUpdate = useCallback(async (updatedData: Partial<Note>) => {
+    try {
+      await updateNote(note.id, updatedData);
+      forceRefresh();
+    } catch (error) {
+      console.error('Error updating note:', error);
+      toast.error('Failed to update note');
+    }
+  }, [note.id, updateNote, forceRefresh]);
+
   return {
-    isEditing: editorState.isEditing,
-    editableTitle: editorState.editableTitle,
-    editableContent: editorState.editableContent,
-    selectedTags: editorState.selectedTags,
-    availableTags,
-    isSaving: editorState.isSaving,
-    toggleEditing: editorState.toggleEditing,
-    handleTitleChange: editorState.handleTitleChange,
-    handleContentChange: editorState.handleContentChange,
+    isEditing,
+    editableContent,
+    editableTitle,
+    selectedTags,
+    availableTags: tags,
+    isSaving,
+    handleContentChange,
+    handleTitleChange,
     handleSaveContent,
-    handleEnhanceContent,
-    setSelectedTags: editorState.setSelectedTags
+    toggleEditing,
+    setSelectedTags,
+    onNoteUpdate
   };
 };
