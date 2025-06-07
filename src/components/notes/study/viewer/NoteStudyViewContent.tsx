@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useTransition, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Note } from "@/types/note";
 import { TextAlignType } from "../hooks/useStudyViewState";
@@ -62,29 +62,35 @@ export const NoteStudyViewContent = ({
 }: NoteStudyViewContentProps) => {
   const [selectedText, setSelectedText] = useState("");
   const [showConversionPanel, setShowConversionPanel] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
-  // Handle text selection for flashcard creation
-  const handleTextSelection = () => {
-    const selection = window.getSelection();
-    if (selection && selection.toString().trim().length > 0) {
-      setSelectedText(selection.toString().trim());
-      setShowConversionPanel(true);
-    } else {
-      setSelectedText("");
-      setShowConversionPanel(false);
-    }
-  };
+  // Handle text selection for flashcard creation with async handling
+  const handleTextSelection = useCallback(() => {
+    // Use requestAnimationFrame to defer the selection handling
+    requestAnimationFrame(() => {
+      startTransition(() => {
+        const selection = window.getSelection();
+        if (selection && selection.toString().trim().length > 0) {
+          setSelectedText(selection.toString().trim());
+          setShowConversionPanel(true);
+        } else {
+          setSelectedText("");
+          setShowConversionPanel(false);
+        }
+      });
+    });
+  }, []);
 
-  const handleTextSelectionConvert = async (frontText: string, backText: string) => {
+  const handleTextSelectionConvert = useCallback(async (frontText: string, backText: string) => {
     // This would integrate with the flashcard creation system
     console.log("Converting selection to flashcard:", { frontText, backText });
     // Implementation would go here
-  };
+  }, []);
 
   // Create a wrapper function for handleEnhanceContent with default enhancement type
-  const handleEnhanceContentWrapper = async () => {
+  const handleEnhanceContentWrapper = useCallback(async () => {
     await handleEnhanceContent('improve-clarity'); // Default enhancement type
-  };
+  }, [handleEnhanceContent]);
 
   if (isEditing) {
     return (
@@ -124,6 +130,7 @@ export const NoteStudyViewContent = ({
               onRetryEnhancement={handleRetryEnhancement}
               activeContentType={activeContentType}
               onActiveContentTypeChange={onActiveContentTypeChange}
+              isLoading={isPending}
             />
           </div>
         </ResizablePanel>

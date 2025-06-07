@@ -1,5 +1,7 @@
+
 import { toast } from 'sonner';
 import { Note } from "@/types/note";
+import { startTransition } from 'react';
 import { 
   addNoteToDatabase, 
   deleteNoteFromDatabase, 
@@ -27,7 +29,9 @@ export const useNoteOperations = (
       
       if (newNote) {
         console.log("Note added successfully:", newNote);
-        setNotes(prevNotes => [newNote, ...prevNotes]);
+        startTransition(() => {
+          setNotes(prevNotes => [newNote, ...prevNotes]);
+        });
         toast.success("Note added");
         return newNote;
       } else {
@@ -51,12 +55,14 @@ export const useNoteOperations = (
       
       // Optimistic update - remove note from UI immediately
       const deletedNote = notes.find(note => note.id === id);
-      setNotes(prevNotes => prevNotes.filter(note => note.id !== id));
-      
-      // Reset to first page if we delete the last note of the page
-      if (paginatedNotes.length === 1 && currentPage > 1) {
-        setCurrentPage(currentPage - 1);
-      }
+      startTransition(() => {
+        setNotes(prevNotes => prevNotes.filter(note => note.id !== id));
+        
+        // Reset to first page if we delete the last note of the page
+        if (paginatedNotes.length === 1 && currentPage > 1) {
+          setCurrentPage(currentPage - 1);
+        }
+      });
       
       try {
         // Attempt to delete from database
@@ -70,7 +76,9 @@ export const useNoteOperations = (
         
         // Revert the optimistic update by restoring the deleted note
         if (deletedNote) {
-          setNotes(prevNotes => [...prevNotes, deletedNote]);
+          startTransition(() => {
+            setNotes(prevNotes => [...prevNotes, deletedNote]);
+          });
         }
         
         toast.dismiss(toastId);
@@ -97,37 +105,39 @@ export const useNoteOperations = (
         await updateNoteTagsInDatabase(id, updatedNote.tags);
       }
 
-      // Then update the state - ensuring all enhancement fields are preserved
-      setNotes(prevNotes => 
-        prevNotes.map(note => {
-          if (note.id === id) {
-            const updatedNoteData = { 
-              ...note, 
-              ...updatedNote,
-              // Ensure enhancement fields are properly merged
-              improved_content: updatedNote.improved_content !== undefined ? updatedNote.improved_content : note.improved_content,
-              improved_content_generated_at: updatedNote.improved_content_generated_at !== undefined ? updatedNote.improved_content_generated_at : note.improved_content_generated_at,
-              summary: updatedNote.summary !== undefined ? updatedNote.summary : note.summary,
-              summary_generated_at: updatedNote.summary_generated_at !== undefined ? updatedNote.summary_generated_at : note.summary_generated_at,
-              key_points: updatedNote.key_points !== undefined ? updatedNote.key_points : note.key_points,
-              key_points_generated_at: updatedNote.key_points_generated_at !== undefined ? updatedNote.key_points_generated_at : note.key_points_generated_at,
-              markdown_content: updatedNote.markdown_content !== undefined ? updatedNote.markdown_content : note.markdown_content,
-              markdown_content_generated_at: updatedNote.markdown_content_generated_at !== undefined ? updatedNote.markdown_content_generated_at : note.markdown_content_generated_at
-            };
-            
-            console.log("🎯 Note state updated:", {
-              id,
-              hasImprovedContent: !!updatedNoteData.improved_content,
-              improvedContentLength: updatedNoteData.improved_content?.length || 0,
-              improvedContentGenerated: updatedNoteData.improved_content_generated_at,
-              updatedFields: Object.keys(updatedNote)
-            });
-            
-            return updatedNoteData;
-          }
-          return note;
-        })
-      );
+      // Then update the state with transition - ensuring all enhancement fields are preserved
+      startTransition(() => {
+        setNotes(prevNotes => 
+          prevNotes.map(note => {
+            if (note.id === id) {
+              const updatedNoteData = { 
+                ...note, 
+                ...updatedNote,
+                // Ensure enhancement fields are properly merged
+                improved_content: updatedNote.improved_content !== undefined ? updatedNote.improved_content : note.improved_content,
+                improved_content_generated_at: updatedNote.improved_content_generated_at !== undefined ? updatedNote.improved_content_generated_at : note.improved_content_generated_at,
+                summary: updatedNote.summary !== undefined ? updatedNote.summary : note.summary,
+                summary_generated_at: updatedNote.summary_generated_at !== undefined ? updatedNote.summary_generated_at : note.summary_generated_at,
+                key_points: updatedNote.key_points !== undefined ? updatedNote.key_points : note.key_points,
+                key_points_generated_at: updatedNote.key_points_generated_at !== undefined ? updatedNote.key_points_generated_at : note.key_points_generated_at,
+                markdown_content: updatedNote.markdown_content !== undefined ? updatedNote.markdown_content : note.markdown_content,
+                markdown_content_generated_at: updatedNote.markdown_content_generated_at !== undefined ? updatedNote.markdown_content_generated_at : note.markdown_content_generated_at
+              };
+              
+              console.log("🎯 Note state updated:", {
+                id,
+                hasImprovedContent: !!updatedNoteData.improved_content,
+                improvedContentLength: updatedNoteData.improved_content?.length || 0,
+                improvedContentGenerated: updatedNoteData.improved_content_generated_at,
+                updatedFields: Object.keys(updatedNote)
+              });
+              
+              return updatedNoteData;
+            }
+            return note;
+          })
+        );
+      });
 
       toast.success("Note updated");
     } catch (error) {
