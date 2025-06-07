@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Copy, Mail, Send, Info } from 'lucide-react';
+import { Copy, Mail, Send, Info, ExternalLink } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 
@@ -58,14 +58,51 @@ Best regards`);
     }
 
     const mailtoLink = `mailto:${recipients.trim()}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
-    window.location.href = mailtoLink;
     
-    toast.success('Email client opened! Your referral email is ready to send.');
-    onClose();
+    try {
+      // Try to open the email client
+      const link = document.createElement('a');
+      link.href = mailtoLink;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Show success message with fallback instructions
+      toast.success('Email client should open now!', {
+        description: 'If your email client didn\'t open, try copying the content and sending manually.',
+        duration: 5000,
+      });
+      
+      // Don't close the dialog immediately - let user verify it worked
+      setTimeout(() => {
+        // Show a follow-up toast asking if it worked
+        toast.info('Did your email client open?', {
+          description: 'If not, you can copy the email content below and send it manually.',
+          duration: 8000,
+        });
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Error opening email client:', error);
+      toast.error('Unable to open email client', {
+        description: 'Please copy the email content and send it manually from your preferred email app.',
+        duration: 6000,
+      });
+    }
+  };
+
+  const copyFullEmail = () => {
+    const fullEmailContent = `To: ${recipients}
+Subject: ${subject}
+
+${message}`;
+    
+    copyToClipboard(fullEmailContent, 'Complete email');
   };
 
   const characterCount = message.length;
-  const isMessageTooLong = characterCount > 2000; // Most email clients handle this well
+  const isMessageTooLong = characterCount > 2000;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -82,8 +119,7 @@ Best regards`);
           <Alert className="border-blue-200 bg-blue-50">
             <Info className="h-4 w-4 text-blue-600" />
             <AlertDescription className="text-blue-800">
-              This will open your default email client to send from your personal email account. 
-              The email will be sent from your address, making it more personal and trustworthy for your friends.
+              This will try to open your default email client. If it doesn't work, you can copy the email content and send it manually from your preferred email app.
             </AlertDescription>
           </Alert>
 
@@ -170,27 +206,36 @@ Best regards`);
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-between gap-3 pt-4 border-t">
-            <Button variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => copyToClipboard(message, 'Email content')}
-                className="flex items-center gap-2"
-              >
-                <Copy className="h-4 w-4" />
-                Copy Content
+          <div className="flex flex-col gap-3 pt-4 border-t">
+            <div className="flex justify-between gap-3">
+              <Button variant="outline" onClick={onClose}>
+                Cancel
               </Button>
-              <Button
-                onClick={handleSendEmail}
-                disabled={!recipients.trim()}
-                className="bg-mint-600 hover:bg-mint-700 flex items-center gap-2"
-              >
-                <Send className="h-4 w-4" />
-                Open Email Client
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={copyFullEmail}
+                  className="flex items-center gap-2"
+                >
+                  <Copy className="h-4 w-4" />
+                  Copy Full Email
+                </Button>
+                <Button
+                  onClick={handleSendEmail}
+                  disabled={!recipients.trim()}
+                  className="bg-mint-600 hover:bg-mint-700 flex items-center gap-2"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Open Email Client
+                </Button>
+              </div>
+            </div>
+            
+            {/* Manual email instructions */}
+            <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+              <p className="text-sm text-gray-600">
+                <strong>Alternative:</strong> If the email client doesn't open, click "Copy Full Email" above and paste it into your preferred email app (Gmail, Outlook, Apple Mail, etc.).
+              </p>
             </div>
           </div>
         </div>
