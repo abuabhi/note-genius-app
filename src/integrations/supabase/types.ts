@@ -821,6 +821,7 @@ export type Database = {
           onboarding_completed: boolean | null
           referral_code: string | null
           school: string | null
+          timezone: string
           updated_at: string | null
           user_tier: Database["public"]["Enums"]["user_tier"]
           username: string | null
@@ -841,6 +842,7 @@ export type Database = {
           onboarding_completed?: boolean | null
           referral_code?: string | null
           school?: string | null
+          timezone?: string
           updated_at?: string | null
           user_tier?: Database["public"]["Enums"]["user_tier"]
           username?: string | null
@@ -861,6 +863,7 @@ export type Database = {
           onboarding_completed?: boolean | null
           referral_code?: string | null
           school?: string | null
+          timezone?: string
           updated_at?: string | null
           user_tier?: Database["public"]["Enums"]["user_tier"]
           username?: string | null

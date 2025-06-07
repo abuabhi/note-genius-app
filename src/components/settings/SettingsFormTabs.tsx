@@ -1,115 +1,55 @@
 
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import { UseFormReturn } from "react-hook-form";
-import { SettingsFormValues } from "./schemas/settingsFormSchema";
-import { UserTier } from "@/hooks/useUserTier";
-import { Country } from "@/hooks/useCountries";
-import { User } from "@supabase/supabase-js";
-
-import AccountSettingsCard from "./cards/AccountSettingsCard";
-import { SubjectsSettingsCard } from "./cards/SubjectsSettingsCard";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AccountSettingsCard } from "./cards/AccountSettingsCard";
 import { StudyPreferencesCard } from "./cards/StudyPreferencesCard";
-import { PasswordChangeCard } from "./cards/PasswordChangeCard";
-import { AdaptiveLearningCard } from "./cards/AdaptiveLearningCard";
 import { NotificationPreferencesCard } from "./cards/NotificationPreferencesCard";
+import { AdaptiveLearningCard } from "./cards/AdaptiveLearningCard";
+import { SubjectsSettingsCard } from "./cards/SubjectsSettingsCard";
+import { PasswordChangeCard } from "./cards/PasswordChangeCard";
+import { UpgradeTierCard } from "./cards/UpgradeTierCard";
 import { SubscriptionLimitsCard } from "./cards/SubscriptionLimitsCard";
+import { TimezoneSelector } from "./TimezoneSelector";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-interface SettingsFormTabsProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
-  form: UseFormReturn<SettingsFormValues>;
-  user: User | null;
-  userTier?: UserTier;
-  countries: Country[];
-  onCountryChange: (countryId: string) => Promise<void>;
-}
-
-export const SettingsFormTabs = ({
-  activeTab,
-  setActiveTab,
-  form,
-  user,
-  userTier,
-  countries,
-  onCountryChange
-}: SettingsFormTabsProps) => {
+export const SettingsFormTabs = () => {
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
-      <TabsList className="grid grid-cols-5 mb-8 bg-white/60 backdrop-blur-sm border border-mint-100/50 shadow-lg">
-        <TabsTrigger value="account" className="data-[state=active]:bg-mint-100 data-[state=active]:text-mint-800">Account</TabsTrigger>
-        <TabsTrigger value="subjects" className="data-[state=active]:bg-mint-100 data-[state=active]:text-mint-800">Subjects</TabsTrigger>
-        <TabsTrigger value="adaptive" className="data-[state=active]:bg-mint-100 data-[state=active]:text-mint-800">AI Learning</TabsTrigger>
-        <TabsTrigger value="notifications" className="data-[state=active]:bg-mint-100 data-[state=active]:text-mint-800">Notifications</TabsTrigger>
-        <TabsTrigger value="subscription" className="data-[state=active]:bg-mint-100 data-[state=active]:text-mint-800">Subscription</TabsTrigger>
+    <Tabs defaultValue="account" className="w-full">
+      <TabsList className="grid w-full grid-cols-4">
+        <TabsTrigger value="account">Account</TabsTrigger>
+        <TabsTrigger value="study">Study</TabsTrigger>
+        <TabsTrigger value="notifications">Notifications</TabsTrigger>
+        <TabsTrigger value="advanced">Advanced</TabsTrigger>
       </TabsList>
       
       <TabsContent value="account" className="space-y-6">
-        <div className="relative">
-          <div className="absolute -inset-2 bg-gradient-to-r from-mint-500/5 to-blue-500/5 rounded-2xl blur-lg"></div>
-          <div className="relative">
-            <AccountSettingsCard 
-              user={user}
-              userTier={userTier}
-              form={form}
-              countries={countries}
-              onCountryChange={onCountryChange}
-            />
-          </div>
-        </div>
-        
-        <div className="relative">
-          <div className="absolute -inset-2 bg-gradient-to-r from-mint-500/5 to-blue-500/5 rounded-2xl blur-lg"></div>
-          <div className="relative">
-            <PasswordChangeCard />
-          </div>
-        </div>
-        
-        <div className="relative">
-          <div className="absolute -inset-2 bg-gradient-to-r from-mint-500/5 to-blue-500/5 rounded-2xl blur-lg"></div>
-          <div className="relative">
-            <StudyPreferencesCard form={form} />
-          </div>
-        </div>
+        <AccountSettingsCard />
+        <Card>
+          <CardHeader>
+            <CardTitle>Timezone Settings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TimezoneSelector />
+          </CardContent>
+        </Card>
+        <PasswordChangeCard />
+        <UpgradeTierCard />
+        <SubscriptionLimitsCard />
       </TabsContent>
       
-      <TabsContent value="subjects" className="space-y-6">
-        <div className="relative">
-          <div className="absolute -inset-2 bg-gradient-to-r from-mint-500/5 to-blue-500/5 rounded-2xl blur-lg"></div>
-          <div className="relative">
-            <SubjectsSettingsCard />
-          </div>
-        </div>
+      <TabsContent value="study" className="space-y-6">
+        <StudyPreferencesCard />
+        <AdaptiveLearningCard />
+        <SubjectsSettingsCard />
       </TabsContent>
-
-      <TabsContent value="adaptive" className="space-y-6">
-        <div className="relative">
-          <div className="absolute -inset-2 bg-gradient-to-r from-purple-500/5 to-blue-500/5 rounded-2xl blur-lg"></div>
-          <div className="relative">
-            <AdaptiveLearningCard form={form} />
-          </div>
-        </div>
-      </TabsContent>
-
+      
       <TabsContent value="notifications" className="space-y-6">
-        <div className="relative">
-          <div className="absolute -inset-2 bg-gradient-to-r from-blue-500/5 to-mint-500/5 rounded-2xl blur-lg"></div>
-          <div className="relative">
-            <NotificationPreferencesCard form={form} />
-          </div>
-        </div>
+        <NotificationPreferencesCard />
       </TabsContent>
-
-      <TabsContent value="subscription" className="space-y-6">
-        <div className="relative">
-          <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/5 to-mint-500/5 rounded-2xl blur-lg"></div>
-          <div className="relative">
-            <SubscriptionLimitsCard />
-          </div>
+      
+      <TabsContent value="advanced" className="space-y-6">
+        {/* Advanced settings can be added here */}
+        <div className="text-center py-8 text-gray-500">
+          Advanced settings will be available soon.
         </div>
       </TabsContent>
     </Tabs>
