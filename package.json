@@ -59,6 +59,7 @@
     "@types/papaparse": "^5.3.16",
     "@types/react-big-calendar": "^1.16.1",
     "@types/react-helmet": "^6.1.11",
+    "@types/react-window": "^1.8.8",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",

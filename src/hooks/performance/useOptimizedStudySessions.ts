@@ -17,18 +17,29 @@ export const useOptimizedStudySessions = () => {
       const [recentSessions, sessionStats] = await Promise.all([
         supabase
           .from('study_sessions')
-          .select('id, subject, started_at, session_type, duration, cards_studied, cards_correct')
+          .select('id, subject, start_time, activity_type, duration, cards_reviewed, cards_correct')
           .eq('user_id', userId)
-          .order('started_at', { ascending: false })
+          .order('start_time', { ascending: false })
           .limit(10), // Only get what we need
         
-        // Aggregate query for stats
-        supabase.rpc('get_session_stats', { user_id: userId, target_date: today })
+        // Basic aggregate query for stats
+        supabase
+          .from('study_sessions')
+          .select('duration, cards_reviewed, cards_correct')
+          .eq('user_id', userId)
+          .gte('start_time', today)
       ]);
 
       return {
         recentSessions: recentSessions.data || [],
-        sessionStats: sessionStats.data || {}
+        sessionStats: {
+          totalTime: sessionStats.data?.reduce((sum, s) => sum + (s.duration || 0), 0) || 0,
+          totalCards: sessionStats.data?.reduce((sum, s) => sum + (s.cards_reviewed || 0), 0) || 0,
+          accuracy: sessionStats.data?.length > 0 
+            ? sessionStats.data.reduce((sum, s) => sum + (s.cards_correct || 0), 0) / 
+              sessionStats.data.reduce((sum, s) => sum + (s.cards_reviewed || 1), 1) * 100
+            : 0
+        }
       };
     },
     staleTime: 2 * 60 * 1000, // 2 minutes - fresher for critical data
@@ -52,7 +63,11 @@ export const useOptimizedStudySessions = () => {
           .gte('date', sevenDaysAgo.toISOString().split('T')[0])
           .order('date', { ascending: true }),
         
-        supabase.rpc('get_subject_performance', { user_id: userId, days_back: 30 })
+        supabase
+          .from('study_sessions')
+          .select('subject, duration, cards_correct, cards_reviewed')
+          .eq('user_id', userId)
+          .gte('start_time', sevenDaysAgo.toISOString())
       ]);
 
       return {
@@ -78,7 +93,7 @@ export const useOptimizedStudySessions = () => {
           .select('*')
           .eq('user_id', userId)
           .range(10, 20)
-          .order('started_at', { ascending: false });
+          .order('start_time', { ascending: false });
       },
       staleTime: 5 * 60 * 1000,
     });
