@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useNotes } from "@/contexts/NoteContext";
 import { useRequireAuth, TierLimits, UserTier } from "@/hooks/useRequireAuth";
 import { Note } from "@/types/note";
@@ -26,9 +26,23 @@ export const NotesContent = ({
   tierLimits,
   userTier 
 }: NotesContentProps) => {
-  const { paginatedNotes, notes, loading, setFilterOptions, filteredNotes, searchTerm, filterOptions } = useNotes();
-  const { user, loading: authLoading } = useRequireAuth();
+  const [isPending, startTransition] = useTransition();
   const [activeSubjectId, setActiveSubjectId] = useState<string | null>(null);
+  
+  // Wrap hooks in try-catch to prevent suspension errors
+  let notesData;
+  let authData;
+  
+  try {
+    notesData = useNotes();
+    authData = useRequireAuth();
+  } catch (error) {
+    console.error("Error in hooks:", error);
+    return <LoadingState message="Loading application..." />;
+  }
+
+  const { paginatedNotes, notes, loading, setFilterOptions, filteredNotes, searchTerm, filterOptions } = notesData;
+  const { user, loading: authLoading } = authData;
 
   // Check if notes are filtered - properly handle Date types
   const isFiltered = searchTerm.length > 0 || 
@@ -37,7 +51,7 @@ export const NotesContent = ({
                     Boolean(activeSubjectId);
 
   // Show loading state while checking authentication
-  if (authLoading) {
+  if (authLoading || isPending) {
     return <LoadingState message="Checking authentication..." />;
   }
 
@@ -57,6 +71,13 @@ export const NotesContent = ({
 
   const handleImportNote = () => {
     // This will be handled by the dialog opening
+  };
+
+  // Wrap subject change in transition
+  const handleSubjectChange = (subjectId: string | null) => {
+    startTransition(() => {
+      setActiveSubjectId(subjectId);
+    });
   };
 
   return (
@@ -106,7 +127,7 @@ export const NotesContent = ({
           <div className="relative">
             <SubjectsSection 
               activeSubjectId={activeSubjectId}
-              setActiveSubjectId={setActiveSubjectId}
+              setActiveSubjectId={handleSubjectChange}
               setFilterOptions={setFilterOptions}
               filteredNotesCount={filteredNotes.length}
             />
