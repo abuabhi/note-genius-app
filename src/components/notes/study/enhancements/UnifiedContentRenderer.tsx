@@ -1,3 +1,4 @@
+
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -40,17 +41,17 @@ export const UnifiedContentRenderer = ({
               </h1>
             ),
             h2: ({ children }) => (
-              <h2 className="text-xl font-semibold text-gray-900 mb-5 mt-7 leading-tight">
+              <h2 className="text-xl font-bold text-gray-900 mb-5 mt-7 leading-tight">
                 {children}
               </h2>
             ),
             h3: ({ children }) => (
-              <h3 className="text-lg font-medium text-gray-900 mb-4 mt-6 leading-tight">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 mt-6 leading-tight">
                 {children}
               </h3>
             ),
             h4: ({ children }) => (
-              <h4 className="text-base font-medium text-gray-900 mb-3 mt-5 leading-tight">
+              <h4 className="text-base font-bold text-gray-900 mb-3 mt-5 leading-tight">
                 {children}
               </h4>
             ),
@@ -152,11 +153,7 @@ export const UnifiedContentRenderer = ({
             );
           } else {
             containerClasses += " bg-gradient-to-r from-mint-50 to-emerald-50 border-mint-400";
-            iconElement = (
-              <div className="flex items-center gap-2 mb-3 opacity-75">
-                <span className="text-xs font-medium text-mint-700 uppercase tracking-wide">Enhanced</span>
-              </div>
-            );
+            // Removed the "Enhanced" label - no icon element for general enhanced content
           }
           
           return (
@@ -169,22 +166,22 @@ export const UnifiedContentRenderer = ({
                   remarkPlugins={[remarkGfm]}
                   components={{
                     h1: ({ children }) => (
-                      <h1 className="text-lg font-semibold text-gray-800 mb-3 mt-4 leading-tight">
+                      <h1 className="text-lg font-bold text-gray-800 mb-3 mt-4 leading-tight">
                         {children}
                       </h1>
                     ),
                     h2: ({ children }) => (
-                      <h2 className="text-base font-medium text-gray-800 mb-3 mt-4 leading-tight">
+                      <h2 className="text-base font-bold text-gray-800 mb-3 mt-4 leading-tight">
                         {children}
                       </h2>
                     ),
                     h3: ({ children }) => (
-                      <h3 className="text-sm font-medium text-gray-800 mb-2 mt-3 leading-tight">
+                      <h3 className="text-sm font-bold text-gray-800 mb-2 mt-3 leading-tight">
                         {children}
                       </h3>
                     ),
                     h4: ({ children }) => (
-                      <h4 className="text-sm font-medium text-gray-800 mb-2 mt-3 leading-tight">
+                      <h4 className="text-sm font-bold text-gray-800 mb-2 mt-3 leading-tight">
                         {children}
                       </h4>
                     ),
@@ -241,17 +238,17 @@ export const UnifiedContentRenderer = ({
                     </h1>
                   ),
                   h2: ({ children }) => (
-                    <h2 className="text-xl font-semibold text-gray-900 mb-5 mt-7 leading-tight">
+                    <h2 className="text-xl font-bold text-gray-900 mb-5 mt-7 leading-tight">
                       {children}
                     </h2>
                   ),
                   h3: ({ children }) => (
-                    <h3 className="text-lg font-medium text-gray-900 mb-4 mt-6 leading-tight">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4 mt-6 leading-tight">
                       {children}
                     </h3>
                   ),
                   h4: ({ children }) => (
-                    <h4 className="text-base font-medium text-gray-900 mb-3 mt-5 leading-tight">
+                    <h4 className="text-base font-bold text-gray-900 mb-3 mt-5 leading-tight">
                       {children}
                     </h4>
                   ),
