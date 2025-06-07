@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { motion, AnimatePresence } from "framer-motion";
-import { StudyTimeDonutCounter } from "@/components/StudyTimeDonutCounter";
+import { StudyTimeDonutCounter } from "@/components/study/StudyTimeDonutCounter";
 
 const FlashcardsList = () => {
   const [currentIndex, setCurrentIndex] = useState(0);

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Note } from '@/types/note';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -42,7 +43,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
         <NoteStudyTracker
           noteId={note.id}
           noteName={note.title}
-          subject={note.subject || undefined}
+          subject={note.category || undefined}
           triggerStudyActivity={studyStarted}
           showDonutCounter={true}
           donutSize="small"
@@ -53,9 +54,9 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
       {/* StudyViewHeader */}
       <StudyViewHeader
         title={note.title}
-        subject={note.subject}
-        createdAt={note.created_at}
-        updatedAt={note.updated_at}
+        subject={note.category}
+        createdAt={note.date}
+        updatedAt={note.date}
       />
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
@@ -65,13 +66,13 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
           <TabsTrigger value="enhanced">Enhanced View</TabsTrigger>
         </TabsList>
         <TabsContent value="summary" className="space-y-4">
-          <NoteSummary noteContent={note.content} />
+          <NoteSummary noteContent={note.content || note.description} />
         </TabsContent>
         <TabsContent value="key-points" className="space-y-4">
-          <NoteKeyPoints noteContent={note.content} />
+          <NoteKeyPoints noteContent={note.content || note.description} />
         </TabsContent>
         <TabsContent value="enhanced" className="space-y-4">
-          <NoteEnhancedView noteContent={note.content} />
+          <NoteEnhancedView noteContent={note.content || note.description} />
         </TabsContent>
       </Tabs>
     </div>
