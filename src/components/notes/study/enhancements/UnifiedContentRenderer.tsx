@@ -1,3 +1,4 @@
+
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -34,68 +35,68 @@ export const UnifiedContentRenderer = ({
         <ReactMarkdown 
           remarkPlugins={[remarkGfm]}
           components={{
-            h1: ({ children }) => (
-              <h1 className="text-2xl font-bold text-gray-900 mb-6 mt-8 leading-tight">
+            h1: ({ children, ...props }) => (
+              <h1 {...props} className="text-2xl font-bold text-gray-900 mb-6 mt-8 leading-tight">
                 {children}
               </h1>
             ),
-            h2: ({ children }) => (
-              <h2 className="text-xl font-bold text-gray-900 mb-5 mt-7 leading-tight">
+            h2: ({ children, ...props }) => (
+              <h2 {...props} className="text-xl font-bold text-gray-900 mb-5 mt-7 leading-tight">
                 {children}
               </h2>
             ),
-            h3: ({ children }) => (
-              <h3 className="text-lg font-bold text-gray-900 mb-4 mt-6 leading-tight">
+            h3: ({ children, ...props }) => (
+              <h3 {...props} className="text-lg font-bold text-gray-900 mb-4 mt-6 leading-tight">
                 {children}
               </h3>
             ),
-            h4: ({ children }) => (
-              <h4 className="text-base font-bold text-gray-900 mb-3 mt-5 leading-tight">
+            h4: ({ children, ...props }) => (
+              <h4 {...props} className="text-base font-bold text-gray-900 mb-3 mt-5 leading-tight">
                 {children}
               </h4>
             ),
-            p: ({ children }) => (
-              <p className="text-gray-700 leading-7 mb-5 text-base">
+            p: ({ children, ...props }) => (
+              <p {...props} className="text-gray-700 leading-7 mb-5 text-base">
                 {children}
               </p>
             ),
-            ul: ({ children }) => (
-              <ul className="mb-6 space-y-2 pl-6 list-disc">
+            ul: ({ children, ...props }) => (
+              <ul {...props} className="mb-6 space-y-2 pl-6 list-disc">
                 {children}
               </ul>
             ),
-            ol: ({ children }) => (
-              <ol className="mb-6 space-y-2 pl-6 list-decimal">
+            ol: ({ children, ...props }) => (
+              <ol {...props} className="mb-6 space-y-2 pl-6 list-decimal">
                 {children}
               </ol>
             ),
-            li: ({ children }) => (
-              <li className="text-gray-700 mb-2 leading-7 marker:text-mint-500 marker:font-medium">
+            li: ({ children, ...props }) => (
+              <li {...props} className="text-gray-700 mb-2 leading-7 marker:text-mint-500 marker:font-medium">
                 {children}
               </li>
             ),
-            strong: ({ children }) => (
-              <strong className="text-gray-900 font-semibold">
+            strong: ({ children, ...props }) => (
+              <strong {...props} className="text-gray-900 font-semibold">
                 {children}
               </strong>
             ),
-            em: ({ children }) => (
-              <em className="text-gray-700 italic">
+            em: ({ children, ...props }) => (
+              <em {...props} className="text-gray-700 italic">
                 {children}
               </em>
             ),
-            blockquote: ({ children }) => (
-              <blockquote className="border-l-4 border-mint-200 bg-mint-50/30 p-4 my-6 rounded-lg text-gray-600">
+            blockquote: ({ children, ...props }) => (
+              <blockquote {...props} className="border-l-4 border-mint-200 bg-mint-50/30 p-4 my-6 rounded-lg text-gray-600">
                 {children}
               </blockquote>
             ),
-            code: ({ children }) => (
-              <code className="text-mint-700 bg-mint-50 px-2 py-1 rounded text-sm font-mono">
+            code: ({ children, ...props }) => (
+              <code {...props} className="text-mint-700 bg-mint-50 px-2 py-1 rounded text-sm font-mono">
                 {children}
               </code>
             ),
-            pre: ({ children }) => (
-              <pre className="bg-gray-50 border border-gray-200 p-4 rounded-lg my-6 overflow-x-auto">
+            pre: ({ children, ...props }) => (
+              <pre {...props} className="bg-gray-50 border border-gray-200 p-4 rounded-lg my-6 overflow-x-auto">
                 {children}
               </pre>
             )
@@ -152,7 +153,6 @@ export const UnifiedContentRenderer = ({
             );
           } else {
             containerClasses += " bg-gradient-to-r from-mint-50 to-emerald-50 border-mint-400";
-            // Removed the "Enhanced" label - no icon element for general enhanced content
           }
           
           return (
@@ -164,53 +164,53 @@ export const UnifiedContentRenderer = ({
                 <ReactMarkdown 
                   remarkPlugins={[remarkGfm]}
                   components={{
-                    h1: ({ children }) => (
-                      <h1 className="text-lg font-bold text-gray-800 mb-3 mt-4 leading-tight">
+                    h1: ({ children, ...props }) => (
+                      <h1 {...props} className="text-lg font-bold text-gray-800 mb-3 mt-4 leading-tight">
                         {children}
                       </h1>
                     ),
-                    h2: ({ children }) => (
-                      <h2 className="text-base font-bold text-gray-800 mb-3 mt-4 leading-tight">
+                    h2: ({ children, ...props }) => (
+                      <h2 {...props} className="text-base font-bold text-gray-800 mb-3 mt-4 leading-tight">
                         {children}
                       </h2>
                     ),
-                    h3: ({ children }) => (
-                      <h3 className="text-sm font-bold text-gray-800 mb-2 mt-3 leading-tight">
+                    h3: ({ children, ...props }) => (
+                      <h3 {...props} className="text-sm font-bold text-gray-800 mb-2 mt-3 leading-tight">
                         {children}
                       </h3>
                     ),
-                    h4: ({ children }) => (
-                      <h4 className="text-sm font-bold text-gray-800 mb-2 mt-3 leading-tight">
+                    h4: ({ children, ...props }) => (
+                      <h4 {...props} className="text-sm font-bold text-gray-800 mb-2 mt-3 leading-tight">
                         {children}
                       </h4>
                     ),
-                    p: ({ children }) => (
-                      <p className="text-gray-700 leading-6 mb-3 text-sm">
+                    p: ({ children, ...props }) => (
+                      <p {...props} className="text-gray-700 leading-6 mb-3 text-sm">
                         {children}
                       </p>
                     ),
-                    ul: ({ children }) => (
-                      <ul className="mb-4 space-y-1 pl-4 list-disc">
+                    ul: ({ children, ...props }) => (
+                      <ul {...props} className="mb-4 space-y-1 pl-4 list-disc">
                         {children}
                       </ul>
                     ),
-                    ol: ({ children }) => (
-                      <ol className="mb-4 space-y-1 pl-4 list-decimal">
+                    ol: ({ children, ...props }) => (
+                      <ol {...props} className="mb-4 space-y-1 pl-4 list-decimal">
                         {children}
                       </ol>
                     ),
-                    li: ({ children }) => (
-                      <li className="text-gray-700 mb-1 leading-6 text-sm marker:text-mint-600 marker:font-medium">
+                    li: ({ children, ...props }) => (
+                      <li {...props} className="text-gray-700 mb-1 leading-6 text-sm marker:text-mint-600 marker:font-medium">
                         {children}
                       </li>
                     ),
-                    strong: ({ children }) => (
-                      <strong className="text-gray-800 font-semibold">
+                    strong: ({ children, ...props }) => (
+                      <strong {...props} className="text-gray-800 font-semibold">
                         {children}
                       </strong>
                     ),
-                    em: ({ children }) => (
-                      <em className="text-gray-700 italic">
+                    em: ({ children, ...props }) => (
+                      <em {...props} className="text-gray-700 italic">
                         {children}
                       </em>
                     )
@@ -231,68 +231,68 @@ export const UnifiedContentRenderer = ({
               <ReactMarkdown 
                 remarkPlugins={[remarkGfm]}
                 components={{
-                  h1: ({ children }) => (
-                    <h1 className="text-2xl font-bold text-gray-900 mb-6 mt-8 leading-tight">
+                  h1: ({ children, ...props }) => (
+                    <h1 {...props} className="text-2xl font-bold text-gray-900 mb-6 mt-8 leading-tight">
                       {children}
                     </h1>
                   ),
-                  h2: ({ children }) => (
-                    <h2 className="text-xl font-bold text-gray-900 mb-5 mt-7 leading-tight">
+                  h2: ({ children, ...props }) => (
+                    <h2 {...props} className="text-xl font-bold text-gray-900 mb-5 mt-7 leading-tight">
                       {children}
                     </h2>
                   ),
-                  h3: ({ children }) => (
-                    <h3 className="text-lg font-bold text-gray-900 mb-4 mt-6 leading-tight">
+                  h3: ({ children, ...props }) => (
+                    <h3 {...props} className="text-lg font-bold text-gray-900 mb-4 mt-6 leading-tight">
                       {children}
                     </h3>
                   ),
-                  h4: ({ children }) => (
-                    <h4 className="text-base font-bold text-gray-900 mb-3 mt-5 leading-tight">
+                  h4: ({ children, ...props }) => (
+                    <h4 {...props} className="text-base font-bold text-gray-900 mb-3 mt-5 leading-tight">
                       {children}
                     </h4>
                   ),
-                  p: ({ children }) => (
-                    <p className="text-gray-700 leading-7 mb-5 text-base">
+                  p: ({ children, ...props }) => (
+                    <p {...props} className="text-gray-700 leading-7 mb-5 text-base">
                       {children}
                     </p>
                   ),
-                  ul: ({ children }) => (
-                    <ul className="mb-6 space-y-2 pl-6 list-disc">
+                  ul: ({ children, ...props }) => (
+                    <ul {...props} className="mb-6 space-y-2 pl-6 list-disc">
                       {children}
                     </ul>
                   ),
-                  ol: ({ children }) => (
-                    <ol className="mb-6 space-y-2 pl-6 list-decimal">
+                  ol: ({ children, ...props }) => (
+                    <ol {...props} className="mb-6 space-y-2 pl-6 list-decimal">
                       {children}
                     </ol>
                   ),
-                  li: ({ children }) => (
-                    <li className="text-gray-700 mb-2 leading-7 marker:text-mint-500 marker:font-medium">
+                  li: ({ children, ...props }) => (
+                    <li {...props} className="text-gray-700 mb-2 leading-7 marker:text-mint-500 marker:font-medium">
                       {children}
                     </li>
                   ),
-                  strong: ({ children }) => (
-                    <strong className="text-gray-900 font-semibold">
+                  strong: ({ children, ...props }) => (
+                    <strong {...props} className="text-gray-900 font-semibold">
                       {children}
                     </strong>
                   ),
-                  em: ({ children }) => (
-                    <em className="text-gray-700 italic">
+                  em: ({ children, ...props }) => (
+                    <em {...props} className="text-gray-700 italic">
                       {children}
                     </em>
                   ),
-                  blockquote: ({ children }) => (
-                    <blockquote className="border-l-4 border-mint-200 bg-mint-50/30 p-4 my-6 rounded-lg text-gray-600">
+                  blockquote: ({ children, ...props }) => (
+                    <blockquote {...props} className="border-l-4 border-mint-200 bg-mint-50/30 p-4 my-6 rounded-lg text-gray-600">
                       {children}
                     </blockquote>
                   ),
-                  code: ({ children }) => (
-                    <code className="text-mint-700 bg-mint-50 px-2 py-1 rounded text-sm font-mono">
+                  code: ({ children, ...props }) => (
+                    <code {...props} className="text-mint-700 bg-mint-50 px-2 py-1 rounded text-sm font-mono">
                       {children}
                     </code>
                   ),
-                  pre: ({ children }) => (
-                    <pre className="bg-gray-50 border border-gray-200 p-4 rounded-lg my-6 overflow-x-auto">
+                  pre: ({ children, ...props }) => (
+                    <pre {...props} className="bg-gray-50 border border-gray-200 p-4 rounded-lg my-6 overflow-x-auto">
                       {children}
                     </pre>
                   )
