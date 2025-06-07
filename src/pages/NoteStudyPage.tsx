@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useTransition, Suspense } from "react";
 import Layout from "@/components/layout/Layout";
@@ -11,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Note } from "@/types/note";
 
 const NoteStudyContent = () => {
-  const { noteId } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
   const { notes, setNotes } = useNotes();
   const [loading, setLoading] = useState(true);
@@ -22,17 +21,17 @@ const NoteStudyContent = () => {
   // Try to find note in context first, then fetch from database if needed
   useEffect(() => {
     const loadNote = async () => {
-      if (!noteId) {
+      if (!id) {
         setError("No note ID provided");
         setLoading(false);
         return;
       }
 
-      console.log("🔍 Looking for note with ID:", noteId);
+      console.log("🔍 Looking for note with ID:", id);
       console.log("📝 Available notes in context:", notes.length);
 
       // First check if note exists in context
-      let foundNote = notes.find(n => n.id === noteId);
+      let foundNote = notes.find(n => n.id === id);
       
       if (foundNote) {
         console.log("✅ Found note in context:", foundNote.title);
@@ -49,7 +48,7 @@ const NoteStudyContent = () => {
         const { data: noteData, error: fetchError } = await supabase
           .from('notes')
           .select('*')
-          .eq('id', noteId)
+          .eq('id', id)
           .single();
 
         if (fetchError) {
@@ -97,7 +96,7 @@ const NoteStudyContent = () => {
         // Add to notes context to avoid future fetches
         startTransition(() => {
           setNotes(prevNotes => {
-            const exists = prevNotes.find(n => n.id === noteId);
+            const exists = prevNotes.find(n => n.id === id);
             if (!exists) {
               return [transformedNote, ...prevNotes];
             }
@@ -122,7 +121,7 @@ const NoteStudyContent = () => {
     return () => {
       cancelAnimationFrame(frameId);
     };
-  }, [noteId, notes, setNotes]);
+  }, [id, notes, setNotes]);
 
   const handleGoBack = () => {
     startTransition(() => {
