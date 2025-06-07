@@ -19,5 +19,10 @@ export const useTimezone = () => {
     }
   }, []);
 
-  return { timezone, isLoading };
+  const updateTimezone = (newTimezone: string) => {
+    console.log('🔄 Updating timezone to:', newTimezone);
+    setTimezone(newTimezone);
+  };
+
+  return { timezone, isLoading, updateTimezone };
 };

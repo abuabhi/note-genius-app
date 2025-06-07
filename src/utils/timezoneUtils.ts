@@ -97,11 +97,6 @@ export const getWeekStartInTimezone = (timezone: string, weeksAgo: number = 0): 
   const todayDate = new Date(`${today}T00:00:00`);
   
   // Get day of week (0 = Sunday, 1 = Monday, etc.)
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: timezone,
-    weekday: 'numeric'
-  });
-  
   const dayOfWeek = todayDate.getDay();
   const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Sunday = 0, so Sunday needs to go back 6 days
   
