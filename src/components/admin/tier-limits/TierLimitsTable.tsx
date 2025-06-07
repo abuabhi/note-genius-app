@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Check, X } from "lucide-react";
 import { TierLimit } from "./TierLimitsManagement";
+import { UserTier } from "@/hooks/useUserTier";
 
 interface TierLimitsTableProps {
   tierLimits: TierLimit[];
@@ -25,12 +26,12 @@ export const TierLimitsTable = ({ tierLimits, onEditTier }: TierLimitsTableProps
     return value.toString();
   };
 
-  const getTierBadgeVariant = (tier: string) => {
+  const getTierBadgeVariant = (tier: UserTier) => {
     switch (tier) {
-      case 'SCHOLAR': return 'outline';
-      case 'GRADUATE': return 'secondary';
-      case 'MASTER': return 'default';
-      case 'DEAN': return 'destructive';
+      case UserTier.SCHOLAR: return 'outline';
+      case UserTier.GRADUATE: return 'secondary';
+      case UserTier.MASTER: return 'default';
+      case UserTier.DEAN: return 'destructive';
       default: return 'outline';
     }
   };

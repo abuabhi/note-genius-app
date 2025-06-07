@@ -8,9 +8,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TierLimitsTable } from "./TierLimitsTable";
 import { EditTierLimitDialog } from "./EditTierLimitDialog";
 import { toast } from "sonner";
+import { UserTier } from "@/hooks/useUserTier";
 
 export interface TierLimit {
-  tier: string;
+  tier: UserTier;
   max_notes: number;
   max_flashcard_sets: number;
   max_storage_mb: number;
@@ -52,7 +53,22 @@ export const TierLimitsManagement = () => {
     mutationFn: async (updatedLimit: TierLimit) => {
       const { error } = await supabase
         .from('tier_limits')
-        .update(updatedLimit)
+        .update({
+          max_notes: updatedLimit.max_notes,
+          max_flashcard_sets: updatedLimit.max_flashcard_sets,
+          max_storage_mb: updatedLimit.max_storage_mb,
+          note_enrichment_limit_per_month: updatedLimit.note_enrichment_limit_per_month,
+          max_cards_per_set: updatedLimit.max_cards_per_set,
+          max_ai_flashcard_generations_per_month: updatedLimit.max_ai_flashcard_generations_per_month,
+          max_collaborations: updatedLimit.max_collaborations,
+          ai_features_enabled: updatedLimit.ai_features_enabled,
+          ai_flashcard_generation: updatedLimit.ai_flashcard_generation,
+          note_enrichment_enabled: updatedLimit.note_enrichment_enabled,
+          ocr_enabled: updatedLimit.ocr_enabled,
+          collaboration_enabled: updatedLimit.collaboration_enabled,
+          priority_support: updatedLimit.priority_support,
+          chat_enabled: updatedLimit.chat_enabled,
+        })
         .eq('tier', updatedLimit.tier);
 
       if (error) throw error;

@@ -26,9 +26,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader } from "lucide-react";
 import { TierLimit } from "./TierLimitsManagement";
+import { UserTier } from "@/hooks/useUserTier";
 
 const tierLimitSchema = z.object({
-  tier: z.string(),
+  tier: z.nativeEnum(UserTier),
   max_notes: z.number().int().min(-1),
   max_flashcard_sets: z.number().int().min(-1),
   max_storage_mb: z.number().int().min(-1),
@@ -65,7 +66,7 @@ export const EditTierLimitDialog = ({
   const form = useForm<TierLimitFormData>({
     resolver: zodResolver(tierLimitSchema),
     defaultValues: {
-      tier: "",
+      tier: UserTier.SCHOLAR,
       max_notes: 0,
       max_flashcard_sets: 0,
       max_storage_mb: 0,
@@ -93,12 +94,12 @@ export const EditTierLimitDialog = ({
     onSave(data as TierLimit);
   };
 
-  const getTierBadgeVariant = (tier: string) => {
+  const getTierBadgeVariant = (tier: UserTier) => {
     switch (tier) {
-      case 'SCHOLAR': return 'outline';
-      case 'GRADUATE': return 'secondary';
-      case 'MASTER': return 'default';
-      case 'DEAN': return 'destructive';
+      case UserTier.SCHOLAR: return 'outline';
+      case UserTier.GRADUATE: return 'secondary';
+      case UserTier.MASTER: return 'default';
+      case UserTier.DEAN: return 'destructive';
       default: return 'outline';
     }
   };
