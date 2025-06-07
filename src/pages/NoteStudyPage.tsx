@@ -5,25 +5,124 @@ import Layout from "@/components/layout/Layout";
 import { useNotes } from "@/contexts/NoteContext";
 import { Button } from "@/components/ui/button";
 import { NoteStudyView } from "@/components/notes/study/NoteStudyView";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, AlertCircle } from "lucide-react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { Note } from "@/types/note";
 
 const NoteStudyContent = () => {
   const { noteId } = useParams();
   const navigate = useNavigate();
-  const { notes } = useNotes();
+  const { notes, setNotes } = useNotes();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [note, setNote] = useState<Note | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const note = notes.find(n => n.id === noteId);
-
+  // Try to find note in context first, then fetch from database if needed
   useEffect(() => {
-    if (notes.length > 0) {
-      startTransition(() => {
+    const loadNote = async () => {
+      if (!noteId) {
+        setError("No note ID provided");
         setLoading(false);
-      });
-    }
-  }, [notes]);
+        return;
+      }
+
+      console.log("🔍 Looking for note with ID:", noteId);
+      console.log("📝 Available notes in context:", notes.length);
+
+      // First check if note exists in context
+      let foundNote = notes.find(n => n.id === noteId);
+      
+      if (foundNote) {
+        console.log("✅ Found note in context:", foundNote.title);
+        setNote(foundNote);
+        setError(null);
+        setLoading(false);
+        return;
+      }
+
+      // If not in context, try to fetch directly from database
+      console.log("🔄 Note not in context, fetching from database...");
+      
+      try {
+        const { data: noteData, error: fetchError } = await supabase
+          .from('notes')
+          .select('*')
+          .eq('id', noteId)
+          .single();
+
+        if (fetchError) {
+          console.error("❌ Error fetching note:", fetchError);
+          setError("Failed to load note from database");
+          setLoading(false);
+          return;
+        }
+
+        if (!noteData) {
+          console.log("❌ No note data returned");
+          setError("Note not found");
+          setLoading(false);
+          return;
+        }
+
+        // Transform database note to our Note type
+        const transformedNote: Note = {
+          id: noteData.id,
+          title: noteData.title || "Untitled",
+          description: noteData.description || "",
+          content: noteData.content || noteData.description || "",
+          date: new Date(noteData.created_at).toISOString().split('T')[0],
+          category: noteData.subject || "Uncategorized",
+          sourceType: noteData.source_type || 'manual',
+          archived: noteData.archived || false,
+          pinned: noteData.pinned || false,
+          subject_id: noteData.subject_id,
+          tags: noteData.tags || [],
+          // Enhancement fields
+          summary: noteData.summary,
+          summary_status: noteData.summary_status,
+          summary_generated_at: noteData.summary_generated_at,
+          key_points: noteData.key_points,
+          key_points_generated_at: noteData.key_points_generated_at,
+          markdown_content: noteData.markdown_content,
+          markdown_content_generated_at: noteData.markdown_content_generated_at,
+          improved_content: noteData.improved_content,
+          improved_content_generated_at: noteData.improved_content_generated_at
+        };
+
+        console.log("✅ Successfully fetched and transformed note:", transformedNote.title);
+        setNote(transformedNote);
+        
+        // Add to notes context to avoid future fetches
+        startTransition(() => {
+          setNotes(prevNotes => {
+            const exists = prevNotes.find(n => n.id === noteId);
+            if (!exists) {
+              return [transformedNote, ...prevNotes];
+            }
+            return prevNotes;
+          });
+        });
+        
+        setError(null);
+      } catch (err) {
+        console.error("❌ Unexpected error fetching note:", err);
+        setError("An unexpected error occurred while loading the note");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Use requestAnimationFrame to prevent suspension during synchronous updates
+    const frameId = requestAnimationFrame(() => {
+      loadNote();
+    });
+
+    return () => {
+      cancelAnimationFrame(frameId);
+    };
+  }, [noteId, notes, setNotes]);
 
   const handleGoBack = () => {
     startTransition(() => {
@@ -42,17 +141,28 @@ const NoteStudyContent = () => {
     );
   }
 
-  if (!note) {
+  if (error || !note) {
     return (
       <div className="container mx-auto p-6">
         <div className="bg-red-50 border border-red-200 rounded-md p-6 text-center">
-          <h2 className="text-xl font-semibold text-red-700 mb-2">Note Not Found</h2>
+          <AlertCircle className="h-8 w-8 text-red-600 mx-auto mb-2" />
+          <h2 className="text-xl font-semibold text-red-700 mb-2">
+            {error || "Note Not Found"}
+          </h2>
           <p className="mb-4 text-red-600">
-            The note you're looking for doesn't exist or has been deleted.
+            {error || "The note you're looking for doesn't exist or has been deleted."}
           </p>
-          <Button onClick={handleGoBack}>
-            Back to Notes
-          </Button>
+          <div className="flex gap-2 justify-center">
+            <Button onClick={handleGoBack}>
+              Back to Notes
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.reload()}
+            >
+              Retry
+            </Button>
+          </div>
         </div>
       </div>
     );

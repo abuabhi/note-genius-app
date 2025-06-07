@@ -83,6 +83,7 @@ export const NoteCard = ({
   
   const handleGoToStudyMode = (e: React.MouseEvent) => {
     e.stopPropagation();
+    console.log("🎯 Navigating to study mode for note:", note.id, note.title);
     navigate(`/notes/${note.id}`);
   };
 
@@ -172,7 +173,7 @@ export const NoteCard = ({
           </div>
         </div>
         
-        {/* Enhanced Study Mode button */}
+        {/* Enhanced Study Mode button with improved click handling */}
         <Button 
           variant="default" 
           size="sm" 
