@@ -8,6 +8,7 @@ import { TodosSection } from "@/components/dashboard/TodosSection";
 import { GoalsSection } from "@/components/dashboard/GoalsSection";
 import { ReferralSignupHandler } from "@/components/referrals/ReferralSignupHandler";
 import { ReferralSignupErrorBoundary } from "@/components/referrals/ReferralSignupErrorBoundary";
+import { SessionProvider } from "@/contexts/SessionContext";
 
 const DashboardPage = () => {
   console.log('🏠 DashboardPage component rendering');
@@ -23,9 +24,6 @@ const DashboardPage = () => {
     userProfile: userProfile?.id,
     loading
   });
-  
-  // All features are now permanently visible
-  const isFeatureVisible = (key: string) => true;
   
   if (loading) {
     console.log('⏳ Dashboard is loading...');
@@ -49,37 +47,39 @@ const DashboardPage = () => {
   console.log('✅ Dashboard rendering main content');
   
   return (
-    <Layout>
-      <ReferralSignupErrorBoundary>
-        <ReferralSignupHandler />
-      </ReferralSignupErrorBoundary>
-      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
-        <div className="container mx-auto p-6 space-y-8">
-          {/* Hero Section - Daily Overview */}
-          <div>
-            <DashboardHeroSection />
-          </div>
-          
-          {/* Learning Analytics */}
-          <div>
-            <LearningAnalyticsDashboard />
-          </div>
-          
-          {/* Two Column Layout for Todos and Goals */}
-          <div className="grid gap-8 lg:grid-cols-2">
-            {/* Today's Todos */}
+    <SessionProvider>
+      <Layout>
+        <ReferralSignupErrorBoundary>
+          <ReferralSignupHandler />
+        </ReferralSignupErrorBoundary>
+        <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+          <div className="container mx-auto p-6 space-y-8">
+            {/* Hero Section - Daily Overview */}
             <div>
-              <TodosSection />
+              <DashboardHeroSection />
             </div>
             
-            {/* Active Goals */}
+            {/* Learning Analytics */}
             <div>
-              <GoalsSection />
+              <LearningAnalyticsDashboard />
+            </div>
+            
+            {/* Two Column Layout for Todos and Goals */}
+            <div className="grid gap-8 lg:grid-cols-2">
+              {/* Today's Todos */}
+              <div>
+                <TodosSection />
+              </div>
+              
+              {/* Active Goals */}
+              <div>
+                <GoalsSection />
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </Layout>
+      </Layout>
+    </SessionProvider>
   );
 };
 

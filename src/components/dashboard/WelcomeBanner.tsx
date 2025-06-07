@@ -1,18 +1,15 @@
 
-import { useState } from "react";
-import { useAuth } from "@/contexts/auth"; // Updated import path
-import { Button } from "@/components/ui/button";
-import { useUserTier } from "@/hooks/useUserTier";
+import { useAuth } from "@/contexts/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Bell, Star, Clock } from "lucide-react";
 import { format } from "date-fns";
+import { useConsolidatedAnalytics } from "@/hooks/useConsolidatedAnalytics";
 
 export function WelcomeBanner() {
   const { user } = useAuth();
-  // All study sessions are now always visible
-  const showStudySessions = true;
+  const { analytics } = useConsolidatedAnalytics();
   
   const { data: userProfile } = useQuery({
     queryKey: ["userProfile", user?.id],
@@ -33,37 +30,6 @@ export function WelcomeBanner() {
       return data;
     },
     enabled: !!user,
-  });
-  
-  const { data: recentActivity } = useQuery({
-    queryKey: ["recentActivity", user?.id, showStudySessions],
-    queryFn: async () => {
-      if (!user || !showStudySessions) return null;
-      
-      // Fetch latest study session
-      const { data: latestSession } = await supabase
-        .from('study_sessions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1);
-      
-      // Fetch total study hours
-      const { data: studySessions } = await supabase
-        .from('study_sessions')
-        .select('duration')
-        .eq('user_id', user.id)
-        .not('duration', 'is', null);
-      
-      const totalStudyHours = studySessions?.reduce((acc, session) => 
-        acc + (session.duration || 0), 0) / 3600 || 0;
-      
-      return {
-        latestSession: latestSession?.[0],
-        totalStudyHours: Math.round(totalStudyHours * 10) / 10,
-      };
-    },
-    enabled: !!user && showStudySessions,
   });
 
   const getTimeOfDay = () => {
@@ -96,8 +62,8 @@ export function WelcomeBanner() {
           </div>
           
           <div className="flex flex-wrap gap-4 md:gap-6">
-            {/* Only show study session info if the feature is visible */}
-            {showStudySessions && recentActivity?.latestSession && (
+            {/* Show latest session if available */}
+            {analytics.recentSessions && analytics.recentSessions.length > 0 && (
               <div className="flex items-center gap-2">
                 <div className="p-2 bg-mint-200 rounded-full">
                   <Clock className="h-4 w-4 text-mint-700" />
@@ -105,35 +71,34 @@ export function WelcomeBanner() {
                 <div>
                   <p className="text-xs text-mint-600">Last study session</p>
                   <p className="font-medium text-mint-800">
-                    {format(new Date(recentActivity.latestSession.created_at), "MMM d")} - {recentActivity.latestSession.title}
+                    {format(new Date(analytics.recentSessions[0].start_time), "MMM d")} - {analytics.recentSessions[0].title}
                   </p>
                 </div>
               </div>
             )}
             
-            {/* Only show study hours if the study sessions feature is visible */}
-            {showStudySessions && (
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-mint-200 rounded-full">
-                  <Star className="h-4 w-4 text-mint-700" />
-                </div>
-                <div>
-                  <p className="text-xs text-mint-600">Total study time</p>
-                  <p className="font-medium text-mint-800">
-                    {recentActivity?.totalStudyHours || 0} hours
-                  </p>
-                </div>
+            {/* Show total study time */}
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-mint-200 rounded-full">
+                <Star className="h-4 w-4 text-mint-700" />
               </div>
-            )}
+              <div>
+                <p className="text-xs text-mint-600">Total study time</p>
+                <p className="font-medium text-mint-800">
+                  {analytics.totalStudyTime}h
+                </p>
+              </div>
+            </div>
             
+            {/* Show today's study time */}
             <div className="flex items-center gap-2">
               <div className="p-2 bg-mint-200 rounded-full">
                 <Bell className="h-4 w-4 text-mint-700" />
               </div>
               <div>
-                <p className="text-xs text-mint-600">Today's focus</p>
+                <p className="text-xs text-mint-600">Today's study time</p>
                 <p className="font-medium text-mint-800">
-                  Keep up the momentum!
+                  {analytics.todayStudyTime}h
                 </p>
               </div>
             </div>

@@ -1,5 +1,5 @@
 
-import { useUnifiedStudyStats } from "@/hooks/useUnifiedStudyStats";
+import { useConsolidatedAnalytics } from "@/hooks/useConsolidatedAnalytics";
 import { EnhancedProgressOverview } from "./EnhancedProgressOverview";
 import LearningSummary from "./overview/LearningSummary";
 import StudyConsistency from "./overview/StudyConsistency";
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 const ProgressOverview = () => {
-  const { stats, isLoading } = useUnifiedStudyStats();
+  const { analytics, isLoading } = useConsolidatedAnalytics();
   const navigate = useNavigate();
 
   if (isLoading) {
@@ -30,7 +30,7 @@ const ProgressOverview = () => {
   }
 
   // Show enhanced progress overview if user has data
-  if (stats.totalSets > 0 || stats.totalSessions > 0) {
+  if (analytics.totalSets > 0 || analytics.totalSessions > 0) {
     return <EnhancedProgressOverview />;
   }
 
@@ -49,8 +49,8 @@ const ProgressOverview = () => {
           totalCourses: 0,
           completedQuizzes: 0,
           totalQuizzes: 0,
-          flashcardAccuracy: stats.flashcardAccuracy,
-          streakDays: stats.streakDays
+          flashcardAccuracy: analytics.flashcardAccuracy,
+          streakDays: analytics.streakDays
         }} />
       </div>
 
@@ -61,9 +61,9 @@ const ProgressOverview = () => {
           <p className="text-gray-600">Your overall learning achievements and milestones</p>
         </div>
         <LearningSummary 
-          totalCardsMastered={stats.totalCardsMastered} 
-          studyTimeHours={stats.studyTimeHours} 
-          totalSets={stats.totalSets} 
+          totalCardsMastered={analytics.totalCardsMastered} 
+          studyTimeHours={analytics.studyTimeHours} 
+          totalSets={analytics.totalSets} 
         />
       </div>
       
