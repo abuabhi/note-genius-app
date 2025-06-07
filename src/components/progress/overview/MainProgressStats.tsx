@@ -1,6 +1,6 @@
 
 import { ChartPie, ChartBar, Zap } from "lucide-react";
-import StatsCard from "./StatsCard";
+import { MetricCard } from "../shared/MetricCard";
 import { useAuth } from "@/contexts/auth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,7 +48,7 @@ const MainProgressStats = ({ stats }: MainProgressStatsProps) => {
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-      <StatsCard
+      <MetricCard
         title="Course Progress"
         value={`${stats.completedCourses}/${stats.totalCourses}`}
         progress={stats.totalCourses > 0 ? (stats.completedCourses / stats.totalCourses) * 100 : 0}
@@ -56,7 +56,7 @@ const MainProgressStats = ({ stats }: MainProgressStatsProps) => {
         subtitle="Feature coming soon"
       />
 
-      <StatsCard
+      <MetricCard
         title="Quiz Performance"
         value={`${quizStats.completed}/${quizStats.total}`}
         progress={quizStats.total > 0 ? (quizStats.completed / quizStats.total) * 100 : 0}
@@ -64,7 +64,7 @@ const MainProgressStats = ({ stats }: MainProgressStatsProps) => {
         subtitle={quizStats.total === 0 ? "No quizzes available yet" : undefined}
       />
 
-      <StatsCard
+      <MetricCard
         title="Flashcard Accuracy"
         value={`${stats.flashcardAccuracy}%`}
         progress={stats.flashcardAccuracy}
@@ -72,7 +72,7 @@ const MainProgressStats = ({ stats }: MainProgressStatsProps) => {
         subtitle="Based on recent reviews"
       />
 
-      <StatsCard
+      <MetricCard
         title="Current Streak"
         value={`${stats.streakDays} days`}
         progress={Math.min((stats.streakDays / 30) * 100, 100)}

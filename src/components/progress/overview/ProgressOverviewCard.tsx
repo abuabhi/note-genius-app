@@ -3,21 +3,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Clock, Target, TrendingUp, Award } from "lucide-react";
 import { useTimezoneAwareAnalytics } from "@/hooks/useTimezoneAwareAnalytics";
+import { MetricDisplay } from "../shared/MetricDisplay";
 
 export const ProgressOverviewCard = () => {
   const { analytics, isLoading } = useTimezoneAwareAnalytics();
 
   if (isLoading) {
     return (
-      <Card className="w-full">
+      <Card className="w-full border-mint-200">
         <CardHeader>
-          <CardTitle className="animate-pulse bg-gray-200 h-6 w-48 rounded"></CardTitle>
+          <div className="animate-pulse bg-mint-200 h-6 w-48 rounded"></div>
         </CardHeader>
         <CardContent className="space-y-6">
           {[1, 2, 3].map((i) => (
             <div key={i} className="animate-pulse">
-              <div className="h-4 bg-gray-200 rounded mb-2"></div>
-              <div className="h-2 bg-gray-200 rounded"></div>
+              <div className="h-4 bg-mint-200 rounded mb-2"></div>
+              <div className="h-2 bg-mint-200 rounded"></div>
             </div>
           ))}
         </CardContent>
@@ -34,59 +35,56 @@ export const ProgressOverviewCard = () => {
   };
 
   // Calculate streaks and achievements
-  const isOnTrack = analytics.weeklyGoalProgress >= 50; // At least 50% of weekly goal
+  const isOnTrack = analytics.weeklyGoalProgress >= 50;
   const weeklyTarget = formatTime(analytics.weeklyGoalMinutes);
   const weeklyProgress = formatTime(analytics.weeklyStudyTimeMinutes);
   const totalHours = Math.round((analytics.totalStudyTimeMinutes || 0) / 60 * 10) / 10;
 
   return (
-    <Card className="w-full bg-gradient-to-br from-mint-50 to-blue-50 border-mint-200">
+    <Card className="w-full bg-gradient-to-br from-mint-50 to-blue-50 border-mint-200 shadow-sm">
       <CardHeader>
         <CardTitle className="text-2xl font-bold text-mint-800 flex items-center gap-2">
-          <Award className="h-6 w-6" />
+          <Award className="h-6 w-6 text-mint-600" />
           Your Learning Journey
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Overall Progress */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-2">
-              <Clock className="h-5 w-5 text-blue-600 mr-2" />
-              <span className="text-sm font-medium text-gray-600">Total Study Time</span>
-            </div>
-            <p className="text-3xl font-bold text-gray-900">{totalHours}h</p>
-            <p className="text-sm text-gray-500">{analytics.totalSessions} sessions completed</p>
-          </div>
+          <MetricDisplay
+            label="Total Study Time"
+            value={`${totalHours}h`}
+            icon={Clock}
+            color="blue"
+            className="text-center"
+          />
           
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-2">
-              <Target className="h-5 w-5 text-green-600 mr-2" />
-              <span className="text-sm font-medium text-gray-600">Cards Mastered</span>
-            </div>
-            <p className="text-3xl font-bold text-gray-900">{analytics.totalCardsMastered}</p>
-            <p className="text-sm text-gray-500">{analytics.flashcardAccuracy}% accuracy</p>
-          </div>
+          <MetricDisplay
+            label="Cards Mastered"
+            value={analytics.totalCardsMastered}
+            icon={Target}
+            color="green"
+            className="text-center"
+          />
           
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-2">
-              <TrendingUp className="h-5 w-5 text-purple-600 mr-2" />
-              <span className="text-sm font-medium text-gray-600">Study Streak</span>
-            </div>
-            <p className="text-3xl font-bold text-gray-900">{analytics.streakDays}</p>
-            <p className="text-sm text-gray-500">{analytics.streakDays === 1 ? 'day' : 'days'} in a row</p>
-          </div>
+          <MetricDisplay
+            label="Study Streak"
+            value={analytics.streakDays}
+            icon={TrendingUp}
+            color="mint"
+            className="text-center"
+          />
         </div>
 
         {/* Weekly Goal Progress */}
-        <div className="space-y-3">
+        <div className="space-y-3 p-4 bg-white/60 rounded-lg border border-mint-100">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Weekly Goal Progress</h3>
-            <span className="text-sm text-gray-600">{weeklyProgress} / {weeklyTarget}</span>
+            <h3 className="text-lg font-semibold text-mint-800">Weekly Goal Progress</h3>
+            <span className="text-sm text-mint-600">{weeklyProgress} / {weeklyTarget}</span>
           </div>
           <Progress value={analytics.weeklyGoalProgress} className="h-3" />
           <div className="flex justify-between items-center">
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-mint-700">
               {analytics.weeklyGoalProgress}% Complete
             </span>
             <span className={`text-sm font-medium ${isOnTrack ? 'text-green-600' : 'text-orange-600'}`}>
@@ -97,14 +95,14 @@ export const ProgressOverviewCard = () => {
 
         {/* Weekly Comparison */}
         {analytics.weeklyChange !== 0 && (
-          <div className="p-4 bg-white/50 rounded-lg">
+          <div className="p-4 bg-white/60 rounded-lg border border-mint-100">
             <div className="flex items-center gap-2">
               <TrendingUp className={`h-4 w-4 ${analytics.weeklyChange > 0 ? 'text-green-600' : 'text-red-600'}`} />
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-mint-700">
                 {analytics.weeklyChange > 0 ? '📈 Great improvement!' : '📉 Slight dip this week'}
               </span>
             </div>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-mint-600 mt-1">
               {analytics.weeklyChange > 0 ? '+' : ''}{analytics.weeklyChange}% compared to last week
             </p>
           </div>
@@ -112,7 +110,7 @@ export const ProgressOverviewCard = () => {
 
         {/* Today's Activity */}
         {analytics.todayStudyTimeMinutes > 0 && (
-          <div className="p-4 bg-green-50 rounded-lg">
+          <div className="p-4 bg-green-50 rounded-lg border border-green-200">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-green-600" />
               <span className="text-sm font-medium text-green-800">

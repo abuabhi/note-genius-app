@@ -43,9 +43,9 @@ export const CleanProgressOverview = () => {
         
         {/* Grade Progression Section */}
         <div className="space-y-6">
-          <div>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Grade Progression</h2>
-            <p className="text-gray-600">Track your journey from C → B → A grades across subjects</p>
+          <div className="border-b border-mint-200 pb-4">
+            <h2 className="text-2xl font-semibold text-mint-800 mb-2">Grade Progression</h2>
+            <p className="text-mint-600">Track your journey from C → B → A grades across subjects</p>
           </div>
           
           <div className="grid gap-8 lg:grid-cols-2">
@@ -56,9 +56,9 @@ export const CleanProgressOverview = () => {
         
         {/* Study Time Analytics Section */}
         <div className="space-y-6">
-          <div>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Study Time Analytics</h2>
-            <p className="text-gray-600">Analyze your study patterns and consistency</p>
+          <div className="border-b border-mint-200 pb-4">
+            <h2 className="text-2xl font-semibold text-mint-800 mb-2">Study Time Analytics</h2>
+            <p className="text-mint-600">Analyze your study patterns and consistency</p>
           </div>
           
           <div className="grid gap-8 lg:grid-cols-2">
@@ -75,9 +75,9 @@ export const CleanProgressOverview = () => {
     <div className="space-y-8">
       {/* Main Progress Stats Section */}
       <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Progress Overview</h2>
-          <p className="text-gray-600">Track your learning achievements and performance</p>
+        <div className="border-b border-mint-200 pb-4">
+          <h2 className="text-2xl font-semibold text-mint-800 mb-2">Progress Overview</h2>
+          <p className="text-mint-600">Track your learning achievements and performance</p>
         </div>
         
         <MainProgressStats stats={{
@@ -92,9 +92,9 @@ export const CleanProgressOverview = () => {
 
       {/* Learning Summary Section */}
       <div className="space-y-6">
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Learning Summary</h2>
-          <p className="text-gray-600">Your overall learning achievements and milestones</p>
+        <div className="border-b border-mint-200 pb-4">
+          <h2 className="text-xl font-semibold text-mint-800 mb-2">Learning Summary</h2>
+          <p className="text-mint-600">Your overall learning achievements and milestones</p>
         </div>
         <LearningSummary 
           totalCardsMastered={analytics.totalCardsMastered} 
@@ -105,15 +105,15 @@ export const CleanProgressOverview = () => {
       
       {/* Study Consistency Section */}
       <div className="space-y-6">
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Study Consistency</h2>
-          <p className="text-gray-600">Your daily study habits over the past month</p>
+        <div className="border-b border-mint-200 pb-4">
+          <h2 className="text-xl font-semibold text-mint-800 mb-2">Study Consistency</h2>
+          <p className="text-mint-600">Your daily study habits over the past month</p>
         </div>
         <StudyConsistency />
       </div>
 
       {/* Empty State Encouragement Card */}
-      <Card className="bg-gradient-to-br from-mint-50 to-blue-50 border-mint-200">
+      <Card className="bg-gradient-to-br from-mint-50 to-blue-50 border-mint-200 shadow-sm">
         <CardContent className="flex flex-col items-center justify-center py-12 px-6 text-center">
           <div className="mb-6">
             <div className="flex items-center justify-center space-x-2 mb-4">
@@ -128,14 +128,14 @@ export const CleanProgressOverview = () => {
           <div className="flex flex-col sm:flex-row gap-4">
             <Button 
               onClick={() => navigate('/flashcards')}
-              className="bg-mint-500 hover:bg-mint-600 text-white"
+              className="bg-mint-500 hover:bg-mint-600 text-white shadow-sm"
             >
               Browse Flashcard Sets
             </Button>
             <Button 
               variant="outline"
               onClick={() => navigate('/flashcards/create')}
-              className="border-mint-200 hover:bg-mint-50 text-mint-700"
+              className="border-mint-200 hover:bg-mint-50 text-mint-700 shadow-sm"
             >
               Create Your First Set
             </Button>

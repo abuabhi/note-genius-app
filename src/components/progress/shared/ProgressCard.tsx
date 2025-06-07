@@ -9,6 +9,7 @@ interface ProgressCardProps {
   className?: string;
   children: React.ReactNode;
   headerAction?: React.ReactNode;
+  description?: string;
 }
 
 export const ProgressCard = ({ 
@@ -16,18 +17,26 @@ export const ProgressCard = ({
   icon: Icon, 
   className, 
   children,
-  headerAction 
+  headerAction,
+  description
 }: ProgressCardProps) => {
   return (
-    <Card className={cn("h-full", className)}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-        <CardTitle className="text-lg font-semibold flex items-center gap-2">
-          {Icon && <Icon className="h-5 w-5 text-mint-600" />}
-          {title}
-        </CardTitle>
-        {headerAction}
+    <Card className={cn("h-full border-mint-200 bg-white shadow-sm hover:shadow-md transition-shadow", className)}>
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <CardTitle className="text-lg font-semibold text-mint-800 flex items-center gap-2">
+              {Icon && <Icon className="h-5 w-5 text-mint-600" />}
+              {title}
+            </CardTitle>
+            {description && (
+              <p className="text-sm text-mint-600">{description}</p>
+            )}
+          </div>
+          {headerAction}
+        </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         {children}
       </CardContent>
     </Card>

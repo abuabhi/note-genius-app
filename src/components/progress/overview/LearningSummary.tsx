@@ -3,7 +3,7 @@ import { BookOpen, Calendar, Trophy } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import LearningSummaryCard from "./LearningSummaryCard";
+import { MetricCard } from "../shared/MetricCard";
 
 interface LearningSummaryProps {
   totalCardsMastered: number;
@@ -41,7 +41,7 @@ const LearningSummary = ({ totalCardsMastered, studyTimeHours, totalSets }: Lear
       const { data, error } = await supabase
         .from('study_achievements')
         .select('id')
-        .is('user_id', null); // Template achievements
+        .is('user_id', null);
 
       if (error) {
         console.error('Error fetching total achievements:', error);
@@ -54,32 +54,32 @@ const LearningSummary = ({ totalCardsMastered, studyTimeHours, totalSets }: Lear
 
   return (
     <div className="grid gap-6 md:grid-cols-4">
-      <LearningSummaryCard
-        title="Total Cards Mastered"
+      <MetricCard
+        title="Cards Mastered"
         value={totalCardsMastered}
         icon={BookOpen}
-        tooltip="Flashcards you've learned well with high retention rates"
+        subtitle="High retention flashcards"
       />
 
-      <LearningSummaryCard
-        title="Total Study Time"
+      <MetricCard
+        title="Study Time"
         value={`${studyTimeHours} hrs`}
         icon={Calendar}
-        tooltip="Total hours spent in completed study sessions"
+        subtitle="Total hours in sessions"
       />
 
-      <LearningSummaryCard
+      <MetricCard
         title="Achievements"
         value={`${achievements.length}/${totalAchievements}`}
         icon={Trophy}
-        tooltip="Study achievements earned out of total available"
+        subtitle="Earned milestones"
       />
 
-      <LearningSummaryCard
+      <MetricCard
         title="Flashcard Sets"
         value={totalSets}
         icon={BookOpen}
-        tooltip="Total number of flashcard sets in your collection"
+        subtitle="Total sets created"
       />
     </div>
   );
