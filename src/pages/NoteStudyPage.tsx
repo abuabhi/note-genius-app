@@ -74,14 +74,14 @@ const NoteStudyContent = () => {
           content: noteData.content || noteData.description || "",
           date: new Date(noteData.created_at).toISOString().split('T')[0],
           category: noteData.subject || "Uncategorized",
-          sourceType: noteData.source_type || 'manual',
+          sourceType: (noteData.source_type as 'manual' | 'scan' | 'import') || 'manual',
           archived: noteData.archived || false,
           pinned: noteData.pinned || false,
           subject_id: noteData.subject_id,
-          tags: noteData.tags || [],
+          tags: [], // Database response doesn't include tags, will be empty for now
           // Enhancement fields
           summary: noteData.summary,
-          summary_status: noteData.summary_status,
+          summary_status: (noteData.summary_status as 'pending' | 'generating' | 'completed' | 'failed') || 'pending',
           summary_generated_at: noteData.summary_generated_at,
           key_points: noteData.key_points,
           key_points_generated_at: noteData.key_points_generated_at,
