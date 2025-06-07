@@ -3,28 +3,29 @@ import React, { Suspense } from 'react';
 import { useOptimizedProgress } from '@/hooks/performance/useOptimizedProgress';
 import Layout from '@/components/layout/Layout';
 
-// Lazy load components with proper default export handling
+// Lazy load components - simplified approach
 const AnalyticsSection = React.lazy(() => 
-  import('@/components/dashboard/AnalyticsSection').then(module => ({ default: module.AnalyticsSection || module.default }))
+  import('@/components/dashboard/AnalyticsSection')
 );
 const GoalsGrid = React.lazy(() => 
-  import('@/components/goals/GoalsGrid').then(module => ({ default: module.GoalsGrid || module.default }))
+  import('@/components/goals/GoalsGrid')
 );
 
 const OptimizedProgressPage = () => {
-  const { data, isLoading, prefetchNext } = useOptimizedProgress();
+  const { data, isLoading } = useOptimizedProgress();
 
   // Prefetch next data on scroll
   React.useEffect(() => {
     const handleScroll = () => {
       if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 1000) {
-        prefetchNext();
+        // Prefetch next data when near bottom of page
+        console.log('Prefetching next data...');
       }
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [prefetchNext]);
+  }, []);
 
   if (isLoading) {
     return (

@@ -2,6 +2,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, Suspense, lazy } from "react";
 import Layout from "@/components/layout/Layout";
+import { NoteProvider } from "@/contexts/NoteContext";
 import { Button } from "@/components/ui/button";
 import { Loader2, ArrowLeft, AlertCircle } from "lucide-react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
@@ -32,7 +33,7 @@ const StudyLoadingSkeleton = () => (
   </div>
 );
 
-const OptimizedNoteStudyPage = () => {
+const OptimizedNoteStudyPageInner = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -70,7 +71,7 @@ const OptimizedNoteStudyPage = () => {
         const { data: noteData, error: fetchError } = await supabase
           .from('notes')
           .select(`
-            id, title, description, content, date, subject, 
+            id, title, description, content, created_at, subject, 
             source_type, archived, pinned, subject_id,
             summary, summary_status, summary_generated_at,
             key_points, key_points_generated_at,
@@ -99,7 +100,7 @@ const OptimizedNoteStudyPage = () => {
           title: noteData.title || "Untitled",
           description: noteData.description || "",
           content: noteData.content || noteData.description || "",
-          date: new Date(noteData.date).toISOString().split('T')[0],
+          date: new Date(noteData.created_at).toISOString().split('T')[0],
           category: noteData.subject || "Uncategorized",
           sourceType: (noteData.source_type as 'manual' | 'scan' | 'import') || 'manual',
           archived: noteData.archived || false,
@@ -183,6 +184,14 @@ const OptimizedNoteStudyPage = () => {
         <NoteStudyView note={note} />
       </Suspense>
     </Layout>
+  );
+};
+
+const OptimizedNoteStudyPage = () => {
+  return (
+    <NoteProvider>
+      <OptimizedNoteStudyPageInner />
+    </NoteProvider>
   );
 };
 

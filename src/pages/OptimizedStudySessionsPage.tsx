@@ -3,9 +3,9 @@ import React, { Suspense } from 'react';
 import { useOptimizedStudySessions } from '@/hooks/performance/useOptimizedStudySessions';
 import Layout from '@/components/layout/Layout';
 
-// Lazy load components with proper default export handling
+// Lazy load components - simplified approach
 const LearningAnalyticsDashboard = React.lazy(() => 
-  import('@/components/dashboard/LearningAnalyticsDashboard').then(module => ({ default: module.LearningAnalyticsDashboard || module.default }))
+  import('@/components/dashboard/LearningAnalyticsDashboard')
 );
 
 const OptimizedStudySessionsPage = () => {
