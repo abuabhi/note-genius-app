@@ -39,6 +39,7 @@ export const NON_STUDY_ROUTES = [
   '/referrals',
   '/auth',
   '/progress',
+  '/admin',
   '/'
 ];
 
@@ -46,13 +47,17 @@ export const NON_STUDY_ROUTES = [
 export const isStudyRoute = (pathname: string): boolean => {
   // First check if it's explicitly a non-study route
   if (NON_STUDY_ROUTES.some(route => pathname === route || pathname.startsWith(route + '/'))) {
+    console.log(`🚫 NON-STUDY ROUTE: ${pathname}`);
     return false;
   }
   
   // Check if it matches any study route patterns
-  return STUDY_ROUTES.some(route => {
+  const isStudy = STUDY_ROUTES.some(route => {
     if (pathname === route) return true;
     if (pathname.startsWith(route + '/')) return true;
     return false;
   });
+  
+  console.log(`${isStudy ? '📚' : '🚫'} Route check: ${pathname} -> ${isStudy ? 'STUDY' : 'NON-STUDY'}`);
+  return isStudy;
 };

@@ -42,5 +42,11 @@ export const useDashboardAnalytics = () => {
     isLoading
   };
 
+  console.log('📊 Dashboard Analytics (sanitized):', {
+    todayStudyTimeMinutes: dashboardData.todayStudyTimeMinutes,
+    totalStudyTimeMinutes: dashboardData.totalStudyTimeMinutes,
+    weeklyStudyTimeMinutes: dashboardData.weeklyStudyTimeMinutes
+  });
+
   return dashboardData;
 };

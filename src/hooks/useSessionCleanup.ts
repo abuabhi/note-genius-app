@@ -15,7 +15,7 @@ export const useSessionCleanup = () => {
 
     const cleanupOrphanedSessions = async () => {
       try {
-        logger.info('🧹 Starting session cleanup for user:', user.id);
+        logger.info('🧹 Starting aggressive session cleanup for user:', user.id);
 
         // Find sessions that are still marked as active but are unrealistic
         const { data: activeSessions, error: fetchError } = await supabase
@@ -64,14 +64,14 @@ export const useSessionCleanup = () => {
                 end_time: endTime.toISOString(),
                 duration: session.calculatedDuration,
                 is_active: false,
-                notes: `Auto-terminated orphaned session`
+                notes: `Auto-terminated orphaned session during dashboard cleanup`
               })
               .eq('id', session.id);
 
             if (updateError) {
               logger.error(`Error cleaning up session ${session.id}:`, updateError);
             } else {
-              logger.info(`✅ Cleaned up orphaned session ${session.id}`);
+              logger.info(`✅ Cleaned up orphaned session ${session.id} (${session.calculatedDuration}s)`);
             }
           }
         }
@@ -94,7 +94,7 @@ export const useSessionCleanup = () => {
       }
     };
 
-    // Run cleanup immediately
+    // Run cleanup immediately on dashboard load
     cleanupOrphanedSessions();
   }, [user]);
 };

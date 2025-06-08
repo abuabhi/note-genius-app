@@ -47,7 +47,7 @@ const DashboardPage = () => {
     return null; // Will redirect via the useRequireAuth hook
   }
 
-  console.log('✅ Dashboard rendering main content');
+  console.log('✅ Dashboard rendering main content - NO SESSION TRACKING');
   
   return (
     <Layout>
