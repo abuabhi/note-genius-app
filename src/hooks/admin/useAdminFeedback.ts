@@ -33,12 +33,17 @@ export const useAdminFeedback = () => {
         .from('feedback')
         .select(`
           *,
-          profiles!inner(username, avatar_url)
+          profiles(username, avatar_url)
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as FeedbackWithProfile[];
+      
+      // Handle the case where profiles might not exist
+      return (data || []).map(item => ({
+        ...item,
+        profiles: item.profiles || null
+      })) as FeedbackWithProfile[];
     },
   });
 };

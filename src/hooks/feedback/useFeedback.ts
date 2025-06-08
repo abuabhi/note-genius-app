@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Feedback, CreateFeedbackData } from '@/types/feedback';
 import { toast } from 'sonner';
+import { useAdminSettings } from '@/hooks/admin/useAdminSettings';
 
 export const useFeedback = () => {
   return useQuery({
@@ -21,41 +22,76 @@ export const useFeedback = () => {
 
 export const useCreateFeedback = () => {
   const queryClient = useQueryClient();
+  const { data: adminSettings } = useAdminSettings();
 
   return useMutation({
     mutationFn: async (feedbackData: CreateFeedbackData) => {
-      const { data, error } = await supabase
-        .from('feedback')
-        .insert([{
-          ...feedbackData,
-          user_id: (await supabase.auth.getUser()).data.user?.id
-        }])
-        .select()
-        .single();
+      const user = await supabase.auth.getUser();
+      const userId = user.data.user?.id;
 
-      if (error) throw error;
-
-      // Send thank you email notification
-      try {
+      // Check feedback mode
+      const isExternalMode = adminSettings?.feedback_mode === 'external';
+      
+      if (isExternalMode && adminSettings?.support_email) {
+        // External mode: Send email only
         const { error: emailError } = await supabase.functions.invoke('send-feedback-notification', {
           body: {
-            type: 'thank_you',
-            feedbackId: data.id
+            type: 'external_feedback',
+            feedbackData: {
+              ...feedbackData,
+              user_id: userId
+            },
+            supportEmail: adminSettings.support_email
           }
         });
         
         if (emailError) {
+          console.error('External feedback email failed:', emailError);
+          throw new Error('Failed to send feedback to support team');
+        }
+
+        return { id: 'external', ...feedbackData, user_id: userId };
+      } else {
+        // Internal mode: Save to database
+        const { data, error } = await supabase
+          .from('feedback')
+          .insert([{
+            ...feedbackData,
+            user_id: userId
+          }])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        // Send thank you email notification
+        try {
+          const { error: emailError } = await supabase.functions.invoke('send-feedback-notification', {
+            body: {
+              type: 'thank_you',
+              feedbackId: data.id
+            }
+          });
+          
+          if (emailError) {
+            console.warn('Thank you email failed:', emailError);
+          }
+        } catch (emailError) {
           console.warn('Thank you email failed:', emailError);
         }
-      } catch (emailError) {
-        console.warn('Thank you email failed:', emailError);
-      }
 
-      return data as Feedback;
+        return data as Feedback;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['feedback'] });
-      toast.success('Feedback submitted successfully! Thank you for helping us improve.');
+      const isExternalMode = adminSettings?.feedback_mode === 'external';
+      
+      if (isExternalMode) {
+        toast.success('Feedback sent successfully! Our support team will get back to you soon.');
+      } else {
+        toast.success('Feedback submitted successfully! Thank you for helping us improve.');
+      }
     },
     onError: (error) => {
       console.error('Error creating feedback:', error);

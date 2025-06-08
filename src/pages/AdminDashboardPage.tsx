@@ -15,7 +15,8 @@ import {
   Settings,
   BarChart3,
   Megaphone,
-  Shield
+  Shield,
+  MessageSquare
 } from "lucide-react";
 
 const AdminDashboardPage = () => {
@@ -68,6 +69,20 @@ const AdminDashboardPage = () => {
       color: "text-yellow-600"
     },
     {
+      title: "Feedback Management",
+      description: "Manage user feedback and support requests",
+      icon: MessageSquare,
+      href: "/admin/feedback",
+      color: "text-pink-600"
+    },
+    {
+      title: "Feedback Settings",
+      description: "Configure feedback handling mode and support email",
+      icon: Settings,
+      href: "/admin/feedback/settings",
+      color: "text-gray-600"
+    },
+    {
       title: "Flashcard Management",
       description: "Manage flashcard sets and content",
       icon: CreditCard,
@@ -101,13 +116,6 @@ const AdminDashboardPage = () => {
       icon: Upload,
       href: "/admin/csv-import",
       color: "text-amber-600"
-    },
-    {
-      title: "Feature Management",
-      description: "Enable/disable app features and manage access",
-      icon: Settings,
-      href: "/admin/features",
-      color: "text-red-600"
     }
   ];
 
