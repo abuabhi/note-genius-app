@@ -1,78 +1,110 @@
 
-import { useSearchParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
-import { FlashcardProvider } from '@/contexts/FlashcardContext';
 import { PageBreadcrumb } from '@/components/ui/page-breadcrumb';
-import { BookOpen } from 'lucide-react';
-import { useOptimizedFlashcardSets } from '@/hooks/useOptimizedFlashcardSets';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { BookOpen, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus } from 'lucide-react';
-import { useState, useMemo, Suspense, useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useUserSubjects } from '@/hooks/useUserSubjects';
+import { useEnhancedFlashcardSets } from '@/hooks/useEnhancedFlashcardSets';
+import AdvancedFlashcardFilters, { FlashcardFilters } from '@/components/flashcards/components/AdvancedFlashcardFilters';
+import FlashcardSetListView from '@/components/flashcards/components/FlashcardSetListView';
 import FlashcardSetGrid from '@/components/flashcards/components/FlashcardSetGrid';
 
-// Ultra-fast skeleton component
-const LoadingSkeleton = () => (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+// Loading skeleton for the list view
+const ListLoadingSkeleton = () => (
+  <div className="space-y-3">
     {Array.from({ length: 6 }).map((_, i) => (
-      <Card key={i} className="animate-pulse">
-        <CardHeader>
-          <Skeleton className="h-6 w-3/4" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-4 w-full mb-2" />
-          <Skeleton className="h-4 w-2/3 mb-4" />
-          <Skeleton className="h-8 w-full" />
-        </CardContent>
-      </Card>
+      <div key={i} className="bg-white border border-mint-100 rounded-lg p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex-1 space-y-2">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-4 w-4" />
+              <Skeleton className="h-5 w-48" />
+              <Skeleton className="h-5 w-16" />
+            </div>
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-16" />
+            <Skeleton className="h-8 w-8" />
+          </div>
+        </div>
+      </div>
     ))}
   </div>
 );
 
 const ErrorDisplay = ({ error, onRetry }: { error: string; onRetry: () => void }) => (
   <div className="text-center py-12">
-    <p className="text-red-600 mb-4">Error loading flashcard sets: {error}</p>
-    <Button onClick={onRetry}>Try Again</Button>
+    <div className="bg-red-50 border border-red-200 rounded-xl p-8 max-w-md mx-auto">
+      <p className="text-red-600 mb-4">Error loading flashcard sets: {error}</p>
+      <Button onClick={onRetry} variant="outline">
+        Try Again
+      </Button>
+    </div>
   </div>
 );
 
 const OptimizedFlashcardsPage = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { allSets, loading, error, deleteFlashcardSet, isDeleting, prefetchFlashcards, refetch } = useOptimizedFlashcardSets();
+  const [page, setPage] = useState(1);
   const [deletingSet, setDeletingSet] = useState<string | null>(null);
 
-  // Minimal refresh logic - only when truly necessary
+  // Initialize filters from URL params
+  const [filters, setFilters] = useState<FlashcardFilters>(() => ({
+    searchQuery: searchParams.get('search') || '',
+    subjectFilter: searchParams.get('subject') || undefined,
+    timeFilter: (searchParams.get('time') as any) || 'all',
+    showPinnedOnly: searchParams.get('pinned') === 'true',
+    sortBy: (searchParams.get('sort') as any) || 'updated_at',
+    viewMode: (searchParams.get('view') as any) || 'list',
+  }));
+
+  const { subjects: userSubjects, isLoading: subjectsLoading } = useUserSubjects();
+  const { 
+    sets, 
+    totalCount, 
+    hasMore, 
+    loading, 
+    error, 
+    deleteFlashcardSet, 
+    togglePinned,
+    isDeleting, 
+    prefetchNextPage,
+    refetch 
+  } = useEnhancedFlashcardSets(filters, page);
+
+  // Update URL when filters change
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        // Only refresh if data is very stale (5+ minutes)
-        const queryState = queryClient.getQueryState(['ultra-optimized-flashcard-sets']);
-        const isVeryStale = queryState?.dataUpdatedAt && (Date.now() - queryState.dataUpdatedAt) > 5 * 60 * 1000;
-        
-        if (isVeryStale) {
-          console.log('🔄 Data is very stale, refreshing flashcard sets');
-          queryClient.invalidateQueries({ queryKey: ['ultra-optimized-flashcard-sets'] });
-        }
-      }
-    };
+    const params = new URLSearchParams();
+    if (filters.searchQuery) params.set('search', filters.searchQuery);
+    if (filters.subjectFilter) params.set('subject', filters.subjectFilter);
+    if (filters.timeFilter !== 'all') params.set('time', filters.timeFilter);
+    if (filters.showPinnedOnly) params.set('pinned', 'true');
+    if (filters.sortBy !== 'updated_at') params.set('sort', filters.sortBy);
+    if (filters.viewMode !== 'list') params.set('view', filters.viewMode);
+    
+    setSearchParams(params, { replace: true });
+  }, [filters, setSearchParams]);
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [queryClient]);
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [filters]);
 
-  const handleStudyStart = (setId: string) => {
-    console.log('handleStudyStart called with setId:', setId);
-    // Prefetch for faster loading
-    prefetchFlashcards(setId);
-    const studyPath = `/flashcards/${setId}/study`;
-    console.log('Navigating to:', studyPath);
-    navigate(studyPath);
-  };
+  // Prefetch next page when approaching end
+  useEffect(() => {
+    if (sets.length > 15 && hasMore) {
+      prefetchNextPage();
+    }
+  }, [sets.length, hasMore, prefetchNextPage]);
 
   const handleDeleteSet = async (setId: string) => {
     setDeletingSet(setId);
@@ -85,32 +117,30 @@ const OptimizedFlashcardsPage = () => {
     }
   };
 
-  // Ultra-fast progress calculation using the optimized data
-  const setProgressData = useMemo(() => {
-    const progressMap: Record<string, number> = {};
-    allSets.forEach(set => {
-      progressMap[set.id] = set.progress_summary?.mastery_percentage || 0;
-    });
-    return progressMap;
-  }, [allSets]);
+  const handleTogglePinned = (setId: string, isPinned: boolean) => {
+    togglePinned({ setId, isPinned });
+  };
 
-  const detailedProgressData = useMemo(() => {
-    const detailedMap: Record<string, any> = {};
-    allSets.forEach(set => {
-      const summary = set.progress_summary;
-      detailedMap[set.id] = {
-        masteredCards: summary?.mastered_cards || 0,
-        needsPracticeCards: summary?.needs_practice || 0,
-        totalCards: summary?.total_cards || 0,
-        masteredPercentage: summary?.mastery_percentage || 0
-      };
-    });
-    return detailedMap;
-  }, [allSets]);
+  const handleLoadMore = () => {
+    setPage(prev => prev + 1);
+  };
 
   const handleRetry = () => {
     refetch();
   };
+
+  // Create progress data for backward compatibility
+  const setProgressData = sets.reduce((acc: Record<string, number>, set) => {
+    acc[set.id] = set.progress_summary?.mastery_percentage || 0;
+    return acc;
+  }, {});
+
+  const detailedProgressData = sets.reduce((acc: Record<string, any>, set) => {
+    if (set.progress_summary) {
+      acc[set.id] = set.progress_summary;
+    }
+    return acc;
+  }, {});
 
   return (
     <Layout>
@@ -133,26 +163,72 @@ const OptimizedFlashcardsPage = () => {
           </Button>
         </div>
 
-        <FlashcardProvider>
-          <Suspense fallback={<LoadingSkeleton />}>
-            {loading ? (
-              <LoadingSkeleton />
-            ) : error ? (
-              <ErrorDisplay error={error} onRetry={handleRetry} />
+        {/* Advanced Filters */}
+        <div className="mb-6">
+          <AdvancedFlashcardFilters
+            filters={filters}
+            onFiltersChange={setFilters}
+            userSubjects={userSubjects}
+            subjectsLoading={subjectsLoading}
+            filteredCount={sets.length}
+            totalCount={totalCount}
+          />
+        </div>
+
+        {/* Content */}
+        {loading && page === 1 ? (
+          filters.viewMode === 'list' ? <ListLoadingSkeleton /> : <ListLoadingSkeleton />
+        ) : error ? (
+          <ErrorDisplay error={error} onRetry={handleRetry} />
+        ) : (
+          <div className="space-y-6">
+            {/* Flashcard Sets Display */}
+            {filters.viewMode === 'list' ? (
+              <FlashcardSetListView
+                sets={sets}
+                onDeleteSet={handleDeleteSet}
+                onTogglePinned={handleTogglePinned}
+                deletingSet={deletingSet}
+                detailedProgressData={detailedProgressData}
+              />
             ) : (
               <FlashcardSetGrid
-                sets={allSets}
+                sets={sets}
                 setProgressData={setProgressData}
                 deletingSet={deletingSet}
                 onDeleteSet={handleDeleteSet}
                 hasInitiallyLoaded={!loading}
-                searchQuery=""
-                subjectFilter={undefined}
+                searchQuery={filters.searchQuery}
+                subjectFilter={filters.subjectFilter}
                 detailedProgressData={detailedProgressData}
               />
             )}
-          </Suspense>
-        </FlashcardProvider>
+
+            {/* Load More / Pagination */}
+            {hasMore && (
+              <div className="flex justify-center pt-6">
+                <Button
+                  onClick={handleLoadMore}
+                  variant="outline"
+                  disabled={loading}
+                  className="px-8"
+                >
+                  {loading ? 'Loading...' : 'Load More Sets'}
+                </Button>
+              </div>
+            )}
+
+            {/* Loading indicator for additional pages */}
+            {loading && page > 1 && (
+              <div className="flex justify-center py-4">
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <div className="w-4 h-4 border-2 border-mint-300 border-t-transparent rounded-full animate-spin"></div>
+                  Loading more sets...
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </Layout>
   );
