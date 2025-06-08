@@ -5,7 +5,6 @@ import { FlashcardProvider } from '@/contexts/FlashcardContext';
 import { PageBreadcrumb } from '@/components/ui/page-breadcrumb';
 import { BookOpen } from 'lucide-react';
 import { useOptimizedFlashcardSets } from '@/hooks/useOptimizedFlashcardSets';
-import { useFlashcardSetProgress } from '@/hooks/useFlashcardSetProgress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -15,7 +14,7 @@ import { useState, useMemo, Suspense, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import FlashcardSetGrid from '@/components/flashcards/components/FlashcardSetGrid';
 
-// Skeleton component for loading state
+// Ultra-fast skeleton component
 const LoadingSkeleton = () => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {Array.from({ length: 6 }).map((_, i) => (
@@ -33,7 +32,6 @@ const LoadingSkeleton = () => (
   </div>
 );
 
-// Error component
 const ErrorDisplay = ({ error, onRetry }: { error: string; onRetry: () => void }) => (
   <div className="text-center py-12">
     <p className="text-red-600 mb-4">Error loading flashcard sets: {error}</p>
@@ -46,31 +44,30 @@ const OptimizedFlashcardsPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { allSets, loading, error, deleteFlashcardSet, isDeleting, prefetchFlashcards, refetch } = useOptimizedFlashcardSets();
-  const { progressData, getSetProgress } = useFlashcardSetProgress(allSets);
   const [deletingSet, setDeletingSet] = useState<string | null>(null);
 
-  // Refresh progress data when returning to this page
+  // Minimal refresh logic - only when truly necessary
   useEffect(() => {
-    const refreshProgress = () => {
-      console.log('🔄 Refreshing flashcard sets and progress data');
-      queryClient.invalidateQueries({ queryKey: ['flashcard-set-progress'] });
-      queryClient.invalidateQueries({ queryKey: ['optimized-flashcard-sets'] });
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Only refresh if data is very stale (5+ minutes)
+        const queryState = queryClient.getQueryState(['ultra-optimized-flashcard-sets']);
+        const isVeryStale = queryState?.dataUpdatedAt && (Date.now() - queryState.dataUpdatedAt) > 5 * 60 * 1000;
+        
+        if (isVeryStale) {
+          console.log('🔄 Data is very stale, refreshing flashcard sets');
+          queryClient.invalidateQueries({ queryKey: ['ultra-optimized-flashcard-sets'] });
+        }
+      }
     };
 
-    // Refresh on mount and when window gains focus
-    refreshProgress();
-    
-    const handleFocus = () => refreshProgress();
-    window.addEventListener('focus', handleFocus);
-    
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [queryClient]);
 
   const handleStudyStart = (setId: string) => {
     console.log('handleStudyStart called with setId:', setId);
-    // Prefetch data for faster loading
+    // Prefetch for faster loading
     prefetchFlashcards(setId);
     const studyPath = `/flashcards/${setId}/study`;
     console.log('Navigating to:', studyPath);
@@ -81,8 +78,6 @@ const OptimizedFlashcardsPage = () => {
     setDeletingSet(setId);
     try {
       await deleteFlashcardSet(setId);
-      // Refresh progress data after deletion
-      queryClient.invalidateQueries({ queryKey: ['flashcard-set-progress'] });
     } catch (error) {
       console.error('Error deleting flashcard set:', error);
     } finally {
@@ -90,38 +85,31 @@ const OptimizedFlashcardsPage = () => {
     }
   };
 
-  // Optimized progress data calculation with early return
+  // Ultra-fast progress calculation using the optimized data
   const setProgressData = useMemo(() => {
-    if (!allSets.length) return {};
-    
     const progressMap: Record<string, number> = {};
     allSets.forEach(set => {
-      const progress = getSetProgress(set.id);
-      progressMap[set.id] = progress.masteredPercentage;
+      progressMap[set.id] = set.progress_summary?.mastery_percentage || 0;
     });
     return progressMap;
-  }, [allSets, getSetProgress]);
+  }, [allSets]);
 
   const detailedProgressData = useMemo(() => {
-    if (!allSets.length) return {};
-    
     const detailedMap: Record<string, any> = {};
     allSets.forEach(set => {
-      const progress = getSetProgress(set.id);
+      const summary = set.progress_summary;
       detailedMap[set.id] = {
-        masteredCards: progress.masteredCards,
-        needsPracticeCards: progress.needsPracticeCards,
-        totalCards: progress.totalCards,
-        masteredPercentage: progress.masteredPercentage
+        masteredCards: summary?.mastered_cards || 0,
+        needsPracticeCards: summary?.needs_practice || 0,
+        totalCards: summary?.total_cards || 0,
+        masteredPercentage: summary?.mastery_percentage || 0
       };
     });
     return detailedMap;
-  }, [allSets, getSetProgress]);
+  }, [allSets]);
 
-  // Handle retry for error state
   const handleRetry = () => {
     refetch();
-    queryClient.invalidateQueries({ queryKey: ['flashcard-set-progress'] });
   };
 
   return (
