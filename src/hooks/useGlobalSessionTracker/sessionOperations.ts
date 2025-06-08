@@ -61,26 +61,26 @@ export const useSessionOperations = (
     }
 
     try {
-      // Check for any existing active sessions in database
+      // Check for any existing active sessions in database - look for very recent ones first
       const { data: activeSessions, error: checkError } = await supabase
         .from('study_sessions')
         .select('*')
         .eq('user_id', user.id)
         .eq('is_active', true)
         .order('start_time', { ascending: false })
-        .limit(1);
+        .limit(3);
 
       if (checkError) {
         logger.warn('Warning checking for active sessions:', checkError);
       }
 
-      // If we have a recent active session (less than 1 hour old), resume it instead of creating new one
+      // If we have recent active sessions, try to resume the most recent one
       if (activeSessions && activeSessions.length > 0) {
         const existingSession = activeSessions[0];
         const sessionAge = Date.now() - new Date(existingSession.start_time).getTime();
-        const oneHour = 60 * 60 * 1000;
+        const twoHours = 2 * 60 * 60 * 1000; // Extended to 2 hours for better continuity
         
-        if (sessionAge < oneHour) {
+        if (sessionAge < twoHours) {
           logger.info('🔄 Resuming existing session instead of creating new one');
           const resumedState = {
             sessionId: existingSession.id,
@@ -117,7 +117,7 @@ export const useSessionOperations = (
         }
       }
 
-      // Create new session
+      // Create new session only if no recent session exists
       const activityType = getCurrentActivityType();
       const now = new Date();
 
@@ -217,7 +217,7 @@ export const useSessionOperations = (
     }
   }, [sessionState.sessionId, sessionState.startTime, queryClient]);
 
-  // Update activity type with route validation
+  // Update activity type with route validation and throttling
   const updateActivityType = useCallback(async () => {
     if (!sessionState.sessionId || !sessionState.isActive) return;
 

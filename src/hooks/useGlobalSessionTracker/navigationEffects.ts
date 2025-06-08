@@ -12,9 +12,11 @@ export const useNavigationEffects = (
   const location = useLocation();
   const previousLocationRef = useRef<string | null>(null);
   const isInitialLoadRef = useRef(true);
+  const lastProcessedPathRef = useRef<string | null>(null);
 
-  // Check if current route is a study route using the helper function
-  const isOnStudyPage = isStudyRoute(location.pathname);
+  // Only check route when location actually changes
+  const currentPath = location.pathname;
+  const isOnStudyPage = isStudyRoute(currentPath);
   
   // Check if previous location was a study page
   const wasOnStudyPage = previousLocationRef.current ? 
@@ -43,19 +45,14 @@ export const useNavigationEffects = (
     return false;
   };
 
-  console.log('🔍 Route analysis:', {
-    currentPath: location.pathname,
-    previousPath: previousLocationRef.current,
-    isOnStudyPage,
-    wasOnStudyPage,
-    areRelated: areRelatedStudyRoutes(location.pathname, previousLocationRef.current),
-    hasActiveSession: sessionState.isActive
-  });
-
-  // Handle page navigation with improved session management
+  // Handle page navigation with improved session management - only when path actually changes
   useEffect(() => {
-    const currentPath = location.pathname;
     const previousPath = previousLocationRef.current;
+    
+    // Skip if we've already processed this path to prevent excessive calls
+    if (lastProcessedPathRef.current === currentPath) {
+      return;
+    }
     
     console.log('📍 Navigation detected:', {
       currentPath,
@@ -68,6 +65,9 @@ export const useNavigationEffects = (
       isPaused: sessionState.isPaused,
       areRelated: areRelatedStudyRoutes(currentPath, previousPath)
     });
+
+    // Update processed path reference
+    lastProcessedPathRef.current = currentPath;
 
     // Skip processing on initial load to avoid unwanted session creation
     if (isInitialLoadRef.current) {
@@ -129,7 +129,7 @@ export const useNavigationEffects = (
       }
     }
     
-  }, [location.pathname, isOnStudyPage, wasOnStudyPage, sessionState.isActive, sessionState.isPaused]);
+  }, [currentPath]); // Only depend on currentPath to prevent excessive calls
 
   return { isOnStudyPage };
 };
