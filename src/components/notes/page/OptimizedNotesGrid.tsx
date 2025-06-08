@@ -34,7 +34,7 @@ export const OptimizedNotesGrid = ({ notes, onPin, onDelete }: OptimizedNotesGri
     setIsDetailsOpen(true);
   };
 
-  // Render based on view mode
+  // List view - vertical layout with full NoteCard functionality
   if (viewMode === 'list') {
     return (
       <>
@@ -67,10 +67,10 @@ export const OptimizedNotesGrid = ({ notes, onPin, onDelete }: OptimizedNotesGri
     );
   }
 
-  // Card view (default)
+  // Card view - 4 cards per row grid with CompactNoteCard
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {notes.map((note) => (
           <CompactNoteCard key={note.id} note={note} />
         ))}
