@@ -1,62 +1,35 @@
 
-import React from "react";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { Home, Shield } from "lucide-react";
-import { useLocation } from "react-router-dom";
+import { OptimizedBreadcrumb, OptimizedBreadcrumbItem, OptimizedBreadcrumbLink, OptimizedBreadcrumbList, OptimizedBreadcrumbPage, OptimizedBreadcrumbSeparator } from "@/components/ui/optimized-breadcrumb";
 
 interface PageBreadcrumbProps {
   pageName: string;
   pageIcon?: React.ReactNode;
+  parentName?: string;
+  parentPath?: string;
 }
 
-export const PageBreadcrumb = ({ pageName, pageIcon }: PageBreadcrumbProps) => {
-  const location = useLocation();
-  const isAdminPage = location.pathname.startsWith('/admin');
-
+export const PageBreadcrumb = ({ 
+  pageName, 
+  pageIcon, 
+  parentName = "Dashboard", 
+  parentPath = "/dashboard" 
+}: PageBreadcrumbProps) => {
   return (
-    <div className="mb-4">
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink href="/dashboard" className="flex items-center gap-1">
-              <Home className="h-3 w-3" />
-              Dashboard
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          {isAdminPage ? (
-            <>
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/admin" className="flex items-center gap-1">
-                  <Shield className="h-3 w-3" />
-                  Administration
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage className="flex items-center gap-1">
-                  {pageIcon}
-                  {pageName}
-                </BreadcrumbPage>
-              </BreadcrumbItem>
-            </>
-          ) : (
-            <BreadcrumbItem>
-              <BreadcrumbPage className="flex items-center gap-1">
-                {pageIcon}
-                {pageName}
-              </BreadcrumbPage>
-            </BreadcrumbItem>
-          )}
-        </BreadcrumbList>
-      </Breadcrumb>
-    </div>
+    <OptimizedBreadcrumb>
+      <OptimizedBreadcrumbList>
+        <OptimizedBreadcrumbItem>
+          <OptimizedBreadcrumbLink to={parentPath}>
+            {parentName}
+          </OptimizedBreadcrumbLink>
+        </OptimizedBreadcrumbItem>
+        <OptimizedBreadcrumbSeparator />
+        <OptimizedBreadcrumbItem>
+          <OptimizedBreadcrumbPage className="flex items-center gap-2">
+            {pageIcon}
+            {pageName}
+          </OptimizedBreadcrumbPage>
+        </OptimizedBreadcrumbItem>
+      </OptimizedBreadcrumbList>
+    </OptimizedBreadcrumb>
   );
 };

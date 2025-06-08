@@ -7,7 +7,7 @@ import { FlashcardProvider } from '@/contexts/FlashcardContext';
 
 // Lazy load all major pages for code splitting
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
-const NotesPage = lazy(() => import('@/pages/NotesPage'));
+const OptimizedNotesPage = lazy(() => import('@/pages/OptimizedNotesPage'));
 const OptimizedNoteStudyPage = lazy(() => import('@/pages/OptimizedNoteStudyPage'));
 const NoteStudyPage = lazy(() => import('@/pages/NoteStudyPage'));
 const EditNotePage = lazy(() => import('@/pages/EditNotePage'));
@@ -144,15 +144,13 @@ export const OptimizedAppRoutes = () => {
         } 
       />
       
-      {/* Notes routes - wrapped with NoteProvider */}
+      {/* Notes routes - NOW USING OPTIMIZED VERSION */}
       <Route 
         path="/notes" 
         element={
-          <NoteProvider>
-            <LazyLoadWrapper fallback={<PageLoadingSkeleton type="notes" />}>
-              <NotesPage />
-            </LazyLoadWrapper>
-          </NoteProvider>
+          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="notes" />}>
+            <OptimizedNotesPage />
+          </LazyLoadWrapper>
         } 
       />
       <Route 
@@ -165,7 +163,6 @@ export const OptimizedAppRoutes = () => {
           </NoteProvider>
         } 
       />
-      {/* Add the missing study route */}
       <Route 
         path="/notes/study/:id" 
         element={
