@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Clock, Play, Pause, RotateCcw } from 'lucide-react';
+import { Clock, Play, Pause } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
@@ -48,11 +48,6 @@ export const CompactFloatingTimer = ({
     };
   }, [internalActive, seconds]);
 
-  const reset = () => {
-    setSeconds(0);
-    setInternalActive(false);
-  };
-
   const toggle = () => {
     const newState = !internalActive;
     setInternalActive(newState);
@@ -92,7 +87,7 @@ export const CompactFloatingTimer = ({
   };
 
   return (
-    <Card className={`fixed top-4 right-4 z-40 p-3 bg-white/95 backdrop-blur-sm border-mint-200 shadow-lg ${className}`}>
+    <Card className={`fixed top-4 right-4 z-40 p-3 bg-mint-500 border-mint-600 shadow-lg ${className}`}>
       <div className="flex items-center gap-3">
         {/* Compact Circular Progress */}
         <div className="relative w-10 h-10">
@@ -104,7 +99,7 @@ export const CompactFloatingTimer = ({
               stroke="currentColor"
               strokeWidth="2"
               fill="transparent"
-              className="text-mint-100"
+              className="text-mint-300"
             />
             <circle
               cx="20"
@@ -115,46 +110,38 @@ export const CompactFloatingTimer = ({
               fill="transparent"
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
-              className="text-mint-500 transition-all duration-300 ease-in-out"
+              className="text-white transition-all duration-300 ease-in-out"
               strokeLinecap="round"
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <Clock className="h-4 w-4 text-mint-600" />
+            <Clock className="h-4 w-4 text-white" />
           </div>
         </div>
 
         {/* Timer Display */}
         <div className="flex flex-col">
-          <div className="text-sm font-mono font-medium text-gray-900">
+          <div className="text-sm font-mono font-medium text-white">
             {formatTime(seconds)}
           </div>
-          <div className="text-xs text-gray-500 truncate max-w-24">
+          <div className="text-xs text-mint-100 truncate max-w-24">
             {getActivityLabel()}
           </div>
         </div>
 
-        {/* Controls */}
+        {/* Controls - Only Play/Pause */}
         <div className="flex gap-1">
           <Button
             variant="ghost"
             size="sm"
             onClick={toggle}
-            className="h-7 w-7 p-0 hover:bg-mint-50"
+            className="h-7 w-7 p-0 hover:bg-mint-400 text-white hover:text-white"
           >
             {internalActive ? (
-              <Pause className="h-3 w-3 text-mint-600" />
+              <Pause className="h-3 w-3" />
             ) : (
-              <Play className="h-3 w-3 text-mint-600" />
+              <Play className="h-3 w-3" />
             )}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={reset}
-            className="h-7 w-7 p-0 hover:bg-mint-50"
-          >
-            <RotateCcw className="h-3 w-3 text-mint-600" />
           </Button>
         </div>
       </div>
