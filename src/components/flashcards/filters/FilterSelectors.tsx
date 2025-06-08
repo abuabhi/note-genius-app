@@ -1,124 +1,147 @@
 
-import { Calendar } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { UserSubject } from '@/types/subject';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Grid2x2, LayoutList } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import type { FlashcardFilters } from "../components/AdvancedFlashcardFilters";
 
 interface FilterSelectorsProps {
-  subjectFilter?: string;
-  timeFilter: string;
-  sortBy: string;
-  viewMode: string;
-  userSubjects: UserSubject[];
-  subjectsLoading: boolean;
-  onSubjectChange: (value: string) => void;
-  onTimeChange: (value: string) => void;
-  onSortChange: (value: string) => void;
-  onViewModeChange: (value: string) => void;
+  filters: FlashcardFilters;
+  onFiltersChange: (filters: FlashcardFilters) => void;
+  hideViewMode?: boolean;
 }
 
-const timeFilterLabels = {
-  all: 'All time',
-  week: 'Last 7 days',
-  month: 'Last 30 days',
-  quarter: 'Last 90 days',
-};
-
-export const FilterSelectors = ({
-  subjectFilter,
-  timeFilter,
-  sortBy,
-  viewMode,
-  userSubjects,
-  subjectsLoading,
-  onSubjectChange,
-  onTimeChange,
-  onSortChange,
-  onViewModeChange,
+export const FilterSelectors = ({ 
+  filters, 
+  onFiltersChange,
+  hideViewMode = false
 }: FilterSelectorsProps) => {
+  const updateFilter = (key: keyof FlashcardFilters, value: any) => {
+    onFiltersChange({ ...filters, [key]: value });
+  };
+
   return (
-    <>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {/* Subject Filter */}
       <div className="space-y-2">
-        <label className="text-sm font-medium">Subject</label>
-        <Select
-          value={subjectFilter || "all_subjects"}
-          onValueChange={(value) => onSubjectChange(value === "all_subjects" ? undefined : value)}
-          disabled={subjectsLoading}
-        >
-          <SelectTrigger className="border-mint-200">
+        <Label>Subject</Label>
+        <Select value={filters.subjectFilter} onValueChange={(value) => updateFilter('subjectFilter', value)}>
+          <SelectTrigger>
             <SelectValue placeholder="All subjects" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all_subjects">All subjects</SelectItem>
-            {userSubjects.map(subject => (
-              <SelectItem key={subject.id} value={subject.name}>
-                {subject.name}
-              </SelectItem>
-            ))}
+            <SelectItem value="all">All Subjects</SelectItem>
+            <SelectItem value="mathematics">Mathematics</SelectItem>
+            <SelectItem value="science">Science</SelectItem>
+            <SelectItem value="history">History</SelectItem>
+            <SelectItem value="literature">Literature</SelectItem>
+            <SelectItem value="languages">Languages</SelectItem>
+            <SelectItem value="other">Other</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {/* Time Filter */}
+      {/* Difficulty Filter */}
       <div className="space-y-2">
-        <label className="text-sm font-medium">Time Period</label>
-        <Select value={timeFilter} onValueChange={onTimeChange}>
-          <SelectTrigger className="border-mint-200">
-            <SelectValue />
+        <Label>Difficulty</Label>
+        <Select value={filters.difficultyFilter} onValueChange={(value) => updateFilter('difficultyFilter', value)}>
+          <SelectTrigger>
+            <SelectValue placeholder="All difficulties" />
           </SelectTrigger>
           <SelectContent>
-            {Object.entries(timeFilterLabels).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-3 w-3" />
-                  {label}
-                </div>
-              </SelectItem>
-            ))}
+            <SelectItem value="all">All Difficulties</SelectItem>
+            <SelectItem value="easy">Easy</SelectItem>
+            <SelectItem value="medium">Medium</SelectItem>
+            <SelectItem value="hard">Hard</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Progress Filter */}
+      <div className="space-y-2">
+        <Label>Progress</Label>
+        <Select value={filters.progressFilter} onValueChange={(value) => updateFilter('progressFilter', value)}>
+          <SelectTrigger>
+            <SelectValue placeholder="All progress" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Progress</SelectItem>
+            <SelectItem value="not_started">Not Started</SelectItem>
+            <SelectItem value="in_progress">In Progress</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {/* Sort By */}
       <div className="space-y-2">
-        <label className="text-sm font-medium">Sort by</label>
-        <Select value={sortBy} onValueChange={onSortChange}>
-          <SelectTrigger className="border-mint-200">
+        <Label>Sort By</Label>
+        <Select value={filters.sortBy} onValueChange={(value) => updateFilter('sortBy', value)}>
+          <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="updated_at">Recently Updated</SelectItem>
-            <SelectItem value="created_at">Recently Created</SelectItem>
-            <SelectItem value="name">Name (A-Z)</SelectItem>
+            <SelectItem value="updated_at">Last Updated</SelectItem>
+            <SelectItem value="created_at">Date Created</SelectItem>
+            <SelectItem value="title">Name (A-Z)</SelectItem>
             <SelectItem value="card_count">Card Count</SelectItem>
-            <SelectItem value="progress">Progress</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {/* View Mode */}
+      {/* Sort Order */}
       <div className="space-y-2">
-        <label className="text-sm font-medium">View</label>
-        <div className="flex gap-2">
-          <Button
-            variant={viewMode === 'list' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => onViewModeChange('list')}
-            className="flex-1"
-          >
-            List
-          </Button>
-          <Button
-            variant={viewMode === 'grid' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => onViewModeChange('grid')}
-            className="flex-1"
-          >
-            Grid
-          </Button>
+        <Label>Sort Order</Label>
+        <Select value={filters.sortOrder} onValueChange={(value) => updateFilter('sortOrder', value as 'asc' | 'desc')}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="desc">Descending</SelectItem>
+            <SelectItem value="asc">Ascending</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* View Mode - Only show if not hidden */}
+      {!hideViewMode && (
+        <div className="space-y-2">
+          <Label>View Mode</Label>
+          <div className="flex gap-2">
+            <Button
+              variant={filters.viewMode === 'grid' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => updateFilter('viewMode', 'grid')}
+              className="flex-1"
+            >
+              <Grid2x2 className="h-4 w-4 mr-2" />
+              Grid
+            </Button>
+            <Button
+              variant={filters.viewMode === 'list' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => updateFilter('viewMode', 'list')}
+              className="flex-1"
+            >
+              <LayoutList className="h-4 w-4 mr-2" />
+              List
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Show Pinned Only */}
+      <div className="space-y-2">
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="pinned-only"
+            checked={filters.showPinnedOnly}
+            onCheckedChange={(checked) => updateFilter('showPinnedOnly', checked)}
+          />
+          <Label htmlFor="pinned-only">Pinned Only</Label>
         </div>
       </div>
-    </>
+    </div>
   );
 };

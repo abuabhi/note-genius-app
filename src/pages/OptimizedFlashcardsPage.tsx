@@ -1,114 +1,102 @@
 
-import { useEffect } from 'react';
-import Layout from '@/components/layout/Layout';
-import { useUserSubjects } from '@/hooks/useUserSubjects';
-import { useEnhancedFlashcardSets } from '@/hooks/useEnhancedFlashcardSets';
-import AdvancedFlashcardFilters from '@/components/flashcards/components/AdvancedFlashcardFilters';
-import ErrorBoundary from '@/components/flashcards/components/ErrorBoundary';
-import { FlashcardsPageHeader } from '@/components/flashcards/page/FlashcardsPageHeader';
-import { FlashcardsContent } from '@/components/flashcards/page/FlashcardsContent';
-import { useFlashcardsPageState } from '@/components/flashcards/page/useFlashcardsPageState';
+import { useState, useMemo } from "react";
+import Layout from "@/components/layout/Layout";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { useOptimizedFlashcardSets } from "@/hooks/useOptimizedFlashcardSets";
+import { FlashcardsPageHeader } from "@/components/flashcards/page/FlashcardsPageHeader";
+import { FlashcardsContent } from "@/components/flashcards/page/FlashcardsContent";
+import { AdvancedFlashcardFilters } from "@/components/flashcards/components/AdvancedFlashcardFilters";
+import { VisualFloatingTimer } from "@/components/study/VisualFloatingTimer";
+import { useViewPreferences } from "@/hooks/useViewPreferences";
+import type { FlashcardFilters } from "@/components/flashcards/components/AdvancedFlashcardFilters";
 
 const OptimizedFlashcardsPage = () => {
-  const { 
-    filters, 
-    setFilters, 
-    page, 
-    setPage, 
-    deletingSet, 
-    setDeletingSet 
-  } = useFlashcardsPageState();
+  console.log('🏠 OptimizedFlashcardsPage component rendering');
+  
+  useRequireAuth();
+  const { viewMode, setViewMode } = useViewPreferences('flashcards', 'grid');
+  
+  const [filters, setFilters] = useState<FlashcardFilters>({
+    searchQuery: '',
+    subjectFilter: 'all',
+    difficultyFilter: 'all',
+    progressFilter: 'all',
+    sortBy: 'updated_at',
+    sortOrder: 'desc',
+    viewMode: viewMode, // Initialize from preferences but don't use for filtering
+    showPinnedOnly: false
+  });
 
-  const { subjects: userSubjects, isLoading: subjectsLoading } = useUserSubjects();
-  const { 
-    sets, 
-    totalCount, 
-    hasMore, 
-    loading, 
-    error, 
-    deleteFlashcardSet, 
-    togglePinned,
-    isDeleting, 
-    isTogglingPinned,
-    prefetchNextPage,
-    refetch 
-  } = useEnhancedFlashcardSets(filters, page);
+  const [page, setPage] = useState(1);
+  const [deletingSet, setDeletingSet] = useState<string | null>(null);
 
-  // Enhanced prefetching with error handling
-  useEffect(() => {
-    if (sets.length > 15 && hasMore) {
-      try {
-        prefetchNextPage();
-      } catch (error) {
-        console.warn('⚠️ Prefetch failed (non-critical):', error);
-      }
-    }
-  }, [sets.length, hasMore, prefetchNextPage]);
+  // Sync viewMode changes to filters (for backward compatibility)
+  const effectiveFilters = useMemo(() => ({
+    ...filters,
+    viewMode
+  }), [filters, viewMode]);
+
+  const {
+    allSets,
+    loading,
+    error,
+    hasMore,
+    detailedProgressData,
+    deleteFlashcardSet,
+    updateFlashcardSet,
+    retryFetch
+  } = useOptimizedFlashcardSets({
+    filters: effectiveFilters,
+    page,
+    pageSize: 12
+  });
 
   const handleDeleteSet = async (setId: string) => {
-    if (isDeleting) return;
-    
     setDeletingSet(setId);
     try {
-      await deleteFlashcardSet(setId);
-    } catch (error) {
-      console.error('Error deleting flashcard set:', error);
+      await deleteFlashcardSet.mutateAsync(setId);
     } finally {
       setDeletingSet(null);
     }
   };
 
   const handleTogglePinned = async (setId: string, isPinned: boolean) => {
-    if (isTogglingPinned) return;
-    
-    try {
-      await togglePinned({ setId, isPinned });
-    } catch (error) {
-      console.error('Error toggling pinned status:', error);
-    }
+    await updateFlashcardSet.mutateAsync({
+      id: setId,
+      updates: { is_pinned: isPinned }
+    });
   };
 
   const handleLoadMore = () => {
-    if (hasMore && !loading) {
-      setPage(prev => prev + 1);
-    }
+    setPage(prev => prev + 1);
   };
 
-  // Create progress data for backward compatibility
-  const detailedProgressData = sets.reduce((acc: Record<string, any>, set) => {
-    if (set.progress_summary) {
-      acc[set.id] = {
-        masteredCards: set.progress_summary.mastered_cards,
-        needsPracticeCards: set.progress_summary.needs_practice,
-        totalCards: set.progress_summary.total_cards,
-        masteredPercentage: set.progress_summary.mastery_percentage,
-      };
-    }
-    return acc;
-  }, {});
+  const handleRetry = () => {
+    setPage(1);
+    retryFetch();
+  };
 
   return (
     <Layout>
-      <ErrorBoundary>
-        <div className="container mx-auto p-4 md:p-6">
-          <FlashcardsPageHeader loading={loading && page === 1} />
-
-          {/* Advanced Filters */}
-          <div className="mb-6">
-            <AdvancedFlashcardFilters
-              filters={filters}
-              onFiltersChange={setFilters}
-              userSubjects={userSubjects}
-              subjectsLoading={subjectsLoading}
-              filteredCount={sets.length}
-              totalCount={totalCount}
-            />
-          </div>
-
-          {/* Content */}
-          <FlashcardsContent
-            sets={sets}
+      <VisualFloatingTimer />
+      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+        <div className="container mx-auto p-6 space-y-6">
+          <FlashcardsPageHeader 
+            loading={loading}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+          />
+          
+          <AdvancedFlashcardFilters
             filters={filters}
+            onFiltersChange={setFilters}
+            totalSets={allSets.length}
+            hideViewMode={true}
+          />
+          
+          <FlashcardsContent
+            sets={allSets}
+            filters={effectiveFilters}
             loading={loading}
             error={error}
             hasMore={hasMore}
@@ -118,10 +106,10 @@ const OptimizedFlashcardsPage = () => {
             onDeleteSet={handleDeleteSet}
             onTogglePinned={handleTogglePinned}
             onLoadMore={handleLoadMore}
-            onRetry={refetch}
+            onRetry={handleRetry}
           />
         </div>
-      </ErrorBoundary>
+      </div>
     </Layout>
   );
 };

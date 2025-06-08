@@ -3,12 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { PageBreadcrumb } from '@/components/ui/page-breadcrumb';
 import { BookOpen, Plus } from 'lucide-react';
+import { ViewToggle } from './ViewToggle';
+import { ViewMode } from '@/hooks/useViewPreferences';
 
 interface FlashcardsPageHeaderProps {
   loading: boolean;
+  viewMode: ViewMode;
+  onViewModeChange: (mode: ViewMode) => void;
 }
 
-export const FlashcardsPageHeader = ({ loading }: FlashcardsPageHeaderProps) => {
+export const FlashcardsPageHeader = ({ 
+  loading, 
+  viewMode, 
+  onViewModeChange 
+}: FlashcardsPageHeaderProps) => {
   const navigate = useNavigate();
 
   return (
@@ -22,14 +30,20 @@ export const FlashcardsPageHeader = ({ loading }: FlashcardsPageHeaderProps) => 
             Study with your personalized flashcard collections
           </p>
         </div>
-        <Button 
-          onClick={() => navigate('/flashcards/create')}
-          className="bg-mint-500 hover:bg-mint-600"
-          disabled={loading}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Create Set
-        </Button>
+        <div className="flex items-center gap-3">
+          <ViewToggle 
+            viewMode={viewMode}
+            onViewModeChange={onViewModeChange}
+          />
+          <Button 
+            onClick={() => navigate('/flashcards/create')}
+            className="bg-mint-500 hover:bg-mint-600"
+            disabled={loading}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create Set
+          </Button>
+        </div>
       </div>
     </>
   );

@@ -21,6 +21,7 @@ export interface ActivityData {
 
 // Define study routes where sessions should be active - be very specific
 export const STUDY_ROUTES = [
+  '/flashcards',
   '/flashcards/study',
   '/flashcards/sets',
   '/notes/study',
