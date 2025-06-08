@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, AlertTriangle } from 'lucide-react';
+import { Loader2, AlertTriangle, WifiOff, Wifi } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 // Enhanced skeleton for flashcard sets list

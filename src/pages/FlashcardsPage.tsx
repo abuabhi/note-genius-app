@@ -56,6 +56,7 @@ const FlashcardsPage = () => {
       await executeWithRetry(async () => {
         // This would be implemented with the update mutation
         console.log('Toggle pinned:', setId, isPinned);
+        return Promise.resolve();
       });
       toast.success(isPinned ? 'Set pinned' : 'Set unpinned');
     } catch (error) {
@@ -68,9 +69,9 @@ const FlashcardsPage = () => {
     setPage(prev => prev + 1);
   };
 
-  const handleRetry = () => {
+  const handleRetry = async () => {
     setPage(1);
-    refetch();
+    return refetch();
   };
 
   return (
