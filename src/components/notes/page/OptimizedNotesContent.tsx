@@ -21,13 +21,13 @@ export const OptimizedNotesContent = () => {
     isLoading,
     error,
     searchTerm,
-    setSearchTerm,
+    setSearchTerm: contextSetSearchTerm,
     sortType,
-    setSortType,
+    setSortType: contextSetSortType,
     showArchived,
     setShowArchived,
     selectedSubject,
-    setSelectedSubject,
+    setSelectedSubject: contextSetSelectedSubject,
     currentPage,
     setCurrentPage,
     refetch,
@@ -128,16 +128,16 @@ export const OptimizedNotesContent = () => {
         isCreating={creatingNote}
       />
 
-      {/* Filters and search - using context handlers directly */}
+      {/* Filters and search - using context handlers that preserve filter states */}
       <OptimizedNotesFilters
         searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
+        onSearchChange={contextSetSearchTerm}
         sortType={sortType}
-        onSortChange={setSortType}
+        onSortChange={contextSetSortType}
         showArchived={showArchived}
         onShowArchivedChange={setShowArchived}
         selectedSubject={selectedSubject}
-        onSubjectChange={setSelectedSubject}
+        onSubjectChange={contextSetSelectedSubject}
       />
 
       {/* Main content */}
