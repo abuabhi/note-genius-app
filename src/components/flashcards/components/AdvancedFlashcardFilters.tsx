@@ -1,12 +1,17 @@
 
-import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import React from "react";
+import { Search, Filter, SortAsc } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { FilterHeader } from "../filters/FilterHeader";
-import { FilterSelectors } from "../filters/FilterSelectors";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { FilterHeader } from "./FilterHeader";
 
 export interface FlashcardFilters {
   searchQuery: string;
@@ -26,13 +31,15 @@ interface AdvancedFlashcardFiltersProps {
   hideViewMode?: boolean;
 }
 
-export const AdvancedFlashcardFilters = ({ 
-  filters, 
-  onFiltersChange, 
+export const AdvancedFlashcardFilters = ({
+  filters,
+  onFiltersChange,
   totalSets,
   hideViewMode = false
 }: AdvancedFlashcardFiltersProps) => {
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const activeFilterCount = Object.values(filters).filter(value => 
+    value !== '' && value !== 'all' && value !== false && value !== 'grid' && value !== 'updated_at' && value !== 'desc'
+  ).length;
 
   const updateFilter = (key: keyof FlashcardFilters, value: any) => {
     onFiltersChange({ ...filters, [key]: value });
@@ -46,29 +53,19 @@ export const AdvancedFlashcardFilters = ({
       progressFilter: 'all',
       sortBy: 'updated_at',
       sortOrder: 'desc',
-      viewMode: filters.viewMode, // Preserve view mode
+      viewMode: filters.viewMode,
       showPinnedOnly: false
     });
   };
 
-  const getActiveFilterCount = () => {
-    let count = 0;
-    if (filters.searchQuery) count++;
-    if (filters.subjectFilter !== 'all') count++;
-    if (filters.difficultyFilter !== 'all') count++;
-    if (filters.progressFilter !== 'all') count++;
-    if (filters.showPinnedOnly) count++;
-    return count;
-  };
-
-  const activeFilterCount = getActiveFilterCount();
-
   return (
     <div className="space-y-4">
-      {/* Search and Basic Controls */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+      <FilterHeader totalSets={totalSets} activeFilterCount={activeFilterCount} />
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
             placeholder="Search flashcard sets..."
             value={filters.searchQuery}
@@ -76,50 +73,74 @@ export const AdvancedFlashcardFilters = ({
             className="pl-10"
           />
         </div>
-        
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-2"
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-            Filters
-            {activeFilterCount > 0 && (
-              <Badge variant="secondary" className="ml-1">
-                {activeFilterCount}
-              </Badge>
-            )}
-          </Button>
-          
-          {activeFilterCount > 0 && (
-            <Button
-              variant="ghost"
-              onClick={clearFilters}
-              className="flex items-center gap-1"
-            >
-              <X className="h-4 w-4" />
-              Clear
-            </Button>
-          )}
-        </div>
+
+        {/* Subject Filter */}
+        <Select value={filters.subjectFilter} onValueChange={(value) => updateFilter('subjectFilter', value)}>
+          <SelectTrigger>
+            <SelectValue placeholder="All Subjects" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Subjects</SelectItem>
+            <SelectItem value="math">Mathematics</SelectItem>
+            <SelectItem value="science">Science</SelectItem>
+            <SelectItem value="history">History</SelectItem>
+            <SelectItem value="language">Language</SelectItem>
+            <SelectItem value="other">Other</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Difficulty Filter */}
+        <Select value={filters.difficultyFilter} onValueChange={(value) => updateFilter('difficultyFilter', value)}>
+          <SelectTrigger>
+            <SelectValue placeholder="All Difficulties" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Difficulties</SelectItem>
+            <SelectItem value="beginner">Beginner</SelectItem>
+            <SelectItem value="intermediate">Intermediate</SelectItem>
+            <SelectItem value="advanced">Advanced</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Sort */}
+        <Select value={filters.sortBy} onValueChange={(value) => updateFilter('sortBy', value)}>
+          <SelectTrigger>
+            <SortAsc className="h-4 w-4 mr-2" />
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="updated_at">Recently Updated</SelectItem>
+            <SelectItem value="created_at">Recently Created</SelectItem>
+            <SelectItem value="name">Name</SelectItem>
+            <SelectItem value="card_count">Card Count</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Advanced Filters */}
-      {showAdvanced && (
-        <Card>
-          <CardContent className="p-4">
-            <FilterHeader 
-              totalSets={totalSets}
-              activeFilterCount={activeFilterCount}
-            />
-            <FilterSelectors
-              filters={filters}
-              onFiltersChange={onFiltersChange}
-              hideViewMode={hideViewMode}
-            />
-          </CardContent>
-        </Card>
+      {/* Active Filters & Clear */}
+      {activeFilterCount > 0 && (
+        <div className="flex items-center justify-between">
+          <div className="flex flex-wrap gap-2">
+            {filters.searchQuery && (
+              <Badge variant="secondary">
+                Search: {filters.searchQuery}
+              </Badge>
+            )}
+            {filters.subjectFilter !== 'all' && (
+              <Badge variant="secondary">
+                Subject: {filters.subjectFilter}
+              </Badge>
+            )}
+            {filters.showPinnedOnly && (
+              <Badge variant="secondary">
+                Pinned Only
+              </Badge>
+            )}
+          </div>
+          <Button variant="ghost" size="sm" onClick={clearFilters}>
+            Clear all
+          </Button>
+        </div>
       )}
     </div>
   );

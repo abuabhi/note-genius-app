@@ -1,33 +1,55 @@
 
-import React from 'react';
-import EnhancedErrorBoundary from '@/components/error/EnhancedErrorBoundary';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { FlashcardsErrorFallback } from '@/components/error/FlashcardsErrorFallback';
 
-interface ErrorBoundaryProps {
-  children: React.ReactNode;
-  fallback?: React.ComponentType<{ error?: Error; retry: () => void }>;
+interface Props {
+  children: ReactNode;
+  fallback?: React.ComponentType<{
+    error?: Error;
+    retry: () => void;
+    goHome: () => void;
+  }>;
 }
 
-// Updated to use the new enhanced error boundary
-const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({ children, fallback }) => {
-  return (
-    <EnhancedErrorBoundary
-      fallback={fallback}
-      maxRetries={3}
-      enableReporting={true}
-      onError={(error, errorInfo) => {
-        // Log to console for debugging
-        console.error('Flashcard ErrorBoundary:', error, errorInfo);
-        
-        // In production, this would send to error reporting service
-        if (process.env.NODE_ENV === 'production') {
-          // Example: Send to error reporting service
-          // errorReportingService.captureException(error, { extra: errorInfo });
-        }
-      }}
-    >
-      {children}
-    </EnhancedErrorBoundary>
-  );
-};
+interface State {
+  hasError: boolean;
+  error?: Error;
+}
 
-export default ErrorBoundary;
+export class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Flashcards Error Boundary caught an error:', error, errorInfo);
+  }
+
+  handleRetry = () => {
+    this.setState({ hasError: false, error: undefined });
+  };
+
+  handleGoHome = () => {
+    window.location.href = '/dashboard';
+  };
+
+  render() {
+    if (this.state.hasError) {
+      const FallbackComponent = this.props.fallback || FlashcardsErrorFallback;
+      return (
+        <FallbackComponent
+          error={this.state.error}
+          retry={this.handleRetry}
+          goHome={this.handleGoHome}
+        />
+      );
+    }
+
+    return this.props.children;
+  }
+}

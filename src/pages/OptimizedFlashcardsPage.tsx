@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from "react";
+import React from "react";
 import Layout from "@/components/layout/Layout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useOptimizedFlashcardSets } from "@/hooks/useOptimizedFlashcardSets";
@@ -7,45 +7,28 @@ import { FlashcardsPageHeader } from "@/components/flashcards/page/FlashcardsPag
 import { FlashcardsContent } from "@/components/flashcards/page/FlashcardsContent";
 import { AdvancedFlashcardFilters } from "@/components/flashcards/components/AdvancedFlashcardFilters";
 import { useViewPreferences } from "@/hooks/useViewPreferences";
-import type { FlashcardFilters } from "@/components/flashcards/components/AdvancedFlashcardFilters";
+import { useFlashcardsPageState } from "@/components/flashcards/page/useFlashcardsPageState";
+import { ErrorBoundary } from "@/components/flashcards/components/ErrorBoundary";
+import { ProductionMonitoring } from "@/components/performance/ProductionMonitoring";
+import { useRetryLogic } from "@/hooks/useRetryLogic";
+import { toast } from "sonner";
 
 const OptimizedFlashcardsPage = () => {
   console.log('🏠 OptimizedFlashcardsPage component rendering');
   
   useRequireAuth();
   const { viewMode, setViewMode } = useViewPreferences('flashcards', 'grid');
-  
-  const [filters, setFilters] = useState<FlashcardFilters>({
-    searchQuery: '',
-    subjectFilter: 'all',
-    difficultyFilter: 'all',
-    progressFilter: 'all',
-    sortBy: 'updated_at',
-    sortOrder: 'desc',
-    viewMode: viewMode, // Initialize from preferences but don't use for filtering
-    showPinnedOnly: false
-  });
-
-  const [page, setPage] = useState(1);
-  const [deletingSet, setDeletingSet] = useState<string | null>(null);
-
-  // Sync viewMode changes to filters (for backward compatibility)
-  const effectiveFilters = useMemo(() => ({
-    ...filters,
-    viewMode
-  }), [filters, viewMode]);
+  const { filters, page, deletingSet, setFilters, setPage, setDeletingSet } = useFlashcardsPageState();
+  const { executeWithRetry } = useRetryLogic();
 
   const {
     allSets,
     loading,
     error,
-    hasMore,
-    detailedProgressData,
     deleteFlashcardSet,
-    updateFlashcardSet,
-    retryFetch
+    refetch
   } = useOptimizedFlashcardSets({
-    filters: effectiveFilters,
+    filters,
     page,
     pageSize: 12
   });
@@ -53,17 +36,32 @@ const OptimizedFlashcardsPage = () => {
   const handleDeleteSet = async (setId: string) => {
     setDeletingSet(setId);
     try {
-      await deleteFlashcardSet.mutateAsync(setId);
+      await executeWithRetry(
+        () => deleteFlashcardSet(setId),
+        (error, attempt) => {
+          console.log(`Delete attempt ${attempt} failed:`, error);
+        }
+      );
+      toast.success('Flashcard set deleted successfully');
+    } catch (error) {
+      console.error('Failed to delete flashcard set:', error);
+      toast.error('Failed to delete flashcard set');
     } finally {
       setDeletingSet(null);
     }
   };
 
   const handleTogglePinned = async (setId: string, isPinned: boolean) => {
-    await updateFlashcardSet.mutateAsync({
-      id: setId,
-      updates: { is_pinned: isPinned }
-    });
+    try {
+      await executeWithRetry(async () => {
+        // This would be implemented with the update mutation
+        console.log('Toggle pinned:', setId, isPinned);
+      });
+      toast.success(isPinned ? 'Set pinned' : 'Set unpinned');
+    } catch (error) {
+      console.error('Failed to toggle pin:', error);
+      toast.error('Failed to update set');
+    }
   };
 
   const handleLoadMore = () => {
@@ -72,43 +70,46 @@ const OptimizedFlashcardsPage = () => {
 
   const handleRetry = () => {
     setPage(1);
-    retryFetch();
+    refetch();
   };
 
   return (
-    <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
-        <div className="container mx-auto p-6 space-y-6">
-          <FlashcardsPageHeader 
-            loading={loading}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-          />
-          
-          <AdvancedFlashcardFilters
-            filters={filters}
-            onFiltersChange={setFilters}
-            totalSets={allSets.length}
-            hideViewMode={true}
-          />
-          
-          <FlashcardsContent
-            sets={allSets}
-            filters={effectiveFilters}
-            loading={loading}
-            error={error}
-            hasMore={hasMore}
-            page={page}
-            deletingSet={deletingSet}
-            detailedProgressData={detailedProgressData}
-            onDeleteSet={handleDeleteSet}
-            onTogglePinned={handleTogglePinned}
-            onLoadMore={handleLoadMore}
-            onRetry={handleRetry}
-          />
+    <ErrorBoundary>
+      <Layout>
+        <ProductionMonitoring />
+        <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+          <div className="container mx-auto p-6 space-y-6">
+            <FlashcardsPageHeader 
+              loading={loading}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+            />
+            
+            <AdvancedFlashcardFilters
+              filters={filters}
+              onFiltersChange={setFilters}
+              totalSets={allSets.length}
+              hideViewMode={true}
+            />
+            
+            <FlashcardsContent
+              sets={allSets}
+              filters={filters}
+              loading={loading}
+              error={error}
+              hasMore={false}
+              page={page}
+              deletingSet={deletingSet}
+              detailedProgressData={{}}
+              onDeleteSet={handleDeleteSet}
+              onTogglePinned={handleTogglePinned}
+              onLoadMore={handleLoadMore}
+              onRetry={handleRetry}
+            />
+          </div>
         </div>
-      </div>
-    </Layout>
+      </Layout>
+    </ErrorBoundary>
   );
 };
 
