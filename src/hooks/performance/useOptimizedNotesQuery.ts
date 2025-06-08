@@ -53,7 +53,7 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
       const startTime = performance.now();
       
       try {
-        console.log(`Filtering notes by subject: ${subject}`);
+        console.log(`Filtering notes by subject: "${subject}"`);
 
         // Build optimized query with joins and proper indexing
         let query = supabase
@@ -79,11 +79,11 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
           query = query.eq('archived', false);
         }
 
-        // Simple subject filtering that works with existing data
+        // Case-insensitive subject filtering that works with existing data
         if (subject && subject !== 'all') {
-          console.log(`Applying subject filter: ${subject}`);
-          // Filter by the subject text field (which should contain the subject name)
-          query = query.eq('subject', subject);
+          console.log(`Applying case-insensitive subject filter: "${subject}"`);
+          // Use ilike for case-insensitive matching
+          query = query.ilike('subject', subject);
         }
 
         if (search) {
@@ -115,7 +115,13 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
           throw error;
         }
 
-        console.log(`Query returned ${notes?.length || 0} notes for subject: ${subject}`);
+        console.log(`Query returned ${notes?.length || 0} notes for subject: "${subject}"`);
+        
+        // Log all unique subjects in the returned notes for debugging
+        if (notes && notes.length > 0) {
+          const uniqueSubjects = [...new Set(notes.map(note => note.subject))];
+          console.log(`Available subjects in notes: ${uniqueSubjects.join(', ')}`);
+        }
 
         // Transform data to match Note interface
         const transformedNotes: Note[] = (notes || []).map(note => ({
