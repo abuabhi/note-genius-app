@@ -84,8 +84,6 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
           )
         `)
         .eq('set_id', setId)
-        .eq('learning_progress.user_id', user.id)
-        .eq('user_flashcard_progress.user_id', user.id)
         .order('position', { ascending: true });
 
       if (flashcardError) {
@@ -106,8 +104,8 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
       // Transform and filter data efficiently
       const allCards: OptimizedFlashcardData[] = flashcardData.map(item => {
         const flashcard = item.flashcards;
-        const progress = item.user_flashcard_progress?.[0];
-        const learningProgress = item.learning_progress?.[0];
+        const progress = Array.isArray(item.user_flashcard_progress) ? item.user_flashcard_progress[0] : item.user_flashcard_progress;
+        const learningProgress = Array.isArray(item.learning_progress) ? item.learning_progress[0] : item.learning_progress;
 
         return {
           id: flashcard.id,

@@ -1,5 +1,6 @@
 
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
