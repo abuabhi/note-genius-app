@@ -65,31 +65,51 @@ export const useOptimizedFlashcardSets = () => {
       // Get all set IDs for batch progress query
       const setIds = setsWithCounts.map(set => set.id);
 
+      // First get flashcard set mappings to get all flashcard IDs
+      const { data: setCards, error: setCardsError } = await supabase
+        .from('flashcard_set_cards')
+        .select('set_id, flashcard_id')
+        .in('set_id', setIds);
+
+      if (setCardsError) {
+        console.error('❌ Error fetching flashcard set cards:', setCardsError);
+        throw setCardsError;
+      }
+
+      // Extract all flashcard IDs for batch progress queries
+      const allFlashcardIds = setCards?.map(card => card.flashcard_id) || [];
+
+      if (allFlashcardIds.length === 0) {
+        // No flashcards in any sets, return sets with zero progress
+        const optimizedSets: OptimizedFlashcardSet[] = setsWithCounts.map(set => ({
+          ...set,
+          card_count: 0,
+          last_studied_at: undefined,
+          progress_summary: {
+            total_cards: 0,
+            mastered_cards: 0,
+            needs_practice: 0,
+            mastery_percentage: 0
+          }
+        }));
+        
+        const loadTime = Date.now() - startTime;
+        console.log(`⚡ Ultra-optimized flashcard sets loaded in ${loadTime}ms (no cards)`);
+        return optimizedSets;
+      }
+
       // Batch query for progress data - much more efficient than individual queries
       const [learningProgressData, userProgressData] = await Promise.allSettled([
         supabase
           .from('learning_progress')
           .select('flashcard_id, user_id, is_known, confidence_level, times_seen, times_correct')
           .eq('user_id', user.id)
-          .in('flashcard_id', 
-            // Get flashcard IDs that belong to our sets
-            supabase
-              .from('flashcard_set_cards')
-              .select('flashcard_id')
-              .in('set_id', setIds)
-              .then(({ data }) => data?.map(card => card.flashcard_id) || [])
-          ),
+          .in('flashcard_id', allFlashcardIds),
         supabase
           .from('user_flashcard_progress')
           .select('flashcard_id, user_id, last_reviewed_at, mastery_level')
           .eq('user_id', user.id)
-          .in('flashcard_id',
-            supabase
-              .from('flashcard_set_cards')
-              .select('flashcard_id')
-              .in('set_id', setIds)
-              .then(({ data }) => data?.map(card => card.flashcard_id) || [])
-          )
+          .in('flashcard_id', allFlashcardIds)
       ]);
 
       // Process progress data efficiently
@@ -99,12 +119,6 @@ export const useOptimizedFlashcardSets = () => {
       // Create lookup maps for O(1) access
       const learningMap = new Map(learningProgress.map(p => [p.flashcard_id, p]));
       const progressMap = new Map(userProgress.map(p => [p.flashcard_id, p]));
-
-      // Get flashcard set mappings
-      const { data: setCards } = await supabase
-        .from('flashcard_set_cards')
-        .select('set_id, flashcard_id')
-        .in('set_id', setIds);
 
       // Group flashcards by set for efficient processing
       const setToCards = new Map<string, string[]>();
