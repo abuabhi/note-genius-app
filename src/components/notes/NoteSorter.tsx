@@ -7,7 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ArrowUpDown, Calendar, CalendarDays, AlphabeticalVariant } from 'lucide-react';
+import { ArrowUpDown, Calendar, CalendarDays, SortAsc } from 'lucide-react';
 import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
 
 export const NoteSorter = () => {
@@ -16,7 +16,7 @@ export const NoteSorter = () => {
   const sortOptions = [
     { value: 'newest', label: 'Newest First', icon: CalendarDays },
     { value: 'oldest', label: 'Oldest First', icon: Calendar },
-    { value: 'alphabetical', label: 'Alphabetical', icon: AlphabeticalVariant },
+    { value: 'alphabetical', label: 'Alphabetical', icon: SortAsc },
   ];
 
   const currentSort = sortOptions.find(option => option.value === sortType);
