@@ -13,6 +13,13 @@ interface FlashcardSetGridProps {
   hasInitiallyLoaded: boolean;
   searchQuery: string;
   subjectFilter: string | undefined;
+  // New props for enhanced progress data
+  detailedProgressData?: Record<string, {
+    masteredCards: number;
+    needsPracticeCards: number;
+    totalCards: number;
+    masteredPercentage: number;
+  }>;
 }
 
 const FlashcardSetGrid = ({
@@ -23,6 +30,7 @@ const FlashcardSetGrid = ({
   hasInitiallyLoaded,
   searchQuery,
   subjectFilter,
+  detailedProgressData = {},
 }: FlashcardSetGridProps) => {
   // Empty State when no sets exist
   if (sets.length === 0 && hasInitiallyLoaded) {
@@ -59,14 +67,18 @@ const FlashcardSetGrid = ({
         {sets.map((set) => {
           const progressPercentage = setProgressData[set.id] || 0;
           const isDeleting = deletingSet === set.id;
+          const detailedProgress = detailedProgressData[set.id];
 
           return (
             <FlashcardSetCard
               key={set.id}
               set={set}
-              progressPercentage={progressPercentage}
+              progressPercentage={detailedProgress?.masteredPercentage || progressPercentage}
               isDeleting={isDeleting}
               onDelete={onDeleteSet}
+              masteredCards={detailedProgress?.masteredCards || 0}
+              needsPracticeCards={detailedProgress?.needsPracticeCards || 0}
+              totalCards={detailedProgress?.totalCards || set.card_count || 0}
             />
           );
         })}

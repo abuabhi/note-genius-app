@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { 
   Play, 
   BookOpen, 
@@ -10,7 +11,9 @@ import {
   Trash2,
   MoreVertical,
   Clock,
-  TrendingUp
+  TrendingUp,
+  CheckCircle,
+  AlertCircle
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -36,6 +39,10 @@ interface FlashcardSetCardProps {
   progressPercentage: number;
   isDeleting: boolean;
   onDelete: (setId: string) => void;
+  // New props for detailed progress
+  masteredCards?: number;
+  needsPracticeCards?: number;
+  totalCards?: number;
 }
 
 const FlashcardSetCard = ({
@@ -43,6 +50,9 @@ const FlashcardSetCard = ({
   progressPercentage,
   isDeleting,
   onDelete,
+  masteredCards = 0,
+  needsPracticeCards = 0,
+  totalCards = 0,
 }: FlashcardSetCardProps) => {
   return (
     <Card className="group hover:shadow-lg transition-all duration-200 border-mint-100">
@@ -64,9 +74,10 @@ const FlashcardSetCard = ({
             )}
           </div>
           
+          {/* Always visible three dots menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100">
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -96,6 +107,7 @@ const FlashcardSetCard = ({
                     <AlertDialogAction
                       onClick={() => onDelete(set.id)}
                       className="bg-red-600 hover:bg-red-700"
+                      disabled={isDeleting}
                     >
                       {isDeleting ? "Deleting..." : "Delete"}
                     </AlertDialogAction>
@@ -109,6 +121,27 @@ const FlashcardSetCard = ({
 
       <CardContent className="pt-0">
         <div className="space-y-4">
+          {/* Enhanced Progress Section */}
+          {totalCards > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium text-gray-700">Progress</span>
+                <span className="text-mint-600 font-semibold">{progressPercentage}%</span>
+              </div>
+              <Progress value={progressPercentage} className="h-2" />
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="flex items-center gap-1 text-green-600">
+                  <CheckCircle className="h-3 w-3" />
+                  <span>{masteredCards} mastered</span>
+                </div>
+                <div className="flex items-center gap-1 text-orange-600">
+                  <AlertCircle className="h-3 w-3" />
+                  <span>{needsPracticeCards} need practice</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Stats */}
           <div className="grid grid-cols-2 gap-4 text-center">
             <div className="bg-gray-50 rounded-lg p-3">
@@ -117,14 +150,14 @@ const FlashcardSetCard = ({
                 <span className="text-sm font-medium text-gray-700">Cards</span>
               </div>
               <div className="text-xl font-bold text-gray-900">
-                {set.card_count || 0}
+                {totalCards || set.card_count || 0}
               </div>
             </div>
             
             <div className="bg-mint-50 rounded-lg p-3">
               <div className="flex items-center justify-center gap-1 mb-1">
                 <TrendingUp className="h-4 w-4 text-mint-600" />
-                <span className="text-sm font-medium text-mint-700">Progress</span>
+                <span className="text-sm font-medium text-mint-700">Mastery</span>
               </div>
               <div className="text-xl font-bold text-mint-900">
                 {progressPercentage}%
@@ -134,14 +167,14 @@ const FlashcardSetCard = ({
 
           {/* Action Buttons */}
           <div className="flex gap-2">
-            <Button asChild className="flex-1" size="sm">
-              <Link to={`/study/${set.id}`}>
+            <Button asChild className="flex-1 bg-mint-500 hover:bg-mint-600" size="sm">
+              <Link to={`/flashcards/${set.id}/study`}>
                 <Play className="h-4 w-4 mr-2" />
                 Study
               </Link>
             </Button>
             
-            <Button asChild variant="outline" className="flex-1" size="sm">
+            <Button asChild variant="outline" className="flex-1 border-mint-200 hover:bg-mint-50" size="sm">
               <Link to={`/flashcards/${set.id}`}>
                 <BookOpen className="h-4 w-4 mr-2" />
                 View
