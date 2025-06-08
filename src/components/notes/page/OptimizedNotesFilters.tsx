@@ -2,34 +2,17 @@
 import { FilterMenu } from '@/components/notes/FilterMenu';
 import { NoteSorter } from '@/components/notes/NoteSorter';
 import { ViewToggle } from './ViewToggle';
-import { ViewMode, useViewPreferences } from '@/hooks/useViewPreferences';
+import { useViewPreferences } from '@/hooks/useViewPreferences';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
 
-interface OptimizedNotesFiltersProps {
-  searchTerm: string;
-  onSearchChange: (term: string) => void;
-  sortType: string;
-  onSortChange: (type: string) => void;
-  showArchived: boolean;
-  onShowArchivedChange: (show: boolean) => void;
-  selectedSubject: string;
-  onSubjectChange: (subject: string) => void;
-}
-
-export const OptimizedNotesFilters = ({
-  searchTerm,
-  onSearchChange,
-  sortType,
-  onSortChange,
-  showArchived,
-  onShowArchivedChange,
-  selectedSubject,
-  onSubjectChange
-}: OptimizedNotesFiltersProps) => {
+export const OptimizedNotesFilters = () => {
   const { viewMode, setViewMode } = useViewPreferences('notes');
-  const optimizedNotesContext = useOptimizedNotes();
+  const { searchTerm, setSearchTerm } = useOptimizedNotes();
+
+  console.log('🔍 OptimizedNotesFilters - Current viewMode:', viewMode);
+  console.log('🔍 OptimizedNotesFilters - Search term:', searchTerm);
 
   return (
     <div className="space-y-4">
@@ -40,12 +23,21 @@ export const OptimizedNotesFilters = ({
           <Input
             type="text"
             placeholder="Search notes..."
-            value={optimizedNotesContext.searchTerm}
-            onChange={(e) => optimizedNotesContext.setSearchTerm(e.target.value)}
+            value={searchTerm}
+            onChange={(e) => {
+              console.log('🔍 Search input changed:', e.target.value);
+              setSearchTerm(e.target.value);
+            }}
             className="pl-10 bg-white/80 backdrop-blur-sm border-mint-200 focus:border-mint-400 transition-colors"
           />
         </div>
-        <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+        <ViewToggle 
+          viewMode={viewMode} 
+          onViewModeChange={(mode) => {
+            console.log('🔄 View mode changing from', viewMode, 'to', mode);
+            setViewMode(mode);
+          }} 
+        />
       </div>
       
       {/* Filters */}

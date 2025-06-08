@@ -10,12 +10,24 @@ interface ViewToggleProps {
 }
 
 export const ViewToggle = ({ viewMode, onViewModeChange }: ViewToggleProps) => {
+  console.log('🎛️ ViewToggle - Current mode:', viewMode);
+
+  const handleCardView = () => {
+    console.log('🃏 Switching to card view');
+    onViewModeChange('card');
+  };
+
+  const handleListView = () => {
+    console.log('📋 Switching to list view');
+    onViewModeChange('list');
+  };
+
   return (
     <div className="flex items-center gap-1 bg-white/80 backdrop-blur-sm rounded-lg p-1 border border-mint-100/50 shadow-sm">
       <Button
         variant={viewMode === 'card' ? 'default' : 'ghost'}
         size="sm"
-        onClick={() => onViewModeChange('card')}
+        onClick={handleCardView}
         className="h-8 px-3"
       >
         <Grid2x2 className="h-4 w-4" />
@@ -23,7 +35,7 @@ export const ViewToggle = ({ viewMode, onViewModeChange }: ViewToggleProps) => {
       <Button
         variant={viewMode === 'list' ? 'default' : 'ghost'}
         size="sm"
-        onClick={() => onViewModeChange('list')}
+        onClick={handleListView}
         className="h-8 px-3"
       >
         <LayoutList className="h-4 w-4" />

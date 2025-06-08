@@ -21,11 +21,7 @@ export const OptimizedNotesContent = () => {
     isLoading,
     error,
     searchTerm,
-    setSearchTerm: contextSetSearchTerm,
-    sortType,
-    setSortType: contextSetSortType,
     selectedSubject,
-    setSelectedSubject: contextSetSelectedSubject,
     currentPage,
     setCurrentPage,
     refetch,
@@ -41,10 +37,6 @@ export const OptimizedNotesContent = () => {
   const [isScanDialogOpen, setIsScanDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [creatingNote, setCreatingNote] = useState(false);
-
-  // Remove showArchived state since we're not using it anymore
-  const showArchived = false;
-  const setShowArchived = () => {}; // Placeholder function
 
   const handleCreateNote = async () => {
     setCreatingNote(true);
@@ -130,17 +122,8 @@ export const OptimizedNotesContent = () => {
         isCreating={creatingNote}
       />
 
-      {/* Updated filters without archived toggle */}
-      <OptimizedNotesFilters
-        searchTerm={searchTerm}
-        onSearchChange={contextSetSearchTerm}
-        sortType={sortType}
-        onSortChange={contextSetSortType}
-        showArchived={showArchived}
-        onShowArchivedChange={setShowArchived}
-        selectedSubject={selectedSubject}
-        onSubjectChange={contextSetSelectedSubject}
-      />
+      {/* Simplified filters using only context */}
+      <OptimizedNotesFilters />
 
       {/* Main content */}
       <ProgressiveLoader 

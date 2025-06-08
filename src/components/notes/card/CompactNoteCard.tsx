@@ -3,18 +3,21 @@ import React from 'react';
 import { Note } from "@/types/note";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Book, Sparkles } from "lucide-react";
+import { Book, Sparkles, Pin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { generateColorFromString, getBestTextColor } from "@/utils/colorUtils";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
+import { NoteCardActions } from "./NoteCardActions";
 
 interface CompactNoteCardProps {
   note: Note;
+  onPin?: (id: string, isPinned: boolean) => void;
+  onDelete?: (id: string) => Promise<void>;
 }
 
-export const CompactNoteCard = ({ note }: CompactNoteCardProps) => {
+export const CompactNoteCard = ({ note, onPin, onDelete }: CompactNoteCardProps) => {
   const navigate = useNavigate();
   const { subjects, isLoading: subjectsLoading } = useUserSubjects();
   
@@ -45,11 +48,33 @@ export const CompactNoteCard = ({ note }: CompactNoteCardProps) => {
 
   return (
     <Card 
-      className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] bg-white/80 backdrop-blur-sm border-0 shadow-md rounded-xl"
+      className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] bg-white/80 backdrop-blur-sm border-0 shadow-md rounded-xl relative"
       onClick={handleCardClick}
     >
+      {/* Pin indicator */}
+      {note.pinned && (
+        <div className="absolute top-2 left-2 w-6 h-6 bg-mint-100/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm">
+          <Pin size={12} className="fill-mint-600 text-mint-600" />
+        </div>
+      )}
+
+      {/* Three-dot menu */}
+      {onPin && onDelete && (
+        <div className="absolute top-2 right-2">
+          <NoteCardActions 
+            noteId={note.id}
+            noteTitle={note.title}
+            noteContent={note.content || note.description || ""}
+            isPinned={!!note.pinned} 
+            onPin={onPin}
+            onDelete={onDelete}
+            iconSize={4}
+          />
+        </div>
+      )}
+      
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold text-slate-800 line-clamp-2">
+        <CardTitle className="text-lg font-semibold text-slate-800 line-clamp-2 pr-8">
           {note.title}
         </CardTitle>
       </CardHeader>

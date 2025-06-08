@@ -40,10 +40,10 @@ export const OptimizedNotesGrid = ({ notes, onPin, onDelete }: OptimizedNotesGri
 
   // List view - vertical layout with full NoteCard functionality
   if (viewMode === 'list') {
-    console.log('📋 Rendering LIST view');
+    console.log('📋 Rendering LIST view - Single column vertical layout');
     return (
       <>
-        <div className="space-y-4">
+        <div className="flex flex-col space-y-4 max-w-none">
           {notes.map((note) => (
             <div key={note.id} className="w-full">
               <NoteCard
@@ -74,12 +74,17 @@ export const OptimizedNotesGrid = ({ notes, onPin, onDelete }: OptimizedNotesGri
   }
 
   // Card view - 4 cards per row grid with CompactNoteCard
-  console.log('🃏 Rendering CARD view');
+  console.log('🃏 Rendering CARD view - Grid layout');
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {notes.map((note) => (
-          <CompactNoteCard key={note.id} note={note} />
+          <CompactNoteCard 
+            key={note.id} 
+            note={note} 
+            onPin={onPin}
+            onDelete={onDelete}
+          />
         ))}
       </div>
       
