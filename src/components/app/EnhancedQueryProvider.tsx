@@ -2,6 +2,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode, useState, useEffect } from 'react';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { config, logger } from '@/config/environment';
 
 interface EnhancedQueryProviderProps {
   children: ReactNode;
@@ -14,16 +15,16 @@ export const EnhancedQueryProvider = ({ children }: EnhancedQueryProviderProps) 
     const client = new QueryClient({
       defaultOptions: {
         queries: {
-          // Stale-while-revalidate strategy
-          staleTime: 2 * 60 * 1000, // 2 minutes
-          gcTime: 10 * 60 * 1000, // 10 minutes (was cacheTime)
+          // Environment-specific cache settings
+          staleTime: config.cache.defaultStaleTime,
+          gcTime: config.cache.defaultCacheTime,
           
           // Network-aware settings
-          refetchOnWindowFocus: true,
+          refetchOnWindowFocus: config.isProduction,
           refetchOnReconnect: true,
           refetchOnMount: true,
           
-          // Retry strategy based on network
+          // Environment-specific retry strategy
           retry: (failureCount, error) => {
             // Don't retry on 4xx errors except 408, 429
             if (error instanceof Error && 'status' in error) {
@@ -33,16 +34,15 @@ export const EnhancedQueryProvider = ({ children }: EnhancedQueryProviderProps) 
               }
             }
             
-            // Adjust retry count based on network speed
-            const maxRetries = isSlowConnection ? 2 : 3;
+            const maxRetries = config.api.retryAttempts;
             return failureCount < maxRetries;
           },
           
-          // Exponential backoff with jitter
+          // Environment-specific backoff
           retryDelay: (attemptIndex) => {
-            const baseDelay = isSlowConnection ? 2000 : 1000;
+            const baseDelay = config.api.baseDelay;
             const exponentialDelay = baseDelay * Math.pow(2, attemptIndex);
-            const maxDelay = isSlowConnection ? 60000 : 30000;
+            const maxDelay = config.api.timeout / 2;
             const jitter = Math.random() * 1000;
             
             return Math.min(exponentialDelay + jitter, maxDelay);
@@ -52,62 +52,76 @@ export const EnhancedQueryProvider = ({ children }: EnhancedQueryProviderProps) 
           enabled: isOnline,
         },
         mutations: {
-          retry: isSlowConnection ? 1 : 2,
-          retryDelay: isSlowConnection ? 3000 : 1000,
+          retry: isSlowConnection ? 1 : config.api.retryAttempts,
+          retryDelay: isSlowConnection ? 3000 : config.api.baseDelay,
         },
       },
     });
 
-    // Cache event listeners for debugging
-    client.getQueryCache().subscribe((event) => {
-      if (event.type === 'added') {
-        console.log('📦 Query added to cache:', event.query.queryKey);
-      } else if (event.type === 'removed') {
-        console.log('🗑️ Query removed from cache:', event.query.queryKey);
-      } else if (event.type === 'updated') {
-        const { query } = event;
-        if (query.state.error) {
-          console.error('❌ Query error:', query.queryKey, query.state.error);
-        } else if (query.state.data) {
-          console.log('✅ Query updated:', query.queryKey);
+    // Environment-specific cache event listeners
+    if (config.isDevelopment || config.isStaging) {
+      client.getQueryCache().subscribe((event) => {
+        if (event.type === 'added') {
+          logger.debug('Query added to cache:', event.query.queryKey);
+        } else if (event.type === 'removed') {
+          logger.debug('Query removed from cache:', event.query.queryKey);
+        } else if (event.type === 'updated') {
+          const { query } = event;
+          if (query.state.error) {
+            logger.error('Query error:', query.queryKey, query.state.error);
+          } else if (query.state.data) {
+            logger.debug('Query updated:', query.queryKey);
+          }
         }
-      }
-    });
+      });
+    }
 
     return client;
   });
 
-  // Adjust query settings based on network status
+  // Adjust query settings based on network status and environment
   useEffect(() => {
+    const networkAwareSettings = {
+      staleTime: isSlowConnection 
+        ? config.cache.defaultStaleTime * 2 
+        : config.cache.defaultStaleTime,
+      gcTime: isSlowConnection 
+        ? config.cache.defaultCacheTime * 2 
+        : config.cache.defaultCacheTime,
+      enabled: isOnline,
+      refetchOnWindowFocus: isOnline && !isSlowConnection && config.isProduction,
+    };
+
     queryClient.setDefaultOptions({
-      queries: {
-        staleTime: isSlowConnection ? 5 * 60 * 1000 : 2 * 60 * 1000, // Longer stale time for slow connections
-        gcTime: isSlowConnection ? 30 * 60 * 1000 : 10 * 60 * 1000, // Longer cache time for slow connections
-        enabled: isOnline,
-        refetchOnWindowFocus: isOnline && !isSlowConnection,
-      }
+      queries: networkAwareSettings
     });
+
+    logger.info('Query client settings updated:', networkAwareSettings);
   }, [isOnline, isSlowConnection, queryClient]);
 
-  // Periodic cache cleanup
+  // Environment-specific cache cleanup
   useEffect(() => {
+    if (!config.isProduction) return; // Only cleanup in production
+
     const cleanup = () => {
       const cache = queryClient.getQueryCache();
       const queries = cache.getAll();
       
-      // Remove stale queries older than 1 hour
-      const oneHourAgo = Date.now() - 60 * 60 * 1000;
+      // Remove stale queries older than configured cache time
+      const cutoffTime = Date.now() - config.cache.defaultCacheTime;
       queries.forEach(query => {
-        if (query.state.dataUpdatedAt < oneHourAgo && query.getObserversCount() === 0) {
+        if (query.state.dataUpdatedAt < cutoffTime && query.getObserversCount() === 0) {
           cache.remove(query);
         }
       });
       
-      console.log('🧹 Cache cleanup completed');
+      logger.info('Cache cleanup completed');
     };
 
-    // Run cleanup every 15 minutes
-    const interval = setInterval(cleanup, 15 * 60 * 1000);
+    // Run cleanup based on environment
+    const cleanupInterval = config.isProduction ? 30 * 60 * 1000 : 15 * 60 * 1000;
+    const interval = setInterval(cleanup, cleanupInterval);
+    
     return () => clearInterval(interval);
   }, [queryClient]);
 
