@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useStudyViewState } from './hooks/useStudyViewState';
 import { useNoteStudyEditor } from './hooks/useNoteStudyEditor';
-import { useOptimizedRealtimeSync } from './hooks/useOptimizedRealtimeSync';
+import { useSimpleRealtimeSync } from './hooks/useSimpleRealtimeSync';
 import { StudyViewHeader } from './header/StudyViewHeader';
 import { NoteStudyViewContent } from './viewer/NoteStudyViewContent';
 import { EnhancementContentType } from './enhancements/EnhancementSelector';
@@ -19,8 +19,8 @@ interface NoteStudyViewProps {
 }
 
 export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
-  // Get optimized real-time synced note data
-  const { currentNote, refreshKey, forceRefresh } = useOptimizedRealtimeSync(note);
+  // Use simplified real-time sync for better performance
+  const { currentNote, refreshKey, forceRefresh } = useSimpleRealtimeSync(note);
 
   // Study view state management
   const {
@@ -62,7 +62,7 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
     isProcessing
   } = useNoteEnrichment(currentNote);
 
-  // Handle AI enhancement with optimized caching
+  // Simplified enhancement handler
   const handleEnhanceContent = async (enhancementType: string) => {
     try {
       if (hasReachedLimit()) {
@@ -78,24 +78,13 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
       );
 
       if (result.success) {
-        // Update the note with the enhancement
         await onNoteUpdate({
           [getEnhancementFieldName(enhancementType)]: result.content,
           [`${getEnhancementFieldName(enhancementType)}_generated_at`]: new Date().toISOString(),
           enhancement_type: getEnhancementType(enhancementType) as 'clarity' | 'other' | 'spelling-grammar'
         });
         
-        // Update session cache
-        const cacheKey = `note_${currentNote.id}`;
-        const updatedNote = { 
-          ...currentNote, 
-          [getEnhancementFieldName(enhancementType)]: result.content 
-        };
-        sessionStorage.setItem(cacheKey, JSON.stringify(updatedNote));
-        
-        // Force refresh to update UI
         forceRefresh();
-        
         toast.success('Enhancement completed successfully!');
       }
     } catch (error) {
@@ -116,11 +105,10 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
 
   // Handle enhancement from header
   const handleEnhancement = (enhancedContent: string, enhancementType?: any) => {
-    // Content is already saved by the enrichment process
     forceRefresh();
   };
 
-  // Mock fetchUsageStats function
+  // Simple usage stats function
   const fetchUsageStats = async () => {
     console.log('Fetching usage stats...');
   };
