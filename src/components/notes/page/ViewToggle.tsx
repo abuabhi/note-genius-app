@@ -23,12 +23,16 @@ export const ViewToggle = ({ viewMode, onViewModeChange }: ViewToggleProps) => {
   };
 
   return (
-    <div className="flex items-center gap-1 bg-white/80 backdrop-blur-sm rounded-lg p-1 border border-mint-100/50 shadow-sm">
+    <div className="flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-lg p-1 border border-mint-100/50 shadow-sm">
       <Button
         variant={viewMode === 'card' ? 'default' : 'ghost'}
         size="sm"
         onClick={handleCardView}
-        className="h-8 px-3"
+        className={`h-9 px-4 transition-all duration-200 ${
+          viewMode === 'card' 
+            ? 'bg-mint-600 text-white shadow-md' 
+            : 'text-gray-600 hover:text-mint-700 hover:bg-mint-50'
+        }`}
       >
         <Grid2x2 className="h-4 w-4" />
       </Button>
@@ -36,7 +40,11 @@ export const ViewToggle = ({ viewMode, onViewModeChange }: ViewToggleProps) => {
         variant={viewMode === 'list' ? 'default' : 'ghost'}
         size="sm"
         onClick={handleListView}
-        className="h-8 px-3"
+        className={`h-9 px-4 transition-all duration-200 ${
+          viewMode === 'list' 
+            ? 'bg-mint-600 text-white shadow-md' 
+            : 'text-gray-600 hover:text-mint-700 hover:bg-mint-50'
+        }`}
       >
         <LayoutList className="h-4 w-4" />
       </Button>

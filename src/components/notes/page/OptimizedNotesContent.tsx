@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
 import { Note } from '@/types/note';
@@ -117,52 +118,64 @@ export const OptimizedNotesContent = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header with actions */}
-      <OptimizedNotesHeader 
-        totalCount={totalCount}
-        onCreateNote={() => setIsManualDialogOpen(true)}
-        onOpenScanDialog={() => setIsScanDialogOpen(true)}
-        onOpenImportDialog={() => setIsImportDialogOpen(true)}
-        isCreating={creatingNote}
-      />
+    <div className="space-y-8">
+      {/* Enhanced Header with better visual hierarchy */}
+      <div className="bg-gradient-to-r from-white/95 to-mint-50/50 backdrop-blur-sm rounded-2xl border border-mint-100/60 shadow-lg shadow-mint-500/10">
+        <OptimizedNotesHeader 
+          totalCount={totalCount}
+          onCreateNote={() => setIsManualDialogOpen(true)}
+          onOpenScanDialog={() => setIsScanDialogOpen(true)}
+          onOpenImportDialog={() => setIsImportDialogOpen(true)}
+          isCreating={creatingNote}
+        />
+      </div>
 
-      {/* Filters with view mode passed as props */}
-      <OptimizedNotesFilters 
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-      />
+      {/* Enhanced Filters with better spacing */}
+      <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-mint-100/50 shadow-sm p-4">
+        <OptimizedNotesFilters 
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+        />
+      </div>
 
-      {/* Main content */}
+      {/* Main content with improved loading states */}
       <ProgressiveLoader 
         isLoading={isLoading}
         isPartiallyLoaded={notes.length > 0}
         skeletonCount={6}
       >
         {notes.length === 0 ? (
-          <EmptyNotesState
-            onCreateNote={() => setIsManualDialogOpen(true)}
-            isFiltered={!!(searchTerm || selectedSubject !== 'all')}
-          />
-        ) : (
-          <>
-            <OptimizedNotesGrid 
-              notes={notes} 
-              onPin={handlePin}
-              onDelete={handleDelete}
-              viewMode={viewMode}
+          <div className="bg-gradient-to-br from-mint-50/30 to-blue-50/20 rounded-2xl border border-mint-100/40 shadow-sm">
+            <EmptyNotesState
+              onCreateNote={() => setIsManualDialogOpen(true)}
+              isFiltered={!!(searchTerm || selectedSubject !== 'all')}
             />
+          </div>
+        ) : (
+          <div className="space-y-8">
+            <div className="transition-all duration-300 ease-in-out">
+              <OptimizedNotesGrid 
+                notes={notes} 
+                onPin={handlePin}
+                onDelete={handleDelete}
+                viewMode={viewMode}
+              />
+            </div>
             
             {totalCount > 20 && (
-              <OptimizedNotesPagination
-                currentPage={currentPage}
-                totalCount={totalCount}
-                pageSize={20}
-                onPageChange={setCurrentPage}
-                hasMore={hasMore}
-              />
+              <div className="flex justify-center">
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-mint-100/50 shadow-sm p-4">
+                  <OptimizedNotesPagination
+                    currentPage={currentPage}
+                    totalCount={totalCount}
+                    pageSize={20}
+                    onPageChange={setCurrentPage}
+                    hasMore={hasMore}
+                  />
+                </div>
+              </div>
             )}
-          </>
+          </div>
         )}
       </ProgressiveLoader>
 

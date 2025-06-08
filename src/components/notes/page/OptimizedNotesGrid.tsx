@@ -37,14 +37,18 @@ export const OptimizedNotesGrid = ({ notes, onPin, onDelete, viewMode }: Optimiz
     setIsDetailsOpen(true);
   };
 
-  // CLEAR AND SIMPLE RENDERING LOGIC
+  // Enhanced LIST VIEW with better spacing and animations
   if (viewMode === 'list') {
     console.log('📋 Rendering LIST view');
     return (
       <>
-        <div className="flex flex-col space-y-4 max-w-none">
-          {notes.map((note) => (
-            <div key={note.id} className="w-full">
+        <div className="flex flex-col space-y-6 max-w-none">
+          {notes.map((note, index) => (
+            <div 
+              key={note.id} 
+              className="w-full animate-fade-in transition-all duration-300 hover:scale-[1.01]"
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
               <NoteCard
                 note={note}
                 onNoteClick={handleNoteClick}
@@ -72,18 +76,23 @@ export const OptimizedNotesGrid = ({ notes, onPin, onDelete, viewMode }: Optimiz
     );
   }
 
-  // DEFAULT TO CARD VIEW
+  // Enhanced CARD VIEW with improved grid and animations
   console.log('🃏 Rendering CARD view');
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {notes.map((note) => (
-          <CompactNoteCard 
-            key={note.id} 
-            note={note} 
-            onPin={onPin}
-            onDelete={onDelete}
-          />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {notes.map((note, index) => (
+          <div
+            key={note.id}
+            className="animate-fade-in transition-all duration-300"
+            style={{ animationDelay: `${index * 75}ms` }}
+          >
+            <CompactNoteCard 
+              note={note} 
+              onPin={onPin}
+              onDelete={onDelete}
+            />
+          </div>
         ))}
       </div>
       

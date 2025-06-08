@@ -3,7 +3,7 @@ import React from 'react';
 import { Note } from "@/types/note";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Book, Sparkles, Pin } from "lucide-react";
+import { Book, Sparkles, Pin, Camera } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { generateColorFromString, getBestTextColor } from "@/utils/colorUtils";
 import { format } from "date-fns";
@@ -50,19 +50,29 @@ export const CompactNoteCard = ({ note, onPin, onDelete }: CompactNoteCardProps)
 
   return (
     <Card 
-      className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] bg-white/80 backdrop-blur-sm border-0 shadow-md rounded-xl relative"
+      className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-mint-500/10 hover:scale-[1.02] hover:-translate-y-1 bg-white/90 backdrop-blur-sm border-0 shadow-lg rounded-2xl relative overflow-hidden"
       onClick={handleCardClick}
     >
-      {/* Pin indicator */}
-      {note.pinned && (
-        <div className="absolute top-2 left-2 w-6 h-6 bg-mint-100/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm">
-          <Pin size={12} className="fill-mint-600 text-mint-600" />
-        </div>
-      )}
+      {/* Subtle gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/20 to-mint-50/30 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      
+      {/* Enhanced floating elements */}
+      <div className="absolute top-3 left-3 flex items-center gap-2 z-10">
+        {note.sourceType === 'scan' && (
+          <div className="w-7 h-7 bg-blue-500/10 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg border border-blue-200/30">
+            <Camera className="h-3 w-3 text-blue-600" />
+          </div>
+        )}
+        {note.pinned && (
+          <div className="w-7 h-7 bg-mint-500/10 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg border border-mint-200/30">
+            <Pin size={12} className="fill-mint-600 text-mint-600" />
+          </div>
+        )}
+      </div>
 
-      {/* Three-dot menu */}
+      {/* Enhanced three-dot menu */}
       {onPin && onDelete && (
-        <div className="absolute top-2 right-2">
+        <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <NoteCardActions 
             noteId={note.id}
             noteTitle={note.title}
@@ -75,16 +85,16 @@ export const CompactNoteCard = ({ note, onPin, onDelete }: CompactNoteCardProps)
         </div>
       )}
       
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold text-slate-800 line-clamp-2 pr-8">
+      <CardHeader className="pb-4 pt-6">
+        <CardTitle className="text-lg font-semibold text-slate-800 line-clamp-2 pr-8 leading-relaxed group-hover:text-slate-900 transition-colors">
           {note.title}
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="pb-3">
-        <div className="flex items-center gap-3 mb-3">
+      <CardContent className="pb-4">
+        <div className="flex items-center gap-3 mb-4">
           <Badge 
-            className="px-3 py-1 text-xs font-medium border-0 shadow-sm"
+            className="px-3 py-1.5 text-xs font-medium border-0 shadow-sm transition-all duration-200 hover:shadow-md"
             style={{ 
               backgroundColor: subjectColor, 
               color: textColor 
@@ -94,21 +104,21 @@ export const CompactNoteCard = ({ note, onPin, onDelete }: CompactNoteCardProps)
             {subjectName}
           </Badge>
           
-          <span className="text-xs text-slate-500 font-medium">
+          <span className="text-xs text-slate-500 font-medium bg-slate-50 px-2 py-1 rounded-full">
             {formattedDate}
           </span>
         </div>
       </CardContent>
 
-      <CardFooter className="pt-0">
+      <CardFooter className="pt-0 pb-6">
         <Button
           onClick={handleStudyClick}
-          className="w-full bg-mint-600 hover:bg-mint-700 text-white font-medium rounded-lg transition-colors relative z-10"
+          className="w-full bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white font-medium rounded-xl transition-all duration-200 relative z-10 shadow-lg shadow-mint-500/25 hover:shadow-mint-500/40 hover:scale-[1.02]"
           size="sm"
           type="button"
         >
           <Sparkles className="h-4 w-4 mr-2" />
-          Study
+          Study Mode
         </Button>
       </CardFooter>
     </Card>
