@@ -1,15 +1,12 @@
 
 import { useState, useCallback } from "react";
-import { useSimplifiedFlashcardStudy } from "@/hooks/useSimplifiedFlashcardStudy";
+import { useOptimizedFlashcardStudy } from "@/hooks/useOptimizedFlashcardStudy";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, RotateCcw, CheckCircle, X, Loader2 } from "lucide-react";
 import { StudyMode } from "@/pages/study/types";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/auth";
-import { useQueryClient } from "@tanstack/react-query";
 
 interface SimplifiedFlashcardStudyProps {
   setId: string;
@@ -18,8 +15,6 @@ interface SimplifiedFlashcardStudyProps {
 }
 
 export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: SimplifiedFlashcardStudyProps) => {
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
   const [isUpdating, setIsUpdating] = useState(false);
   
   const {
@@ -38,83 +33,23 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
     handleFlip,
     handleCardChoice,
     setIsFlipped
-  } = useSimplifiedFlashcardStudy({ setId, mode });
+  } = useOptimizedFlashcardStudy({ setId, mode });
 
-  // Enhanced handleCardChoice with database updates
+  // Enhanced handleCardChoice with loading state
   const handleEnhancedCardChoice = useCallback(async (choice: 'mastered' | 'needs_practice') => {
-    if (!currentCard || !user || isUpdating) return;
+    if (!currentCard || isUpdating) return;
     
     setIsUpdating(true);
     
     try {
-      const isCorrect = choice === 'mastered';
-      const now = new Date().toISOString();
-      
-      // Update learning progress
-      const { error: progressError } = await supabase
-        .from('learning_progress')
-        .upsert({
-          user_id: user.id,
-          flashcard_id: currentCard.id,
-          times_seen: 1, // Will be incremented by database trigger
-          times_correct: isCorrect ? 1 : 0, // Will be incremented by database trigger
-          last_seen_at: now,
-          is_difficult: !isCorrect,
-          is_known: isCorrect,
-          confidence_level: isCorrect ? 5 : 2
-        }, { 
-          onConflict: 'user_id,flashcard_id',
-          ignoreDuplicates: false 
-        });
-
-      if (progressError) {
-        console.error('Error updating learning progress:', progressError);
-        toast.error('Failed to save progress');
-        return;
-      }
-
-      // Update user flashcard progress for spaced repetition
-      const { error: srpError } = await supabase
-        .from('user_flashcard_progress')
-        .upsert({
-          user_id: user.id,
-          flashcard_id: currentCard.id,
-          last_score: isCorrect ? 5 : 1,
-          last_reviewed_at: now,
-          ease_factor: isCorrect ? 2.6 : 1.8,
-          interval: isCorrect ? 1 : 0,
-          repetition: isCorrect ? 1 : 0,
-          next_review_at: new Date(Date.now() + (isCorrect ? 24 : 1) * 60 * 60 * 1000).toISOString()
-        }, { 
-          onConflict: 'user_id,flashcard_id',
-          ignoreDuplicates: false 
-        });
-
-      if (srpError) {
-        console.error('Error updating spaced repetition progress:', srpError);
-      }
-
-      // Show feedback
-      if (isCorrect) {
-        toast.success('Great! Card marked as mastered 🎉');
-      } else {
-        toast.info('Card marked for more practice 📚');
-      }
-
-      // Invalidate queries to refresh stats
-      queryClient.invalidateQueries({ queryKey: ['timezone-aware-analytics'] });
-      queryClient.invalidateQueries({ queryKey: ['unified-study-stats'] });
-      
-      // Call original handler for UI updates
-      handleCardChoice(choice);
-      
+      await handleCardChoice(choice);
     } catch (error) {
       console.error('Error saving card progress:', error);
       toast.error('Failed to save progress. Please try again.');
     } finally {
       setIsUpdating(false);
     }
-  }, [currentCard, user, handleCardChoice, queryClient, isUpdating]);
+  }, [currentCard, handleCardChoice, isUpdating]);
 
   if (isLoading) {
     return (
@@ -146,19 +81,24 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
     );
   }
 
-  if (isComplete) {
+  if (isComplete || totalCards === 0) {
     return (
       <Card className="bg-gradient-to-br from-mint-50 to-blue-50 border-mint-200">
         <CardContent className="p-8">
           <div className="text-center">
             <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-mint-800 mb-2">Study Session Complete! 🎉</h2>
+            <h2 className="text-2xl font-bold text-mint-800 mb-2">
+              {totalCards === 0 ? 'No Cards Available' : 'Study Session Complete! 🎉'}
+            </h2>
             <p className="text-mint-600 mb-6">
-              Great job! You've studied {studiedToday} cards and mastered {masteredCount} of them.
+              {totalCards === 0 
+                ? `No cards need ${mode === 'review' ? 'review' : 'learning'} at this time.`
+                : `Great job! You've studied ${studiedToday} cards and mastered ${masteredCount} of them.`
+              }
             </p>
             <div className="flex gap-3 justify-center">
               <Button onClick={() => window.location.reload()}>
-                Study Again
+                {totalCards === 0 ? 'Refresh' : 'Study Again'}
               </Button>
               <Button variant="outline" onClick={() => window.history.back()}>
                 Back to Sets

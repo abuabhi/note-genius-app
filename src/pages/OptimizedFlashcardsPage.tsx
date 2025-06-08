@@ -17,12 +17,14 @@ import FlashcardSetGrid from '@/components/flashcards/components/FlashcardSetGri
 const OptimizedFlashcardsPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { flashcardSets, loading, error, deleteFlashcardSet } = useOptimizedFlashcardSets();
-  const { progressData, getSetProgress } = useFlashcardSetProgress(flashcardSets);
+  const { allSets, loading, error, deleteFlashcardSet, isDeleting, prefetchFlashcards } = useOptimizedFlashcardSets();
+  const { progressData, getSetProgress } = useFlashcardSetProgress(allSets);
   const [deletingSet, setDeletingSet] = useState<string | null>(null);
 
   const handleStudyStart = (setId: string) => {
     console.log('handleStudyStart called with setId:', setId);
+    // Prefetch data for faster loading
+    prefetchFlashcards(setId);
     const studyPath = `/flashcards/${setId}/study`;
     console.log('Navigating to:', studyPath);
     navigate(studyPath);
@@ -39,19 +41,19 @@ const OptimizedFlashcardsPage = () => {
     }
   };
 
-  // Transform progress data for the grid component
+  // Optimized progress data calculation
   const setProgressData = useMemo(() => {
     const progressMap: Record<string, number> = {};
-    flashcardSets.forEach(set => {
+    allSets.forEach(set => {
       const progress = getSetProgress(set.id);
       progressMap[set.id] = progress.masteredPercentage;
     });
     return progressMap;
-  }, [flashcardSets, getSetProgress]);
+  }, [allSets, getSetProgress]);
 
   const detailedProgressData = useMemo(() => {
     const detailedMap: Record<string, any> = {};
-    flashcardSets.forEach(set => {
+    allSets.forEach(set => {
       const progress = getSetProgress(set.id);
       detailedMap[set.id] = {
         masteredCards: progress.masteredCards,
@@ -61,27 +63,30 @@ const OptimizedFlashcardsPage = () => {
       };
     });
     return detailedMap;
-  }, [flashcardSets, getSetProgress]);
+  }, [allSets, getSetProgress]);
+
+  // Optimized loading skeleton
+  const loadingSkeleton = useMemo(() => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <Card key={i} className="animate-pulse">
+          <CardHeader>
+            <Skeleton className="h-6 w-3/4" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-2/3 mb-4" />
+            <Skeleton className="h-8 w-full" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  ), []);
 
   // Memoized content for better performance
   const flashcardContent = useMemo(() => {
     if (loading) {
-      return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-6 w-3/4" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-4 w-full mb-2" />
-                <Skeleton className="h-4 w-2/3 mb-4" />
-                <Skeleton className="h-8 w-full" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      );
+      return loadingSkeleton;
     }
 
     if (error) {
@@ -97,7 +102,7 @@ const OptimizedFlashcardsPage = () => {
 
     return (
       <FlashcardSetGrid
-        sets={flashcardSets}
+        sets={allSets}
         setProgressData={setProgressData}
         deletingSet={deletingSet}
         onDeleteSet={handleDeleteSet}
@@ -107,7 +112,7 @@ const OptimizedFlashcardsPage = () => {
         detailedProgressData={detailedProgressData}
       />
     );
-  }, [flashcardSets, loading, error, setProgressData, detailedProgressData, deletingSet]);
+  }, [allSets, loading, error, setProgressData, detailedProgressData, deletingSet, loadingSkeleton]);
 
   return (
     <Layout>

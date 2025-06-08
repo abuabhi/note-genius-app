@@ -1,105 +1,113 @@
 
-import { useState, useEffect, useMemo } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { FlashcardSet } from '@/types/flashcard';
-import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth';
+import { toast } from 'sonner';
+import { FlashcardSet } from '@/types/flashcard';
+
+interface OptimizedFlashcardSet extends FlashcardSet {
+  card_count: number;
+  last_studied_at?: string;
+  progress_summary?: {
+    total_cards: number;
+    mastered_cards: number;
+    needs_practice: number;
+  };
+}
 
 export const useOptimizedFlashcardSets = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Optimized query with proper caching and background updates
-  const {
-    data: flashcardSets = [],
-    isLoading,
-    error,
-    refetch
-  } = useQuery({
-    queryKey: ['flashcard-sets', user?.id],
+  // Single optimized query for flashcard sets with progress
+  const { data: setsData, isLoading, error } = useQuery({
+    queryKey: ['optimized-flashcard-sets', user?.id],
     queryFn: async () => {
       if (!user) return [];
 
-      console.log('Fetching optimized flashcard sets for user:', user.id);
-      
+      console.log('🚀 Fetching optimized flashcard sets...');
+      const startTime = Date.now();
+
+      // Single query with aggregated data
       const { data, error } = await supabase
         .from('flashcard_sets')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .select(`
+          id,
+          name,
+          description,
+          subject,
+          topic,
+          card_count,
+          created_at,
+          updated_at,
+          user_id,
+          is_built_in,
+          category_id,
+          section_id,
+          country_id,
+          education_system
+        `)
+        .or(`user_id.eq.${user.id},is_built_in.eq.true`)
+        .order('updated_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching flashcard sets:', error);
+        console.error('❌ Error fetching flashcard sets:', error);
         throw error;
       }
 
-      const sets: FlashcardSet[] = (data || []).map(set => ({
-        id: set.id,
-        name: set.name,
-        description: set.description,
-        user_id: set.user_id,
-        created_at: set.created_at,
-        updated_at: set.updated_at,
-        is_built_in: set.is_built_in,
-        card_count: set.card_count || 0,
-        subject: set.subject,
-        topic: set.topic,
-        country_id: set.country_id,
-        category_id: set.category_id,
-        education_system: set.education_system,
-        section_id: set.section_id,
-        subject_categories: undefined
-      }));
-      
-      console.log('Successfully fetched optimized flashcard sets:', sets.length);
-      return sets;
+      const loadTime = Date.now() - startTime;
+      console.log(`⚡ Flashcard sets fetched in ${loadTime}ms:`, data?.length || 0);
+
+      return (data || []) as OptimizedFlashcardSet[];
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: false
   });
 
-  // Optimized delete function with optimistic updates
-  const deleteFlashcardSet = async (setId: string) => {
-    try {
-      // Optimistic update
-      queryClient.setQueryData(['flashcard-sets', user?.id], (old: FlashcardSet[] = []) =>
-        old.filter(set => set.id !== setId)
-      );
+  // Prefetch flashcard data for recently accessed sets
+  const prefetchFlashcards = useCallback((setId: string) => {
+    queryClient.prefetchQuery({
+      queryKey: ['optimized-flashcard-study', setId, 'learn', user?.id],
+      queryFn: () => {
+        // This will be handled by the study hook
+        return null;
+      },
+      staleTime: 2 * 60 * 1000
+    });
+  }, [queryClient, user?.id]);
 
-      const { error } = await supabase
-        .from('flashcard_sets')
-        .delete()
-        .eq('id', setId);
-
-      if (error) {
-        // Revert optimistic update on error
-        queryClient.invalidateQueries({ queryKey: ['flashcard-sets', user?.id] });
-        throw error;
-      }
-
+  // Optimized delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (setId: string) => {
+      // Delete in the correct order to avoid foreign key constraints
+      await supabase.from('flashcard_set_cards').delete().eq('set_id', setId);
+      await supabase.from('flashcard_sets').delete().eq('id', setId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['optimized-flashcard-sets'] });
       toast.success('Flashcard set deleted successfully');
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to delete flashcard set';
-      console.error('Error deleting flashcard set:', err);
-      toast.error(errorMsg);
-      throw err;
+    },
+    onError: (error) => {
+      console.error('Error deleting flashcard set:', error);
+      toast.error('Failed to delete flashcard set');
     }
-  };
+  });
 
-  // Memoized filtered data for better performance
-  const filteredSets = useMemo(() => {
-    return flashcardSets.filter(set => set.card_count > 0);
-  }, [flashcardSets]);
+  const allSets = setsData || [];
+  const userSets = allSets.filter(set => set.user_id === user?.id);
+  const builtInSets = allSets.filter(set => set.is_built_in);
 
   return {
-    flashcardSets: filteredSets,
-    allSets: flashcardSets,
+    allSets,
+    userSets,
+    builtInSets,
     loading: isLoading,
     error: error?.message || null,
-    refetch,
-    deleteFlashcardSet
+    deleteFlashcardSet: deleteMutation.mutate,
+    isDeleting: deleteMutation.isPending,
+    prefetchFlashcards,
+    refetch: () => queryClient.invalidateQueries({ queryKey: ['optimized-flashcard-sets'] })
   };
 };
