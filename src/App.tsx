@@ -1,6 +1,5 @@
-
 import React, { Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/auth';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
@@ -13,6 +12,7 @@ import NotFoundPage from './pages/NotFoundPage';
 import { OptimizedAppRoutes } from './components/optimized/OptimizedAppRoutes';
 import { SessionProvider } from '@/contexts/SessionContext';
 import { useStudyActivityDetector } from '@/hooks/useStudyActivityDetector';
+import OptimizedNotesPage from "@/pages/OptimizedNotesPage";
 
 // Create a QueryClient instance with optimized settings for high concurrency
 const queryClient = new QueryClient({
@@ -38,7 +38,7 @@ const StudyActivityHandler = () => {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <Router>
         <AuthProvider>
           <SessionProvider>
             <StudyActivityHandler />
@@ -61,13 +61,17 @@ function App() {
                   ))}
                 </Route>
                 
+                {/* Replace the notes route with optimized version */}
+                <Route path="/notes" element={<OptimizedNotesPage />} />
+                <Route path="/notes/:noteId" element={<OptimizedNotesPage />} />
+                
                 {/* Not Found Route */}
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </Suspense>
           </SessionProvider>
         </AuthProvider>
-      </BrowserRouter>
+      </Router>
     </QueryClientProvider>
   );
 }
