@@ -1,5 +1,5 @@
 
-import { StudySessionWithDonutTracker } from './StudySessionWithDonutTracker';
+import { CompactFloatingTimer } from './CompactFloatingTimer';
 
 interface StudySessionTrackerProps {
   flashcardSetId: string;
@@ -9,35 +9,17 @@ interface StudySessionTrackerProps {
   onSessionStart?: () => void;
   onSessionEnd?: () => void;
   triggerStudyActivity?: boolean;
-  showDonutCounter?: boolean; // New prop to control donut visibility
-  donutSize?: 'small' | 'medium' | 'large'; // New prop for donut size
+  showDonutCounter?: boolean; // Keep for backward compatibility
+  donutSize?: 'small' | 'medium' | 'large'; // Keep for backward compatibility
 }
 
 export const StudySessionTracker = ({ 
-  flashcardSetId, 
-  flashcardSetName, 
-  cardsStudied,
-  correctAnswers = 0,
-  onSessionStart,
-  onSessionEnd,
   triggerStudyActivity = false,
-  showDonutCounter = true,
-  donutSize = 'medium'
 }: StudySessionTrackerProps) => {
   return (
-    <StudySessionWithDonutTracker
+    <CompactFloatingTimer
       activityType="flashcard"
-      resourceId={flashcardSetId}
-      resourceName={flashcardSetName}
-      subject="Flashcards"
-      cardsStudied={cardsStudied}
-      correctAnswers={correctAnswers}
-      onSessionStart={onSessionStart}
-      onSessionEnd={onSessionEnd}
       triggerStudyActivity={triggerStudyActivity}
-      showDonutCounter={showDonutCounter}
-      donutSize={donutSize}
-      donutPosition="side"
     />
   );
 };

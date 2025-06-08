@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +9,7 @@ import { CheckCircle, XCircle } from "lucide-react";
 import { Progress } from '@/components/ui/progress';
 import { useUserTier } from '@/hooks/useUserTier';
 import { Separator } from '@/components/ui/separator';
-import { StudyTimeDonutCounter } from '@/components/study/StudyTimeDonutCounter';
+import { CompactFloatingTimer } from '@/components/study/CompactFloatingTimer';
 
 interface QuizTakingCardProps {
   questions: (QuizQuestion & { options: QuizOption[] })[];
@@ -124,15 +125,12 @@ export const QuizTakingCard = ({ questions, onQuizComplete }: QuizTakingCardProp
   
   return (
     <div className="w-full max-w-4xl mx-auto space-y-4">
-      {/* Study Time Tracker */}
+      {/* Compact Floating Timer */}
       {quizStarted && (
-        <div className="flex justify-center">
-          <StudyTimeDonutCounter
-            activityType="quiz"
-            isActive={true}
-            size="small"
-          />
-        </div>
+        <CompactFloatingTimer
+          activityType="quiz"
+          isActive={true}
+        />
       )}
 
       <Card className="bg-white/60 backdrop-blur-sm border-mint-100">
