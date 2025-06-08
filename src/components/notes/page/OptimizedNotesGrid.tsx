@@ -73,19 +73,22 @@ export const OptimizedNotesGrid = ({ notes, onPin, onDelete }: OptimizedNotesGri
     );
   }
 
-  // Card view - 4 cards per row grid with CompactNoteCard
-  console.log('🃏 Rendering CARD view - Grid layout');
+  // Default to card view - 4 cards per row grid with CompactNoteCard
+  console.log('🃏 Rendering CARD view - Grid layout with', notes.length, 'notes');
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {notes.map((note) => (
-          <CompactNoteCard 
-            key={note.id} 
-            note={note} 
-            onPin={onPin}
-            onDelete={onDelete}
-          />
-        ))}
+        {notes.map((note) => {
+          console.log('🃏 Rendering card for note:', note.id, note.title);
+          return (
+            <CompactNoteCard 
+              key={note.id} 
+              note={note} 
+              onPin={onPin}
+              onDelete={onDelete}
+            />
+          );
+        })}
       </div>
       
       {selectedNote && (

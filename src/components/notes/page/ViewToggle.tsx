@@ -13,12 +13,12 @@ export const ViewToggle = ({ viewMode, onViewModeChange }: ViewToggleProps) => {
   console.log('🎛️ ViewToggle - Current mode:', viewMode);
 
   const handleCardView = () => {
-    console.log('🃏 Switching to card view');
+    console.log('🃏 ViewToggle - Switching to card view');
     onViewModeChange('card');
   };
 
   const handleListView = () => {
-    console.log('📋 Switching to list view');
+    console.log('📋 ViewToggle - Switching to list view');
     onViewModeChange('list');
   };
 
