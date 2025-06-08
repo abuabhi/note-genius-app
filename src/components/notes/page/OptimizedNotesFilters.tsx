@@ -20,12 +20,12 @@ interface OptimizedNotesFiltersProps {
 
 // Default subjects that should always be available
 const DEFAULT_SUBJECTS = [
+  'Arts',
   'English',
-  'Mathematics', 
-  'Technology',
+  'Languages', 
+  'Mathematics',
   'Science',
-  'Language',
-  'Others'
+  'Technologies'
 ];
 
 export const OptimizedNotesFilters = ({

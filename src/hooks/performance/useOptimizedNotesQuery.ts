@@ -77,9 +77,9 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
           query = query.eq('archived', false);
         }
 
-        // Fix subject filtering - use subject name instead of ID
+        // Fix subject filtering - use proper Supabase syntax
         if (subject && subject !== 'all') {
-          // Try to match both the subject field and user_subjects name
+          // Use a single .or() call with proper syntax
           query = query.or(`subject.ilike.%${subject}%,user_subjects.name.ilike.%${subject}%`);
         }
 

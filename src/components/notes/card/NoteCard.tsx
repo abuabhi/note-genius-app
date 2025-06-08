@@ -1,4 +1,3 @@
-
 import { Note } from "@/types/note";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Archive, Book, Camera, FileText, Pin, Tag, Sparkles } from "lucide-react";
@@ -86,7 +85,8 @@ export const NoteCard = ({
   const handleGoToStudyMode = (e: React.MouseEvent) => {
     e.stopPropagation();
     console.log("🎯 Navigating to study mode for note:", note.id, note.title);
-    navigate(`/notes/${note.id}`);
+    // Fix the navigation route - use the study route
+    navigate(`/notes/study/${note.id}`);
   };
 
   // Format date as dd-MMM-yyyy (e.g., 15-May-2023)
