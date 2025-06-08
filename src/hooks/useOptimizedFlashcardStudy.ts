@@ -1,10 +1,11 @@
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Flashcard } from "@/types/flashcard";
-import { StudyMode } from "@/pages/study/types";
-import { toast } from "sonner";
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/auth';
+import { toast } from 'sonner';
+import { StudyMode } from '@/pages/study/types';
+import { FlashcardWithProgress } from '@/types/flashcard';
+import { useGlobalSessionTracker } from './useGlobalSessionTracker';
 
 interface UseOptimizedFlashcardStudyProps {
   setId: string;
@@ -12,160 +13,180 @@ interface UseOptimizedFlashcardStudyProps {
 }
 
 export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcardStudyProps) => {
-  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { updateSessionActivity, recordActivity } = useGlobalSessionTracker();
+  
+  const [flashcards, setFlashcards] = useState<FlashcardWithProgress[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [isComplete, setIsComplete] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [studiedToday, setStudiedToday] = useState(0);
   const [masteredCount, setMasteredCount] = useState(0);
 
-  // Optimized flashcard fetching with caching
-  const {
-    data: flashcards = [],
-    isLoading,
-    error
-  } = useQuery({
-    queryKey: ['flashcards', setId, mode],
-    queryFn: async () => {
-      console.log("useOptimizedFlashcardStudy: Fetching flashcards for setId:", setId, "mode:", mode);
-      
-      const { data: setCards, error: setCardsError } = await supabase
-        .from('flashcard_set_cards')
-        .select(`
-          flashcard_id,
-          position,
-          flashcards (
-            id,
-            front_content,
-            back_content,
-            difficulty,
-            created_at,
-            updated_at,
-            user_id,
-            is_built_in,
-            last_reviewed_at,
-            next_review_at
-          )
-        `)
-        .eq('set_id', setId)
-        .order('position', { ascending: true });
+  // Load flashcards and progress
+  useEffect(() => {
+    const loadFlashcards = async () => {
+      if (!user || !setId) return;
 
-      if (setCardsError) {
-        console.error("useOptimizedFlashcardStudy: Error fetching flashcards:", setCardsError);
-        throw setCardsError;
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Fetch flashcards with progress
+        const { data: flashcardsData, error: flashcardsError } = await supabase
+          .from('flashcards')
+          .select(`
+            *,
+            user_flashcard_progress!left (
+              mastery_level,
+              review_count,
+              last_reviewed_at,
+              next_review_date
+            )
+          `)
+          .eq('set_id', setId)
+          .order('created_at');
+
+        if (flashcardsError) throw flashcardsError;
+
+        const processedFlashcards = flashcardsData.map(card => ({
+          ...card,
+          mastery_level: card.user_flashcard_progress?.[0]?.mastery_level || 'new',
+          review_count: card.user_flashcard_progress?.[0]?.review_count || 0,
+          last_reviewed_at: card.user_flashcard_progress?.[0]?.last_reviewed_at,
+          next_review_date: card.user_flashcard_progress?.[0]?.next_review_date
+        }));
+
+        // Filter cards based on study mode
+        let filteredCards = processedFlashcards;
+        if (mode === 'review') {
+          filteredCards = processedFlashcards.filter(card => 
+            card.mastery_level === 'needs_practice' || card.review_count > 0
+          );
+        } else if (mode === 'new') {
+          filteredCards = processedFlashcards.filter(card => 
+            card.mastery_level === 'new' && card.review_count === 0
+          );
+        }
+
+        setFlashcards(filteredCards);
+        
+        // Count cards studied today and mastered
+        const today = new Date().toDateString();
+        const todayCount = filteredCards.filter(card => 
+          card.last_reviewed_at && new Date(card.last_reviewed_at).toDateString() === today
+        ).length;
+        
+        const masteredCards = filteredCards.filter(card => 
+          card.mastery_level === 'mastered'
+        ).length;
+        
+        setStudiedToday(todayCount);
+        setMasteredCount(masteredCards);
+
+      } catch (err) {
+        console.error('Error loading flashcards:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load flashcards');
+        toast.error('Failed to load flashcards');
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-      if (!setCards || setCards.length === 0) {
-        console.log("useOptimizedFlashcardStudy: No flashcards found in set:", setId);
-        return [];
-      }
+    loadFlashcards();
+  }, [user, setId, mode]);
 
-      const flashcards: Flashcard[] = setCards
-        .filter(card => card.flashcards)
-        .map(card => {
-          const flashcard = card.flashcards;
-          return {
-            id: flashcard.id,
-            front_content: flashcard.front_content,
-            back_content: flashcard.back_content,
-            front: flashcard.front_content,
-            back: flashcard.back_content,
-            set_id: setId,
-            difficulty: flashcard.difficulty,
-            created_at: flashcard.created_at,
-            updated_at: flashcard.updated_at,
-            user_id: flashcard.user_id,
-            is_built_in: flashcard.is_built_in,
-            last_reviewed_at: flashcard.last_reviewed_at,
-            next_review_at: flashcard.next_review_at,
-            position: card.position
-          };
+  const handleCardChoice = useCallback(async (choice: 'mastered' | 'needs_practice') => {
+    if (!user || !flashcards[currentIndex]) return;
+
+    const currentCard = flashcards[currentIndex];
+    recordActivity(); // Record user activity
+
+    try {
+      const now = new Date().toISOString();
+      const nextReviewDate = choice === 'mastered' 
+        ? new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days later
+        : new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(); // 1 day later
+
+      // Update progress in database
+      const { error } = await supabase
+        .from('user_flashcard_progress')
+        .upsert({
+          user_id: user.id,
+          flashcard_id: currentCard.id,
+          mastery_level: choice,
+          review_count: (currentCard.review_count || 0) + 1,
+          last_reviewed_at: now,
+          next_review_date: nextReviewDate
         });
 
-      console.log("useOptimizedFlashcardStudy: Loaded flashcards:", flashcards.length);
-      return flashcards;
-    },
-    enabled: !!setId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
-  });
+      if (error) throw error;
 
-  // Preload next few cards for better performance
-  const preloadedCards = useMemo(() => {
-    const startIndex = Math.max(0, currentIndex - 1);
-    const endIndex = Math.min(flashcards.length, currentIndex + 4);
-    return flashcards.slice(startIndex, endIndex);
-  }, [flashcards, currentIndex]);
+      // Update local state
+      const updatedFlashcards = [...flashcards];
+      updatedFlashcards[currentIndex] = {
+        ...currentCard,
+        mastery_level: choice,
+        review_count: (currentCard.review_count || 0) + 1,
+        last_reviewed_at: now,
+        next_review_date: nextReviewDate
+      };
+      setFlashcards(updatedFlashcards);
 
-  // Get current card safely with memoization - MOVED UP BEFORE USAGE
-  const currentCard = useMemo(() => {
-    return flashcards.length > 0 && currentIndex < flashcards.length 
-      ? flashcards[currentIndex] 
-      : null;
-  }, [flashcards, currentIndex]);
+      // Update session activity with cards reviewed
+      await updateSessionActivity({
+        cards_reviewed: 1,
+        cards_correct: choice === 'mastered' ? 1 : 0
+      });
+
+      // Update today's count
+      setStudiedToday(prev => prev + 1);
+      
+      if (choice === 'mastered') {
+        setMasteredCount(prev => prev + 1);
+      }
+
+      // Move to next card
+      handleNext();
+
+    } catch (error) {
+      console.error('Error updating card progress:', error);
+      toast.error('Failed to update card progress');
+    }
+  }, [user, flashcards, currentIndex, updateSessionActivity, recordActivity]);
 
   const handleNext = useCallback(() => {
-    if (currentIndex < flashcards.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-      setIsFlipped(false);
-    } else {
-      setIsComplete(true);
-    }
-  }, [currentIndex, flashcards.length]);
+    recordActivity(); // Record user activity
+    setIsFlipped(false);
+    setCurrentIndex(prev => (prev + 1) % flashcards.length);
+  }, [flashcards.length, recordActivity]);
 
   const handlePrevious = useCallback(() => {
-    if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
-      setIsFlipped(false);
-    }
-  }, [currentIndex]);
+    recordActivity(); // Record user activity
+    setIsFlipped(false);
+    setCurrentIndex(prev => (prev - 1 + flashcards.length) % flashcards.length);
+  }, [flashcards.length, recordActivity]);
 
   const handleFlip = useCallback(() => {
+    recordActivity(); // Record user activity
     setIsFlipped(prev => !prev);
-  }, []);
+  }, [recordActivity]);
 
-  const handleCardChoice = useCallback((choice: 'mastered' | 'needs_practice') => {
-    console.log("useOptimizedFlashcardStudy: Card choice:", choice, "for card:", currentCard?.id);
-    
-    if (choice === 'mastered') {
-      setMasteredCount(prev => prev + 1);
-    }
-    
-    setStudiedToday(prev => prev + 1);
-    
-    // Optimistically update progress in background
-    if (currentCard) {
-      // Background update without blocking UI
-      setTimeout(() => {
-        // This could trigger a background mutation to update progress
-        queryClient.invalidateQueries({ queryKey: ['learning-progress', currentCard.id] });
-      }, 100);
-    }
-    
-    setTimeout(() => {
-      handleNext();
-    }, 500);
-  }, [currentCard, handleNext, queryClient]);
-
-  console.log("useOptimizedFlashcardStudy: Current state:", {
-    flashcardsLength: flashcards.length,
-    currentIndex,
-    currentCardId: currentCard?.id,
-    isLoading,
-    error: error?.message,
-    mode
-  });
+  // Memoized values
+  const currentCard = useMemo(() => flashcards[currentIndex] || null, [flashcards, currentIndex]);
+  const isComplete = useMemo(() => flashcards.length === 0, [flashcards.length]);
+  const totalCards = flashcards.length;
 
   return {
-    flashcards: preloadedCards, // Return preloaded subset for better performance
-    allFlashcards: flashcards, // Full set available if needed
+    flashcards,
     currentIndex,
     isFlipped,
     isLoading,
-    error: error?.message || null,
+    error,
     isComplete,
     currentCard,
-    totalCards: flashcards.length,
+    totalCards,
     studiedToday,
     masteredCount,
     handleNext,

@@ -2,6 +2,7 @@
 import { StudyMode } from "@/pages/study/types";
 import { useOptimizedFlashcardStudy } from "@/hooks/useOptimizedFlashcardStudy";
 import { useQuizMode } from "@/hooks/useQuizMode";
+import { useGlobalSessionTracker } from "@/hooks/useGlobalSessionTracker";
 
 interface StudySessionManagerProps {
   setId: string;
@@ -10,6 +11,8 @@ interface StudySessionManagerProps {
 }
 
 export const StudySessionManager = ({ setId, mode, children }: StudySessionManagerProps) => {
+  const { recordActivity } = useGlobalSessionTracker();
+  
   // Use different hooks based on mode
   const studyHook = useOptimizedFlashcardStudy({ setId, mode });
   const quizHook = useQuizMode({ setId, mode });
@@ -49,6 +52,7 @@ export const StudySessionManager = ({ setId, mode, children }: StudySessionManag
   } : null;
 
   const handleCorrectAnswer = () => {
+    recordActivity();
     if (isQuizMode && quizData) {
       quizData.handleQuizAnswer('mastered');
     } else if (studyData) {
@@ -57,6 +61,7 @@ export const StudySessionManager = ({ setId, mode, children }: StudySessionManag
   };
 
   const handleIncorrectAnswer = () => {
+    recordActivity();
     if (isQuizMode && quizData) {
       quizData.handleQuizAnswer('needs_practice');
     } else if (studyData) {
@@ -81,10 +86,19 @@ export const StudySessionManager = ({ setId, mode, children }: StudySessionManag
     cardsStudied,
     mode,
     
-    // Handlers
-    handleNext,
-    handlePrevious,
-    handleFlip,
+    // Handlers (with activity recording)
+    handleNext: () => {
+      recordActivity();
+      handleNext();
+    },
+    handlePrevious: () => {
+      recordActivity();
+      handlePrevious();
+    },
+    handleFlip: () => {
+      recordActivity();
+      handleFlip();
+    },
     handleCorrectAnswer,
     handleIncorrectAnswer,
     setIsFlipped,

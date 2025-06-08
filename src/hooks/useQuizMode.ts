@@ -1,9 +1,11 @@
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
-import { Flashcard } from '@/types/flashcard';
+import { toast } from 'sonner';
 import { StudyMode } from '@/pages/study/types';
+import { FlashcardWithProgress } from '@/types/flashcard';
+import { useGlobalSessionTracker } from './useGlobalSessionTracker';
 
 interface UseQuizModeProps {
   setId: string;
@@ -11,303 +13,175 @@ interface UseQuizModeProps {
 }
 
 interface QuizSession {
-  id: string;
-  user_id: string;
-  flashcard_set_id: string;
-  mode: string;
-  start_time: string;
-  end_time?: string;
-  total_cards: number;
-  correct_answers: number;
-  total_score: number;
-  duration_seconds?: number;
-  average_response_time?: number;
-  grade?: string;
-}
-
-interface QuizCardResponse {
-  flashcard_id: string;
-  user_answer: string;
-  is_correct: boolean;
-  response_time_seconds: number;
-  points_earned: number;
-  time_bonus: number;
+  startTime: Date;
+  totalQuestions: number;
+  answeredQuestions: number;
 }
 
 export const useQuizMode = ({ setId, mode }: UseQuizModeProps) => {
   const { user } = useAuth();
-  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
+  const { updateSessionActivity, recordActivity } = useGlobalSessionTracker();
+  
+  const [flashcards, setFlashcards] = useState<FlashcardWithProgress[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isComplete, setIsComplete] = useState(false);
-  
-  // Quiz-specific state
-  const [quizSession, setQuizSession] = useState<QuizSession | null>(null);
-  const [timeLeft, setTimeLeft] = useState(30); // 30 seconds per card
+  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes default
   const [totalScore, setTotalScore] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
-  const [cardStartTime, setCardStartTime] = useState<Date | null>(null);
-  const [responses, setResponses] = useState<QuizCardResponse[]>([]);
   const [isTimerActive, setIsTimerActive] = useState(false);
-  const [quizStartTime, setQuizStartTime] = useState<Date | null>(null);
-  
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const [quizSession, setQuizSession] = useState<QuizSession | null>(null);
 
-  const fetchFlashcards = useCallback(async () => {
-    if (!user || !setId) return;
+  // Load flashcards for quiz
+  useEffect(() => {
+    const loadFlashcards = async () => {
+      if (!user || !setId) return;
 
-    try {
-      setIsLoading(true);
-      setError(null);
+      try {
+        setIsLoading(true);
+        setError(null);
 
-      const { data: setCards, error: fetchError } = await supabase
-        .from('flashcard_set_cards')
-        .select(`
-          flashcard_id,
-          position,
-          flashcards (
-            id,
-            front_content,
-            back_content,
-            created_at
-          )
-        `)
-        .eq('set_id', setId)
-        .order('position');
+        // Fetch flashcards
+        const { data: flashcardsData, error: flashcardsError } = await supabase
+          .from('flashcards')
+          .select('*')
+          .eq('set_id', setId)
+          .order('created_at');
 
-      if (fetchError) throw fetchError;
+        if (flashcardsError) throw flashcardsError;
 
-      const cards = (setCards || [])
-        .map(item => ({
-          ...item.flashcards,
-          position: item.position
-        }))
-        .filter(card => card.id) as Flashcard[];
+        // Shuffle cards for quiz mode
+        const shuffledCards = [...flashcardsData].sort(() => Math.random() - 0.5);
+        setFlashcards(shuffledCards.slice(0, 10)); // Limit to 10 questions
 
-      setFlashcards(cards);
-
-      // Create quiz session for quiz mode
-      if (mode === 'test' && cards.length > 0) {
-        const startTime = new Date();
-        setQuizStartTime(startTime);
-        
-        const { data: session, error: sessionError } = await supabase
-          .from('quiz_sessions')
-          .insert({
-            user_id: user.id,
-            flashcard_set_id: setId,
-            mode: 'quiz',
-            total_cards: cards.length,
-            start_time: startTime.toISOString()
-          })
-          .select()
-          .single();
-
-        if (sessionError) throw sessionError;
+        // Initialize quiz session
+        const session: QuizSession = {
+          startTime: new Date(),
+          totalQuestions: Math.min(shuffledCards.length, 10),
+          answeredQuestions: 0
+        };
         setQuizSession(session);
-        startCardTimer();
-      }
+        setIsTimerActive(true);
 
-    } catch (err) {
-      console.error('Error fetching flashcards:', err);
-      setError('Failed to load flashcards');
-    } finally {
-      setIsLoading(false);
+      } catch (err) {
+        console.error('Error loading quiz flashcards:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load quiz');
+        toast.error('Failed to load quiz');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (mode === 'test') {
+      loadFlashcards();
     }
   }, [user, setId, mode]);
 
-  const startCardTimer = useCallback(() => {
-    setTimeLeft(30);
-    setCardStartTime(new Date());
-    setIsTimerActive(true);
-    
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-    
-    timerRef.current = setInterval(() => {
+  // Timer effect
+  useEffect(() => {
+    if (!isTimerActive || timeLeft <= 0) return;
+
+    const timer = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
-          // Time's up - auto advance with incorrect answer
-          handleTimeUp();
+          setIsTimerActive(false);
+          handleQuizComplete();
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
-  }, []);
 
-  const stopTimer = useCallback(() => {
+    return () => clearInterval(timer);
+  }, [isTimerActive, timeLeft]);
+
+  const handleQuizAnswer = useCallback(async (answer: 'mastered' | 'needs_practice') => {
+    if (!user || !flashcards[currentIndex] || !quizSession) return;
+
+    recordActivity(); // Record user activity
+    const isCorrect = answer === 'mastered';
+    
+    if (isCorrect) {
+      setCorrectAnswers(prev => prev + 1);
+      setTotalScore(prev => prev + 10); // 10 points per correct answer
+    }
+
+    // Update session activity
+    await updateSessionActivity({
+      quiz_score: isCorrect ? totalScore + 10 : totalScore,
+      quiz_total_questions: quizSession.answeredQuestions + 1
+    });
+
+    // Update quiz session
+    const updatedSession = {
+      ...quizSession,
+      answeredQuestions: quizSession.answeredQuestions + 1
+    };
+    setQuizSession(updatedSession);
+
+    // Check if quiz is complete
+    if (updatedSession.answeredQuestions >= updatedSession.totalQuestions) {
+      handleQuizComplete();
+    } else {
+      handleNext();
+    }
+  }, [user, flashcards, currentIndex, quizSession, totalScore, updateSessionActivity, recordActivity]);
+
+  const handleQuizComplete = useCallback(async () => {
+    if (!user || !quizSession) return;
+
     setIsTimerActive(false);
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
-
-  const calculateScore = useCallback((responseTime: number, isCorrect: boolean): { points: number; timeBonus: number } => {
-    if (!isCorrect) return { points: 0, timeBonus: 0 };
     
-    const basePoints = 100;
-    const maxTimeBonus = 50;
-    const timeBonus = Math.max(0, Math.floor(maxTimeBonus * (30 - responseTime) / 30));
-    
-    return {
-      points: basePoints + timeBonus,
-      timeBonus
-    };
-  }, []);
-
-  const handleQuizAnswer = useCallback(async (choice: 'needs_practice' | 'mastered') => {
-    if (!quizSession || !cardStartTime || !flashcards[currentIndex]) return;
-
-    const currentCard = flashcards[currentIndex];
-    const responseTime = (new Date().getTime() - cardStartTime.getTime()) / 1000;
-    const isCorrect = choice === 'mastered';
-    const { points, timeBonus } = calculateScore(responseTime, isCorrect);
-
-    stopTimer();
-
-    const response: QuizCardResponse = {
-      flashcard_id: currentCard.id,
-      user_answer: choice,
-      is_correct: isCorrect,
-      response_time_seconds: responseTime,
-      points_earned: points,
-      time_bonus: timeBonus
-    };
-
     try {
-      // Save response to database
-      await supabase
-        .from('quiz_card_responses')
+      // Save quiz results
+      const { error } = await supabase
+        .from('quiz_results')
         .insert({
-          quiz_session_id: quizSession.id,
-          ...response
-        });
-
-      // Update local state
-      const newResponses = [...responses, response];
-      setResponses(newResponses);
-      setTotalScore(prev => prev + points);
-      if (isCorrect) {
-        setCorrectAnswers(prev => prev + 1);
-      }
-
-      // Update simple flashcard progress
-      await supabase
-        .from('simple_flashcard_progress')
-        .upsert({
           user_id: user.id,
-          flashcard_id: currentCard.id,
-          status: choice,
-          last_reviewed_at: new Date().toISOString(),
-          review_count: 1
-        }, { 
-          onConflict: 'user_id,flashcard_id' 
+          quiz_id: setId,
+          score: totalScore,
+          total_questions: quizSession.totalQuestions,
+          correct_answers: correctAnswers,
+          completed_at: new Date().toISOString(),
+          time_taken: Math.floor((Date.now() - quizSession.startTime.getTime()) / 1000)
         });
 
-      // Move to next card or complete quiz
-      if (currentIndex >= flashcards.length - 1) {
-        await completeQuiz(newResponses);
-      } else {
-        setCurrentIndex(prev => prev + 1);
-        setIsFlipped(false);
-        startCardTimer();
-      }
+      if (error) throw error;
+
+      toast.success(`Quiz completed! Score: ${correctAnswers}/${quizSession.totalQuestions}`);
     } catch (error) {
-      console.error('Error saving quiz response:', error);
+      console.error('Error saving quiz results:', error);
+      toast.error('Failed to save quiz results');
     }
-  }, [quizSession, cardStartTime, flashcards, currentIndex, calculateScore, stopTimer, responses, user]);
-
-  const handleTimeUp = useCallback(async () => {
-    await handleQuizAnswer('needs_practice');
-  }, [handleQuizAnswer]);
-
-  const completeQuiz = useCallback(async (finalResponses: QuizCardResponse[]) => {
-    if (!quizSession || !quizStartTime) return;
-
-    const endTime = new Date();
-    const durationSeconds = Math.floor((endTime.getTime() - quizStartTime.getTime()) / 1000);
-    const averageResponseTime = finalResponses.length > 0 
-      ? finalResponses.reduce((sum, r) => sum + r.response_time_seconds, 0) / finalResponses.length 
-      : 0;
-    
-    const finalCorrectAnswers = finalResponses.filter(r => r.is_correct).length;
-    const finalTotalScore = finalResponses.reduce((sum, r) => sum + r.points_earned, 0);
-    const percentage = (finalCorrectAnswers / flashcards.length) * 100;
-    const grade = percentage >= 90 ? 'A' : 
-                  percentage >= 80 ? 'B' : 
-                  percentage >= 70 ? 'C' : 
-                  percentage >= 60 ? 'D' : 'F';
-
-    try {
-      const { data: updatedSession } = await supabase
-        .from('quiz_sessions')
-        .update({
-          end_time: endTime.toISOString(),
-          correct_answers: finalCorrectAnswers,
-          total_score: finalTotalScore,
-          duration_seconds: durationSeconds,
-          average_response_time: averageResponseTime,
-          grade
-        })
-        .eq('id', quizSession.id)
-        .select()
-        .single();
-
-      if (updatedSession) {
-        setQuizSession(updatedSession);
-      }
-
-      setIsComplete(true);
-      stopTimer();
-    } catch (error) {
-      console.error('Error completing quiz:', error);
-    }
-  }, [quizSession, quizStartTime, flashcards.length, stopTimer]);
-
-  const handleFlip = useCallback(() => {
-    setIsFlipped(prev => !prev);
-  }, []);
+  }, [user, quizSession, totalScore, correctAnswers, setId]);
 
   const handleNext = useCallback(() => {
-    if (currentIndex < flashcards.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-      setIsFlipped(false);
-      if (mode === 'test') {
-        startCardTimer();
-      }
-    }
-  }, [currentIndex, flashcards.length, mode, startCardTimer]);
+    recordActivity(); // Record user activity
+    setIsFlipped(false);
+    setCurrentIndex(prev => (prev + 1) % flashcards.length);
+  }, [flashcards.length, recordActivity]);
 
   const handlePrevious = useCallback(() => {
-    if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
-      setIsFlipped(false);
-      if (mode === 'test') {
-        startCardTimer();
-      }
-    }
-  }, [currentIndex, mode, startCardTimer]);
+    recordActivity(); // Record user activity
+    setIsFlipped(false);
+    setCurrentIndex(prev => (prev - 1 + flashcards.length) % flashcards.length);
+  }, [flashcards.length, recordActivity]);
 
-  useEffect(() => {
-    fetchFlashcards();
-    
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, [fetchFlashcards]);
+  const handleFlip = useCallback(() => {
+    recordActivity(); // Record user activity
+    setIsFlipped(prev => !prev);
+  }, [recordActivity]);
 
-  const currentCard = flashcards[currentIndex];
+  // Memoized values
+  const currentCard = useMemo(() => flashcards[currentIndex] || null, [flashcards, currentIndex]);
+  const isComplete = useMemo(() => 
+    quizSession ? quizSession.answeredQuestions >= quizSession.totalQuestions : false, 
+    [quizSession]
+  );
   const totalCards = flashcards.length;
 
   return {
-    // Original properties
     flashcards,
     currentIndex,
     isFlipped,
@@ -316,18 +190,15 @@ export const useQuizMode = ({ setId, mode }: UseQuizModeProps) => {
     isComplete,
     currentCard,
     totalCards,
-    handleFlip,
-    handleNext,
-    handlePrevious,
-    setIsFlipped,
-    
-    // Quiz-specific properties
-    quizSession,
     timeLeft,
     totalScore,
     correctAnswers,
     isTimerActive,
-    responses,
-    handleQuizAnswer
+    quizSession,
+    handleNext,
+    handlePrevious,
+    handleFlip,
+    handleQuizAnswer,
+    setIsFlipped
   };
 };
