@@ -38,11 +38,11 @@ export const BugReportForm = () => {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="flex items-center gap-2 mb-4">
         <Bug className="h-5 w-5 text-red-500" />
-        <h3 className="text-lg font-semibold text-orange-700">Report an Issue</h3>
+        <h3 className="text-lg font-semibold text-foreground">Report an Issue</h3>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="bug-title" className="text-orange-700">
+        <Label htmlFor="bug-title" className="text-foreground">
           Issue Summary *
         </Label>
         <Input
@@ -50,17 +50,16 @@ export const BugReportForm = () => {
           placeholder="Brief description of the issue"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="border-orange-200 focus:border-orange-400"
           required
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="bug-severity" className="text-orange-700">
+        <Label htmlFor="bug-severity" className="text-foreground">
           Severity Level
         </Label>
         <Select value={severity} onValueChange={(value: any) => setSeverity(value)}>
-          <SelectTrigger className="border-orange-200 focus:border-orange-400">
+          <SelectTrigger>
             <SelectValue placeholder="Select severity" />
           </SelectTrigger>
           <SelectContent>
@@ -72,7 +71,7 @@ export const BugReportForm = () => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="bug-description" className="text-orange-700">
+        <Label htmlFor="bug-description" className="text-foreground">
           Detailed Description
         </Label>
         <Textarea
@@ -85,14 +84,14 @@ export const BugReportForm = () => {
 • Any error messages you saw?"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="min-h-[150px] border-orange-200 focus:border-orange-400"
+          className="min-h-[150px]"
         />
       </div>
 
       <Button
         type="submit"
         disabled={!title.trim() || createFeedback.isPending}
-        className="w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-medium py-3"
+        className="w-full py-3"
       >
         <Send className="h-4 w-4 mr-2" />
         {createFeedback.isPending ? 'Submitting...' : 'Submit Bug Report'}

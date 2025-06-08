@@ -66,7 +66,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                 />
                 <Separator className="my-2" />
                 
-                {/* Quiz - now always visible */}
+                {/* Quiz */}
                 <NavLink
                   to="/quizzes"
                   icon={Activity}
@@ -76,12 +76,32 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                 />
                 <Separator className="my-2" />
                 
-                {/* Goals - now always visible */}
+                {/* Goals */}
                 <NavLink
                   to="/goals"
                   icon={Target}
                   label="Goals"
                   isActive={pathname.includes("/goals")}
+                  isCollapsed={isCollapsed}
+                />
+                <Separator className="my-2" />
+                
+                {/* Todo */}
+                <NavLink
+                  to="/todos"
+                  icon={CheckSquare}
+                  label="ToDo"
+                  isActive={pathname.includes("/todos")}
+                  isCollapsed={isCollapsed}
+                />
+                <Separator className="my-2" />
+                
+                {/* Study Sessions */}
+                <NavLink
+                  to="/study-sessions"
+                  icon={Clock}
+                  label="Study Sessions"
+                  isActive={pathname.includes("/study-sessions")}
                   isCollapsed={isCollapsed}
                 />
                 <Separator className="my-2" />
@@ -106,7 +126,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   badge={
                     <Badge 
                       variant="secondary" 
-                      className="bg-gradient-to-r from-orange-600 to-amber-700 text-white text-xs animate-bounce ml-2"
+                      className="bg-primary text-primary-foreground text-xs animate-bounce ml-2"
                     >
                       FEEDBACK
                     </Badge>
@@ -114,29 +134,9 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   customClassName={cn(
                     "animate-pulse hover:animate-none",
                     pathname.includes("/feedback") 
-                      ? "bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-lg" 
-                      : "hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50"
+                      ? "bg-accent text-accent-foreground font-medium" 
+                      : "hover:bg-accent/50"
                   )}
-                />
-                <Separator className="my-2" />
-                
-                {/* Todo - now always visible */}
-                <NavLink
-                  to="/todos"
-                  icon={CheckSquare}
-                  label="ToDo"
-                  isActive={pathname.includes("/todos")}
-                  isCollapsed={isCollapsed}
-                />
-                <Separator className="my-2" />
-                
-                {/* Study Sessions - now always visible */}
-                <NavLink
-                  to="/study-sessions"
-                  icon={Clock}
-                  label="Study Sessions"
-                  isActive={pathname.includes("/study-sessions")}
-                  isCollapsed={isCollapsed}
                 />
                 <Separator className="my-2" />
                 

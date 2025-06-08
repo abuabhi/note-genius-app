@@ -38,11 +38,11 @@ export const FeatureRequestForm = () => {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="flex items-center gap-2 mb-4">
         <Lightbulb className="h-5 w-5 text-amber-500" />
-        <h3 className="text-lg font-semibold text-orange-700">Suggest a New Feature</h3>
+        <h3 className="text-lg font-semibold text-foreground">Suggest a New Feature</h3>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="feature-title" className="text-orange-700">
+        <Label htmlFor="feature-title" className="text-foreground">
           Feature Title *
         </Label>
         <Input
@@ -50,17 +50,16 @@ export const FeatureRequestForm = () => {
           placeholder="What feature would you like to see?"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="border-orange-200 focus:border-orange-400"
           required
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="feature-priority" className="text-orange-700">
+        <Label htmlFor="feature-priority" className="text-foreground">
           Priority Level
         </Label>
         <Select value={priority} onValueChange={(value: any) => setPriority(value)}>
-          <SelectTrigger className="border-orange-200 focus:border-orange-400">
+          <SelectTrigger>
             <SelectValue placeholder="Select priority" />
           </SelectTrigger>
           <SelectContent>
@@ -73,7 +72,7 @@ export const FeatureRequestForm = () => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="feature-description" className="text-orange-700">
+        <Label htmlFor="feature-description" className="text-foreground">
           Detailed Description
         </Label>
         <Textarea
@@ -81,14 +80,14 @@ export const FeatureRequestForm = () => {
           placeholder="Describe the feature in detail. How would it work? How would it benefit you and other users? Include any specific requirements or examples."
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="min-h-[150px] border-orange-200 focus:border-orange-400"
+          className="min-h-[150px]"
         />
       </div>
 
       <Button
         type="submit"
         disabled={!title.trim() || createFeedback.isPending}
-        className="w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-medium py-3"
+        className="w-full py-3"
       >
         <Send className="h-4 w-4 mr-2" />
         {createFeedback.isPending ? 'Submitting...' : 'Submit Feature Request'}

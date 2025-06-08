@@ -16,7 +16,8 @@ import {
   Upload,
   Database,
   Gift,
-  Heart
+  Heart,
+  CheckSquare
 } from "lucide-react";
 
 export interface NavigationItem {
@@ -65,17 +66,11 @@ export const navigationData: NavigationGroup[] = [
       },
       {
         id: "quizzes",
-        title: "Formal Quizzes",
+        title: "Quiz",
         href: "/quiz",
         icon: GraduationCap,
         description: "Multiple-choice assessments"
-      }
-    ]
-  },
-  {
-    id: "study",
-    title: "Study Tools",
-    items: [
+      },
       {
         id: "goals",
         title: "Goals",
@@ -84,25 +79,41 @@ export const navigationData: NavigationGroup[] = [
         description: "Set and track study goals"
       },
       {
+        id: "todos",
+        title: "ToDo",
+        href: "/todos",
+        icon: CheckSquare,
+        description: "Manage your tasks"
+      },
+      {
+        id: "study-sessions",
+        title: "Study Sessions",
+        href: "/study-sessions",
+        icon: Clock,
+        description: "Track your study time"
+      },
+      {
         id: "progress",
         title: "Progress",
         href: "/progress",
         icon: BarChart3,
         description: "View your learning analytics"
-      },
+      }
+    ]
+  },
+  {
+    id: "feedback",
+    title: "Feedback",
+    items: [
       {
-        id: "schedule",
-        title: "Schedule",
-        href: "/schedule",
-        icon: Calendar,
-        description: "Plan your study sessions"
-      },
-      {
-        id: "reminders",
-        title: "Reminders",
-        href: "/reminders",
-        icon: Bell,
-        description: "Manage study reminders"
+        id: "feedback",
+        title: "Feedback",
+        href: "/feedback",
+        icon: Heart,
+        description: "Share your thoughts and help us improve",
+        badge: "FEEDBACK",
+        isAnimated: true,
+        customStyle: "feedback"
       }
     ]
   },
@@ -118,6 +129,26 @@ export const navigationData: NavigationGroup[] = [
         description: "Refer friends and earn rewards",
         isNew: true,
         isAnimated: true
+      }
+    ]
+  },
+  {
+    id: "study",
+    title: "Study Tools",
+    items: [
+      {
+        id: "schedule",
+        title: "Schedule",
+        href: "/schedule",
+        icon: Calendar,
+        description: "Plan your study sessions"
+      },
+      {
+        id: "reminders",
+        title: "Reminders",
+        href: "/reminders",
+        icon: Bell,
+        description: "Manage study reminders"
       }
     ]
   },
@@ -138,22 +169,6 @@ export const navigationData: NavigationGroup[] = [
         href: "/chat",
         icon: MessageSquare,
         description: "Chat with study partners"
-      }
-    ]
-  },
-  {
-    id: "feedback",
-    title: "Feedback",
-    items: [
-      {
-        id: "feedback",
-        title: "Feedback",
-        href: "/feedback",
-        icon: Heart,
-        description: "Share your thoughts and help us improve",
-        badge: "FEEDBACK",
-        isAnimated: true,
-        customStyle: "feedback"
       }
     ]
   },

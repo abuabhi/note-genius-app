@@ -36,16 +36,15 @@ export const NavigationItem = ({
           ? "bg-accent text-accent-foreground font-medium"
           : "hover:bg-accent/50 text-foreground",
         isAnimated && "hover:scale-105 transform-gpu",
-        isAnimated && !isActive && "hover:shadow-md hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50",
-        isFeedback && !isActive && "hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50",
-        isFeedback && isActive && "bg-gradient-to-r from-orange-500 to-amber-600 text-white font-medium shadow-lg",
+        isAnimated && !isActive && "hover:shadow-md hover:bg-accent/50",
+        isFeedback && !isActive && "hover:bg-accent/50",
+        isFeedback && isActive && "bg-accent text-accent-foreground font-medium",
         isFeedback && "animate-pulse hover:animate-none"
       )}
     >
       <Icon className={cn(
         "h-4 w-4",
-        isAnimated && "animate-pulse",
-        isFeedback && "drop-shadow-sm"
+        isAnimated && "animate-pulse"
       )} />
       <span className="flex-1">{title}</span>
       {isNew && (
@@ -59,7 +58,7 @@ export const NavigationItem = ({
       {badge && customStyle === "feedback" && (
         <Badge 
           variant="secondary" 
-          className="bg-gradient-to-r from-orange-600 to-amber-700 text-white text-xs animate-bounce"
+          className="bg-primary text-primary-foreground text-xs animate-bounce"
         >
           {badge}
         </Badge>

@@ -15,8 +15,8 @@ export const FeedbackForm = () => {
       {/* Header */}
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center gap-2">
-          <Heart className="h-8 w-8 text-orange-500 animate-pulse" />
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-amber-600 bg-clip-text text-transparent">
+          <Heart className="h-8 w-8 text-primary animate-pulse" />
+          <h1 className="text-3xl font-bold text-foreground">
             Share Your Feedback
           </h1>
         </div>
@@ -26,9 +26,9 @@ export const FeedbackForm = () => {
       </div>
 
       {/* Feedback Form */}
-      <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-orange-50/30">
+      <Card className="shadow-lg border">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-orange-700">
+          <CardTitle className="flex items-center gap-2 text-foreground">
             <Heart className="h-5 w-5" />
             What would you like to share?
           </CardTitle>
@@ -38,24 +38,24 @@ export const FeedbackForm = () => {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 bg-orange-100">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger 
                 value="rating" 
-                className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-amber-600 data-[state=active]:text-white"
+                className="flex items-center gap-2"
               >
                 <Heart className="h-4 w-4" />
                 Rate Experience
               </TabsTrigger>
               <TabsTrigger 
                 value="feature" 
-                className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-amber-600 data-[state=active]:text-white"
+                className="flex items-center gap-2"
               >
                 <Lightbulb className="h-4 w-4" />
                 Suggest Feature
               </TabsTrigger>
               <TabsTrigger 
                 value="bug" 
-                className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-amber-600 data-[state=active]:text-white"
+                className="flex items-center gap-2"
               >
                 <Bug className="h-4 w-4" />
                 Report Issue

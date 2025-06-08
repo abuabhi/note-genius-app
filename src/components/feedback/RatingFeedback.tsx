@@ -46,7 +46,7 @@ export const RatingFeedback = () => {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-4">
-        <Label className="text-lg font-semibold text-orange-700">
+        <Label className="text-lg font-semibold text-foreground">
           How would you rate your overall experience?
         </Label>
         
@@ -71,7 +71,7 @@ export const RatingFeedback = () => {
             </button>
           ))}
           {(rating > 0 || hoveredRating > 0) && (
-            <span className="ml-3 text-lg font-medium text-orange-600">
+            <span className="ml-3 text-lg font-medium text-foreground">
               {getRatingText(hoveredRating || rating)}
             </span>
           )}
@@ -79,7 +79,7 @@ export const RatingFeedback = () => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="comment" className="text-orange-700">
+        <Label htmlFor="comment" className="text-foreground">
           Tell us more about your experience (optional)
         </Label>
         <Textarea
@@ -87,14 +87,14 @@ export const RatingFeedback = () => {
           placeholder="What did you like? What could be improved? Any specific features you'd like to see?"
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          className="min-h-[120px] border-orange-200 focus:border-orange-400"
+          className="min-h-[120px]"
         />
       </div>
 
       <Button
         type="submit"
         disabled={rating === 0 || createFeedback.isPending}
-        className="w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-medium py-3"
+        className="w-full py-3"
       >
         <Send className="h-4 w-4 mr-2" />
         {createFeedback.isPending ? 'Submitting...' : 'Submit Rating'}
