@@ -20,6 +20,10 @@ export const OptimizedNotesGrid = ({ notes, onPin, onDelete }: OptimizedNotesGri
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const { viewMode } = useViewPreferences('notes');
 
+  // Debug logging to see what's happening
+  console.log('🔍 OptimizedNotesGrid - Current viewMode:', viewMode);
+  console.log('🔍 OptimizedNotesGrid - Notes count:', notes.length);
+
   if (notes.length === 0) {
     return <EmptyNotesState />;
   }
@@ -36,19 +40,21 @@ export const OptimizedNotesGrid = ({ notes, onPin, onDelete }: OptimizedNotesGri
 
   // List view - vertical layout with full NoteCard functionality
   if (viewMode === 'list') {
+    console.log('📋 Rendering LIST view');
     return (
       <>
         <div className="space-y-4">
           {notes.map((note) => (
-            <NoteCard
-              key={note.id}
-              note={note}
-              onNoteClick={handleNoteClick}
-              onShowDetails={handleShowDetails}
-              onPin={onPin}
-              onDelete={onDelete}
-              confirmDelete={null}
-            />
+            <div key={note.id} className="w-full">
+              <NoteCard
+                note={note}
+                onNoteClick={handleNoteClick}
+                onShowDetails={handleShowDetails}
+                onPin={onPin}
+                onDelete={onDelete}
+                confirmDelete={null}
+              />
+            </div>
           ))}
         </div>
         
@@ -68,6 +74,7 @@ export const OptimizedNotesGrid = ({ notes, onPin, onDelete }: OptimizedNotesGri
   }
 
   // Card view - 4 cards per row grid with CompactNoteCard
+  console.log('🃏 Rendering CARD view');
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
