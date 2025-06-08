@@ -24,8 +24,8 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
   const [isMinimized, setIsMinimized] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  // Don't show timer if not on study page or no active session
-  if (!isOnStudyPage || !isActive) {
+  // Show timer if there's an active session, regardless of page
+  if (!isActive) {
     return null;
   }
 
@@ -77,10 +77,34 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
     setIsMinimized(!isMinimized);
   };
 
+  // Determine colors based on pause state and study page status
+  const getCardStyles = () => {
+    if (!isOnStudyPage || isPaused) {
+      // Paused or not on study page - gray/muted appearance
+      return "bg-gray-500/20 border-gray-500";
+    }
+    // Active on study page - red appearance
+    return "bg-red-500/20 border-red-500";
+  };
+
+  const getTextColor = () => {
+    if (!isOnStudyPage || isPaused) {
+      return "text-gray-600";
+    }
+    return "text-red-700";
+  };
+
+  const getProgressColor = () => {
+    if (!isOnStudyPage || isPaused) {
+      return "text-gray-600";
+    }
+    return "text-red-700";
+  };
+
   if (isMinimized) {
     return (
       <Card 
-        className={`fixed bottom-4 right-4 z-50 p-2 shadow-lg transition-all duration-200 cursor-pointer bg-red-500/30 border-red-500 backdrop-blur-sm ${className}`}
+        className={`fixed bottom-4 right-4 z-50 p-2 shadow-lg transition-all duration-200 cursor-pointer backdrop-blur-sm ${getCardStyles()} ${className}`}
         onClick={handleMinimize}
       >
         <div className="flex items-center gap-2">
@@ -93,7 +117,7 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
                 stroke="currentColor"
                 strokeWidth="2"
                 fill="transparent"
-                className="text-red-200"
+                className={`${getTextColor()} opacity-30`}
               />
               <circle
                 cx="16"
@@ -104,15 +128,15 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
                 fill="transparent"
                 strokeDasharray={circumference}
                 strokeDashoffset={strokeDashoffset}
-                className="text-red-700 transition-all duration-300 ease-in-out"
+                className={`${getProgressColor()} transition-all duration-300 ease-in-out`}
                 strokeLinecap="round"
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <ActivityIcon className="h-3 w-3 text-red-700" />
+              <ActivityIcon className={`h-3 w-3 ${getTextColor()}`} />
             </div>
           </div>
-          <div className="text-xs font-mono font-medium text-red-700">
+          <div className={`text-xs font-mono font-medium ${getTextColor()}`}>
             {formatTime(elapsedSeconds)}
           </div>
         </div>
@@ -122,7 +146,7 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
 
   return (
     <Card 
-      className={`fixed bottom-4 right-4 z-50 p-2 shadow-lg transition-all duration-200 bg-red-500/30 border-red-500 backdrop-blur-sm ${className}`}
+      className={`fixed bottom-4 right-4 z-50 p-2 shadow-lg transition-all duration-200 backdrop-blur-sm ${getCardStyles()} ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -137,7 +161,7 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
               stroke="currentColor"
               strokeWidth="2"
               fill="transparent"
-              className="text-red-200"
+              className={`${getTextColor()} opacity-30`}
             />
             <circle
               cx="16"
@@ -148,17 +172,17 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
               fill="transparent"
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
-              className="text-red-700 transition-all duration-300 ease-in-out"
+              className={`${getProgressColor()} transition-all duration-300 ease-in-out`}
               strokeLinecap="round"
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <ActivityIcon className="h-3 w-3 text-red-700" />
+            <ActivityIcon className={`h-3 w-3 ${getTextColor()}`} />
           </div>
         </div>
 
         {/* Timer Text */}
-        <div className={`text-sm font-mono font-medium text-red-700 ${isPaused ? 'opacity-70' : ''}`}>
+        <div className={`text-sm font-mono font-medium ${getTextColor()} ${isPaused ? 'opacity-70' : ''}`}>
           {formatTime(elapsedSeconds)}
         </div>
 
@@ -168,7 +192,7 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
             variant="ghost"
             size="sm"
             onClick={handleTogglePause}
-            className="h-6 w-6 p-0 hover:bg-red-600/20 text-red-700 hover:text-red-800"
+            className={`h-6 w-6 p-0 hover:bg-opacity-20 ${getTextColor()}`}
             title={isPaused ? 'Resume' : 'Pause'}
           >
             {isPaused ? (
@@ -181,7 +205,7 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
             variant="ghost"
             size="sm"
             onClick={handleEndSession}
-            className="h-6 w-6 p-0 hover:bg-red-600/20 text-red-700 hover:text-red-800"
+            className={`h-6 w-6 p-0 hover:bg-opacity-20 ${getTextColor()}`}
             title="End Session"
           >
             <Square className="h-3 w-3" />
@@ -191,7 +215,7 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
               variant="ghost"
               size="sm"
               onClick={handleMinimize}
-              className="h-6 w-6 p-0 hover:bg-red-600/20 text-red-700 hover:text-red-800"
+              className={`h-6 w-6 p-0 hover:bg-opacity-20 ${getTextColor()}`}
               title="Minimize"
             >
               <X className="h-3 w-3" />

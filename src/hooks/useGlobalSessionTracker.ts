@@ -86,7 +86,7 @@ export const useGlobalSessionTracker = () => {
 
   // Start a new session
   const startSession = useCallback(async () => {
-    if (!user || !isOnStudyPage || sessionState.isActive) return;
+    if (!user || sessionState.isActive) return;
 
     try {
       const activityType = getCurrentActivityType();
@@ -125,9 +125,9 @@ export const useGlobalSessionTracker = () => {
     } catch (error) {
       console.error('Error starting global session:', error);
     }
-  }, [user, isOnStudyPage, sessionState.isActive, getCurrentActivityType, queryClient]);
+  }, [user, sessionState.isActive, getCurrentActivityType, queryClient]);
 
-  // End the current session
+  // End the current session (only when truly ending, not when switching pages)
   const endSession = useCallback(async () => {
     if (!sessionState.sessionId) return;
 
@@ -200,7 +200,8 @@ export const useGlobalSessionTracker = () => {
       ...prev,
       isPaused: !prev.isPaused
     }));
-  }, []);
+    console.log(sessionState.isPaused ? '▶️ Session resumed' : '⏸️ Session paused');
+  }, [sessionState.isPaused]);
 
   // Timer effect
   useEffect(() => {
@@ -224,23 +225,29 @@ export const useGlobalSessionTracker = () => {
     };
   }, [sessionState.isActive, sessionState.isPaused, sessionState.startTime]);
 
-  // Handle page navigation
+  // Handle page navigation - key logic fix here
   useEffect(() => {
     if (isOnStudyPage) {
-      // If we're on a study page and no session is active, start one
+      // If we're on a study page
       if (!sessionState.isActive) {
+        // No active session - start one
         startSession();
       } else {
-        // Update activity type if session is already active
+        // Session exists - just update activity type and resume if paused
         updateActivityType();
+        if (sessionState.isPaused) {
+          setSessionState(prev => ({ ...prev, isPaused: false }));
+          console.log('▶️ Session resumed on study page');
+        }
       }
     } else {
-      // If we leave study pages, end the session
-      if (sessionState.isActive) {
-        endSession();
+      // If we leave study pages, pause the session but don't end it
+      if (sessionState.isActive && !sessionState.isPaused) {
+        setSessionState(prev => ({ ...prev, isPaused: true }));
+        console.log('⏸️ Session paused - left study area');
       }
     }
-  }, [isOnStudyPage, location.pathname, sessionState.isActive, startSession, endSession, updateActivityType]);
+  }, [isOnStudyPage, location.pathname, sessionState.isActive, sessionState.isPaused, startSession, updateActivityType]);
 
   // Record user activity
   const recordActivity = useCallback(() => {
