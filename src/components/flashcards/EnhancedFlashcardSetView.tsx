@@ -1,3 +1,4 @@
+
 import { useState, useMemo, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,6 +48,7 @@ import {
 import { useFlashcards } from "@/contexts/FlashcardContext";
 import { Flashcard } from "@/types/flashcard";
 import { useLearningProgress } from "@/hooks/useLearningProgress";
+import { FlashcardSetBreadcrumb } from "./FlashcardSetBreadcrumb";
 
 const EnhancedFlashcardSetView = () => {
   const { setId } = useParams<{ setId: string }>();
@@ -196,6 +198,9 @@ const EnhancedFlashcardSetView = () => {
 
   return (
     <div className="container mx-auto p-6">
+      {/* Breadcrumb */}
+      <FlashcardSetBreadcrumb setName={currentSet?.name} />
+      
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <Button variant="ghost" size="sm" onClick={() => navigate("/flashcards")}>
