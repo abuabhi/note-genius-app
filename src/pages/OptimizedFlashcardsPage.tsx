@@ -28,6 +28,7 @@ const FlashcardSetCard = memo(({ set, onStudy, onDelete }: any) => {
               size="sm"
               onClick={(e) => {
                 e.stopPropagation();
+                console.log('Study button clicked for set:', set.id);
                 onStudy(set.id);
               }}
               className="h-8 w-8 p-0"
@@ -64,6 +65,7 @@ const FlashcardSetCard = memo(({ set, onStudy, onDelete }: any) => {
           <Button
             onClick={(e) => {
               e.stopPropagation();
+              console.log('Main study button clicked for set:', set.id);
               onStudy(set.id);
             }}
             className="w-full mt-3 bg-mint-500 hover:bg-mint-600"
@@ -85,8 +87,11 @@ const OptimizedFlashcardsPage = () => {
   const [isStudyActive, setIsStudyActive] = useState(false);
 
   const handleStudyStart = (setId: string) => {
+    console.log('handleStudyStart called with setId:', setId);
     setIsStudyActive(true);
-    navigate(`/flashcards/${setId}/study`);
+    const studyPath = `/flashcards/${setId}/study`;
+    console.log('Navigating to:', studyPath);
+    navigate(studyPath);
   };
 
   // Memoized grid for better performance

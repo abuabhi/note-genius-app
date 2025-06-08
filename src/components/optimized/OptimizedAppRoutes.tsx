@@ -1,4 +1,3 @@
-
 import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
@@ -45,18 +44,6 @@ const PageLoadingSkeleton = ({ type }: { type: 'dashboard' | 'notes' | 'flashcar
         </div>
       </Layout>
     ),
-    notes: (
-      <Layout>
-        <div className="container mx-auto p-6 space-y-6">
-          <div className="h-8 bg-gray-200 rounded animate-pulse" />
-          <div className="grid gap-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-24 bg-gray-200 rounded animate-pulse" />
-            ))}
-          </div>
-        </div>
-      </Layout>
-    ),
     flashcards: (
       <Layout>
         <div className="container mx-auto p-6 space-y-6">
@@ -64,6 +51,18 @@ const PageLoadingSkeleton = ({ type }: { type: 'dashboard' | 'notes' | 'flashcar
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="h-40 bg-gray-200 rounded animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </Layout>
+    ),
+    notes: (
+      <Layout>
+        <div className="container mx-auto p-6 space-y-6">
+          <div className="h-8 bg-gray-200 rounded animate-pulse" />
+          <div className="grid gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-24 bg-gray-200 rounded animate-pulse" />
             ))}
           </div>
         </div>
@@ -201,7 +200,16 @@ export const OptimizedAppRoutes = () => {
           </LazyLoadWrapper>
         } 
       />
-      {/* All flashcard study routes */}
+      
+      {/* ALL Flashcard Study Routes - ensuring all variations work */}
+      <Route 
+        path="/flashcards/:setId/study" 
+        element={
+          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="flashcards" />}>
+            <FlashcardStudyPage />
+          </LazyLoadWrapper>
+        } 
+      />
       <Route 
         path="/flashcards/:id/study" 
         element={
@@ -211,7 +219,7 @@ export const OptimizedAppRoutes = () => {
         } 
       />
       <Route 
-        path="/flashcards/:setId/study" 
+        path="/study/:setId" 
         element={
           <LazyLoadWrapper fallback={<PageLoadingSkeleton type="flashcards" />}>
             <FlashcardStudyPage />
