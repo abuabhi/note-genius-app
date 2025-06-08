@@ -7,14 +7,12 @@ import { Button } from "@/components/ui/button";
 import { StudyPageContent } from "@/pages/study/StudyPageContent";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { CompactFloatingTimer } from "@/components/study/CompactFloatingTimer";
 import { FlashcardProvider } from "@/contexts/FlashcardContext";
 
 const FlashcardStudyPage = () => {
   const { setId, id } = useParams();
   const navigate = useNavigate();
   const { allSets: flashcardSets, loading } = useOptimizedFlashcardSets();
-  const [studyStarted, setStudyStarted] = useState(false);
   useRequireAuth();
 
   // Use either setId or id parameter
@@ -24,13 +22,6 @@ const FlashcardStudyPage = () => {
   const handleGoBack = () => {
     navigate('/flashcards');
   };
-
-  // Auto-start study activity when component mounts
-  useEffect(() => {
-    if (currentSet && !loading) {
-      setStudyStarted(true);
-    }
-  }, [currentSet, loading]);
 
   if (loading) {
     return (
@@ -66,15 +57,6 @@ const FlashcardStudyPage = () => {
   return (
     <FlashcardProvider>
       <Layout>
-        {/* Compact Floating Timer - shows during study */}
-        {studyStarted && (
-          <CompactFloatingTimer
-            activityType="flashcard"
-            isActive={true}
-            className="bg-mint-500 border-mint-600"
-          />
-        )}
-
         {/* Use StudyPageContent which has breadcrumb and mode selector */}
         <StudyPageContent />
       </Layout>

@@ -12,7 +12,6 @@ import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus } from 'lucide-react';
 import { useState, useMemo } from 'react';
-import { CompactFloatingTimer } from '@/components/study/CompactFloatingTimer';
 import FlashcardSetGrid from '@/components/flashcards/components/FlashcardSetGrid';
 
 const OptimizedFlashcardsPage = () => {
@@ -20,12 +19,10 @@ const OptimizedFlashcardsPage = () => {
   const navigate = useNavigate();
   const { flashcardSets, loading, error, deleteFlashcardSet } = useOptimizedFlashcardSets();
   const { progressData, getSetProgress } = useFlashcardSetProgress(flashcardSets);
-  const [isStudyActive, setIsStudyActive] = useState(false);
   const [deletingSet, setDeletingSet] = useState<string | null>(null);
 
   const handleStudyStart = (setId: string) => {
     console.log('handleStudyStart called with setId:', setId);
-    setIsStudyActive(true);
     const studyPath = `/flashcards/${setId}/study`;
     console.log('Navigating to:', studyPath);
     navigate(studyPath);
@@ -115,13 +112,6 @@ const OptimizedFlashcardsPage = () => {
   return (
     <Layout>
       <div className="container mx-auto p-4 md:p-6">
-        {/* Compact Floating Timer - shows on main flashcards page */}
-        <CompactFloatingTimer
-          activityType="flashcard"
-          isActive={isStudyActive}
-          className="bg-mint-500 border-mint-600"
-        />
-
         <PageBreadcrumb pageName="Flashcards" pageIcon={<BookOpen className="h-3 w-3" />} />
         
         <div className="mb-6 flex items-center justify-between">
