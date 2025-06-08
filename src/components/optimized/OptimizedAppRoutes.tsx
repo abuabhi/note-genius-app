@@ -11,6 +11,7 @@ const NoteStudyPage = lazy(() => import('@/pages/NoteStudyPage'));
 const EditNotePage = lazy(() => import('@/pages/EditNotePage'));
 const NoteToFlashcardPage = lazy(() => import('@/pages/NoteToFlashcardPage'));
 const FlashcardsPage = lazy(() => import('@/pages/FlashcardsPage'));
+const FlashcardSetPage = lazy(() => import('@/pages/FlashcardSetPage'));
 const CreateFlashcardPage = lazy(() => import('@/pages/CreateFlashcardPage'));
 const FlashcardStudyPage = lazy(() => import('@/pages/FlashcardStudyPage'));
 const ProgressPage = lazy(() => import('@/pages/ProgressPage'));
@@ -192,6 +193,17 @@ export const OptimizedAppRoutes = () => {
           </LazyLoadWrapper>
         } 
       />
+      
+      {/* Individual Flashcard Set View - NEW ROUTE */}
+      <Route 
+        path="/flashcards/:setId" 
+        element={
+          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="flashcards" />}>
+            <FlashcardSetPage />
+          </LazyLoadWrapper>
+        } 
+      />
+      
       <Route 
         path="/flashcards/create" 
         element={

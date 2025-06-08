@@ -54,6 +54,12 @@ export const isStudyRoute = (pathname: string): boolean => {
     return false;
   }
   
+  // Check for individual flashcard set pages - any flashcard set view page (NEW)
+  if (/^\/flashcards\/[^\/]+$/.test(pathname)) {
+    console.log(`📚 FLASHCARD SET VIEW ROUTE: ${pathname}`);
+    return true;
+  }
+  
   // Check for flashcard study patterns - any flashcard set study page
   if (/^\/flashcards\/[^\/]+\/study$/.test(pathname)) {
     console.log(`📚 FLASHCARD STUDY ROUTE: ${pathname}`);
