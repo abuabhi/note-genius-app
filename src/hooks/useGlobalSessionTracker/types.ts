@@ -1,3 +1,4 @@
+
 import { Location } from 'react-router-dom';
 
 export type ActivityType = 'general' | 'flashcard_study' | 'note_review' | 'quiz_taking';
@@ -8,6 +9,13 @@ export interface ActivityData {
   endTime: number | null;
   duration: number;
   details?: any;
+  // Add missing properties for compatibility
+  cards_reviewed?: number;
+  cards_correct?: number;
+  quiz_score?: number;
+  quiz_total_questions?: number;
+  notes_created?: number;
+  notes_reviewed?: number;
 }
 
 export interface GlobalSessionState {
@@ -15,7 +23,7 @@ export interface GlobalSessionState {
   isActive: boolean;
   startTime: number | null;
   elapsedSeconds: number;
-  currentActivity: ActivityData | null;
+  currentActivity: ActivityType | null;
   isPaused: boolean;
 }
 
@@ -52,3 +60,13 @@ export const STUDY_ROUTES = [
   '/quiz/*',
   '/study'
 ];
+
+// Export the isStudyRoute function
+export const isStudyRoute = (pathname: string): boolean => {
+  return STUDY_ROUTES.some(route => {
+    if (route.endsWith('/*')) {
+      return pathname.startsWith(route.slice(0, -2));
+    }
+    return pathname === route;
+  });
+};

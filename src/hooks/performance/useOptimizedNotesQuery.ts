@@ -109,8 +109,15 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
 
         // Transform data to match Note interface
         const transformedNotes: Note[] = (notes || []).map(note => ({
-          ...note,
-          category: note.user_subjects?.name || note.subject || 'Uncategorized',
+          id: note.id,
+          title: note.title,
+          description: note.description || '',
+          content: note.content || '',
+          date: note.date,
+          category: note.user_subjects?.name || note.category || 'Uncategorized',
+          sourceType: (note.source_type || 'manual') as 'manual' | 'import' | 'scan',
+          archived: note.archived || false,
+          pinned: note.pinned || false,
           tags: note.note_tags?.map(nt => nt.tags).filter(Boolean) || []
         }));
 

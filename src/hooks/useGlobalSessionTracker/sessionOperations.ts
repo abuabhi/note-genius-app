@@ -2,7 +2,7 @@
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
-import { ActivityType, GlobalSessionState, ActivityData, isStudyRoute } from './types';
+import { ActivityType, GlobalSessionState, isStudyRoute } from './types';
 import { persistSession, restoreSession, clearPersistedSession } from './sessionPersistence';
 import { validateSessionDuration, validateSessionState } from './sessionValidation';
 import { logger } from '@/config/environment';
@@ -16,7 +16,7 @@ export const useSessionOperations = (
   const queryClient = useQueryClient();
 
   // Update session with activity data
-  const updateSessionActivity = useCallback(async (activityData: ActivityData) => {
+  const updateSessionActivity = useCallback(async (activityData: any) => {
     if (!sessionState.sessionId || !sessionState.isActive) return;
 
     try {
@@ -85,7 +85,7 @@ export const useSessionOperations = (
           const resumedState = {
             sessionId: existingSession.id,
             isActive: true,
-            startTime: new Date(existingSession.start_time),
+            startTime: new Date(existingSession.start_time).getTime(),
             elapsedSeconds: Math.floor(sessionAge / 1000),
             currentActivity: getCurrentActivityType(),
             isPaused: false
@@ -145,7 +145,7 @@ export const useSessionOperations = (
       const newSessionState = {
         sessionId: data.id,
         isActive: true,
-        startTime: now,
+        startTime: now.getTime(),
         elapsedSeconds: 0,
         currentActivity: activityType,
         isPaused: false

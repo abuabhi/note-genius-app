@@ -1,3 +1,4 @@
+
 import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/auth';
@@ -49,8 +50,13 @@ function App() {
                   <Route key={index} path={route.path} element={route.element} />
                 ))}
                 
-                {/* Protected Routes - Use OptimizedAppRoutes for main app navigation */}
+                {/* Protected Routes */}
                 <Route element={<ProtectedRoute />}>
+                  {/* Replace the notes route with optimized version */}
+                  <Route path="/notes" element={<OptimizedNotesPage />} />
+                  <Route path="/notes/:noteId" element={<OptimizedNotesPage />} />
+                  
+                  {/* Use OptimizedAppRoutes for main app navigation */}
                   <Route path="/*" element={<OptimizedAppRoutes />} />
                 </Route>
                 
@@ -60,10 +66,6 @@ function App() {
                     <Route key={index} path={route.path} element={route.element} />
                   ))}
                 </Route>
-                
-                {/* Replace the notes route with optimized version */}
-                <Route path="/notes" element={<OptimizedNotesPage />} />
-                <Route path="/notes/:noteId" element={<OptimizedNotesPage />} />
                 
                 {/* Not Found Route */}
                 <Route path="*" element={<NotFoundPage />} />

@@ -47,7 +47,7 @@ export const OptimizedNotesGrid = ({ notes }: OptimizedNotesGridProps) => {
             <div className="space-y-3">
               {/* Subject/Category */}
               <Badge variant="secondary" className="bg-mint-50 text-mint-700 border-mint-200">
-                {note.category || note.subject}
+                {note.category}
               </Badge>
 
               {/* Tags */}

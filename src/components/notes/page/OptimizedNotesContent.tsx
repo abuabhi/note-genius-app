@@ -42,8 +42,7 @@ export const OptimizedNotesContent = () => {
         content: '',
         date: new Date().toISOString().split('T')[0],
         category: 'General',
-        sourceType: 'manual',
-        subject: 'General'
+        sourceType: 'manual'
       });
     } catch (error) {
       console.error('Failed to create note:', error);

@@ -3,7 +3,7 @@ import Layout from '@/components/layout/Layout';
 import { OptimizedNotesProvider } from '@/contexts/OptimizedNotesContext';
 import { PageBreadcrumb } from '@/components/ui/page-breadcrumb';
 import { FileText } from 'lucide-react';
-import { ProductionErrorBoundary } from '@/components/error/ProductionErrorBoundary';
+import { EnhancedErrorBoundary } from '@/components/error/EnhancedErrorBoundary';
 import { ProductionMonitoring } from '@/components/performance/ProductionMonitoring';
 import { CacheMonitor } from '@/components/performance/CacheMonitor';
 import { OptimizedNotesContent } from '@/components/notes/page/OptimizedNotesContent';
@@ -13,9 +13,8 @@ const OptimizedNotesPage = () => {
   useRequireAuth();
 
   return (
-    <ProductionErrorBoundary
-      enableReporting={true}
-      showErrorDetails={process.env.NODE_ENV === 'development'}
+    <EnhancedErrorBoundary
+      fallback={<div>Something went wrong. Please try again.</div>}
     >
       <Layout>
         <ProductionMonitoring />
@@ -34,7 +33,7 @@ const OptimizedNotesPage = () => {
           </div>
         </div>
       </Layout>
-    </ProductionErrorBoundary>
+    </EnhancedErrorBoundary>
   );
 };
 
