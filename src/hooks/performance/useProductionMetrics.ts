@@ -93,7 +93,7 @@ export const useProductionMetrics = (componentName: string) => {
         const queryData: QueryPerformanceData = {
           queryKey,
           duration: state.dataUpdatedAt - (state.dataUpdatedAt - 1000), // Approximate
-          cacheHit: state.isFetched && !state.isRefetching,
+          cacheHit: query.state.fetchStatus !== 'fetching',
           timestamp: Date.now()
         };
         
