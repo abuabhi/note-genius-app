@@ -5,6 +5,7 @@ import CreateFlashcard from "@/components/flashcards/CreateFlashcard";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { FlashcardProvider } from "@/contexts/flashcards";
 
 const CreateFlashcardPage = () => {
   useRequireAuth();
@@ -22,19 +23,21 @@ const CreateFlashcardPage = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto p-6">
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" size="sm" onClick={handleBack}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Set
-          </Button>
-          <h1 className="text-3xl font-bold text-mint-900">Add New Flashcard</h1>
+      <FlashcardProvider>
+        <div className="container mx-auto p-6">
+          <div className="flex items-center gap-4 mb-6">
+            <Button variant="ghost" size="sm" onClick={handleBack}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Set
+            </Button>
+            <h1 className="text-3xl font-bold text-mint-900">Add New Flashcard</h1>
+          </div>
+          
+          <div className="max-w-2xl mx-auto">
+            <CreateFlashcard setId={setId} onSuccess={handleSuccess} />
+          </div>
         </div>
-        
-        <div className="max-w-2xl mx-auto">
-          <CreateFlashcard setId={setId} onSuccess={handleSuccess} />
-        </div>
-      </div>
+      </FlashcardProvider>
     </Layout>
   );
 };
