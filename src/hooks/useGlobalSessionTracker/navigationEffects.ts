@@ -10,53 +10,77 @@ export const useNavigationEffects = (
   updateActivityType: () => Promise<void>
 ) => {
   const location = useLocation();
-  const previousIsOnStudyPageRef = useRef<boolean | null>(null);
+  const previousLocationRef = useRef<string | null>(null);
+  const isInitialLoadRef = useRef(true);
 
   // Check if current route is a study route
   const isOnStudyPage = STUDY_ROUTES.some(route => location.pathname.startsWith(route));
+  
+  // Check if previous location was a study page
+  const wasOnStudyPage = previousLocationRef.current ? 
+    STUDY_ROUTES.some(route => previousLocationRef.current!.startsWith(route)) : null;
 
-  // Handle page navigation with improved logic for session continuity
+  // Handle page navigation - ONLY depend on location.pathname to avoid session state race conditions
   useEffect(() => {
-    const previousIsOnStudyPage = previousIsOnStudyPageRef.current;
+    const currentPath = location.pathname;
+    const previousPath = previousLocationRef.current;
     
     console.log('📍 Navigation detected:', {
-      path: location.pathname,
+      currentPath,
+      previousPath,
       isOnStudyPage,
-      previousIsOnStudyPage,
+      wasOnStudyPage,
+      isInitialLoad: isInitialLoadRef.current,
       hasActiveSession: sessionState.isActive,
       sessionId: sessionState.sessionId,
       isPaused: sessionState.isPaused
     });
 
-    // Update the ref for next navigation
-    previousIsOnStudyPageRef.current = isOnStudyPage;
+    // Skip processing on initial load to avoid unwanted session creation
+    if (isInitialLoadRef.current) {
+      isInitialLoadRef.current = false;
+      previousLocationRef.current = currentPath;
+      
+      // On initial load, if we're on a study page and no session exists, start one
+      if (isOnStudyPage && !sessionState.isActive) {
+        console.log('🚀 Initial load on study page - starting session');
+        startSession();
+      }
+      return;
+    }
 
-    if (isOnStudyPage) {
-      // On a study page
-      if (sessionState.isActive) {
-        // Session exists - update activity type and unpause if needed
-        console.log('🔄 On study page with existing session - updating activity and unpausing');
+    // Update previous location reference
+    previousLocationRef.current = currentPath;
+
+    if (isOnStudyPage && wasOnStudyPage) {
+      // Moving between study pages - just update activity type, don't touch session state
+      console.log('🔄 Moving between study pages - updating activity type only');
+      updateActivityType();
+      
+    } else if (isOnStudyPage && !wasOnStudyPage) {
+      // Entering study area from non-study page
+      if (sessionState.isActive && sessionState.isPaused) {
+        // Resume existing paused session
+        console.log('▶️ Entering study area - resuming paused session');
+        setSessionState(prev => ({ ...prev, isPaused: false }));
         updateActivityType();
-        if (sessionState.isPaused) {
-          setSessionState(prev => ({ ...prev, isPaused: false }));
-          console.log('▶️ Session resumed on study page');
-        }
-      } else if (previousIsOnStudyPage === false || previousIsOnStudyPage === null) {
-        // No session exists AND we came from a non-study page (or initial load) - start a new one
+      } else if (!sessionState.isActive) {
+        // Start new session
         console.log('🚀 Entering study area - starting new session');
         startSession();
       }
-      // If previousIsOnStudyPage === true, we're moving between study pages with no active session
-      // This shouldn't happen in normal flow, but we don't want to start a new session
-    } else {
-      // Not on a study page
-      if (sessionState.isActive && !sessionState.isPaused && previousIsOnStudyPage === true) {
-        // Session exists, is active, and we just left the study area - pause it
-        console.log('⏸️ Left study area - pausing session');
+      
+    } else if (!isOnStudyPage && wasOnStudyPage) {
+      // Leaving study area for non-study page
+      if (sessionState.isActive && !sessionState.isPaused) {
+        console.log('⏸️ Leaving study area - pausing session');
         setSessionState(prev => ({ ...prev, isPaused: true }));
       }
     }
-  }, [location.pathname, sessionState.isActive, sessionState.isPaused]);
+    
+    // If moving between non-study pages, do nothing
+    
+  }, [location.pathname]); // ONLY depend on pathname to avoid race conditions
 
   return { isOnStudyPage };
 };

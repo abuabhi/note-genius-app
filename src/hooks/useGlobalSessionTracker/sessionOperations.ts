@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -43,9 +42,41 @@ export const useSessionOperations = (
       return;
     }
     
+    // Check if there's already an active session to prevent duplicates
     if (sessionState.isActive) {
       console.log('❌ Cannot start session: session already active');
       return;
+    }
+
+    // Check for existing active session in database to prevent duplicates
+    try {
+      const { data: existingSessions } = await supabase
+        .from('study_sessions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .order('start_time', { ascending: false })
+        .limit(1);
+
+      if (existingSessions && existingSessions.length > 0) {
+        const existingSession = existingSessions[0];
+        console.log('📍 Found existing active session, resuming:', existingSession.id);
+        
+        setSessionState({
+          sessionId: existingSession.id,
+          isActive: true,
+          startTime: new Date(existingSession.start_time),
+          elapsedSeconds: Math.floor((Date.now() - new Date(existingSession.start_time).getTime()) / 1000),
+          currentActivity: existingSession.activity_type,
+          isPaused: false
+        });
+        
+        // Update activity type for current page
+        updateActivityType();
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking for existing sessions:', error);
     }
 
     try {
