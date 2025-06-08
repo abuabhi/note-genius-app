@@ -35,6 +35,9 @@ export const useConsolidatedAnalytics = () => {
     // Streak and trends
     streakDays: analytics.streakDays,
     
+    // Session data - add the missing recentSessions property
+    recentSessions: analytics.recentSessions,
+    
     // Timezone info
     timezone: analytics.timezone,
     todayString: analytics.todayString
@@ -44,6 +47,7 @@ export const useConsolidatedAnalytics = () => {
     totalCardsMastered: consolidatedAnalytics.totalCardsMastered,
     totalSets: consolidatedAnalytics.totalSets,
     flashcardAccuracy: consolidatedAnalytics.flashcardAccuracy,
+    recentSessions: consolidatedAnalytics.recentSessions?.length || 0,
     source: 'useConsolidatedAnalytics'
   });
 
