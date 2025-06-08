@@ -1,4 +1,3 @@
-
 import Layout from '@/components/layout/Layout';
 import { OptimizedNotesProvider } from '@/contexts/OptimizedNotesContext';
 import { PageBreadcrumb } from '@/components/ui/page-breadcrumb';
@@ -7,7 +6,7 @@ import EnhancedErrorBoundary from '@/components/error/EnhancedErrorBoundary';
 import { ProductionMonitoring } from '@/components/performance/ProductionMonitoring';
 import { CacheMonitor } from '@/components/performance/CacheMonitor';
 import { AdvancedCacheManager } from '@/components/performance/AdvancedCacheManager';
-import { OptimizedNotesContent } from '@/components/notes/page/OptimizedNotesContent';
+import { SecureOptimizedNotesContent } from '@/components/notes/page/SecureOptimizedNotesContent';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -49,7 +48,7 @@ const OptimizedNotesPage = () => {
             )}
             
             <OptimizedNotesProvider>
-              <OptimizedNotesContent />
+              <SecureOptimizedNotesContent />
             </OptimizedNotesProvider>
           </div>
         </div>
