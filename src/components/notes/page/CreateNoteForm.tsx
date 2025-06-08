@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,15 +10,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 interface CreateNoteFormProps {
   onSave: (note: Omit<Note, 'id'>) => Promise<Note | null>;
+  initialData?: Note;
 }
 
-export const CreateNoteForm = ({ onSave }: CreateNoteFormProps) => {
+export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [content, setContent] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { subjects } = useUserSubjects();
+
+  // Initialize form with existing data when editing
+  useEffect(() => {
+    if (initialData) {
+      setTitle(initialData.title || '');
+      setDescription(initialData.description || '');
+      setContent(initialData.content || '');
+      setSelectedSubject(initialData.category || '');
+    }
+  }, [initialData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,17 +41,18 @@ export const CreateNoteForm = ({ onSave }: CreateNoteFormProps) => {
         title: title.trim(),
         description: description.trim(),
         content: content.trim(),
-        date: new Date().toISOString().split('T')[0],
+        date: initialData?.date || new Date().toISOString().split('T')[0],
         category: selectedSubject || 'General',
-        sourceType: 'manual',
-        archived: false,
-        pinned: false,
-        tags: []
+        sourceType: initialData?.sourceType || 'manual',
+        archived: initialData?.archived || false,
+        pinned: initialData?.pinned || false,
+        tags: initialData?.tags || [],
+        subject_id: initialData?.subject_id
       };
 
       const result = await onSave(noteData);
-      if (result) {
-        // Reset form
+      if (result && !initialData) {
+        // Reset form only for new notes (not when editing)
         setTitle('');
         setDescription('');
         setContent('');
@@ -110,7 +122,7 @@ export const CreateNoteForm = ({ onSave }: CreateNoteFormProps) => {
           disabled={!title.trim() || isSubmitting}
           className="bg-mint-600 hover:bg-mint-700"
         >
-          {isSubmitting ? 'Creating...' : 'Create Note'}
+          {isSubmitting ? (initialData ? 'Updating...' : 'Creating...') : (initialData ? 'Update Note' : 'Create Note')}
         </Button>
       </div>
     </form>
