@@ -8,45 +8,75 @@ export const useActivityTracking = (
   isOnStudyPage: boolean
 ) => {
   const lastActivityRef = useRef(Date.now());
+  const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Record user activity
   const recordActivity = useCallback(() => {
     lastActivityRef.current = Date.now();
-  }, []);
-
-  // Auto-pause on inactivity (5 minutes)
-  useEffect(() => {
-    if (!sessionState.isActive || sessionState.isPaused) return;
-
-    const checkInactivity = setInterval(() => {
-      const timeSinceActivity = Date.now() - lastActivityRef.current;
-      const fiveMinutes = 5 * 60 * 1000;
-
-      if (timeSinceActivity > fiveMinutes && !sessionState.isPaused) {
-        console.log('🔄 Auto-pausing session due to inactivity');
+    
+    // Clear existing timeout
+    if (inactivityTimeoutRef.current) {
+      clearTimeout(inactivityTimeoutRef.current);
+    }
+    
+    // Set new inactivity timeout (15 minutes instead of 5 for less aggressive pausing)
+    if (sessionState.isActive && !sessionState.isPaused) {
+      inactivityTimeoutRef.current = setTimeout(() => {
+        console.log('🔄 Auto-pausing session due to inactivity (15 minutes)');
         setSessionState(prev => ({ ...prev, isPaused: true }));
-      }
-    }, 60000); // Check every minute
-
-    return () => clearInterval(checkInactivity);
+      }, 15 * 60 * 1000); // 15 minutes
+    }
   }, [sessionState.isActive, sessionState.isPaused]);
 
-  // Activity listeners
+  // Auto-pause on inactivity with improved logic
   useEffect(() => {
-    if (!isOnStudyPage) return;
+    if (!sessionState.isActive || sessionState.isPaused || !isOnStudyPage) {
+      // Clear timeout if session is not active, paused, or not on study page
+      if (inactivityTimeoutRef.current) {
+        clearTimeout(inactivityTimeoutRef.current);
+        inactivityTimeoutRef.current = null;
+      }
+      return;
+    }
+
+    // Start the inactivity timer
+    recordActivity();
+
+    return () => {
+      if (inactivityTimeoutRef.current) {
+        clearTimeout(inactivityTimeoutRef.current);
+        inactivityTimeoutRef.current = null;
+      }
+    };
+  }, [sessionState.isActive, sessionState.isPaused, isOnStudyPage, recordActivity]);
+
+  // Activity listeners with improved event handling
+  useEffect(() => {
+    if (!isOnStudyPage || !sessionState.isActive) return;
 
     const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
     
+    const throttledRecordActivity = (() => {
+      let lastCall = 0;
+      return () => {
+        const now = Date.now();
+        if (now - lastCall >= 1000) { // Throttle to once per second
+          recordActivity();
+          lastCall = now;
+        }
+      };
+    })();
+    
     events.forEach(event => {
-      document.addEventListener(event, recordActivity, { passive: true });
+      document.addEventListener(event, throttledRecordActivity, { passive: true });
     });
 
     return () => {
       events.forEach(event => {
-        document.removeEventListener(event, recordActivity);
+        document.removeEventListener(event, throttledRecordActivity);
       });
     };
-  }, [recordActivity, isOnStudyPage]);
+  }, [recordActivity, isOnStudyPage, sessionState.isActive]);
 
   return { recordActivity };
 };

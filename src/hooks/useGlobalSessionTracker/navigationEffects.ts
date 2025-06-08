@@ -12,6 +12,7 @@ export const useNavigationEffects = (
   const location = useLocation();
   const previousLocationRef = useRef<string | null>(null);
   const isInitialLoadRef = useRef(true);
+  const sessionStartedRef = useRef(false);
 
   // Check if current route is a study route
   const isOnStudyPage = STUDY_ROUTES.some(route => location.pathname.startsWith(route));
@@ -20,7 +21,7 @@ export const useNavigationEffects = (
   const wasOnStudyPage = previousLocationRef.current ? 
     STUDY_ROUTES.some(route => previousLocationRef.current!.startsWith(route)) : null;
 
-  // Handle page navigation - ONLY depend on location.pathname to avoid session state race conditions
+  // Handle page navigation with improved session management
   useEffect(() => {
     const currentPath = location.pathname;
     const previousPath = previousLocationRef.current;
@@ -33,7 +34,8 @@ export const useNavigationEffects = (
       isInitialLoad: isInitialLoadRef.current,
       hasActiveSession: sessionState.isActive,
       sessionId: sessionState.sessionId,
-      isPaused: sessionState.isPaused
+      isPaused: sessionState.isPaused,
+      sessionStarted: sessionStartedRef.current
     });
 
     // Skip processing on initial load to avoid unwanted session creation
@@ -41,9 +43,10 @@ export const useNavigationEffects = (
       isInitialLoadRef.current = false;
       previousLocationRef.current = currentPath;
       
-      // On initial load, if we're on a study page and no session exists, start one
-      if (isOnStudyPage && !sessionState.isActive) {
+      // On initial load, only start session if on study page and no active session
+      if (isOnStudyPage && !sessionState.isActive && !sessionStartedRef.current) {
         console.log('🚀 Initial load on study page - starting session');
+        sessionStartedRef.current = true;
         startSession();
       }
       return;
@@ -53,9 +56,11 @@ export const useNavigationEffects = (
     previousLocationRef.current = currentPath;
 
     if (isOnStudyPage && wasOnStudyPage) {
-      // Moving between study pages - just update activity type, don't touch session state
+      // Moving between study pages - just update activity type
       console.log('🔄 Moving between study pages - updating activity type only');
-      updateActivityType();
+      if (sessionState.isActive) {
+        updateActivityType();
+      }
       
     } else if (isOnStudyPage && !wasOnStudyPage) {
       // Entering study area from non-study page
@@ -64,9 +69,10 @@ export const useNavigationEffects = (
         console.log('▶️ Entering study area - resuming paused session');
         setSessionState(prev => ({ ...prev, isPaused: false }));
         updateActivityType();
-      } else if (!sessionState.isActive) {
-        // Start new session
+      } else if (!sessionState.isActive && !sessionStartedRef.current) {
+        // Start new session only if we haven't already started one
         console.log('🚀 Entering study area - starting new session');
+        sessionStartedRef.current = true;
         startSession();
       }
       
@@ -78,9 +84,12 @@ export const useNavigationEffects = (
       }
     }
     
-    // If moving between non-study pages, do nothing
+    // Reset session started flag when leaving study pages completely
+    if (!isOnStudyPage) {
+      sessionStartedRef.current = false;
+    }
     
-  }, [location.pathname]); // ONLY depend on pathname to avoid race conditions
+  }, [location.pathname, isOnStudyPage, wasOnStudyPage, sessionState.isActive, sessionState.isPaused]);
 
   return { isOnStudyPage };
 };

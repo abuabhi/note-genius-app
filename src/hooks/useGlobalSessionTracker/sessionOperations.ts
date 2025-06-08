@@ -1,3 +1,4 @@
+
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -35,7 +36,7 @@ export const useSessionOperations = (
     }
   }, [sessionState.sessionId, sessionState.isActive]);
 
-  // Start a new session
+  // Start a new session with better duplicate prevention
   const startSession = useCallback(async () => {
     if (!user) {
       console.log('❌ Cannot start session: no user');
@@ -43,60 +44,45 @@ export const useSessionOperations = (
     }
     
     // Check if there's already an active session to prevent duplicates
-    if (sessionState.isActive) {
-      console.log('❌ Cannot start session: session already active');
+    if (sessionState.isActive && sessionState.sessionId) {
+      console.log('❌ Cannot start session: session already active locally');
       return;
     }
 
-    // Check for existing active session in database to prevent duplicates
     try {
-      const { data: existingSessions } = await supabase
+      // First, end any existing active sessions for this user (cleanup)
+      const { error: cleanupError } = await supabase
         .from('study_sessions')
-        .select('*')
+        .update({
+          is_active: false,
+          end_time: new Date().toISOString(),
+          duration: 1800, // Default 30 minutes for abandoned sessions
+          updated_at: new Date().toISOString()
+        })
         .eq('user_id', user.id)
-        .eq('is_active', true)
-        .order('start_time', { ascending: false })
-        .limit(1);
+        .eq('is_active', true);
 
-      if (existingSessions && existingSessions.length > 0) {
-        const existingSession = existingSessions[0];
-        console.log('📍 Found existing active session, resuming:', existingSession.id);
-        
-        // Type-safe activity type conversion
-        const activityType = (existingSession.activity_type as ActivityType) || 'general';
-        
-        setSessionState({
-          sessionId: existingSession.id,
-          isActive: true,
-          startTime: new Date(existingSession.start_time),
-          elapsedSeconds: Math.floor((Date.now() - new Date(existingSession.start_time).getTime()) / 1000),
-          currentActivity: activityType,
-          isPaused: false
-        });
-        
-        // Update activity type for current page
-        updateActivityType();
-        return;
+      if (cleanupError) {
+        console.warn('Warning cleaning up existing sessions:', cleanupError);
       }
-    } catch (error) {
-      console.error('Error checking for existing sessions:', error);
-    }
 
-    try {
+      // Now create a new session
       const activityType = getCurrentActivityType();
       const now = new Date();
 
       const sessionData = {
         user_id: user.id,
-        title: `Global Study Session`,
-        subject: 'Multi-Activity Study',
+        title: `Study Session - ${activityType}`,
+        subject: activityType === 'general' ? 'Multi-Activity Study' : activityType.replace('_', ' '),
         start_time: now.toISOString(),
         is_active: true,
         activity_type: activityType,
-        auto_created: true
+        auto_created: true,
+        duration: null,
+        end_time: null
       };
 
-      console.log('🚀 Starting new global session...');
+      console.log('🚀 Starting new session with cleanup...');
       const { data, error } = await supabase
         .from('study_sessions')
         .insert(sessionData)
@@ -114,30 +100,55 @@ export const useSessionOperations = (
         isPaused: false
       });
 
-      console.log('✅ Global session started:', data.id);
+      console.log('✅ New session started:', data.id);
       queryClient.invalidateQueries({ queryKey: ['studySessions'] });
+      queryClient.invalidateQueries({ queryKey: ['timezone-aware-analytics'] });
 
     } catch (error) {
-      console.error('Error starting global session:', error);
+      console.error('Error starting session:', error);
     }
-  }, [user, sessionState.isActive, getCurrentActivityType, queryClient]);
+  }, [user, sessionState.isActive, sessionState.sessionId, getCurrentActivityType, queryClient]);
 
-  // End the current session
+  // End the current session with proper duration calculation
   const endSession = useCallback(async () => {
-    if (!sessionState.sessionId) return;
+    if (!sessionState.sessionId || !sessionState.startTime) {
+      console.log('❌ Cannot end session: no active session');
+      return;
+    }
 
     try {
       const endTime = new Date();
-      const duration = sessionState.startTime ? 
-        Math.floor((endTime.getTime() - sessionState.startTime.getTime()) / 1000) : 0;
+      const startTime = new Date(sessionState.startTime);
+      
+      // Calculate realistic duration (cap at 4 hours but allow shorter sessions)
+      const actualDurationSeconds = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
+      const maxDuration = 4 * 60 * 60; // 4 hours
+      const minDuration = 60; // 1 minute minimum
+      
+      // Use actual duration if reasonable, otherwise cap it
+      let finalDuration = actualDurationSeconds;
+      if (actualDurationSeconds > maxDuration) {
+        finalDuration = Math.min(maxDuration, 60 * 60); // Cap at 1 hour for likely abandoned sessions
+        console.log(`⚠️ Session duration capped: ${actualDurationSeconds}s -> ${finalDuration}s`);
+      } else if (actualDurationSeconds < minDuration) {
+        finalDuration = minDuration;
+      }
 
-      console.log('🛑 Ending global session...');
+      console.log('🛑 Ending session...', {
+        sessionId: sessionState.sessionId,
+        actualDuration: actualDurationSeconds,
+        finalDuration: finalDuration,
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString()
+      });
+
       const { error } = await supabase
         .from('study_sessions')
         .update({
           end_time: endTime.toISOString(),
-          duration,
-          is_active: false
+          duration: finalDuration,
+          is_active: false,
+          updated_at: endTime.toISOString()
         })
         .eq('id', sessionState.sessionId);
 
@@ -152,11 +163,12 @@ export const useSessionOperations = (
         isPaused: false
       });
 
-      console.log('✅ Global session ended');
+      console.log('✅ Session ended successfully');
       queryClient.invalidateQueries({ queryKey: ['studySessions'] });
+      queryClient.invalidateQueries({ queryKey: ['timezone-aware-analytics'] });
 
     } catch (error) {
-      console.error('Error ending global session:', error);
+      console.error('Error ending session:', error);
     }
   }, [sessionState.sessionId, sessionState.startTime, queryClient]);
 

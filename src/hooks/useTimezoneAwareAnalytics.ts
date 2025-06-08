@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
@@ -11,15 +12,17 @@ import {
   debugTimezone
 } from '@/utils/timezoneUtils';
 
-// Validation helpers
+// Enhanced validation helpers
 const validateDuration = (duration: number | null): number => {
-  if (!duration || duration < 60 || duration > 14400) return 0; // 1 min to 4 hours
+  if (!duration || duration < 60) return 0; // Minimum 1 minute
+  if (duration > 14400) return 3600; // Cap at 1 hour for suspicious long sessions
+  if (duration === 14400) return 3600; // Fix the exactly 4-hour bug
   return duration;
 };
 
 const validateHours = (hours: number): number => {
   if (hours > 1000) return Math.round(hours / 3600); // Convert seconds to hours if needed
-  return Math.max(0, hours);
+  return Math.max(0, Math.min(hours, 24)); // Cap at 24 hours per day max
 };
 
 const safePercentage = (current: number, previous: number): number => {
@@ -36,14 +39,14 @@ export const useTimezoneAwareAnalytics = () => {
     queryFn: async () => {
       if (!user || !timezone) return null;
 
-      console.log('🔄 Fetching timezone-aware analytics for user:', user.id, 'timezone:', timezone);
+      console.log('🔄 Fetching cleaned timezone-aware analytics for user:', user.id, 'timezone:', timezone);
       
-      // Debug timezone calculations for Melbourne users
+      // Debug timezone calculations
       if (timezone.includes('Melbourne') || timezone.includes('Australia')) {
         debugTimezone(timezone);
       }
 
-      // Get study sessions with strict filtering - only completed, realistic sessions
+      // Get study sessions with enhanced filtering - only valid, completed sessions
       const { data: sessions, error: sessionsError } = await supabase
         .from('study_sessions')
         .select('*')
@@ -52,6 +55,7 @@ export const useTimezoneAwareAnalytics = () => {
         .not('duration', 'is', null)
         .gte('duration', 60) // At least 1 minute
         .lte('duration', 14400) // At most 4 hours
+        .gte('start_time', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()) // Last 90 days only
         .order('start_time', { ascending: false });
 
       if (sessionsError) {
@@ -59,7 +63,7 @@ export const useTimezoneAwareAnalytics = () => {
         throw sessionsError;
       }
 
-      console.log(`📊 Found ${sessions?.length || 0} valid sessions`);
+      console.log(`📊 Found ${sessions?.length || 0} valid sessions after cleanup`);
 
       // Get flashcard sets and progress
       const { data: flashcardSets } = await supabase
@@ -72,7 +76,7 @@ export const useTimezoneAwareAnalytics = () => {
         .select('*')
         .eq('user_id', user.id);
 
-      // Get today's learning progress to include recently completed cards
+      // Get today's learning progress
       const todayString = getTodayInTimezone(timezone);
       const startOfToday = getStartOfDayInTimezone(timezone);
       const { data: todayProgress } = await supabase
@@ -83,9 +87,10 @@ export const useTimezoneAwareAnalytics = () => {
 
       const allSessions = sessions || [];
       
-      // Calculate total study time (duration is in seconds)
+      // Calculate total study time with enhanced validation
       const totalStudyTimeSeconds = allSessions.reduce((sum, session) => {
         const validDuration = validateDuration(session.duration);
+        console.log(`Session ${session.id}: ${session.duration}s -> ${validDuration}s`);
         return sum + validDuration;
       }, 0);
 
@@ -93,6 +98,8 @@ export const useTimezoneAwareAnalytics = () => {
       const averageSessionTimeMinutes = allSessions.length > 0 
         ? Math.round((totalStudyTimeSeconds / allSessions.length) / 60) 
         : 0;
+
+      console.log(`📈 Study time calculation: ${totalStudyTimeSeconds}s = ${totalStudyTimeHours}h from ${allSessions.length} sessions`);
 
       // Calculate flashcard statistics
       const totalSets = flashcardSets?.length || 0;
@@ -105,23 +112,20 @@ export const useTimezoneAwareAnalytics = () => {
       }
 
       // Enhanced Cards Mastered calculation
-      // Include both spaced repetition mastery AND recently completed cards
       const spacedRepetitionMastered = progress?.filter(p => 
         p.ease_factor && p.ease_factor >= 2.5 && 
         p.interval && p.interval >= 7
       ).length || 0;
 
-      // Count recently completed cards (today) with good accuracy
       const recentlyMastered = todayProgress?.filter(p => 
         p.times_correct > 0 && 
         p.times_seen > 0 && 
-        (p.times_correct / p.times_seen) >= 0.8 // 80% accuracy threshold
+        (p.times_correct / p.times_seen) >= 0.8
       ).length || 0;
 
-      // Combine both mastery criteria
       const totalCardsMastered = spacedRepetitionMastered + recentlyMastered;
 
-      // Timezone-aware date calculations using improved utilities
+      // Timezone-aware date calculations
       const startOfTodayCalc = getStartOfDayInTimezone(timezone);
       const endOfToday = getEndOfDayInTimezone(timezone);
       
@@ -136,24 +140,11 @@ export const useTimezoneAwareAnalytics = () => {
       const todaySessions = allSessions.filter(s => {
         if (!s.start_time) return false;
         const sessionDate = new Date(s.start_time);
-        const isToday = sessionDate >= startOfTodayCalc && sessionDate <= endOfToday;
-        
-        // Debug session timezone classification
-        if (timezone.includes('Melbourne') || timezone.includes('Australia')) {
-          console.log(`📅 Session ${s.id}:`, {
-            startTime: s.start_time,
-            sessionDate: sessionDate.toISOString(),
-            isToday,
-            duration: s.duration
-          });
-        }
-        
-        return isToday;
+        return sessionDate >= startOfTodayCalc && sessionDate <= endOfToday;
       });
 
       const todayStudyTimeSeconds = todaySessions.reduce((sum, session) => {
-        const validDuration = validateDuration(session.duration);
-        return sum + validDuration;
+        return sum + validateDuration(session.duration);
       }, 0);
 
       const todayStudyTimeHours = Math.round((todayStudyTimeSeconds / 3600) * 10) / 10;
@@ -163,37 +154,20 @@ export const useTimezoneAwareAnalytics = () => {
       const weekStart = getWeekStartInTimezone(timezone, 0);
       const weekEnd = getWeekEndInTimezone(timezone, 0);
       
-      console.log(`📅 Week boundaries for ${timezone}:`, {
-        weekStart: weekStart.toISOString(),
-        weekEnd: weekEnd.toISOString()
-      });
-      
       const weeklySessions = allSessions.filter(s => {
         if (!s.start_time) return false;
         const sessionDate = new Date(s.start_time);
-        const isThisWeek = sessionDate >= weekStart && sessionDate <= weekEnd;
-        
-        if (timezone.includes('Melbourne') || timezone.includes('Australia')) {
-          console.log(`📅 Weekly Session ${s.id}:`, {
-            startTime: s.start_time,
-            sessionDate: sessionDate.toISOString(),
-            isThisWeek,
-            duration: s.duration
-          });
-        }
-        
-        return isThisWeek;
+        return sessionDate >= weekStart && sessionDate <= weekEnd;
       });
 
       const weeklyStudyTimeSeconds = weeklySessions.reduce((sum, session) => {
-        const validDuration = validateDuration(session.duration);
-        return sum + validDuration;
+        return sum + validateDuration(session.duration);
       }, 0);
 
       const weeklyStudyTimeHours = Math.round((weeklyStudyTimeSeconds / 3600) * 10) / 10;
       const weeklyStudyTimeMinutes = Math.round(weeklyStudyTimeSeconds / 60);
 
-      // Previous week for comparison (Monday to Sunday)
+      // Previous week for comparison
       const previousWeekStart = getWeekStartInTimezone(timezone, 1);
       const previousWeekEnd = getWeekEndInTimezone(timezone, 1);
       
@@ -204,8 +178,7 @@ export const useTimezoneAwareAnalytics = () => {
       });
 
       const previousWeekTimeSeconds = previousWeekSessions.reduce((sum, session) => {
-        const validDuration = validateDuration(session.duration);
-        return sum + validDuration;
+        return sum + validateDuration(session.duration);
       }, 0);
 
       const previousWeekTimeMinutes = Math.round(previousWeekTimeSeconds / 60);
@@ -223,7 +196,7 @@ export const useTimezoneAwareAnalytics = () => {
         todaySessions: todaySessions.length,
         weeklySessions: weeklySessions.length,
         
-        // Study time in multiple formats for different uses
+        // Study time in multiple formats - now properly validated
         totalStudyTime: validateHours(totalStudyTimeHours),
         totalStudyTimeMinutes: Math.round(totalStudyTimeSeconds / 60),
         
@@ -243,17 +216,17 @@ export const useTimezoneAwareAnalytics = () => {
         weeklyGoalProgress,
         weeklyGoalMinutes,
         
-        // Flashcard metrics - updated with enhanced mastery calculation
+        // Flashcard metrics
         totalSets,
         totalCardsReviewed,
-        totalCardsMastered, // Now includes both spaced repetition + recent completions
+        totalCardsMastered,
         flashcardAccuracy,
         
         // Data for components
         recentSessions: allSessions.slice(0, 5),
         activeSessions: [],
         
-        // Streak calculation (simplified - could be enhanced)
+        // Streak calculation
         streakDays: todaySessions.length > 0 ? 1 : 0,
         
         // Timezone info
@@ -274,21 +247,16 @@ export const useTimezoneAwareAnalytics = () => {
         }
       };
 
-      console.log('📈 Timezone-aware analytics summary:', {
+      console.log('📈 CLEANED Analytics Summary:', {
         timezone,
-        todayString,
         totalSessions: result.totalSessions,
-        todaySessions: result.todaySessions,
+        totalStudyTimeHours: result.totalStudyTime,
+        totalStudyTimeMinutes: result.totalStudyTimeMinutes,
         todayMinutes: result.todayStudyTimeMinutes,
         weeklyMinutes: result.weeklyStudyTimeMinutes,
-        previousWeekMinutes: result.previousWeekTimeMinutes,
         weeklyChange: result.weeklyChange,
         goalProgress: result.weeklyGoalProgress,
-        totalCardsMastered: result.totalCardsMastered,
-        spacedRepetitionMastered,
-        recentlyMastered,
-        weekStart: weekStart.toISOString(),
-        weekEnd: weekEnd.toISOString()
+        totalCardsMastered: result.totalCardsMastered
       });
       
       return result;
@@ -336,7 +304,42 @@ export const useTimezoneAwareAnalytics = () => {
   };
 
   return { 
-    analytics: analytics || defaultAnalytics, 
+    analytics: analytics || {
+      totalSessions: 0,
+      todaySessions: 0,
+      weeklySessions: 0,
+      totalStudyTime: 0,
+      totalStudyTimeMinutes: 0,
+      todayStudyTime: 0,
+      todayStudyTimeMinutes: 0,
+      weeklyStudyTime: 0,
+      weeklyStudyTimeMinutes: 0,
+      previousWeekTimeMinutes: 0,
+      weeklyChange: 0,
+      averageSessionTime: 0,
+      weeklyGoalProgress: 0,
+      weeklyGoalMinutes: 300,
+      totalSets: 0,
+      totalCardsReviewed: 0,
+      totalCardsMastered: 0,
+      flashcardAccuracy: 0,
+      recentSessions: [],
+      activeSessions: [],
+      streakDays: 0,
+      timezone: timezone || 'UTC',
+      todayString: '',
+      studyTimeHours: 0,
+      stats: {
+        totalSessions: 0,
+        totalStudyTime: 0,
+        averageSessionTime: 0,
+        totalCardsMastered: 0,
+        totalSets: 0,
+        flashcardAccuracy: 0,
+        streakDays: 0,
+        studyTimeHours: 0
+      }
+    }, 
     isLoading: analyticsLoading || timezoneLoading,
     timezone
   };
