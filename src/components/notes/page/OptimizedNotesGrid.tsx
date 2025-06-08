@@ -6,22 +6,22 @@ import { EmptyNotesState } from '@/components/notes/EmptyNotesState';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { NoteDetailsSheet } from '@/components/notes/NoteDetailsSheet';
-import { useViewPreferences } from '@/hooks/useViewPreferences';
+import { ViewMode } from '@/hooks/useViewPreferences';
 
 interface OptimizedNotesGridProps {
   notes: Note[];
   onPin: (id: string, isPinned: boolean) => void;
   onDelete: (id: string) => Promise<void>;
+  viewMode: ViewMode;
 }
 
-export const OptimizedNotesGrid = ({ notes, onPin, onDelete }: OptimizedNotesGridProps) => {
+export const OptimizedNotesGrid = ({ notes, onPin, onDelete, viewMode }: OptimizedNotesGridProps) => {
   const navigate = useNavigate();
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const { viewMode } = useViewPreferences('notes');
 
   // Debug logging to see what's happening
-  console.log('🔍 OptimizedNotesGrid - Current viewMode:', viewMode);
+  console.log('🔍 OptimizedNotesGrid - Received viewMode:', viewMode);
   console.log('🔍 OptimizedNotesGrid - Notes count:', notes.length);
 
   if (notes.length === 0) {

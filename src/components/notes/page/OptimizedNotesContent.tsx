@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
 import { Note } from '@/types/note';
@@ -11,6 +10,7 @@ import { ErrorState } from './ErrorState';
 import { EmptyNotesState } from '@/components/notes/EmptyNotesState';
 import { DialogManager } from './header/DialogManager';
 import { useUserTier } from '@/hooks/useUserTier';
+import { useViewPreferences } from '@/hooks/useViewPreferences';
 import { toast } from 'sonner';
 
 export const OptimizedNotesContent = () => {
@@ -31,12 +31,15 @@ export const OptimizedNotesContent = () => {
   } = useOptimizedNotes();
 
   const { tierLimits } = useUserTier();
+  const { viewMode } = useViewPreferences('notes');
   
   // Dialog states
   const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
   const [isScanDialogOpen, setIsScanDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [creatingNote, setCreatingNote] = useState(false);
+
+  console.log('🔍 OptimizedNotesContent - Current viewMode:', viewMode);
 
   const handleCreateNote = async () => {
     setCreatingNote(true);
@@ -142,6 +145,7 @@ export const OptimizedNotesContent = () => {
               notes={notes} 
               onPin={handlePin}
               onDelete={handleDelete}
+              viewMode={viewMode}
             />
             
             {totalCount > 20 && (
