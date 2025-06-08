@@ -53,6 +53,37 @@ export const useGlobalSessionTracker = () => {
     return 'general';
   }, [location.pathname]);
 
+  // Update session with activity data
+  const updateSessionActivity = useCallback(async (activityData: {
+    cards_reviewed?: number;
+    cards_correct?: number;
+    quiz_score?: number;
+    quiz_total_questions?: number;
+    notes_created?: number;
+    notes_reviewed?: number;
+  }) => {
+    if (!sessionState.sessionId || !sessionState.isActive) return;
+
+    try {
+      const { error } = await supabase
+        .from('study_sessions')
+        .update({
+          cards_reviewed: activityData.cards_reviewed || 0,
+          cards_correct: activityData.cards_correct || 0,
+          quiz_score: activityData.quiz_score || 0,
+          quiz_total_questions: activityData.quiz_total_questions || 0,
+          notes_created: activityData.notes_created || 0,
+          notes_reviewed: activityData.notes_reviewed || 0,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', sessionState.sessionId);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error updating session activity:', error);
+    }
+  }, [sessionState.sessionId, sessionState.isActive]);
+
   // Start a new session
   const startSession = useCallback(async () => {
     if (!user || !isOnStudyPage || sessionState.isActive) return;
@@ -257,6 +288,7 @@ export const useGlobalSessionTracker = () => {
     endSession,
     togglePause,
     recordActivity,
+    updateSessionActivity,
     getCurrentActivityType: getCurrentActivityType()
   };
 };

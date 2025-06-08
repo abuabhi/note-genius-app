@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 import { StudyMode } from '@/pages/study/types';
-import { FlashcardWithProgress } from '@/types/flashcard';
+import { Flashcard } from '@/types/flashcard';
 import { useGlobalSessionTracker } from './useGlobalSessionTracker';
 
 interface UseQuizModeProps {
@@ -16,6 +16,13 @@ interface QuizSession {
   startTime: Date;
   totalQuestions: number;
   answeredQuestions: number;
+}
+
+interface FlashcardWithProgress extends Flashcard {
+  mastery_level?: string;
+  review_count?: number;
+  last_reviewed_at?: string;
+  next_review_date?: string;
 }
 
 export const useQuizMode = ({ setId, mode }: UseQuizModeProps) => {
@@ -42,11 +49,27 @@ export const useQuizMode = ({ setId, mode }: UseQuizModeProps) => {
         setIsLoading(true);
         setError(null);
 
+        // First, get flashcards that belong to this set
+        const { data: setCards, error: setCardsError } = await supabase
+          .from('flashcard_set_cards')
+          .select('flashcard_id')
+          .eq('set_id', setId);
+
+        if (setCardsError) throw setCardsError;
+
+        const flashcardIds = setCards.map(card => card.flashcard_id);
+
+        if (flashcardIds.length === 0) {
+          setFlashcards([]);
+          setIsLoading(false);
+          return;
+        }
+
         // Fetch flashcards
         const { data: flashcardsData, error: flashcardsError } = await supabase
           .from('flashcards')
           .select('*')
-          .eq('set_id', setId)
+          .in('id', flashcardIds)
           .order('created_at');
 
         if (flashcardsError) throw flashcardsError;
@@ -142,9 +165,8 @@ export const useQuizMode = ({ setId, mode }: UseQuizModeProps) => {
           quiz_id: setId,
           score: totalScore,
           total_questions: quizSession.totalQuestions,
-          correct_answers: correctAnswers,
           completed_at: new Date().toISOString(),
-          time_taken: Math.floor((Date.now() - quizSession.startTime.getTime()) / 1000)
+          duration_seconds: Math.floor((Date.now() - quizSession.startTime.getTime()) / 1000)
         });
 
       if (error) throw error;

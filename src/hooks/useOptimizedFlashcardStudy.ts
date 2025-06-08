@@ -4,12 +4,19 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 import { StudyMode } from '@/pages/study/types';
-import { FlashcardWithProgress } from '@/types/flashcard';
+import { Flashcard } from '@/types/flashcard';
 import { useGlobalSessionTracker } from './useGlobalSessionTracker';
 
 interface UseOptimizedFlashcardStudyProps {
   setId: string;
   mode: StudyMode;
+}
+
+interface FlashcardWithProgress extends Flashcard {
+  mastery_level?: string;
+  review_count?: number;
+  last_reviewed_at?: string;
+  next_review_date?: string;
 }
 
 export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcardStudyProps) => {
@@ -33,6 +40,22 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
         setIsLoading(true);
         setError(null);
 
+        // First, get flashcards that belong to this set
+        const { data: setCards, error: setCardsError } = await supabase
+          .from('flashcard_set_cards')
+          .select('flashcard_id')
+          .eq('set_id', setId);
+
+        if (setCardsError) throw setCardsError;
+
+        const flashcardIds = setCards.map(card => card.flashcard_id);
+
+        if (flashcardIds.length === 0) {
+          setFlashcards([]);
+          setIsLoading(false);
+          return;
+        }
+
         // Fetch flashcards with progress
         const { data: flashcardsData, error: flashcardsError } = await supabase
           .from('flashcards')
@@ -40,12 +63,10 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
             *,
             user_flashcard_progress!left (
               mastery_level,
-              review_count,
-              last_reviewed_at,
-              next_review_date
+              last_reviewed_at
             )
           `)
-          .eq('set_id', setId)
+          .in('id', flashcardIds)
           .order('created_at');
 
         if (flashcardsError) throw flashcardsError;
@@ -53,20 +74,20 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
         const processedFlashcards = flashcardsData.map(card => ({
           ...card,
           mastery_level: card.user_flashcard_progress?.[0]?.mastery_level || 'new',
-          review_count: card.user_flashcard_progress?.[0]?.review_count || 0,
+          review_count: 0,
           last_reviewed_at: card.user_flashcard_progress?.[0]?.last_reviewed_at,
-          next_review_date: card.user_flashcard_progress?.[0]?.next_review_date
+          next_review_date: null
         }));
 
         // Filter cards based on study mode
         let filteredCards = processedFlashcards;
         if (mode === 'review') {
           filteredCards = processedFlashcards.filter(card => 
-            card.mastery_level === 'needs_practice' || card.review_count > 0
+            card.mastery_level === 'needs_practice' || card.last_reviewed_at
           );
-        } else if (mode === 'new') {
+        } else if (mode === 'learn') {
           filteredCards = processedFlashcards.filter(card => 
-            card.mastery_level === 'new' && card.review_count === 0
+            !card.last_reviewed_at
           );
         }
 
@@ -105,20 +126,16 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
 
     try {
       const now = new Date().toISOString();
-      const nextReviewDate = choice === 'mastered' 
-        ? new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days later
-        : new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(); // 1 day later
 
-      // Update progress in database
+      // Update progress in database using correct schema
       const { error } = await supabase
         .from('user_flashcard_progress')
         .upsert({
           user_id: user.id,
           flashcard_id: currentCard.id,
-          mastery_level: choice,
-          review_count: (currentCard.review_count || 0) + 1,
+          mastery_level: choice === 'mastered' ? 1 : 0, // mastery_level is integer
           last_reviewed_at: now,
-          next_review_date: nextReviewDate
+          last_score: choice === 'mastered' ? 5 : 1
         });
 
       if (error) throw error;
@@ -128,9 +145,7 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
       updatedFlashcards[currentIndex] = {
         ...currentCard,
         mastery_level: choice,
-        review_count: (currentCard.review_count || 0) + 1,
-        last_reviewed_at: now,
-        next_review_date: nextReviewDate
+        last_reviewed_at: now
       };
       setFlashcards(updatedFlashcards);
 
