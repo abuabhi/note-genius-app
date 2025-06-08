@@ -1,8 +1,29 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Feedback } from '@/types/feedback';
 import { toast } from 'sonner';
+
+// Define the extended feedback type with profile data
+export interface FeedbackWithProfile {
+  id: string;
+  user_id: string;
+  type: 'rating' | 'feature_request' | 'bug_report';
+  title: string;
+  description?: string;
+  rating?: number;
+  status: 'pending' | 'in_progress' | 'resolved' | 'closed';
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  severity: 'minor' | 'major' | 'critical';
+  admin_response?: string;
+  responded_at?: string;
+  responded_by?: string;
+  created_at: string;
+  updated_at: string;
+  profiles: {
+    username: string;
+    avatar_url: string;
+  } | null;
+}
 
 export const useAdminFeedback = () => {
   return useQuery({
@@ -17,7 +38,7 @@ export const useAdminFeedback = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as (Feedback & { profiles: { username: string; avatar_url: string } })[];
+      return data as FeedbackWithProfile[];
     },
   });
 };
@@ -35,7 +56,7 @@ export const useUpdateFeedbackStatus = () => {
         .single();
 
       if (error) throw error;
-      return data as Feedback;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-feedback'] });
@@ -94,7 +115,7 @@ export const useRespondToFeedback = () => {
         console.warn('Email notification failed:', emailError);
       }
 
-      return data as Feedback;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-feedback'] });

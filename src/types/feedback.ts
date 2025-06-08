@@ -9,6 +9,9 @@ export interface Feedback {
   status: 'pending' | 'in_progress' | 'resolved' | 'closed';
   priority: 'low' | 'medium' | 'high' | 'critical';
   severity: 'minor' | 'major' | 'critical';
+  admin_response?: string;
+  responded_at?: string;
+  responded_by?: string;
   created_at: string;
   updated_at: string;
 }

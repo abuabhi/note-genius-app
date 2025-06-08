@@ -7,10 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useAdminFeedback, useUpdateFeedbackStatus, useRespondToFeedback } from '@/hooks/admin/useAdminFeedback';
+import { useAdminFeedback, useUpdateFeedbackStatus, useRespondToFeedback, type FeedbackWithProfile } from '@/hooks/admin/useAdminFeedback';
 import { MessageSquare, User, Calendar, Star, Send, Search, Filter } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { Feedback } from '@/types/feedback';
 
 export const AdminFeedbackManagement = () => {
   const { data: feedbackList, isLoading } = useAdminFeedback();
@@ -20,7 +19,7 @@ export const AdminFeedbackManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [selectedFeedback, setSelectedFeedback] = useState<any>(null);
+  const [selectedFeedback, setSelectedFeedback] = useState<FeedbackWithProfile | null>(null);
   const [responseText, setResponseText] = useState('');
 
   const filteredFeedback = feedbackList?.filter(feedback => {
