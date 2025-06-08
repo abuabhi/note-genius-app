@@ -8,7 +8,6 @@ import { TodosSection } from "@/components/dashboard/TodosSection";
 import { GoalsSection } from "@/components/dashboard/GoalsSection";
 import { ReferralSignupHandler } from "@/components/referrals/ReferralSignupHandler";
 import { ReferralSignupErrorBoundary } from "@/components/referrals/ReferralSignupErrorBoundary";
-import { SessionProvider } from "@/contexts/SessionContext";
 import { useSessionCleanup } from "@/hooks/useSessionCleanup";
 
 const DashboardPage = () => {
@@ -51,39 +50,37 @@ const DashboardPage = () => {
   console.log('✅ Dashboard rendering main content');
   
   return (
-    <SessionProvider>
-      <Layout>
-        <ReferralSignupErrorBoundary>
-          <ReferralSignupHandler />
-        </ReferralSignupErrorBoundary>
-        <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
-          <div className="container mx-auto p-6 space-y-8">
-            {/* Hero Section - Daily Overview */}
+    <Layout>
+      <ReferralSignupErrorBoundary>
+        <ReferralSignupHandler />
+      </ReferralSignupErrorBoundary>
+      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+        <div className="container mx-auto p-6 space-y-8">
+          {/* Hero Section - Daily Overview */}
+          <div>
+            <DashboardHeroSection />
+          </div>
+          
+          {/* Learning Analytics */}
+          <div>
+            <LearningAnalyticsDashboard />
+          </div>
+          
+          {/* Two Column Layout for Todos and Goals */}
+          <div className="grid gap-8 lg:grid-cols-2">
+            {/* Today's Todos */}
             <div>
-              <DashboardHeroSection />
+              <TodosSection />
             </div>
             
-            {/* Learning Analytics */}
+            {/* Active Goals */}
             <div>
-              <LearningAnalyticsDashboard />
-            </div>
-            
-            {/* Two Column Layout for Todos and Goals */}
-            <div className="grid gap-8 lg:grid-cols-2">
-              {/* Today's Todos */}
-              <div>
-                <TodosSection />
-              </div>
-              
-              {/* Active Goals */}
-              <div>
-                <GoalsSection />
-              </div>
+              <GoalsSection />
             </div>
           </div>
         </div>
-      </Layout>
-    </SessionProvider>
+      </div>
+    </Layout>
   );
 };
 

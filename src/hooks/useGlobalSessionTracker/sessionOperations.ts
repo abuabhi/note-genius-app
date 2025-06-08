@@ -2,8 +2,10 @@
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
-import { ActivityType, GlobalSessionState, ActivityData } from './types';
+import { ActivityType, GlobalSessionState, ActivityData, isStudyRoute } from './types';
 import { persistSession, restoreSession, clearPersistedSession } from './sessionPersistence';
+import { validateSessionDuration, validateSessionState } from './sessionValidation';
+import { logger } from '@/config/environment';
 
 export const useSessionOperations = (
   user: any,
@@ -33,94 +35,79 @@ export const useSessionOperations = (
 
       if (error) throw error;
     } catch (error) {
-      console.error('Error updating session activity:', error);
+      logger.error('Error updating session activity:', error);
     }
   }, [sessionState.sessionId, sessionState.isActive]);
 
-  // Restore or start session with persistence support
+  // Start session with enhanced validation
   const startSession = useCallback(async () => {
     if (!user) {
-      console.log('❌ Cannot start session: no user');
+      logger.warn('Cannot start session: no user');
       return;
     }
 
-    // First, try to restore existing session from localStorage
-    const restoredSession = restoreSession();
-    if (restoredSession && restoredSession.sessionId) {
-      console.log('🔄 Attempting to restore existing session:', restoredSession.sessionId);
-      
-      // Verify the session still exists in database and is active
-      const { data: existingSession, error } = await supabase
-        .from('study_sessions')
-        .select('*')
-        .eq('id', restoredSession.sessionId)
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .single();
+    // Check if we should even start a session based on current route
+    const currentPath = window.location.pathname;
+    if (!isStudyRoute(currentPath)) {
+      logger.info(`Not starting session - current path "${currentPath}" is not a study route`);
+      return;
+    }
 
-      if (!error && existingSession) {
-        console.log('✅ Restored existing session from localStorage:', restoredSession.sessionId);
-        setSessionState(prev => ({
-          ...prev,
-          ...restoredSession,
-          isActive: true
-        }));
+    // Validate existing session state
+    if (sessionState.isActive && sessionState.sessionId) {
+      if (validateSessionState(sessionState)) {
+        logger.info('Session already active and valid, updating activity type only');
+        updateActivityType();
         return;
       } else {
-        console.log('⚠️ Stored session no longer valid, clearing');
-        clearPersistedSession();
+        logger.warn('Existing session is invalid, ending it');
+        await endSession();
       }
-    }
-    
-    // Check if there's already an active session to prevent duplicates
-    if (sessionState.isActive && sessionState.sessionId) {
-      console.log('ℹ️ Session already active, updating activity type only');
-      updateActivityType();
-      return;
     }
 
     try {
-      // Check for any existing active sessions in database
+      // Check for any existing active sessions in database and clean them up
       const { data: activeSessions, error: checkError } = await supabase
         .from('study_sessions')
         .select('*')
         .eq('user_id', user.id)
         .eq('is_active', true)
-        .order('start_time', { ascending: false })
-        .limit(1);
+        .order('start_time', { ascending: false });
 
       if (checkError) {
-        console.warn('Warning checking for active sessions:', checkError);
+        logger.warn('Warning checking for active sessions:', checkError);
       }
 
+      // Clean up any existing active sessions
       if (activeSessions && activeSessions.length > 0) {
-        const existingSession = activeSessions[0];
-        console.log('🔄 Found existing active session, continuing it:', existingSession.id);
+        logger.info(`Found ${activeSessions.length} existing active sessions, cleaning them up`);
         
-        const startTime = new Date(existingSession.start_time);
-        const elapsedSeconds = Math.floor((Date.now() - startTime.getTime()) / 1000);
-        
-        const restoredState = {
-          sessionId: existingSession.id,
-          isActive: true,
-          startTime: startTime,
-          elapsedSeconds: elapsedSeconds,
-          currentActivity: existingSession.activity_type as ActivityType,
-          isPaused: false
-        };
-        
-        setSessionState(restoredState);
-        persistSession(restoredState);
-        return;
+        for (const existingSession of activeSessions) {
+          const startTime = new Date(existingSession.start_time);
+          const duration = Math.min(
+            Math.floor((Date.now() - startTime.getTime()) / 1000),
+            4 * 60 * 60 // Cap at 4 hours
+          );
+          
+          await supabase
+            .from('study_sessions')
+            .update({
+              end_time: new Date().toISOString(),
+              duration: validateSessionDuration(duration),
+              is_active: false,
+              notes: 'Auto-terminated by new session'
+            })
+            .eq('id', existingSession.id);
+        }
       }
 
-      // Only create new session if no active session exists
+      // Create new session
       const activityType = getCurrentActivityType();
       const now = new Date();
 
       const sessionData = {
         user_id: user.id,
-        title: `Study Session - ${activityType}`,
+        title: `Study Session - ${activityType.replace('_', ' ')}`,
         subject: activityType === 'general' ? 'Multi-Activity Study' : activityType.replace('_', ' '),
         start_time: now.toISOString(),
         is_active: true,
@@ -130,7 +117,7 @@ export const useSessionOperations = (
         end_time: null
       };
 
-      console.log('🚀 Creating new session...');
+      logger.info('🚀 Creating new session for study route:', currentPath);
       const { data, error } = await supabase
         .from('study_sessions')
         .insert(sessionData)
@@ -151,19 +138,19 @@ export const useSessionOperations = (
       setSessionState(newSessionState);
       persistSession(newSessionState);
 
-      console.log('✅ New session created:', data.id);
+      logger.info('✅ New session created:', data.id);
       queryClient.invalidateQueries({ queryKey: ['studySessions'] });
       queryClient.invalidateQueries({ queryKey: ['timezone-aware-analytics'] });
 
     } catch (error) {
-      console.error('Error starting session:', error);
+      logger.error('Error starting session:', error);
     }
-  }, [user, sessionState.isActive, sessionState.sessionId, getCurrentActivityType, queryClient]);
+  }, [user, sessionState, getCurrentActivityType, queryClient]);
 
-  // End the current session with proper cleanup
+  // End session with validation
   const endSession = useCallback(async () => {
     if (!sessionState.sessionId || !sessionState.startTime) {
-      console.log('❌ Cannot end session: no active session');
+      logger.info('Cannot end session: no active session');
       return;
     }
 
@@ -172,21 +159,12 @@ export const useSessionOperations = (
       const startTime = new Date(sessionState.startTime);
       
       const actualDurationSeconds = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
-      const maxDuration = 4 * 60 * 60; // 4 hours
-      const minDuration = 60; // 1 minute minimum
-      
-      let finalDuration = actualDurationSeconds;
-      if (actualDurationSeconds > maxDuration) {
-        finalDuration = Math.min(maxDuration, 60 * 60);
-        console.log(`⚠️ Session duration capped: ${actualDurationSeconds}s -> ${finalDuration}s`);
-      } else if (actualDurationSeconds < minDuration) {
-        finalDuration = minDuration;
-      }
+      const validatedDuration = validateSessionDuration(actualDurationSeconds);
 
-      console.log('🛑 Ending session...', {
+      logger.info('🛑 Ending session...', {
         sessionId: sessionState.sessionId,
         actualDuration: actualDurationSeconds,
-        finalDuration: finalDuration,
+        validatedDuration: validatedDuration,
         startTime: startTime.toISOString(),
         endTime: endTime.toISOString()
       });
@@ -195,7 +173,7 @@ export const useSessionOperations = (
         .from('study_sessions')
         .update({
           end_time: endTime.toISOString(),
-          duration: finalDuration,
+          duration: validatedDuration,
           is_active: false,
           updated_at: endTime.toISOString()
         })
@@ -214,24 +192,30 @@ export const useSessionOperations = (
 
       clearPersistedSession();
 
-      console.log('✅ Session ended successfully');
+      logger.info('✅ Session ended successfully');
       queryClient.invalidateQueries({ queryKey: ['studySessions'] });
       queryClient.invalidateQueries({ queryKey: ['timezone-aware-analytics'] });
 
     } catch (error) {
-      console.error('Error ending session:', error);
+      logger.error('Error ending session:', error);
     }
   }, [sessionState.sessionId, sessionState.startTime, queryClient]);
 
-  // Update session activity type when switching between study pages
+  // Update activity type with route validation
   const updateActivityType = useCallback(async () => {
     if (!sessionState.sessionId || !sessionState.isActive) return;
+
+    const currentPath = window.location.pathname;
+    if (!isStudyRoute(currentPath)) {
+      logger.info('Not updating activity type - not on study route');
+      return;
+    }
 
     const newActivityType = getCurrentActivityType();
     if (newActivityType === sessionState.currentActivity) return;
 
     try {
-      console.log('🔄 Updating activity type to:', newActivityType);
+      logger.info('🔄 Updating activity type to:', newActivityType);
       const { error } = await supabase
         .from('study_sessions')
         .update({
@@ -254,10 +238,10 @@ export const useSessionOperations = (
 
       persistSession(updatedState);
 
-      console.log('✅ Activity type updated to:', newActivityType);
+      logger.info('✅ Activity type updated to:', newActivityType);
 
     } catch (error) {
-      console.error('Error updating activity type:', error);
+      logger.error('Error updating activity type:', error);
     }
   }, [sessionState, getCurrentActivityType]);
 
@@ -272,7 +256,7 @@ export const useSessionOperations = (
       isPaused: !prev.isPaused
     }));
     persistSession(newState);
-    console.log(sessionState.isPaused ? '▶️ Session resumed' : '⏸️ Session paused');
+    logger.info(sessionState.isPaused ? '▶️ Session resumed' : '⏸️ Session paused');
   }, [sessionState]);
 
   return {

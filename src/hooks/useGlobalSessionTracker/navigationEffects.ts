@@ -1,7 +1,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { GlobalSessionState, STUDY_ROUTES } from './types';
+import { GlobalSessionState, isStudyRoute } from './types';
 
 export const useNavigationEffects = (
   sessionState: GlobalSessionState,
@@ -13,32 +13,20 @@ export const useNavigationEffects = (
   const previousLocationRef = useRef<string | null>(null);
   const isInitialLoadRef = useRef(true);
 
-  // Check if current route is a study route
-  const isOnStudyPage = STUDY_ROUTES.some(route => location.pathname.startsWith(route));
+  // Check if current route is a study route using the helper function
+  const isOnStudyPage = isStudyRoute(location.pathname);
   
   // Check if previous location was a study page
   const wasOnStudyPage = previousLocationRef.current ? 
-    STUDY_ROUTES.some(route => previousLocationRef.current!.startsWith(route)) : null;
+    isStudyRoute(previousLocationRef.current) : false;
 
-  // Check if we're staying within flashcard study context
-  const isFlashcardStudyContext = (current: string, previous: string | null) => {
-    if (!previous) return false;
-    
-    // All these paths should maintain the same session
-    const flashcardPaths = [
-      '/flashcards',
-      /^\/flashcards\/[^\/]+\/study$/,
-    ];
-    
-    const isCurrentFlashcard = flashcardPaths.some(path => 
-      typeof path === 'string' ? current === path : path.test(current)
-    );
-    const isPreviousFlashcard = flashcardPaths.some(path => 
-      typeof path === 'string' ? previous === path : path.test(previous)
-    );
-    
-    return isCurrentFlashcard && isPreviousFlashcard;
-  };
+  console.log('🔍 Route analysis:', {
+    currentPath: location.pathname,
+    previousPath: previousLocationRef.current,
+    isOnStudyPage,
+    wasOnStudyPage,
+    hasActiveSession: sessionState.isActive
+  });
 
   // Handle page navigation with improved session management
   useEffect(() => {
@@ -53,8 +41,7 @@ export const useNavigationEffects = (
       isInitialLoad: isInitialLoadRef.current,
       hasActiveSession: sessionState.isActive,
       sessionId: sessionState.sessionId,
-      isPaused: sessionState.isPaused,
-      isFlashcardStudyContext: isFlashcardStudyContext(currentPath, previousPath)
+      isPaused: sessionState.isPaused
     });
 
     // Skip processing on initial load to avoid unwanted session creation
@@ -64,7 +51,7 @@ export const useNavigationEffects = (
       
       // On initial load, only start session if on study page and no active session
       if (isOnStudyPage && !sessionState.isActive) {
-        console.log('🚀 Initial load on study page - starting or restoring session');
+        console.log('🚀 Initial load on study page - starting session');
         startSession();
       }
       return;
@@ -72,20 +59,6 @@ export const useNavigationEffects = (
 
     // Update previous location reference
     previousLocationRef.current = currentPath;
-
-    // Handle flashcard study context - MAINTAIN SESSION
-    if (isFlashcardStudyContext(currentPath, previousPath)) {
-      console.log('🔄 Staying within flashcard study context - maintaining session');
-      if (sessionState.isActive) {
-        // Just update activity type without disrupting the session
-        updateActivityType();
-      } else {
-        // No active session but we're in study context, start/restore one
-        console.log('🚀 No active session in study context - starting session');
-        startSession();
-      }
-      return;
-    }
 
     if (isOnStudyPage && wasOnStudyPage) {
       // Moving between different study pages - maintain session, update activity
@@ -106,8 +79,8 @@ export const useNavigationEffects = (
         setSessionState(prev => ({ ...prev, isPaused: false }));
         updateActivityType();
       } else if (!sessionState.isActive) {
-        // Start new session or restore existing one
-        console.log('🚀 Entering study area - starting/restoring session');
+        // Start new session
+        console.log('🚀 Entering study area - starting session');
         startSession();
       } else {
         // Already have active session, just update activity
@@ -115,10 +88,15 @@ export const useNavigationEffects = (
       }
       
     } else if (!isOnStudyPage && wasOnStudyPage) {
-      // Leaving study area for non-study page
-      // Only pause if we're truly leaving study context (not flashcard list)
-      if (sessionState.isActive && !sessionState.isPaused && !currentPath.startsWith('/flashcards')) {
+      // Leaving study area for non-study page - pause session
+      if (sessionState.isActive && !sessionState.isPaused) {
         console.log('⏸️ Leaving study area for non-study page - pausing session');
+        setSessionState(prev => ({ ...prev, isPaused: true }));
+      }
+    } else if (!isOnStudyPage && !wasOnStudyPage) {
+      // Moving between non-study pages - ensure no active session
+      if (sessionState.isActive && !sessionState.isPaused) {
+        console.log('⏸️ On non-study page with active session - pausing');
         setSessionState(prev => ({ ...prev, isPaused: true }));
       }
     }
