@@ -10,8 +10,39 @@ interface CacheMetrics {
   cacheSize: number;
 }
 
+interface CacheConfigs {
+  static: {
+    staleTime: number;
+    gcTime: number;
+  };
+  user: {
+    staleTime: number;
+    gcTime: number;
+  };
+  frequent: {
+    staleTime: number;
+    gcTime: number;
+  };
+}
+
 export const useCacheStrategy = () => {
   const queryClient = useQueryClient();
+
+  // Cache configuration presets
+  const cacheConfigs: CacheConfigs = {
+    static: {
+      staleTime: 30 * 60 * 1000, // 30 minutes
+      gcTime: 60 * 60 * 1000, // 1 hour
+    },
+    user: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes
+    },
+    frequent: {
+      staleTime: 1 * 60 * 1000, // 1 minute
+      gcTime: 5 * 60 * 1000, // 5 minutes
+    },
+  };
 
   // Get cache metrics
   const getCacheMetrics = useCallback((): CacheMetrics => {
@@ -48,9 +79,37 @@ export const useCacheStrategy = () => {
       queryKey,
       queryFn,
       staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes (renamed from cacheTime)
+      gcTime: 10 * 60 * 1000, // 10 minutes
     });
   }, [queryClient]);
+
+  // Stale-while-revalidate pattern
+  const staleWhileRevalidate = useCallback(async (queryKey: string[], queryFn: () => Promise<any>) => {
+    // First, try to get cached data
+    const cachedData = queryClient.getQueryData(queryKey);
+    
+    if (cachedData) {
+      // Return cached data immediately
+      setTimeout(() => {
+        // Revalidate in background
+        queryClient.prefetchQuery({
+          queryKey,
+          queryFn,
+          staleTime: 0, // Force refetch
+        });
+      }, 0);
+      
+      return cachedData;
+    }
+    
+    // No cached data, fetch normally
+    return queryClient.fetchQuery({
+      queryKey,
+      queryFn,
+      staleTime: cacheConfigs.user.staleTime,
+      gcTime: cacheConfigs.user.gcTime,
+    });
+  }, [queryClient, cacheConfigs]);
 
   // Monitor cache health
   useEffect(() => {
@@ -74,6 +133,8 @@ export const useCacheStrategy = () => {
     getCacheMetrics,
     cleanupStaleQueries,
     prefetchStrategy,
+    staleWhileRevalidate,
+    cacheConfigs,
     queryClient
   };
 };

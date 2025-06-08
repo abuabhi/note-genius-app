@@ -1,3 +1,4 @@
+
 import { useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -171,22 +172,3 @@ export const CacheMonitor = () => {
     </Card>
   );
 };
-
-function formatCacheSize(bytes: number) {
-  const kb = bytes / 1024;
-  if (kb < 1024) return `${kb.toFixed(1)} KB`;
-  const mb = kb / 1024;
-  return `${mb.toFixed(1)} MB`;
-}
-
-function clearCache() {
-  queryClient.clear();
-  console.log('🗑️ Cache cleared');
-}
-
-function invalidateStale() {
-  queryClient.invalidateQueries({
-    predicate: (query) => query.isStale()
-  });
-  console.log('🔄 Stale queries invalidated');
-}

@@ -71,7 +71,8 @@ const FlashcardsPage = () => {
 
   const handleRetry = async () => {
     setPage(1);
-    return refetch();
+    const result = await refetch();
+    return result;
   };
 
   return (
