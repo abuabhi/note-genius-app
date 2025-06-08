@@ -15,7 +15,8 @@ import {
   Shield,
   Upload,
   Database,
-  Gift
+  Gift,
+  Heart
 } from "lucide-react";
 
 export interface NavigationItem {
@@ -27,6 +28,7 @@ export interface NavigationItem {
   badge?: string;
   isNew?: boolean;
   isAnimated?: boolean;
+  customStyle?: string;
 }
 
 export interface NavigationGroup {
@@ -87,6 +89,16 @@ export const navigationData: NavigationGroup[] = [
         href: "/progress",
         icon: BarChart3,
         description: "View your learning analytics"
+      },
+      {
+        id: "feedback",
+        title: "Feedback",
+        href: "/feedback",
+        icon: Heart,
+        description: "Share your thoughts and help us improve",
+        badge: "FEEDBACK",
+        isAnimated: true,
+        customStyle: "feedback"
       },
       {
         id: "schedule",

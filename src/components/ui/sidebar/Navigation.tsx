@@ -17,7 +17,8 @@ import {
   CheckSquare, 
   BarChart3, 
   Clock,
-  Gift
+  Gift,
+  Heart
 } from "lucide-react";
 
 interface NavigationProps {
@@ -85,6 +86,40 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                 />
                 <Separator className="my-2" />
                 
+                {/* Progress */}
+                <NavLink
+                  to="/progress"
+                  icon={BarChart3}
+                  label="Progress"
+                  isActive={pathname.includes("/progress")}
+                  isCollapsed={isCollapsed}
+                />
+                <Separator className="my-2" />
+                
+                {/* Feedback */}
+                <NavLink
+                  to="/feedback"
+                  icon={Heart}
+                  label="Feedback"
+                  isActive={pathname.includes("/feedback")}
+                  isCollapsed={isCollapsed}
+                  badge={
+                    <Badge 
+                      variant="secondary" 
+                      className="bg-gradient-to-r from-orange-600 to-amber-700 text-white text-xs animate-bounce ml-2"
+                    >
+                      FEEDBACK
+                    </Badge>
+                  }
+                  customClassName={cn(
+                    "animate-pulse hover:animate-none",
+                    pathname.includes("/feedback") 
+                      ? "bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-lg" 
+                      : "hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50"
+                  )}
+                />
+                <Separator className="my-2" />
+                
                 {/* Todo - now always visible */}
                 <NavLink
                   to="/todos"
@@ -101,16 +136,6 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   icon={Clock}
                   label="Study Sessions"
                   isActive={pathname.includes("/study-sessions")}
-                  isCollapsed={isCollapsed}
-                />
-                <Separator className="my-2" />
-                
-                {/* Progress */}
-                <NavLink
-                  to="/progress"
-                  icon={BarChart3}
-                  label="Progress"
-                  isActive={pathname.includes("/progress")}
                   isCollapsed={isCollapsed}
                 />
                 <Separator className="my-2" />

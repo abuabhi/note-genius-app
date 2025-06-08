@@ -1,111 +1,144 @@
 
-import { lazy } from 'react';
-import { RouteConfig } from './publicRoutes';
+import { RouteObject } from 'react-router-dom';
+import DashboardPage from '@/pages/DashboardPage';
+import NotesPage from '@/pages/NotesPage';
+import EditNotePage from '@/pages/EditNotePage';
+import FlashcardsPage from '@/pages/FlashcardsPage';
+import CreateFlashcardPage from '@/pages/CreateFlashcardPage';
+import EditFlashcardPage from '@/pages/EditFlashcardPage';
+import FlashcardSetPage from '@/pages/FlashcardSetPage';
+import FlashcardStudyPage from '@/pages/FlashcardStudyPage';
+import FlashcardLibraryPage from '@/pages/FlashcardLibraryPage';
+import QuizPage from '@/pages/QuizPage';
+import CreateQuizPage from '@/pages/CreateQuizPage';
+import TakeQuizPage from '@/pages/TakeQuizPage';
+import QuizHistoryPage from '@/pages/QuizHistoryPage';
+import GoalsPage from '@/pages/GoalsPage';
+import ProgressPage from '@/pages/ProgressPage';
+import SchedulePage from '@/pages/SchedulePage';
+import SettingsPage from '@/pages/SettingsPage';
+import TodoPage from '@/pages/TodoPage';
+import StudySessionsPage from '@/pages/StudySessionsPage';
+import NoteStudyPage from '@/pages/NoteStudyPage';
+import NoteToFlashcardPage from '@/pages/NoteToFlashcardPage';
+import CollaborationPage from '@/pages/CollaborationPage';
+import ChatPage from '@/pages/ChatPage';
+import ConnectionsPage from '@/pages/ConnectionsPage';
+import NotificationsPage from '@/pages/NotificationsPage';
+import ReferralsPage from '@/pages/ReferralsPage';
+import FeedbackPage from '@/pages/FeedbackPage';
 
-const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
-const NotesPage = lazy(() => import('@/pages/NotesPage'));
-const NoteStudyPage = lazy(() => import('@/pages/NoteStudyPage'));
-const EditNotePage = lazy(() => import('@/pages/EditNotePage'));
-const NoteToFlashcardPage = lazy(() => import('@/pages/NoteToFlashcardPage'));
-const FlashcardsPage = lazy(() => import('@/pages/FlashcardsPage'));
-const CreateFlashcardPage = lazy(() => import('@/pages/CreateFlashcardPage'));
-const FlashcardStudyPage = lazy(() => import('@/pages/FlashcardStudyPage'));
-const QuizPage = lazy(() => import('@/pages/QuizPage'));
-const QuizTakingPage = lazy(() => import('@/pages/TakeQuizPage'));
-const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
-const ReferralsPage = lazy(() => import('@/pages/ReferralsPage'));
-const GoalsPage = lazy(() => import('@/pages/GoalsPage'));
-const TodoPage = lazy(() => import('@/pages/TodoPage'));
-const StudySessionsPage = lazy(() => import('@/pages/StudySessionsPage'));
-const ProgressPage = lazy(() => import('@/pages/ProgressPage'));
-const SchedulePage = lazy(() => import('@/pages/SchedulePage'));
-const ChatPage = lazy(() => import('@/pages/ChatPage'));
-const CollaborationPage = lazy(() => import('@/pages/CollaborationPage'));
-const ConnectionsPage = lazy(() => import('@/pages/ConnectionsPage'));
-
-export const standardRoutes: RouteConfig[] = [
+export const standardRoutes: RouteObject[] = [
   {
-    path: "/dashboard",
-    element: <DashboardPage />
+    path: '/dashboard',
+    element: <DashboardPage />,
   },
   {
-    path: "/notes",
-    element: <NotesPage />
+    path: '/notes',
+    element: <NotesPage />,
   },
   {
-    path: "/notes/:id",
-    element: <NoteStudyPage />
+    path: '/notes/:noteId',
+    element: <EditNotePage />,
   },
   {
-    path: "/edit-note/:noteId",
-    element: <EditNotePage />
+    path: '/notes/study/:noteId',
+    element: <NoteStudyPage />,
   },
   {
-    path: "/note-to-flashcard",
-    element: <NoteToFlashcardPage />
+    path: '/notes/convert/:noteId',
+    element: <NoteToFlashcardPage />,
   },
   {
-    path: "/flashcards",
-    element: <FlashcardsPage />
+    path: '/flashcards',
+    element: <FlashcardsPage />,
   },
   {
-    path: "/flashcards/create",
-    element: <CreateFlashcardPage />
+    path: '/flashcards/create',
+    element: <CreateFlashcardPage />,
   },
   {
-    path: "/flashcards/:id/study",
-    element: <FlashcardStudyPage />
+    path: '/flashcards/edit/:id',
+    element: <EditFlashcardPage />,
   },
   {
-    path: "/quiz",
-    element: <QuizPage />
+    path: '/flashcards/sets/:id',
+    element: <FlashcardSetPage />,
   },
   {
-    path: "/quizzes", 
-    element: <QuizPage />
+    path: '/flashcards/study/:id',
+    element: <FlashcardStudyPage />,
   },
   {
-    path: "/quiz/:id",
-    element: <QuizTakingPage />
+    path: '/flashcards/library',
+    element: <FlashcardLibraryPage />,
   },
   {
-    path: "/goals",
-    element: <GoalsPage />
+    path: '/quiz',
+    element: <QuizPage />,
   },
   {
-    path: "/todos",
-    element: <TodoPage />
+    path: '/quizzes',
+    element: <QuizPage />,
   },
   {
-    path: "/study-sessions",
-    element: <StudySessionsPage />
+    path: '/quiz/create',
+    element: <CreateQuizPage />,
   },
   {
-    path: "/progress",
-    element: <ProgressPage />
+    path: '/quiz/take/:id',
+    element: <TakeQuizPage />,
   },
   {
-    path: "/schedule",
-    element: <SchedulePage />
+    path: '/quiz/history',
+    element: <QuizHistoryPage />,
   },
   {
-    path: "/chat",
-    element: <ChatPage />
+    path: '/goals',
+    element: <GoalsPage />,
   },
   {
-    path: "/collaboration",
-    element: <CollaborationPage />
+    path: '/progress',
+    element: <ProgressPage />,
   },
   {
-    path: "/connections",
-    element: <ConnectionsPage />
+    path: '/feedback',
+    element: <FeedbackPage />,
   },
   {
-    path: "/settings",
-    element: <SettingsPage />
+    path: '/schedule',
+    element: <SchedulePage />,
   },
   {
-    path: "/referrals",
-    element: <ReferralsPage />
-  }
+    path: '/settings',
+    element: <SettingsPage />,
+  },
+  {
+    path: '/todos',
+    element: <TodoPage />,
+  },
+  {
+    path: '/study-sessions',
+    element: <StudySessionsPage />,
+  },
+  {
+    path: '/collaboration',
+    element: <CollaborationPage />,
+  },
+  {
+    path: '/chat',
+    element: <ChatPage />,
+  },
+  {
+    path: '/connections',
+    element: <ConnectionsPage />,
+  },
+  {
+    path: '/notifications',
+    element: <NotificationsPage />,
+  },
+  {
+    path: '/referrals',
+    element: <ReferralsPage />,
+  },
 ];

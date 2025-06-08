@@ -10,6 +10,8 @@ export interface NavigationItemType {
   icon: any;
   isNew?: boolean;
   isAnimated?: boolean;
+  customStyle?: string;
+  badge?: string;
 }
 
 interface NavigationGroupProps {
@@ -42,6 +44,8 @@ export const NavigationGroup = ({ id, title, items, isOpen }: NavigationGroupPro
                   isActive={isActive}
                   isNew={item.isNew}
                   isAnimated={item.isAnimated}
+                  customStyle={item.customStyle}
+                  badge={item.badge}
                 />
               );
             })}
