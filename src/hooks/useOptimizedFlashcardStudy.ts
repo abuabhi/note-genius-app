@@ -73,7 +73,10 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
 
         const processedFlashcards = flashcardsData.map(card => ({
           ...card,
-          mastery_level: card.user_flashcard_progress?.[0]?.mastery_level || 'new',
+          // Map database fields to interface fields
+          front: card.front_content,
+          back: card.back_content,
+          mastery_level: card.user_flashcard_progress?.[0]?.mastery_level === 1 ? 'mastered' : 'needs_practice',
           review_count: 0,
           last_reviewed_at: card.user_flashcard_progress?.[0]?.last_reviewed_at,
           next_review_date: null

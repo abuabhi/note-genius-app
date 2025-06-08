@@ -74,8 +74,14 @@ export const useQuizMode = ({ setId, mode }: UseQuizModeProps) => {
 
         if (flashcardsError) throw flashcardsError;
 
-        // Shuffle cards for quiz mode
-        const shuffledCards = [...flashcardsData].sort(() => Math.random() - 0.5);
+        // Shuffle cards for quiz mode and map database fields to interface fields
+        const shuffledCards = [...flashcardsData].sort(() => Math.random() - 0.5).map(card => ({
+          ...card,
+          // Map database fields to interface fields
+          front: card.front_content,
+          back: card.back_content
+        }));
+        
         setFlashcards(shuffledCards.slice(0, 10)); // Limit to 10 questions
 
         // Initialize quiz session
