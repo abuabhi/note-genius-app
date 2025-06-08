@@ -38,7 +38,7 @@ export const OptimizedNotesGrid = ({ notes, onPin, onDelete }: OptimizedNotesGri
   if (viewMode === 'list') {
     return (
       <>
-        <div className="flex flex-col space-y-4">
+        <div className="space-y-4">
           {notes.map((note) => (
             <NoteCard
               key={note.id}
