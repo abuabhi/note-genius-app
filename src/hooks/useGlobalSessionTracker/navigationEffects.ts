@@ -27,6 +27,19 @@ export const useNavigationEffects = (
     return current.startsWith('/flashcards/') && previous.startsWith('/flashcards/');
   };
 
+  // Check if we're moving between flashcard study and flashcard list (maintain session)
+  const isFlashcardContextNavigation = (current: string, previous: string | null) => {
+    if (!previous) return false;
+    const isCurrentFlashcardStudy = current.match(/^\/flashcards\/[^\/]+\/study$/);
+    const isCurrentFlashcardList = current === '/flashcards';
+    const isPreviousFlashcardStudy = previous.match(/^\/flashcards\/[^\/]+\/study$/);
+    const isPreviousFlashcardList = previous === '/flashcards';
+    
+    return (isCurrentFlashcardStudy && isPreviousFlashcardList) || 
+           (isCurrentFlashcardList && isPreviousFlashcardStudy) ||
+           (isCurrentFlashcardStudy && isPreviousFlashcardStudy); // Moving between different flashcard studies
+  };
+
   // Handle page navigation with improved session management
   useEffect(() => {
     const currentPath = location.pathname;
@@ -42,7 +55,8 @@ export const useNavigationEffects = (
       sessionId: sessionState.sessionId,
       isPaused: sessionState.isPaused,
       sessionStarted: sessionStartedRef.current,
-      isFlashcardNavigation: isFlashcardNavigation(currentPath, previousPath)
+      isFlashcardNavigation: isFlashcardNavigation(currentPath, previousPath),
+      isFlashcardContextNavigation: isFlashcardContextNavigation(currentPath, previousPath)
     });
 
     // Skip processing on initial load to avoid unwanted session creation
@@ -62,7 +76,17 @@ export const useNavigationEffects = (
     // Update previous location reference
     previousLocationRef.current = currentPath;
 
-    // Handle flashcard-to-flashcard navigation (maintain session)
+    // Handle flashcard context navigation (maintain session across flashcard study and list)
+    if (isFlashcardContextNavigation(currentPath, previousPath)) {
+      console.log('🔄 Moving within flashcard context - maintaining session');
+      if (sessionState.isActive) {
+        // Just update activity type without disrupting the session
+        updateActivityType();
+      }
+      return;
+    }
+
+    // Handle general flashcard-to-flashcard navigation (maintain session)
     if (isFlashcardNavigation(currentPath, previousPath)) {
       console.log('🔄 Moving between flashcard sets - maintaining session');
       if (sessionState.isActive) {
@@ -94,15 +118,17 @@ export const useNavigationEffects = (
       }
       
     } else if (!isOnStudyPage && wasOnStudyPage) {
-      // Leaving study area for non-study page
-      if (sessionState.isActive && !sessionState.isPaused) {
-        console.log('⏸️ Leaving study area - pausing session');
+      // Leaving study area for non-study page (but not if going to flashcard list from flashcard study)
+      const leavingFlashcardContextForNonStudy = previousPath?.match(/^\/flashcards/) && !currentPath.startsWith('/flashcards');
+      
+      if (sessionState.isActive && !sessionState.isPaused && leavingFlashcardContextForNonStudy) {
+        console.log('⏸️ Leaving flashcard study area for non-study page - pausing session');
         setSessionState(prev => ({ ...prev, isPaused: true }));
       }
     }
     
-    // Reset session started flag when leaving study pages completely
-    if (!isOnStudyPage) {
+    // Reset session started flag when leaving study pages completely (but not for flashcard context navigation)
+    if (!isOnStudyPage && !currentPath.startsWith('/flashcards')) {
       sessionStartedRef.current = false;
     }
     

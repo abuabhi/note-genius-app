@@ -154,16 +154,20 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
         );
       }
 
-      // Step 5: Calculate stats
+      // Step 5: Calculate stats with aligned criteria
       const today = new Date().toDateString();
       const studiedToday = filteredCards.filter(card => 
         card.last_reviewed_at && new Date(card.last_reviewed_at).toDateString() === today
       ).length;
 
-      const masteredCount = filteredCards.filter(card => 
-        card.mastery_level >= 1 || card.is_known || 
-        (card.times_seen > 0 && (card.times_correct / card.times_seen) >= 0.9)
-      ).length;
+      // Use same mastery criteria as useFlashcardSetProgress
+      const masteredCount = filteredCards.filter(card => {
+        const isKnown = card.is_known;
+        const highConfidence = card.confidence_level >= 4;
+        const highAccuracy = card.times_seen > 0 && (card.times_correct / card.times_seen) > 0.8;
+        
+        return isKnown || highConfidence || (card.times_seen >= 3 && highAccuracy);
+      }).length;
 
       const totalTime = Date.now() - startTime;
       console.log(`✅ Optimized flashcard data processed in ${totalTime}ms:`, {
@@ -184,8 +188,8 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
       };
     },
     enabled: !!user && !!setId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 30 * 1000, // 30 seconds - shorter for more responsive updates
+    gcTime: 2 * 60 * 1000, // 2 minutes
     refetchOnWindowFocus: false,
     retry: 2
   });
@@ -206,7 +210,7 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
     }
   }, [data?.stats]);
 
-  // Optimized card choice handler with batch updates
+  // Optimized card choice handler with batch updates and better cache invalidation
   const handleCardChoice = useCallback(async (choice: 'mastered' | 'needs_practice') => {
     if (!user || !currentCard) return;
 
@@ -303,13 +307,27 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
     setIsFlipped(prev => !prev);
   }, [recordActivity]);
 
-  // Invalidate cache when user makes progress
+  // Enhanced cache invalidation for better progress sync
   const invalidateCache = useCallback(() => {
+    console.log('🔄 Invalidating flashcard caches for progress sync');
+    
+    // Invalidate all related caches
     queryClient.invalidateQueries({ 
-      queryKey: ['optimized-flashcard-study', setId] 
+      queryKey: ['optimized-flashcard-study'] 
+    });
+    queryClient.invalidateQueries({ 
+      queryKey: ['optimized-flashcard-sets'] 
+    });
+    queryClient.invalidateQueries({ 
+      queryKey: ['flashcard-set-progress'] 
     });
     queryClient.invalidateQueries({ 
       queryKey: ['timezone-aware-analytics'] 
+    });
+    
+    // Force refetch to get latest data
+    queryClient.refetchQueries({ 
+      queryKey: ['optimized-flashcard-study', setId] 
     });
   }, [queryClient, setId]);
 

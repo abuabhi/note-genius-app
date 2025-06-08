@@ -1,5 +1,6 @@
 
 import { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { useOptimizedFlashcardStudy } from "@/hooks/useOptimizedFlashcardStudy";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ interface SimplifiedFlashcardStudyProps {
 
 export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: SimplifiedFlashcardStudyProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
+  const navigate = useNavigate();
   
   const {
     flashcards,
@@ -32,10 +34,11 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
     handlePrevious,
     handleFlip,
     handleCardChoice,
-    setIsFlipped
+    setIsFlipped,
+    invalidateCache
   } = useOptimizedFlashcardStudy({ setId, mode });
 
-  // Enhanced handleCardChoice with loading state
+  // Enhanced handleCardChoice with loading state and cache invalidation
   const handleEnhancedCardChoice = useCallback(async (choice: 'mastered' | 'needs_practice') => {
     if (!currentCard || isUpdating) return;
     
@@ -43,13 +46,28 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
     
     try {
       await handleCardChoice(choice);
+      // Invalidate cache to ensure progress updates are reflected
+      invalidateCache();
     } catch (error) {
       console.error('Error saving card progress:', error);
       toast.error('Failed to save progress. Please try again.');
     } finally {
       setIsUpdating(false);
     }
-  }, [currentCard, handleCardChoice, isUpdating]);
+  }, [currentCard, handleCardChoice, isUpdating, invalidateCache]);
+
+  // Handle study again with proper cache invalidation
+  const handleStudyAgain = useCallback(() => {
+    console.log('🔄 Study Again clicked - reloading flashcards');
+    invalidateCache();
+    window.location.reload();
+  }, [invalidateCache]);
+
+  // Handle back to sets with proper React Router navigation
+  const handleBackToSets = useCallback(() => {
+    console.log('⬅️ Back to Sets clicked - navigating to /flashcards');
+    navigate('/flashcards');
+  }, [navigate]);
 
   if (isLoading) {
     return (
@@ -97,10 +115,10 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
               }
             </p>
             <div className="flex gap-3 justify-center">
-              <Button onClick={() => window.location.reload()}>
+              <Button onClick={handleStudyAgain}>
                 {totalCards === 0 ? 'Refresh' : 'Study Again'}
               </Button>
-              <Button variant="outline" onClick={() => window.history.back()}>
+              <Button variant="outline" onClick={handleBackToSets}>
                 Back to Sets
               </Button>
             </div>

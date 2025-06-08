@@ -11,7 +11,8 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus } from 'lucide-react';
-import { useState, useMemo, Suspense } from 'react';
+import { useState, useMemo, Suspense, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import FlashcardSetGrid from '@/components/flashcards/components/FlashcardSetGrid';
 
 // Skeleton component for loading state
@@ -43,9 +44,29 @@ const ErrorDisplay = ({ error, onRetry }: { error: string; onRetry: () => void }
 const OptimizedFlashcardsPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { allSets, loading, error, deleteFlashcardSet, isDeleting, prefetchFlashcards } = useOptimizedFlashcardSets();
+  const queryClient = useQueryClient();
+  const { allSets, loading, error, deleteFlashcardSet, isDeleting, prefetchFlashcards, refetch } = useOptimizedFlashcardSets();
   const { progressData, getSetProgress } = useFlashcardSetProgress(allSets);
   const [deletingSet, setDeletingSet] = useState<string | null>(null);
+
+  // Refresh progress data when returning to this page
+  useEffect(() => {
+    const refreshProgress = () => {
+      console.log('🔄 Refreshing flashcard sets and progress data');
+      queryClient.invalidateQueries({ queryKey: ['flashcard-set-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['optimized-flashcard-sets'] });
+    };
+
+    // Refresh on mount and when window gains focus
+    refreshProgress();
+    
+    const handleFocus = () => refreshProgress();
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [queryClient]);
 
   const handleStudyStart = (setId: string) => {
     console.log('handleStudyStart called with setId:', setId);
@@ -60,6 +81,8 @@ const OptimizedFlashcardsPage = () => {
     setDeletingSet(setId);
     try {
       await deleteFlashcardSet(setId);
+      // Refresh progress data after deletion
+      queryClient.invalidateQueries({ queryKey: ['flashcard-set-progress'] });
     } catch (error) {
       console.error('Error deleting flashcard set:', error);
     } finally {
@@ -97,7 +120,8 @@ const OptimizedFlashcardsPage = () => {
 
   // Handle retry for error state
   const handleRetry = () => {
-    window.location.reload();
+    refetch();
+    queryClient.invalidateQueries({ queryKey: ['flashcard-set-progress'] });
   };
 
   return (
