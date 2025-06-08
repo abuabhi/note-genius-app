@@ -81,6 +81,28 @@ export const FlashcardsContent = ({
     return <ErrorDisplay error={error} onRetry={onRetry} />;
   }
 
+  // Map progress data from the optimized sets to the expected format for list view
+  const mappedDetailedProgressData = sets.reduce((acc: Record<string, any>, set) => {
+    const progressSummary = set.progress_summary;
+    if (progressSummary) {
+      acc[set.id] = {
+        masteredCards: progressSummary.mastered_cards || 0,
+        needsPracticeCards: progressSummary.needs_practice || 0,
+        totalCards: progressSummary.total_cards || 0,
+        masteredPercentage: progressSummary.mastery_percentage || 0
+      };
+    } else {
+      // Fallback for sets without progress data
+      acc[set.id] = {
+        masteredCards: 0,
+        needsPracticeCards: set.card_count || 0,
+        totalCards: set.card_count || 0,
+        masteredPercentage: 0
+      };
+    }
+    return acc;
+  }, {});
+
   const setProgressData = sets.reduce((acc: Record<string, number>, set) => {
     acc[set.id] = set.progress_summary?.mastery_percentage || 0;
     return acc;
@@ -95,7 +117,7 @@ export const FlashcardsContent = ({
           onDeleteSet={onDeleteSet}
           onTogglePinned={onTogglePinned}
           deletingSet={deletingSet}
-          detailedProgressData={detailedProgressData}
+          detailedProgressData={mappedDetailedProgressData}
         />
       ) : (
         <FlashcardSetGrid
@@ -106,7 +128,7 @@ export const FlashcardsContent = ({
           hasInitiallyLoaded={!loading}
           searchQuery={filters.searchQuery}
           subjectFilter={filters.subjectFilter}
-          detailedProgressData={detailedProgressData}
+          detailedProgressData={mappedDetailedProgressData}
         />
       )}
 

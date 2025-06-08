@@ -6,7 +6,6 @@ import { useOptimizedFlashcardSets } from "@/hooks/useOptimizedFlashcardSets";
 import { FlashcardsPageHeader } from "@/components/flashcards/page/FlashcardsPageHeader";
 import { FlashcardsContent } from "@/components/flashcards/page/FlashcardsContent";
 import { AdvancedFlashcardFilters } from "@/components/flashcards/components/AdvancedFlashcardFilters";
-import { VisualFloatingTimer } from "@/components/study/VisualFloatingTimer";
 import { useViewPreferences } from "@/hooks/useViewPreferences";
 import type { FlashcardFilters } from "@/components/flashcards/components/AdvancedFlashcardFilters";
 
@@ -78,7 +77,6 @@ const OptimizedFlashcardsPage = () => {
 
   return (
     <Layout>
-      <VisualFloatingTimer />
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
         <div className="container mx-auto p-6 space-y-6">
           <FlashcardsPageHeader 
