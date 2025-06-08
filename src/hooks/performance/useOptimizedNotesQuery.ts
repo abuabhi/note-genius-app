@@ -77,15 +77,15 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
           query = query.eq('archived', false);
         }
 
-        // Fix subject filtering - use proper Supabase syntax
+        // Fix subject filtering - use a simpler approach that works
         if (subject && subject !== 'all') {
-          // Use a single .or() call with proper syntax
-          query = query.or(`subject.ilike.%${subject}%,user_subjects.name.ilike.%${subject}%`);
+          // First try filtering by the subject field directly
+          query = query.ilike('subject', `%${subject}%`);
         }
 
         if (search) {
-          // Use full-text search for better performance
-          query = query.or(`title.ilike.%${search}%,content.ilike.%${search}%,description.ilike.%${search}%`);
+          // Use simpler search that works
+          query = query.ilike('title', `%${search}%`);
         }
 
         // Apply sorting with pinned notes first
