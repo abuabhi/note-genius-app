@@ -5,7 +5,7 @@ import CreateFlashcard from "@/components/flashcards/CreateFlashcard";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { FlashcardProvider } from "@/contexts/flashcards/index.tsx";
+import { FlashcardProvider } from "@/contexts/flashcards/index";
 
 const CreateFlashcardPage = () => {
   useRequireAuth();

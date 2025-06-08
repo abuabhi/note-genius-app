@@ -8,3 +8,6 @@ export { useCategoryOperations } from './useCategoryOperations';
 export { useStudyOperations } from './useStudyOperations';
 export { useLibraryOperations } from './useLibraryOperations';
 export { combineFlashcardOperations } from './useFlashcards';
+
+// Export the main context components from the tsx file
+export { FlashcardProvider, useFlashcards } from './index.tsx';
