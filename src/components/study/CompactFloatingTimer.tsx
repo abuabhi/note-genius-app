@@ -90,7 +90,7 @@ export const CompactFloatingTimer = ({
   const timerClassName = className || "bg-mint-500 border-mint-600";
 
   return (
-    <Card className={`fixed top-4 right-4 z-40 p-3 ${timerClassName} shadow-lg`}>
+    <Card className={`fixed bottom-4 right-4 z-40 p-3 ${timerClassName} shadow-lg`}>
       <div className="flex items-center gap-3">
         {/* Compact Circular Progress */}
         <div className="relative w-10 h-10">

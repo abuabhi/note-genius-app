@@ -72,6 +72,15 @@ export const useTimezoneAwareAnalytics = () => {
         .select('*')
         .eq('user_id', user.id);
 
+      // Get today's learning progress to include recently completed cards
+      const todayString = getTodayInTimezone(timezone);
+      const startOfToday = getStartOfDayInTimezone(timezone);
+      const { data: todayProgress } = await supabase
+        .from('learning_progress')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('last_seen_at', startOfToday.toISOString());
+
       const allSessions = sessions || [];
       
       // Calculate total study time (duration is in seconds)
@@ -95,19 +104,30 @@ export const useTimezoneAwareAnalytics = () => {
         flashcardAccuracy = Math.round((totalScore / (progress.length * 5)) * 100);
       }
 
-      const totalCardsMastered = progress?.filter(p => 
+      // Enhanced Cards Mastered calculation
+      // Include both spaced repetition mastery AND recently completed cards
+      const spacedRepetitionMastered = progress?.filter(p => 
         p.ease_factor && p.ease_factor >= 2.5 && 
         p.interval && p.interval >= 7
       ).length || 0;
 
+      // Count recently completed cards (today) with good accuracy
+      const recentlyMastered = todayProgress?.filter(p => 
+        p.times_correct > 0 && 
+        p.times_seen > 0 && 
+        (p.times_correct / p.times_seen) >= 0.8 // 80% accuracy threshold
+      ).length || 0;
+
+      // Combine both mastery criteria
+      const totalCardsMastered = spacedRepetitionMastered + recentlyMastered;
+
       // Timezone-aware date calculations using improved utilities
-      const todayString = getTodayInTimezone(timezone);
-      const startOfToday = getStartOfDayInTimezone(timezone);
+      const startOfTodayCalc = getStartOfDayInTimezone(timezone);
       const endOfToday = getEndOfDayInTimezone(timezone);
       
       console.log(`🌏 ${timezone} Timezone Boundaries:`, {
         todayString,
-        startOfToday: startOfToday.toISOString(),
+        startOfToday: startOfTodayCalc.toISOString(),
         endOfToday: endOfToday.toISOString(),
         currentTime: new Date().toISOString()
       });
@@ -116,7 +136,7 @@ export const useTimezoneAwareAnalytics = () => {
       const todaySessions = allSessions.filter(s => {
         if (!s.start_time) return false;
         const sessionDate = new Date(s.start_time);
-        const isToday = sessionDate >= startOfToday && sessionDate <= endOfToday;
+        const isToday = sessionDate >= startOfTodayCalc && sessionDate <= endOfToday;
         
         // Debug session timezone classification
         if (timezone.includes('Melbourne') || timezone.includes('Australia')) {
@@ -223,10 +243,10 @@ export const useTimezoneAwareAnalytics = () => {
         weeklyGoalProgress,
         weeklyGoalMinutes,
         
-        // Flashcard metrics
+        // Flashcard metrics - updated with enhanced mastery calculation
         totalSets,
         totalCardsReviewed,
-        totalCardsMastered,
+        totalCardsMastered, // Now includes both spaced repetition + recent completions
         flashcardAccuracy,
         
         // Data for components
@@ -264,6 +284,9 @@ export const useTimezoneAwareAnalytics = () => {
         previousWeekMinutes: result.previousWeekTimeMinutes,
         weeklyChange: result.weeklyChange,
         goalProgress: result.weeklyGoalProgress,
+        totalCardsMastered: result.totalCardsMastered,
+        spacedRepetitionMastered,
+        recentlyMastered,
         weekStart: weekStart.toISOString(),
         weekEnd: weekEnd.toISOString()
       });
