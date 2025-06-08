@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Note } from "@/types/note";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -86,7 +85,7 @@ export const CompactNoteCard = ({ note, onPin, onDelete }: CompactNoteCardProps)
       )}
       
       <CardHeader className="pb-4 pt-6">
-        <CardTitle className="text-lg font-semibold text-slate-800 line-clamp-2 pr-8 leading-relaxed group-hover:text-slate-900 transition-colors">
+        <CardTitle className="text-lg font-bold text-green-700 line-clamp-2 pr-8 leading-relaxed group-hover:text-green-800 transition-colors">
           {note.title}
         </CardTitle>
       </CardHeader>
@@ -104,7 +103,7 @@ export const CompactNoteCard = ({ note, onPin, onDelete }: CompactNoteCardProps)
             {subjectName}
           </Badge>
           
-          <span className="text-xs text-slate-500 font-medium bg-slate-50 px-2 py-1 rounded-full">
+          <span className="text-sm text-gray-600 font-bold bg-slate-50 px-2 py-1 rounded-full">
             {formattedDate}
           </span>
         </div>

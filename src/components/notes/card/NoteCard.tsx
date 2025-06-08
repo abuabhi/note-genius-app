@@ -1,4 +1,3 @@
-
 import { Note } from "@/types/note";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Archive, Book, Camera, FileText, Pin, Tag, Sparkles } from "lucide-react";
@@ -142,7 +141,7 @@ export const NoteCard = ({
           />
         </div>
         
-        <CardTitle className="text-xl text-slate-800 leading-relaxed pr-20 font-semibold">
+        <CardTitle className="text-xl text-green-700 leading-relaxed pr-20 font-bold">
           {note.title}
         </CardTitle>
         
@@ -170,7 +169,7 @@ export const NoteCard = ({
           </Badge>
           
           {/* Date */}
-          <span className="text-xs text-slate-500 font-medium">
+          <span className="text-sm text-gray-600 font-bold">
             {formattedDate}
           </span>
         </div>
