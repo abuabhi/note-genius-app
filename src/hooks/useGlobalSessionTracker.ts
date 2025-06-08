@@ -86,7 +86,15 @@ export const useGlobalSessionTracker = () => {
 
   // Start a new session
   const startSession = useCallback(async () => {
-    if (!user || sessionState.isActive) return;
+    if (!user) {
+      console.log('❌ Cannot start session: no user');
+      return;
+    }
+    
+    if (sessionState.isActive) {
+      console.log('❌ Cannot start session: session already active');
+      return;
+    }
 
     try {
       const activityType = getCurrentActivityType();
@@ -102,6 +110,7 @@ export const useGlobalSessionTracker = () => {
         auto_created: true
       };
 
+      console.log('🚀 Starting new global session...');
       const { data, error } = await supabase
         .from('study_sessions')
         .insert(sessionData)
@@ -119,7 +128,7 @@ export const useGlobalSessionTracker = () => {
         isPaused: false
       });
 
-      console.log('🚀 Global session started:', data.id);
+      console.log('✅ Global session started:', data.id);
       queryClient.invalidateQueries({ queryKey: ['studySessions'] });
 
     } catch (error) {
@@ -136,6 +145,7 @@ export const useGlobalSessionTracker = () => {
       const duration = sessionState.startTime ? 
         Math.floor((endTime.getTime() - sessionState.startTime.getTime()) / 1000) : 0;
 
+      console.log('🛑 Ending global session...');
       const { error } = await supabase
         .from('study_sessions')
         .update({
@@ -156,7 +166,7 @@ export const useGlobalSessionTracker = () => {
         isPaused: false
       });
 
-      console.log('🛑 Global session ended');
+      console.log('✅ Global session ended');
       queryClient.invalidateQueries({ queryKey: ['studySessions'] });
 
     } catch (error) {
@@ -172,6 +182,7 @@ export const useGlobalSessionTracker = () => {
     if (newActivityType === sessionState.currentActivity) return;
 
     try {
+      console.log('🔄 Updating activity type to:', newActivityType);
       const { error } = await supabase
         .from('study_sessions')
         .update({
@@ -187,7 +198,7 @@ export const useGlobalSessionTracker = () => {
         currentActivity: newActivityType
       }));
 
-      console.log('🔄 Activity type updated to:', newActivityType);
+      console.log('✅ Activity type updated to:', newActivityType);
 
     } catch (error) {
       console.error('Error updating activity type:', error);
@@ -225,29 +236,47 @@ export const useGlobalSessionTracker = () => {
     };
   }, [sessionState.isActive, sessionState.isPaused, sessionState.startTime]);
 
-  // Handle page navigation - key logic fix here
+  // Handle page navigation - FIXED LOGIC
   useEffect(() => {
+    console.log('📍 Navigation detected:', {
+      path: location.pathname,
+      isOnStudyPage,
+      hasActiveSession: sessionState.isActive,
+      sessionId: sessionState.sessionId,
+      isPaused: sessionState.isPaused
+    });
+
     if (isOnStudyPage) {
-      // If we're on a study page
-      if (!sessionState.isActive) {
-        // No active session - start one
-        startSession();
-      } else {
-        // Session exists - just update activity type and resume if paused
+      // On a study page
+      if (sessionState.isActive) {
+        // Session exists - just update activity type and unpause if needed
+        console.log('🔄 On study page with existing session - updating activity and unpausing');
         updateActivityType();
         if (sessionState.isPaused) {
           setSessionState(prev => ({ ...prev, isPaused: false }));
           console.log('▶️ Session resumed on study page');
         }
+      } else {
+        // No session exists - start a new one
+        console.log('🚀 On study page with no session - starting new session');
+        startSession();
       }
     } else {
-      // If we leave study pages, pause the session but don't end it
+      // Not on a study page
       if (sessionState.isActive && !sessionState.isPaused) {
+        // Session exists and is active - pause it
+        console.log('⏸️ Left study area - pausing session');
         setSessionState(prev => ({ ...prev, isPaused: true }));
-        console.log('⏸️ Session paused - left study area');
       }
     }
-  }, [isOnStudyPage, location.pathname, sessionState.isActive, sessionState.isPaused, startSession, updateActivityType]);
+  }, [isOnStudyPage, location.pathname]);
+
+  // Separate effect for activity type updates when session exists
+  useEffect(() => {
+    if (isOnStudyPage && sessionState.isActive && !sessionState.isPaused) {
+      updateActivityType();
+    }
+  }, [location.pathname, isOnStudyPage, sessionState.isActive, sessionState.isPaused]);
 
   // Record user activity
   const recordActivity = useCallback(() => {
