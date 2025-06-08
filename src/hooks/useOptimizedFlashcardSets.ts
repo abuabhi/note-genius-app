@@ -20,7 +20,7 @@ export const useOptimizedFlashcardSets = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Single optimized query for flashcard sets with progress
+  // Single optimized query for flashcard sets
   const { data: setsData, isLoading, error } = useQuery({
     queryKey: ['optimized-flashcard-sets', user?.id],
     queryFn: async () => {
@@ -29,7 +29,7 @@ export const useOptimizedFlashcardSets = () => {
       console.log('🚀 Fetching optimized flashcard sets...');
       const startTime = Date.now();
 
-      // Single query with aggregated data
+      // Fetch flashcard sets with proper filtering
       const { data, error } = await supabase
         .from('flashcard_sets')
         .select(`

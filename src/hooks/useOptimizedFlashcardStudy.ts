@@ -42,7 +42,7 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
     totalCards: 0
   });
 
-  // Single optimized query to fetch all data
+  // Optimized query to fetch flashcards with proper relationships
   const { data, isLoading, error } = useQuery({
     queryKey: ['optimized-flashcard-study', setId, mode, user?.id],
     queryFn: async () => {
@@ -51,7 +51,7 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
       console.log('🚀 Starting optimized flashcard fetch for set:', setId, 'mode:', mode);
       const startTime = Date.now();
 
-      // Single query with JOINs to fetch everything at once
+      // Step 1: Get flashcards for the set
       const { data: flashcardData, error: flashcardError } = await supabase
         .from('flashcard_set_cards')
         .select(`
@@ -65,22 +65,6 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
             updated_at,
             user_id,
             is_built_in
-          ),
-          user_flashcard_progress (
-            mastery_level,
-            last_reviewed_at,
-            last_score,
-            ease_factor,
-            interval,
-            repetition
-          ),
-          learning_progress (
-            times_seen,
-            times_correct,
-            is_known,
-            is_difficult,
-            confidence_level,
-            last_seen_at
           )
         `)
         .eq('set_id', setId)
@@ -91,9 +75,6 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
         throw flashcardError;
       }
 
-      const loadTime = Date.now() - startTime;
-      console.log(`⚡ Data fetched in ${loadTime}ms`);
-
       if (!flashcardData || flashcardData.length === 0) {
         return {
           flashcards: [],
@@ -101,11 +82,35 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
         };
       }
 
-      // Transform and filter data efficiently
+      // Step 2: Get progress data separately for the user
+      const flashcardIds = flashcardData.map(item => item.flashcards.id);
+      
+      const [progressData, learningData] = await Promise.all([
+        supabase
+          .from('user_flashcard_progress')
+          .select('*')
+          .eq('user_id', user.id)
+          .in('flashcard_id', flashcardIds),
+        supabase
+          .from('learning_progress')
+          .select('*')
+          .eq('user_id', user.id)
+          .in('flashcard_id', flashcardIds)
+      ]);
+
+      // Create lookup maps for performance
+      const progressMap = new Map(
+        (progressData.data || []).map(p => [p.flashcard_id, p])
+      );
+      const learningMap = new Map(
+        (learningData.data || []).map(l => [l.flashcard_id, l])
+      );
+
+      // Step 3: Transform and combine data efficiently
       const allCards: OptimizedFlashcardData[] = flashcardData.map(item => {
         const flashcard = item.flashcards;
-        const progress = Array.isArray(item.user_flashcard_progress) ? item.user_flashcard_progress[0] : item.user_flashcard_progress;
-        const learningProgress = Array.isArray(item.learning_progress) ? item.learning_progress[0] : item.learning_progress;
+        const progress = progressMap.get(flashcard.id);
+        const learningProgress = learningMap.get(flashcard.id);
 
         return {
           id: flashcard.id,
@@ -130,11 +135,10 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
         };
       });
 
-      // Fast filtering based on mode
+      // Step 4: Filter based on mode
       let filteredCards = allCards;
       if (mode === 'review') {
         filteredCards = allCards.filter(card => {
-          // Needs review if: never seen, marked difficult, low success rate, or mastery < 1
           if (!card.last_reviewed_at) return true;
           if (card.is_difficult) return true;
           if (card.mastery_level && card.mastery_level < 1) return true;
@@ -145,13 +149,12 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
           return successRate < 80;
         });
       } else if (mode === 'learn') {
-        // For learn mode, prioritize cards never seen or with low confidence
         filteredCards = allCards.filter(card => 
           !card.last_reviewed_at || card.confidence_level < 3
         );
       }
 
-      // Calculate stats
+      // Step 5: Calculate stats
       const today = new Date().toDateString();
       const studiedToday = filteredCards.filter(card => 
         card.last_reviewed_at && new Date(card.last_reviewed_at).toDateString() === today

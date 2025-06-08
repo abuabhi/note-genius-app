@@ -11,8 +11,34 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Suspense } from 'react';
 import FlashcardSetGrid from '@/components/flashcards/components/FlashcardSetGrid';
+
+// Skeleton component for loading state
+const LoadingSkeleton = () => (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {Array.from({ length: 6 }).map((_, i) => (
+      <Card key={i} className="animate-pulse">
+        <CardHeader>
+          <Skeleton className="h-6 w-3/4" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-4 w-full mb-2" />
+          <Skeleton className="h-4 w-2/3 mb-4" />
+          <Skeleton className="h-8 w-full" />
+        </CardContent>
+      </Card>
+    ))}
+  </div>
+);
+
+// Error component
+const ErrorDisplay = ({ error, onRetry }: { error: string; onRetry: () => void }) => (
+  <div className="text-center py-12">
+    <p className="text-red-600 mb-4">Error loading flashcard sets: {error}</p>
+    <Button onClick={onRetry}>Try Again</Button>
+  </div>
+);
 
 const OptimizedFlashcardsPage = () => {
   const [searchParams] = useSearchParams();
@@ -41,8 +67,10 @@ const OptimizedFlashcardsPage = () => {
     }
   };
 
-  // Optimized progress data calculation
+  // Optimized progress data calculation with early return
   const setProgressData = useMemo(() => {
+    if (!allSets.length) return {};
+    
     const progressMap: Record<string, number> = {};
     allSets.forEach(set => {
       const progress = getSetProgress(set.id);
@@ -52,6 +80,8 @@ const OptimizedFlashcardsPage = () => {
   }, [allSets, getSetProgress]);
 
   const detailedProgressData = useMemo(() => {
+    if (!allSets.length) return {};
+    
     const detailedMap: Record<string, any> = {};
     allSets.forEach(set => {
       const progress = getSetProgress(set.id);
@@ -65,54 +95,10 @@ const OptimizedFlashcardsPage = () => {
     return detailedMap;
   }, [allSets, getSetProgress]);
 
-  // Optimized loading skeleton
-  const loadingSkeleton = useMemo(() => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <Card key={i} className="animate-pulse">
-          <CardHeader>
-            <Skeleton className="h-6 w-3/4" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-4 w-full mb-2" />
-            <Skeleton className="h-4 w-2/3 mb-4" />
-            <Skeleton className="h-8 w-full" />
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  ), []);
-
-  // Memoized content for better performance
-  const flashcardContent = useMemo(() => {
-    if (loading) {
-      return loadingSkeleton;
-    }
-
-    if (error) {
-      return (
-        <div className="text-center py-12">
-          <p className="text-red-600 mb-4">Error loading flashcard sets: {error}</p>
-          <Button onClick={() => window.location.reload()}>
-            Try Again
-          </Button>
-        </div>
-      );
-    }
-
-    return (
-      <FlashcardSetGrid
-        sets={allSets}
-        setProgressData={setProgressData}
-        deletingSet={deletingSet}
-        onDeleteSet={handleDeleteSet}
-        hasInitiallyLoaded={!loading}
-        searchQuery=""
-        subjectFilter={undefined}
-        detailedProgressData={detailedProgressData}
-      />
-    );
-  }, [allSets, loading, error, setProgressData, detailedProgressData, deletingSet, loadingSkeleton]);
+  // Handle retry for error state
+  const handleRetry = () => {
+    window.location.reload();
+  };
 
   return (
     <Layout>
@@ -136,7 +122,24 @@ const OptimizedFlashcardsPage = () => {
         </div>
 
         <FlashcardProvider>
-          {flashcardContent}
+          <Suspense fallback={<LoadingSkeleton />}>
+            {loading ? (
+              <LoadingSkeleton />
+            ) : error ? (
+              <ErrorDisplay error={error} onRetry={handleRetry} />
+            ) : (
+              <FlashcardSetGrid
+                sets={allSets}
+                setProgressData={setProgressData}
+                deletingSet={deletingSet}
+                onDeleteSet={handleDeleteSet}
+                hasInitiallyLoaded={!loading}
+                searchQuery=""
+                subjectFilter={undefined}
+                detailedProgressData={detailedProgressData}
+              />
+            )}
+          </Suspense>
         </FlashcardProvider>
       </div>
     </Layout>

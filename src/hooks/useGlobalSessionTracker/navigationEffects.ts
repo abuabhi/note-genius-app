@@ -21,6 +21,12 @@ export const useNavigationEffects = (
   const wasOnStudyPage = previousLocationRef.current ? 
     STUDY_ROUTES.some(route => previousLocationRef.current!.startsWith(route)) : null;
 
+  // Check if we're moving between flashcard sets (same study context)
+  const isFlashcardNavigation = (current: string, previous: string | null) => {
+    if (!previous) return false;
+    return current.startsWith('/flashcards/') && previous.startsWith('/flashcards/');
+  };
+
   // Handle page navigation with improved session management
   useEffect(() => {
     const currentPath = location.pathname;
@@ -35,7 +41,8 @@ export const useNavigationEffects = (
       hasActiveSession: sessionState.isActive,
       sessionId: sessionState.sessionId,
       isPaused: sessionState.isPaused,
-      sessionStarted: sessionStartedRef.current
+      sessionStarted: sessionStartedRef.current,
+      isFlashcardNavigation: isFlashcardNavigation(currentPath, previousPath)
     });
 
     // Skip processing on initial load to avoid unwanted session creation
@@ -55,8 +62,18 @@ export const useNavigationEffects = (
     // Update previous location reference
     previousLocationRef.current = currentPath;
 
+    // Handle flashcard-to-flashcard navigation (maintain session)
+    if (isFlashcardNavigation(currentPath, previousPath)) {
+      console.log('🔄 Moving between flashcard sets - maintaining session');
+      if (sessionState.isActive) {
+        // Just update activity type without disrupting the session
+        updateActivityType();
+      }
+      return;
+    }
+
     if (isOnStudyPage && wasOnStudyPage) {
-      // Moving between study pages - just update activity type
+      // Moving between study pages (but not flashcard-to-flashcard) - just update activity type
       console.log('🔄 Moving between study pages - updating activity type only');
       if (sessionState.isActive) {
         updateActivityType();
