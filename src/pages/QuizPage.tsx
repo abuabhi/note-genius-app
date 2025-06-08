@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageBreadcrumb } from '@/components/ui/page-breadcrumb';
+import { Link } from 'react-router-dom';
 
 const QuizPage = () => {
   const { loading: authLoading } = useRequireAuth();
@@ -44,10 +45,10 @@ const QuizPage = () => {
             </p>
           </div>
           <Button asChild className="flex items-center gap-2">
-            <a href="/create-quiz">
+            <Link to="/quiz/create">
               <PlusCircle className="h-4 w-4" />
               Create Quiz
-            </a>
+            </Link>
           </Button>
         </div>
 

@@ -1,3 +1,4 @@
+
 import { Routes, Route } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { LazyLoadWrapper } from '@/components/performance/LazyLoadWrapper';
@@ -97,7 +98,7 @@ export const OptimizedAppRoutes = () => {
           </LazyLoadWrapper>
         } />
         
-        {/* Quiz routes */}
+        {/* Quiz routes - Fixed both /quiz and /quizzes to point to the same component */}
         <Route path="/quiz" element={
           <LazyLoadWrapper>
             <QuizPage />
