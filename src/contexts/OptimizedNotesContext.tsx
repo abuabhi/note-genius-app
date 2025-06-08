@@ -198,19 +198,28 @@ export const OptimizedNotesProvider = ({ children }: { children: ReactNode }) =>
     }, 'Delete note');
   }, [executeWithRetry, recordMetric, refetch, invalidateCache]);
 
-  // Enhanced search with behavior tracking
+  // Enhanced search with behavior tracking - preserves current filters
   const handleSearchChange = useCallback((term: string) => {
+    console.log(`🔍 Search change: "${searchTerm}" -> "${term}", preserving subject: ${selectedSubject}, sort: ${sortType}`);
     setSearchTerm(term);
     setCurrentPage(1); // Reset to first page on search
     trackSearchBehavior(term);
-  }, [trackSearchBehavior]);
+  }, [trackSearchBehavior, searchTerm, selectedSubject, sortType]);
 
-  // Enhanced subject change with behavior tracking
+  // Enhanced subject change with behavior tracking - preserves current filters  
   const handleSubjectChange = useCallback((subject: string) => {
+    console.log(`🎯 Subject change: "${selectedSubject}" -> "${subject}", preserving search: "${searchTerm}", sort: ${sortType}`);
     setSelectedSubject(subject);
     setCurrentPage(1);
     trackSubjectSelection(subject);
-  }, [trackSubjectSelection]);
+  }, [trackSubjectSelection, selectedSubject, searchTerm, sortType]);
+
+  // Enhanced sort change - preserves current filters
+  const handleSortChange = useCallback((sort: string) => {
+    console.log(`🔄 Sort change: "${sortType}" -> "${sort}", preserving subject: ${selectedSubject}, search: "${searchTerm}"`);
+    setSortType(sort);
+    setCurrentPage(1);
+  }, [sortType, selectedSubject, searchTerm]);
 
   const contextValue = useMemo(() => ({
     notes,
@@ -221,7 +230,7 @@ export const OptimizedNotesProvider = ({ children }: { children: ReactNode }) =>
     searchTerm,
     setSearchTerm: handleSearchChange,
     sortType,
-    setSortType,
+    setSortType: handleSortChange,
     showArchived,
     setShowArchived,
     selectedSubject,
@@ -235,7 +244,7 @@ export const OptimizedNotesProvider = ({ children }: { children: ReactNode }) =>
     deleteNote
   }), [
     notes, totalCount, hasMore, isLoading, error,
-    searchTerm, handleSearchChange, sortType, showArchived,
+    searchTerm, handleSearchChange, sortType, handleSortChange, showArchived,
     selectedSubject, handleSubjectChange, currentPage, refetch, prefetchNextPage,
     addNote, updateNote, deleteNote
   ]);
