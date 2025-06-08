@@ -184,7 +184,7 @@ export const OptimizedAppRoutes = () => {
         } 
       />
       
-      {/* Flashcards */}
+      {/* Flashcards - Optimized Routes */}
       <Route 
         path="/flashcards" 
         element={
@@ -201,6 +201,7 @@ export const OptimizedAppRoutes = () => {
           </LazyLoadWrapper>
         } 
       />
+      {/* All flashcard study routes */}
       <Route 
         path="/flashcards/:id/study" 
         element={
@@ -217,7 +218,6 @@ export const OptimizedAppRoutes = () => {
           </LazyLoadWrapper>
         } 
       />
-      {/* Add the missing /study/:id route */}
       <Route 
         path="/study/:id" 
         element={

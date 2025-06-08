@@ -14,8 +14,20 @@ import { OptimizedAppRoutes } from './components/optimized/OptimizedAppRoutes';
 import { SessionProvider } from '@/contexts/SessionContext';
 import { useStudyActivityDetector } from '@/hooks/useStudyActivityDetector';
 
-// Create a QueryClient instance
-const queryClient = new QueryClient();
+// Create a QueryClient instance with optimized settings for high concurrency
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+      retry: 2,
+      refetchOnWindowFocus: false,
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
+});
 
 // Component to handle study activity detection
 const StudyActivityHandler = () => {
@@ -37,12 +49,9 @@ function App() {
                   <Route key={index} path={route.path} element={route.element} />
                 ))}
                 
-                {/* Standard User Routes */}
+                {/* Protected Routes - Use OptimizedAppRoutes for main app navigation */}
                 <Route element={<ProtectedRoute />}>
-                  <Route path="/" element={<OptimizedAppRoutes />} />
-                  {standardRoutes.map((route, index) => (
-                    <Route key={index} path={route.path} element={route.element} />
-                  ))}
+                  <Route path="/*" element={<OptimizedAppRoutes />} />
                 </Route>
                 
                 {/* Admin Routes */}
