@@ -11,7 +11,6 @@ import { NoteStudyViewContent } from './viewer/NoteStudyViewContent';
 import { EnhancementContentType } from './enhancements/EnhancementSelector';
 import { useNoteEnrichment } from '@/hooks/useNoteEnrichment';
 import { toast } from 'sonner';
-import { CompactStudyTimer } from './timer/CompactStudyTimer';
 import { StudyBreadcrumb } from './navigation/StudyBreadcrumb';
 
 interface NoteStudyViewProps {
@@ -20,8 +19,6 @@ interface NoteStudyViewProps {
 }
 
 export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
-  const [studyStarted, setStudyStarted] = useState(false);
-
   // Get optimized real-time synced note data
   const { currentNote, refreshKey, forceRefresh } = useOptimizedRealtimeSync(note);
 
@@ -112,13 +109,8 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
     await handleEnhanceContent(enhancementType);
   };
 
-  // Handle content type change with study session tracking
+  // Handle content type change
   const handleActiveContentTypeChange = (type: EnhancementContentType) => {
-    // Start study session when user switches to study-focused tabs
-    if (['summary', 'keyPoints', 'improved', 'markdown'].includes(type) && !studyStarted) {
-      setStudyStarted(true);
-    }
-    
     setActiveContentType(type);
   };
 
@@ -144,15 +136,6 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-mint-50/20">
-      {/* Compact Study Timer */}
-      {studyStarted && (
-        <CompactStudyTimer
-          noteId={currentNote.id}
-          noteName={currentNote.title}
-          triggerStudyActivity={studyStarted}
-        />
-      )}
-
       <div className="max-w-7xl mx-auto p-4 space-y-6">
         {/* Breadcrumb Navigation */}
         <StudyBreadcrumb note={currentNote} />
