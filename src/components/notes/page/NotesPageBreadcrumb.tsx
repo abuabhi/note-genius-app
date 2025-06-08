@@ -1,13 +1,13 @@
 
 import React from "react";
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+  OptimizedBreadcrumb,
+  OptimizedBreadcrumbItem,
+  OptimizedBreadcrumbLink,
+  OptimizedBreadcrumbList,
+  OptimizedBreadcrumbPage,
+  OptimizedBreadcrumbSeparator,
+} from "@/components/ui/optimized-breadcrumb";
 import { Home, FileText } from "lucide-react";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
 import { useNotes } from "@/contexts/NoteContext";
@@ -29,41 +29,41 @@ export const NotesPageBreadcrumb = ({ activeSubjectId }: NotesPageBreadcrumbProp
 
   return (
     <div className="flex items-center justify-between mb-2">
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink href="/dashboard" className="flex items-center gap-1">
+      <OptimizedBreadcrumb>
+        <OptimizedBreadcrumbList>
+          <OptimizedBreadcrumbItem>
+            <OptimizedBreadcrumbLink to="/dashboard" className="flex items-center gap-1">
               <Home className="h-3 w-3" />
               Dashboard
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
+            </OptimizedBreadcrumbLink>
+          </OptimizedBreadcrumbItem>
+          <OptimizedBreadcrumbSeparator />
           
           {!hasFilters ? (
-            <BreadcrumbItem>
-              <BreadcrumbPage className="flex items-center gap-1">
+            <OptimizedBreadcrumbItem>
+              <OptimizedBreadcrumbPage className="flex items-center gap-1">
                 <FileText className="h-3 w-3" />
                 Notes
-              </BreadcrumbPage>
-            </BreadcrumbItem>
+              </OptimizedBreadcrumbPage>
+            </OptimizedBreadcrumbItem>
           ) : (
             <>
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/notes" className="flex items-center gap-1">
+              <OptimizedBreadcrumbItem>
+                <OptimizedBreadcrumbLink to="/notes" className="flex items-center gap-1">
                   <FileText className="h-3 w-3" />
                   Notes
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>
+                </OptimizedBreadcrumbLink>
+              </OptimizedBreadcrumbItem>
+              <OptimizedBreadcrumbSeparator />
+              <OptimizedBreadcrumbItem>
+                <OptimizedBreadcrumbPage>
                   {activeSubject ? activeSubject.name : 'Search Results'}
-                </BreadcrumbPage>
-              </BreadcrumbItem>
+                </OptimizedBreadcrumbPage>
+              </OptimizedBreadcrumbItem>
             </>
           )}
-        </BreadcrumbList>
-      </Breadcrumb>
+        </OptimizedBreadcrumbList>
+      </OptimizedBreadcrumb>
       
       {resultsText && (
         <span className="text-sm text-muted-foreground">
