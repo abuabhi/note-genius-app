@@ -1,3 +1,4 @@
+
 import { Note } from "@/types/note";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Archive, Book, Camera, FileText, Pin, Tag, Sparkles } from "lucide-react";
@@ -84,8 +85,8 @@ export const NoteCard = ({
   
   const handleGoToStudyMode = (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log("🎯 Navigating to study mode for note:", note.id, note.title);
-    // Fix the navigation route - use the study route
+    e.preventDefault();
+    console.log("🎯 Study button clicked - Navigating to study mode for note:", note.id, note.title);
     navigate(`/notes/study/${note.id}`);
   };
 
@@ -189,7 +190,8 @@ export const NoteCard = ({
             variant="ghost"
             size="sm"
             onClick={handleGoToStudyMode}
-            className="text-xs px-3 py-1.5 h-auto bg-mint-50/80 hover:bg-mint-100 text-mint-700 font-medium rounded-full transition-all duration-200"
+            className="text-xs px-3 py-1.5 h-auto bg-mint-50/80 hover:bg-mint-100 text-mint-700 font-medium rounded-full transition-all duration-200 relative z-10"
+            type="button"
           >
             <Sparkles className="h-3 w-3 mr-1.5" />
             Study

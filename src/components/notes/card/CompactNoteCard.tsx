@@ -36,6 +36,8 @@ export const CompactNoteCard = ({ note, onPin, onDelete }: CompactNoteCardProps)
   
   const handleStudyClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
+    console.log("🎯 CompactNoteCard Study button clicked - Navigating to study mode for note:", note.id, note.title);
     navigate(`/notes/study/${note.id}`);
   };
 
@@ -101,8 +103,9 @@ export const CompactNoteCard = ({ note, onPin, onDelete }: CompactNoteCardProps)
       <CardFooter className="pt-0">
         <Button
           onClick={handleStudyClick}
-          className="w-full bg-mint-600 hover:bg-mint-700 text-white font-medium rounded-lg transition-colors"
+          className="w-full bg-mint-600 hover:bg-mint-700 text-white font-medium rounded-lg transition-colors relative z-10"
           size="sm"
+          type="button"
         >
           <Sparkles className="h-4 w-4 mr-2" />
           Study
