@@ -80,6 +80,8 @@ export const NoteCard = ({
   };
 
   const subjectName = getSubjectName();
+  const subjectColor = generateColorFromString(subjectName);
+  const textColor = getBestTextColor(subjectColor);
   
   const handleGoToStudyMode = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -152,46 +154,48 @@ export const NoteCard = ({
       </CardHeader>
       
       <CardFooter className="flex justify-between items-center px-6 py-4 pt-0">
-        {/* Enhanced metadata section */}
-        <div className="flex items-center gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full border border-white/50 shadow-sm" 
-                 style={{ backgroundColor: generateColorFromString(subjectName) }} />
-            <span className="font-medium text-slate-700">{formattedDate}</span>
-          </div>
+        {/* Enhanced metadata section with subject color */}
+        <div className="flex items-center gap-3">
+          {/* Subject badge with generated color */}
+          <Badge 
+            className="px-3 py-1.5 text-xs font-medium border-0 shadow-sm"
+            style={{ 
+              backgroundColor: subjectColor, 
+              color: textColor 
+            }}
+          >
+            <Book className="h-3 w-3 mr-1.5" />
+            {subjectName}
+          </Badge>
           
-          <div className="flex items-center gap-2">
-            <div 
-              className="px-3 py-1 rounded-full text-xs font-medium shadow-sm border border-white/20"
-              style={{
-                backgroundColor: `${generateColorFromString(subjectName)}15`,
-                color: generateColorFromString(subjectName),
-              }}
-            >
-              {subjectName}
-            </div>
-          </div>
+          {/* Date */}
+          <span className="text-xs text-slate-500 font-medium">
+            {formattedDate}
+          </span>
         </div>
-        
-        {/* Enhanced Study Mode button with improved click handling */}
-        <Button 
-          variant="default" 
-          size="sm" 
-          className="h-9 text-sm bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 flex items-center gap-2 px-5 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border-0 group-hover:scale-105"
-          onClick={handleGoToStudyMode}
-        >
-          <Sparkles className="h-4 w-4" />
-          Study Mode
-        </Button>
+
+        {/* Tags and actions */}
+        <div className="flex items-center gap-2">
+          {note.tags && note.tags.length > 0 && (
+            <div className="flex items-center gap-1">
+              <Tag className="h-3 w-3 text-slate-400" />
+              <span className="text-xs text-slate-500">
+                {note.tags.length}
+              </span>
+            </div>
+          )}
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleGoToStudyMode}
+            className="text-xs px-3 py-1.5 h-auto bg-mint-50/80 hover:bg-mint-100 text-mint-700 font-medium rounded-full transition-all duration-200"
+          >
+            <Sparkles className="h-3 w-3 mr-1.5" />
+            Study
+          </Button>
+        </div>
       </CardFooter>
-      
-      {/* Modern accent line */}
-      <div 
-        className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r opacity-60"
-        style={{
-          backgroundImage: `linear-gradient(90deg, ${generateColorFromString(subjectName)}, transparent)`
-        }}
-      />
     </Card>
   );
 };

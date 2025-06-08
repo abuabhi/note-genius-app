@@ -8,6 +8,7 @@ import { useAdvancedCache } from '@/hooks/performance/useAdvancedCache';
 import { useIntelligentPrefetch } from '@/hooks/performance/useIntelligentPrefetch';
 import { useState, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface OptimizedNotesContextType {
   notes: Note[];
@@ -98,18 +99,46 @@ export const OptimizedNotesProvider = ({ children }: { children: ReactNode }) =>
     trackBehavior('subject-select', { subject });
   }, [trackBehavior]);
 
-  // Enhanced operations with caching
+  // Real database operations with proper error handling
   const addNote = useCallback(async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
     return executeWithRetry(async () => {
       recordMetric('note_add_start', 1);
       
-      // Mock implementation - replace with actual API call
+      const { data, error } = await supabase
+        .from('notes')
+        .insert({
+          title: noteData.title,
+          description: noteData.description,
+          content: noteData.content,
+          date: noteData.date,
+          subject: noteData.category,
+          source_type: noteData.sourceType,
+          archived: noteData.archived || false,
+          pinned: noteData.pinned || false,
+          subject_id: noteData.subject_id,
+          summary_status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
       const newNote: Note = {
-        ...noteData,
-        id: `note_${Date.now()}`,
+        id: data.id,
+        title: data.title,
+        description: data.description || '',
+        content: data.content || '',
+        date: data.date,
+        category: data.subject || 'Uncategorized',
+        sourceType: data.source_type as 'manual' | 'import' | 'scan',
+        archived: data.archived || false,
+        pinned: data.pinned || false,
+        subject_id: data.subject_id,
+        tags: [],
+        summary_status: 'pending'
       };
       
-      // Invalidate related cache
+      // Smart cache invalidation - only invalidate current query
       invalidateCache('note-created', { noteId: newNote.id });
       
       recordMetric('note_add_success', 1);
@@ -124,10 +153,24 @@ export const OptimizedNotesProvider = ({ children }: { children: ReactNode }) =>
     return executeWithRetry(async () => {
       recordMetric('note_update_start', 1, { noteId: id });
       
-      // Mock implementation - replace with actual API call
-      console.log('Updating note:', id, updates);
+      // Prepare update data
+      const updateData: any = {};
+      if (updates.title !== undefined) updateData.title = updates.title;
+      if (updates.description !== undefined) updateData.description = updates.description;
+      if (updates.content !== undefined) updateData.content = updates.content;
+      if (updates.category !== undefined) updateData.subject = updates.category;
+      if (updates.archived !== undefined) updateData.archived = updates.archived;
+      if (updates.pinned !== undefined) updateData.pinned = updates.pinned;
+      if (updates.subject_id !== undefined) updateData.subject_id = updates.subject_id;
+
+      const { error } = await supabase
+        .from('notes')
+        .update(updateData)
+        .eq('id', id);
+
+      if (error) throw error;
       
-      // Invalidate related cache
+      // Smart cache invalidation - only invalidate affected queries
       invalidateCache('note-updated', { noteId: id });
       
       recordMetric('note_update_success', 1, { noteId: id });
@@ -140,10 +183,13 @@ export const OptimizedNotesProvider = ({ children }: { children: ReactNode }) =>
     return executeWithRetry(async () => {
       recordMetric('note_delete_start', 1, { noteId: id });
       
-      // Mock implementation - replace with actual API call
-      console.log('Deleting note:', id);
+      const { data, error } = await supabase.functions.invoke('delete-note', {
+        body: { noteId: id }
+      });
+
+      if (error) throw error;
       
-      // Invalidate related cache
+      // Smart cache invalidation
       invalidateCache('note-deleted', { noteId: id });
       
       recordMetric('note_delete_success', 1, { noteId: id });

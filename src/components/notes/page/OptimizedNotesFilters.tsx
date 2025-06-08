@@ -40,13 +40,18 @@ export const OptimizedNotesFilters = ({
 }: OptimizedNotesFiltersProps) => {
   const { subjects: userSubjects, isLoading } = useUserSubjects();
 
-  // Combine default subjects with user subjects, avoiding duplicates
+  // Combine default subjects with user subjects, avoiding duplicates (case-insensitive)
   const allSubjects = [
     ...DEFAULT_SUBJECTS,
     ...(userSubjects || [])
       .map(s => s.name)
-      .filter(name => !DEFAULT_SUBJECTS.includes(name))
+      .filter(name => !DEFAULT_SUBJECTS.some(defaultSubject => 
+        defaultSubject.toLowerCase() === name.toLowerCase()
+      ))
   ];
+
+  // Remove duplicates and sort
+  const uniqueSubjects = [...new Set(allSubjects)].sort();
 
   return (
     <Card className="bg-white/60 backdrop-blur-sm border-mint-100/50">
@@ -72,7 +77,7 @@ export const OptimizedNotesFilters = ({
               </SelectTrigger>
               <SelectContent className="bg-white">
                 <SelectItem value="all">All Subjects</SelectItem>
-                {allSubjects.map(subject => (
+                {uniqueSubjects.map(subject => (
                   <SelectItem key={subject} value={subject}>
                     {subject}
                   </SelectItem>

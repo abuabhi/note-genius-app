@@ -23,7 +23,7 @@ interface NotesQueryResult {
 
 export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
   const { user } = useAuth();
-  const { cacheConfigs, staleWhileRevalidate } = useCacheStrategy();
+  const { cacheConfigs } = useCacheStrategy();
   const { recordMetric } = useProductionMetrics('NotesQuery');
   const queryClient = useQueryClient();
 
@@ -77,8 +77,10 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
           query = query.eq('archived', false);
         }
 
+        // Fix subject filtering - use subject name instead of ID
         if (subject && subject !== 'all') {
-          query = query.eq('subject_id', subject);
+          // Try to match both the subject field and user_subjects name
+          query = query.or(`subject.ilike.%${subject}%,user_subjects.name.ilike.%${subject}%`);
         }
 
         if (search) {
@@ -86,16 +88,16 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
           query = query.or(`title.ilike.%${search}%,content.ilike.%${search}%,description.ilike.%${search}%`);
         }
 
-        // Apply sorting
+        // Apply sorting with pinned notes first
         switch (sortBy) {
           case 'newest':
-            query = query.order('updated_at', { ascending: false });
+            query = query.order('pinned', { ascending: false }).order('updated_at', { ascending: false });
             break;
           case 'oldest':
-            query = query.order('created_at', { ascending: true });
+            query = query.order('pinned', { ascending: false }).order('created_at', { ascending: true });
             break;
           case 'alphabetical':
-            query = query.order('title', { ascending: true });
+            query = query.order('pinned', { ascending: false }).order('title', { ascending: true });
             break;
         }
 
@@ -119,7 +121,17 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
           sourceType: (note.source_type || 'manual') as 'manual' | 'import' | 'scan',
           archived: note.archived || false,
           pinned: note.pinned || false,
-          tags: note.note_tags?.map(nt => nt.tags).filter(Boolean) || []
+          subject_id: note.subject_id,
+          tags: note.note_tags?.map(nt => nt.tags).filter(Boolean) || [],
+          summary: note.summary,
+          summary_generated_at: note.summary_generated_at,
+          summary_status: note.summary_status as 'pending' | 'generating' | 'completed' | 'failed',
+          key_points: note.key_points,
+          key_points_generated_at: note.key_points_generated_at,
+          markdown_content: note.markdown_content,
+          markdown_content_generated_at: note.markdown_content_generated_at,
+          improved_content: note.improved_content,
+          improved_content_generated_at: note.improved_content_generated_at
         }));
 
         const duration = performance.now() - startTime;
@@ -145,8 +157,8 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
     },
     enabled: !!user,
     ...cacheConfigs.user,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 30 * 1000, // Reduce stale time to 30 seconds
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Prefetch next page
@@ -161,7 +173,7 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
           // Same query logic but for next page
           return { notes: [], totalCount: 0, hasMore: false };
         },
-        staleTime: cacheConfigs.user.staleTime
+        staleTime: 30 * 1000
       });
     }
   };
