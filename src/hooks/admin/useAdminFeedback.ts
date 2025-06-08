@@ -29,20 +29,40 @@ export const useAdminFeedback = () => {
   return useQuery({
     queryKey: ['admin-feedback'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First get all feedback
+      const { data: feedbackData, error: feedbackError } = await supabase
         .from('feedback')
-        .select(`
-          *,
-          profiles(username, avatar_url)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      
-      // Handle the case where profiles might not exist
-      return (data || []).map(item => ({
-        ...item,
-        profiles: item.profiles || null
+      if (feedbackError) throw feedbackError;
+
+      if (!feedbackData || feedbackData.length === 0) {
+        return [];
+      }
+
+      // Get all unique user IDs
+      const userIds = [...new Set(feedbackData.map(f => f.user_id))];
+
+      // Get profiles for these users
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.warn('Could not fetch profiles:', profilesError);
+      }
+
+      // Create a map of user ID to profile
+      const profilesMap = new Map(
+        (profilesData || []).map(profile => [profile.id, profile])
+      );
+
+      // Combine feedback with profiles
+      return feedbackData.map(feedback => ({
+        ...feedback,
+        profiles: profilesMap.get(feedback.user_id) || null
       })) as FeedbackWithProfile[];
     },
   });
