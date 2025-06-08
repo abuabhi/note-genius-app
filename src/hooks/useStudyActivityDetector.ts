@@ -25,26 +25,8 @@ export const useStudyActivityDetector = () => {
 
     if (studyRoute && !isTracking) {
       // Start session for study activity
-      const activityType = STUDY_ROUTES[studyRoute as keyof typeof STUDY_ROUTES];
-      
-      // Get subject/title from URL if available
-      let title = `${activityType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} Session`;
-      let subject = 'General';
-
-      // Extract more specific info from URL if possible
-      if (currentPath.includes('/flashcards/')) {
-        title = 'Flashcard Study Session';
-        subject = 'Flashcards';
-      } else if (currentPath.includes('/notes/')) {
-        title = 'Note Review Session';
-        subject = 'Notes';
-      } else if (currentPath.includes('/quiz')) {
-        title = 'Quiz Session';
-        subject = 'Quiz';
-      }
-
-      console.log('Auto-starting session for:', activityType, 'on route:', currentPath);
-      startSession(activityType, title, subject);
+      console.log('Auto-starting session for study activity on route:', currentPath);
+      startSession();
     } else if (!studyRoute && isTracking) {
       // End session when leaving study pages
       console.log('Auto-ending session - left study area');

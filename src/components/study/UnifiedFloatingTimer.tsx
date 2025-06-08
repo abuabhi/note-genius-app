@@ -1,9 +1,8 @@
 
 import { useState, useEffect } from 'react';
-import { Clock, Play, Pause, BookOpen, Target, FileText, X } from 'lucide-react';
+import { Clock, Play, Pause, BookOpen, Target, FileText, X, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { useGlobalSessionTracker } from '@/hooks/useGlobalSessionTracker';
 
 interface UnifiedFloatingTimerProps {
@@ -23,6 +22,7 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
   } = useGlobalSessionTracker();
 
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   // Don't show timer if not on study page or no active session
   if (!isOnStudyPage || !isActive) {
@@ -53,19 +53,6 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
     }
   };
 
-  const getActivityLabel = () => {
-    switch (currentActivity) {
-      case 'flashcard_study':
-        return 'Flashcards';
-      case 'quiz_taking':
-        return 'Quiz';
-      case 'note_review':
-        return 'Notes';
-      default:
-        return 'Study';
-    }
-  };
-
   const getActivityColor = () => {
     switch (currentActivity) {
       case 'flashcard_study':
@@ -83,7 +70,7 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
   const maxMinutes = 120;
   const currentMinutes = Math.floor(elapsedSeconds / 60);
   const percentage = Math.min((currentMinutes / maxMinutes) * 100, 100);
-  const radius = 16;
+  const radius = 12;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
@@ -110,11 +97,11 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
         onClick={handleMinimize}
       >
         <div className="flex items-center gap-2">
-          <div className="relative w-8 h-8">
-            <svg className="w-8 h-8 transform -rotate-90" viewBox="0 0 40 40">
+          <div className="relative w-6 h-6">
+            <svg className="w-6 h-6 transform -rotate-90" viewBox="0 0 32 32">
               <circle
-                cx="20"
-                cy="20"
+                cx="16"
+                cy="16"
                 r={radius}
                 stroke="currentColor"
                 strokeWidth="2"
@@ -122,8 +109,8 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
                 className="text-white/30"
               />
               <circle
-                cx="20"
-                cy="20"
+                cx="16"
+                cy="16"
                 r={radius}
                 stroke="currentColor"
                 strokeWidth="2"
@@ -147,105 +134,82 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
   }
 
   return (
-    <Card className={`fixed bottom-4 right-4 z-50 p-4 shadow-lg transition-all duration-200 ${getActivityColor()} ${className}`}>
-      <div className="flex flex-col gap-3">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className={`h-2 w-2 rounded-full animate-pulse ${isPaused ? 'bg-yellow-300' : 'bg-green-300'}`} />
-            <Badge variant="outline" className="bg-white/20 text-white border-white/30 text-xs">
-              {getActivityLabel()}
-            </Badge>
-          </div>
-          <div className="flex gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleMinimize}
-              className="h-6 w-6 p-0 hover:bg-white/20 text-white hover:text-white"
-              title="Minimize"
-            >
-              <X className="h-3 w-3" />
-            </Button>
+    <Card 
+      className={`fixed bottom-4 right-4 z-50 p-3 shadow-lg transition-all duration-200 ${getActivityColor()} ${className}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className="flex items-center gap-3">
+        {/* Circular Progress with Activity Icon */}
+        <div className="relative w-10 h-10">
+          <svg className="w-10 h-10 transform -rotate-90" viewBox="0 0 32 32">
+            <circle
+              cx="16"
+              cy="16"
+              r={radius}
+              stroke="currentColor"
+              strokeWidth="2"
+              fill="transparent"
+              className="text-white/30"
+            />
+            <circle
+              cx="16"
+              cy="16"
+              r={radius}
+              stroke="currentColor"
+              strokeWidth="2"
+              fill="transparent"
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
+              className="text-white transition-all duration-300 ease-in-out"
+              strokeLinecap="round"
+            />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <ActivityIcon className="h-4 w-4 text-white" />
           </div>
         </div>
 
-        {/* Main Timer Display */}
-        <div className="flex items-center gap-4">
-          {/* Circular Progress */}
-          <div className="relative w-12 h-12">
-            <svg className="w-12 h-12 transform -rotate-90" viewBox="0 0 40 40">
-              <circle
-                cx="20"
-                cy="20"
-                r={radius}
-                stroke="currentColor"
-                strokeWidth="3"
-                fill="transparent"
-                className="text-white/30"
-              />
-              <circle
-                cx="20"
-                cy="20"
-                r={radius}
-                stroke="currentColor"
-                strokeWidth="3"
-                fill="transparent"
-                strokeDasharray={circumference}
-                strokeDashoffset={strokeDashoffset}
-                className="text-white transition-all duration-300 ease-in-out"
-                strokeLinecap="round"
-              />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <ActivityIcon className="h-5 w-5 text-white" />
-            </div>
-          </div>
-
-          {/* Timer Text and Status */}
-          <div className="flex flex-col">
-            <div className={`text-lg font-mono font-bold text-white ${isPaused ? 'opacity-70' : ''}`}>
-              {formatTime(elapsedSeconds)}
-            </div>
-            <div className="text-xs text-white/80">
-              {isPaused ? 'Paused' : 'Active Session'}
-            </div>
-            {elapsedSeconds >= 1800 && ( // 30+ minutes
-              <div className="text-xs text-green-200 font-medium">
-                🔥 Great focus!
-              </div>
-            )}
-          </div>
+        {/* Timer Text */}
+        <div className={`text-sm font-mono font-bold text-white ${isPaused ? 'opacity-70' : ''}`}>
+          {formatTime(elapsedSeconds)}
         </div>
 
         {/* Controls */}
-        <div className="flex gap-2 justify-between">
+        <div className="flex gap-1">
           <Button
             variant="ghost"
             size="sm"
             onClick={handleTogglePause}
-            className="flex-1 h-8 hover:bg-white/20 text-white hover:text-white text-xs"
+            className="h-7 w-7 p-0 hover:bg-white/20 text-white hover:text-white"
+            title={isPaused ? 'Resume' : 'Pause'}
           >
             {isPaused ? (
-              <>
-                <Play className="h-3 w-3 mr-1" />
-                Resume
-              </>
+              <Play className="h-3 w-3" />
             ) : (
-              <>
-                <Pause className="h-3 w-3 mr-1" />
-                Pause
-              </>
+              <Pause className="h-3 w-3" />
             )}
           </Button>
           <Button
             variant="ghost"
             size="sm"
             onClick={handleEndSession}
-            className="flex-1 h-8 hover:bg-white/20 text-white hover:text-white text-xs"
+            className="h-7 w-7 p-0 hover:bg-white/20 text-white hover:text-white"
+            title="End Session"
           >
-            End Session
+            <Square className="h-3 w-3" />
           </Button>
+          {isHovered && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleMinimize}
+              className="h-7 w-7 p-0 hover:bg-white/20 text-white hover:text-white"
+              title="Minimize"
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          )}
         </div>
       </div>
     </Card>
