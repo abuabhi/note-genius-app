@@ -27,8 +27,9 @@ import ConnectionsPage from '@/pages/ConnectionsPage';
 import NotificationsPage from '@/pages/NotificationsPage';
 import ReferralsPage from '@/pages/ReferralsPage';
 import FeedbackPage from '@/pages/FeedbackPage';
+import { RouteConfig } from './publicRoutes';
 
-export const standardRoutes: RouteObject[] = [
+export const standardRoutes: RouteConfig[] = [
   {
     path: '/dashboard',
     element: <DashboardPage />,
