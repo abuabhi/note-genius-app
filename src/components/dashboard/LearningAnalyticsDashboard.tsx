@@ -20,6 +20,13 @@ import { useConsolidatedAnalytics } from "@/hooks/useConsolidatedAnalytics";
 export const LearningAnalyticsDashboard = () => {
   const { analytics, isLoading } = useConsolidatedAnalytics();
 
+  console.log('📊 LearningAnalyticsDashboard received analytics:', {
+    totalCardsMastered: analytics.totalCardsMastered,
+    totalStudyTime: analytics.totalStudyTime,
+    flashcardAccuracy: analytics.flashcardAccuracy,
+    totalSessions: analytics.totalSessions
+  });
+
   if (isLoading) {
     return (
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -70,7 +77,7 @@ export const LearningAnalyticsDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Cards Mastered */}
+          {/* Cards Mastered - Fixed to show correct count */}
           <Card className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">Cards Mastered</CardTitle>
