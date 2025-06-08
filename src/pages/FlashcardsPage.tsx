@@ -10,7 +10,7 @@ import { useViewPreferences } from "@/hooks/useViewPreferences";
 import { useFlashcardsPageState } from "@/components/flashcards/page/useFlashcardsPageState";
 import { ErrorBoundary } from "@/components/flashcards/components/ErrorBoundary";
 import { ProductionMonitoring } from "@/components/performance/ProductionMonitoring";
-import { useRetryLogic } from "@/hooks/useRetryLogic";
+import { useEnhancedRetry } from "@/hooks/performance/useEnhancedRetry";
 import { toast } from "sonner";
 
 const FlashcardsPage = () => {
@@ -19,7 +19,7 @@ const FlashcardsPage = () => {
   useRequireAuth();
   const { viewMode, setViewMode } = useViewPreferences('flashcards', 'grid');
   const { filters, page, deletingSet, setFilters, setPage, setDeletingSet } = useFlashcardsPageState();
-  const { executeWithRetry } = useRetryLogic();
+  const { executeWithRetry } = useEnhancedRetry();
 
   const {
     allSets,
@@ -37,10 +37,8 @@ const FlashcardsPage = () => {
     setDeletingSet(setId);
     try {
       await executeWithRetry(
-        () => deleteFlashcardSet(setId),
-        (error, attempt) => {
-          console.log(`Delete attempt ${attempt} failed:`, error);
-        }
+        () => Promise.resolve(deleteFlashcardSet(setId)),
+        'Delete flashcard set'
       );
       toast.success('Flashcard set deleted successfully');
     } catch (error) {
@@ -57,7 +55,7 @@ const FlashcardsPage = () => {
         // This would be implemented with the update mutation
         console.log('Toggle pinned:', setId, isPinned);
         return Promise.resolve();
-      });
+      }, 'Toggle pin status');
       toast.success(isPinned ? 'Set pinned' : 'Set unpinned');
     } catch (error) {
       console.error('Failed to toggle pin:', error);
