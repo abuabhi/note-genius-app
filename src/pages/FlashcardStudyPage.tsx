@@ -8,6 +8,7 @@ import { StudyPageContent } from "@/pages/study/StudyPageContent";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { CompactFloatingTimer } from "@/components/study/CompactFloatingTimer";
+import { FlashcardProvider } from "@/contexts/FlashcardContext";
 
 const FlashcardStudyPage = () => {
   const { setId, id } = useParams();
@@ -73,8 +74,10 @@ const FlashcardStudyPage = () => {
         />
       )}
 
-      {/* Use StudyPageContent which has breadcrumb and mode selector */}
-      <StudyPageContent />
+      {/* Wrap StudyPageContent with FlashcardProvider */}
+      <FlashcardProvider>
+        <StudyPageContent />
+      </FlashcardProvider>
     </Layout>
   );
 };
