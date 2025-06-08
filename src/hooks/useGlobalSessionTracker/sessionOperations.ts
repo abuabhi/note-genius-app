@@ -62,12 +62,15 @@ export const useSessionOperations = (
         const existingSession = existingSessions[0];
         console.log('📍 Found existing active session, resuming:', existingSession.id);
         
+        // Type-safe activity type conversion
+        const activityType = (existingSession.activity_type as ActivityType) || 'general';
+        
         setSessionState({
           sessionId: existingSession.id,
           isActive: true,
           startTime: new Date(existingSession.start_time),
           elapsedSeconds: Math.floor((Date.now() - new Date(existingSession.start_time).getTime()) / 1000),
-          currentActivity: existingSession.activity_type,
+          currentActivity: activityType,
           isPaused: false
         });
         
