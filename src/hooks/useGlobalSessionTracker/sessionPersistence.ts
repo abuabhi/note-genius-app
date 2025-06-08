@@ -7,7 +7,7 @@ export const persistSession = (sessionState: GlobalSessionState) => {
   if (sessionState.isActive && sessionState.sessionId) {
     const persistData = {
       sessionId: sessionState.sessionId,
-      startTime: sessionState.startTime?.toISOString(),
+      startTime: sessionState.startTime?.toISOString(), // Now startTime is Date, so toISOString() works
       currentActivity: sessionState.currentActivity,
       elapsedSeconds: sessionState.elapsedSeconds,
       isPaused: sessionState.isPaused
@@ -27,7 +27,7 @@ export const restoreSession = (): Partial<GlobalSessionState> | null => {
     
     return {
       sessionId: data.sessionId,
-      startTime: data.startTime ? new Date(data.startTime) : null,
+      startTime: data.startTime ? new Date(data.startTime) : null, // Create Date object
       currentActivity: data.currentActivity,
       elapsedSeconds: data.elapsedSeconds || 0,
       isPaused: data.isPaused || false,

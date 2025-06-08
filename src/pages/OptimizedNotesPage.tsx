@@ -3,7 +3,7 @@ import Layout from '@/components/layout/Layout';
 import { OptimizedNotesProvider } from '@/contexts/OptimizedNotesContext';
 import { PageBreadcrumb } from '@/components/ui/page-breadcrumb';
 import { FileText } from 'lucide-react';
-import { EnhancedErrorBoundary } from '@/components/error/EnhancedErrorBoundary';
+import EnhancedErrorBoundary from '@/components/error/EnhancedErrorBoundary'; // Fixed: default import
 import { ProductionMonitoring } from '@/components/performance/ProductionMonitoring';
 import { CacheMonitor } from '@/components/performance/CacheMonitor';
 import { OptimizedNotesContent } from '@/components/notes/page/OptimizedNotesContent';

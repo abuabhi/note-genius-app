@@ -26,7 +26,7 @@ export const validateSessionState = (state: GlobalSessionState): boolean => {
   }
   
   const now = new Date();
-  const elapsedTime = Math.floor((now.getTime() - state.startTime.getTime()) / 1000);
+  const elapsedTime = Math.floor((now.getTime() - state.startTime.getTime()) / 1000); // startTime is now Date
   
   // Session has been running too long
   if (elapsedTime > MAX_SESSION_DURATION) {

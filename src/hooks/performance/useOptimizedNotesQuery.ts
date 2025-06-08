@@ -114,7 +114,8 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
           description: note.description || '',
           content: note.content || '',
           date: note.date,
-          category: note.user_subjects?.name || note.category || 'Uncategorized',
+          // Map from subject field or user_subjects relation, fallback to 'Uncategorized'
+          category: note.user_subjects?.name || note.subject || 'Uncategorized',
           sourceType: (note.source_type || 'manual') as 'manual' | 'import' | 'scan',
           archived: note.archived || false,
           pinned: note.pinned || false,

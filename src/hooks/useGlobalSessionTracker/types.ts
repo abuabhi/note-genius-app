@@ -21,7 +21,7 @@ export interface ActivityData {
 export interface GlobalSessionState {
   sessionId: string | null;
   isActive: boolean;
-  startTime: number | null;
+  startTime: Date | null; // Changed from number to Date
   elapsedSeconds: number;
   currentActivity: ActivityType | null;
   isPaused: boolean;

@@ -14,7 +14,7 @@ export const useTimerManagement = (
       timerRef.current = setInterval(() => {
         setSessionState(prev => ({
           ...prev,
-          elapsedSeconds: Math.floor((Date.now() - prev.startTime!.getTime()) / 1000)
+          elapsedSeconds: Math.floor((Date.now() - prev.startTime!.getTime()) / 1000) // startTime is now Date
         }));
       }, 1000);
     } else if (timerRef.current) {
