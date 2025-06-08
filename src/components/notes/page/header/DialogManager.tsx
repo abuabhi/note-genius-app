@@ -1,10 +1,11 @@
 
 import React from "react";
 import { Note } from "@/types/note";
-import { TierLimits, UserTier } from "@/hooks/useRequireAuth";
-import { AddNoteDialog } from "@/components/notes/AddNoteDialog";
-import { ScanDialog } from "@/components/notes/scan/ScanDialog";
+import { TierLimits } from "@/hooks/useRequireAuth";
+import { ScanNoteDialog } from "@/components/notes/ScanNoteDialog";
 import { ImportDialog } from "@/components/notes/import/ImportDialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CreateNoteForm } from "../CreateNoteForm";
 
 interface DialogManagerProps {
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
@@ -33,9 +34,17 @@ export const DialogManager = ({
   setIsScanDialogOpen,
   setIsImportDialogOpen
 }: DialogManagerProps) => {
-  const handleSaveNote = async (noteData: Omit<Note, 'id'>): Promise<boolean> => {
-    const result = await onSaveNote(noteData);
-    return result !== null;
+  const handleSaveNote = async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
+    try {
+      const result = await onSaveNote(noteData);
+      if (result) {
+        setIsManualDialogOpen(false);
+      }
+      return result;
+    } catch (error) {
+      console.error("Error in handleSaveNote:", error);
+      return null;
+    }
   };
 
   const handleScanNote = async (noteData: Omit<Note, 'id'>): Promise<boolean> => {
@@ -51,19 +60,21 @@ export const DialogManager = ({
   return (
     <>
       {/* Manual Note Dialog */}
-      <AddNoteDialog 
-        onSaveNote={handleSaveNote}
-        isVisible={isManualDialogOpen}
-        onClose={() => setIsManualDialogOpen(false)}
-        tierLimits={tierLimits}
-      />
+      <Dialog open={isManualDialogOpen} onOpenChange={setIsManualDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create a New Note</DialogTitle>
+          </DialogHeader>
+          <CreateNoteForm onSave={handleSaveNote} />
+        </DialogContent>
+      </Dialog>
 
       {/* Scan Dialog */}
-      <ScanDialog
+      <ScanNoteDialog
         onSaveNote={handleScanNote}
         isVisible={isScanDialogOpen}
         onClose={() => setIsScanDialogOpen(false)}
-        tierLimits={tierLimits}
+        isPremiumUser={tierLimits?.ocr_enabled ?? false}
       />
 
       {/* Import Dialog */}
