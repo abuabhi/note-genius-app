@@ -10,14 +10,16 @@ import { Loader2, ArrowLeft } from "lucide-react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 const FlashcardStudyPage = () => {
-  const { setId } = useParams();
+  const { setId, id } = useParams();
   const navigate = useNavigate();
   const { flashcardSets } = useFlashcards();
   const [loading, setLoading] = useState(true);
   const [mode] = useState<StudyMode>("learn"); // Use valid StudyMode value
   useRequireAuth();
 
-  const currentSet = flashcardSets.find(set => set.id === setId);
+  // Use either setId or id parameter
+  const currentSetId = setId || id;
+  const currentSet = flashcardSets.find(set => set.id === currentSetId);
 
   useEffect(() => {
     if (flashcardSets.length > 0) {
@@ -42,7 +44,7 @@ const FlashcardStudyPage = () => {
     );
   }
 
-  if (!currentSet || !setId) {
+  if (!currentSet || !currentSetId) {
     return (
       <Layout>
         <div className="container mx-auto p-6">
@@ -76,7 +78,7 @@ const FlashcardStudyPage = () => {
 
         <SimplifiedStudyPageLayout
           isLoading={loading}
-          setId={setId}
+          setId={currentSetId}
           mode={mode}
           currentSet={currentSet}
         />

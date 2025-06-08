@@ -209,6 +209,14 @@ export const OptimizedAppRoutes = () => {
           </LazyLoadWrapper>
         } 
       />
+      <Route 
+        path="/flashcards/:setId/study" 
+        element={
+          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="flashcards" />}>
+            <FlashcardStudyPage />
+          </LazyLoadWrapper>
+        } 
+      />
       
       {/* Progress */}
       <Route 
