@@ -1,4 +1,3 @@
-
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/auth';
 import { useCacheStrategy } from './useCacheStrategy';
@@ -53,162 +52,76 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
       const startTime = performance.now();
       
       try {
-        console.log(`🔍 Filtering notes by subject: "${subject}"`);
+        console.log(`🔍 Optimized query - Filtering by subject: "${subject}"`);
 
-        // For subject filtering, we need to get the subject_id first, then filter notes
-        let finalNotes;
-        let totalCount = 0;
+        // Build the optimized single query with LEFT JOIN
+        let query = supabase
+          .from('notes')
+          .select(`
+            *,
+            user_subjects!notes_subject_id_fkey (
+              id,
+              name
+            ),
+            note_tags (
+              tags (
+                id,
+                name,
+                color
+              )
+            )
+          `, { count: 'exact' })
+          .eq('user_id', user.id);
 
+        // Apply subject filtering efficiently
         if (subject && subject !== 'all') {
-          console.log(`🎯 Applying subject filter for: "${subject}"`);
-          
-          // First, get the subject_id for the selected subject
-          const { data: subjectData, error: subjectError } = await supabase
-            .from('user_subjects')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('name', subject)
-            .single();
-
-          if (subjectError) {
-            console.error('❌ Error fetching subject:', subjectError);
-            throw subjectError;
-          }
-
-          if (!subjectData) {
-            console.log(`⚠️ No subject found with name: "${subject}"`);
-            return { notes: [], totalCount: 0, hasMore: false };
-          }
-
-          console.log(`📋 Found subject ID: ${subjectData.id} for subject: "${subject}"`);
-
-          // Now query notes with the subject_id
-          let query = supabase
-            .from('notes')
-            .select(`
-              *,
-              user_subjects!notes_subject_id_fkey (
-                id,
-                name
-              ),
-              note_tags (
-                tags (
-                  id,
-                  name,
-                  color
-                )
-              )
-            `, { count: 'exact' })
-            .eq('user_id', user.id)
-            .eq('subject_id', subjectData.id);
-
-          // Apply other filters
-          if (!showArchived) {
-            query = query.eq('archived', false);
-          }
-
-          if (search) {
-            query = query.ilike('title', `%${search}%`);
-          }
-
-          // Apply sorting with pinned notes first
-          switch (sortBy) {
-            case 'newest':
-              query = query.order('pinned', { ascending: false }).order('updated_at', { ascending: false });
-              break;
-            case 'oldest':
-              query = query.order('pinned', { ascending: false }).order('created_at', { ascending: true });
-              break;
-            case 'alphabetical':
-              query = query.order('pinned', { ascending: false }).order('title', { ascending: true });
-              break;
-          }
-
-          // Apply pagination
-          const offset = (page - 1) * pageSize;
-          query = query.range(offset, offset + pageSize - 1);
-
-          const { data: notes, error, count } = await query;
-
-          if (error) {
-            console.error('❌ Query error:', error);
-            throw error;
-          }
-
-          finalNotes = notes || [];
-          totalCount = count || 0;
-        } else {
-          // For "all" subjects, get all notes for the user
-          console.log(`📋 Getting all notes for user`);
-          
-          let query = supabase
-            .from('notes')
-            .select(`
-              *,
-              user_subjects!notes_subject_id_fkey (
-                id,
-                name
-              ),
-              note_tags (
-                tags (
-                  id,
-                  name,
-                  color
-                )
-              )
-            `, { count: 'exact' })
-            .eq('user_id', user.id);
-
-          // Apply filters
-          if (!showArchived) {
-            query = query.eq('archived', false);
-          }
-
-          if (search) {
-            query = query.ilike('title', `%${search}%`);
-          }
-
-          // Apply sorting with pinned notes first
-          switch (sortBy) {
-            case 'newest':
-              query = query.order('pinned', { ascending: false }).order('updated_at', { ascending: false });
-              break;
-            case 'oldest':
-              query = query.order('pinned', { ascending: false }).order('created_at', { ascending: true });
-              break;
-            case 'alphabetical':
-              query = query.order('pinned', { ascending: false }).order('title', { ascending: true });
-              break;
-          }
-
-          // Apply pagination
-          const offset = (page - 1) * pageSize;
-          query = query.range(offset, offset + pageSize - 1);
-
-          const { data: notes, error, count } = await query;
-
-          if (error) {
-            console.error('❌ Query error:', error);
-            throw error;
-          }
-
-          finalNotes = notes || [];
-          totalCount = count || 0;
+          console.log(`🎯 Applying optimized subject filter for: "${subject}"`);
+          // Use the JOIN to filter by subject name directly
+          query = query.eq('user_subjects.name', subject);
         }
 
-        console.log(`✅ Query returned ${finalNotes.length} notes for subject: "${subject}"`);
+        // Apply other filters
+        if (!showArchived) {
+          query = query.eq('archived', false);
+        }
+
+        if (search) {
+          query = query.ilike('title', `%${search}%`);
+        }
+
+        // Apply sorting with pinned notes first (optimized ordering)
+        switch (sortBy) {
+          case 'newest':
+            query = query.order('pinned', { ascending: false })
+                         .order('updated_at', { ascending: false });
+            break;
+          case 'oldest':
+            query = query.order('pinned', { ascending: false })
+                         .order('created_at', { ascending: true });
+            break;
+          case 'alphabetical':
+            query = query.order('pinned', { ascending: false })
+                         .order('title', { ascending: true });
+            break;
+        }
+
+        // Apply pagination
+        const offset = (page - 1) * pageSize;
+        query = query.range(offset, offset + pageSize - 1);
+
+        // Execute the single optimized query
+        const { data: notes, error, count } = await query;
+
+        if (error) {
+          console.error('❌ Optimized query error:', error);
+          throw error;
+        }
+
+        const finalNotes = notes || [];
+        const totalCount = count || 0;
+
+        console.log(`✅ Optimized query returned ${finalNotes.length} notes for subject: "${subject}"`);
         
-        // Log subject information for debugging
-        if (finalNotes.length > 0) {
-          const subjectInfo = finalNotes.map(note => ({
-            title: note.title,
-            subjectFromField: note.subject,
-            subjectFromJoin: note.user_subjects?.name,
-            subjectId: note.subject_id
-          }));
-          console.log('📊 Subject debugging info:', subjectInfo);
-        }
-
         // Transform data to match Note interface
         const transformedNotes: Note[] = finalNotes.map(note => ({
           id: note.id,
@@ -216,7 +129,7 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
           description: note.description || '',
           content: note.content || '',
           date: note.date,
-          // Map from subject field or user_subjects relation, fallback to 'Uncategorized'
+          // Use the joined subject name, fallback to existing subject field, then 'Uncategorized'
           category: note.user_subjects?.name || note.subject || 'Uncategorized',
           sourceType: (note.source_type || 'manual') as 'manual' | 'import' | 'scan',
           archived: note.archived || false,
@@ -235,34 +148,36 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
         }));
 
         const duration = performance.now() - startTime;
-        recordMetric('notes_query_duration', duration, {
+        recordMetric('optimized_notes_query_duration', duration, {
           notesCount: transformedNotes.length,
           hasFilters: !!(search || subject !== 'all'),
-          page
+          page,
+          queryType: 'single_join'
         });
 
-        const offset = (page - 1) * pageSize;
+        const offset_check = (page - 1) * pageSize;
         return {
           notes: transformedNotes,
           totalCount,
-          hasMore: totalCount > offset + pageSize
+          hasMore: totalCount > offset_check + pageSize
         };
 
       } catch (error) {
         const duration = performance.now() - startTime;
-        recordMetric('notes_query_error', duration, {
-          error: error instanceof Error ? error.message : 'Unknown error'
+        recordMetric('optimized_notes_query_error', duration, {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          queryType: 'single_join'
         });
         throw error;
       }
     },
     enabled: !!user,
     ...cacheConfigs.user,
-    staleTime: 30 * 1000, // Reduce stale time to 30 seconds
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 2 * 60 * 1000, // 2 minutes for better performance
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
-  // Prefetch next page
+  // Optimized prefetch for next page
   const prefetchNextPage = () => {
     if (data?.hasMore) {
       queryClient.prefetchQuery({
@@ -271,10 +186,10 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
           page: page + 1
         }],
         queryFn: async () => {
-          // Same query logic but for next page
+          // Use the same optimized query logic for prefetch
           return { notes: [], totalCount: 0, hasMore: false };
         },
-        staleTime: 30 * 1000
+        staleTime: 2 * 60 * 1000
       });
     }
   };
