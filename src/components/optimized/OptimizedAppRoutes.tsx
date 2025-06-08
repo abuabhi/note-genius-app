@@ -1,10 +1,9 @@
-
 import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { LazyLoadWrapper } from '@/components/performance/LazyLoadWrapper';
 import { NoteProvider } from '@/contexts/NoteContext';
-import { FlashcardProvider } from '@/contexts/FlashcardProvider';
+import { FlashcardProvider } from '@/contexts/FlashcardContext';
 
 // Lazy load all major pages for code splitting
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
