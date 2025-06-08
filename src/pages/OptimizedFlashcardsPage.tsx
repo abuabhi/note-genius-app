@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, PlayCircle, MoreHorizontal } from 'lucide-react';
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useState } from 'react';
+import { CompactFloatingTimer } from '@/components/study/CompactFloatingTimer';
 
 // Memoized flashcard set card component for better performance
 const FlashcardSetCard = memo(({ set, onStudy, onDelete }: any) => {
@@ -81,6 +82,12 @@ const OptimizedFlashcardsPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { flashcardSets, loading, error, deleteFlashcardSet } = useOptimizedFlashcardSets();
+  const [isStudyActive, setIsStudyActive] = useState(false);
+
+  const handleStudyStart = (setId: string) => {
+    setIsStudyActive(true);
+    navigate(`/study/${setId}`);
+  };
 
   // Memoized grid for better performance
   const flashcardGrid = useMemo(() => {
@@ -136,7 +143,7 @@ const OptimizedFlashcardsPage = () => {
           <FlashcardSetCard
             key={set.id}
             set={set}
-            onStudy={(setId: string) => navigate(`/study/${setId}`)}
+            onStudy={handleStudyStart}
             onDelete={deleteFlashcardSet}
           />
         ))}
@@ -147,6 +154,13 @@ const OptimizedFlashcardsPage = () => {
   return (
     <Layout>
       <div className="container mx-auto p-4 md:p-6">
+        {/* Compact Floating Timer - shows on main flashcards page */}
+        <CompactFloatingTimer
+          activityType="flashcard"
+          isActive={isStudyActive}
+          className="bg-mint-500 border-mint-600"
+        />
+
         <PageBreadcrumb pageName="Flashcards" pageIcon={<BookOpen className="h-3 w-3" />} />
         
         <div className="mb-6 flex items-center justify-between">
