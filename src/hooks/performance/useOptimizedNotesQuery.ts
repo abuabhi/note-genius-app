@@ -53,7 +53,7 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
       const startTime = performance.now();
       
       try {
-        console.log(`Filtering notes by subject: "${subject}"`);
+        console.log(`🔍 Filtering notes by subject: "${subject}"`);
 
         // Build optimized query with joins and proper indexing
         let query = supabase
@@ -79,11 +79,11 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
           query = query.eq('archived', false);
         }
 
-        // Case-insensitive subject filtering that works with existing data
+        // Subject filtering using the joined user_subjects table
         if (subject && subject !== 'all') {
-          console.log(`Applying case-insensitive subject filter: "${subject}"`);
-          // Use ilike for case-insensitive matching
-          query = query.ilike('subject', subject);
+          console.log(`🎯 Applying subject filter for: "${subject}"`);
+          // Filter by the user_subjects.name field through the join
+          query = query.eq('user_subjects.name', subject);
         }
 
         if (search) {
@@ -111,16 +111,20 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
         const { data: notes, error, count } = await query;
 
         if (error) {
-          console.error('Query error:', error);
+          console.error('❌ Query error:', error);
           throw error;
         }
 
-        console.log(`Query returned ${notes?.length || 0} notes for subject: "${subject}"`);
+        console.log(`✅ Query returned ${notes?.length || 0} notes for subject: "${subject}"`);
         
-        // Log all unique subjects in the returned notes for debugging
+        // Log subject information for debugging
         if (notes && notes.length > 0) {
-          const uniqueSubjects = [...new Set(notes.map(note => note.subject))];
-          console.log(`Available subjects in notes: ${uniqueSubjects.join(', ')}`);
+          const subjectInfo = notes.map(note => ({
+            title: note.title,
+            subjectFromField: note.subject,
+            subjectFromJoin: note.user_subjects?.name
+          }));
+          console.log('📊 Subject debugging info:', subjectInfo);
         }
 
         // Transform data to match Note interface
