@@ -53,26 +53,7 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
       const startTime = performance.now();
       
       try {
-        // First, get the subject_id if filtering by subject name
-        let subjectId = null;
-        if (subject && subject !== 'all') {
-          console.log(`Looking for subject: ${subject}`);
-          
-          // Get subject ID from user_subjects table
-          const { data: subjectData } = await supabase
-            .from('user_subjects')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('name', subject)
-            .single();
-          
-          if (subjectData) {
-            subjectId = subjectData.id;
-            console.log(`Found subject_id: ${subjectId} for subject: ${subject}`);
-          } else {
-            console.log(`No subject found with name: ${subject}`);
-          }
-        }
+        console.log(`Filtering notes by subject: ${subject}`);
 
         // Build optimized query with joins and proper indexing
         let query = supabase
@@ -98,14 +79,11 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
           query = query.eq('archived', false);
         }
 
-        // Filter by subject_id if we found one
-        if (subjectId) {
-          console.log(`Filtering by subject_id: ${subjectId}`);
-          query = query.eq('subject_id', subjectId);
-        } else if (subject && subject !== 'all') {
-          // Fallback to text-based filtering if no subject_id found
-          console.log(`Fallback: filtering by subject text: ${subject}`);
-          query = query.ilike('subject', `%${subject}%`);
+        // Simple subject filtering that works with existing data
+        if (subject && subject !== 'all') {
+          console.log(`Applying subject filter: ${subject}`);
+          // Filter by the subject text field (which should contain the subject name)
+          query = query.eq('subject', subject);
         }
 
         if (search) {
@@ -137,7 +115,7 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
           throw error;
         }
 
-        console.log(`Query returned ${notes?.length || 0} notes`);
+        console.log(`Query returned ${notes?.length || 0} notes for subject: ${subject}`);
 
         // Transform data to match Note interface
         const transformedNotes: Note[] = (notes || []).map(note => ({
