@@ -1,17 +1,15 @@
 
+import { useState, useCallback } from "react";
+import { useSimplifiedFlashcardStudy } from "@/hooks/useSimplifiedFlashcardStudy";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ChevronLeft, ChevronRight, RotateCcw, CheckCircle, X, Loader2 } from "lucide-react";
 import { StudyMode } from "@/pages/study/types";
-import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { QuizResults } from "./QuizResults";
-import { FlashcardContent } from "./components/FlashcardContent";
-import { NavigationControls } from "./components/NavigationControls";
-import { StudyChoices } from "./components/StudyChoices";
-import { ModeHint } from "./components/ModeHint";
-import { QuizHeader } from "./components/QuizHeader";
-import { StudySessionTracker } from "./StudySessionTracker";
-import { StudySessionManager } from "./components/StudySessionManager";
-import { StudyLoadingState, StudyErrorState, StudyEmptyState, StudyCompletionState } from "./components/StudyStates";
-import { CompactFloatingTimer } from "./CompactFloatingTimer";
-import { useState } from "react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface SimplifiedFlashcardStudyProps {
   setId: string;
@@ -20,171 +18,297 @@ interface SimplifiedFlashcardStudyProps {
 }
 
 export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: SimplifiedFlashcardStudyProps) => {
-  const { userProfile } = useRequireAuth();
-  const [hasUserStartedStudying, setHasUserStartedStudying] = useState(false);
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [isUpdating, setIsUpdating] = useState(false);
+  
+  const {
+    flashcards,
+    currentIndex,
+    isFlipped,
+    isLoading,
+    error,
+    isComplete,
+    currentCard,
+    totalCards,
+    studiedToday,
+    masteredCount,
+    handleNext,
+    handlePrevious,
+    handleFlip,
+    handleCardChoice,
+    setIsFlipped
+  } = useSimplifiedFlashcardStudy({ setId, mode });
 
-  const handleRestart = () => {
-    window.location.reload();
-  };
+  // Enhanced handleCardChoice with database updates
+  const handleEnhancedCardChoice = useCallback(async (choice: 'mastered' | 'needs_practice') => {
+    if (!currentCard || !user || isUpdating) return;
+    
+    setIsUpdating(true);
+    
+    try {
+      const isCorrect = choice === 'mastered';
+      const now = new Date().toISOString();
+      
+      // Update learning progress
+      const { error: progressError } = await supabase
+        .from('learning_progress')
+        .upsert({
+          user_id: user.id,
+          flashcard_id: currentCard.id,
+          times_seen: 1, // Will be incremented by database trigger
+          times_correct: isCorrect ? 1 : 0, // Will be incremented by database trigger
+          last_seen_at: now,
+          is_difficult: !isCorrect,
+          is_known: isCorrect,
+          confidence_level: isCorrect ? 5 : 2
+        }, { 
+          onConflict: 'user_id,flashcard_id',
+          ignoreDuplicates: false 
+        });
 
-  const handleBackToSets = () => {
-    window.history.back();
-  };
+      if (progressError) {
+        console.error('Error updating learning progress:', progressError);
+        toast.error('Failed to save progress');
+        return;
+      }
 
-  const handleFirstStudyAction = () => {
-    if (!hasUserStartedStudying) {
-      setHasUserStartedStudying(true);
+      // Update user flashcard progress for spaced repetition
+      const { error: srpError } = await supabase
+        .from('user_flashcard_progress')
+        .upsert({
+          user_id: user.id,
+          flashcard_id: currentCard.id,
+          last_score: isCorrect ? 5 : 1,
+          last_reviewed_at: now,
+          ease_factor: isCorrect ? 2.6 : 1.8,
+          interval: isCorrect ? 1 : 0,
+          repetition: isCorrect ? 1 : 0,
+          next_review_at: new Date(Date.now() + (isCorrect ? 24 : 1) * 60 * 60 * 1000).toISOString()
+        }, { 
+          onConflict: 'user_id,flashcard_id',
+          ignoreDuplicates: false 
+        });
+
+      if (srpError) {
+        console.error('Error updating spaced repetition progress:', srpError);
+      }
+
+      // Show feedback
+      if (isCorrect) {
+        toast.success('Great! Card marked as mastered 🎉');
+      } else {
+        toast.info('Card marked for more practice 📚');
+      }
+
+      // Invalidate queries to refresh stats
+      queryClient.invalidateQueries({ queryKey: ['timezone-aware-analytics'] });
+      queryClient.invalidateQueries({ queryKey: ['unified-study-stats'] });
+      
+      // Call original handler for UI updates
+      handleCardChoice(choice);
+      
+    } catch (error) {
+      console.error('Error saving card progress:', error);
+      toast.error('Failed to save progress. Please try again.');
+    } finally {
+      setIsUpdating(false);
     }
-  };
+  }, [currentCard, user, handleCardChoice, queryClient, isUpdating]);
 
-  return (
-    <StudySessionManager setId={setId} mode={mode}>
-      {(sessionData) => {
-        const {
-          flashcards,
-          currentIndex,
-          isFlipped,
-          isLoading,
-          error,
-          isComplete,
-          currentCard,
-          totalCards,
-          isQuizMode,
-          cardsStudied,
-          handleNext,
-          handlePrevious,
-          handleFlip,
-          handleCorrectAnswer,
-          handleIncorrectAnswer,
-          quizData,
-          studyData
-        } = sessionData;
+  if (isLoading) {
+    return (
+      <Card className="bg-white/60 backdrop-blur-sm border-mint-100">
+        <CardContent className="p-8">
+          <div className="flex flex-col items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-mint-500 mb-4" />
+            <p className="text-mint-700">Loading flashcards...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
-        if (isLoading) {
-          return <StudyLoadingState />;
-        }
-        
-        if (error) {
-          return <StudyErrorState error={error} />;
-        }
-        
-        if (flashcards.length === 0) {
-          return <StudyEmptyState />;
-        }
+  if (error) {
+    return (
+      <Card className="bg-red-50 border-red-200">
+        <CardContent className="p-8">
+          <div className="text-center">
+            <X className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-red-700 mb-2">Study Session Error</h3>
+            <p className="text-red-600 mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()} variant="outline">
+              Try Again
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
-        if (isComplete) {
-          if (isQuizMode && quizData?.quizSession) {
-            return (
-              <QuizResults
-                totalCards={totalCards}
-                correctAnswers={quizData.correctAnswers}
-                totalScore={quizData.totalScore}
-                durationSeconds={quizData.quizSession.duration_seconds || undefined}
-                averageResponseTime={quizData.quizSession.average_response_time || undefined}
-                grade={quizData.quizSession.grade || undefined}
-                onRestart={handleRestart}
-                onBackToSets={handleBackToSets}
-              />
-            );
-          }
-
-          return (
-            <StudyCompletionState
-              isQuizMode={isQuizMode}
-              studiedToday={studyData?.studiedToday}
-              masteredCount={studyData?.masteredCount}
-            />
-          );
-        }
-        
-        if (!currentCard) {
-          return (
-            <div className="text-center py-12">
-              <p className="text-red-600">Invalid card data</p>
-            </div>
-          );
-        }
-
-        // Enhanced handlers that trigger session start
-        const enhancedHandleFlip = () => {
-          handleFirstStudyAction();
-          handleFlip();
-        };
-
-        const enhancedHandleCorrect = () => {
-          handleFirstStudyAction();
-          handleCorrectAnswer();
-        };
-
-        const enhancedHandleIncorrect = () => {
-          handleFirstStudyAction();
-          handleIncorrectAnswer();
-        };
-
-        const enhancedHandleNext = () => {
-          handleFirstStudyAction();
-          handleNext();
-        };
-
-        return (
-          <div className="max-w-4xl mx-auto space-y-6">
-            {/* Compact Floating Timer - replaces the old session tracker */}
-            {hasUserStartedStudying && (
-              <CompactFloatingTimer
-                activityType="flashcard"
-                triggerStudyActivity={hasUserStartedStudying}
-              />
-            )}
-
-            {/* Quiz Header with Timer and Score */}
-            {isQuizMode && quizData && (
-              <QuizHeader
-                timeLeft={quizData.timeLeft}
-                isTimerActive={quizData.isTimerActive}
-                totalScore={quizData.totalScore}
-                correctAnswers={quizData.correctAnswers}
-              />
-            )}
-
-            {/* Flashcard */}
-            <FlashcardContent
-              currentCard={currentCard}
-              isFlipped={isFlipped}
-              currentIndex={currentIndex}
-              totalCards={totalCards}
-              onFlip={enhancedHandleFlip}
-            />
-
-            {/* Controls */}
-            <div className="space-y-4">
-              {/* Navigation - disabled in quiz mode */}
-              <NavigationControls
-                currentIndex={currentIndex}
-                totalCards={totalCards}
-                onPrevious={handlePrevious}
-                onNext={enhancedHandleNext}
-                onFlip={enhancedHandleFlip}
-                isQuizMode={isQuizMode}
-              />
-
-              {/* Study/Quiz Choices */}
-              <StudyChoices
-                isFlipped={isFlipped}
-                isQuizMode={isQuizMode}
-                onCorrect={enhancedHandleCorrect}
-                onIncorrect={enhancedHandleIncorrect}
-              />
-
-              {/* Mode hint */}
-              <ModeHint
-                mode={mode}
-                isFlipped={isFlipped}
-                timeLeft={quizData?.timeLeft}
-              />
+  if (isComplete) {
+    return (
+      <Card className="bg-gradient-to-br from-mint-50 to-blue-50 border-mint-200">
+        <CardContent className="p-8">
+          <div className="text-center">
+            <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-mint-800 mb-2">Study Session Complete! 🎉</h2>
+            <p className="text-mint-600 mb-6">
+              Great job! You've studied {studiedToday} cards and mastered {masteredCount} of them.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <Button onClick={() => window.location.reload()}>
+                Study Again
+              </Button>
+              <Button variant="outline" onClick={() => window.history.back()}>
+                Back to Sets
+              </Button>
             </div>
           </div>
-        );
-      }}
-    </StudySessionManager>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!currentCard) {
+    return (
+      <Card className="bg-white/60 backdrop-blur-sm border-mint-100">
+        <CardContent className="p-8">
+          <div className="text-center">
+            <p className="text-mint-700">No cards available for study.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const progress = totalCards > 0 ? ((currentIndex + 1) / totalCards) * 100 : 0;
+
+  return (
+    <div className="space-y-6">
+      {/* Progress indicator */}
+      <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 border border-mint-100">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium text-mint-700">
+            Card {currentIndex + 1} of {totalCards}
+          </span>
+          <Badge variant="outline" className="bg-mint-100 text-mint-700 border-mint-200">
+            {mode === 'learn' ? 'Learning' : 'Review'} Mode
+          </Badge>
+        </div>
+        <div className="w-full bg-mint-100 rounded-full h-2">
+          <div
+            className="bg-gradient-to-r from-mint-500 to-blue-500 h-2 rounded-full transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Main flashcard */}
+      <Card className="bg-white/60 backdrop-blur-sm border-mint-100 min-h-[400px]">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg text-mint-800 flex items-center gap-2">
+            <span>
+              {isFlipped ? "Answer" : "Question"}
+            </span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Card content */}
+          <div 
+            className="min-h-[200px] flex items-center justify-center p-6 bg-gradient-to-br from-white to-mint-50 rounded-lg border border-mint-100 cursor-pointer hover:shadow-md transition-all duration-200"
+            onClick={handleFlip}
+          >
+            <div className="text-center">
+              <p className="text-lg text-mint-800 leading-relaxed">
+                {isFlipped 
+                  ? (currentCard.back_content || currentCard.back) 
+                  : (currentCard.front_content || currentCard.front)
+                }
+              </p>
+              {!isFlipped && (
+                <p className="text-sm text-mint-500 mt-4">
+                  Click to reveal answer
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex flex-col gap-4">
+            {/* Flip button */}
+            <Button
+              onClick={handleFlip}
+              variant="outline"
+              className="w-full border-mint-200 hover:bg-mint-50"
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              {isFlipped ? "Show Question" : "Show Answer"}
+            </Button>
+
+            {/* Choice buttons - only show when answer is revealed */}
+            {isFlipped && (
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  onClick={() => handleEnhancedCardChoice('needs_practice')}
+                  variant="outline"
+                  className="border-orange-200 hover:bg-orange-50 text-orange-700"
+                  disabled={isUpdating}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Need Practice
+                </Button>
+                <Button
+                  onClick={() => handleEnhancedCardChoice('mastered')}
+                  className="bg-green-500 hover:bg-green-600 text-white"
+                  disabled={isUpdating}
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  {isUpdating ? 'Saving...' : 'Mastered'}
+                </Button>
+              </div>
+            )}
+
+            {/* Navigation buttons */}
+            <div className="flex justify-between">
+              <Button
+                onClick={handlePrevious}
+                variant="ghost"
+                disabled={currentIndex === 0}
+                className="text-mint-600 hover:bg-mint-50"
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Previous
+              </Button>
+              <Button
+                onClick={handleNext}
+                variant="ghost"
+                disabled={currentIndex === totalCards - 1}
+                className="text-mint-600 hover:bg-mint-50"
+              >
+                Next
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Study stats */}
+      <div className="grid grid-cols-2 gap-4">
+        <Card className="bg-white/60 backdrop-blur-sm border-mint-100">
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-mint-800">{studiedToday}</p>
+            <p className="text-sm text-mint-600">Cards Studied</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-white/60 backdrop-blur-sm border-mint-100">
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-green-600">{masteredCount}</p>
+            <p className="text-sm text-mint-600">Cards Mastered</p>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 };

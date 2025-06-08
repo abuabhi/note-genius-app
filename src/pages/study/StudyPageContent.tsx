@@ -6,7 +6,6 @@ import { SimplifiedStudyModeSelector } from "@/components/study/SimplifiedStudyM
 import { StudyModeInfo } from "@/components/study/StudyModeInfo";
 import { Separator } from "@/components/ui/separator";
 import { StudyMode } from "./types";
-import { StudyPageHeader } from "./StudyPageHeader";
 import { SimplifiedStudyPageLayout } from "./SimplifiedStudyPageLayout";
 import {
   Breadcrumb,
@@ -22,7 +21,21 @@ export const StudyPageContent = () => {
   const { setId } = useParams<{ setId: string }>();
   const [searchParams] = useSearchParams();
   const modeParam = searchParams.get('mode');
-  const [mode, setMode] = useState<StudyMode>(modeParam === "review" ? "review" : "learn");
+  
+  // Support all three study modes
+  const getInitialMode = (): StudyMode => {
+    switch (modeParam) {
+      case "review":
+        return "review";
+      case "test":
+        return "test";
+      case "learn":
+      default:
+        return "learn";
+    }
+  };
+  
+  const [mode, setMode] = useState<StudyMode>(getInitialMode());
   
   const { flashcardSets, loading, fetchFlashcardSets } = useSimpleFlashcardSets();
   const [currentSet, setCurrentSet] = useState<any>(null);
@@ -144,7 +157,7 @@ export const StudyPageContent = () => {
             )}
           </div>
           
-          {/* Study mode selector */}
+          {/* Study mode selector - show all three modes */}
           {!isLoading && (
             <SimplifiedStudyModeSelector 
               currentMode={mode}

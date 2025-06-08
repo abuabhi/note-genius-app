@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { useOptimizedFlashcardSets } from "@/hooks/useOptimizedFlashcardSets";
 import { Button } from "@/components/ui/button";
-import { SimplifiedStudyPageLayout } from "@/pages/study/SimplifiedStudyPageLayout";
-import { StudyMode } from "@/pages/study/types";
+import { StudyPageContent } from "@/pages/study/StudyPageContent";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { CompactFloatingTimer } from "@/components/study/CompactFloatingTimer";
@@ -14,7 +13,6 @@ const FlashcardStudyPage = () => {
   const { setId, id } = useParams();
   const navigate = useNavigate();
   const { allSets: flashcardSets, loading } = useOptimizedFlashcardSets();
-  const [mode] = useState<StudyMode>("learn");
   const [studyStarted, setStudyStarted] = useState(false);
   useRequireAuth();
 
@@ -66,34 +64,17 @@ const FlashcardStudyPage = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto p-4">
-        {/* Compact Floating Timer - shows during study */}
-        {studyStarted && (
-          <CompactFloatingTimer
-            activityType="flashcard"
-            isActive={true}
-            className="bg-mint-500 border-mint-600"
-          />
-        )}
-
-        <div className="mb-4">
-          <Button 
-            variant="outline" 
-            onClick={handleGoBack} 
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Flashcards
-          </Button>
-        </div>
-
-        <SimplifiedStudyPageLayout
-          isLoading={loading}
-          setId={currentSetId}
-          mode={mode}
-          currentSet={currentSet}
+      {/* Compact Floating Timer - shows during study */}
+      {studyStarted && (
+        <CompactFloatingTimer
+          activityType="flashcard"
+          isActive={true}
+          className="bg-mint-500 border-mint-600"
         />
-      </div>
+      )}
+
+      {/* Use StudyPageContent which has breadcrumb and mode selector */}
+      <StudyPageContent />
     </Layout>
   );
 };

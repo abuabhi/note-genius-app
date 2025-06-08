@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { StudyMode } from "@/pages/study/types";
-import { BookOpen, RotateCcw, Clock } from "lucide-react";
+import { BookOpen, RefreshCw, Timer } from "lucide-react";
 
 interface SimplifiedStudyModeSelectorProps {
   currentMode: StudyMode;
@@ -15,21 +15,21 @@ export const SimplifiedStudyModeSelector = ({
   const modes = [
     {
       key: "learn" as StudyMode,
-      label: "Study",
+      label: "Study Mode",
       icon: BookOpen,
-      description: "Learn new cards"
+      description: "Learn new cards and practice"
     },
     {
       key: "review" as StudyMode,
       label: "Review",
-      icon: RotateCcw,
-      description: "Practice difficult cards"
+      icon: RefreshCw,
+      description: "Review cards that need practice"
     },
     {
       key: "test" as StudyMode,
       label: "Timed Review",
-      icon: Clock,
-      description: "Quick timed assessment"
+      icon: Timer,
+      description: "Timed quiz mode"
     }
   ];
 
@@ -45,7 +45,11 @@ export const SimplifiedStudyModeSelector = ({
             variant={isActive ? "default" : "outline"}
             size="sm"
             onClick={() => onModeChange(mode.key)}
-            className="flex items-center gap-2"
+            className={`flex items-center gap-2 ${
+              isActive 
+                ? "bg-mint-500 hover:bg-mint-600 text-white" 
+                : "border-mint-200 hover:bg-mint-50 text-mint-700"
+            }`}
           >
             <Icon className="h-4 w-4" />
             {mode.label}
