@@ -24,8 +24,6 @@ export const OptimizedNotesContent = () => {
     setSearchTerm: contextSetSearchTerm,
     sortType,
     setSortType: contextSetSortType,
-    showArchived,
-    setShowArchived,
     selectedSubject,
     setSelectedSubject: contextSetSelectedSubject,
     currentPage,
@@ -43,6 +41,10 @@ export const OptimizedNotesContent = () => {
   const [isScanDialogOpen, setIsScanDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [creatingNote, setCreatingNote] = useState(false);
+
+  // Remove showArchived state since we're not using it anymore
+  const showArchived = false;
+  const setShowArchived = () => {}; // Placeholder function
 
   const handleCreateNote = async () => {
     setCreatingNote(true);
@@ -128,7 +130,7 @@ export const OptimizedNotesContent = () => {
         isCreating={creatingNote}
       />
 
-      {/* Filters and search - using context handlers that preserve filter states */}
+      {/* Updated filters without archived toggle */}
       <OptimizedNotesFilters
         searchTerm={searchTerm}
         onSearchChange={contextSetSearchTerm}
@@ -149,7 +151,7 @@ export const OptimizedNotesContent = () => {
         {notes.length === 0 ? (
           <EmptyNotesState
             onCreateNote={() => setIsManualDialogOpen(true)}
-            isFiltered={!!(searchTerm || selectedSubject !== 'all' || showArchived)}
+            isFiltered={!!(searchTerm || selectedSubject !== 'all')}
           />
         ) : (
           <>
