@@ -17,7 +17,7 @@ const FlashcardsPage = () => {
   console.log('🏠 FlashcardsPage component rendering');
   
   useRequireAuth();
-  const { viewMode, setViewMode } = useViewPreferences('flashcards', 'grid');
+  const { viewMode, setViewMode } = useViewPreferences('flashcards', 'card');
   const { filters, page, deletingSet, setFilters, setPage, setDeletingSet } = useFlashcardsPageState();
   const { executeWithRetry } = useEnhancedRetry();
 

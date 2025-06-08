@@ -12,9 +12,9 @@ export const ViewToggle = ({ viewMode, onViewModeChange }: ViewToggleProps) => {
   return (
     <div className="flex items-center border border-mint-200 rounded-lg p-1 bg-white">
       <Button
-        variant={viewMode === 'grid' ? 'default' : 'ghost'}
+        variant={viewMode === 'card' ? 'default' : 'ghost'}
         size="sm"
-        onClick={() => onViewModeChange('grid')}
+        onClick={() => onViewModeChange('card')}
         className="h-8 px-3"
       >
         <Grid2x2 className="h-4 w-4" />
