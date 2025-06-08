@@ -108,22 +108,6 @@ export const OptimizedNotesContent = () => {
     }
   };
 
-  // Enhanced sort handler that preserves current page and subject filter
-  const handleSortChange = (newSortType: string) => {
-    console.log(`🔄 Sort change: ${sortType} -> ${newSortType}, preserving subject: ${selectedSubject}`);
-    setSortType(newSortType);
-    // Reset to first page when sorting changes, but preserve subject filter
-    setCurrentPage(1);
-  };
-
-  // Enhanced subject handler that preserves current page
-  const handleSubjectChange = (newSubject: string) => {
-    console.log(`🎯 Subject change: ${selectedSubject} -> ${newSubject}, preserving sort: ${sortType}`);
-    setSelectedSubject(newSubject);
-    // Reset to first page when subject changes, but preserve sort
-    setCurrentPage(1);
-  };
-
   if (error) {
     return (
       <ErrorState 
@@ -144,16 +128,16 @@ export const OptimizedNotesContent = () => {
         isCreating={creatingNote}
       />
 
-      {/* Filters and search */}
+      {/* Filters and search - using context handlers directly */}
       <OptimizedNotesFilters
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         sortType={sortType}
-        onSortChange={handleSortChange}
+        onSortChange={setSortType}
         showArchived={showArchived}
         onShowArchivedChange={setShowArchived}
         selectedSubject={selectedSubject}
-        onSubjectChange={handleSubjectChange}
+        onSubjectChange={setSelectedSubject}
       />
 
       {/* Main content */}
