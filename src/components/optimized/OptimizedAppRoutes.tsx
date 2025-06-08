@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { LazyLoadWrapper } from '@/components/performance/LazyLoadWrapper';
 import { NoteProvider } from '@/contexts/NoteContext';
+import { FlashcardProvider } from '@/contexts/FlashcardContext';
 
 // Lazy load all major pages for code splitting
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
@@ -184,66 +185,80 @@ export const OptimizedAppRoutes = () => {
         } 
       />
       
-      {/* Flashcards - Optimized Routes */}
+      {/* Flashcards - Optimized Routes - wrapped with FlashcardProvider */}
       <Route 
         path="/flashcards" 
         element={
-          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="flashcards" />}>
-            <FlashcardsPage />
-          </LazyLoadWrapper>
+          <FlashcardProvider>
+            <LazyLoadWrapper fallback={<PageLoadingSkeleton type="flashcards" />}>
+              <FlashcardsPage />
+            </LazyLoadWrapper>
+          </FlashcardProvider>
         } 
       />
       
-      {/* Individual Flashcard Set View - NEW ROUTE */}
+      {/* Individual Flashcard Set View - wrapped with FlashcardProvider */}
       <Route 
         path="/flashcards/:setId" 
         element={
-          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="flashcards" />}>
-            <FlashcardSetPage />
-          </LazyLoadWrapper>
+          <FlashcardProvider>
+            <LazyLoadWrapper fallback={<PageLoadingSkeleton type="flashcards" />}>
+              <FlashcardSetPage />
+            </LazyLoadWrapper>
+          </FlashcardProvider>
         } 
       />
       
       <Route 
         path="/flashcards/create" 
         element={
-          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="flashcards" />}>
-            <CreateFlashcardPage />
-          </LazyLoadWrapper>
+          <FlashcardProvider>
+            <LazyLoadWrapper fallback={<PageLoadingSkeleton type="flashcards" />}>
+              <CreateFlashcardPage />
+            </LazyLoadWrapper>
+          </FlashcardProvider>
         } 
       />
       
-      {/* ALL Flashcard Study Routes - ensuring all variations work */}
+      {/* ALL Flashcard Study Routes - wrapped with FlashcardProvider */}
       <Route 
         path="/flashcards/:setId/study" 
         element={
-          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="flashcards" />}>
-            <FlashcardStudyPage />
-          </LazyLoadWrapper>
+          <FlashcardProvider>
+            <LazyLoadWrapper fallback={<PageLoadingSkeleton type="flashcards" />}>
+              <FlashcardStudyPage />
+            </LazyLoadWrapper>
+          </FlashcardProvider>
         } 
       />
       <Route 
         path="/flashcards/:id/study" 
         element={
-          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="flashcards" />}>
-            <FlashcardStudyPage />
-          </LazyLoadWrapper>
+          <FlashcardProvider>
+            <LazyLoadWrapper fallback={<PageLoadingSkeleton type="flashcards" />}>
+              <FlashcardStudyPage />
+            </LazyLoadWrapper>
+          </FlashcardProvider>
         } 
       />
       <Route 
         path="/study/:setId" 
         element={
-          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="flashcards" />}>
-            <FlashcardStudyPage />
-          </LazyLoadWrapper>
+          <FlashcardProvider>
+            <LazyLoadWrapper fallback={<PageLoadingSkeleton type="flashcards" />}>
+              <FlashcardStudyPage />
+            </LazyLoadWrapper>
+          </FlashcardProvider>
         } 
       />
       <Route 
         path="/study/:id" 
         element={
-          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="flashcards" />}>
-            <FlashcardStudyPage />
-          </LazyLoadWrapper>
+          <FlashcardProvider>
+            <LazyLoadWrapper fallback={<PageLoadingSkeleton type="flashcards" />}>
+              <FlashcardStudyPage />
+            </LazyLoadWrapper>
+          </FlashcardProvider>
         } 
       />
       
