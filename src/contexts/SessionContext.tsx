@@ -8,11 +8,7 @@ interface SessionContextType {
   activityType: 'flashcard_study' | 'note_review' | 'quiz_taking' | 'general' | null;
   startTime: Date | null;
   elapsedSeconds: number;
-  startSession: (
-    activityType: 'flashcard_study' | 'note_review' | 'quiz_taking' | 'general',
-    title?: string,
-    subject?: string
-  ) => Promise<string | null>;
+  startSession: () => Promise<void>;
   endSession: () => Promise<void>;
   updateSessionActivity: (activityData: {
     cards_reviewed?: number;
