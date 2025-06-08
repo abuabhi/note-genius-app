@@ -55,80 +55,162 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
       try {
         console.log(`🔍 Filtering notes by subject: "${subject}"`);
 
-        // Build optimized query with joins and proper indexing
-        let query = supabase
-          .from('notes')
-          .select(`
-            *,
-            user_subjects!notes_subject_id_fkey (
-              id,
-              name
-            ),
-            note_tags (
-              tags (
-                id,
-                name,
-                color
-              )
-            )
-          `, { count: 'exact' })
-          .eq('user_id', user.id);
+        // For subject filtering, we need to get the subject_id first, then filter notes
+        let finalNotes;
+        let totalCount = 0;
 
-        // Apply filters
-        if (!showArchived) {
-          query = query.eq('archived', false);
-        }
-
-        // Subject filtering using the joined user_subjects table
         if (subject && subject !== 'all') {
           console.log(`🎯 Applying subject filter for: "${subject}"`);
-          // Filter by the user_subjects.name field through the join
-          query = query.eq('user_subjects.name', subject);
+          
+          // First, get the subject_id for the selected subject
+          const { data: subjectData, error: subjectError } = await supabase
+            .from('user_subjects')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('name', subject)
+            .single();
+
+          if (subjectError) {
+            console.error('❌ Error fetching subject:', subjectError);
+            throw subjectError;
+          }
+
+          if (!subjectData) {
+            console.log(`⚠️ No subject found with name: "${subject}"`);
+            return { notes: [], totalCount: 0, hasMore: false };
+          }
+
+          console.log(`📋 Found subject ID: ${subjectData.id} for subject: "${subject}"`);
+
+          // Now query notes with the subject_id
+          let query = supabase
+            .from('notes')
+            .select(`
+              *,
+              user_subjects!notes_subject_id_fkey (
+                id,
+                name
+              ),
+              note_tags (
+                tags (
+                  id,
+                  name,
+                  color
+                )
+              )
+            `, { count: 'exact' })
+            .eq('user_id', user.id)
+            .eq('subject_id', subjectData.id);
+
+          // Apply other filters
+          if (!showArchived) {
+            query = query.eq('archived', false);
+          }
+
+          if (search) {
+            query = query.ilike('title', `%${search}%`);
+          }
+
+          // Apply sorting with pinned notes first
+          switch (sortBy) {
+            case 'newest':
+              query = query.order('pinned', { ascending: false }).order('updated_at', { ascending: false });
+              break;
+            case 'oldest':
+              query = query.order('pinned', { ascending: false }).order('created_at', { ascending: true });
+              break;
+            case 'alphabetical':
+              query = query.order('pinned', { ascending: false }).order('title', { ascending: true });
+              break;
+          }
+
+          // Apply pagination
+          const offset = (page - 1) * pageSize;
+          query = query.range(offset, offset + pageSize - 1);
+
+          const { data: notes, error, count } = await query;
+
+          if (error) {
+            console.error('❌ Query error:', error);
+            throw error;
+          }
+
+          finalNotes = notes || [];
+          totalCount = count || 0;
+        } else {
+          // For "all" subjects, get all notes for the user
+          console.log(`📋 Getting all notes for user`);
+          
+          let query = supabase
+            .from('notes')
+            .select(`
+              *,
+              user_subjects!notes_subject_id_fkey (
+                id,
+                name
+              ),
+              note_tags (
+                tags (
+                  id,
+                  name,
+                  color
+                )
+              )
+            `, { count: 'exact' })
+            .eq('user_id', user.id);
+
+          // Apply filters
+          if (!showArchived) {
+            query = query.eq('archived', false);
+          }
+
+          if (search) {
+            query = query.ilike('title', `%${search}%`);
+          }
+
+          // Apply sorting with pinned notes first
+          switch (sortBy) {
+            case 'newest':
+              query = query.order('pinned', { ascending: false }).order('updated_at', { ascending: false });
+              break;
+            case 'oldest':
+              query = query.order('pinned', { ascending: false }).order('created_at', { ascending: true });
+              break;
+            case 'alphabetical':
+              query = query.order('pinned', { ascending: false }).order('title', { ascending: true });
+              break;
+          }
+
+          // Apply pagination
+          const offset = (page - 1) * pageSize;
+          query = query.range(offset, offset + pageSize - 1);
+
+          const { data: notes, error, count } = await query;
+
+          if (error) {
+            console.error('❌ Query error:', error);
+            throw error;
+          }
+
+          finalNotes = notes || [];
+          totalCount = count || 0;
         }
 
-        if (search) {
-          // Use simpler search that works
-          query = query.ilike('title', `%${search}%`);
-        }
-
-        // Apply sorting with pinned notes first
-        switch (sortBy) {
-          case 'newest':
-            query = query.order('pinned', { ascending: false }).order('updated_at', { ascending: false });
-            break;
-          case 'oldest':
-            query = query.order('pinned', { ascending: false }).order('created_at', { ascending: true });
-            break;
-          case 'alphabetical':
-            query = query.order('pinned', { ascending: false }).order('title', { ascending: true });
-            break;
-        }
-
-        // Apply pagination
-        const offset = (page - 1) * pageSize;
-        query = query.range(offset, offset + pageSize - 1);
-
-        const { data: notes, error, count } = await query;
-
-        if (error) {
-          console.error('❌ Query error:', error);
-          throw error;
-        }
-
-        console.log(`✅ Query returned ${notes?.length || 0} notes for subject: "${subject}"`);
+        console.log(`✅ Query returned ${finalNotes.length} notes for subject: "${subject}"`);
         
         // Log subject information for debugging
-        if (notes && notes.length > 0) {
-          const subjectInfo = notes.map(note => ({
+        if (finalNotes.length > 0) {
+          const subjectInfo = finalNotes.map(note => ({
             title: note.title,
             subjectFromField: note.subject,
-            subjectFromJoin: note.user_subjects?.name
+            subjectFromJoin: note.user_subjects?.name,
+            subjectId: note.subject_id
           }));
           console.log('📊 Subject debugging info:', subjectInfo);
         }
 
         // Transform data to match Note interface
-        const transformedNotes: Note[] = (notes || []).map(note => ({
+        const transformedNotes: Note[] = finalNotes.map(note => ({
           id: note.id,
           title: note.title,
           description: note.description || '',
@@ -159,10 +241,11 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
           page
         });
 
+        const offset = (page - 1) * pageSize;
         return {
           notes: transformedNotes,
-          totalCount: count || 0,
-          hasMore: (count || 0) > offset + pageSize
+          totalCount,
+          hasMore: totalCount > offset + pageSize
         };
 
       } catch (error) {
