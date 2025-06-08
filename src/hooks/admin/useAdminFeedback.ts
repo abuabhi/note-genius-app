@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -33,7 +32,7 @@ export const useAdminFeedback = () => {
         .from('feedback')
         .select(`
           *,
-          profiles!inner(username, avatar_url)
+          profiles!feedback_user_id_fkey(username, avatar_url)
         `)
         .order('created_at', { ascending: false });
 
