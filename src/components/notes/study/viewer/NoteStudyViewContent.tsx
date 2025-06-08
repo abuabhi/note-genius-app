@@ -77,7 +77,6 @@ export const NoteStudyViewContent = ({
           handleContentChange={handleContentChange}
           handleSaveContent={handleSaveContent}
           toggleEditing={toggleEditing}
-          handleEnhanceContent={handleEnhanceContent}
           setSelectedTags={setSelectedTags}
         />
       ) : (
