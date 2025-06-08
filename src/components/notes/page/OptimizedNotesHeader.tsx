@@ -3,16 +3,21 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus, FileText, Scan, Upload } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { AddNoteButtonGroup } from './header/AddNoteButtonGroup';
 
 interface OptimizedNotesHeaderProps {
   totalCount: number;
   onCreateNote: () => void;
+  onOpenScanDialog: () => void;
+  onOpenImportDialog: () => void;
   isCreating: boolean;
 }
 
 export const OptimizedNotesHeader = ({ 
   totalCount, 
-  onCreateNote, 
+  onCreateNote,
+  onOpenScanDialog,
+  onOpenImportDialog,
   isCreating 
 }: OptimizedNotesHeaderProps) => {
   return (
@@ -38,24 +43,11 @@ export const OptimizedNotesHeader = ({
           </div>
 
           <div className="flex gap-2">
-            <Button
-              onClick={onCreateNote}
-              disabled={isCreating}
-              className="bg-mint-600 hover:bg-mint-700 text-white gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              {isCreating ? 'Creating...' : 'New Note'}
-            </Button>
-            
-            <Button variant="outline" className="gap-2" disabled>
-              <Scan className="h-4 w-4" />
-              Scan
-            </Button>
-            
-            <Button variant="outline" className="gap-2" disabled>
-              <Upload className="h-4 w-4" />
-              Import
-            </Button>
+            <AddNoteButtonGroup 
+              onOpenManualDialog={onCreateNote}
+              onOpenScanDialog={onOpenScanDialog}
+              onOpenImportDialog={onOpenImportDialog}
+            />
           </div>
         </div>
       </CardContent>

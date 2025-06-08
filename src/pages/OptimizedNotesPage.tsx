@@ -1,3 +1,4 @@
+
 import Layout from '@/components/layout/Layout';
 import { OptimizedNotesProvider } from '@/contexts/OptimizedNotesContext';
 import { PageBreadcrumb } from '@/components/ui/page-breadcrumb';
@@ -8,13 +9,18 @@ import { CacheMonitor } from '@/components/performance/CacheMonitor';
 import { AdvancedCacheManager } from '@/components/performance/AdvancedCacheManager';
 import { SecureOptimizedNotesContent } from '@/components/notes/page/SecureOptimizedNotesContent';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { useUserTier, UserTier } from '@/hooks/useUserTier';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Settings } from 'lucide-react';
 
 const OptimizedNotesPage = () => {
   useRequireAuth();
+  const { userTier } = useUserTier();
   const [showCacheManager, setShowCacheManager] = useState(false);
+
+  // Only show cache manager toggle for DEAN tier users
+  const canAccessCacheManager = userTier === UserTier.DEAN;
 
   return (
     <EnhancedErrorBoundary>
@@ -30,18 +36,20 @@ const OptimizedNotesPage = () => {
                 pageIcon={<FileText className="h-3 w-3" />} 
               />
               
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowCacheManager(!showCacheManager)}
-                className="flex items-center gap-2"
-              >
-                <Settings className="h-4 w-4" />
-                {showCacheManager ? 'Hide' : 'Show'} Cache Manager
-              </Button>
+              {canAccessCacheManager && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowCacheManager(!showCacheManager)}
+                  className="flex items-center gap-2"
+                >
+                  <Settings className="h-4 w-4" />
+                  {showCacheManager ? 'Hide' : 'Show'} Cache Manager
+                </Button>
+              )}
             </div>
             
-            {showCacheManager && (
+            {canAccessCacheManager && showCacheManager && (
               <div className="mb-6">
                 <AdvancedCacheManager />
               </div>

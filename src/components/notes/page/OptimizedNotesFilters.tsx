@@ -5,6 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Search, Filter } from 'lucide-react';
+import { useUserSubjects } from '@/hooks/useUserSubjects';
 
 interface OptimizedNotesFiltersProps {
   searchTerm: string;
@@ -17,6 +18,16 @@ interface OptimizedNotesFiltersProps {
   onSubjectChange: (subject: string) => void;
 }
 
+// Default subjects that should always be available
+const DEFAULT_SUBJECTS = [
+  'English',
+  'Mathematics', 
+  'Technology',
+  'Science',
+  'Language',
+  'Others'
+];
+
 export const OptimizedNotesFilters = ({
   searchTerm,
   onSearchChange,
@@ -27,55 +38,70 @@ export const OptimizedNotesFilters = ({
   selectedSubject,
   onSubjectChange
 }: OptimizedNotesFiltersProps) => {
+  const { subjects: userSubjects, isLoading } = useUserSubjects();
+
+  // Combine default subjects with user subjects, avoiding duplicates
+  const allSubjects = [
+    ...DEFAULT_SUBJECTS,
+    ...(userSubjects || [])
+      .map(s => s.name)
+      .filter(name => !DEFAULT_SUBJECTS.includes(name))
+  ];
+
   return (
     <Card className="bg-white/60 backdrop-blur-sm border-mint-100/50">
       <CardContent className="p-4">
-        <div className="flex flex-col lg:flex-row gap-4">
+        <div className="flex flex-col lg:flex-row gap-4 items-center">
           {/* Search */}
-          <div className="flex-1 relative">
+          <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Search notes..."
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-10 bg-white/80"
+              className="pl-10 bg-white/80 border-mint-200 focus:ring-mint-400"
             />
           </div>
 
           {/* Subject Filter */}
-          <Select value={selectedSubject} onValueChange={onSubjectChange}>
-            <SelectTrigger className="w-full lg:w-[200px] bg-white/80">
-              <SelectValue placeholder="Select subject" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Subjects</SelectItem>
-              <SelectItem value="general">General</SelectItem>
-              <SelectItem value="work">Work</SelectItem>
-              <SelectItem value="personal">Personal</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-gray-500" />
+            <Select value={selectedSubject} onValueChange={onSubjectChange}>
+              <SelectTrigger className="w-40 bg-white/80 border-mint-200">
+                <SelectValue placeholder="All Subjects" />
+              </SelectTrigger>
+              <SelectContent className="bg-white">
+                <SelectItem value="all">All Subjects</SelectItem>
+                {allSubjects.map(subject => (
+                  <SelectItem key={subject} value={subject}>
+                    {subject}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* Sort */}
           <Select value={sortType} onValueChange={onSortChange}>
-            <SelectTrigger className="w-full lg:w-[180px] bg-white/80">
-              <SelectValue placeholder="Sort by" />
+            <SelectTrigger className="w-32 bg-white/80 border-mint-200">
+              <SelectValue />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Newest First</SelectItem>
-              <SelectItem value="oldest">Oldest First</SelectItem>
-              <SelectItem value="alphabetical">Alphabetical</SelectItem>
+            <SelectContent className="bg-white">
+              <SelectItem value="newest">Newest</SelectItem>
+              <SelectItem value="oldest">Oldest</SelectItem>
+              <SelectItem value="alphabetical">A-Z</SelectItem>
             </SelectContent>
           </Select>
 
-          {/* Show Archived */}
+          {/* Show Archived Toggle */}
           <div className="flex items-center space-x-2">
             <Switch
               id="show-archived"
               checked={showArchived}
               onCheckedChange={onShowArchivedChange}
             />
-            <Label htmlFor="show-archived" className="text-sm text-gray-600">
-              Show archived
+            <Label htmlFor="show-archived" className="text-sm">
+              Show Archived
             </Label>
           </div>
         </div>

@@ -9,6 +9,9 @@ import { OptimizedNotesGrid } from './OptimizedNotesGrid';
 import { OptimizedNotesPagination } from './OptimizedNotesPagination';
 import { ErrorState } from './ErrorState';
 import { EmptyNotesState } from '@/components/notes/EmptyNotesState';
+import { DialogManager } from './header/DialogManager';
+import { useUserTier } from '@/hooks/useUserTier';
+import { toast } from 'sonner';
 
 export const OptimizedNotesContent = () => {
   const {
@@ -28,9 +31,17 @@ export const OptimizedNotesContent = () => {
     currentPage,
     setCurrentPage,
     refetch,
-    addNote
+    addNote,
+    updateNote,
+    deleteNote
   } = useOptimizedNotes();
 
+  const { tierLimits } = useUserTier();
+  
+  // Dialog states
+  const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
+  const [isScanDialogOpen, setIsScanDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [creatingNote, setCreatingNote] = useState(false);
 
   const handleCreateNote = async () => {
@@ -46,8 +57,54 @@ export const OptimizedNotesContent = () => {
       });
     } catch (error) {
       console.error('Failed to create note:', error);
+      toast.error('Failed to create note');
     } finally {
       setCreatingNote(false);
+      setIsManualDialogOpen(false);
+    }
+  };
+
+  const handleSaveNote = async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
+    try {
+      const newNote = await addNote(noteData);
+      if (newNote) {
+        toast.success('Note created successfully');
+        return newNote;
+      }
+      return null;
+    } catch (error) {
+      console.error('Failed to save note:', error);
+      toast.error('Failed to save note');
+      return null;
+    }
+  };
+
+  const handleScanNote = async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
+    return handleSaveNote({ ...noteData, sourceType: 'scan' });
+  };
+
+  const handleImportNote = async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
+    return handleSaveNote({ ...noteData, sourceType: 'import' });
+  };
+
+  const handlePin = async (id: string, isPinned: boolean) => {
+    try {
+      await updateNote(id, { pinned: !isPinned });
+      toast.success(isPinned ? "Note unpinned" : "Note pinned");
+    } catch (error) {
+      console.error('Error pinning note:', error);
+      toast.error('Failed to update note pin status');
+    }
+  };
+
+  const handleDelete = async (id: string): Promise<void> => {
+    try {
+      await deleteNote(id);
+      toast.success("Note deleted successfully");
+    } catch (error) {
+      console.error('Error deleting note:', error);
+      toast.error('Failed to delete note');
+      throw error;
     }
   };
 
@@ -65,7 +122,9 @@ export const OptimizedNotesContent = () => {
       {/* Header with actions */}
       <OptimizedNotesHeader 
         totalCount={totalCount}
-        onCreateNote={handleCreateNote}
+        onCreateNote={() => setIsManualDialogOpen(true)}
+        onOpenScanDialog={() => setIsScanDialogOpen(true)}
+        onOpenImportDialog={() => setIsImportDialogOpen(true)}
         isCreating={creatingNote}
       />
 
@@ -89,12 +148,16 @@ export const OptimizedNotesContent = () => {
       >
         {notes.length === 0 ? (
           <EmptyNotesState
-            onCreateNote={handleCreateNote}
+            onCreateNote={() => setIsManualDialogOpen(true)}
             isFiltered={!!(searchTerm || selectedSubject !== 'all' || showArchived)}
           />
         ) : (
           <>
-            <OptimizedNotesGrid notes={notes} />
+            <OptimizedNotesGrid 
+              notes={notes} 
+              onPin={handlePin}
+              onDelete={handleDelete}
+            />
             
             {totalCount > 20 && (
               <OptimizedNotesPagination
@@ -108,6 +171,21 @@ export const OptimizedNotesContent = () => {
           </>
         )}
       </ProgressiveLoader>
+
+      {/* Dialog Manager for note creation */}
+      <DialogManager 
+        onSaveNote={handleSaveNote}
+        onScanNote={handleScanNote}
+        onImportNote={handleImportNote}
+        tierLimits={tierLimits}
+        isManualDialogOpen={isManualDialogOpen}
+        isScanDialogOpen={isScanDialogOpen}
+        isImportDialogOpen={isImportDialogOpen}
+        isSubmitting={creatingNote}
+        setIsManualDialogOpen={setIsManualDialogOpen}
+        setIsScanDialogOpen={setIsScanDialogOpen}
+        setIsImportDialogOpen={setIsImportDialogOpen}
+      />
     </div>
   );
 };
