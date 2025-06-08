@@ -64,21 +64,21 @@ const FlashcardStudyPage = () => {
   }
 
   return (
-    <Layout>
-      {/* Compact Floating Timer - shows during study */}
-      {studyStarted && (
-        <CompactFloatingTimer
-          activityType="flashcard"
-          isActive={true}
-          className="bg-mint-500 border-mint-600"
-        />
-      )}
+    <FlashcardProvider>
+      <Layout>
+        {/* Compact Floating Timer - shows during study */}
+        {studyStarted && (
+          <CompactFloatingTimer
+            activityType="flashcard"
+            isActive={true}
+            className="bg-mint-500 border-mint-600"
+          />
+        )}
 
-      {/* Wrap StudyPageContent with FlashcardProvider */}
-      <FlashcardProvider>
+        {/* Use StudyPageContent which has breadcrumb and mode selector */}
         <StudyPageContent />
-      </FlashcardProvider>
-    </Layout>
+      </Layout>
+    </FlashcardProvider>
   );
 };
 
