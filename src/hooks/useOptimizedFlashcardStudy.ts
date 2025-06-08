@@ -97,6 +97,13 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
     return flashcards.slice(startIndex, endIndex);
   }, [flashcards, currentIndex]);
 
+  // Get current card safely with memoization - MOVED UP BEFORE USAGE
+  const currentCard = useMemo(() => {
+    return flashcards.length > 0 && currentIndex < flashcards.length 
+      ? flashcards[currentIndex] 
+      : null;
+  }, [flashcards, currentIndex]);
+
   const handleNext = useCallback(() => {
     if (currentIndex < flashcards.length - 1) {
       setCurrentIndex(prev => prev + 1);
@@ -139,13 +146,6 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
       handleNext();
     }, 500);
   }, [currentCard, handleNext, queryClient]);
-
-  // Get current card safely with memoization
-  const currentCard = useMemo(() => {
-    return flashcards.length > 0 && currentIndex < flashcards.length 
-      ? flashcards[currentIndex] 
-      : null;
-  }, [flashcards, currentIndex]);
 
   console.log("useOptimizedFlashcardStudy: Current state:", {
     flashcardsLength: flashcards.length,
