@@ -12,17 +12,17 @@ interface NoteStudyViewContentProps {
   fontSize: number;
   textAlign: TextAlignType;
   editableContent: string;
-  selectedTags: string[];
-  availableTags: string[];
+  selectedTags: { id?: string; name: string; color: string }[];
+  availableTags: { id: string; name: string; color: string }[];
   isSaving: boolean;
-  statsLoading: boolean;
+  statsLoading?: boolean;
   currentUsage: number;
   monthlyLimit: number;
   handleContentChange: (content: string) => void;
   handleSaveContent: () => void;
   toggleEditing: () => void;
   handleEnhanceContent: (enhancementType: string) => Promise<void>;
-  setSelectedTags: (tags: string[]) => void;
+  setSelectedTags: (tags: { id?: string; name: string; color: string }[]) => void;
   handleRetryEnhancement: (enhancementType: string) => Promise<void>;
   hasReachedLimit: boolean;
   fetchUsageStats: () => Promise<void>;
@@ -41,6 +41,7 @@ export const NoteStudyViewContent = ({
   selectedTags,
   availableTags,
   isSaving,
+  statsLoading = false,
   currentUsage,
   monthlyLimit,
   handleContentChange,
@@ -59,6 +60,7 @@ export const NoteStudyViewContent = ({
     <div className="p-6 space-y-6">
       {/* Usage Meter */}
       <EnhancementUsageMeter
+        statsLoading={statsLoading}
         currentUsage={currentUsage}
         monthlyLimit={monthlyLimit}
         hasReachedLimit={hasReachedLimit}
@@ -67,14 +69,16 @@ export const NoteStudyViewContent = ({
       {/* Main Content Area */}
       {isEditing ? (
         <NoteStudyEditForm
+          note={note}
           editableContent={editableContent}
           selectedTags={selectedTags}
           availableTags={availableTags}
           isSaving={isSaving}
-          onContentChange={handleContentChange}
-          onSave={handleSaveContent}
-          onCancel={toggleEditing}
-          onTagsChange={setSelectedTags}
+          handleContentChange={handleContentChange}
+          handleSaveContent={handleSaveContent}
+          toggleEditing={toggleEditing}
+          handleEnhanceContent={handleEnhanceContent}
+          setSelectedTags={setSelectedTags}
         />
       ) : (
         <OptimizedTwoColumnView

@@ -9,15 +9,17 @@ import {
 } from "@/components/ui/tooltip";
 
 interface EnhancementUsageMeterProps {
-  statsLoading: boolean;
+  statsLoading?: boolean;
   currentUsage: number;
   monthlyLimit: number | null;
+  hasReachedLimit?: boolean;
 }
 
 export const EnhancementUsageMeter: React.FC<EnhancementUsageMeterProps> = ({
-  statsLoading,
+  statsLoading = false,
   currentUsage,
-  monthlyLimit
+  monthlyLimit,
+  hasReachedLimit = false
 }) => {
   const renderUsageMeter = useCallback(() => {
     console.log("🔍 EnhancementUsageMeter - Rendering circular version with:", {
@@ -145,7 +147,7 @@ export const EnhancementUsageMeter: React.FC<EnhancementUsageMeterProps> = ({
         </Tooltip>
       </TooltipProvider>
     );
-  }, [currentUsage, monthlyLimit, statsLoading]);
+  }, [currentUsage, monthlyLimit, statsLoading, hasReachedLimit]);
 
   return renderUsageMeter();
 };
