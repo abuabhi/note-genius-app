@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { PageBreadcrumb } from '@/components/ui/page-breadcrumb';
 import { useAdminSettings, useUpdateAdminSettings } from '@/hooks/admin/useAdminSettings';
 import { useState, useEffect } from 'react';
 import { Settings, Mail, Database, ExternalLink, Save } from 'lucide-react';
@@ -57,7 +58,13 @@ const AdminFeedbackSettingsPage = () => {
   return (
     <div className="container mx-auto py-8 space-y-8">
       <div>
-        <h1 className="text-3xl font-bold">Feedback System Settings</h1>
+        <PageBreadcrumb 
+          pageName="Feedback Settings" 
+          pageIcon={<Settings className="h-4 w-4" />}
+          parentName="Admin Dashboard"
+          parentPath="/admin"
+        />
+        <h1 className="text-3xl font-bold mt-4">Feedback System Settings</h1>
         <p className="text-muted-foreground mt-2">
           Configure how feedback is handled in your application
         </p>
