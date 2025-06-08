@@ -34,6 +34,23 @@ export const useCreateFeedback = () => {
         .single();
 
       if (error) throw error;
+
+      // Send thank you email notification
+      try {
+        const { error: emailError } = await supabase.functions.invoke('send-feedback-notification', {
+          body: {
+            type: 'thank_you',
+            feedbackId: data.id
+          }
+        });
+        
+        if (emailError) {
+          console.warn('Thank you email failed:', emailError);
+        }
+      } catch (emailError) {
+        console.warn('Thank you email failed:', emailError);
+      }
+
       return data as Feedback;
     },
     onSuccess: () => {

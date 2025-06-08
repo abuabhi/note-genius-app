@@ -358,11 +358,14 @@ export type Database = {
       }
       feedback: {
         Row: {
+          admin_response: string | null
           created_at: string
           description: string | null
           id: string
           priority: string | null
           rating: number | null
+          responded_at: string | null
+          responded_by: string | null
           severity: string | null
           status: string
           title: string
@@ -371,11 +374,14 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          admin_response?: string | null
           created_at?: string
           description?: string | null
           id?: string
           priority?: string | null
           rating?: number | null
+          responded_at?: string | null
+          responded_by?: string | null
           severity?: string | null
           status?: string
           title: string
@@ -384,11 +390,14 @@ export type Database = {
           user_id: string
         }
         Update: {
+          admin_response?: string | null
           created_at?: string
           description?: string | null
           id?: string
           priority?: string | null
           rating?: number | null
+          responded_at?: string | null
+          responded_by?: string | null
           severity?: string | null
           status?: string
           title?: string
@@ -2465,6 +2474,10 @@ export type Database = {
           priority: number
           dismissible: boolean
         }[]
+      }
+      get_user_email_for_feedback: {
+        Args: { feedback_user_id: string }
+        Returns: string
       }
       process_referral_signup: {
         Args: { referred_user_id: string; referral_code_used: string }

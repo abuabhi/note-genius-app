@@ -30,6 +30,7 @@ const ConnectionsPage = lazy(() => import('@/pages/ConnectionsPage'));
 const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'));
 const ReferralsPage = lazy(() => import('@/pages/ReferralsPage'));
 const FeedbackPage = lazy(() => import('@/pages/FeedbackPage'));
+const AdminFeedbackPage = lazy(() => import('@/pages/AdminFeedbackPage'));
 
 export const OptimizedAppRoutes = () => {
   return (
@@ -182,6 +183,13 @@ export const OptimizedAppRoutes = () => {
         <Route path="/referrals" element={
           <LazyLoadWrapper>
             <ReferralsPage />
+          </LazyLoadWrapper>
+        } />
+        
+        {/* Admin routes */}
+        <Route path="/admin/feedback" element={
+          <LazyLoadWrapper>
+            <AdminFeedbackPage />
           </LazyLoadWrapper>
         } />
       </Routes>

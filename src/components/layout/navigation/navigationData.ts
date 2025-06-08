@@ -1,4 +1,3 @@
-
 import { 
   Home, 
   BookOpen, 
@@ -184,6 +183,13 @@ export const navigationData: NavigationGroup[] = [
         description: "Administration overview"
       },
       {
+        id: "admin-feedback",
+        title: "Feedback Management",
+        href: "/admin/feedback",
+        icon: MessageSquare,
+        description: "Manage user feedback and support requests"
+      },
+      {
         id: "admin-users",
         title: "User Management",
         href: "/admin/users",
@@ -217,13 +223,6 @@ export const navigationData: NavigationGroup[] = [
         href: "/admin/sections",
         icon: Settings,
         description: "Manage sections"
-      },
-      {
-        id: "admin-features",
-        title: "Features",
-        href: "/admin/features",
-        icon: Shield,
-        description: "Manage feature toggles"
       }
     ]
   },

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import AdminDashboardPage from "@/pages/AdminDashboardPage";
 import AdminUsersPage from "@/pages/AdminUsersPage";
@@ -10,12 +9,14 @@ import AdminCSVImportPage from "@/pages/AdminCSVImportPage";
 import AdminAnalyticsPage from "@/pages/AdminAnalyticsPage";
 import AdminAnnouncementsPage from "@/pages/AdminAnnouncementsPage";
 import AdminTierLimitsPage from "@/pages/AdminTierLimitsPage";
+import AdminFeedbackPage from "@/pages/AdminFeedbackPage";
 import { RouteConfig } from './publicRoutes';
 
 // Admin routes - removed AdminFeaturesPage since feature toggles are removed
 export const adminRoutes: RouteConfig[] = [
   { path: "/admin", element: <AdminDashboardPage /> }, // Main admin dashboard
   { path: "/admin/users", element: <AdminUsersPage /> },
+  { path: "/admin/feedback", element: <AdminFeedbackPage /> },
   { path: "/admin/analytics", element: <AdminAnalyticsPage /> },
   { path: "/admin/announcements", element: <AdminAnnouncementsPage /> },
   { path: "/admin/flashcards", element: <AdminFlashcardPage /> },
