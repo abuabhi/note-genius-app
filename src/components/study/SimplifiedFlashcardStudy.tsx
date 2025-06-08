@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useOptimizedFlashcardStudy } from "@/hooks/useOptimizedFlashcardStudy";
@@ -35,7 +34,8 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
     handleFlip,
     handleCardChoice,
     setIsFlipped,
-    invalidateCache
+    invalidateCache,
+    resetStudySession
   } = useOptimizedFlashcardStudy({ setId, mode });
 
   // Enhanced handleCardChoice with loading state and cache invalidation
@@ -56,12 +56,12 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
     }
   }, [currentCard, handleCardChoice, isUpdating, invalidateCache]);
 
-  // Handle study again with proper cache invalidation
+  // Handle study again without page reload - maintain session
   const handleStudyAgain = useCallback(() => {
-    console.log('🔄 Study Again clicked - reloading flashcards');
+    console.log('🔄 Study Again clicked - resetting study state while maintaining session');
+    resetStudySession();
     invalidateCache();
-    window.location.reload();
-  }, [invalidateCache]);
+  }, [resetStudySession, invalidateCache]);
 
   // Handle back to sets with proper React Router navigation
   const handleBackToSets = useCallback(() => {

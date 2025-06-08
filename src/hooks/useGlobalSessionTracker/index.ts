@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { useLocation } from 'react-router-dom';
 import { ActivityType, GlobalSessionState, STUDY_ROUTES } from './types';
@@ -7,6 +7,7 @@ import { useSessionOperations } from './sessionOperations';
 import { useActivityTracking } from './activityTracking';
 import { useTimerManagement } from './timerManagement';
 import { useNavigationEffects } from './navigationEffects';
+import { restoreSession, persistSession } from './sessionPersistence';
 
 export const useGlobalSessionTracker = () => {
   const { user } = useAuth();
@@ -20,6 +21,24 @@ export const useGlobalSessionTracker = () => {
     currentActivity: null,
     isPaused: false
   });
+
+  // Restore session on mount
+  useEffect(() => {
+    if (user) {
+      const restored = restoreSession();
+      if (restored) {
+        console.log('🔄 Restoring session on mount:', restored);
+        setSessionState(prev => ({ ...prev, ...restored }));
+      }
+    }
+  }, [user]);
+
+  // Persist session state changes
+  useEffect(() => {
+    if (sessionState.isActive) {
+      persistSession(sessionState);
+    }
+  }, [sessionState]);
 
   // Determine activity type from current route
   const getCurrentActivityType = useCallback((): ActivityType => {

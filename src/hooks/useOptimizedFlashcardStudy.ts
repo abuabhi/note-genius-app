@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -210,6 +209,14 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
     }
   }, [data?.stats]);
 
+  // Reset study session without page reload
+  const resetStudySession = useCallback(() => {
+    console.log('🔄 Resetting study session state');
+    setCurrentIndex(0);
+    setIsFlipped(false);
+    // Don't reset studyStats as they will be updated from fresh data
+  }, []);
+
   // Optimized card choice handler with batch updates and better cache invalidation
   const handleCardChoice = useCallback(async (choice: 'mastered' | 'needs_practice') => {
     if (!user || !currentCard) return;
@@ -347,6 +354,7 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
     handleFlip,
     handleCardChoice,
     setIsFlipped,
-    invalidateCache
+    invalidateCache,
+    resetStudySession
   };
 };
