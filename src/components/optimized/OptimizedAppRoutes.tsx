@@ -1,13 +1,15 @@
+
 import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { LazyLoadWrapper } from '@/components/performance/LazyLoadWrapper';
 import { NoteProvider } from '@/contexts/NoteContext';
-import { FlashcardProvider } from '@/contexts/FlashcardContext';
+import { FlashcardProvider } from '@/contexts/FlashcardProvider';
 
 // Lazy load all major pages for code splitting
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const NotesPage = lazy(() => import('@/pages/NotesPage'));
+const OptimizedNoteStudyPage = lazy(() => import('@/pages/OptimizedNoteStudyPage'));
 const NoteStudyPage = lazy(() => import('@/pages/NoteStudyPage'));
 const EditNotePage = lazy(() => import('@/pages/EditNotePage'));
 const NoteToFlashcardPage = lazy(() => import('@/pages/NoteToFlashcardPage'));
@@ -160,6 +162,17 @@ export const OptimizedAppRoutes = () => {
           <NoteProvider>
             <LazyLoadWrapper fallback={<PageLoadingSkeleton type="notes" />}>
               <NoteStudyPage />
+            </LazyLoadWrapper>
+          </NoteProvider>
+        } 
+      />
+      {/* Add the missing study route */}
+      <Route 
+        path="/notes/study/:id" 
+        element={
+          <NoteProvider>
+            <LazyLoadWrapper fallback={<PageLoadingSkeleton type="notes" />}>
+              <OptimizedNoteStudyPage />
             </LazyLoadWrapper>
           </NoteProvider>
         } 
