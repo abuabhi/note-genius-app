@@ -38,15 +38,76 @@ export const getBestTextColor = (bgColor: string): string => {
 
 /**
  * Generate a color based on a string (for category tags)
+ * Uses a predefined set of colors to ensure good distribution and avoid conflicts
  * @param str Input string to generate color from
  * @returns HSL color string
  */
 export const generateColorFromString = (str: string): string => {
+  // Predefined color palette with good contrast and distribution
+  const colorPalette = [
+    'hsl(210, 70%, 60%)', // Blue
+    'hsl(150, 70%, 50%)', // Green
+    'hsl(270, 70%, 60%)', // Purple
+    'hsl(30, 80%, 55%)',  // Orange
+    'hsl(340, 70%, 60%)', // Pink
+    'hsl(190, 70%, 55%)', // Cyan
+    'hsl(60, 70%, 50%)',  // Yellow
+    'hsl(320, 70%, 60%)', // Magenta
+    'hsl(120, 60%, 45%)', // Forest Green
+    'hsl(240, 70%, 60%)', // Indigo
+    'hsl(15, 75%, 55%)',  // Red-Orange
+    'hsl(180, 60%, 50%)', // Teal
+    'hsl(300, 70%, 60%)', // Violet
+    'hsl(45, 80%, 55%)',  // Gold
+    'hsl(200, 70%, 55%)', // Sky Blue
+    'hsl(330, 70%, 60%)', // Rose
+    'hsl(90, 60%, 50%)',  // Lime
+    'hsl(250, 70%, 60%)', // Blue-Violet
+    'hsl(20, 80%, 55%)',  // Coral
+    'hsl(160, 70%, 50%)', // Sea Green
+  ];
+
+  // Create a more robust hash function
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
   }
   
-  const hue = Math.abs(hash) % 360;
-  return `hsl(${hue}, 70%, 60%)`;
+  // Use absolute value and modulo to get a palette index
+  const index = Math.abs(hash) % colorPalette.length;
+  
+  console.log(`🎨 Color generation for "${str}": index ${index}, color ${colorPalette[index]}`);
+  
+  return colorPalette[index];
+};
+
+/**
+ * Get all available colors used in the palette
+ * @returns Array of all predefined colors
+ */
+export const getAllAvailableColors = (): string[] => {
+  return [
+    'hsl(210, 70%, 60%)', // Blue
+    'hsl(150, 70%, 50%)', // Green
+    'hsl(270, 70%, 60%)', // Purple
+    'hsl(30, 80%, 55%)',  // Orange
+    'hsl(340, 70%, 60%)', // Pink
+    'hsl(190, 70%, 55%)', // Cyan
+    'hsl(60, 70%, 50%)',  // Yellow
+    'hsl(320, 70%, 60%)', // Magenta
+    'hsl(120, 60%, 45%)', // Forest Green
+    'hsl(240, 70%, 60%)', // Indigo
+    'hsl(15, 75%, 55%)',  // Red-Orange
+    'hsl(180, 60%, 50%)', // Teal
+    'hsl(300, 70%, 60%)', // Violet
+    'hsl(45, 80%, 55%)',  // Gold
+    'hsl(200, 70%, 55%)', // Sky Blue
+    'hsl(330, 70%, 60%)', // Rose
+    'hsl(90, 60%, 50%)',  // Lime
+    'hsl(250, 70%, 60%)', // Blue-Violet
+    'hsl(20, 80%, 55%)',  // Coral
+    'hsl(160, 70%, 50%)', // Sea Green
+  ];
 };

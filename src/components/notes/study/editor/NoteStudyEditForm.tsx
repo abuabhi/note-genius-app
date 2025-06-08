@@ -14,7 +14,6 @@ interface NoteStudyEditFormProps {
   handleContentChange: (html: string) => void;
   handleSaveContent: () => void;
   toggleEditing: () => void;
-  handleEnhanceContent: () => Promise<void>;
   setSelectedTags: (tags: { id?: string; name: string; color: string }[]) => void;
 }
 
