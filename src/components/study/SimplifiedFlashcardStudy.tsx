@@ -127,20 +127,24 @@ export const SimplifiedFlashcardStudy = ({ setId, mode, currentSet }: Simplified
 
         return (
           <div className="max-w-4xl mx-auto space-y-6">
-            {/* Study Session Tracker - only show during active study */}
-            {setId && currentSet && !isComplete && (
-              <StudySessionTracker
-                flashcardSetId={setId}
-                flashcardSetName={currentSet?.name || "Flashcard Study"}
-                cardsStudied={cardsStudied}
-                onSessionStart={() => {
-                  console.log("Study session started for:", currentSet?.name);
-                }}
-                onSessionEnd={() => {
-                  console.log("Study session ended");
-                }}
-                triggerStudyActivity={hasUserStartedStudying}
-              />
+            {/* Study Session Tracker with Live Timer - ALWAYS visible during study */}
+            {setId && currentSet && (
+              <div className="bg-gradient-to-r from-mint-50 to-blue-50 p-4 rounded-lg border border-mint-200">
+                <StudySessionTracker
+                  flashcardSetId={setId}
+                  flashcardSetName={currentSet?.name || "Flashcard Study"}
+                  cardsStudied={cardsStudied}
+                  onSessionStart={() => {
+                    console.log("Study session started for:", currentSet?.name);
+                  }}
+                  onSessionEnd={() => {
+                    console.log("Study session ended");
+                  }}
+                  triggerStudyActivity={hasUserStartedStudying}
+                  showDonutCounter={true}
+                  donutSize="medium"
+                />
+              </div>
             )}
 
             {/* Quiz Header with Timer and Score */}
