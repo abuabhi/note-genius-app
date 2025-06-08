@@ -33,7 +33,7 @@ export const useAdminFeedback = () => {
         .from('feedback')
         .select(`
           *,
-          profiles(username, avatar_url)
+          profiles:user_id(username, avatar_url)
         `)
         .order('created_at', { ascending: false });
 
