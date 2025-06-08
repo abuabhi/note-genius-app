@@ -35,12 +35,20 @@ export const OptimizedNotesGrid = ({ notes, onPin, onDelete }: OptimizedNotesGri
   };
 
   // Render based on view mode
-  if (viewMode === 'card') {
+  if (viewMode === 'list') {
     return (
       <>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="flex flex-col space-y-4">
           {notes.map((note) => (
-            <CompactNoteCard key={note.id} note={note} />
+            <NoteCard
+              key={note.id}
+              note={note}
+              onNoteClick={handleNoteClick}
+              onShowDetails={handleShowDetails}
+              onPin={onPin}
+              onDelete={onDelete}
+              confirmDelete={null}
+            />
           ))}
         </div>
         
@@ -59,20 +67,12 @@ export const OptimizedNotesGrid = ({ notes, onPin, onDelete }: OptimizedNotesGri
     );
   }
 
-  // List view (default)
+  // Card view (default)
   return (
     <>
-      <div className="flex flex-col space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {notes.map((note) => (
-          <NoteCard
-            key={note.id}
-            note={note}
-            onNoteClick={handleNoteClick}
-            onShowDetails={handleShowDetails}
-            onPin={onPin}
-            onDelete={onDelete}
-            confirmDelete={null}
-          />
+          <CompactNoteCard key={note.id} note={note} />
         ))}
       </div>
       
