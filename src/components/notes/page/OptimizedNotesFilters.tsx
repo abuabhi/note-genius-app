@@ -2,17 +2,20 @@
 import { FilterMenu } from '@/components/notes/FilterMenu';
 import { NoteSorter } from '@/components/notes/NoteSorter';
 import { ViewToggle } from './ViewToggle';
-import { useViewPreferences } from '@/hooks/useViewPreferences';
+import { ViewMode } from '@/hooks/useViewPreferences';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
 
-export const OptimizedNotesFilters = () => {
-  const { viewMode, setViewMode } = useViewPreferences('notes');
+interface OptimizedNotesFiltersProps {
+  viewMode: ViewMode;
+  onViewModeChange: (mode: ViewMode) => void;
+}
+
+export const OptimizedNotesFilters = ({ viewMode, onViewModeChange }: OptimizedNotesFiltersProps) => {
   const { searchTerm, setSearchTerm } = useOptimizedNotes();
 
-  console.log('🔍 OptimizedNotesFilters - Current viewMode:', viewMode);
-  console.log('🔍 OptimizedNotesFilters - Search term:', searchTerm);
+  console.log('🔍 OptimizedNotesFilters - Received viewMode prop:', viewMode);
 
   return (
     <div className="space-y-4">
@@ -33,10 +36,7 @@ export const OptimizedNotesFilters = () => {
         </div>
         <ViewToggle 
           viewMode={viewMode} 
-          onViewModeChange={(mode) => {
-            console.log('🔄 View mode changing from', viewMode, 'to', mode);
-            setViewMode(mode);
-          }} 
+          onViewModeChange={onViewModeChange}
         />
       </div>
       

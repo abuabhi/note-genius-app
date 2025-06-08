@@ -20,9 +20,8 @@ export const OptimizedNotesGrid = ({ notes, onPin, onDelete, viewMode }: Optimiz
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
-  // Debug logging to see what's happening
-  console.log('🔍 OptimizedNotesGrid - Received viewMode:', viewMode);
-  console.log('🔍 OptimizedNotesGrid - Notes count:', notes.length);
+  console.log('🎯 OptimizedNotesGrid - Received viewMode prop:', viewMode);
+  console.log('🎯 OptimizedNotesGrid - Notes count:', notes.length);
 
   if (notes.length === 0) {
     return <EmptyNotesState />;
@@ -38,9 +37,9 @@ export const OptimizedNotesGrid = ({ notes, onPin, onDelete, viewMode }: Optimiz
     setIsDetailsOpen(true);
   };
 
-  // List view - vertical layout with full NoteCard functionality
+  // CLEAR AND SIMPLE RENDERING LOGIC
   if (viewMode === 'list') {
-    console.log('📋 Rendering LIST view - Single column vertical layout');
+    console.log('📋 Rendering LIST view');
     return (
       <>
         <div className="flex flex-col space-y-4 max-w-none">
@@ -73,22 +72,19 @@ export const OptimizedNotesGrid = ({ notes, onPin, onDelete, viewMode }: Optimiz
     );
   }
 
-  // Default to card view - 4 cards per row grid with CompactNoteCard
-  console.log('🃏 Rendering CARD view - Grid layout with', notes.length, 'notes');
+  // DEFAULT TO CARD VIEW
+  console.log('🃏 Rendering CARD view');
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {notes.map((note) => {
-          console.log('🃏 Rendering card for note:', note.id, note.title);
-          return (
-            <CompactNoteCard 
-              key={note.id} 
-              note={note} 
-              onPin={onPin}
-              onDelete={onDelete}
-            />
-          );
-        })}
+        {notes.map((note) => (
+          <CompactNoteCard 
+            key={note.id} 
+            note={note} 
+            onPin={onPin}
+            onDelete={onDelete}
+          />
+        ))}
       </div>
       
       {selectedNote && (

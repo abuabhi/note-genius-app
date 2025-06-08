@@ -31,7 +31,9 @@ export const OptimizedNotesContent = () => {
   } = useOptimizedNotes();
 
   const { tierLimits } = useUserTier();
-  const { viewMode } = useViewPreferences('notes');
+  
+  // SINGLE SOURCE OF TRUTH for view mode - only defined here
+  const { viewMode, setViewMode } = useViewPreferences('notes');
   
   // Dialog states
   const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
@@ -39,7 +41,7 @@ export const OptimizedNotesContent = () => {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [creatingNote, setCreatingNote] = useState(false);
 
-  console.log('🔍 OptimizedNotesContent - Current viewMode:', viewMode);
+  console.log('🎯 OptimizedNotesContent - MASTER viewMode:', viewMode);
 
   const handleCreateNote = async () => {
     setCreatingNote(true);
@@ -125,8 +127,11 @@ export const OptimizedNotesContent = () => {
         isCreating={creatingNote}
       />
 
-      {/* Simplified filters using only context */}
-      <OptimizedNotesFilters />
+      {/* Filters with view mode passed as props */}
+      <OptimizedNotesFilters 
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+      />
 
       {/* Main content */}
       <ProgressiveLoader 
