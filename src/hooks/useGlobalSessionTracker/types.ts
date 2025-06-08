@@ -24,10 +24,12 @@ export const STUDY_ROUTES = [
   '/flashcards',
   '/flashcards/study',
   '/flashcards/sets',
+  '/flashcards/create',
   '/notes/study',
   '/notes/editor',
   '/quiz/taking',
-  '/quizzes/practice'
+  '/quizzes/practice',
+  '/quizzes'
 ];
 
 // Define non-study routes where sessions should NEVER be active
@@ -52,7 +54,25 @@ export const isStudyRoute = (pathname: string): boolean => {
     return false;
   }
   
-  // Check if it matches any study route patterns
+  // Check for flashcard study patterns - any flashcard set study page
+  if (/^\/flashcards\/[^\/]+\/study$/.test(pathname)) {
+    console.log(`📚 FLASHCARD STUDY ROUTE: ${pathname}`);
+    return true;
+  }
+  
+  // Check for note study patterns - any note study page
+  if (/^\/notes\/[^\/]+\/study$/.test(pathname)) {
+    console.log(`📝 NOTE STUDY ROUTE: ${pathname}`);
+    return true;
+  }
+  
+  // Check for quiz taking patterns
+  if (/^\/quiz\/[^\/]+\/taking$/.test(pathname) || /^\/quizzes\/[^\/]+\/practice$/.test(pathname)) {
+    console.log(`🧠 QUIZ STUDY ROUTE: ${pathname}`);
+    return true;
+  }
+  
+  // Check if it matches any general study route patterns
   const isStudy = STUDY_ROUTES.some(route => {
     if (pathname === route) return true;
     if (pathname.startsWith(route + '/')) return true;

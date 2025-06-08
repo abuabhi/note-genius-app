@@ -20,11 +20,35 @@ export const useNavigationEffects = (
   const wasOnStudyPage = previousLocationRef.current ? 
     isStudyRoute(previousLocationRef.current) : false;
 
+  // Helper function to determine if both routes are related study routes
+  const areRelatedStudyRoutes = (current: string, previous: string | null): boolean => {
+    if (!previous) return false;
+    
+    // Both are flashcard-related routes (including main flashcards page and specific sets)
+    if (current.startsWith('/flashcards') && previous.startsWith('/flashcards')) {
+      return true;
+    }
+    
+    // Both are note-related routes
+    if (current.startsWith('/notes') && previous.startsWith('/notes')) {
+      return true;
+    }
+    
+    // Both are quiz-related routes
+    if ((current.startsWith('/quiz') || current.startsWith('/quizzes')) && 
+        (previous.startsWith('/quiz') || previous.startsWith('/quizzes'))) {
+      return true;
+    }
+    
+    return false;
+  };
+
   console.log('🔍 Route analysis:', {
     currentPath: location.pathname,
     previousPath: previousLocationRef.current,
     isOnStudyPage,
     wasOnStudyPage,
+    areRelated: areRelatedStudyRoutes(location.pathname, previousLocationRef.current),
     hasActiveSession: sessionState.isActive
   });
 
@@ -41,7 +65,8 @@ export const useNavigationEffects = (
       isInitialLoad: isInitialLoadRef.current,
       hasActiveSession: sessionState.isActive,
       sessionId: sessionState.sessionId,
-      isPaused: sessionState.isPaused
+      isPaused: sessionState.isPaused,
+      areRelated: areRelatedStudyRoutes(currentPath, previousPath)
     });
 
     // Skip processing on initial load to avoid unwanted session creation
@@ -60,9 +85,12 @@ export const useNavigationEffects = (
     // Update previous location reference
     previousLocationRef.current = currentPath;
 
-    if (isOnStudyPage && wasOnStudyPage) {
-      // Moving between different study pages - maintain session, update activity
-      console.log('🔄 Moving between study pages - updating activity type only');
+    // Check if we're moving between related study routes
+    const areRelated = areRelatedStudyRoutes(currentPath, previousPath);
+
+    if (isOnStudyPage && wasOnStudyPage && areRelated) {
+      // Moving between related study pages - maintain session, just update activity
+      console.log('🔄 Moving between related study pages - maintaining session, updating activity only');
       if (sessionState.isActive) {
         updateActivityType();
       } else {
@@ -71,8 +99,8 @@ export const useNavigationEffects = (
         startSession();
       }
       
-    } else if (isOnStudyPage && !wasOnStudyPage) {
-      // Entering study area from non-study page
+    } else if (isOnStudyPage && (!wasOnStudyPage || !areRelated)) {
+      // Entering study area from non-study page OR switching between unrelated study areas
       if (sessionState.isActive && sessionState.isPaused) {
         // Resume existing paused session
         console.log('▶️ Entering study area - resuming paused session');
@@ -94,7 +122,7 @@ export const useNavigationEffects = (
         setSessionState(prev => ({ ...prev, isPaused: true }));
       }
     } else if (!isOnStudyPage && !wasOnStudyPage) {
-      // Moving between non-study pages - ensure no active session
+      // Moving between non-study pages - ensure session is paused if active
       if (sessionState.isActive && !sessionState.isPaused) {
         console.log('⏸️ On non-study page with active session - pausing');
         setSessionState(prev => ({ ...prev, isPaused: true }));

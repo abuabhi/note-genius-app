@@ -39,7 +39,7 @@ export const useSessionOperations = (
     }
   }, [sessionState.sessionId, sessionState.isActive]);
 
-  // Start session with enhanced validation
+  // Start session with enhanced validation and session reuse
   const startSession = useCallback(async () => {
     if (!user) {
       logger.warn('Cannot start session: no user');
@@ -53,39 +53,55 @@ export const useSessionOperations = (
       return;
     }
 
-    // Validate existing session state
-    if (sessionState.isActive && sessionState.sessionId) {
-      if (validateSessionState(sessionState)) {
-        logger.info('Session already active and valid, updating activity type only');
-        updateActivityType();
-        return;
-      } else {
-        logger.warn('Existing session is invalid, ending it');
-        await endSession();
-      }
+    // If we already have an active session and it's valid, just update activity type
+    if (sessionState.isActive && sessionState.sessionId && validateSessionState(sessionState)) {
+      logger.info('Valid session already exists, updating activity type only');
+      updateActivityType();
+      return;
     }
 
     try {
-      // Check for any existing active sessions in database and clean them up
+      // Check for any existing active sessions in database
       const { data: activeSessions, error: checkError } = await supabase
         .from('study_sessions')
         .select('*')
         .eq('user_id', user.id)
         .eq('is_active', true)
-        .order('start_time', { ascending: false });
+        .order('start_time', { ascending: false })
+        .limit(1);
 
       if (checkError) {
         logger.warn('Warning checking for active sessions:', checkError);
       }
 
-      // Clean up any existing active sessions
+      // If we have a recent active session (less than 1 hour old), resume it instead of creating new one
       if (activeSessions && activeSessions.length > 0) {
-        logger.info(`Found ${activeSessions.length} existing active sessions, cleaning them up`);
+        const existingSession = activeSessions[0];
+        const sessionAge = Date.now() - new Date(existingSession.start_time).getTime();
+        const oneHour = 60 * 60 * 1000;
         
-        for (const existingSession of activeSessions) {
-          const startTime = new Date(existingSession.start_time);
+        if (sessionAge < oneHour) {
+          logger.info('🔄 Resuming existing session instead of creating new one');
+          const resumedState = {
+            sessionId: existingSession.id,
+            isActive: true,
+            startTime: new Date(existingSession.start_time),
+            elapsedSeconds: Math.floor(sessionAge / 1000),
+            currentActivity: getCurrentActivityType(),
+            isPaused: false
+          };
+          
+          setSessionState(resumedState);
+          persistSession(resumedState);
+          
+          // Update the activity type for the resumed session
+          await updateActivityType();
+          return;
+        } else {
+          // Session is too old, clean it up
+          logger.info('Cleaning up old session');
           const duration = Math.min(
-            Math.floor((Date.now() - startTime.getTime()) / 1000),
+            Math.floor(sessionAge / 1000),
             4 * 60 * 60 // Cap at 4 hours
           );
           
@@ -95,7 +111,7 @@ export const useSessionOperations = (
               end_time: new Date().toISOString(),
               duration: validateSessionDuration(duration),
               is_active: false,
-              notes: 'Auto-terminated by new session'
+              notes: 'Auto-terminated due to age'
             })
             .eq('id', existingSession.id);
         }
