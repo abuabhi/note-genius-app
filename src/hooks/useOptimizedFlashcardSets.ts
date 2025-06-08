@@ -1,251 +1,87 @@
 
-import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
-import { useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useCallback, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
-import { FlashcardSet } from '@/types/flashcard';
+import { useFlashcardSetsQuery } from './flashcards/useFlashcardSetsQuery';
+import { useFlashcardSetMutations } from './flashcards/useFlashcardSetMutations';
+import { useFlashcardSetPrefetch } from './flashcards/useFlashcardSetPrefetch';
+import type { FlashcardFilters } from '@/components/flashcards/components/AdvancedFlashcardFilters';
 
-interface OptimizedFlashcardSet extends FlashcardSet {
-  card_count: number;
-  last_studied_at?: string;
-  progress_summary?: {
-    total_cards: number;
-    mastered_cards: number;
-    needs_practice: number;
-    mastery_percentage: number;
-  };
+interface UseOptimizedFlashcardSetsProps {
+  filters?: FlashcardFilters;
+  page?: number;
+  pageSize?: number;
 }
 
-export const useOptimizedFlashcardSets = () => {
+export const useOptimizedFlashcardSets = (props: UseOptimizedFlashcardSetsProps = {}) => {
+  const { 
+    filters = {
+      searchQuery: '',
+      subjectFilter: 'all',
+      difficultyFilter: 'all',
+      progressFilter: 'all',
+      sortBy: 'updated_at',
+      sortOrder: 'desc',
+      viewMode: 'grid',
+      showPinnedOnly: false
+    }, 
+    page = 1, 
+    pageSize = 12 
+  } = props;
+
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Ultra-optimized single query for flashcard sets with progress
-  const { data: setsData, isLoading, error, refetch } = useQuery({
-    queryKey: ['ultra-optimized-flashcard-sets', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
+  // Use the separated query hook
+  const { data: setsData, isLoading, error, refetch } = useFlashcardSetsQuery(filters, page);
 
-      console.log('🚀 Ultra-optimized flashcard sets fetch starting...');
-      const startTime = Date.now();
+  // Use the mutations hook
+  const mutations = useFlashcardSetMutations(filters, page);
 
-      // Single query to get sets with card counts - much faster than multiple queries
-      const { data: setsWithCounts, error: setsError } = await supabase
-        .from('flashcard_sets')
-        .select(`
-          id,
-          name,
-          description,
-          subject,
-          topic,
-          card_count,
-          created_at,
-          updated_at,
-          user_id,
-          is_built_in,
-          category_id,
-          section_id,
-          country_id,
-          education_system
-        `)
-        .or(`user_id.eq.${user.id},is_built_in.eq.true`)
-        .order('updated_at', { ascending: false });
+  // Use the prefetch hook
+  const { prefetchNextPage } = useFlashcardSetPrefetch(filters, page, setsData?.hasMore || false);
 
-      if (setsError) {
-        console.error('❌ Error fetching flashcard sets:', setsError);
-        throw setsError;
-      }
-
-      if (!setsWithCounts || setsWithCounts.length === 0) {
-        console.log('✅ No flashcard sets found - returning empty array');
-        return [];
-      }
-
-      // Get all set IDs for batch progress query
-      const setIds = setsWithCounts.map(set => set.id);
-
-      // First get flashcard set mappings to get all flashcard IDs
-      const { data: setCards, error: setCardsError } = await supabase
-        .from('flashcard_set_cards')
-        .select('set_id, flashcard_id')
-        .in('set_id', setIds);
-
-      if (setCardsError) {
-        console.error('❌ Error fetching flashcard set cards:', setCardsError);
-        throw setCardsError;
-      }
-
-      // Extract all flashcard IDs for batch progress queries
-      const allFlashcardIds = setCards?.map(card => card.flashcard_id) || [];
-
-      if (allFlashcardIds.length === 0) {
-        // No flashcards in any sets, return sets with zero progress
-        const optimizedSets: OptimizedFlashcardSet[] = setsWithCounts.map(set => ({
-          ...set,
-          card_count: 0,
-          last_studied_at: undefined,
-          progress_summary: {
-            total_cards: 0,
-            mastered_cards: 0,
-            needs_practice: 0,
-            mastery_percentage: 0
-          }
-        }));
-        
-        const loadTime = Date.now() - startTime;
-        console.log(`⚡ Ultra-optimized flashcard sets loaded in ${loadTime}ms (no cards)`);
-        return optimizedSets;
-      }
-
-      // Batch query for progress data - much more efficient than individual queries
-      const [learningProgressData, userProgressData] = await Promise.allSettled([
-        supabase
-          .from('learning_progress')
-          .select('flashcard_id, user_id, is_known, confidence_level, times_seen, times_correct')
-          .eq('user_id', user.id)
-          .in('flashcard_id', allFlashcardIds),
-        supabase
-          .from('user_flashcard_progress')
-          .select('flashcard_id, user_id, last_reviewed_at, mastery_level')
-          .eq('user_id', user.id)
-          .in('flashcard_id', allFlashcardIds)
-      ]);
-
-      // Process progress data efficiently
-      const learningProgress = learningProgressData.status === 'fulfilled' ? learningProgressData.value.data || [] : [];
-      const userProgress = userProgressData.status === 'fulfilled' ? userProgressData.value.data || [] : [];
-
-      // Create lookup maps for O(1) access
-      const learningMap = new Map(learningProgress.map(p => [p.flashcard_id, p]));
-      const progressMap = new Map(userProgress.map(p => [p.flashcard_id, p]));
-
-      // Group flashcards by set for efficient processing
-      const setToCards = new Map<string, string[]>();
-      setCards?.forEach(card => {
-        if (!setToCards.has(card.set_id)) {
-          setToCards.set(card.set_id, []);
-        }
-        setToCards.get(card.set_id)!.push(card.flashcard_id);
+  // Enhanced refetch function
+  const enhancedRefetch = useCallback(async () => {
+    try {
+      console.log('🔄 Manual refetch triggered');
+      await queryClient.invalidateQueries({ 
+        queryKey: ['enhanced-flashcard-sets', user?.id] 
       });
-
-      // Process each set with optimized progress calculation
-      const optimizedSets: OptimizedFlashcardSet[] = setsWithCounts.map(set => {
-        const cardIds = setToCards.get(set.id) || [];
-        const totalCards = cardIds.length;
-        
-        let masteredCards = 0;
-        let lastStudiedAt: string | undefined;
-
-        // Fast mastery calculation
-        cardIds.forEach(cardId => {
-          const learning = learningMap.get(cardId);
-          const progress = progressMap.get(cardId);
-          
-          // Simplified mastery criteria for faster calculation
-          const isKnown = learning?.is_known;
-          const highConfidence = learning?.confidence_level >= 4;
-          const goodAccuracy = learning?.times_seen > 0 && (learning.times_correct / learning.times_seen) > 0.8;
-          
-          if (isKnown || highConfidence || (learning?.times_seen >= 3 && goodAccuracy)) {
-            masteredCards++;
-          }
-          
-          // Track most recent study time
-          if (progress?.last_reviewed_at) {
-            if (!lastStudiedAt || progress.last_reviewed_at > lastStudiedAt) {
-              lastStudiedAt = progress.last_reviewed_at;
-            }
-          }
-        });
-
-        const masteryPercentage = totalCards > 0 ? Math.round((masteredCards / totalCards) * 100) : 0;
-
-        return {
-          ...set,
-          card_count: totalCards,
-          last_studied_at: lastStudiedAt,
-          progress_summary: {
-            total_cards: totalCards,
-            mastered_cards: masteredCards,
-            needs_practice: totalCards - masteredCards,
-            mastery_percentage: masteryPercentage
-          }
-        };
-      });
-
-      const loadTime = Date.now() - startTime;
-      console.log(`⚡ Ultra-optimized flashcard sets loaded in ${loadTime}ms:`, {
-        totalSets: optimizedSets.length,
-        avgMastery: optimizedSets.reduce((sum, set) => sum + (set.progress_summary?.mastery_percentage || 0), 0) / optimizedSets.length
-      });
-
-      return optimizedSets;
-    },
-    enabled: !!user,
-    staleTime: 2 * 60 * 1000, // 2 minutes - longer for better performance
-    gcTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: false,
-    refetchOnMount: false, // Don't refetch on every mount
-    retry: 1 // Reduce retries for faster failure
-  });
-
-  // Simplified prefetch for study data
-  const prefetchFlashcards = useCallback((setId: string) => {
-    queryClient.prefetchQuery({
-      queryKey: ['optimized-flashcard-study', setId, 'learn', user?.id],
-      queryFn: () => null, // Will be handled by study hook
-      staleTime: 30 * 1000 // Short prefetch cache
-    });
-  }, [queryClient, user?.id]);
-
-  // Optimized delete mutation with immediate UI update
-  const deleteMutation = useMutation({
-    mutationFn: async (setId: string) => {
-      // Optimistic update - remove from UI immediately
-      queryClient.setQueryData(['ultra-optimized-flashcard-sets', user?.id], (old: OptimizedFlashcardSet[] = []) => 
-        old.filter(set => set.id !== setId)
-      );
-
-      // Delete in background
-      const { error: cardsError } = await supabase
-        .from('flashcard_set_cards')
-        .delete()
-        .eq('set_id', setId);
-
-      if (cardsError) throw cardsError;
-
-      const { error: setError } = await supabase
-        .from('flashcard_sets')
-        .delete()
-        .eq('id', setId);
-
-      if (setError) throw setError;
-    },
-    onSuccess: () => {
-      toast.success('Flashcard set deleted successfully');
-    },
-    onError: (error) => {
-      console.error('Error deleting flashcard set:', error);
-      toast.error('Failed to delete flashcard set');
-      // Revert optimistic update on error
-      queryClient.invalidateQueries({ queryKey: ['ultra-optimized-flashcard-sets'] });
+      return refetch();
+    } catch (error) {
+      console.error('❌ Manual refetch failed:', error);
+      toast.error('Failed to refresh data. Please try again.');
     }
-  });
+  }, [queryClient, user?.id, refetch]);
 
-  const allSets = setsData || [];
-  const userSets = allSets.filter(set => set.user_id === user?.id);
-  const builtInSets = allSets.filter(set => set.is_built_in);
+  // Handle query error for consistent error messaging
+  const handleQueryError = useCallback((error: any) => {
+    if (error?.message?.includes('RLS')) {
+      return 'Authentication error. Please try logging out and back in.';
+    }
+    
+    if (error?.message?.includes('network')) {
+      return 'Network connection error. Please check your internet connection.';
+    }
+    
+    return error?.message || 'An unexpected error occurred while loading flashcard sets.';
+  }, []);
+
+  // Memoized results with error state
+  const results = useMemo(() => ({
+    allSets: setsData?.sets || [],
+    totalCount: setsData?.totalCount || 0,
+    hasMore: setsData?.hasMore || false,
+    loading: isLoading,
+    error: error ? handleQueryError(error) : null,
+  }), [setsData, isLoading, error, handleQueryError]);
 
   return {
-    allSets,
-    userSets,
-    builtInSets,
-    loading: isLoading,
-    error: error?.message || null,
-    deleteFlashcardSet: deleteMutation.mutate,
-    isDeleting: deleteMutation.isPending,
-    prefetchFlashcards,
-    refetch: () => queryClient.invalidateQueries({ queryKey: ['ultra-optimized-flashcard-sets'] })
+    ...results,
+    ...mutations,
+    prefetchNextPage,
+    refetch: enhancedRefetch,
   };
 };

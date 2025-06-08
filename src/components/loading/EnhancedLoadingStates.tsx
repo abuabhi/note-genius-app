@@ -1,7 +1,7 @@
-
+import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Loader2, Wifi, WifiOff } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 // Enhanced skeleton for flashcard sets list
@@ -209,3 +209,103 @@ export const TimeoutLoading = ({
 
   return <>{children}</>;
 };
+
+// Enhanced loading state
+interface LoadingStateProps {
+  message?: string;
+  showProgress?: boolean;
+  progress?: number;
+}
+
+export const EnhancedLoadingState: React.FC<LoadingStateProps> = ({ 
+  message = "Loading...", 
+  showProgress = false, 
+  progress = 0 
+}) => (
+  <div className="flex flex-col items-center justify-center py-12 space-y-4">
+    <div className="relative">
+      <Loader2 className="h-8 w-8 animate-spin text-mint-600" />
+      {showProgress && (
+        <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
+          <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-mint-600 transition-all duration-300 ease-out"
+              style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+    <p className="text-muted-foreground text-center">{message}</p>
+  </div>
+);
+
+// Enhanced error state
+interface ErrorStateProps {
+  message?: string;
+  onRetry?: () => void;
+  showDetails?: boolean;
+  error?: Error;
+}
+
+export const EnhancedErrorState: React.FC<ErrorStateProps> = ({ 
+  message = "Something went wrong", 
+  onRetry,
+  showDetails = false,
+  error 
+}) => (
+  <div className="flex flex-col items-center justify-center py-12 space-y-4">
+    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+      <AlertTriangle className="h-8 w-8 text-red-600" />
+    </div>
+    <div className="text-center space-y-2">
+      <h3 className="font-semibold text-red-900">{message}</h3>
+      <p className="text-red-700 text-sm">Please try again or contact support if the problem persists.</p>
+    </div>
+    
+    {showDetails && error && (
+      <details className="max-w-md p-3 bg-red-50 rounded-lg border border-red-200">
+        <summary className="text-sm text-red-600 cursor-pointer hover:text-red-800">
+          Technical Details
+        </summary>
+        <pre className="mt-2 text-xs text-red-700 whitespace-pre-wrap break-words max-h-32 overflow-y-auto">
+          {error.message}
+        </pre>
+      </details>
+    )}
+    
+    {onRetry && (
+      <Button onClick={onRetry} variant="outline" size="sm">
+        Try Again
+      </Button>
+    )}
+  </div>
+);
+
+// Enhanced empty state
+interface EmptyStateProps {
+  title?: string;
+  description?: string;
+  action?: React.ReactNode;
+  icon?: React.ReactNode;
+}
+
+export const EnhancedEmptyState: React.FC<EmptyStateProps> = ({ 
+  title = "No data available", 
+  description = "There's nothing to show here yet.",
+  action,
+  icon
+}) => (
+  <div className="flex flex-col items-center justify-center py-12 space-y-4">
+    {icon && (
+      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+        {icon}
+      </div>
+    )}
+    <div className="text-center space-y-2">
+      <h3 className="font-semibold text-gray-900">{title}</h3>
+      <p className="text-gray-600 text-sm max-w-md">{description}</p>
+    </div>
+    {action && <div className="mt-4">{action}</div>}
+  </div>
+);

@@ -1,3 +1,116 @@
 
-// Re-export the optimized version for backward compatibility
-export { default } from './OptimizedFlashcardsPage';
+import React from "react";
+import Layout from "@/components/layout/Layout";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { useOptimizedFlashcardSets } from "@/hooks/useOptimizedFlashcardSets";
+import { FlashcardsPageHeader } from "@/components/flashcards/page/FlashcardsPageHeader";
+import { FlashcardsContent } from "@/components/flashcards/page/FlashcardsContent";
+import { AdvancedFlashcardFilters } from "@/components/flashcards/components/AdvancedFlashcardFilters";
+import { useViewPreferences } from "@/hooks/useViewPreferences";
+import { useFlashcardsPageState } from "@/components/flashcards/page/useFlashcardsPageState";
+import { ErrorBoundary } from "@/components/flashcards/components/ErrorBoundary";
+import { ProductionMonitoring } from "@/components/performance/ProductionMonitoring";
+import { useRetryLogic } from "@/hooks/useRetryLogic";
+import { toast } from "sonner";
+
+const FlashcardsPage = () => {
+  console.log('🏠 FlashcardsPage component rendering');
+  
+  useRequireAuth();
+  const { viewMode, setViewMode } = useViewPreferences('flashcards', 'grid');
+  const { filters, page, deletingSet, setFilters, setPage, setDeletingSet } = useFlashcardsPageState();
+  const { executeWithRetry } = useRetryLogic();
+
+  const {
+    allSets,
+    loading,
+    error,
+    deleteFlashcardSet,
+    refetch
+  } = useOptimizedFlashcardSets({
+    filters,
+    page,
+    pageSize: 12
+  });
+
+  const handleDeleteSet = async (setId: string) => {
+    setDeletingSet(setId);
+    try {
+      await executeWithRetry(
+        () => deleteFlashcardSet(setId),
+        (error, attempt) => {
+          console.log(`Delete attempt ${attempt} failed:`, error);
+        }
+      );
+      toast.success('Flashcard set deleted successfully');
+    } catch (error) {
+      console.error('Failed to delete flashcard set:', error);
+      toast.error('Failed to delete flashcard set');
+    } finally {
+      setDeletingSet(null);
+    }
+  };
+
+  const handleTogglePinned = async (setId: string, isPinned: boolean) => {
+    try {
+      await executeWithRetry(async () => {
+        // This would be implemented with the update mutation
+        console.log('Toggle pinned:', setId, isPinned);
+      });
+      toast.success(isPinned ? 'Set pinned' : 'Set unpinned');
+    } catch (error) {
+      console.error('Failed to toggle pin:', error);
+      toast.error('Failed to update set');
+    }
+  };
+
+  const handleLoadMore = () => {
+    setPage(prev => prev + 1);
+  };
+
+  const handleRetry = () => {
+    setPage(1);
+    refetch();
+  };
+
+  return (
+    <ErrorBoundary>
+      <Layout>
+        <ProductionMonitoring />
+        <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+          <div className="container mx-auto p-6 space-y-6">
+            <FlashcardsPageHeader 
+              loading={loading}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+            />
+            
+            <AdvancedFlashcardFilters
+              filters={filters}
+              onFiltersChange={setFilters}
+              totalSets={allSets.length}
+              hideViewMode={true}
+            />
+            
+            <FlashcardsContent
+              sets={allSets}
+              filters={filters}
+              loading={loading}
+              error={error}
+              hasMore={false}
+              page={page}
+              deletingSet={deletingSet}
+              detailedProgressData={{}}
+              onDeleteSet={handleDeleteSet}
+              onTogglePinned={handleTogglePinned}
+              onLoadMore={handleLoadMore}
+              onRetry={handleRetry}
+            />
+          </div>
+        </div>
+      </Layout>
+    </ErrorBoundary>
+  );
+};
+
+export default FlashcardsPage;

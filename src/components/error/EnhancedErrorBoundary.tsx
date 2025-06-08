@@ -14,7 +14,14 @@ interface ErrorBoundaryState {
 
 interface EnhancedErrorBoundaryProps {
   children: ReactNode;
-  fallback?: React.ComponentType<{ error?: Error; retry: () => void; goHome: () => void }>;
+  fallback?: React.ComponentType<{ 
+    error?: Error; 
+    retry: () => void; 
+    goHome: () => void;
+    onReport?: () => void;
+    retryCount?: number;
+    maxRetries?: number;
+  }>;
   maxRetries?: number;
   onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
   enableReporting?: boolean;
@@ -121,8 +128,8 @@ interface DefaultErrorFallbackProps {
   retry: () => void;
   goHome: () => void;
   onReport?: () => void;
-  retryCount: number;
-  maxRetries: number;
+  retryCount?: number;
+  maxRetries?: number;
 }
 
 const DefaultErrorFallback: React.FC<DefaultErrorFallbackProps> = ({ 
@@ -130,8 +137,8 @@ const DefaultErrorFallback: React.FC<DefaultErrorFallbackProps> = ({
   retry, 
   goHome, 
   onReport,
-  retryCount,
-  maxRetries 
+  retryCount = 0,
+  maxRetries = 3 
 }) => (
   <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-red-50 to-orange-50">
     <Card className="w-full max-w-lg border-red-200 shadow-lg">
