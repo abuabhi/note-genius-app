@@ -5,7 +5,8 @@ import CreateFlashcard from "@/components/flashcards/CreateFlashcard";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { FlashcardProvider } from "@/contexts/flashcards/index";
+import { FlashcardProvider } from "@/contexts/flashcards/index.tsx";
+import { CreateFlashcardBreadcrumb } from "@/components/flashcards/CreateFlashcardBreadcrumb";
 
 const CreateFlashcardPage = () => {
   useRequireAuth();
@@ -25,6 +26,8 @@ const CreateFlashcardPage = () => {
     <Layout>
       <FlashcardProvider>
         <div className="container mx-auto p-6">
+          <CreateFlashcardBreadcrumb setId={setId} />
+          
           <div className="flex items-center gap-4 mb-6">
             <Button variant="ghost" size="sm" onClick={handleBack}>
               <ArrowLeft className="h-4 w-4 mr-2" />
