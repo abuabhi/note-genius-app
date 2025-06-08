@@ -176,7 +176,7 @@ export const NoteCard = ({
         </div>
 
         {/* Tags and actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {note.tags && note.tags.length > 0 && (
             <div className="flex items-center gap-1">
               <Tag className="h-3 w-3 text-slate-400" />
@@ -186,15 +186,15 @@ export const NoteCard = ({
             </div>
           )}
           
+          {/* Enhanced Study Button - More Prominent */}
           <Button
-            variant="ghost"
-            size="sm"
             onClick={handleGoToStudyMode}
-            className="text-xs px-3 py-1.5 h-auto bg-mint-50/80 hover:bg-mint-100 text-mint-700 font-medium rounded-full transition-all duration-200 relative z-10"
+            className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white font-medium rounded-xl transition-all duration-200 relative z-10 shadow-lg shadow-mint-500/25 hover:shadow-mint-500/40 hover:scale-[1.02] px-4 py-2 h-auto"
+            size="sm"
             type="button"
           >
-            <Sparkles className="h-3 w-3 mr-1.5" />
-            Study
+            <Sparkles className="h-4 w-4 mr-2" />
+            Study Mode
           </Button>
         </div>
       </CardFooter>
