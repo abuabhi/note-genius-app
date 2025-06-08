@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, List } from 'lucide-react';
+import { List } from 'lucide-react';
 import { ViewMode } from '@/hooks/useViewPreferences';
 
 interface ViewToggleProps {
@@ -26,7 +26,7 @@ export const ViewToggle = ({ viewMode, onViewModeChange }: ViewToggleProps) => {
         onClick={() => onViewModeChange('card')}
         className="h-8 px-3"
       >
-        <Card className="h-4 w-4" />
+        <div className="h-4 w-4 border border-current rounded-sm" />
       </Button>
     </div>
   );
