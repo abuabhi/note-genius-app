@@ -4,7 +4,9 @@ import { Note } from '@/types/note';
 import { useOptimizedNotesQuery } from '@/hooks/performance/useOptimizedNotesQuery';
 import { useEnhancedRetry } from '@/hooks/performance/useEnhancedRetry';
 import { useProductionMetrics } from '@/hooks/performance/useProductionMetrics';
-import { useState, useCallback } from 'react';
+import { useAdvancedCache } from '@/hooks/performance/useAdvancedCache';
+import { useIntelligentPrefetch } from '@/hooks/performance/useIntelligentPrefetch';
+import { useState, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 
 interface OptimizedNotesContextType {
@@ -44,6 +46,10 @@ export const OptimizedNotesProvider = ({ children }: { children: ReactNode }) =>
     }
   });
 
+  // Advanced caching hooks
+  const { invalidateCache, prefetchRelatedData, warmCache } = useAdvancedCache();
+  const { trackBehavior, triggerPrefetch } = useIntelligentPrefetch();
+
   // Filter and pagination state
   const [searchTerm, setSearchTerm] = useState('');
   const [sortType, setSortType] = useState('newest');
@@ -69,7 +75,30 @@ export const OptimizedNotesProvider = ({ children }: { children: ReactNode }) =>
     showArchived
   });
 
-  // Optimized operations with retry logic
+  // Warm cache on mount
+  useEffect(() => {
+    warmCache();
+  }, [warmCache]);
+
+  // Track user behavior for intelligent prefetching
+  const trackSearchBehavior = useCallback((term: string) => {
+    trackBehavior('search', { term });
+    if (term) {
+      triggerPrefetch('search-start', { term });
+    }
+  }, [trackBehavior, triggerPrefetch]);
+
+  const trackNoteAccess = useCallback((noteId: string) => {
+    trackBehavior('note-access', { noteId });
+    triggerPrefetch('note-view', { noteId });
+    prefetchRelatedData(noteId);
+  }, [trackBehavior, triggerPrefetch, prefetchRelatedData]);
+
+  const trackSubjectSelection = useCallback((subject: string) => {
+    trackBehavior('subject-select', { subject });
+  }, [trackBehavior]);
+
+  // Enhanced operations with caching
   const addNote = useCallback(async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
     return executeWithRetry(async () => {
       recordMetric('note_add_start', 1);
@@ -80,13 +109,16 @@ export const OptimizedNotesProvider = ({ children }: { children: ReactNode }) =>
         id: `note_${Date.now()}`,
       };
       
+      // Invalidate related cache
+      invalidateCache('note-created', { noteId: newNote.id });
+      
       recordMetric('note_add_success', 1);
       toast.success('Note created successfully');
       refetch();
       
       return newNote;
     }, 'Add note');
-  }, [executeWithRetry, recordMetric, refetch]);
+  }, [executeWithRetry, recordMetric, refetch, invalidateCache]);
 
   const updateNote = useCallback(async (id: string, updates: Partial<Note>): Promise<void> => {
     return executeWithRetry(async () => {
@@ -95,11 +127,14 @@ export const OptimizedNotesProvider = ({ children }: { children: ReactNode }) =>
       // Mock implementation - replace with actual API call
       console.log('Updating note:', id, updates);
       
+      // Invalidate related cache
+      invalidateCache('note-updated', { noteId: id });
+      
       recordMetric('note_update_success', 1, { noteId: id });
       toast.success('Note updated successfully');
       refetch();
     }, 'Update note');
-  }, [executeWithRetry, recordMetric, refetch]);
+  }, [executeWithRetry, recordMetric, refetch, invalidateCache]);
 
   const deleteNote = useCallback(async (id: string): Promise<void> => {
     return executeWithRetry(async () => {
@@ -108,17 +143,28 @@ export const OptimizedNotesProvider = ({ children }: { children: ReactNode }) =>
       // Mock implementation - replace with actual API call
       console.log('Deleting note:', id);
       
+      // Invalidate related cache
+      invalidateCache('note-deleted', { noteId: id });
+      
       recordMetric('note_delete_success', 1, { noteId: id });
       toast.success('Note deleted successfully');
       refetch();
     }, 'Delete note');
-  }, [executeWithRetry, recordMetric, refetch]);
+  }, [executeWithRetry, recordMetric, refetch, invalidateCache]);
 
-  // Debounced search
+  // Enhanced search with behavior tracking
   const handleSearchChange = useCallback((term: string) => {
     setSearchTerm(term);
     setCurrentPage(1); // Reset to first page on search
-  }, []);
+    trackSearchBehavior(term);
+  }, [trackSearchBehavior]);
+
+  // Enhanced subject change with behavior tracking
+  const handleSubjectChange = useCallback((subject: string) => {
+    setSelectedSubject(subject);
+    setCurrentPage(1);
+    trackSubjectSelection(subject);
+  }, [trackSubjectSelection]);
 
   const contextValue = useMemo(() => ({
     notes,
@@ -133,7 +179,7 @@ export const OptimizedNotesProvider = ({ children }: { children: ReactNode }) =>
     showArchived,
     setShowArchived,
     selectedSubject,
-    setSelectedSubject,
+    setSelectedSubject: handleSubjectChange,
     currentPage,
     setCurrentPage,
     refetch,
@@ -144,7 +190,7 @@ export const OptimizedNotesProvider = ({ children }: { children: ReactNode }) =>
   }), [
     notes, totalCount, hasMore, isLoading, error,
     searchTerm, handleSearchChange, sortType, showArchived,
-    selectedSubject, currentPage, refetch, prefetchNextPage,
+    selectedSubject, handleSubjectChange, currentPage, refetch, prefetchNextPage,
     addNote, updateNote, deleteNote
   ]);
 
