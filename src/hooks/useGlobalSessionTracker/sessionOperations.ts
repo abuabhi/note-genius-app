@@ -85,7 +85,7 @@ export const useSessionOperations = (
           const resumedState = {
             sessionId: existingSession.id,
             isActive: true,
-            startTime: new Date(existingSession.start_time).getTime(),
+            startTime: new Date(existingSession.start_time), // Convert to Date object
             elapsedSeconds: Math.floor(sessionAge / 1000),
             currentActivity: getCurrentActivityType(),
             isPaused: false
@@ -145,7 +145,7 @@ export const useSessionOperations = (
       const newSessionState = {
         sessionId: data.id,
         isActive: true,
-        startTime: now.getTime(),
+        startTime: now, // Use Date object directly
         elapsedSeconds: 0,
         currentActivity: activityType,
         isPaused: false
@@ -172,7 +172,7 @@ export const useSessionOperations = (
 
     try {
       const endTime = new Date();
-      const startTime = new Date(sessionState.startTime);
+      const startTime = sessionState.startTime; // Already a Date object
       
       const actualDurationSeconds = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
       const validatedDuration = validateSessionDuration(actualDurationSeconds);

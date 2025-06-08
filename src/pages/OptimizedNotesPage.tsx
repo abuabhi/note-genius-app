@@ -13,9 +13,7 @@ const OptimizedNotesPage = () => {
   useRequireAuth();
 
   return (
-    <EnhancedErrorBoundary
-      fallback={<div>Something went wrong. Please try again.</div>}
-    >
+    <EnhancedErrorBoundary>
       <Layout>
         <ProductionMonitoring />
         <CacheMonitor />
