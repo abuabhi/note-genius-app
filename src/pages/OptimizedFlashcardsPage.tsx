@@ -86,7 +86,7 @@ const OptimizedFlashcardsPage = () => {
 
   const handleStudyStart = (setId: string) => {
     setIsStudyActive(true);
-    navigate(`/study/${setId}`);
+    navigate(`/flashcards/${setId}/study`);
   };
 
   // Memoized grid for better performance
