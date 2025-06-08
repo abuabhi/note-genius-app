@@ -1,6 +1,6 @@
 
 import { StudyMode } from "@/pages/study/types";
-import { useSimplifiedFlashcardStudy } from "@/hooks/useSimplifiedFlashcardStudy";
+import { useOptimizedFlashcardStudy } from "@/hooks/useOptimizedFlashcardStudy";
 import { useQuizMode } from "@/hooks/useQuizMode";
 
 interface StudySessionManagerProps {
@@ -11,7 +11,7 @@ interface StudySessionManagerProps {
 
 export const StudySessionManager = ({ setId, mode, children }: StudySessionManagerProps) => {
   // Use different hooks based on mode
-  const studyHook = useSimplifiedFlashcardStudy({ setId, mode });
+  const studyHook = useOptimizedFlashcardStudy({ setId, mode });
   const quizHook = useQuizMode({ setId, mode });
   
   // Select which hook to use based on mode
