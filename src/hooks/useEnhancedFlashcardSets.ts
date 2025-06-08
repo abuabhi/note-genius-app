@@ -20,6 +20,8 @@ interface EnhancedFlashcardSet extends FlashcardSet {
 }
 
 const ITEMS_PER_PAGE = 20;
+const QUERY_STALE_TIME = 2 * 60 * 1000; // 2 minutes
+const QUERY_CACHE_TIME = 10 * 60 * 1000; // 10 minutes
 
 export const useEnhancedFlashcardSets = (filters: FlashcardFilters, page: number = 1) => {
   const { user } = useAuth();
@@ -43,148 +45,193 @@ export const useEnhancedFlashcardSets = (filters: FlashcardFilters, page: number
     }
   }, [filters.timeFilter]);
 
-  // Main flashcard sets query with database-level filtering
+  // Enhanced error handling function
+  const handleQueryError = useCallback((error: any) => {
+    console.error('❌ Enhanced flashcard sets query error:', error);
+    
+    if (error?.message?.includes('RLS')) {
+      console.error('RLS Policy Error - User may not be authenticated properly');
+      return 'Authentication error. Please try logging out and back in.';
+    }
+    
+    if (error?.message?.includes('network')) {
+      return 'Network connection error. Please check your internet connection.';
+    }
+    
+    return error?.message || 'An unexpected error occurred while loading flashcard sets.';
+  }, []);
+
+  // Main flashcard sets query with enhanced error handling and caching
   const { data: setsData, isLoading, error, refetch } = useQuery({
     queryKey: ['enhanced-flashcard-sets', user?.id, filters, page],
     queryFn: async () => {
-      if (!user) return { sets: [], totalCount: 0, hasMore: false };
+      if (!user) {
+        console.log('🚫 No user authenticated for flashcard sets query');
+        return { sets: [], totalCount: 0, hasMore: false };
+      }
 
-      console.log('🚀 Enhanced flashcard sets fetch starting...', { filters, page });
+      console.log('🚀 Enhanced flashcard sets fetch starting...', { 
+        userId: user.id.slice(0, 8), 
+        filters, 
+        page 
+      });
+      
       const startTime = Date.now();
-
       const offset = (page - 1) * ITEMS_PER_PAGE;
       const timeFilterCondition = getTimeFilterCondition();
 
-      // Build the base query
-      let query = supabase
-        .from('flashcard_sets')
-        .select(`
-          id,
-          name,
-          description,
-          subject,
-          topic,
-          card_count,
-          created_at,
-          updated_at,
-          user_id,
-          is_built_in,
-          category_id,
-          section_id,
-          country_id,
-          education_system
-        `, { count: 'exact' })
-        .or(`user_id.eq.${user.id},is_built_in.eq.true`);
+      try {
+        // Build the optimized query with proper error handling
+        let query = supabase
+          .from('flashcard_sets')
+          .select(`
+            id,
+            name,
+            description,
+            subject,
+            topic,
+            card_count,
+            created_at,
+            updated_at,
+            user_id,
+            is_built_in,
+            category_id,
+            section_id,
+            country_id,
+            education_system
+          `, { count: 'exact' })
+          .or(`user_id.eq.${user.id},is_built_in.eq.true`);
 
-      // Apply filters
-      if (filters.searchQuery) {
-        query = query.or(`name.ilike.%${filters.searchQuery}%,description.ilike.%${filters.searchQuery}%`);
-      }
-
-      if (filters.subjectFilter) {
-        query = query.eq('subject', filters.subjectFilter);
-      }
-
-      if (timeFilterCondition) {
-        query = query.gte('updated_at', timeFilterCondition);
-      }
-
-      // Apply sorting
-      switch (filters.sortBy) {
-        case 'name':
-          query = query.order('name', { ascending: true });
-          break;
-        case 'created_at':
-          query = query.order('created_at', { ascending: false });
-          break;
-        case 'card_count':
-          query = query.order('card_count', { ascending: false });
-          break;
-        case 'updated_at':
-        default:
-          query = query.order('updated_at', { ascending: false });
-          break;
-      }
-
-      // Apply pagination
-      query = query.range(offset, offset + ITEMS_PER_PAGE - 1);
-
-      const { data: setsWithCounts, error: setsError, count } = await query;
-
-      if (setsError) {
-        console.error('❌ Error fetching flashcard sets:', setsError);
-        throw setsError;
-      }
-
-      if (!setsWithCounts || setsWithCounts.length === 0) {
-        console.log('✅ No flashcard sets found');
-        return { sets: [], totalCount: count || 0, hasMore: false };
-      }
-
-      // For pinned filter, we'll handle this in the frontend for now
-      // In a real app, you'd want a pinned_sets table or pinned column
-      let filteredSets = setsWithCounts;
-      
-      if (filters.showPinnedOnly) {
-        // For demo purposes, consider sets with card_count > 10 as "pinned"
-        // In production, you'd query a proper pinned_sets table
-        filteredSets = setsWithCounts.filter(set => (set.card_count || 0) > 10);
-      }
-
-      // Light progress calculation - only for visible sets
-      const setsWithProgress: EnhancedFlashcardSet[] = filteredSets.map(set => ({
-        ...set,
-        is_pinned: (set.card_count || 0) > 10, // Demo logic
-        progress_summary: {
-          total_cards: set.card_count || 0,
-          mastered_cards: Math.floor((set.card_count || 0) * 0.3), // Demo data
-          needs_practice: Math.floor((set.card_count || 0) * 0.7),
-          mastery_percentage: Math.floor(Math.random() * 100),
+        // Apply filters with null checks
+        if (filters.searchQuery?.trim()) {
+          const searchTerm = filters.searchQuery.trim();
+          query = query.or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,subject.ilike.%${searchTerm}%`);
         }
-      }));
 
-      const loadTime = Date.now() - startTime;
-      console.log(`⚡ Enhanced flashcard sets loaded in ${loadTime}ms`, {
-        totalSets: setsWithProgress.length,
-        totalCount: count,
-        page,
-        filters
-      });
+        if (filters.subjectFilter?.trim()) {
+          query = query.eq('subject', filters.subjectFilter.trim());
+        }
 
-      return {
-        sets: setsWithProgress,
-        totalCount: count || 0,
-        hasMore: (count || 0) > offset + ITEMS_PER_PAGE
-      };
+        if (timeFilterCondition) {
+          query = query.gte('updated_at', timeFilterCondition);
+        }
+
+        // Apply sorting with fallback
+        const sortBy = filters.sortBy || 'updated_at';
+        switch (sortBy) {
+          case 'name':
+            query = query.order('name', { ascending: true });
+            break;
+          case 'created_at':
+            query = query.order('created_at', { ascending: false });
+            break;
+          case 'card_count':
+            query = query.order('card_count', { ascending: false });
+            break;
+          case 'updated_at':
+          default:
+            query = query.order('updated_at', { ascending: false });
+            break;
+        }
+
+        // Apply pagination
+        query = query.range(offset, offset + ITEMS_PER_PAGE - 1);
+
+        const { data: setsWithCounts, error: setsError, count } = await query;
+
+        if (setsError) {
+          console.error('❌ Supabase query error:', setsError);
+          throw new Error(`Database query failed: ${setsError.message}`);
+        }
+
+        if (!setsWithCounts || setsWithCounts.length === 0) {
+          console.log('✅ No flashcard sets found');
+          return { sets: [], totalCount: count || 0, hasMore: false };
+        }
+
+        // Apply client-side pinned filter if needed
+        let filteredSets = setsWithCounts;
+        if (filters.showPinnedOnly) {
+          // Demo logic: consider sets with > 10 cards as "pinned"
+          filteredSets = setsWithCounts.filter(set => (set.card_count || 0) > 10);
+        }
+
+        // Enhanced progress calculation with error handling
+        const setsWithProgress: EnhancedFlashcardSet[] = filteredSets.map(set => {
+          const cardCount = set.card_count || 0;
+          
+          return {
+            ...set,
+            is_pinned: cardCount > 10, // Demo logic
+            progress_summary: {
+              total_cards: cardCount,
+              mastered_cards: Math.floor(cardCount * 0.3), // Demo data
+              needs_practice: Math.floor(cardCount * 0.7),
+              mastery_percentage: cardCount > 0 ? Math.floor(Math.random() * 100) : 0,
+            }
+          };
+        });
+
+        const loadTime = Date.now() - startTime;
+        console.log(`⚡ Enhanced flashcard sets loaded in ${loadTime}ms`, {
+          totalSets: setsWithProgress.length,
+          totalCount: count,
+          page,
+          hasMore: (count || 0) > offset + ITEMS_PER_PAGE
+        });
+
+        return {
+          sets: setsWithProgress,
+          totalCount: count || 0,
+          hasMore: (count || 0) > offset + ITEMS_PER_PAGE
+        };
+
+      } catch (error: any) {
+        const errorMessage = handleQueryError(error);
+        console.error('❌ Enhanced flashcard sets fetch failed:', errorMessage);
+        throw new Error(errorMessage);
+      }
     },
     enabled: !!user,
-    staleTime: 60 * 1000, // 1 minute - shorter for real-time feel
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: QUERY_STALE_TIME,
+    gcTime: QUERY_CACHE_TIME,
     refetchOnWindowFocus: false,
-    placeholderData: (previousData) => previousData, // Keep previous data while loading
+    placeholderData: (previousData) => previousData,
+    retry: (failureCount, error) => {
+      // Don't retry on authentication errors
+      if (error?.message?.includes('RLS') || error?.message?.includes('Authentication')) {
+        return false;
+      }
+      // Retry up to 2 times for other errors
+      return failureCount < 2;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  // Prefetch next page
+  // Enhanced prefetch with error handling
   const prefetchNextPage = useCallback(() => {
-    if (setsData?.hasMore) {
+    if (setsData?.hasMore && user) {
       queryClient.prefetchQuery({
-        queryKey: ['enhanced-flashcard-sets', user?.id, filters, page + 1],
+        queryKey: ['enhanced-flashcard-sets', user.id, filters, page + 1],
         queryFn: () => null, // Will be handled by the main query
-        staleTime: 30 * 1000,
+        staleTime: QUERY_STALE_TIME / 2, // Shorter stale time for prefetch
+      }).catch(error => {
+        console.warn('⚠️ Prefetch failed (non-critical):', error.message);
       });
     }
   }, [queryClient, user?.id, filters, page, setsData?.hasMore]);
 
-  // Toggle pinned mutation (demo - in production, you'd update a database table)
+  // Enhanced toggle pinned mutation with optimistic updates and error handling
   const togglePinnedMutation = useMutation({
     mutationFn: async ({ setId, isPinned }: { setId: string; isPinned: boolean }) => {
-      // In production, you'd update a pinned_sets table or add a pinned column
-      console.log('Toggle pinned:', setId, isPinned);
-      await new Promise(resolve => setTimeout(resolve, 100)); // Simulate API call
+      console.log('🔄 Toggle pinned:', setId, isPinned);
+      
+      // Simulate API call - in production, you'd update a database table
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
       return { setId, isPinned };
     },
     onMutate: async ({ setId, isPinned }) => {
-      // Optimistic update
       const queryKey = ['enhanced-flashcard-sets', user?.id, filters, page];
       await queryClient.cancelQueries({ queryKey });
       
@@ -203,40 +250,62 @@ export const useEnhancedFlashcardSets = (filters: FlashcardFilters, page: number
       return { previousData, queryKey };
     },
     onError: (err, variables, context) => {
+      console.error('❌ Toggle pinned failed:', err);
+      
       if (context?.previousData) {
         queryClient.setQueryData(context.queryKey, context.previousData);
       }
-      toast.error('Failed to update pinned status');
+      
+      toast.error('Failed to update pinned status. Please try again.');
     },
     onSuccess: () => {
-      toast.success('Pinned status updated');
+      toast.success('Pinned status updated successfully');
     },
   });
 
-  // Delete mutation with optimistic updates
+  // Enhanced delete mutation with optimistic updates and cleanup
   const deleteMutation = useMutation({
     mutationFn: async (setId: string) => {
-      const { error: cardsError } = await supabase
-        .from('flashcard_set_cards')
-        .delete()
-        .eq('set_id', setId);
+      console.log('🗑️ Deleting flashcard set:', setId);
+      
+      try {
+        // Delete flashcard set cards first
+        const { error: cardsError } = await supabase
+          .from('flashcard_set_cards')
+          .delete()
+          .eq('set_id', setId);
 
-      if (cardsError) throw cardsError;
+        if (cardsError) {
+          console.error('❌ Error deleting flashcard set cards:', cardsError);
+          throw new Error(`Failed to delete flashcard cards: ${cardsError.message}`);
+        }
 
-      const { error: setError } = await supabase
-        .from('flashcard_sets')
-        .delete()
-        .eq('id', setId);
+        // Then delete the flashcard set
+        const { error: setError } = await supabase
+          .from('flashcard_sets')
+          .delete()
+          .eq('id', setId);
 
-      if (setError) throw setError;
+        if (setError) {
+          console.error('❌ Error deleting flashcard set:', setError);
+          throw new Error(`Failed to delete flashcard set: ${setError.message}`);
+        }
+
+        console.log('✅ Flashcard set deleted successfully');
+        return setId;
+        
+      } catch (error: any) {
+        console.error('❌ Delete operation failed:', error);
+        throw error;
+      }
     },
     onMutate: async (setId) => {
-      // Optimistic update
       const queryKey = ['enhanced-flashcard-sets', user?.id, filters, page];
       await queryClient.cancelQueries({ queryKey });
       
       const previousData = queryClient.getQueryData(queryKey);
       
+      // Optimistically remove the set from the UI
       queryClient.setQueryData(queryKey, (old: any) => {
         if (!old) return old;
         return {
@@ -249,37 +318,56 @@ export const useEnhancedFlashcardSets = (filters: FlashcardFilters, page: number
       return { previousData, queryKey };
     },
     onError: (err, variables, context) => {
+      console.error('❌ Delete mutation failed:', err);
+      
+      // Revert optimistic update
       if (context?.previousData) {
         queryClient.setQueryData(context.queryKey, context.previousData);
       }
-      toast.error('Failed to delete flashcard set');
+      
+      const errorMessage = err?.message || 'Failed to delete flashcard set';
+      toast.error(errorMessage);
     },
     onSuccess: () => {
       toast.success('Flashcard set deleted successfully');
-      // Invalidate to refresh counts
+      
+      // Invalidate and refetch to get fresh data
       queryClient.invalidateQueries({ 
         queryKey: ['enhanced-flashcard-sets', user?.id] 
       });
     },
   });
 
-  // Memoized results
+  // Memoized results with error state
   const results = useMemo(() => ({
     sets: setsData?.sets || [],
     totalCount: setsData?.totalCount || 0,
     hasMore: setsData?.hasMore || false,
     loading: isLoading,
-    error: error?.message || null,
-  }), [setsData, isLoading, error]);
+    error: error ? handleQueryError(error) : null,
+  }), [setsData, isLoading, error, handleQueryError]);
+
+  // Enhanced refetch function
+  const enhancedRefetch = useCallback(async () => {
+    try {
+      console.log('🔄 Manual refetch triggered');
+      await queryClient.invalidateQueries({ 
+        queryKey: ['enhanced-flashcard-sets', user?.id] 
+      });
+      return refetch();
+    } catch (error) {
+      console.error('❌ Manual refetch failed:', error);
+      toast.error('Failed to refresh data. Please try again.');
+    }
+  }, [queryClient, user?.id, refetch]);
 
   return {
     ...results,
     deleteFlashcardSet: deleteMutation.mutate,
     togglePinned: togglePinnedMutation.mutate,
     isDeleting: deleteMutation.isPending,
+    isTogglingPinned: togglePinnedMutation.isPending,
     prefetchNextPage,
-    refetch: () => queryClient.invalidateQueries({ 
-      queryKey: ['enhanced-flashcard-sets', user?.id] 
-    }),
+    refetch: enhancedRefetch,
   };
 };

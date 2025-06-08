@@ -11,6 +11,7 @@ import { useEnhancedFlashcardSets } from '@/hooks/useEnhancedFlashcardSets';
 import AdvancedFlashcardFilters, { FlashcardFilters } from '@/components/flashcards/components/AdvancedFlashcardFilters';
 import FlashcardSetListView from '@/components/flashcards/components/FlashcardSetListView';
 import FlashcardSetGrid from '@/components/flashcards/components/FlashcardSetGrid';
+import ErrorBoundary from '@/components/flashcards/components/ErrorBoundary';
 
 // Loading skeleton for the list view
 const ListLoadingSkeleton = () => (
@@ -57,14 +58,20 @@ const OptimizedFlashcardsPage = () => {
   const [page, setPage] = useState(1);
   const [deletingSet, setDeletingSet] = useState<string | null>(null);
 
-  // Initialize filters from URL params
+  // Initialize filters from URL params with validation
   const [filters, setFilters] = useState<FlashcardFilters>(() => ({
     searchQuery: searchParams.get('search') || '',
     subjectFilter: searchParams.get('subject') || undefined,
-    timeFilter: (searchParams.get('time') as any) || 'all',
+    timeFilter: (['all', 'week', 'month', 'quarter'].includes(searchParams.get('time') || '')) 
+      ? (searchParams.get('time') as any) 
+      : 'all',
     showPinnedOnly: searchParams.get('pinned') === 'true',
-    sortBy: (searchParams.get('sort') as any) || 'updated_at',
-    viewMode: (searchParams.get('view') as any) || 'list',
+    sortBy: (['updated_at', 'created_at', 'name', 'card_count', 'progress'].includes(searchParams.get('sort') || '')) 
+      ? (searchParams.get('sort') as any) 
+      : 'updated_at',
+    viewMode: (['list', 'grid'].includes(searchParams.get('view') || '')) 
+      ? (searchParams.get('view') as any) 
+      : 'list',
   }));
 
   const { subjects: userSubjects, isLoading: subjectsLoading } = useUserSubjects();
@@ -77,21 +84,26 @@ const OptimizedFlashcardsPage = () => {
     deleteFlashcardSet, 
     togglePinned,
     isDeleting, 
+    isTogglingPinned,
     prefetchNextPage,
     refetch 
   } = useEnhancedFlashcardSets(filters, page);
 
-  // Update URL when filters change
+  // Update URL when filters change with debouncing
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (filters.searchQuery) params.set('search', filters.searchQuery);
-    if (filters.subjectFilter) params.set('subject', filters.subjectFilter);
-    if (filters.timeFilter !== 'all') params.set('time', filters.timeFilter);
-    if (filters.showPinnedOnly) params.set('pinned', 'true');
-    if (filters.sortBy !== 'updated_at') params.set('sort', filters.sortBy);
-    if (filters.viewMode !== 'list') params.set('view', filters.viewMode);
-    
-    setSearchParams(params, { replace: true });
+    const timeoutId = setTimeout(() => {
+      const params = new URLSearchParams();
+      if (filters.searchQuery?.trim()) params.set('search', filters.searchQuery.trim());
+      if (filters.subjectFilter?.trim()) params.set('subject', filters.subjectFilter.trim());
+      if (filters.timeFilter !== 'all') params.set('time', filters.timeFilter);
+      if (filters.showPinnedOnly) params.set('pinned', 'true');
+      if (filters.sortBy !== 'updated_at') params.set('sort', filters.sortBy);
+      if (filters.viewMode !== 'list') params.set('view', filters.viewMode);
+      
+      setSearchParams(params, { replace: true });
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
   }, [filters, setSearchParams]);
 
   // Reset page when filters change
@@ -99,14 +111,20 @@ const OptimizedFlashcardsPage = () => {
     setPage(1);
   }, [filters]);
 
-  // Prefetch next page when approaching end
+  // Enhanced prefetching with error handling
   useEffect(() => {
     if (sets.length > 15 && hasMore) {
-      prefetchNextPage();
+      try {
+        prefetchNextPage();
+      } catch (error) {
+        console.warn('⚠️ Prefetch failed (non-critical):', error);
+      }
     }
   }, [sets.length, hasMore, prefetchNextPage]);
 
   const handleDeleteSet = async (setId: string) => {
+    if (isDeleting) return; // Prevent duplicate requests
+    
     setDeletingSet(setId);
     try {
       await deleteFlashcardSet(setId);
@@ -117,12 +135,20 @@ const OptimizedFlashcardsPage = () => {
     }
   };
 
-  const handleTogglePinned = (setId: string, isPinned: boolean) => {
-    togglePinned({ setId, isPinned });
+  const handleTogglePinned = async (setId: string, isPinned: boolean) => {
+    if (isTogglingPinned) return; // Prevent duplicate requests
+    
+    try {
+      await togglePinned({ setId, isPinned });
+    } catch (error) {
+      console.error('Error toggling pinned status:', error);
+    }
   };
 
   const handleLoadMore = () => {
-    setPage(prev => prev + 1);
+    if (hasMore && !loading) {
+      setPage(prev => prev + 1);
+    }
   };
 
   const handleRetry = () => {
@@ -137,99 +163,114 @@ const OptimizedFlashcardsPage = () => {
 
   const detailedProgressData = sets.reduce((acc: Record<string, any>, set) => {
     if (set.progress_summary) {
-      acc[set.id] = set.progress_summary;
+      acc[set.id] = {
+        masteredCards: set.progress_summary.mastered_cards,
+        needsPracticeCards: set.progress_summary.needs_practice,
+        totalCards: set.progress_summary.total_cards,
+        masteredPercentage: set.progress_summary.mastery_percentage,
+      };
     }
     return acc;
   }, {});
 
   return (
     <Layout>
-      <div className="container mx-auto p-4 md:p-6">
-        <PageBreadcrumb pageName="Flashcards" pageIcon={<BookOpen className="h-3 w-3" />} />
-        
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-mint-800">Flashcard Sets</h1>
-            <p className="text-muted-foreground">
-              Study with your personalized flashcard collections
-            </p>
+      <ErrorBoundary>
+        <div className="container mx-auto p-4 md:p-6">
+          <PageBreadcrumb pageName="Flashcards" pageIcon={<BookOpen className="h-3 w-3" />} />
+          
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-mint-800">Flashcard Sets</h1>
+              <p className="text-muted-foreground">
+                Study with your personalized flashcard collections
+              </p>
+            </div>
+            <Button 
+              onClick={() => navigate('/flashcards/create')}
+              className="bg-mint-500 hover:bg-mint-600"
+              disabled={loading && page === 1}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create Set
+            </Button>
           </div>
-          <Button 
-            onClick={() => navigate('/flashcards/create')}
-            className="bg-mint-500 hover:bg-mint-600"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Create Set
-          </Button>
-        </div>
 
-        {/* Advanced Filters */}
-        <div className="mb-6">
-          <AdvancedFlashcardFilters
-            filters={filters}
-            onFiltersChange={setFilters}
-            userSubjects={userSubjects}
-            subjectsLoading={subjectsLoading}
-            filteredCount={sets.length}
-            totalCount={totalCount}
-          />
-        </div>
+          {/* Advanced Filters */}
+          <div className="mb-6">
+            <AdvancedFlashcardFilters
+              filters={filters}
+              onFiltersChange={setFilters}
+              userSubjects={userSubjects}
+              subjectsLoading={subjectsLoading}
+              filteredCount={sets.length}
+              totalCount={totalCount}
+            />
+          </div>
 
-        {/* Content */}
-        {loading && page === 1 ? (
-          filters.viewMode === 'list' ? <ListLoadingSkeleton /> : <ListLoadingSkeleton />
-        ) : error ? (
-          <ErrorDisplay error={error} onRetry={handleRetry} />
-        ) : (
-          <div className="space-y-6">
-            {/* Flashcard Sets Display */}
-            {filters.viewMode === 'list' ? (
-              <FlashcardSetListView
-                sets={sets}
-                onDeleteSet={handleDeleteSet}
-                onTogglePinned={handleTogglePinned}
-                deletingSet={deletingSet}
-                detailedProgressData={detailedProgressData}
-              />
-            ) : (
-              <FlashcardSetGrid
-                sets={sets}
-                setProgressData={setProgressData}
-                deletingSet={deletingSet}
-                onDeleteSet={handleDeleteSet}
-                hasInitiallyLoaded={!loading}
-                searchQuery={filters.searchQuery}
-                subjectFilter={filters.subjectFilter}
-                detailedProgressData={detailedProgressData}
-              />
-            )}
+          {/* Content */}
+          {loading && page === 1 ? (
+            <ListLoadingSkeleton />
+          ) : error ? (
+            <ErrorDisplay error={error} onRetry={handleRetry} />
+          ) : (
+            <div className="space-y-6">
+              {/* Flashcard Sets Display */}
+              {filters.viewMode === 'list' ? (
+                <FlashcardSetListView
+                  sets={sets}
+                  onDeleteSet={handleDeleteSet}
+                  onTogglePinned={handleTogglePinned}
+                  deletingSet={deletingSet}
+                  detailedProgressData={detailedProgressData}
+                />
+              ) : (
+                <FlashcardSetGrid
+                  sets={sets}
+                  setProgressData={setProgressData}
+                  deletingSet={deletingSet}
+                  onDeleteSet={handleDeleteSet}
+                  hasInitiallyLoaded={!loading}
+                  searchQuery={filters.searchQuery}
+                  subjectFilter={filters.subjectFilter}
+                  detailedProgressData={detailedProgressData}
+                />
+              )}
 
-            {/* Load More / Pagination */}
-            {hasMore && (
-              <div className="flex justify-center pt-6">
-                <Button
-                  onClick={handleLoadMore}
-                  variant="outline"
-                  disabled={loading}
-                  className="px-8"
-                >
-                  {loading ? 'Loading...' : 'Load More Sets'}
-                </Button>
-              </div>
-            )}
-
-            {/* Loading indicator for additional pages */}
-            {loading && page > 1 && (
-              <div className="flex justify-center py-4">
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <div className="w-4 h-4 border-2 border-mint-300 border-t-transparent rounded-full animate-spin"></div>
-                  Loading more sets...
+              {/* Load More / Pagination */}
+              {hasMore && (
+                <div className="flex justify-center pt-6">
+                  <Button
+                    onClick={handleLoadMore}
+                    variant="outline"
+                    disabled={loading}
+                    className="px-8"
+                  >
+                    {loading ? 'Loading...' : 'Load More Sets'}
+                  </Button>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+              )}
+
+              {/* Loading indicator for additional pages */}
+              {loading && page > 1 && (
+                <div className="flex justify-center py-4">
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <div className="w-4 h-4 border-2 border-mint-300 border-t-transparent rounded-full animate-spin"></div>
+                    Loading more sets...
+                  </div>
+                </div>
+              )}
+
+              {/* No more results indicator */}
+              {!hasMore && sets.length > 0 && (
+                <div className="text-center py-4 text-sm text-gray-500">
+                  No more flashcard sets to load
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </ErrorBoundary>
     </Layout>
   );
 };
