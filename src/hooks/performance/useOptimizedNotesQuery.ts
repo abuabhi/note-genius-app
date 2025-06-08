@@ -1,3 +1,4 @@
+
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/auth';
 import { useCacheStrategy } from './useCacheStrategy';
@@ -54,7 +55,34 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
       try {
         console.log(`🔍 Optimized query - Filtering by subject: "${subject}"`);
 
-        // Build the optimized single query with LEFT JOIN
+        let subjectId: string | null = null;
+
+        // First, get the subject_id if filtering by a specific subject
+        if (subject && subject !== 'all') {
+          console.log(`🎯 Looking up subject_id for: "${subject}"`);
+          
+          const { data: subjectData, error: subjectError } = await supabase
+            .from('user_subjects')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('name', subject)
+            .maybeSingle();
+
+          if (subjectError) {
+            console.error('❌ Error looking up subject:', subjectError);
+            throw subjectError;
+          }
+
+          if (!subjectData) {
+            console.log(`⚠️ Subject "${subject}" not found for user, returning empty results`);
+            return { notes: [], totalCount: 0, hasMore: false };
+          }
+
+          subjectId = subjectData.id;
+          console.log(`✅ Found subject_id: ${subjectId} for subject: "${subject}"`);
+        }
+
+        // Build the optimized notes query
         let query = supabase
           .from('notes')
           .select(`
@@ -73,11 +101,10 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
           `, { count: 'exact' })
           .eq('user_id', user.id);
 
-        // Apply subject filtering efficiently
-        if (subject && subject !== 'all') {
-          console.log(`🎯 Applying optimized subject filter for: "${subject}"`);
-          // Use the JOIN to filter by subject name directly
-          query = query.eq('user_subjects.name', subject);
+        // Apply subject filtering if we have a subject_id
+        if (subjectId) {
+          console.log(`🎯 Applying subject filter with subject_id: ${subjectId}`);
+          query = query.eq('subject_id', subjectId);
         }
 
         // Apply other filters
@@ -109,7 +136,7 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
         const offset = (page - 1) * pageSize;
         query = query.range(offset, offset + pageSize - 1);
 
-        // Execute the single optimized query
+        // Execute the optimized query
         const { data: notes, error, count } = await query;
 
         if (error) {
@@ -152,7 +179,7 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
           notesCount: transformedNotes.length,
           hasFilters: !!(search || subject !== 'all'),
           page,
-          queryType: 'single_join'
+          queryType: 'two_step_filter'
         });
 
         const offset_check = (page - 1) * pageSize;
@@ -166,7 +193,7 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
         const duration = performance.now() - startTime;
         recordMetric('optimized_notes_query_error', duration, {
           error: error instanceof Error ? error.message : 'Unknown error',
-          queryType: 'single_join'
+          queryType: 'two_step_filter'
         });
         throw error;
       }
