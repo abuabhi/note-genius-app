@@ -1,3 +1,4 @@
+
 import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
@@ -144,7 +145,7 @@ export const OptimizedAppRoutes = () => {
         } 
       />
       
-      {/* Notes routes - NOW USING OPTIMIZED VERSION */}
+      {/* Notes routes - ALL USING OPTIMIZED VERSIONS */}
       <Route 
         path="/notes" 
         element={
@@ -158,7 +159,7 @@ export const OptimizedAppRoutes = () => {
         element={
           <NoteProvider>
             <LazyLoadWrapper fallback={<PageLoadingSkeleton type="notes" />}>
-              <NoteStudyPage />
+              <OptimizedNoteStudyPage />
             </LazyLoadWrapper>
           </NoteProvider>
         } 
