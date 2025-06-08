@@ -1,406 +1,190 @@
-
-import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import Layout from '@/components/layout/Layout';
+import { lazy, Suspense } from 'react';
 import { LazyLoadWrapper } from '@/components/performance/LazyLoadWrapper';
-import { NoteProvider } from '@/contexts/NoteContext';
-import { FlashcardProvider } from '@/contexts/FlashcardContext';
 
-// Lazy load all major pages for code splitting
+// Lazy load pages for better performance
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
-const OptimizedNotesPage = lazy(() => import('@/pages/OptimizedNotesPage'));
-const OptimizedNoteStudyPage = lazy(() => import('@/pages/OptimizedNoteStudyPage'));
-const NoteStudyPage = lazy(() => import('@/pages/NoteStudyPage'));
+const NotesPage = lazy(() => import('@/pages/NotesPage'));
 const EditNotePage = lazy(() => import('@/pages/EditNotePage'));
-const NoteToFlashcardPage = lazy(() => import('@/pages/NoteToFlashcardPage'));
 const FlashcardsPage = lazy(() => import('@/pages/FlashcardsPage'));
-const FlashcardSetPage = lazy(() => import('@/pages/FlashcardSetPage'));
 const CreateFlashcardPage = lazy(() => import('@/pages/CreateFlashcardPage'));
+const EditFlashcardPage = lazy(() => import('@/pages/EditFlashcardPage'));
+const FlashcardSetPage = lazy(() => import('@/pages/FlashcardSetPage'));
 const FlashcardStudyPage = lazy(() => import('@/pages/FlashcardStudyPage'));
-const ProgressPage = lazy(() => import('@/pages/ProgressPage'));
-const StudySessionsPage = lazy(() => import('@/pages/StudySessionsPage'));
-
-// Standard pages that don't have optimized versions yet
-const GoalsPage = lazy(() => import('@/pages/GoalsPage'));
-const TodoPage = lazy(() => import('@/pages/TodoPage'));
-const SchedulePage = lazy(() => import('@/pages/SchedulePage'));
+const FlashcardLibraryPage = lazy(() => import('@/pages/FlashcardLibraryPage'));
 const QuizPage = lazy(() => import('@/pages/QuizPage'));
 const CreateQuizPage = lazy(() => import('@/pages/CreateQuizPage'));
 const TakeQuizPage = lazy(() => import('@/pages/TakeQuizPage'));
-const ChatPage = lazy(() => import('@/pages/ChatPage'));
-const CollaborationPage = lazy(() => import('@/pages/CollaborationPage'));
-const ConnectionsPage = lazy(() => import('@/pages/ConnectionsPage'));
-const ReferralsPage = lazy(() => import('@/pages/ReferralsPage'));
+const QuizHistoryPage = lazy(() => import('@/pages/QuizHistoryPage'));
+const GoalsPage = lazy(() => import('@/pages/GoalsPage'));
+const ProgressPage = lazy(() => import('@/pages/ProgressPage'));
+const SchedulePage = lazy(() => import('@/pages/SchedulePage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
-
-// Loading components for each page type
-const PageLoadingSkeleton = ({ type }: { type: 'dashboard' | 'notes' | 'flashcards' | 'progress' | 'sessions' | 'goals' | 'todos' | 'standard' }) => {
-  const skeletons = {
-    dashboard: (
-      <Layout>
-        <div className="container mx-auto p-6 space-y-8">
-          <div className="h-8 bg-gray-200 rounded animate-pulse" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded animate-pulse" />
-            ))}
-          </div>
-        </div>
-      </Layout>
-    ),
-    flashcards: (
-      <Layout>
-        <div className="container mx-auto p-6 space-y-6">
-          <div className="h-8 bg-gray-200 rounded animate-pulse" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-40 bg-gray-200 rounded animate-pulse" />
-            ))}
-          </div>
-        </div>
-      </Layout>
-    ),
-    notes: (
-      <Layout>
-        <div className="container mx-auto p-6 space-y-6">
-          <div className="h-8 bg-gray-200 rounded animate-pulse" />
-          <div className="grid gap-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-24 bg-gray-200 rounded animate-pulse" />
-            ))}
-          </div>
-        </div>
-      </Layout>
-    ),
-    progress: (
-      <Layout>
-        <div className="container mx-auto p-6 space-y-6">
-          <div className="h-8 bg-gray-200 rounded animate-pulse" />
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="h-64 bg-gray-200 rounded animate-pulse" />
-            <div className="h-64 bg-gray-200 rounded animate-pulse" />
-          </div>
-        </div>
-      </Layout>
-    ),
-    sessions: (
-      <Layout>
-        <div className="container mx-auto p-6 space-y-6">
-          <div className="h-8 bg-gray-200 rounded animate-pulse" />
-          <div className="space-y-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-16 bg-gray-200 rounded animate-pulse" />
-            ))}
-          </div>
-        </div>
-      </Layout>
-    ),
-    goals: (
-      <Layout>
-        <div className="container mx-auto p-6 space-y-6">
-          <div className="h-8 bg-gray-200 rounded animate-pulse" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded animate-pulse" />
-            ))}
-          </div>
-        </div>
-      </Layout>
-    ),
-    todos: (
-      <Layout>
-        <div className="container mx-auto p-6 space-y-6">
-          <div className="h-8 bg-gray-200 rounded animate-pulse" />
-          <div className="space-y-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-12 bg-gray-200 rounded animate-pulse" />
-            ))}
-          </div>
-        </div>
-      </Layout>
-    ),
-    standard: (
-      <Layout>
-        <div className="container mx-auto p-6 space-y-6">
-          <div className="h-8 bg-gray-200 rounded animate-pulse" />
-          <div className="h-64 bg-gray-200 rounded animate-pulse" />
-        </div>
-      </Layout>
-    )
-  };
-
-  return skeletons[type];
-};
+const TodoPage = lazy(() => import('@/pages/TodoPage'));
+const StudySessionsPage = lazy(() => import('@/pages/StudySessionsPage'));
+const NoteStudyPage = lazy(() => import('@/pages/NoteStudyPage'));
+const NoteToFlashcardPage = lazy(() => import('@/pages/NoteToFlashcardPage'));
+const CollaborationPage = lazy(() => import('@/pages/CollaborationPage'));
+const ChatPage = lazy(() => import('@/pages/ChatPage'));
+const ConnectionsPage = lazy(() => import('@/pages/ConnectionsPage'));
+const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'));
+const ReferralsPage = lazy(() => import('@/pages/ReferralsPage'));
+const FeedbackPage = lazy(() => import('@/pages/FeedbackPage'));
 
 export const OptimizedAppRoutes = () => {
   return (
-    <Routes>
-      {/* Dashboard */}
-      <Route 
-        path="/dashboard" 
-        element={
-          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="dashboard" />}>
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+      <Routes>
+        {/* Dashboard */}
+        <Route path="/dashboard" element={
+          <LazyLoadWrapper>
             <DashboardPage />
           </LazyLoadWrapper>
-        } 
-      />
-      
-      {/* Notes routes - ALL USING OPTIMIZED VERSIONS */}
-      <Route 
-        path="/notes" 
-        element={
-          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="notes" />}>
-            <OptimizedNotesPage />
+        } />
+        
+        {/* Notes routes */}
+        <Route path="/notes" element={
+          <LazyLoadWrapper>
+            <NotesPage />
           </LazyLoadWrapper>
-        } 
-      />
-      <Route 
-        path="/notes/:id" 
-        element={
-          <NoteProvider>
-            <LazyLoadWrapper fallback={<PageLoadingSkeleton type="notes" />}>
-              <OptimizedNoteStudyPage />
-            </LazyLoadWrapper>
-          </NoteProvider>
-        } 
-      />
-      <Route 
-        path="/notes/study/:id" 
-        element={
-          <NoteProvider>
-            <LazyLoadWrapper fallback={<PageLoadingSkeleton type="notes" />}>
-              <OptimizedNoteStudyPage />
-            </LazyLoadWrapper>
-          </NoteProvider>
-        } 
-      />
-      <Route 
-        path="/edit-note/:noteId" 
-        element={
-          <NoteProvider>
-            <LazyLoadWrapper fallback={<PageLoadingSkeleton type="notes" />}>
-              <EditNotePage />
-            </LazyLoadWrapper>
-          </NoteProvider>
-        } 
-      />
-      <Route 
-        path="/note-to-flashcard" 
-        element={
-          <NoteProvider>
-            <LazyLoadWrapper fallback={<PageLoadingSkeleton type="notes" />}>
-              <NoteToFlashcardPage />
-            </LazyLoadWrapper>
-          </NoteProvider>
-        } 
-      />
-      
-      {/* Flashcards - Optimized Routes - wrapped with FlashcardProvider */}
-      <Route 
-        path="/flashcards" 
-        element={
-          <FlashcardProvider>
-            <LazyLoadWrapper fallback={<PageLoadingSkeleton type="flashcards" />}>
-              <FlashcardsPage />
-            </LazyLoadWrapper>
-          </FlashcardProvider>
-        } 
-      />
-      
-      {/* Individual Flashcard Set View - wrapped with FlashcardProvider */}
-      <Route 
-        path="/flashcards/:setId" 
-        element={
-          <FlashcardProvider>
-            <LazyLoadWrapper fallback={<PageLoadingSkeleton type="flashcards" />}>
-              <FlashcardSetPage />
-            </LazyLoadWrapper>
-          </FlashcardProvider>
-        } 
-      />
-      
-      <Route 
-        path="/flashcards/create" 
-        element={
-          <FlashcardProvider>
-            <LazyLoadWrapper fallback={<PageLoadingSkeleton type="flashcards" />}>
-              <CreateFlashcardPage />
-            </LazyLoadWrapper>
-          </FlashcardProvider>
-        } 
-      />
-      
-      {/* ALL Flashcard Study Routes - wrapped with FlashcardProvider */}
-      <Route 
-        path="/flashcards/:setId/study" 
-        element={
-          <FlashcardProvider>
-            <LazyLoadWrapper fallback={<PageLoadingSkeleton type="flashcards" />}>
-              <FlashcardStudyPage />
-            </LazyLoadWrapper>
-          </FlashcardProvider>
-        } 
-      />
-      <Route 
-        path="/flashcards/:id/study" 
-        element={
-          <FlashcardProvider>
-            <LazyLoadWrapper fallback={<PageLoadingSkeleton type="flashcards" />}>
-              <FlashcardStudyPage />
-            </LazyLoadWrapper>
-          </FlashcardProvider>
-        } 
-      />
-      <Route 
-        path="/study/:setId" 
-        element={
-          <FlashcardProvider>
-            <LazyLoadWrapper fallback={<PageLoadingSkeleton type="flashcards" />}>
-              <FlashcardStudyPage />
-            </LazyLoadWrapper>
-          </FlashcardProvider>
-        } 
-      />
-      <Route 
-        path="/study/:id" 
-        element={
-          <FlashcardProvider>
-            <LazyLoadWrapper fallback={<PageLoadingSkeleton type="flashcards" />}>
-              <FlashcardStudyPage />
-            </LazyLoadWrapper>
-          </FlashcardProvider>
-        } 
-      />
-      
-      {/* Progress */}
-      <Route 
-        path="/progress" 
-        element={
-          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="progress" />}>
-            <ProgressPage />
+        } />
+        <Route path="/notes/:noteId" element={
+          <LazyLoadWrapper>
+            <EditNotePage />
           </LazyLoadWrapper>
-        } 
-      />
-      
-      {/* Study Sessions */}
-      <Route 
-        path="/study-sessions" 
-        element={
-          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="sessions" />}>
-            <StudySessionsPage />
+        } />
+        <Route path="/notes/study/:noteId" element={
+          <LazyLoadWrapper>
+            <NoteStudyPage />
           </LazyLoadWrapper>
-        } 
-      />
-      
-      {/* Goals */}
-      <Route 
-        path="/goals" 
-        element={
-          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="goals" />}>
-            <GoalsPage />
+        } />
+        <Route path="/notes/convert/:noteId" element={
+          <LazyLoadWrapper>
+            <NoteToFlashcardPage />
           </LazyLoadWrapper>
-        } 
-      />
-      
-      {/* Todos */}
-      <Route 
-        path="/todos" 
-        element={
-          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="todos" />}>
-            <TodoPage />
+        } />
+        
+        {/* Flashcards routes */}
+        <Route path="/flashcards" element={
+          <LazyLoadWrapper>
+            <FlashcardsPage />
           </LazyLoadWrapper>
-        } 
-      />
-      
-      {/* Quiz routes */}
-      <Route 
-        path="/quiz" 
-        element={
-          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="standard" />}>
+        } />
+        <Route path="/flashcards/create" element={
+          <LazyLoadWrapper>
+            <CreateFlashcardPage />
+          </LazyLoadWrapper>
+        } />
+        <Route path="/flashcards/edit/:id" element={
+          <LazyLoadWrapper>
+            <EditFlashcardPage />
+          </LazyLoadWrapper>
+        } />
+        <Route path="/flashcards/sets/:id" element={
+          <LazyLoadWrapper>
+            <FlashcardSetPage />
+          </LazyLoadWrapper>
+        } />
+        <Route path="/flashcards/study/:id" element={
+          <LazyLoadWrapper>
+            <FlashcardStudyPage />
+          </LazyLoadWrapper>
+        } />
+        <Route path="/flashcards/library" element={
+          <LazyLoadWrapper>
+            <FlashcardLibraryPage />
+          </LazyLoadWrapper>
+        } />
+        
+        {/* Quiz routes */}
+        <Route path="/quiz" element={
+          <LazyLoadWrapper>
             <QuizPage />
           </LazyLoadWrapper>
-        } 
-      />
-      <Route 
-        path="/quizzes" 
-        element={
-          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="standard" />}>
+        } />
+        <Route path="/quizzes" element={
+          <LazyLoadWrapper>
             <QuizPage />
           </LazyLoadWrapper>
-        } 
-      />
-      <Route 
-        path="/create-quiz" 
-        element={
-          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="standard" />}>
+        } />
+        <Route path="/quiz/create" element={
+          <LazyLoadWrapper>
             <CreateQuizPage />
           </LazyLoadWrapper>
-        } 
-      />
-      <Route 
-        path="/quiz/:id" 
-        element={
-          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="standard" />}>
+        } />
+        <Route path="/quiz/take/:id" element={
+          <LazyLoadWrapper>
             <TakeQuizPage />
           </LazyLoadWrapper>
-        } 
-      />
-      
-      {/* Communication and Collaboration */}
-      <Route 
-        path="/chat" 
-        element={
-          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="standard" />}>
-            <ChatPage />
+        } />
+        <Route path="/quiz/history" element={
+          <LazyLoadWrapper>
+            <QuizHistoryPage />
           </LazyLoadWrapper>
-        } 
-      />
-      <Route 
-        path="/collaboration" 
-        element={
-          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="standard" />}>
-            <CollaborationPage />
+        } />
+        
+        {/* Other routes */}
+        <Route path="/goals" element={
+          <LazyLoadWrapper>
+            <GoalsPage />
           </LazyLoadWrapper>
-        } 
-      />
-      <Route 
-        path="/connections" 
-        element={
-          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="standard" />}>
-            <ConnectionsPage />
+        } />
+        <Route path="/progress" element={
+          <LazyLoadWrapper>
+            <ProgressPage />
           </LazyLoadWrapper>
-        } 
-      />
-      
-      {/* Schedule */}
-      <Route 
-        path="/schedule" 
-        element={
-          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="standard" />}>
+        } />
+        <Route path="/feedback" element={
+          <LazyLoadWrapper>
+            <FeedbackPage />
+          </LazyLoadWrapper>
+        } />
+        <Route path="/schedule" element={
+          <LazyLoadWrapper>
             <SchedulePage />
           </LazyLoadWrapper>
-        } 
-      />
-
-      {/* Settings */}
-      <Route 
-        path="/settings" 
-        element={
-          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="standard" />}>
+        } />
+        <Route path="/settings" element={
+          <LazyLoadWrapper>
             <SettingsPage />
           </LazyLoadWrapper>
-        } 
-      />
-
-      {/* Referrals */}
-      <Route 
-        path="/referrals" 
-        element={
-          <LazyLoadWrapper fallback={<PageLoadingSkeleton type="standard" />}>
+        } />
+        <Route path="/todos" element={
+          <LazyLoadWrapper>
+            <TodoPage />
+          </LazyLoadWrapper>
+        } />
+        <Route path="/study-sessions" element={
+          <LazyLoadWrapper>
+            <StudySessionsPage />
+          </LazyLoadWrapper>
+        } />
+        <Route path="/collaboration" element={
+          <LazyLoadWrapper>
+            <CollaborationPage />
+          </LazyLoadWrapper>
+        } />
+        <Route path="/chat" element={
+          <LazyLoadWrapper>
+            <ChatPage />
+          </LazyLoadWrapper>
+        } />
+        <Route path="/connections" element={
+          <LazyLoadWrapper>
+            <ConnectionsPage />
+          </LazyLoadWrapper>
+        } />
+        <Route path="/notifications" element={
+          <LazyLoadWrapper>
+            <NotificationsPage />
+          </LazyLoadWrapper>
+        } />
+        <Route path="/referrals" element={
+          <LazyLoadWrapper>
             <ReferralsPage />
           </LazyLoadWrapper>
-        } 
-      />
-    </Routes>
+        } />
+      </Routes>
+    </Suspense>
   );
 };

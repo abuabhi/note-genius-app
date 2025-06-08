@@ -91,16 +91,6 @@ export const navigationData: NavigationGroup[] = [
         description: "View your learning analytics"
       },
       {
-        id: "feedback",
-        title: "Feedback",
-        href: "/feedback",
-        icon: Heart,
-        description: "Share your thoughts and help us improve",
-        badge: "FEEDBACK",
-        isAnimated: true,
-        customStyle: "feedback"
-      },
-      {
         id: "schedule",
         title: "Schedule",
         href: "/schedule",
@@ -148,6 +138,22 @@ export const navigationData: NavigationGroup[] = [
         href: "/chat",
         icon: MessageSquare,
         description: "Chat with study partners"
+      }
+    ]
+  },
+  {
+    id: "feedback",
+    title: "Feedback",
+    items: [
+      {
+        id: "feedback",
+        title: "Feedback",
+        href: "/feedback",
+        icon: Heart,
+        description: "Share your thoughts and help us improve",
+        badge: "FEEDBACK",
+        isAnimated: true,
+        customStyle: "feedback"
       }
     ]
   },
