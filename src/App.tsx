@@ -14,6 +14,8 @@ import { OptimizedAppRoutes } from './components/optimized/OptimizedAppRoutes';
 import { SessionProvider } from '@/contexts/SessionContext';
 import { useStudyActivityDetector } from '@/hooks/useStudyActivityDetector';
 import OptimizedNotesPage from "@/pages/OptimizedNotesPage";
+import NoteStudyPage from "@/pages/NoteStudyPage";
+import { NoteProvider } from '@/contexts/NoteContext';
 
 // Create a QueryClient instance with optimized settings for high concurrency
 const queryClient = new QueryClient({
@@ -55,6 +57,13 @@ function App() {
                   {/* Replace the notes route with optimized version */}
                   <Route path="/notes" element={<OptimizedNotesPage />} />
                   <Route path="/notes/:noteId" element={<OptimizedNotesPage />} />
+                  
+                  {/* Note study routes need NoteProvider */}
+                  <Route path="/notes/study/:id" element={
+                    <NoteProvider>
+                      <NoteStudyPage />
+                    </NoteProvider>
+                  } />
                   
                   {/* Use OptimizedAppRoutes for main app navigation */}
                   <Route path="/*" element={<OptimizedAppRoutes />} />
