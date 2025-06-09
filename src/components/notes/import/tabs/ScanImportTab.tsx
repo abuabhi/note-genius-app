@@ -1,13 +1,15 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Camera, Upload, FileImage, AlertCircle, CheckCircle, Sparkles, Zap, FileText } from "lucide-react";
+import { Sparkles, Zap, AlertCircle } from "lucide-react";
 import { Note } from "@/types/note";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ProcessedContent } from "./components/ProcessedContent";
+import { FileSelector } from "./components/FileSelector";
+import { FilePreview } from "./components/FilePreview";
+import { ProcessingStatus } from "./components/ProcessingStatus";
 import { useDragAndDrop } from "../../scanning/hooks/useDragAndDrop";
 import { useBatchProcessing } from "../../scanning/hooks/useBatchProcessing";
 import { BatchProcessingView } from "../../scanning/BatchProcessingView";
@@ -79,24 +81,6 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
     uploadImageToStorage: uploadFileToStorage 
   });
 
-  const handleFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    const supportedFiles = files.filter(file => 
-      file.type.startsWith('image/') || file.type === 'application/pdf'
-    );
-    
-    if (supportedFiles.length === 0) {
-      toast.error("Please select valid image files (.png, .jpg, .webp) or PDF files");
-      return;
-    }
-
-    if (supportedFiles.length === 1) {
-      processFileSelection(supportedFiles[0]);
-    } else {
-      handleMultipleFiles(supportedFiles);
-    }
-  };
-
   const processFileSelection = (file: File) => {
     // Validate file size (max 50MB for PDFs, 10MB for images)
     const maxSize = file.type === 'application/pdf' ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
@@ -131,6 +115,14 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
     processBatchImages(files);
   };
 
+  const handleFileSelect = (files: File[]) => {
+    if (files.length === 1) {
+      processFileSelection(files[0]);
+    } else {
+      handleMultipleFiles(files);
+    }
+  };
+
   const handleDropEvent = (e: React.DragEvent) => {
     handleDrop(e, 
       (fileUrl: string) => {
@@ -153,11 +145,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
           return;
         }
         
-        if (supportedFiles.length === 1) {
-          processFileSelection(supportedFiles[0]);
-        } else {
-          handleMultipleFiles(supportedFiles);
-        }
+        handleFileSelect(supportedFiles);
       }
     );
   };
@@ -182,10 +170,10 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
       const { data: ocrResult, error: ocrError } = await supabase.functions.invoke('process-file', {
         body: { 
           fileUrl,
-          language: 'eng', // Default to English
+          language: 'eng',
           userId: userId,
-          useOpenAI: isPremiumUser, // Use OpenAI for premium users, fallback for others
-          enhanceImage: false, // Could be made configurable
+          useOpenAI: isPremiumUser,
+          enhanceImage: false,
           fileType: selectedFile.type
         }
       });
@@ -274,7 +262,6 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
       const success = await onSaveNote(note);
       if (success) {
         toast.success("Note saved successfully!");
-        // Reset form
         resetForm();
       }
     } catch (error) {
@@ -398,27 +385,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
   if (currentStep === 'process') {
     return (
       <div className="space-y-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center">
-              <div className="h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Processing {fileType === 'application/pdf' ? 'PDF Document' : 'Image'}
-              </h3>
-              <p className="text-sm text-gray-600 mb-4">
-                {isPremiumUser 
-                  ? "Using OpenAI Vision API for enhanced OCR accuracy..." 
-                  : "Using Google Vision API with OpenAI fallback..."
-                }
-              </p>
-              <div className="bg-blue-50 p-3 rounded-lg">
-                <p className="text-xs text-blue-700">
-                  AI-powered text extraction with automatic title/subject detection in progress...
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <ProcessingStatus fileType={fileType} isPremiumUser={isPremiumUser || false} />
       </div>
     );
   }
@@ -454,163 +421,28 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Camera className="h-5 w-5" />
+            <Sparkles className="h-5 w-5" />
             Document & Image Scanner
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Main Drag and Drop Zone */}
-          <div
-            className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all duration-300 ${
-              isDragOver 
-                ? 'border-purple-500 bg-purple-50 scale-[1.02] shadow-lg' 
-                : 'border-gray-300 hover:border-purple-400 hover:bg-gray-50'
-            }`}
+          <FileSelector
+            isDragOver={isDragOver}
             onDragEnter={handleDragEnter}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDropEvent}
-            onClick={() => {
-              const input = document.createElement('input');
-              input.type = 'file';
-              input.accept = '.png,.jpg,.jpeg,.gif,.bmp,.tiff,.webp,.pdf';
-              input.multiple = true;
-              input.onchange = (e) => {
-                const files = Array.from((e.target as HTMLInputElement).files || []);
-                const supportedFiles = files.filter(file => 
-                  file.type.startsWith('image/') || file.type === 'application/pdf'
-                );
-                
-                if (supportedFiles.length === 0) {
-                  toast.error("Please select valid image or PDF files");
-                  return;
-                }
-
-                if (supportedFiles.length === 1) {
-                  processFileSelection(supportedFiles[0]);
-                } else {
-                  handleMultipleFiles(supportedFiles);
-                }
-              };
-              input.click();
-            }}
-          >
-            <div className={`transition-all duration-300 ${isDragOver ? 'scale-110' : ''}`}>
-              {isDragOver ? (
-                <FileImage className="h-20 w-20 mb-6 text-purple-500 animate-bounce mx-auto" />
-              ) : (
-                <Upload className="h-16 w-16 mb-6 text-gray-400 mx-auto" />
-              )}
-            </div>
-            
-            <h3 className={`text-2xl font-bold mb-3 transition-colors ${
-              isDragOver ? 'text-purple-700' : 'text-gray-700'
-            }`}>
-              {isDragOver ? 'Drop Documents Here!' : 'Drag & Drop or Click to Scan'}
-            </h3>
-            
-            <p className={`text-lg mb-4 transition-colors ${
-              isDragOver ? 'text-purple-600' : 'text-gray-500'
-            }`}>
-              {isDragOver 
-                ? 'Release to start processing your documents' 
-                : 'Upload images or PDF files for OCR processing'
-              }
-            </p>
-            
-            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl transition-colors ${
-              isDragOver ? 'bg-purple-100/50' : 'bg-gray-50'
-            }`}>
-              <div className="text-left">
-                <div className="font-semibold text-sm mb-2 flex items-center">
-                  <FileImage className="h-4 w-4 mr-2" />
-                  Image Files
-                </div>
-                <ul className="text-xs space-y-1">
-                  <li>• Standard OCR with AI analysis</li>
-                  <li>• Handwriting recognition</li>
-                  <li>• PNG, JPG, WebP, GIF, etc.</li>
-                </ul>
-              </div>
-              <div className="text-left">
-                <div className="font-semibold text-sm mb-2 flex items-center">
-                  <FileText className="h-4 w-4 mr-2" />
-                  PDF Documents
-                </div>
-                <ul className="text-xs space-y-1">
-                  <li>• Convert to image for OCR</li>
-                  <li>• Process first page</li>
-                  <li>• Automatic text extraction</li>
-                </ul>
-              </div>
-            </div>
-            
-            <p className="text-xs text-gray-500 mt-4">
-              Supported: Images (PNG, JPG, GIF, BMP, TIFF, WebP) & PDF files
-            </p>
-          </div>
+            onFileSelect={handleFileSelect}
+          />
 
           {selectedFile && (
-            <Card className="bg-gray-50">
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    {selectedFile.type === 'application/pdf' ? (
-                      <FileText className="h-5 w-5 text-red-500" />
-                    ) : (
-                      <FileImage className="h-5 w-5 text-blue-500" />
-                    )}
-                    <div>
-                      <p className="font-medium">{selectedFile.name}</p>
-                      <p className="text-sm text-gray-500">
-                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB • 
-                        {selectedFile.type === 'application/pdf' ? ' PDF Document' : ' Image'}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {/* Image/File Preview */}
-                  <div className="border rounded-lg overflow-hidden">
-                    {selectedFile.type.startsWith('image/') && filePreviewUrl ? (
-                      <img 
-                        src={filePreviewUrl} 
-                        alt="Selected document preview" 
-                        className="w-full h-48 object-contain bg-white"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center w-full h-48 bg-gray-100">
-                        <div className="text-center p-4">
-                          <FileText className="h-12 w-12 text-red-500 mx-auto mb-2" />
-                          <p className="text-sm text-gray-600">{selectedFile.name}</p>
-                          <p className="text-xs text-gray-500">PDF document</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="bg-blue-50 p-3 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Sparkles className="h-4 w-4 text-blue-600" />
-                      <span className="text-sm font-medium text-blue-700">AI-Powered OCR Ready</span>
-                    </div>
-                    <p className="text-xs text-blue-700">
-                      {isPremiumUser 
-                        ? "Premium: OpenAI Vision API for maximum accuracy on handwritten text"
-                        : "Using advanced Google Vision API with OpenAI fallback for best results"
-                      }
-                    </p>
-                  </div>
-                  
-                  <Button 
-                    onClick={processFile}
-                    disabled={isProcessing}
-                    className="w-full bg-purple-600 hover:bg-purple-700"
-                  >
-                    {isProcessing ? 'Processing...' : 'Extract Text with AI'}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <FilePreview
+              selectedFile={selectedFile}
+              filePreviewUrl={filePreviewUrl}
+              isProcessing={isProcessing}
+              isPremiumUser={isPremiumUser || false}
+              onProcess={processFile}
+            />
           )}
 
           {!isPremiumUser && (
