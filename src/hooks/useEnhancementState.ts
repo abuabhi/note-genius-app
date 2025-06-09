@@ -67,7 +67,20 @@ export const useEnhancementState = (noteId: string) => {
       }
 
       if (data) {
-        updateEnhancementState(data);
+        // Type the data properly to match Note interface
+        const noteData: Partial<Note> = {
+          summary: data.summary,
+          summary_status: data.summary_status as 'pending' | 'generating' | 'completed' | 'failed',
+          key_points: data.key_points,
+          markdown_content: data.markdown_content,
+          improved_content: data.improved_content,
+          summary_generated_at: data.summary_generated_at,
+          key_points_generated_at: data.key_points_generated_at,
+          markdown_content_generated_at: data.markdown_content_generated_at,
+          improved_content_generated_at: data.improved_content_generated_at
+        };
+        
+        updateEnhancementState(noteData);
       }
     } catch (error) {
       console.error("❌ Exception in refreshEnhancementState:", error);

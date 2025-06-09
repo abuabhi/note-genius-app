@@ -53,7 +53,7 @@ export const EnhancementSelector = ({
     note.improved_content.trim().length > 20
   );
   
-  // Check enhancement statuses
+  // Check enhancement statuses - only show generating for summary if it's actually in progress
   const summaryStatus = note.summary_status || "completed";
   const isGeneratingSummary = summaryStatus === 'generating' || summaryStatus === 'pending';
   const hasSummaryError = summaryStatus === 'failed';
@@ -93,7 +93,7 @@ export const EnhancementSelector = ({
       icon: Target,
       description: 'AI-generated concise summary',
       hasContent: hasSummary,
-      isGenerating: isGeneratingSummary,
+      isGenerating: isGeneratingSummary && !hasSummary, // Only show generating if no content exists
       hasError: hasSummaryError
     },
     {
@@ -127,6 +127,23 @@ export const EnhancementSelector = ({
   const handleTabClick = (contentType: EnhancementContentType) => {
     console.log(`🎯 Tab clicked: ${contentType} (current: ${activeContentType})`);
     setActiveContentType(contentType);
+  };
+
+  // Render status indicator with green/gray dots
+  const renderStatusIndicator = (option: EnhancementOption) => {
+    if (option.isGenerating) {
+      return <Loader2 className="h-4 w-4 animate-spin text-mint-500" />;
+    }
+    
+    if (option.hasError) {
+      return <AlertCircle className="h-4 w-4 text-red-500" />;
+    }
+    
+    if (option.hasContent) {
+      return <div className="w-2 h-2 bg-green-500 rounded-full" />;
+    }
+    
+    return <div className="w-2 h-2 bg-gray-300 rounded-full" />;
   };
 
   return (
@@ -168,18 +185,7 @@ export const EnhancementSelector = ({
               </div>
               
               <div className="flex items-center space-x-1">
-                {option.isGenerating && (
-                  <Loader2 className="h-4 w-4 animate-spin text-mint-500" />
-                )}
-                {option.hasError && (
-                  <AlertCircle className="h-4 w-4 text-red-500" />
-                )}
-                {!option.isGenerating && !option.hasError && option.hasContent && isActive && (
-                  <CheckCircle className="h-4 w-4 text-mint-600" />
-                )}
-                {!option.hasContent && !option.isGenerating && !option.hasError && (
-                  <div className="w-2 h-2 bg-gray-300 rounded-full" />
-                )}
+                {renderStatusIndicator(option)}
               </div>
             </button>
           );
