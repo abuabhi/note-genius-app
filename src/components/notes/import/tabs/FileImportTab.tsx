@@ -19,16 +19,22 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [processedText, setProcessedText] = useState<string>('');
   const [documentTitle, setDocumentTitle] = useState<string>('');
+  const [documentSubject, setDocumentSubject] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [processingMethod, setProcessingMethod] = useState<string>('');
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isAiGenerated, setIsAiGenerated] = useState(false);
+  const [analysisConfidence, setAnalysisConfidence] = useState<number>(0);
 
   const handleFileSelected = (file: File) => {
     if (file) {
       setSelectedFile(file);
       setDocumentTitle(file.name.replace(/\.[^/.]+$/, "")); // Remove extension
+      setDocumentSubject('');
       setProcessedText(''); // Clear previous content
+      setIsAiGenerated(false);
+      setAnalysisConfidence(0);
     }
   };
 
@@ -99,12 +105,15 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
 
       console.log('Processing file type:', fileType);
 
+      // Get current user for content analysis
+      const { data: { user } } = await supabase.auth.getUser();
+
       // Call the document processing edge function
       const { data: processData, error: processError } = await supabase.functions.invoke('process-document', {
         body: {
           fileUrl: publicUrl,
           fileType: fileType,
-          userId: (await supabase.auth.getUser()).data.user?.id
+          userId: user?.id
         }
       });
 
@@ -118,11 +127,21 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
       if (processData?.success) {
         setProcessedText(processData.text || 'No text content extracted');
         setDocumentTitle(processData.title || documentTitle);
+        setDocumentSubject(processData.subject || 'Uncategorized');
         setProcessingMethod(processData.metadata?.processingMethod || 'unknown');
         
+        // Check if content was AI-generated
+        const contentAnalysis = processData.metadata?.contentAnalysis;
+        if (contentAnalysis?.aiGeneratedTitle || contentAnalysis?.aiGeneratedSubject) {
+          setIsAiGenerated(true);
+          setAnalysisConfidence(contentAnalysis.confidence || 0);
+        }
+        
         const method = processData.metadata?.processingMethod || 'standard';
-        if (method === 'vision-api-success') {
+        if (method === 'vision-api-async-success') {
           toast.success("PDF processed successfully with Google Vision API!");
+        } else if (method === 'openai-vision-success') {
+          toast.success("PDF processed successfully with OpenAI Vision API!");
         } else if (method === 'standard-text-extraction') {
           toast.success("Document processed with standard text extraction!");
         } else if (method === 'docx') {
@@ -161,7 +180,7 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
         pinned: false,
         archived: false,
         date: new Date().toISOString().split('T')[0],
-        category: 'Documents'
+        category: documentSubject || 'Documents'
       };
 
       const success = await onSaveNote(note);
@@ -171,6 +190,9 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
         setSelectedFile(null);
         setProcessedText('');
         setDocumentTitle('');
+        setDocumentSubject('');
+        setIsAiGenerated(false);
+        setAnalysisConfidence(0);
       }
     } catch (error) {
       console.error('Error saving note:', error);
@@ -184,6 +206,9 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
     setSelectedFile(null);
     setProcessedText('');
     setDocumentTitle('');
+    setDocumentSubject('');
+    setIsAiGenerated(false);
+    setAnalysisConfidence(0);
   };
 
   return (
@@ -225,10 +250,14 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
             <ProcessedContent
               processedText={processedText}
               documentTitle={documentTitle}
+              documentSubject={documentSubject}
               processingMethod={processingMethod}
               onTitleChange={setDocumentTitle}
+              onSubjectChange={setDocumentSubject}
               onSave={saveAsNote}
               isSaving={isSaving}
+              isAiGenerated={isAiGenerated}
+              analysisConfidence={analysisConfidence}
             />
           )}
         </CardContent>

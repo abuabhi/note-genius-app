@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { readDocx, DocxResult } from "./docx-reader.ts";
@@ -11,6 +10,8 @@ import {
   downloadAndParseResults, 
   cleanupGCSFiles 
 } from "./google-vision-helpers.ts";
+import { analyzeDocumentContent, fetchUserSubjects } from "./content-analyzer.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 interface ProcessDocumentRequestBody {
   fileUrl?: string;
@@ -38,8 +39,16 @@ serve(async (req) => {
     
     let documentText = "";
     let documentTitle = "";
+    let documentSubject = "";
     let documentMetadata = {};
     let processingMethod = "";
+    let contentAnalysis = null;
+    
+    // Initialize Supabase client for user data queries
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
     
     if (fileUrl) {
       console.log(`Fetching document from URL: ${fileUrl}`);
@@ -71,7 +80,6 @@ serve(async (req) => {
             
             if (visionResult.text && visionResult.text.trim() && visionResult.text.length > 50) {
               documentText = visionResult.text.trim();
-              documentTitle = "PDF Processed with Google Vision API";
               processingMethod = "vision-api-async-success";
               documentMetadata = {
                 processingMethod: "vision-api-async-success",
@@ -98,7 +106,6 @@ serve(async (req) => {
                 
                 if (openaiResult.text && openaiResult.text.trim() && openaiResult.text.length > 20) {
                   documentText = openaiResult.text.trim();
-                  documentTitle = "PDF Processed with OpenAI Vision";
                   processingMethod = "openai-vision-success";
                   documentMetadata = {
                     processingMethod: "openai-vision-success",
@@ -164,7 +171,6 @@ serve(async (req) => {
               
               if (openaiResult.text && openaiResult.text.trim() && openaiResult.text.length > 20) {
                 documentText = openaiResult.text.trim();
-                documentTitle = "PDF Processed with OpenAI Vision";
                 processingMethod = "openai-vision-success";
                 documentMetadata = {
                   processingMethod: "openai-vision-success",
@@ -230,6 +236,50 @@ serve(async (req) => {
       else {
         throw new Error(`Unsupported file type: ${fileType}`);
       }
+
+      // Perform content analysis if we have successfully extracted text and user ID
+      if (documentText && documentText.trim() && userId && 
+          processingMethod !== "all-processing-failed" && 
+          processingMethod !== "config-missing") {
+        
+        console.log('Starting content analysis for title and subject generation');
+        
+        try {
+          // Fetch user's existing subjects
+          const userSubjects = await fetchUserSubjects(userId, supabase);
+          console.log(`Found ${userSubjects.length} existing subjects for user`);
+          
+          // Analyze content with OpenAI
+          const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
+          if (openaiApiKey) {
+            contentAnalysis = await analyzeDocumentContent(documentText, userSubjects, openaiApiKey);
+            
+            // Override title and subject if analysis was successful
+            if (contentAnalysis && contentAnalysis.confidence > 0.5) {
+              documentTitle = contentAnalysis.suggestedTitle;
+              documentSubject = contentAnalysis.suggestedSubject;
+              
+              // Add analysis metadata
+              documentMetadata = {
+                ...documentMetadata,
+                contentAnalysis: {
+                  aiGeneratedTitle: true,
+                  aiGeneratedSubject: true,
+                  confidence: contentAnalysis.confidence,
+                  topics: contentAnalysis.topics
+                }
+              };
+              
+              console.log(`Content analysis successful: title="${documentTitle}", subject="${documentSubject}", confidence=${contentAnalysis.confidence}`);
+            }
+          } else {
+            console.log('OpenAI API key not configured for content analysis');
+          }
+        } catch (analysisError) {
+          console.warn('Content analysis failed, using fallback:', analysisError.message);
+          // Continue with fallback title/subject - don't fail the entire process
+        }
+      }
     } 
     else if (externalApiParams) {
       // Handle external API based document import
@@ -237,6 +287,7 @@ serve(async (req) => {
       
       documentText = `Content imported from ${externalApiParams.source || 'external service'}`;
       documentTitle = externalApiParams.title || `Imported from External Service`;
+      documentSubject = externalApiParams.subject || "Uncategorized";
       documentMetadata = { source: externalApiParams.source };
       processingMethod = "external-api";
       
@@ -251,6 +302,7 @@ serve(async (req) => {
         success: true,
         text: documentText,
         title: documentTitle,
+        subject: documentSubject,
         metadata: {
           ...documentMetadata,
           processingMethod

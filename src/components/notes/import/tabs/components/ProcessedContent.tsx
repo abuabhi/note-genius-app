@@ -3,24 +3,32 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, Info, CheckCircle, Clock, Zap, ImageIcon } from "lucide-react";
+import { AlertCircle, Info, CheckCircle, Clock, Zap, ImageIcon, Sparkles } from "lucide-react";
 
 interface ProcessedContentProps {
   processedText: string;
   documentTitle: string;
+  documentSubject?: string;
   processingMethod: string;
   onTitleChange: (title: string) => void;
+  onSubjectChange?: (subject: string) => void;
   onSave: () => void;
   isSaving: boolean;
+  isAiGenerated?: boolean;
+  analysisConfidence?: number;
 }
 
 export const ProcessedContent = ({
   processedText,
   documentTitle,
+  documentSubject,
   processingMethod,
   onTitleChange,
+  onSubjectChange,
   onSave,
-  isSaving
+  isSaving,
+  isAiGenerated,
+  analysisConfidence
 }: ProcessedContentProps) => {
   const getStatusInfo = () => {
     if (processingMethod === 'vision-api-async-success') {
@@ -28,7 +36,7 @@ export const ProcessedContent = ({
         icon: <CheckCircle className="h-4 w-4 text-green-600" />,
         className: "text-green-700 bg-green-50 border border-green-200",
         title: "PDF Processed Successfully with Google Vision API",
-        message: "Text was extracted using Google Cloud Vision API with async workflow for optimal accuracy and quality."
+        message: "Text was extracted using Google Cloud Vision API with async workflow for optimal accuracy and quality. Title and subject were automatically generated using AI analysis."
       };
     }
     
@@ -37,7 +45,7 @@ export const ProcessedContent = ({
         icon: <CheckCircle className="h-4 w-4 text-green-600" />,
         className: "text-green-700 bg-green-50 border border-green-200",
         title: "PDF Processed Successfully with Google Vision API",
-        message: "Text was extracted using Google Cloud Vision API for optimal accuracy."
+        message: "Text was extracted using Google Cloud Vision API for optimal accuracy. Title and subject were automatically generated using AI analysis."
       };
     }
     
@@ -46,7 +54,7 @@ export const ProcessedContent = ({
         icon: <Zap className="h-4 w-4 text-blue-600" />,
         className: "text-blue-700 bg-blue-50 border border-blue-200",
         title: "PDF Processed Successfully with OpenAI Vision",
-        message: "PDF was converted to images and processed using OpenAI Vision API for high-quality OCR. Multi-page documents are supported."
+        message: "PDF was converted to images and processed using OpenAI Vision API for high-quality OCR. Multi-page documents are supported. Title and subject were automatically generated."
       };
     }
     
@@ -100,7 +108,7 @@ export const ProcessedContent = ({
         icon: <CheckCircle className="h-4 w-4 text-green-600" />,
         className: "text-green-700 bg-green-50 border border-green-200",
         title: "Word Document Processed",
-        message: "Document was processed successfully using native Word document parsing."
+        message: "Document was processed successfully using native Word document parsing. Title and subject were automatically generated using AI analysis."
       };
     }
     
@@ -144,9 +152,28 @@ export const ProcessedContent = ({
           )}
         </div>
       )}
+
+      {isAiGenerated && analysisConfidence && (
+        <div className="text-xs p-3 rounded-lg bg-purple-50 border border-purple-200 text-purple-700">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-purple-600" />
+            <span className="font-medium">
+              AI-Generated Metadata
+            </span>
+          </div>
+          <p className="mt-2 text-sm">
+            Title and subject were automatically generated using AI analysis with {Math.round(analysisConfidence * 100)}% confidence. You can edit them if needed.
+          </p>
+        </div>
+      )}
       
       <div>
-        <Label htmlFor="title">Document Title</Label>
+        <Label htmlFor="title" className="flex items-center gap-2">
+          Document Title
+          {isAiGenerated && (
+            <Sparkles className="h-3 w-3 text-purple-500" title="AI Generated" />
+          )}
+        </Label>
         <Input
           id="title"
           type="text"
@@ -156,6 +183,25 @@ export const ProcessedContent = ({
           className="mt-1"
         />
       </div>
+
+      {onSubjectChange && (
+        <div>
+          <Label htmlFor="subject" className="flex items-center gap-2">
+            Subject
+            {isAiGenerated && (
+              <Sparkles className="h-3 w-3 text-purple-500" title="AI Generated" />
+            )}
+          </Label>
+          <Input
+            id="subject"
+            type="text"
+            value={documentSubject || ''}
+            onChange={(e) => onSubjectChange(e.target.value)}
+            placeholder="Document subject"
+            className="mt-1"
+          />
+        </div>
+      )}
       
       <div>
         <Label>Content Preview</Label>
