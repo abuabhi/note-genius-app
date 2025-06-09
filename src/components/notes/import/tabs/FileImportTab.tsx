@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+
+import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Upload, FileImage, File } from "lucide-react";
+import { FileText, Upload, FileImage, File, X } from "lucide-react";
 import { Note } from "@/types/note";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,14 +22,56 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
   const [isSaving, setIsSaving] = useState(false);
   const [processingMethod, setProcessingMethod] = useState<string>('');
   const [forceOCR, setForceOCR] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleFileSelected = (file: File) => {
     if (file) {
       setSelectedFile(file);
       setDocumentTitle(file.name.replace(/\.[^/.]+$/, "")); // Remove extension
       setProcessedText(''); // Clear previous content
     }
+  };
+
+  const handleInputFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      handleFileSelected(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      
+      // Check if file type is supported
+      const supportedTypes = ['.pdf', '.docx', '.doc', '.txt', '.md', '.png', '.jpg', '.jpeg'];
+      const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+      
+      if (supportedTypes.includes(fileExtension)) {
+        handleFileSelected(file);
+      } else {
+        toast.error("Unsupported file type. Please select a PDF, Word document, text file, or image.");
+      }
+    }
+  };
+
+  const handleDropZoneClick = () => {
+    fileInputRef.current?.click();
   };
 
   const getFileIcon = (file: File) => {
@@ -43,7 +86,7 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
 
     setIsProcessing(true);
     try {
-      console.log('Starting professional document processing for:', selectedFile.name);
+      console.log('Starting document processing for:', selectedFile.name);
       
       // Upload file to Supabase storage first
       const fileExt = selectedFile.name.split('.').pop();
@@ -99,9 +142,9 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
         
         const method = processData.metadata?.processingMethod || 'standard';
         if (method.includes('ocr')) {
-          toast.success("Document processed with OCR for handwritten content!");
-        } else if (method === 'pdf.js') {
-          toast.success("Document processed with professional PDF extraction!");
+          toast.success("Document processed with OCR!");
+        } else if (method === 'text-extraction') {
+          toast.success("Document processed with text extraction!");
         } else {
           toast.success("Document processed successfully!");
         }
@@ -155,29 +198,77 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
     }
   };
 
+  const clearSelectedFile = () => {
+    setSelectedFile(null);
+    setProcessedText('');
+    setDocumentTitle('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
-            Professional Document Processing
+            Document Processing
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="document-file">Select Document</Label>
-            <Input
-              id="document-file"
-              type="file"
-              onChange={handleFileSelected}
-              accept=".pdf,.docx,.doc,.txt,.md,.png,.jpg,.jpeg"
-              className="mt-1"
-            />
-            <p className="text-sm text-gray-500 mt-1">
-              Professional extraction for PDFs, Word documents, text files, and images
-            </p>
-          </div>
+          {!selectedFile ? (
+            <div
+              className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+                isDragOver 
+                  ? 'border-purple-500 bg-purple-50' 
+                  : 'border-gray-300 hover:border-purple-400 hover:bg-gray-50'
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={handleDropZoneClick}
+            >
+              <Upload className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+              <p className="text-lg font-medium text-gray-700 mb-2">
+                Drop your document here or click to browse
+              </p>
+              <p className="text-sm text-gray-500">
+                Supports PDF, Word documents, text files, and images
+              </p>
+              <Input
+                ref={fileInputRef}
+                type="file"
+                onChange={handleInputFileSelected}
+                accept=".pdf,.docx,.doc,.txt,.md,.png,.jpg,.jpeg"
+                className="hidden"
+              />
+            </div>
+          ) : (
+            <Card className="bg-gray-50">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {getFileIcon(selectedFile)}
+                    <div>
+                      <p className="font-medium">{selectedFile.name}</p>
+                      <p className="text-sm text-gray-500">
+                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearSelectedFile}
+                    className="text-gray-500 hover:text-red-500"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {selectedFile?.type === 'application/pdf' && (
             <div className="flex items-center space-x-2 p-3 bg-blue-50 rounded-lg">
@@ -195,27 +286,13 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
           )}
 
           {selectedFile && (
-            <Card className="bg-gray-50">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  {getFileIcon(selectedFile)}
-                  <div>
-                    <p className="font-medium">{selectedFile.name}</p>
-                    <p className="text-sm text-gray-500">
-                      {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                    </p>
-                  </div>
-                </div>
-                
-                <Button 
-                  onClick={processDocument}
-                  disabled={isProcessing}
-                  className="w-full mt-3"
-                >
-                  {isProcessing ? 'Processing with Professional Tools...' : 'Extract Text'}
-                </Button>
-              </CardContent>
-            </Card>
+            <Button 
+              onClick={processDocument}
+              disabled={isProcessing}
+              className="w-full"
+            >
+              {isProcessing ? 'Processing Document...' : 'Extract Text'}
+            </Button>
           )}
 
           {processedText && (

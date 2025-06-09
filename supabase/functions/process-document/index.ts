@@ -1,8 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
-import { readPdfWithPdfJs, ProfessionalPdfResult } from "./professional-pdf-reader.ts";
-import { convertPdfToImages } from "./pdf-to-image.ts";
+import { readPdf, PdfResult } from "./pdf-reader.ts";
 import { readDocx, DocxResult } from "./docx-reader.ts";
 
 interface ProcessDocumentRequestBody {
@@ -49,120 +48,27 @@ serve(async (req) => {
       
       // Process based on file type
       if (fileType === 'pdf') {
-        console.log('Processing PDF document with professional extraction');
+        console.log('Processing PDF document with text extraction');
         
         if (useOCR) {
-          // Force OCR processing
+          // Force OCR processing - call process-image function
           console.log('Forcing OCR processing for PDF');
-          const imageResult = await convertPdfToImages(fileBuffer, 10);
           
-          if (imageResult.success && imageResult.images.length > 0) {
-            // Call OCR processing function for each image
-            let ocrText = "";
-            for (let i = 0; i < imageResult.images.length; i++) {
-              try {
-                // Call the process-image function for OCR
-                const ocrResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/process-image`, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
-                  },
-                  body: JSON.stringify({
-                    imageUrl: imageResult.images[i],
-                    language: 'eng',
-                    userId: userId,
-                    useOpenAI: false, // Use cost-effective Google Vision
-                    enhanceImage: false
-                  })
-                });
-                
-                if (ocrResponse.ok) {
-                  const ocrData = await ocrResponse.json();
-                  if (ocrData.text) {
-                    ocrText += `Page ${i + 1}:\n${ocrData.text}\n\n`;
-                  }
-                }
-              } catch (ocrError) {
-                console.error(`OCR error for page ${i + 1}:`, ocrError);
-                continue;
-              }
-            }
-            
-            documentText = ocrText || "No text could be extracted via OCR";
-            documentTitle = "OCR Processed PDF";
-            processingMethod = "OCR";
-            documentMetadata = {
-              processingMethod: "forced-ocr",
-              pageCount: imageResult.pageCount,
-              ocrProvider: "google-vision"
-            };
-          } else {
-            throw new Error("Failed to convert PDF to images for OCR");
-          }
+          // For now, return a message indicating OCR is needed
+          documentText = "OCR processing requested but requires image conversion. Please use a different processing method or contact support.";
+          documentTitle = "OCR Processing Required";
+          processingMethod = "ocr-requested";
+          documentMetadata = {
+            processingMethod: "ocr-requested",
+            requiresImageConversion: true
+          };
         } else {
-          // Try PDF.js first
-          const pdfResult: ProfessionalPdfResult = await readPdfWithPdfJs(fileBuffer);
-          
-          if (pdfResult.processingMethod === 'requires-ocr') {
-            console.log('PDF requires OCR processing, converting to images');
-            
-            const imageResult = await convertPdfToImages(fileBuffer, 10);
-            
-            if (imageResult.success && imageResult.images.length > 0) {
-              // Process with OCR
-              let ocrText = "";
-              for (let i = 0; i < imageResult.images.length; i++) {
-                try {
-                  const ocrResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/process-image`, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
-                    },
-                    body: JSON.stringify({
-                      imageUrl: imageResult.images[i],
-                      language: 'eng',
-                      userId: userId,
-                      useOpenAI: false,
-                      enhanceImage: false
-                    })
-                  });
-                  
-                  if (ocrResponse.ok) {
-                    const ocrData = await ocrResponse.json();
-                    if (ocrData.text) {
-                      ocrText += `Page ${i + 1}:\n${ocrData.text}\n\n`;
-                    }
-                  }
-                } catch (ocrError) {
-                  console.error(`OCR error for page ${i + 1}:`, ocrError);
-                  continue;
-                }
-              }
-              
-              documentText = ocrText || pdfResult.text;
-              documentTitle = "OCR + PDF.js Processed";
-              processingMethod = "hybrid-ocr";
-              documentMetadata = {
-                ...pdfResult.metadata,
-                ocrProcessed: true,
-                hybridProcessing: true
-              };
-            } else {
-              // Fallback to PDF.js result even if poor
-              documentText = pdfResult.text;
-              documentTitle = pdfResult.title || "PDF Document";
-              processingMethod = "pdf.js-fallback";
-              documentMetadata = pdfResult.metadata;
-            }
-          } else {
-            // PDF.js extraction was successful
-            documentText = pdfResult.text;
-            documentTitle = pdfResult.title || "PDF Document";
-            processingMethod = "pdf.js";
-            documentMetadata = pdfResult.metadata;
-          }
+          // Use the working PDF text extraction
+          const pdfResult: PdfResult = await readPdf(fileBuffer);
+          documentText = pdfResult.text;
+          documentTitle = pdfResult.title || "PDF Document";
+          documentMetadata = pdfResult.metadata || {};
+          processingMethod = "text-extraction";
         }
         
         console.log(`PDF processing complete. Method: ${processingMethod}, Text length: ${documentText.length}`);
