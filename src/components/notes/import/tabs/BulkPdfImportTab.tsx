@@ -11,6 +11,7 @@ import { Note } from "@/types/note";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ProcessedContent } from "./components/ProcessedContent";
+import { useRetryLogic } from "@/hooks/useRetryLogic";
 
 interface BulkPdfImportTabProps {
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<boolean>;
@@ -30,6 +31,7 @@ interface PdfFile {
   isAiGenerated?: boolean;
   analysisConfidence?: number;
   error?: string;
+  progress?: number;
 }
 
 export const BulkPdfImportTab = ({ onSaveNote, isPremiumUser }: BulkPdfImportTabProps) => {
@@ -37,19 +39,41 @@ export const BulkPdfImportTab = ({ onSaveNote, isPremiumUser }: BulkPdfImportTab
   const [mergeOption, setMergeOption] = useState<'merge' | 'separate'>('separate');
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [processingFile, setProcessingFile] = useState<string>('');
   const [processedFiles, setProcessedFiles] = useState<PdfFile[]>([]);
   const [currentStep, setCurrentStep] = useState<'select' | 'process' | 'review'>('select');
+  const [isDragOver, setIsDragOver] = useState(false);
+  
+  const { executeWithRetry } = useRetryLogic({
+    maxRetries: 3,
+    baseDelay: 1000,
+    maxDelay: 8000
+  });
 
-  const handleFileSelection = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    const files = Array.from(e.dataTransfer.files);
     const pdfFiles = files.filter(file => file.type === 'application/pdf');
     
     if (pdfFiles.length !== files.length) {
       toast.warning("Only PDF files are supported for bulk import");
     }
 
-    if (pdfFiles.length > 10) {
+    if (selectedFiles.length + pdfFiles.length > 10) {
       toast.error("Maximum 10 files can be processed at once");
       return;
     }
@@ -59,11 +83,37 @@ export const BulkPdfImportTab = ({ onSaveNote, isPremiumUser }: BulkPdfImportTab
       id: `${file.name}-${Date.now()}-${Math.random()}`,
       name: file.name,
       size: file.size,
-      status: 'pending'
+      status: 'pending',
+      progress: 0
     }));
 
-    setSelectedFiles(newPdfFiles);
+    setSelectedFiles(prev => [...prev, ...newPdfFiles]);
   }, []);
+
+  const handleFileSelection = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    const pdfFiles = files.filter(file => file.type === 'application/pdf');
+    
+    if (pdfFiles.length !== files.length) {
+      toast.warning("Only PDF files are supported for bulk import");
+    }
+
+    if (selectedFiles.length + pdfFiles.length > 10) {
+      toast.error("Maximum 10 files can be processed at once");
+      return;
+    }
+
+    const newPdfFiles: PdfFile[] = pdfFiles.map(file => ({
+      file,
+      id: `${file.name}-${Date.now()}-${Math.random()}`,
+      name: file.name,
+      size: file.size,
+      status: 'pending',
+      progress: 0
+    }));
+
+    setSelectedFiles(prev => [...prev, ...newPdfFiles]);
+  }, [selectedFiles.length]);
 
   const removeFile = (id: string) => {
     setSelectedFiles(prev => prev.filter(file => file.id !== id));
@@ -92,6 +142,68 @@ export const BulkPdfImportTab = ({ onSaveNote, isPremiumUser }: BulkPdfImportTab
     return publicUrl;
   };
 
+  const processFileWithRetry = async (pdfFile: PdfFile): Promise<PdfFile> => {
+    return executeWithRetry(async () => {
+      // Update file status to processing
+      setSelectedFiles(prev => prev.map(f => 
+        f.id === pdfFile.id ? { ...f, status: 'processing', progress: 25 } : f
+      ));
+
+      console.log(`🔄 Processing PDF: ${pdfFile.name}`);
+
+      // Upload file to Supabase storage
+      const fileUrl = await uploadFileToStorage(pdfFile.file);
+      
+      // Update progress
+      setSelectedFiles(prev => prev.map(f => 
+        f.id === pdfFile.id ? { ...f, progress: 50 } : f
+      ));
+      
+      // Get current user session for content analysis
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+
+      // Call the process-document edge function
+      const { data: processResult, error: processError } = await supabase.functions.invoke('process-document', {
+        body: {
+          fileUrl,
+          fileType: 'pdf',
+          userId: userId
+        }
+      });
+
+      if (processError) {
+        throw new Error(processError.message || 'Failed to process PDF');
+      }
+
+      if (!processResult || !processResult.success) {
+        throw new Error(processResult?.error || 'Failed to process PDF');
+      }
+
+      // Update progress to complete
+      setSelectedFiles(prev => prev.map(f => 
+        f.id === pdfFile.id ? { ...f, progress: 100 } : f
+      ));
+
+      const processedFile: PdfFile = {
+        ...pdfFile,
+        status: 'completed',
+        processedText: processResult.text,
+        suggestedTitle: processResult.title || pdfFile.name.replace('.pdf', ''),
+        suggestedSubject: processResult.subject || 'Uncategorized',
+        processingMethod: processResult.metadata?.processingMethod || 'unknown',
+        isAiGenerated: processResult.metadata?.contentAnalysis?.aiGeneratedTitle || false,
+        analysisConfidence: processResult.metadata?.contentAnalysis?.confidence || 0,
+        progress: 100
+      };
+
+      console.log(`✅ Successfully processed: ${pdfFile.name}`);
+      return processedFile;
+    }, (error, attempt) => {
+      console.warn(`⚠️ Attempt ${attempt} failed for ${pdfFile.name}:`, error.message);
+    });
+  };
+
   const processPdfFiles = async () => {
     if (selectedFiles.length === 0) {
       toast.error("Please select PDF files to import");
@@ -104,82 +216,50 @@ export const BulkPdfImportTab = ({ onSaveNote, isPremiumUser }: BulkPdfImportTab
 
     try {
       const results: PdfFile[] = [];
+      const batchSize = 3; // Process 3 files concurrently
       
-      for (let i = 0; i < selectedFiles.length; i++) {
-        const pdfFile = selectedFiles[i];
-        setProcessingFile(pdfFile.name);
-        setProgress((i / selectedFiles.length) * 100);
-
-        // Update file status to processing
-        setSelectedFiles(prev => prev.map(f => 
-          f.id === pdfFile.id ? { ...f, status: 'processing' } : f
-        ));
-
-        try {
-          console.log(`🔄 Processing PDF: ${pdfFile.name}`);
-
-          // Upload file to Supabase storage
-          const fileUrl = await uploadFileToStorage(pdfFile.file);
-          
-          // Get current user session for content analysis
-          const { data: { session } } = await supabase.auth.getSession();
-          const userId = session?.user?.id;
-
-          // Call the process-document edge function
-          const { data: processResult, error: processError } = await supabase.functions.invoke('process-document', {
-            body: {
-              fileUrl,
-              fileType: 'pdf',
-              userId: userId
-            }
-          });
-
-          if (processError) {
-            throw new Error(processError.message || 'Failed to process PDF');
+      // Process files in batches for better performance
+      for (let i = 0; i < selectedFiles.length; i += batchSize) {
+        const batch = selectedFiles.slice(i, i + batchSize);
+        
+        // Process current batch concurrently
+        const batchPromises = batch.map(async (pdfFile) => {
+          try {
+            const result = await processFileWithRetry(pdfFile);
+            return result;
+          } catch (error) {
+            console.error(`❌ Error processing ${pdfFile.name}:`, error);
+            
+            const failedFile: PdfFile = {
+              ...pdfFile,
+              status: 'failed',
+              error: error.message || 'Processing failed',
+              progress: 0
+            };
+            
+            setSelectedFiles(prev => prev.map(f => 
+              f.id === pdfFile.id ? failedFile : f
+            ));
+            
+            toast.error(`Failed to process ${pdfFile.name}: ${error.message}`);
+            return failedFile;
           }
+        });
 
-          if (!processResult || !processResult.success) {
-            throw new Error(processResult?.error || 'Failed to process PDF');
+        // Wait for current batch to complete
+        const batchResults = await Promise.allSettled(batchPromises);
+        
+        // Add completed files to results
+        batchResults.forEach((result) => {
+          if (result.status === 'fulfilled') {
+            results.push(result.value);
           }
+        });
 
-          const processedFile: PdfFile = {
-            ...pdfFile,
-            status: 'completed',
-            processedText: processResult.text,
-            suggestedTitle: processResult.title || pdfFile.name.replace('.pdf', ''),
-            suggestedSubject: processResult.subject || 'Uncategorized',
-            processingMethod: processResult.metadata?.processingMethod || 'unknown',
-            isAiGenerated: processResult.metadata?.contentAnalysis?.aiGeneratedTitle || false,
-            analysisConfidence: processResult.metadata?.contentAnalysis?.confidence || 0
-          };
-
-          results.push(processedFile);
-          
-          // Update file status to completed
-          setSelectedFiles(prev => prev.map(f => 
-            f.id === pdfFile.id ? processedFile : f
-          ));
-
-          console.log(`✅ Successfully processed: ${pdfFile.name}`);
-          
-        } catch (error) {
-          console.error(`❌ Error processing ${pdfFile.name}:`, error);
-          
-          const failedFile: PdfFile = {
-            ...pdfFile,
-            status: 'failed',
-            error: error.message || 'Processing failed'
-          };
-          
-          results.push(failedFile);
-          
-          // Update file status to failed
-          setSelectedFiles(prev => prev.map(f => 
-            f.id === pdfFile.id ? failedFile : f
-          ));
-          
-          toast.error(`Failed to process ${pdfFile.name}: ${error.message}`);
-        }
+        // Update overall progress
+        const completedFiles = i + batchSize;
+        const progressPercent = Math.min((completedFiles / selectedFiles.length) * 100, 100);
+        setProgress(progressPercent);
       }
 
       setProgress(100);
@@ -203,7 +283,6 @@ export const BulkPdfImportTab = ({ onSaveNote, isPremiumUser }: BulkPdfImportTab
     } finally {
       setIsProcessing(false);
       setProgress(0);
-      setProcessingFile('');
     }
   };
 
@@ -235,13 +314,13 @@ export const BulkPdfImportTab = ({ onSaveNote, isPremiumUser }: BulkPdfImportTab
           pinned: false,
           archived: false,
           date: new Date().toISOString().split('T')[0],
-          category: 'Documents' // Use Documents for merged content since it contains multiple subjects
+          category: 'Documents'
         };
 
         await onSaveNote(mergedNote);
         toast.success("PDFs merged and saved as one note");
       } else {
-        // Create separate notes - FIXED: Use AI-generated subject as category
+        // Create separate notes - Use AI-generated subject as category
         for (const file of completedFiles) {
           const note: Omit<Note, 'id'> = {
             title: file.suggestedTitle || file.name.replace('.pdf', ''),
@@ -255,7 +334,7 @@ export const BulkPdfImportTab = ({ onSaveNote, isPremiumUser }: BulkPdfImportTab
             pinned: false,
             archived: false,
             date: new Date().toISOString().split('T')[0],
-            category: file.suggestedSubject || 'Uncategorized' // FIXED: Use AI-generated subject instead of hardcoded "Documents"
+            category: file.suggestedSubject || 'Uncategorized'
           };
 
           await onSaveNote(note);
@@ -279,7 +358,6 @@ export const BulkPdfImportTab = ({ onSaveNote, isPremiumUser }: BulkPdfImportTab
     setProcessedFiles([]);
     setCurrentStep('select');
     setProgress(0);
-    setProcessingFile('');
   };
 
   const getFileStatusIcon = (status: PdfFile['status']) => {
@@ -337,7 +415,7 @@ export const BulkPdfImportTab = ({ onSaveNote, isPremiumUser }: BulkPdfImportTab
                 documentTitle={`Merged PDFs (${completedFiles.length} files)`}
                 documentSubject="Documents"
                 processingMethod="bulk-merge"
-                onTitleChange={() => {}} // Read-only for merged content
+                onTitleChange={() => {}}
                 onSave={saveProcessedFiles}
                 isSaving={false}
                 isAiGenerated={completedFiles.some(f => f.isAiGenerated)}
@@ -411,19 +489,39 @@ export const BulkPdfImportTab = ({ onSaveNote, isPremiumUser }: BulkPdfImportTab
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="pdf-files">Select PDF Files</Label>
+            <Label htmlFor="pdf-files">Select PDF Files or Drag & Drop</Label>
+            <div
+              className={`mt-2 border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all duration-200 ${
+                isDragOver 
+                  ? 'border-purple-500 bg-purple-50 shadow-lg' 
+                  : 'border-gray-300 hover:border-purple-400 hover:bg-gray-50'
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => document.getElementById('pdf-files')?.click()}
+            >
+              <Upload className={`h-12 w-12 mx-auto mb-4 transition-colors ${
+                isDragOver ? 'text-purple-500' : 'text-gray-400'
+              }`} />
+              <p className={`text-lg font-medium mb-2 transition-colors ${
+                isDragOver ? 'text-purple-700' : 'text-gray-700'
+              }`}>
+                {isDragOver ? 'Drop your PDFs here' : 'Drag & drop PDFs here or click to browse'}
+              </p>
+              <p className="text-sm text-gray-500">
+                Maximum 10 files • PDF format only
+              </p>
+            </div>
             <Input
               id="pdf-files"
               type="file"
               multiple
               accept=".pdf"
               onChange={handleFileSelection}
-              className="mt-1"
+              className="hidden"
               disabled={isProcessing}
             />
-            <p className="text-sm text-gray-500 mt-1">
-              Select multiple PDF files to import. Maximum 10 files at once.
-            </p>
           </div>
 
           {selectedFiles.length > 0 && (
@@ -432,11 +530,17 @@ export const BulkPdfImportTab = ({ onSaveNote, isPremiumUser }: BulkPdfImportTab
               <div className="max-h-48 overflow-y-auto space-y-2">
                 {selectedFiles.map((file) => (
                   <div key={file.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-1">
                       {getFileStatusIcon(file.status)}
-                      <div>
+                      <div className="flex-1">
                         <p className="font-medium text-sm">{file.name}</p>
                         <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+                        {file.status === 'processing' && file.progress !== undefined && (
+                          <div className="mt-1">
+                            <Progress value={file.progress} className="h-2" />
+                            <p className="text-xs text-gray-500 mt-1">{file.progress}% processed</p>
+                          </div>
+                        )}
                         {file.status === 'failed' && file.error && (
                           <p className="text-xs text-red-500">{file.error}</p>
                         )}
@@ -503,8 +607,8 @@ export const BulkPdfImportTab = ({ onSaveNote, isPremiumUser }: BulkPdfImportTab
                   </Badge>
                 </div>
                 <p className="text-sm text-blue-700">
-                  PDFs will be processed using Google Vision API (primary) with OpenAI API fallback. 
-                  AI will automatically generate titles and detect subjects for better organization.
+                  PDFs will be processed concurrently with automatic retry on failures. 
+                  AI will generate titles and detect subjects for better organization.
                 </p>
               </div>
 
@@ -519,7 +623,7 @@ export const BulkPdfImportTab = ({ onSaveNote, isPremiumUser }: BulkPdfImportTab
               {isProcessing && (
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>Processing: {processingFile}</span>
+                    <span>Processing files concurrently...</span>
                     <span>{Math.round(progress)}%</span>
                   </div>
                   <Progress value={progress} className="w-full" />

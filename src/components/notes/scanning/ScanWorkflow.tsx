@@ -30,6 +30,7 @@ export const ScanWorkflow = ({
   const [noteTitle, setNoteTitle] = useState("");
   const [noteCategory, setNoteCategory] = useState("Uncategorized");
   const [isSaving, setIsSaving] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   
   const { 
     capturedImage, 
@@ -44,6 +45,40 @@ export const ScanWorkflow = ({
     setNoteTitle("");
     setNoteCategory("Uncategorized");
     setActiveTab("camera");
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    
+    if (imageFiles.length === 0) {
+      return;
+    }
+
+    const file = imageFiles[0]; // Take the first image file
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const imageUrl = event.target?.result as string;
+      handleImageCaptured(imageUrl);
+      setActiveTab("upload"); // Switch to upload tab to show the processed image
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSaveNote = async () => {
@@ -93,23 +128,51 @@ export const ScanWorkflow = ({
   return (
     <>
       {!capturedImage ? (
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="camera">Camera</TabsTrigger>
-            <TabsTrigger value="upload">Upload</TabsTrigger>
-          </TabsList>
+        <div
+          className={`transition-all duration-200 ${isDragOver ? 'bg-purple-50 border-purple-200' : ''}`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          {isDragOver && (
+            <div className="fixed inset-0 bg-purple-100 bg-opacity-75 flex items-center justify-center z-50 pointer-events-none">
+              <div className="bg-white p-8 rounded-lg shadow-lg text-center">
+                <FileText className="h-16 w-16 text-purple-500 mx-auto mb-4" />
+                <p className="text-lg font-medium text-purple-700">
+                  Drop your image here to scan
+                </p>
+                <p className="text-sm text-purple-500">
+                  Supports PNG, JPG, JPEG formats
+                </p>
+              </div>
+            </div>
+          )}
           
-          <TabsContent value="camera" className="min-h-[300px] flex items-center justify-center">
-            <CameraCapture 
-              onImageCaptured={handleImageCaptured}
-              isActive={activeTab === "camera" && !capturedImage}
-            />
-          </TabsContent>
-          
-          <TabsContent value="upload" className="min-h-[300px] flex items-center justify-center">
-            <ImageUpload onImageUploaded={handleImageCaptured} />
-          </TabsContent>
-        </Tabs>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="camera">Camera</TabsTrigger>
+              <TabsTrigger value="upload">Upload / Drop</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="camera" className="min-h-[300px] flex items-center justify-center">
+              <CameraCapture 
+                onImageCaptured={handleImageCaptured}
+                isActive={activeTab === "camera" && !capturedImage}
+              />
+            </TabsContent>
+            
+            <TabsContent value="upload" className="min-h-[300px] flex items-center justify-center">
+              <div className="w-full">
+                <div className={`transition-all duration-200 ${isDragOver ? 'border-purple-500 bg-purple-50' : ''}`}>
+                  <ImageUpload onImageUploaded={handleImageCaptured} />
+                </div>
+                <p className="text-center text-sm text-gray-500 mt-4">
+                  💡 Tip: You can also drag and drop images anywhere on this page
+                </p>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
       ) : (
         <div className="mt-4 space-y-4">
           <ImageProcessor 
