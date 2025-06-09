@@ -30,94 +30,93 @@ export const UnifiedContentRenderer = ({
   });
 
   if (!content || content.trim() === '') {
-    return <div className="text-gray-500 italic">No content available</div>;
+    return <div className="text-muted-foreground italic">No content available</div>;
   }
 
   // ENHANCED: Better processing of AI_ENHANCED blocks
   const processAIEnhancedContent = (rawContent: string): string => {
     let processed = rawContent
-      .replace(/\[AI_ENHANCED\]/g, '<div class="ai-enhanced">')
+      .replace(/\[AI_ENHANCED\]/g, '<div class="ai-enhanced-block">')
       .replace(/\[\/AI_ENHANCED\]/g, '</div>');
     
     console.log("🔧 AI_ENHANCED processing:", {
       originalHadTags: rawContent.includes('[AI_ENHANCED]'),
-      processedHasDivs: processed.includes('<div class="ai-enhanced">'),
+      processedHasDivs: processed.includes('<div class="ai-enhanced-block">'),
       tagCount: (rawContent.match(/\[AI_ENHANCED\]/g) || []).length
     });
     
     return processed;
   };
 
-  // ENHANCED: Better list and content spacing
-  const ensureProperListSpacing = (content: string): string => {
+  // ENHANCED: Better content spacing and structure
+  const enhanceContentSpacing = (content: string): string => {
     return content
-      // Add space before bullet lists
+      // Ensure proper spacing before lists
       .replace(/\n([-*+])/g, '\n\n$1')
-      // Add space before numbered lists
       .replace(/\n(\d+\.)/g, '\n\n$1')
-      // Add space before headings
+      // Ensure proper spacing before headings
       .replace(/\n(#{1,6}\s)/g, '\n\n$1')
-      // Remove excessive line breaks
-      .replace(/\n\n\n+/g, '\n\n')
-      // Ensure list items have proper spacing
-      .replace(/([-*+]\s.+)\n([-*+]\s)/g, '$1\n\n$2')
-      .replace(/(\d+\.\s.+)\n(\d+\.\s)/g, '$1\n\n$2');
+      // Clean up excessive line breaks
+      .replace(/\n{3,}/g, '\n\n')
+      // Ensure paragraphs have proper spacing
+      .replace(/([.!?])\n([A-Z])/g, '$1\n\n$2')
+      .trim();
   };
 
-  // ENHANCED: Custom components with better styling
+  // ENHANCED: Improved markdown components with better styling
   const markdownComponents = {
     h1: ({ node, ...props }: any) => (
-      <h1 className="text-2xl font-bold mb-4 mt-6 text-gray-900 border-b border-gray-200 pb-2 leading-tight" {...props} />
+      <h1 className="text-2xl font-bold mb-6 mt-8 text-foreground border-b border-border pb-3 first:mt-0" {...props} />
     ),
     h2: ({ node, ...props }: any) => (
-      <h2 className="text-xl font-semibold mb-3 mt-5 text-gray-800 leading-tight" {...props} />
+      <h2 className="text-xl font-semibold mb-4 mt-6 text-foreground first:mt-0" {...props} />
     ),
     h3: ({ node, ...props }: any) => (
-      <h3 className="text-lg font-medium mb-3 mt-4 text-gray-800 leading-tight" {...props} />
+      <h3 className="text-lg font-medium mb-3 mt-5 text-foreground first:mt-0" {...props} />
     ),
     h4: ({ node, ...props }: any) => (
-      <h4 className="text-base font-medium mb-2 mt-3 text-gray-700 leading-tight" {...props} />
+      <h4 className="text-base font-medium mb-2 mt-4 text-foreground first:mt-0" {...props} />
     ),
     p: ({ node, ...props }: any) => (
-      <p className="mb-4 leading-relaxed text-gray-700 text-base" {...props} />
+      <p className="mb-4 leading-7 text-foreground last:mb-0" {...props} />
     ),
     ul: ({ node, ...props }: any) => (
-      <ul className="list-disc list-outside my-4 space-y-2 pl-6 ml-2" {...props} />
+      <ul className="my-6 ml-6 list-disc space-y-2 marker:text-muted-foreground" {...props} />
     ),
     ol: ({ node, ...props }: any) => (
-      <ol className="list-decimal list-outside my-4 space-y-2 pl-6 ml-2" {...props} />
+      <ol className="my-6 ml-6 list-decimal space-y-2 marker:text-muted-foreground" {...props} />
     ),
     li: ({ node, ...props }: any) => (
-      <li className="mb-2 text-gray-700 leading-relaxed pl-1 list-item" {...props} />
+      <li className="leading-7 text-foreground" {...props} />
     ),
     strong: ({ node, ...props }: any) => (
-      <strong className="font-semibold text-gray-900" {...props} />
+      <strong className="font-semibold text-foreground" {...props} />
     ),
     em: ({ node, ...props }: any) => (
-      <em className="italic text-gray-700" {...props} />
+      <em className="italic text-foreground" {...props} />
     ),
     code: ({ node, inline, ...props }: any) =>
       inline ? (
-        <code className="bg-gray-100 text-gray-800 rounded px-1.5 py-0.5 font-mono text-sm" {...props} />
+        <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-medium" {...props} />
       ) : (
-        <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto my-4">
-          <code className="text-sm font-mono text-gray-800" {...props} />
+        <pre className="mb-4 mt-6 overflow-x-auto rounded-lg bg-muted p-4">
+          <code className="relative rounded font-mono text-sm" {...props} />
         </pre>
       ),
     blockquote: ({ node, ...props }: any) => (
-      <blockquote className="border-l-4 border-mint-300 pl-4 italic text-gray-600 my-4 bg-mint-50 py-3 rounded-r" {...props} />
+      <blockquote className="mt-6 border-l-4 border-border pl-6 italic text-muted-foreground" {...props} />
     ),
     hr: ({ node, ...props }: any) => (
-      <hr className="my-6 border-gray-200" {...props} />
+      <hr className="my-8 border-border" {...props} />
     ),
     a: ({ node, ...props }: any) => (
-      <a className="text-mint-600 hover:text-mint-700 underline" target="_blank" rel="noopener noreferrer" {...props} />
+      <a className="font-medium text-primary underline underline-offset-4 hover:text-primary/80" target="_blank" rel="noopener noreferrer" {...props} />
     ),
     div: ({ node, className: nodeClassName, ...props }: any) => {
       // Handle AI_ENHANCED blocks specially
-      if (nodeClassName === 'ai-enhanced') {
+      if (nodeClassName === 'ai-enhanced-block') {
         console.log("🎯 Rendering AI_ENHANCED block");
-        return <div className="ai-enhanced" {...props} />;
+        return <div className="ai-enhanced-block" {...props} />;
       }
       return <div className={nodeClassName} {...props} />;
     }
@@ -131,17 +130,17 @@ export const UnifiedContentRenderer = ({
   };
 
   if (isMarkdown) {
-    const processedContent = ensureProperListSpacing(processAIEnhancedContent(content));
+    const processedContent = enhanceContentSpacing(processAIEnhancedContent(content));
     
     console.log("🚀 Rendering as markdown:", {
       originalLength: content.length,
       processedLength: processedContent.length,
-      hasAIBlocks: processedContent.includes('<div class="ai-enhanced">')
+      hasAIBlocks: processedContent.includes('<div class="ai-enhanced-block">')
     });
     
     return (
       <div 
-        className={`prose prose-gray max-w-none ${className}`}
+        className={`prose prose-gray max-w-none dark:prose-invert ${className}`}
         style={containerStyle}
       >
         <ReactMarkdown
@@ -158,7 +157,7 @@ export const UnifiedContentRenderer = ({
   console.log("📝 Rendering as plain text");
   return (
     <div 
-      className={`text-base whitespace-pre-wrap ${className}`}
+      className={`whitespace-pre-wrap leading-7 text-foreground ${className}`}
       style={containerStyle}
     >
       {content}

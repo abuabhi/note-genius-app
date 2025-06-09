@@ -71,16 +71,24 @@ export const EnhancementDisplayPanel = ({
     }
   };
 
-  // FIXED: Proper mapping to match enhancement types for markdown rendering
+  // ENHANCED: Better enhancement type mapping for consistent markdown rendering
   const getEnhancementTypeForRetry = (contentType: EnhancementContentType): string => {
-    switch (contentType) {
-      case 'summary': return 'summarize';
-      case 'keyPoints': return 'extract-key-points';
-      case 'improved': return 'improve-clarity';
-      case 'markdown': return 'convert-to-markdown';
-      case 'original': return 'original';
-      default: return 'summarize';
-    }
+    const mappings = {
+      'summary': 'summarize',
+      'keyPoints': 'extract-key-points', 
+      'improved': 'improve-clarity',
+      'markdown': 'convert-to-markdown',
+      'original': 'original'
+    };
+    
+    const enhancementType = mappings[contentType] || 'summarize';
+    
+    console.log("🎯 Enhancement type mapping:", {
+      contentType,
+      mappedType: enhancementType
+    });
+    
+    return enhancementType;
   };
 
   const getContentForType = (type: EnhancementContentType): string => {
@@ -95,14 +103,15 @@ export const EnhancementDisplayPanel = ({
   };
 
   const getTitleForType = (type: EnhancementContentType): string => {
-    switch (type) {
-      case 'summary': return 'Summary';
-      case 'keyPoints': return 'Key Points';
-      case 'improved': return 'Improved Content';
-      case 'markdown': return 'Markdown';
-      case 'original': return 'Original Content';
-      default: return 'Content';
-    }
+    const titles = {
+      'summary': 'Summary',
+      'keyPoints': 'Key Points',
+      'improved': 'Improved Content',
+      'markdown': 'Markdown',
+      'original': 'Original Content'
+    };
+    
+    return titles[type] || 'Content';
   };
 
   const enhancementType = getEnhancementTypeForRetry(contentType);
@@ -133,7 +142,7 @@ export const EnhancementDisplayPanel = ({
                 size="sm"
                 onClick={handleCancelGeneration}
                 disabled={isCancelling}
-                className="text-red-600 border-red-200 hover:bg-red-50"
+                className="text-destructive border-destructive/20 hover:bg-destructive/10"
               >
                 <X className="h-4 w-4 mr-2" />
                 {isCancelling ? "Cancelling..." : "Cancel Generation"}

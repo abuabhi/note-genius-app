@@ -41,16 +41,16 @@ export const EnhancementContent = ({
     contentPreview: content?.substring(0, 100)
   });
 
-  // FIXED: All AI-generated content should be treated as markdown except original
+  // ENHANCED: Better markdown detection logic
   const getIsMarkdown = (type: string): boolean => {
     const lowerType = type.toLowerCase();
     
-    // Original content is NOT markdown
+    // Original content is plain text
     if (lowerType === 'original') {
       return false;
     }
     
-    // ALL other enhancement types are markdown
+    // All AI-generated enhancement types should be treated as markdown
     const aiEnhancementTypes = [
       'summarize', 'summary',
       'extract-key-points', 'keypoints', 'key-points',
@@ -60,14 +60,26 @@ export const EnhancementContent = ({
     
     const isAIEnhancement = aiEnhancementTypes.includes(lowerType);
     
-    console.log("🔍 Markdown detection:", {
+    // Also check if content has markdown indicators
+    const hasMarkdownIndicators = content && (
+      content.includes('#') ||
+      content.includes('**') ||
+      content.includes('- ') ||
+      content.includes('1. ') ||
+      content.includes('[AI_ENHANCED]')
+    );
+    
+    const shouldRenderAsMarkdown = isAIEnhancement || hasMarkdownIndicators;
+    
+    console.log("🔍 Enhanced markdown detection:", {
       enhancementType: type,
       lowerType,
       isAIEnhancement,
-      willRenderAsMarkdown: isAIEnhancement
+      hasMarkdownIndicators,
+      finalDecision: shouldRenderAsMarkdown
     });
     
-    return isAIEnhancement;
+    return shouldRenderAsMarkdown;
   };
 
   const isMarkdown = getIsMarkdown(enhancementType);
@@ -94,11 +106,11 @@ export const EnhancementContent = ({
   
   if (!content || content.trim() === '') {
     return (
-      <div className="p-8 bg-gray-50 rounded-lg border border-gray-100 text-center">
+      <div className="p-8 bg-accent/50 rounded-lg border border-border text-center">
         <div className="flex flex-col items-center space-y-4">
-          <Sparkles className="h-12 w-12 text-mint-400" />
+          <Sparkles className="h-12 w-12 text-primary" />
           <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No {safeTitle.toLowerCase()} available</h3>
+            <h3 className="text-lg font-medium text-foreground mb-2">No {safeTitle.toLowerCase()} available</h3>
             <p className="text-sm text-muted-foreground mb-4">
               Generate AI-enhanced content to see {safeTitle.toLowerCase()} here
             </p>
@@ -108,7 +120,7 @@ export const EnhancementContent = ({
               variant="outline" 
               size="sm" 
               onClick={() => onRetry(enhancementType)}
-              className="text-mint-600 hover:text-mint-700 border-mint-200 hover:border-mint-300"
+              className="text-primary hover:text-primary/80 border-primary/20 hover:border-primary/30"
             >
               <RefreshCw className="mr-2 h-4 w-4" /> Generate {safeTitle}
             </Button>
@@ -121,7 +133,8 @@ export const EnhancementContent = ({
   console.log("🎯 Rendering content with:", {
     enhancementType,
     isMarkdown,
-    contentHasAITags: content.includes('[AI_ENHANCED]')
+    contentHasAITags: content.includes('[AI_ENHANCED]'),
+    contentHasMarkdownSyntax: content.includes('#') || content.includes('**')
   });
 
   // Render content with appropriate renderer
@@ -132,7 +145,7 @@ export const EnhancementContent = ({
         fontSize={fontSize} 
         textAlign={textAlign}
         isMarkdown={isMarkdown}
-        className="text-gray-700"
+        className="text-foreground"
       />
     </div>
   );
