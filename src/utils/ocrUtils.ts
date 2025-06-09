@@ -1,6 +1,7 @@
+
 // Enhanced OCR utility functions with better handwriting support
 
-import { createWorker } from 'tesseract.js';
+import { createWorker, PSM, OEM } from 'tesseract.js';
 
 /**
  * Enhanced image preprocessing specifically for handwritten text
@@ -87,8 +88,8 @@ export const processImageWithOCR = async (
     // Configure Tesseract for better handwriting recognition
     await worker.setParameters({
       tessedit_char_whitelist: '',
-      tessedit_pageseg_mode: '6', // Uniform block of text
-      tessedit_ocr_engine_mode: '1' // Neural nets LSTM only
+      tessedit_pageseg_mode: PSM.SINGLE_BLOCK, // Use PSM enum instead of string
+      tessedit_ocr_engine_mode: OEM.LSTM_ONLY // Use OEM enum instead of string
     });
     
     const { data } = await worker.recognize(imageUrl);
