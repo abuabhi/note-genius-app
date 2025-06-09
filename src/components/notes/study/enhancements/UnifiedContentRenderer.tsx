@@ -53,9 +53,7 @@ export const UnifiedContentRenderer = ({
       }}
     >
       <ReactMarkdown
-        children={content}
         remarkPlugins={[remarkGfm]}
-        linkTarget="_blank"
         components={{
           h1: ({node, ...props}) => <h1 className="text-2xl font-bold mt-4 mb-2" {...props} />,
           h2: ({node, ...props}) => <h2 className="text-xl font-semibold mt-3 mb-1" {...props} />,
@@ -65,16 +63,29 @@ export const UnifiedContentRenderer = ({
           ol: ({node, ...props}) => <ol className="list-decimal list-inside my-2" {...props} />,
           li: ({node, ...props}) => <li className="mb-1" {...props} />,
           strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
-          code: ({node, inline, ...props}) =>
-            inline ? (
-              <code className="bg-gray-100 rounded px-1 font-mono text-sm" {...props} />
+          code: ({node, className, children, ...props}) => {
+            const match = /language-(\w+)/.exec(className || '');
+            const isInline = !match;
+            
+            return isInline ? (
+              <code className="bg-gray-100 rounded px-1 font-mono text-sm" {...props}>
+                {children}
+              </code>
             ) : (
               <pre className="bg-gray-100 p-2 rounded overflow-x-auto text-sm">
-                <code {...props} />
+                <code className={className} {...props}>
+                  {children}
+                </code>
               </pre>
-            ),
+            );
+          },
+          a: ({node, ...props}) => (
+            <a {...props} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline" />
+          ),
         }}
-      />
+      >
+        {content}
+      </ReactMarkdown>
     </div>
   );
 };
