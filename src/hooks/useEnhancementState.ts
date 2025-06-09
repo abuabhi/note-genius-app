@@ -28,8 +28,12 @@ export const useEnhancementState = (noteId: string) => {
   }, []);
 
   const updateEnhancementState = useCallback((note: Partial<Note>) => {
+    // CRITICAL FIX: Don't treat 'generating' or 'pending' status as having content
+    const summaryStatus = note.summary_status || 'completed';
+    const hasSummaryContent = validateContent(note.summary) && summaryStatus === 'completed';
+    
     const newState = {
-      hasSummary: validateContent(note.summary),
+      hasSummary: hasSummaryContent,
       hasKeyPoints: validateContent(note.key_points),
       hasMarkdown: validateContent(note.markdown_content),
       hasImprovedClarity: validateContent(note.improved_content, 20), // Higher threshold for improved content
@@ -39,13 +43,19 @@ export const useEnhancementState = (noteId: string) => {
     console.log("🔄 Enhancement state updated:", {
       noteId,
       newState,
+      summaryStatus,
       rawContentLengths: {
         summary: note.summary?.length || 0,
         key_points: note.key_points?.length || 0,
         markdown_content: note.markdown_content?.length || 0,
         improved_content: note.improved_content?.length || 0
       },
-      summaryStatus: note.summary_status
+      summaryValidation: {
+        hasContent: !!note.summary,
+        hasValidLength: validateContent(note.summary),
+        statusIsCompleted: summaryStatus === 'completed',
+        finalResult: hasSummaryContent
+      }
     });
 
     setEnhancementState(newState);

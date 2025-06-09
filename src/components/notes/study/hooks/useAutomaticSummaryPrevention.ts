@@ -29,13 +29,39 @@ export const useAutomaticSummaryPrevention = (currentNote: Note, refreshKey: num
       }
     });
     
-    // CRITICAL FIX: If a note has summary_status of "pending" but it wasn't user-initiated,
-    // reset it to prevent automatic generation
+    // CRITICAL FIX: Reset any stuck summary generation states
     const preventAutomaticSummary = async () => {
-      if (currentNote.summary_status === 'pending' && refreshKey === 0) {
-        console.log("⚠️ Found pending summary status on note load - resetting to completed to prevent auto-generation");
-        // Use 'completed' instead of 'idle' since 'idle' is not a valid status
-        await updateNote(currentNote.id, { summary_status: 'completed' });
+      // If summary is stuck in generating or pending state without actual content
+      if ((currentNote.summary_status === 'pending' || currentNote.summary_status === 'generating') && 
+          refreshKey === 0 && 
+          !currentNote.summary) {
+        console.log("⚠️ Found stuck summary generation state - resetting to prevent infinite loop");
+        
+        try {
+          await updateNote(currentNote.id, { 
+            summary_status: 'completed',
+            summary: '' // Clear any pending summary
+          });
+          console.log("✅ Successfully reset stuck summary state");
+        } catch (error) {
+          console.error("❌ Failed to reset summary state:", error);
+        }
+      }
+      
+      // Also reset if we have a summary but status is still generating/pending
+      if ((currentNote.summary_status === 'pending' || currentNote.summary_status === 'generating') && 
+          currentNote.summary && 
+          currentNote.summary.trim().length > 0) {
+        console.log("⚠️ Found completed summary with wrong status - correcting status");
+        
+        try {
+          await updateNote(currentNote.id, { 
+            summary_status: 'completed'
+          });
+          console.log("✅ Successfully corrected summary status");
+        } catch (error) {
+          console.error("❌ Failed to correct summary status:", error);
+        }
       }
     };
     
