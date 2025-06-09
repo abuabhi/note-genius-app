@@ -15,10 +15,16 @@ export async function readPdfWithPdfJs(fileContent: ArrayBuffer): Promise<Profes
   try {
     console.log("Starting professional PDF extraction with PDF.js");
     
+    // Configure PDF.js for Deno environment - disable worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = null;
+    
     // Initialize PDF.js with the file content
     const loadingTask = pdfjsLib.getDocument({
       data: new Uint8Array(fileContent),
-      verbosity: 0 // Minimize console output
+      verbosity: 0, // Minimize console output
+      disableWorker: true, // Important for Deno environment
+      useWorkerFetch: false, // Disable worker fetch
+      isEvalSupported: false // Disable eval for security
     });
     
     const pdf = await loadingTask.promise;
@@ -46,18 +52,22 @@ export async function readPdfWithPdfJs(fileContent: ArrayBuffer): Promise<Profes
           totalTextLength += pageText.length;
         }
         
-        // Check for images/graphics
-        const operatorList = await page.getOperatorList();
-        const hasPageImages = operatorList.fnArray.some((fn: number) => 
-          fn === pdfjsLib.OPS.paintImageXObject || 
-          fn === pdfjsLib.OPS.paintInlineImageXObject
-        );
-        
-        if (hasPageImages) {
-          hasImages = true;
+        // Check for images/graphics (simplified approach for Deno)
+        try {
+          const operatorList = await page.getOperatorList();
+          const hasPageImages = operatorList.fnArray.some((fn: number) => 
+            fn === pdfjsLib.OPS.paintImageXObject || 
+            fn === pdfjsLib.OPS.paintInlineImageXObject
+          );
+          
+          if (hasPageImages) {
+            hasImages = true;
+          }
+        } catch (opError) {
+          console.log(`Could not check for images on page ${pageNum}, continuing...`);
         }
         
-        console.log(`Page ${pageNum}: ${pageText.length} characters, images: ${hasPageImages}`);
+        console.log(`Page ${pageNum}: ${pageText.length} characters extracted`);
       } catch (pageError) {
         console.error(`Error processing page ${pageNum}:`, pageError);
         continue;
