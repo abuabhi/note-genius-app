@@ -21,6 +21,50 @@ export const useSimpleRealtimeSync = (initialNote: Note) => {
     setCurrentNote(initialNote);
   }, [initialNote]);
 
+  // CRITICAL FIX: Reset stuck summary states on note load
+  useEffect(() => {
+    const fixStuckSummaryStatus = async () => {
+      // Check if summary is stuck in generating/pending state without actual generation
+      const isStuckState = (
+        (currentNote.summary_status === 'pending' || currentNote.summary_status === 'generating') &&
+        (!currentNote.summary || currentNote.summary.trim().length === 0)
+      );
+
+      if (isStuckState) {
+        console.log("🔧 Detected stuck summary status, fixing...");
+        
+        try {
+          const { error } = await supabase
+            .from('notes')
+            .update({ 
+              summary_status: 'completed',
+              summary: ''
+            })
+            .eq('id', currentNote.id);
+
+          if (error) {
+            console.error("❌ Failed to fix stuck summary status:", error);
+          } else {
+            console.log("✅ Fixed stuck summary status");
+            // Update local state
+            setCurrentNote(prev => ({
+              ...prev,
+              summary_status: 'completed',
+              summary: ''
+            }));
+            forceRefresh();
+          }
+        } catch (error) {
+          console.error("❌ Exception fixing summary status:", error);
+        }
+      }
+    };
+
+    // Run the fix after a short delay to ensure component is mounted
+    const timeoutId = setTimeout(fixStuckSummaryStatus, 500);
+    return () => clearTimeout(timeoutId);
+  }, [currentNote.id, currentNote.summary_status, currentNote.summary, forceRefresh]);
+
   // Set up real-time subscription for note updates
   useEffect(() => {
     console.log("📡 Setting up simplified real-time subscription for note:", initialNote.id);
@@ -57,7 +101,7 @@ export const useSimpleRealtimeSync = (initialNote: Note) => {
             category: payload.new.subject || currentNote.category || 'Uncategorized',
             // Ensure tags are preserved
             tags: currentNote.tags || [],
-            // CRITICAL: Ensure summary_status is properly set
+            // CRITICAL: Ensure summary_status is properly set and validated
             summary_status: (payload.new.summary_status as 'pending' | 'generating' | 'completed' | 'failed') || 'completed'
           };
           

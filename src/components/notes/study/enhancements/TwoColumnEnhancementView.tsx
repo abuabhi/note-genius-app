@@ -52,14 +52,15 @@ export const TwoColumnEnhancementView = ({
     }
   }, [note.id, setActiveContentType]);
   
-  // FIXED: More strict validation that prevents treating generating/pending states as having content
+  // FIXED: Stricter validation that prevents treating generating/pending states as having content
   const hasSummary = Boolean(
     note.summary && 
     typeof note.summary === 'string' && 
     note.summary.trim().length > 10 &&
     note.summary_status === 'completed' &&
     !note.summary.includes('Generating') &&
-    !note.summary.includes('Processing')
+    !note.summary.includes('Processing') &&
+    !note.summary.includes('...') // Common placeholder text
   );
   
   const hasKeyPoints = Boolean(
@@ -87,7 +88,7 @@ export const TwoColumnEnhancementView = ({
   const isGeneratingSummary = summaryStatus === 'generating' || summaryStatus === 'pending';
   const hasSummaryError = summaryStatus === 'failed';
   
-  console.log("🔍 TwoColumnEnhancementView - FIXED state analysis:", {
+  console.log("🔍 TwoColumnEnhancementView - Enhanced state analysis:", {
     noteId: note.id,
     timestamp: new Date().toISOString(),
     isEditOperation,
@@ -99,6 +100,7 @@ export const TwoColumnEnhancementView = ({
       statusIsCompleted: summaryStatus === 'completed',
       doesNotContainGenerating: !note.summary?.includes('Generating'),
       doesNotContainProcessing: !note.summary?.includes('Processing'),
+      doesNotContainPlaceholder: !note.summary?.includes('...'),
       finalValidation: hasSummary
     },
     contentStates: {
@@ -120,6 +122,16 @@ export const TwoColumnEnhancementView = ({
       console.log("🔄 Resetting manual selection flag");
       wasManuallySelected.current = false;
     }, 5000);
+  };
+
+  // Handle cancel enhancement
+  const handleCancelEnhancement = () => {
+    console.log("❌ Enhancement cancelled by user");
+    if (onCancelEnhancement) {
+      onCancelEnhancement();
+    }
+    // Switch back to original content
+    setActiveContentType('original');
   };
   
   // COMPLETELY DISABLED auto-switching logic during edit operations or summary generation
@@ -221,7 +233,7 @@ export const TwoColumnEnhancementView = ({
         textAlign={textAlign}
         isLoading={isLoading}
         onRetryEnhancement={onRetryEnhancement}
-        onCancelEnhancement={onCancelEnhancement}
+        onCancelEnhancement={handleCancelEnhancement}
         className="flex-1 min-h-0"
       />
     </div>

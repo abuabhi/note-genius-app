@@ -1,14 +1,14 @@
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Note } from "@/types/note";
 import { TextAlignType } from "../hooks/useStudyViewState";
-import { LoadingAnimations } from "./LoadingAnimations";
 import { EnhancementContentType } from "./EnhancementSelector";
-import { cn } from "@/lib/utils";
-import { EnhancementHeader } from "./components/EnhancementHeader";
-import { EnhancementEmptyState } from "./components/EnhancementEmptyState";
-import { EnhancementContentRenderer } from "./components/EnhancementContentRenderer";
-import { getContentInfo, getEnhancementTypeFromContent } from "./utils/contentInfo";
+import { EnhancementContent } from "./EnhancementContent";
+import { LoadingAnimations } from "./LoadingAnimations";
+import { RefreshCw, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface EnhancementDisplayPanelProps {
   note: Note;
@@ -16,7 +16,7 @@ interface EnhancementDisplayPanelProps {
   fontSize: number;
   textAlign: TextAlignType;
   isLoading?: boolean;
-  onRetryEnhancement?: (enhancementType: string) => void;
+  onRetryEnhancement?: (enhancementType: string) => Promise<void>;
   onCancelEnhancement?: () => void;
   className?: string;
 }
@@ -29,129 +29,107 @@ export const EnhancementDisplayPanel = ({
   isLoading = false,
   onRetryEnhancement,
   onCancelEnhancement,
-  className
+  className = ""
 }: EnhancementDisplayPanelProps) => {
-  const [retryLoading, setRetryLoading] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
 
-  const getContent = () => {
-    switch (contentType) {
-      case 'original':
-        return note.content || note.description || "";
-      case 'summary':
-        return note.summary || "";
-      case 'keyPoints':
-        return note.key_points || "";
-      case 'improved':
-        return note.improved_content || "";
-      case 'markdown':
-        return note.markdown_content || "";
-      default:
-        return "";
-    }
-  };
-
-  const handleRetry = async (enhancementType: string) => {
-    if (!onRetryEnhancement) return;
-    
-    setRetryLoading(true);
-    try {
-      await onRetryEnhancement(enhancementType);
-    } finally {
-      setRetryLoading(false);
-    }
-  };
-
-  const content = getContent();
-  const contentInfo = getContentInfo(contentType);
-  const Icon = contentInfo.icon;
-
-  // Check if content exists and is meaningful
-  const hasContent = Boolean(
-    content && 
-    typeof content === 'string' && 
-    content.trim().length > (contentType === 'improved' ? 20 : 10)
-  );
-
-  // Check for summary generation status specifically
-  const isGeneratingSummary = contentType === 'summary' && 
+  // Check if summary is in generating/pending state
+  const isSummaryGenerating = contentType === 'summary' && 
     (note.summary_status === 'generating' || note.summary_status === 'pending');
+  
+  // Handle cancelling stuck generation
+  const handleCancelGeneration = async () => {
+    if (contentType !== 'summary') return;
+    
+    setIsCancelling(true);
+    
+    try {
+      const { error } = await supabase
+        .from('notes')
+        .update({ 
+          summary_status: 'completed',
+          summary: ''
+        })
+        .eq('id', note.id);
 
-  // Show loading state with tab-specific loading animation
-  if (isLoading || isGeneratingSummary) {
-    return (
-      <div className={cn("flex flex-col bg-white", className)}>
-        <EnhancementHeader
-          title={contentInfo.title}
-          description="Generating content..."
-          icon={Icon}
-          color={`${contentInfo.color} animate-pulse`}
-          content=""
-          contentType={contentType}
-          onRetryEnhancement={undefined}
-          retryLoading={false}
-          getEnhancementTypeFromContent={getEnhancementTypeFromContent}
-        />
-        <div className="flex-1 flex items-center justify-center p-12">
-          <LoadingAnimations />
-        </div>
-      </div>
-    );
-  }
+      if (error) {
+        console.error("❌ Failed to cancel generation:", error);
+        toast.error("Failed to cancel generation");
+      } else {
+        console.log("✅ Cancelled summary generation");
+        toast.success("Generation cancelled");
+        
+        if (onCancelEnhancement) {
+          onCancelEnhancement();
+        }
+      }
+    } catch (error) {
+      console.error("❌ Exception cancelling generation:", error);
+      toast.error("Failed to cancel generation");
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
-  // Show empty state with generate option for non-original content
-  if (!hasContent && contentType !== 'original') {
-    return (
-      <div className={cn("flex flex-col bg-white", className)}>
-        <EnhancementHeader
-          title={contentInfo.title}
-          description={contentInfo.description}
-          icon={Icon}
-          color={contentInfo.color}
-          content=""
-          contentType={contentType}
-          onRetryEnhancement={undefined}
-          retryLoading={false}
-          getEnhancementTypeFromContent={getEnhancementTypeFromContent}
-        />
-        <EnhancementEmptyState
-          title={contentInfo.title}
-          icon={Icon}
-          onRetryEnhancement={handleRetry}
-          retryLoading={retryLoading}
-          getEnhancementTypeFromContent={getEnhancementTypeFromContent}
-          contentType={contentType}
-        />
-      </div>
-    );
-  }
+  const getEnhancementTypeForRetry = (contentType: EnhancementContentType): string => {
+    switch (contentType) {
+      case 'summary': return 'summarize';
+      case 'keyPoints': return 'extract-key-points';
+      case 'improved': return 'improve-clarity';
+      case 'markdown': return 'convert-to-markdown';
+      default: return 'summarize';
+    }
+  };
 
   return (
-    <div className={cn("flex flex-col bg-white", className)}>
-      {/* Enhanced Header */}
-      <EnhancementHeader
-        title={contentInfo.title}
-        description={contentInfo.description}
-        icon={Icon}
-        color={contentInfo.color}
-        content={content}
-        contentType={contentType}
-        onRetryEnhancement={handleRetry}
-        retryLoading={retryLoading}
-        getEnhancementTypeFromContent={getEnhancementTypeFromContent}
-      />
-
-      {/* Enhanced Content */}
-      <div className="flex-1 overflow-y-auto bg-gradient-to-b from-white to-gray-50/30">
-        <div className="p-8">
-          <EnhancementContentRenderer
-            content={content}
+    <div className={`flex flex-col h-full ${className}`}>
+      {/* Show loading state when processing */}
+      {(isLoading || isSummaryGenerating) && (
+        <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-4">
+          <LoadingAnimations contentType={contentType} />
+          
+          {/* Cancel button for stuck processing */}
+          {isSummaryGenerating && (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCancelGeneration}
+                disabled={isCancelling}
+                className="text-red-600 border-red-200 hover:bg-red-50"
+              >
+                <X className="h-4 w-4 mr-2" />
+                {isCancelling ? "Cancelling..." : "Cancel Generation"}
+              </Button>
+              
+              {onRetryEnhancement && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onRetryEnhancement(getEnhancementTypeForRetry(contentType))}
+                  disabled={isCancelling}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retry
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+      
+      {/* Show content when not loading */}
+      {!isLoading && !isSummaryGenerating && (
+        <div className="flex-1 overflow-auto">
+          <EnhancementContent
+            note={note}
             contentType={contentType}
             fontSize={fontSize}
             textAlign={textAlign}
-            isMarkdown={contentInfo.isMarkdown}
+            onRetryEnhancement={onRetryEnhancement}
           />
         </div>
-      </div>
+      )}
     </div>
   );
 };
