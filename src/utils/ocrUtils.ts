@@ -1,4 +1,3 @@
-
 // Enhanced OCR utility functions with better handwriting support
 
 import { createWorker, PSM, OEM } from 'tesseract.js';
@@ -83,13 +82,12 @@ export const processImageWithOCR = async (
     });
     
     await worker.loadLanguage(language);
-    await worker.initialize(language);
+    await worker.initialize(language, OEM.LSTM_ONLY);
     
     // Configure Tesseract for better handwriting recognition
     await worker.setParameters({
       tessedit_char_whitelist: '',
-      tessedit_pageseg_mode: PSM.SINGLE_BLOCK, // Use PSM enum instead of string
-      tessedit_ocr_engine_mode: OEM.LSTM_ONLY // Use OEM enum instead of string
+      tessedit_pageseg_mode: PSM.SINGLE_BLOCK
     });
     
     const { data } = await worker.recognize(imageUrl);
