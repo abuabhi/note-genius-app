@@ -1,9 +1,8 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, FileText, Scan, Upload, Sparkles } from 'lucide-react';
+import { Plus, FileText, Import, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { AddNoteButtonGroup } from './header/AddNoteButtonGroup';
 
 interface OptimizedNotesHeaderProps {
   totalCount: number;
@@ -51,11 +50,23 @@ export const OptimizedNotesHeader = ({
         </div>
 
         <div className="flex gap-3">
-          <AddNoteButtonGroup 
-            onOpenManualDialog={onCreateNote}
-            onOpenScanDialog={onOpenScanDialog}
-            onOpenImportDialog={onOpenImportDialog}
-          />
+          <Button 
+            className="bg-mint-600 hover:bg-mint-700 text-white shadow-sm hover:shadow-md transition-all duration-200 font-medium border-0"
+            onClick={onCreateNote}
+            disabled={isCreating}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add Note
+          </Button>
+          
+          <Button 
+            className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm hover:shadow-md transition-all duration-200 font-medium border-0"
+            onClick={onOpenImportDialog}
+            disabled={isCreating}
+          >
+            <Import className="mr-2 h-4 w-4" />
+            Import
+          </Button>
         </div>
       </div>
     </CardContent>
