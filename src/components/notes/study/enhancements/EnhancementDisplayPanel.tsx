@@ -81,12 +81,34 @@ export const EnhancementDisplayPanel = ({
     }
   };
 
+  const getContentForType = (type: EnhancementContentType): string => {
+    switch (type) {
+      case 'summary': return note.summary || '';
+      case 'keyPoints': return note.key_points || '';
+      case 'improved': return note.improved_content || '';
+      case 'markdown': return note.markdown_content || '';
+      case 'original': return note.content || note.description || '';
+      default: return '';
+    }
+  };
+
+  const getTitleForType = (type: EnhancementContentType): string => {
+    switch (type) {
+      case 'summary': return 'Summary';
+      case 'keyPoints': return 'Key Points';
+      case 'improved': return 'Improved Content';
+      case 'markdown': return 'Markdown';
+      case 'original': return 'Original Content';
+      default: return 'Content';
+    }
+  };
+
   return (
     <div className={`flex flex-col h-full ${className}`}>
       {/* Show loading state when processing */}
       {(isLoading || isSummaryGenerating) && (
         <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-4">
-          <LoadingAnimations contentType={contentType} />
+          <LoadingAnimations enhancementType={getEnhancementTypeForRetry(contentType)} />
           
           {/* Cancel button for stuck processing */}
           {isSummaryGenerating && (
@@ -122,11 +144,13 @@ export const EnhancementDisplayPanel = ({
       {!isLoading && !isSummaryGenerating && (
         <div className="flex-1 overflow-auto">
           <EnhancementContent
-            note={note}
-            contentType={contentType}
+            content={getContentForType(contentType)}
+            title={getTitleForType(contentType)}
             fontSize={fontSize}
             textAlign={textAlign}
-            onRetryEnhancement={onRetryEnhancement}
+            isMarkdown={contentType === 'markdown'}
+            enhancementType={getEnhancementTypeForRetry(contentType)}
+            onRetry={onRetryEnhancement}
           />
         </div>
       )}
