@@ -52,6 +52,13 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({
     }
   };
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      handleFileSelected(file);
+    }
+  };
+
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto border-mint-100 bg-white">
@@ -68,7 +75,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({
             <input
               id="document-file"
               type="file"
-              onChange={handleFileSelected}
+              onChange={handleFileChange}
               className="w-full p-2 border border-gray-300 rounded"
             />
           </div>

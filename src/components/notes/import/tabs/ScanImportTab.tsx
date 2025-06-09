@@ -59,7 +59,6 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
         title: documentTitle,
         content: extractedText,
         description: `Scanned from ${selectedImage?.name || 'image'}`,
-        subject: 'Scanned Documents',
         tags: [{ name: 'OCR', color: '#F59E0B' }, { name: 'Scan', color: '#8B5CF6' }],
         sourceType: 'scan',
         pinned: false,

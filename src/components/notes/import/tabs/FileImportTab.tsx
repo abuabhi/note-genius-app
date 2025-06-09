@@ -66,7 +66,6 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
         title: documentTitle,
         content: processedText,
         description: `Imported from ${selectedFile?.name || 'document'}`,
-        subject: 'Documents',
         tags: [{ name: 'Import', color: '#8B5CF6' }],
         sourceType: 'import',
         pinned: false,
