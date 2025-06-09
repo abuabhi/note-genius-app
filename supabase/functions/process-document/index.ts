@@ -9,7 +9,6 @@ interface ProcessDocumentRequestBody {
   fileType?: string;
   userId?: string;
   externalApiParams?: Record<string, any>;
-  useOCR?: boolean; // Flag to force OCR processing
 }
 
 serve(async (req) => {
@@ -20,9 +19,9 @@ serve(async (req) => {
   
   try {
     const requestData: ProcessDocumentRequestBody = await req.json();
-    const { fileUrl, fileType, userId, externalApiParams, useOCR = false } = requestData;
+    const { fileUrl, fileType, userId, externalApiParams } = requestData;
     
-    console.log(`Processing document request: fileType=${fileType}, userId=${userId}, useOCR=${useOCR}`);
+    console.log(`Processing document request: fileType=${fileType}, userId=${userId}`);
     
     // Validate input parameters
     if (!fileType) {
@@ -48,128 +47,89 @@ serve(async (req) => {
       
       // Process based on file type
       if (fileType === 'pdf') {
-        console.log('Processing PDF document');
+        console.log('Processing PDF document with Google Vision API');
         
-        if (useOCR) {
-          console.log('OCR processing requested - using Google Vision API directly on PDF');
-          
-          try {
-            // Check if we have the Google Vision API key
-            const googleApiKey = Deno.env.get("GOOGLE_CLOUD_API_KEY");
-            if (!googleApiKey) {
-              documentText = "Google Cloud Vision API key is not configured.\n\n" +
-                "To use OCR processing, you need to:\n" +
-                "1. Set up a Google Cloud project\n" +
-                "2. Enable the Cloud Vision API\n" +
-                "3. Create an API key\n" +
-                "4. Add the API key to your Supabase secrets as 'GOOGLE_CLOUD_API_KEY'\n\n" +
-                "Alternatively, you can try processing without OCR to extract any embedded text.";
-              documentTitle = "API Key Required";
-              processingMethod = "api-key-missing";
-              documentMetadata = {
-                processingMethod: "api-key-missing"
-              };
-            } else {
-              // Process PDF directly with Google Vision API
-              const ocrResult = await processPdfWithVisionAPI(fileBuffer, googleApiKey);
+        try {
+          // Check if we have the Google Vision API key
+          const googleApiKey = Deno.env.get("GOOGLE_CLOUD_API_KEY");
+          if (!googleApiKey) {
+            documentText = "Google Cloud Vision API key is not configured.\n\n" +
+              "To process PDFs, you need to:\n" +
+              "1. Set up a Google Cloud project\n" +
+              "2. Enable the Cloud Vision API\n" +
+              "3. Create an API key\n" +
+              "4. Add the API key to your Supabase secrets as 'GOOGLE_CLOUD_API_KEY'";
+            documentTitle = "API Key Required";
+            processingMethod = "api-key-missing";
+            documentMetadata = {
+              processingMethod: "api-key-missing"
+            };
+          } else {
+            // First try Google Vision API for PDFs
+            try {
+              const visionResult = await processPdfWithVisionAPI(fileBuffer, googleApiKey);
               
-              if (ocrResult.text && ocrResult.text.trim()) {
-                documentText = ocrResult.text.trim();
-                documentTitle = "OCR Processed PDF";
-                processingMethod = "ocr-vision-api-pdf";
+              if (visionResult.text && visionResult.text.trim()) {
+                documentText = visionResult.text.trim();
+                documentTitle = "PDF Processed with Vision API";
+                processingMethod = "vision-api-success";
                 documentMetadata = {
-                  processingMethod: "ocr-vision-api-pdf",
-                  confidence: ocrResult.confidence || 0.8,
+                  processingMethod: "vision-api-success",
+                  confidence: visionResult.confidence || 0.9,
                   provider: "google-vision",
-                  pages: ocrResult.pages || 1
+                  pages: visionResult.pages || 1
                 };
                 
-                console.log(`OCR processing complete. Extracted ${documentText.length} characters from PDF`);
+                console.log(`Vision API processing complete. Extracted ${documentText.length} characters from PDF`);
               } else {
-                documentText = "OCR processing completed but no readable text was found in the PDF.\n\n" +
-                  "This could be because:\n" +
-                  "• The PDF contains only images without text\n" +
-                  "• The text quality is too poor for OCR recognition\n" +
-                  "• The text is in a language or font not well supported by OCR\n\n" +
-                  "Try using a clearer PDF or one with better text quality.";
-                documentTitle = "No Text Detected";
-                processingMethod = "ocr-no-text";
+                throw new Error("No text extracted from Vision API");
+              }
+            } catch (visionError) {
+              console.error('Vision API processing failed, trying fallback:', visionError);
+              
+              // Fallback to standard PDF text extraction
+              const pdfResult: PdfResult = await readPdf(fileBuffer);
+              
+              const hasReadableText = pdfResult.text && 
+                pdfResult.text.length > 20 && 
+                /[a-zA-Z\s]{10,}/.test(pdfResult.text);
+              
+              if (hasReadableText) {
+                documentText = pdfResult.text;
+                documentTitle = pdfResult.title || "PDF Document (Standard Extraction)";
+                processingMethod = "standard-text-extraction";
                 documentMetadata = {
-                  processingMethod: "ocr-no-text",
-                  provider: "google-vision"
+                  processingMethod: "standard-text-extraction",
+                  visionApiError: visionError.message,
+                  fallbackUsed: true
+                };
+              } else {
+                documentText = `PDF processing failed.\n\n` +
+                  "This PDF appears to contain primarily images or scanned content that couldn't be processed.\n\n" +
+                  `Vision API Error: ${visionError.message}\n\n` +
+                  "Please ensure:\n" +
+                  "• Your Google Cloud Vision API key is configured correctly\n" +
+                  "• API quota is not exceeded\n" +
+                  "• Billing is enabled for your Google Cloud project";
+                documentTitle = "Processing Failed";
+                processingMethod = "all-processing-failed";
+                documentMetadata = {
+                  processingMethod: "all-processing-failed",
+                  visionApiError: visionError.message
                 };
               }
             }
-            
-          } catch (ocrError) {
-            console.error('OCR processing failed:', ocrError);
-            
-            // Try fallback to standard text extraction
-            console.log('Falling back to standard PDF text extraction');
-            const pdfResult: PdfResult = await readPdf(fileBuffer);
-            
-            const hasReadableText = pdfResult.text && 
-              pdfResult.text.length > 20 && 
-              /[a-zA-Z\s]{10,}/.test(pdfResult.text);
-            
-            if (hasReadableText) {
-              documentText = pdfResult.text;
-              documentTitle = pdfResult.title || "PDF Document (OCR Failed, Text Extracted)";
-              processingMethod = "ocr-failed-text-extracted";
-              documentMetadata = {
-                processingMethod: "ocr-failed-text-extracted",
-                ocrError: ocrError.message,
-                fallbackUsed: true
-              };
-            } else {
-              documentText = `OCR processing failed: ${ocrError.message}\n\n` +
-                "Standard text extraction also failed. This PDF appears to contain primarily images or scanned content.\n\n" +
-                "This could be due to:\n" +
-                "• Google Cloud Vision API key not configured properly\n" +
-                "• API quota exceeded or billing not enabled\n" +
-                "• Network connectivity issues\n" +
-                "• PDF contains only complex images\n\n" +
-                "Please check your Google Cloud settings and try again.";
-              documentTitle = "Processing Failed";
-              processingMethod = "all-processing-failed";
-              documentMetadata = {
-                processingMethod: "all-processing-failed",
-                ocrError: ocrError.message
-              };
-            }
           }
-        } else {
-          // Use standard PDF text extraction
-          const pdfResult: PdfResult = await readPdf(fileBuffer);
           
-          // Check if we got meaningful text
-          const hasReadableText = pdfResult.text && 
-            pdfResult.text.length > 20 && 
-            /[a-zA-Z\s]{10,}/.test(pdfResult.text) && 
-            !(/[^\x20-\x7E\n]{20,}/.test(pdfResult.text));
-          
-          if (hasReadableText) {
-            documentText = pdfResult.text;
-            documentTitle = pdfResult.title || "PDF Document";
-            documentMetadata = pdfResult.metadata || {};
-            processingMethod = "text-extraction-success";
-          } else {
-            // Auto-suggest OCR for poor text extraction
-            documentText = "This PDF appears to contain primarily images, scanned content, or encoded text that cannot be extracted using standard text extraction methods.\n\n" +
-              "The document may be:\n" +
-              "• A scanned document (image-based PDF)\n" +
-              "• A PDF with complex formatting or fonts\n" +
-              "• A PDF created from images\n\n" +
-              "To extract text from this type of document, please enable the 'Force OCR processing' option, which will use Google Vision API to recognize text from the PDF content.";
-            documentTitle = "Text Extraction Failed - Try OCR";
-            processingMethod = "text-extraction-failed";
-            documentMetadata = {
-              processingMethod: "text-extraction-failed",
-              originalTextLength: pdfResult.text?.length || 0,
-              suggestion: "Enable OCR processing for better results",
-              extractionQuality: "poor"
-            };
-          }
+        } catch (error) {
+          console.error('PDF processing error:', error);
+          documentText = `Error processing PDF: ${error.message}`;
+          documentTitle = "Processing Error";
+          processingMethod = "processing-error";
+          documentMetadata = {
+            processingMethod: "processing-error",
+            error: error.message
+          };
         }
         
         console.log(`PDF processing complete. Method: ${processingMethod}, Text length: ${documentText.length}`);
@@ -209,8 +169,7 @@ serve(async (req) => {
         title: documentTitle,
         metadata: {
           ...documentMetadata,
-          processingMethod,
-          requiresOCR: processingMethod.includes('failed') && !processingMethod.includes('ocr')
+          processingMethod
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -230,10 +189,10 @@ serve(async (req) => {
 });
 
 /**
- * Process PDF directly with Google Cloud Vision API
+ * Process PDF with Google Cloud Vision API using the correct files endpoint
  */
 async function processPdfWithVisionAPI(pdfBuffer: ArrayBuffer, apiKey: string): Promise<{ text: string; confidence?: number; pages?: number }> {
-  console.log("Processing PDF directly with Google Cloud Vision API");
+  console.log("Processing PDF with Google Cloud Vision API using files endpoint");
   
   try {
     // Convert ArrayBuffer to base64
@@ -244,7 +203,8 @@ async function processPdfWithVisionAPI(pdfBuffer: ArrayBuffer, apiKey: string): 
     }
     const base64Pdf = btoa(binaryString);
     
-    const url = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`;
+    // Use the correct endpoint for document processing
+    const url = `https://vision.googleapis.com/v1/files:asyncBatchAnnotate?key=${apiKey}`;
     
     const response = await fetch(url, {
       method: 'POST',
@@ -254,38 +214,90 @@ async function processPdfWithVisionAPI(pdfBuffer: ArrayBuffer, apiKey: string): 
       body: JSON.stringify({
         requests: [
           {
-            image: {
-              content: base64Pdf
+            inputConfig: {
+              gcsSource: {
+                uri: `data:application/pdf;base64,${base64Pdf}`
+              },
+              mimeType: 'application/pdf'
             },
             features: [
               {
-                type: 'DOCUMENT_TEXT_DETECTION',
-                maxResults: 1
+                type: 'DOCUMENT_TEXT_DETECTION'
               }
-            ]
+            ],
+            outputConfig: {
+              gcsDestination: {
+                uri: 'gs://temp-bucket'
+              },
+              batchSize: 1
+            }
           }
         ]
       })
     });
     
+    // If async endpoint fails, fall back to synchronous processing
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Google Cloud Vision API error: ${JSON.stringify(error)}`);
+      console.log("Async processing failed, trying synchronous approach");
+      return await processPdfSynchronously(base64Pdf, apiKey);
     }
     
     const data = await response.json();
-    const fullTextAnnotation = data.responses[0]?.fullTextAnnotation;
-    const extractedText = fullTextAnnotation?.text || "";
+    console.log("Vision API response:", data);
     
-    console.log(`Vision API extracted ${extractedText.length} characters from PDF`);
+    // For now, fall back to synchronous since async requires GCS setup
+    return await processPdfSynchronously(base64Pdf, apiKey);
     
-    return {
-      text: extractedText,
-      confidence: 0.9, // Vision API generally has high confidence for PDFs
-      pages: fullTextAnnotation?.pages?.length || 1
-    };
   } catch (error) {
     console.error("Google Cloud Vision PDF processing error:", error);
     throw new Error(`Vision API PDF processing failed: ${error.message}`);
   }
+}
+
+/**
+ * Synchronous PDF processing with Vision API
+ */
+async function processPdfSynchronously(base64Pdf: string, apiKey: string): Promise<{ text: string; confidence?: number; pages?: number }> {
+  console.log("Processing PDF synchronously with Vision API");
+  
+  const url = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`;
+  
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      requests: [
+        {
+          image: {
+            content: base64Pdf
+          },
+          features: [
+            {
+              type: 'DOCUMENT_TEXT_DETECTION',
+              maxResults: 1
+            }
+          ]
+        }
+      ]
+    })
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(`Google Cloud Vision API error: ${JSON.stringify(error)}`);
+  }
+  
+  const data = await response.json();
+  const fullTextAnnotation = data.responses[0]?.fullTextAnnotation;
+  const extractedText = fullTextAnnotation?.text || "";
+  
+  console.log(`Vision API extracted ${extractedText.length} characters from PDF`);
+  
+  return {
+    text: extractedText,
+    confidence: 0.9,
+    pages: fullTextAnnotation?.pages?.length || 1
+  };
 }

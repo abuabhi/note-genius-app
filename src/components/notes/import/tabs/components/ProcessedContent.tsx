@@ -22,45 +22,49 @@ export const ProcessedContent = ({
   onSave,
   isSaving
 }: ProcessedContentProps) => {
-  const isOCRRequired = processingMethod?.includes('failed') && !processingMethod?.includes('ocr');
-  const isTextExtractionFailed = processingMethod === 'text-extraction-failed';
-  const isOCRSuccess = processingMethod?.includes('ocr-vision-api');
-  const isProcessingFailed = processingMethod?.includes('all-processing-failed');
-
   const getStatusInfo = () => {
-    if (isOCRSuccess) {
+    if (processingMethod === 'vision-api-success') {
       return {
         icon: <CheckCircle className="h-4 w-4 text-green-600" />,
         className: "text-green-700 bg-green-50 border border-green-200",
-        title: "OCR Processing Successful",
-        message: "Text was successfully extracted using Google Vision API."
+        title: "PDF Processed Successfully",
+        message: "Text was extracted using Google Vision API for optimal accuracy."
       };
     }
     
-    if (isProcessingFailed) {
+    if (processingMethod === 'api-key-missing') {
+      return {
+        icon: <AlertCircle className="h-4 w-4 text-red-600" />,
+        className: "text-red-700 bg-red-50 border border-red-200",
+        title: "API Key Required",
+        message: "Google Cloud Vision API key is not configured. Please add it to your Supabase secrets."
+      };
+    }
+    
+    if (processingMethod === 'all-processing-failed') {
       return {
         icon: <AlertCircle className="h-4 w-4 text-red-600" />,
         className: "text-red-700 bg-red-50 border border-red-200",
         title: "Processing Failed",
-        message: "Both OCR and standard text extraction failed. Please check your API configuration."
+        message: "Both Vision API and standard text extraction failed. Please check your API configuration."
       };
     }
     
-    if (isTextExtractionFailed) {
-      return {
-        icon: <AlertCircle className="h-4 w-4 text-amber-600" />,
-        className: "text-amber-700 bg-amber-50 border border-amber-200",
-        title: "Standard Text Extraction Failed",
-        message: "The document appears to contain images or scanned content. Enable 'Force OCR processing' above to extract text using Google Vision API."
-      };
-    }
-    
-    if (processingMethod?.includes('ocr-failed-text-extracted')) {
+    if (processingMethod === 'standard-text-extraction') {
       return {
         icon: <Info className="h-4 w-4 text-blue-600" />,
         className: "text-blue-700 bg-blue-50 border border-blue-200",
-        title: "OCR Failed - Text Extraction Used",
-        message: "OCR processing failed, but standard text extraction was successful."
+        title: "Standard Text Extraction Used",
+        message: "Vision API failed, but standard text extraction was successful."
+      };
+    }
+    
+    if (processingMethod === 'docx') {
+      return {
+        icon: <CheckCircle className="h-4 w-4 text-green-600" />,
+        className: "text-green-700 bg-green-50 border border-green-200",
+        title: "Word Document Processed",
+        message: "Document was processed successfully."
       };
     }
     
@@ -107,8 +111,8 @@ export const ProcessedContent = ({
       <div>
         <Label>Content Preview</Label>
         <div className={`border rounded p-4 max-h-60 overflow-y-auto mt-1 ${
-          isTextExtractionFailed || isProcessingFailed
-            ? 'bg-amber-50 border-amber-200' 
+          processingMethod === 'all-processing-failed' || processingMethod === 'api-key-missing'
+            ? 'bg-red-50 border-red-200' 
             : 'bg-gray-50 border-gray-200'
         }`}>
           <pre className="whitespace-pre-wrap text-sm">{processedText}</pre>

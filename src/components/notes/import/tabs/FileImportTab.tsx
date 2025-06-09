@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { FileDropZone } from "./components/FileDropZone";
 import { SelectedFileCard } from "./components/SelectedFileCard";
-import { ProcessingOptions } from "./components/ProcessingOptions";
 import { ProcessedContent } from "./components/ProcessedContent";
 
 interface FileImportTabProps {
@@ -23,7 +22,6 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [processingMethod, setProcessingMethod] = useState<string>('');
-  const [forceOCR, setForceOCR] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
 
   const handleFileSelected = (file: File) => {
@@ -99,15 +97,14 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
                       selectedFile.type.includes('word') || selectedFile.name.endsWith('.docx') ? 'docx' :
                       selectedFile.type.includes('text') ? 'txt' : 'unknown';
 
-      console.log('Processing file type:', fileType, 'Force OCR:', forceOCR);
+      console.log('Processing file type:', fileType);
 
       // Call the document processing edge function
       const { data: processData, error: processError } = await supabase.functions.invoke('process-document', {
         body: {
           fileUrl: publicUrl,
           fileType: fileType,
-          userId: (await supabase.auth.getUser()).data.user?.id,
-          useOCR: forceOCR
+          userId: (await supabase.auth.getUser()).data.user?.id
         }
       });
 
@@ -124,10 +121,12 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
         setProcessingMethod(processData.metadata?.processingMethod || 'unknown');
         
         const method = processData.metadata?.processingMethod || 'standard';
-        if (method.includes('ocr')) {
-          toast.success("Document processed with OCR!");
-        } else if (method === 'text-extraction') {
-          toast.success("Document processed with text extraction!");
+        if (method === 'vision-api-success') {
+          toast.success("PDF processed successfully with Google Vision API!");
+        } else if (method === 'standard-text-extraction') {
+          toast.success("Document processed with standard text extraction!");
+        } else if (method === 'docx') {
+          toast.success("Word document processed successfully!");
         } else {
           toast.success("Document processed successfully!");
         }
@@ -211,12 +210,6 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
               onClear={clearSelectedFile}
             />
           )}
-
-          <ProcessingOptions
-            fileType={selectedFile?.type || ''}
-            forceOCR={forceOCR}
-            onForceOCRChange={setForceOCR}
-          />
 
           {selectedFile && (
             <Button 
