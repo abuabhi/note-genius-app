@@ -32,8 +32,11 @@ export const EnhancementContent = ({
   onRetry,
   onCancel
 }: EnhancementContentProps) => {
+  // FIXED: Ensure title is always a string and safe to use
+  const safeTitle = title || "Content";
+  
   console.log("🎨 EnhancementContent rendering:", {
-    title,
+    title: safeTitle,
     hasContent: !!content,
     contentLength: content?.length || 0,
     isLoading,
@@ -45,7 +48,7 @@ export const EnhancementContent = ({
     return (
       <LoadingAnimations 
         enhancementType={enhancementType}
-        message={`Generating ${title.toLowerCase()}...`} 
+        message={`Generating ${safeTitle.toLowerCase()}...`} 
       />
     );
   }
@@ -53,9 +56,9 @@ export const EnhancementContent = ({
   if (hasError) {
     return (
       <EnhancementError 
-        error={`Failed to generate ${title.toLowerCase()}`}
+        error={`Failed to generate ${safeTitle.toLowerCase()}`}
         onRetry={() => onRetry?.(enhancementType)}
-        title={`${title} Generation Failed`}
+        title={`${safeTitle} Generation Failed`}
         enhancementType={enhancementType}
       />
     );
@@ -67,9 +70,9 @@ export const EnhancementContent = ({
         <div className="flex flex-col items-center space-y-4">
           <Sparkles className="h-12 w-12 text-mint-400" />
           <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No {title.toLowerCase()} available</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No {safeTitle.toLowerCase()} available</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Generate AI-enhanced content to see {title.toLowerCase()} here
+              Generate AI-enhanced content to see {safeTitle.toLowerCase()} here
             </p>
           </div>
           {onRetry && (
@@ -79,7 +82,7 @@ export const EnhancementContent = ({
               onClick={() => onRetry(enhancementType)}
               className="text-mint-600 hover:text-mint-700 border-mint-200 hover:border-mint-300"
             >
-              <RefreshCw className="mr-2 h-4 w-4" /> Generate {title}
+              <RefreshCw className="mr-2 h-4 w-4" /> Generate {safeTitle}
             </Button>
           )}
         </div>
