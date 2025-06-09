@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,6 +58,33 @@ export const ProcessedContent = ({
       };
     }
     
+    if (processingMethod === 'openai' || processingMethod === 'openai-vision') {
+      return {
+        icon: <Zap className="h-4 w-4 text-blue-600" />,
+        className: "text-blue-700 bg-blue-50 border border-blue-200",
+        title: "Image Processed Successfully with OpenAI Vision",
+        message: "Image was processed using OpenAI Vision API for high-quality OCR with advanced text recognition capabilities. Title and subject were automatically generated using AI analysis."
+      };
+    }
+    
+    if (processingMethod === 'google-vision' || processingMethod === 'google-cloud-vision') {
+      return {
+        icon: <CheckCircle className="h-4 w-4 text-green-600" />,
+        className: "text-green-700 bg-green-50 border border-green-200",
+        title: "Image Processed Successfully with Google Vision API",
+        message: "Image was processed using Google Cloud Vision API for accurate text extraction. Title and subject were automatically generated using AI analysis."
+      };
+    }
+    
+    if (processingMethod === 'bulk-merge') {
+      return {
+        icon: <CheckCircle className="h-4 w-4 text-purple-600" />,
+        className: "text-purple-700 bg-purple-50 border border-purple-200",
+        title: "Multiple PDFs Processed and Merged",
+        message: "Multiple PDF files were processed using AI-powered OCR and merged into a single document. Each file was processed with Google Vision API (primary) and OpenAI fallback."
+      };
+    }
+    
     if (processingMethod === 'google-vision-auth-error') {
       return {
         icon: <AlertCircle className="h-4 w-4 text-orange-600" />,
@@ -98,7 +126,7 @@ export const ProcessedContent = ({
         icon: <AlertCircle className="h-4 w-4 text-red-600" />,
         className: "text-red-700 bg-red-50 border border-red-200",
         title: "Processing Failed",
-        message: "Both Google Vision API and OpenAI Vision API failed to process this PDF. The file may be corrupted, password-protected, or contain only non-text content."
+        message: "Both Google Vision API and OpenAI Vision API failed to process this document. The file may be corrupted, password-protected, or contain only non-text content."
       };
     }
     
@@ -120,11 +148,12 @@ export const ProcessedContent = ({
       };
     }
     
+    // Fallback for unknown methods
     return {
       icon: <Info className="h-4 w-4 text-gray-500" />,
       className: "text-gray-600 bg-gray-50 border border-gray-200",
-      title: `Processing method: ${processingMethod?.replace(/-/g, ' ')}`,
-      message: null
+      title: `Processing method: ${processingMethod?.replace(/-/g, ' ') || 'Unknown'}`,
+      message: "Document was processed successfully."
     };
   };
 
