@@ -7,6 +7,7 @@ interface SingleImageCaptureProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   onImageCaptured: (imageUrl: string) => void;
+  onMultipleImages: (files: File[]) => void;
   isDragOver: boolean;
   onDragOver: (e: React.DragEvent) => void;
   onDragLeave: (e: React.DragEvent) => void;
@@ -17,6 +18,7 @@ export const SingleImageCapture = ({
   activeTab,
   setActiveTab,
   onImageCaptured,
+  onMultipleImages,
   isDragOver,
   onDragOver,
   onDragLeave,
@@ -45,10 +47,13 @@ export const SingleImageCapture = ({
         <TabsContent value="upload" className="min-h-[300px] flex items-center justify-center">
           <div className="w-full">
             <div className={`transition-all duration-200 ${isDragOver ? 'border-purple-500 bg-purple-50' : ''}`}>
-              <ImageUpload onImageUploaded={onImageCaptured} />
+              <ImageUpload 
+                onImageUploaded={onImageCaptured} 
+                onMultipleImagesUploaded={onMultipleImages}
+              />
             </div>
             <p className="text-center text-sm text-gray-500 mt-4">
-              💡 Tip: Drop a single image for standard processing, or multiple images for batch processing
+              💡 Tip: Select or drop multiple images for batch processing (up to 3 concurrent)
             </p>
           </div>
         </TabsContent>

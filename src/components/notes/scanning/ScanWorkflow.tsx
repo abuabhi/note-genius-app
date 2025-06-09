@@ -177,7 +177,7 @@ export const ScanWorkflow = ({
               Drop your images here to scan
             </p>
             <p className="text-sm text-purple-500">
-              Single image: Standard processing • Multiple images: Batch processing
+              Single image: Standard processing • Multiple images: Batch processing (up to 3 concurrent)
             </p>
           </div>
         </div>
@@ -188,6 +188,7 @@ export const ScanWorkflow = ({
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           onImageCaptured={handleSingleImage}
+          onMultipleImages={handleMultipleImages}
           isDragOver={isDragOver}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}

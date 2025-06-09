@@ -5,21 +5,31 @@ import { Upload } from "lucide-react";
 
 interface ImageUploadProps {
   onImageUploaded: (imageUrl: string) => void;
+  onMultipleImagesUploaded?: (files: File[]) => void;
 }
 
-export const ImageUpload = ({ onImageUploaded }: ImageUploadProps) => {
+export const ImageUpload = ({ onImageUploaded, onMultipleImagesUploaded }: ImageUploadProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+    const files = Array.from(e.target.files || []);
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    
+    if (imageFiles.length === 0) return;
+
+    if (imageFiles.length === 1) {
+      // Single image processing
+      const file = imageFiles[0];
       const reader = new FileReader();
       reader.onload = (event) => {
         const imageUrl = event.target?.result as string;
         onImageUploaded(imageUrl);
       };
       reader.readAsDataURL(file);
+    } else if (onMultipleImagesUploaded) {
+      // Multiple images - batch processing
+      onMultipleImagesUploaded(imageFiles);
     }
   };
 
@@ -43,7 +53,10 @@ export const ImageUpload = ({ onImageUploaded }: ImageUploadProps) => {
     const files = Array.from(e.dataTransfer.files);
     const imageFiles = files.filter(file => file.type.startsWith('image/'));
     
-    if (imageFiles.length > 0) {
+    if (imageFiles.length === 0) return;
+
+    if (imageFiles.length === 1) {
+      // Single image processing
       const file = imageFiles[0];
       const reader = new FileReader();
       reader.onload = (event) => {
@@ -51,6 +64,9 @@ export const ImageUpload = ({ onImageUploaded }: ImageUploadProps) => {
         onImageUploaded(imageUrl);
       };
       reader.readAsDataURL(file);
+    } else if (onMultipleImagesUploaded) {
+      // Multiple images - batch processing
+      onMultipleImagesUploaded(imageFiles);
     }
   };
 
@@ -74,15 +90,18 @@ export const ImageUpload = ({ onImageUploaded }: ImageUploadProps) => {
           <p className={`text-sm font-medium transition-colors ${
             isDragOver ? 'text-mint-700' : 'text-mint-700'
           }`}>
-            {isDragOver ? 'Drop your image here' : 'Click to select an image or drag and drop'}
+            {isDragOver ? 'Drop your images here' : 'Click to select images or drag and drop'}
           </p>
-          <p className="text-xs text-mint-500 mt-2">Supports PNG, JPG, JPEG</p>
+          <p className="text-xs text-mint-500 mt-2">
+            Supports PNG, JPG, JPEG • Single image: Standard processing • Multiple images: Batch processing
+          </p>
         </CardContent>
       </Card>
       <input
         type="file"
         ref={fileInputRef}
         accept="image/*"
+        multiple
         onChange={handleFileChange}
         className="hidden"
       />
