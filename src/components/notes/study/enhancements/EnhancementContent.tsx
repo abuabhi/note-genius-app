@@ -41,24 +41,30 @@ export const EnhancementContent = ({
     contentPreview: content?.substring(0, 100)
   });
 
-  // Determine if content should be rendered as Markdown
+  // FIXED: Updated markdown detection to include all enhanced content types
   const getIsMarkdown = (type: string): boolean => {
     const markdownEnhancements = [
-      'summary',
+      // OpenAI enhancement types that generate markdown
       'summarize',
-      'extract-key-points',
-      'keyPoints', 
-      'convert-to-markdown',
-      'markdown',
+      'extract-key-points', 
       'improve-clarity',
+      'convert-to-markdown',
+      // Content type mappings
+      'summary',
+      'keyPoints', 
       'improved',
-      'original++',
-      // Legacy support
+      'markdown',
+      // Legacy and alternative names
       'key-points',
-      'markdown-format'
+      'markdown-format',
+      'clarity',
+      'original++',
+      // All enhanced content should be markdown except original
+      'enhanced'
     ];
     
-    return markdownEnhancements.includes(type.toLowerCase());
+    const lowerType = type.toLowerCase();
+    return markdownEnhancements.includes(lowerType) || lowerType !== 'original';
   };
 
   const isMarkdown = getIsMarkdown(enhancementType);
@@ -66,7 +72,8 @@ export const EnhancementContent = ({
   console.log("🔍 Content rendering decision:", {
     enhancementType,
     isMarkdown,
-    willUseMarkdownRenderer: isMarkdown
+    willUseMarkdownRenderer: isMarkdown,
+    typeCheck: enhancementType.toLowerCase()
   });
 
   if (isLoading) {

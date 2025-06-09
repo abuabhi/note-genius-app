@@ -71,12 +71,14 @@ export const EnhancementDisplayPanel = ({
     }
   };
 
+  // FIXED: Corrected mapping to match OpenAI enhancement types and markdown detection
   const getEnhancementTypeForRetry = (contentType: EnhancementContentType): string => {
     switch (contentType) {
       case 'summary': return 'summarize';
       case 'keyPoints': return 'extract-key-points';
       case 'improved': return 'improve-clarity';
       case 'markdown': return 'convert-to-markdown';
+      case 'original': return 'original';
       default: return 'summarize';
     }
   };
