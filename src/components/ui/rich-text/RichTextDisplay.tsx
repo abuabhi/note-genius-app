@@ -26,35 +26,62 @@ export const RichTextDisplay = ({
     // Remove auto-generated title patterns if requested
     if (removeTitle) {
       const titlePatterns = [
-        // Markdown headers
+        // Markdown headers with specific note references
         /^#+\s*Analysis of Notes on .+?\n/i,
+        /^#+\s*Summary of Notes on .+?\n/i,
         /^#+\s*Summary of .+?\n/i,
         /^#+\s*Key Points of .+?\n/i,
+        /^#+\s*Key Points from .+?\n/i,
         /^#+\s*Improved .+?\n/i,
         /^#+\s*Markdown Version of .+?\n/i,
+        /^#+\s*Enhanced .+?\n/i,
         /^#+\s*Formal vs Informal Language\n/i,
         /^#+\s*.+? vs .+?\n/i,
-        /^#+\s*Summary\s*\n/i,
-        /^#+\s*Key Points\s*\n/i,
-        /^#+\s*Improved Clarity\s*\n/i,
-        // Plain text titles
+        
+        // Generic markdown headers
+        /^#+\s*Summary\s*:?\s*\n/i,
+        /^#+\s*Key Points\s*:?\s*\n/i,
+        /^#+\s*Improved Clarity\s*:?\s*\n/i,
+        /^#+\s*Analysis\s*:?\s*\n/i,
+        /^#+\s*Overview\s*:?\s*\n/i,
+        /^#+\s*Notes\s*:?\s*\n/i,
+        
+        // Plain text titles with specific note references
         /^Analysis of Notes on .+?\n/i,
+        /^Summary of Notes on .+?\n/i,
         /^Summary of .+?\n/i,
         /^Key Points of .+?\n/i,
+        /^Key Points from .+?\n/i,
         /^Improved .+?\n/i,
         /^Markdown Version of .+?\n/i,
+        /^Enhanced .+?\n/i,
         /^Formal vs Informal Language\n/i,
         /^.+? vs .+?\n/i,
-        /^Summary\s*\n/i,
-        /^Key Points\s*\n/i,
-        /^Improved Clarity\s*\n/i,
-        // Common AI-generated title patterns
-        /^## Summary\n/i,
-        /^## Key Points\n/i,
-        /^## Improved Clarity\n/i,
-        /^# Summary\n/i,
-        /^# Key Points\n/i,
-        /^# Improved Clarity\n/i,
+        
+        // Generic plain text titles
+        /^Summary\s*:?\s*\n/i,
+        /^Key Points\s*:?\s*\n/i,
+        /^Improved Clarity\s*:?\s*\n/i,
+        /^Analysis\s*:?\s*\n/i,
+        /^Overview\s*:?\s*\n/i,
+        /^Notes\s*:?\s*\n/i,
+        
+        // AI-generated patterns with double hash
+        /^## Summary\s*:?\s*\n/i,
+        /^## Key Points\s*:?\s*\n/i,
+        /^## Improved Clarity\s*:?\s*\n/i,
+        /^## Analysis\s*:?\s*\n/i,
+        /^## Overview\s*:?\s*\n/i,
+        
+        // AI-generated patterns with single hash
+        /^# Summary\s*:?\s*\n/i,
+        /^# Key Points\s*:?\s*\n/i,
+        /^# Improved Clarity\s*:?\s*\n/i,
+        /^# Analysis\s*:?\s*\n/i,
+        /^# Overview\s*:?\s*\n/i,
+        
+        // Remove lines that are just the note title repeated
+        /^.{1,100}\n(?=\n|$)/,
       ];
       
       titlePatterns.forEach(pattern => {

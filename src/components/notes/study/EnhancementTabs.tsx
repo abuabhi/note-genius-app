@@ -120,6 +120,7 @@ export const EnhancementTabs = ({
         content={originalContent} 
         fontSize={fontSize} 
         textAlign={textAlign}
+        removeTitle={true}
       />
     );
   }
@@ -189,11 +190,14 @@ export const EnhancementTabs = ({
         <TabsContent value="original" className="m-0 h-full">
           <div className="h-full">
             <EnhancementTabHeader title="Original Note" />
-            <RichTextDisplay 
-              content={originalContent} 
-              fontSize={fontSize} 
-              textAlign={textAlign}
-            />
+            <div className="px-6 py-4">
+              <RichTextDisplay 
+                content={originalContent} 
+                fontSize={fontSize} 
+                textAlign={textAlign}
+                removeTitle={true}
+              />
+            </div>
           </div>
         </TabsContent>
         
@@ -206,6 +210,7 @@ export const EnhancementTabs = ({
                 title="Summary"
                 fontSize={fontSize}
                 textAlign={textAlign}
+                isMarkdown={true}
                 isLoading={isGeneratingSummary || isLoading || tabLoadingState.summary}
                 hasError={hasSummaryError}
                 enhancementType="summary"
@@ -224,6 +229,7 @@ export const EnhancementTabs = ({
                 title="Key Points"
                 fontSize={fontSize}
                 textAlign={textAlign}
+                isMarkdown={true}
                 isLoading={isLoading || tabLoadingState.keyPoints}
                 enhancementType="keyPoints"
                 onRetry={handleRetry}
@@ -259,6 +265,7 @@ export const EnhancementTabs = ({
                 title="Improved Clarity"
                 fontSize={fontSize}
                 textAlign={textAlign}
+                isMarkdown={true}
                 isLoading={isLoading || tabLoadingState.improved}
                 enhancementType="improved"
                 onRetry={handleRetry}

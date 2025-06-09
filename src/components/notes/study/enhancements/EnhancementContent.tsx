@@ -41,7 +41,8 @@ export const EnhancementContent = ({
     contentLength: content?.length || 0,
     isLoading,
     hasError,
-    enhancementType
+    enhancementType,
+    isMarkdown
   });
 
   if (isLoading) {
@@ -94,7 +95,14 @@ export const EnhancementContent = ({
   const aiEnhancementTypes = ['summary', 'keyPoints', 'improved', 'markdown'];
   const isAIGenerated = aiEnhancementTypes.includes(enhancementType);
   
-  // CRITICAL FIX: Always use UnifiedContentRenderer for AI-generated content
+  console.log("🔍 EnhancementContent routing decision:", {
+    enhancementType,
+    isAIGenerated,
+    isMarkdown,
+    shouldUseUnifiedRenderer: isAIGenerated || isMarkdown
+  });
+  
+  // FORCE MARKDOWN RENDERING: Always use UnifiedContentRenderer for AI-generated content OR if explicitly marked as markdown
   if (isAIGenerated || isMarkdown) {
     return (
       <div className="animate-fade-in px-6 py-4">
@@ -108,7 +116,7 @@ export const EnhancementContent = ({
     );
   }
   
-  // For original content, use the legacy renderer with padding
+  // For original content only, use the legacy renderer with padding
   return (
     <div className="animate-fade-in px-6 py-4">
       <EnhancementContentRenderer
