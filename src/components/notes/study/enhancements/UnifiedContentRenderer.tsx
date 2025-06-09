@@ -34,7 +34,7 @@ export const UnifiedContentRenderer = ({
 
   if (!hasEnhancementMarkers) {
     // Regular markdown content - FORCE ReactMarkdown rendering
-    console.log("🔍 Rendering regular markdown content");
+    console.log("🔍 Rendering regular markdown content with ReactMarkdown");
     return (
       <div 
         className={`unified-content-renderer ${className}`}
@@ -45,6 +45,7 @@ export const UnifiedContentRenderer = ({
       >
         <ReactMarkdown 
           remarkPlugins={[remarkGfm]}
+          skipHtml={false}
           components={{
             h1: ({ children, ...props }) => (
               <h1 {...props} className="text-2xl font-bold text-gray-900 mb-4 mt-6 leading-tight">
@@ -147,6 +148,7 @@ export const UnifiedContentRenderer = ({
               
               <ReactMarkdown 
                 remarkPlugins={[remarkGfm]}
+                skipHtml={false}
                 components={{
                   h1: ({ children, ...props }) => (
                     <h1 {...props} className="text-lg font-bold text-gray-800 mb-2 mt-3">
@@ -205,6 +207,7 @@ export const UnifiedContentRenderer = ({
             <div key={index} className="mb-4">
               <ReactMarkdown 
                 remarkPlugins={[remarkGfm]}
+                skipHtml={false}
                 components={{
                   h1: ({ children, ...props }) => (
                     <h1 {...props} className="text-2xl font-bold text-gray-900 mb-4 mt-6 leading-tight">

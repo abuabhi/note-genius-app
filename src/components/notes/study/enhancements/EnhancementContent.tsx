@@ -99,7 +99,8 @@ export const EnhancementContent = ({
     enhancementType,
     isAIGenerated,
     isMarkdown,
-    shouldUseUnifiedRenderer: isAIGenerated || isMarkdown
+    shouldUseUnifiedRenderer: isAIGenerated || isMarkdown,
+    contentToRender: content?.substring(0, 200)
   });
   
   // FORCE MARKDOWN RENDERING for ALL AI-generated content
