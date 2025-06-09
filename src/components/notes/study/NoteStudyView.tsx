@@ -62,12 +62,21 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
     isProcessing
   } = useNoteEnrichment(currentNote);
 
-  // Simplified enhancement handler
+  // CRITICAL FIX: Only allow manual enhancement requests, never automatic
   const handleEnhanceContent = async (enhancementType: string) => {
+    console.log("🎯 Manual enhancement requested:", enhancementType);
+    
     try {
       if (hasReachedLimit()) {
         toast.error('You have reached your monthly enhancement limit');
         return;
+      }
+
+      // CRITICAL: Set status to generating BEFORE calling enrichNote
+      if (enhancementType === 'summarize') {
+        await onNoteUpdate({
+          summary_status: 'generating'
+        });
       }
 
       const result = await enrichNote(
@@ -78,17 +87,41 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
       );
 
       if (result.success) {
-        await onNoteUpdate({
-          [getEnhancementFieldName(enhancementType)]: result.content,
-          [`${getEnhancementFieldName(enhancementType)}_generated_at`]: new Date().toISOString(),
+        const fieldName = getEnhancementFieldName(enhancementType);
+        const updateData: any = {
+          [fieldName]: result.content,
+          [`${fieldName}_generated_at`]: new Date().toISOString(),
           enhancement_type: getEnhancementType(enhancementType) as 'clarity' | 'other' | 'spelling-grammar'
-        });
+        };
+
+        // CRITICAL: Set status to completed for summary
+        if (enhancementType === 'summarize') {
+          updateData.summary_status = 'completed';
+        }
+
+        await onNoteUpdate(updateData);
         
         forceRefresh();
         toast.success('Enhancement completed successfully!');
+      } else {
+        // CRITICAL: Set status to failed on error
+        if (enhancementType === 'summarize') {
+          await onNoteUpdate({
+            summary_status: 'failed'
+          });
+        }
+        toast.error('Failed to enhance note');
       }
     } catch (error) {
       console.error('Error enhancing content:', error);
+      
+      // CRITICAL: Set status to failed on error
+      if (enhancementType === 'summarize') {
+        await onNoteUpdate({
+          summary_status: 'failed'
+        });
+      }
+      
       toast.error('Failed to enhance note');
     }
   };
@@ -103,8 +136,9 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
     setActiveContentType(type);
   };
 
-  // Handle enhancement from header
+  // Handle enhancement from header - FIXED: no automatic generation
   const handleEnhancement = (enhancedContent: string, enhancementType?: any) => {
+    console.log("📝 Enhancement completed, refreshing view");
     forceRefresh();
   };
 
