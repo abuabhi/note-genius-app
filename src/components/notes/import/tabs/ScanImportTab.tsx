@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +30,32 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
   const [isAiGenerated, setIsAiGenerated] = useState(false);
   const [analysisConfidence, setAnalysisConfidence] = useState<number>(0);
   const [currentStep, setCurrentStep] = useState<'select' | 'process' | 'review' | 'batch'>('select');
+
+  const uploadImageToStorage = async (file: File | string): Promise<string> => {
+    let fileToUpload: File;
+    
+    if (typeof file === 'string') {
+      // Convert data URL to file
+      const response = await fetch(file);
+      const blob = await response.blob();
+      fileToUpload = new File([blob], 'image.png', { type: blob.type });
+    } else {
+      fileToUpload = file;
+    }
+
+    const fileName = `${Date.now()}-${fileToUpload.name}`;
+    const { data, error } = await supabase.storage
+      .from('documents')
+      .upload(fileName, fileToUpload);
+
+    if (error) throw error;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('documents')
+      .getPublicUrl(fileName);
+
+    return publicUrl;
+  };
 
   // Add drag and drop functionality
   const {
