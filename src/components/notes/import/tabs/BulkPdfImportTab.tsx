@@ -235,13 +235,13 @@ export const BulkPdfImportTab = ({ onSaveNote, isPremiumUser }: BulkPdfImportTab
           pinned: false,
           archived: false,
           date: new Date().toISOString().split('T')[0],
-          category: 'Documents'
+          category: 'Documents' // Use Documents for merged content since it contains multiple subjects
         };
 
         await onSaveNote(mergedNote);
         toast.success("PDFs merged and saved as one note");
       } else {
-        // Create separate notes
+        // Create separate notes - FIXED: Use AI-generated subject as category
         for (const file of completedFiles) {
           const note: Omit<Note, 'id'> = {
             title: file.suggestedTitle || file.name.replace('.pdf', ''),
@@ -255,7 +255,7 @@ export const BulkPdfImportTab = ({ onSaveNote, isPremiumUser }: BulkPdfImportTab
             pinned: false,
             archived: false,
             date: new Date().toISOString().split('T')[0],
-            category: 'Documents'
+            category: file.suggestedSubject || 'Uncategorized' // FIXED: Use AI-generated subject instead of hardcoded "Documents"
           };
 
           await onSaveNote(note);
