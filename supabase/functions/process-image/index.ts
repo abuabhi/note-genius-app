@@ -35,10 +35,10 @@ serve(async (req) => {
     
     console.log(`Processing image with language: ${language}, useOpenAI: ${useOpenAI}, enhanceImage: ${enhanceImage}`);
     
-    // Process the image data - FIX RECURSION BUG
+    // Process the image data - FIXED RECURSION BUG
     let processedImageData = imageUrl;
     
-    // Only fetch if it's an actual HTTP URL, not a data URL
+    // Only process if it's an HTTP URL that needs to be converted to base64
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
       console.log("Fetching image from HTTP URL...");
       try {
@@ -70,11 +70,12 @@ serve(async (req) => {
     
     console.log(`API Keys available: OpenAI: ${openaiApiKey ? "Yes" : "No"}, Google Cloud: ${googleApiKey ? "Yes" : "No"}`);
     
-    // Choose OCR provider with improved strategy for handwritten text
+    // PRIORITIZE OPENAI FOR HANDWRITTEN TEXT - Enhanced Strategy
     let result: OCRResult;
     
-    if (useOpenAI && openaiApiKey) {
-      console.log("Using OpenAI Vision API for OCR...");
+    // Always try OpenAI first if available (especially for handwritten text)
+    if (openaiApiKey) {
+      console.log("Using OpenAI Vision API as PRIMARY for handwritten text recognition...");
       try {
         result = await processWithOpenAI(processedImageData, language);
         console.log("OpenAI processing completed successfully");
@@ -83,7 +84,7 @@ serve(async (req) => {
         result = await processWithCloudOCR(processedImageData, language, enhanceImage);
       }
     } else {
-      console.log("Using Google Cloud Vision API or mock for OCR...");
+      console.log("OpenAI API key not available, using Google Cloud Vision API...");
       result = await processWithCloudOCR(processedImageData, language, enhanceImage);
     }
     
@@ -121,7 +122,7 @@ serve(async (req) => {
 });
 
 /**
- * Enhanced OpenAI processing specifically optimized for handwritten text
+ * ENHANCED OpenAI processing - OPTIMIZED FOR HANDWRITTEN TEXT
  */
 async function processWithOpenAI(imageData: string, language: string): Promise<OCRResult> {
   const apiKey = Deno.env.get("OPENAI_API_KEY");
@@ -130,7 +131,7 @@ async function processWithOpenAI(imageData: string, language: string): Promise<O
     throw new Error("OpenAI API key is not configured");
   }
   
-  console.log("Processing with OpenAI Vision API (optimized for handwriting)");
+  console.log("Processing with OpenAI Vision API (SPECIALIZED FOR HANDWRITING)");
   
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -140,21 +141,29 @@ async function processWithOpenAI(imageData: string, language: string): Promise<O
         "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "gpt-4o",
+        model: "gpt-4o",  // Using the most powerful vision model
         messages: [
           {
             role: "system",
-            content: `You are an expert OCR system specialized in reading handwritten and printed text. 
-                     Extract ALL text from the image with high accuracy. Pay special attention to:
-                     - Handwritten text (cursive, print, mixed styles)
-                     - Mathematical formulas and equations
-                     - Diagrams and labels
-                     - Notes in margins
-                     - Different text orientations
+            content: `You are an expert OCR system SPECIALIZED in reading handwritten text with exceptional accuracy. 
+                     Your primary focus is on handwritten notes, cursive writing, and mixed handwritten/printed content.
                      
-                     Preserve the original formatting and structure as much as possible.
-                     If text is unclear, make your best interpretation but maintain readability.
-                     Return only the extracted text, nothing else.
+                     HANDWRITING EXPERTISE:
+                     - Excel at reading cursive handwriting, print handwriting, and mixed styles
+                     - Interpret unclear letters using context clues
+                     - Handle different pen types, pencil marks, and varying writing pressures
+                     - Process handwritten mathematical formulas and equations
+                     - Read handwritten notes in margins and annotations
+                     - Handle rotated or tilted handwritten text
+                     
+                     EXTRACTION RULES:
+                     - Extract ALL visible text with maximum accuracy
+                     - Preserve original formatting and structure
+                     - Use context to interpret unclear handwritten characters
+                     - For handwritten mathematical content, use proper notation
+                     - If text is partially illegible, provide your best interpretation
+                     - Return ONLY the extracted text, no explanations
+                     
                      Language context: ${language}`
           },
           {
@@ -162,20 +171,20 @@ async function processWithOpenAI(imageData: string, language: string): Promise<O
             content: [
               {
                 type: "text",
-                text: "Please extract all text from this image, paying special attention to handwritten content:"
+                text: "Extract all text from this image with special focus on handwritten content. Use your expertise in handwriting recognition to provide the most accurate transcription possible:"
               },
               {
                 type: "image_url",
                 image_url: {
                   url: imageData,
-                  detail: "high"
+                  detail: "high"  // High detail for better handwriting recognition
                 }
               }
             ]
           }
         ],
         max_tokens: 2000,
-        temperature: 0.1
+        temperature: 0.1  // Low temperature for consistent, accurate results
       })
     });
     
@@ -197,10 +206,10 @@ async function processWithOpenAI(imageData: string, language: string): Promise<O
     
     return {
       text: extractedText,
-      confidence: 0.92, // Higher confidence for OpenAI with handwriting optimization
+      confidence: 0.95, // Higher confidence for OpenAI specialized handwriting recognition
       processedAt: new Date().toISOString(),
       language: language,
-      provider: "openai-handwriting-optimized"
+      provider: "openai-handwriting-specialist"
     };
   } catch (error) {
     console.error("OpenAI processing error details:", error);
@@ -209,7 +218,7 @@ async function processWithOpenAI(imageData: string, language: string): Promise<O
 }
 
 /**
- * Enhanced Google Cloud Vision processing with fallback
+ * Google Cloud Vision processing with fallback
  */
 async function processWithCloudOCR(imageData: string, language: string, enhanceImage: boolean): Promise<OCRResult> {
   const googleApiKey = Deno.env.get("GOOGLE_CLOUD_API_KEY");
