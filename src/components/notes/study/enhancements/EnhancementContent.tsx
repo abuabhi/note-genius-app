@@ -32,7 +32,6 @@ export const EnhancementContent = ({
   onRetry,
   onCancel
 }: EnhancementContentProps) => {
-  // FIXED: Ensure title is always a string and safe to use
   const safeTitle = title || "Content";
   
   console.log("🎨 EnhancementContent rendering:", {
@@ -42,7 +41,8 @@ export const EnhancementContent = ({
     isLoading,
     hasError,
     enhancementType,
-    isMarkdown
+    isMarkdown,
+    contentPreview: content?.substring(0, 100)
   });
 
   if (isLoading) {
@@ -91,7 +91,7 @@ export const EnhancementContent = ({
     );
   }
 
-  // AI-generated enhancement types that should always be treated as markdown
+  // AI-generated enhancement types that should ALWAYS be treated as markdown
   const aiEnhancementTypes = ['summary', 'keyPoints', 'improved', 'markdown'];
   const isAIGenerated = aiEnhancementTypes.includes(enhancementType);
   
@@ -102,8 +102,9 @@ export const EnhancementContent = ({
     shouldUseUnifiedRenderer: isAIGenerated || isMarkdown
   });
   
-  // FORCE MARKDOWN RENDERING: Always use UnifiedContentRenderer for AI-generated content OR if explicitly marked as markdown
+  // FORCE MARKDOWN RENDERING for ALL AI-generated content
   if (isAIGenerated || isMarkdown) {
+    console.log("✅ Using UnifiedContentRenderer for markdown content");
     return (
       <div className="animate-fade-in px-6 py-4">
         <UnifiedContentRenderer 
@@ -117,6 +118,7 @@ export const EnhancementContent = ({
   }
   
   // For original content only, use the legacy renderer with padding
+  console.log("📝 Using EnhancementContentRenderer for original content");
   return (
     <div className="animate-fade-in px-6 py-4">
       <EnhancementContentRenderer

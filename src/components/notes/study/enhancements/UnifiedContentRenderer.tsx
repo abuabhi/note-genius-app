@@ -19,11 +19,22 @@ export const UnifiedContentRenderer = ({
   textAlign,
   className = ''
 }: UnifiedContentRendererProps) => {
+  console.log("🎨 UnifiedContentRenderer rendering:", {
+    contentLength: content?.length || 0,
+    contentPreview: content?.substring(0, 100),
+    hasContent: !!content
+  });
+
+  if (!content || content.trim() === '') {
+    return <div className="text-gray-500 italic">No content available</div>;
+  }
+
   // Check if content has AI enhancement markers
   const hasEnhancementMarkers = content.includes('[AI_ENHANCED]') && content.includes('[/AI_ENHANCED]');
 
   if (!hasEnhancementMarkers) {
-    // Regular markdown content without AI markers
+    // Regular markdown content - FORCE ReactMarkdown rendering
+    console.log("🔍 Rendering regular markdown content");
     return (
       <div 
         className={`unified-content-renderer ${className}`}
@@ -36,57 +47,57 @@ export const UnifiedContentRenderer = ({
           remarkPlugins={[remarkGfm]}
           components={{
             h1: ({ children, ...props }) => (
-              <h1 {...props} className="text-2xl font-bold text-gray-900 mb-6 mt-8 leading-tight">
+              <h1 {...props} className="text-2xl font-bold text-gray-900 mb-4 mt-6 leading-tight">
                 {children}
               </h1>
             ),
             h2: ({ children, ...props }) => (
-              <h2 {...props} className="text-xl font-bold text-gray-900 mb-5 mt-7 leading-tight">
+              <h2 {...props} className="text-xl font-bold text-gray-900 mb-3 mt-5 leading-tight">
                 {children}
               </h2>
             ),
             h3: ({ children, ...props }) => (
-              <h3 {...props} className="text-lg font-bold text-gray-900 mb-4 mt-6 leading-tight">
+              <h3 {...props} className="text-lg font-bold text-gray-900 mb-3 mt-4 leading-tight">
                 {children}
               </h3>
             ),
             h4: ({ children, ...props }) => (
-              <h4 {...props} className="text-base font-bold text-gray-900 mb-3 mt-5 leading-tight">
+              <h4 {...props} className="text-base font-bold text-gray-900 mb-2 mt-3 leading-tight">
                 {children}
               </h4>
             ),
             p: ({ children, ...props }) => (
-              <p {...props} className="text-gray-700 leading-7 mb-5 text-base">
+              <p {...props} className="text-gray-700 leading-relaxed mb-4">
                 {children}
               </p>
             ),
             ul: ({ children, ...props }) => (
-              <ul {...props} className="mb-6 space-y-2 pl-6 list-disc">
+              <ul {...props} className="mb-4 space-y-2 pl-6 list-disc">
                 {children}
               </ul>
             ),
             ol: ({ children, ...props }) => (
-              <ol {...props} className="mb-6 space-y-2 pl-6 list-decimal">
+              <ol {...props} className="mb-4 space-y-2 pl-6 list-decimal">
                 {children}
               </ol>
             ),
             li: ({ children, ...props }) => (
-              <li {...props} className="text-gray-700 mb-2 leading-7 marker:text-mint-500 marker:font-medium">
+              <li {...props} className="text-gray-700 leading-relaxed marker:text-mint-500">
                 {children}
               </li>
             ),
             strong: ({ children, ...props }) => (
-              <strong {...props} className="text-gray-900 font-semibold">
+              <strong {...props} className="font-semibold text-gray-900">
                 {children}
               </strong>
             ),
             em: ({ children, ...props }) => (
-              <em {...props} className="text-gray-700 italic">
+              <em {...props} className="italic text-gray-700">
                 {children}
               </em>
             ),
             blockquote: ({ children, ...props }) => (
-              <blockquote {...props} className="border-l-4 border-mint-200 bg-mint-50/30 p-4 my-6 rounded-lg text-gray-600">
+              <blockquote {...props} className="border-l-4 border-mint-200 bg-mint-50/30 p-4 my-4 rounded-lg text-gray-600">
                 {children}
               </blockquote>
             ),
@@ -96,7 +107,7 @@ export const UnifiedContentRenderer = ({
               </code>
             ),
             pre: ({ children, ...props }) => (
-              <pre {...props} className="bg-gray-50 border border-gray-200 p-4 rounded-lg my-6 overflow-x-auto">
+              <pre {...props} className="bg-gray-50 border border-gray-200 p-4 rounded-lg my-4 overflow-x-auto">
                 {children}
               </pre>
             )
@@ -126,102 +137,66 @@ export const UnifiedContentRenderer = ({
           
           if (!enhancedText) return null;
           
-          // Determine enhancement type for styling
-          const isStudyTip = enhancedText.includes('Study Tip') || enhancedText.includes('Remember:') || enhancedText.includes('Tip:');
-          const isExample = enhancedText.includes('Example:') || enhancedText.includes('Real-World');
-          
-          // Choose styling based on enhancement type
-          let containerClasses = "my-5 p-5 rounded-lg border-l-4 relative overflow-hidden transition-all duration-200 hover:shadow-sm";
-          let iconElement = null;
-          
-          if (isStudyTip) {
-            containerClasses += " bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-400";
-            iconElement = (
-              <div className="flex items-center gap-2 mb-3 opacity-75">
-                <div className="flex items-center justify-center w-5 h-5 bg-white/60 rounded-full">
-                  <Lightbulb className="w-3 h-3 text-amber-600" />
-                </div>
-                <span className="text-xs font-medium text-amber-700 uppercase tracking-wide">Study Tip</span>
-              </div>
-            );
-          } else if (isExample) {
-            containerClasses += " bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-400";
-            iconElement = (
-              <div className="flex items-center gap-2 mb-3 opacity-75">
-                <span className="text-xs font-medium text-blue-700 uppercase tracking-wide">Example</span>
-              </div>
-            );
-          } else {
-            containerClasses += " bg-gradient-to-r from-mint-50 to-emerald-50 border-mint-400";
-          }
-          
+          // Enhanced content block with styling
           return (
-            <div key={index} className={containerClasses}>
-              {iconElement}
-              
-              {/* Enhanced content with proper markdown rendering */}
-              <div className="relative">
-                <ReactMarkdown 
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    h1: ({ children, ...props }) => (
-                      <h1 {...props} className="text-lg font-bold text-gray-800 mb-3 mt-4 leading-tight">
-                        {children}
-                      </h1>
-                    ),
-                    h2: ({ children, ...props }) => (
-                      <h2 {...props} className="text-base font-bold text-gray-800 mb-3 mt-4 leading-tight">
-                        {children}
-                      </h2>
-                    ),
-                    h3: ({ children, ...props }) => (
-                      <h3 {...props} className="text-sm font-bold text-gray-800 mb-2 mt-3 leading-tight">
-                        {children}
-                      </h3>
-                    ),
-                    h4: ({ children, ...props }) => (
-                      <h4 {...props} className="text-sm font-bold text-gray-800 mb-2 mt-3 leading-tight">
-                        {children}
-                      </h4>
-                    ),
-                    p: ({ children, ...props }) => (
-                      <p {...props} className="text-gray-700 leading-6 mb-3 text-sm">
-                        {children}
-                      </p>
-                    ),
-                    ul: ({ children, ...props }) => (
-                      <ul {...props} className="mb-4 space-y-1 pl-4 list-disc">
-                        {children}
-                      </ul>
-                    ),
-                    ol: ({ children, ...props }) => (
-                      <ol {...props} className="mb-4 space-y-1 pl-4 list-decimal">
-                        {children}
-                      </ol>
-                    ),
-                    li: ({ children, ...props }) => (
-                      <li {...props} className="text-gray-700 mb-1 leading-6 text-sm marker:text-mint-600 marker:font-medium">
-                        {children}
-                      </li>
-                    ),
-                    strong: ({ children, ...props }) => (
-                      <strong {...props} className="text-gray-800 font-semibold">
-                        {children}
-                      </strong>
-                    ),
-                    em: ({ children, ...props }) => (
-                      <em {...props} className="text-gray-700 italic">
-                        {children}
-                      </em>
-                    )
-                  }}
-                >
-                  {enhancedText}
-                </ReactMarkdown>
+            <div key={index} className="my-4 p-4 rounded-lg border-l-4 border-mint-400 bg-gradient-to-r from-mint-50 to-emerald-50">
+              <div className="flex items-center gap-2 mb-3 opacity-75">
+                <Lightbulb className="w-3 h-3 text-mint-600" />
+                <span className="text-xs font-medium text-mint-700 uppercase tracking-wide">Enhanced</span>
               </div>
               
-              {/* Subtle decorative element */}
-              <div className="absolute top-0 right-0 w-12 h-12 bg-gradient-to-bl from-white/20 to-transparent rounded-bl-full pointer-events-none"></div>
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  h1: ({ children, ...props }) => (
+                    <h1 {...props} className="text-lg font-bold text-gray-800 mb-2 mt-3">
+                      {children}
+                    </h1>
+                  ),
+                  h2: ({ children, ...props }) => (
+                    <h2 {...props} className="text-base font-bold text-gray-800 mb-2 mt-3">
+                      {children}
+                    </h2>
+                  ),
+                  h3: ({ children, ...props }) => (
+                    <h3 {...props} className="text-sm font-bold text-gray-800 mb-2 mt-2">
+                      {children}
+                    </h3>
+                  ),
+                  p: ({ children, ...props }) => (
+                    <p {...props} className="text-gray-700 leading-relaxed mb-3 text-sm">
+                      {children}
+                    </p>
+                  ),
+                  ul: ({ children, ...props }) => (
+                    <ul {...props} className="mb-3 space-y-1 pl-4 list-disc">
+                      {children}
+                    </ul>
+                  ),
+                  ol: ({ children, ...props }) => (
+                    <ol {...props} className="mb-3 space-y-1 pl-4 list-decimal">
+                      {children}
+                    </ol>
+                  ),
+                  li: ({ children, ...props }) => (
+                    <li {...props} className="text-gray-700 leading-relaxed text-sm marker:text-mint-600">
+                      {children}
+                    </li>
+                  ),
+                  strong: ({ children, ...props }) => (
+                    <strong {...props} className="font-semibold text-gray-800">
+                      {children}
+                    </strong>
+                  ),
+                  em: ({ children, ...props }) => (
+                    <em {...props} className="italic text-gray-700">
+                      {children}
+                    </em>
+                  )
+                }}
+              >
+                {enhancedText}
+              </ReactMarkdown>
             </div>
           );
         } else if (part.trim()) {
@@ -232,57 +207,57 @@ export const UnifiedContentRenderer = ({
                 remarkPlugins={[remarkGfm]}
                 components={{
                   h1: ({ children, ...props }) => (
-                    <h1 {...props} className="text-2xl font-bold text-gray-900 mb-6 mt-8 leading-tight">
+                    <h1 {...props} className="text-2xl font-bold text-gray-900 mb-4 mt-6 leading-tight">
                       {children}
                     </h1>
                   ),
                   h2: ({ children, ...props }) => (
-                    <h2 {...props} className="text-xl font-bold text-gray-900 mb-5 mt-7 leading-tight">
+                    <h2 {...props} className="text-xl font-bold text-gray-900 mb-3 mt-5 leading-tight">
                       {children}
                     </h2>
                   ),
                   h3: ({ children, ...props }) => (
-                    <h3 {...props} className="text-lg font-bold text-gray-900 mb-4 mt-6 leading-tight">
+                    <h3 {...props} className="text-lg font-bold text-gray-900 mb-3 mt-4 leading-tight">
                       {children}
                     </h3>
                   ),
                   h4: ({ children, ...props }) => (
-                    <h4 {...props} className="text-base font-bold text-gray-900 mb-3 mt-5 leading-tight">
+                    <h4 {...props} className="text-base font-bold text-gray-900 mb-2 mt-3 leading-tight">
                       {children}
                     </h4>
                   ),
                   p: ({ children, ...props }) => (
-                    <p {...props} className="text-gray-700 leading-7 mb-5 text-base">
+                    <p {...props} className="text-gray-700 leading-relaxed mb-4">
                       {children}
                     </p>
                   ),
                   ul: ({ children, ...props }) => (
-                    <ul {...props} className="mb-6 space-y-2 pl-6 list-disc">
+                    <ul {...props} className="mb-4 space-y-2 pl-6 list-disc">
                       {children}
                     </ul>
                   ),
                   ol: ({ children, ...props }) => (
-                    <ol {...props} className="mb-6 space-y-2 pl-6 list-decimal">
+                    <ol {...props} className="mb-4 space-y-2 pl-6 list-decimal">
                       {children}
                     </ol>
                   ),
                   li: ({ children, ...props }) => (
-                    <li {...props} className="text-gray-700 mb-2 leading-7 marker:text-mint-500 marker:font-medium">
+                    <li {...props} className="text-gray-700 leading-relaxed marker:text-mint-500">
                       {children}
                     </li>
                   ),
                   strong: ({ children, ...props }) => (
-                    <strong {...props} className="text-gray-900 font-semibold">
+                    <strong {...props} className="font-semibold text-gray-900">
                       {children}
                     </strong>
                   ),
                   em: ({ children, ...props }) => (
-                    <em {...props} className="text-gray-700 italic">
+                    <em {...props} className="italic text-gray-700">
                       {children}
                     </em>
                   ),
                   blockquote: ({ children, ...props }) => (
-                    <blockquote {...props} className="border-l-4 border-mint-200 bg-mint-50/30 p-4 my-6 rounded-lg text-gray-600">
+                    <blockquote {...props} className="border-l-4 border-mint-200 bg-mint-50/30 p-4 my-4 rounded-lg text-gray-600">
                       {children}
                     </blockquote>
                   ),
@@ -292,7 +267,7 @@ export const UnifiedContentRenderer = ({
                     </code>
                   ),
                   pre: ({ children, ...props }) => (
-                    <pre {...props} className="bg-gray-50 border border-gray-200 p-4 rounded-lg my-6 overflow-x-auto">
+                    <pre {...props} className="bg-gray-50 border border-gray-200 p-4 rounded-lg my-4 overflow-x-auto">
                       {children}
                     </pre>
                   )

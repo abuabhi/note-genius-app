@@ -23,9 +23,19 @@ export const RichTextDisplay = ({
     
     let processed = content;
     
+    console.log("🧹 RichTextDisplay processing content:", {
+      removeTitle,
+      originalLength: content.length,
+      contentPreview: content.substring(0, 100)
+    });
+    
     // Remove auto-generated title patterns if requested
     if (removeTitle) {
       const titlePatterns = [
+        // Remove "Hand1", "Hand2", etc. - FIXED PATTERN
+        /^Hand\d+\s*\n/i,
+        /^Hand\d+$/im,
+        
         // Markdown headers with specific note references
         /^#+\s*Analysis of Notes on .+?\n/i,
         /^#+\s*Summary of Notes on .+?\n/i,
@@ -78,20 +88,27 @@ export const RichTextDisplay = ({
         /^# Key Points\s*:?\s*\n/i,
         /^# Improved Clarity\s*:?\s*\n/i,
         /^# Analysis\s*:?\s*\n/i,
-        /^# Overview\s*:?\s*\n/i,
-        
-        // Remove lines that are just the note title repeated
-        /^.{1,100}\n(?=\n|$)/,
+        /^# Overview\s*:?\s*\n/i
       ];
       
-      titlePatterns.forEach(pattern => {
+      titlePatterns.forEach((pattern, index) => {
+        const beforeReplace = processed;
         processed = processed.replace(pattern, '');
+        if (beforeReplace !== processed) {
+          console.log(`🎯 Title pattern ${index} matched and removed`);
+        }
       });
     }
     
     // Clean up excessive spacing
     processed = processed.replace(/\n{3,}/g, '\n\n');
     processed = processed.replace(/^\s+|\s+$/g, '');
+    
+    console.log("🧹 RichTextDisplay processed content:", {
+      processedLength: processed.length,
+      processedPreview: processed.substring(0, 100),
+      removedCharacters: content.length - processed.length
+    });
     
     return processed.trim();
   }, [content, removeTitle]);
