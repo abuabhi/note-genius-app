@@ -32,7 +32,7 @@ export const EnhancementContentRenderer = ({
     contentLength: content.length
   });
 
-  // Route AI-generated content or content with enhancement markers to UnifiedContentRenderer
+  // SIMPLIFIED LOGIC: Route AI-generated content or markdown content to UnifiedContentRenderer
   if (isAIGenerated || hasEnhancementMarkers(content) || isMarkdown) {
     let processedContent = content;
     
@@ -60,7 +60,7 @@ export const EnhancementContentRenderer = ({
       content={content} 
       fontSize={fontSize} 
       textAlign={textAlign}
-      removeTitle={contentType !== 'original'}
+      removeTitle={true}
       className="prose-mint prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700"
     />
   );

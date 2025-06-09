@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw, Sparkles } from "lucide-react";
 import { EnhancementError } from "../../enrichment/EnhancementError";
 import { LoadingAnimations } from "./LoadingAnimations";
+import { UnifiedContentRenderer } from "./UnifiedContentRenderer";
 
 interface EnhancementContentProps {
   content: string;
@@ -89,27 +90,33 @@ export const EnhancementContent = ({
     );
   }
 
-  // Determine content type for proper rendering
-  const getContentType = () => {
-    // AI-generated content types that should be treated as markdown
-    const aiEnhancementTypes = ['summary', 'keyPoints', 'improved', 'markdown'];
-    
-    if (aiEnhancementTypes.includes(enhancementType)) {
-      return enhancementType as 'summary' | 'keyPoints' | 'improved' | 'markdown';
-    }
-    
-    // Fallback to original for other types
-    return 'original';
-  };
+  // AI-generated enhancement types that should always be treated as markdown
+  const aiEnhancementTypes = ['summary', 'keyPoints', 'improved', 'markdown'];
+  const isAIGenerated = aiEnhancementTypes.includes(enhancementType);
   
+  // CRITICAL FIX: Always use UnifiedContentRenderer for AI-generated content
+  if (isAIGenerated || isMarkdown) {
+    return (
+      <div className="animate-fade-in px-6 py-4">
+        <UnifiedContentRenderer 
+          content={content} 
+          fontSize={fontSize} 
+          textAlign={textAlign}
+          className="prose-mint prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700"
+        />
+      </div>
+    );
+  }
+  
+  // For original content, use the legacy renderer with padding
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in px-6 py-4">
       <EnhancementContentRenderer
         content={content}
-        contentType={getContentType()}
+        contentType="original"
         fontSize={fontSize}
         textAlign={textAlign}
-        isMarkdown={isMarkdown || ['summary', 'keyPoints', 'improved', 'markdown'].includes(enhancementType)}
+        isMarkdown={false}
       />
     </div>
   );

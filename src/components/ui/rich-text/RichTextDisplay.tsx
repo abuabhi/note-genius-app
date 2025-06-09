@@ -26,6 +26,7 @@ export const RichTextDisplay = ({
     // Remove auto-generated title patterns if requested
     if (removeTitle) {
       const titlePatterns = [
+        // Markdown headers
         /^#+\s*Analysis of Notes on .+?\n/i,
         /^#+\s*Summary of .+?\n/i,
         /^#+\s*Key Points of .+?\n/i,
@@ -33,6 +34,10 @@ export const RichTextDisplay = ({
         /^#+\s*Markdown Version of .+?\n/i,
         /^#+\s*Formal vs Informal Language\n/i,
         /^#+\s*.+? vs .+?\n/i,
+        /^#+\s*Summary\s*\n/i,
+        /^#+\s*Key Points\s*\n/i,
+        /^#+\s*Improved Clarity\s*\n/i,
+        // Plain text titles
         /^Analysis of Notes on .+?\n/i,
         /^Summary of .+?\n/i,
         /^Key Points of .+?\n/i,
@@ -40,6 +45,16 @@ export const RichTextDisplay = ({
         /^Markdown Version of .+?\n/i,
         /^Formal vs Informal Language\n/i,
         /^.+? vs .+?\n/i,
+        /^Summary\s*\n/i,
+        /^Key Points\s*\n/i,
+        /^Improved Clarity\s*\n/i,
+        // Common AI-generated title patterns
+        /^## Summary\n/i,
+        /^## Key Points\n/i,
+        /^## Improved Clarity\n/i,
+        /^# Summary\n/i,
+        /^# Key Points\n/i,
+        /^# Improved Clarity\n/i,
       ];
       
       titlePatterns.forEach(pattern => {
