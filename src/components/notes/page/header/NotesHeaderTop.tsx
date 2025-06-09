@@ -31,7 +31,7 @@ export const NotesHeaderTop = ({
             onClick={onOpenManualDialog}
           >
             <PlusCircle className="mr-2 h-4 w-4" />
-            Manual
+            Add Note
           </Button>
           
           <Button 
