@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Camera, Upload, FileImage, AlertCircle, CheckCircle, Sparkles, Files } from "lucide-react";
+import { Camera, Upload, FileImage, AlertCircle, CheckCircle, Sparkles, Zap } from "lucide-react";
 import { Note } from "@/types/note";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -331,7 +331,10 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Batch Processing</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-purple-600" />
+              Batch Processing - Up to 3 Documents Simultaneously
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <BatchProcessingView
@@ -370,7 +373,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
             />
             <div className="mt-4 flex gap-2">
               <Button onClick={resetForm} variant="outline">
-                Scan More Images
+                Scan More Documents
               </Button>
             </div>
           </CardContent>
@@ -387,7 +390,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
           <CardContent className="p-6">
             <div className="text-center">
               <div className="h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Processing Image</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Processing Document</h3>
               <p className="text-sm text-gray-600 mb-4">
                 {isPremiumUser 
                   ? "Using OpenAI Vision API for enhanced OCR accuracy..." 
@@ -396,7 +399,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
               </p>
               <div className="bg-blue-50 p-3 rounded-lg">
                 <p className="text-xs text-blue-700">
-                  AI-powered text extraction and automatic title/subject detection in progress...
+                  AI-powered text extraction with automatic title/subject detection in progress...
                 </p>
               </div>
             </div>
@@ -408,90 +411,121 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
 
   return (
     <div className="space-y-6">
-      {/* Batch Processing Limit Notice */}
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <Files className="h-4 w-4 text-amber-600" />
-          <span className="text-sm font-medium text-amber-700">Batch Processing Limit</span>
+      {/* Enhanced Feature Banner */}
+      <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+            <Sparkles className="h-4 w-4 text-white" />
+          </div>
+          <div>
+            <span className="text-lg font-semibold text-purple-700">Professional Document Scanning & OCR</span>
+          </div>
         </div>
-        <p className="text-sm text-amber-700">
-          <strong>Single file limit:</strong> This tab processes one image at a time.<br/>
-          <strong>For batch processing:</strong> Use the main "Scan Handwritten Note" feature to process up to 3 documents simultaneously.
-        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-purple-700">
+          <div>
+            <strong>🚀 Batch Processing:</strong> Scan up to 3 documents simultaneously for maximum efficiency
+          </div>
+          <div>
+            <strong>🤖 AI-Powered:</strong> {isPremiumUser ? 'OpenAI Vision (Premium)' : 'Google Vision + OpenAI fallback'} for superior accuracy
+          </div>
+          <div>
+            <strong>✍️ Handwriting Expert:</strong> Specialized recognition for cursive and print handwriting
+          </div>
+          <div>
+            <strong>📊 Smart Analysis:</strong> Automatic title detection and content categorization
+          </div>
+        </div>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Camera className="h-5 w-5" />
-            Scan Documents & Images
+            Document & Image Scanner
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="image-file">Select Images</Label>
-            <Input
-              id="image-file"
-              type="file"
-              onChange={handleImageSelected}
-              accept=".png,.jpg,.jpeg,.gif,.bmp,.tiff,.webp"
-              multiple
-              className="mt-1"
-            />
-            <p className="text-sm text-gray-500 mt-1">
-              Supported formats: PNG, JPG, JPEG, GIF, BMP, TIFF, WebP (max 10MB each)
-            </p>
-          </div>
-
-          {/* Drag and Drop Zone */}
+          {/* Main Drag and Drop Zone */}
           <div
-            className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all duration-300 ${
+            className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all duration-300 ${
               isDragOver 
-                ? 'border-purple-500 bg-purple-50 scale-[1.02]' 
+                ? 'border-purple-500 bg-purple-50 scale-[1.02] shadow-lg' 
                 : 'border-gray-300 hover:border-purple-400 hover:bg-gray-50'
             }`}
             onDragEnter={handleDragEnter}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDropEvent}
-            onClick={() => document.getElementById('image-file')?.click()}
+            onClick={() => {
+              const input = document.createElement('input');
+              input.type = 'file';
+              input.accept = '.png,.jpg,.jpeg,.gif,.bmp,.tiff,.webp';
+              input.multiple = true;
+              input.onchange = (e) => {
+                const files = Array.from((e.target as HTMLInputElement).files || []);
+                const imageFiles = files.filter(file => file.type.startsWith('image/'));
+                
+                if (imageFiles.length === 0) {
+                  toast.error("Please select valid image files");
+                  return;
+                }
+
+                if (imageFiles.length === 1) {
+                  processFileSelection(imageFiles[0]);
+                } else {
+                  handleMultipleFiles(imageFiles);
+                }
+              };
+              input.click();
+            }}
           >
             <div className={`transition-all duration-300 ${isDragOver ? 'scale-110' : ''}`}>
               {isDragOver ? (
-                <FileImage className="h-16 w-16 mb-4 text-purple-500 animate-bounce mx-auto" />
+                <FileImage className="h-20 w-20 mb-6 text-purple-500 animate-bounce mx-auto" />
               ) : (
-                <Upload className="h-12 w-12 mb-4 text-gray-400 mx-auto" />
+                <Upload className="h-16 w-16 mb-6 text-gray-400 mx-auto" />
               )}
             </div>
             
-            <p className={`text-lg font-medium mb-2 transition-colors ${
+            <h3 className={`text-2xl font-bold mb-3 transition-colors ${
               isDragOver ? 'text-purple-700' : 'text-gray-700'
             }`}>
-              {isDragOver ? 'Drop your images here!' : 'Drag & Drop Images Here'}
-            </p>
+              {isDragOver ? 'Drop Documents Here!' : 'Drag & Drop or Click to Scan'}
+            </h3>
             
-            <p className={`text-sm mb-3 transition-colors ${
+            <p className={`text-lg mb-4 transition-colors ${
               isDragOver ? 'text-purple-600' : 'text-gray-500'
             }`}>
               {isDragOver 
-                ? 'Release to process your images' 
-                : 'Or click to select files'
+                ? 'Release to start processing your documents' 
+                : 'Upload single images or multiple documents for batch processing'
               }
             </p>
             
-            <div className={`text-xs p-3 rounded-lg transition-colors ${
-              isDragOver ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'
+            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl transition-colors ${
+              isDragOver ? 'bg-purple-100/50' : 'bg-gray-50'
             }`}>
-              <p>
-                <strong>Single image:</strong> Standard OCR with AI analysis
-              </p>
-              <p>
-                <strong>Multiple images:</strong> Batch processing with progress tracking
-              </p>
-              <p className="mt-1">
-                <strong>AI-Powered:</strong> {isPremiumUser ? 'OpenAI Vision (Premium)' : 'Google Vision + OpenAI fallback'}
-              </p>
+              <div className="text-left">
+                <p className="font-semibold text-sm mb-2">📄 Single Document:</p>
+                <ul className="text-xs space-y-1">
+                  <li>• Standard OCR with AI analysis</li>
+                  <li>• Automatic title & subject detection</li>
+                  <li>• Handwriting recognition</li>
+                </ul>
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-sm mb-2">📚 Batch Processing (Up to 3):</p>
+                <ul className="text-xs space-y-1">
+                  <li>• Simultaneous processing</li>
+                  <li>• Progress tracking</li>
+                  <li>• Bulk note creation</li>
+                </ul>
+              </div>
             </div>
+            
+            <p className="text-xs text-gray-500 mt-4">
+              Supported: PNG, JPG, JPEG, GIF, BMP, TIFF, WebP (max 10MB each)
+            </p>
           </div>
 
           {selectedImage && imagePreviewUrl && (
@@ -512,7 +546,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
                   <div className="border rounded-lg overflow-hidden">
                     <img 
                       src={imagePreviewUrl} 
-                      alt="Selected image preview" 
+                      alt="Selected document preview" 
                       className="w-full h-48 object-contain bg-white"
                     />
                   </div>
@@ -520,12 +554,12 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
                   <div className="bg-blue-50 p-3 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
                       <Sparkles className="h-4 w-4 text-blue-600" />
-                      <span className="text-sm font-medium text-blue-700">AI-Powered OCR</span>
+                      <span className="text-sm font-medium text-blue-700">AI-Powered OCR Ready</span>
                     </div>
                     <p className="text-xs text-blue-700">
                       {isPremiumUser 
-                        ? "Premium users get priority access to OpenAI Vision API for enhanced accuracy"
-                        : "Using Google Vision API (primary) with OpenAI fallback for best results"
+                        ? "Premium: OpenAI Vision API for maximum accuracy on handwritten text"
+                        : "Using advanced Google Vision API with OpenAI fallback for best results"
                       }
                     </p>
                   </div>
@@ -543,14 +577,14 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
           )}
 
           {!isPremiumUser && (
-            <div className="bg-yellow-50 p-3 rounded-lg">
+            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
               <div className="flex items-center gap-2 mb-2">
                 <AlertCircle className="h-4 w-4 text-yellow-600" />
-                <span className="text-sm font-medium text-yellow-700">Enhanced Features Available</span>
+                <span className="text-sm font-medium text-yellow-700">Enhanced OCR Available</span>
               </div>
               <p className="text-sm text-yellow-700">
-                Premium users get priority access to OpenAI Vision API for enhanced OCR accuracy, 
-                handwriting recognition, and advanced content analysis.
+                Premium users get priority access to OpenAI Vision API for enhanced handwriting recognition, 
+                better accuracy on complex documents, and advanced content analysis features.
               </p>
             </div>
           )}
