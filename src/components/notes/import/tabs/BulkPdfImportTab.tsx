@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -118,12 +119,11 @@ export const BulkPdfImportTab = ({ onSaveNote, isPremiumUser }: BulkPdfImportTab
           description: `Combined content from ${extractedTexts.length} PDF files`,
           subject: 'Documents',
           tags: [{ name: 'PDF Import', color: '#8B5CF6' }, { name: 'Bulk Import', color: '#6366F1' }],
-          source_type: 'import',
+          sourceType: 'import',
           pinned: false,
           archived: false,
           date: new Date().toISOString().split('T')[0],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          category: 'Documents'
         };
 
         await onSaveNote(mergedNote);
@@ -137,12 +137,11 @@ export const BulkPdfImportTab = ({ onSaveNote, isPremiumUser }: BulkPdfImportTab
             description: `Imported from ${item.name}`,
             subject: 'Documents',
             tags: [{ name: 'PDF Import', color: '#8B5CF6' }],
-            source_type: 'import',
+            sourceType: 'import',
             pinned: false,
             archived: false,
             date: new Date().toISOString().split('T')[0],
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            category: 'Documents'
           };
 
           await onSaveNote(note);

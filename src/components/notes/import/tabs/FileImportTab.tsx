@@ -68,12 +68,11 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
         description: `Imported from ${selectedFile?.name || 'document'}`,
         subject: 'Documents',
         tags: [{ name: 'Import', color: '#8B5CF6' }],
-        source_type: 'import',
+        sourceType: 'import',
         pinned: false,
         archived: false,
         date: new Date().toISOString().split('T')[0],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        category: 'Documents'
       };
 
       const success = await onSaveNote(note);
