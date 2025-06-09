@@ -14,6 +14,29 @@ export const getBestTextColor = (bgColor: string): string => {
     }
   }
 
+  // Handle hex colors
+  if (bgColor.startsWith('#')) {
+    const color = bgColor.slice(1);
+    
+    // Convert to RGB
+    let r, g, b;
+    if (color.length === 3) {
+      r = parseInt(color[0] + color[0], 16);
+      g = parseInt(color[1] + color[1], 16);
+      b = parseInt(color[2] + color[2], 16);
+    } else {
+      r = parseInt(color.slice(0, 2), 16);
+      g = parseInt(color.slice(2, 4), 16);
+      b = parseInt(color.slice(4, 6), 16);
+    }
+    
+    // Calculate luminance
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    
+    // Return white for dark backgrounds, black for light backgrounds
+    return luminance > 0.5 ? 'black' : 'white';
+  }
+
   // Remove the hash if it exists
   const color = bgColor.startsWith('#') ? bgColor.slice(1) : bgColor;
   
@@ -37,34 +60,58 @@ export const getBestTextColor = (bgColor: string): string => {
 };
 
 /**
+ * Custom subject color mapping
+ */
+const SUBJECT_COLOR_MAP: Record<string, string> = {
+  'english': '#FF3CAC',        // Fuchsia Pink
+  'mathematics': '#3A86FF',    // Royal Blue
+  'science': '#FF6B6B',        // Coral
+  'technologies': '#9B5DE5',   // Purple Grape
+  'languages': '#FFD60A',      // Sunshine Yellow
+  'arts': '#FFA500',           // Fresh Orange
+  'other': '#98FF98',          // Mint Green
+  'uncategorized': '#98FF98',  // Mint Green
+  'general': '#98FF98'         // Mint Green
+};
+
+/**
  * Generate a color based on a string (for category tags)
- * Uses a predefined set of colors to ensure good distribution and avoid conflicts
+ * Uses custom color mapping for specific subjects, falls back to predefined palette
  * @param str Input string to generate color from
- * @returns HSL color string
+ * @returns Hex color string
  */
 export const generateColorFromString = (str: string): string => {
-  // Predefined color palette with good contrast and distribution
+  if (!str) return SUBJECT_COLOR_MAP['other'];
+  
+  // Normalize the subject name for lookup
+  const normalizedSubject = str.toLowerCase().trim();
+  
+  // Check if we have a custom color for this subject
+  if (SUBJECT_COLOR_MAP[normalizedSubject]) {
+    console.log(`🎨 Using custom color for "${str}": ${SUBJECT_COLOR_MAP[normalizedSubject]}`);
+    return SUBJECT_COLOR_MAP[normalizedSubject];
+  }
+  
+  // Check for partial matches
+  for (const [subject, color] of Object.entries(SUBJECT_COLOR_MAP)) {
+    if (normalizedSubject.includes(subject) || subject.includes(normalizedSubject)) {
+      console.log(`🎨 Using partial match color for "${str}" (matched "${subject}"): ${color}`);
+      return color;
+    }
+  }
+  
+  // Fallback to predefined color palette for other subjects
   const colorPalette = [
-    'hsl(210, 70%, 60%)', // Blue
-    'hsl(150, 70%, 50%)', // Green
-    'hsl(270, 70%, 60%)', // Purple
-    'hsl(30, 80%, 55%)',  // Orange
-    'hsl(340, 70%, 60%)', // Pink
-    'hsl(190, 70%, 55%)', // Cyan
-    'hsl(60, 70%, 50%)',  // Yellow
-    'hsl(320, 70%, 60%)', // Magenta
-    'hsl(120, 60%, 45%)', // Forest Green
-    'hsl(240, 70%, 60%)', // Indigo
-    'hsl(15, 75%, 55%)',  // Red-Orange
-    'hsl(180, 60%, 50%)', // Teal
-    'hsl(300, 70%, 60%)', // Violet
-    'hsl(45, 80%, 55%)',  // Gold
-    'hsl(200, 70%, 55%)', // Sky Blue
-    'hsl(330, 70%, 60%)', // Rose
-    'hsl(90, 60%, 50%)',  // Lime
-    'hsl(250, 70%, 60%)', // Blue-Violet
-    'hsl(20, 80%, 55%)',  // Coral
-    'hsl(160, 70%, 50%)', // Sea Green
+    '#10B981', // Mint-500 (default)
+    '#8B5CF6', // Purple-500
+    '#F59E0B', // Amber-500
+    '#EF4444', // Red-500
+    '#3B82F6', // Blue-500
+    '#06B6D4', // Cyan-500
+    '#84CC16', // Lime-500
+    '#F97316', // Orange-500
+    '#EC4899', // Pink-500
+    '#6366F1', // Indigo-500
   ];
 
   // Create a more robust hash function
@@ -78,7 +125,7 @@ export const generateColorFromString = (str: string): string => {
   // Use absolute value and modulo to get a palette index
   const index = Math.abs(hash) % colorPalette.length;
   
-  console.log(`🎨 Color generation for "${str}": index ${index}, color ${colorPalette[index]}`);
+  console.log(`🎨 Using fallback color for "${str}": ${colorPalette[index]}`);
   
   return colorPalette[index];
 };
@@ -89,25 +136,16 @@ export const generateColorFromString = (str: string): string => {
  */
 export const getAllAvailableColors = (): string[] => {
   return [
-    'hsl(210, 70%, 60%)', // Blue
-    'hsl(150, 70%, 50%)', // Green
-    'hsl(270, 70%, 60%)', // Purple
-    'hsl(30, 80%, 55%)',  // Orange
-    'hsl(340, 70%, 60%)', // Pink
-    'hsl(190, 70%, 55%)', // Cyan
-    'hsl(60, 70%, 50%)',  // Yellow
-    'hsl(320, 70%, 60%)', // Magenta
-    'hsl(120, 60%, 45%)', // Forest Green
-    'hsl(240, 70%, 60%)', // Indigo
-    'hsl(15, 75%, 55%)',  // Red-Orange
-    'hsl(180, 60%, 50%)', // Teal
-    'hsl(300, 70%, 60%)', // Violet
-    'hsl(45, 80%, 55%)',  // Gold
-    'hsl(200, 70%, 55%)', // Sky Blue
-    'hsl(330, 70%, 60%)', // Rose
-    'hsl(90, 60%, 50%)',  // Lime
-    'hsl(250, 70%, 60%)', // Blue-Violet
-    'hsl(20, 80%, 55%)',  // Coral
-    'hsl(160, 70%, 50%)', // Sea Green
+    ...Object.values(SUBJECT_COLOR_MAP),
+    '#10B981', // Mint-500
+    '#8B5CF6', // Purple-500
+    '#F59E0B', // Amber-500
+    '#EF4444', // Red-500
+    '#3B82F6', // Blue-500
+    '#06B6D4', // Cyan-500
+    '#84CC16', // Lime-500
+    '#F97316', // Orange-500
+    '#EC4899', // Pink-500
+    '#6366F1', // Indigo-500
   ];
 };
