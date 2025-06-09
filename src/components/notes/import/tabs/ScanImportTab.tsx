@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -149,32 +148,6 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
         }
       }
     );
-  };
-
-  const uploadImageToStorage = async (file: File | string): Promise<string> => {
-    let fileToUpload: File;
-    
-    if (typeof file === 'string') {
-      // Convert data URL to file
-      const response = await fetch(file);
-      const blob = await response.blob();
-      fileToUpload = new File([blob], 'image.png', { type: blob.type });
-    } else {
-      fileToUpload = file;
-    }
-
-    const fileName = `${Date.now()}-${fileToUpload.name}`;
-    const { data, error } = await supabase.storage
-      .from('documents')
-      .upload(fileName, fileToUpload);
-
-    if (error) throw error;
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('documents')
-      .getPublicUrl(fileName);
-
-    return publicUrl;
   };
 
   const processImage = async () => {
