@@ -121,7 +121,7 @@ async function validateOpenAIKey(apiKey: string): Promise<boolean> {
 }
 
 /**
- * Safely convert image to base64 with proper chunking and size limits
+ * Properly convert image to base64 without corruption
  */
 async function convertImageToBase64(imageUrl: string): Promise<string> {
   console.log("Converting image to base64...");
@@ -143,18 +143,16 @@ async function convertImageToBase64(imageUrl: string): Promise<string> {
       throw new Error(`Image too large: ${sizeMB.toFixed(2)}MB. Maximum allowed: 20MB`);
     }
     
-    // Convert to base64 using chunks to avoid stack overflow
+    // Convert to base64 using the built-in btoa function properly
     const uint8Array = new Uint8Array(arrayBuffer);
-    const chunkSize = 8192; // 8KB chunks
-    let base64 = '';
-    
-    for (let i = 0; i < uint8Array.length; i += chunkSize) {
-      const chunk = uint8Array.slice(i, i + chunkSize);
-      const chunkString = String.fromCharCode.apply(null, Array.from(chunk));
-      base64 += btoa(chunkString);
+    let binary = '';
+    for (let i = 0; i < uint8Array.byteLength; i++) {
+      binary += String.fromCharCode(uint8Array[i]);
     }
     
+    const base64 = btoa(binary);
     const dataUrl = `data:${contentType};base64,${base64}`;
+    
     console.log(`Base64 conversion successful. Data URL length: ${dataUrl.length}`);
     
     return dataUrl;
@@ -338,11 +336,22 @@ async function processWithCloudOCR(imageUrl: string, language: string, enhanceIm
     let base64Image: string;
     
     if (imageUrl.startsWith('data:')) {
-      base64Image = imageUrl.split(',')[1];
+      // Extract just the base64 part, removing the data URL prefix
+      const base64Match = imageUrl.match(/^data:image\/[^;]+;base64,(.+)$/);
+      if (!base64Match) {
+        throw new Error("Invalid data URL format");
+      }
+      base64Image = base64Match[1];
     } else {
       const dataUrl = await convertImageToBase64(imageUrl);
-      base64Image = dataUrl.split(',')[1];
+      const base64Match = dataUrl.match(/^data:image\/[^;]+;base64,(.+)$/);
+      if (!base64Match) {
+        throw new Error("Failed to extract base64 from converted data URL");
+      }
+      base64Image = base64Match[1];
     }
+    
+    console.log(`Sending base64 image to Google Vision API, length: ${base64Image.length}`);
     
     const response = await fetch(url, {
       method: 'POST',
@@ -371,10 +380,13 @@ async function processWithCloudOCR(imageUrl: string, language: string, enhanceIm
     
     if (!response.ok) {
       const error = await response.json();
+      console.error("Google Cloud Vision API error:", error);
       throw new Error(`Google Cloud Vision API error: ${JSON.stringify(error)}`);
     }
     
     const data = await response.json();
+    console.log("Google Vision API response received");
+    
     const fullTextAnnotation = data.responses[0]?.fullTextAnnotation;
     const extractedText = fullTextAnnotation?.text || "No text detected in image";
     
@@ -392,7 +404,7 @@ async function processWithCloudOCR(imageUrl: string, language: string, enhanceIm
     console.error("Google Cloud Vision processing error:", error);
     
     return {
-      text: `OCR processing failed: ${error.message}. Please check your Google Cloud Vision API configuration.`,
+      text: `OCR processing failed: ${error.message}. Please check your Google Cloud Vision API configuration and ensure the image is accessible.`,
       confidence: 0.0,
       processedAt: new Date().toISOString(),
       language: language,
