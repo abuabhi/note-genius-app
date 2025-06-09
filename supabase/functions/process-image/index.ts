@@ -33,10 +33,10 @@ serve(async (req) => {
       throw new Error("Image URL is required");
     }
     
-    console.log(`Processing image: ${imageUrl.substring(0, 50)}..., language: ${language}, useOpenAI: ${useOpenAI}, enhanceImage: ${enhanceImage}`);
+    console.log(`Processing image with language: ${language}, useOpenAI: ${useOpenAI}, enhanceImage: ${enhanceImage}`);
     
-    // Fetch the image
-    let imageData: string | ArrayBuffer = imageUrl;
+    // Process the image data
+    let processedImageData = imageUrl;
     
     // If the imageUrl is an actual URL (not a data URL), fetch it
     if (imageUrl.startsWith('http')) {
@@ -48,15 +48,16 @@ serve(async (req) => {
         }
         
         // Get the image as an array buffer
-        imageData = await response.arrayBuffer();
+        const imageBuffer = await response.arrayBuffer();
         
-        // Convert to base64 for processing if needed
-        const base64 = btoa(String.fromCharCode(...new Uint8Array(imageData)));
-        imageData = `data:${response.headers.get("content-type") || "image/png"};base64,${base64}`;
+        // Convert to base64 for processing
+        const base64 = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
+        const contentType = response.headers.get("content-type") || "image/png";
+        processedImageData = `data:${contentType};base64,${base64}`;
         console.log("Image successfully converted to data URL");
       } catch (fetchError) {
         console.error("Error fetching image:", fetchError);
-        throw fetchError;
+        throw new Error(`Failed to fetch image: ${fetchError.message}`);
       }
     }
     
@@ -73,17 +74,17 @@ serve(async (req) => {
       // Use OpenAI Vision API for premium users
       console.log("Using OpenAI Vision API for OCR...");
       try {
-        result = await processWithOpenAI(imageData.toString(), language);
+        result = await processWithOpenAI(processedImageData, language);
         console.log("OpenAI processing completed successfully");
       } catch (openaiError) {
         console.error("OpenAI processing failed, falling back to Google Cloud Vision:", openaiError);
         // If OpenAI fails, fallback to Google Cloud Vision or mock
-        result = await processWithCloudOCR(imageData.toString(), language, enhanceImage);
+        result = await processWithCloudOCR(processedImageData, language, enhanceImage);
       }
     } else {
       // Use Cloud Vision API (or fallback to mock response)
       console.log("Using Google Cloud Vision API or mock for OCR...");
-      result = await processWithCloudOCR(imageData.toString(), language, enhanceImage);
+      result = await processWithCloudOCR(processedImageData, language, enhanceImage);
     }
     
     // Log usage metrics if user ID is provided
@@ -168,7 +169,7 @@ async function processWithOpenAI(imageData: string, language: string): Promise<O
     if (!response.ok) {
       const error = await response.json();
       console.error("OpenAI API error response:", error);
-      throw new Error(`OpenAI API error: ${JSON.stringify(error)}`);
+      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
     }
     
     const data = await response.json();
