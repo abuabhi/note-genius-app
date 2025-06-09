@@ -23,12 +23,30 @@ export const ProcessedContent = ({
   isSaving
 }: ProcessedContentProps) => {
   const getStatusInfo = () => {
+    if (processingMethod === 'vision-api-async-success') {
+      return {
+        icon: <CheckCircle className="h-4 w-4 text-green-600" />,
+        className: "text-green-700 bg-green-50 border border-green-200",
+        title: "PDF Processed Successfully",
+        message: "Text was extracted using Google Vision API with async workflow for optimal accuracy."
+      };
+    }
+    
     if (processingMethod === 'vision-api-success') {
       return {
         icon: <CheckCircle className="h-4 w-4 text-green-600" />,
         className: "text-green-700 bg-green-50 border border-green-200",
         title: "PDF Processed Successfully",
         message: "Text was extracted using Google Vision API for optimal accuracy."
+      };
+    }
+    
+    if (processingMethod === 'config-missing') {
+      return {
+        icon: <AlertCircle className="h-4 w-4 text-red-600" />,
+        className: "text-red-700 bg-red-50 border border-red-200",
+        title: "Configuration Required",
+        message: "Google Cloud Vision API key and Storage bucket are not configured. Please add them to your Supabase secrets."
       };
     }
     
@@ -111,7 +129,7 @@ export const ProcessedContent = ({
       <div>
         <Label>Content Preview</Label>
         <div className={`border rounded p-4 max-h-60 overflow-y-auto mt-1 ${
-          processingMethod === 'all-processing-failed' || processingMethod === 'api-key-missing'
+          processingMethod === 'all-processing-failed' || processingMethod === 'config-missing' || processingMethod === 'api-key-missing'
             ? 'bg-red-50 border-red-200' 
             : 'bg-gray-50 border-gray-200'
         }`}>
