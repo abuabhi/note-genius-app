@@ -1,13 +1,15 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Camera, Upload, FileImage, AlertCircle, CheckCircle, Sparkles } from "lucide-react";
+import { Camera, Upload, FileImage, AlertCircle, CheckCircle, Sparkles, Files } from "lucide-react";
 import { Note } from "@/types/note";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ProcessedContent } from "./components/ProcessedContent";
+import { useDragAndDrop } from "../../scanning/hooks/useDragAndDrop";
 
 interface ScanImportTabProps {
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<boolean>;
@@ -27,34 +29,75 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
   const [analysisConfidence, setAnalysisConfidence] = useState<number>(0);
   const [currentStep, setCurrentStep] = useState<'select' | 'process' | 'review'>('select');
 
+  // Add drag and drop functionality
+  const {
+    isDragOver,
+    handleDragEnter,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+    resetDragState
+  } = useDragAndDrop();
+
   const handleImageSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        toast.error("Please select a valid image file");
-        return;
-      }
-
-      // Validate file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error("Image file must be smaller than 10MB");
-        return;
-      }
-
-      setSelectedImage(file);
-      setDocumentTitle(file.name.replace(/\.[^/.]+$/, "")); // Remove extension
-      setExtractedText(''); // Clear previous content
-      setDocumentSubject('');
-      setProcessingMethod('');
-      setIsAiGenerated(false);
-      setAnalysisConfidence(0);
-      setCurrentStep('select');
-
-      // Create preview URL
-      const previewUrl = URL.createObjectURL(file);
-      setImagePreviewUrl(previewUrl);
+      processFileSelection(file);
     }
+  };
+
+  const processFileSelection = (file: File) => {
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("Please select a valid image file");
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image file must be smaller than 10MB");
+      return;
+    }
+
+    setSelectedImage(file);
+    setDocumentTitle(file.name.replace(/\.[^/.]+$/, "")); // Remove extension
+    setExtractedText(''); // Clear previous content
+    setDocumentSubject('');
+    setProcessingMethod('');
+    setIsAiGenerated(false);
+    setAnalysisConfidence(0);
+    setCurrentStep('select');
+
+    // Create preview URL
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreviewUrl(previewUrl);
+  };
+
+  const handleDropEvent = (e: React.DragEvent) => {
+    handleDrop(e, 
+      (imageUrl: string) => {
+        // Handle single image from drag and drop
+        // Convert data URL back to file for processing
+        fetch(imageUrl)
+          .then(res => res.blob())
+          .then(blob => {
+            const file = new File([blob], 'dropped-image.png', { type: blob.type });
+            processFileSelection(file);
+          });
+      },
+      (files: File[]) => {
+        // Handle multiple files - show warning and process first one
+        if (files.length > 3) {
+          toast.error(`You dropped ${files.length} files. Only the first 3 will be processed due to the batch limit.`);
+        }
+        
+        if (files.length > 1) {
+          toast.info(`Multiple files detected. Processing first file: ${files[0].name}. Use the main scanning workflow for batch processing.`);
+        }
+        
+        processFileSelection(files[0]);
+      }
+    );
   };
 
   const uploadImageToStorage = async (file: File): Promise<string> => {
@@ -206,6 +249,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
     setIsAiGenerated(false);
     setAnalysisConfidence(0);
     setCurrentStep('select');
+    resetDragState();
     if (imagePreviewUrl) {
       URL.revokeObjectURL(imagePreviewUrl);
     }
@@ -272,6 +316,18 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
 
   return (
     <div className="space-y-6">
+      {/* Batch Processing Limit Notice */}
+      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Files className="h-4 w-4 text-amber-600" />
+          <span className="text-sm font-medium text-amber-700">Batch Processing Limit</span>
+        </div>
+        <p className="text-sm text-amber-700">
+          <strong>Single file limit:</strong> This tab processes one image at a time.<br/>
+          <strong>For batch processing:</strong> Use the main "Scan Handwritten Note" feature to process up to 3 documents simultaneously.
+        </p>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -292,6 +348,54 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
             <p className="text-sm text-gray-500 mt-1">
               Supported formats: PNG, JPG, JPEG, GIF, BMP, TIFF, WebP (max 10MB)
             </p>
+          </div>
+
+          {/* Drag and Drop Zone */}
+          <div
+            className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all duration-300 ${
+              isDragOver 
+                ? 'border-purple-500 bg-purple-50 scale-[1.02]' 
+                : 'border-gray-300 hover:border-purple-400 hover:bg-gray-50'
+            }`}
+            onDragEnter={handleDragEnter}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDropEvent}
+            onClick={() => document.getElementById('image-file')?.click()}
+          >
+            <div className={`transition-all duration-300 ${isDragOver ? 'scale-110' : ''}`}>
+              {isDragOver ? (
+                <FileImage className="h-16 w-16 mb-4 text-purple-500 animate-bounce mx-auto" />
+              ) : (
+                <Upload className="h-12 w-12 mb-4 text-gray-400 mx-auto" />
+              )}
+            </div>
+            
+            <p className={`text-lg font-medium mb-2 transition-colors ${
+              isDragOver ? 'text-purple-700' : 'text-gray-700'
+            }`}>
+              {isDragOver ? 'Drop your image here!' : 'Drag & Drop Images Here'}
+            </p>
+            
+            <p className={`text-sm mb-3 transition-colors ${
+              isDragOver ? 'text-purple-600' : 'text-gray-500'
+            }`}>
+              {isDragOver 
+                ? 'Release to process your image' 
+                : 'Or click to select files'
+              }
+            </p>
+            
+            <div className={`text-xs p-3 rounded-lg transition-colors ${
+              isDragOver ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'
+            }`}>
+              <p>
+                <strong>Single image processing:</strong> Standard OCR with AI analysis
+              </p>
+              <p>
+                <strong>Multiple files:</strong> First file will be processed (use main scanning for batch)
+              </p>
+            </div>
           </div>
 
           {selectedImage && imagePreviewUrl && (
