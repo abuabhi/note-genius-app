@@ -3,7 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, Info, CheckCircle } from "lucide-react";
+import { AlertCircle, Info, CheckCircle, Clock } from "lucide-react";
 
 interface ProcessedContentProps {
   processedText: string;
@@ -27,8 +27,8 @@ export const ProcessedContent = ({
       return {
         icon: <CheckCircle className="h-4 w-4 text-green-600" />,
         className: "text-green-700 bg-green-50 border border-green-200",
-        title: "PDF Processed Successfully",
-        message: "Text was extracted using Google Vision API with async workflow for optimal accuracy."
+        title: "PDF Processed Successfully with Vision API",
+        message: "Text was extracted using Google Cloud Vision API with async workflow for optimal accuracy and quality."
       };
     }
     
@@ -36,8 +36,8 @@ export const ProcessedContent = ({
       return {
         icon: <CheckCircle className="h-4 w-4 text-green-600" />,
         className: "text-green-700 bg-green-50 border border-green-200",
-        title: "PDF Processed Successfully",
-        message: "Text was extracted using Google Vision API for optimal accuracy."
+        title: "PDF Processed Successfully with Vision API",
+        message: "Text was extracted using Google Cloud Vision API for optimal accuracy."
       };
     }
     
@@ -64,7 +64,7 @@ export const ProcessedContent = ({
         icon: <AlertCircle className="h-4 w-4 text-red-600" />,
         className: "text-red-700 bg-red-50 border border-red-200",
         title: "Processing Failed",
-        message: "Both Vision API and standard text extraction failed. Please check your API configuration."
+        message: "Both Vision API and standard text extraction failed. The PDF may contain only images or require OCR processing."
       };
     }
     
@@ -73,7 +73,7 @@ export const ProcessedContent = ({
         icon: <Info className="h-4 w-4 text-blue-600" />,
         className: "text-blue-700 bg-blue-50 border border-blue-200",
         title: "Standard Text Extraction Used",
-        message: "Vision API failed, but standard text extraction was successful."
+        message: "Vision API was not available, but standard text extraction was successful for this PDF."
       };
     }
     
@@ -82,13 +82,22 @@ export const ProcessedContent = ({
         icon: <CheckCircle className="h-4 w-4 text-green-600" />,
         className: "text-green-700 bg-green-50 border border-green-200",
         title: "Word Document Processed",
-        message: "Document was processed successfully."
+        message: "Document was processed successfully using native Word document parsing."
+      };
+    }
+    
+    if (processingMethod === 'processing') {
+      return {
+        icon: <Clock className="h-4 w-4 text-blue-600" />,
+        className: "text-blue-700 bg-blue-50 border border-blue-200",
+        title: "Processing Document...",
+        message: "Google Cloud Vision API is analyzing your document. This may take a few moments for optimal results."
       };
     }
     
     return {
       icon: <Info className="h-4 w-4 text-gray-500" />,
-      className: "text-gray-600 bg-gray-100",
+      className: "text-gray-600 bg-gray-50 border border-gray-200",
       title: `Processing method: ${processingMethod?.replace(/-/g, ' ')}`,
       message: null
     };
@@ -139,7 +148,7 @@ export const ProcessedContent = ({
       
       <Button
         onClick={onSave}
-        disabled={isSaving || !documentTitle}
+        disabled={isSaving || !documentTitle || processingMethod === 'processing'}
         className="w-full bg-purple-600 hover:bg-purple-700"
       >
         {isSaving ? 'Saving...' : 'Save as Note'}
