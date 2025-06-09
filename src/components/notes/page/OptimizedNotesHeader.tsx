@@ -1,4 +1,5 @@
 
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus, FileText, Import, Sparkles } from 'lucide-react';
@@ -56,11 +57,12 @@ export const OptimizedNotesHeader = ({
             disabled={isCreating}
           >
             <Plus className="mr-2 h-4 w-4" />
-            Add Note
+            Manually
           </Button>
           
           <Button 
-            className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm hover:shadow-md transition-all duration-200 font-medium border-0"
+            variant="outline"
+            className="shadow-sm hover:shadow-md transition-all duration-200 font-medium"
             onClick={onOpenImportDialog}
             disabled={isCreating}
           >
@@ -72,3 +74,4 @@ export const OptimizedNotesHeader = ({
     </CardContent>
   );
 };
+
