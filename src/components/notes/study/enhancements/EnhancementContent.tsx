@@ -1,5 +1,4 @@
 
-import { EnhancementContentRenderer } from "./components/EnhancementContentRenderer";
 import { TextAlignType } from "../hooks/useStudyViewState";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Sparkles } from "lucide-react";
@@ -12,7 +11,6 @@ interface EnhancementContentProps {
   title: string;
   fontSize: number;
   textAlign: TextAlignType;
-  isMarkdown?: boolean;
   isLoading?: boolean;
   hasError?: boolean;
   enhancementType?: string;
@@ -25,7 +23,6 @@ export const EnhancementContent = ({
   title,
   fontSize,
   textAlign,
-  isMarkdown = false,
   isLoading = false,
   hasError = false,
   enhancementType = "",
@@ -41,7 +38,6 @@ export const EnhancementContent = ({
     isLoading,
     hasError,
     enhancementType,
-    isMarkdown,
     contentPreview: content?.substring(0, 100)
   });
 
@@ -91,26 +87,14 @@ export const EnhancementContent = ({
     );
   }
 
-  // AI-generated enhancement types that should ALWAYS be treated as markdown
-  const markdownEnhancements = ['summary', 'keyPoints', 'extract-key-points', 'improved', 'improve-clarity', 'markdown', 'convert-to-markdown'];
-  const shouldRenderAsMarkdown = markdownEnhancements.includes(enhancementType) || isMarkdown;
-  
-  console.log("🔍 EnhancementContent routing decision:", {
-    enhancementType,
-    shouldRenderAsMarkdown,
-    isMarkdown,
-    contentToRender: content?.substring(0, 200)
-  });
-  
-  // Use UnifiedContentRenderer for all content with proper markdown flag
+  // Simple text rendering for all content types
   return (
     <div className="animate-fade-in px-4 py-2">
       <UnifiedContentRenderer 
         content={content} 
         fontSize={fontSize} 
         textAlign={textAlign}
-        isMarkdown={shouldRenderAsMarkdown}
-        className="prose-mint prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700"
+        className="text-gray-700"
       />
     </div>
   );
