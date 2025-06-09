@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +9,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ProcessedContent } from "./components/ProcessedContent";
 import { useDragAndDrop } from "../../scanning/hooks/useDragAndDrop";
+import { useBatchProcessing } from "../../scanning/hooks/useBatchProcessing";
+import { BatchProcessingView } from "../../scanning/BatchProcessingView";
 
 interface ScanImportTabProps {
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<boolean>;
@@ -27,7 +28,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
   const [processingMethod, setProcessingMethod] = useState<string>('');
   const [isAiGenerated, setIsAiGenerated] = useState(false);
   const [analysisConfidence, setAnalysisConfidence] = useState<number>(0);
-  const [currentStep, setCurrentStep] = useState<'select' | 'process' | 'review'>('select');
+  const [currentStep, setCurrentStep] = useState<'select' | 'process' | 'review' | 'batch'>('select');
 
   // Add drag and drop functionality
   const {
@@ -39,20 +40,35 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
     resetDragState
   } = useDragAndDrop();
 
+  // Add batch processing functionality
+  const { 
+    processedImages, 
+    batchProgress, 
+    processBatchImages, 
+    resetBatchProcessing 
+  } = useBatchProcessing({ 
+    selectedLanguage: 'eng', 
+    isPremiumUser, 
+    uploadImageToStorage 
+  });
+
   const handleImageSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      processFileSelection(file);
+    const files = Array.from(event.target.files || []);
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    
+    if (imageFiles.length === 0) {
+      toast.error("Please select valid image files");
+      return;
+    }
+
+    if (imageFiles.length === 1) {
+      processFileSelection(imageFiles[0]);
+    } else {
+      handleMultipleFiles(imageFiles);
     }
   };
 
   const processFileSelection = (file: File) => {
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error("Please select a valid image file");
-      return;
-    }
-
     // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
       toast.error("Image file must be smaller than 10MB");
@@ -73,11 +89,16 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
     setImagePreviewUrl(previewUrl);
   };
 
+  const handleMultipleFiles = (files: File[]) => {
+    console.log(`Starting batch processing for ${files.length} images`);
+    setCurrentStep('batch');
+    processBatchImages(files);
+  };
+
   const handleDropEvent = (e: React.DragEvent) => {
     handleDrop(e, 
       (imageUrl: string) => {
         // Handle single image from drag and drop
-        // Convert data URL back to file for processing
         fetch(imageUrl)
           .then(res => res.blob())
           .then(blob => {
@@ -86,25 +107,39 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
           });
       },
       (files: File[]) => {
-        // Handle multiple files - show warning and process first one
-        if (files.length > 3) {
-          toast.error(`You dropped ${files.length} files. Only the first 3 will be processed due to the batch limit.`);
+        // Handle multiple files
+        const imageFiles = files.filter(file => file.type.startsWith('image/'));
+        
+        if (imageFiles.length === 0) {
+          toast.error("No valid image files found");
+          return;
         }
         
-        if (files.length > 1) {
-          toast.info(`Multiple files detected. Processing first file: ${files[0].name}. Use the main scanning workflow for batch processing.`);
+        if (imageFiles.length === 1) {
+          processFileSelection(imageFiles[0]);
+        } else {
+          handleMultipleFiles(imageFiles);
         }
-        
-        processFileSelection(files[0]);
       }
     );
   };
 
-  const uploadImageToStorage = async (file: File): Promise<string> => {
-    const fileName = `${Date.now()}-${file.name}`;
+  const uploadImageToStorage = async (file: File | string): Promise<string> => {
+    let fileToUpload: File;
+    
+    if (typeof file === 'string') {
+      // Convert data URL to file
+      const response = await fetch(file);
+      const blob = await response.blob();
+      fileToUpload = new File([blob], 'image.png', { type: blob.type });
+    } else {
+      fileToUpload = file;
+    }
+
+    const fileName = `${Date.now()}-${fileToUpload.name}`;
     const { data, error } = await supabase.storage
       .from('documents')
-      .upload(fileName, file);
+      .upload(fileName, fileToUpload);
 
     if (error) throw error;
 
@@ -239,6 +274,40 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
     }
   };
 
+  const saveBatchAsNotes = async () => {
+    setIsSaving(true);
+    const completedImages = processedImages.filter(img => img.status === 'completed');
+
+    try {
+      for (const image of completedImages) {
+        const note: Omit<Note, 'id'> = {
+          title: image.title,
+          content: image.recognizedText,
+          description: `Scanned from batch processing`,
+          tags: [
+            { name: 'OCR', color: '#F59E0B' }, 
+            { name: 'Batch Scan', color: '#8B5CF6' }
+          ],
+          sourceType: 'scan',
+          pinned: false,
+          archived: false,
+          date: new Date().toISOString().split('T')[0],
+          category: image.category
+        };
+
+        await onSaveNote(note);
+      }
+
+      toast.success(`Saved ${completedImages.length} notes successfully!`);
+      resetForm();
+    } catch (error) {
+      console.error("Error saving batch notes:", error);
+      toast.error("Failed to save notes");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const resetForm = () => {
     setSelectedImage(null);
     setImagePreviewUrl('');
@@ -249,11 +318,34 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
     setIsAiGenerated(false);
     setAnalysisConfidence(0);
     setCurrentStep('select');
+    resetBatchProcessing();
     resetDragState();
     if (imagePreviewUrl) {
       URL.revokeObjectURL(imagePreviewUrl);
     }
   };
+
+  // Show batch processing view
+  if (currentStep === 'batch') {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Batch Processing</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <BatchProcessingView
+              processedImages={processedImages}
+              batchProgress={batchProgress}
+              onSaveBatch={saveBatchAsNotes}
+              onReset={resetForm}
+              isSaving={isSaving}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Show review step
   if (currentStep === 'review') {
@@ -278,7 +370,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
             />
             <div className="mt-4 flex gap-2">
               <Button onClick={resetForm} variant="outline">
-                Scan Another Image
+                Scan More Images
               </Button>
             </div>
           </CardContent>
@@ -332,21 +424,22 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Camera className="h-5 w-5" />
-            Scan Document or Image
+            Scan Documents & Images
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="image-file">Select Image</Label>
+            <Label htmlFor="image-file">Select Images</Label>
             <Input
               id="image-file"
               type="file"
               onChange={handleImageSelected}
               accept=".png,.jpg,.jpeg,.gif,.bmp,.tiff,.webp"
+              multiple
               className="mt-1"
             />
             <p className="text-sm text-gray-500 mt-1">
-              Supported formats: PNG, JPG, JPEG, GIF, BMP, TIFF, WebP (max 10MB)
+              Supported formats: PNG, JPG, JPEG, GIF, BMP, TIFF, WebP (max 10MB each)
             </p>
           </div>
 
@@ -374,14 +467,14 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
             <p className={`text-lg font-medium mb-2 transition-colors ${
               isDragOver ? 'text-purple-700' : 'text-gray-700'
             }`}>
-              {isDragOver ? 'Drop your image here!' : 'Drag & Drop Images Here'}
+              {isDragOver ? 'Drop your images here!' : 'Drag & Drop Images Here'}
             </p>
             
             <p className={`text-sm mb-3 transition-colors ${
               isDragOver ? 'text-purple-600' : 'text-gray-500'
             }`}>
               {isDragOver 
-                ? 'Release to process your image' 
+                ? 'Release to process your images' 
                 : 'Or click to select files'
               }
             </p>
@@ -390,10 +483,13 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
               isDragOver ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'
             }`}>
               <p>
-                <strong>Single image processing:</strong> Standard OCR with AI analysis
+                <strong>Single image:</strong> Standard OCR with AI analysis
               </p>
               <p>
-                <strong>Multiple files:</strong> First file will be processed (use main scanning for batch)
+                <strong>Multiple images:</strong> Batch processing with progress tracking
+              </p>
+              <p className="mt-1">
+                <strong>AI-Powered:</strong> {isPremiumUser ? 'OpenAI Vision (Premium)' : 'Google Vision + OpenAI fallback'}
               </p>
             </div>
           </div>
