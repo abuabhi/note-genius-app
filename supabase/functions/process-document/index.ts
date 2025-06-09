@@ -2,6 +2,15 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { readDocx, DocxResult } from "./docx-reader.ts";
+import { convertPdfToImages, PdfConversionResult } from "./pdf-converter.ts";
+import { 
+  getAccessToken, 
+  uploadToGCSWithServiceAccount, 
+  startAsyncBatchAnnotation, 
+  pollOperationUntilComplete, 
+  downloadAndParseResults, 
+  cleanupGCSFiles 
+} from "./google-vision-helpers.ts";
 
 interface ProcessDocumentRequestBody {
   fileUrl?: string;
@@ -43,17 +52,19 @@ serve(async (req) => {
       }
       
       const fileBuffer = await fileResponse.arrayBuffer();
+      const fileSizeKB = Math.round(fileBuffer.byteLength / 1024);
+      console.log(`File fetched successfully: ${fileSizeKB}KB`);
       
       // Process based on file type
       if (fileType === 'pdf') {
         console.log('Processing PDF document');
         
-        // Check if we have the Google Cloud service account JSON
+        // Try Google Vision API first
         const serviceAccountJson = Deno.env.get("GOOGLE_CLOUD_SERVICE_ACCOUNT_JSON");
         const gcsBucket = Deno.env.get("GOOGLE_CLOUD_STORAGE_BUCKET");
         
         if (serviceAccountJson && gcsBucket) {
-          console.log('Attempting Google Vision API processing with service account auth');
+          console.log('Attempting Google Vision API processing');
           
           try {
             const visionResult = await processPdfWithVisionAPIAsync(fileBuffer, serviceAccountJson, gcsBucket);
@@ -66,20 +77,21 @@ serve(async (req) => {
                 processingMethod: "vision-api-async-success",
                 confidence: visionResult.confidence || 0.9,
                 provider: "google-vision-async",
-                pages: visionResult.pages || 1
+                pages: visionResult.pages || 1,
+                fileSizeKB
               };
               
-              console.log(`Google Vision API processing successful. Extracted ${documentText.length} characters from PDF`);
+              console.log(`Google Vision API processing successful. Extracted ${documentText.length} characters`);
             } else {
               throw new Error("Google Vision API returned insufficient text content");
             }
           } catch (visionError) {
             console.error('Google Vision API processing failed:', visionError.message);
             
-            // Fallback to OpenAI Vision API
+            // Fallback to OpenAI Vision API with PDF conversion
             const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
             if (openaiApiKey) {
-              console.log('Falling back to OpenAI Vision API');
+              console.log('Falling back to OpenAI Vision API with PDF conversion');
               
               try {
                 const openaiResult = await processPdfWithOpenAIVision(fileBuffer, openaiApiKey);
@@ -92,7 +104,9 @@ serve(async (req) => {
                     processingMethod: "openai-vision-success",
                     googleVisionError: visionError.message,
                     provider: "openai-vision",
-                    fallbackUsed: true
+                    fallbackUsed: true,
+                    fileSizeKB,
+                    ...openaiResult.metadata
                   };
                   
                   console.log(`OpenAI Vision processing successful. Extracted ${documentText.length} characters`);
@@ -118,7 +132,8 @@ serve(async (req) => {
                 documentMetadata = {
                   processingMethod: "all-processing-failed",
                   googleVisionError: visionError.message,
-                  openaiVisionError: openaiError.message
+                  openaiVisionError: openaiError.message,
+                  fileSizeKB
                 };
               }
             } else {
@@ -133,7 +148,8 @@ serve(async (req) => {
               documentMetadata = {
                 processingMethod: "all-processing-failed",
                 googleVisionError: visionError.message,
-                openaiNotConfigured: true
+                openaiNotConfigured: true,
+                fileSizeKB
               };
             }
           }
@@ -141,7 +157,7 @@ serve(async (req) => {
           // Try OpenAI Vision if Google Cloud is not configured
           const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
           if (openaiApiKey) {
-            console.log('Google Cloud not configured, using OpenAI Vision API');
+            console.log('Google Cloud not configured, using OpenAI Vision API with PDF conversion');
             
             try {
               const openaiResult = await processPdfWithOpenAIVision(fileBuffer, openaiApiKey);
@@ -153,7 +169,9 @@ serve(async (req) => {
                 documentMetadata = {
                   processingMethod: "openai-vision-success",
                   provider: "openai-vision",
-                  googleCloudNotConfigured: true
+                  googleCloudNotConfigured: true,
+                  fileSizeKB,
+                  ...openaiResult.metadata
                 };
                 
                 console.log(`OpenAI Vision processing successful. Extracted ${documentText.length} characters`);
@@ -174,7 +192,8 @@ serve(async (req) => {
               processingMethod = "config-missing";
               documentMetadata = {
                 processingMethod: "config-missing",
-                openaiError: openaiError.message
+                openaiError: openaiError.message,
+                fileSizeKB
               };
             }
           } else {
@@ -193,7 +212,8 @@ serve(async (req) => {
             documentTitle = "Configuration Required";
             processingMethod = "config-missing";
             documentMetadata = {
-              processingMethod: "config-missing"
+              processingMethod: "config-missing",
+              fileSizeKB
             };
           }
         }
@@ -203,7 +223,7 @@ serve(async (req) => {
         const docxResult: DocxResult = await readDocx(fileBuffer);
         documentText = docxResult.text;
         documentTitle = docxResult.title || "Word Document";
-        documentMetadata = docxResult.metadata || {};
+        documentMetadata = { ...docxResult.metadata, fileSizeKB };
         processingMethod = "docx";
         console.log(`DOCX processing complete. Title: ${documentTitle}, Text length: ${documentText.length}`);
       } 
@@ -253,21 +273,141 @@ serve(async (req) => {
 });
 
 /**
- * Process PDF with Google Cloud Vision API using service account authentication
+ * Process PDF with OpenAI Vision API after converting to images
+ */
+async function processPdfWithOpenAIVision(
+  pdfBuffer: ArrayBuffer,
+  apiKey: string
+): Promise<{ text: string; confidence?: number; metadata?: any }> {
+  console.log("Processing PDF with OpenAI Vision API (with PDF-to-image conversion)");
+  
+  try {
+    // Convert PDF to images first
+    console.log("Converting PDF to images...");
+    const conversionResult: PdfConversionResult = await convertPdfToImages(pdfBuffer, 3); // Limit to 3 pages
+    
+    if (conversionResult.pages.length === 0) {
+      throw new Error("PDF conversion produced no readable pages");
+    }
+    
+    console.log(`PDF converted to ${conversionResult.pages.length} images in ${conversionResult.conversionTime}ms`);
+    
+    // Process each page with OpenAI Vision
+    const extractedTexts: string[] = [];
+    let totalTokens = 0;
+    
+    for (let i = 0; i < conversionResult.pages.length; i++) {
+      const page = conversionResult.pages[i];
+      console.log(`Processing page ${page.pageNumber} with OpenAI Vision...`);
+      
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: `Please extract all text content from this image of page ${page.pageNumber}. Return only the extracted text, preserving the original formatting and structure as much as possible. Do not add any commentary or explanations.`
+                },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: `data:image/png;base64,${page.imageData}`,
+                    detail: 'high'
+                  }
+                }
+              ]
+            }
+          ],
+          max_tokens: 4000,
+          temperature: 0.1
+        })
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`OpenAI API request failed for page ${page.pageNumber}: ${response.status} ${errorText}`);
+      }
+      
+      const data = await response.json();
+      const pageText = data.choices?.[0]?.message?.content || '';
+      
+      if (pageText.trim()) {
+        extractedTexts.push(`--- Page ${page.pageNumber} ---\n${pageText.trim()}`);
+        console.log(`Extracted ${pageText.length} characters from page ${page.pageNumber}`);
+      }
+      
+      // Track token usage
+      if (data.usage) {
+        totalTokens += data.usage.total_tokens || 0;
+      }
+      
+      // Small delay between requests to be respectful
+      if (i < conversionResult.pages.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+    
+    if (extractedTexts.length === 0) {
+      throw new Error('No text content could be extracted from any PDF pages');
+    }
+    
+    // Combine all extracted text
+    const combinedText = extractedTexts.join('\n\n');
+    
+    console.log(`OpenAI Vision processing completed. Total text: ${combinedText.length} characters, tokens used: ${totalTokens}`);
+    
+    return {
+      text: combinedText,
+      confidence: 0.85,
+      metadata: {
+        pagesProcessed: conversionResult.pages.length,
+        totalPages: conversionResult.totalPages,
+        conversionTime: conversionResult.conversionTime,
+        tokensUsed: totalTokens,
+        provider: 'openai-vision'
+      }
+    };
+    
+  } catch (error) {
+    console.error("OpenAI Vision PDF processing error:", error);
+    throw new Error(`OpenAI Vision processing failed: ${error.message}`);
+  }
+}
+
+/**
+ * Process PDF with Google Cloud Vision API using service account authentication (FIXED)
  */
 async function processPdfWithVisionAPIAsync(
   pdfBuffer: ArrayBuffer, 
   serviceAccountJson: string, 
   gcsBucket: string
 ): Promise<{ text: string; confidence?: number; pages?: number }> {
-  console.log("Processing PDF with Google Cloud Vision API (Service Account Auth)");
+  console.log("Processing PDF with Google Cloud Vision API (Service Account Auth - FIXED)");
   
   try {
-    // Parse service account credentials
-    const credentials = JSON.parse(serviceAccountJson);
+    // Parse and validate service account credentials
+    let credentials;
+    try {
+      credentials = JSON.parse(serviceAccountJson);
+    } catch (parseError) {
+      throw new Error(`Invalid service account JSON: ${parseError.message}`);
+    }
+    
+    // Validate required fields
+    if (!credentials.private_key || !credentials.client_email || !credentials.project_id) {
+      throw new Error("Service account JSON missing required fields (private_key, client_email, project_id)");
+    }
     
     // Step 1: Upload PDF to Google Cloud Storage
-    const fileName = `temp-pdf-${Date.now()}.pdf`;
+    const fileName = `temp-pdf-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.pdf`;
     const gcsUri = await uploadToGCSWithServiceAccount(pdfBuffer, gcsBucket, fileName, credentials);
     console.log(`PDF uploaded to GCS: ${gcsUri}`);
     
@@ -284,7 +424,11 @@ async function processPdfWithVisionAPIAsync(
     console.log(`Successfully extracted ${extractedText.length} characters`);
     
     // Step 5: Clean up temporary files
-    await cleanupGCSFiles(gcsBucket, fileName, credentials);
+    try {
+      await cleanupGCSFiles(gcsBucket, fileName, credentials);
+    } catch (cleanupError) {
+      console.warn('Failed to cleanup temporary files:', cleanupError.message);
+    }
     
     return {
       text: extractedText,
@@ -295,334 +439,5 @@ async function processPdfWithVisionAPIAsync(
   } catch (error) {
     console.error("Google Cloud Vision PDF processing error:", error);
     throw new Error(`Vision API processing failed: ${error.message}`);
-  }
-}
-
-/**
- * Process PDF with OpenAI Vision API
- */
-async function processPdfWithOpenAIVision(
-  pdfBuffer: ArrayBuffer,
-  apiKey: string
-): Promise<{ text: string; confidence?: number }> {
-  console.log("Processing PDF with OpenAI Vision API");
-  
-  try {
-    // Convert PDF to base64
-    const base64Pdf = btoa(String.fromCharCode(...new Uint8Array(pdfBuffer)));
-    
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: 'Please extract all text content from this PDF document. Return only the extracted text, no additional commentary or formatting.'
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:application/pdf;base64,${base64Pdf}`
-                }
-              }
-            ]
-          }
-        ],
-        max_tokens: 4000
-      })
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`OpenAI API request failed: ${response.status} ${errorText}`);
-    }
-    
-    const data = await response.json();
-    const extractedText = data.choices?.[0]?.message?.content || '';
-    
-    if (!extractedText.trim()) {
-      throw new Error('No text content extracted from PDF');
-    }
-    
-    return {
-      text: extractedText,
-      confidence: 0.85
-    };
-    
-  } catch (error) {
-    console.error("OpenAI Vision PDF processing error:", error);
-    throw new Error(`OpenAI Vision processing failed: ${error.message}`);
-  }
-}
-
-/**
- * Generate JWT token for service account authentication
- */
-async function generateJWT(credentials: any): Promise<string> {
-  const now = Math.floor(Date.now() / 1000);
-  const payload = {
-    iss: credentials.client_email,
-    scope: 'https://www.googleapis.com/auth/cloud-platform',
-    aud: 'https://oauth2.googleapis.com/token',
-    iat: now,
-    exp: now + 3600
-  };
-  
-  // Create JWT header
-  const header = { alg: 'RS256', typ: 'JWT' };
-  
-  // Encode header and payload
-  const encodedHeader = btoa(JSON.stringify(header)).replace(/[+/=]/g, (m) => ({ '+': '-', '/': '_', '=': '' })[m]);
-  const encodedPayload = btoa(JSON.stringify(payload)).replace(/[+/=]/g, (m) => ({ '+': '-', '/': '_', '=': '' })[m]);
-  
-  // Import private key
-  const privateKey = await crypto.subtle.importKey(
-    'pkcs8',
-    new TextEncoder().encode(credentials.private_key.replace(/\\n/g, '\n')),
-    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-    false,
-    ['sign']
-  );
-  
-  // Sign the token
-  const signature = await crypto.subtle.sign(
-    'RSASSA-PKCS1-v1_5',
-    privateKey,
-    new TextEncoder().encode(`${encodedHeader}.${encodedPayload}`)
-  );
-  
-  const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
-    .replace(/[+/=]/g, (m) => ({ '+': '-', '/': '_', '=': '' })[m]);
-  
-  return `${encodedHeader}.${encodedPayload}.${encodedSignature}`;
-}
-
-/**
- * Get access token using service account
- */
-async function getAccessToken(credentials: any): Promise<string> {
-  const jwt = await generateJWT(credentials);
-  
-  const response = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`
-  });
-  
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Failed to get access token: ${response.status} ${errorText}`);
-  }
-  
-  const data = await response.json();
-  return data.access_token;
-}
-
-/**
- * Upload PDF to Google Cloud Storage with service account authentication
- */
-async function uploadToGCSWithServiceAccount(
-  pdfBuffer: ArrayBuffer, 
-  bucket: string, 
-  fileName: string, 
-  credentials: any
-): Promise<string> {
-  const accessToken = await getAccessToken(credentials);
-  const uploadUrl = `https://storage.googleapis.com/upload/storage/v1/b/${bucket}/o?uploadType=media&name=${fileName}`;
-  
-  const response = await fetch(uploadUrl, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/pdf',
-    },
-    body: pdfBuffer
-  });
-  
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Failed to upload to GCS: ${response.status} ${errorText}`);
-  }
-  
-  return `gs://${bucket}/${fileName}`;
-}
-
-/**
- * Start async batch annotation job with service account authentication
- */
-async function startAsyncBatchAnnotation(
-  inputUri: string, 
-  bucket: string, 
-  credentials: any
-): Promise<string> {
-  const accessToken = await getAccessToken(credentials);
-  const url = 'https://vision.googleapis.com/v1/files:asyncBatchAnnotate';
-  const outputPrefix = `vision-output-${Date.now()}`;
-  
-  const requestBody = {
-    requests: [
-      {
-        inputConfig: {
-          gcsSource: { uri: inputUri },
-          mimeType: 'application/pdf'
-        },
-        features: [{ type: 'DOCUMENT_TEXT_DETECTION' }],
-        outputConfig: {
-          gcsDestination: { uri: `gs://${bucket}/${outputPrefix}/` },
-          batchSize: 2
-        }
-      }
-    ]
-  };
-  
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(requestBody)
-  });
-  
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Failed to start async annotation: ${response.status} ${errorText}`);
-  }
-  
-  const result = await response.json();
-  return result.name;
-}
-
-/**
- * Poll operation until complete with service account authentication
- */
-async function pollOperationUntilComplete(
-  operationName: string, 
-  credentials: any, 
-  maxAttempts = 30
-): Promise<string> {
-  const accessToken = await getAccessToken(credentials);
-  const url = `https://vision.googleapis.com/v1/${operationName}`;
-  
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const response = await fetch(url, {
-      headers: { 'Authorization': `Bearer ${accessToken}` }
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to poll operation: ${response.status} ${errorText}`);
-    }
-    
-    const result = await response.json();
-    
-    if (result.done) {
-      if (result.error) {
-        throw new Error(`Vision API operation failed: ${JSON.stringify(result.error)}`);
-      }
-      
-      const outputUri = result.response?.responses?.[0]?.outputConfig?.gcsDestination?.uri;
-      if (!outputUri) {
-        throw new Error('No output URI found in operation result');
-      }
-      
-      return outputUri;
-    }
-    
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    console.log(`Polling attempt ${attempt + 1}/${maxAttempts} - operation still running...`);
-  }
-  
-  throw new Error('Operation timed out after maximum polling attempts');
-}
-
-/**
- * Download and parse results from GCS with service account authentication
- */
-async function downloadAndParseResults(outputUri: string, credentials: any): Promise<string> {
-  const accessToken = await getAccessToken(credentials);
-  const bucketMatch = outputUri.match(/gs:\/\/([^\/]+)\/(.+)/);
-  if (!bucketMatch) {
-    throw new Error('Invalid output URI format');
-  }
-  
-  const bucket = bucketMatch[1];
-  const prefix = bucketMatch[2];
-  
-  // List files in the output directory
-  const listUrl = `https://storage.googleapis.com/storage/v1/b/${bucket}/o?prefix=${encodeURIComponent(prefix)}`;
-  
-  const listResponse = await fetch(listUrl, {
-    headers: { 'Authorization': `Bearer ${accessToken}` }
-  });
-  
-  if (!listResponse.ok) {
-    const errorText = await listResponse.text();
-    throw new Error(`Failed to list output files: ${listResponse.status} ${errorText}`);
-  }
-  
-  const listResult = await listResponse.json();
-  const jsonFiles = listResult.items?.filter((item: any) => item.name.endsWith('.json')) || [];
-  
-  if (jsonFiles.length === 0) {
-    throw new Error('No JSON result files found in output directory');
-  }
-  
-  // Download the first JSON file
-  const fileName = jsonFiles[0].name;
-  const downloadUrl = `https://storage.googleapis.com/storage/v1/b/${bucket}/o/${encodeURIComponent(fileName)}?alt=media`;
-  
-  const downloadResponse = await fetch(downloadUrl, {
-    headers: { 'Authorization': `Bearer ${accessToken}` }
-  });
-  
-  if (!downloadResponse.ok) {
-    const errorText = await downloadResponse.text();
-    throw new Error(`Failed to download result file: ${downloadResponse.status} ${errorText}`);
-  }
-  
-  const resultData = await downloadResponse.json();
-  
-  // Extract text from the result
-  let extractedText = '';
-  if (resultData.responses && resultData.responses.length > 0) {
-    for (const response of resultData.responses) {
-      if (response.fullTextAnnotation && response.fullTextAnnotation.text) {
-        extractedText += response.fullTextAnnotation.text + '\n';
-      }
-    }
-  }
-  
-  if (!extractedText.trim()) {
-    throw new Error('No text content found in Vision API results');
-  }
-  
-  return extractedText.trim();
-}
-
-/**
- * Clean up temporary files from GCS with service account authentication
- */
-async function cleanupGCSFiles(bucket: string, fileName: string, credentials: any): Promise<void> {
-  try {
-    const accessToken = await getAccessToken(credentials);
-    const deleteUrl = `https://storage.googleapis.com/storage/v1/b/${bucket}/o/${encodeURIComponent(fileName)}`;
-    
-    await fetch(deleteUrl, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${accessToken}` }
-    });
-    
-    console.log('Cleaned up temporary PDF file');
-  } catch (error) {
-    console.warn('Failed to cleanup temporary files:', error.message);
   }
 }
