@@ -7,6 +7,7 @@ interface RetryConfig {
   baseDelay?: number;
   maxDelay?: number;
   backoffMultiplier?: number;
+  progressCallback?: (progress: { attempt: number; maxAttempts: number }) => void;
 }
 
 export const useRetryLogic = (config: RetryConfig = {}) => {
@@ -14,11 +15,13 @@ export const useRetryLogic = (config: RetryConfig = {}) => {
     maxRetries = 3,
     baseDelay = 1000,
     maxDelay = 10000,
-    backoffMultiplier = 2
+    backoffMultiplier = 2,
+    progressCallback
   } = config;
 
   const [retryCount, setRetryCount] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [lastError, setLastError] = useState<Error | null>(null);
 
   const calculateDelay = useCallback((attempt: number) => {
     const delay = Math.min(baseDelay * Math.pow(backoffMultiplier, attempt), maxDelay);
@@ -30,36 +33,43 @@ export const useRetryLogic = (config: RetryConfig = {}) => {
     operation: () => Promise<T>,
     onError?: (error: Error, attempt: number) => void
   ): Promise<T> => {
-    let lastError: Error;
+    let currentError: Error;
     
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         setIsRetrying(attempt > 0);
+        if (progressCallback) {
+          progressCallback({ attempt, maxAttempts: maxRetries });
+        }
+        
         const result = await operation();
         setRetryCount(0);
         setIsRetrying(false);
+        setLastError(null);
         return result;
       } catch (error) {
-        lastError = error as Error;
+        currentError = error as Error;
+        setLastError(currentError);
         setRetryCount(attempt + 1);
         
         if (attempt < maxRetries) {
           const delay = calculateDelay(attempt);
           toast.info(`Retrying in ${Math.round(delay / 1000)} seconds... (${attempt + 1}/${maxRetries})`);
           await new Promise(resolve => setTimeout(resolve, delay));
-          onError?.(lastError, attempt + 1);
+          onError?.(currentError, attempt + 1);
         }
       }
     }
     
     setIsRetrying(false);
-    toast.error(`Operation failed after ${maxRetries} retries`);
+    toast.error(`Operation failed after ${maxRetries} retries: ${currentError?.message || 'Unknown error'}`);
     throw lastError!;
-  }, [maxRetries, calculateDelay]);
+  }, [maxRetries, calculateDelay, progressCallback]);
 
   const reset = useCallback(() => {
     setRetryCount(0);
     setIsRetrying(false);
+    setLastError(null);
   }, []);
 
   return {
@@ -67,6 +77,7 @@ export const useRetryLogic = (config: RetryConfig = {}) => {
     retryCount,
     isRetrying,
     canRetry: retryCount < maxRetries,
+    lastError,
     reset
   };
 };

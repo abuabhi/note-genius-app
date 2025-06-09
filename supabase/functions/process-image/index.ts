@@ -121,7 +121,7 @@ async function validateOpenAIKey(apiKey: string): Promise<boolean> {
 }
 
 /**
- * Properly convert image to base64 without corruption
+ * Improved image to base64 conversion with better error handling
  */
 async function convertImageToBase64(imageUrl: string): Promise<string> {
   console.log("Converting image to base64...");
@@ -133,6 +133,13 @@ async function convertImageToBase64(imageUrl: string): Promise<string> {
     }
     
     const contentType = response.headers.get("content-type") || "image/png";
+    
+    // Validate content type
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif', 'image/bmp', 'image/tiff'];
+    if (!allowedTypes.includes(contentType.toLowerCase())) {
+      throw new Error(`Unsupported image type: ${contentType}. Allowed types: ${allowedTypes.join(', ')}`);
+    }
+    
     const arrayBuffer = await response.arrayBuffer();
     
     // Check image size (OpenAI limit is 20MB)
@@ -143,15 +150,25 @@ async function convertImageToBase64(imageUrl: string): Promise<string> {
       throw new Error(`Image too large: ${sizeMB.toFixed(2)}MB. Maximum allowed: 20MB`);
     }
     
-    // Convert to base64 using the built-in btoa function properly
-    const uint8Array = new Uint8Array(arrayBuffer);
-    let binary = '';
-    for (let i = 0; i < uint8Array.byteLength; i++) {
-      binary += String.fromCharCode(uint8Array[i]);
+    // Modern and safe base64 encoding
+    let base64: string;
+    
+    if (typeof Buffer !== 'undefined') {
+      // Deno/Node.js environment - use Buffer for better performance and safety
+      base64 = Buffer.from(arrayBuffer).toString('base64');
+    } else {
+      // Browser fallback - use improved method
+      const uint8Array = new Uint8Array(arrayBuffer);
+      const binary = String.fromCharCode(...uint8Array);
+      base64 = btoa(binary);
     }
     
-    const base64 = btoa(binary);
     const dataUrl = `data:${contentType};base64,${base64}`;
+    
+    // Validate the generated data URL
+    if (!/^data:image\/(png|jpeg|jpg|webp|gif|bmp|tiff);base64,/.test(dataUrl)) {
+      throw new Error("Invalid data URL format generated");
+    }
     
     console.log(`Base64 conversion successful. Data URL length: ${dataUrl.length}`);
     
@@ -163,7 +180,7 @@ async function convertImageToBase64(imageUrl: string): Promise<string> {
 }
 
 /**
- * Enhanced OpenAI processing with proper error handling and validation
+ * Enhanced OpenAI processing with improved error handling
  */
 async function processWithOpenAI(imageUrl: string, language: string): Promise<OCRResult> {
   const apiKey = Deno.env.get("OPENAI_API_KEY");
@@ -186,6 +203,10 @@ async function processWithOpenAI(imageUrl: string, language: string): Promise<OC
     
     if (imageUrl.startsWith('data:')) {
       console.log("Image is already in data URL format");
+      // Validate the existing data URL format
+      if (!/^data:image\/(png|jpeg|jpg|webp|gif|bmp|tiff);base64,/.test(imageUrl)) {
+        throw new Error("Invalid input data URL format");
+      }
       processedImageUrl = imageUrl;
     } else {
       console.log("Converting HTTP URL to base64 data URL...");
@@ -193,7 +214,7 @@ async function processWithOpenAI(imageUrl: string, language: string): Promise<OC
     }
     
     const requestBody = {
-      model: "gpt-4o", // Using the latest model as recommended
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
@@ -266,7 +287,10 @@ async function processWithOpenAI(imageUrl: string, language: string): Promise<OC
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       console.error("OpenAI API error response:", errorData);
-      throw new Error(`OpenAI API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`);
+      
+      // Parse nested error messages
+      const errorMessage = errorData?.error?.message || `${response.status} ${response.statusText}`;
+      throw new Error(`OpenAI API error: ${errorMessage}`);
     }
     
     const data = await response.json();
@@ -293,7 +317,7 @@ async function processWithOpenAI(imageUrl: string, language: string): Promise<OC
     
     return {
       text: extractedText,
-      confidence: 0.95, // High confidence for OpenAI
+      confidence: 0.95,
       processedAt: new Date().toISOString(),
       language: language,
       provider: "openai-vision-gpt4o"
@@ -310,7 +334,7 @@ async function processWithOpenAI(imageUrl: string, language: string): Promise<OC
 }
 
 /**
- * Google Cloud Vision processing with better error handling
+ * Google Cloud Vision processing with improved error handling
  */
 async function processWithCloudOCR(imageUrl: string, language: string, enhanceImage: boolean): Promise<OCRResult> {
   const googleApiKey = Deno.env.get("GOOGLE_CLOUD_API_KEY");
@@ -339,7 +363,7 @@ async function processWithCloudOCR(imageUrl: string, language: string, enhanceIm
       // Extract just the base64 part, removing the data URL prefix
       const base64Match = imageUrl.match(/^data:image\/[^;]+;base64,(.+)$/);
       if (!base64Match) {
-        throw new Error("Invalid data URL format");
+        throw new Error("Invalid data URL format for Google Vision");
       }
       base64Image = base64Match[1];
     } else {

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Camera, Upload, FileImage, AlertCircle, CheckCircle, Sparkles, Zap } from "lucide-react";
+import { Camera, Upload, FileImage, AlertCircle, CheckCircle, Sparkles, Zap, FileText } from "lucide-react";
 import { Note } from "@/types/note";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,8 +18,8 @@ interface ScanImportTabProps {
 }
 
 export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps) => {
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreviewUrl, setImagePreviewUrl] = useState<string>('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [filePreviewUrl, setFilePreviewUrl] = useState<string>('');
   const [extractedText, setExtractedText] = useState<string>('');
   const [documentTitle, setDocumentTitle] = useState<string>('');
   const [documentSubject, setDocumentSubject] = useState<string>('');
@@ -29,15 +29,16 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
   const [isAiGenerated, setIsAiGenerated] = useState(false);
   const [analysisConfidence, setAnalysisConfidence] = useState<number>(0);
   const [currentStep, setCurrentStep] = useState<'select' | 'process' | 'review' | 'batch'>('select');
+  const [fileType, setFileType] = useState<string>('');
 
-  const uploadImageToStorage = async (file: File | string): Promise<string> => {
+  const uploadFileToStorage = async (file: File | string): Promise<string> => {
     let fileToUpload: File;
     
     if (typeof file === 'string') {
       // Convert data URL to file
       const response = await fetch(file);
       const blob = await response.blob();
-      fileToUpload = new File([blob], 'image.png', { type: blob.type });
+      fileToUpload = new File([blob], 'file.png', { type: blob.type });
     } else {
       fileToUpload = file;
     }
@@ -75,33 +76,37 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
   } = useBatchProcessing({ 
     selectedLanguage: 'eng', 
     isPremiumUser, 
-    uploadImageToStorage 
+    uploadImageToStorage: uploadFileToStorage 
   });
 
-  const handleImageSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
-    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    const supportedFiles = files.filter(file => 
+      file.type.startsWith('image/') || file.type === 'application/pdf'
+    );
     
-    if (imageFiles.length === 0) {
-      toast.error("Please select valid image files");
+    if (supportedFiles.length === 0) {
+      toast.error("Please select valid image files (.png, .jpg, .webp) or PDF files");
       return;
     }
 
-    if (imageFiles.length === 1) {
-      processFileSelection(imageFiles[0]);
+    if (supportedFiles.length === 1) {
+      processFileSelection(supportedFiles[0]);
     } else {
-      handleMultipleFiles(imageFiles);
+      handleMultipleFiles(supportedFiles);
     }
   };
 
   const processFileSelection = (file: File) => {
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Image file must be smaller than 10MB");
+    // Validate file size (max 50MB for PDFs, 10MB for images)
+    const maxSize = file.type === 'application/pdf' ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error(`File must be smaller than ${file.type === 'application/pdf' ? '50MB' : '10MB'}`);
       return;
     }
 
-    setSelectedImage(file);
+    setSelectedFile(file);
+    setFileType(file.type);
     setDocumentTitle(file.name.replace(/\.[^/.]+$/, "")); // Remove extension
     setExtractedText(''); // Clear previous content
     setDocumentSubject('');
@@ -111,78 +116,86 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
     setCurrentStep('select');
 
     // Create preview URL
-    const previewUrl = URL.createObjectURL(file);
-    setImagePreviewUrl(previewUrl);
+    if (file.type.startsWith('image/')) {
+      const previewUrl = URL.createObjectURL(file);
+      setFilePreviewUrl(previewUrl);
+    } else {
+      // For PDFs, we'll show a file icon preview
+      setFilePreviewUrl('');
+    }
   };
 
   const handleMultipleFiles = (files: File[]) => {
-    console.log(`Starting batch processing for ${files.length} images`);
+    console.log(`Starting batch processing for ${files.length} files`);
     setCurrentStep('batch');
     processBatchImages(files);
   };
 
   const handleDropEvent = (e: React.DragEvent) => {
     handleDrop(e, 
-      (imageUrl: string) => {
-        // Handle single image from drag and drop
-        fetch(imageUrl)
+      (fileUrl: string) => {
+        // Handle single file from drag and drop
+        fetch(fileUrl)
           .then(res => res.blob())
           .then(blob => {
-            const file = new File([blob], 'dropped-image.png', { type: blob.type });
+            const file = new File([blob], 'dropped-file', { type: blob.type });
             processFileSelection(file);
           });
       },
       (files: File[]) => {
         // Handle multiple files
-        const imageFiles = files.filter(file => file.type.startsWith('image/'));
+        const supportedFiles = files.filter(file => 
+          file.type.startsWith('image/') || file.type === 'application/pdf'
+        );
         
-        if (imageFiles.length === 0) {
-          toast.error("No valid image files found");
+        if (supportedFiles.length === 0) {
+          toast.error("No valid image or PDF files found");
           return;
         }
         
-        if (imageFiles.length === 1) {
-          processFileSelection(imageFiles[0]);
+        if (supportedFiles.length === 1) {
+          processFileSelection(supportedFiles[0]);
         } else {
-          handleMultipleFiles(imageFiles);
+          handleMultipleFiles(supportedFiles);
         }
       }
     );
   };
 
-  const processImage = async () => {
-    if (!selectedImage) return;
+  const processFile = async () => {
+    if (!selectedFile) return;
 
     setIsProcessing(true);
     setCurrentStep('process');
     
     try {
-      console.log("🔄 Starting OCR processing for image:", selectedImage.name);
+      console.log("🔄 Starting OCR processing for file:", selectedFile.name, "Type:", selectedFile.type);
 
-      // Upload image to Supabase storage
-      const imageUrl = await uploadImageToStorage(selectedImage);
+      // Upload file to Supabase storage
+      const fileUrl = await uploadFileToStorage(selectedFile);
       
       // Get current user session for content analysis
       const { data: { session } } = await supabase.auth.getSession();
       const userId = session?.user?.id;
 
-      // Call the process-image edge function
-      const { data: ocrResult, error: ocrError } = await supabase.functions.invoke('process-image', {
+      // Call the unified process-file edge function
+      const { data: ocrResult, error: ocrError } = await supabase.functions.invoke('process-file', {
         body: { 
-          imageUrl,
+          fileUrl,
           language: 'eng', // Default to English
           userId: userId,
           useOpenAI: isPremiumUser, // Use OpenAI for premium users, fallback for others
-          enhanceImage: false // Could be made configurable
+          enhanceImage: false, // Could be made configurable
+          fileType: selectedFile.type
         }
       });
 
       if (ocrError) {
-        throw new Error(ocrError.message || "Failed to process image");
+        throw new Error(ocrError.message || "Failed to process file");
       }
 
       if (!ocrResult || !ocrResult.text) {
-        throw new Error("No text could be extracted from the image");
+        throw new Error("No text could be extracted from the file");
       }
 
       console.log("✅ OCR processing completed successfully");
@@ -196,24 +209,22 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
         try {
           console.log("🤖 Starting AI content analysis...");
           
-          // We'll call the same process-document function but with extracted text
-          // First upload the text as a temporary text file for analysis
+          // Call process-document for content analysis
           const textBlob = new Blob([extractedText], { type: 'text/plain' });
           const textFile = new File([textBlob], 'extracted-text.txt', { type: 'text/plain' });
-          const textFileUrl = await uploadImageToStorage(textFile);
+          const textFileUrl = await uploadFileToStorage(textFile);
 
-          // Call process-document for content analysis (it will analyze the text)
           const { data: analysisResult, error: analysisError } = await supabase.functions.invoke('process-document', {
             body: {
               fileUrl: textFileUrl,
               fileType: 'txt',
               userId: userId,
-              extractedText: extractedText // Pass the text directly for analysis
+              extractedText: extractedText
             }
           });
 
           if (!analysisError && analysisResult?.success) {
-            setDocumentTitle(analysisResult.title || selectedImage.name.replace(/\.[^/.]+$/, ""));
+            setDocumentTitle(analysisResult.title || selectedFile.name.replace(/\.[^/.]+$/, ""));
             setDocumentSubject(analysisResult.subject || "Uncategorized");
             setIsAiGenerated(analysisResult.metadata?.contentAnalysis?.aiGeneratedTitle || false);
             setAnalysisConfidence(analysisResult.metadata?.contentAnalysis?.confidence || 0);
@@ -228,11 +239,11 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
       }
 
       setCurrentStep('review');
-      toast.success("Image processed successfully!");
+      toast.success(`${selectedFile.type === 'application/pdf' ? 'PDF' : 'Image'} processed successfully!`);
       
     } catch (error) {
-      console.error('❌ Error processing image:', error);
-      toast.error(`Failed to process image: ${error.message}`);
+      console.error('❌ Error processing file:', error);
+      toast.error(`Failed to process file: ${error.message}`);
       setCurrentStep('select');
     } finally {
       setIsProcessing(false);
@@ -247,10 +258,10 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
       const note: Omit<Note, 'id'> = {
         title: documentTitle,
         content: extractedText,
-        description: `Scanned from ${selectedImage?.name || 'image'}`,
+        description: `Scanned from ${selectedFile?.name || 'file'}`,
         tags: [
           { name: 'OCR', color: '#F59E0B' }, 
-          { name: 'Scan', color: '#8B5CF6' },
+          { name: fileType === 'application/pdf' ? 'PDF Scan' : 'Image Scan', color: '#8B5CF6' },
           ...(isAiGenerated ? [{ name: 'AI Generated', color: '#10B981' }] : [])
         ],
         sourceType: 'scan',
@@ -309,8 +320,8 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
   };
 
   const resetForm = () => {
-    setSelectedImage(null);
-    setImagePreviewUrl('');
+    setSelectedFile(null);
+    setFilePreviewUrl('');
     setExtractedText('');
     setDocumentTitle('');
     setDocumentSubject('');
@@ -318,10 +329,11 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
     setIsAiGenerated(false);
     setAnalysisConfidence(0);
     setCurrentStep('select');
+    setFileType('');
     resetBatchProcessing();
     resetDragState();
-    if (imagePreviewUrl) {
-      URL.revokeObjectURL(imagePreviewUrl);
+    if (filePreviewUrl) {
+      URL.revokeObjectURL(filePreviewUrl);
     }
   };
 
@@ -390,7 +402,9 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
           <CardContent className="p-6">
             <div className="text-center">
               <div className="h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Processing Document</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Processing {fileType === 'application/pdf' ? 'PDF Document' : 'Image'}
+              </h3>
               <p className="text-sm text-gray-600 mb-4">
                 {isPremiumUser 
                   ? "Using OpenAI Vision API for enhanced OCR accuracy..." 
@@ -423,13 +437,13 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-purple-700">
           <div>
-            <strong>🚀 Batch Processing:</strong> Scan up to 3 documents simultaneously for maximum efficiency
+            <strong>🚀 Batch Processing:</strong> Scan up to 3 documents simultaneously
           </div>
           <div>
-            <strong>🤖 AI-Powered:</strong> {isPremiumUser ? 'OpenAI Vision (Premium)' : 'Google Vision + OpenAI fallback'} for superior accuracy
+            <strong>🤖 AI-Powered:</strong> {isPremiumUser ? 'OpenAI Vision (Premium)' : 'Google Vision + OpenAI fallback'} 
           </div>
           <div>
-            <strong>✍️ Handwriting Expert:</strong> Specialized recognition for cursive and print handwriting
+            <strong>✍️ Multi-Format:</strong> Images & PDFs supported with smart processing
           </div>
           <div>
             <strong>📊 Smart Analysis:</strong> Automatic title detection and content categorization
@@ -459,21 +473,23 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
             onClick={() => {
               const input = document.createElement('input');
               input.type = 'file';
-              input.accept = '.png,.jpg,.jpeg,.gif,.bmp,.tiff,.webp';
+              input.accept = '.png,.jpg,.jpeg,.gif,.bmp,.tiff,.webp,.pdf';
               input.multiple = true;
               input.onchange = (e) => {
                 const files = Array.from((e.target as HTMLInputElement).files || []);
-                const imageFiles = files.filter(file => file.type.startsWith('image/'));
+                const supportedFiles = files.filter(file => 
+                  file.type.startsWith('image/') || file.type === 'application/pdf'
+                );
                 
-                if (imageFiles.length === 0) {
-                  toast.error("Please select valid image files");
+                if (supportedFiles.length === 0) {
+                  toast.error("Please select valid image or PDF files");
                   return;
                 }
 
-                if (imageFiles.length === 1) {
-                  processFileSelection(imageFiles[0]);
+                if (supportedFiles.length === 1) {
+                  processFileSelection(supportedFiles[0]);
                 } else {
-                  handleMultipleFiles(imageFiles);
+                  handleMultipleFiles(supportedFiles);
                 }
               };
               input.click();
@@ -498,7 +514,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
             }`}>
               {isDragOver 
                 ? 'Release to start processing your documents' 
-                : 'Upload single images or multiple documents for batch processing'
+                : 'Upload images or PDF files for OCR processing'
               }
             </p>
             
@@ -506,49 +522,70 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
               isDragOver ? 'bg-purple-100/50' : 'bg-gray-50'
             }`}>
               <div className="text-left">
-                <p className="font-semibold text-sm mb-2">📄 Single Document:</p>
+                <div className="font-semibold text-sm mb-2 flex items-center">
+                  <FileImage className="h-4 w-4 mr-2" />
+                  Image Files
+                </div>
                 <ul className="text-xs space-y-1">
                   <li>• Standard OCR with AI analysis</li>
-                  <li>• Automatic title & subject detection</li>
                   <li>• Handwriting recognition</li>
+                  <li>• PNG, JPG, WebP, GIF, etc.</li>
                 </ul>
               </div>
               <div className="text-left">
-                <p className="font-semibold text-sm mb-2">📚 Batch Processing (Up to 3):</p>
+                <div className="font-semibold text-sm mb-2 flex items-center">
+                  <FileText className="h-4 w-4 mr-2" />
+                  PDF Documents
+                </div>
                 <ul className="text-xs space-y-1">
-                  <li>• Simultaneous processing</li>
-                  <li>• Progress tracking</li>
-                  <li>• Bulk note creation</li>
+                  <li>• Convert to image for OCR</li>
+                  <li>• Process first page</li>
+                  <li>• Automatic text extraction</li>
                 </ul>
               </div>
             </div>
             
             <p className="text-xs text-gray-500 mt-4">
-              Supported: PNG, JPG, JPEG, GIF, BMP, TIFF, WebP (max 10MB each)
+              Supported: Images (PNG, JPG, GIF, BMP, TIFF, WebP) & PDF files
             </p>
           </div>
 
-          {selectedImage && imagePreviewUrl && (
+          {selectedFile && (
             <Card className="bg-gray-50">
               <CardContent className="p-4">
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
-                    <FileImage className="h-5 w-5 text-blue-500" />
+                    {selectedFile.type === 'application/pdf' ? (
+                      <FileText className="h-5 w-5 text-red-500" />
+                    ) : (
+                      <FileImage className="h-5 w-5 text-blue-500" />
+                    )}
                     <div>
-                      <p className="font-medium">{selectedImage.name}</p>
+                      <p className="font-medium">{selectedFile.name}</p>
                       <p className="text-sm text-gray-500">
-                        {(selectedImage.size / 1024 / 1024).toFixed(2)} MB
+                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB • 
+                        {selectedFile.type === 'application/pdf' ? ' PDF Document' : ' Image'}
                       </p>
                     </div>
                   </div>
                   
-                  {/* Image Preview */}
+                  {/* Image/File Preview */}
                   <div className="border rounded-lg overflow-hidden">
-                    <img 
-                      src={imagePreviewUrl} 
-                      alt="Selected document preview" 
-                      className="w-full h-48 object-contain bg-white"
-                    />
+                    {selectedFile.type.startsWith('image/') && filePreviewUrl ? (
+                      <img 
+                        src={filePreviewUrl} 
+                        alt="Selected document preview" 
+                        className="w-full h-48 object-contain bg-white"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center w-full h-48 bg-gray-100">
+                        <div className="text-center p-4">
+                          <FileText className="h-12 w-12 text-red-500 mx-auto mb-2" />
+                          <p className="text-sm text-gray-600">{selectedFile.name}</p>
+                          <p className="text-xs text-gray-500">PDF document</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="bg-blue-50 p-3 rounded-lg">
@@ -565,7 +602,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
                   </div>
                   
                   <Button 
-                    onClick={processImage}
+                    onClick={processFile}
                     disabled={isProcessing}
                     className="w-full bg-purple-600 hover:bg-purple-700"
                   >
