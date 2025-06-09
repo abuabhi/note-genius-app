@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -117,7 +116,7 @@ export const BulkPdfImportTab = ({ onSaveNote, isPremiumUser }: BulkPdfImportTab
         ));
 
         try {
-          console.log(`Processing PDF: ${pdfFile.name}`);
+          console.log(`🔄 Processing PDF: ${pdfFile.name}`);
 
           // Upload file to Supabase storage
           const fileUrl = await uploadFileToStorage(pdfFile.file);
@@ -131,7 +130,7 @@ export const BulkPdfImportTab = ({ onSaveNote, isPremiumUser }: BulkPdfImportTab
             body: {
               fileUrl,
               fileType: 'pdf',
-              userId: userId // Pass user ID for content analysis
+              userId: userId
             }
           });
 
@@ -256,8 +255,7 @@ export const BulkPdfImportTab = ({ onSaveNote, isPremiumUser }: BulkPdfImportTab
             pinned: false,
             archived: false,
             date: new Date().toISOString().split('T')[0],
-            category: 'Documents',
-            subject: file.suggestedSubject || 'Uncategorized'
+            category: 'Documents'
           };
 
           await onSaveNote(note);

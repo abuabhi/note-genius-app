@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -180,8 +179,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
         pinned: false,
         archived: false,
         date: new Date().toISOString().split('T')[0],
-        category: 'Scanned Documents',
-        subject: documentSubject || 'Uncategorized'
+        category: 'Scanned Documents'
       };
 
       const success = await onSaveNote(note);
