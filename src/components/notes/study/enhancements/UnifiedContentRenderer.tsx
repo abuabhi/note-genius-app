@@ -25,30 +25,46 @@ export const UnifiedContentRenderer = ({
     contentLength: content?.length || 0,
     contentPreview: content?.substring(0, 100),
     hasContent: !!content,
-    isMarkdown
+    isMarkdown,
+    hasAIEnhancedTags: content?.includes('[AI_ENHANCED]')
   });
 
   if (!content || content.trim() === '') {
     return <div className="text-gray-500 italic">No content available</div>;
   }
 
-  // Pre-process content to handle AI_ENHANCED blocks and ensure proper list spacing
+  // ENHANCED: Better processing of AI_ENHANCED blocks
   const processAIEnhancedContent = (rawContent: string): string => {
-    return rawContent
+    let processed = rawContent
       .replace(/\[AI_ENHANCED\]/g, '<div class="ai-enhanced">')
       .replace(/\[\/AI_ENHANCED\]/g, '</div>');
+    
+    console.log("🔧 AI_ENHANCED processing:", {
+      originalHadTags: rawContent.includes('[AI_ENHANCED]'),
+      processedHasDivs: processed.includes('<div class="ai-enhanced">'),
+      tagCount: (rawContent.match(/\[AI_ENHANCED\]/g) || []).length
+    });
+    
+    return processed;
   };
 
-  // Ensure proper spacing around lists and headings
+  // ENHANCED: Better list and content spacing
   const ensureProperListSpacing = (content: string): string => {
     return content
-      .replace(/\n([-*])/g, '\n\n$1') // Add space before bullet lists
-      .replace(/\n(\d+\.)/g, '\n\n$1') // Add space before numbered lists
-      .replace(/\n(#{1,6}\s)/g, '\n\n$1') // Add space before headings
-      .replace(/\n\n\n+/g, '\n\n'); // Remove excessive line breaks
+      // Add space before bullet lists
+      .replace(/\n([-*+])/g, '\n\n$1')
+      // Add space before numbered lists
+      .replace(/\n(\d+\.)/g, '\n\n$1')
+      // Add space before headings
+      .replace(/\n(#{1,6}\s)/g, '\n\n$1')
+      // Remove excessive line breaks
+      .replace(/\n\n\n+/g, '\n\n')
+      // Ensure list items have proper spacing
+      .replace(/([-*+]\s.+)\n([-*+]\s)/g, '$1\n\n$2')
+      .replace(/(\d+\.\s.+)\n(\d+\.\s)/g, '$1\n\n$2');
   };
 
-  // Custom components for react-markdown with improved styling
+  // ENHANCED: Custom components with better styling
   const markdownComponents = {
     h1: ({ node, ...props }: any) => (
       <h1 className="text-2xl font-bold mb-4 mt-6 text-gray-900 border-b border-gray-200 pb-2 leading-tight" {...props} />
@@ -63,7 +79,7 @@ export const UnifiedContentRenderer = ({
       <h4 className="text-base font-medium mb-2 mt-3 text-gray-700 leading-tight" {...props} />
     ),
     p: ({ node, ...props }: any) => (
-      <p className="mb-4 leading-relaxed text-gray-700" {...props} />
+      <p className="mb-4 leading-relaxed text-gray-700 text-base" {...props} />
     ),
     ul: ({ node, ...props }: any) => (
       <ul className="list-disc list-outside my-4 space-y-2 pl-6 ml-2" {...props} />
@@ -72,7 +88,7 @@ export const UnifiedContentRenderer = ({
       <ol className="list-decimal list-outside my-4 space-y-2 pl-6 ml-2" {...props} />
     ),
     li: ({ node, ...props }: any) => (
-      <li className="mb-2 text-gray-700 leading-relaxed pl-1" {...props} />
+      <li className="mb-2 text-gray-700 leading-relaxed pl-1 list-item" {...props} />
     ),
     strong: ({ node, ...props }: any) => (
       <strong className="font-semibold text-gray-900" {...props} />
@@ -100,6 +116,7 @@ export const UnifiedContentRenderer = ({
     div: ({ node, className: nodeClassName, ...props }: any) => {
       // Handle AI_ENHANCED blocks specially
       if (nodeClassName === 'ai-enhanced') {
+        console.log("🎯 Rendering AI_ENHANCED block");
         return <div className="ai-enhanced" {...props} />;
       }
       return <div className={nodeClassName} {...props} />;
@@ -115,6 +132,12 @@ export const UnifiedContentRenderer = ({
 
   if (isMarkdown) {
     const processedContent = ensureProperListSpacing(processAIEnhancedContent(content));
+    
+    console.log("🚀 Rendering as markdown:", {
+      originalLength: content.length,
+      processedLength: processedContent.length,
+      hasAIBlocks: processedContent.includes('<div class="ai-enhanced">')
+    });
     
     return (
       <div 
@@ -132,6 +155,7 @@ export const UnifiedContentRenderer = ({
   }
 
   // Fallback for plain text content
+  console.log("📝 Rendering as plain text");
   return (
     <div 
       className={`text-base whitespace-pre-wrap ${className}`}

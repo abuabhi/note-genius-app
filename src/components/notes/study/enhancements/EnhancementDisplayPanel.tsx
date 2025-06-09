@@ -71,7 +71,7 @@ export const EnhancementDisplayPanel = ({
     }
   };
 
-  // FIXED: Corrected mapping to match OpenAI enhancement types and markdown detection
+  // FIXED: Proper mapping to match enhancement types for markdown rendering
   const getEnhancementTypeForRetry = (contentType: EnhancementContentType): string => {
     switch (contentType) {
       case 'summary': return 'summarize';
@@ -105,12 +105,25 @@ export const EnhancementDisplayPanel = ({
     }
   };
 
+  const enhancementType = getEnhancementTypeForRetry(contentType);
+  const content = getContentForType(contentType);
+  const title = getTitleForType(contentType);
+
+  console.log("🎯 EnhancementDisplayPanel rendering:", {
+    contentType,
+    enhancementType,
+    hasContent: !!content,
+    contentLength: content.length,
+    isLoading,
+    isSummaryGenerating
+  });
+
   return (
     <div className={`flex flex-col h-full ${className}`}>
       {/* Show loading state when processing */}
       {(isLoading || isSummaryGenerating) && (
         <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-4">
-          <LoadingAnimations enhancementType={getEnhancementTypeForRetry(contentType)} />
+          <LoadingAnimations enhancementType={enhancementType} />
           
           {/* Cancel button for stuck processing */}
           {isSummaryGenerating && (
@@ -130,7 +143,7 @@ export const EnhancementDisplayPanel = ({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onRetryEnhancement(getEnhancementTypeForRetry(contentType))}
+                  onClick={() => onRetryEnhancement(enhancementType)}
                   disabled={isCancelling}
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
@@ -146,11 +159,11 @@ export const EnhancementDisplayPanel = ({
       {!isLoading && !isSummaryGenerating && (
         <div className="flex-1 overflow-auto">
           <EnhancementContent
-            content={getContentForType(contentType)}
-            title={getTitleForType(contentType)}
+            content={content}
+            title={title}
             fontSize={fontSize}
             textAlign={textAlign}
-            enhancementType={getEnhancementTypeForRetry(contentType)}
+            enhancementType={enhancementType}
             onRetry={onRetryEnhancement}
           />
         </div>

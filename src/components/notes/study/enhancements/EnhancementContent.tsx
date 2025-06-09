@@ -41,40 +41,36 @@ export const EnhancementContent = ({
     contentPreview: content?.substring(0, 100)
   });
 
-  // FIXED: Updated markdown detection to include all enhanced content types
+  // FIXED: All AI-generated content should be treated as markdown except original
   const getIsMarkdown = (type: string): boolean => {
-    const markdownEnhancements = [
-      // OpenAI enhancement types that generate markdown
-      'summarize',
-      'extract-key-points', 
-      'improve-clarity',
-      'convert-to-markdown',
-      // Content type mappings
-      'summary',
-      'keyPoints', 
-      'improved',
-      'markdown',
-      // Legacy and alternative names
-      'key-points',
-      'markdown-format',
-      'clarity',
-      'original++',
-      // All enhanced content should be markdown except original
-      'enhanced'
+    const lowerType = type.toLowerCase();
+    
+    // Original content is NOT markdown
+    if (lowerType === 'original') {
+      return false;
+    }
+    
+    // ALL other enhancement types are markdown
+    const aiEnhancementTypes = [
+      'summarize', 'summary',
+      'extract-key-points', 'keypoints', 'key-points',
+      'improve-clarity', 'improved', 'clarity',
+      'convert-to-markdown', 'markdown', 'markdown-format'
     ];
     
-    const lowerType = type.toLowerCase();
-    return markdownEnhancements.includes(lowerType) || lowerType !== 'original';
+    const isAIEnhancement = aiEnhancementTypes.includes(lowerType);
+    
+    console.log("🔍 Markdown detection:", {
+      enhancementType: type,
+      lowerType,
+      isAIEnhancement,
+      willRenderAsMarkdown: isAIEnhancement
+    });
+    
+    return isAIEnhancement;
   };
 
   const isMarkdown = getIsMarkdown(enhancementType);
-
-  console.log("🔍 Content rendering decision:", {
-    enhancementType,
-    isMarkdown,
-    willUseMarkdownRenderer: isMarkdown,
-    typeCheck: enhancementType.toLowerCase()
-  });
 
   if (isLoading) {
     return (
@@ -121,6 +117,12 @@ export const EnhancementContent = ({
       </div>
     );
   }
+
+  console.log("🎯 Rendering content with:", {
+    enhancementType,
+    isMarkdown,
+    contentHasAITags: content.includes('[AI_ENHANCED]')
+  });
 
   // Render content with appropriate renderer
   return (
