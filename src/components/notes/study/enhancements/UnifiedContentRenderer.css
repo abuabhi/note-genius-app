@@ -1,5 +1,72 @@
 
-/* Enhanced styling for AI-enhanced content blocks */
+/* SIMPLIFIED: Enhanced styling for unified content rendering */
+
+/* Plain text styling for original content */
+.unified-plain-text {
+  white-space: pre-wrap;
+  line-height: 1.75;
+  padding: 1rem 0;
+  color: hsl(var(--foreground));
+}
+
+/* Markdown content container */
+.unified-markdown-content {
+  line-height: 1.75;
+}
+
+/* FIXED: Force list visibility with stronger selectors */
+.unified-markdown-content .enhanced-list {
+  margin: 1.5rem 0 !important;
+  padding-left: 1.5rem !important;
+}
+
+.unified-markdown-content .enhanced-ul {
+  list-style-type: disc !important;
+}
+
+.unified-markdown-content .enhanced-ol {
+  list-style-type: decimal !important;
+}
+
+.unified-markdown-content .enhanced-list-item {
+  display: list-item !important;
+  margin: 0.5rem 0 !important;
+  padding-left: 0.25rem !important;
+}
+
+.unified-markdown-content .enhanced-ul .enhanced-list-item::marker {
+  content: "•" !important;
+  color: hsl(var(--muted-foreground)) !important;
+  font-size: 1.1em !important;
+  font-weight: bold !important;
+}
+
+.unified-markdown-content .enhanced-ol .enhanced-list-item::marker {
+  color: hsl(var(--muted-foreground)) !important;
+  font-weight: 600 !important;
+}
+
+/* FIXED: Override any conflicting prose styles */
+.unified-markdown-content.prose ul,
+.unified-markdown-content.prose ol {
+  margin: 1.5rem 0 !important;
+  padding-left: 1.5rem !important;
+}
+
+.unified-markdown-content.prose li {
+  display: list-item !important;
+  margin: 0.5rem 0 !important;
+}
+
+.unified-markdown-content.prose ul > li {
+  list-style-type: disc !important;
+}
+
+.unified-markdown-content.prose ol > li {
+  list-style-type: decimal !important;
+}
+
+/* Enhanced AI-enhanced content blocks */
 .ai-enhanced-block {
   background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--accent)/0.8) 100%);
   border-left: 4px solid hsl(var(--primary));
@@ -31,10 +98,7 @@
 /* Ensure proper spacing within AI-enhanced blocks */
 .ai-enhanced-block h1,
 .ai-enhanced-block h2,
-.ai-enhanced-block h3,
-.ai-enhanced-block h4,
-.ai-enhanced-block h5,
-.ai-enhanced-block h6 {
+.ai-enhanced-block h3 {
   margin-top: 1rem !important;
   margin-bottom: 1rem !important;
   color: hsl(var(--foreground)) !important;
@@ -68,66 +132,6 @@
   margin-bottom: 0 !important;
 }
 
-/* Enhanced list styling for better visibility */
-.prose ul {
-  list-style-type: disc !important;
-  margin-left: 0 !important;
-}
-
-.prose ol {
-  list-style-type: decimal !important;
-  margin-left: 0 !important;
-}
-
-.prose li {
-  display: list-item !important;
-  margin-left: 0 !important;
-  padding-left: 0 !important;
-}
-
-.prose ul > li::marker,
-.prose ol > li::marker {
-  color: hsl(var(--muted-foreground)) !important;
-  font-weight: 500 !important;
-}
-
-/* Ensure markers are visible */
-.prose ul li::marker {
-  content: "•" !important;
-  font-size: 1.1em !important;
-}
-
-.prose ol li::marker {
-  font-weight: 600 !important;
-}
-
-/* Better spacing for consecutive elements */
-.prose h1 + p,
-.prose h2 + p,
-.prose h3 + p,
-.prose h4 + p {
-  margin-top: 0.5rem !important;
-}
-
-.prose p + ul,
-.prose p + ol {
-  margin-top: 1rem !important;
-}
-
-.prose ul + p,
-.prose ol + p {
-  margin-top: 1.5rem !important;
-}
-
-/* Fix for nested lists */
-.prose ul ul,
-.prose ol ol,
-.prose ul ol,
-.prose ol ul {
-  margin: 0.75rem 0 !important;
-  padding-left: 1.5rem !important;
-}
-
 /* Dark mode adjustments */
 @media (prefers-color-scheme: dark) {
   .ai-enhanced-block {
@@ -155,23 +159,8 @@
     left: 16px;
   }
   
-  .prose ul,
-  .prose ol {
+  .unified-markdown-content .enhanced-list {
     margin-left: 1rem !important;
     padding-left: 1.25rem !important;
-  }
-}
-
-/* Better print styles */
-@media print {
-  .ai-enhanced-block {
-    background: #f8f9fa !important;
-    border-left: 4px solid #007bff !important;
-    box-shadow: none !important;
-  }
-  
-  .ai-enhanced-block::before {
-    background: #007bff !important;
-    color: white !important;
   }
 }

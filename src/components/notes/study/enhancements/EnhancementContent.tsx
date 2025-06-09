@@ -41,48 +41,14 @@ export const EnhancementContent = ({
     contentPreview: content?.substring(0, 100)
   });
 
-  // ENHANCED: Better markdown detection logic
-  const getIsMarkdown = (type: string): boolean => {
-    const lowerType = type.toLowerCase();
-    
-    // Original content is plain text
-    if (lowerType === 'original') {
-      return false;
-    }
-    
-    // All AI-generated enhancement types should be treated as markdown
-    const aiEnhancementTypes = [
-      'summarize', 'summary',
-      'extract-key-points', 'keypoints', 'key-points',
-      'improve-clarity', 'improved', 'clarity',
-      'convert-to-markdown', 'markdown', 'markdown-format'
-    ];
-    
-    const isAIEnhancement = aiEnhancementTypes.includes(lowerType);
-    
-    // Also check if content has markdown indicators
-    const hasMarkdownIndicators = content && (
-      content.includes('#') ||
-      content.includes('**') ||
-      content.includes('- ') ||
-      content.includes('1. ') ||
-      content.includes('[AI_ENHANCED]')
-    );
-    
-    const shouldRenderAsMarkdown = isAIEnhancement || hasMarkdownIndicators;
-    
-    console.log("🔍 Enhanced markdown detection:", {
-      enhancementType: type,
-      lowerType,
-      isAIEnhancement,
-      hasMarkdownIndicators,
-      finalDecision: shouldRenderAsMarkdown
-    });
-    
-    return shouldRenderAsMarkdown;
-  };
-
-  const isMarkdown = getIsMarkdown(enhancementType);
+  // SIMPLIFIED: Original content = plain text, everything else = markdown
+  const isMarkdown = enhancementType !== 'original';
+  
+  console.log("🎯 Simplified rendering decision:", {
+    enhancementType,
+    isMarkdown,
+    reasoning: enhancementType === 'original' ? 'Original content uses plain text' : 'AI-enhanced content uses markdown'
+  });
 
   if (isLoading) {
     return (
@@ -130,16 +96,9 @@ export const EnhancementContent = ({
     );
   }
 
-  console.log("🎯 Rendering content with:", {
-    enhancementType,
-    isMarkdown,
-    contentHasAITags: content.includes('[AI_ENHANCED]'),
-    contentHasMarkdownSyntax: content.includes('#') || content.includes('**')
-  });
-
-  // Render content with appropriate renderer
+  // SIMPLIFIED: Always use UnifiedContentRenderer with proper container padding
   return (
-    <div className="animate-fade-in px-4 py-2">
+    <div className="animate-fade-in px-6 py-4">
       <UnifiedContentRenderer 
         content={content} 
         fontSize={fontSize} 

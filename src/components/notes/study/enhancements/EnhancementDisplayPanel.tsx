@@ -71,7 +71,7 @@ export const EnhancementDisplayPanel = ({
     }
   };
 
-  // ENHANCED: Better enhancement type mapping for consistent markdown rendering
+  // SIMPLIFIED: Direct mapping for enhancement types
   const getEnhancementTypeForRetry = (contentType: EnhancementContentType): string => {
     const mappings = {
       'summary': 'summarize',
@@ -81,14 +81,7 @@ export const EnhancementDisplayPanel = ({
       'original': 'original'
     };
     
-    const enhancementType = mappings[contentType] || 'summarize';
-    
-    console.log("🎯 Enhancement type mapping:", {
-      contentType,
-      mappedType: enhancementType
-    });
-    
-    return enhancementType;
+    return mappings[contentType] || 'summarize';
   };
 
   const getContentForType = (type: EnhancementContentType): string => {
@@ -106,7 +99,7 @@ export const EnhancementDisplayPanel = ({
     const titles = {
       'summary': 'Summary',
       'keyPoints': 'Key Points',
-      'improved': 'Improved Content',
+      'improved': 'Improved Clarity',
       'markdown': 'Markdown',
       'original': 'Original Content'
     };
