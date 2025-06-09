@@ -40,7 +40,23 @@ export const FileSelector = ({
     input.type = 'file';
     input.accept = '.png,.jpg,.jpeg,.gif,.bmp,.tiff,.webp,.pdf';
     input.multiple = true;
-    input.onchange = handleFileInputChange;
+    
+    // Fix: Convert native Event to React ChangeEvent format
+    input.onchange = (event: Event) => {
+      const target = event.target as HTMLInputElement;
+      const files = Array.from(target.files || []);
+      const supportedFiles = files.filter(file => 
+        file.type.startsWith('image/') || file.type === 'application/pdf'
+      );
+      
+      if (supportedFiles.length === 0) {
+        toast.error("Please select valid image files (.png, .jpg, .webp) or PDF files");
+        return;
+      }
+
+      onFileSelect(supportedFiles);
+    };
+    
     input.click();
   };
 
