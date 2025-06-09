@@ -65,8 +65,19 @@ export const EnhancementDisplayPanel = ({
   const contentInfo = getContentInfo(contentType);
   const Icon = contentInfo.icon;
 
+  // Check if content exists and is meaningful
+  const hasContent = Boolean(
+    content && 
+    typeof content === 'string' && 
+    content.trim().length > (contentType === 'improved' ? 20 : 10)
+  );
+
+  // Check for summary generation status specifically
+  const isGeneratingSummary = contentType === 'summary' && 
+    (note.summary_status === 'generating' || note.summary_status === 'pending');
+
   // Show loading state with tab-specific loading animation
-  if (isLoading) {
+  if (isLoading || isGeneratingSummary) {
     return (
       <div className={cn("flex flex-col bg-white", className)}>
         <EnhancementHeader
@@ -87,8 +98,8 @@ export const EnhancementDisplayPanel = ({
     );
   }
 
-  // Show empty state with retry option for non-original content
-  if (!content && contentType !== 'original') {
+  // Show empty state with generate option for non-original content
+  if (!hasContent && contentType !== 'original') {
     return (
       <div className={cn("flex flex-col bg-white", className)}>
         <EnhancementHeader

@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Note } from "@/types/note";
 import { TextAlignType } from "../hooks/useStudyViewState";
 import { EnhancementSelector, EnhancementContentType } from "./EnhancementSelector";
@@ -11,108 +11,74 @@ interface OptimizedTwoColumnViewProps {
   textAlign: TextAlignType;
   activeContentType: EnhancementContentType;
   setActiveContentType: (type: EnhancementContentType) => void;
-  isLoading?: boolean;
-  onRetryEnhancement?: (enhancementType: string) => Promise<void>;
-  onCancelEnhancement?: () => void;
+  onRetryEnhancement?: (enhancementType: string) => void;
   isEditOperation?: boolean;
 }
 
-export const OptimizedTwoColumnView = ({ 
-  note, 
-  fontSize, 
+export const OptimizedTwoColumnView = ({
+  note,
+  fontSize,
   textAlign,
   activeContentType,
   setActiveContentType,
-  isLoading = false,
   onRetryEnhancement,
-  onCancelEnhancement,
   isEditOperation = false
 }: OptimizedTwoColumnViewProps) => {
-  const wasManuallySelected = useRef(false);
-  const lastAutoSwitchTimestamp = useRef<number>(0);
-  const previousNoteId = useRef<string>(note.id);
-  
-  // Reset state when note changes
-  useEffect(() => {
-    if (previousNoteId.current !== note.id) {
-      console.log("📝 Note changed, resetting view state");
-      setActiveContentType('original');
-      wasManuallySelected.current = false;
-      lastAutoSwitchTimestamp.current = 0;
-      previousNoteId.current = note.id;
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleRetryEnhancement = async (enhancementType: string) => {
+    if (!onRetryEnhancement) return;
+    
+    console.log("🔄 OptimizedTwoColumnView - Starting enhancement:", enhancementType);
+    setIsGenerating(true);
+    
+    try {
+      await onRetryEnhancement(enhancementType);
+      console.log("✅ OptimizedTwoColumnView - Enhancement completed:", enhancementType);
+    } catch (error) {
+      console.error("❌ OptimizedTwoColumnView - Enhancement failed:", error);
+    } finally {
+      setIsGenerating(false);
     }
-  }, [note.id, setActiveContentType]);
-  
-  // Simplified content detection
-  const hasEnhancements = {
-    summary: Boolean(note.summary && note.summary.trim().length > 10),
-    keyPoints: Boolean(note.key_points && note.key_points.trim().length > 10),
-    improved: Boolean(note.improved_content && note.improved_content.trim().length > 20),
-    markdown: Boolean(note.markdown_content && note.markdown_content.trim().length > 10)
   };
 
-  // Handle manual tab selection
-  const handleManualTabChange = (type: EnhancementContentType) => {
-    console.log(`🎯 Manual tab selection: ${type}`);
-    wasManuallySelected.current = true;
-    setActiveContentType(type);
-    
-    // Reset manual flag after delay
-    setTimeout(() => {
-      wasManuallySelected.current = false;
-    }, 3000);
-  };
-  
-  // Simplified auto-switch logic
-  useEffect(() => {
-    if (isEditOperation || wasManuallySelected.current) return;
-
-    const currentTime = Date.now();
-    if (currentTime - lastAutoSwitchTimestamp.current < 1000) return;
-    
-    // Auto-switch to first available enhancement
-    if (activeContentType === 'original') {
-      if (hasEnhancements.keyPoints) {
-        setActiveContentType('keyPoints');
-        lastAutoSwitchTimestamp.current = currentTime;
-      } else if (hasEnhancements.improved) {
-        setActiveContentType('improved');
-        lastAutoSwitchTimestamp.current = currentTime;
-      } else if (hasEnhancements.summary) {
-        setActiveContentType('summary');
-        lastAutoSwitchTimestamp.current = currentTime;
-      }
+  console.log("🎯 OptimizedTwoColumnView - Rendering with:", {
+    noteId: note.id,
+    activeContentType,
+    isEditOperation,
+    isGenerating,
+    hasContent: {
+      summary: Boolean(note.summary?.trim()),
+      keyPoints: Boolean(note.key_points?.trim()),
+      markdown: Boolean(note.markdown_content?.trim()),
+      improved: Boolean(note.improved_content?.trim())
     }
-  }, [
-    hasEnhancements.keyPoints,
-    hasEnhancements.improved, 
-    hasEnhancements.summary,
-    activeContentType, 
-    setActiveContentType,
-    isEditOperation
-  ]);
+  });
 
   return (
-    <div className="flex flex-col md:flex-row w-full rounded-lg overflow-hidden shadow-sm border border-gray-200 bg-white min-h-[500px]">
-      {/* Content Selector */}
-      <EnhancementSelector
-        note={note}
-        activeContentType={activeContentType}
-        setActiveContentType={handleManualTabChange}
-        className="w-full md:w-64 md:min-w-64 shrink-0"
-      />
-      
-      {/* Content Display */}
-      <EnhancementDisplayPanel
-        note={note}
-        contentType={activeContentType}
-        fontSize={fontSize}
-        textAlign={textAlign}
-        isLoading={isLoading}
-        onRetryEnhancement={onRetryEnhancement}
-        onCancelEnhancement={onCancelEnhancement}
-        className="flex-1 min-h-0"
-      />
+    <div className="flex h-full bg-white rounded-lg shadow-sm border border-mint-100 overflow-hidden">
+      {/* Left Column: Enhancement Selector - Always show all tabs */}
+      <div className="w-72 flex-shrink-0">
+        <EnhancementSelector
+          note={note}
+          activeContentType={activeContentType}
+          setActiveContentType={setActiveContentType}
+          className="h-full"
+        />
+      </div>
+
+      {/* Right Column: Content Display */}
+      <div className="flex-1 min-w-0">
+        <EnhancementDisplayPanel
+          note={note}
+          contentType={activeContentType}
+          fontSize={fontSize}
+          textAlign={textAlign}
+          isLoading={isGenerating}
+          onRetryEnhancement={handleRetryEnhancement}
+          className="h-full"
+        />
+      </div>
     </div>
   );
 };

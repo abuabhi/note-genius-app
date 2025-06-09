@@ -18,18 +18,13 @@ export const useEnhancementState = (noteId: string) => {
     isLoading: true
   });
 
-  // Enhanced validation with minimum length and timestamp requirements
-  const validateContent = useCallback((content: string | null | undefined, timestamp?: string | null): boolean => {
-    const hasValidContent = Boolean(
+  // Enhanced validation with minimum length requirements
+  const validateContent = useCallback((content: string | null | undefined, minLength: number = 10): boolean => {
+    return Boolean(
       content && 
       typeof content === 'string' && 
-      content.trim().length > 10
+      content.trim().length > minLength
     );
-    
-    // For improved content, also require a timestamp to ensure it was properly generated
-    const hasTimestamp = Boolean(timestamp);
-    
-    return hasValidContent && (timestamp !== undefined ? hasTimestamp : true);
   }, []);
 
   const updateEnhancementState = useCallback((note: Partial<Note>) => {
@@ -37,25 +32,20 @@ export const useEnhancementState = (noteId: string) => {
       hasSummary: validateContent(note.summary),
       hasKeyPoints: validateContent(note.key_points),
       hasMarkdown: validateContent(note.markdown_content),
-      hasImprovedClarity: validateContent(note.improved_content, note.improved_content_generated_at),
+      hasImprovedClarity: validateContent(note.improved_content, 20), // Higher threshold for improved content
       isLoading: false
     };
 
-    console.log("🔄 Enhancement state updated (FIXED):", {
+    console.log("🔄 Enhancement state updated:", {
       noteId,
       newState,
-      rawContent: {
-        summary: note.summary?.substring(0, 50) || 'none',
-        key_points: note.key_points?.substring(0, 50) || 'none',
-        markdown_content: note.markdown_content?.substring(0, 50) || 'none',
-        improved_content: note.improved_content?.substring(0, 50) || 'none'
+      rawContentLengths: {
+        summary: note.summary?.length || 0,
+        key_points: note.key_points?.length || 0,
+        markdown_content: note.markdown_content?.length || 0,
+        improved_content: note.improved_content?.length || 0
       },
-      timestamps: {
-        summary: note.summary_generated_at,
-        keyPoints: note.key_points_generated_at,
-        markdown: note.markdown_content_generated_at,
-        improved: note.improved_content_generated_at
-      }
+      summaryStatus: note.summary_status
     });
 
     setEnhancementState(newState);
@@ -67,7 +57,7 @@ export const useEnhancementState = (noteId: string) => {
     try {
       const { data, error } = await supabase
         .from('notes')
-        .select('summary, key_points, markdown_content, improved_content, summary_generated_at, key_points_generated_at, markdown_content_generated_at, improved_content_generated_at')
+        .select('summary, summary_status, key_points, markdown_content, improved_content, summary_generated_at, key_points_generated_at, markdown_content_generated_at, improved_content_generated_at')
         .eq('id', noteId)
         .single();
 

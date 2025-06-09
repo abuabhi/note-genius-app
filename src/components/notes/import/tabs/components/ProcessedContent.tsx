@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -171,7 +170,7 @@ export const ProcessedContent = ({
         <Label htmlFor="title" className="flex items-center gap-2">
           Document Title
           {isAiGenerated && (
-            <Sparkles className="h-3 w-3 text-purple-500" title="AI Generated" />
+            <Sparkles className="h-3 w-3 text-purple-500" />
           )}
         </Label>
         <Input
@@ -189,7 +188,7 @@ export const ProcessedContent = ({
           <Label htmlFor="subject" className="flex items-center gap-2">
             Subject
             {isAiGenerated && (
-              <Sparkles className="h-3 w-3 text-purple-500" title="AI Generated" />
+              <Sparkles className="h-3 w-3 text-purple-500" />
             )}
           </Label>
           <Input

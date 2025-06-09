@@ -10,7 +10,7 @@ interface EnhancementOption {
   label: string;
   icon: React.ComponentType<any>;
   description: string;
-  available: boolean;
+  hasContent: boolean;
   isGenerating?: boolean;
   hasError?: boolean;
 }
@@ -28,11 +28,11 @@ export const EnhancementSelector = ({
   setActiveContentType,
   className
 }: EnhancementSelectorProps) => {
-  // More robust detection with better null checking and string validation
+  // Check if content exists and is meaningful
   const hasSummary = Boolean(
     note.summary && 
     typeof note.summary === 'string' && 
-    note.summary.trim().length > 10 // Minimum meaningful length
+    note.summary.trim().length > 10
   );
   
   const hasKeyPoints = Boolean(
@@ -47,11 +47,10 @@ export const EnhancementSelector = ({
     note.markdown_content.trim().length > 10
   );
   
-  // Fixed: More robust improved content detection
   const hasImprovedClarity = Boolean(
     note.improved_content && 
     typeof note.improved_content === 'string' && 
-    note.improved_content.trim().length > 20 // Higher threshold for improved content
+    note.improved_content.trim().length > 20
   );
   
   // Check enhancement statuses
@@ -59,52 +58,41 @@ export const EnhancementSelector = ({
   const isGeneratingSummary = summaryStatus === 'generating' || summaryStatus === 'pending';
   const hasSummaryError = summaryStatus === 'failed';
 
-  // Enhanced debug logging with improved validation
-  console.log("🔍 EnhancementSelector - Enhanced content detection (FIXED):", {
+  console.log("🔍 EnhancementSelector - Content availability check:", {
     noteId: note.id,
-    timestamp: new Date().toISOString(),
-    improvedContentAnalysis: {
-      rawValue: note.improved_content,
-      exists: !!note.improved_content,
-      type: typeof note.improved_content,
-      length: note.improved_content?.length || 0,
-      trimmedLength: note.improved_content?.trim()?.length || 0,
-      firstChars: note.improved_content?.substring(0, 100) || 'none',
-      passesValidation: hasImprovedClarity,
-      generatedAt: note.improved_content_generated_at
+    hasContent: {
+      summary: hasSummary,
+      keyPoints: hasKeyPoints,
+      markdown: hasMarkdown,
+      improvedClarity: hasImprovedClarity
     },
-    allEnhancementStates: {
-      hasImprovedClarity,
-      hasSummary,
-      hasKeyPoints,
-      hasMarkdown
-    },
-    activeContentType,
-    summaryStatus
+    summaryStatus,
+    isGenerating: isGeneratingSummary,
+    activeTab: activeContentType
   });
 
-  // Define enhancement options with improved styling and icons - reordered to put markdown below original
+  // Define all enhancement options - ALWAYS show all tabs
   const enhancementOptions: EnhancementOption[] = [
     {
       id: 'original',
       label: 'Original',
       icon: FileText,
       description: 'Your original note content',
-      available: true
+      hasContent: true // Original always has content
     },
     {
       id: 'markdown',
       label: 'Original++',
       icon: Code,
       description: 'Original note formatted',
-      available: hasMarkdown
+      hasContent: hasMarkdown
     },
     {
       id: 'summary',
       label: 'Summary',
       icon: Target,
       description: 'AI-generated concise summary',
-      available: hasSummary || isGeneratingSummary || hasSummaryError,
+      hasContent: hasSummary,
       isGenerating: isGeneratingSummary,
       hasError: hasSummaryError
     },
@@ -113,35 +101,27 @@ export const EnhancementSelector = ({
       label: 'Key Points',
       icon: List,
       description: 'Essential highlights extracted',
-      available: hasKeyPoints
+      hasContent: hasKeyPoints
     },
     {
       id: 'improved',
       label: 'Improved Clarity',
       icon: Sparkles,
       description: 'Enhanced notes version',
-      available: hasImprovedClarity
+      hasContent: hasImprovedClarity
     }
   ];
 
-  // Filter to only show available options
-  const availableOptions = enhancementOptions.filter(option => option.available);
-
-  console.log("📋 EnhancementSelector - Final tab availability (FIXED):", {
-    totalOptions: enhancementOptions.length,
-    availableCount: availableOptions.length,
-    availableOptions: availableOptions.map(opt => ({
+  console.log("📋 EnhancementSelector - All tabs always visible:", {
+    totalTabs: enhancementOptions.length,
+    tabStates: enhancementOptions.map(opt => ({
       id: opt.id,
       label: opt.label,
+      hasContent: opt.hasContent,
       isGenerating: opt.isGenerating,
       hasError: opt.hasError
     })),
-    activeTab: activeContentType,
-    improvedClarityDetails: {
-      available: hasImprovedClarity,
-      contentLength: note.improved_content?.length || 0,
-      contentPreview: note.improved_content?.substring(0, 50) || 'none'
-    }
+    activeTab: activeContentType
   });
 
   const handleTabClick = (contentType: EnhancementContentType) => {
@@ -155,7 +135,7 @@ export const EnhancementSelector = ({
         <h3 className="text-sm font-semibold text-mint-800">Content Views</h3>
       </div>
       <div className="flex flex-col py-2 space-y-1">
-        {availableOptions.map((option) => {
+        {enhancementOptions.map((option) => {
           const Icon = option.icon;
           const isActive = activeContentType === option.id;
           
@@ -194,8 +174,11 @@ export const EnhancementSelector = ({
                 {option.hasError && (
                   <AlertCircle className="h-4 w-4 text-red-500" />
                 )}
-                {!option.isGenerating && !option.hasError && isActive && (
+                {!option.isGenerating && !option.hasError && option.hasContent && isActive && (
                   <CheckCircle className="h-4 w-4 text-mint-600" />
+                )}
+                {!option.hasContent && !option.isGenerating && !option.hasError && (
+                  <div className="w-2 h-2 bg-gray-300 rounded-full" />
                 )}
               </div>
             </button>

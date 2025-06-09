@@ -56,6 +56,8 @@ export const NoteStudyViewContent = ({
   isEditOperation
 }: NoteStudyViewContentProps) => {
 
+  console.log("🎯 NoteStudyViewContent - Rendering with activeContentType:", activeContentType);
+
   return (
     <div className="p-6 space-y-6">
       {/* Usage Meter */}
