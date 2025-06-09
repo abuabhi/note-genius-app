@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -192,16 +191,17 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
       setExtractedText(extractedText);
       setProcessingMethod(ocrResult.provider || 'unknown');
 
-      // If we have extracted text and user ID, analyze content for title/subject
+      // NEW: Auto-generate title and subject using AI content analysis
       if (extractedText.trim() && userId) {
         try {
-          console.log("🤖 Starting AI content analysis...");
+          console.log("🤖 Starting AI content analysis for auto title/subject generation...");
           
-          // Call process-document for content analysis
+          // Create a text file from the extracted content for analysis
           const textBlob = new Blob([extractedText], { type: 'text/plain' });
           const textFile = new File([textBlob], 'extracted-text.txt', { type: 'text/plain' });
           const textFileUrl = await uploadFileToStorage(textFile);
 
+          // Call process-document for intelligent title and subject generation
           const { data: analysisResult, error: analysisError } = await supabase.functions.invoke('process-document', {
             body: {
               fileUrl: textFileUrl,
@@ -212,22 +212,28 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
           });
 
           if (!analysisError && analysisResult?.success) {
+            // Use AI-generated title and subject
             setDocumentTitle(analysisResult.title || selectedFile.name.replace(/\.[^/.]+$/, ""));
             setDocumentSubject(analysisResult.subject || "Uncategorized");
             setIsAiGenerated(analysisResult.metadata?.contentAnalysis?.aiGeneratedTitle || false);
             setAnalysisConfidence(analysisResult.metadata?.contentAnalysis?.confidence || 0);
-            console.log("✅ AI content analysis completed");
+            console.log("✅ AI auto-generated title and subject successfully");
+            
+            toast.success("Text extracted and title/subject auto-generated!");
           } else {
-            console.warn("⚠️ AI content analysis failed, using fallback");
+            console.warn("⚠️ AI content analysis failed, using fallback title/subject");
+            toast.success("Text extracted successfully!");
           }
         } catch (analysisError) {
           console.warn("⚠️ Content analysis failed:", analysisError);
+          toast.success("Text extracted successfully!");
           // Continue without AI analysis - not critical
         }
+      } else {
+        toast.success(`${selectedFile.type === 'application/pdf' ? 'PDF' : 'Image'} processed successfully!`);
       }
 
       setCurrentStep('review');
-      toast.success(`${selectedFile.type === 'application/pdf' ? 'PDF' : 'Image'} processed successfully!`);
       
     } catch (error) {
       console.error('❌ Error processing file:', error);
