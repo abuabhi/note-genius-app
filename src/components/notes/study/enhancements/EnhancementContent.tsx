@@ -92,42 +92,25 @@ export const EnhancementContent = ({
   }
 
   // AI-generated enhancement types that should ALWAYS be treated as markdown
-  const aiEnhancementTypes = ['summary', 'keyPoints', 'improved', 'markdown'];
-  const isAIGenerated = aiEnhancementTypes.includes(enhancementType);
+  const markdownEnhancements = ['summary', 'keyPoints', 'extract-key-points', 'improved', 'improve-clarity', 'markdown', 'convert-to-markdown'];
+  const shouldRenderAsMarkdown = markdownEnhancements.includes(enhancementType) || isMarkdown;
   
   console.log("🔍 EnhancementContent routing decision:", {
     enhancementType,
-    isAIGenerated,
+    shouldRenderAsMarkdown,
     isMarkdown,
-    shouldUseUnifiedRenderer: isAIGenerated || isMarkdown,
     contentToRender: content?.substring(0, 200)
   });
   
-  // FORCE MARKDOWN RENDERING for ALL AI-generated content
-  if (isAIGenerated || isMarkdown) {
-    console.log("✅ Using UnifiedContentRenderer for markdown content");
-    return (
-      <div className="animate-fade-in px-6 py-4">
-        <UnifiedContentRenderer 
-          content={content} 
-          fontSize={fontSize} 
-          textAlign={textAlign}
-          className="prose-mint prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700"
-        />
-      </div>
-    );
-  }
-  
-  // For original content only, use the legacy renderer with padding
-  console.log("📝 Using EnhancementContentRenderer for original content");
+  // Use UnifiedContentRenderer for all content with proper markdown flag
   return (
-    <div className="animate-fade-in px-6 py-4">
-      <EnhancementContentRenderer
-        content={content}
-        contentType="original"
-        fontSize={fontSize}
+    <div className="animate-fade-in px-4 py-2">
+      <UnifiedContentRenderer 
+        content={content} 
+        fontSize={fontSize} 
         textAlign={textAlign}
-        isMarkdown={false}
+        isMarkdown={shouldRenderAsMarkdown}
+        className="prose-mint prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700"
       />
     </div>
   );
