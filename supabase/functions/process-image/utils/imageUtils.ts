@@ -30,17 +30,19 @@ export async function convertImageToBase64(imageUrl: string): Promise<string> {
       throw new Error(`Image too large: ${sizeMB.toFixed(2)}MB. Maximum allowed: 20MB`);
     }
     
-    // Modern and safe base64 encoding
+    // Improved base64 encoding that avoids call stack overflow
     let base64: string;
     
-    if (typeof Buffer !== 'undefined') {
-      // Deno/Node.js environment - use Buffer for better performance and safety
+    // Check if we're in Deno environment and Buffer is available
+    if (typeof Deno !== 'undefined' && typeof Buffer !== 'undefined') {
+      // Deno environment - use Buffer for better performance and safety
+      console.log("Using Buffer.from() for base64 conversion");
       base64 = Buffer.from(arrayBuffer).toString('base64');
     } else {
-      // Browser fallback - use improved method
+      // Fallback - use chunk-based approach to avoid call stack overflow
+      console.log("Using chunk-based base64 conversion");
       const uint8Array = new Uint8Array(arrayBuffer);
-      const binary = String.fromCharCode(...uint8Array);
-      base64 = btoa(binary);
+      base64 = arrayBufferToBase64Chunked(uint8Array);
     }
     
     const dataUrl = `data:${contentType};base64,${base64}`;
@@ -57,6 +59,22 @@ export async function convertImageToBase64(imageUrl: string): Promise<string> {
     console.error("Error converting image to base64:", error);
     throw error;
   }
+}
+
+/**
+ * Convert ArrayBuffer to base64 using chunk-based approach to avoid call stack overflow
+ */
+function arrayBufferToBase64Chunked(uint8Array: Uint8Array): string {
+  const chunkSize = 8192; // Process 8KB at a time
+  let binaryString = '';
+  
+  for (let i = 0; i < uint8Array.length; i += chunkSize) {
+    const chunk = uint8Array.slice(i, i + chunkSize);
+    const chunkArray = Array.from(chunk);
+    binaryString += String.fromCharCode(...chunkArray);
+  }
+  
+  return btoa(binaryString);
 }
 
 export async function validateOpenAIKey(apiKey: string): Promise<boolean> {
