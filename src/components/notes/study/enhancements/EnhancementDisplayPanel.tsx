@@ -148,7 +148,6 @@ export const EnhancementDisplayPanel = ({
             title={getTitleForType(contentType)}
             fontSize={fontSize}
             textAlign={textAlign}
-            isMarkdown={contentType === 'markdown'}
             enhancementType={getEnhancementTypeForRetry(contentType)}
             onRetry={onRetryEnhancement}
           />
