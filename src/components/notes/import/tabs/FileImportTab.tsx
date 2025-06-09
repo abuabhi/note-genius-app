@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +19,8 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
   const [documentTitle, setDocumentTitle] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [processingMethod, setProcessingMethod] = useState<string>('');
+  const [forceOCR, setForceOCR] = useState(false);
 
   const handleFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -42,7 +43,7 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
 
     setIsProcessing(true);
     try {
-      console.log('Starting document processing for:', selectedFile.name);
+      console.log('Starting professional document processing for:', selectedFile.name);
       
       // Upload file to Supabase storage first
       const fileExt = selectedFile.name.split('.').pop();
@@ -72,14 +73,15 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
                       selectedFile.type.includes('word') || selectedFile.name.endsWith('.docx') ? 'docx' :
                       selectedFile.type.includes('text') ? 'txt' : 'unknown';
 
-      console.log('Processing file type:', fileType);
+      console.log('Processing file type:', fileType, 'Force OCR:', forceOCR);
 
       // Call the document processing edge function
       const { data: processData, error: processError } = await supabase.functions.invoke('process-document', {
         body: {
           fileUrl: publicUrl,
           fileType: fileType,
-          userId: (await supabase.auth.getUser()).data.user?.id
+          userId: (await supabase.auth.getUser()).data.user?.id,
+          useOCR: forceOCR
         }
       });
 
@@ -93,7 +95,16 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
       if (processData?.success) {
         setProcessedText(processData.text || 'No text content extracted');
         setDocumentTitle(processData.title || documentTitle);
-        toast.success("Document processed successfully!");
+        setProcessingMethod(processData.metadata?.processingMethod || 'unknown');
+        
+        const method = processData.metadata?.processingMethod || 'standard';
+        if (method.includes('ocr')) {
+          toast.success("Document processed with OCR for handwritten content!");
+        } else if (method === 'pdf.js') {
+          toast.success("Document processed with professional PDF extraction!");
+        } else {
+          toast.success("Document processed successfully!");
+        }
       } else {
         throw new Error(processData?.error || 'Unknown processing error');
       }
@@ -150,7 +161,7 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
-            Upload Single Document
+            Professional Document Processing
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -164,9 +175,24 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
               className="mt-1"
             />
             <p className="text-sm text-gray-500 mt-1">
-              Supported formats: PDF, Word documents, text files, images
+              Professional extraction for PDFs, Word documents, text files, and images
             </p>
           </div>
+
+          {selectedFile?.type === 'application/pdf' && (
+            <div className="flex items-center space-x-2 p-3 bg-blue-50 rounded-lg">
+              <input
+                type="checkbox"
+                id="force-ocr"
+                checked={forceOCR}
+                onChange={(e) => setForceOCR(e.target.checked)}
+                className="rounded"
+              />
+              <Label htmlFor="force-ocr" className="text-sm">
+                Force OCR processing (for handwritten or scanned PDFs)
+              </Label>
+            </div>
+          )}
 
           {selectedFile && (
             <Card className="bg-gray-50">
@@ -186,7 +212,7 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
                   disabled={isProcessing}
                   className="w-full mt-3"
                 >
-                  {isProcessing ? 'Processing...' : 'Extract Text'}
+                  {isProcessing ? 'Processing with Professional Tools...' : 'Extract Text'}
                 </Button>
               </CardContent>
             </Card>
@@ -194,6 +220,12 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
 
           {processedText && (
             <div className="space-y-4">
+              {processingMethod && (
+                <div className="text-xs text-gray-600 bg-gray-100 p-2 rounded">
+                  Processing method: {processingMethod}
+                </div>
+              )}
+              
               <div>
                 <Label htmlFor="title">Document Title</Label>
                 <Input
