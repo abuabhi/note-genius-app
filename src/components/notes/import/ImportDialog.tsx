@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Import } from "lucide-react";
-import { ImportTabs } from "./tabs/ImportTabs";
 import { Note } from "@/types/note";
 import { useImportState } from "./useImportState";
 
@@ -26,8 +25,6 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({
 }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(isVisible);
   const { 
-    activeTab, 
-    setActiveTab, 
     selectedFile, 
     processedText,
     documentTitle,
@@ -35,7 +32,6 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({
     isProcessing,
     isSaving,
     handleFileSelected,
-    handleApiImport,
     processDocument,
     saveAsNote
   } = useImportState(onSaveNote, () => {
@@ -66,15 +62,30 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <ImportTabs 
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          onFileSelected={handleFileSelected}
-          onApiImport={handleApiImport}
-          selectedFile={selectedFile}
-          processDocument={processDocument}
-          isProcessing={isProcessing}
-        />
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="document-file" className="block text-sm font-medium mb-1">Select File</label>
+            <input
+              id="document-file"
+              type="file"
+              onChange={handleFileSelected}
+              className="w-full p-2 border border-gray-300 rounded"
+            />
+          </div>
+
+          {selectedFile && (
+            <div className="p-4 border rounded bg-gray-50">
+              <p className="font-medium">{selectedFile.name}</p>
+              <Button 
+                onClick={processDocument}
+                disabled={isProcessing}
+                className="mt-2"
+              >
+                {isProcessing ? 'Processing...' : 'Process Document'}
+              </Button>
+            </div>
+          )}
+        </div>
         
         {processedText && (
           <div className="mt-4">
