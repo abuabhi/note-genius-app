@@ -75,22 +75,26 @@ ${noteContent}
   switch (enhancementType) {
     case 'summarize':
       return `${baseContext}
-Create a concise summary of this note following the professional Markdown formatting rules above.
+Do not include the note title again in the content.
+
+Please create a concise summary of this note in **Markdown format**.
 
 Requirements:
-- Start with a clear heading: # Summary
-- Write in flowing paragraphs with complete sentences
-- Each paragraph should be separated by a blank line
-- Focus on the main ideas and how they connect
-- Keep the summary to about 20% of the original length
-- Use **bold** for key terms when appropriate
-- Add section headings (##) if the content has distinct topics
-- Ensure proper spacing between all elements
+- Start with: \`# Summary\`
+- Use flowing paragraphs with complete sentences
+- Separate each paragraph with a blank line
+- Use **bold** for key terms where appropriate
+- Keep the summary to around **20% of the original length**
+- If the content has multiple topics, group them using \`##\` subheadings
+- Use proper spacing between all elements
+- Output only the formatted summary content (no explanations or notes)
 
-Example format:
+Example format (follow structure only, do not reuse text):
+
+\`\`\`markdown
 # Summary
 
-This note covers the fundamental concepts of [topic].
+This note explains the fundamentals of [topic].
 
 ## Key Concepts
 
@@ -98,146 +102,116 @@ The main ideas include...
 
 ## Important Details
 
-Additional information about...
+Additional details on related topics...
+\`\`\`
 `;
 
     case 'extract-key-points':
       return `${baseContext}
-Extract the most important facts, concepts, and ideas from this note following the professional Markdown formatting rules above.
+Do not repeat the note title in the output.
+
+Extract and return only the most important facts, concepts, and insights from this note using clean **Markdown formatting**.
 
 Requirements:
-- Start with a clear heading: # Key Points
-- Create 5-8 key points minimum
-- Use bullet list format with proper spacing
-- Each point should be one clear, concise statement
-- Use **bold** for important terms in each point
-- Add blank lines before and after the list
-- Group related points under subheadings if appropriate
+- Begin with: \`# Key Points\`
+- Provide a minimum of **7–10 bullet points**
+- Use \`- \` for each bullet point, separated by blank lines
+- Use **bold** for key terms within each point
+- Group related points under \`##\` subheadings if appropriate
+- Keep each point clear, informative, and to the point
+- Do NOT include explanations or commentary—only the formatted key points
 
-Example format:
+Example structure (for format guidance only):
+
+\`\`\`markdown
 # Key Points
 
 ## Core Concepts
 
-- **First key concept**: Clear explanation here
-- **Second key concept**: Another important point
-- **Third key concept**: Additional detail
+- **First key idea**: Brief but meaningful explanation
 
-## Important Details
+- **Second concept**: Summary of importance
 
-- **Specific fact**: Relevant information
-- **Another detail**: More context
+## Supporting Facts
+
+- **Term**: Explanation here
+- **Another fact**: More context
+\`\`\`
 `;
 
     case 'improve-clarity':
       return `${baseContext}
-You are an educational AI assistant helping students understand complex topics better. Your task is to enhance the provided educational content by inserting contextual learning aids and explanations directly within the original text — without changing the original wording.
+Do not repeat or include the note title in the output.
+
+You are an AI assistant helping students understand complex topics better. Your task is to enhance this educational content by inserting **new learning aids inline** — without changing the original text.
 
 -----------------------
-🔒 CRITICAL STRUCTURE RULES:
+✅ FORMAT & STRUCTURE RULES
 -----------------------
-- NEVER alter or reword any original content — preserve it **exactly as-is**
-- Add new content only INLINE, directly after the related sentence or paragraph
-- All new content must be wrapped in [AI_ENHANCED]...[/AI_ENHANCED] markers
-- Add content only where helpful (e.g., after definitions, key concepts, lists, or transitions)
-- Maintain smooth, natural reading flow between original and enhanced content
+- DO NOT reword or delete the original content
+- Insert new content directly **after** the relevant sentence or paragraph
+- Wrap all enhancements in \`[AI_ENHANCED] ... [/AI_ENHANCED]\` tags
+- Add **30–50% more content** overall
+- Format enhancements using proper Markdown:
+  - \`##\`, \`###\` for headings
+  - \`- \` for bullet lists (with blank lines before/after)
+  - \`**bold**\` for key terms
+  - Break large additions into smaller, readable chunks
 
 -----------------------
-🖋️ ENHANCEMENT STYLE & STRATEGY:
+🧠 CONTENT STRATEGY
 -----------------------
-- Use **professional Markdown formatting** inside all [AI_ENHANCED] blocks:
-  - Use \`##\`, \`###\`, etc. for clear headings
-  - Use \`-\` for bullet points with a blank line before and after the list
-  - Use \`**bold**\` for key terms
-  - Split long content into **small, readable chunks**
-  - Avoid single massive paragraphs inside enhancements
-
-- Strategy for inserting enhancements:
-  1. Add definitions or background after important terms
-  2. Provide real-world examples after abstract concepts
-  3. Add memory tips after technical lists or processes
-  4. Connect current concept to related ideas after each major section
-  5. Expand on difficult concepts or scientific principles using short blocks
+Enhancements should:
+- Explain difficult concepts
+- Define key terms
+- Provide analogies or real-world examples
+- Offer memory tips or study methods
+- Make connections to related topics
 
 -----------------------
-📚 ENHANCEMENT CONTENT REQUIREMENTS:
+🧪 EXAMPLE FORMAT
 -----------------------
-- Expand total content by **at least 30–50%**
-- Include:
-  - Definitions and breakdowns
-  - Visual or conceptual analogies
-  - Real-world applications
-  - Study techniques (mnemonics, associations)
-  - Related or supporting topics
-- Maintain Markdown readability and document hierarchy
 
------------------------
-✅ [EXAMPLE ENHANCEMENT BLOCK FORMAT]
------------------------
-Original sentence.
+Original paragraph.
 
 [AI_ENHANCED]
 
-### Additional Explanation
+### Explanation
 
-- **Why this matters**: Add short context
-- **Example**: Real-world case
-- **Tip**: Mnemonic or learning method
+- **Why it matters**: Brief contextual note
+- **Example**: Real-world scenario
+- **Study Tip**: Mnemonic, shortcut, or association
 
 [/AI_ENHANCED]
 
 -----------------------
-⚠️ FINAL CHECKLIST
+⚠️ DO NOT:
 -----------------------
-1. Original text remains unchanged
-2. All added content appears inline using [AI_ENHANCED]…[/AI_ENHANCED]
-3. All enhancements follow professional Markdown
-4. Layout is clean, skimmable, and readable
-5. No extra commentary or out-of-scope content
+- Alter or summarize original content
+- Insert new headings outside of enhancement blocks
+- Include explanations of what you're doing
+- Repeat or paraphrase the note title
 
------------------------
-INSTRUCTION SCOPE
------------------------
-Only return enhanced Markdown-formatted content. Do not summarize or explain your actions. Simply return the final Markdown output with inline enhancements inserted.
-`;
+Return only the original content with [AI_ENHANCED] blocks inserted inline.`;
 
     case 'convert-to-markdown':
       return `${baseContext}
-Convert this content into well-formatted, professional Markdown following the formatting rules above.
+Do not include or repeat the note title in the output.
+
+Your task is to convert the provided content into clear, structured **Markdown format** to improve readability and presentation. Do **not** alter or summarise the original content — just format it.
 
 Requirements:
-- Start with an appropriate main heading (#)
-- Use ## for major sections, ### for subsections
-- Use bullet lists (-) with proper spacing for unordered content
-- Use numbered lists (1., 2.) only when sequence matters
-- Use **bold** for emphasis and key terms
-- Ensure proper paragraph spacing with blank lines
-- Use > for quotes if applicable
-- Use \`code\` for technical terms if needed
-- Maintain clear hierarchy and structure
-- Add blank lines before and after all headings and lists
-- Make content skimmable and professional
+- Keep all original sentences and wording exactly as-is
+- Start with a top-level heading (\`#\`) based on the topic (not the note title)
+- Use \`##\` for major sections, \`###\` for subsections
+- Use bullet lists (\`- \`) with proper indentation and spacing
+- Use numbered lists (\`1., 2.\`) only where logical steps are involved
+- Use **bold** for key terms and \`code\` for technical terms where needed
+- Add a blank line **before and after** all headings, lists, and sections
+- Ensure proper paragraph spacing and Markdown hierarchy
+- Do not add, delete, or reword any content
 
-Example structure:
-# [Main Topic]
-
-## Overview
-
-Brief introduction paragraph.
-
-## Key Components
-
-- **Component 1**: Description here
-- **Component 2**: Another description
-
-## Important Details
-
-Additional information in well-formatted paragraphs.
-
-### Subsection
-
-More specific details if needed.
-`;
+Output only the fully formatted Markdown version of the original note.`;
 
     default:
       return `${baseContext}
