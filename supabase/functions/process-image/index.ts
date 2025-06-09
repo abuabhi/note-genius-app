@@ -34,7 +34,7 @@ serve(async (req) => {
     }
     
     console.log(`Processing image with language: ${language}, useOpenAI: ${useOpenAI}, enhanceImage: ${enhanceImage}`);
-    console.log(`Image URL type: ${imageUrl.startsWith('http') ? 'HTTP' : imageUrl.startsWith('data:') ? 'DATA_URL' : 'UNKNOWN'}`);
+    console.log(`Image URL: ${imageUrl.substring(0, 100)}...`);
     
     // Check API keys
     const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
@@ -46,17 +46,23 @@ serve(async (req) => {
     
     // Always try OpenAI first if available (especially for handwritten text)
     if (openaiApiKey) {
-      console.log("Using OpenAI Vision API as PRIMARY for handwritten text recognition...");
+      console.log("Using OpenAI Vision API for handwritten text recognition...");
       try {
         result = await processWithOpenAI(imageUrl, language);
         console.log("OpenAI processing completed successfully");
       } catch (openaiError) {
         console.error("OpenAI processing failed, falling back to Google Cloud Vision:", openaiError);
-        result = await processWithCloudOCR(imageUrl, language, enhanceImage);
+        if (googleApiKey) {
+          result = await processWithCloudOCR(imageUrl, language, enhanceImage);
+        } else {
+          throw new Error(`OpenAI failed: ${openaiError.message}. No Google Cloud API key available for fallback.`);
+        }
       }
-    } else {
+    } else if (googleApiKey) {
       console.log("OpenAI API key not available, using Google Cloud Vision API...");
       result = await processWithCloudOCR(imageUrl, language, enhanceImage);
+    } else {
+      throw new Error("No OCR API keys available. Please configure either OPENAI_API_KEY or GOOGLE_CLOUD_API_KEY.");
     }
     
     // Log usage metrics if user ID is provided
@@ -64,7 +70,7 @@ serve(async (req) => {
       console.log(`Logging OCR usage for user: ${userId}`);
     }
     
-    console.log("Returning OCR result");
+    console.log("Returning OCR result from provider:", result.provider);
     
     return new Response(
       JSON.stringify({
@@ -93,7 +99,73 @@ serve(async (req) => {
 });
 
 /**
- * FIXED OpenAI processing - NO MORE RECURSION
+ * Validate OpenAI API key with a simple test call
+ */
+async function validateOpenAIKey(apiKey: string): Promise<boolean> {
+  try {
+    console.log("Validating OpenAI API key...");
+    const response = await fetch("https://api.openai.com/v1/models", {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+      },
+    });
+    
+    const isValid = response.ok;
+    console.log(`OpenAI API key validation: ${isValid ? "SUCCESS" : "FAILED"}`);
+    return isValid;
+  } catch (error) {
+    console.error("OpenAI API key validation error:", error);
+    return false;
+  }
+}
+
+/**
+ * Safely convert image to base64 with proper chunking and size limits
+ */
+async function convertImageToBase64(imageUrl: string): Promise<string> {
+  console.log("Converting image to base64...");
+  
+  try {
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+    }
+    
+    const contentType = response.headers.get("content-type") || "image/png";
+    const arrayBuffer = await response.arrayBuffer();
+    
+    // Check image size (OpenAI limit is 20MB)
+    const sizeMB = arrayBuffer.byteLength / (1024 * 1024);
+    console.log(`Image size: ${sizeMB.toFixed(2)}MB`);
+    
+    if (sizeMB > 20) {
+      throw new Error(`Image too large: ${sizeMB.toFixed(2)}MB. Maximum allowed: 20MB`);
+    }
+    
+    // Convert to base64 using chunks to avoid stack overflow
+    const uint8Array = new Uint8Array(arrayBuffer);
+    const chunkSize = 8192; // 8KB chunks
+    let base64 = '';
+    
+    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+      const chunk = uint8Array.slice(i, i + chunkSize);
+      const chunkString = String.fromCharCode.apply(null, Array.from(chunk));
+      base64 += btoa(chunkString);
+    }
+    
+    const dataUrl = `data:${contentType};base64,${base64}`;
+    console.log(`Base64 conversion successful. Data URL length: ${dataUrl.length}`);
+    
+    return dataUrl;
+  } catch (error) {
+    console.error("Error converting image to base64:", error);
+    throw error;
+  }
+}
+
+/**
+ * Enhanced OpenAI processing with proper error handling and validation
  */
 async function processWithOpenAI(imageUrl: string, language: string): Promise<OCRResult> {
   const apiKey = Deno.env.get("OPENAI_API_KEY");
@@ -102,33 +174,84 @@ async function processWithOpenAI(imageUrl: string, language: string): Promise<OC
     throw new Error("OpenAI API key is not configured");
   }
   
-  console.log("Processing with OpenAI Vision API (SPECIALIZED FOR HANDWRITING)");
+  // Validate API key first
+  const isValidKey = await validateOpenAIKey(apiKey);
+  if (!isValidKey) {
+    throw new Error("OpenAI API key is invalid or expired");
+  }
+  
+  console.log("Processing with OpenAI Vision API (Handwriting Specialist)");
   
   try {
-    // FIXED: Use imageUrl directly - no conversion needed for OpenAI
-    // OpenAI can handle both HTTP URLs and data URLs directly
-    let processedImageUrl = imageUrl;
+    // Convert image to proper base64 format
+    let processedImageUrl: string;
     
-    // Only convert HTTP URLs to data URLs if absolutely necessary
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      console.log("Converting HTTP URL to data URL for OpenAI...");
-      try {
-        const response = await fetch(imageUrl);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
-        }
-        
-        const imageBuffer = await response.arrayBuffer();
-        const base64 = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
-        const contentType = response.headers.get("content-type") || "image/png";
-        processedImageUrl = `data:${contentType};base64,${base64}`;
-        console.log("Image successfully converted to data URL");
-      } catch (fetchError) {
-        console.error("Error converting image:", fetchError);
-        // Fallback: try using the original URL directly
-        processedImageUrl = imageUrl;
-      }
+    if (imageUrl.startsWith('data:')) {
+      console.log("Image is already in data URL format");
+      processedImageUrl = imageUrl;
+    } else {
+      console.log("Converting HTTP URL to base64 data URL...");
+      processedImageUrl = await convertImageToBase64(imageUrl);
     }
+    
+    const requestBody = {
+      model: "gpt-4o", // Using the latest model as recommended
+      messages: [
+        {
+          role: "system",
+          content: `You are an expert OCR system specialized in reading handwritten text with exceptional accuracy. 
+                   Your primary focus is on handwritten notes, cursive writing, and mixed handwritten/printed content.
+                   
+                   HANDWRITING EXPERTISE:
+                   - Excel at reading cursive handwriting, print handwriting, and mixed styles
+                   - Interpret unclear letters using context clues
+                   - Handle different pen types, pencil marks, and varying writing pressures
+                   - Process handwritten mathematical formulas and equations
+                   - Read handwritten notes in margins and annotations
+                   - Handle rotated or tilted handwritten text
+                   
+                   EXTRACTION RULES:
+                   - Extract ALL visible text with maximum accuracy
+                   - Preserve original formatting and structure including line breaks
+                   - Use context to interpret unclear handwritten characters
+                   - For handwritten mathematical content, use proper notation
+                   - If text is partially illegible, provide your best interpretation
+                   - Return ONLY the extracted text, no explanations or commentary
+                   
+                   Language context: ${language}`
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Please transcribe all text from this image with special focus on handwritten content. Use your expertise in handwriting recognition to provide the most accurate transcription possible:"
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: processedImageUrl,
+                detail: "high"
+              }
+            }
+          ]
+        }
+      ],
+      max_tokens: 2000,
+      temperature: 0.1
+    };
+    
+    console.log("Sending request to OpenAI API...");
+    console.log("Request body structure:", {
+      model: requestBody.model,
+      messagesCount: requestBody.messages.length,
+      maxTokens: requestBody.max_tokens,
+      imageUrlLength: processedImageUrl.length
+    });
+    
+    // Add timeout handling (30 seconds)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
     
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -136,102 +259,74 @@ async function processWithOpenAI(imageUrl: string, language: string): Promise<OC
         "Content-Type": "application/json",
         "Authorization": `Bearer ${apiKey}`
       },
-      body: JSON.stringify({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: `You are an expert OCR system SPECIALIZED in reading handwritten text with exceptional accuracy. 
-                     Your primary focus is on handwritten notes, cursive writing, and mixed handwritten/printed content.
-                     
-                     HANDWRITING EXPERTISE:
-                     - Excel at reading cursive handwriting, print handwriting, and mixed styles
-                     - Interpret unclear letters using context clues
-                     - Handle different pen types, pencil marks, and varying writing pressures
-                     - Process handwritten mathematical formulas and equations
-                     - Read handwritten notes in margins and annotations
-                     - Handle rotated or tilted handwritten text
-                     
-                     EXTRACTION RULES:
-                     - Extract ALL visible text with maximum accuracy
-                     - Preserve original formatting and structure
-                     - Use context to interpret unclear handwritten characters
-                     - For handwritten mathematical content, use proper notation
-                     - If text is partially illegible, provide your best interpretation
-                     - Return ONLY the extracted text, no explanations
-                     
-                     Language context: ${language}`
-          },
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: "Extract all text from this image with special focus on handwritten content. Use your expertise in handwriting recognition to provide the most accurate transcription possible:"
-              },
-              {
-                type: "image_url",
-                image_url: {
-                  url: processedImageUrl,
-                  detail: "high"
-                }
-              }
-            ]
-          }
-        ],
-        max_tokens: 2000,
-        temperature: 0.1
-      })
+      body: JSON.stringify(requestBody),
+      signal: controller.signal
     });
     
+    clearTimeout(timeoutId);
+    
     if (!response.ok) {
-      const error = await response.json();
-      console.error("OpenAI API error response:", error);
-      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+      const errorData = await response.json().catch(() => ({}));
+      console.error("OpenAI API error response:", errorData);
+      throw new Error(`OpenAI API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`);
     }
     
     const data = await response.json();
-    console.log("OpenAI response received");
+    console.log("OpenAI response received successfully");
+    console.log("Response structure:", {
+      choicesCount: data.choices?.length || 0,
+      hasContent: !!data.choices?.[0]?.message?.content,
+      usage: data.usage
+    });
     
     if (!data.choices || data.choices.length === 0) {
       console.error("Invalid OpenAI response structure:", data);
-      throw new Error("Invalid response from OpenAI");
+      throw new Error("Invalid response from OpenAI - no choices returned");
     }
     
-    const extractedText = data.choices[0].message.content.trim();
+    const extractedText = data.choices[0].message.content?.trim();
+    
+    if (!extractedText) {
+      throw new Error("OpenAI returned empty text content");
+    }
+    
+    console.log(`OpenAI extracted text length: ${extractedText.length} characters`);
+    console.log("First 100 characters:", extractedText.substring(0, 100));
     
     return {
       text: extractedText,
-      confidence: 0.95,
+      confidence: 0.95, // High confidence for OpenAI
       processedAt: new Date().toISOString(),
       language: language,
-      provider: "openai-handwriting-specialist"
+      provider: "openai-vision-gpt4o"
     };
   } catch (error) {
     console.error("OpenAI processing error details:", error);
+    
+    if (error.name === 'AbortError') {
+      throw new Error("OpenAI API request timed out after 30 seconds");
+    }
+    
     throw new Error(`OpenAI processing failed: ${error.message}`);
   }
 }
 
 /**
- * FIXED Google Cloud Vision processing
+ * Google Cloud Vision processing with better error handling
  */
 async function processWithCloudOCR(imageUrl: string, language: string, enhanceImage: boolean): Promise<OCRResult> {
   const googleApiKey = Deno.env.get("GOOGLE_CLOUD_API_KEY");
   
-  // Enhanced mock data for demo purposes
   if (!googleApiKey) {
-    console.log("No Google Cloud API key found, returning enhanced mock OCR result");
-    
-    const confidenceScore = 0.75 + Math.random() * 0.15;
+    console.log("No Google Cloud API key found, returning fallback result");
     
     return {
-      text: "Sample handwritten note content extracted from the image.\n\nThis would contain the actual text from your handwritten notes, including:\n- Bullet points and lists\n- Mathematical equations\n- Diagrams and sketches\n- Margin notes\n\nThe OCR system is optimized for handwritten content recognition.",
-      confidence: confidenceScore,
+      text: "No OCR services are properly configured. Please set up either OPENAI_API_KEY or GOOGLE_CLOUD_API_KEY in your Supabase secrets to enable text extraction from images.",
+      confidence: 0.0,
       processedAt: new Date().toISOString(),
       language: language,
       enhancementApplied: enhanceImage,
-      provider: "demo-handwriting-ocr"
+      provider: "no-service-configured"
     };
   }
   
@@ -240,22 +335,13 @@ async function processWithCloudOCR(imageUrl: string, language: string, enhanceIm
     
     const url = `https://vision.googleapis.com/v1/images:annotate?key=${googleApiKey}`;
     
-    // FIXED: Handle different URL types properly
     let base64Image: string;
     
     if (imageUrl.startsWith('data:')) {
-      // Already a data URL, extract base64 part
       base64Image = imageUrl.split(',')[1];
-    } else if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      // Convert HTTP URL to base64
-      const response = await fetch(imageUrl);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
-      }
-      const imageBuffer = await response.arrayBuffer();
-      base64Image = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
     } else {
-      throw new Error("Invalid image URL format");
+      const dataUrl = await convertImageToBase64(imageUrl);
+      base64Image = dataUrl.split(',')[1];
     }
     
     const response = await fetch(url, {
@@ -290,7 +376,9 @@ async function processWithCloudOCR(imageUrl: string, language: string, enhanceIm
     
     const data = await response.json();
     const fullTextAnnotation = data.responses[0]?.fullTextAnnotation;
-    const extractedText = fullTextAnnotation?.text || "No text detected";
+    const extractedText = fullTextAnnotation?.text || "No text detected in image";
+    
+    console.log(`Google Vision extracted text length: ${extractedText.length} characters`);
     
     return {
       text: extractedText,
@@ -303,14 +391,13 @@ async function processWithCloudOCR(imageUrl: string, language: string, enhanceIm
   } catch (error) {
     console.error("Google Cloud Vision processing error:", error);
     
-    // Enhanced fallback
     return {
-      text: "OCR processing encountered an error. This is enhanced fallback text that would contain the extracted content from your handwritten notes.",
-      confidence: 0.4,
+      text: `OCR processing failed: ${error.message}. Please check your Google Cloud Vision API configuration.`,
+      confidence: 0.0,
       processedAt: new Date().toISOString(),
       language: language,
       enhancementApplied: enhanceImage,
-      provider: "enhanced-fallback"
+      provider: "google-vision-error"
     };
   }
 }
