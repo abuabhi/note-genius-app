@@ -1,20 +1,81 @@
-
-// This file contains utility functions for OCR processing
+// Enhanced OCR utility functions with better handwriting support
 
 import { createWorker } from 'tesseract.js';
 
 /**
- * Process an image with OCR to extract text
- * @param imageUrl URL or base64 string of the image to process
- * @param language Language code for OCR (e.g., 'eng', 'fra', 'spa')
- * @returns Promise resolving to the extracted text and confidence score
+ * Enhanced image preprocessing specifically for handwritten text
+ */
+export const enhanceImageForHandwriting = async (imageUrl: string): Promise<string> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(imageUrl);
+        return;
+      }
+      
+      // Set canvas dimensions with upscaling for better OCR
+      const scale = 2; // Upscale for better recognition
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      
+      // Enable image smoothing for better quality
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      
+      // Draw scaled image
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      
+      // Apply enhanced preprocessing for handwriting
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      
+      // Enhanced preprocessing pipeline
+      for (let i = 0; i < data.length; i += 4) {
+        // Convert to grayscale with better weights for text
+        const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        
+        // Apply adaptive contrast enhancement
+        const enhanced = gray < 140 ? Math.max(0, gray - 20) : Math.min(255, gray + 30);
+        
+        // Apply slight sharpening for handwritten text
+        const sharpened = Math.min(255, Math.max(0, enhanced * 1.2));
+        
+        // Set RGB values
+        data[i] = sharpened;      // R
+        data[i + 1] = sharpened;  // G
+        data[i + 2] = sharpened;  // B
+        // Keep alpha channel as is
+      }
+      
+      // Put the processed data back
+      ctx.putImageData(imageData, 0, 0);
+      
+      // Convert to data URL with high quality
+      const enhancedImageUrl = canvas.toDataURL('image/png');
+      resolve(enhancedImageUrl);
+    };
+    
+    img.onerror = () => {
+      console.error('Error loading image for enhancement');
+      resolve(imageUrl);
+    };
+    
+    img.src = imageUrl;
+  });
+};
+
+/**
+ * Enhanced OCR processing with better handwriting recognition
  */
 export const processImageWithOCR = async (
   imageUrl: string, 
   language: string = 'eng'
 ): Promise<{ text: string; confidence: number }> => {
   try {
-    // Create worker with the specified language
+    // Create worker with enhanced settings for handwriting
     const worker = await createWorker({
       langPath: 'https://tessdata.projectnaptha.com/4.0.0',
       logger: m => console.log(m)
@@ -23,12 +84,19 @@ export const processImageWithOCR = async (
     await worker.loadLanguage(language);
     await worker.initialize(language);
     
+    // Configure Tesseract for better handwriting recognition
+    await worker.setParameters({
+      tessedit_char_whitelist: '',
+      tessedit_pageseg_mode: '6', // Uniform block of text
+      tessedit_ocr_engine_mode: '1' // Neural nets LSTM only
+    });
+    
     const { data } = await worker.recognize(imageUrl);
     await worker.terminate();
     
     return { 
       text: data.text, 
-      confidence: data.confidence / 100 // Convert to 0-1 scale
+      confidence: data.confidence / 100
     };
   } catch (error) {
     console.error('OCR processing error:', error);

@@ -26,7 +26,7 @@ export const ScanWorkflow = ({
   setSelectedLanguage,
   isPremiumUser = false
 }: ScanWorkflowProps) => {
-  const [activeTab, setActiveTab] = useState("camera");
+  const [activeTab, setActiveTab] = useState("upload"); // Default to upload for better UX
   const [recognizedText, setRecognizedText] = useState("");
   const [noteTitle, setNoteTitle] = useState("");
   const [noteCategory, setNoteCategory] = useState("Uncategorized");
@@ -40,7 +40,14 @@ export const ScanWorkflow = ({
     handleImageCaptured 
   } = useImageUpload();
 
-  const { isDragOver, handleDragOver, handleDragLeave, handleDrop } = useDragAndDrop();
+  const { 
+    isDragOver, 
+    handleDragEnter,
+    handleDragOver, 
+    handleDragLeave, 
+    handleDrop,
+    resetDragState
+  } = useDragAndDrop();
 
   const { 
     processedImages, 
@@ -58,22 +65,26 @@ export const ScanWorkflow = ({
     setRecognizedText("");
     setNoteTitle("");
     setNoteCategory("Uncategorized");
-    setActiveTab("camera");
+    setActiveTab("upload");
     setProcessingMode('single');
     resetBatchProcessing();
+    resetDragState();
   };
 
   const handleSingleImage = (imageUrl: string) => {
+    console.log('Processing single image');
     handleImageCaptured(imageUrl);
-    setActiveTab("upload");
+    // Don't force tab switch, let user stay where they are
   };
 
   const handleMultipleImages = (files: File[]) => {
+    console.log(`Starting batch processing for ${files.length} images`);
     setProcessingMode('batch');
     processBatchImages(files);
   };
 
   const handleDropEvent = (e: React.DragEvent) => {
+    console.log('Drop event triggered in ScanWorkflow');
     handleDrop(e, handleSingleImage, handleMultipleImages);
   };
 
@@ -118,7 +129,6 @@ export const ScanWorkflow = ({
     setIsSaving(true);
 
     try {
-      // First upload the image to storage
       let imageUrl = null;
       if (capturedImage) {
         imageUrl = await uploadImageToStorage(capturedImage);
@@ -168,17 +178,24 @@ export const ScanWorkflow = ({
   }
 
   return (
-    <>
+    <div className="relative">
+      {/* Global drag overlay */}
       {isDragOver && (
-        <div className="fixed inset-0 bg-purple-100 bg-opacity-75 flex items-center justify-center z-50 pointer-events-none">
-          <div className="bg-white p-8 rounded-lg shadow-lg text-center">
-            <FileText className="h-16 w-16 text-purple-500 mx-auto mb-4" />
-            <p className="text-lg font-medium text-purple-700">
-              Drop your images here to scan
+        <div className="fixed inset-0 bg-blue-100 bg-opacity-90 flex items-center justify-center z-50 pointer-events-none">
+          <div className="bg-white p-8 rounded-xl shadow-xl text-center border-2 border-blue-300 border-dashed">
+            <FileText className="h-20 w-20 text-blue-500 mx-auto mb-4 animate-pulse" />
+            <p className="text-xl font-bold text-blue-700 mb-2">
+              Drop Images to Scan
             </p>
-            <p className="text-sm text-purple-500">
-              Single image: Standard processing • Multiple images: Batch processing (up to 3 concurrent)
+            <p className="text-blue-600 max-w-sm">
+              <strong>Single image:</strong> Standard OCR processing<br/>
+              <strong>Multiple images:</strong> Batch processing (up to 3 concurrent)
             </p>
+            <div className="mt-4 p-2 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-700 font-medium">
+                ✨ Optimized for handwritten text recognition
+              </p>
+            </div>
           </div>
         </div>
       )}
@@ -190,6 +207,7 @@ export const ScanWorkflow = ({
           onImageCaptured={handleSingleImage}
           onMultipleImages={handleMultipleImages}
           isDragOver={isDragOver}
+          onDragEnter={handleDragEnter}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDropEvent}
@@ -237,7 +255,7 @@ export const ScanWorkflow = ({
           )}
         </Button>
       </div>
-    </>
+    </div>
   );
 };
 
