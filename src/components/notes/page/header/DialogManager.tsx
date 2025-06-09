@@ -1,11 +1,10 @@
 
 import React from "react";
-import { Note } from "@/types/note";
-import { TierLimits } from "@/hooks/useRequireAuth";
-import { ScanNoteDialog } from "@/components/notes/ScanNoteDialog";
-import { ImportDialog } from "@/components/notes/import/ImportDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CreateNoteForm } from "../CreateNoteForm";
+import { EnhancedImportDialog } from "../../import/EnhancedImportDialog";
+import { Note } from "@/types/note";
+import { TierLimits } from "@/hooks/useRequireAuth";
 
 interface DialogManagerProps {
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
@@ -34,54 +33,62 @@ export const DialogManager = ({
   setIsScanDialogOpen,
   setIsImportDialogOpen
 }: DialogManagerProps) => {
-  const handleSaveNote = async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
+  
+  const handleManualSave = async (note: Omit<Note, 'id'>): Promise<Note | null> => {
+    if (isSubmitting) return null;
+    
     try {
-      const result = await onSaveNote(noteData);
+      const result = await onSaveNote(note);
       if (result) {
         setIsManualDialogOpen(false);
       }
       return result;
     } catch (error) {
-      console.error("Error in handleSaveNote:", error);
+      console.error("Error in manual save:", error);
       return null;
     }
   };
 
-  const handleScanNote = async (noteData: Omit<Note, 'id'>): Promise<boolean> => {
-    const result = await onScanNote(noteData);
-    return result !== null;
-  };
-
-  const handleImportNote = async (noteData: Omit<Note, 'id'>): Promise<boolean> => {
-    const result = await onImportNote(noteData);
-    return result !== null;
+  const handleImportSave = async (note: Omit<Note, 'id'>): Promise<boolean> => {
+    if (isSubmitting) return false;
+    
+    try {
+      const result = await onImportNote(note);
+      if (result) {
+        setIsImportDialogOpen(false);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error in import save:", error);
+      return false;
+    }
   };
 
   return (
     <>
-      {/* Manual Note Dialog */}
-      <Dialog open={isManualDialogOpen} onOpenChange={setIsManualDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      {/* Manual Entry Dialog */}
+      <Dialog open={isManualDialogOpen} onOpenChange={(open) => {
+        if (!isSubmitting) setIsManualDialogOpen(open);
+      }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-mint-200 bg-white">
           <DialogHeader>
-            <DialogTitle>Create a New Note</DialogTitle>
+            <DialogTitle className="text-xl font-semibold text-mint-800">Create New Note</DialogTitle>
           </DialogHeader>
-          <CreateNoteForm onSave={handleSaveNote} />
+          <div className="py-2">
+            <CreateNoteForm onSave={handleManualSave} />
+          </div>
         </DialogContent>
       </Dialog>
 
-      {/* Scan Dialog */}
-      <ScanNoteDialog
-        onSaveNote={handleScanNote}
-        isVisible={isScanDialogOpen}
-        onClose={() => setIsScanDialogOpen(false)}
-        isPremiumUser={tierLimits?.ocr_enabled ?? false}
-      />
-
-      {/* Import Dialog */}
-      <ImportDialog
-        onSaveNote={handleImportNote}
+      {/* Enhanced Import Dialog */}
+      <EnhancedImportDialog 
+        onSaveNote={handleImportSave}
         isVisible={isImportDialogOpen}
-        onClose={() => setIsImportDialogOpen(false)}
+        onClose={() => {
+          if (!isSubmitting) setIsImportDialogOpen(false);
+        }}
+        isPremiumUser={tierLimits?.ocr_enabled ?? false}
       />
     </>
   );

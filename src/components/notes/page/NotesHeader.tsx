@@ -22,7 +22,6 @@ export const NotesHeader = ({
 }: NotesHeaderProps) => {
   // State to track which dialogs are open and submission status
   const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
-  const [isScanDialogOpen, setIsScanDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -32,7 +31,6 @@ export const NotesHeader = ({
       <div className="bg-white/60 backdrop-blur-sm rounded-lg border border-mint-100 p-6 shadow-sm">
         <NotesHeaderTop 
           onOpenManualDialog={() => setIsManualDialogOpen(true)}
-          onOpenScanDialog={() => setIsScanDialogOpen(true)}
           onOpenImportDialog={() => setIsImportDialogOpen(true)}
         />
       </div>
@@ -44,11 +42,11 @@ export const NotesHeader = ({
         onImportNote={onImportNote}
         tierLimits={tierLimits}
         isManualDialogOpen={isManualDialogOpen}
-        isScanDialogOpen={isScanDialogOpen}
+        isScanDialogOpen={false}
         isImportDialogOpen={isImportDialogOpen}
         isSubmitting={isSubmitting}
         setIsManualDialogOpen={setIsManualDialogOpen}
-        setIsScanDialogOpen={setIsScanDialogOpen}
+        setIsScanDialogOpen={() => {}}
         setIsImportDialogOpen={setIsImportDialogOpen}
       />
     </div>
