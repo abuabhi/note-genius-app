@@ -3,7 +3,9 @@ import React, { useState } from "react";
 import { Note } from "@/types/note";
 import { TierLimits, UserTier } from "@/hooks/useRequireAuth";
 import { NotesHeaderTop } from "./header/NotesHeaderTop";
-import { DialogManager } from "./header/DialogManager";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { CreateNoteForm } from "./CreateNoteForm";
+import { ImportDialog } from "../import/ImportDialog";
 
 interface NotesHeaderProps {
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
@@ -25,6 +27,43 @@ export const NotesHeader = ({
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const handleManualSave = async (note: Omit<Note, 'id'>): Promise<Note | null> => {
+    if (isSubmitting) return null;
+    
+    setIsSubmitting(true);
+    try {
+      const result = await onSaveNote(note);
+      if (result) {
+        setIsManualDialogOpen(false);
+      }
+      return result;
+    } catch (error) {
+      console.error("Error in manual save:", error);
+      return null;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleImportSave = async (note: Omit<Note, 'id'>): Promise<boolean> => {
+    if (isSubmitting) return false;
+    
+    setIsSubmitting(true);
+    try {
+      const result = await onImportNote(note);
+      if (result) {
+        setIsImportDialogOpen(false);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error in import save:", error);
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Unified Header Section - Search, Actions, Filters, and Sorting */}
@@ -35,19 +74,30 @@ export const NotesHeader = ({
         />
       </div>
 
-      {/* Dialogs for creating notes */}
-      <DialogManager 
-        onSaveNote={onSaveNote}
-        onScanNote={onScanNote}
-        onImportNote={onImportNote}
-        tierLimits={tierLimits}
-        isManualDialogOpen={isManualDialogOpen}
-        isScanDialogOpen={false}
-        isImportDialogOpen={isImportDialogOpen}
-        isSubmitting={isSubmitting}
-        setIsManualDialogOpen={setIsManualDialogOpen}
-        setIsScanDialogOpen={() => {}}
-        setIsImportDialogOpen={setIsImportDialogOpen}
+      {/* Manual Entry Dialog */}
+      <Dialog open={isManualDialogOpen} onOpenChange={(open) => {
+        if (!isSubmitting) setIsManualDialogOpen(open);
+      }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-mint-200 bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-mint-800">Create New Note</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Fill out the form below to create a new note.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            <CreateNoteForm onSave={handleManualSave} />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Dialog */}
+      <ImportDialog 
+        onSaveNote={handleImportSave}
+        isVisible={isImportDialogOpen}
+        onClose={() => {
+          if (!isSubmitting) setIsImportDialogOpen(false);
+        }}
       />
     </div>
   );
