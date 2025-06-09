@@ -41,6 +41,34 @@ export const EnhancementContent = ({
     contentPreview: content?.substring(0, 100)
   });
 
+  // Determine if content should be rendered as Markdown
+  const getIsMarkdown = (type: string): boolean => {
+    const markdownEnhancements = [
+      'summary',
+      'summarize',
+      'extract-key-points',
+      'keyPoints', 
+      'convert-to-markdown',
+      'markdown',
+      'improve-clarity',
+      'improved',
+      'original++',
+      // Legacy support
+      'key-points',
+      'markdown-format'
+    ];
+    
+    return markdownEnhancements.includes(type.toLowerCase());
+  };
+
+  const isMarkdown = getIsMarkdown(enhancementType);
+
+  console.log("🔍 Content rendering decision:", {
+    enhancementType,
+    isMarkdown,
+    willUseMarkdownRenderer: isMarkdown
+  });
+
   if (isLoading) {
     return (
       <LoadingAnimations 
@@ -87,13 +115,14 @@ export const EnhancementContent = ({
     );
   }
 
-  // Simple text rendering for all content types
+  // Render content with appropriate renderer
   return (
     <div className="animate-fade-in px-4 py-2">
       <UnifiedContentRenderer 
         content={content} 
         fontSize={fontSize} 
         textAlign={textAlign}
+        isMarkdown={isMarkdown}
         className="text-gray-700"
       />
     </div>
