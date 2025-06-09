@@ -20,24 +20,27 @@ export const EnhancementContentRenderer = ({
   textAlign,
   isMarkdown
 }: EnhancementContentRendererProps) => {
-  // Route content based on type and AI enhancement markers
-  if (hasEnhancementMarkers(content)) {
-    // Content with AI enhancement markers - use UnifiedContentRenderer for green highlighting
-    return (
-      <UnifiedContentRenderer 
-        content={content} 
-        fontSize={fontSize} 
-        textAlign={textAlign}
-        className="prose-mint prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700"
-      />
-    );
-  } else if (isMarkdown) {
-    // Pure markdown content without AI markers
+  // AI-generated enhancement types that should always be treated as markdown
+  const aiEnhancementTypes: EnhancementContentType[] = ['summary', 'keyPoints', 'improved', 'markdown'];
+  const isAIGenerated = aiEnhancementTypes.includes(contentType);
+  
+  console.log("🎨 EnhancementContentRenderer:", {
+    contentType,
+    isAIGenerated,
+    isMarkdown,
+    hasEnhancementMarkers: hasEnhancementMarkers(content),
+    contentLength: content.length
+  });
+
+  // Route AI-generated content or content with enhancement markers to UnifiedContentRenderer
+  if (isAIGenerated || hasEnhancementMarkers(content) || isMarkdown) {
     let processedContent = content;
     
-    if (contentType === 'keyPoints') {
+    // Apply specific processing for different content types
+    if (contentType === 'keyPoints' && !hasEnhancementMarkers(content)) {
       processedContent = processKeyPoints(content);
-    } else {
+    } else if (isAIGenerated && !hasEnhancementMarkers(content)) {
+      // Clean and format AI-generated markdown content
       processedContent = formatMarkdownStructure(cleanMarkdownContent(content));
     }
     
@@ -49,16 +52,16 @@ export const EnhancementContentRenderer = ({
         className="prose-mint prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700"
       />
     );
-  } else {
-    // Original content - use RichTextDisplay
-    return (
-      <RichTextDisplay 
-        content={content} 
-        fontSize={fontSize} 
-        textAlign={textAlign}
-        removeTitle={contentType !== 'original'}
-        className="prose-mint prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700"
-      />
-    );
   }
+  
+  // Only use RichTextDisplay for original content
+  return (
+    <RichTextDisplay 
+      content={content} 
+      fontSize={fontSize} 
+      textAlign={textAlign}
+      removeTitle={contentType !== 'original'}
+      className="prose-mint prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700"
+    />
+  );
 };

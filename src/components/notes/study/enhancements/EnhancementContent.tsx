@@ -1,6 +1,5 @@
 
-import { RichTextDisplay } from "@/components/ui/rich-text/RichTextDisplay";
-import { EnhancedContentRenderer } from "./EnhancedContentRenderer";
+import { EnhancementContentRenderer } from "./components/EnhancementContentRenderer";
 import { TextAlignType } from "../hooks/useStudyViewState";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Sparkles } from "lucide-react";
@@ -90,30 +89,28 @@ export const EnhancementContent = ({
     );
   }
 
-  // Check if content contains AI enhancement markers
-  const hasEnhancementMarkers = content.includes('[AI_ENHANCED]') && content.includes('[/AI_ENHANCED]');
+  // Determine content type for proper rendering
+  const getContentType = () => {
+    // AI-generated content types that should be treated as markdown
+    const aiEnhancementTypes = ['summary', 'keyPoints', 'improved', 'markdown'];
+    
+    if (aiEnhancementTypes.includes(enhancementType)) {
+      return enhancementType as 'summary' | 'keyPoints' | 'improved' | 'markdown';
+    }
+    
+    // Fallback to original for other types
+    return 'original';
+  };
   
   return (
     <div className="animate-fade-in">
-      {hasEnhancementMarkers ? (
-        <EnhancedContentRenderer
-          content={content}
-          fontSize={fontSize}
-          textAlign={textAlign}
-          className={`prose-sm prose-headings:font-medium prose-headings:text-mint-800 prose-ul:pl-6 prose-ol:pl-6 ${
-            isMarkdown ? "font-mono" : ""
-          }`}
-        />
-      ) : (
-        <RichTextDisplay 
-          content={content} 
-          fontSize={fontSize} 
-          textAlign={textAlign}
-          className={`prose-sm prose-headings:font-medium prose-headings:text-mint-800 prose-ul:pl-6 prose-ol:pl-6 ${
-            isMarkdown ? "font-mono" : ""
-          }`}
-        />
-      )}
+      <EnhancementContentRenderer
+        content={content}
+        contentType={getContentType()}
+        fontSize={fontSize}
+        textAlign={textAlign}
+        isMarkdown={isMarkdown || ['summary', 'keyPoints', 'improved', 'markdown'].includes(enhancementType)}
+      />
     </div>
   );
 };
