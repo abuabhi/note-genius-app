@@ -48,27 +48,49 @@ serve(async (req) => {
       
       // Process based on file type
       if (fileType === 'pdf') {
-        console.log('Processing PDF document with text extraction');
+        console.log('Processing PDF document');
         
         if (useOCR) {
-          // Force OCR processing - call process-image function
-          console.log('Forcing OCR processing for PDF');
-          
-          // For now, return a message indicating OCR is needed
-          documentText = "OCR processing requested but requires image conversion. Please use a different processing method or contact support.";
+          console.log('OCR processing requested - this requires image conversion');
+          documentText = "This PDF appears to contain images, scanned content, or complex formatting that requires OCR (Optical Character Recognition) processing. Please enable the 'Force OCR processing' option to extract text from image-based content, or try converting the PDF to a text-based format first.";
           documentTitle = "OCR Processing Required";
-          processingMethod = "ocr-requested";
+          processingMethod = "ocr-required";
           documentMetadata = {
-            processingMethod: "ocr-requested",
-            requiresImageConversion: true
+            processingMethod: "ocr-required",
+            suggestion: "Enable OCR processing for image-based PDFs"
           };
         } else {
-          // Use the working PDF text extraction
+          // Use the existing PDF text extraction
           const pdfResult: PdfResult = await readPdf(fileBuffer);
-          documentText = pdfResult.text;
-          documentTitle = pdfResult.title || "PDF Document";
-          documentMetadata = pdfResult.metadata || {};
-          processingMethod = "text-extraction";
+          
+          // Check if we got meaningful text or just encoded garbage
+          const hasReadableText = pdfResult.text && 
+            pdfResult.text.length > 20 && 
+            /[a-zA-Z\s]{10,}/.test(pdfResult.text) && // Contains readable words
+            !(/[^\x20-\x7E\n]{20,}/.test(pdfResult.text)); // Not mostly non-printable chars
+          
+          if (hasReadableText) {
+            documentText = pdfResult.text;
+            documentTitle = pdfResult.title || "PDF Document";
+            documentMetadata = pdfResult.metadata || {};
+            processingMethod = "text-extraction-success";
+          } else {
+            // Text extraction failed - likely image-based or encoded PDF
+            documentText = "This PDF appears to contain primarily images, scanned content, or encoded text that cannot be extracted using standard text extraction methods. The document may be:\n\n" +
+              "• A scanned document (image-based PDF)\n" +
+              "• A PDF with complex formatting or fonts\n" +
+              "• A password-protected or encrypted PDF\n" +
+              "• A PDF created from images\n\n" +
+              "To extract text from this type of document, please enable the 'Force OCR processing' option, which will attempt to recognize text from images.";
+            documentTitle = "Text Extraction Failed - OCR Recommended";
+            processingMethod = "text-extraction-failed";
+            documentMetadata = {
+              processingMethod: "text-extraction-failed",
+              originalTextLength: pdfResult.text?.length || 0,
+              suggestion: "Try OCR processing for image-based content",
+              extractionQuality: "poor"
+            };
+          }
         }
         
         console.log(`PDF processing complete. Method: ${processingMethod}, Text length: ${documentText.length}`);
@@ -109,7 +131,7 @@ serve(async (req) => {
         metadata: {
           ...documentMetadata,
           processingMethod,
-          professional: true
+          requiresOCR: processingMethod.includes('failed') || processingMethod.includes('ocr')
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
