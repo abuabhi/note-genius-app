@@ -15,8 +15,8 @@ export async function readPdfWithPdfJs(fileContent: ArrayBuffer): Promise<Profes
   try {
     console.log("Starting professional PDF extraction with PDF.js");
     
-    // Configure PDF.js for Deno environment - disable worker
-    pdfjsLib.GlobalWorkerOptions.workerSrc = null;
+    // Configure PDF.js for Deno environment - completely disable worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '';
     
     // Initialize PDF.js with the file content
     const loadingTask = pdfjsLib.getDocument({
@@ -24,7 +24,9 @@ export async function readPdfWithPdfJs(fileContent: ArrayBuffer): Promise<Profes
       verbosity: 0, // Minimize console output
       disableWorker: true, // Important for Deno environment
       useWorkerFetch: false, // Disable worker fetch
-      isEvalSupported: false // Disable eval for security
+      isEvalSupported: false, // Disable eval for security
+      useSystemFonts: false, // Disable system fonts
+      standardFontDataUrl: null // Disable standard font loading
     });
     
     const pdf = await loadingTask.promise;

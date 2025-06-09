@@ -16,15 +16,17 @@ export async function convertPdfToImages(
   try {
     console.log("Converting PDF pages to images for OCR processing");
     
-    // Configure PDF.js for Deno environment
-    pdfjsLib.GlobalWorkerOptions.workerSrc = null;
+    // Configure PDF.js for Deno environment - completely disable worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '';
     
     const loadingTask = pdfjsLib.getDocument({
       data: new Uint8Array(fileContent),
       verbosity: 0,
       disableWorker: true,
       useWorkerFetch: false,
-      isEvalSupported: false
+      isEvalSupported: false,
+      useSystemFonts: false,
+      standardFontDataUrl: null
     });
     
     const pdf = await loadingTask.promise;
