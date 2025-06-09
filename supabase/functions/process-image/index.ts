@@ -34,35 +34,7 @@ serve(async (req) => {
     }
     
     console.log(`Processing image with language: ${language}, useOpenAI: ${useOpenAI}, enhanceImage: ${enhanceImage}`);
-    
-    // Process the image data - FIXED RECURSION BUG
-    let processedImageData = imageUrl;
-    
-    // Only process if it's an HTTP URL that needs to be converted to base64
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      console.log("Fetching image from HTTP URL...");
-      try {
-        const response = await fetch(imageUrl);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch image: ${response.statusText}`);
-        }
-        
-        const imageBuffer = await response.arrayBuffer();
-        const base64 = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
-        const contentType = response.headers.get("content-type") || "image/png";
-        processedImageData = `data:${contentType};base64,${base64}`;
-        console.log("Image successfully converted to data URL");
-      } catch (fetchError) {
-        console.error("Error fetching image:", fetchError);
-        throw new Error(`Failed to fetch image: ${fetchError.message}`);
-      }
-    } else if (imageUrl.startsWith('data:')) {
-      // Already a data URL, use as is
-      processedImageData = imageUrl;
-      console.log("Using provided data URL directly");
-    } else {
-      throw new Error("Invalid image URL format");
-    }
+    console.log(`Image URL type: ${imageUrl.startsWith('http') ? 'HTTP' : imageUrl.startsWith('data:') ? 'DATA_URL' : 'UNKNOWN'}`);
     
     // Check API keys
     const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
@@ -70,22 +42,21 @@ serve(async (req) => {
     
     console.log(`API Keys available: OpenAI: ${openaiApiKey ? "Yes" : "No"}, Google Cloud: ${googleApiKey ? "Yes" : "No"}`);
     
-    // PRIORITIZE OPENAI FOR HANDWRITTEN TEXT - Enhanced Strategy
     let result: OCRResult;
     
     // Always try OpenAI first if available (especially for handwritten text)
     if (openaiApiKey) {
       console.log("Using OpenAI Vision API as PRIMARY for handwritten text recognition...");
       try {
-        result = await processWithOpenAI(processedImageData, language);
+        result = await processWithOpenAI(imageUrl, language);
         console.log("OpenAI processing completed successfully");
       } catch (openaiError) {
         console.error("OpenAI processing failed, falling back to Google Cloud Vision:", openaiError);
-        result = await processWithCloudOCR(processedImageData, language, enhanceImage);
+        result = await processWithCloudOCR(imageUrl, language, enhanceImage);
       }
     } else {
       console.log("OpenAI API key not available, using Google Cloud Vision API...");
-      result = await processWithCloudOCR(processedImageData, language, enhanceImage);
+      result = await processWithCloudOCR(imageUrl, language, enhanceImage);
     }
     
     // Log usage metrics if user ID is provided
@@ -122,9 +93,9 @@ serve(async (req) => {
 });
 
 /**
- * ENHANCED OpenAI processing - OPTIMIZED FOR HANDWRITTEN TEXT
+ * FIXED OpenAI processing - NO MORE RECURSION
  */
-async function processWithOpenAI(imageData: string, language: string): Promise<OCRResult> {
+async function processWithOpenAI(imageUrl: string, language: string): Promise<OCRResult> {
   const apiKey = Deno.env.get("OPENAI_API_KEY");
   
   if (!apiKey) {
@@ -134,6 +105,31 @@ async function processWithOpenAI(imageData: string, language: string): Promise<O
   console.log("Processing with OpenAI Vision API (SPECIALIZED FOR HANDWRITING)");
   
   try {
+    // FIXED: Use imageUrl directly - no conversion needed for OpenAI
+    // OpenAI can handle both HTTP URLs and data URLs directly
+    let processedImageUrl = imageUrl;
+    
+    // Only convert HTTP URLs to data URLs if absolutely necessary
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      console.log("Converting HTTP URL to data URL for OpenAI...");
+      try {
+        const response = await fetch(imageUrl);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+        }
+        
+        const imageBuffer = await response.arrayBuffer();
+        const base64 = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
+        const contentType = response.headers.get("content-type") || "image/png";
+        processedImageUrl = `data:${contentType};base64,${base64}`;
+        console.log("Image successfully converted to data URL");
+      } catch (fetchError) {
+        console.error("Error converting image:", fetchError);
+        // Fallback: try using the original URL directly
+        processedImageUrl = imageUrl;
+      }
+    }
+    
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -141,7 +137,7 @@ async function processWithOpenAI(imageData: string, language: string): Promise<O
         "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "gpt-4o",  // Using the most powerful vision model
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -176,15 +172,15 @@ async function processWithOpenAI(imageData: string, language: string): Promise<O
               {
                 type: "image_url",
                 image_url: {
-                  url: imageData,
-                  detail: "high"  // High detail for better handwriting recognition
+                  url: processedImageUrl,
+                  detail: "high"
                 }
               }
             ]
           }
         ],
         max_tokens: 2000,
-        temperature: 0.1  // Low temperature for consistent, accurate results
+        temperature: 0.1
       })
     });
     
@@ -206,7 +202,7 @@ async function processWithOpenAI(imageData: string, language: string): Promise<O
     
     return {
       text: extractedText,
-      confidence: 0.95, // Higher confidence for OpenAI specialized handwriting recognition
+      confidence: 0.95,
       processedAt: new Date().toISOString(),
       language: language,
       provider: "openai-handwriting-specialist"
@@ -218,16 +214,16 @@ async function processWithOpenAI(imageData: string, language: string): Promise<O
 }
 
 /**
- * Google Cloud Vision processing with fallback
+ * FIXED Google Cloud Vision processing
  */
-async function processWithCloudOCR(imageData: string, language: string, enhanceImage: boolean): Promise<OCRResult> {
+async function processWithCloudOCR(imageUrl: string, language: string, enhanceImage: boolean): Promise<OCRResult> {
   const googleApiKey = Deno.env.get("GOOGLE_CLOUD_API_KEY");
   
   // Enhanced mock data for demo purposes
   if (!googleApiKey) {
     console.log("No Google Cloud API key found, returning enhanced mock OCR result");
     
-    const confidenceScore = 0.75 + Math.random() * 0.15; // Between 0.75 and 0.90
+    const confidenceScore = 0.75 + Math.random() * 0.15;
     
     return {
       text: "Sample handwritten note content extracted from the image.\n\nThis would contain the actual text from your handwritten notes, including:\n- Bullet points and lists\n- Mathematical equations\n- Diagrams and sketches\n- Margin notes\n\nThe OCR system is optimized for handwritten content recognition.",
@@ -244,10 +240,22 @@ async function processWithCloudOCR(imageData: string, language: string, enhanceI
     
     const url = `https://vision.googleapis.com/v1/images:annotate?key=${googleApiKey}`;
     
-    // Remove data URL prefix if present
-    let base64Image = imageData;
-    if (imageData.startsWith('data:')) {
-      base64Image = imageData.split(',')[1];
+    // FIXED: Handle different URL types properly
+    let base64Image: string;
+    
+    if (imageUrl.startsWith('data:')) {
+      // Already a data URL, extract base64 part
+      base64Image = imageUrl.split(',')[1];
+    } else if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      // Convert HTTP URL to base64
+      const response = await fetch(imageUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+      }
+      const imageBuffer = await response.arrayBuffer();
+      base64Image = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
+    } else {
+      throw new Error("Invalid image URL format");
     }
     
     const response = await fetch(url, {
@@ -263,7 +271,7 @@ async function processWithCloudOCR(imageData: string, language: string, enhanceI
             },
             features: [
               {
-                type: 'DOCUMENT_TEXT_DETECTION', // Better for handwritten text
+                type: 'DOCUMENT_TEXT_DETECTION',
                 maxResults: 1
               }
             ],
