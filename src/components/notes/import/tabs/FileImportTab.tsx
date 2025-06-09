@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Upload, FileImage, File } from "lucide-react";
 import { Note } from "@/types/note";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FileImportTabProps {
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<boolean>;
@@ -41,17 +42,70 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
 
     setIsProcessing(true);
     try {
-      // Simulate document processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log('Starting document processing for:', selectedFile.name);
       
-      // In a real implementation, this would call the document processing service
-      const simulatedText = `Extracted content from ${selectedFile.name}\n\nThis is simulated content that would be extracted from the document. The actual implementation would use document processing services to extract text from PDFs, Word documents, images, and other file types.\n\nKey features:\n- Text extraction from multiple file formats\n- OCR for image-based documents\n- Preservation of document structure\n- Metadata extraction`;
+      // Upload file to Supabase storage first
+      const fileExt = selectedFile.name.split('.').pop();
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `documents/${fileName}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(filePath, selectedFile);
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw new Error(`Failed to upload file: ${uploadError.message}`);
+      }
+
+      console.log('File uploaded successfully:', uploadData);
+
+      // Get the public URL for the uploaded file
+      const { data: { publicUrl } } = supabase.storage
+        .from('documents')
+        .getPublicUrl(filePath);
+
+      console.log('File URL:', publicUrl);
+
+      // Determine file type
+      const fileType = selectedFile.type === 'application/pdf' ? 'pdf' : 
+                      selectedFile.type.includes('word') || selectedFile.name.endsWith('.docx') ? 'docx' :
+                      selectedFile.type.includes('text') ? 'txt' : 'unknown';
+
+      console.log('Processing file type:', fileType);
+
+      // Call the document processing edge function
+      const { data: processData, error: processError } = await supabase.functions.invoke('process-document', {
+        body: {
+          fileUrl: publicUrl,
+          fileType: fileType,
+          userId: (await supabase.auth.getUser()).data.user?.id
+        }
+      });
+
+      if (processError) {
+        console.error('Processing error:', processError);
+        throw new Error(`Failed to process document: ${processError.message}`);
+      }
+
+      console.log('Document processed successfully:', processData);
+
+      if (processData?.success) {
+        setProcessedText(processData.text || 'No text content extracted');
+        setDocumentTitle(processData.title || documentTitle);
+        toast.success("Document processed successfully!");
+      } else {
+        throw new Error(processData?.error || 'Unknown processing error');
+      }
+
+      // Clean up the uploaded file after processing
+      await supabase.storage.from('documents').remove([filePath]);
       
-      setProcessedText(simulatedText);
-      toast.success("Document processed successfully!");
     } catch (error) {
       console.error('Error processing document:', error);
-      toast.error("Failed to process document");
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast.error(`Failed to process document: ${errorMessage}`);
+      setProcessedText(`Error processing document: ${errorMessage}`);
     } finally {
       setIsProcessing(false);
     }
