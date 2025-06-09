@@ -1,4 +1,3 @@
-
 /**
  * Helper functions for Google Cloud Vision API integration
  */
@@ -226,7 +225,7 @@ export async function cleanupGCSFiles(bucket: string, fileName: string, credenti
 }
 
 /**
- * Generate JWT token for service account authentication (imported here)
+ * Generate JWT token for service account authentication (FIXED)
  */
 async function generateJWT(credentials: any): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
@@ -253,16 +252,29 @@ async function generateJWT(credentials: any): Promise<string> {
     privateKeyPem = privateKeyPem.replace(/\\n/g, '\n');
   }
   
-  // Ensure proper PEM format
+  // Ensure proper PEM format and extract the actual key content
   if (!privateKeyPem.startsWith('-----BEGIN PRIVATE KEY-----')) {
     throw new Error('Invalid private key format - must be PKCS#8 PEM format');
   }
   
   try {
+    // Extract the base64 content between the PEM headers
+    const pemContent = privateKeyPem
+      .replace(/-----BEGIN PRIVATE KEY-----/, '')
+      .replace(/-----END PRIVATE KEY-----/, '')
+      .replace(/\s/g, ''); // Remove all whitespace including newlines
+    
+    // Convert base64 to binary
+    const binaryString = atob(pemContent);
+    const keyBuffer = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      keyBuffer[i] = binaryString.charCodeAt(i);
+    }
+    
     // Import private key with proper error handling
     const privateKey = await crypto.subtle.importKey(
       'pkcs8',
-      new TextEncoder().encode(privateKeyPem),
+      keyBuffer,
       { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
       false,
       ['sign']

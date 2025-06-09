@@ -1,6 +1,6 @@
 
 /**
- * PDF to Image conversion utilities for Deno runtime
+ * PDF to Image conversion utilities for Deno runtime (FIXED)
  */
 
 export interface PdfPage {
@@ -17,7 +17,7 @@ export interface PdfConversionResult {
 }
 
 /**
- * Convert PDF buffer to PNG images using PDF.js
+ * Convert PDF buffer to PNG images using PDF.js (FIXED for Deno)
  */
 export async function convertPdfToImages(
   pdfBuffer: ArrayBuffer,
@@ -26,11 +26,13 @@ export async function convertPdfToImages(
   const startTime = Date.now();
   
   try {
-    // Dynamic import of PDF.js for Deno
-    const pdfjs = await import('https://esm.sh/pdfjs-dist@4.0.379/build/pdf.mjs');
+    // Use a different PDF.js CDN that works better with Deno
+    const pdfjs = await import('https://cdn.skypack.dev/pdfjs-dist@3.11.174');
     
-    // Configure PDF.js worker
-    pdfjs.GlobalWorkerOptions.workerSrc = 'https://esm.sh/pdfjs-dist@4.0.379/build/pdf.worker.mjs';
+    // Set up worker for Deno environment
+    pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdn.skypack.dev/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+    
+    console.log('PDF.js loaded successfully');
     
     // Load PDF document
     const pdf = await pdfjs.getDocument({
@@ -49,7 +51,7 @@ export async function convertPdfToImages(
         const page = await pdf.getPage(pageNum);
         const viewport = page.getViewport({ scale: 2.0 }); // Higher scale for better quality
         
-        // Create canvas for rendering
+        // Create canvas for rendering (using OffscreenCanvas for Deno)
         const canvas = new OffscreenCanvas(viewport.width, viewport.height);
         const context = canvas.getContext('2d');
         
