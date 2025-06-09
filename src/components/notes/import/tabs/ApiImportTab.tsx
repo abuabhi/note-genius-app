@@ -46,11 +46,12 @@ export const ApiImportTab = ({ onSaveNote, isPremiumUser }: ApiImportTabProps) =
         title: `${service} Import - ${new Date().toLocaleDateString()}`,
         content: simulatedContent,
         description: `Content imported from ${service}`,
-        category: 'Imports',
+        subject: 'Imports',
         tags: [{ name: service, color: '#3B82F6' }, { name: 'API Import', color: '#8B5CF6' }],
-        sourceType: 'import',
-        isPinned: false,
-        isArchived: false,
+        source_type: 'import',
+        pinned: false,
+        archived: false,
+        date: new Date().toISOString().split('T')[0],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
@@ -85,11 +86,12 @@ export const ApiImportTab = ({ onSaveNote, isPremiumUser }: ApiImportTabProps) =
         title: title || `Web Import - ${new Date().toLocaleDateString()}`,
         content: simulatedContent,
         description: `Content imported from ${url}`,
-        category: 'Web Imports',
+        subject: 'Web Imports',
         tags: [{ name: 'Web Import', color: '#10B981' }, { name: 'URL', color: '#6366F1' }],
-        sourceType: 'import',
-        isPinned: false,
-        isArchived: false,
+        source_type: 'import',
+        pinned: false,
+        archived: false,
+        date: new Date().toISOString().split('T')[0],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };

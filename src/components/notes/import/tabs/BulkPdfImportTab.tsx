@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -117,11 +116,12 @@ export const BulkPdfImportTab = ({ onSaveNote, isPremiumUser }: BulkPdfImportTab
           title: `Merged PDFs (${extractedTexts.length} files)`,
           content: mergedText,
           description: `Combined content from ${extractedTexts.length} PDF files`,
-          category: 'Documents',
+          subject: 'Documents',
           tags: [{ name: 'PDF Import', color: '#8B5CF6' }, { name: 'Bulk Import', color: '#6366F1' }],
-          sourceType: 'import',
-          isPinned: false,
-          isArchived: false,
+          source_type: 'import',
+          pinned: false,
+          archived: false,
+          date: new Date().toISOString().split('T')[0],
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         };
@@ -135,11 +135,12 @@ export const BulkPdfImportTab = ({ onSaveNote, isPremiumUser }: BulkPdfImportTab
             title: item.title,
             content: item.text,
             description: `Imported from ${item.name}`,
-            category: 'Documents',
+            subject: 'Documents',
             tags: [{ name: 'PDF Import', color: '#8B5CF6' }],
-            sourceType: 'import',
-            isPinned: false,
-            isArchived: false,
+            source_type: 'import',
+            pinned: false,
+            archived: false,
+            date: new Date().toISOString().split('T')[0],
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           };
