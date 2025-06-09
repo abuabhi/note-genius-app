@@ -8,6 +8,6 @@ interface ProcessingOptionsProps {
 }
 
 export const ProcessingOptions = ({ fileType, forceOCR, onForceOCRChange }: ProcessingOptionsProps) => {
-  // Hide the processing options since we now use Vision API by default for PDFs
+  // Processing options are no longer needed as we use AI-powered OCR by default
   return null;
 };
