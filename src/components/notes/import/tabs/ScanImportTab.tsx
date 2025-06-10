@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Camera } from 'lucide-react';
+import { Camera, Sparkles } from 'lucide-react';
 import { ImageUpload } from '../../scanning/ImageUpload';
 import { useImageUpload } from '../../scanning/hooks/useImageUpload';
 import { useDragAndDrop } from '../../scanning/hooks/useDragAndDrop';
@@ -149,30 +149,39 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
     }
   };
 
-  // Show batch processing view
   if (processingMode === 'batch') {
     return (
-      <BatchProcessingView
-        processedImages={processedImages}
-        batchProgress={batchProgress}
-        onSaveBatch={saveBatchAsNotes}
-        onReset={resetForm}
-        isSaving={isSaving}
-      />
+      <div className="animate-fade-in">
+        <BatchProcessingView
+          processedImages={processedImages}
+          batchProgress={batchProgress}
+          onSaveBatch={saveBatchAsNotes}
+          onReset={resetForm}
+          isSaving={isSaving}
+        />
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <Card className="bg-white shadow-sm border border-gray-200">
-        <CardHeader className="text-center pb-4">
-          <div className="mx-auto w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-3">
-            <Camera className="h-6 w-6 text-gray-600" />
+    <div className="space-y-8 animate-fade-in">
+      <Card className="bg-white/90 backdrop-blur-sm shadow-xl border-0 hover:shadow-2xl transition-all duration-500 hover:scale-[1.01] animate-scale-in group">
+        <CardHeader className="text-center pb-6 relative overflow-hidden">
+          {/* Animated Background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-mint-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          
+          <div className="relative z-10">
+            <div className="mx-auto w-16 h-16 bg-gradient-to-br from-mint-500 to-mint-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg animate-pulse group-hover:animate-bounce">
+              <Camera className="h-8 w-8 text-white" />
+            </div>
+            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+              Scan Documents
+            </CardTitle>
+            <div className="h-1 w-24 bg-gradient-to-r from-mint-500 to-mint-300 rounded-full mx-auto mt-3 animate-fade-in" />
+            <p className="text-gray-600 text-base mt-4 leading-relaxed">
+              Capture or upload photos of handwritten notes and documents
+            </p>
           </div>
-          <CardTitle className="text-gray-800 text-lg font-semibold">Scan Documents</CardTitle>
-          <p className="text-gray-600 text-sm mt-2">
-            Capture or upload photos of handwritten notes and documents
-          </p>
         </CardHeader>
         <CardContent className="pt-0">
           {!capturedImage ? (
@@ -188,7 +197,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
               />
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-8 animate-fade-in">
               <ImageProcessor 
                 imageUrl={capturedImage} 
                 onReset={() => setCapturedImage(null)}
@@ -199,20 +208,23 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
               />
               
               {recognizedText && (
-                <NoteMetadataForm 
-                  title={noteTitle}
-                  setTitle={setNoteTitle}
-                  category={noteCategory}
-                  setCategory={setNoteCategory}
-                  isDisabled={!capturedImage || !recognizedText}
-                  detectedLanguage={getLanguageName(selectedLanguage)}
-                />
+                <div className="animate-fade-in">
+                  <NoteMetadataForm 
+                    title={noteTitle}
+                    setTitle={setNoteTitle}
+                    category={noteCategory}
+                    setCategory={setNoteCategory}
+                    isDisabled={!capturedImage || !recognizedText}
+                    detectedLanguage={getLanguageName(selectedLanguage)}
+                  />
+                </div>
               )}
 
               <div className="flex justify-end">
                 <Button
                   onClick={handleSaveNote}
                   disabled={!capturedImage || !recognizedText || !noteTitle || isSaving}
+                  className="bg-gradient-to-r from-mint-500 to-mint-600 hover:from-mint-600 hover:to-mint-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                 >
                   {isSaving ? (
                     <>
@@ -235,7 +247,6 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
   );
 };
 
-// Helper function to get the language name from the language code
 const getLanguageName = (code: string): string => {
   const languages = {
     eng: "English",
