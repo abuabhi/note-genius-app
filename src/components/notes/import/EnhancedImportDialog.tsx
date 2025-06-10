@@ -70,7 +70,7 @@ export const EnhancedImportDialog = ({
 
           <div className="mt-4 overflow-y-auto max-h-[60vh]">
             <TabsContent value="file" className="space-y-4">
-              <FileImportTab onImport={handleImport} />
+              <FileImportTab />
             </TabsContent>
 
             <TabsContent value="youtube" className="space-y-4">
@@ -78,15 +78,15 @@ export const EnhancedImportDialog = ({
             </TabsContent>
 
             <TabsContent value="api" className="space-y-4">
-              <ApiImportTab onImport={handleImport} />
+              <ApiImportTab />
             </TabsContent>
 
             <TabsContent value="scan" className="space-y-4">
-              <ScanImportTab onImport={handleImport} isPremiumUser={isPremiumUser} />
+              <ScanImportTab isPremiumUser={isPremiumUser} />
             </TabsContent>
 
             <TabsContent value="bulk" className="space-y-4">
-              <BulkPdfImportTab onImport={handleImport} />
+              <BulkPdfImportTab />
             </TabsContent>
           </div>
         </Tabs>
