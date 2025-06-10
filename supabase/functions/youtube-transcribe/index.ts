@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -20,11 +19,9 @@ interface VideoMetadata {
   channelTitle: string;
 }
 
-interface TranscriptionProgress {
-  status: 'processing' | 'completed' | 'error';
-  progress?: number;
-  method?: 'captions' | 'assemblyai';
-  message?: string;
+interface TranscriptionCapability {
+  hasCaption: boolean;
+  transcriptionMethod: 'captions' | 'assemblyai';
 }
 
 serve(async (req) => {
@@ -166,6 +163,68 @@ async function checkCaptionsAvailability(videoId: string): Promise<boolean> {
   }
 }
 
+async function extractAudioUrl(videoId: string): Promise<string> {
+  try {
+    console.log(`Extracting audio URL for video: ${videoId}`);
+    
+    // Use yt-dlp-like approach to get audio stream URL
+    const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    
+    // First, try to get video info page
+    const videoPageResponse = await fetch(videoUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+    
+    if (!videoPageResponse.ok) {
+      throw new Error(`Failed to fetch video page: ${videoPageResponse.status}`);
+    }
+    
+    const videoPageText = await videoPageResponse.text();
+    
+    // Extract the player response JSON from the page
+    const playerResponseMatch = videoPageText.match(/var ytInitialPlayerResponse = ({.*?});/);
+    if (!playerResponseMatch) {
+      throw new Error('Could not find player response in video page');
+    }
+    
+    const playerResponse = JSON.parse(playerResponseMatch[1]);
+    
+    // Get adaptive formats (audio streams)
+    const streamingData = playerResponse.streamingData;
+    if (!streamingData || !streamingData.adaptiveFormats) {
+      throw new Error('No streaming data found in player response');
+    }
+    
+    // Find the best audio-only stream
+    const audioStreams = streamingData.adaptiveFormats.filter((format: any) => 
+      format.mimeType && format.mimeType.startsWith('audio/') && format.url
+    );
+    
+    if (audioStreams.length === 0) {
+      throw new Error('No audio streams found');
+    }
+    
+    // Sort by quality and prefer webm/opus or mp4/m4a
+    audioStreams.sort((a: any, b: any) => {
+      // Prefer higher bitrate
+      const aBitrate = parseInt(a.bitrate) || 0;
+      const bBitrate = parseInt(b.bitrate) || 0;
+      return bBitrate - aBitrate;
+    });
+    
+    const bestAudioStream = audioStreams[0];
+    console.log(`Found audio stream: ${bestAudioStream.mimeType}, bitrate: ${bestAudioStream.bitrate}`);
+    
+    return bestAudioStream.url;
+    
+  } catch (error) {
+    console.error('Error extracting audio URL:', error);
+    throw new Error(`Failed to extract audio URL: ${error.message}`);
+  }
+}
+
 async function transcribeVideo(videoId: string, videoUrl: string, req: Request): Promise<string> {
   try {
     console.log(`Starting transcription workflow for video: ${videoId}`);
@@ -197,7 +256,11 @@ async function transcribeVideo(videoId: string, videoUrl: string, req: Request):
       throw new Error('Monthly credit limit of 100 reached. Please wait until next month or contact support.');
     }
 
-    const transcript = await transcribeWithAssemblyAI(videoUrl, videoId, req);
+    // Extract audio URL from YouTube
+    const audioUrl = await extractAudioUrl(videoId);
+    console.log(`Using extracted audio URL for transcription`);
+
+    const transcript = await transcribeWithAssemblyAI(audioUrl, videoId, req);
     
     if (!transcript || transcript.length < 20) {
       throw new Error('AssemblyAI transcription failed or returned insufficient content');
@@ -275,15 +338,15 @@ async function getYouTubeCaptions(videoId: string): Promise<string | null> {
   return null;
 }
 
-async function transcribeWithAssemblyAI(videoUrl: string, videoId: string, req: Request): Promise<string> {
+async function transcribeWithAssemblyAI(audioUrl: string, videoId: string, req: Request): Promise<string> {
   try {
-    console.log('Starting AssemblyAI transcription for:', videoUrl);
+    console.log('Starting AssemblyAI transcription with audio URL:', audioUrl);
 
     // Get user ID from the request
     const userId = extractUserIdFromRequest(req);
     console.log('User ID for logging:', userId);
 
-    // Step 1: Submit the video URL for transcription
+    // Step 1: Submit the audio URL for transcription
     const uploadResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
       method: 'POST',
       headers: {
@@ -291,7 +354,7 @@ async function transcribeWithAssemblyAI(videoUrl: string, videoId: string, req: 
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        audio_url: videoUrl,
+        audio_url: audioUrl,
         speaker_labels: false,
         auto_chapters: false,
         summarization: false,
@@ -305,7 +368,7 @@ async function transcribeWithAssemblyAI(videoUrl: string, videoId: string, req: 
       console.error('AssemblyAI submission error:', uploadResponse.status, errorText);
       
       // Log the failed attempt
-      await logAssemblyAIUsage(userId, videoId, videoUrl, false, `API Error: ${uploadResponse.status} - ${errorText}`);
+      await logAssemblyAIUsage(userId, videoId, audioUrl, false, `API Error: ${uploadResponse.status} - ${errorText}`);
       
       throw new Error(`AssemblyAI API error: ${uploadResponse.status} - ${errorText}`);
     }
@@ -341,7 +404,7 @@ async function transcribeWithAssemblyAI(videoUrl: string, videoId: string, req: 
         transcript = statusData.text;
         break;
       } else if (statusData.status === 'error') {
-        await logAssemblyAIUsage(userId, videoId, videoUrl, false, `Transcription error: ${statusData.error}`, statusData);
+        await logAssemblyAIUsage(userId, videoId, audioUrl, false, `Transcription error: ${statusData.error}`, statusData);
         throw new Error(`AssemblyAI transcription failed: ${statusData.error}`);
       }
       
@@ -349,14 +412,14 @@ async function transcribeWithAssemblyAI(videoUrl: string, videoId: string, req: 
     }
 
     if (!transcript) {
-      await logAssemblyAIUsage(userId, videoId, videoUrl, false, 'Transcription timeout - exceeded maximum wait time');
+      await logAssemblyAIUsage(userId, videoId, audioUrl, false, 'Transcription timeout - exceeded maximum wait time');
       throw new Error('Transcription timeout - please try again later');
     }
 
     console.log(`AssemblyAI transcription completed. Length: ${transcript.length} characters`);
     
     // Log the successful usage
-    await logAssemblyAIUsage(userId, videoId, videoUrl, true, undefined, { transcript_id: transcriptId });
+    await logAssemblyAIUsage(userId, videoId, audioUrl, true, undefined, { transcript_id: transcriptId });
     
     return transcript;
 
