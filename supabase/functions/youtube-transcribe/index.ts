@@ -10,6 +10,7 @@ const corsHeaders = {
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 const youtubeApiKey = Deno.env.get('GOOGLE_CLOUD_API_KEY');
+const assemblyAIApiKey = Deno.env.get('ASSEMBLYAI_API_KEY');
 
 interface VideoMetadata {
   title: string;
@@ -17,6 +18,13 @@ interface VideoMetadata {
   duration: string;
   thumbnailUrl: string;
   channelTitle: string;
+}
+
+interface TranscriptionProgress {
+  status: 'processing' | 'completed' | 'error';
+  progress?: number;
+  method?: 'captions' | 'assemblyai';
+  message?: string;
 }
 
 serve(async (req) => {
@@ -34,9 +42,19 @@ serve(async (req) => {
       });
     }
 
+    if (action === 'check_captions') {
+      const hasCaption = await checkCaptionsAvailability(videoId);
+      return new Response(JSON.stringify({ 
+        hasCaption,
+        transcriptionMethod: hasCaption ? 'captions' : 'assemblyai'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     if (action === 'transcribe') {
       console.log(`Starting transcription for video: ${videoId}`);
-      const transcript = await transcribeVideo(videoId);
+      const transcript = await transcribeVideo(videoId, url);
       const enhancedContent = await enhanceTranscript(transcript, metadata);
       
       return new Response(JSON.stringify(enhancedContent), {
@@ -90,88 +108,162 @@ async function getVideoMetadata(videoId: string): Promise<VideoMetadata> {
   };
 }
 
-async function transcribeVideo(videoId: string): Promise<string> {
-  try {
-    console.log(`Attempting to get captions for video: ${videoId}`);
-    
-    // First, try to get existing captions
-    const captions = await getYouTubeCaptions(videoId);
-    if (captions) {
-      console.log('Found existing captions');
-      return captions;
-    }
-
-    console.log('No captions found, attempting audio extraction and transcription');
-    
-    // If no captions available, try to get audio and transcribe with Whisper
-    const audioTranscript = await transcribeAudioWithWhisper(videoId);
-    if (audioTranscript) {
-      return audioTranscript;
-    }
-
-    // If both methods fail, return a helpful error message
-    throw new Error('Unable to transcribe this video. The video may not have captions available and audio transcription failed. Please try a different video or one with captions.');
-    
-  } catch (error) {
-    console.error('Transcription error:', error);
-    throw error;
-  }
-}
-
-async function getYouTubeCaptions(videoId: string): Promise<string | null> {
+async function checkCaptionsAvailability(videoId: string): Promise<boolean> {
   if (!youtubeApiKey) {
-    return null;
+    console.log('YouTube API key not available for caption check');
+    return false;
   }
 
   try {
+    console.log(`Checking captions availability for video: ${videoId}`);
+    
     // Get caption tracks
     const captionsResponse = await fetch(
       `https://www.googleapis.com/youtube/v3/captions?videoId=${videoId}&part=snippet&key=${youtubeApiKey}`
     );
 
     if (!captionsResponse.ok) {
-      return null;
+      console.log('Failed to check captions:', captionsResponse.status);
+      return false;
     }
 
     const captionsData = await captionsResponse.json();
     
     if (!captionsData.items || captionsData.items.length === 0) {
-      return null;
+      console.log('No caption tracks found');
+      return false;
     }
 
-    // Find English captions or the first available
-    const englishCaption = captionsData.items.find((item: any) => 
-      item.snippet.language === 'en' || item.snippet.language === 'en-US'
-    ) || captionsData.items[0];
+    // Check if there are any caption tracks (auto-generated or manual)
+    const hasValidCaptions = captionsData.items.some((item: any) => {
+      const snippet = item.snippet;
+      return snippet && (snippet.trackKind === 'standard' || snippet.trackKind === 'ASR');
+    });
 
-    // Note: Downloading actual caption content requires OAuth2
-    // For this implementation, we'll return a placeholder
-    return null;
+    console.log(`Captions available: ${hasValidCaptions}`);
+    return hasValidCaptions;
     
   } catch (error) {
-    console.error('Error fetching captions:', error);
-    return null;
+    console.error('Error checking captions availability:', error);
+    return false;
   }
 }
 
-async function transcribeAudioWithWhisper(videoId: string): Promise<string | null> {
-  if (!openAIApiKey) {
-    console.log('OpenAI API key not available for Whisper transcription');
-    return null;
-  }
-
+async function transcribeVideo(videoId: string, videoUrl: string): Promise<string> {
   try {
-    console.log(`Attempting to transcribe audio for video: ${videoId}`);
+    console.log(`Starting transcription workflow for video: ${videoId}`);
     
-    // For now, we'll return a helpful message since direct audio extraction
-    // from YouTube requires additional infrastructure and may violate ToS
-    // This is a placeholder for when proper audio extraction is implemented
+    // Step 1: Check for existing captions
+    const hasCaption = await checkCaptionsAvailability(videoId);
     
-    throw new Error('Audio transcription is not yet implemented. Please use videos with existing captions.');
+    if (hasCaption) {
+      console.log('Attempting to get existing captions...');
+      const captions = await getYouTubeCaptions(videoId);
+      if (captions && captions.length > 50) { // Ensure we have substantial content
+        console.log('Successfully retrieved captions');
+        return captions;
+      }
+    }
+
+    // Step 2: Use Assembly AI as fallback
+    console.log('No captions available, using Assembly AI for transcription...');
     
+    if (!assemblyAIApiKey) {
+      throw new Error('Assembly AI API key not configured');
+    }
+
+    const transcript = await transcribeWithAssemblyAI(videoUrl);
+    
+    if (!transcript || transcript.length < 20) {
+      throw new Error('Assembly AI transcription failed or returned insufficient content');
+    }
+
+    console.log('Successfully transcribed with Assembly AI');
+    return transcript;
+
   } catch (error) {
-    console.error('Whisper transcription error:', error);
-    return null;
+    console.error('Transcription error:', error);
+    throw new Error(`Transcription failed: ${error.message}`);
+  }
+}
+
+async function getYouTubeCaptions(videoId: string): Promise<string | null> {
+  // Note: This is a simplified implementation
+  // In a full implementation, you would need OAuth2 to download actual caption content
+  // For now, we return null to trigger Assembly AI fallback
+  console.log('Caption download requires OAuth2 implementation - falling back to Assembly AI');
+  return null;
+}
+
+async function transcribeWithAssemblyAI(videoUrl: string): Promise<string> {
+  try {
+    console.log('Starting Assembly AI transcription for:', videoUrl);
+
+    // Step 1: Submit transcription job
+    const submitResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
+      method: 'POST',
+      headers: {
+        'Authorization': assemblyAIApiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        audio_url: videoUrl,
+        speaker_labels: false, // Disable speaker diarization for speed
+        auto_highlights: false,
+        sentiment_analysis: false,
+        entity_detection: false,
+        language_detection: true,
+      }),
+    });
+
+    if (!submitResponse.ok) {
+      const errorData = await submitResponse.json();
+      throw new Error(`Assembly AI submission failed: ${errorData.error || submitResponse.statusText}`);
+    }
+
+    const submitData = await submitResponse.json();
+    const transcriptId = submitData.id;
+    
+    console.log(`Assembly AI job submitted with ID: ${transcriptId}`);
+
+    // Step 2: Poll for completion
+    let attempts = 0;
+    const maxAttempts = 120; // 10 minutes max (5 second intervals)
+    
+    while (attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+      
+      const pollResponse = await fetch(`https://api.assemblyai.com/v2/transcript/${transcriptId}`, {
+        headers: {
+          'Authorization': assemblyAIApiKey,
+        },
+      });
+
+      if (!pollResponse.ok) {
+        throw new Error('Failed to check transcription status');
+      }
+
+      const pollData = await pollResponse.json();
+      console.log(`Assembly AI status: ${pollData.status}`);
+
+      if (pollData.status === 'completed') {
+        if (!pollData.text) {
+          throw new Error('Assembly AI completed but returned no text');
+        }
+        console.log(`Assembly AI transcription completed. Length: ${pollData.text.length} characters`);
+        return pollData.text;
+      } else if (pollData.status === 'error') {
+        throw new Error(`Assembly AI transcription failed: ${pollData.error}`);
+      }
+
+      attempts++;
+    }
+
+    throw new Error('Assembly AI transcription timed out');
+
+  } catch (error) {
+    console.error('Assembly AI transcription error:', error);
+    throw error;
   }
 }
 
@@ -180,9 +272,9 @@ async function enhanceTranscript(transcript: string, metadata: VideoMetadata) {
     throw new Error('OpenAI API key not configured');
   }
 
-  // If transcript is empty or very short, create content from metadata
+  // Check if we have a valid transcript
   if (!transcript || transcript.length < 50) {
-    console.log('No transcript available, creating content from metadata');
+    console.log('No valid transcript available, creating content from metadata');
     
     const prompt = `
 Create a structured note based on this YouTube video information:
@@ -192,7 +284,7 @@ Channel: ${metadata.channelTitle}
 Duration: ${metadata.duration}
 Description: ${metadata.description.substring(0, 500)}...
 
-Since no transcript is available, please create a helpful note that includes:
+Since transcription was not available, please create a helpful note that includes:
 1. A summary based on the title and description
 2. Key topics that would likely be covered
 3. Potential learning objectives
@@ -233,11 +325,14 @@ Format your response as JSON with these fields:
       description: result.description,
       subject: result.subject,
       content: result.content,
-      subject_id: null
+      subject_id: null,
+      transcriptionMethod: 'metadata_only'
     };
   }
 
-  // Original transcript enhancement logic
+  // Process the actual transcript
+  console.log(`Processing transcript of ${transcript.length} characters`);
+  
   const prompt = `
 You are tasked with analyzing a YouTube video transcript and creating a well-structured note. Here's the video information:
 
@@ -251,7 +346,7 @@ Please provide:
 1. A concise, descriptive title for the note (different from the video title if needed)
 2. A brief description/summary
 3. The main subject category (e.g., Science, Technology, History, etc.)
-4. Well-formatted content with key points, timestamps if relevant, and main takeaways
+4. Well-formatted content with key points, important concepts, and main takeaways
 
 Format your response as JSON with these fields:
 - title: string
@@ -288,7 +383,8 @@ Format your response as JSON with these fields:
     description: result.description,
     subject: result.subject,
     content: result.content,
-    subject_id: null
+    subject_id: null,
+    transcriptionMethod: 'assemblyai'
   };
 }
 
