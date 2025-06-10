@@ -1,17 +1,18 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sparkles, Zap, AlertCircle } from "lucide-react";
+import { FileText, AlertCircle } from "lucide-react";
 import { Note } from "@/types/note";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ProcessedContent } from "./components/ProcessedContent";
-import { FileSelector } from "./components/FileSelector";
 import { FilePreview } from "./components/FilePreview";
 import { ProcessingStatus } from "./components/ProcessingStatus";
 import { useDragAndDrop } from "../../scanning/hooks/useDragAndDrop";
 import { useBatchProcessing } from "../../scanning/hooks/useBatchProcessing";
 import { BatchProcessingView } from "../../scanning/BatchProcessingView";
+import { SimplifiedFileSelector } from "./components/SimplifiedFileSelector";
 
 interface ScanImportTabProps {
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<boolean>;
@@ -36,7 +37,6 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
     let fileToUpload: File;
     
     if (typeof file === 'string') {
-      // Convert data URL to file
       const response = await fetch(file);
       const blob = await response.blob();
       fileToUpload = new File([blob], 'file.png', { type: blob.type });
@@ -58,7 +58,6 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
     return publicUrl;
   };
 
-  // Add drag and drop functionality
   const {
     isDragOver,
     handleDragEnter,
@@ -68,7 +67,6 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
     resetDragState
   } = useDragAndDrop();
 
-  // Add batch processing functionality
   const { 
     processedImages, 
     batchProgress, 
@@ -80,38 +78,60 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
     uploadImageToStorage: uploadFileToStorage 
   });
 
-  const processFileSelection = (file: File) => {
-    // Validate file size (max 50MB for PDFs, 10MB for images)
+  const validateFile = (file: File): boolean => {
+    const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Only PDF, PNG, JPG, and WebP files are supported");
+      return false;
+    }
+
     const maxSize = file.type === 'application/pdf' ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
     if (file.size > maxSize) {
       toast.error(`File must be smaller than ${file.type === 'application/pdf' ? '50MB' : '10MB'}`);
-      return;
+      return false;
     }
+
+    return true;
+  };
+
+  const processFileSelection = (file: File) => {
+    if (!validateFile(file)) return;
 
     setSelectedFile(file);
     setFileType(file.type);
-    setDocumentTitle(file.name.replace(/\.[^/.]+$/, "")); // Remove extension
-    setExtractedText(''); // Clear previous content
+    setDocumentTitle(file.name.replace(/\.[^/.]+$/, ""));
+    setExtractedText('');
     setDocumentSubject('');
     setProcessingMethod('');
     setIsAiGenerated(false);
     setAnalysisConfidence(0);
     setCurrentStep('select');
 
-    // Create preview URL
     if (file.type.startsWith('image/')) {
       const previewUrl = URL.createObjectURL(file);
       setFilePreviewUrl(previewUrl);
     } else {
-      // For PDFs, we'll show a file icon preview
       setFilePreviewUrl('');
     }
   };
 
   const handleMultipleFiles = (files: File[]) => {
-    console.log(`Starting batch processing for ${files.length} files`);
+    const validFiles = files.filter(validateFile);
+    
+    if (validFiles.length === 0) {
+      toast.error("No valid files selected");
+      return;
+    }
+
+    if (validFiles.length > 3) {
+      toast.error("Maximum 3 files allowed");
+      return;
+    }
+
+    console.log(`Starting batch processing for ${validFiles.length} files`);
     setCurrentStep('batch');
-    processBatchImages(files);
+    processBatchImages(validFiles);
   };
 
   const handleFileSelect = (files: File[]) => {
@@ -125,7 +145,6 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
   const handleDropEvent = (e: React.DragEvent) => {
     handleDrop(e, 
       (fileUrl: string) => {
-        // Handle single file from drag and drop
         fetch(fileUrl)
           .then(res => res.blob())
           .then(blob => {
@@ -134,17 +153,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
           });
       },
       (files: File[]) => {
-        // Handle multiple files
-        const supportedFiles = files.filter(file => 
-          file.type.startsWith('image/') || file.type === 'application/pdf'
-        );
-        
-        if (supportedFiles.length === 0) {
-          toast.error("No valid image or PDF files found");
-          return;
-        }
-        
-        handleFileSelect(supportedFiles);
+        handleFileSelect(files);
       }
     );
   };
@@ -158,14 +167,10 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
     try {
       console.log("🔄 Starting OCR processing for file:", selectedFile.name, "Type:", selectedFile.type);
 
-      // Upload file to Supabase storage
       const fileUrl = await uploadFileToStorage(selectedFile);
-      
-      // Get current user session for content analysis
       const { data: { session } } = await supabase.auth.getSession();
       const userId = session?.user?.id;
 
-      // Call the unified process-file edge function
       const { data: ocrResult, error: ocrError } = await supabase.functions.invoke('process-file', {
         body: { 
           fileUrl,
@@ -191,17 +196,15 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
       setExtractedText(extractedText);
       setProcessingMethod(ocrResult.provider || 'unknown');
 
-      // NEW: Auto-generate title and subject using AI content analysis
+      // Auto-generate title and subject using AI content analysis
       if (extractedText.trim() && userId) {
         try {
           console.log("🤖 Starting AI content analysis for auto title/subject generation...");
           
-          // Create a text file from the extracted content for analysis
           const textBlob = new Blob([extractedText], { type: 'text/plain' });
           const textFile = new File([textBlob], 'extracted-text.txt', { type: 'text/plain' });
           const textFileUrl = await uploadFileToStorage(textFile);
 
-          // Call process-document for intelligent title and subject generation
           const { data: analysisResult, error: analysisError } = await supabase.functions.invoke('process-document', {
             body: {
               fileUrl: textFileUrl,
@@ -212,7 +215,6 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
           });
 
           if (!analysisError && analysisResult?.success) {
-            // Use AI-generated title and subject
             setDocumentTitle(analysisResult.title || selectedFile.name.replace(/\.[^/.]+$/, ""));
             setDocumentSubject(analysisResult.subject || "Uncategorized");
             setIsAiGenerated(analysisResult.metadata?.contentAnalysis?.aiGeneratedTitle || false);
@@ -227,7 +229,6 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
         } catch (analysisError) {
           console.warn("⚠️ Content analysis failed:", analysisError);
           toast.success("Text extracted successfully!");
-          // Continue without AI analysis - not critical
         }
       } else {
         toast.success(`${selectedFile.type === 'application/pdf' ? 'PDF' : 'Image'} processed successfully!`);
@@ -330,15 +331,14 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
     }
   };
 
-  // Show batch processing view
   if (currentStep === 'batch') {
     return (
       <div className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-purple-600" />
-              Batch Processing - Up to 3 Documents Simultaneously
+              <FileText className="h-5 w-5 text-mint-600" />
+              Batch Processing
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -355,7 +355,6 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
     );
   }
 
-  // Show review step
   if (currentStep === 'review') {
     return (
       <div className="space-y-6">
@@ -387,7 +386,6 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
     );
   }
 
-  // Show processing step
   if (currentStep === 'process') {
     return (
       <div className="space-y-6">
@@ -398,41 +396,15 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
 
   return (
     <div className="space-y-6">
-      {/* Enhanced Feature Banner */}
-      <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
-            <Sparkles className="h-4 w-4 text-white" />
-          </div>
-          <div>
-            <span className="text-lg font-semibold text-purple-700">Professional Document Scanning & OCR</span>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-purple-700">
-          <div>
-            <strong>🚀 Batch Processing:</strong> Scan up to 3 documents simultaneously
-          </div>
-          <div>
-            <strong>🤖 AI-Powered:</strong> {isPremiumUser ? 'OpenAI Vision (Premium)' : 'Google Vision + OpenAI fallback'} 
-          </div>
-          <div>
-            <strong>✍️ Multi-Format:</strong> Images & PDFs supported with smart processing
-          </div>
-          <div>
-            <strong>📊 Smart Analysis:</strong> Automatic title detection and content categorization
-          </div>
-        </div>
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5" />
-            Document & Image Scanner
+            <FileText className="h-5 w-5" />
+            Document Scanner
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <FileSelector
+          <SimplifiedFileSelector
             isDragOver={isDragOver}
             onDragEnter={handleDragEnter}
             onDragOver={handleDragOver}
@@ -458,8 +430,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
                 <span className="text-sm font-medium text-yellow-700">Enhanced OCR Available</span>
               </div>
               <p className="text-sm text-yellow-700">
-                Premium users get priority access to OpenAI Vision API for enhanced handwriting recognition, 
-                better accuracy on complex documents, and advanced content analysis features.
+                Premium users get enhanced handwriting recognition and better accuracy.
               </p>
             </div>
           )}
