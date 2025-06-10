@@ -10,6 +10,6 @@ import { RouteConfig } from './publicRoutes';
 export const authCallbackRoutes: RouteConfig[] = [
   { path: "/auth/notion/callback", element: <NotionAuthCallback /> },
   { path: "/auth/evernote/callback", element: <EvernoteAuthCallback /> },
-  { path: "/auth/microsoft/callback", element: <MicrosoftAuthCallback /> },
+  { path: "/auth/microsoft-callback", element: <MicrosoftAuthCallback /> },
   { path: "/auth/googledocs/callback", element: <GoogleDocsAuthCallback /> },
 ];
