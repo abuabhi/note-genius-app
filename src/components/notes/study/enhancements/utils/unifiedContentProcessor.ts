@@ -19,7 +19,7 @@ export interface ProcessedContent {
 }
 
 /**
- * NUCLEAR: Single content processor for ALL content types with enhanced HTML cleaning
+ * NUCLEAR: Single content processor for ALL content types - PROPER HTML TO MARKDOWN CONVERSION
  */
 export const processContentForRendering = (rawContent: string): ProcessedContent => {
   if (!rawContent || typeof rawContent !== 'string') {
@@ -30,7 +30,7 @@ export const processContentForRendering = (rawContent: string): ProcessedContent
     };
   }
 
-  console.log("🚀 NUCLEAR PROCESSOR: Processing content:", {
+  console.log("🚀 UNIFIED PROCESSOR: Processing content:", {
     originalLength: rawContent.length,
     hasTipTapMarkers: detectTipTapContent(rawContent),
     preview: rawContent.substring(0, 100)
@@ -39,21 +39,27 @@ export const processContentForRendering = (rawContent: string): ProcessedContent
   let processed = rawContent;
   let wasHtmlCleaned = false;
 
-  // Step 1: Detect and aggressively clean HTML/TipTap content
+  // Step 1: Detect and CONVERT HTML/TipTap content to markdown (don't strip!)
   if (detectTipTapContent(rawContent)) {
-    console.log("🧹 DETECTED HTML/TIPTAP CONTENT - Applying aggressive cleaning");
+    console.log("🔄 DETECTED HTML/TIPTAP CONTENT - Converting to markdown");
     
-    // First convert HTML structures to markdown
+    // FIXED: Convert HTML structures to markdown FIRST
     processed = convertHtmlToMarkdown(processed);
     
-    // Then strip ALL remaining HTML and prose classes
-    processed = stripAllHtmlAndProse(processed);
+    // THEN clean up any remaining HTML artifacts
+    processed = processed
+      .replace(/<[^>]*>/g, '')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, ' ');
     
     wasHtmlCleaned = true;
   } else {
-    // Even for non-TipTap content, do basic HTML cleanup
+    // Even for non-TipTap content, do basic HTML entity cleanup
     processed = processed
-      .replace(/<[^>]*>/g, '')
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
       .replace(/&amp;/g, '&')
@@ -88,11 +94,12 @@ export const processContentForRendering = (rawContent: string): ProcessedContent
 
   const metadata = analyzeContent(processed, wasHtmlCleaned);
 
-  console.log("✅ NUCLEAR PROCESSOR: Content processed:", {
+  console.log("✅ UNIFIED PROCESSOR: Content processed:", {
     finalLength: processed.length,
     metadata,
     hasAIBlocks,
-    wasHtmlCleaned
+    wasHtmlCleaned,
+    finalPreview: processed.substring(0, 100)
   });
 
   return {

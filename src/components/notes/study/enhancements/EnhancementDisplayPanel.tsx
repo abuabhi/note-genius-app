@@ -21,59 +21,6 @@ interface EnhancementDisplayPanelProps {
   className?: string;
 }
 
-/**
- * NUCLEAR FIX: Aggressive content preprocessing to strip HTML/prose classes
- */
-const preprocessContentForNuclearRendering = (content: string, contentType: EnhancementContentType): string => {
-  if (!content || typeof content !== 'string') {
-    return '';
-  }
-
-  console.log(`🧹 NUCLEAR PREPROCESSING - ${contentType} BEFORE:`, {
-    contentLength: content.length,
-    hasHTML: /<[^>]*>/g.test(content),
-    hasProse: /prose/.test(content),
-    preview: content.substring(0, 200)
-  });
-
-  // NUCLEAR: Aggressive HTML and prose class removal for Original and Improved Clarity
-  if (contentType === 'original' || contentType === 'improved') {
-    let processed = content
-      // Remove ALL HTML tags completely
-      .replace(/<[^>]*>/g, '')
-      // Remove prose classes and any class attributes
-      .replace(/class="[^"]*prose[^"]*"/gi, '')
-      .replace(/class='[^']*prose[^']*'/gi, '')
-      // Remove TipTap specific markup
-      .replace(/data-[^=]*="[^"]*"/gi, '')
-      // Remove inline styles
-      .replace(/style="[^"]*"/gi, '')
-      // Clean up HTML entities
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&amp;/g, '&')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/&nbsp;/g, ' ')
-      // Clean up extra whitespace
-      .replace(/\s+/g, ' ')
-      .replace(/\n\s*\n/g, '\n\n')
-      .trim();
-
-    console.log(`✅ NUCLEAR PREPROCESSING - ${contentType} AFTER:`, {
-      processedLength: processed.length,
-      hasHTML: /<[^>]*>/g.test(processed),
-      hasProse: /prose/.test(processed),
-      preview: processed.substring(0, 200)
-    });
-
-    return processed;
-  }
-
-  // For other content types, return as-is (they're working fine)
-  return content;
-};
-
 export const EnhancementDisplayPanel = ({
   note,
   contentType,
@@ -138,30 +85,20 @@ export const EnhancementDisplayPanel = ({
   };
 
   const getContentForType = (type: EnhancementContentType): string => {
-    let rawContent = '';
-    
     switch (type) {
       case 'summary': 
-        rawContent = note.summary || '';
-        break;
+        return note.summary || '';
       case 'keyPoints': 
-        rawContent = note.key_points || '';
-        break;
+        return note.key_points || '';
       case 'improved': 
-        rawContent = note.improved_content || '';
-        break;
+        return note.improved_content || '';
       case 'markdown': 
-        rawContent = note.markdown_content || '';
-        break;
+        return note.markdown_content || '';
       case 'original': 
-        rawContent = note.content || note.description || '';
-        break;
+        return note.content || note.description || '';
       default: 
-        rawContent = '';
+        return '';
     }
-
-    // NUCLEAR: Apply preprocessing for problematic content types
-    return preprocessContentForNuclearRendering(rawContent, type);
   };
 
   const getTitleForType = (type: EnhancementContentType): string => {
@@ -180,14 +117,14 @@ export const EnhancementDisplayPanel = ({
   const content = getContentForType(contentType);
   const title = getTitleForType(contentType);
 
-  console.log("🎯 EnhancementDisplayPanel - NUCLEAR PREPROCESSING APPLIED:", {
+  console.log("🎯 EnhancementDisplayPanel - UNIFIED PROCESSING:", {
     contentType,
     enhancementType,
     hasContent: !!content,
     contentLength: content.length,
     isLoading,
     isSummaryGenerating,
-    preprocessingApplied: contentType === 'original' || contentType === 'improved'
+    contentPreview: content.substring(0, 100)
   });
 
   return (
@@ -227,7 +164,7 @@ export const EnhancementDisplayPanel = ({
         </div>
       )}
       
-      {/* Show content when not loading - ALL CONTENT TREATED AS MARKDOWN */}
+      {/* Show content when not loading - ALL CONTENT GOES THROUGH UNIFIED PROCESSING */}
       {!isLoading && !isSummaryGenerating && (
         <div className="flex-1 overflow-auto">
           <EnhancementContent
