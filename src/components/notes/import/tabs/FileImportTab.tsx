@@ -13,25 +13,21 @@ interface FileImportTabProps {
   isPremiumUser?: boolean;
 }
 
-export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps) => {
+export const FileImportTab = ({ onSaveNote }: FileImportTabProps) => {
   const {
-    selectedFiles,
+    selectedFile,
+    processedText,
+    documentTitle,
     isProcessing,
-    processedContent,
-    processingStatus,
-    handleFileSelect,
-    processFiles,
-    clearFiles,
-    saveNote
-  } = useImportState();
+    handleFileSelected,
+    processDocument,
+    setSelectedFile,
+    setProcessedText
+  } = useImportState(onSaveNote);
 
-  const handleSave = async () => {
-    if (processedContent) {
-      const success = await onSaveNote(processedContent);
-      if (success) {
-        clearFiles();
-      }
-    }
+  const clearFiles = () => {
+    setSelectedFile(null);
+    setProcessedText(null);
   };
 
   const supportedFormats = [
@@ -44,7 +40,7 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
 
   return (
     <div className="space-y-4 h-full">
-      {!selectedFiles.length && !processedContent && (
+      {!selectedFile && !processedText && (
         <Card className="border-2 border-dashed border-mint-200 bg-mint-50">
           <CardHeader className="text-center">
             <div className="mx-auto w-16 h-16 bg-mint-100 rounded-full flex items-center justify-center mb-4">
@@ -53,7 +49,7 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
             <CardTitle className="text-mint-800">Upload Files</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <FileDropZone onFileSelect={handleFileSelect} />
+            <FileDropZone onFileSelected={handleFileSelected} />
             
             <div className="bg-white rounded-lg p-4 border border-mint-200">
               <h4 className="font-medium text-mint-800 mb-3">Supported Formats:</h4>
@@ -71,35 +67,31 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
         </Card>
       )}
 
-      {selectedFiles.length > 0 && !processedContent && (
+      {selectedFile && !processedText && (
         <Card className="border border-mint-200">
           <CardContent className="p-4">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-medium text-mint-800">Selected Files</h3>
+                <h3 className="font-medium text-mint-800">Selected File</h3>
                 <Button variant="outline" onClick={clearFiles} size="sm">
-                  Clear All
+                  Clear
                 </Button>
               </div>
               
-              <div className="space-y-2">
-                {selectedFiles.map((file, index) => (
-                  <div key={index} className="flex items-center gap-2 p-2 bg-mint-50 rounded border border-mint-200">
-                    <FileText className="h-4 w-4 text-mint-600" />
-                    <span className="text-sm text-mint-800">{file.name}</span>
-                    <span className="text-xs text-mint-500 ml-auto">
-                      {(file.size / 1024 / 1024).toFixed(2)} MB
-                    </span>
-                  </div>
-                ))}
+              <div className="flex items-center gap-2 p-2 bg-mint-50 rounded border border-mint-200">
+                <FileText className="h-4 w-4 text-mint-600" />
+                <span className="text-sm text-mint-800">{selectedFile.name}</span>
+                <span className="text-xs text-mint-500 ml-auto">
+                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                </span>
               </div>
               
               <Button 
-                onClick={processFiles} 
+                onClick={processDocument} 
                 disabled={isProcessing}
                 className="w-full bg-mint-500 hover:bg-mint-600 text-white"
               >
-                {isProcessing ? 'Processing...' : 'Process Files'}
+                {isProcessing ? 'Processing...' : 'Process File'}
               </Button>
             </div>
           </CardContent>
@@ -107,13 +99,39 @@ export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps)
       )}
 
       {isProcessing && (
-        <ProcessingStatus status={processingStatus} />
+        <Card className="border border-mint-200">
+          <CardContent className="p-4">
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 bg-mint-100 rounded-full flex items-center justify-center mx-auto">
+                <Upload className="h-8 w-8 text-mint-600 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="font-medium text-mint-800">Processing Document</h3>
+                <p className="text-sm text-mint-600">Please wait while we extract the content...</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
-      {processedContent && (
+      {processedText && (
         <ProcessedContent 
-          content={processedContent}
-          onSave={handleSave}
+          title={documentTitle}
+          content={processedText}
+          onSave={async () => {
+            const note = {
+              title: documentTitle,
+              content: processedText,
+              date: new Date().toISOString(),
+              category: "Imports",
+              description: `Imported from file`,
+              sourceType: "import"
+            };
+            const success = await onSaveNote(note);
+            if (success) {
+              clearFiles();
+            }
+          }}
           onBack={clearFiles}
         />
       )}
