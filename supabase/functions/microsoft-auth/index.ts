@@ -16,6 +16,9 @@ serve(async (req) => {
     console.log("Microsoft auth function called");
     console.log("Client ID exists:", !!MICROSOFT_CLIENT_ID);
     console.log("Client Secret exists:", !!MICROSOFT_CLIENT_SECRET);
+    console.log("Client ID value:", MICROSOFT_CLIENT_ID);
+    console.log("Client Secret first 10 chars:", MICROSOFT_CLIENT_SECRET?.substring(0, 10));
+    console.log("Client Secret last 5 chars:", MICROSOFT_CLIENT_SECRET?.substring(-5));
     
     if (!MICROSOFT_CLIENT_ID || !MICROSOFT_CLIENT_SECRET) {
       console.error("Missing credentials - Client ID:", !!MICROSOFT_CLIENT_ID, "Client Secret:", !!MICROSOFT_CLIENT_SECRET);
@@ -53,6 +56,13 @@ serve(async (req) => {
         scope: "Notes.Read Notes.ReadWrite User.Read"
       });
       console.log("Exchanging authorization code for tokens");
+      console.log("Request body params (without secret):", {
+        client_id: MICROSOFT_CLIENT_ID,
+        code: code?.substring(0, 20) + "...",
+        redirect_uri: redirect_uri,
+        grant_type: "authorization_code",
+        scope: "Notes.Read Notes.ReadWrite User.Read"
+      });
     } else if (grant_type === "refresh_token") {
       // Refresh access token
       requestBody = new URLSearchParams({
@@ -89,7 +99,7 @@ serve(async (req) => {
       // More specific error message
       let errorMessage = data.error_description || data.error || "Token exchange failed";
       if (data.error === "invalid_client") {
-        errorMessage = "Invalid Microsoft app credentials. Please check your Client ID and Client Secret in Supabase secrets.";
+        errorMessage = "Invalid Microsoft app credentials. The Client Secret appears to be incorrect. Please verify you copied the secret VALUE (not the ID) from Azure portal.";
       }
       
       throw new Error(errorMessage);
