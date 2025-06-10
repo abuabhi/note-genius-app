@@ -27,11 +27,13 @@ export const NuclearContentRenderer = ({
   console.log("🚀 NUCLEAR RENDERER: Starting render process:", {
     contentLength: content?.length || 0,
     fontSize,
-    textAlign
+    textAlign,
+    rawContentPreview: content?.substring(0, 200)
   });
 
   // Validate content
   if (!validateContentForRendering(content)) {
+    console.log("❌ NUCLEAR RENDERER: Content validation failed");
     return (
       <div className="nuclear-content-container text-muted-foreground italic p-4">
         No content available
@@ -42,10 +44,11 @@ export const NuclearContentRenderer = ({
   // Process content through unified processor
   const processedData = processContentForRendering(content);
   
-  console.log("✅ NUCLEAR RENDERER: Content processed:", {
+  console.log("✅ NUCLEAR RENDERER: Content processed successfully:", {
     originalLength: content.length,
     processedLength: processedData.content.length,
-    metadata: processedData.metadata
+    metadata: processedData.metadata,
+    processedPreview: processedData.content.substring(0, 200)
   });
 
   const containerStyle = {
@@ -111,10 +114,25 @@ export const NuclearContentRenderer = ({
         </pre>
       ),
     
-    // AI Enhanced blocks
+    // AI Enhanced blocks - convert markdown sections back to styled blocks
+    blockquote: ({ children, ...props }: any) => {
+      // Check if this is an AI enhanced section
+      const childrenString = React.Children.toArray(children).join('');
+      if (childrenString.includes('✨ AI Enhanced Content:')) {
+        console.log("🎯 NUCLEAR: Rendering AI Enhanced blockquote");
+        return (
+          <div className="ai-enhanced-block nuclear-ai-block" {...props}>
+            {children}
+          </div>
+        );
+      }
+      return <blockquote className="nuclear-blockquote" {...props}>{children}</blockquote>;
+    },
+    
+    // Handle divs (in case any slip through)
     div: ({ className: divClassName, children, ...props }: any) => {
       if (divClassName === 'ai-enhanced-block') {
-        console.log("🎯 NUCLEAR: Rendering AI Enhanced block");
+        console.log("🎯 NUCLEAR: Rendering AI Enhanced div block");
         return (
           <div className="ai-enhanced-block nuclear-ai-block" {...props}>
             {children}
@@ -124,6 +142,12 @@ export const NuclearContentRenderer = ({
       return <div className={`nuclear-div ${divClassName || ''}`} {...props}>{children}</div>;
     }
   };
+
+  console.log("🎨 NUCLEAR RENDERER: About to render with ReactMarkdown:", {
+    hasProcessedContent: !!processedData.content,
+    containerStyle,
+    componentsCount: Object.keys(nuclearMarkdownComponents).length
+  });
 
   return (
     <div 

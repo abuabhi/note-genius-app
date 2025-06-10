@@ -4,7 +4,7 @@
  * This is the SINGLE source of truth for all content processing
  */
 
-import { stripAllHtmlAndProse, detectTipTapContent, convertHtmlToMarkdown } from './contentCleaning';
+import { convertHtmlToMarkdown, detectTipTapContent } from './contentCleaning';
 
 export interface ProcessedContent {
   content: string;
@@ -33,63 +33,62 @@ export const processContentForRendering = (rawContent: string): ProcessedContent
   console.log("🚀 UNIFIED PROCESSOR: Processing content:", {
     originalLength: rawContent.length,
     hasTipTapMarkers: detectTipTapContent(rawContent),
-    preview: rawContent.substring(0, 100)
+    preview: rawContent.substring(0, 200)
   });
 
   let processed = rawContent;
   let wasHtmlCleaned = false;
 
-  // Step 1: Detect and CONVERT HTML/TipTap content to markdown (don't strip!)
+  // Step 1: FIRST convert HTML structures to markdown (BEFORE any stripping)
   if (detectTipTapContent(rawContent)) {
-    console.log("🔄 DETECTED HTML/TIPTAP CONTENT - Converting to markdown");
+    console.log("🔄 DETECTED HTML/TIPTAP CONTENT - Converting to markdown FIRST");
     
-    // FIXED: Convert HTML structures to markdown FIRST
+    // Convert HTML structures to markdown BEFORE cleaning
     processed = convertHtmlToMarkdown(processed);
-    
-    // THEN clean up any remaining HTML artifacts
-    processed = processed
-      .replace(/<[^>]*>/g, '')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&amp;/g, '&')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/&nbsp;/g, ' ');
-    
     wasHtmlCleaned = true;
-  } else {
-    // Even for non-TipTap content, do basic HTML entity cleanup
-    processed = processed
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&amp;/g, '&')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/&nbsp;/g, ' ');
+    
+    console.log("✅ HTML converted to markdown:", {
+      beforeLength: rawContent.length,
+      afterLength: processed.length,
+      preview: processed.substring(0, 200)
+    });
   }
 
-  // Step 2: Process AI_ENHANCED blocks
-  const hasAIBlocks = processed.includes('[AI_ENHANCED]');
+  // Step 2: Process AI_ENHANCED blocks (convert to proper markdown)
+  const hasAIBlocks = processed.includes('[AI_ENHANCED]') || processed.includes('<div class="ai-enhanced-block">');
   if (hasAIBlocks) {
+    // Convert AI enhanced blocks to proper markdown sections
     processed = processed
-      .replace(/\[AI_ENHANCED\]/g, '<div class="ai-enhanced-block">')
-      .replace(/\[\/AI_ENHANCED\]/g, '</div>');
+      .replace(/\[AI_ENHANCED\]/g, '\n\n**✨ AI Enhanced Content:**\n\n')
+      .replace(/\[\/AI_ENHANCED\]/g, '\n\n---\n\n')
+      .replace(/<div class="ai-enhanced-block">/g, '\n\n**✨ AI Enhanced Content:**\n\n')
+      .replace(/<\/div>/g, '\n\n---\n\n');
   }
 
-  // Step 3: Normalize whitespace and line breaks
+  // Step 3: Clean up any remaining HTML entities and artifacts
   processed = processed
-    // Fix line endings
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&mdash;/g, '—')
+    .replace(/&ndash;/g, '–');
+
+  // Step 4: Clean up any remaining HTML tags (AFTER conversion)
+  processed = processed.replace(/<[^>]*>/g, '');
+
+  // Step 5: Normalize whitespace and line breaks
+  processed = processed
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n')
-    // Clean up excessive whitespace
     .replace(/[ \t]+/g, ' ')
-    // Clean up excessive newlines but preserve structure
     .replace(/\n{4,}/g, '\n\n\n')
-    // Remove leading/trailing whitespace from lines
     .replace(/^[ \t]+|[ \t]+$/gm, '')
     .trim();
 
-  // Step 4: Ensure proper markdown structure
+  // Step 6: Ensure proper markdown structure
   processed = ensureMarkdownStructure(processed);
 
   const metadata = analyzeContent(processed, wasHtmlCleaned);
@@ -99,7 +98,7 @@ export const processContentForRendering = (rawContent: string): ProcessedContent
     metadata,
     hasAIBlocks,
     wasHtmlCleaned,
-    finalPreview: processed.substring(0, 100)
+    finalPreview: processed.substring(0, 200)
   });
 
   return {
@@ -120,7 +119,7 @@ const ensureMarkdownStructure = (content: string): string => {
     .replace(/^[-*+]\s+(.+)$/gm, '- $1')
     .replace(/^\d+\.\s+(.+)$/gm, (match, text, offset, str) => {
       const lineStart = str.lastIndexOf('\n', offset) + 1;
-      const prevText = str.substring(lineStart - 20, lineStart);
+      const prevText = str.substring(Math.max(0, lineStart - 50), lineStart);
       const listNum = (prevText.match(/^\d+\./gm) || []).length + 1;
       return `${listNum}. ${text}`;
     })
@@ -136,7 +135,7 @@ const analyzeContent = (content: string, wasHtmlCleaned: boolean) => {
   return {
     hasLists: /^[-*+]\s+|\d+\.\s+/m.test(content),
     hasHeaders: /^#{1,6}\s+/m.test(content),
-    hasAIBlocks: content.includes('<div class="ai-enhanced-block">'),
+    hasAIBlocks: content.includes('**✨ AI Enhanced Content:**'),
     wordCount: content.split(/\s+/).filter(word => word.length > 0).length,
     wasHtmlCleaned
   };

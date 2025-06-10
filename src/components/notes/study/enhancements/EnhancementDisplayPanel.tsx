@@ -85,20 +85,36 @@ export const EnhancementDisplayPanel = ({
   };
 
   const getContentForType = (type: EnhancementContentType): string => {
+    let content = '';
+    
     switch (type) {
       case 'summary': 
-        return note.summary || '';
+        content = note.summary || '';
+        break;
       case 'keyPoints': 
-        return note.key_points || '';
+        content = note.key_points || '';
+        break;
       case 'improved': 
-        return note.improved_content || '';
+        content = note.improved_content || '';
+        break;
       case 'markdown': 
-        return note.markdown_content || '';
+        content = note.markdown_content || '';
+        break;
       case 'original': 
-        return note.content || note.description || '';
+        content = note.content || note.description || '';
+        break;
       default: 
-        return '';
+        content = '';
     }
+    
+    console.log(`🎯 EnhancementDisplayPanel - Getting content for ${type}:`, {
+      contentType: type,
+      hasContent: !!content,
+      contentLength: content.length,
+      contentPreview: content.substring(0, 100)
+    });
+    
+    return content;
   };
 
   const getTitleForType = (type: EnhancementContentType): string => {
@@ -117,13 +133,14 @@ export const EnhancementDisplayPanel = ({
   const content = getContentForType(contentType);
   const title = getTitleForType(contentType);
 
-  console.log("🎯 EnhancementDisplayPanel - UNIFIED PROCESSING:", {
+  console.log("🎯 EnhancementDisplayPanel - FINAL RENDER:", {
     contentType,
     enhancementType,
     hasContent: !!content,
     contentLength: content.length,
     isLoading,
     isSummaryGenerating,
+    title,
     contentPreview: content.substring(0, 100)
   });
 
