@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -115,7 +114,6 @@ export const OneNoteConnection = ({ onConnected }: OneNoteConnectionProps) => {
     // Add a slight delay to ensure cleanup is complete
     setTimeout(() => {
       // Force a fresh login by calling the connect function directly
-      // The forceAccountSelection logic should be handled in the OAuth module
       connect();
     }, 500);
   };
