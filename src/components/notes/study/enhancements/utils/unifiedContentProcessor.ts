@@ -67,12 +67,19 @@ export const processContentForRendering = (rawContent: string): ProcessedContent
       .replace(/<\/div>/g, '\n\n---\n\n');
   }
 
-  // Step 3: Process ENRICHED content - FALLBACK HTML approach (without remark-directive)
+  // Step 3: Process ENRICHED content - IMPROVED HTML approach with proper spacing
   const hasEnrichedContent = processed.includes('[ENRICHED]') || processed.includes('**[ENRICHED]**');
   if (hasEnrichedContent) {
-    console.log("🔥 PROCESSING ENRICHED CONTENT MARKERS - HTML FALLBACK APPROACH");
+    console.log("🔥 PROCESSING ENRICHED CONTENT MARKERS - IMPROVED HTML APPROACH");
     
-    // Convert enriched markers to HTML that ReactMarkdown can render with rehypeRaw
+    // IMPROVED: Clean up any existing malformed HTML first
+    processed = processed
+      .replace(/<div class="enriched-content-section">\s*\*\*🔥 Enhanced Content:\*\*/g, 
+               '\n\n<div class="enriched-content-section">\n\n**🔥 Enhanced Content:**\n\n')
+      .replace(/<\/div>\s*<div class="enriched-content-section">/g, 
+               '\n\n</div>\n\n<div class="enriched-content-section">\n\n');
+    
+    // Convert enriched markers to properly spaced HTML that ReactMarkdown can render with rehypeRaw
     processed = processed
       // Handle **[ENRICHED]** markers (from new AI responses)
       .replace(/\*\*\[ENRICHED\]\*\*/g, '\n\n<div class="enriched-content-section">\n\n**🔥 Enhanced Content:**\n\n')
@@ -81,7 +88,7 @@ export const processContentForRendering = (rawContent: string): ProcessedContent
       .replace(/\[ENRICHED\]/g, '\n\n<div class="enriched-content-section">\n\n**🔥 Enhanced Content:**\n\n')
       .replace(/\[\/ENRICHED\]/g, '\n\n</div>\n\n');
     
-    console.log("✅ Enriched markers processed to HTML divs:", {
+    console.log("✅ Enriched markers processed to HTML div containers:", {
       hasEnrichedDivs: processed.includes('<div class="enriched-content-section">'),
       processedPreview: processed.substring(0, 400)
     });
@@ -98,7 +105,21 @@ export const processContentForRendering = (rawContent: string): ProcessedContent
     .replace(/&mdash;/g, '—')
     .replace(/&ndash;/g, '–');
 
-  // Step 5: Normalize whitespace and line breaks
+  // Step 5: Ensure HTML divs are closed properly
+  const openDivMatches = processed.match(/<div[^>]*>/g) || [];
+  const closeDivMatches = processed.match(/<\/div>/g) || [];
+  
+  if (openDivMatches.length > closeDivMatches.length) {
+    const missingCloseDivs = openDivMatches.length - closeDivMatches.length;
+    console.warn(`⚠️ Found ${missingCloseDivs} unclosed div tags! Adding closing tags.`);
+    
+    // Add missing closing tags
+    for (let i = 0; i < missingCloseDivs; i++) {
+      processed += '\n</div>';
+    }
+  }
+
+  // Step 6: Normalize whitespace and line breaks
   processed = processed
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n')
@@ -107,7 +128,7 @@ export const processContentForRendering = (rawContent: string): ProcessedContent
     .replace(/^[ \t]+|[ \t]+$/gm, '')
     .trim();
 
-  // Step 6: Ensure proper markdown structure
+  // Step 7: Ensure proper markdown structure
   processed = ensureMarkdownStructure(processed);
 
   const metadata = analyzeContent(processed, wasHtmlCleaned, hasEnrichedContent);

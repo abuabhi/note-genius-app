@@ -5,6 +5,7 @@
   line-height: 1.6;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  font-family: inherit;
 }
 
 /* Headers */
@@ -134,7 +135,7 @@
   margin: 1rem 0;
 }
 
-/* ENRICHED CONTENT STYLING - FIXED WITH PROPER CSS */
+/* ENRICHED CONTENT STYLING - FIXED FONT INHERITANCE */
 .nuclear-content-container .enriched-content-section {
   background: linear-gradient(to right, #f0fdf4, #ecfdf5);
   border: 2px solid #22c55e;
@@ -143,6 +144,12 @@
   margin: 2rem 0 !important;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   position: relative;
+  
+  /* FONT INHERITANCE FIX */
+  font-family: inherit !important;
+  font-size: inherit !important;
+  line-height: 1.6 !important;
+  color: inherit;
 }
 
 .nuclear-content-container .enriched-content-section::before {
@@ -165,9 +172,10 @@
   font-size: 1.1em;
   margin-bottom: 1rem;
   display: block;
+  font-family: inherit !important;
 }
 
-/* Enhanced content within enriched sections */
+/* Enhanced content within enriched sections - CONSISTENT FONTS */
 .nuclear-content-container .enriched-content-section h1,
 .nuclear-content-container .enriched-content-section h2,
 .nuclear-content-container .enriched-content-section h3,
@@ -176,36 +184,48 @@
 .nuclear-content-container .enriched-content-section h6 {
   color: #15803d;
   margin-top: 1rem !important;
+  font-family: inherit !important;
 }
 
 .nuclear-content-container .enriched-content-section p {
   color: #166534;
   line-height: 1.7 !important;
+  font-family: inherit !important;
 }
 
 .nuclear-content-container .enriched-content-section ul,
 .nuclear-content-container .enriched-content-section ol {
   color: #166534;
+  font-family: inherit !important;
 }
 
 .nuclear-content-container .enriched-content-section strong {
   color: #14532d;
   font-weight: bold;
+  font-family: inherit !important;
 }
 
 .nuclear-content-container .enriched-content-section em {
   color: #15803d;
+  font-family: inherit !important;
+}
+
+/* ALL TEXT IN ENRICHED SECTIONS INHERITS FONT */
+.nuclear-content-container .enriched-content-section * {
+  font-family: inherit !important;
 }
 
 /* Improved readability for enriched content */
 .nuclear-content-container .enriched-content-section ul li {
   margin-bottom: 0.5rem;
   margin-left: 1rem !important;
+  font-family: inherit !important;
 }
 
 .nuclear-content-container .enriched-content-section ol li {
   margin-bottom: 0.5rem;
   margin-left: 1rem !important;
+  font-family: inherit !important;
 }
 
 /* Animation for enriched content appearance */
