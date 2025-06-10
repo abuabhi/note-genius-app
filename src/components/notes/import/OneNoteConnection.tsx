@@ -114,8 +114,9 @@ export const OneNoteConnection = ({ onConnected }: OneNoteConnectionProps) => {
     
     // Add a slight delay to ensure cleanup is complete
     setTimeout(() => {
-      // Force a fresh login by adding prompt=select_account parameter
-      connect(true); // We'll modify the connect function to accept a forceAccountSelection parameter
+      // Force a fresh login by calling the connect function directly
+      // The forceAccountSelection logic should be handled in the OAuth module
+      connect();
     }, 500);
   };
 

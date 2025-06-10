@@ -59,10 +59,8 @@ export const initiateOneNoteAuth = async (forceAccountSelection = false) => {
   authUrl.searchParams.append("scope", scopes.join(" "));
   authUrl.searchParams.append("response_mode", "fragment");
   
-  // Force account selection if requested
-  if (forceAccountSelection) {
-    authUrl.searchParams.append("prompt", "select_account");
-  }
+  // Always force account selection for better UX
+  authUrl.searchParams.append("prompt", "select_account");
   
   // Generate and store a random state parameter to prevent CSRF
   const state = Math.random().toString(36).substring(2, 15);
