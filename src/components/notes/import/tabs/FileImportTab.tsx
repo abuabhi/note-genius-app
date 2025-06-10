@@ -1,267 +1,122 @@
 
-import React, { useState, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload } from "lucide-react";
-import { Note } from "@/types/note";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { FileDropZone } from "./components/FileDropZone";
-import { SelectedFileCard } from "./components/SelectedFileCard";
-import { ProcessedContent } from "./components/ProcessedContent";
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Upload, FileText, Image, FileIcon } from 'lucide-react';
+import { useImportState } from '../useImportState';
+import { FileDropZone } from './components/FileDropZone';
+import { ProcessedContent } from './components/ProcessedContent';
+import { ProcessingStatus } from './components/ProcessingStatus';
 
 interface FileImportTabProps {
-  onSaveNote: (note: Omit<Note, 'id'>) => Promise<boolean>;
+  onSaveNote: (note: any) => Promise<boolean>;
   isPremiumUser?: boolean;
 }
 
 export const FileImportTab = ({ onSaveNote, isPremiumUser }: FileImportTabProps) => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [processedText, setProcessedText] = useState<string>('');
-  const [documentTitle, setDocumentTitle] = useState<string>('');
-  const [documentSubject, setDocumentSubject] = useState<string>('');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [processingMethod, setProcessingMethod] = useState<string>('');
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [isAiGenerated, setIsAiGenerated] = useState(false);
-  const [analysisConfidence, setAnalysisConfidence] = useState<number>(0);
+  const {
+    selectedFiles,
+    isProcessing,
+    processedContent,
+    processingStatus,
+    handleFileSelect,
+    processFiles,
+    clearFiles,
+    saveNote
+  } = useImportState();
 
-  const handleFileSelected = (file: File) => {
-    if (file) {
-      setSelectedFile(file);
-      setDocumentTitle(file.name.replace(/\.[^/.]+$/, "")); // Remove extension
-      setDocumentSubject('');
-      setProcessedText(''); // Clear previous content
-      setIsAiGenerated(false);
-      setAnalysisConfidence(0);
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      const file = files[0];
-      
-      // Check if file type is supported
-      const supportedTypes = ['.pdf', '.docx', '.doc', '.txt', '.md', '.png', '.jpg', '.jpeg'];
-      const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-      
-      if (supportedTypes.includes(fileExtension)) {
-        handleFileSelected(file);
-      } else {
-        toast.error("Unsupported file type. Please select a PDF, Word document, text file, or image.");
-      }
-    }
-  };
-
-  const processDocument = async () => {
-    if (!selectedFile) return;
-
-    setIsProcessing(true);
-    try {
-      console.log('Starting document processing for:', selectedFile.name);
-      
-      // Upload file to Supabase storage first
-      const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `documents/${fileName}`;
-
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('documents')
-        .upload(filePath, selectedFile);
-
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw new Error(`Failed to upload file: ${uploadError.message}`);
-      }
-
-      console.log('File uploaded successfully:', uploadData);
-
-      // Get the public URL for the uploaded file
-      const { data: { publicUrl } } = supabase.storage
-        .from('documents')
-        .getPublicUrl(filePath);
-
-      console.log('File URL:', publicUrl);
-
-      // Determine file type
-      const fileType = selectedFile.type === 'application/pdf' ? 'pdf' : 
-                      selectedFile.type.includes('word') || selectedFile.name.endsWith('.docx') ? 'docx' :
-                      selectedFile.type.includes('text') ? 'txt' : 'unknown';
-
-      console.log('Processing file type:', fileType);
-
-      // Get current user for content analysis
-      const { data: { user } } = await supabase.auth.getUser();
-
-      // Call the document processing edge function
-      const { data: processData, error: processError } = await supabase.functions.invoke('process-document', {
-        body: {
-          fileUrl: publicUrl,
-          fileType: fileType,
-          userId: user?.id
-        }
-      });
-
-      if (processError) {
-        console.error('Processing error:', processError);
-        throw new Error(`Failed to process document: ${processError.message}`);
-      }
-
-      console.log('Document processed successfully:', processData);
-
-      if (processData?.success) {
-        setProcessedText(processData.text || 'No text content extracted');
-        setDocumentTitle(processData.title || documentTitle);
-        setDocumentSubject(processData.subject || 'Uncategorized');
-        setProcessingMethod(processData.metadata?.processingMethod || 'unknown');
-        
-        // Check if content was AI-generated
-        const contentAnalysis = processData.metadata?.contentAnalysis;
-        if (contentAnalysis?.aiGeneratedTitle || contentAnalysis?.aiGeneratedSubject) {
-          setIsAiGenerated(true);
-          setAnalysisConfidence(contentAnalysis.confidence || 0);
-        }
-        
-        const method = processData.metadata?.processingMethod || 'standard';
-        if (method === 'vision-api-async-success') {
-          toast.success("PDF processed successfully with Google Vision API!");
-        } else if (method === 'openai-vision-success') {
-          toast.success("PDF processed successfully with OpenAI Vision API!");
-        } else if (method === 'standard-text-extraction') {
-          toast.success("Document processed with standard text extraction!");
-        } else if (method === 'docx') {
-          toast.success("Word document processed successfully!");
-        } else {
-          toast.success("Document processed successfully!");
-        }
-      } else {
-        throw new Error(processData?.error || 'Unknown processing error');
-      }
-
-      // Clean up the uploaded file after processing
-      await supabase.storage.from('documents').remove([filePath]);
-      
-    } catch (error) {
-      console.error('Error processing document:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      toast.error(`Failed to process document: ${errorMessage}`);
-      setProcessedText(`Error processing document: ${errorMessage}`);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const saveAsNote = async () => {
-    if (!processedText || !documentTitle) return;
-
-    setIsSaving(true);
-    try {
-      const note: Omit<Note, 'id'> = {
-        title: documentTitle,
-        content: processedText,
-        description: `Imported from ${selectedFile?.name || 'document'}`,
-        tags: [{ name: 'Import', color: '#8B5CF6' }],
-        sourceType: 'import',
-        pinned: false,
-        archived: false,
-        date: new Date().toISOString().split('T')[0],
-        category: documentSubject || 'Documents'
-      };
-
-      const success = await onSaveNote(note);
+  const handleSave = async () => {
+    if (processedContent) {
+      const success = await onSaveNote(processedContent);
       if (success) {
-        toast.success("Note saved successfully!");
-        // Reset form
-        setSelectedFile(null);
-        setProcessedText('');
-        setDocumentTitle('');
-        setDocumentSubject('');
-        setIsAiGenerated(false);
-        setAnalysisConfidence(0);
+        clearFiles();
       }
-    } catch (error) {
-      console.error('Error saving note:', error);
-      toast.error("Failed to save note");
-    } finally {
-      setIsSaving(false);
     }
   };
 
-  const clearSelectedFile = () => {
-    setSelectedFile(null);
-    setProcessedText('');
-    setDocumentTitle('');
-    setDocumentSubject('');
-    setIsAiGenerated(false);
-    setAnalysisConfidence(0);
-  };
+  const supportedFormats = [
+    { icon: FileText, name: 'PDF Documents', ext: '.pdf' },
+    { icon: FileText, name: 'Word Documents', ext: '.docx' },
+    { icon: FileText, name: 'Text Files', ext: '.txt' },
+    { icon: Image, name: 'Images', ext: '.jpg, .png' },
+    { icon: FileIcon, name: 'Other Documents', ext: '.rtf, .odt' }
+  ];
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Upload className="h-5 w-5" />
-            Document Processing
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {!selectedFile ? (
-            <FileDropZone
-              onFileSelected={handleFileSelected}
-              isDragOver={isDragOver}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            />
-          ) : (
-            <SelectedFileCard
-              file={selectedFile}
-              onClear={clearSelectedFile}
-            />
-          )}
+    <div className="space-y-4 h-full">
+      {!selectedFiles.length && !processedContent && (
+        <Card className="border-2 border-dashed border-mint-200 bg-mint-50">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-16 h-16 bg-mint-100 rounded-full flex items-center justify-center mb-4">
+              <Upload className="h-8 w-8 text-mint-600" />
+            </div>
+            <CardTitle className="text-mint-800">Upload Files</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <FileDropZone onFileSelect={handleFileSelect} />
+            
+            <div className="bg-white rounded-lg p-4 border border-mint-200">
+              <h4 className="font-medium text-mint-800 mb-3">Supported Formats:</h4>
+              <div className="grid grid-cols-1 gap-2">
+                {supportedFormats.map((format, index) => (
+                  <div key={index} className="flex items-center gap-2 text-sm text-mint-600">
+                    <format.icon className="h-4 w-4" />
+                    <span className="font-medium">{format.name}</span>
+                    <span className="text-mint-500">({format.ext})</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-          {selectedFile && (
-            <Button 
-              onClick={processDocument}
-              disabled={isProcessing}
-              className="w-full"
-            >
-              {isProcessing ? 'Processing Document...' : 'Extract Text'}
-            </Button>
-          )}
+      {selectedFiles.length > 0 && !processedContent && (
+        <Card className="border border-mint-200">
+          <CardContent className="p-4">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium text-mint-800">Selected Files</h3>
+                <Button variant="outline" onClick={clearFiles} size="sm">
+                  Clear All
+                </Button>
+              </div>
+              
+              <div className="space-y-2">
+                {selectedFiles.map((file, index) => (
+                  <div key={index} className="flex items-center gap-2 p-2 bg-mint-50 rounded border border-mint-200">
+                    <FileText className="h-4 w-4 text-mint-600" />
+                    <span className="text-sm text-mint-800">{file.name}</span>
+                    <span className="text-xs text-mint-500 ml-auto">
+                      {(file.size / 1024 / 1024).toFixed(2)} MB
+                    </span>
+                  </div>
+                ))}
+              </div>
+              
+              <Button 
+                onClick={processFiles} 
+                disabled={isProcessing}
+                className="w-full bg-mint-500 hover:bg-mint-600 text-white"
+              >
+                {isProcessing ? 'Processing...' : 'Process Files'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-          {processedText && (
-            <ProcessedContent
-              processedText={processedText}
-              documentTitle={documentTitle}
-              documentSubject={documentSubject}
-              processingMethod={processingMethod}
-              onTitleChange={setDocumentTitle}
-              onSubjectChange={setDocumentSubject}
-              onSave={saveAsNote}
-              isSaving={isSaving}
-              isAiGenerated={isAiGenerated}
-              analysisConfidence={analysisConfidence}
-            />
-          )}
-        </CardContent>
-      </Card>
+      {isProcessing && (
+        <ProcessingStatus status={processingStatus} />
+      )}
+
+      {processedContent && (
+        <ProcessedContent 
+          content={processedContent}
+          onSave={handleSave}
+          onBack={clearFiles}
+        />
+      )}
     </div>
   );
 };
