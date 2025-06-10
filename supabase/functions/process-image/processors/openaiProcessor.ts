@@ -11,7 +11,7 @@ interface OCRResult {
 }
 
 /**
- * Enhanced OpenAI processing with improved error handling
+ * Enhanced OpenAI processing with improved error handling and Markdown formatting
  */
 export async function processWithOpenAI(imageUrl: string, language: string): Promise<OCRResult> {
   const apiKey = Deno.env.get("OPENAI_API_KEY");
@@ -26,7 +26,7 @@ export async function processWithOpenAI(imageUrl: string, language: string): Pro
     throw new Error("OpenAI API key is invalid or expired");
   }
   
-  console.log("Processing with OpenAI Vision API (Handwriting Specialist)");
+  console.log("Processing with OpenAI Vision API (Handwriting Specialist + Markdown Formatter)");
   
   try {
     // Convert image to proper base64 format
@@ -49,8 +49,7 @@ export async function processWithOpenAI(imageUrl: string, language: string): Pro
       messages: [
         {
           role: "system",
-          content: `You are an expert OCR system specialized in reading handwritten text with exceptional accuracy. 
-                   Your primary focus is on handwritten notes, cursive writing, and mixed handwritten/printed content.
+          content: `You are an expert OCR system specialized in reading handwritten text with exceptional accuracy AND formatting it as clean, structured Markdown.
                    
                    HANDWRITING EXPERTISE:
                    - Excel at reading cursive handwriting, print handwriting, and mixed styles
@@ -60,22 +59,46 @@ export async function processWithOpenAI(imageUrl: string, language: string): Pro
                    - Read handwritten notes in margins and annotations
                    - Handle rotated or tilted handwritten text
                    
-                   EXTRACTION RULES:
-                   - Extract ALL visible text with maximum accuracy
-                   - Preserve original formatting and structure including line breaks
-                   - Use context to interpret unclear handwritten characters
-                   - For handwritten mathematical content, use proper notation
-                   - If text is partially illegible, provide your best interpretation
-                   - Return ONLY the extracted text, no explanations or commentary
+                   MARKDOWN FORMATTING REQUIREMENTS:
+                   - Convert ALL text to properly structured Markdown
+                   - Transform numbered lists (1., 2., 3.) into Markdown numbered lists (1. 2. 3.)
+                   - Convert bullet points or dashes into Markdown bullets (- )
+                   - Format section headers with appropriate # ## ### levels
+                   - Use **bold** for emphasis where handwriting indicates importance
+                   - Use proper line spacing between sections (blank lines)
+                   - Format mathematical content with proper notation
+                   - Preserve hierarchical structure and relationships
                    
-                   Language context: ${language}`
+                   EXTRACTION & FORMATTING RULES:
+                   - Extract ALL visible text with maximum accuracy
+                   - Output ONLY properly formatted Markdown - no explanations
+                   - Maintain original content structure but enhance with Markdown syntax
+                   - Use context to interpret unclear handwritten characters
+                   - For lists, ensure proper Markdown list formatting with blank lines
+                   - For headers/titles, use appropriate # levels based on hierarchy
+                   - Add blank lines between different sections or topics
+                   - If mathematical content exists, format it clearly
+                   
+                   Language context: ${language}
+                   
+                   EXAMPLE INPUT: Handwritten numbered list "1. First item 2. Second item"
+                   EXAMPLE OUTPUT:
+                   1. First item
+                   2. Second item
+                   
+                   EXAMPLE INPUT: Handwritten title and bullets "My Notes - point one - point two"
+                   EXAMPLE OUTPUT:
+                   # My Notes
+                   
+                   - Point one
+                   - Point two`
         },
         {
           role: "user",
           content: [
             {
               type: "text",
-              text: "Please transcribe all text from this image with special focus on handwritten content. Use your expertise in handwriting recognition to provide the most accurate transcription possible:"
+              text: "Please transcribe all text from this image and format it as clean, structured Markdown. Pay special attention to converting handwritten lists, headers, and sections into proper Markdown syntax. Preserve the original meaning while enhancing readability through proper Markdown formatting:"
             },
             {
               type: "image_url",
@@ -132,14 +155,15 @@ export async function processWithOpenAI(imageUrl: string, language: string): Pro
       throw new Error("OpenAI returned empty text content");
     }
     
-    console.log(`OpenAI extracted text length: ${extractedText.length} characters`);
+    console.log(`OpenAI extracted and formatted text length: ${extractedText.length} characters`);
+    console.log("Text formatted as Markdown with proper structure");
     
     return {
       text: extractedText,
       confidence: 0.95,
       processedAt: new Date().toISOString(),
       language: language,
-      provider: "openai-vision-gpt4o"
+      provider: "openai-vision-gpt4o-markdown"
     };
   } catch (error) {
     console.error("OpenAI processing error details:", error);
