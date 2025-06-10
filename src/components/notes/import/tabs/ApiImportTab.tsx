@@ -15,26 +15,20 @@ interface ApiImportTabProps {
 export const ApiImportTab = ({ onSaveNote, isPremiumUser }: ApiImportTabProps) => {
   const [selectedService, setSelectedService] = useState<string | null>(null);
 
-  const handleImport = (type: string, content: string) => {
-    const note = {
-      title: `Imported from ${type}`,
-      content: content,
-      date: new Date().toISOString(),
-      category: "Imports",
-      description: `Imported content from ${type}`,
-      sourceType: "import"
-    };
-    onSaveNote(note);
+  const handleConnection = (accessToken: string) => {
+    console.log("Connected with token:", accessToken);
+    // Handle the connection logic here
+    // This would typically involve fetching data from the connected service
   };
 
   const renderServiceConnection = () => {
     switch (selectedService) {
       case 'onenote':
-        return <OneNoteConnection onImport={handleImport} />;
+        return <OneNoteConnection onConnected={handleConnection} />;
       case 'googledocs':
-        return <GoogleDocsConnection onImport={handleImport} />;
+        return <GoogleDocsConnection onConnected={handleConnection} />;
       case 'notion':
-        return <NotionConnection onImport={handleImport} />;
+        return <NotionConnection onConnected={handleConnection} />;
       default:
         return null;
     }
