@@ -1,23 +1,27 @@
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ChatUIMessage } from './types/noteChat';
 import { cn } from '@/lib/utils';
 import { User, Bot } from 'lucide-react';
 import { format } from 'date-fns';
 import { FollowUpQuestions } from './components/FollowUpQuestions';
+import { MessageFeedback } from './components/MessageFeedback';
 
 interface NoteChatMessagesProps {
   messages: ChatUIMessage[];
   isLoading?: boolean;
   onSelectFollowUp?: (question: string) => void;
+  highlightedMessageId?: string | null;
 }
 
 export const NoteChatMessages = ({ 
   messages, 
   isLoading,
-  onSelectFollowUp 
+  onSelectFollowUp,
+  highlightedMessageId
 }: NoteChatMessagesProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -26,6 +30,21 @@ export const NoteChatMessages = ({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Scroll to highlighted message
+  useEffect(() => {
+    if (highlightedMessageId) {
+      const messageElement = messageRefs.current.get(highlightedMessageId);
+      if (messageElement) {
+        messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [highlightedMessageId]);
+
+  const handleMessageFeedback = (messageId: string, type: 'helpful' | 'unhelpful') => {
+    console.log('Message feedback:', messageId, type);
+    // Here you could send feedback to your analytics service
+  };
 
   if (messages.length === 0 && !isLoading) {
     return (
@@ -48,9 +67,15 @@ export const NoteChatMessages = ({
       {messages.map((message) => (
         <div key={message.id}>
           <div
+            ref={(el) => {
+              if (el) {
+                messageRefs.current.set(message.id, el);
+              }
+            }}
             className={cn(
-              "flex gap-3",
-              message.type === 'user' ? 'justify-end' : 'justify-start'
+              "flex gap-3 group",
+              message.type === 'user' ? 'justify-end' : 'justify-start',
+              highlightedMessageId === message.id && "bg-yellow-100 -mx-2 px-2 py-1 rounded-lg transition-colors"
             )}
           >
             {message.type === 'ai' && (
@@ -61,7 +86,7 @@ export const NoteChatMessages = ({
             
             <div
               className={cn(
-                "max-w-[80%] rounded-lg px-4 py-2",
+                "max-w-[80%] rounded-lg px-4 py-2 relative",
                 message.type === 'user'
                   ? 'bg-mint-500 text-white'
                   : 'bg-gray-100 text-gray-900'
@@ -78,6 +103,15 @@ export const NoteChatMessages = ({
               >
                 {format(new Date(message.timestamp), 'HH:mm')}
               </div>
+              
+              {/* Message feedback for AI messages */}
+              {message.type === 'ai' && (
+                <MessageFeedback
+                  messageId={message.id}
+                  content={message.content}
+                  onFeedback={handleMessageFeedback}
+                />
+              )}
             </div>
 
             {message.type === 'user' && (

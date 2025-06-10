@@ -4,6 +4,8 @@ import { Note } from '@/types/note';
 import { NoteChatMessages } from './NoteChatMessages';
 import { NoteChatInput } from './NoteChatInput';
 import { SmartSuggestions } from './components/SmartSuggestions';
+import { ChatSearch } from './components/ChatSearch';
+import { ChatExport } from './components/ChatExport';
 import { useNoteChat } from './hooks/useNoteChat';
 import { useNoteChatHistory } from './hooks/useNoteChatHistory';
 import { useSmartSuggestions } from './hooks/useSmartSuggestions';
@@ -18,6 +20,8 @@ interface NoteChatSidebarProps {
 }
 
 export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps) => {
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+  
   const { sendMessage, isLoading, error } = useNoteChat(note);
   const { messages, addUserMessage, addMessage } = useNoteChatHistory(note.id);
   const { suggestions } = useSmartSuggestions(note);
@@ -61,23 +65,32 @@ export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps)
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b bg-mint-50">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-1">
             <MessageCircle className="h-5 w-5 text-mint-600" />
-            <div>
+            <div className="flex-1 min-w-0">
               <h3 className="font-medium text-gray-900">AI Chat Assistant</h3>
-              <p className="text-xs text-gray-600 truncate max-w-48">
+              <p className="text-xs text-gray-600 truncate">
                 {note.title}
               </p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="h-8 w-8"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          
+          {/* Header actions */}
+          <div className="flex items-center gap-2">
+            <ChatSearch 
+              messages={messages}
+              onMessageHighlight={setHighlightedMessageId}
+            />
+            <ChatExport messages={messages} note={note} />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="h-8 w-8"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Error display */}
@@ -103,6 +116,7 @@ export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps)
           messages={messages} 
           isLoading={isLoading}
           onSelectFollowUp={handleSelectFollowUp}
+          highlightedMessageId={highlightedMessageId}
         />
 
         {/* Input */}
