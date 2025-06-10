@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -54,7 +53,7 @@ serve(async (req) => {
 
     if (action === 'transcribe') {
       console.log(`Starting transcription for video: ${videoId}`);
-      const transcript = await transcribeVideo(videoId, url);
+      const transcript = await transcribeVideo(videoId, url, req);
       const enhancedContent = await enhanceTranscript(transcript, metadata);
       
       return new Response(JSON.stringify(enhancedContent), {
@@ -75,6 +74,23 @@ serve(async (req) => {
     );
   }
 });
+
+function extractUserIdFromRequest(req: Request): string {
+  try {
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('No valid authorization header found');
+      return 'anonymous';
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.sub || 'anonymous';
+  } catch (error) {
+    console.error('Error extracting user ID:', error);
+    return 'anonymous';
+  }
+}
 
 async function getVideoMetadata(videoId: string): Promise<VideoMetadata> {
   if (!youtubeApiKey) {
@@ -149,7 +165,7 @@ async function checkCaptionsAvailability(videoId: string): Promise<boolean> {
   }
 }
 
-async function transcribeVideo(videoId: string, videoUrl: string): Promise<string> {
+async function transcribeVideo(videoId: string, videoUrl: string, req: Request): Promise<string> {
   try {
     console.log(`Starting transcription workflow for video: ${videoId}`);
     
@@ -180,7 +196,7 @@ async function transcribeVideo(videoId: string, videoUrl: string): Promise<strin
       throw new Error('Monthly credit limit of 100 reached. Please wait until next month or contact support.');
     }
 
-    const transcript = await transcribeWithSupadata(videoUrl, videoId);
+    const transcript = await transcribeWithSupadata(videoUrl, videoId, req);
     
     if (!transcript || transcript.length < 20) {
       throw new Error('Supadata.ai transcription failed or returned insufficient content');
@@ -258,24 +274,13 @@ async function getYouTubeCaptions(videoId: string): Promise<string | null> {
   return null;
 }
 
-async function transcribeWithSupadata(videoUrl: string, videoId: string): Promise<string> {
+async function transcribeWithSupadata(videoUrl: string, videoId: string, req: Request): Promise<string> {
   try {
     console.log('Starting Supadata.ai transcription for:', videoUrl);
 
-    // Get user ID from JWT token
-    const authHeader = Deno.env.get('AUTH_HEADER') || '';
-    let userId = 'unknown';
-    
-    try {
-      // Simple JWT decode to get user ID (for logging purposes)
-      const token = authHeader.replace('Bearer ', '');
-      if (token) {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        userId = payload.sub || 'unknown';
-      }
-    } catch (e) {
-      console.log('Could not decode user ID from token');
-    }
+    // Get user ID from the request
+    const userId = extractUserIdFromRequest(req);
+    console.log('User ID for logging:', userId);
 
     const response = await fetch('https://api.supadata.ai/v1/youtube', {
       method: 'POST',
