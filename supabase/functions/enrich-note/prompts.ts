@@ -150,7 +150,7 @@ You are an AI assistant helping students understand complex topics better. Your 
 -----------------------
 - DO NOT reword or delete the original content
 - Insert new content directly **after** the relevant sentence or paragraph
-- Wrap all enhancements in \`[AI_ENHANCED] ... [/AI_ENHANCED]\` tags
+- Wrap all enhancements in \`**[ENRICHED]**\` and \`**[/ENRICHED]**\` markers
 - Add **30–50% more content** overall
 - Format enhancements using proper Markdown:
   - \`##\`, \`###\` for headings
@@ -174,7 +174,7 @@ Enhancements should:
 
 Original paragraph.
 
-[AI_ENHANCED]
+**[ENRICHED]**
 
 ### Explanation
 
@@ -182,7 +182,7 @@ Original paragraph.
 - **Example**: Real-world scenario
 - **Study Tip**: Mnemonic, shortcut, or association
 
-[/AI_ENHANCED]
+**[/ENRICHED]**
 
 -----------------------
 ⚠️ DO NOT:
@@ -192,7 +192,7 @@ Original paragraph.
 - Include explanations of what you're doing
 - Repeat or paraphrase the note title
 
-Return only the original content with [AI_ENHANCED] blocks inserted inline.`;
+Return only the original content with **[ENRICHED]** blocks inserted inline.`;
 
     case 'convert-to-markdown':
       return `${baseContext}
@@ -222,7 +222,7 @@ Do not include or repeat the note title in the output.
 **📋 CONTENT EXPANSION REQUIREMENTS:**
 - **PRESERVE ORIGINAL**: Keep 100% of the original content exactly as written
 - **ADD SUBSTANTIAL CONTENT**: Expand by 50-70% with detailed explanations, examples, and context
-- **MARK ALL ADDITIONS**: Wrap every new section with **\`<span class="enriched-content">\`** and **\`</span>\`** tags
+- **MARK ALL ADDITIONS**: Wrap every new section with **\`**[ENRICHED]**\`** and **\`**[/ENRICHED]**\`** markers
 - **USE MARKDOWN**: Format everything in clean, professional Markdown
 
 **🎯 WHAT TO ADD:**
@@ -237,7 +237,7 @@ Do not include or repeat the note title in the output.
 
 **🏗️ STRUCTURE APPROACH:**
 1. Keep the original content in its exact sequence
-2. After each paragraph or concept, add enriched content in \`<span class="enriched-content">\` tags
+2. After each paragraph or concept, add enriched content in \`**[ENRICHED]**\` markers
 3. Use proper Markdown hierarchy (\`##\`, \`###\`, bullet points, **bold** text)
 4. Ensure enriched sections flow naturally with the original content
 5. Make the enriched content visually distinct but contextually integrated
@@ -246,7 +246,7 @@ Do not include or repeat the note title in the output.
 
 Original paragraph about photosynthesis.
 
-<span class="enriched-content">
+**[ENRICHED]**
 
 ### Detailed Process Breakdown
 
@@ -259,13 +259,13 @@ Photosynthesis occurs in two main stages:
 
 **Memory aid**: Remember "Light → ATP → Sugar" as the basic flow of photosynthesis.
 
-</span>
+**[/ENRICHED]**
 
 Next original paragraph continues here.
 
 **⚠️ STRICT RULES:**
 - Never alter, delete, or rephrase original content
-- Every addition must be in \`<span class="enriched-content">\` tags
+- Every addition must be in \`**[ENRICHED]**\` markers
 - Aim for 50-70% content increase overall
 - Keep enriched content educational and valuable
 - Maintain professional, academic tone

@@ -1,3 +1,4 @@
+
 /**
  * NUCLEAR REWRITE: Unified Content Processor
  * This is the SINGLE source of truth for all content processing
@@ -33,7 +34,7 @@ export const processContentForRendering = (rawContent: string): ProcessedContent
   console.log("🚀 UNIFIED PROCESSOR: Processing content:", {
     originalLength: rawContent.length,
     hasTipTapMarkers: detectTipTapContent(rawContent),
-    hasEnrichedMarkers: rawContent.includes('[ENRICHED]') || rawContent.includes('enriched-content'),
+    hasEnrichedMarkers: rawContent.includes('[ENRICHED]') || rawContent.includes('**[ENRICHED]**'),
     preview: rawContent.substring(0, 200)
   });
 
@@ -66,29 +67,27 @@ export const processContentForRendering = (rawContent: string): ProcessedContent
       .replace(/<\/div>/g, '\n\n---\n\n');
   }
 
-  // Step 3: Process ENRICHED content - ENHANCED for new enrichment system
-  const hasEnrichedContent = processed.includes('[ENRICHED]') || processed.includes('<span class="enriched-content">') || processed.includes('enriched-content');
+  // Step 3: Process ENRICHED content - NEW MARKDOWN-ONLY APPROACH
+  const hasEnrichedContent = processed.includes('[ENRICHED]') || processed.includes('**[ENRICHED]**');
   if (hasEnrichedContent) {
-    console.log("🔥 PROCESSING ENRICHED CONTENT MARKERS");
+    console.log("🔥 PROCESSING ENRICHED CONTENT MARKERS - MARKDOWN APPROACH");
     
-    // Replace enriched markers with styled markdown - KEEP HTML SPANS for proper styling
+    // Handle new markdown-style enriched markers
     processed = processed
-      // Handle old-style markers
-      .replace(/\*\*\[ENRICHED\]\*\*/g, '\n\n**[ENRICHED]**\n\n')
-      .replace(/\*\*\[\/ENRICHED\]\*\*/g, '\n\n**[/ENRICHED]**\n\n')
-      .replace(/\[ENRICHED\]/g, '\n\n**[ENRICHED]**\n\n')
-      .replace(/\[\/ENRICHED\]/g, '\n\n**[/ENRICHED]**\n\n')
-      // CRITICAL: Keep HTML spans intact for proper styling
-      .replace(/<span class="enriched-content">/g, '<span class="enriched-content">')
-      .replace(/<\/span>/g, '</span>');
+      // Convert **[ENRICHED]** markers to section breaks with special identifiers
+      .replace(/\*\*\[ENRICHED\]\*\*/g, '\n\n---ENRICHED-START---\n\n')
+      .replace(/\*\*\[\/ENRICHED\]\*\*/g, '\n\n---ENRICHED-END---\n\n')
+      // Handle plain [ENRICHED] markers as fallback
+      .replace(/\[ENRICHED\]/g, '\n\n---ENRICHED-START---\n\n')
+      .replace(/\[\/ENRICHED\]/g, '\n\n---ENRICHED-END---\n\n');
     
-    console.log("✅ Enriched markers processed:", {
-      hasMarkers: processed.includes('[ENRICHED]') || processed.includes('enriched-content'),
+    console.log("✅ Enriched markers processed to section identifiers:", {
+      hasMarkers: processed.includes('---ENRICHED-START---'),
       processedPreview: processed.substring(0, 300)
     });
   }
 
-  // Step 4: Clean up any remaining HTML entities and artifacts (but PRESERVE enriched-content spans)
+  // Step 4: Clean up any remaining HTML entities and artifacts
   processed = processed
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
@@ -99,27 +98,8 @@ export const processContentForRendering = (rawContent: string): ProcessedContent
     .replace(/&mdash;/g, '—')
     .replace(/&ndash;/g, '–');
 
-  // Step 5: Clean up any remaining HTML tags (EXCEPT enriched-content spans)
-  // CRITICAL: Preserve enriched-content spans and their closing tags
-  const enrichedContentRegex = /<span class="enriched-content">[\s\S]*?<\/span>/g;
-  const enrichedSpans: string[] = [];
-  let tempProcessed = processed;
-  
-  // Extract enriched spans temporarily
-  tempProcessed = tempProcessed.replace(enrichedContentRegex, (match, index) => {
-    enrichedSpans.push(match);
-    return `__ENRICHED_SPAN_${enrichedSpans.length - 1}__`;
-  });
-  
-  // Remove other HTML tags
-  tempProcessed = tempProcessed.replace(/<[^>]*>/g, '');
-  
-  // Restore enriched spans
-  enrichedSpans.forEach((span, index) => {
-    tempProcessed = tempProcessed.replace(`__ENRICHED_SPAN_${index}__`, span);
-  });
-  
-  processed = tempProcessed;
+  // Step 5: Clean up any remaining HTML tags (now that we use pure markdown approach)
+  processed = processed.replace(/<[^>]*>/g, '');
 
   // Step 6: Normalize whitespace and line breaks
   processed = processed
@@ -179,7 +159,7 @@ const analyzeContent = (content: string, wasHtmlCleaned: boolean, hasEnrichedCon
     hasLists: /^[-*+]\s+|\d+\.\s+/m.test(content),
     hasHeaders: /^#{1,6}\s+/m.test(content),
     hasAIBlocks: content.includes('**✨ AI Enhanced Content:**'),
-    hasEnrichedContent,
+    hasEnrichedContent: hasEnrichedContent || content.includes('---ENRICHED-START---'),
     wordCount: content.split(/\s+/).filter(word => word.length > 0).length,
     wasHtmlCleaned
   };
