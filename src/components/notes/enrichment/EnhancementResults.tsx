@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { CheckCircle, ArrowUpCircle } from 'lucide-react';
+import { UnifiedContentRenderer } from '@/components/notes/study/enhancements/UnifiedContentRenderer';
 
 interface EnhancementResultsProps {
   enhancedContent: string;
@@ -23,11 +24,12 @@ export const EnhancementResults: React.FC<EnhancementResultsProps> = ({
       <Separator />
       
       <div className="border rounded-md p-4 max-h-[400px] overflow-y-auto">
-        <div className="prose prose-sm dark:prose-invert max-w-none">
-          {enhancedContent.split('\n').map((line, index) => (
-            <p key={index}>{line || <br />}</p>
-          ))}
-        </div>
+        <UnifiedContentRenderer
+          content={enhancedContent}
+          fontSize={16}
+          textAlign="left"
+          isMarkdown={true}
+        />
       </div>
       
       <div className="flex justify-end">

@@ -90,7 +90,7 @@ export const SpellingGrammarDiff = ({
   return (
     <div className={className}>
       <div className="mb-4 flex items-center justify-between">
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-muted-foreground">
           <span className="font-medium">Spelling & Grammar Fixes Applied</span>
           <div className="flex items-center gap-4 mt-1 text-xs">
             <div className="flex items-center gap-1">
@@ -126,8 +126,8 @@ export const SpellingGrammarDiff = ({
       
       {showDiff ? (
         <div 
-          className="prose prose-gray max-w-none leading-relaxed"
-          style={{ fontSize: `${fontSize}px` }}
+          className="nuclear-content-container"
+          style={{ fontSize: `${fontSize}px`, textAlign: textAlign === 'left' ? 'left' : textAlign === 'center' ? 'center' : 'justify' }}
         >
           {diffChanges.map((change, index) => {
             if (change.type === 'unchanged') {
