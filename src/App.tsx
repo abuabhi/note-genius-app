@@ -49,13 +49,14 @@ function App() {
             <Toaster position="top-right" />
             <Suspense fallback={<div>Loading...</div>}>
               <Routes>
-                {publicRoutes.map((route, index) => (
-                  <Route key={index} path={route.path} element={route.element} />
-                ))}
-                
-                {/* Auth callback routes (these need to be public) */}
+                {/* Auth callback routes MUST be first and public */}
                 {authCallbackRoutes.map((route, index) => (
                   <Route key={`auth-${index}`} path={route.path} element={route.element} />
+                ))}
+                
+                {/* Public routes */}
+                {publicRoutes.map((route, index) => (
+                  <Route key={index} path={route.path} element={route.element} />
                 ))}
                 
                 {/* Protected Routes */}
