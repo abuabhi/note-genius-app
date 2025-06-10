@@ -23,7 +23,7 @@ export const FlashcardGeneration = ({
   onFlashcardCreated 
 }: FlashcardGenerationProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
-  const { createFlashcardFromContent } = useFlashcards();
+  const { createFlashcard, flashcardSets } = useFlashcards();
   const navigate = useNavigate();
 
   const handleQuickGeneration = async () => {
@@ -36,11 +36,25 @@ export const FlashcardGeneration = ({
     try {
       const content = selectedText || conversationContext || note.content || '';
       
+      // Find a default set or use the first available set
+      const defaultSet = flashcardSets.find(set => 
+        set.subject === note.category || set.name.includes(note.title)
+      ) || flashcardSets[0];
+
+      if (!defaultSet) {
+        toast.error('Please create a flashcard set first');
+        return;
+      }
+      
       // Create a simple flashcard from the content
-      await createFlashcardFromContent({
-        content,
-        noteTitle: note.title,
-        noteCategory: note.category
+      const question = `What is the key point about "${content.slice(0, 50)}..."?`;
+      const answer = content;
+
+      await createFlashcard({
+        front_content: question,
+        back_content: answer,
+        set_id: defaultSet.id,
+        subject: note.category
       });
 
       toast.success('Flashcard created successfully!');

@@ -7,13 +7,17 @@ import { SmartSuggestions } from './components/SmartSuggestions';
 import { ChatSearch } from './components/ChatSearch';
 import { ChatExport } from './components/ChatExport';
 import { FlashcardGeneration } from './components/FlashcardGeneration';
+import { AccessibilityProvider } from './components/AccessibilityProvider';
 import { useNoteChat } from './hooks/useNoteChat';
+import { useStreamingChat } from './hooks/useStreamingChat';
 import { useNoteChatHistory } from './hooks/useNoteChatHistory';
 import { useSmartSuggestions } from './hooks/useSmartSuggestions';
+import { useErrorHandler } from './hooks/useErrorHandler';
 import { cn } from '@/lib/utils';
-import { X, MessageCircle, BookOpen } from 'lucide-react';
+import { X, MessageCircle, BookOpen, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface NoteChatSidebarProps {
   note: Note;
@@ -24,21 +28,44 @@ interface NoteChatSidebarProps {
 export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps) => {
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   const [selectedText, setSelectedText] = useState<string>('');
+  const [useStreaming, setUseStreaming] = useState(true);
   
   const { sendMessage, isLoading, error } = useNoteChat(note);
+  const { sendStreamingMessage, isStreaming, streamingMessage } = useStreamingChat(note);
   const { messages, addUserMessage, addMessage } = useNoteChatHistory(note.id);
   const { suggestions } = useSmartSuggestions(note);
+  const { handleError, clearErrors, getLastError, canRetry } = useErrorHandler();
 
   const handleSendMessage = useCallback(async (message: string) => {
-    // Add user message immediately
-    addUserMessage(message);
+    try {
+      clearErrors();
+      
+      // Add user message immediately
+      const userMessage = addUserMessage(message);
 
-    // Send to AI and get response with conversation context
-    const aiResponse = await sendMessage(message, messages);
-    if (aiResponse) {
-      addMessage(aiResponse);
+      if (useStreaming) {
+        // Use streaming for real-time response
+        await sendStreamingMessage(
+          message,
+          messages,
+          (content) => {
+            // Handle streaming updates
+          },
+          (finalMessage) => {
+            addMessage(finalMessage);
+          }
+        );
+      } else {
+        // Use regular response
+        const aiResponse = await sendMessage(message, messages);
+        if (aiResponse) {
+          addMessage(aiResponse);
+        }
+      }
+    } catch (error) {
+      handleError(error, 'sending message');
     }
-  }, [sendMessage, addUserMessage, addMessage, messages]);
+  }, [sendMessage, sendStreamingMessage, addUserMessage, addMessage, messages, useStreaming, handleError, clearErrors]);
 
   const handleSelectSuggestion = useCallback((suggestion: string) => {
     handleSendMessage(suggestion);
@@ -49,17 +76,20 @@ export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps)
   }, [handleSendMessage]);
 
   const handleFlashcardCreated = useCallback(() => {
-    // Clear selected text after flashcard creation
     setSelectedText('');
   }, []);
 
+  const currentError = error || getLastError();
+  const isProcessing = isLoading || isStreaming;
+
   return (
-    <>
+    <AccessibilityProvider>
       {/* Mobile overlay */}
       {isOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-40 md:hidden"
           onClick={onClose}
+          aria-hidden="true"
         />
       )}
       
@@ -70,14 +100,17 @@ export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps)
           "flex flex-col",
           isOpen ? "translate-x-0" : "translate-x-full"
         )}
+        role="dialog"
+        aria-label="AI Chat Assistant"
+        aria-modal="true"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b bg-mint-50">
           <div className="flex items-center gap-2 flex-1">
-            <MessageCircle className="h-5 w-5 text-mint-600" />
+            <MessageCircle className="h-5 w-5 text-mint-600" aria-hidden="true" />
             <div className="flex-1 min-w-0">
               <h3 className="font-medium text-gray-900">AI Chat Assistant</h3>
-              <p className="text-xs text-gray-600 truncate">
+              <p className="text-xs text-gray-600 truncate" title={note.title}>
                 {note.title}
               </p>
             </div>
@@ -95,6 +128,7 @@ export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps)
               size="icon"
               onClick={onClose}
               className="h-8 w-8"
+              aria-label="Close chat"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -102,10 +136,23 @@ export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps)
         </div>
 
         {/* Error display */}
-        {error && (
-          <div className="p-3 bg-red-50 border-b border-red-200">
-            <p className="text-sm text-red-600">{error}</p>
-          </div>
+        {currentError && (
+          <Alert className="m-3 border-red-200 bg-red-50">
+            <AlertTriangle className="h-4 w-4 text-red-600" />
+            <AlertDescription className="text-red-700">
+              {currentError.message}
+              {canRetry && (
+                <Button
+                  variant="link"
+                  size="sm"
+                  onClick={clearErrors}
+                  className="ml-2 p-0 h-auto text-red-700 underline"
+                >
+                  Dismiss
+                </Button>
+              )}
+            </AlertDescription>
+          </Alert>
         )}
 
         {/* Tabs for Chat and Flashcards */}
@@ -128,7 +175,7 @@ export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps)
                 <SmartSuggestions 
                   suggestions={suggestions}
                   onSelectSuggestion={handleSelectSuggestion}
-                  isLoading={isLoading}
+                  isLoading={isProcessing}
                 />
               </div>
             )}
@@ -138,12 +185,17 @@ export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps)
               messages={messages}
               note={note}
               isLoading={isLoading}
+              isStreaming={isStreaming}
+              streamingMessage={streamingMessage}
               onSelectFollowUp={handleSelectFollowUp}
               highlightedMessageId={highlightedMessageId}
             />
 
             {/* Input */}
-            <NoteChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+            <NoteChatInput 
+              onSendMessage={handleSendMessage} 
+              isLoading={isProcessing}
+            />
           </TabsContent>
 
           <TabsContent value="flashcards" className="flex-1 flex flex-col mt-0">
@@ -158,6 +210,6 @@ export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps)
           </TabsContent>
         </Tabs>
       </div>
-    </>
+    </AccessibilityProvider>
   );
 };

@@ -8,12 +8,15 @@ import { FollowUpQuestions } from './components/FollowUpQuestions';
 import { MessageFeedback } from './components/MessageFeedback';
 import { Button } from '@/components/ui/button';
 import { useFlashcardIntegration } from './hooks/useFlashcardIntegration';
+import { useAccessibility } from './components/AccessibilityProvider';
 import { Note } from '@/types/note';
 
 interface NoteChatMessagesProps {
   messages: ChatUIMessage[];
   note: Note;
   isLoading?: boolean;
+  isStreaming?: boolean;
+  streamingMessage?: string;
   onSelectFollowUp?: (question: string) => void;
   highlightedMessageId?: string | null;
 }
@@ -22,12 +25,15 @@ export const NoteChatMessages = ({
   messages,
   note,
   isLoading,
+  isStreaming,
+  streamingMessage,
   onSelectFollowUp,
   highlightedMessageId
 }: NoteChatMessagesProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const { generateFlashcardFromChat, isGenerating } = useFlashcardIntegration(note);
+  const { announceMessage } = useAccessibility();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -35,7 +41,17 @@ export const NoteChatMessages = ({
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, streamingMessage]);
+
+  // Announce new messages for screen readers
+  useEffect(() => {
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.type === 'ai') {
+        announceMessage(`AI response: ${lastMessage.content.slice(0, 100)}...`);
+      }
+    }
+  }, [messages, announceMessage]);
 
   // Scroll to highlighted message
   useEffect(() => {
@@ -49,14 +65,19 @@ export const NoteChatMessages = ({
 
   const handleMessageFeedback = (messageId: string, type: 'helpful' | 'unhelpful') => {
     console.log('Message feedback:', messageId, type);
-    // Here you could send feedback to your analytics service
+    announceMessage(`Feedback recorded: ${type}`);
   };
 
   const handleCreateFlashcard = async (question: string, answer: string) => {
-    await generateFlashcardFromChat(question, answer);
+    try {
+      await generateFlashcardFromChat(question, answer);
+      announceMessage('Flashcard created successfully');
+    } catch (error) {
+      announceMessage('Failed to create flashcard');
+    }
   };
 
-  if (messages.length === 0 && !isLoading) {
+  if (messages.length === 0 && !isLoading && !isStreaming) {
     return (
       <div className="flex-1 flex items-center justify-center p-8 text-center">
         <div className="max-w-xs">
@@ -73,7 +94,12 @@ export const NoteChatMessages = ({
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div 
+      className="flex-1 overflow-y-auto p-4 space-y-4"
+      role="log"
+      aria-label="Chat conversation"
+      aria-live="polite"
+    >
       {messages.map((message) => (
         <div key={message.id}>
           <div
@@ -87,10 +113,12 @@ export const NoteChatMessages = ({
               message.type === 'user' ? 'justify-end' : 'justify-start',
               highlightedMessageId === message.id && "bg-yellow-100 -mx-2 px-2 py-1 rounded-lg transition-colors"
             )}
+            role="article"
+            aria-label={`${message.type === 'user' ? 'User' : 'AI'} message`}
           >
             {message.type === 'ai' && (
               <div className="flex-shrink-0 w-8 h-8 bg-mint-100 rounded-full flex items-center justify-center">
-                <Bot className="h-4 w-4 text-mint-600" />
+                <Bot className="h-4 w-4 text-mint-600" aria-hidden="true" />
               </div>
             )}
             
@@ -110,6 +138,7 @@ export const NoteChatMessages = ({
                   "text-xs mt-1 opacity-70",
                   message.type === 'user' ? 'text-mint-100' : 'text-gray-500'
                 )}
+                aria-label={`Message sent at ${format(new Date(message.timestamp), 'HH:mm')}`}
               >
                 {format(new Date(message.timestamp), 'HH:mm')}
               </div>
@@ -130,7 +159,6 @@ export const NoteChatMessages = ({
                     size="sm"
                     variant="outline"
                     onClick={() => {
-                      // Get the previous user message as the question
                       const messageIndex = messages.findIndex(m => m.id === message.id);
                       const userMessage = messageIndex > 0 ? messages[messageIndex - 1] : null;
                       if (userMessage && userMessage.type === 'user') {
@@ -139,8 +167,9 @@ export const NoteChatMessages = ({
                     }}
                     disabled={isGenerating}
                     className="h-6 text-xs"
+                    aria-label="Create flashcard from this conversation"
                   >
-                    <BookOpen className="h-3 w-3 mr-1" />
+                    <BookOpen className="h-3 w-3 mr-1" aria-hidden="true" />
                     Create Flashcard
                   </Button>
                 </div>
@@ -149,7 +178,7 @@ export const NoteChatMessages = ({
 
             {message.type === 'user' && (
               <div className="flex-shrink-0 w-8 h-8 bg-mint-500 rounded-full flex items-center justify-center">
-                <User className="h-4 w-4 text-white" />
+                <User className="h-4 w-4 text-white" aria-hidden="true" />
               </div>
             )}
           </div>
@@ -166,10 +195,28 @@ export const NoteChatMessages = ({
         </div>
       ))}
       
-      {isLoading && (
+      {/* Streaming message display */}
+      {isStreaming && streamingMessage && (
         <div className="flex gap-3 justify-start">
           <div className="flex-shrink-0 w-8 h-8 bg-mint-100 rounded-full flex items-center justify-center">
-            <Bot className="h-4 w-4 text-mint-600" />
+            <Bot className="h-4 w-4 text-mint-600" aria-hidden="true" />
+          </div>
+          <div className="bg-gray-100 rounded-lg px-4 py-2 max-w-[80%]">
+            <div className="whitespace-pre-wrap text-sm">{streamingMessage}</div>
+            <div className="flex items-center gap-1 mt-1">
+              <div className="w-1 h-1 bg-gray-400 rounded-full animate-pulse" />
+              <div className="w-1 h-1 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
+              <div className="w-1 h-1 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Loading indicator */}
+      {isLoading && !isStreaming && (
+        <div className="flex gap-3 justify-start" role="status" aria-label="AI is thinking">
+          <div className="flex-shrink-0 w-8 h-8 bg-mint-100 rounded-full flex items-center justify-center">
+            <Bot className="h-4 w-4 text-mint-600" aria-hidden="true" />
           </div>
           <div className="bg-gray-100 rounded-lg px-4 py-2">
             <div className="flex gap-1">
