@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { TextAlignType } from '../hooks/useStudyViewState';
-import { UnifiedContentRenderer } from './UnifiedContentRenderer';
+import { NuclearContentRenderer } from './NuclearContentRenderer';
 
 interface EnhancedContentRendererProps {
   content: string;
@@ -10,20 +10,28 @@ interface EnhancedContentRendererProps {
   className?: string;
 }
 
+/**
+ * NUCLEAR REWRITE: Enhanced Content Renderer now uses Nuclear Renderer
+ */
 export const EnhancedContentRenderer = ({
   content,
   fontSize,
   textAlign,
   className
 }: EnhancedContentRendererProps) => {
-  // DRASTIC REWRITE: Everything is now markdown - no conditional logic
+  console.log("🚀 NUCLEAR ENHANCED: Everything is nuclear-rendered markdown:", {
+    contentLength: content?.length || 0,
+    fontSize,
+    textAlign
+  });
+
+  // NUCLEAR: Everything goes through the nuclear renderer
   return (
-    <UnifiedContentRenderer
+    <NuclearContentRenderer
       content={content}
       fontSize={fontSize}
       textAlign={textAlign}
       className={className}
-      isMarkdown={true}
     />
   );
 };
