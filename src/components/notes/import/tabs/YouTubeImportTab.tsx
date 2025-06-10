@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Youtube, Play, Clock } from 'lucide-react';
+import { Loader2, Youtube, Play, Clock, AlertTriangle, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -118,7 +118,7 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
     setError(null);
 
     try {
-      toast.loading('Transcribing video... This may take a few minutes');
+      toast.loading('Processing video... This may take a few minutes');
 
       const { data, error } = await supabase.functions.invoke('youtube-transcribe', {
         body: { 
@@ -129,11 +129,13 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        throw new Error(error.message || 'Transcription failed');
+      }
 
       const noteData = {
         title: data.title,
-        description: data.description || `Transcribed from YouTube video: ${videoMetadata.title}`,
+        description: data.description || `Imported from YouTube video: ${videoMetadata.title}`,
         content: data.content,
         category: data.subject || 'General',
         sourceType: 'import' as const,
@@ -147,16 +149,26 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
 
       onImport(noteData);
       toast.dismiss();
-      toast.success('Video transcribed successfully!');
+      toast.success('Video content imported successfully!');
       
       // Reset form
       setYoutubeUrl('');
       setVideoMetadata(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Transcription error:', error);
       toast.dismiss();
-      toast.error('Failed to transcribe video. Please try again.');
-      setError('Transcription failed. Please try again.');
+      
+      // Handle specific error cases
+      if (error.message?.includes('captions')) {
+        setError('This video does not have captions available. Please try a video with captions or subtitles.');
+        toast.error('Video does not have captions available');
+      } else if (error.message?.includes('Audio transcription')) {
+        setError('Audio transcription is not yet available. Please use videos with existing captions.');
+        toast.error('Audio transcription not yet supported');
+      } else {
+        setError(`Failed to process video: ${error.message}`);
+        toast.error('Failed to process video. Please try again.');
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -191,6 +203,7 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
 
       {error && (
         <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
@@ -232,12 +245,12 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
               {isProcessing ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Transcribing...
+                  Processing...
                 </>
               ) : (
                 <>
                   <Youtube className="h-4 w-4 mr-2" />
-                  Transcribe Video
+                  Import Video Content
                 </>
               )}
             </Button>
@@ -246,9 +259,10 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
       )}
 
       <Alert>
+        <Info className="h-4 w-4" />
         <AlertDescription>
-          <strong>Note:</strong> Transcription works best with videos that have clear audio. 
-          Long videos may take several minutes to process.
+          <strong>Current limitations:</strong> This feature works best with videos that have captions or subtitles. 
+          Audio transcription for videos without captions is not yet available but will be implemented in a future update.
         </AlertDescription>
       </Alert>
     </div>
