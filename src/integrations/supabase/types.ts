@@ -759,6 +759,41 @@ export type Database = {
         }
         Relationships: []
       }
+      note_chat_messages: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          note_id: string
+          response: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          note_id: string
+          response: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          note_id?: string
+          response?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "note_chat_messages_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       note_enrichment_usage: {
         Row: {
           completion_tokens: number

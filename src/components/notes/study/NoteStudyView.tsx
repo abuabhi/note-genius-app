@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Note } from '@/types/note';
 import { Card } from '@/components/ui/card';
@@ -11,6 +12,8 @@ import { EnhancementContentType } from './enhancements/EnhancementSelector';
 import { useNoteEnrichment } from '@/hooks/useNoteEnrichment';
 import { toast } from 'sonner';
 import { StudyBreadcrumb } from './navigation/StudyBreadcrumb';
+import { NoteChatSidebar } from './chat/NoteChatSidebar';
+import { NoteChatToggle } from './chat/NoteChatToggle';
 
 interface NoteStudyViewProps {
   note: Note;
@@ -18,6 +21,9 @@ interface NoteStudyViewProps {
 }
 
 export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
+  // Chat state
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
   // Use simplified real-time sync for better performance
   const { currentNote, refreshKey, forceRefresh } = useSimpleRealtimeSync(note);
 
@@ -36,7 +42,6 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
     setActiveContentType
   } = useStudyViewState();
 
-  // Note editing functionality
   const {
     isEditing,
     editableContent,
@@ -52,7 +57,6 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
     onNoteUpdate
   } = useNoteStudyEditor(currentNote, forceRefresh);
 
-  // Note enrichment functionality
   const {
     enrichNote,
     currentUsage,
@@ -71,7 +75,6 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
         return;
       }
 
-      // CRITICAL: Set status to generating BEFORE calling enrichNote
       if (enhancementType === 'summarize') {
         await onNoteUpdate({
           summary_status: 'generating'
@@ -97,7 +100,6 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
           enhancement_type: getEnhancementType(enhancementType) as 'clarity' | 'other' | 'spelling-grammar'
         };
 
-        // CRITICAL: Set status to completed for summary and enriched
         if (enhancementType === 'summarize') {
           updateData.summary_status = 'completed';
         } else if (enhancementType === 'enrich-note') {
@@ -109,7 +111,6 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
         forceRefresh();
         toast.success('Enhancement completed successfully!');
       } else {
-        // CRITICAL: Set status to failed on error
         if (enhancementType === 'summarize') {
           await onNoteUpdate({
             summary_status: 'failed'
@@ -124,7 +125,6 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
     } catch (error) {
       console.error('Error enhancing content:', error);
       
-      // CRITICAL: Set status to failed on error
       if (enhancementType === 'summarize') {
         await onNoteUpdate({
           summary_status: 'failed'
@@ -139,23 +139,19 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
     }
   };
 
-  // Handle retry enhancement
   const handleRetryEnhancement = async (enhancementType: string) => {
     await handleEnhanceContent(enhancementType);
   };
 
-  // Handle content type change
   const handleActiveContentTypeChange = (type: EnhancementContentType) => {
     setActiveContentType(type);
   };
 
-  // Handle enhancement from header - FIXED: no automatic generation
   const handleEnhancement = (enhancedContent: string, enhancementType?: any) => {
     console.log("📝 Enhancement completed, refreshing view");
     forceRefresh();
   };
 
-  // Simple usage stats function
   const fetchUsageStats = async () => {
     console.log('Fetching usage stats...');
   };
@@ -229,6 +225,18 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
           />
         </Card>
       </div>
+
+      {/* Chat Components */}
+      <NoteChatToggle 
+        isOpen={isChatOpen}
+        onToggle={() => setIsChatOpen(!isChatOpen)}
+      />
+      
+      <NoteChatSidebar
+        note={currentNote}
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+      />
     </div>
   );
 };
