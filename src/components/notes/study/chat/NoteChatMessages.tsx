@@ -2,26 +2,32 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChatUIMessage } from './types/noteChat';
 import { cn } from '@/lib/utils';
-import { User, Bot } from 'lucide-react';
+import { User, Bot, BookOpen } from 'lucide-react';
 import { format } from 'date-fns';
 import { FollowUpQuestions } from './components/FollowUpQuestions';
 import { MessageFeedback } from './components/MessageFeedback';
+import { Button } from '@/components/ui/button';
+import { useFlashcardIntegration } from './hooks/useFlashcardIntegration';
+import { Note } from '@/types/note';
 
 interface NoteChatMessagesProps {
   messages: ChatUIMessage[];
+  note: Note;
   isLoading?: boolean;
   onSelectFollowUp?: (question: string) => void;
   highlightedMessageId?: string | null;
 }
 
 export const NoteChatMessages = ({ 
-  messages, 
+  messages,
+  note,
   isLoading,
   onSelectFollowUp,
   highlightedMessageId
 }: NoteChatMessagesProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const { generateFlashcardFromChat, isGenerating } = useFlashcardIntegration(note);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -44,6 +50,10 @@ export const NoteChatMessages = ({
   const handleMessageFeedback = (messageId: string, type: 'helpful' | 'unhelpful') => {
     console.log('Message feedback:', messageId, type);
     // Here you could send feedback to your analytics service
+  };
+
+  const handleCreateFlashcard = async (question: string, answer: string) => {
+    await generateFlashcardFromChat(question, answer);
   };
 
   if (messages.length === 0 && !isLoading) {
@@ -111,6 +121,29 @@ export const NoteChatMessages = ({
                   content={message.content}
                   onFeedback={handleMessageFeedback}
                 />
+              )}
+
+              {/* Flashcard creation button for AI messages */}
+              {message.type === 'ai' && (
+                <div className="mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      // Get the previous user message as the question
+                      const messageIndex = messages.findIndex(m => m.id === message.id);
+                      const userMessage = messageIndex > 0 ? messages[messageIndex - 1] : null;
+                      if (userMessage && userMessage.type === 'user') {
+                        handleCreateFlashcard(userMessage.content, message.content);
+                      }
+                    }}
+                    disabled={isGenerating}
+                    className="h-6 text-xs"
+                  >
+                    <BookOpen className="h-3 w-3 mr-1" />
+                    Create Flashcard
+                  </Button>
+                </div>
               )}
             </div>
 

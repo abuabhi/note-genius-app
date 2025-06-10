@@ -6,12 +6,14 @@ import { NoteChatInput } from './NoteChatInput';
 import { SmartSuggestions } from './components/SmartSuggestions';
 import { ChatSearch } from './components/ChatSearch';
 import { ChatExport } from './components/ChatExport';
+import { FlashcardGeneration } from './components/FlashcardGeneration';
 import { useNoteChat } from './hooks/useNoteChat';
 import { useNoteChatHistory } from './hooks/useNoteChatHistory';
 import { useSmartSuggestions } from './hooks/useSmartSuggestions';
 import { cn } from '@/lib/utils';
-import { X, MessageCircle } from 'lucide-react';
+import { X, MessageCircle, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface NoteChatSidebarProps {
   note: Note;
@@ -21,6 +23,7 @@ interface NoteChatSidebarProps {
 
 export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps) => {
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+  const [selectedText, setSelectedText] = useState<string>('');
   
   const { sendMessage, isLoading, error } = useNoteChat(note);
   const { messages, addUserMessage, addMessage } = useNoteChatHistory(note.id);
@@ -44,6 +47,11 @@ export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps)
   const handleSelectFollowUp = useCallback((question: string) => {
     handleSendMessage(question);
   }, [handleSendMessage]);
+
+  const handleFlashcardCreated = useCallback(() => {
+    // Clear selected text after flashcard creation
+    setSelectedText('');
+  }, []);
 
   return (
     <>
@@ -100,27 +108,55 @@ export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps)
           </div>
         )}
 
-        {/* Smart Suggestions - only show when no messages */}
-        {messages.length === 0 && (
-          <div className="p-4 border-b">
-            <SmartSuggestions 
-              suggestions={suggestions}
-              onSelectSuggestion={handleSelectSuggestion}
+        {/* Tabs for Chat and Flashcards */}
+        <Tabs defaultValue="chat" className="flex-1 flex flex-col">
+          <TabsList className="grid w-full grid-cols-2 mx-4 mt-2">
+            <TabsTrigger value="chat" className="flex items-center gap-2">
+              <MessageCircle className="h-4 w-4" />
+              Chat
+            </TabsTrigger>
+            <TabsTrigger value="flashcards" className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              Flashcards
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="chat" className="flex-1 flex flex-col mt-0">
+            {/* Smart Suggestions - only show when no messages */}
+            {messages.length === 0 && (
+              <div className="p-4 border-b">
+                <SmartSuggestions 
+                  suggestions={suggestions}
+                  onSelectSuggestion={handleSelectSuggestion}
+                  isLoading={isLoading}
+                />
+              </div>
+            )}
+
+            {/* Messages */}
+            <NoteChatMessages 
+              messages={messages}
+              note={note}
               isLoading={isLoading}
+              onSelectFollowUp={handleSelectFollowUp}
+              highlightedMessageId={highlightedMessageId}
             />
-          </div>
-        )}
 
-        {/* Messages */}
-        <NoteChatMessages 
-          messages={messages} 
-          isLoading={isLoading}
-          onSelectFollowUp={handleSelectFollowUp}
-          highlightedMessageId={highlightedMessageId}
-        />
+            {/* Input */}
+            <NoteChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+          </TabsContent>
 
-        {/* Input */}
-        <NoteChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+          <TabsContent value="flashcards" className="flex-1 flex flex-col mt-0">
+            <div className="p-4 flex-1">
+              <FlashcardGeneration
+                note={note}
+                selectedText={selectedText}
+                conversationContext={messages.slice(-2).map(m => m.content).join('\n')}
+                onFlashcardCreated={handleFlashcardCreated}
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </>
   );

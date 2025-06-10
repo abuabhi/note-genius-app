@@ -84,6 +84,82 @@ export function useFlashcardOperations(state?: FlashcardState) {
       setIsLoading(false);
     }
   };
+
+  const createFlashcardFromContent = async (contentData: {
+    content: string;
+    noteTitle: string;
+    noteCategory: string;
+    setId?: string;
+  }) => {
+    try {
+      setIsLoading(true);
+      
+      if (!user) {
+        throw new Error("User must be logged in to create flashcards");
+      }
+
+      // Find or create a default set for this note/category
+      let targetSetId = contentData.setId;
+      
+      if (!targetSetId) {
+        // Look for an existing set for this category or create one
+        const setName = `${contentData.noteTitle} - Generated`;
+        
+        // Try to find existing set
+        const { data: existingSets } = await supabase
+          .from('flashcard_sets')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('name', setName)
+          .limit(1);
+
+        if (existingSets && existingSets.length > 0) {
+          targetSetId = existingSets[0].id;
+        } else {
+          // Create a new set
+          const { data: newSet, error: setError } = await supabase
+            .from('flashcard_sets')
+            .insert({
+              name: setName,
+              description: `Flashcards generated from note: ${contentData.noteTitle}`,
+              subject: contentData.noteCategory,
+              user_id: user.id
+            })
+            .select()
+            .single();
+
+          if (setError) {
+            console.error("Error creating flashcard set:", setError);
+            throw setError;
+          }
+
+          targetSetId = newSet.id;
+          
+          // Update local sets state
+          setFlashcardSets(prev => [...prev, { ...newSet, card_count: 0 }]);
+        }
+      }
+
+      // Generate question/answer from content
+      const question = `What is the key point about "${contentData.content.slice(0, 50)}..."?`;
+      const answer = contentData.content;
+
+      // Create the flashcard
+      return await addFlashcard({
+        front_content: question,
+        back_content: answer,
+        set_id: targetSetId,
+        subject: contentData.noteCategory
+      });
+
+    } catch (error) {
+      console.error("Error creating flashcard from content:", error);
+      toast.error("Failed to create flashcard from content");
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   const addFlashcardToSet = async (flashcardId: string, setId: string, position?: number) => {
     try {
@@ -256,6 +332,7 @@ export function useFlashcardOperations(state?: FlashcardState) {
   
   return {
     addFlashcard,
+    createFlashcardFromContent,
     isLoading,
     fetchFlashcards,
     createFlashcard,
