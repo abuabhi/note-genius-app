@@ -1,72 +1,55 @@
 
-/* SIMPLIFIED: Enhanced styling for unified content rendering */
+/* SIMPLIFIED: Enhanced styling for unified content rendering - ALL CONTENT AS MARKDOWN */
 
-/* Plain text styling for original content */
-.unified-plain-text {
-  white-space: pre-wrap;
-  line-height: 1.75;
-  padding: 1rem 0;
-  color: hsl(var(--foreground));
-}
-
-/* Markdown content container */
+/* Markdown content container - applies to ALL content now */
 .unified-markdown-content {
   line-height: 1.75;
+  padding: 1rem 0;
 }
 
-/* FIXED: Force list visibility with stronger selectors */
-.unified-markdown-content .enhanced-list {
+/* FORCED: Super strong list visibility selectors */
+.unified-markdown-content ul,
+.unified-markdown-content ol {
   margin: 1.5rem 0 !important;
-  padding-left: 1.5rem !important;
+  padding-left: 2rem !important;
+  list-style: none !important;
 }
 
-.unified-markdown-content .enhanced-ul {
+.unified-markdown-content ul {
   list-style-type: disc !important;
 }
 
-.unified-markdown-content .enhanced-ol {
+.unified-markdown-content ol {
   list-style-type: decimal !important;
 }
 
-.unified-markdown-content .enhanced-list-item {
+.unified-markdown-content li {
   display: list-item !important;
-  margin: 0.5rem 0 !important;
-  padding-left: 0.25rem !important;
+  margin: 0.75rem 0 !important;
+  padding-left: 0.5rem !important;
+  list-style-position: outside !important;
 }
 
-.unified-markdown-content .enhanced-ul .enhanced-list-item::marker {
+.unified-markdown-content ul > li::before {
   content: "•" !important;
   color: hsl(var(--muted-foreground)) !important;
-  font-size: 1.1em !important;
   font-weight: bold !important;
+  width: 1em !important;
+  margin-left: -1em !important;
+  display: inline-block !important;
 }
 
-.unified-markdown-content .enhanced-ol .enhanced-list-item::marker {
+.unified-markdown-content ol > li::before {
+  counter-increment: list-counter !important;
+  content: counter(list-counter) "." !important;
   color: hsl(var(--muted-foreground)) !important;
   font-weight: 600 !important;
+  width: 1.5em !important;
+  margin-left: -1.5em !important;
+  display: inline-block !important;
 }
 
-/* FIXED: Override any conflicting prose styles */
-.unified-markdown-content.prose ul,
-.unified-markdown-content.prose ol {
-  margin: 1.5rem 0 !important;
-  padding-left: 1.5rem !important;
-}
-
-.unified-markdown-content.prose li {
-  display: list-item !important;
-  margin: 0.5rem 0 !important;
-}
-
-.unified-markdown-content.prose ul > li {
-  list-style-type: disc !important;
-}
-
-.unified-markdown-content.prose ol > li {
-  list-style-type: decimal !important;
-}
-
-/* Enhanced AI-enhanced content blocks */
+/* ENHANCED: Enhanced AI-enhanced content blocks */
 .ai-enhanced-block {
   background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--accent)/0.8) 100%);
   border-left: 4px solid hsl(var(--primary));
@@ -159,8 +142,36 @@
     left: 16px;
   }
   
-  .unified-markdown-content .enhanced-list {
+  .unified-markdown-content ul,
+  .unified-markdown-content ol {
     margin-left: 1rem !important;
     padding-left: 1.25rem !important;
   }
+}
+
+/* OVERRIDE: Force override any conflicting prose styles */
+.unified-markdown-content.prose *,
+.unified-markdown-content.prose-gray * {
+  max-width: none !important;
+}
+
+.unified-markdown-content.prose ul,
+.unified-markdown-content.prose ol,
+.unified-markdown-content.prose-gray ul,
+.unified-markdown-content.prose-gray ol {
+  margin: 1.5rem 0 !important;
+  padding-left: 2rem !important;
+  list-style-type: disc !important;
+}
+
+.unified-markdown-content.prose ol,
+.unified-markdown-content.prose-gray ol {
+  list-style-type: decimal !important;
+}
+
+.unified-markdown-content.prose li,
+.unified-markdown-content.prose-gray li {
+  display: list-item !important;
+  margin: 0.75rem 0 !important;
+  list-style-position: outside !important;
 }

@@ -41,13 +41,10 @@ export const EnhancementContent = ({
     contentPreview: content?.substring(0, 100)
   });
 
-  // SIMPLIFIED: Original content = plain text, everything else = markdown
-  const isMarkdown = enhancementType !== 'original';
-  
-  console.log("🎯 Simplified rendering decision:", {
+  // SIMPLIFIED: ALL CONTENT IS MARKDOWN - NO EXCEPTIONS
+  console.log("🎯 EVERYTHING IS MARKDOWN:", {
     enhancementType,
-    isMarkdown,
-    reasoning: enhancementType === 'original' ? 'Original content uses plain text' : 'AI-enhanced content uses markdown'
+    reasoning: 'All content types now use markdown rendering'
   });
 
   if (isLoading) {
@@ -96,14 +93,14 @@ export const EnhancementContent = ({
     );
   }
 
-  // SIMPLIFIED: Always use UnifiedContentRenderer with proper container padding
+  // SIMPLIFIED: Always use UnifiedContentRenderer with markdown=true for ALL content
   return (
     <div className="animate-fade-in px-6 py-4">
       <UnifiedContentRenderer 
         content={content} 
         fontSize={fontSize} 
         textAlign={textAlign}
-        isMarkdown={isMarkdown}
+        isMarkdown={true}
         className="text-foreground"
       />
     </div>

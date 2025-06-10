@@ -111,13 +111,14 @@ export const EnhancementDisplayPanel = ({
   const content = getContentForType(contentType);
   const title = getTitleForType(contentType);
 
-  console.log("🎯 EnhancementDisplayPanel rendering:", {
+  console.log("🎯 EnhancementDisplayPanel - ALL CONTENT AS MARKDOWN:", {
     contentType,
     enhancementType,
     hasContent: !!content,
     contentLength: content.length,
     isLoading,
-    isSummaryGenerating
+    isSummaryGenerating,
+    note: "All content types will be rendered as markdown"
   });
 
   return (
@@ -157,7 +158,7 @@ export const EnhancementDisplayPanel = ({
         </div>
       )}
       
-      {/* Show content when not loading */}
+      {/* Show content when not loading - ALL CONTENT TREATED AS MARKDOWN */}
       {!isLoading && !isSummaryGenerating && (
         <div className="flex-1 overflow-auto">
           <EnhancementContent
