@@ -135,6 +135,10 @@ export const OneNoteConnection = ({ onConnected }: OneNoteConnectionProps) => {
     toast.success(`Importing ${selectedPages.length} selected pages...`);
     // The actual import logic is handled by the parent component
   };
+
+  const handleConnect = () => {
+    connect();
+  };
   
   return (
     <div className="space-y-4">
@@ -222,7 +226,7 @@ export const OneNoteConnection = ({ onConnected }: OneNoteConnectionProps) => {
           </>
         ) : (
           <Button 
-            onClick={connect} 
+            onClick={handleConnect} 
             disabled={loading}
           >
             {loading ? (
