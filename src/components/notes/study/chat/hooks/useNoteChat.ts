@@ -9,7 +9,10 @@ export const useNoteChat = (note: Note) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const sendMessage = useCallback(async (message: string): Promise<ChatUIMessage | null> => {
+  const sendMessage = useCallback(async (
+    message: string, 
+    previousMessages: ChatUIMessage[] = []
+  ): Promise<ChatUIMessage | null> => {
     if (!message.trim()) return null;
 
     setIsLoading(true);
@@ -29,12 +32,20 @@ export const useNoteChat = (note: Note) => {
         }
       };
 
-      // Call the AI service with note context
+      // Prepare conversation history for better context
+      const conversationHistory = previousMessages.slice(-6).map(msg => ({
+        role: msg.type === 'user' ? 'user' : 'assistant',
+        content: msg.content
+      }));
+
+      // Call the enhanced AI service with note context and conversation history
       const { data, error: aiError } = await supabase.functions.invoke('note-chat', {
         body: {
           message,
           noteContext,
-          noteId: note.id
+          noteId: note.id,
+          conversationHistory,
+          enhancedFeatures: true
         }
       });
 
@@ -43,6 +54,8 @@ export const useNoteChat = (note: Note) => {
       }
 
       const aiResponse = data?.response || 'I apologize, but I cannot provide a response at the moment.';
+      const followUpQuestions = data?.followUpQuestions || [];
+      const suggestions = data?.suggestions || [];
 
       // Save the conversation to database
       const { data: savedMessage, error: saveError } = await supabase
@@ -61,12 +74,14 @@ export const useNoteChat = (note: Note) => {
         // Don't throw here, still return the AI response
       }
 
-      // Return the AI response as a UI message
+      // Return the AI response as a UI message with enhanced features
       return {
         id: savedMessage?.id || `temp-${Date.now()}`,
         type: 'ai',
         content: aiResponse,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        followUpQuestions,
+        suggestions
       };
 
     } catch (err) {

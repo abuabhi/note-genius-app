@@ -13,6 +13,8 @@ export interface ChatUIMessage {
   type: 'user' | 'ai';
   content: string;
   timestamp: string;
+  suggestions?: string[];
+  followUpQuestions?: string[];
 }
 
 export interface NoteChatState {
@@ -20,4 +22,18 @@ export interface NoteChatState {
   isLoading: boolean;
   isOpen: boolean;
   error: string | null;
+}
+
+export interface SmartSuggestion {
+  id: string;
+  text: string;
+  type: 'question' | 'action' | 'summary';
+  icon?: string;
+}
+
+export interface ChatContext {
+  noteTitle: string;
+  noteContent: string;
+  subject: string;
+  previousMessages: ChatUIMessage[];
 }

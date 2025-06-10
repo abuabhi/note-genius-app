@@ -3,8 +3,10 @@ import { useState, useCallback } from 'react';
 import { Note } from '@/types/note';
 import { NoteChatMessages } from './NoteChatMessages';
 import { NoteChatInput } from './NoteChatInput';
+import { SmartSuggestions } from './components/SmartSuggestions';
 import { useNoteChat } from './hooks/useNoteChat';
 import { useNoteChatHistory } from './hooks/useNoteChatHistory';
+import { useSmartSuggestions } from './hooks/useSmartSuggestions';
 import { cn } from '@/lib/utils';
 import { X, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,17 +20,26 @@ interface NoteChatSidebarProps {
 export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps) => {
   const { sendMessage, isLoading, error } = useNoteChat(note);
   const { messages, addUserMessage, addMessage } = useNoteChatHistory(note.id);
+  const { suggestions } = useSmartSuggestions(note);
 
   const handleSendMessage = useCallback(async (message: string) => {
     // Add user message immediately
     addUserMessage(message);
 
-    // Send to AI and get response
-    const aiResponse = await sendMessage(message);
+    // Send to AI and get response with conversation context
+    const aiResponse = await sendMessage(message, messages);
     if (aiResponse) {
       addMessage(aiResponse);
     }
-  }, [sendMessage, addUserMessage, addMessage]);
+  }, [sendMessage, addUserMessage, addMessage, messages]);
+
+  const handleSelectSuggestion = useCallback((suggestion: string) => {
+    handleSendMessage(suggestion);
+  }, [handleSendMessage]);
+
+  const handleSelectFollowUp = useCallback((question: string) => {
+    handleSendMessage(question);
+  }, [handleSendMessage]);
 
   return (
     <>
@@ -53,7 +64,7 @@ export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps)
           <div className="flex items-center gap-2">
             <MessageCircle className="h-5 w-5 text-mint-600" />
             <div>
-              <h3 className="font-medium text-gray-900">Note Chat</h3>
+              <h3 className="font-medium text-gray-900">AI Chat Assistant</h3>
               <p className="text-xs text-gray-600 truncate max-w-48">
                 {note.title}
               </p>
@@ -76,8 +87,23 @@ export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps)
           </div>
         )}
 
+        {/* Smart Suggestions - only show when no messages */}
+        {messages.length === 0 && (
+          <div className="p-4 border-b">
+            <SmartSuggestions 
+              suggestions={suggestions}
+              onSelectSuggestion={handleSelectSuggestion}
+              isLoading={isLoading}
+            />
+          </div>
+        )}
+
         {/* Messages */}
-        <NoteChatMessages messages={messages} isLoading={isLoading} />
+        <NoteChatMessages 
+          messages={messages} 
+          isLoading={isLoading}
+          onSelectFollowUp={handleSelectFollowUp}
+        />
 
         {/* Input */}
         <NoteChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />

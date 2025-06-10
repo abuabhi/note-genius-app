@@ -12,15 +12,15 @@ serve(async (req) => {
   }
 
   try {
-    const { message, noteContext, noteId } = await req.json()
+    const { message, noteContext, noteId, conversationHistory = [], enhancedFeatures = false } = await req.json()
 
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY')
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured')
     }
 
-    // Create system prompt with note context
-    const systemPrompt = `You are a helpful AI assistant that can only answer questions about the specific note provided below. 
+    // Create enhanced system prompt with note context
+    const systemPrompt = `You are an intelligent AI assistant specialized in helping students learn from their notes. 
 
 Note Details:
 - Title: ${noteContext.title}
@@ -33,14 +33,60 @@ Enhanced Content (if available):
 - Improved Content: ${noteContext.enhancedContent?.improvedContent || 'Not available'}
 - Enriched Content: ${noteContext.enhancedContent?.enrichedContent || 'Not available'}
 
-IMPORTANT RULES:
-1. Only answer questions related to the content of this specific note
-2. If asked about topics not covered in the note, politely redirect to the note content
-3. Be helpful and educational in your responses
-4. Keep responses concise but informative
-5. If the note content is limited, acknowledge this limitation
+IMPORTANT CAPABILITIES:
+1. Answer questions about the note content with detailed explanations
+2. Provide summaries, key points, and study guides
+3. Generate practice questions and quizzes
+4. Explain complex concepts in simpler terms
+5. Create mnemonics and memory aids
+6. Suggest study strategies based on the content
+7. Provide follow-up questions to deepen understanding
 
-If someone asks about something not in the note, respond with something like: "I can only help with questions about the content in this note. Based on what's here, I can discuss [mention relevant topics from the note]."`;
+RESPONSE GUIDELINES:
+- Be educational and encouraging
+- Use examples and analogies when helpful
+- Break down complex topics into digestible parts
+- Suggest related concepts or areas to explore
+- Always relate answers back to the note content
+- Be concise but comprehensive
+
+If asked about topics not in the note, politely redirect to the note content while offering to help with what's available.`;
+
+    // Prepare messages array with conversation history
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...conversationHistory,
+      { role: 'user', content: message }
+    ];
+
+    // Enhanced AI call with additional features
+    const aiBody: any = {
+      model: 'gpt-4.1-2025-04-14',
+      messages,
+      max_tokens: 800,
+      temperature: 0.7,
+    };
+
+    // For enhanced features, use function calling to generate follow-up questions
+    if (enhancedFeatures) {
+      aiBody.functions = [
+        {
+          name: 'generate_follow_up_questions',
+          description: 'Generate relevant follow-up questions based on the response',
+          parameters: {
+            type: 'object',
+            properties: {
+              follow_up_questions: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Array of 2-3 relevant follow-up questions'
+              }
+            }
+          }
+        }
+      ];
+      aiBody.function_call = 'auto';
+    }
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -48,15 +94,7 @@ If someone asks about something not in the note, respond with something like: "I
         'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: message }
-        ],
-        max_tokens: 500,
-        temperature: 0.7,
-      }),
+      body: JSON.stringify(aiBody),
     })
 
     if (!response.ok) {
@@ -65,9 +103,41 @@ If someone asks about something not in the note, respond with something like: "I
 
     const data = await response.json()
     const aiResponse = data.choices[0]?.message?.content || 'I apologize, but I cannot provide a response at the moment.'
+    
+    let followUpQuestions: string[] = [];
+    
+    // Extract follow-up questions from function call if available
+    if (enhancedFeatures && data.choices[0]?.message?.function_call) {
+      try {
+        const functionArgs = JSON.parse(data.choices[0].message.function_call.arguments);
+        followUpQuestions = functionArgs.follow_up_questions || [];
+      } catch (e) {
+        console.log('Could not parse function call arguments');
+      }
+    }
+
+    // Generate default follow-up questions if none were generated
+    if (enhancedFeatures && followUpQuestions.length === 0) {
+      const contentType = message.toLowerCase();
+      if (contentType.includes('what') || contentType.includes('explain')) {
+        followUpQuestions = ['Can you give me an example?', 'How does this relate to other concepts?'];
+      } else if (contentType.includes('how')) {
+        followUpQuestions = ['What are the key steps?', 'Are there any common mistakes?'];
+      } else if (contentType.includes('why')) {
+        followUpQuestions = ['What are the implications?', 'How can I remember this?'];
+      } else {
+        followUpQuestions = ['Can you elaborate on this?', 'What should I study next?'];
+      }
+    }
+
+    const responseData: any = { response: aiResponse };
+    
+    if (enhancedFeatures) {
+      responseData.followUpQuestions = followUpQuestions.slice(0, 2); // Limit to 2 questions
+    }
 
     return new Response(
-      JSON.stringify({ response: aiResponse }),
+      JSON.stringify(responseData),
       { 
         headers: { 
           ...corsHeaders, 
