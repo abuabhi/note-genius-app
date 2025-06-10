@@ -109,7 +109,7 @@ export const NuclearContentRenderer = ({
       }
       
       return <strong className="nuclear-strong" {...props}>{children}</strong>;
-    ),
+    },
     em: ({ children, ...props }: any) => (
       <em className="nuclear-em" {...props}>{children}</em>
     ),
