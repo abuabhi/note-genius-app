@@ -3,7 +3,8 @@ export type EnhancementFunction =
   | 'summarize' 
   | 'extract-key-points' 
   | 'improve-clarity' 
-  | 'convert-to-markdown';
+  | 'convert-to-markdown'
+  | 'enrich-note';
 
 export type TokenUsage = {
   promptTokens: number;

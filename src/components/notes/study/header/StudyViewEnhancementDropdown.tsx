@@ -98,6 +98,19 @@ export const StudyViewEnhancementDropdown = ({
             <span className="text-xs text-gray-500 leading-relaxed">Transform your original content into properly formatted markdown with headers, lists, and styling</span>
           </div>
         </DropdownMenuItem>
+
+        <DropdownMenuSeparator className="my-1 border-t border-gray-100" />
+        
+        <DropdownMenuItem 
+          onClick={() => onEnhancementSelect('enrich-note')}
+          className="flex items-start px-4 py-3 text-sm cursor-pointer hover:bg-mint-50 focus:bg-mint-50"
+        >
+          <Sparkles className="mr-3 h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
+          <div className="flex flex-col">
+            <span className="font-medium text-gray-900 mb-1">🔥 Enrich My Note</span>
+            <span className="text-xs text-gray-500 leading-relaxed">Add 50-70% more detailed content, examples, and context while preserving original information</span>
+          </div>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

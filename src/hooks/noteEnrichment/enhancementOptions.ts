@@ -44,6 +44,16 @@ export const enhancementOptions: EnhancementOption[] = [
     prompt: 'Please convert this note content to well-structured markdown format with appropriate headers, lists, and formatting.',
     outputType: 'markdown',
     replaceContent: false
+  },
+  {
+    id: 'enrich-note',
+    value: 'enrich-note',
+    title: 'Enrich My Note',
+    description: 'Add 50-70% more detailed content and examples',
+    icon: '🔥',
+    prompt: 'Please enrich this note by adding 50-70% more content including detailed explanations, examples, context, and related information. Mark all new content you add with **[ENRICHED]** at the beginning and **[/ENRICHED]** at the end of each new section. Preserve the original content exactly as is, and seamlessly integrate the new enriched content.',
+    outputType: 'enriched',
+    replaceContent: false
   }
 ];
 

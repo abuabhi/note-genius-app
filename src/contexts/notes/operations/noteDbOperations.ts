@@ -118,7 +118,8 @@ export const updateNoteInDatabase = async (id: string, updatedNote: Partial<Note
       summary: updatedNote.summary?.substring(0, 50) || 'none',
       key_points: updatedNote.key_points?.substring(0, 50) || 'none',
       improved_content: updatedNote.improved_content?.substring(0, 50) || 'none',
-      markdown_content: updatedNote.markdown_content?.substring(0, 50) || 'none'
+      markdown_content: updatedNote.markdown_content?.substring(0, 50) || 'none',
+      enriched_content: updatedNote.enriched_content?.substring(0, 50) || 'none'
     }
   });
 
@@ -148,6 +149,11 @@ export const updateNoteInDatabase = async (id: string, updatedNote: Partial<Note
   if (updatedNote.improved_content !== undefined) noteUpdateData.improved_content = updatedNote.improved_content;
   if (updatedNote.improved_content_generated_at !== undefined) noteUpdateData.improved_content_generated_at = updatedNote.improved_content_generated_at;
 
+  // NEW: Enriched content fields
+  if (updatedNote.enriched_content !== undefined) noteUpdateData.enriched_content = updatedNote.enriched_content;
+  if (updatedNote.enriched_content_generated_at !== undefined) noteUpdateData.enriched_content_generated_at = updatedNote.enriched_content_generated_at;
+  if (updatedNote.enriched_status !== undefined) noteUpdateData.enriched_status = updatedNote.enriched_status;
+
   console.log('📝 Database update payload:', {
     id,
     updateFields: Object.keys(noteUpdateData),
@@ -155,7 +161,8 @@ export const updateNoteInDatabase = async (id: string, updatedNote: Partial<Note
       summary: noteUpdateData.summary?.substring(0, 50) || 'none',
       key_points: noteUpdateData.key_points?.substring(0, 50) || 'none',
       improved_content: noteUpdateData.improved_content?.substring(0, 50) || 'none',
-      markdown_content: noteUpdateData.markdown_content?.substring(0, 50) || 'none'
+      markdown_content: noteUpdateData.markdown_content?.substring(0, 50) || 'none',
+      enriched_content: noteUpdateData.enriched_content?.substring(0, 50) || 'none'
     }
   });
 

@@ -4,14 +4,16 @@ export type EnhancementFunction =
   | 'extract-key-points' 
   | 'create-flashcards' 
   | 'improve-clarity' 
-  | 'convert-to-markdown';
+  | 'convert-to-markdown'
+  | 'enrich-note';
 
 export type EnhancementType = 
   | 'summary'
   | 'keyPoints'
   | 'flashcards'
   | 'improved'
-  | 'markdown';
+  | 'markdown'
+  | 'enriched';
 
 export interface EnhancementResult {
   success: boolean;

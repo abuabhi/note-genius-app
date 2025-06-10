@@ -36,27 +36,38 @@ export const EnhancementDisplayPanel = ({
   // Check if summary is in generating/pending state
   const isSummaryGenerating = contentType === 'summary' && 
     (note.summary_status === 'generating' || note.summary_status === 'pending');
+
+  // Check if enriched content is in generating/pending state
+  const isEnrichedGenerating = contentType === 'enriched' && 
+    (note.enriched_status === 'generating' || note.enriched_status === 'pending');
   
   // Handle cancelling stuck generation
   const handleCancelGeneration = async () => {
-    if (contentType !== 'summary') return;
+    if (contentType !== 'summary' && contentType !== 'enriched') return;
     
     setIsCancelling(true);
     
     try {
+      const updateData: any = {};
+      
+      if (contentType === 'summary') {
+        updateData.summary_status = 'completed';
+        updateData.summary = '';
+      } else if (contentType === 'enriched') {
+        updateData.enriched_status = 'completed';
+        updateData.enriched_content = '';
+      }
+
       const { error } = await supabase
         .from('notes')
-        .update({ 
-          summary_status: 'completed',
-          summary: ''
-        })
+        .update(updateData)
         .eq('id', note.id);
 
       if (error) {
         console.error("❌ Failed to cancel generation:", error);
         toast.error("Failed to cancel generation");
       } else {
-        console.log("✅ Cancelled summary generation");
+        console.log("✅ Cancelled generation");
         toast.success("Generation cancelled");
         
         if (onCancelEnhancement) {
@@ -78,6 +89,7 @@ export const EnhancementDisplayPanel = ({
       'keyPoints': 'extract-key-points', 
       'improved': 'improve-clarity',
       'markdown': 'convert-to-markdown',
+      'enriched': 'enrich-note',
       'original': 'original'
     };
     
@@ -99,6 +111,9 @@ export const EnhancementDisplayPanel = ({
         break;
       case 'markdown': 
         content = note.markdown_content || '';
+        break;
+      case 'enriched': 
+        content = note.enriched_content || '';
         break;
       case 'original': 
         content = note.content || note.description || '';
@@ -123,6 +138,7 @@ export const EnhancementDisplayPanel = ({
       'keyPoints': 'Key Points',
       'improved': 'Improved Clarity',
       'markdown': 'Markdown',
+      'enriched': 'Enriched Note',
       'original': 'Original Content'
     };
     
@@ -140,6 +156,7 @@ export const EnhancementDisplayPanel = ({
     contentLength: content.length,
     isLoading,
     isSummaryGenerating,
+    isEnrichedGenerating,
     title,
     contentPreview: content.substring(0, 100)
   });
@@ -147,12 +164,12 @@ export const EnhancementDisplayPanel = ({
   return (
     <div className={`flex flex-col h-full ${className}`}>
       {/* Show loading state when processing */}
-      {(isLoading || isSummaryGenerating) && (
+      {(isLoading || isSummaryGenerating || isEnrichedGenerating) && (
         <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-4">
           <LoadingAnimations enhancementType={enhancementType} />
           
           {/* Cancel button for stuck processing */}
-          {isSummaryGenerating && (
+          {(isSummaryGenerating || isEnrichedGenerating) && (
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -182,7 +199,7 @@ export const EnhancementDisplayPanel = ({
       )}
       
       {/* Show content when not loading - ALL CONTENT GOES THROUGH UNIFIED PROCESSING */}
-      {!isLoading && !isSummaryGenerating && (
+      {!isLoading && !isSummaryGenerating && !isEnrichedGenerating && (
         <div className="flex-1 overflow-auto">
           <EnhancementContent
             content={content}

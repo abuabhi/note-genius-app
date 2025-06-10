@@ -1,9 +1,9 @@
 
-import { CheckCircle, AlertCircle, Loader2, FileText, List, Sparkles, Code, Target } from "lucide-react";
+import { CheckCircle, AlertCircle, Loader2, FileText, List, Sparkles, Code, Target, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Note } from "@/types/note";
 
-export type EnhancementContentType = 'original' | 'summary' | 'keyPoints' | 'markdown' | 'improved';
+export type EnhancementContentType = 'original' | 'summary' | 'keyPoints' | 'markdown' | 'improved' | 'enriched';
 
 interface EnhancementOption {
   id: EnhancementContentType;
@@ -52,11 +52,21 @@ export const EnhancementSelector = ({
     typeof note.improved_content === 'string' && 
     note.improved_content.trim().length > 20
   );
+
+  const hasEnrichedContent = Boolean(
+    note.enriched_content && 
+    typeof note.enriched_content === 'string' && 
+    note.enriched_content.trim().length > 20
+  );
   
   // Check enhancement statuses - only show generating for summary if it's actually in progress
   const summaryStatus = note.summary_status || "completed";
   const isGeneratingSummary = summaryStatus === 'generating' || summaryStatus === 'pending';
   const hasSummaryError = summaryStatus === 'failed';
+
+  const enrichedStatus = note.enriched_status || "completed";
+  const isGeneratingEnriched = enrichedStatus === 'generating' || enrichedStatus === 'pending';
+  const hasEnrichedError = enrichedStatus === 'failed';
 
   console.log("🔍 EnhancementSelector - Content availability check:", {
     noteId: note.id,
@@ -64,10 +74,12 @@ export const EnhancementSelector = ({
       summary: hasSummary,
       keyPoints: hasKeyPoints,
       markdown: hasMarkdown,
-      improvedClarity: hasImprovedClarity
+      improvedClarity: hasImprovedClarity,
+      enriched: hasEnrichedContent
     },
     summaryStatus,
-    isGenerating: isGeneratingSummary,
+    enrichedStatus,
+    isGenerating: isGeneratingSummary || isGeneratingEnriched,
     activeTab: activeContentType
   });
 
@@ -109,6 +121,15 @@ export const EnhancementSelector = ({
       icon: Sparkles,
       description: 'Enhanced notes version',
       hasContent: hasImprovedClarity
+    },
+    {
+      id: 'enriched',
+      label: 'Enriched Note',
+      icon: Flame,
+      description: '50-70% more detailed content',
+      hasContent: hasEnrichedContent,
+      isGenerating: isGeneratingEnriched && !hasEnrichedContent,
+      hasError: hasEnrichedError
     }
   ];
 

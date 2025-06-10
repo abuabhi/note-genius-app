@@ -13,6 +13,7 @@ export interface ProcessedContent {
     hasLists: boolean;
     hasHeaders: boolean;
     hasAIBlocks: boolean;
+    hasEnrichedContent: boolean;
     wordCount: number;
     wasHtmlCleaned: boolean;
   };
@@ -26,13 +27,14 @@ export const processContentForRendering = (rawContent: string): ProcessedContent
     return {
       content: '',
       type: 'markdown',
-      metadata: { hasLists: false, hasHeaders: false, hasAIBlocks: false, wordCount: 0, wasHtmlCleaned: false }
+      metadata: { hasLists: false, hasHeaders: false, hasAIBlocks: false, hasEnrichedContent: false, wordCount: 0, wasHtmlCleaned: false }
     };
   }
 
   console.log("🚀 UNIFIED PROCESSOR: Processing content:", {
     originalLength: rawContent.length,
     hasTipTapMarkers: detectTipTapContent(rawContent),
+    hasEnrichedMarkers: rawContent.includes('[ENRICHED]'),
     preview: rawContent.substring(0, 200)
   });
 
@@ -65,7 +67,25 @@ export const processContentForRendering = (rawContent: string): ProcessedContent
       .replace(/<\/div>/g, '\n\n---\n\n');
   }
 
-  // Step 3: Clean up any remaining HTML entities and artifacts
+  // Step 3: Process ENRICHED content markers with better formatting
+  const hasEnrichedContent = processed.includes('[ENRICHED]');
+  if (hasEnrichedContent) {
+    console.log("🔥 PROCESSING ENRICHED CONTENT MARKERS");
+    
+    // Replace enriched markers with styled markdown
+    processed = processed
+      .replace(/\*\*\[ENRICHED\]\*\*/g, '\n\n**[ENRICHED]**\n\n')
+      .replace(/\*\*\[\/ENRICHED\]\*\*/g, '\n\n**[/ENRICHED]**\n\n')
+      .replace(/\[ENRICHED\]/g, '\n\n**[ENRICHED]**\n\n')
+      .replace(/\[\/ENRICHED\]/g, '\n\n**[/ENRICHED]**\n\n');
+    
+    console.log("✅ Enriched markers processed:", {
+      hasMarkers: processed.includes('[ENRICHED]'),
+      processedPreview: processed.substring(0, 300)
+    });
+  }
+
+  // Step 4: Clean up any remaining HTML entities and artifacts
   processed = processed
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
@@ -76,10 +96,10 @@ export const processContentForRendering = (rawContent: string): ProcessedContent
     .replace(/&mdash;/g, '—')
     .replace(/&ndash;/g, '–');
 
-  // Step 4: Clean up any remaining HTML tags (AFTER conversion)
+  // Step 5: Clean up any remaining HTML tags (AFTER conversion)
   processed = processed.replace(/<[^>]*>/g, '');
 
-  // Step 5: Normalize whitespace and line breaks
+  // Step 6: Normalize whitespace and line breaks
   processed = processed
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n')
@@ -88,15 +108,16 @@ export const processContentForRendering = (rawContent: string): ProcessedContent
     .replace(/^[ \t]+|[ \t]+$/gm, '')
     .trim();
 
-  // Step 6: Ensure proper markdown structure
+  // Step 7: Ensure proper markdown structure
   processed = ensureMarkdownStructure(processed);
 
-  const metadata = analyzeContent(processed, wasHtmlCleaned);
+  const metadata = analyzeContent(processed, wasHtmlCleaned, hasEnrichedContent);
 
   console.log("✅ UNIFIED PROCESSOR: Content processed:", {
     finalLength: processed.length,
     metadata,
     hasAIBlocks,
+    hasEnrichedContent,
     wasHtmlCleaned,
     finalPreview: processed.substring(0, 200)
   });
@@ -131,11 +152,12 @@ const ensureMarkdownStructure = (content: string): string => {
 /**
  * Analyze content for metadata
  */
-const analyzeContent = (content: string, wasHtmlCleaned: boolean) => {
+const analyzeContent = (content: string, wasHtmlCleaned: boolean, hasEnrichedContent: boolean) => {
   return {
     hasLists: /^[-*+]\s+|\d+\.\s+/m.test(content),
     hasHeaders: /^#{1,6}\s+/m.test(content),
     hasAIBlocks: content.includes('**✨ AI Enhanced Content:**'),
+    hasEnrichedContent,
     wordCount: content.split(/\s+/).filter(word => word.length > 0).length,
     wasHtmlCleaned
   };

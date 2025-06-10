@@ -1,266 +1,125 @@
 
-/* NUCLEAR REWRITE: Bulletproof Content Rendering CSS */
-/* Maximum specificity to override any conflicting styles */
+/* Nuclear Content Renderer Styles - Maximum Specificity */
 
-/* NUCLEAR: Container styles with forced properties */
 .nuclear-content-container {
-  width: 100% !important;
-  max-width: 100% !important;
-  overflow-x: hidden !important;
-  word-wrap: break-word !important;
-  overflow-wrap: break-word !important;
-  hyphens: auto !important;
-  line-height: 1.7 !important;
-  color: hsl(var(--foreground)) !important;
+  @apply leading-relaxed;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
-/* NUCLEAR: Reset all inherited styles */
-.nuclear-content-container * {
-  max-width: 100% !important;
-  box-sizing: border-box !important;
-  word-wrap: break-word !important;
-  overflow-wrap: break-word !important;
+/* Headers */
+.nuclear-header {
+  @apply font-bold mb-4 mt-6 text-gray-900;
+  line-height: 1.25 !important;
 }
 
-/* NUCLEAR: Paragraph styles with forced spacing */
-.nuclear-content-container p {
-  margin: 0 0 1.25rem 0 !important;
-  padding: 0 !important;
-  line-height: 1.7 !important;
-  color: hsl(var(--foreground)) !important;
-  word-wrap: break-word !important;
-  overflow-wrap: break-word !important;
-  white-space: pre-wrap !important;
+.nuclear-h1 {
+  @apply text-3xl border-b border-gray-200 pb-2;
 }
 
-.nuclear-content-container p:last-child {
-  margin-bottom: 0 !important;
+.nuclear-h2 {
+  @apply text-2xl;
 }
 
-/* NUCLEAR: Header styles with forced spacing and visibility */
-.nuclear-content-container h1,
-.nuclear-content-container h2,
-.nuclear-content-container h3,
-.nuclear-content-container h4,
-.nuclear-content-container h5,
-.nuclear-content-container h6 {
-  margin: 2rem 0 1rem 0 !important;
-  padding: 0 !important;
-  font-weight: 600 !important;
-  color: hsl(var(--foreground)) !important;
-  line-height: 1.4 !important;
-  word-wrap: break-word !important;
-  overflow-wrap: break-word !important;
+.nuclear-h3 {
+  @apply text-xl;
 }
 
-.nuclear-content-container h1:first-child,
-.nuclear-content-container h2:first-child,
-.nuclear-content-container h3:first-child,
-.nuclear-content-container h4:first-child,
-.nuclear-content-container h5:first-child,
-.nuclear-content-container h6:first-child {
-  margin-top: 0 !important;
+.nuclear-h4 {
+  @apply text-lg;
 }
 
-.nuclear-content-container h1 { font-size: 2rem !important; border-bottom: 2px solid hsl(var(--border)) !important; padding-bottom: 0.5rem !important; }
-.nuclear-content-container h2 { font-size: 1.5rem !important; }
-.nuclear-content-container h3 { font-size: 1.25rem !important; }
-
-/* NUCLEAR: List styles - DISABLE ALL NATIVE STYLES */
-.nuclear-content-container ul,
-.nuclear-content-container ol {
-  margin: 1.5rem 0 !important;
-  padding: 0 0 0 2rem !important;
-  list-style: none !important;
-  list-style-type: none !important;
-  display: block !important;
-  position: relative !important;
+.nuclear-h5 {
+  @apply text-base;
 }
 
-/* NUCLEAR: List item styles - DISABLE NATIVE, USE ONLY CUSTOM */
-.nuclear-content-container li {
-  display: block !important;
-  list-style: none !important;
-  list-style-type: none !important;
-  margin: 0.75rem 0 !important;
-  padding: 0 0 0 0.5rem !important;
-  position: relative !important;
-  word-wrap: break-word !important;
-  overflow-wrap: break-word !important;
-  line-height: 1.6 !important;
-  color: hsl(var(--foreground)) !important;
+.nuclear-h6 {
+  @apply text-sm;
 }
 
-/* NUCLEAR: Force ONLY custom bullet points with pseudo-elements */
-.nuclear-content-container ul > li {
-  list-style: none !important;
-  list-style-type: none !important;
-  display: block !important;
+/* Paragraphs */
+.nuclear-paragraph {
+  @apply mb-4 text-gray-700 leading-relaxed;
+  margin-bottom: 1rem !important;
 }
 
-.nuclear-content-container ul > li::before {
-  content: "•" !important;
-  position: absolute !important;
-  left: -1.5rem !important;
-  top: 0 !important;
-  color: hsl(var(--primary)) !important;
-  font-weight: bold !important;
-  font-size: 1.2em !important;
-  line-height: 1.6 !important;
+/* Lists */
+.nuclear-list {
+  @apply mb-4 text-gray-700;
+  margin-left: 1.5rem !important;
 }
 
-.nuclear-content-container ol > li {
-  list-style: none !important;
-  list-style-type: none !important;
-  display: block !important;
-  counter-increment: list-counter !important;
+.nuclear-ul {
+  list-style-type: disc !important;
 }
 
-.nuclear-content-container ol {
-  counter-reset: list-counter !important;
+.nuclear-ol {
+  list-style-type: decimal !important;
 }
 
-.nuclear-content-container ol > li::before {
-  content: counter(list-counter) "." !important;
-  position: absolute !important;
-  left: -2rem !important;
-  top: 0 !important;
-  color: hsl(var(--primary)) !important;
-  font-weight: 600 !important;
-  min-width: 1.5rem !important;
-  text-align: right !important;
-  line-height: 1.6 !important;
+.nuclear-list-item {
+  @apply mb-2;
+  display: list-item !important;
+  margin-bottom: 0.5rem !important;
 }
 
-/* NUCLEAR: Nested lists */
-.nuclear-content-container ul ul,
-.nuclear-content-container ol ol,
-.nuclear-content-container ul ol,
-.nuclear-content-container ol ul {
-  margin: 0.5rem 0 !important;
-  padding-left: 1.5rem !important;
+/* Text formatting */
+.nuclear-strong {
+  @apply font-bold text-gray-900;
 }
 
-/* NUCLEAR: Text formatting */
-.nuclear-content-container strong {
-  font-weight: 600 !important;
-  color: hsl(var(--foreground)) !important;
+.nuclear-em {
+  @apply italic text-gray-800;
 }
 
-.nuclear-content-container em {
-  font-style: italic !important;
-  color: hsl(var(--foreground)) !important;
+/* Code blocks */
+.nuclear-code-inline {
+  @apply bg-gray-100 px-1 py-0.5 rounded text-sm font-mono text-gray-800;
 }
 
-/* NUCLEAR: Code styles */
-.nuclear-content-container code {
-  background: hsl(var(--muted)) !important;
-  padding: 0.125rem 0.25rem !important;
-  border-radius: 0.25rem !important;
-  font-family: ui-monospace, SFMono-Regular, monospace !important;
-  font-size: 0.875em !important;
-  color: hsl(var(--foreground)) !important;
+.nuclear-code-block {
+  @apply bg-gray-100 p-4 rounded-lg mb-4 overflow-x-auto;
 }
 
-.nuclear-content-container pre {
-  background: hsl(var(--muted)) !important;
-  padding: 1rem !important;
-  border-radius: 0.5rem !important;
-  overflow-x: auto !important;
-  margin: 1.5rem 0 !important;
+.nuclear-code {
+  @apply font-mono text-sm text-gray-800;
 }
 
-.nuclear-content-container pre code {
-  background: none !important;
-  padding: 0 !important;
+/* AI Enhanced content blocks */
+.nuclear-ai-block {
+  @apply bg-mint-50 border-l-4 border-mint-500 p-4 mb-4 rounded-r-lg;
 }
 
-/* NUCLEAR: AI Enhanced blocks with maximum visibility */
-.nuclear-content-container .ai-enhanced-block {
-  background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--accent)/0.8) 100%) !important;
-  border-left: 4px solid hsl(var(--primary)) !important;
-  padding: 1.5rem !important;
-  margin: 2rem 0 !important;
-  border-radius: 0.75rem !important;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
-  position: relative !important;
-  backdrop-filter: blur(8px) !important;
-  word-wrap: break-word !important;
-  overflow-wrap: break-word !important;
+/* Blockquotes */
+.nuclear-blockquote {
+  @apply border-l-4 border-gray-300 pl-4 my-4 italic text-gray-600;
 }
 
-.nuclear-content-container .ai-enhanced-block::before {
-  content: "✨ AI Enhanced" !important;
-  position: absolute !important;
-  top: -12px !important;
-  left: 20px !important;
-  background: hsl(var(--primary)) !important;
-  color: hsl(var(--primary-foreground)) !important;
-  font-size: 0.75rem !important;
-  font-weight: 600 !important;
-  padding: 6px 12px !important;
-  border-radius: 8px !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.05em !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important;
-  z-index: 1 !important;
+/* Divs */
+.nuclear-div {
+  @apply mb-2;
 }
 
-/* NUCLEAR: Responsive adjustments */
-@media (max-width: 640px) {
-  .nuclear-content-container {
-    font-size: 0.875rem !important;
-  }
-  
-  .nuclear-content-container ul,
-  .nuclear-content-container ol {
-    padding-left: 1.5rem !important;
-  }
-  
-  .nuclear-content-container .ai-enhanced-block {
-    padding: 1.25rem !important;
-    margin: 1.5rem 0 !important;
-  }
-  
-  .nuclear-content-container .ai-enhanced-block::before {
-    font-size: 0.7rem !important;
-    padding: 4px 8px !important;
-    top: -10px !important;
-    left: 16px !important;
-  }
+/* Enriched content highlighting */
+.enriched-marker {
+  @apply inline-block px-2 py-1 rounded-md text-xs font-semibold;
 }
 
-/* NUCLEAR: Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .nuclear-content-container .ai-enhanced-block {
-    background: linear-gradient(135deg, hsl(var(--accent)/0.3) 0%, hsl(var(--accent)/0.2) 100%) !important;
-  }
+.enriched-start {
+  @apply bg-orange-100 text-orange-800 border border-orange-200 mb-2;
 }
 
-/* NUCLEAR: Override any conflicting prose styles */
-.nuclear-content-container.prose,
-.nuclear-content-container.prose-gray,
-.nuclear-content-container.prose-sm,
-.nuclear-content-container.prose-lg {
-  max-width: none !important;
+.enriched-end {
+  @apply bg-orange-50 text-orange-600;
 }
 
-.nuclear-content-container.prose *,
-.nuclear-content-container.prose-gray * {
-  max-width: none !important;
+/* Global enriched content styling */
+.nuclear-content-container :global(.enriched-content) {
+  @apply bg-gradient-to-r from-orange-50 to-yellow-50 border-l-4 border-orange-400 pl-4 py-2 my-3 rounded-r-lg;
+  position: relative;
 }
 
-/* NUCLEAR: Ensure no text wrapping issues */
-.nuclear-content-container {
-  overflow-wrap: break-word !important;
-  word-break: break-word !important;
-  hyphens: auto !important;
-}
-
-/* NUCLEAR: Print styles */
-@media print {
-  .nuclear-content-container ul > li::before,
-  .nuclear-content-container ol > li::before {
-    print-color-adjust: exact !important;
-  }
+.nuclear-content-container :global(.enriched-content::before) {
+  content: "🔥 Enriched Content";
+  @apply absolute -top-2 left-2 bg-orange-400 text-white text-xs px-2 py-1 rounded;
 }

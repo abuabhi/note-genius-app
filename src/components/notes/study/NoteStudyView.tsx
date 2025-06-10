@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Note } from '@/types/note';
 import { Card } from '@/components/ui/card';
@@ -77,6 +76,10 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
         await onNoteUpdate({
           summary_status: 'generating'
         });
+      } else if (enhancementType === 'enrich-note') {
+        await onNoteUpdate({
+          enriched_status: 'generating'
+        });
       }
 
       const result = await enrichNote(
@@ -94,9 +97,11 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
           enhancement_type: getEnhancementType(enhancementType) as 'clarity' | 'other' | 'spelling-grammar'
         };
 
-        // CRITICAL: Set status to completed for summary
+        // CRITICAL: Set status to completed for summary and enriched
         if (enhancementType === 'summarize') {
           updateData.summary_status = 'completed';
+        } else if (enhancementType === 'enrich-note') {
+          updateData.enriched_status = 'completed';
         }
 
         await onNoteUpdate(updateData);
@@ -109,6 +114,10 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
           await onNoteUpdate({
             summary_status: 'failed'
           });
+        } else if (enhancementType === 'enrich-note') {
+          await onNoteUpdate({
+            enriched_status: 'failed'
+          });
         }
         toast.error('Failed to enhance note');
       }
@@ -119,6 +128,10 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
       if (enhancementType === 'summarize') {
         await onNoteUpdate({
           summary_status: 'failed'
+        });
+      } else if (enhancementType === 'enrich-note') {
+        await onNoteUpdate({
+          enriched_status: 'failed'
         });
       }
       
@@ -231,6 +244,8 @@ const getEnhancementFieldName = (enhancementType: string): string => {
       return 'improved_content';
     case 'convert-to-markdown':
       return 'markdown_content';
+    case 'enrich-note':
+      return 'enriched_content';
     default:
       return 'summary';
   }
@@ -241,6 +256,7 @@ const getEnhancementType = (enhancementType: string): 'clarity' | 'other' | 'spe
     case 'improve-clarity':
       return 'clarity';
     case 'summarize':
+    case 'enrich-note':
       return 'other';
     default:
       return 'other';

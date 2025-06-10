@@ -96,10 +96,20 @@ export const NuclearContentRenderer = ({
       <li className="nuclear-list-item" {...props}>{children}</li>
     ),
     
-    // Text formatting
-    strong: ({ children, ...props }: any) => (
-      <strong className="nuclear-strong" {...props}>{children}</strong>
-    ),
+    // Text formatting with enriched content highlighting
+    strong: ({ children, ...props }: any) => {
+      const childrenString = React.Children.toArray(children).join('');
+      
+      // Check if this is enriched content marker
+      if (childrenString === '[ENRICHED]') {
+        return <span className="enriched-marker enriched-start" {...props}>🔥 Added Content:</span>;
+      }
+      if (childrenString === '[/ENRICHED]') {
+        return <span className="enriched-marker enriched-end" {...props}></span>;
+      }
+      
+      return <strong className="nuclear-strong" {...props}>{children}</strong>;
+    },
     em: ({ children, ...props }: any) => (
       <em className="nuclear-em" {...props}>{children}</em>
     ),

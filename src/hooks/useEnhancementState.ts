@@ -32,11 +32,15 @@ export const useEnhancementState = (noteId: string) => {
     const summaryStatus = note.summary_status || 'completed';
     const hasSummaryContent = validateContent(note.summary) && summaryStatus === 'completed';
     
+    const enrichedStatus = note.enriched_status || 'completed';
+    const hasEnrichedContent = validateContent(note.enriched_content, 20) && enrichedStatus === 'completed';
+    
     const newState = {
       hasSummary: hasSummaryContent,
       hasKeyPoints: validateContent(note.key_points),
       hasMarkdown: validateContent(note.markdown_content),
       hasImprovedClarity: validateContent(note.improved_content, 20), // Higher threshold for improved content
+      hasEnrichedContent: hasEnrichedContent,
       isLoading: false
     };
 
@@ -44,17 +48,25 @@ export const useEnhancementState = (noteId: string) => {
       noteId,
       newState,
       summaryStatus,
+      enrichedStatus,
       rawContentLengths: {
         summary: note.summary?.length || 0,
         key_points: note.key_points?.length || 0,
         markdown_content: note.markdown_content?.length || 0,
-        improved_content: note.improved_content?.length || 0
+        improved_content: note.improved_content?.length || 0,
+        enriched_content: note.enriched_content?.length || 0
       },
       summaryValidation: {
         hasContent: !!note.summary,
         hasValidLength: validateContent(note.summary),
         statusIsCompleted: summaryStatus === 'completed',
         finalResult: hasSummaryContent
+      },
+      enrichedValidation: {
+        hasContent: !!note.enriched_content,
+        hasValidLength: validateContent(note.enriched_content, 20),
+        statusIsCompleted: enrichedStatus === 'completed',
+        finalResult: hasEnrichedContent
       }
     });
 
@@ -67,7 +79,7 @@ export const useEnhancementState = (noteId: string) => {
     try {
       const { data, error } = await supabase
         .from('notes')
-        .select('summary, summary_status, key_points, markdown_content, improved_content, summary_generated_at, key_points_generated_at, markdown_content_generated_at, improved_content_generated_at')
+        .select('summary, summary_status, key_points, markdown_content, improved_content, enriched_content, enriched_status, summary_generated_at, key_points_generated_at, markdown_content_generated_at, improved_content_generated_at, enriched_content_generated_at')
         .eq('id', noteId)
         .single();
 
@@ -84,10 +96,13 @@ export const useEnhancementState = (noteId: string) => {
           key_points: data.key_points,
           markdown_content: data.markdown_content,
           improved_content: data.improved_content,
+          enriched_content: data.enriched_content,
+          enriched_status: data.enriched_status as 'pending' | 'generating' | 'completed' | 'failed',
           summary_generated_at: data.summary_generated_at,
           key_points_generated_at: data.key_points_generated_at,
           markdown_content_generated_at: data.markdown_content_generated_at,
-          improved_content_generated_at: data.improved_content_generated_at
+          improved_content_generated_at: data.improved_content_generated_at,
+          enriched_content_generated_at: data.enriched_content_generated_at
         };
         
         updateEnhancementState(noteData);

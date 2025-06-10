@@ -35,6 +35,9 @@ export interface Note {
   markdown_content_generated_at?: string;
   improved_content?: string;
   improved_content_generated_at?: string;
+  enriched_content?: string;
+  enriched_content_generated_at?: string;
+  enriched_status?: 'pending' | 'generating' | 'completed' | 'failed';
   
   // Enhanced spelling/grammar fix tracking
   original_content_backup?: string;
