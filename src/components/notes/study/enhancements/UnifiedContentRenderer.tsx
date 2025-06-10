@@ -22,10 +22,10 @@ export const UnifiedContentRenderer = ({
   className = '',
   isMarkdown = true
 }: UnifiedContentRendererProps) => {
-  console.log("🎨 UnifiedContentRenderer:", {
+  console.log("🚀 DRASTIC REWRITE: UnifiedContentRenderer - ALL CONTENT IS MARKDOWN:", {
     contentLength: content?.length || 0,
-    isMarkdown,
-    hasAIEnhancedTags: content?.includes('[AI_ENHANCED]')
+    hasAIEnhancedTags: content?.includes('[AI_ENHANCED]'),
+    forcedMarkdown: true
   });
 
   if (!content || content.trim() === '') {
@@ -39,29 +39,18 @@ export const UnifiedContentRenderer = ({
              'justify' as const
   };
 
-  // SIMPLIFIED: Plain text rendering for original content
-  if (!isMarkdown) {
-    return (
-      <div 
-        className={`unified-plain-text ${className}`}
-        style={containerStyle}
-      >
-        {content}
-      </div>
-    );
-  }
-
-  // SIMPLIFIED: Markdown rendering for all AI-enhanced content
+  // DRASTIC REWRITE: EVERYTHING IS MARKDOWN - NO EXCEPTIONS
   const processedContent = processAIEnhancedContent(cleanMarkdownContent(content));
   
-  console.log("🚀 Rendering as markdown:", {
+  console.log("🎯 NUCLEAR OPTION: Rendering ALL content as markdown:", {
     originalLength: content.length,
     processedLength: processedContent.length,
-    hasAIBlocks: processedContent.includes('<div class="ai-enhanced-block">')
+    hasAIBlocks: processedContent.includes('<div class="ai-enhanced-block">'),
+    forcedMarkdown: "ALL CONTENT TYPES"
   });
 
   const markdownComponents = {
-    // Headers with consistent spacing
+    // NUCLEAR: Headers with consistent spacing
     h1: ({ node, ...props }: any) => (
       <h1 className="text-2xl font-bold mb-4 mt-6 text-foreground border-b border-border pb-2 first:mt-0" {...props} />
     ),
@@ -72,23 +61,23 @@ export const UnifiedContentRenderer = ({
       <h3 className="text-lg font-medium mb-2 mt-4 text-foreground first:mt-0" {...props} />
     ),
     
-    // Paragraphs with proper spacing
+    // NUCLEAR: Paragraphs with proper spacing and NO wrapping issues
     p: ({ node, ...props }: any) => (
-      <p className="mb-4 leading-relaxed text-foreground last:mb-0" {...props} />
+      <p className="mb-4 leading-relaxed text-foreground last:mb-0" style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }} {...props} />
     ),
     
-    // FIXED: Enhanced list rendering with forced visibility
+    // NUCLEAR: Enhanced list rendering with FORCED visibility
     ul: ({ node, ...props }: any) => (
-      <ul className="enhanced-list enhanced-ul my-4 ml-6 space-y-1" {...props} />
+      <ul className="enhanced-list enhanced-ul my-4 ml-6 space-y-1" style={{ listStyleType: 'disc', paddingLeft: '2rem', margin: '1.5rem 0' }} {...props} />
     ),
     ol: ({ node, ...props }: any) => (
-      <ol className="enhanced-list enhanced-ol my-4 ml-6 space-y-1" {...props} />
+      <ol className="enhanced-list enhanced-ol my-4 ml-6 space-y-1" style={{ listStyleType: 'decimal', paddingLeft: '2rem', margin: '1.5rem 0' }} {...props} />
     ),
     li: ({ node, ...props }: any) => (
-      <li className="enhanced-list-item leading-relaxed text-foreground" {...props} />
+      <li className="enhanced-list-item leading-relaxed text-foreground" style={{ display: 'list-item', listStylePosition: 'outside', margin: '0.75rem 0', wordWrap: 'break-word' }} {...props} />
     ),
     
-    // Text formatting
+    // NUCLEAR: Text formatting
     strong: ({ node, ...props }: any) => (
       <strong className="font-semibold text-foreground" {...props} />
     ),
@@ -96,7 +85,7 @@ export const UnifiedContentRenderer = ({
       <em className="italic text-foreground" {...props} />
     ),
     
-    // Code blocks
+    // NUCLEAR: Code blocks
     code: ({ node, inline, ...props }: any) =>
       inline ? (
         <code className="relative rounded bg-muted px-2 py-1 font-mono text-sm" {...props} />
@@ -106,7 +95,7 @@ export const UnifiedContentRenderer = ({
         </pre>
       ),
     
-    // AI_ENHANCED blocks
+    // NUCLEAR: AI_ENHANCED blocks
     div: ({ node, className: nodeClassName, ...props }: any) => {
       if (nodeClassName === 'ai-enhanced-block') {
         console.log("🎯 Rendering AI_ENHANCED block");

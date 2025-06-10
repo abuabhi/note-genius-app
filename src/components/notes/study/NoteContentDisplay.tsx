@@ -2,7 +2,7 @@
 import { useState, useCallback } from "react";
 import { Note } from "@/types/note";
 import { TextAlignType } from "./hooks/useStudyViewState";
-import { TwoColumnEnhancementView } from "./enhancements/TwoColumnEnhancementView";
+import { OptimizedTwoColumnView } from "./enhancements/OptimizedTwoColumnView";
 import { EnhancementContentType } from "./enhancements/EnhancementSelector";
 
 interface NoteContentDisplayProps {
@@ -38,17 +38,23 @@ export const NoteContentDisplay = ({
     onActiveContentTypeChange?.(type);
   }, [onActiveContentTypeChange]);
 
+  console.log("🎯 NoteContentDisplay - UNIFIED RENDERING PATH - ALL MARKDOWN:", {
+    noteId: note.id,
+    activeContentType: localActiveContentType,
+    isEditing,
+    isLoading
+  });
+
   return (
     <div className="note-content-display">
-      <TwoColumnEnhancementView
+      <OptimizedTwoColumnView
         note={note}
         fontSize={fontSize}
         textAlign={textAlign}
         activeContentType={localActiveContentType}
         setActiveContentType={handleActiveContentTypeChange}
-        isLoading={isLoading}
         onRetryEnhancement={onRetryEnhancement}
-        onCancelEnhancement={onCancelEnhancement}
+        isEditOperation={isLoading}
       />
     </div>
   );
