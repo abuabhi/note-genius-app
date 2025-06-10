@@ -8,13 +8,11 @@ import {
   MessageSquare, 
   BarChart3, 
   Megaphone, 
-  CreditCard,
   Layers,
   GraduationCap,
   BookOpen,
   Upload,
-  Settings,
-  CreditCard as CreditCardIcon
+  Settings
 } from 'lucide-react';
 
 const AdminDashboardPage = () => {
@@ -46,13 +44,6 @@ const AdminDashboardPage = () => {
       icon: Megaphone,
       href: '/admin/announcements',
       color: 'bg-orange-500'
-    },
-    {
-      title: 'Credit Monitoring',
-      description: 'Monitor AssemblyAI API usage and credits',
-      icon: CreditCardIcon,
-      href: '/admin/credits',
-      color: 'bg-indigo-500'
     },
     {
       title: 'Flashcard Management',

@@ -135,45 +135,6 @@ export type Database = {
         }
         Relationships: []
       }
-      assemblyai_usage: {
-        Row: {
-          created_at: string
-          credits_used: number
-          error_message: string | null
-          id: string
-          month_year: string
-          response_data: Json | null
-          success: boolean
-          user_id: string
-          video_id: string
-          video_url: string
-        }
-        Insert: {
-          created_at?: string
-          credits_used?: number
-          error_message?: string | null
-          id?: string
-          month_year?: string
-          response_data?: Json | null
-          success?: boolean
-          user_id: string
-          video_id: string
-          video_url: string
-        }
-        Update: {
-          created_at?: string
-          credits_used?: number
-          error_message?: string | null
-          id?: string
-          month_year?: string
-          response_data?: Json | null
-          success?: boolean
-          user_id?: string
-          video_id?: string
-          video_url?: string
-        }
-        Relationships: []
-      }
       chat_conversations: {
         Row: {
           created_at: string
@@ -2545,20 +2506,6 @@ export type Database = {
           mobile_layout: string
           priority: number
           dismissible: boolean
-        }[]
-      }
-      get_assemblyai_credits_used_this_month: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      get_assemblyai_usage_stats: {
-        Args: { target_month?: string }
-        Returns: {
-          total_credits: number
-          total_requests: number
-          successful_requests: number
-          failed_requests: number
-          unique_users: number
         }[]
       }
       get_user_email_for_feedback: {
