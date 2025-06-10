@@ -1,14 +1,10 @@
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Note } from "@/types/note";
 import { TextAlignType } from "../hooks/useStudyViewState";
 import { EnhancementContentType } from "./EnhancementSelector";
 import { EnhancementContent } from "./EnhancementContent";
 import { LoadingAnimations } from "./LoadingAnimations";
-import { RefreshCw, X } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { ContentMetadata } from "./ContentMetadata";
 
 interface EnhancementDisplayPanelProps {
   note: Note;
@@ -31,8 +27,6 @@ export const EnhancementDisplayPanel = ({
   onCancelEnhancement,
   className = ""
 }: EnhancementDisplayPanelProps) => {
-  const [isCancelling, setIsCancelling] = useState(false);
-
   // Check if summary is in generating/pending state
   const isSummaryGenerating = contentType === 'summary' && 
     (note.summary_status === 'generating' || note.summary_status === 'pending');
@@ -41,47 +35,6 @@ export const EnhancementDisplayPanel = ({
   const isEnrichedGenerating = contentType === 'enriched' && 
     (note.enriched_status === 'generating' || note.enriched_status === 'pending');
   
-  // Handle cancelling stuck generation
-  const handleCancelGeneration = async () => {
-    if (contentType !== 'summary' && contentType !== 'enriched') return;
-    
-    setIsCancelling(true);
-    
-    try {
-      const updateData: any = {};
-      
-      if (contentType === 'summary') {
-        updateData.summary_status = 'completed';
-        updateData.summary = '';
-      } else if (contentType === 'enriched') {
-        updateData.enriched_status = 'completed';
-        updateData.enriched_content = '';
-      }
-
-      const { error } = await supabase
-        .from('notes')
-        .update(updateData)
-        .eq('id', note.id);
-
-      if (error) {
-        console.error("❌ Failed to cancel generation:", error);
-        toast.error("Failed to cancel generation");
-      } else {
-        console.log("✅ Cancelled generation");
-        toast.success("Generation cancelled");
-        
-        if (onCancelEnhancement) {
-          onCancelEnhancement();
-        }
-      }
-    } catch (error) {
-      console.error("❌ Exception cancelling generation:", error);
-      toast.error("Failed to cancel generation");
-    } finally {
-      setIsCancelling(false);
-    }
-  };
-
   // SIMPLIFIED: Direct mapping for enhancement types
   const getEnhancementTypeForRetry = (contentType: EnhancementContentType): string => {
     const mappings = {
@@ -163,46 +116,39 @@ export const EnhancementDisplayPanel = ({
 
   return (
     <div className={`flex flex-col h-full ${className}`}>
-      {/* Show loading state when processing */}
+      {/* Show loading state when processing - SIMPLIFIED without cancel/retry buttons */}
       {(isLoading || isSummaryGenerating || isEnrichedGenerating) && (
-        <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-4">
+        <div className="flex-1 flex items-center justify-center p-8">
           <LoadingAnimations enhancementType={enhancementType} />
-          
-          {/* Cancel button for stuck processing */}
-          {(isSummaryGenerating || isEnrichedGenerating) && (
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCancelGeneration}
-                disabled={isCancelling}
-                className="text-destructive border-destructive/20 hover:bg-destructive/10"
-              >
-                <X className="h-4 w-4 mr-2" />
-                {isCancelling ? "Cancelling..." : "Cancel Generation"}
-              </Button>
-              
-              {onRetryEnhancement && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onRetryEnhancement(enhancementType)}
-                  disabled={isCancelling}
-                >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Retry
-                </Button>
-              )}
-            </div>
-          )}
         </div>
       )}
       
-      {/* Show content when not loading - ALL CONTENT GOES THROUGH UNIFIED PROCESSING */}
-      {!isLoading && !isSummaryGenerating && !isEnrichedGenerating && (
+      {/* Show content when not loading - with metadata header */}
+      {!isLoading && !isSummaryGenerating && !isEnrichedGenerating && content && (
         <div className="flex-1 overflow-auto">
+          {/* Content metadata header */}
+          <ContentMetadata 
+            content={content}
+            enhancementType={enhancementType}
+          />
+          
+          {/* Main content */}
           <EnhancementContent
             content={content}
+            title={title}
+            fontSize={fontSize}
+            textAlign={textAlign}
+            enhancementType={enhancementType}
+            onRetry={onRetryEnhancement}
+          />
+        </div>
+      )}
+
+      {/* Show empty state when no content and not loading */}
+      {!isLoading && !isSummaryGenerating && !isEnrichedGenerating && !content && (
+        <div className="flex-1 overflow-auto">
+          <EnhancementContent
+            content=""
             title={title}
             fontSize={fontSize}
             textAlign={textAlign}

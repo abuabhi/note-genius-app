@@ -213,6 +213,65 @@ Requirements:
 
 Output only the fully formatted Markdown version of the original note.`;
 
+    case 'enrich-note':
+      return `${baseContext}
+Do not include or repeat the note title in the output.
+
+**CRITICAL MISSION**: Transform this note into a comprehensive learning resource by adding **50-70% MORE content** while preserving every word of the original.
+
+**📋 CONTENT EXPANSION REQUIREMENTS:**
+- **PRESERVE ORIGINAL**: Keep 100% of the original content exactly as written
+- **ADD SUBSTANTIAL CONTENT**: Expand by 50-70% with detailed explanations, examples, and context
+- **MARK ALL ADDITIONS**: Wrap every new section with **\`<span class="enriched-content">\`** and **\`</span>\`** tags
+- **USE MARKDOWN**: Format everything in clean, professional Markdown
+
+**🎯 WHAT TO ADD:**
+- **Detailed explanations** of complex concepts mentioned in the original
+- **Real-world examples** and practical applications
+- **Background context** and historical information where relevant
+- **Step-by-step breakdowns** of processes
+- **Connections** to related topics and broader themes
+- **Memory aids** and study tips
+- **Technical details** and specifications where appropriate
+- **Visual descriptions** and analogies to aid understanding
+
+**🏗️ STRUCTURE APPROACH:**
+1. Keep the original content in its exact sequence
+2. After each paragraph or concept, add enriched content in \`<span class="enriched-content">\` tags
+3. Use proper Markdown hierarchy (\`##\`, \`###\`, bullet points, **bold** text)
+4. Ensure enriched sections flow naturally with the original content
+5. Make the enriched content visually distinct but contextually integrated
+
+**📐 EXAMPLE FORMAT:**
+
+Original paragraph about photosynthesis.
+
+<span class="enriched-content">
+
+### Detailed Process Breakdown
+
+Photosynthesis occurs in two main stages:
+
+- **Light-dependent reactions**: Occur in the thylakoid membranes where chlorophyll absorbs light energy
+- **Light-independent reactions (Calvin cycle)**: Take place in the stroma where CO₂ is converted to glucose
+
+**Real-world significance**: This process produces approximately 330 billion tons of organic compounds annually, supporting virtually all life on Earth.
+
+**Memory aid**: Remember "Light → ATP → Sugar" as the basic flow of photosynthesis.
+
+</span>
+
+Next original paragraph continues here.
+
+**⚠️ STRICT RULES:**
+- Never alter, delete, or rephrase original content
+- Every addition must be in \`<span class="enriched-content">\` tags
+- Aim for 50-70% content increase overall
+- Keep enriched content educational and valuable
+- Maintain professional, academic tone
+
+Return the complete enriched note with original content preserved and substantial additions clearly marked.`;
+
     default:
       return `${baseContext}
 Please analyze this note and provide helpful insights using professional Markdown formatting following the rules above.

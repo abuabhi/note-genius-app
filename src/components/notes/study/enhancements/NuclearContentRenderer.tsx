@@ -109,7 +109,7 @@ export const NuclearContentRenderer = ({
       }
       
       return <strong className="nuclear-strong" {...props}>{children}</strong>;
-    },
+    ),
     em: ({ children, ...props }: any) => (
       <em className="nuclear-em" {...props}>{children}</em>
     ),
@@ -139,12 +139,33 @@ export const NuclearContentRenderer = ({
       return <blockquote className="nuclear-blockquote" {...props}>{children}</blockquote>;
     },
     
+    // Handle enriched content spans - CRITICAL for new enrichment
+    span: ({ className: spanClassName, children, ...props }: any) => {
+      if (spanClassName === 'enriched-content') {
+        console.log("🔥 NUCLEAR: Rendering enriched content span");
+        return (
+          <span className="enriched-content" {...props}>
+            {children}
+          </span>
+        );
+      }
+      return <span className={spanClassName} {...props}>{children}</span>;
+    },
+    
     // Handle divs (in case any slip through)
     div: ({ className: divClassName, children, ...props }: any) => {
       if (divClassName === 'ai-enhanced-block') {
         console.log("🎯 NUCLEAR: Rendering AI Enhanced div block");
         return (
           <div className="ai-enhanced-block nuclear-ai-block" {...props}>
+            {children}
+          </div>
+        );
+      }
+      if (divClassName === 'enriched-content') {
+        console.log("🔥 NUCLEAR: Rendering enriched content div");
+        return (
+          <div className="enriched-content" {...props}>
             {children}
           </div>
         );

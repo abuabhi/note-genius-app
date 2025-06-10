@@ -94,6 +94,49 @@ export const LoadingAnimations = ({
           </div>
         );
       
+      case 'enrich-note':
+        return (
+          <div className="flex flex-col items-center justify-center space-y-6">
+            <div className="relative">
+              {/* Central fire icon with pulsing effect */}
+              <div className="text-6xl animate-pulse">🔥</div>
+              
+              {/* Expanding rings */}
+              <div className="absolute inset-0 border-4 border-orange-200 rounded-full animate-ping opacity-30"></div>
+              <div className="absolute -inset-2 border-2 border-orange-300 rounded-full animate-ping opacity-20 [animation-delay:0.5s]"></div>
+              <div className="absolute -inset-4 border border-orange-400 rounded-full animate-ping opacity-10 [animation-delay:1s]"></div>
+              
+              {/* Floating sparkles */}
+              <div className="absolute -top-2 -left-2">
+                <Sparkles className="h-5 w-5 text-yellow-400 animate-bounce [animation-delay:0.3s]" />
+              </div>
+              <div className="absolute -bottom-1 -right-3">
+                <Stars className="h-4 w-4 text-orange-400 animate-bounce [animation-delay:0.8s]" />
+              </div>
+              <div className="absolute top-0 right-0">
+                <div className="w-3 h-3 bg-red-400 rounded-full animate-pulse [animation-delay:1.2s]"></div>
+              </div>
+              <div className="absolute bottom-2 left-1">
+                <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse [animation-delay:0.6s]"></div>
+              </div>
+            </div>
+            
+            <div className="flex flex-col items-center space-y-3">
+              <div className="text-orange-600 font-bold text-xl">Enriching Your Note</div>
+              <div className="text-orange-500 text-sm text-center max-w-xs">
+                Adding detailed explanations, examples, and context...
+              </div>
+              <div className="flex space-x-1">
+                <div className="w-3 h-3 bg-orange-500 rounded-full animate-bounce"></div>
+                <div className="w-3 h-3 bg-orange-500 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                <div className="w-3 h-3 bg-orange-500 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                <div className="w-3 h-3 bg-orange-500 rounded-full animate-bounce [animation-delay:0.6s]"></div>
+                <div className="w-3 h-3 bg-orange-500 rounded-full animate-bounce [animation-delay:0.8s]"></div>
+              </div>
+            </div>
+          </div>
+        );
+      
       default:
         return (
           <div className="flex items-center justify-center space-x-3">
