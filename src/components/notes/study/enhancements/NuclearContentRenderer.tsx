@@ -1,11 +1,10 @@
+
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import remarkDirective from 'remark-directive';
 import rehypeRaw from 'rehype-raw';
 import { TextAlignType } from '../hooks/useStudyViewState';
 import { processContentForRendering, validateContentForRendering } from './utils/unifiedContentProcessor';
-import { remarkEnrichedContainer } from './utils/remarkEnrichedContainer';
 import './NuclearContentRenderer.css';
 
 interface NuclearContentRendererProps {
@@ -132,10 +131,10 @@ export const NuclearContentRenderer = ({
       return <blockquote className="nuclear-blockquote" {...props}>{children}</blockquote>;
     },
     
-    // Handle divs - UPDATED for remark-directive approach
+    // Handle divs - FALLBACK for enriched content without remark-directive
     div: ({ className: divClassName = '', children, ...props }: any) => {
       if (divClassName.includes('enriched-content-section')) {
-        console.log("🔥 NUCLEAR: Rendering enriched content section via remark-directive");
+        console.log("🔥 NUCLEAR: Rendering enriched content section via HTML");
         return (
           <div className="enriched-content-section" {...props}>
             {children}
@@ -173,7 +172,7 @@ export const NuclearContentRenderer = ({
     >
       <ReactMarkdown
         children={processedData.content}
-        remarkPlugins={[remarkGfm, remarkDirective, remarkEnrichedContainer]}
+        remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw]}
         components={nuclearMarkdownComponents}
       />
