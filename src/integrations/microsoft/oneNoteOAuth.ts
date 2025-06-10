@@ -42,7 +42,7 @@ export interface MicrosoftAuthState {
 /**
  * Initiates the Microsoft OAuth authentication flow
  */
-export const initiateOneNoteAuth = async () => {
+export const initiateOneNoteAuth = async (forceAccountSelection = false) => {
   // Fetch client ID from Supabase
   const fetchedClientId = await getMicrosoftClientId();
   
@@ -58,6 +58,11 @@ export const initiateOneNoteAuth = async () => {
   authUrl.searchParams.append("redirect_uri", redirectUri);
   authUrl.searchParams.append("scope", scopes.join(" "));
   authUrl.searchParams.append("response_mode", "fragment");
+  
+  // Force account selection if requested
+  if (forceAccountSelection) {
+    authUrl.searchParams.append("prompt", "select_account");
+  }
   
   // Generate and store a random state parameter to prevent CSRF
   const state = Math.random().toString(36).substring(2, 15);

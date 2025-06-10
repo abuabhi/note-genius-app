@@ -1,8 +1,9 @@
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useOneNoteAuth } from "@/integrations/microsoft/oneNoteOAuth";
-import { Loader2, Check, X, AlertCircle, ExternalLink, RefreshCw, Copy, User } from "lucide-react";
+import { Loader2, Check, X, AlertCircle, ExternalLink, RefreshCw, Copy, User, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
@@ -104,6 +105,20 @@ export const OneNoteConnection = ({ onConnected }: OneNoteConnectionProps) => {
     }
   };
 
+  const switchAccount = async () => {
+    // Disconnect current session
+    disconnect();
+    setPages([]);
+    setSelectedPages([]);
+    setUserInfo(null);
+    
+    // Add a slight delay to ensure cleanup is complete
+    setTimeout(() => {
+      // Force a fresh login by adding prompt=select_account parameter
+      connect(true); // We'll modify the connect function to accept a forceAccountSelection parameter
+    }, 500);
+  };
+
   const togglePageSelection = (pageId: string) => {
     setSelectedPages(prev => 
       prev.includes(pageId) 
@@ -146,12 +161,23 @@ export const OneNoteConnection = ({ onConnected }: OneNoteConnectionProps) => {
       {/* User Info Display */}
       {isAuthenticated && userInfo && (
         <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-          <div className="flex items-center gap-2 text-blue-700">
-            <User className="h-4 w-4" />
-            <div className="text-sm">
-              <p className="font-medium">Connected as: {userInfo.name}</p>
-              <p className="text-blue-600">{userInfo.email}</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-blue-700">
+              <User className="h-4 w-4" />
+              <div className="text-sm">
+                <p className="font-medium">Connected as: {userInfo.name}</p>
+                <p className="text-blue-600">{userInfo.email}</p>
+              </div>
             </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={switchAccount}
+              className="text-blue-700 border-blue-300 hover:bg-blue-100"
+            >
+              <LogOut className="h-3 w-3 mr-1" />
+              Switch Account
+            </Button>
           </div>
         </div>
       )}
