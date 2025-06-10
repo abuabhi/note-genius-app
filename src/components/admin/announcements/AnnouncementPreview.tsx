@@ -3,7 +3,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Announcement } from './types';
 import { Card } from '@/components/ui/card';
-import { RichTextDisplay } from '@/components/ui/rich-text/RichTextDisplay';
+import { UnifiedContentRenderer } from '@/components/notes/study/enhancements/UnifiedContentRenderer';
 
 interface AnnouncementPreviewProps {
   open: boolean;
@@ -44,10 +44,11 @@ export const AnnouncementPreview = ({ open, onOpenChange, announcement }: Announ
                   textAlign: announcement?.text_align || 'center',
                 }}
               >
-                <RichTextDisplay 
+                <UnifiedContentRenderer 
                   content={announcement.content} 
                   textAlign="center" 
                   className="text-white"
+                  isMarkdown={true}
                 />
               </div>
             </div>

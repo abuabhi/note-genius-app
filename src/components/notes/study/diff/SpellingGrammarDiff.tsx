@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Eye, EyeOff } from 'lucide-react';
-import { RichTextDisplay } from '@/components/ui/rich-text/RichTextDisplay';
+import { UnifiedContentRenderer } from '@/components/notes/study/enhancements/UnifiedContentRenderer';
 import { TextAlignType } from '../hooks/useStudyViewState';
 
 interface SpellingGrammarDiffProps {
@@ -75,11 +75,12 @@ export const SpellingGrammarDiff = ({
   
   if (!originalContent || !fixedContent) {
     return (
-      <RichTextDisplay
+      <UnifiedContentRenderer
         content={fixedContent || originalContent}
         fontSize={fontSize}
         textAlign={textAlign}
         className={className}
+        isMarkdown={true}
       />
     );
   }
@@ -155,10 +156,11 @@ export const SpellingGrammarDiff = ({
           })}
         </div>
       ) : (
-        <RichTextDisplay
+        <UnifiedContentRenderer
           content={fixedContent}
           fontSize={fontSize}
           textAlign={textAlign}
+          isMarkdown={true}
         />
       )}
     </div>

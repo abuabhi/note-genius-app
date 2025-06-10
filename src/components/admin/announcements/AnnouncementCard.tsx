@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Edit, Trash2, Eye, EyeOff, Smartphone, CalendarClock, Target } from 'lucide-react';
 import { format } from 'date-fns';
 import { Announcement } from './types';
-import { RichTextDisplay } from '@/components/ui/rich-text/RichTextDisplay';
+import { UnifiedContentRenderer } from '@/components/notes/study/enhancements/UnifiedContentRenderer';
 
 interface AnnouncementCardProps {
   announcement: Announcement;
@@ -65,9 +65,10 @@ export const AnnouncementCard = ({
               <div>{getStatusBadge(announcement)}</div>
             </div>
             <div className="text-muted-foreground text-sm max-h-20 overflow-hidden">
-              <RichTextDisplay 
+              <UnifiedContentRenderer 
                 content={announcement.content.slice(0, 150)} 
-                removeTitle={true}
+                isMarkdown={true}
+                className="text-sm"
               />
               {announcement.content.length > 150 ? '...' : ''}
             </div>

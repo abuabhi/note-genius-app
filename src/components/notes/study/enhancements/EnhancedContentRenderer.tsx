@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { RichTextDisplay } from '@/components/ui/rich-text/RichTextDisplay';
 import { TextAlignType } from '../hooks/useStudyViewState';
 import { UnifiedContentRenderer } from './UnifiedContentRenderer';
 
@@ -17,28 +16,14 @@ export const EnhancedContentRenderer = ({
   textAlign,
   className
 }: EnhancedContentRendererProps) => {
-  // Check if content has AI enhancement markers
-  const hasEnhancementMarkers = content.includes('[AI_ENHANCED]') && content.includes('[/AI_ENHANCED]');
-  
-  if (!hasEnhancementMarkers) {
-    // No special markers, render as normal rich text
-    return (
-      <RichTextDisplay
-        content={content}
-        fontSize={fontSize}
-        textAlign={textAlign}
-        className={className}
-      />
-    );
-  }
-
-  // Content with enhancement markers - use unified renderer
+  // DRASTIC REWRITE: Everything is now markdown - no conditional logic
   return (
     <UnifiedContentRenderer
       content={content}
       fontSize={fontSize}
       textAlign={textAlign}
       className={className}
+      isMarkdown={true}
     />
   );
 };
