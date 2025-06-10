@@ -1,158 +1,136 @@
 
-import { Link } from "react-router-dom";
-import Layout from "@/components/layout/Layout";
-import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { UserTier } from "@/hooks/useRequireAuth";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { 
   Users, 
-  CreditCard, 
-  BookOpen, 
-  Layers, 
-  GraduationCap, 
-  Award,
+  MessageSquare, 
+  BarChart3, 
+  Megaphone, 
+  CreditCard,
+  Layers,
+  GraduationCap,
+  BookOpen,
   Upload,
   Settings,
-  BarChart3,
-  Megaphone,
-  Shield,
-  MessageSquare
-} from "lucide-react";
+  CreditCard as CreditCardIcon
+} from 'lucide-react';
 
 const AdminDashboardPage = () => {
-  const { user, userProfile } = useRequireAuth();
-
-  if (!user || userProfile?.user_tier !== UserTier.DEAN) {
-    return (
-      <Layout>
-        <div className="container mx-auto p-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Access Denied</CardTitle>
-              <CardDescription>
-                You need Dean-tier access to view the admin dashboard.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </div>
-      </Layout>
-    );
-  }
-
-  const adminCards = [
+  const adminSections = [
     {
-      title: "User Management",
-      description: "Manage user accounts, tiers, and permissions",
+      title: 'User Management',
+      description: 'Manage users, roles, and permissions',
       icon: Users,
-      href: "/admin/users",
-      color: "text-blue-600"
+      href: '/admin/users',
+      color: 'bg-blue-500'
     },
     {
-      title: "Tier Limits Management",
-      description: "Configure usage limits and features for each tier",
-      icon: Shield,
-      href: "/admin/tier-limits",
-      color: "text-purple-600"
-    },
-    {
-      title: "Analytics & KPIs",
-      description: "View business metrics, revenue, and user analytics",
-      icon: BarChart3,
-      href: "/admin/analytics",
-      color: "text-green-600"
-    },
-    {
-      title: "Announcements",
-      description: "Create and manage announcement bars for users",
-      icon: Megaphone,
-      href: "/admin/announcements",
-      color: "text-yellow-600"
-    },
-    {
-      title: "Feedback Management",
-      description: "Manage user feedback and support requests",
+      title: 'Feedback Management',
+      description: 'Review and respond to user feedback',
       icon: MessageSquare,
-      href: "/admin/feedback",
-      color: "text-pink-600"
+      href: '/admin/feedback',
+      color: 'bg-green-500'
     },
     {
-      title: "Feedback Settings",
-      description: "Configure feedback handling mode and support email",
-      icon: Settings,
-      href: "/admin/feedback/settings",
-      color: "text-gray-600"
+      title: 'Analytics & Reports',
+      description: 'View system analytics and generate reports',
+      icon: BarChart3,
+      href: '/admin/analytics',
+      color: 'bg-purple-500'
     },
     {
-      title: "Flashcard Management",
-      description: "Manage flashcard sets and content",
-      icon: CreditCard,
-      href: "/admin/flashcards",
-      color: "text-purple-600"
+      title: 'Announcements',
+      description: 'Create and manage system announcements',
+      icon: Megaphone,
+      href: '/admin/announcements',
+      color: 'bg-orange-500'
     },
     {
-      title: "Sections Management",
-      description: "Organize and manage subject sections",
+      title: 'Credit Monitoring',
+      description: 'Monitor Supadata.ai API usage and credits',
+      icon: CreditCardIcon,
+      href: '/admin/credits',
+      color: 'bg-indigo-500'
+    },
+    {
+      title: 'Flashcard Management',
+      description: 'Manage flashcard sets and content',
       icon: Layers,
-      href: "/admin/sections",
-      color: "text-orange-600"
+      href: '/admin/flashcards',
+      color: 'bg-pink-500'
     },
     {
-      title: "Subjects Management",
-      description: "Manage academic subjects and categories",
+      title: 'Sections Management',
+      description: 'Organize content into sections',
       icon: BookOpen,
-      href: "/admin/subjects",
-      color: "text-indigo-600"
+      href: '/admin/sections',
+      color: 'bg-teal-500'
     },
     {
-      title: "Grades Management",
-      description: "Manage grade levels and academic standards",
+      title: 'Grades Management',
+      description: 'Manage grade levels and classifications',
       icon: GraduationCap,
-      href: "/admin/grades",
-      color: "text-teal-600"
+      href: '/admin/grades',
+      color: 'bg-red-500'
     },
     {
-      title: "CSV Import",
-      description: "Import data from CSV files",
+      title: 'Subjects Management',
+      description: 'Manage subject categories and topics',
+      icon: BookOpen,
+      href: '/admin/subjects',
+      color: 'bg-yellow-500'
+    },
+    {
+      title: 'CSV Import Tools',
+      description: 'Import data from CSV files',
       icon: Upload,
-      href: "/admin/csv-import",
-      color: "text-amber-600"
+      href: '/admin/csv-import',
+      color: 'bg-cyan-500'
+    },
+    {
+      title: 'Tier Limits',
+      description: 'Configure limits for different user tiers',
+      icon: Settings,
+      href: '/admin/tier-limits',
+      color: 'bg-gray-500'
     }
   ];
 
   return (
-    <Layout>
-      <div className="container mx-auto p-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
-          <p className="text-muted-foreground">
-            Manage your application's users, content, and settings
-          </p>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {adminCards.map((card) => {
-            const IconComponent = card.icon;
-            return (
-              <Link key={card.href} to={card.href}>
-                <Card className="hover:shadow-lg transition-all duration-200 hover:scale-105">
-                  <CardHeader>
-                    <div className="flex items-center space-x-3">
-                      <IconComponent className={`h-8 w-8 ${card.color}`} />
-                      <div>
-                        <CardTitle className="text-lg">{card.title}</CardTitle>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription>{card.description}</CardDescription>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
+    <div className="container mx-auto p-6">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
+        <p className="text-muted-foreground">
+          Welcome to the admin panel. Select a section below to get started.
+        </p>
       </div>
-    </Layout>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {adminSections.map((section) => {
+          const IconComponent = section.icon;
+          return (
+            <Card key={section.href} className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="flex items-center space-x-2">
+                  <div className={`p-2 rounded-lg ${section.color} text-white`}>
+                    <IconComponent className="h-5 w-5" />
+                  </div>
+                  <CardTitle className="text-lg">{section.title}</CardTitle>
+                </div>
+                <CardDescription>{section.description}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button asChild className="w-full">
+                  <Link to={section.href}>Access {section.title}</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
   );
 };
 
