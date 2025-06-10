@@ -17,12 +17,18 @@ export const ImportServiceCard = ({
 }: ImportServiceCardProps) => {
   return (
     <Card 
-      className={`cursor-pointer hover:border-mint-500 transition-colors ${isSelected ? 'border-mint-500 bg-mint-50' : 'border-mint-200'}`}
+      className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
+        isSelected 
+          ? 'border-mint-500 bg-mint-50 shadow-sm' 
+          : 'border-gray-200 bg-white hover:border-gray-300'
+      }`}
       onClick={onSelect}
     >
-      <CardContent className="p-4 flex flex-col items-center">
-        <Icon className="h-5 w-5 text-mint-600 mb-2" />
-        <p className="font-medium text-mint-800 text-sm">{name}</p>
+      <CardContent className="p-4 flex flex-col items-center text-center">
+        <Icon className={`h-6 w-6 mb-3 ${isSelected ? 'text-mint-600' : 'text-gray-500'}`} />
+        <p className={`font-medium text-sm ${isSelected ? 'text-mint-800' : 'text-gray-800'}`}>
+          {name}
+        </p>
       </CardContent>
     </Card>
   );

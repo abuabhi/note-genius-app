@@ -35,24 +35,28 @@ export const ApiImportTab = ({ onSaveNote, isPremiumUser }: ApiImportTabProps) =
   };
 
   return (
-    <div className="space-y-4">
-      <Card className="border border-mint-200 bg-mint-50">
-        <CardHeader className="text-center pb-2">
-          <div className="mx-auto w-12 h-12 bg-mint-100 rounded-full flex items-center justify-center mb-2">
-            <Globe className="h-6 w-6 text-mint-600" />
+    <div className="space-y-6">
+      <Card className="bg-white shadow-sm border border-gray-200">
+        <CardHeader className="text-center pb-4">
+          <div className="mx-auto w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-3">
+            <Globe className="h-6 w-6 text-gray-600" />
           </div>
-          <CardTitle className="text-mint-800 text-lg">Online Services</CardTitle>
+          <CardTitle className="text-gray-800 text-lg font-semibold">Online Services</CardTitle>
+          <p className="text-gray-600 text-sm mt-2">
+            Connect to your favorite services to import existing notes and documents
+          </p>
         </CardHeader>
-        <CardContent className="pt-0 space-y-4">
-          <p className="text-center text-mint-600 text-sm">Select a service to import notes from:</p>
-          
-          <ImportServiceGrid 
-            selectedService={selectedService}
-            onSelectService={setSelectedService}
-          />
+        <CardContent className="pt-0 space-y-6">
+          <div>
+            <p className="text-sm font-medium text-gray-700 mb-4">Select a service to import notes from:</p>
+            <ImportServiceGrid 
+              selectedService={selectedService}
+              onSelectService={setSelectedService}
+            />
+          </div>
           
           {selectedService && (
-            <div className="mt-4">
+            <div className="border-t border-gray-200 pt-6">
               {renderServiceConnection()}
             </div>
           )}

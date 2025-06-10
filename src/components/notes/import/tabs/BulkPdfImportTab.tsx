@@ -48,19 +48,23 @@ export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
   };
 
   return (
-    <div className="space-y-4">
-      <Card className="border border-mint-200 bg-mint-50">
-        <CardHeader className="text-center pb-2">
-          <div className="mx-auto w-12 h-12 bg-mint-100 rounded-full flex items-center justify-center mb-2">
-            <FileStack className="h-6 w-6 text-mint-600" />
+    <div className="space-y-6">
+      <Card className="bg-white shadow-sm border border-gray-200">
+        <CardHeader className="text-center pb-4">
+          <div className="mx-auto w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-3">
+            <FileStack className="h-6 w-6 text-gray-600" />
           </div>
-          <CardTitle className="text-mint-800 text-lg">Bulk PDF Import</CardTitle>
+          <CardTitle className="text-gray-800 text-lg font-semibold">Bulk PDF Import</CardTitle>
+          <p className="text-gray-600 text-sm mt-2">
+            Upload multiple PDF files and convert them to notes simultaneously
+          </p>
         </CardHeader>
-        <CardContent className="pt-0 space-y-4">
+        <CardContent className="pt-0 space-y-6">
           {selectedFiles.length === 0 ? (
-            <div className="border-2 border-dashed border-mint-300 rounded-lg p-6 text-center">
-              <Upload className="h-8 w-8 mx-auto mb-2 text-mint-400" />
-              <p className="text-mint-700 mb-2">Drop PDF files here or click to browse</p>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
+              <Upload className="h-8 w-8 mx-auto mb-3 text-gray-400" />
+              <p className="text-gray-700 mb-3 font-medium">Drop PDF files here or click to browse</p>
+              <p className="text-sm text-gray-500 mb-4">Select multiple PDF files to process them all at once</p>
               <input
                 type="file"
                 multiple
@@ -71,15 +75,15 @@ export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
               />
               <label
                 htmlFor="bulk-pdf-input"
-                className="inline-block px-4 py-2 bg-mint-500 text-white rounded cursor-pointer hover:bg-mint-600"
+                className="inline-block px-4 py-2 bg-mint-500 text-white rounded-lg cursor-pointer hover:bg-mint-600 transition-colors font-medium"
               >
                 Select PDFs
               </label>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <h3 className="font-medium text-mint-800">Selected Files ({selectedFiles.length})</h3>
+                <h3 className="font-semibold text-gray-800">Selected Files ({selectedFiles.length})</h3>
                 <Button
                   onClick={() => setSelectedFiles([])}
                   variant="outline"
@@ -89,19 +93,21 @@ export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
                 </Button>
               </div>
               
-              <div className="max-h-32 overflow-y-auto space-y-1">
+              <div className="max-h-40 overflow-y-auto space-y-2 bg-gray-50 rounded-lg p-4">
                 {selectedFiles.map((file, index) => (
-                  <div key={index} className="flex items-center gap-2 p-2 bg-white rounded border border-mint-200">
-                    <FileText className="h-4 w-4 text-mint-600" />
-                    <span className="text-sm text-mint-800 flex-1">{file.name}</span>
-                    <span className="text-xs text-mint-500">
-                      {(file.size / 1024 / 1024).toFixed(1)} MB
-                    </span>
+                  <div key={index} className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200">
+                    <FileText className="h-4 w-4 text-gray-600" />
+                    <div className="flex-1">
+                      <span className="text-sm font-medium text-gray-800">{file.name}</span>
+                      <p className="text-xs text-gray-500">
+                        {(file.size / 1024 / 1024).toFixed(1)} MB
+                      </p>
+                    </div>
                     <Button
                       onClick={() => removeFile(index)}
                       variant="ghost"
                       size="sm"
-                      className="h-6 w-6 p-0"
+                      className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>
@@ -112,7 +118,7 @@ export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
               <Button
                 onClick={processFiles}
                 disabled={isProcessing}
-                className="w-full bg-mint-500 hover:bg-mint-600 text-white"
+                className="w-full"
               >
                 {isProcessing ? 'Processing PDFs...' : `Process ${selectedFiles.length} PDF${selectedFiles.length > 1 ? 's' : ''}`}
               </Button>

@@ -163,13 +163,16 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
   }
 
   return (
-    <div className="space-y-4">
-      <Card className="border border-mint-200 bg-mint-50">
-        <CardHeader className="text-center pb-2">
-          <div className="mx-auto w-12 h-12 bg-mint-100 rounded-full flex items-center justify-center mb-2">
-            <Camera className="h-6 w-6 text-mint-600" />
+    <div className="space-y-6">
+      <Card className="bg-white shadow-sm border border-gray-200">
+        <CardHeader className="text-center pb-4">
+          <div className="mx-auto w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-3">
+            <Camera className="h-6 w-6 text-gray-600" />
           </div>
-          <CardTitle className="text-mint-800 text-lg">Scan Documents</CardTitle>
+          <CardTitle className="text-gray-800 text-lg font-semibold">Scan Documents</CardTitle>
+          <p className="text-gray-600 text-sm mt-2">
+            Capture or upload photos of handwritten notes and documents
+          </p>
         </CardHeader>
         <CardContent className="pt-0">
           {!capturedImage ? (
@@ -185,7 +188,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
               />
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <ImageProcessor 
                 imageUrl={capturedImage} 
                 onReset={() => setCapturedImage(null)}
@@ -210,7 +213,6 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
                 <Button
                   onClick={handleSaveNote}
                   disabled={!capturedImage || !recognizedText || !noteTitle || isSaving}
-                  className="bg-mint-500 hover:bg-mint-600 text-white"
                 >
                   {isSaving ? (
                     <>
