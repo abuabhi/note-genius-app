@@ -49,7 +49,7 @@ const AdminDashboardPage = () => {
     },
     {
       title: 'Credit Monitoring',
-      description: 'Monitor Supadata.ai API usage and credits',
+      description: 'Monitor AssemblyAI API usage and credits',
       icon: CreditCardIcon,
       href: '/admin/credits',
       color: 'bg-indigo-500'

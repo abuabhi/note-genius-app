@@ -24,7 +24,7 @@ interface VideoMetadata {
 
 interface TranscriptionCapability {
   hasCaption: boolean;
-  transcriptionMethod: 'captions' | 'supadata';
+  transcriptionMethod: 'captions' | 'assemblyai';
 }
 
 export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
@@ -162,9 +162,9 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
 
     try {
       // Show different loading messages based on transcription method
-      if (transcriptionInfo?.transcriptionMethod === 'supadata') {
-        setProcessingStep('Using Supadata.ai transcription service...');
-        toast.loading('Processing video with Supadata.ai transcription - this may take 2-5 minutes');
+      if (transcriptionInfo?.transcriptionMethod === 'assemblyai') {
+        setProcessingStep('Using AssemblyAI transcription service...');
+        toast.loading('Processing video with AssemblyAI transcription - this may take 2-5 minutes');
       } else {
         setProcessingStep('Processing video captions...');
         toast.loading('Processing video content...');
@@ -182,7 +182,7 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
       if (error) {
         // Handle specific credit limit error
         if (error.message?.includes('Monthly credit limit')) {
-          throw new Error('Monthly Supadata.ai credit limit reached (100/month). Please try again next month.');
+          throw new Error('Monthly AssemblyAI credit limit reached (100/month). Please try again next month.');
         }
         throw new Error(error.message || 'Transcription failed');
       }
@@ -206,8 +206,8 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
       toast.dismiss();
       
       // Show success message based on method used
-      if (data.transcriptionMethod === 'supadata') {
-        toast.success('Video transcribed and imported successfully using Supadata.ai!');
+      if (data.transcriptionMethod === 'assemblyai') {
+        toast.success('Video transcribed and imported successfully using AssemblyAI!');
       } else if (data.transcriptionMethod === 'metadata_only') {
         toast.success('Video information imported successfully! Note: Full transcription was not available.');
       } else {
@@ -243,7 +243,7 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
       return (
         <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
           <Zap className="h-3 w-3 mr-1" />
-          Supadata.ai Transcription Required
+          AssemblyAI Transcription Required
         </Badge>
       );
     }
@@ -349,8 +349,8 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
         <Info className="h-4 w-4" />
         <AlertDescription>
           <strong>Enhanced transcription:</strong> This feature now automatically detects if videos have captions (free) 
-          or uses advanced Supadata.ai transcription for videos without captions. Processing time may vary based on video length 
-          and transcription method. Monthly limit: 100 Supadata.ai transcriptions.
+          or uses advanced AssemblyAI transcription for videos without captions. Processing time may vary based on video length 
+          and transcription method. Monthly limit: 100 AssemblyAI transcriptions.
         </AlertDescription>
       </Alert>
     </div>

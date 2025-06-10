@@ -79,14 +79,14 @@ const AdminCreditsPage = () => {
     try {
       // Fetch usage stats
       const { data: statsData, error: statsError } = await supabase
-        .rpc('get_supadata_usage_stats', { target_month: selectedMonth });
+        .rpc('get_assemblyai_usage_stats', { target_month: selectedMonth });
 
       if (statsError) throw statsError;
       setStats(statsData[0] || { total_credits: 0, total_requests: 0, successful_requests: 0, failed_requests: 0, unique_users: 0 });
 
       // Fetch detailed usage with proper join
       const { data: detailsData, error: detailsError } = await supabase
-        .from('supadata_usage')
+        .from('assemblyai_usage')
         .select(`
           id,
           user_id,
@@ -176,7 +176,7 @@ const AdminCreditsPage = () => {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Supadata.ai Credit Monitoring</h1>
+          <h1 className="text-3xl font-bold">AssemblyAI Credit Monitoring</h1>
           <p className="text-muted-foreground">Monitor monthly API usage and credit consumption</p>
         </div>
         

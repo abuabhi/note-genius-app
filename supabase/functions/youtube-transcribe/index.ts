@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -9,7 +10,7 @@ const corsHeaders = {
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 const youtubeApiKey = Deno.env.get('GOOGLE_CLOUD_API_KEY');
-const supadataApiKey = Deno.env.get('SUPADATA_API_KEY');
+const assemblyaiApiKey = Deno.env.get('ASSEMBLYAI_API_KEY');
 
 interface VideoMetadata {
   title: string;
@@ -22,7 +23,7 @@ interface VideoMetadata {
 interface TranscriptionProgress {
   status: 'processing' | 'completed' | 'error';
   progress?: number;
-  method?: 'captions' | 'supadata';
+  method?: 'captions' | 'assemblyai';
   message?: string;
 }
 
@@ -45,7 +46,7 @@ serve(async (req) => {
       const hasCaption = await checkCaptionsAvailability(videoId);
       return new Response(JSON.stringify({ 
         hasCaption,
-        transcriptionMethod: hasCaption ? 'captions' : 'supadata'
+        transcriptionMethod: hasCaption ? 'captions' : 'assemblyai'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -181,11 +182,11 @@ async function transcribeVideo(videoId: string, videoUrl: string, req: Request):
       }
     }
 
-    // Step 2: Use Supadata.ai as fallback
-    console.log('No captions available, using Supadata.ai for transcription...');
+    // Step 2: Use AssemblyAI as fallback
+    console.log('No captions available, using AssemblyAI for transcription...');
     
-    if (!supadataApiKey) {
-      throw new Error('Supadata.ai API key not configured');
+    if (!assemblyaiApiKey) {
+      throw new Error('AssemblyAI API key not configured');
     }
 
     // Check current month credit usage before proceeding
@@ -196,13 +197,13 @@ async function transcribeVideo(videoId: string, videoUrl: string, req: Request):
       throw new Error('Monthly credit limit of 100 reached. Please wait until next month or contact support.');
     }
 
-    const transcript = await transcribeWithSupadata(videoUrl, videoId, req);
+    const transcript = await transcribeWithAssemblyAI(videoUrl, videoId, req);
     
     if (!transcript || transcript.length < 20) {
-      throw new Error('Supadata.ai transcription failed or returned insufficient content');
+      throw new Error('AssemblyAI transcription failed or returned insufficient content');
     }
 
-    console.log('Successfully transcribed with Supadata.ai');
+    console.log('Successfully transcribed with AssemblyAI');
     return transcript;
 
   } catch (error) {
@@ -218,7 +219,7 @@ async function getCurrentMonthCredits(): Promise<number> {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { data, error } = await supabase.rpc('get_supadata_credits_used_this_month');
+    const { data, error } = await supabase.rpc('get_assemblyai_credits_used_this_month');
     
     if (error) {
       console.error('Error fetching current credits:', error);
@@ -232,7 +233,7 @@ async function getCurrentMonthCredits(): Promise<number> {
   }
 }
 
-async function logSupadataUsage(
+async function logAssemblyAIUsage(
   userId: string, 
   videoId: string, 
   videoUrl: string, 
@@ -247,7 +248,7 @@ async function logSupadataUsage(
     );
 
     const { error } = await supabase
-      .from('supadata_usage')
+      .from('assemblyai_usage')
       .insert({
         user_id: userId,
         video_id: videoId,
@@ -259,67 +260,108 @@ async function logSupadataUsage(
       });
 
     if (error) {
-      console.error('Error logging Supadata usage:', error);
+      console.error('Error logging AssemblyAI usage:', error);
     }
   } catch (error) {
-    console.error('Error in logSupadataUsage:', error);
+    console.error('Error in logAssemblyAIUsage:', error);
   }
 }
 
 async function getYouTubeCaptions(videoId: string): Promise<string | null> {
   // Note: This is a simplified implementation
   // In a full implementation, you would need OAuth2 to download actual caption content
-  // For now, we return null to trigger Supadata.ai fallback
-  console.log('Caption download requires OAuth2 implementation - falling back to Supadata.ai');
+  // For now, we return null to trigger AssemblyAI fallback
+  console.log('Caption download requires OAuth2 implementation - falling back to AssemblyAI');
   return null;
 }
 
-async function transcribeWithSupadata(videoUrl: string, videoId: string, req: Request): Promise<string> {
+async function transcribeWithAssemblyAI(videoUrl: string, videoId: string, req: Request): Promise<string> {
   try {
-    console.log('Starting Supadata.ai transcription for:', videoUrl);
+    console.log('Starting AssemblyAI transcription for:', videoUrl);
 
     // Get user ID from the request
     const userId = extractUserIdFromRequest(req);
     console.log('User ID for logging:', userId);
 
-    const response = await fetch('https://api.supadata.ai/v1/youtube', {
+    // Step 1: Submit the video URL for transcription
+    const uploadResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
       method: 'POST',
       headers: {
-        'x-api-key': supadataApiKey,
-        'Content-Type': 'application/json',
+        'authorization': assemblyaiApiKey,
+        'content-type': 'application/json',
       },
       body: JSON.stringify({
-        url: videoUrl,
-        format: 'text'
+        audio_url: videoUrl,
+        speaker_labels: false,
+        auto_chapters: false,
+        summarization: false,
+        summary_model: 'informative',
+        summary_type: 'bullets'
       }),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Supadata.ai API error:', response.status, errorText);
+    if (!uploadResponse.ok) {
+      const errorText = await uploadResponse.text();
+      console.error('AssemblyAI submission error:', uploadResponse.status, errorText);
       
       // Log the failed attempt
-      await logSupadataUsage(userId, videoId, videoUrl, false, `API Error: ${response.status} - ${errorText}`);
+      await logAssemblyAIUsage(userId, videoId, videoUrl, false, `API Error: ${uploadResponse.status} - ${errorText}`);
       
-      throw new Error(`Supadata.ai API error: ${response.status} - ${errorText}`);
+      throw new Error(`AssemblyAI API error: ${uploadResponse.status} - ${errorText}`);
     }
 
-    const data = await response.json();
+    const uploadData = await uploadResponse.json();
+    const transcriptId = uploadData.id;
+
+    console.log(`Transcription submitted with ID: ${transcriptId}`);
+
+    // Step 2: Poll for completion
+    let transcript = null;
+    let attempts = 0;
+    const maxAttempts = 60; // 5 minutes max wait time
     
-    if (!data.transcript) {
-      await logSupadataUsage(userId, videoId, videoUrl, false, 'No transcript in response', data);
-      throw new Error('Supadata.ai returned no transcript');
+    while (attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds between polls
+      
+      const statusResponse = await fetch(`https://api.assemblyai.com/v2/transcript/${transcriptId}`, {
+        headers: {
+          'authorization': assemblyaiApiKey,
+        },
+      });
+
+      if (!statusResponse.ok) {
+        throw new Error(`Failed to check transcription status: ${statusResponse.status}`);
+      }
+
+      const statusData = await statusResponse.json();
+      
+      console.log(`Transcription status: ${statusData.status}`);
+      
+      if (statusData.status === 'completed') {
+        transcript = statusData.text;
+        break;
+      } else if (statusData.status === 'error') {
+        await logAssemblyAIUsage(userId, videoId, videoUrl, false, `Transcription error: ${statusData.error}`, statusData);
+        throw new Error(`AssemblyAI transcription failed: ${statusData.error}`);
+      }
+      
+      attempts++;
     }
 
-    console.log(`Supadata.ai transcription completed. Length: ${data.transcript.length} characters`);
+    if (!transcript) {
+      await logAssemblyAIUsage(userId, videoId, videoUrl, false, 'Transcription timeout - exceeded maximum wait time');
+      throw new Error('Transcription timeout - please try again later');
+    }
+
+    console.log(`AssemblyAI transcription completed. Length: ${transcript.length} characters`);
     
     // Log the successful usage
-    await logSupadataUsage(userId, videoId, videoUrl, true, undefined, data);
+    await logAssemblyAIUsage(userId, videoId, videoUrl, true, undefined, { transcript_id: transcriptId });
     
-    return data.transcript;
+    return transcript;
 
   } catch (error) {
-    console.error('Supadata.ai transcription error:', error);
+    console.error('AssemblyAI transcription error:', error);
     throw error;
   }
 }
@@ -441,7 +483,7 @@ Format your response as JSON with these fields:
     subject: result.subject,
     content: result.content,
     subject_id: null,
-    transcriptionMethod: 'supadata'
+    transcriptionMethod: 'assemblyai'
   };
 }
 

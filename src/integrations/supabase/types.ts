@@ -135,6 +135,45 @@ export type Database = {
         }
         Relationships: []
       }
+      assemblyai_usage: {
+        Row: {
+          created_at: string
+          credits_used: number
+          error_message: string | null
+          id: string
+          month_year: string
+          response_data: Json | null
+          success: boolean
+          user_id: string
+          video_id: string
+          video_url: string
+        }
+        Insert: {
+          created_at?: string
+          credits_used?: number
+          error_message?: string | null
+          id?: string
+          month_year?: string
+          response_data?: Json | null
+          success?: boolean
+          user_id: string
+          video_id: string
+          video_url: string
+        }
+        Update: {
+          created_at?: string
+          credits_used?: number
+          error_message?: string | null
+          id?: string
+          month_year?: string
+          response_data?: Json | null
+          success?: boolean
+          user_id?: string
+          video_id?: string
+          video_url?: string
+        }
+        Relationships: []
+      }
       chat_conversations: {
         Row: {
           created_at: string
@@ -2079,45 +2118,6 @@ export type Database = {
           },
         ]
       }
-      supadata_usage: {
-        Row: {
-          created_at: string
-          credits_used: number
-          error_message: string | null
-          id: string
-          month_year: string
-          response_data: Json | null
-          success: boolean
-          user_id: string
-          video_id: string
-          video_url: string
-        }
-        Insert: {
-          created_at?: string
-          credits_used?: number
-          error_message?: string | null
-          id?: string
-          month_year?: string
-          response_data?: Json | null
-          success?: boolean
-          user_id: string
-          video_id: string
-          video_url: string
-        }
-        Update: {
-          created_at?: string
-          credits_used?: number
-          error_message?: string | null
-          id?: string
-          month_year?: string
-          response_data?: Json | null
-          success?: boolean
-          user_id?: string
-          video_id?: string
-          video_url?: string
-        }
-        Relationships: []
-      }
       tags: {
         Row: {
           color: string | null
@@ -2547,11 +2547,11 @@ export type Database = {
           dismissible: boolean
         }[]
       }
-      get_supadata_credits_used_this_month: {
+      get_assemblyai_credits_used_this_month: {
         Args: Record<PropertyKey, never>
         Returns: number
       }
-      get_supadata_usage_stats: {
+      get_assemblyai_usage_stats: {
         Args: { target_month?: string }
         Returns: {
           total_credits: number
