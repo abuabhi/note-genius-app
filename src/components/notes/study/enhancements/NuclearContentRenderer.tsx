@@ -1,3 +1,4 @@
+
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -47,8 +48,11 @@ export const NuclearContentRenderer = ({
     originalLength: content.length,
     processedLength: processedData.content.length,
     metadata: processedData.metadata,
-    processedPreview: processedData.content.substring(0, 200)
+    processedPreview: processedData.content.substring(0, 400)
   });
+
+  // IMPORTANT: Add debug logging to see the final content before ReactMarkdown
+  console.log("🎨 NUCLEAR RENDERER: Final content going to ReactMarkdown:", processedData.content);
 
   const containerStyle = {
     fontSize: `${fontSize}px`,
@@ -95,20 +99,10 @@ export const NuclearContentRenderer = ({
       <li className="nuclear-list-item" {...props}>{children}</li>
     ),
     
-    // Text formatting with enriched content highlighting - UPDATED FOR NEW APPROACH
-    strong: ({ children, ...props }: any) => {
-      const childrenString = React.Children.toArray(children).join('');
-      
-      // Check if this is enriched content marker (old format fallback)
-      if (childrenString === '[ENRICHED]') {
-        return <span className="enriched-marker enriched-start" {...props}>🔥 Added Content:</span>;
-      }
-      if (childrenString === '[/ENRICHED]') {
-        return <span className="enriched-marker enriched-end" {...props}></span>;
-      }
-      
-      return <strong className="nuclear-strong" {...props}>{children}</strong>;
-    },
+    // Text formatting
+    strong: ({ children, ...props }: any) => (
+      <strong className="nuclear-strong" {...props}>{children}</strong>
+    ),
     em: ({ children, ...props }: any) => (
       <em className="nuclear-em" {...props}>{children}</em>
     ),
@@ -123,9 +117,8 @@ export const NuclearContentRenderer = ({
         </pre>
       ),
     
-    // AI Enhanced blocks - convert markdown sections back to styled blocks
+    // AI Enhanced blocks
     blockquote: ({ children, ...props }: any) => {
-      // Check if this is an AI enhanced section
       const childrenString = React.Children.toArray(children).join('');
       if (childrenString.includes('✨ AI Enhanced Content:')) {
         console.log("🎯 NUCLEAR: Rendering AI Enhanced blockquote");
@@ -138,21 +131,24 @@ export const NuclearContentRenderer = ({
       return <blockquote className="nuclear-blockquote" {...props}>{children}</blockquote>;
     },
     
-    // Handle enriched content spans - CRITICAL for new enrichment
-    span: ({ className: spanClassName, children, ...props }: any) => {
-      if (spanClassName === 'enriched-content') {
-        console.log("🔥 NUCLEAR: Rendering enriched content span");
+    // Handle divs (this is where enriched content sections will be rendered)
+    div: ({ className: divClassName, children, ...props }: any) => {
+      if (divClassName === 'enriched-content-section') {
+        console.log("🔥 NUCLEAR: Rendering enriched content section div");
         return (
-          <span className="enriched-content" {...props}>
+          <div className="enriched-content-section" {...props}>
             {children}
-          </span>
+          </div>
         );
       }
-      return <span className={spanClassName} {...props}>{children}</span>;
-    },
-    
-    // Handle divs (in case any slip through)
-    div: ({ className: divClassName, children, ...props }: any) => {
+      if (divClassName === 'enriched-header') {
+        console.log("🔥 NUCLEAR: Rendering enriched header div");
+        return (
+          <div className="enriched-header" {...props}>
+            {children}
+          </div>
+        );
+      }
       if (divClassName === 'ai-enhanced-block') {
         console.log("🎯 NUCLEAR: Rendering AI Enhanced div block");
         return (
@@ -161,77 +157,20 @@ export const NuclearContentRenderer = ({
           </div>
         );
       }
-      if (divClassName === 'enriched-content') {
-        console.log("🔥 NUCLEAR: Rendering enriched content div");
-        return (
-          <div className="enriched-content" {...props}>
-            {children}
-          </div>
-        );
-      }
       return <div className={`nuclear-div ${divClassName || ''}`} {...props}>{children}</div>;
     },
     
-    // Handle enriched content sections - NEW APPROACH FOR SECTION IDENTIFIERS
-    hr: ({ ...props }: any) => {
-      // Check if this is an enriched content section marker
-      const nextSibling = props?.node?.nextSibling;
-      const prevSibling = props?.node?.previousSibling;
-      
-      // This is a placeholder for now - the real magic happens in our custom processing
-      return <hr className="nuclear-hr" {...props} />;
-    }
+    // Handle horizontal rules
+    hr: ({ ...props }: any) => (
+      <hr className="nuclear-hr" {...props} />
+    )
   };
-
-  // NUCLEAR: Process enriched content sections BEFORE passing to ReactMarkdown
-  const processEnrichedSections = (content: string): string => {
-    console.log("🔥 NUCLEAR: Processing enriched sections:", {
-      hasEnrichedMarkers: content.includes('---ENRICHED-START---'),
-      contentPreview: content.substring(0, 200)
-    });
-
-    // Split content by enriched markers and wrap sections
-    const sections = content.split(/(---ENRICHED-START---|---ENRICHED-END---)/);
-    let processedContent = '';
-    let inEnrichedSection = false;
-
-    for (let i = 0; i < sections.length; i++) {
-      const section = sections[i];
-      
-      if (section === '---ENRICHED-START---') {
-        inEnrichedSection = true;
-        processedContent += '\n\n<div class="enriched-content-section">\n\n**🔥 Enriched Content:**\n\n';
-      } else if (section === '---ENRICHED-END---') {
-        inEnrichedSection = false;
-        processedContent += '\n\n</div>\n\n';
-      } else {
-        if (inEnrichedSection) {
-          // Content inside enriched section - add some styling hints
-          processedContent += section;
-        } else {
-          // Regular content
-          processedContent += section;
-        }
-      }
-    }
-
-    console.log("✅ NUCLEAR: Enriched sections processed:", {
-      originalLength: content.length,
-      processedLength: processedContent.length,
-      hasEnrichedDivs: processedContent.includes('enriched-content-section')
-    });
-
-    return processedContent;
-  };
-
-  // Process the content for enriched sections
-  const finalContent = processEnrichedSections(processedData.content);
 
   console.log("🎨 NUCLEAR RENDERER: About to render with ReactMarkdown:", {
-    hasProcessedContent: !!finalContent,
+    hasProcessedContent: !!processedData.content,
     containerStyle,
     componentsCount: Object.keys(nuclearMarkdownComponents).length,
-    finalContentPreview: finalContent.substring(0, 200)
+    finalContentPreview: processedData.content.substring(0, 400)
   });
 
   return (
@@ -240,7 +179,7 @@ export const NuclearContentRenderer = ({
       style={containerStyle}
     >
       <ReactMarkdown
-        children={finalContent}
+        children={processedData.content}
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw]}
         components={nuclearMarkdownComponents}

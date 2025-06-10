@@ -67,23 +67,23 @@ export const processContentForRendering = (rawContent: string): ProcessedContent
       .replace(/<\/div>/g, '\n\n---\n\n');
   }
 
-  // Step 3: Process ENRICHED content - NEW MARKDOWN-ONLY APPROACH
+  // Step 3: Process ENRICHED content - FIXED: Direct HTML injection for ReactMarkdown
   const hasEnrichedContent = processed.includes('[ENRICHED]') || processed.includes('**[ENRICHED]**');
   if (hasEnrichedContent) {
-    console.log("🔥 PROCESSING ENRICHED CONTENT MARKERS - MARKDOWN APPROACH");
+    console.log("🔥 PROCESSING ENRICHED CONTENT MARKERS - HTML INJECTION APPROACH");
     
-    // Handle new markdown-style enriched markers
+    // Convert enriched markers directly to HTML divs with proper styling
     processed = processed
-      // Convert **[ENRICHED]** markers to section breaks with special identifiers
-      .replace(/\*\*\[ENRICHED\]\*\*/g, '\n\n---ENRICHED-START---\n\n')
-      .replace(/\*\*\[\/ENRICHED\]\*\*/g, '\n\n---ENRICHED-END---\n\n')
-      // Handle plain [ENRICHED] markers as fallback
-      .replace(/\[ENRICHED\]/g, '\n\n---ENRICHED-START---\n\n')
-      .replace(/\[\/ENRICHED\]/g, '\n\n---ENRICHED-END---\n\n');
+      // Handle **[ENRICHED]** markers (from new AI responses)
+      .replace(/\*\*\[ENRICHED\]\*\*/g, '<div class="enriched-content-section"><div class="enriched-header">🔥 Enhanced Content:</div>')
+      .replace(/\*\*\[\/ENRICHED\]\*\*/g, '</div>')
+      // Handle plain [ENRICHED] markers (fallback)
+      .replace(/\[ENRICHED\]/g, '<div class="enriched-content-section"><div class="enriched-header">🔥 Enhanced Content:</div>')
+      .replace(/\[\/ENRICHED\]/g, '</div>');
     
-    console.log("✅ Enriched markers processed to section identifiers:", {
-      hasMarkers: processed.includes('---ENRICHED-START---'),
-      processedPreview: processed.substring(0, 300)
+    console.log("✅ Enriched markers processed to HTML divs:", {
+      hasEnrichedDivs: processed.includes('enriched-content-section'),
+      processedPreview: processed.substring(0, 400)
     });
   }
 
@@ -98,10 +98,7 @@ export const processContentForRendering = (rawContent: string): ProcessedContent
     .replace(/&mdash;/g, '—')
     .replace(/&ndash;/g, '–');
 
-  // Step 5: Clean up any remaining HTML tags (now that we use pure markdown approach)
-  processed = processed.replace(/<[^>]*>/g, '');
-
-  // Step 6: Normalize whitespace and line breaks
+  // Step 5: Normalize whitespace and line breaks
   processed = processed
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n')
@@ -110,7 +107,7 @@ export const processContentForRendering = (rawContent: string): ProcessedContent
     .replace(/^[ \t]+|[ \t]+$/gm, '')
     .trim();
 
-  // Step 7: Ensure proper markdown structure
+  // Step 6: Ensure proper markdown structure
   processed = ensureMarkdownStructure(processed);
 
   const metadata = analyzeContent(processed, wasHtmlCleaned, hasEnrichedContent);
@@ -159,7 +156,7 @@ const analyzeContent = (content: string, wasHtmlCleaned: boolean, hasEnrichedCon
     hasLists: /^[-*+]\s+|\d+\.\s+/m.test(content),
     hasHeaders: /^#{1,6}\s+/m.test(content),
     hasAIBlocks: content.includes('**✨ AI Enhanced Content:**'),
-    hasEnrichedContent: hasEnrichedContent || content.includes('---ENRICHED-START---'),
+    hasEnrichedContent: hasEnrichedContent || content.includes('enriched-content-section'),
     wordCount: content.split(/\s+/).filter(word => word.length > 0).length,
     wasHtmlCleaned
   };
