@@ -13,11 +13,17 @@ serve(async (req) => {
   }
   
   try {
+    console.log("Microsoft auth function called");
+    console.log("Client ID exists:", !!MICROSOFT_CLIENT_ID);
+    console.log("Client Secret exists:", !!MICROSOFT_CLIENT_SECRET);
+    
     if (!MICROSOFT_CLIENT_ID || !MICROSOFT_CLIENT_SECRET) {
-      throw new Error("Microsoft OAuth credentials not configured");
+      console.error("Missing credentials - Client ID:", !!MICROSOFT_CLIENT_ID, "Client Secret:", !!MICROSOFT_CLIENT_SECRET);
+      throw new Error("Microsoft OAuth credentials not configured properly");
     }
 
     const body = await req.json();
+    console.log("Request body action:", body.action);
     
     // Handle client ID request
     if (body.action === 'get_client_id') {
@@ -46,6 +52,7 @@ serve(async (req) => {
         grant_type: "authorization_code",
         scope: "Notes.Read Notes.ReadWrite User.Read"
       });
+      console.log("Exchanging authorization code for tokens");
     } else if (grant_type === "refresh_token") {
       // Refresh access token
       requestBody = new URLSearchParams({
@@ -55,11 +62,14 @@ serve(async (req) => {
         grant_type: "refresh_token",
         scope: "Notes.Read Notes.ReadWrite User.Read"
       });
+      console.log("Refreshing access token");
     } else {
       throw new Error("Invalid grant type");
     }
 
     console.log("Making request to Microsoft token endpoint...");
+    console.log("Using client ID:", MICROSOFT_CLIENT_ID);
+    console.log("Secret length:", MICROSOFT_CLIENT_SECRET?.length || 0);
     
     const response = await fetch(MICROSOFT_TOKEN_URL, {
       method: 'POST',
@@ -72,8 +82,17 @@ serve(async (req) => {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error("Microsoft token exchange error:", data);
-      throw new Error(data.error_description || data.error || "Token exchange failed");
+      console.error("Microsoft token exchange error:", JSON.stringify(data, null, 2));
+      console.error("Response status:", response.status);
+      console.error("Response statusText:", response.statusText);
+      
+      // More specific error message
+      let errorMessage = data.error_description || data.error || "Token exchange failed";
+      if (data.error === "invalid_client") {
+        errorMessage = "Invalid Microsoft app credentials. Please check your Client ID and Client Secret in Supabase secrets.";
+      }
+      
+      throw new Error(errorMessage);
     }
 
     console.log("Microsoft token exchange successful");
@@ -99,7 +118,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: error.message || 'Internal server error',
-        details: error.toString()
+        details: error.toString(),
+        timestamp: new Date().toISOString()
       }),
       { 
         status: 500, 
