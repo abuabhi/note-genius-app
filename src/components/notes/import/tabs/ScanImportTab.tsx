@@ -1,7 +1,5 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Camera, Sparkles } from 'lucide-react';
 import { ImageUpload } from '../../scanning/ImageUpload';
 import { useImageUpload } from '../../scanning/hooks/useImageUpload';
 import { useDragAndDrop } from '../../scanning/hooks/useDragAndDrop';
@@ -151,98 +149,79 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
 
   if (processingMode === 'batch') {
     return (
-      <div className="animate-fade-in">
-        <BatchProcessingView
-          processedImages={processedImages}
-          batchProgress={batchProgress}
-          onSaveBatch={saveBatchAsNotes}
-          onReset={resetForm}
-          isSaving={isSaving}
-        />
-      </div>
+      <BatchProcessingView
+        processedImages={processedImages}
+        batchProgress={batchProgress}
+        onSaveBatch={saveBatchAsNotes}
+        onReset={resetForm}
+        isSaving={isSaving}
+      />
     );
   }
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      <Card className="bg-white/90 backdrop-blur-sm shadow-xl border-0 hover:shadow-2xl transition-all duration-500 hover:scale-[1.01] animate-scale-in group">
-        <CardHeader className="text-center pb-6 relative overflow-hidden">
-          {/* Animated Background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-mint-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          
-          <div className="relative z-10">
-            <div className="mx-auto w-16 h-16 bg-gradient-to-br from-mint-500 to-mint-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg animate-pulse group-hover:animate-bounce">
-              <Camera className="h-8 w-8 text-white" />
-            </div>
-            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-              Scan Documents
-            </CardTitle>
-            <div className="h-1 w-24 bg-gradient-to-r from-mint-500 to-mint-300 rounded-full mx-auto mt-3 animate-fade-in" />
-            <p className="text-gray-600 text-base mt-4 leading-relaxed">
-              Capture or upload photos of handwritten notes and documents
-            </p>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          {!capturedImage ? (
-            <div className="w-full">
-              <ImageUpload 
-                onImageUploaded={handleSingleImage} 
-                onMultipleImagesUploaded={handleMultipleImages}
-                isDragOver={isDragOver}
-                onDragEnter={handleDragEnter}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDropEvent}
-              />
-            </div>
-          ) : (
-            <div className="space-y-8 animate-fade-in">
-              <ImageProcessor 
-                imageUrl={capturedImage} 
-                onReset={() => setCapturedImage(null)}
-                onTextExtracted={setRecognizedText}
-                selectedLanguage={selectedLanguage}
-                onLanguageChange={setSelectedLanguage}
-                isPremiumUser={isPremiumUser}
-              />
-              
-              {recognizedText && (
-                <div className="animate-fade-in">
-                  <NoteMetadataForm 
-                    title={noteTitle}
-                    setTitle={setNoteTitle}
-                    category={noteCategory}
-                    setCategory={setNoteCategory}
-                    isDisabled={!capturedImage || !recognizedText}
-                    detectedLanguage={getLanguageName(selectedLanguage)}
-                  />
+    <div className="space-y-6">
+      <div>
+        <p className="text-sm text-gray-600 mb-4">
+          Capture or upload photos of handwritten notes and documents
+        </p>
+        
+        {!capturedImage ? (
+          <ImageUpload 
+            onImageUploaded={handleSingleImage} 
+            onMultipleImagesUploaded={handleMultipleImages}
+            isDragOver={isDragOver}
+            onDragEnter={handleDragEnter}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDropEvent}
+          />
+        ) : (
+          <div className="space-y-4">
+            <ImageProcessor 
+              imageUrl={capturedImage} 
+              onReset={() => setCapturedImage(null)}
+              onTextExtracted={setRecognizedText}
+              selectedLanguage={selectedLanguage}
+              onLanguageChange={setSelectedLanguage}
+              isPremiumUser={isPremiumUser}
+            />
+            
+            {recognizedText && (
+              <div>
+                <NoteMetadataForm 
+                  title={noteTitle}
+                  setTitle={setNoteTitle}
+                  category={noteCategory}
+                  setCategory={setNoteCategory}
+                  isDisabled={!capturedImage || !recognizedText}
+                  detectedLanguage={getLanguageName(selectedLanguage)}
+                />
+                
+                <div className="flex justify-end mt-4">
+                  <Button
+                    onClick={handleSaveNote}
+                    disabled={!capturedImage || !recognizedText || !noteTitle || isSaving}
+                    className="bg-mint-500 hover:bg-mint-600 text-white"
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <FileText className="mr-2 h-4 w-4" />
+                        Save Note
+                      </>
+                    )}
+                  </Button>
                 </div>
-              )}
-
-              <div className="flex justify-end">
-                <Button
-                  onClick={handleSaveNote}
-                  disabled={!capturedImage || !recognizedText || !noteTitle || isSaving}
-                  className="bg-gradient-to-r from-mint-500 to-mint-600 hover:from-mint-600 hover:to-mint-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-                >
-                  {isSaving ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <FileText className="mr-2 h-4 w-4" />
-                      Save Note
-                    </>
-                  )}
-                </Button>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
