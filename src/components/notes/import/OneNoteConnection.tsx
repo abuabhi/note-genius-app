@@ -1,10 +1,9 @@
-
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useOneNoteAuth } from "@/integrations/microsoft/oneNoteOAuth";
-import { Loader2, Check, X, AlertCircle, ExternalLink, RefreshCw, Copy } from "lucide-react";
-import { useState } from "react";
+import { Loader2, Check, X, AlertCircle, ExternalLink, RefreshCw, Copy, User } from "lucide-react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 interface OneNoteConnectionProps {
@@ -16,11 +15,51 @@ export const OneNoteConnection = ({ onConnected }: OneNoteConnectionProps) => {
   const [isRefreshingPages, setIsRefreshingPages] = useState(false);
   const [pages, setPages] = useState<any[]>([]);
   const [selectedPages, setSelectedPages] = useState<string[]>([]);
+  const [userInfo, setUserInfo] = useState<{name?: string, email?: string} | null>(null);
   
   // When authentication changes and we have an access token, call the callback
   if (isAuthenticated && accessToken) {
     onConnected(accessToken);
   }
+
+  // Fetch user info when authenticated
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      if (!accessToken) {
+        setUserInfo(null);
+        return;
+      }
+      
+      try {
+        console.log('Fetching Microsoft user info...');
+        const response = await fetch('https://graph.microsoft.com/v1.0/me?$select=displayName,mail,userPrincipalName', {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          console.error('Failed to fetch user info:', response.status, response.statusText);
+          return;
+        }
+
+        const userData = await response.json();
+        console.log('Microsoft user info:', userData);
+        
+        setUserInfo({
+          name: userData.displayName,
+          email: userData.mail || userData.userPrincipalName
+        });
+      } catch (error) {
+        console.error('Error fetching user info:', error);
+      }
+    };
+
+    if (isAuthenticated && accessToken) {
+      fetchUserInfo();
+    }
+  }, [isAuthenticated, accessToken]);
 
   const fetchPages = async () => {
     if (!accessToken) return;
@@ -103,6 +142,19 @@ export const OneNoteConnection = ({ onConnected }: OneNoteConnectionProps) => {
           </Badge>
         )}
       </div>
+      
+      {/* User Info Display */}
+      {isAuthenticated && userInfo && (
+        <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+          <div className="flex items-center gap-2 text-blue-700">
+            <User className="h-4 w-4" />
+            <div className="text-sm">
+              <p className="font-medium">Connected as: {userInfo.name}</p>
+              <p className="text-blue-600">{userInfo.email}</p>
+            </div>
+          </div>
+        </div>
+      )}
       
       {error && (
         <Alert className="border-red-200 bg-red-50">
