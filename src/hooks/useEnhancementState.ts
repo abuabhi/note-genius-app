@@ -9,12 +9,14 @@ export const useEnhancementState = (noteId: string) => {
     hasKeyPoints: boolean;
     hasMarkdown: boolean;
     hasImprovedClarity: boolean;
+    hasEnrichedContent: boolean;
     isLoading: boolean;
   }>({
     hasSummary: false,
     hasKeyPoints: false,
     hasMarkdown: false,
     hasImprovedClarity: false,
+    hasEnrichedContent: false,
     isLoading: true
   });
 

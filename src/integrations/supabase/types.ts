@@ -843,6 +843,9 @@ export type Database = {
           created_at: string
           date: string
           description: string
+          enriched_content: string | null
+          enriched_content_generated_at: string | null
+          enriched_status: string | null
           id: string
           improved_content: string | null
           improved_content_generated_at: string | null
@@ -867,6 +870,9 @@ export type Database = {
           created_at?: string
           date?: string
           description: string
+          enriched_content?: string | null
+          enriched_content_generated_at?: string | null
+          enriched_status?: string | null
           id?: string
           improved_content?: string | null
           improved_content_generated_at?: string | null
@@ -891,6 +897,9 @@ export type Database = {
           created_at?: string
           date?: string
           description?: string
+          enriched_content?: string | null
+          enriched_content_generated_at?: string | null
+          enriched_status?: string | null
           id?: string
           improved_content?: string | null
           improved_content_generated_at?: string | null
