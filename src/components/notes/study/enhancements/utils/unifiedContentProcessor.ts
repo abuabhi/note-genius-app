@@ -1,4 +1,3 @@
-
 /**
  * NUCLEAR REWRITE: Unified Content Processor
  * This is the SINGLE source of truth for all content processing
@@ -67,22 +66,22 @@ export const processContentForRendering = (rawContent: string): ProcessedContent
       .replace(/<\/div>/g, '\n\n---\n\n');
   }
 
-  // Step 3: Process ENRICHED content - FIXED: Direct HTML injection for ReactMarkdown
+  // Step 3: Process ENRICHED content - FIXED: Use markdown directive syntax
   const hasEnrichedContent = processed.includes('[ENRICHED]') || processed.includes('**[ENRICHED]**');
   if (hasEnrichedContent) {
-    console.log("🔥 PROCESSING ENRICHED CONTENT MARKERS - HTML INJECTION APPROACH");
+    console.log("🔥 PROCESSING ENRICHED CONTENT MARKERS - MARKDOWN DIRECTIVE APPROACH");
     
-    // Convert enriched markers directly to HTML divs with proper styling
+    // Convert enriched markers to markdown container directive syntax
     processed = processed
       // Handle **[ENRICHED]** markers (from new AI responses)
-      .replace(/\*\*\[ENRICHED\]\*\*/g, '<div class="enriched-content-section"><div class="enriched-header">🔥 Enhanced Content:</div>')
-      .replace(/\*\*\[\/ENRICHED\]\*\*/g, '</div>')
+      .replace(/\*\*\[ENRICHED\]\*\*/g, '\n\n:::enriched\n**🔥 Enhanced Content:**\n\n')
+      .replace(/\*\*\[\/ENRICHED\]\*\*/g, '\n:::\n\n')
       // Handle plain [ENRICHED] markers (fallback)
-      .replace(/\[ENRICHED\]/g, '<div class="enriched-content-section"><div class="enriched-header">🔥 Enhanced Content:</div>')
-      .replace(/\[\/ENRICHED\]/g, '</div>');
+      .replace(/\[ENRICHED\]/g, '\n\n:::enriched\n**🔥 Enhanced Content:**\n\n')
+      .replace(/\[\/ENRICHED\]/g, '\n:::\n\n');
     
-    console.log("✅ Enriched markers processed to HTML divs:", {
-      hasEnrichedDivs: processed.includes('enriched-content-section'),
+    console.log("✅ Enriched markers processed to markdown directives:", {
+      hasEnrichedDirectives: processed.includes(':::enriched'),
       processedPreview: processed.substring(0, 400)
     });
   }
@@ -156,7 +155,7 @@ const analyzeContent = (content: string, wasHtmlCleaned: boolean, hasEnrichedCon
     hasLists: /^[-*+]\s+|\d+\.\s+/m.test(content),
     hasHeaders: /^#{1,6}\s+/m.test(content),
     hasAIBlocks: content.includes('**✨ AI Enhanced Content:**'),
-    hasEnrichedContent: hasEnrichedContent || content.includes('enriched-content-section'),
+    hasEnrichedContent: hasEnrichedContent || content.includes(':::enriched'),
     wordCount: content.split(/\s+/).filter(word => word.length > 0).length,
     wasHtmlCleaned
   };

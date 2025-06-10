@@ -1,10 +1,11 @@
-
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkDirective from 'remark-directive';
 import rehypeRaw from 'rehype-raw';
 import { TextAlignType } from '../hooks/useStudyViewState';
 import { processContentForRendering, validateContentForRendering } from './utils/unifiedContentProcessor';
+import { remarkEnrichedContainer } from './utils/remarkEnrichedContainer';
 import './NuclearContentRenderer.css';
 
 interface NuclearContentRendererProps {
@@ -131,25 +132,17 @@ export const NuclearContentRenderer = ({
       return <blockquote className="nuclear-blockquote" {...props}>{children}</blockquote>;
     },
     
-    // Handle divs (this is where enriched content sections will be rendered)
-    div: ({ className: divClassName, children, ...props }: any) => {
-      if (divClassName === 'enriched-content-section') {
-        console.log("🔥 NUCLEAR: Rendering enriched content section div");
+    // Handle divs - UPDATED for remark-directive approach
+    div: ({ className: divClassName = '', children, ...props }: any) => {
+      if (divClassName.includes('enriched-content-section')) {
+        console.log("🔥 NUCLEAR: Rendering enriched content section via remark-directive");
         return (
           <div className="enriched-content-section" {...props}>
             {children}
           </div>
         );
       }
-      if (divClassName === 'enriched-header') {
-        console.log("🔥 NUCLEAR: Rendering enriched header div");
-        return (
-          <div className="enriched-header" {...props}>
-            {children}
-          </div>
-        );
-      }
-      if (divClassName === 'ai-enhanced-block') {
+      if (divClassName.includes('ai-enhanced-block')) {
         console.log("🎯 NUCLEAR: Rendering AI Enhanced div block");
         return (
           <div className="ai-enhanced-block nuclear-ai-block" {...props}>
@@ -157,7 +150,7 @@ export const NuclearContentRenderer = ({
           </div>
         );
       }
-      return <div className={`nuclear-div ${divClassName || ''}`} {...props}>{children}</div>;
+      return <div className={`nuclear-div ${divClassName}`.trim()} {...props}>{children}</div>;
     },
     
     // Handle horizontal rules
@@ -180,7 +173,7 @@ export const NuclearContentRenderer = ({
     >
       <ReactMarkdown
         children={processedData.content}
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[remarkGfm, remarkDirective, remarkEnrichedContainer]}
         rehypePlugins={[rehypeRaw]}
         components={nuclearMarkdownComponents}
       />

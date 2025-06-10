@@ -92,6 +92,7 @@
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "tesseract.js": "^4.1.2",
+    "unist-util-visit": "^5.0.0",
     "uuid": "^9.0.1",
     "vaul": "^0.9.3",
     "web-vitals": "^5.0.2",
