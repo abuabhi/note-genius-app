@@ -6,7 +6,6 @@ import { Upload, FileText, Image, FileIcon } from 'lucide-react';
 import { useImportState } from '../useImportState';
 import { FileDropZone } from './components/FileDropZone';
 import { ProcessedContent } from './components/ProcessedContent';
-import { ProcessingStatus } from './components/ProcessingStatus';
 
 interface FileImportTabProps {
   onSaveNote: (note: any) => Promise<boolean>;

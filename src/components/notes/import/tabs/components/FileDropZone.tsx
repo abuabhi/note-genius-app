@@ -1,24 +1,15 @@
 
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Upload } from "lucide-react";
 
 interface FileDropZoneProps {
   onFileSelected: (file: File) => void;
-  isDragOver: boolean;
-  onDragOver: (e: React.DragEvent) => void;
-  onDragLeave: (e: React.DragEvent) => void;
-  onDrop: (e: React.DragEvent) => void;
 }
 
-export const FileDropZone = ({
-  onFileSelected,
-  isDragOver,
-  onDragOver,
-  onDragLeave,
-  onDrop
-}: FileDropZoneProps) => {
+export const FileDropZone = ({ onFileSelected }: FileDropZoneProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const handleInputFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -31,23 +22,44 @@ export const FileDropZone = ({
     fileInputRef.current?.click();
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    const file = files[0];
+    if (file) {
+      onFileSelected(file);
+    }
+  };
+
   return (
     <div
       className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
         isDragOver 
-          ? 'border-purple-500 bg-purple-50' 
-          : 'border-gray-300 hover:border-purple-400 hover:bg-gray-50'
+          ? 'border-mint-500 bg-mint-50' 
+          : 'border-mint-300 hover:border-mint-400 hover:bg-mint-50'
       }`}
-      onDragOver={onDragOver}
-      onDragLeave={onDragLeave}
-      onDrop={onDrop}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
       onClick={handleDropZoneClick}
     >
-      <Upload className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-      <p className="text-lg font-medium text-gray-700 mb-2">
+      <Upload className="h-12 w-12 mx-auto mb-4 text-mint-400" />
+      <p className="text-lg font-medium text-mint-700 mb-2">
         Drop your document here or click to browse
       </p>
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-mint-500">
         Supports PDF, Word documents, text files, and images
       </p>
       <Input
