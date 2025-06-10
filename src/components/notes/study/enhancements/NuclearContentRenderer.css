@@ -66,31 +66,24 @@
 .nuclear-content-container h2 { font-size: 1.5rem !important; }
 .nuclear-content-container h3 { font-size: 1.25rem !important; }
 
-/* NUCLEAR: List styles with MAXIMUM SPECIFICITY and forced visibility */
+/* NUCLEAR: List styles - DISABLE ALL NATIVE STYLES */
 .nuclear-content-container ul,
 .nuclear-content-container ol {
   margin: 1.5rem 0 !important;
   padding: 0 0 0 2rem !important;
   list-style: none !important;
+  list-style-type: none !important;
   display: block !important;
   position: relative !important;
 }
 
-.nuclear-content-container ul {
-  list-style-type: disc !important;
-}
-
-.nuclear-content-container ol {
-  list-style-type: decimal !important;
-  counter-reset: list-counter !important;
-}
-
-/* NUCLEAR: List item styles with FORCED bullet points */
+/* NUCLEAR: List item styles - DISABLE NATIVE, USE ONLY CUSTOM */
 .nuclear-content-container li {
-  display: list-item !important;
+  display: block !important;
+  list-style: none !important;
+  list-style-type: none !important;
   margin: 0.75rem 0 !important;
   padding: 0 0 0 0.5rem !important;
-  list-style-position: outside !important;
   position: relative !important;
   word-wrap: break-word !important;
   overflow-wrap: break-word !important;
@@ -98,10 +91,11 @@
   color: hsl(var(--foreground)) !important;
 }
 
-/* NUCLEAR: Force bullet points with pseudo-elements for ultimate reliability */
+/* NUCLEAR: Force ONLY custom bullet points with pseudo-elements */
 .nuclear-content-container ul > li {
-  list-style-type: disc !important;
-  display: list-item !important;
+  list-style: none !important;
+  list-style-type: none !important;
+  display: block !important;
 }
 
 .nuclear-content-container ul > li::before {
@@ -109,24 +103,29 @@
   position: absolute !important;
   left: -1.5rem !important;
   top: 0 !important;
-  color: hsl(var(--muted-foreground)) !important;
+  color: hsl(var(--primary)) !important;
   font-weight: bold !important;
   font-size: 1.2em !important;
   line-height: 1.6 !important;
 }
 
 .nuclear-content-container ol > li {
-  list-style-type: decimal !important;
-  display: list-item !important;
+  list-style: none !important;
+  list-style-type: none !important;
+  display: block !important;
+  counter-increment: list-counter !important;
+}
+
+.nuclear-content-container ol {
+  counter-reset: list-counter !important;
 }
 
 .nuclear-content-container ol > li::before {
-  counter-increment: list-counter !important;
   content: counter(list-counter) "." !important;
   position: absolute !important;
   left: -2rem !important;
   top: 0 !important;
-  color: hsl(var(--muted-foreground)) !important;
+  color: hsl(var(--primary)) !important;
   font-weight: 600 !important;
   min-width: 1.5rem !important;
   text-align: right !important;
