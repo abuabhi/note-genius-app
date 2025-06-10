@@ -17,7 +17,22 @@ serve(async (req) => {
       throw new Error("Microsoft OAuth credentials not configured");
     }
 
-    const { code, redirect_uri, grant_type, refresh_token } = await req.json();
+    const body = await req.json();
+    
+    // Handle client ID request
+    if (body.action === 'get_client_id') {
+      return new Response(
+        JSON.stringify({ client_id: MICROSOFT_CLIENT_ID }),
+        { 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json' 
+          } 
+        }
+      );
+    }
+
+    const { code, redirect_uri, grant_type, refresh_token } = body;
     
     let requestBody: URLSearchParams;
     

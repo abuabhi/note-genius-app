@@ -1,12 +1,33 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 
-// Microsoft OAuth configuration
-const clientId = "YOUR_MS_CLIENT_ID"; // This needs to be replaced with actual client ID
+// Microsoft OAuth configuration - client ID will be fetched from Supabase
+let clientId: string | null = null;
 const redirectUri = `${window.location.origin}/auth/microsoft-callback`;
 const tenantId = "common"; // Use "common" for multi-tenant applications
 const scopes = ["Notes.Read", "Notes.ReadWrite", "User.Read"];
+
+// Fetch Microsoft Client ID from Supabase secrets
+const getMicrosoftClientId = async (): Promise<string | null> => {
+  if (clientId) return clientId; // Return cached value if available
+  
+  try {
+    const { data, error } = await supabase.functions.invoke('microsoft-auth', {
+      body: { action: 'get_client_id' }
+    });
+    
+    if (error) {
+      console.error('Error fetching Microsoft Client ID:', error);
+      return null;
+    }
+    
+    clientId = data?.client_id || null;
+    return clientId;
+  } catch (error) {
+    console.error('Failed to fetch Microsoft Client ID:', error);
+    return null;
+  }
+};
 
 // Types for Microsoft OAuth
 export interface MicrosoftAuthState {
@@ -21,16 +42,18 @@ export interface MicrosoftAuthState {
 /**
  * Initiates the Microsoft OAuth authentication flow
  */
-export const initiateOneNoteAuth = () => {
-  // Check if client ID is configured
-  if (clientId === "YOUR_MS_CLIENT_ID") {
+export const initiateOneNoteAuth = async () => {
+  // Fetch client ID from Supabase
+  const fetchedClientId = await getMicrosoftClientId();
+  
+  if (!fetchedClientId) {
     alert("Microsoft Graph client ID is not configured. Please contact your administrator.");
     return;
   }
 
   // Build Microsoft OAuth URL
   const authUrl = new URL(`https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize`);
-  authUrl.searchParams.append("client_id", clientId);
+  authUrl.searchParams.append("client_id", fetchedClientId);
   authUrl.searchParams.append("response_type", "code");
   authUrl.searchParams.append("redirect_uri", redirectUri);
   authUrl.searchParams.append("scope", scopes.join(" "));
