@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -8,7 +9,6 @@ const corsHeaders = {
 };
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-const youtubeApiKey = Deno.env.get('GOOGLE_CLOUD_API_KEY');
 const assemblyaiApiKey = Deno.env.get('ASSEMBLYAI_API_KEY');
 
 interface VideoMetadata {
@@ -17,11 +17,6 @@ interface VideoMetadata {
   duration: string;
   thumbnailUrl: string;
   channelTitle: string;
-}
-
-interface TranscriptionCapability {
-  hasCaption: boolean;
-  transcriptionMethod: 'captions' | 'assemblyai';
 }
 
 serve(async (req) => {
@@ -39,19 +34,17 @@ serve(async (req) => {
       });
     }
 
-    if (action === 'check_captions') {
-      const hasCaption = await checkCaptionsAvailability(videoId);
-      return new Response(JSON.stringify({ 
-        hasCaption,
-        transcriptionMethod: hasCaption ? 'captions' : 'assemblyai'
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
     if (action === 'transcribe') {
       console.log(`Starting transcription for video: ${videoId}`);
-      const transcript = await transcribeVideo(videoId, url, req);
+      
+      // Check current month credit usage before proceeding
+      const currentUsage = await getCurrentMonthCredits();
+      
+      if (currentUsage >= 100) {
+        throw new Error('Monthly credit limit of 100 reached. Please wait until next month or contact support.');
+      }
+
+      const transcript = await transcribeWithAssemblyAI(url, videoId, req);
       const enhancedContent = await enhanceTranscript(transcript, metadata);
       
       return new Response(JSON.stringify(enhancedContent), {
@@ -91,187 +84,47 @@ function extractUserIdFromRequest(req: Request): string {
 }
 
 async function getVideoMetadata(videoId: string): Promise<VideoMetadata> {
-  if (!youtubeApiKey) {
-    throw new Error('YouTube API key not configured');
-  }
-
-  const response = await fetch(
-    `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&part=snippet,contentDetails&key=${youtubeApiKey}`
-  );
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch video metadata');
-  }
-
-  const data = await response.json();
-  
-  if (!data.items || data.items.length === 0) {
-    throw new Error('Video not found');
-  }
-
-  const video = data.items[0];
-  const snippet = video.snippet;
-  const contentDetails = video.contentDetails;
-
-  return {
-    title: snippet.title,
-    description: snippet.description,
-    duration: formatDuration(contentDetails.duration),
-    thumbnailUrl: snippet.thumbnails.medium?.url || snippet.thumbnails.default?.url,
-    channelTitle: snippet.channelTitle,
-  };
-}
-
-async function checkCaptionsAvailability(videoId: string): Promise<boolean> {
-  if (!youtubeApiKey) {
-    console.log('YouTube API key not available for caption check');
-    return false;
-  }
-
+  // Basic metadata extraction without API keys
   try {
-    console.log(`Checking captions availability for video: ${videoId}`);
-    
-    // Get caption tracks
-    const captionsResponse = await fetch(
-      `https://www.googleapis.com/youtube/v3/captions?videoId=${videoId}&part=snippet&key=${youtubeApiKey}`
-    );
-
-    if (!captionsResponse.ok) {
-      console.log('Failed to check captions:', captionsResponse.status);
-      return false;
-    }
-
-    const captionsData = await captionsResponse.json();
-    
-    if (!captionsData.items || captionsData.items.length === 0) {
-      console.log('No caption tracks found');
-      return false;
-    }
-
-    // Check if there are any caption tracks (auto-generated or manual)
-    const hasValidCaptions = captionsData.items.some((item: any) => {
-      const snippet = item.snippet;
-      return snippet && (snippet.trackKind === 'standard' || snippet.trackKind === 'ASR');
-    });
-
-    console.log(`Captions available: ${hasValidCaptions}`);
-    return hasValidCaptions;
-    
-  } catch (error) {
-    console.error('Error checking captions availability:', error);
-    return false;
-  }
-}
-
-async function extractAudioUrl(videoId: string): Promise<string> {
-  try {
-    console.log(`Extracting audio URL for video: ${videoId}`);
-    
-    // Use yt-dlp-like approach to get audio stream URL
     const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-    
-    // First, try to get video info page
-    const videoPageResponse = await fetch(videoUrl, {
+    const response = await fetch(videoUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
       }
     });
-    
-    if (!videoPageResponse.ok) {
-      throw new Error(`Failed to fetch video page: ${videoPageResponse.status}`);
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch video page');
     }
+
+    const html = await response.text();
     
-    const videoPageText = await videoPageResponse.text();
+    // Extract basic info from page HTML
+    const titleMatch = html.match(/<title>([^<]+)<\/title>/);
+    const title = titleMatch ? titleMatch[1].replace(' - YouTube', '') : `Video ${videoId}`;
     
-    // Extract the player response JSON from the page
-    const playerResponseMatch = videoPageText.match(/var ytInitialPlayerResponse = ({.*?});/);
-    if (!playerResponseMatch) {
-      throw new Error('Could not find player response in video page');
-    }
+    const descMatch = html.match(/"shortDescription":"([^"]+)"/);
+    const description = descMatch ? descMatch[1].substring(0, 200) + '...' : 'YouTube video';
     
-    const playerResponse = JSON.parse(playerResponseMatch[1]);
+    const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
     
-    // Get adaptive formats (audio streams)
-    const streamingData = playerResponse.streamingData;
-    if (!streamingData || !streamingData.adaptiveFormats) {
-      throw new Error('No streaming data found in player response');
-    }
-    
-    // Find the best audio-only stream
-    const audioStreams = streamingData.adaptiveFormats.filter((format: any) => 
-      format.mimeType && format.mimeType.startsWith('audio/') && format.url
-    );
-    
-    if (audioStreams.length === 0) {
-      throw new Error('No audio streams found');
-    }
-    
-    // Sort by quality and prefer webm/opus or mp4/m4a
-    audioStreams.sort((a: any, b: any) => {
-      // Prefer higher bitrate
-      const aBitrate = parseInt(a.bitrate) || 0;
-      const bBitrate = parseInt(b.bitrate) || 0;
-      return bBitrate - aBitrate;
-    });
-    
-    const bestAudioStream = audioStreams[0];
-    console.log(`Found audio stream: ${bestAudioStream.mimeType}, bitrate: ${bestAudioStream.bitrate}`);
-    
-    return bestAudioStream.url;
-    
+    return {
+      title,
+      description,
+      duration: 'Unknown',
+      thumbnailUrl,
+      channelTitle: 'YouTube'
+    };
   } catch (error) {
-    console.error('Error extracting audio URL:', error);
-    throw new Error(`Failed to extract audio URL: ${error.message}`);
-  }
-}
-
-async function transcribeVideo(videoId: string, videoUrl: string, req: Request): Promise<string> {
-  try {
-    console.log(`Starting transcription workflow for video: ${videoId}`);
-    
-    // Step 1: Check for existing captions
-    const hasCaption = await checkCaptionsAvailability(videoId);
-    
-    if (hasCaption) {
-      console.log('Attempting to get existing captions...');
-      const captions = await getYouTubeCaptions(videoId);
-      if (captions && captions.length > 50) { // Ensure we have substantial content
-        console.log('Successfully retrieved captions');
-        return captions;
-      }
-    }
-
-    // Step 2: Use AssemblyAI as fallback
-    console.log('No captions available, using AssemblyAI for transcription...');
-    
-    if (!assemblyaiApiKey) {
-      throw new Error('AssemblyAI API key not configured');
-    }
-
-    // Check current month credit usage before proceeding
-    const currentMonth = new Date().toISOString().slice(0, 7);
-    const currentUsage = await getCurrentMonthCredits();
-    
-    if (currentUsage >= 100) {
-      throw new Error('Monthly credit limit of 100 reached. Please wait until next month or contact support.');
-    }
-
-    // Extract audio URL from YouTube
-    const audioUrl = await extractAudioUrl(videoId);
-    console.log(`Using extracted audio URL for transcription`);
-
-    const transcript = await transcribeWithAssemblyAI(audioUrl, videoId, req);
-    
-    if (!transcript || transcript.length < 20) {
-      throw new Error('AssemblyAI transcription failed or returned insufficient content');
-    }
-
-    console.log('Successfully transcribed with AssemblyAI');
-    return transcript;
-
-  } catch (error) {
-    console.error('Transcription error:', error);
-    throw new Error(`Transcription failed: ${error.message}`);
+    console.error('Error fetching metadata:', error);
+    // Fallback metadata
+    return {
+      title: `YouTube Video ${videoId}`,
+      description: 'YouTube video content',
+      duration: 'Unknown',
+      thumbnailUrl: `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`,
+      channelTitle: 'YouTube'
+    };
   }
 }
 
@@ -330,23 +183,19 @@ async function logAssemblyAIUsage(
   }
 }
 
-async function getYouTubeCaptions(videoId: string): Promise<string | null> {
-  // Note: This is a simplified implementation
-  // In a full implementation, you would need OAuth2 to download actual caption content
-  // For now, we return null to trigger AssemblyAI fallback
-  console.log('Caption download requires OAuth2 implementation - falling back to AssemblyAI');
-  return null;
-}
-
-async function transcribeWithAssemblyAI(audioUrl: string, videoId: string, req: Request): Promise<string> {
+async function transcribeWithAssemblyAI(youtubeUrl: string, videoId: string, req: Request): Promise<string> {
   try {
-    console.log('Starting AssemblyAI transcription with audio URL:', audioUrl);
+    console.log('Starting AssemblyAI transcription with YouTube URL:', youtubeUrl);
+
+    if (!assemblyaiApiKey) {
+      throw new Error('AssemblyAI API key not configured');
+    }
 
     // Get user ID from the request
     const userId = extractUserIdFromRequest(req);
     console.log('User ID for logging:', userId);
 
-    // Step 1: Submit the audio URL for transcription
+    // Step 1: Submit the YouTube URL directly to AssemblyAI
     const uploadResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
       method: 'POST',
       headers: {
@@ -354,12 +203,10 @@ async function transcribeWithAssemblyAI(audioUrl: string, videoId: string, req: 
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        audio_url: audioUrl,
+        audio_url: youtubeUrl,
         speaker_labels: false,
         auto_chapters: false,
-        summarization: false,
-        summary_model: 'informative',
-        summary_type: 'bullets'
+        summarization: false
       }),
     });
 
@@ -368,7 +215,7 @@ async function transcribeWithAssemblyAI(audioUrl: string, videoId: string, req: 
       console.error('AssemblyAI submission error:', uploadResponse.status, errorText);
       
       // Log the failed attempt
-      await logAssemblyAIUsage(userId, videoId, audioUrl, false, `API Error: ${uploadResponse.status} - ${errorText}`);
+      await logAssemblyAIUsage(userId, videoId, youtubeUrl, false, `API Error: ${uploadResponse.status} - ${errorText}`);
       
       throw new Error(`AssemblyAI API error: ${uploadResponse.status} - ${errorText}`);
     }
@@ -381,7 +228,7 @@ async function transcribeWithAssemblyAI(audioUrl: string, videoId: string, req: 
     // Step 2: Poll for completion
     let transcript = null;
     let attempts = 0;
-    const maxAttempts = 60; // 5 minutes max wait time
+    const maxAttempts = 120; // 10 minutes max wait time
     
     while (attempts < maxAttempts) {
       await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds between polls
@@ -404,7 +251,7 @@ async function transcribeWithAssemblyAI(audioUrl: string, videoId: string, req: 
         transcript = statusData.text;
         break;
       } else if (statusData.status === 'error') {
-        await logAssemblyAIUsage(userId, videoId, audioUrl, false, `Transcription error: ${statusData.error}`, statusData);
+        await logAssemblyAIUsage(userId, videoId, youtubeUrl, false, `Transcription error: ${statusData.error}`, statusData);
         throw new Error(`AssemblyAI transcription failed: ${statusData.error}`);
       }
       
@@ -412,14 +259,14 @@ async function transcribeWithAssemblyAI(audioUrl: string, videoId: string, req: 
     }
 
     if (!transcript) {
-      await logAssemblyAIUsage(userId, videoId, audioUrl, false, 'Transcription timeout - exceeded maximum wait time');
+      await logAssemblyAIUsage(userId, videoId, youtubeUrl, false, 'Transcription timeout - exceeded maximum wait time');
       throw new Error('Transcription timeout - please try again later');
     }
 
     console.log(`AssemblyAI transcription completed. Length: ${transcript.length} characters`);
     
     // Log the successful usage
-    await logAssemblyAIUsage(userId, videoId, audioUrl, true, undefined, { transcript_id: transcriptId });
+    await logAssemblyAIUsage(userId, videoId, youtubeUrl, true, undefined, { transcript_id: transcriptId });
     
     return transcript;
 
@@ -548,20 +395,4 @@ Format your response as JSON with these fields:
     subject_id: null,
     transcriptionMethod: 'assemblyai'
   };
-}
-
-function formatDuration(duration: string): string {
-  // Convert ISO 8601 duration to readable format
-  const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-  if (!match) return duration;
-
-  const hours = parseInt(match[1] || '0');
-  const minutes = parseInt(match[2] || '0');
-  const seconds = parseInt(match[3] || '0');
-
-  if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  } else {
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  }
 }

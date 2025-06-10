@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Youtube, Play, Clock, AlertTriangle, Info, CheckCircle, Zap } from 'lucide-react';
+import { Loader2, Youtube, Play, AlertTriangle, Info, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -22,17 +22,10 @@ interface VideoMetadata {
   channelTitle: string;
 }
 
-interface TranscriptionCapability {
-  hasCaption: boolean;
-  transcriptionMethod: 'captions' | 'assemblyai';
-}
-
 export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isCheckingCaption, setIsCheckingCaption] = useState(false);
   const [videoMetadata, setVideoMetadata] = useState<VideoMetadata | null>(null);
-  const [transcriptionInfo, setTranscriptionInfo] = useState<TranscriptionCapability | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [processingStep, setProcessingStep] = useState<string>('');
 
@@ -57,7 +50,6 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
     setYoutubeUrl(value);
     setError(null);
     setVideoMetadata(null);
-    setTranscriptionInfo(null);
   };
 
   const fetchVideoMetadata = async (videoId: string): Promise<VideoMetadata | null> => {
@@ -73,26 +65,6 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
       return data.metadata;
     } catch (error) {
       console.error('Error fetching video metadata:', error);
-      return null;
-    }
-  };
-
-  const checkTranscriptionCapability = async (videoId: string): Promise<TranscriptionCapability | null> => {
-    try {
-      const { data, error } = await supabase.functions.invoke('youtube-transcribe', {
-        body: { 
-          action: 'check_captions',
-          videoId 
-        }
-      });
-
-      if (error) throw error;
-      return {
-        hasCaption: data.hasCaption,
-        transcriptionMethod: data.transcriptionMethod
-      };
-    } catch (error) {
-      console.error('Error checking transcription capability:', error);
       return null;
     }
   };
@@ -115,15 +87,10 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
     }
 
     setIsProcessing(true);
-    setIsCheckingCaption(true);
     setError(null);
 
     try {
-      // Fetch metadata and transcription capability in parallel
-      const [metadata, transcriptionCapability] = await Promise.all([
-        fetchVideoMetadata(videoId),
-        checkTranscriptionCapability(videoId)
-      ]);
+      const metadata = await fetchVideoMetadata(videoId);
 
       if (metadata) {
         setVideoMetadata(metadata);
@@ -132,16 +99,11 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
         return;
       }
 
-      if (transcriptionCapability) {
-        setTranscriptionInfo(transcriptionCapability);
-      }
-
     } catch (error) {
       setError('Failed to fetch video information');
       console.error('Preview error:', error);
     } finally {
       setIsProcessing(false);
-      setIsCheckingCaption(false);
     }
   };
 
@@ -161,14 +123,8 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
     setError(null);
 
     try {
-      // Show different loading messages based on transcription method
-      if (transcriptionInfo?.transcriptionMethod === 'assemblyai') {
-        setProcessingStep('Using AssemblyAI transcription service...');
-        toast.loading('Processing video with AssemblyAI transcription - this may take 2-5 minutes');
-      } else {
-        setProcessingStep('Processing video captions...');
-        toast.loading('Processing video content...');
-      }
+      setProcessingStep('Using AssemblyAI transcription service...');
+      toast.loading('Processing video with AssemblyAI transcription - this may take 2-10 minutes');
 
       const { data, error } = await supabase.functions.invoke('youtube-transcribe', {
         body: { 
@@ -197,7 +153,7 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
           originalFileUrl: youtubeUrl,
           fileType: 'youtube',
           importedAt: new Date().toISOString(),
-          transcriptionMethod: data.transcriptionMethod || transcriptionInfo?.transcriptionMethod
+          transcriptionMethod: data.transcriptionMethod
         },
         subject_id: data.subject_id
       };
@@ -217,7 +173,6 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
       // Reset form
       setYoutubeUrl('');
       setVideoMetadata(null);
-      setTranscriptionInfo(null);
     } catch (error: any) {
       console.error('Transcription error:', error);
       toast.dismiss();
@@ -226,26 +181,6 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
     } finally {
       setIsProcessing(false);
       setProcessingStep('');
-    }
-  };
-
-  const getTranscriptionMethodBadge = () => {
-    if (!transcriptionInfo) return null;
-
-    if (transcriptionInfo.hasCaption) {
-      return (
-        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">
-          <CheckCircle className="h-3 w-3 mr-1" />
-          Captions Available (Free)
-        </Badge>
-      );
-    } else {
-      return (
-        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
-          <Zap className="h-3 w-3 mr-1" />
-          AssemblyAI Transcription Required
-        </Badge>
-      );
     }
   };
 
@@ -266,12 +201,12 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
             disabled={isProcessing || !youtubeUrl.trim()}
             variant="outline"
           >
-            {isCheckingCaption ? (
+            {isProcessing ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Play className="h-4 w-4" />
             )}
-            {isCheckingCaption ? 'Checking...' : 'Preview'}
+            {isProcessing ? 'Loading...' : 'Preview'}
           </Button>
         </div>
       </div>
@@ -302,11 +237,10 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
                 <h4 className="font-medium text-sm">{videoMetadata.title}</h4>
                 <p className="text-xs text-muted-foreground">by {videoMetadata.channelTitle}</p>
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" />
-                    {videoMetadata.duration}
-                  </div>
-                  {getTranscriptionMethodBadge()}
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
+                    <Zap className="h-3 w-3 mr-1" />
+                    AssemblyAI Transcription
+                  </Badge>
                 </div>
               </div>
             </div>
@@ -348,9 +282,8 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          <strong>Enhanced transcription:</strong> This feature now automatically detects if videos have captions (free) 
-          or uses advanced AssemblyAI transcription for videos without captions. Processing time may vary based on video length 
-          and transcription method. Monthly limit: 100 AssemblyAI transcriptions.
+          <strong>AssemblyAI Transcription:</strong> This feature uses AssemblyAI to transcribe YouTube videos directly. 
+          Processing time may vary based on video length (typically 2-10 minutes). Monthly limit: 100 transcriptions.
         </AlertDescription>
       </Alert>
     </div>
