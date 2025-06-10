@@ -1,14 +1,16 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Globe } from "lucide-react";
+import { Globe, CheckCircle, AlertCircle } from "lucide-react";
 import { Note } from "@/types/note";
 import { toast } from "sonner";
+import { OneNoteConnection } from "../OneNoteConnection";
+import { useOneNoteAuth } from "@/integrations/microsoft/oneNoteOAuth";
 
 interface ApiImportTabProps {
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<boolean>;
@@ -19,10 +21,42 @@ export const ApiImportTab = ({ onSaveNote, isPremiumUser }: ApiImportTabProps) =
   const [activeApiTab, setActiveApiTab] = useState('onenote');
   const [isImporting, setIsImporting] = useState(false);
   const [apiCredentials, setApiCredentials] = useState({
-    onenote: { token: '', pageId: '' },
     googledocs: { documentId: '', accessToken: '' },
     notion: { token: '', pageId: '' }
   });
+  const [oneNotePages, setOneNotePages] = useState<any[]>([]);
+  const [selectedPageId, setSelectedPageId] = useState('');
+  const [oneNoteAccessToken, setOneNoteAccessToken] = useState('');
+
+  const { isAuthenticated, accessToken, loading, error } = useOneNoteAuth();
+
+  useEffect(() => {
+    if (isAuthenticated && accessToken) {
+      setOneNoteAccessToken(accessToken);
+      fetchOneNotePages(accessToken);
+    }
+  }, [isAuthenticated, accessToken]);
+
+  const fetchOneNotePages = async (token: string) => {
+    try {
+      const response = await fetch('https://graph.microsoft.com/v1.0/me/onenote/pages?$select=id,title,createdDateTime&$top=50', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch OneNote pages: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setOneNotePages(data.value || []);
+    } catch (error) {
+      console.error('Error fetching OneNote pages:', error);
+      toast.error('Failed to fetch OneNote pages');
+    }
+  };
 
   const handleCredentialChange = (service: string, field: string, value: string) => {
     setApiCredentials(prev => ({
@@ -31,13 +65,99 @@ export const ApiImportTab = ({ onSaveNote, isPremiumUser }: ApiImportTabProps) =
     }));
   };
 
+  const importFromOneNote = async () => {
+    if (!oneNoteAccessToken || !selectedPageId) {
+      toast.error('Please select a OneNote page to import');
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      // Fetch the page content from OneNote
+      const response = await fetch(`https://graph.microsoft.com/v1.0/me/onenote/pages/${selectedPageId}/content`, {
+        headers: {
+          'Authorization': `Bearer ${oneNoteAccessToken}`,
+          'Accept': 'text/html'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch page content: ${response.statusText}`);
+      }
+
+      const htmlContent = await response.text();
+      
+      // Get page details for title
+      const pageResponse = await fetch(`https://graph.microsoft.com/v1.0/me/onenote/pages/${selectedPageId}?$select=id,title,createdDateTime`, {
+        headers: {
+          'Authorization': `Bearer ${oneNoteAccessToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const pageData = await pageResponse.json();
+      
+      // Convert HTML to plain text (basic conversion)
+      const textContent = convertHtmlToText(htmlContent);
+      
+      const note: Omit<Note, 'id'> = {
+        title: pageData.title || `OneNote Page - ${new Date().toLocaleDateString()}`,
+        content: textContent,
+        description: `Imported from OneNote page`,
+        tags: [
+          { name: 'OneNote', color: '#7719AA' }, 
+          { name: 'API Import', color: '#8B5CF6' }
+        ],
+        sourceType: 'import',
+        pinned: false,
+        archived: false,
+        date: new Date().toISOString().split('T')[0],
+        category: 'Imports',
+        importData: {
+          originalFileUrl: `https://onenote.com/pages/${selectedPageId}`,
+          fileType: 'onenote',
+          importedAt: new Date().toISOString()
+        }
+      };
+
+      const success = await onSaveNote(note);
+      if (success) {
+        toast.success('Successfully imported from OneNote!');
+        setSelectedPageId('');
+      }
+    } catch (error) {
+      console.error('Error importing from OneNote:', error);
+      toast.error(`Failed to import from OneNote: ${error.message}`);
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const convertHtmlToText = (html: string): string => {
+    // Create a temporary DOM element to parse HTML
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    
+    // Remove script and style elements
+    const scripts = div.querySelectorAll('script, style');
+    scripts.forEach(el => el.remove());
+    
+    // Get text content and clean it up
+    let text = div.textContent || div.innerText || '';
+    
+    // Clean up extra whitespace and line breaks
+    text = text.replace(/\s+/g, ' ').trim();
+    text = text.replace(/\n\s*\n/g, '\n\n');
+    
+    return text;
+  };
+
   const importFromApi = async (service: string) => {
     setIsImporting(true);
     try {
-      // Simulate API import
+      // Simulate API import for other services (Google Docs, Notion)
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // In a real implementation, this would make actual API calls
       const simulatedContent = `Content imported from ${service}\n\nThis is simulated content that would be fetched from the ${service} API. The actual implementation would:\n\n- Authenticate with the service\n- Fetch the specified content\n- Parse and format the data\n- Create structured notes\n\nImported at: ${new Date().toLocaleString()}`;
       
       const note: Omit<Note, 'id'> = {
@@ -64,6 +184,11 @@ export const ApiImportTab = ({ onSaveNote, isPremiumUser }: ApiImportTabProps) =
     }
   };
 
+  const handleConnected = (token: string) => {
+    setOneNoteAccessToken(token);
+    fetchOneNotePages(token);
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -82,34 +207,47 @@ export const ApiImportTab = ({ onSaveNote, isPremiumUser }: ApiImportTabProps) =
             </TabsList>
 
             <TabsContent value="onenote" className="space-y-4 mt-6">
-              <div className="space-y-3">
-                <div>
-                  <Label htmlFor="onenote-token">OneNote Access Token</Label>
-                  <Input
-                    id="onenote-token"
-                    type="password"
-                    placeholder="Microsoft Graph access token"
-                    value={apiCredentials.onenote.token}
-                    onChange={(e) => handleCredentialChange('onenote', 'token', e.target.value)}
-                  />
+              <OneNoteConnection onConnected={handleConnected} />
+              
+              {isAuthenticated && oneNotePages.length > 0 && (
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="onenote-page">Select OneNote Page</Label>
+                    <select
+                      id="onenote-page"
+                      value={selectedPageId}
+                      onChange={(e) => setSelectedPageId(e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="">Select a page to import...</option>
+                      {oneNotePages.map((page) => (
+                        <option key={page.id} value={page.id}>
+                          {page.title} ({new Date(page.createdDateTime).toLocaleDateString()})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <Button 
+                    onClick={importFromOneNote}
+                    disabled={isImporting || !selectedPageId}
+                    className="w-full"
+                  >
+                    {isImporting ? 'Importing...' : 'Import Selected Page'}
+                  </Button>
                 </div>
-                <div>
-                  <Label htmlFor="onenote-page">Page ID</Label>
-                  <Input
-                    id="onenote-page"
-                    placeholder="OneNote page ID"
-                    value={apiCredentials.onenote.pageId}
-                    onChange={(e) => handleCredentialChange('onenote', 'pageId', e.target.value)}
-                  />
+              )}
+
+              {isAuthenticated && oneNotePages.length === 0 && !loading && (
+                <div className="text-center py-4 text-gray-500">
+                  No OneNote pages found or unable to fetch pages.
                 </div>
-                <Button 
-                  onClick={() => importFromApi('OneNote')}
-                  disabled={isImporting || !apiCredentials.onenote.token}
-                  className="w-full"
-                >
-                  {isImporting ? 'Importing...' : 'Import from OneNote'}
-                </Button>
-              </div>
+              )}
+
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                  {error}
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="googledocs" className="space-y-4 mt-6">

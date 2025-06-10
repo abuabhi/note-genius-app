@@ -1,8 +1,9 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useOneNoteAuth } from "@/integrations/microsoft/oneNoteOAuth";
-import { Loader2, Check, X } from "lucide-react";
+import { Loader2, Check, X, AlertCircle, ExternalLink } from "lucide-react";
 
 interface OneNoteConnectionProps {
   onConnected: (accessToken: string) => void;
@@ -38,9 +39,12 @@ export const OneNoteConnection = ({ onConnected }: OneNoteConnectionProps) => {
       </div>
       
       {error && (
-        <div className="p-2 text-sm bg-red-50 border border-red-200 rounded text-red-600">
-          {error}
-        </div>
+        <Alert className="border-red-200 bg-red-50">
+          <AlertCircle className="h-4 w-4 text-red-600" />
+          <AlertDescription className="text-red-700">
+            {error}
+          </AlertDescription>
+        </Alert>
       )}
       
       <div className="flex gap-2">
@@ -64,11 +68,27 @@ export const OneNoteConnection = ({ onConnected }: OneNoteConnectionProps) => {
                 Connecting...
               </>
             ) : (
-              <>Connect to OneNote</>
+              <>
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Connect to OneNote
+              </>
             )}
           </Button>
         )}
       </div>
+
+      {!isAuthenticated && (
+        <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+          <div className="text-sm text-blue-700">
+            <p className="font-medium mb-1">Setup Required:</p>
+            <ul className="list-disc list-inside space-y-1 text-xs">
+              <li>Configure Microsoft Graph app in Azure portal</li>
+              <li>Add client ID and secret to Supabase secrets</li>
+              <li>Set redirect URL to: <code className="bg-blue-100 px-1 rounded">{window.location.origin}/auth/microsoft-callback</code></li>
+            </ul>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

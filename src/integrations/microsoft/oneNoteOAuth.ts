@@ -3,10 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 
 // Microsoft OAuth configuration
-const clientId = "YOUR_MS_CLIENT_ID"; // Replace with your actual client ID from Azure portal
+const clientId = "YOUR_MS_CLIENT_ID"; // This needs to be replaced with actual client ID
 const redirectUri = `${window.location.origin}/auth/microsoft-callback`;
 const tenantId = "common"; // Use "common" for multi-tenant applications
-const scopes = ["Notes.Read", "Notes.ReadWrite"];
+const scopes = ["Notes.Read", "Notes.ReadWrite", "User.Read"];
 
 // Types for Microsoft OAuth
 export interface MicrosoftAuthState {
@@ -22,6 +22,12 @@ export interface MicrosoftAuthState {
  * Initiates the Microsoft OAuth authentication flow
  */
 export const initiateOneNoteAuth = () => {
+  // Check if client ID is configured
+  if (clientId === "YOUR_MS_CLIENT_ID") {
+    alert("Microsoft Graph client ID is not configured. Please contact your administrator.");
+    return;
+  }
+
   // Build Microsoft OAuth URL
   const authUrl = new URL(`https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize`);
   authUrl.searchParams.append("client_id", clientId);
@@ -41,26 +47,38 @@ export const initiateOneNoteAuth = () => {
   const left = window.screenX + (window.outerWidth - width) / 2;
   const top = window.screenY + (window.outerHeight - height) / 2.5;
   
-  window.open(
+  const popup = window.open(
     authUrl.toString(),
     "microsoft-oauth-popup",
     `width=${width},height=${height},left=${left},top=${top}`
   );
   
   // Listen for the OAuth callback messages from the popup
-  window.addEventListener("message", handleOAuthCallback, false);
+  const messageHandler = (event: MessageEvent) => {
+    if (event.origin !== window.location.origin) return;
+    
+    if (event.data && event.data.type === "microsoft_oauth_callback") {
+      handleOAuthCallback(event);
+      window.removeEventListener("message", messageHandler);
+      if (popup) popup.close();
+    }
+  };
+  
+  window.addEventListener("message", messageHandler, false);
+  
+  // Check if popup was closed manually
+  const checkClosed = setInterval(() => {
+    if (popup?.closed) {
+      clearInterval(checkClosed);
+      window.removeEventListener("message", messageHandler);
+    }
+  }, 1000);
 };
 
 /**
  * Handles the OAuth callback from Microsoft
  */
 const handleOAuthCallback = async (event: MessageEvent) => {
-  // Make sure the message is coming from our application
-  if (event.origin !== window.location.origin) return;
-  
-  // Check if the message contains OAuth data
-  if (!event.data || !event.data.type || event.data.type !== "microsoft_oauth_callback") return;
-  
   const { code, state, error } = event.data;
   
   // Verify state to prevent CSRF attacks
@@ -69,11 +87,17 @@ const handleOAuthCallback = async (event: MessageEvent) => {
   
   if (!storedState || state !== storedState) {
     console.error("OAuth state mismatch, possible CSRF attack");
+    window.dispatchEvent(new CustomEvent('oneNoteAuthError', { 
+      detail: { error: 'State mismatch - possible security issue' }
+    }));
     return;
   }
   
   if (error) {
     console.error("Microsoft OAuth error:", error);
+    window.dispatchEvent(new CustomEvent('oneNoteAuthError', { 
+      detail: { error: `OAuth error: ${error}` }
+    }));
     return;
   }
   
@@ -90,7 +114,7 @@ const handleOAuthCallback = async (event: MessageEvent) => {
     if (error) throw new Error(error.message || "Failed to exchange auth code");
     
     if (data && data.access_token) {
-      // Store tokens in localStorage or secure storage
+      // Store tokens in localStorage
       const tokenData = {
         access_token: data.access_token,
         refresh_token: data.refresh_token,
@@ -98,11 +122,16 @@ const handleOAuthCallback = async (event: MessageEvent) => {
       };
       localStorage.setItem("onenote_token_data", JSON.stringify(tokenData));
       
-      // Trigger any callbacks or state updates
-      window.dispatchEvent(new CustomEvent('oneNoteAuthenticated'));
+      // Trigger authentication success event
+      window.dispatchEvent(new CustomEvent('oneNoteAuthenticated', { 
+        detail: { tokenData }
+      }));
     }
   } catch (error) {
     console.error("Error exchanging code for tokens:", error);
+    window.dispatchEvent(new CustomEvent('oneNoteAuthError', { 
+      detail: { error: error.message || 'Token exchange failed' }
+    }));
   }
 };
 
@@ -162,24 +191,42 @@ export const useOneNoteAuth = () => {
       }
     };
     
-    // Listen for auth event
-    const handleAuthEvent = () => {
-      checkAuthStatus();
+    // Listen for auth events
+    const handleAuthEvent = (event: CustomEvent) => {
+      const { tokenData } = event.detail;
+      setAuthState({
+        isAuthenticated: true,
+        accessToken: tokenData.access_token,
+        refreshToken: tokenData.refresh_token,
+        tokenExpiry: tokenData.expires_at,
+        loading: false,
+        error: null
+      });
     };
     
-    window.addEventListener('oneNoteAuthenticated', handleAuthEvent);
+    const handleAuthError = (event: CustomEvent) => {
+      const { error } = event.detail;
+      setAuthState(prev => ({
+        ...prev,
+        loading: false,
+        error: error
+      }));
+    };
+    
+    window.addEventListener('oneNoteAuthenticated', handleAuthEvent as EventListener);
+    window.addEventListener('oneNoteAuthError', handleAuthError as EventListener);
     checkAuthStatus();
     
     return () => {
-      window.removeEventListener('oneNoteAuthenticated', handleAuthEvent);
-      window.removeEventListener("message", handleOAuthCallback);
+      window.removeEventListener('oneNoteAuthenticated', handleAuthEvent as EventListener);
+      window.removeEventListener('oneNoteAuthError', handleAuthError as EventListener);
     };
   }, []);
   
   // Function to refresh the access token
   const refreshAccessToken = async (refreshToken: string) => {
     try {
-      setAuthState(prev => ({ ...prev, loading: true }));
+      setAuthState(prev => ({ ...prev, loading: true, error: null }));
       
       const { data, error } = await supabase.functions.invoke('microsoft-auth', {
         body: {
