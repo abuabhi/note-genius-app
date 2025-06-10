@@ -28,7 +28,7 @@ interface UsageDetail {
   success: boolean;
   error_message?: string;
   created_at: string;
-  profiles?: {
+  user_profile?: {
     username?: string;
   };
 }
@@ -84,18 +84,38 @@ const AdminCreditsPage = () => {
       if (statsError) throw statsError;
       setStats(statsData[0] || { total_credits: 0, total_requests: 0, successful_requests: 0, failed_requests: 0, unique_users: 0 });
 
-      // Fetch detailed usage
+      // Fetch detailed usage with proper join
       const { data: detailsData, error: detailsError } = await supabase
         .from('supadata_usage')
         .select(`
-          *,
-          profiles:user_id (username)
+          id,
+          user_id,
+          video_id,
+          video_url,
+          credits_used,
+          success,
+          error_message,
+          created_at
         `)
         .eq('month_year', selectedMonth)
         .order('created_at', { ascending: false });
 
       if (detailsError) throw detailsError;
-      setUsageDetails(detailsData || []);
+
+      // Fetch user profiles separately to avoid join issues
+      const userIds = [...new Set(detailsData?.map(item => item.user_id) || [])];
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, username')
+        .in('id', userIds);
+
+      // Combine the data
+      const enrichedData = detailsData?.map(usage => ({
+        ...usage,
+        user_profile: profilesData?.find(profile => profile.id === usage.user_id)
+      })) || [];
+
+      setUsageDetails(enrichedData);
 
     } catch (error: any) {
       console.error('Error fetching usage data:', error);
@@ -273,7 +293,7 @@ const AdminCreditsPage = () => {
                         <div className={`w-2 h-2 rounded-full ${usage.success ? 'bg-green-500' : 'bg-red-500'}`} />
                         <div>
                           <p className="font-medium">
-                            {usage.profiles?.username || `User ${usage.user_id.slice(0, 8)}`}
+                            {usage.user_profile?.username || `User ${usage.user_id.slice(0, 8)}`}
                           </p>
                           <p className="text-sm text-muted-foreground">
                             Video ID: {usage.video_id}
