@@ -79,7 +79,19 @@ export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps)
     setSelectedText('');
   }, []);
 
-  const currentError = error || getLastError();
+  // Helper function to get error message
+  const getErrorMessage = () => {
+    const lastError = getLastError();
+    if (lastError) {
+      return lastError.message;
+    }
+    if (error) {
+      return typeof error === 'string' ? error : error.message || 'An error occurred';
+    }
+    return null;
+  };
+
+  const errorMessage = getErrorMessage();
   const isProcessing = isLoading || isStreaming;
 
   return (
@@ -136,11 +148,11 @@ export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps)
         </div>
 
         {/* Error display */}
-        {currentError && (
+        {errorMessage && (
           <Alert className="m-3 border-red-200 bg-red-50">
             <AlertTriangle className="h-4 w-4 text-red-600" />
             <AlertDescription className="text-red-700">
-              {currentError.message}
+              {errorMessage}
               {canRetry && (
                 <Button
                   variant="link"
