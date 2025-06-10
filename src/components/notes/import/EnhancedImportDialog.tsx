@@ -33,8 +33,8 @@ export const EnhancedImportDialog = ({
 
   return (
     <Dialog open={isVisible} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[600px] overflow-hidden">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl h-[600px] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2 text-mint-800">
             <Upload className="h-5 w-5 text-mint-600" />
             Import Document or Content
@@ -44,8 +44,8 @@ export const EnhancedImportDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full">
-          <TabsList className="grid w-full grid-cols-5 bg-mint-50 border border-mint-200">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+          <TabsList className="grid w-full grid-cols-5 bg-mint-50 border border-mint-200 flex-shrink-0">
             <TabsTrigger value="file" className="flex items-center gap-2 data-[state=active]:bg-mint-500 data-[state=active]:text-white">
               <Upload className="h-4 w-4" />
               Files
@@ -68,24 +68,24 @@ export const EnhancedImportDialog = ({
             </TabsTrigger>
           </TabsList>
 
-          <div className="mt-4 h-[480px] overflow-y-auto">
-            <TabsContent value="file" className="h-full">
+          <div className="flex-1 mt-4 overflow-hidden">
+            <TabsContent value="file" className="h-full overflow-y-auto">
               <FileImportTab onSaveNote={onSaveNote} isPremiumUser={isPremiumUser} />
             </TabsContent>
 
-            <TabsContent value="youtube" className="h-full">
+            <TabsContent value="youtube" className="h-full overflow-y-auto">
               <YouTubeImportTab onImport={handleImport} />
             </TabsContent>
 
-            <TabsContent value="api" className="h-full">
+            <TabsContent value="api" className="h-full overflow-y-auto">
               <ApiImportTab onSaveNote={onSaveNote} />
             </TabsContent>
 
-            <TabsContent value="scan" className="h-full">
+            <TabsContent value="scan" className="h-full overflow-y-auto">
               <ScanImportTab onSaveNote={onSaveNote} isPremiumUser={isPremiumUser} />
             </TabsContent>
 
-            <TabsContent value="bulk" className="h-full">
+            <TabsContent value="bulk" className="h-full overflow-y-auto">
               <BulkPdfImportTab onSaveNote={onSaveNote} />
             </TabsContent>
           </div>

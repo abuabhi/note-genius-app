@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, FileText, Image, FileIcon } from 'lucide-react';
+import { Upload, FileText } from 'lucide-react';
 import { useImportState } from '../useImportState';
 import { FileDropZone } from './components/FileDropZone';
 import { ProcessedContent } from './components/ProcessedContent';
@@ -29,39 +29,18 @@ export const FileImportTab = ({ onSaveNote }: FileImportTabProps) => {
     setProcessedText(null);
   };
 
-  const supportedFormats = [
-    { icon: FileText, name: 'PDF Documents', ext: '.pdf' },
-    { icon: FileText, name: 'Word Documents', ext: '.docx' },
-    { icon: FileText, name: 'Text Files', ext: '.txt' },
-    { icon: Image, name: 'Images', ext: '.jpg, .png' },
-    { icon: FileIcon, name: 'Other Documents', ext: '.rtf, .odt' }
-  ];
-
   return (
-    <div className="space-y-4 h-full">
+    <div className="space-y-4">
       {!selectedFile && !processedText && (
         <Card className="border-2 border-dashed border-mint-200 bg-mint-50">
-          <CardHeader className="text-center">
-            <div className="mx-auto w-16 h-16 bg-mint-100 rounded-full flex items-center justify-center mb-4">
-              <Upload className="h-8 w-8 text-mint-600" />
+          <CardHeader className="text-center pb-2">
+            <div className="mx-auto w-12 h-12 bg-mint-100 rounded-full flex items-center justify-center mb-2">
+              <Upload className="h-6 w-6 text-mint-600" />
             </div>
-            <CardTitle className="text-mint-800">Upload Files</CardTitle>
+            <CardTitle className="text-mint-800 text-lg">Upload Files</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="pt-0">
             <FileDropZone onFileSelected={handleFileSelected} />
-            
-            <div className="bg-white rounded-lg p-4 border border-mint-200">
-              <h4 className="font-medium text-mint-800 mb-3">Supported Formats:</h4>
-              <div className="grid grid-cols-1 gap-2">
-                {supportedFormats.map((format, index) => (
-                  <div key={index} className="flex items-center gap-2 text-sm text-mint-600">
-                    <format.icon className="h-4 w-4" />
-                    <span className="font-medium">{format.name}</span>
-                    <span className="text-mint-500">({format.ext})</span>
-                  </div>
-                ))}
-              </div>
-            </div>
           </CardContent>
         </Card>
       )}
@@ -101,8 +80,8 @@ export const FileImportTab = ({ onSaveNote }: FileImportTabProps) => {
         <Card className="border border-mint-200">
           <CardContent className="p-4">
             <div className="text-center space-y-4">
-              <div className="w-16 h-16 bg-mint-100 rounded-full flex items-center justify-center mx-auto">
-                <Upload className="h-8 w-8 text-mint-600 animate-pulse" />
+              <div className="w-12 h-12 bg-mint-100 rounded-full flex items-center justify-center mx-auto">
+                <Upload className="h-6 w-6 text-mint-600 animate-pulse" />
               </div>
               <div>
                 <h3 className="font-medium text-mint-800">Processing Document</h3>
