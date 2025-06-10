@@ -5,6 +5,7 @@ import { AuthProvider } from './contexts/auth';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { publicRoutes } from './routes/publicRoutes';
+import { authCallbackRoutes } from './routes/authCallbackRoutes';
 import { standardRoutes } from './routes/standardRoutes';
 import { adminRoutes } from './routes/adminRoutes';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
@@ -50,6 +51,11 @@ function App() {
               <Routes>
                 {publicRoutes.map((route, index) => (
                   <Route key={index} path={route.path} element={route.element} />
+                ))}
+                
+                {/* Auth callback routes (these need to be public) */}
+                {authCallbackRoutes.map((route, index) => (
+                  <Route key={`auth-${index}`} path={route.path} element={route.element} />
                 ))}
                 
                 {/* Protected Routes */}
