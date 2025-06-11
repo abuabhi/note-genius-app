@@ -5,7 +5,7 @@ export const PREDEFINED_SUBJECTS = [
   "Science",
   "Humanities and Social Sciences",
   "Arts",
-  "Technologies",
+  "Technology", // Changed from "Technologies"
   "Health and Physical Education (HPE)",
   "Languages"
 ] as const;
