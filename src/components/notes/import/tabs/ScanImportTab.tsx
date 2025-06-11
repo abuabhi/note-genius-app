@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ImageUpload } from '../../scanning/ImageUpload';
@@ -243,5 +244,3 @@ const getLanguageName = (code: string): string => {
   
   return languages[code as keyof typeof languages] || code;
 };
-
-}
