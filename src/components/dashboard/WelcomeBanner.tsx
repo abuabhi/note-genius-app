@@ -40,7 +40,7 @@ export function WelcomeBanner() {
   };
 
   // Get user's name from profile, fall back to first part of email if no username
-  const displayName = userProfile?.username || user?.email?.split('@')[0] || "Scholar";
+  const displayName = userProfile?.username || user?.email?.split('@')[0] || "Genius";
   const timeOfDay = getTimeOfDay();
 
   return (

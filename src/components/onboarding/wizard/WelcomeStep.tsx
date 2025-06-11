@@ -23,7 +23,7 @@ export const WelcomeStep = ({ data, updateData, onNext }: WelcomeStepProps) => {
           </div>
         </div>
         <h2 className="text-3xl font-bold bg-gradient-to-r from-mint-700 to-blue-700 bg-clip-text text-transparent mb-3">
-          Welcome to StudyApp!
+          Welcome to PrepGenie!
         </h2>
         <p className="text-lg text-slate-600 max-w-md mx-auto">
           Let's personalize your learning experience by setting up your academic profile.

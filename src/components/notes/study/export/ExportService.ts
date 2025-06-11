@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import { Document, Packer, Paragraph, TextRun, Header, Footer, Table, TableRow, TableCell, AlignmentType } from 'docx';
 import { Note } from '@/types/note';
@@ -111,114 +110,15 @@ class ExportService {
     return formattedContent;
   }
 
-  private preserveFormattingForDOCX(content: string): { paragraphs: any[] } {
-    const paragraphs: any[] = [];
-    
-    // Split content by major elements (headers, paragraphs, lists)
-    const htmlContent = content
-      .replace(/<h([1-6])[^>]*>(.*?)<\/h[1-6]>/g, '||HEADER$1||$2||ENDHEADER||')
-      .replace(/<p[^>]*>(.*?)<\/p>/g, '||PARAGRAPH||$1||ENDPARAGRAPH||')
-      .replace(/<ul[^>]*>(.*?)<\/ul>/g, '||LIST||$1||ENDLIST||')
-      .replace(/<li[^>]*>(.*?)<\/li>/g, '||LISTITEM||$1||ENDLISTITEM||');
-
-    const parts = htmlContent.split(/\|\|[A-Z]+\|\|/);
-    
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i].trim();
-      if (!part) continue;
-
-      if (part.match(/^HEADER([1-6])/)) {
-        const level = parseInt(part.match(/^HEADER([1-6])/)?.[1] || '1');
-        const text = parts[i + 1]?.replace(/\|\|ENDHEADER\|\|/, '') || '';
-        paragraphs.push(new Paragraph({
-          children: [new TextRun({ text: text.trim(), bold: true, size: 28 - (level * 2) })],
-          spacing: { before: 240, after: 120 }
-        }));
-        i++; // Skip the text part
-      } else if (part === 'PARAGRAPH') {
-        const text = parts[i + 1]?.replace(/\|\|ENDPARAGRAPH\|\|/, '') || '';
-        const cleanText = text.replace(/<[^>]+>/g, '').trim();
-        if (cleanText) {
-          paragraphs.push(new Paragraph({
-            children: [new TextRun({ text: cleanText, size: 22 })],
-            spacing: { after: 120 }
-          }));
-        }
-        i++; // Skip the text part
-      } else if (part === 'LISTITEM') {
-        const text = parts[i + 1]?.replace(/\|\|ENDLISTITEM\|\|/, '') || '';
-        const cleanText = text.replace(/<[^>]+>/g, '').trim();
-        if (cleanText) {
-          paragraphs.push(new Paragraph({
-            children: [new TextRun({ text: `• ${cleanText}`, size: 22 })],
-            indent: { left: 720 },
-            spacing: { after: 60 }
-          }));
-        }
-        i++; // Skip the text part
-      }
-    }
-
-    // If no structured content found, create a simple paragraph
-    if (paragraphs.length === 0) {
-      const cleanText = content.replace(/<[^>]+>/g, '').trim();
-      if (cleanText) {
-        paragraphs.push(new Paragraph({
-          children: [new TextRun({ text: cleanText, size: 22 })],
-        }));
-      }
-    }
-
-    return { paragraphs };
-  }
-
-  private preserveFormattingForTXT(content: string): string {
-    // Enhanced text formatting with better structure preservation
-    let formattedContent = content
-      // Headers with visual emphasis
-      .replace(/<h1[^>]*>(.*?)<\/h1>/g, '\n\n═══ $1 ═══\n\n')
-      .replace(/<h2[^>]*>(.*?)<\/h2>/g, '\n\n▓▓▓ $1 ▓▓▓\n\n')
-      .replace(/<h3[^>]*>(.*?)<\/h3>/g, '\n\n■■■ $1 ■■■\n\n')
-      .replace(/<h([4-6])[^>]*>(.*?)<\/h[4-6]>/g, '\n\n>>> $2 <<<\n\n')
-      // Bold and italic with text markers
-      .replace(/<strong[^>]*>(.*?)<\/strong>/g, '**$1**')
-      .replace(/<b[^>]*>(.*?)<\/b>/g, '**$1**')
-      .replace(/<em[^>]*>(.*?)<\/em>/g, '*$1*')
-      .replace(/<i[^>]*>(.*?)<\/i>/g, '*$1*')
-      // Lists with proper indentation
-      .replace(/<ul[^>]*>/g, '\n')
-      .replace(/<\/ul>/g, '\n')
-      .replace(/<ol[^>]*>/g, '\n')
-      .replace(/<\/ol>/g, '\n')
-      .replace(/<li[^>]*>(.*?)<\/li>/g, '    • $1\n')
-      // Tables with ASCII art
-      .replace(/<table[^>]*>/g, '\n┌─────────────────────────────────────┐\n')
-      .replace(/<\/table>/g, '└─────────────────────────────────────┘\n')
-      .replace(/<tr[^>]*>/g, '│ ')
-      .replace(/<\/tr>/g, ' │\n')
-      .replace(/<t[hd][^>]*>(.*?)<\/t[hd]>/g, '$1 │ ')
-      // Paragraphs with proper spacing
-      .replace(/<p[^>]*>/g, '\n')
-      .replace(/<\/p>/g, '\n\n')
-      .replace(/<br\s*\/?>/g, '\n')
-      .replace(/<div[^>]*>/g, '\n')
-      .replace(/<\/div>/g, '\n')
-      .replace(/<span[^>]*>/g, '')
-      .replace(/<\/span>/g, '')
-      // Clean up HTML tags
-      .replace(/<[^>]+>/g, '')
-      // Decode entities
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      // Clean up spacing
-      .replace(/\n\s*\n\s*\n/g, '\n\n')
-      .trim();
-
-    return formattedContent;
+  private addFooterToPDF(pdf: jsPDF, pageWidth: number, pageHeight: number, margin: number): void {
+    pdf.setFontSize(8);
+    pdf.setFont(undefined, 'italic');
+    pdf.setTextColor(77, 182, 172); // mint color
+    const footerText = 'Generated with PrepGenie';
+    const textWidth = pdf.getTextWidth(footerText);
+    const xPosition = (pageWidth - textWidth) / 2;
+    pdf.text(footerText, xPosition, pageHeight - 10);
+    pdf.setTextColor(0, 0, 0); // Reset to black
   }
 
   async exportToPDF(options: ExportOptions): Promise<void> {
@@ -297,15 +197,65 @@ class ExportService {
     pdf.save(`${note.title || 'note'}-${contentType}.pdf`);
   }
 
-  private addFooterToPDF(pdf: jsPDF, pageWidth: number, pageHeight: number, margin: number): void {
-    pdf.setFontSize(8);
-    pdf.setFont(undefined, 'italic');
-    pdf.setTextColor(77, 182, 172); // mint color
-    const footerText = 'Generated with StudyApp';
-    const textWidth = pdf.getTextWidth(footerText);
-    const xPosition = (pageWidth - textWidth) / 2;
-    pdf.text(footerText, xPosition, pageHeight - 10);
-    pdf.setTextColor(0, 0, 0); // Reset to black
+  private preserveFormattingForDOCX(content: string): { paragraphs: any[] } {
+    const paragraphs: any[] = [];
+    
+    // Split content by major elements (headers, paragraphs, lists)
+    const htmlContent = content
+      .replace(/<h([1-6])[^>]*>(.*?)<\/h[1-6]>/g, '||HEADER$1||$2||ENDHEADER||')
+      .replace(/<p[^>]*>(.*?)<\/p>/g, '||PARAGRAPH||$1||ENDPARAGRAPH||')
+      .replace(/<ul[^>]*>(.*?)<\/ul>/g, '||LIST||$1||ENDLIST||')
+      .replace(/<li[^>]*>(.*?)<\/li>/g, '||LISTITEM||$1||ENDLISTITEM||');
+
+    const parts = htmlContent.split(/\|\|[A-Z]+\|\|/);
+    
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i].trim();
+      if (!part) continue;
+
+      if (part.match(/^HEADER([1-6])/)) {
+        const level = parseInt(part.match(/^HEADER([1-6])/)?.[1] || '1');
+        const text = parts[i + 1]?.replace(/\|\|ENDHEADER\|\|/, '') || '';
+        paragraphs.push(new Paragraph({
+          children: [new TextRun({ text: text.trim(), bold: true, size: 28 - (level * 2) })],
+          spacing: { before: 240, after: 120 }
+        }));
+        i++; // Skip the text part
+      } else if (part === 'PARAGRAPH') {
+        const text = parts[i + 1]?.replace(/\|\|ENDPARAGRAPH\|\|/, '') || '';
+        const cleanText = text.replace(/<[^>]+>/g, '').trim();
+        if (cleanText) {
+          paragraphs.push(new Paragraph({
+            children: [new TextRun({ text: cleanText, size: 22 })],
+            spacing: { after: 120 }
+          }));
+        }
+        i++; // Skip the text part
+      } else if (part === 'LISTITEM') {
+        const text = parts[i + 1]?.replace(/\|\|ENDLISTITEM\|\|/, '') || '';
+        const cleanText = text.replace(/<[^>]+>/g, '').trim();
+        if (cleanText) {
+          paragraphs.push(new Paragraph({
+            children: [new TextRun({ text: `• ${cleanText}`, size: 22 })],
+            indent: { left: 720 },
+            spacing: { after: 60 }
+          }));
+        }
+        i++; // Skip the text part
+      }
+    }
+
+    // If no structured content found, create a simple paragraph
+    if (paragraphs.length === 0) {
+      const cleanText = content.replace(/<[^>]+>/g, '').trim();
+      if (cleanText) {
+        paragraphs.push(new Paragraph({
+          children: [new TextRun({ text: cleanText, size: 22 })],
+        }));
+      }
+    }
+
+    return { paragraphs };
   }
 
   async exportToDOCX(options: ExportOptions): Promise<void> {
@@ -346,7 +296,7 @@ class ExportService {
               new Paragraph({
                 children: [
                   new TextRun({
-                    text: 'Generated with StudyApp',
+                    text: 'Generated with PrepGenie',
                     size: 16,
                     italics: true,
                     color: '4DB6AC', // mint color
@@ -396,6 +346,55 @@ class ExportService {
     URL.revokeObjectURL(link.href);
   }
 
+  private preserveFormattingForTXT(content: string): string {
+    // Enhanced text formatting with better structure preservation
+    let formattedContent = content
+      // Headers with visual emphasis
+      .replace(/<h1[^>]*>(.*?)<\/h1>/g, '\n\n═══ $1 ═══\n\n')
+      .replace(/<h2[^>]*>(.*?)<\/h2>/g, '\n\n▓▓▓ $1 ▓▓▓\n\n')
+      .replace(/<h3[^>]*>(.*?)<\/h3>/g, '\n\n■■■ $1 ■■■\n\n')
+      .replace(/<h([4-6])[^>]*>(.*?)<\/h[4-6]>/g, '\n\n>>> $2 <<<\n\n')
+      // Bold and italic with text markers
+      .replace(/<strong[^>]*>(.*?)<\/strong>/g, '**$1**')
+      .replace(/<b[^>]*>(.*?)<\/b>/g, '**$1**')
+      .replace(/<em[^>]*>(.*?)<\/em>/g, '*$1*')
+      .replace(/<i[^>]*>(.*?)<\/i>/g, '*$1*')
+      // Lists with proper indentation
+      .replace(/<ul[^>]*>/g, '\n')
+      .replace(/<\/ul>/g, '\n')
+      .replace(/<ol[^>]*>/g, '\n')
+      .replace(/<\/ol>/g, '\n')
+      .replace(/<li[^>]*>(.*?)<\/li>/g, '    • $1\n')
+      // Tables with ASCII art
+      .replace(/<table[^>]*>/g, '\n┌─────────────────────────────────────┐\n')
+      .replace(/<\/table>/g, '└─────────────────────────────────────┘\n')
+      .replace(/<tr[^>]*>/g, '│ ')
+      .replace(/<\/tr>/g, ' │\n')
+      .replace(/<t[hd][^>]*>(.*?)<\/t[hd]>/g, '$1 │ ')
+      // Paragraphs with proper spacing
+      .replace(/<p[^>]*>/g, '\n')
+      .replace(/<\/p>/g, '\n\n')
+      .replace(/<br\s*\/?>/g, '\n')
+      .replace(/<div[^>]*>/g, '\n')
+      .replace(/<\/div>/g, '\n')
+      .replace(/<span[^>]*>/g, '')
+      .replace(/<\/span>/g, '')
+      // Clean up HTML tags
+      .replace(/<[^>]+>/g, '')
+      // Decode entities
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      // Clean up spacing
+      .replace(/\n\s*\n\s*\n/g, '\n\n')
+      .trim();
+
+    return formattedContent;
+  }
+
   async exportToTXT(options: ExportOptions): Promise<void> {
     const { note, contentType } = options;
     const content = this.getContentByType(note, contentType);
@@ -417,7 +416,7 @@ class ExportService {
       '',
       '',
       '─'.repeat(60),
-      'Generated with StudyApp',
+      'Generated with PrepGenie',
       '─'.repeat(60),
     ].join('\n');
 

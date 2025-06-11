@@ -22,7 +22,7 @@ export const CompletionStep = ({ onFinish }: CompletionStepProps) => {
     },
     {
       title: "Explore Features",
-      description: "Discover what StudyApp can do",
+      description: "Discover what PrepGenie can do",
       icon: Bell,
       color: "bg-purple-500"
     }
@@ -37,7 +37,7 @@ export const CompletionStep = ({ onFinish }: CompletionStepProps) => {
           </div>
         </div>
         <h2 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-4">
-          Welcome to StudyApp!
+          Welcome to PrepGenie!
         </h2>
         <p className="text-lg text-slate-600 max-w-md mx-auto mb-2">
           Your account is ready! You're all set to start your learning journey.
