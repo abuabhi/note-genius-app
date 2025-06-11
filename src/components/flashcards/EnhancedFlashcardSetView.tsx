@@ -1,5 +1,4 @@
-
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -75,7 +74,7 @@ const EnhancedFlashcardSetView = () => {
   const [deletingCard, setDeletingCard] = useState<string | null>(null);
 
   // Function to get card progress from learning progress data
-  const getCardProgress = (cardId: string) => {
+  const getCardProgress = useCallback((cardId: string) => {
     const progress = progressMap.get(cardId);
     
     if (!progress) {
@@ -97,9 +96,9 @@ const EnhancedFlashcardSetView = () => {
       correctPercentage: correctPercentage,
       needsReview: progress.is_difficult || correctPercentage < 70 || !progress.last_seen_at
     };
-  };
+  }, [progressMap]);
 
-  // Filter and sort flashcards - MOVED BEFORE CONDITIONAL RETURNS
+  // Filter and sort flashcards - MOVED BEFORE CONDITIONAL RETURNS AND STABILIZED
   const filteredAndSortedCards = useMemo(() => {
     let filtered = flashcards.filter(card => {
       const matchesSearch = 
@@ -136,9 +135,9 @@ const EnhancedFlashcardSetView = () => {
           return (a.position || 0) - (b.position || 0);
       }
     });
-  }, [flashcards, searchQuery, sortBy, filterDifficulty, filterReviewStatus, progressMap]);
+  }, [flashcards, searchQuery, sortBy, filterDifficulty, filterReviewStatus, getCardProgress]);
 
-  // Calculate set statistics based on real progress data - MOVED BEFORE CONDITIONAL RETURNS
+  // Calculate set statistics based on real progress data - STABILIZED
   const setStats = useMemo(() => {
     const totalCards = flashcards.length;
     const reviewedCards = flashcards.filter(card => {
@@ -164,7 +163,7 @@ const EnhancedFlashcardSetView = () => {
       averageProgress: avgProgress,
       completionRate: totalCards > 0 ? Math.round((reviewedCards / totalCards) * 100) : 0
     };
-  }, [flashcards, progressMap]);
+  }, [flashcards, progressMap, getCardProgress]);
 
   // Early return for missing setId - NOW AFTER ALL HOOKS
   if (!setId) {
@@ -186,6 +185,7 @@ const EnhancedFlashcardSetView = () => {
     );
   }
 
+  // STABILIZED useEffect with proper dependencies
   useEffect(() => {
     const loadSetAndFlashcards = async () => {
       console.log("🚀 EnhancedFlashcardSetView: Starting load for setId:", setId);
@@ -226,10 +226,14 @@ const EnhancedFlashcardSetView = () => {
       }
     };
 
-    loadSetAndFlashcards();
-  }, [setId, fetchFlashcardsInSet, fetchFlashcardSets, fetchLearningProgress]);
+    // Only run if we have a setId and haven't already loaded this set
+    if (setId && (flashcards.length === 0 || currentSet?.id !== setId)) {
+      loadSetAndFlashcards();
+    }
+  }, [setId]); // MINIMAL dependencies to prevent infinite loops
 
-  const handleDeleteCard = async (cardId: string) => {
+  // Stabilized delete handler
+  const handleDeleteCard = useCallback(async (cardId: string) => {
     setDeletingCard(cardId);
     try {
       await deleteFlashcard(cardId);
@@ -239,7 +243,7 @@ const EnhancedFlashcardSetView = () => {
     } finally {
       setDeletingCard(null);
     }
-  };
+  }, [deleteFlashcard]);
 
   // Error state
   if (error) {

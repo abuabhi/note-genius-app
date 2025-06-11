@@ -18,9 +18,13 @@ import {
 import { Home, BookOpen } from "lucide-react";
 
 export const StudyPageContent = () => {
-  const { setId } = useParams<{ setId: string }>();
+  // Fixed: Use 'id' instead of 'setId' to match the route parameter
+  const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const modeParam = searchParams.get('mode');
+  
+  console.log("StudyPageContent: Params received", { id });
+  console.log("StudyPageContent: Current URL:", window.location.pathname);
   
   // Support all three study modes
   const getInitialMode = (): StudyMode => {
@@ -44,24 +48,24 @@ export const StudyPageContent = () => {
   const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
   
   const loadFlashcardSet = useCallback(async () => {
-    if (!setId || hasAttemptedLoad) return;
+    if (!id || hasAttemptedLoad) return;
     
-    console.log("Starting loadFlashcardSet for setId:", setId);
+    console.log("StudyPageContent: Starting loadFlashcardSet for id:", id);
     setIsLoading(true);
     setError(null);
     setHasAttemptedLoad(true);
     
     try {
       // First check if we already have the set in our existing sets
-      let targetSet = flashcardSets?.find(s => s.id === setId);
+      let targetSet = flashcardSets?.find(s => s.id === id);
       
       if (!targetSet) {
-        console.log("Set not found in existing sets, fetching all sets...");
+        console.log("StudyPageContent: Set not found in existing sets, fetching all sets...");
         const sets = await fetchFlashcardSets();
-        targetSet = sets?.find(s => s.id === setId);
+        targetSet = sets?.find(s => s.id === id);
       }
       
-      console.log("Target set found:", targetSet);
+      console.log("StudyPageContent: Target set found:", targetSet);
       
       if (targetSet) {
         setCurrentSet(targetSet);
@@ -70,21 +74,22 @@ export const StudyPageContent = () => {
         setError("Flashcard set not found");
       }
     } catch (fetchError) {
-      console.error("Error in loadFlashcardSet:", fetchError);
+      console.error("StudyPageContent: Error in loadFlashcardSet:", fetchError);
       setError("Failed to load flashcard set. Please try again.");
     } finally {
       setIsLoading(false);
     }
-  }, [setId, hasAttemptedLoad, flashcardSets, fetchFlashcardSets]);
+  }, [id, hasAttemptedLoad, flashcardSets, fetchFlashcardSets]);
   
   useEffect(() => {
-    console.log("StudyPageContent useEffect triggered", { setId, hasAttemptedLoad });
-    if (setId && !hasAttemptedLoad) {
+    console.log("StudyPageContent: useEffect triggered", { id, hasAttemptedLoad });
+    if (id && !hasAttemptedLoad) {
       loadFlashcardSet();
     }
-  }, [setId, loadFlashcardSet, hasAttemptedLoad]);
+  }, [id, loadFlashcardSet, hasAttemptedLoad]);
   
-  if (!setId) {
+  if (!id) {
+    console.log("StudyPageContent: No id provided, redirecting to flashcards");
     return <Navigate to="/flashcards" />;
   }
   
@@ -174,7 +179,7 @@ export const StudyPageContent = () => {
       
       <SimplifiedStudyPageLayout
         isLoading={isLoading}
-        setId={setId}
+        setId={id}
         mode={mode}
         currentSet={currentSet}
       />

@@ -57,24 +57,42 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     setLoading(newLoading);
   }, []);
 
-  // Enhanced setFlashcardSets with user validation and immediate state update
+  // Enhanced setFlashcardSets with user validation and immediate state update - STABILIZED
   const enhancedSetFlashcardSets = useCallback((sets: FlashcardSet[] | ((prev: FlashcardSet[]) => FlashcardSet[])) => {
     if (!user) {
       console.warn('FlashcardProvider: Attempted to set flashcard sets without authenticated user');
       return;
     }
     
-    const newSets = typeof sets === 'function' ? sets(flashcardSets) : sets;
-    console.log('FlashcardProvider: Setting flashcard sets', {
-      userId: user.id,
-      setsCount: newSets.length,
-      sets: newSets.map(s => ({ id: s.id.slice(0, 8), name: s.name, user_id: s.user_id }))
+    setFlashcardSets(prev => {
+      const newSets = typeof sets === 'function' ? sets(prev) : sets;
+      console.log('FlashcardProvider: Setting flashcard sets', {
+        userId: user.id,
+        setsCount: newSets.length,
+        sets: newSets.map(s => ({ id: s.id.slice(0, 8), name: s.name, user_id: s.user_id }))
+      });
+      return newSets;
     });
-    
-    setFlashcardSets(newSets);
-  }, [user, flashcardSets]);
+  }, [user]);
 
-  // Create state object for hooks to share with enhanced user validation
+  // Stabilized setters with useCallback
+  const stableSetFlashcards = useCallback((flashcards: Flashcard[] | ((prev: Flashcard[]) => Flashcard[])) => {
+    setFlashcards(flashcards);
+  }, []);
+
+  const stableSetCurrentFlashcard = useCallback((flashcard: Flashcard | null) => {
+    setCurrentFlashcard(flashcard);
+  }, []);
+
+  const stableSetCurrentSet = useCallback((set: FlashcardSet | null) => {
+    setCurrentSet(set);
+  }, []);
+
+  const stableSetCategories = useCallback((categories: SubjectCategory[] | ((prev: SubjectCategory[]) => SubjectCategory[])) => {
+    setCategories(categories);
+  }, []);
+
+  // Create state object for hooks to share with enhanced user validation - STABILIZED
   const state: FlashcardState = useMemo(() => {
     if (!user) {
       console.log('FlashcardProvider: No user available for state creation');
@@ -87,11 +105,11 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
       currentSet,
       categories,
       loading,
-      setFlashcards,
+      setFlashcards: stableSetFlashcards,
       setFlashcardSets: enhancedSetFlashcardSets,
-      setCurrentFlashcard,
-      setCurrentSet,
-      setCategories,
+      setCurrentFlashcard: stableSetCurrentFlashcard,
+      setCurrentSet: stableSetCurrentSet,
+      setCategories: stableSetCategories,
       setLoading: stableSetLoading,
       user
     };
@@ -102,7 +120,11 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     currentSet,
     categories,
     loading,
+    stableSetFlashcards,
     enhancedSetFlashcardSets,
+    stableSetCurrentFlashcard,
+    stableSetCurrentSet,
+    stableSetCategories,
     stableSetLoading,
     user
   ]);
@@ -110,28 +132,27 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
   // Get all operations from our hooks with stable references
   const flashcardOperations = useFlashcardOperations(state);
   const flashcardSetsOperations = useFlashcardSets(state);
-  const categoryOperations = useCategoryOperations(categories, setCategories);
+  const categoryOperations = useCategoryOperations(categories, stableSetCategories);
   const libraryOperations = useLibraryOperations(state);
   const studyOperations = useStudyOperations();
   
   // Get combined operations that include recordFlashcardReview and getFlashcardProgress
   const combinedOperations = combineFlashcardOperations(state);
 
-  // Enhanced fetchFlashcardSets that forces a state refresh
+  // Enhanced fetchFlashcardSets that forces a state refresh - STABILIZED
   const enhancedFetchFlashcardSets = useCallback(async () => {
     console.log('FlashcardProvider: Enhanced fetch flashcard sets called');
     try {
       const result = await flashcardSetsOperations.fetchFlashcardSets();
-      // The state should already be updated by the operation, but we can log for debugging
       console.log('FlashcardProvider: Fetch completed, current sets count:', flashcardSets.length);
       return result;
     } catch (error) {
       console.error('FlashcardProvider: Error in enhanced fetch:', error);
       throw error;
     }
-  }, [flashcardSetsOperations, flashcardSets.length]);
+  }, [flashcardSetsOperations.fetchFlashcardSets, flashcardSets.length]);
 
-  // Enhanced createFlashcardSet that immediately updates state
+  // Enhanced createFlashcardSet that immediately updates state - STABILIZED
   const enhancedCreateFlashcardSet = useCallback(async (setData: any) => {
     console.log('FlashcardProvider: Enhanced create flashcard set called');
     try {
@@ -155,9 +176,20 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
       console.error('FlashcardProvider: Error in enhanced create:', error);
       throw error;
     }
-  }, [flashcardSetsOperations, enhancedSetFlashcardSets]);
+  }, [flashcardSetsOperations.createFlashcardSet, enhancedSetFlashcardSets]);
 
-  // Create stable context value with all required properties
+  // STABILIZED fetchFlashcardsInSet
+  const enhancedFetchFlashcardsInSet = useCallback(async (setId: string) => {
+    console.log('FlashcardProvider: Enhanced fetch flashcards in set called for:', setId);
+    try {
+      return await flashcardSetsOperations.fetchFlashcardsInSet(setId);
+    } catch (error) {
+      console.error('FlashcardProvider: Error in enhanced fetchFlashcardsInSet:', error);
+      throw error;
+    }
+  }, [flashcardSetsOperations.fetchFlashcardsInSet]);
+
+  // Create stable context value with all required properties - STABILIZED
   const contextValue: FlashcardContextType = useMemo(() => ({
     // State properties
     flashcards,
@@ -170,11 +202,11 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     isLoading: loading.flashcards || loading.sets || loading.categories,
     
     // State setters
-    setFlashcards,
+    setFlashcards: stableSetFlashcards,
     setFlashcardSets: enhancedSetFlashcardSets,
-    setCurrentFlashcard,
-    setCurrentSet,
-    setCategories,
+    setCurrentFlashcard: stableSetCurrentFlashcard,
+    setCurrentSet: stableSetCurrentSet,
+    setCategories: stableSetCategories,
     setLoading: stableSetLoading,
     user,
     
@@ -191,7 +223,7 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     createFlashcardSet: enhancedCreateFlashcardSet,
     updateFlashcardSet: flashcardSetsOperations.updateFlashcardSet,
     deleteFlashcardSet: flashcardSetsOperations.deleteFlashcardSet,
-    fetchFlashcardsInSet: flashcardSetsOperations.fetchFlashcardsInSet,
+    fetchFlashcardsInSet: enhancedFetchFlashcardsInSet,
   }), [
     flashcards,
     flashcardSets,
@@ -200,13 +232,19 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     categories,
     loading,
     isReady,
+    stableSetFlashcards,
     enhancedSetFlashcardSets,
+    stableSetCurrentFlashcard,
+    stableSetCurrentSet,
+    stableSetCategories,
     stableSetLoading,
     user,
     enhancedFetchFlashcardSets,
     enhancedCreateFlashcardSet,
+    enhancedFetchFlashcardsInSet,
     flashcardOperations,
-    flashcardSetsOperations,
+    flashcardSetsOperations.updateFlashcardSet,
+    flashcardSetsOperations.deleteFlashcardSet,
     categoryOperations,
     libraryOperations,
     studyOperations,
