@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileText, Loader2 } from "lucide-react";
@@ -116,7 +117,7 @@ export const ScanWorkflow = ({
           title: image.title,
           description: image.recognizedText.substring(0, 100) + (image.recognizedText.length > 100 ? "..." : ""),
           date: new Date().toISOString().split('T')[0],
-          category: image.category, // This maps to the subject field in the database
+          subject: image.category, // This maps to the subject field in the database
           content: image.recognizedText,
           sourceType: 'scan',
           scanData: {
@@ -171,7 +172,7 @@ export const ScanWorkflow = ({
         title: noteTitle,
         description: recognizedText.substring(0, 100) + (recognizedText.length > 100 ? "..." : ""),
         date: dateString,
-        category: noteSubject, // Keep for backward compatibility
+        subject: noteSubject, // Keep for backward compatibility
         subject_id: subjectId, // Use the proper subject ID for relationships
         content: recognizedText,
         sourceType: 'scan',

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Note } from "@/types/note";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,13 +21,13 @@ export const CompactNoteCard = ({ note, onPin, onDelete }: CompactNoteCardProps)
   const navigate = useNavigate();
   const { subjects, isLoading: subjectsLoading } = useUserSubjects();
   
-  // Find the subject name based on subject_id or fall back to category
+  // Find the subject name based on subject_id or fall back to subject
   const getSubjectName = () => {
     if (note.subject_id && !subjectsLoading) {
       const foundSubject = subjects.find(s => s.id === note.subject_id);
-      return foundSubject?.name || note.category || "Uncategorized";
+      return foundSubject?.name || note.subject || "Uncategorized";
     }
-    return note.category || "Uncategorized";
+    return note.subject || "Uncategorized";
   };
 
   const subjectName = getSubjectName();

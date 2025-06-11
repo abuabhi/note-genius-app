@@ -38,7 +38,7 @@ export const FlashcardGeneration = ({
       
       // Find a default set or use the first available set
       const defaultSet = flashcardSets.find(set => 
-        set.subject === note.category || set.name.includes(note.title)
+        set.subject === note.subject || set.name.includes(note.title)
       ) || flashcardSets[0];
 
       if (!defaultSet) {
@@ -54,7 +54,7 @@ export const FlashcardGeneration = ({
         front_content: question,
         back_content: answer,
         set_id: defaultSet.id,
-        subject: note.category
+        subject: note.subject
       });
 
       toast.success('Flashcard created successfully!');

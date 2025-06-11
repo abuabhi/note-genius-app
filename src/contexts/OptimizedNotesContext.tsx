@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 import { Note } from '@/types/note';
 import { useOptimizedNotesQuery } from '@/hooks/performance/useOptimizedNotesQuery';
@@ -111,7 +110,7 @@ export const OptimizedNotesProvider = ({ children }: { children: ReactNode }) =>
           description: noteData.description,
           content: noteData.content,
           date: noteData.date,
-          subject: noteData.category,
+          subject: noteData.subject,
           source_type: noteData.sourceType,
           archived: noteData.archived || false,
           pinned: noteData.pinned || false,
@@ -129,7 +128,7 @@ export const OptimizedNotesProvider = ({ children }: { children: ReactNode }) =>
         description: data.description || '',
         content: data.content || '',
         date: data.date,
-        category: data.subject || 'Uncategorized',
+        subject: data.subject || 'Uncategorized',
         sourceType: data.source_type as 'manual' | 'import' | 'scan',
         archived: data.archived || false,
         pinned: data.pinned || false,
@@ -158,7 +157,7 @@ export const OptimizedNotesProvider = ({ children }: { children: ReactNode }) =>
       if (updates.title !== undefined) updateData.title = updates.title;
       if (updates.description !== undefined) updateData.description = updates.description;
       if (updates.content !== undefined) updateData.content = updates.content;
-      if (updates.category !== undefined) updateData.subject = updates.category;
+      if (updates.subject !== undefined) updateData.subject = updates.subject;
       if (updates.archived !== undefined) updateData.archived = updates.archived;
       if (updates.pinned !== undefined) updateData.pinned = updates.pinned;
       if (updates.subject_id !== undefined) updateData.subject_id = updates.subject_id;

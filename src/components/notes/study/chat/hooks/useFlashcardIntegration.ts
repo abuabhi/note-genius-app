@@ -44,15 +44,15 @@ export const useFlashcardIntegration = (note: Note) => {
       return existingSet;
     }
 
-    // 3. Try category/subject match (only if note has a category and fewer than 3 sets exist for this subject)
-    if (note.category) {
+    // 3. Try subject match (only if note has a subject and fewer than 3 sets exist for this subject)
+    if (note.subject) {
       const subjectSets = flashcardSets.filter(set => 
-        set.subject?.toLowerCase().trim() === note.category.toLowerCase().trim()
+        set.subject?.toLowerCase().trim() === note.subject.toLowerCase().trim()
       );
       
       // Only use existing subject set if there are very few sets to avoid confusion
       if (subjectSets.length === 1) {
-        console.log('Found single category/subject match:', subjectSets[0].name);
+        console.log('Found single subject match:', subjectSets[0].name);
         return subjectSets[0];
       }
     }
@@ -63,7 +63,7 @@ export const useFlashcardIntegration = (note: Note) => {
       const newSet = await createFlashcardSet({
         name: noteFlashcardsName,
         description: `Flashcards created from "${note.title}" note`,
-        subject: note.category || 'General',
+        subject: note.subject || 'General',
         topic: note.title
       });
 
@@ -92,12 +92,12 @@ export const useFlashcardIntegration = (note: Note) => {
     );
     if (titleMatch) return titleMatch.id;
 
-    if (note.category) {
-      const categoryMatches = flashcardSets.filter(set => 
-        set.subject?.toLowerCase().trim() === note.category.toLowerCase().trim()
+    if (note.subject) {
+      const subjectMatches = flashcardSets.filter(set => 
+        set.subject?.toLowerCase().trim() === note.subject.toLowerCase().trim()
       );
       // Only suggest if there's exactly one match to avoid confusion
-      if (categoryMatches.length === 1) return categoryMatches[0].id;
+      if (subjectMatches.length === 1) return subjectMatches[0].id;
     }
 
     return undefined;
@@ -131,7 +131,7 @@ export const useFlashcardIntegration = (note: Note) => {
         front_content: question,
         back_content: answer,
         set_id: targetSetId,
-        subject: note.category
+        subject: note.subject
       });
 
       setLastCreatedFlashcardId(flashcard.id);

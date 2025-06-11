@@ -52,7 +52,7 @@ export const OptimizedNotesContent = () => {
         description: 'Enter your note description here...',
         content: '',
         date: new Date().toISOString().split('T')[0],
-        category: 'General',
+        subject: 'General',
         sourceType: 'manual'
       });
     } catch (error) {
