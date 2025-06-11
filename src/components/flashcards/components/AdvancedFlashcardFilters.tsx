@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { FilterHeader } from "./FilterHeader";
+import { useUserSubjects } from "@/hooks/useUserSubjects";
 
 export interface FlashcardFilters {
   searchQuery: string;
@@ -37,11 +38,14 @@ export const AdvancedFlashcardFilters = ({
   totalSets,
   hideViewMode = false
 }: AdvancedFlashcardFiltersProps) => {
+  const { subjects, isLoading: subjectsLoading } = useUserSubjects();
+
   const activeFilterCount = Object.values(filters).filter(value => 
     value !== '' && value !== 'all' && value !== false && value !== 'grid' && value !== 'updated_at' && value !== 'desc'
   ).length;
 
   const updateFilter = (key: keyof FlashcardFilters, value: any) => {
+    console.log('🔍 Filter updated:', key, value);
     onFiltersChange({ ...filters, [key]: value });
   };
 
@@ -74,18 +78,22 @@ export const AdvancedFlashcardFilters = ({
           />
         </div>
 
-        {/* Subject Filter */}
-        <Select value={filters.subjectFilter} onValueChange={(value) => updateFilter('subjectFilter', value)}>
+        {/* Subject Filter - Updated to use dynamic user subjects */}
+        <Select 
+          value={filters.subjectFilter} 
+          onValueChange={(value) => updateFilter('subjectFilter', value)}
+          disabled={subjectsLoading}
+        >
           <SelectTrigger>
             <SelectValue placeholder="All Subjects" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Subjects</SelectItem>
-            <SelectItem value="math">Mathematics</SelectItem>
-            <SelectItem value="science">Science</SelectItem>
-            <SelectItem value="history">History</SelectItem>
-            <SelectItem value="language">Language</SelectItem>
-            <SelectItem value="other">Other</SelectItem>
+            {subjects.map(subject => (
+              <SelectItem key={subject.id} value={subject.name}>
+                {subject.name}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 

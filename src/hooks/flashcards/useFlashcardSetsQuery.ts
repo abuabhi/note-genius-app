@@ -32,11 +32,13 @@ export const useFlashcardSetsQuery = (filters: FlashcardFilters, page: number = 
 
       // Apply search filter
       if (filters.searchQuery) {
+        console.log('🔍 Applying search filter:', filters.searchQuery);
         query = query.ilike('name', `%${filters.searchQuery}%`);
       }
 
-      // Apply subject filter
-      if (filters.subjectFilter !== 'all') {
+      // Apply subject filter - FIXED: Now properly filters by subject
+      if (filters.subjectFilter && filters.subjectFilter !== 'all') {
+        console.log('📚 Applying subject filter:', filters.subjectFilter);
         query = query.eq('subject', filters.subjectFilter);
       }
 
@@ -55,6 +57,12 @@ export const useFlashcardSetsQuery = (filters: FlashcardFilters, page: number = 
         console.error('❌ Error fetching flashcard sets:', error);
         throw error;
       }
+
+      console.log('✅ Successfully fetched flashcard sets:', {
+        totalSets: data?.length || 0,
+        appliedFilters: filters,
+        page
+      });
 
       return {
         sets: data || [],

@@ -73,6 +73,13 @@ const FlashcardsPage = () => {
     return result.data || result;
   };
 
+  // Reset page when filters change to ensure proper filtering
+  const handleFiltersChange = (newFilters: typeof filters) => {
+    console.log('🔄 Filters changed, resetting page to 1');
+    setFilters(newFilters);
+    setPage(1);
+  };
+
   return (
     <ErrorBoundary>
       <Layout>
@@ -87,7 +94,7 @@ const FlashcardsPage = () => {
             
             <AdvancedFlashcardFilters
               filters={filters}
-              onFiltersChange={setFilters}
+              onFiltersChange={handleFiltersChange}
               totalSets={allSets.length}
               hideViewMode={true}
             />
