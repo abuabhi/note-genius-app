@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { ChatSidebar } from "./ChatSidebar";
 import { ChatContainer } from "./ChatContainer";
-import { useChat } from "@/hooks/chat"; // Updated import path
+import { useChat } from "@/hooks/chat";
 import { EmptyChat } from "./EmptyChat";
 import {
   Sheet,
@@ -40,7 +40,7 @@ export const MobileChat = () => {
       {showSidebar ? (
         <ChatSidebar />
       ) : activeConversationId ? (
-        <ChatContainer onBack={handleBack} showBackButton={true} />
+        <ChatContainer />
       ) : (
         <EmptyChat onStartChat={handleStartChat} />
       )}

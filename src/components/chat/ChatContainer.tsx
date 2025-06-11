@@ -44,7 +44,7 @@ export const ChatContainer = () => {
         "transform transition-transform duration-300 ease-in-out",
         sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}>
-        <ChatSidebar onClose={() => setSidebarOpen(false)} />
+        <ChatSidebar />
       </div>
 
       {/* Main chat area */}
@@ -79,7 +79,9 @@ export const ChatContainer = () => {
             </div>
 
             {/* Messages */}
-            <MessageList conversationId={activeConversationId} />
+            <div className="flex-1 overflow-hidden">
+              <MessageList conversationId={activeConversationId} />
+            </div>
 
             {/* Message input */}
             <div className="border-t bg-background p-4">
