@@ -64,7 +64,7 @@ export const useNoteEnrichment = (note?: Note) => {
         id: note.id,
         title: note.title,
         content: note.content,
-        subject: note.subject
+        category: note.subject
       }, enhancementType);
       
       setEnhancedContent(enhanced);
