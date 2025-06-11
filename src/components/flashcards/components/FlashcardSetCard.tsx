@@ -173,10 +173,10 @@ const FlashcardSetCard = ({
             </div>
           </div>
 
-          {/* Action Buttons */}
+          {/* Action Buttons - Fixed Study URL */}
           <div className="flex gap-2">
             <Button asChild className="flex-1 bg-mint-500 hover:bg-mint-600" size="sm">
-              <Link to={`/study/${setId}`}>
+              <Link to={`/flashcards/study/${setId}`}>
                 <Play className="h-4 w-4 mr-2" />
                 Study
               </Link>
