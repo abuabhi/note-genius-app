@@ -1,8 +1,9 @@
 
 import React from 'react';
 import { Note } from '@/types/note';
-import { EnhancementDisplayPanel } from '../enhancements/EnhancementDisplayPanel';
 import { TextAlignType } from '../hooks/useStudyViewState';
+import { OptimizedTwoColumnView } from '../enhancements/OptimizedTwoColumnView';
+import { EnhancementContentType } from '../enhancements/EnhancementSelector';
 
 interface NoteStudyDisplayProps {
   note: Note;
@@ -21,15 +22,24 @@ export const NoteStudyDisplay: React.FC<NoteStudyDisplayProps> = ({
   handleRetryEnhancement,
   isEditOperation
 }) => {
+  // Convert activeContentType string to EnhancementContentType
+  const contentType = activeContentType as EnhancementContentType;
+  
+  // Create a no-op function for setActiveContentType since it's handled at parent level
+  const handleActiveContentTypeChange = () => {
+    // This is handled by the parent component through activeContentType prop
+  };
+
   return (
     <div className="space-y-6">
-      <EnhancementDisplayPanel
+      <OptimizedTwoColumnView
         note={note}
-        contentType={activeContentType as any}
         fontSize={fontSize}
         textAlign={textAlign}
-        isLoading={isEditOperation}
+        activeContentType={contentType}
+        setActiveContentType={handleActiveContentTypeChange}
         onRetryEnhancement={handleRetryEnhancement}
+        isEditOperation={isEditOperation}
       />
     </div>
   );
