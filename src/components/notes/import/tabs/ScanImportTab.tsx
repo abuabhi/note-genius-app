@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ImageUpload } from '../../scanning/ImageUpload';
@@ -10,6 +9,7 @@ import { ImageProcessor } from '../../scanning/ImageProcessor';
 import { NoteMetadataForm } from '../../scanning/NoteMetadataForm';
 import { Button } from '@/components/ui/button';
 import { FileText, Loader2 } from 'lucide-react';
+import { getOrCreateSubjectId } from "@/utils/subjectHelpers";
 
 interface ScanImportTabProps {
   onSaveNote: (note: any) => Promise<boolean>;
@@ -82,7 +82,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
   };
 
   // Handle auto-generated subject
-  const handleSubjectGenerated = (subject: string) => {
+  const handleSubjectGenerated = async (subject: string) => {
     if (noteSubject === "Uncategorized") {
       setNoteSubject(subject);
     }
@@ -94,11 +94,15 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
 
     try {
       for (const image of completedImages) {
+        // Get or create subject ID for each image
+        const subjectId = await getOrCreateSubjectId(image.category);
+        
         const note = {
           title: image.title,
           description: image.recognizedText.substring(0, 100) + (image.recognizedText.length > 100 ? "..." : ""),
           date: new Date().toISOString().split('T')[0],
-          category: image.category, // This maps to subject in the database
+          category: image.category, // Keep for backward compatibility
+          subject_id: subjectId, // Use proper subject ID
           content: image.recognizedText,
           sourceType: 'scan',
           scanData: {
@@ -133,6 +137,9 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
         imageUrl = await uploadImageToStorage(capturedImage);
       }
 
+      // Get or create subject ID
+      const subjectId = await getOrCreateSubjectId(noteSubject);
+
       const today = new Date();
       const dateString = today.toISOString().split('T')[0];
 
@@ -140,7 +147,8 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
         title: noteTitle,
         description: recognizedText.substring(0, 100) + (recognizedText.length > 100 ? "..." : ""),
         date: dateString,
-        category: noteSubject, // This maps to subject in the database
+        category: noteSubject, // Keep for backward compatibility
+        subject_id: subjectId, // Use proper subject ID
         content: recognizedText,
         sourceType: 'scan',
         scanData: {

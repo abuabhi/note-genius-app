@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileText, Loader2 } from "lucide-react";
@@ -11,6 +10,7 @@ import { useBatchProcessing } from "./hooks/useBatchProcessing";
 import { BatchProcessingView } from "./BatchProcessingView";
 import { SingleImageCapture } from "./SingleImageCapture";
 import { Note } from "@/types/note";
+import { getOrCreateSubjectId } from "@/utils/subjectHelpers";
 
 interface ScanWorkflowProps {
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<boolean>;
@@ -98,7 +98,7 @@ export const ScanWorkflow = ({
   };
 
   // Handle auto-generated subject
-  const handleSubjectGenerated = (subject: string) => {
+  const handleSubjectGenerated = async (subject: string) => {
     console.log('Auto-generated subject:', subject);
     if (noteSubject === "Uncategorized") { // Only set if still default
       setNoteSubject(subject);
@@ -160,6 +160,10 @@ export const ScanWorkflow = ({
         imageUrl = await uploadImageToStorage(capturedImage);
       }
 
+      // Get or create subject ID
+      const subjectId = await getOrCreateSubjectId(noteSubject);
+      console.log('Subject ID obtained:', subjectId);
+
       const today = new Date();
       const dateString = today.toISOString().split('T')[0];
 
@@ -167,7 +171,8 @@ export const ScanWorkflow = ({
         title: noteTitle,
         description: recognizedText.substring(0, 100) + (recognizedText.length > 100 ? "..." : ""),
         date: dateString,
-        category: noteSubject, // This maps to the subject field in the database
+        category: noteSubject, // Keep for backward compatibility
+        subject_id: subjectId, // Use the proper subject ID for relationships
         content: recognizedText,
         sourceType: 'scan',
         scanData: {
@@ -178,7 +183,7 @@ export const ScanWorkflow = ({
         }
       };
 
-      console.log('Saving note with subject:', noteSubject);
+      console.log('Saving note with subject ID:', subjectId);
       const success = await onSaveNote(newNote);
       if (success) {
         resetForm();
