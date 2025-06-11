@@ -19,19 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Section } from "@/types/admin";
-
-// Import AcademicSubject type from the database context
-interface AcademicSubject {
-  id: string;
-  name: string;
-  parent_id?: string;
-  level?: number;
-  grade_id?: string;
-  country_id?: string;
-  education_system?: string;
-  created_at: string;
-  updated_at: string;
-}
+import { AcademicSubject } from "@/types/flashcard";
 
 interface SectionFormDialogProps {
   open: boolean;
