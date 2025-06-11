@@ -39,7 +39,6 @@ interface FlashcardSetCardProps {
   progressPercentage: number;
   isDeleting: boolean;
   onDelete: (setId: string) => void;
-  // New props for detailed progress
   masteredCards?: number;
   needsPracticeCards?: number;
   totalCards?: number;
@@ -54,13 +53,19 @@ const FlashcardSetCard = ({
   needsPracticeCards = 0,
   totalCards = 0,
 }: FlashcardSetCardProps) => {
-  // Ensure we have a valid set ID for routing
   const setId = set.id;
   
   if (!setId) {
     console.error('FlashcardSetCard: Missing set ID for set:', set.name);
     return null;
   }
+
+  console.log('FlashcardSetCard: Rendering card for set:', {
+    id: setId,
+    name: set.name,
+    studyUrl: `/flashcards/study/${setId}`,
+    viewUrl: `/flashcards/sets/${setId}`
+  });
 
   return (
     <Card className="group hover:shadow-lg transition-all duration-200 border-mint-100">
@@ -82,7 +87,6 @@ const FlashcardSetCard = ({
             )}
           </div>
           
-          {/* Always visible three dots menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -173,16 +177,27 @@ const FlashcardSetCard = ({
             </div>
           </div>
 
-          {/* Action Buttons - Fixed Study URL */}
+          {/* Action Buttons */}
           <div className="flex gap-2">
-            <Button asChild className="flex-1 bg-mint-500 hover:bg-mint-600" size="sm">
+            <Button 
+              asChild 
+              className="flex-1 bg-mint-500 hover:bg-mint-600" 
+              size="sm"
+              onClick={() => console.log('FlashcardSetCard: Study button clicked for set:', setId)}
+            >
               <Link to={`/flashcards/study/${setId}`}>
                 <Play className="h-4 w-4 mr-2" />
                 Study
               </Link>
             </Button>
             
-            <Button asChild variant="outline" className="flex-1 border-mint-200 hover:bg-mint-50" size="sm">
+            <Button 
+              asChild 
+              variant="outline" 
+              className="flex-1 border-mint-200 hover:bg-mint-50" 
+              size="sm"
+              onClick={() => console.log('FlashcardSetCard: View button clicked for set:', setId)}
+            >
               <Link to={`/flashcards/sets/${setId}`}>
                 <BookOpen className="h-4 w-4 mr-2" />
                 View

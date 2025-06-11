@@ -1,3 +1,4 @@
+
 import { useState, useMemo, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,6 +65,10 @@ const EnhancedFlashcardSetView = () => {
   const [filterReviewStatus, setFilterReviewStatus] = useState("all");
   const [deletingCard, setDeletingCard] = useState<string | null>(null);
 
+  console.log("EnhancedFlashcardSetView: Rendered with setId:", setId);
+  console.log("EnhancedFlashcardSetView: Current set:", currentSet);
+  console.log("EnhancedFlashcardSetView: All flashcard sets:", flashcardSets.length);
+
   // Function to get card progress from learning progress data
   const getCardProgress = (cardId: string) => {
     const progress = progressMap.get(cardId);
@@ -92,6 +97,7 @@ const EnhancedFlashcardSetView = () => {
   useEffect(() => {
     const loadFlashcardSetAndCards = async () => {
       if (!setId) {
+        console.error("EnhancedFlashcardSetView: No set ID provided");
         setError("No set ID provided");
         setLoading(false);
         return;
@@ -101,45 +107,59 @@ const EnhancedFlashcardSetView = () => {
         setLoading(true);
         setError(null);
         
-        // Check if we have the current set, if not fetch it
-        if (!currentSet || currentSet.id !== setId) {
-          console.log("Current set not available or different, checking flashcard sets...");
-          
-          // Try to find the set in existing flashcard sets
-          let targetSet = flashcardSets.find(set => set.id === setId);
-          
-          if (!targetSet) {
-            console.log("Set not found in existing sets, fetching all sets...");
-            await fetchFlashcardSets();
-            targetSet = flashcardSets.find(set => set.id === setId);
-          }
-          
-          if (targetSet) {
-            setCurrentSet(targetSet);
-          }
+        console.log("EnhancedFlashcardSetView: Starting to load set and cards for setId:", setId);
+        
+        // First ensure we have all flashcard sets loaded
+        if (flashcardSets.length === 0) {
+          console.log("EnhancedFlashcardSetView: No sets in memory, fetching all sets...");
+          await fetchFlashcardSets();
+        }
+        
+        // Try to find the set in existing flashcard sets
+        let targetSet = flashcardSets.find(set => set.id === setId);
+        console.log("EnhancedFlashcardSetView: Target set found in memory:", !!targetSet);
+        
+        if (!targetSet) {
+          console.log("EnhancedFlashcardSetView: Set not found in memory, fetching all sets again...");
+          await fetchFlashcardSets();
+          targetSet = flashcardSets.find(set => set.id === setId);
+        }
+        
+        if (targetSet) {
+          console.log("EnhancedFlashcardSetView: Setting current set:", targetSet.name);
+          setCurrentSet(targetSet);
+        } else {
+          console.error("EnhancedFlashcardSetView: Set not found after all attempts:", setId);
+          setError("Flashcard set not found. It may have been deleted or you don't have access to it.");
+          setLoading(false);
+          return;
         }
         
         // Fetch flashcards (this will also set the current set if found)
+        console.log("EnhancedFlashcardSetView: Fetching flashcards for set:", setId);
         const cards = await fetchFlashcardsInSet(setId);
+        console.log("EnhancedFlashcardSetView: Fetched flashcards count:", cards?.length || 0);
         setFlashcards(cards || []);
         
         // Fetch learning progress for these cards
         if (cards && cards.length > 0) {
+          console.log("EnhancedFlashcardSetView: Fetching learning progress for", cards.length, "cards");
           await fetchLearningProgress(cards.map(card => card.id));
         }
       } catch (loadError) {
-        console.error("Error loading flashcard set and cards:", loadError);
-        setError("Failed to load flashcard set. Please check if the set exists.");
+        console.error("EnhancedFlashcardSetView: Error loading flashcard set and cards:", loadError);
+        setError("Failed to load flashcard set. Please check if the set exists and try again.");
       } finally {
         setLoading(false);
       }
     };
 
     loadFlashcardSetAndCards();
-  }, [setId, currentSet, flashcardSets, fetchFlashcardsInSet, fetchLearningProgress, setCurrentSet, fetchFlashcardSets]);
+  }, [setId, flashcardSets, fetchFlashcardsInSet, fetchLearningProgress, setCurrentSet, fetchFlashcardSets]);
 
   // Error state
   if (error) {
+    console.log("EnhancedFlashcardSetView: Rendering error state:", error);
     return (
       <div className="container mx-auto p-6">
         <div className="bg-red-50 border border-red-200 rounded-md p-6 text-center">
@@ -194,7 +214,6 @@ const EnhancedFlashcardSetView = () => {
         case "created_at":
           return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
         case "review_status":
-          // Sort by review status (needs review first)
           const aNeeds = getCardProgress(a.id).needsReview;
           const bNeeds = getCardProgress(b.id).needsReview;
           return bNeeds === aNeeds ? 0 : bNeeds ? 1 : -1;
@@ -563,7 +582,7 @@ const EnhancedFlashcardSetView = () => {
         </div>
       )}
 
-      {/* Study Button for Needs Review Cards - Updated URL */}
+      {/* Study Button for Needs Review Cards */}
       {setStats.needsReviewCards > 0 && (
         <div className="mt-6 flex justify-center">
           <Button size="lg" asChild className="bg-orange-600 hover:bg-orange-700">
