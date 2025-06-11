@@ -11,7 +11,7 @@ interface OCRResult {
 }
 
 /**
- * Enhanced OpenAI processing with improved error handling and Markdown formatting
+ * Enhanced OpenAI processing with improved error handling and clean Markdown formatting
  */
 export async function processWithOpenAI(imageUrl: string, language: string): Promise<OCRResult> {
   const apiKey = Deno.env.get("OPENAI_API_KEY");
@@ -26,7 +26,7 @@ export async function processWithOpenAI(imageUrl: string, language: string): Pro
     throw new Error("OpenAI API key is invalid or expired");
   }
   
-  console.log("Processing with OpenAI Vision API (Handwriting Specialist + Markdown Formatter)");
+  console.log("Processing with OpenAI Vision API (Handwriting Specialist + Clean Markdown)");
   
   try {
     // Convert image to proper base64 format
@@ -49,7 +49,7 @@ export async function processWithOpenAI(imageUrl: string, language: string): Pro
       messages: [
         {
           role: "system",
-          content: `You are an expert OCR system specialized in reading handwritten text with exceptional accuracy AND formatting it as clean, structured Markdown.
+          content: `You are an expert OCR system specialized in reading handwritten text with exceptional accuracy and formatting it as clean, structured Markdown.
                    
                    HANDWRITING EXPERTISE:
                    - Excel at reading cursive handwriting, print handwriting, and mixed styles
@@ -60,35 +60,37 @@ export async function processWithOpenAI(imageUrl: string, language: string): Pro
                    - Handle rotated or tilted handwritten text
                    
                    MARKDOWN FORMATTING REQUIREMENTS:
-                   - Convert ALL text to properly structured Markdown
-                   - Transform numbered lists (1., 2., 3.) into Markdown numbered lists (1. 2. 3.)
-                   - Convert bullet points or dashes into Markdown bullets (- )
-                   - Format section headers with appropriate # ## ### levels
-                   - Use **bold** for emphasis where handwriting indicates importance
+                   - Output ONLY clean, properly formatted Markdown - NO code blocks, NO backticks, NO \`\`\`markdown wrapper
+                   - Transform numbered lists (1., 2., 3.) into proper Markdown: 1. 2. 3.
+                   - Convert bullet points or dashes into Markdown bullets: - 
+                   - Format section headers with appropriate # ## ### levels based on hierarchy
+                   - Use **bold** for emphasis where handwriting indicates importance (underlined, circled, or heavy text)
                    - Use proper line spacing between sections (blank lines)
                    - Format mathematical content with proper notation
                    - Preserve hierarchical structure and relationships
                    
-                   EXTRACTION & FORMATTING RULES:
+                   OUTPUT RULES:
                    - Extract ALL visible text with maximum accuracy
-                   - Output ONLY properly formatted Markdown - no explanations
-                   - Maintain original content structure but enhance with Markdown syntax
+                   - Return ONLY the formatted Markdown content - no explanations, no code block wrapper
+                   - Maintain original content structure but enhance with proper Markdown syntax
                    - Use context to interpret unclear handwritten characters
-                   - For lists, ensure proper Markdown list formatting with blank lines
-                   - For headers/titles, use appropriate # levels based on hierarchy
-                   - Add blank lines between different sections or topics
-                   - If mathematical content exists, format it clearly
+                   - For lists, ensure proper Markdown formatting with appropriate spacing
+                   - For headers/titles, use # levels based on visual hierarchy and importance
+                   - Add blank lines between different sections or topics for readability
+                   - If mathematical content exists, format it clearly and readably
                    
                    Language context: ${language}
                    
-                   EXAMPLE INPUT: Handwritten numbered list "1. First item 2. Second item"
+                   EXAMPLE INPUT: Handwritten "My Notes 1. First item 2. Second item"
                    EXAMPLE OUTPUT:
+                   # My Notes
+                   
                    1. First item
                    2. Second item
                    
-                   EXAMPLE INPUT: Handwritten title and bullets "My Notes - point one - point two"
+                   EXAMPLE INPUT: Handwritten "Important - point one - point two"
                    EXAMPLE OUTPUT:
-                   # My Notes
+                   # Important
                    
                    - Point one
                    - Point two`
@@ -98,7 +100,7 @@ export async function processWithOpenAI(imageUrl: string, language: string): Pro
           content: [
             {
               type: "text",
-              text: "Please transcribe all text from this image and format it as clean, structured Markdown. Pay special attention to converting handwritten lists, headers, and sections into proper Markdown syntax. Preserve the original meaning while enhancing readability through proper Markdown formatting:"
+              text: "Please transcribe all text from this image and format it as clean, structured Markdown. Return ONLY the formatted Markdown content without any code block wrappers. Convert handwritten lists, headers, and sections into proper Markdown syntax while preserving the original meaning and structure:"
             },
             {
               type: "image_url",
@@ -149,14 +151,21 @@ export async function processWithOpenAI(imageUrl: string, language: string): Pro
       throw new Error("Invalid response from OpenAI - no choices returned");
     }
     
-    const extractedText = data.choices[0].message.content?.trim();
+    let extractedText = data.choices[0].message.content?.trim();
     
     if (!extractedText) {
       throw new Error("OpenAI returned empty text content");
     }
     
-    console.log(`OpenAI extracted and formatted text length: ${extractedText.length} characters`);
-    console.log("Text formatted as Markdown with proper structure");
+    // Post-process to clean up any remaining code block wrappers
+    extractedText = extractedText
+      .replace(/^```markdown\s*\n?/i, '')  // Remove opening markdown code block
+      .replace(/\n?```\s*$/i, '')          // Remove closing code block
+      .replace(/^```\s*\n?/i, '')          // Remove any generic opening code block
+      .trim();
+    
+    console.log(`OpenAI extracted and cleaned text length: ${extractedText.length} characters`);
+    console.log("Text processed as clean Markdown format");
     
     return {
       text: extractedText,

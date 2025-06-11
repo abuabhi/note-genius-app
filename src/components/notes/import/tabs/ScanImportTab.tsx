@@ -1,5 +1,5 @@
-
 import React from 'react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { ImageUpload } from '../../scanning/ImageUpload';
 import { useImageUpload } from '../../scanning/hooks/useImageUpload';
 import { useDragAndDrop } from '../../scanning/hooks/useDragAndDrop';
@@ -160,35 +160,37 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-sm text-gray-600 mb-4">
+    <div className="flex flex-col h-full max-h-[calc(70vh-120px)]">
+      <div className="mb-4">
+        <p className="text-sm text-gray-600">
           Capture or upload photos of handwritten notes and documents
         </p>
-        
-        {!capturedImage ? (
-          <ImageUpload 
-            onImageUploaded={handleSingleImage} 
-            onMultipleImagesUploaded={handleMultipleImages}
-            isDragOver={isDragOver}
-            onDragEnter={handleDragEnter}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDropEvent}
-          />
-        ) : (
-          <div className="space-y-4">
-            <ImageProcessor 
-              imageUrl={capturedImage} 
-              onReset={() => setCapturedImage(null)}
-              onTextExtracted={setRecognizedText}
-              selectedLanguage={selectedLanguage}
-              onLanguageChange={setSelectedLanguage}
-              isPremiumUser={isPremiumUser}
+      </div>
+      
+      <ScrollArea className="flex-1">
+        <div className="space-y-4">
+          {!capturedImage ? (
+            <ImageUpload 
+              onImageUploaded={handleSingleImage} 
+              onMultipleImagesUploaded={handleMultipleImages}
+              isDragOver={isDragOver}
+              onDragEnter={handleDragEnter}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDropEvent}
             />
-            
-            {recognizedText && (
-              <div>
+          ) : (
+            <div className="space-y-4">
+              <ImageProcessor 
+                imageUrl={capturedImage} 
+                onReset={() => setCapturedImage(null)}
+                onTextExtracted={setRecognizedText}
+                selectedLanguage={selectedLanguage}
+                onLanguageChange={setSelectedLanguage}
+                isPremiumUser={isPremiumUser}
+              />
+              
+              {recognizedText && (
                 <NoteMetadataForm 
                   title={noteTitle}
                   setTitle={setNoteTitle}
@@ -197,31 +199,34 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
                   isDisabled={!capturedImage || !recognizedText}
                   detectedLanguage={getLanguageName(selectedLanguage)}
                 />
-                
-                <div className="flex justify-end mt-4">
-                  <Button
-                    onClick={handleSaveNote}
-                    disabled={!capturedImage || !recognizedText || !noteTitle || isSaving}
-                    className="bg-mint-500 hover:bg-mint-600 text-white"
-                  >
-                    {isSaving ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <FileText className="mr-2 h-4 w-4" />
-                        Save Note
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
+              )}
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+
+      {/* Fixed save button footer */}
+      {capturedImage && recognizedText && (
+        <div className="border-t pt-4 mt-4 bg-white">
+          <Button
+            onClick={handleSaveNote}
+            disabled={!capturedImage || !recognizedText || !noteTitle || isSaving}
+            className="w-full bg-mint-500 hover:bg-mint-600 text-white"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <FileText className="mr-2 h-4 w-4" />
+                Save Note
+              </>
             )}
-          </div>
-        )}
-      </div>
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
@@ -238,3 +243,5 @@ const getLanguageName = (code: string): string => {
   
   return languages[code as keyof typeof languages] || code;
 };
+
+}

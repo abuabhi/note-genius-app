@@ -1,7 +1,7 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileText, Loader2 } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { ImageProcessor } from "./ImageProcessor";
 import { NoteMetadataForm } from "./NoteMetadataForm";
 import { useImageUpload } from "./hooks/useImageUpload";
@@ -178,7 +178,7 @@ export const ScanWorkflow = ({
   }
 
   return (
-    <div className="relative">
+    <div className="flex flex-col h-full max-h-[calc(90vh-120px)]">
       {/* Global drag overlay */}
       {isDragOver && (
         <div className="fixed inset-0 bg-blue-100 bg-opacity-90 flex items-center justify-center z-50 pointer-events-none">
@@ -200,61 +200,69 @@ export const ScanWorkflow = ({
         </div>
       )}
 
-      {!capturedImage ? (
-        <SingleImageCapture
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          onImageCaptured={handleSingleImage}
-          onMultipleImages={handleMultipleImages}
-          isDragOver={isDragOver}
-          onDragEnter={handleDragEnter}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDropEvent}
-        />
-      ) : (
-        <div className="mt-4 space-y-4">
-          <ImageProcessor 
-            imageUrl={capturedImage} 
-            onReset={() => setCapturedImage(null)}
-            onTextExtracted={setRecognizedText}
-            selectedLanguage={selectedLanguage}
-            onLanguageChange={setSelectedLanguage}
-            isPremiumUser={isPremiumUser}
-          />
-          
-          {recognizedText && (
-            <NoteMetadataForm 
-              title={noteTitle}
-              setTitle={setNoteTitle}
-              category={noteCategory}
-              setCategory={setNoteCategory}
-              isDisabled={!capturedImage || !recognizedText}
-              detectedLanguage={getLanguageName(selectedLanguage)}
+      {/* Scrollable content area */}
+      <ScrollArea className="flex-1">
+        <div className="p-1">
+          {!capturedImage ? (
+            <SingleImageCapture
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              onImageCaptured={handleSingleImage}
+              onMultipleImages={handleMultipleImages}
+              isDragOver={isDragOver}
+              onDragEnter={handleDragEnter}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDropEvent}
             />
+          ) : (
+            <div className="space-y-4">
+              <ImageProcessor 
+                imageUrl={capturedImage} 
+                onReset={() => setCapturedImage(null)}
+                onTextExtracted={setRecognizedText}
+                selectedLanguage={selectedLanguage}
+                onLanguageChange={setSelectedLanguage}
+                isPremiumUser={isPremiumUser}
+              />
+              
+              {recognizedText && (
+                <NoteMetadataForm 
+                  title={noteTitle}
+                  setTitle={setNoteTitle}
+                  category={noteCategory}
+                  setCategory={setNoteCategory}
+                  isDisabled={!capturedImage || !recognizedText}
+                  detectedLanguage={getLanguageName(selectedLanguage)}
+                />
+              )}
+            </div>
           )}
         </div>
-      )}
+      </ScrollArea>
       
-      <div className="mt-4 flex justify-end">
-        <Button
-          onClick={handleSaveNote}
-          disabled={!capturedImage || !recognizedText || !noteTitle || isSaving}
-          className="bg-mint-500 hover:bg-mint-600 text-white"
-        >
-          {isSaving ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            <>
-              <FileText className="mr-2 h-4 w-4" />
-              Save Note
-            </>
-          )}
-        </Button>
-      </div>
+      {/* Fixed footer with Save button */}
+      {capturedImage && recognizedText && (
+        <div className="border-t p-4 bg-white">
+          <Button
+            onClick={handleSaveNote}
+            disabled={!capturedImage || !recognizedText || !noteTitle || isSaving}
+            className="w-full bg-mint-500 hover:bg-mint-600 text-white"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <FileText className="mr-2 h-4 w-4" />
+                Save Note
+              </>
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
