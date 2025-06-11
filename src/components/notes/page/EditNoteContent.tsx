@@ -12,12 +12,21 @@ interface EditNoteContentProps {
 
 export const EditNoteContent = ({ note }: EditNoteContentProps) => {
   const navigate = useNavigate();
-  const { updateNote } = useNotes();
+  const { updateNote, setNotes } = useNotes();
 
   const handleSaveNote = async (updatedNoteData: Omit<Note, 'id'>): Promise<Note | null> => {
     try {
       await updateNote(note.id, updatedNoteData);
       toast("Note updated successfully");
+      
+      // Update the notes list immediately to reflect the changes
+      setNotes(prevNotes => 
+        prevNotes.map(n => 
+          n.id === note.id 
+            ? { ...n, ...updatedNoteData, id: note.id }
+            : n
+        )
+      );
       
       // Navigate back to the previous page
       navigate(-1);
