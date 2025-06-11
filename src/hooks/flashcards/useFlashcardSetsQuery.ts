@@ -13,7 +13,12 @@ export const useFlashcardSetsQuery = (filters: FlashcardFilters, page: number = 
     queryFn: async () => {
       if (!user) throw new Error('User not authenticated');
 
-      console.log('🔍 Fetching flashcard sets with filters:', filters);
+      console.log('🔍 useFlashcardSetsQuery - Fetching with filters:', {
+        subjectFilter: filters.subjectFilter,
+        searchQuery: filters.searchQuery,
+        sortBy: filters.sortBy,
+        sortOrder: filters.sortOrder
+      });
       
       let query = supabase
         .from('flashcard_sets')
@@ -31,14 +36,15 @@ export const useFlashcardSetsQuery = (filters: FlashcardFilters, page: number = 
         .or(`user_id.eq.${user.id},is_built_in.eq.true`);
 
       // Apply search filter
-      if (filters.searchQuery) {
+      if (filters.searchQuery && filters.searchQuery.trim() !== '') {
         console.log('🔍 Applying search filter:', filters.searchQuery);
         query = query.ilike('name', `%${filters.searchQuery}%`);
       }
 
-      // Apply subject filter - FIXED: Now properly filters by subject
-      if (filters.subjectFilter && filters.subjectFilter !== 'all') {
+      // Apply subject filter - ENHANCED: Now properly filters by subject
+      if (filters.subjectFilter && filters.subjectFilter !== 'all' && filters.subjectFilter.trim() !== '') {
         console.log('📚 Applying subject filter:', filters.subjectFilter);
+        // Use exact match for subject filtering
         query = query.eq('subject', filters.subjectFilter);
       }
 
@@ -60,8 +66,14 @@ export const useFlashcardSetsQuery = (filters: FlashcardFilters, page: number = 
 
       console.log('✅ Successfully fetched flashcard sets:', {
         totalSets: data?.length || 0,
+        totalCount: count,
         appliedFilters: filters,
-        page
+        page,
+        sampleSets: data?.slice(0, 3).map(s => ({ 
+          id: s.id.slice(0, 8), 
+          name: s.name, 
+          subject: s.subject 
+        }))
       });
 
       return {
@@ -71,8 +83,8 @@ export const useFlashcardSetsQuery = (filters: FlashcardFilters, page: number = 
       };
     },
     enabled: !!user,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 2 * 60 * 1000, // 2 minutes - reduced for better responsiveness
+    gcTime: 5 * 60 * 1000, // 5 minutes - reduced cache time
     retry: 2
   });
 };

@@ -33,6 +33,12 @@ export const useOptimizedFlashcardSets = (props: UseOptimizedFlashcardSetsProps 
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  console.log('🔍 useOptimizedFlashcardSets - Filters:', {
+    subjectFilter: filters.subjectFilter,
+    searchQuery: filters.searchQuery,
+    allFilters: filters
+  });
+
   // Use the separated query hook
   const { data: setsData, isLoading, error, refetch } = useFlashcardSetsQuery(filters, page);
 
@@ -68,6 +74,15 @@ export const useOptimizedFlashcardSets = (props: UseOptimizedFlashcardSetsProps 
     
     return error?.message || 'An unexpected error occurred while loading flashcard sets.';
   }, []);
+
+  // Log the final results
+  console.log('🎯 useOptimizedFlashcardSets - Final results:', {
+    totalSets: setsData?.sets?.length || 0,
+    hasData: !!setsData,
+    isLoading,
+    error: error?.message,
+    filters
+  });
 
   // Memoized results with error state
   const results = useMemo(() => ({

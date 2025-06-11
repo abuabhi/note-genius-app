@@ -53,36 +53,9 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
       const startTime = performance.now();
       
       try {
-        console.log(`🔍 Optimized query - Filtering by subject: "${subject}"`);
+        console.log(`🔍 Optimized notes query - Filtering by subject: "${subject}"`);
 
-        let subjectId: string | null = null;
-
-        // First, get the subject_id if filtering by a specific subject
-        if (subject && subject !== 'all') {
-          console.log(`🎯 Looking up subject_id for: "${subject}"`);
-          
-          const { data: subjectData, error: subjectError } = await supabase
-            .from('user_subjects')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('name', subject)
-            .maybeSingle();
-
-          if (subjectError) {
-            console.error('❌ Error looking up subject:', subjectError);
-            throw subjectError;
-          }
-
-          if (!subjectData) {
-            console.log(`⚠️ Subject "${subject}" not found for user, returning empty results`);
-            return { notes: [], totalCount: 0, hasMore: false };
-          }
-
-          subjectId = subjectData.id;
-          console.log(`✅ Found subject_id: ${subjectId} for subject: "${subject}"`);
-        }
-
-        // Build the optimized notes query
+        // OPTIMIZED APPROACH: Direct query with subject name filter
         let query = supabase
           .from('notes')
           .select(`
@@ -101,10 +74,13 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
           `, { count: 'exact' })
           .eq('user_id', user.id);
 
-        // Apply subject filtering if we have a subject_id
-        if (subjectId) {
-          console.log(`🎯 Applying subject filter with subject_id: ${subjectId}`);
-          query = query.eq('subject_id', subjectId);
+        // Apply subject filter efficiently using join
+        if (subject && subject !== 'all' && subject.trim() !== '') {
+          console.log(`🎯 Applying optimized subject filter: "${subject}"`);
+          // Join with user_subjects and filter by name directly in the query
+          query = query
+            .not('user_subjects', 'is', null)
+            .eq('user_subjects.name', subject);
         }
 
         // Apply other filters
@@ -112,7 +88,7 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
           query = query.eq('archived', false);
         }
 
-        if (search) {
+        if (search && search.trim() !== '') {
           query = query.ilike('title', `%${search}%`);
         }
 
@@ -140,14 +116,14 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
         const { data: notes, error, count } = await query;
 
         if (error) {
-          console.error('❌ Optimized query error:', error);
+          console.error('❌ Optimized notes query error:', error);
           throw error;
         }
 
         const finalNotes = notes || [];
         const totalCount = count || 0;
 
-        console.log(`✅ Optimized query returned ${finalNotes.length} notes for subject: "${subject}"`);
+        console.log(`✅ Optimized notes query returned ${finalNotes.length} notes for subject: "${subject}"`);
         
         // Transform data to match Note interface
         const transformedNotes: Note[] = finalNotes.map(note => ({
@@ -179,7 +155,7 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
           notesCount: transformedNotes.length,
           hasFilters: !!(search || subject !== 'all'),
           page,
-          queryType: 'two_step_filter'
+          queryType: 'optimized_join_filter'
         });
 
         const offset_check = (page - 1) * pageSize;
@@ -193,15 +169,15 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
         const duration = performance.now() - startTime;
         recordMetric('optimized_notes_query_error', duration, {
           error: error instanceof Error ? error.message : 'Unknown error',
-          queryType: 'two_step_filter'
+          queryType: 'optimized_join_filter'
         });
         throw error;
       }
     },
     enabled: !!user,
     ...cacheConfigs.user,
-    staleTime: 2 * 60 * 1000, // 2 minutes for better performance
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 1 * 60 * 1000, // 1 minute for faster updates
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Optimized prefetch for next page
@@ -216,7 +192,7 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
           // Use the same optimized query logic for prefetch
           return { notes: [], totalCount: 0, hasMore: false };
         },
-        staleTime: 2 * 60 * 1000
+        staleTime: 1 * 60 * 1000
       });
     }
   };
