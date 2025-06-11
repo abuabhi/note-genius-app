@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
 import { FlashcardContextType, FlashcardProviderProps, FlashcardState } from './types';
 import { FlashcardSet, Flashcard, SubjectCategory } from '@/types/flashcard';
@@ -192,6 +191,7 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     createFlashcardSet: enhancedCreateFlashcardSet,
     updateFlashcardSet: flashcardSetsOperations.updateFlashcardSet,
     deleteFlashcardSet: flashcardSetsOperations.deleteFlashcardSet,
+    fetchFlashcardsInSet: flashcardSetsOperations.fetchFlashcardsInSet,
   }), [
     flashcards,
     flashcardSets,
@@ -220,3 +220,5 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     </FlashcardContext.Provider>
   );
 };
+
+export default FlashcardProvider;
