@@ -20,7 +20,7 @@ export const QuizList = () => {
   const { academicSubjects } = useSubjects();
   const { quizzes, isLoading, error } = useQuizList({
     search: searchTerm,
-    subject_id: selectedSubject === "all" ? undefined : selectedSubject
+    subject: selectedSubject === "all" ? undefined : selectedSubject
   });
 
   const handleTakeQuiz = (quiz: QuizWithQuestions) => {

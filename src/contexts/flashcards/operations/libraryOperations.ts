@@ -14,7 +14,7 @@ export const searchLibrary = async (state: FlashcardState, query: string): Promi
       .from('flashcard_sets')
       .select(`
         *,
-        academic_subjects!flashcard_sets_subject_id_fkey (
+        academic_subjects (
           id,
           name
         )
@@ -27,7 +27,6 @@ export const searchLibrary = async (state: FlashcardState, query: string): Promi
 
     return data?.map(set => ({
       ...convertToFlashcardSet(set),
-      subject_id: set.subject_id,
       academic_subjects: set.academic_subjects
     })) || [];
   } catch (error) {
@@ -48,7 +47,7 @@ export const fetchBuiltInSets = async (state: FlashcardState): Promise<Flashcard
       .from('flashcard_sets')
       .select(`
         *,
-        academic_subjects!flashcard_sets_subject_id_fkey (
+        academic_subjects (
           id,
           name
         )
@@ -65,7 +64,6 @@ export const fetchBuiltInSets = async (state: FlashcardState): Promise<Flashcard
     
     const formattedSets = data?.map(set => ({
       ...convertToFlashcardSet(set),
-      subject_id: set.subject_id,
       academic_subjects: set.academic_subjects
     })) || [];
 
@@ -185,10 +183,7 @@ export const copySetFromLibrary = async (state: FlashcardState, setId: string): 
       }
     }
 
-    const formattedSet = convertToFlashcardSet({
-      ...newSet,
-      subject_id: newSet.subject_id
-    });
+    const formattedSet = convertToFlashcardSet(newSet);
     
     setFlashcardSets(prev => [formattedSet, ...prev]);
     

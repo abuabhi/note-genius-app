@@ -11,13 +11,13 @@ export const convertToFlashcardSet = (data: any): FlashcardSet => {
     description: data.description || '',
     subject: data.subject || '',
     topic: data.topic || '',
-    category_id: data.category_id,
+    subject_id: data.subject_id,
     country_id: data.country_id,
     user_id: data.user_id,
     created_at: data.created_at,
     updated_at: data.updated_at,
     card_count: data.card_count || 0,
     is_built_in: data.is_built_in || false,
-    subject_categories: data.subject_categories
+    academic_subjects: data.academic_subjects
   };
 };

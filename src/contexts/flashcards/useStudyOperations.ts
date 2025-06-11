@@ -1,166 +1,136 @@
 
-import { useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Flashcard } from "@/types/flashcard";
-import { toast } from "sonner";
-import { useAuth } from "@/contexts/auth";
-import { useAchievements } from "@/hooks/useAchievements";
+import { useCallback } from 'react';
+import { FlashcardState } from './types';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-interface StudyOperations {
-  markAsCorrect: (flashcardId: string) => Promise<void>;
-  markAsIncorrect: (flashcardId: string) => Promise<void>;
-  resetFlashcard: (flashcardId: string) => Promise<void>;
-}
-
-export const useStudyOperations = (): StudyOperations => {
-  const { user } = useAuth();
-  const { checkAndAwardAchievements } = useAchievements();
-
-  const markAsCorrect = useCallback(async (flashcardId: string) => {
+/**
+ * Hook that provides study-related operations for flashcards
+ */
+export const useStudyOperations = (state: FlashcardState) => {
+  
+  const recordFlashcardReview = useCallback(async (flashcardId: string, quality: number): Promise<void> => {
+    const { user } = state;
+    
     if (!user) {
-      toast.error("You must be logged in to track progress.");
+      console.error('User not authenticated');
       return;
     }
-
+    
     try {
-      // Update spaced repetition progress
-      const { data, error } = await supabase
+      // First, get existing progress
+      const { data: existingProgress, error: fetchError } = await supabase
         .from('user_flashcard_progress')
-        .upsert(
-          { 
-            user_id: user.id, 
-            flashcard_id: flashcardId, 
-            last_score: 5, // Perfect score
-            last_reviewed_at: new Date().toISOString(),
-            ease_factor: 2.6, // Good retention
-            interval: 1,
-            repetition: 1
-          },
-          { onConflict: 'user_id, flashcard_id', ignoreDuplicates: false }
-        )
-        .select();
-
-      if (error) {
-        console.error("Error marking as correct:", error);
-        toast.error("Failed to update progress. Please try again.");
-        return;
-      }
-
-      // Also update learning progress
-      await supabase
-        .from('learning_progress')
-        .upsert({
-          user_id: user.id,
-          flashcard_id: flashcardId,
-          times_seen: 1, // Will be incremented by trigger if exists
-          times_correct: 1, // Will be incremented by trigger if exists
-          last_seen_at: new Date().toISOString(),
-          is_difficult: false // Mark as not difficult since it was answered correctly
-        }, { onConflict: 'user_id,flashcard_id' });
-
-      toast.success("Flashcard marked as correct!");
-      // Check for new achievements after successful review
-      await checkAndAwardAchievements();
-    } catch (error: any) {
-      console.error("Unexpected error marking as correct:", error);
-      toast.error("An unexpected error occurred. Please try again.");
-    }
-  }, [user, checkAndAwardAchievements]);
-
-  const markAsIncorrect = useCallback(async (flashcardId: string) => {
-    if (!user) {
-      toast.error("You must be logged in to track progress.");
-      return;
-    }
-
-    try {
-      // Update spaced repetition progress
-      const { data, error } = await supabase
-        .from('user_flashcard_progress')
-        .upsert(
-          { 
-            user_id: user.id, 
-            flashcard_id: flashcardId, 
-            last_score: 1, // Low score for incorrect
-            last_reviewed_at: new Date().toISOString(),
-            ease_factor: 1.8, // Lower retention
-            interval: 0,
-            repetition: 0
-          },
-          { onConflict: 'user_id, flashcard_id', ignoreDuplicates: false }
-        )
-        .select();
-
-      if (error) {
-        console.error("Error marking as incorrect:", error);
-        toast.error("Failed to update progress. Please try again.");
-        return;
-      }
-
-      // Also update learning progress
-      await supabase
-        .from('learning_progress')
-        .upsert({
-          user_id: user.id,
-          flashcard_id: flashcardId,
-          times_seen: 1, // Will be incremented by trigger if exists
-          times_correct: 0, // No increment for incorrect
-          last_seen_at: new Date().toISOString(),
-          is_difficult: true // Mark as difficult since it was answered incorrectly
-        }, { onConflict: 'user_id,flashcard_id' });
-
-      toast.warning("Flashcard marked as incorrect. Review again soon!");
-      // Still check for achievements (might unlock "effort" based achievements)
-      await checkAndAwardAchievements();
-    } catch (error: any) {
-      console.error("Unexpected error marking as incorrect:", error);
-      toast.error("An unexpected error occurred. Please try again.");
-    }
-  }, [user, checkAndAwardAchievements]);
-
-  const resetFlashcard = useCallback(async (flashcardId: string) => {
-    if (!user) {
-      toast.error("You must be logged in to reset progress.");
-      return;
-    }
-
-    try {
-      // Reset spaced repetition progress
-      const { error: srpError } = await supabase
-        .from('user_flashcard_progress')
-        .delete()
+        .select('*')
         .eq('user_id', user.id)
-        .eq('flashcard_id', flashcardId);
-
-      if (srpError) {
-        console.error("Error resetting spaced repetition:", srpError);
+        .eq('flashcard_id', flashcardId)
+        .single();
+      
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        throw fetchError;
       }
-
-      // Reset learning progress
-      const { error: lpError } = await supabase
-        .from('learning_progress')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('flashcard_id', flashcardId);
-
-      if (lpError) {
-        console.error("Error resetting learning progress:", lpError);
-      }
-
-      if (!srpError && !lpError) {
-        toast.success("Flashcard progress reset successfully!");
+      
+      const now = new Date().toISOString();
+      let nextReviewAt = new Date();
+      let interval = 1;
+      let repetition = 0;
+      let easeFactor = 2.5;
+      
+      if (existingProgress) {
+        // Update existing progress using SM-2 algorithm
+        repetition = existingProgress.repetition;
+        easeFactor = existingProgress.ease_factor;
+        interval = existingProgress.interval;
+        
+        if (quality >= 3) {
+          if (repetition === 0) {
+            interval = 1;
+          } else if (repetition === 1) {
+            interval = 6;
+          } else {
+            interval = Math.round(interval * easeFactor);
+          }
+          repetition += 1;
+        } else {
+          repetition = 0;
+          interval = 1;
+        }
+        
+        easeFactor = easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+        if (easeFactor < 1.3) easeFactor = 1.3;
+        
+        nextReviewAt.setDate(nextReviewAt.getDate() + interval);
+        
+        const { error: updateError } = await supabase
+          .from('user_flashcard_progress')
+          .update({
+            last_reviewed_at: now,
+            next_review_at: nextReviewAt.toISOString(),
+            repetition,
+            interval,
+            ease_factor: easeFactor,
+            last_score: quality,
+            updated_at: now
+          })
+          .eq('id', existingProgress.id);
+          
+        if (updateError) throw updateError;
       } else {
-        toast.error("Failed to reset flashcard. Please try again.");
+        // Create new progress record
+        nextReviewAt.setDate(nextReviewAt.getDate() + 1);
+        
+        const { error: insertError } = await supabase
+          .from('user_flashcard_progress')
+          .insert({
+            user_id: user.id,
+            flashcard_id: flashcardId,
+            last_reviewed_at: now,
+            next_review_at: nextReviewAt.toISOString(),
+            repetition: quality >= 3 ? 1 : 0,
+            interval: 1,
+            ease_factor: easeFactor,
+            last_score: quality
+          });
+          
+        if (insertError) throw insertError;
       }
-    } catch (error: any) {
-      console.error("Unexpected error resetting flashcard:", error);
-      toast.error("An unexpected error occurred. Please try again.");
+      
+      console.log('Flashcard review recorded successfully');
+    } catch (error) {
+      console.error('Error recording flashcard review:', error);
+      toast.error('Failed to record review progress');
     }
-  }, [user]);
+  }, [state]);
+  
+  const getFlashcardProgress = useCallback(async (flashcardId: string) => {
+    const { user } = state;
+    
+    if (!user) {
+      console.error('User not authenticated');
+      return null;
+    }
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_flashcard_progress')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('flashcard_id', flashcardId)
+        .single();
+        
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Error fetching flashcard progress:', error);
+      return null;
+    }
+  }, [state]);
 
   return {
-    markAsCorrect,
-    markAsIncorrect,
-    resetFlashcard,
+    recordFlashcardReview,
+    getFlashcardProgress
   };
 };

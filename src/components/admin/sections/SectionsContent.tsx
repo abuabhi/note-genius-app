@@ -13,7 +13,7 @@ import SectionsFilter from "./SectionsFilter";
 
 const SectionsContent = () => {
   const { sections, isLoading, createSection, updateSection, deleteSection } = useSections();
-  const { categories, fetchCategories } = useFlashcards();
+  const { academicSubjects, fetchAcademicSubjects } = useFlashcards();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSection, setEditingSection] = useState<Section | null>(null);
   const [name, setName] = useState("");
@@ -24,8 +24,8 @@ const SectionsContent = () => {
   const [filterSubject, setFilterSubject] = useState("");
 
   useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+    fetchAcademicSubjects();
+  }, [fetchAcademicSubjects]);
 
   const resetForm = () => {
     setName("");
@@ -38,7 +38,7 @@ const SectionsContent = () => {
     if (section) {
       setEditingSection(section);
       setName(section.name);
-      setSubjectId(section.subject_id);
+      setSubjectId(section.academic_subject_id);
       setDescription(section.description || "");
     } else {
       resetForm();
@@ -51,7 +51,7 @@ const SectionsContent = () => {
 
     const sectionData = {
       name,
-      subject_id: subjectId,
+      academic_subject_id: subjectId,
       description: description || null,
     };
 
@@ -81,7 +81,7 @@ const SectionsContent = () => {
 
   // Filter sections based on subject filter
   const filteredSections = filterSubject
-    ? sections.filter(section => section.subject_id === filterSubject)
+    ? sections.filter(section => section.academic_subject_id === filterSubject)
     : sections;
 
   return (
@@ -102,7 +102,7 @@ const SectionsContent = () => {
           <SectionsFilter 
             filterSubject={filterSubject} 
             setFilterSubject={setFilterSubject} 
-            categories={categories} 
+            categories={academicSubjects} 
           />
           
           <SectionsTable 
@@ -128,7 +128,7 @@ const SectionsContent = () => {
         description={description}
         setDescription={setDescription}
         onSubmit={handleSubmit}
-        categories={categories}
+        categories={academicSubjects}
       />
 
       <DeleteSectionDialog
