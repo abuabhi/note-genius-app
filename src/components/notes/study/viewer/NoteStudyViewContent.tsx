@@ -1,47 +1,51 @@
 
-import { Note } from "@/types/note";
-import { TextAlignType } from "../hooks/useStudyViewState";
-import { EnhancementContentType } from "../enhancements/EnhancementSelector";
-import { OptimizedTwoColumnView } from "../enhancements/OptimizedTwoColumnView";
-import { NoteStudyEditForm } from "../editor/NoteStudyEditForm";
-import { EnhancementUsageMeter } from "./EnhancementUsageMeter";
+import React from 'react';
+import { Note } from '@/types/note';
+import { UserSubject } from '@/types/subject';
+import { NoteStudyEditForm } from '../editor/NoteStudyEditForm';
+import { NoteStudyDisplay } from './NoteStudyDisplay';
 
 interface NoteStudyViewContentProps {
   note: Note;
   isEditing: boolean;
   fontSize: number;
-  textAlign: TextAlignType;
+  textAlign: string;
   editableContent: string;
+  editableSubject: string;
   selectedTags: { id?: string; name: string; color: string }[];
   availableTags: { id: string; name: string; color: string }[];
+  availableSubjects: UserSubject[];
   isSaving: boolean;
-  statsLoading?: boolean;
+  statsLoading: boolean;
   currentUsage: number;
   monthlyLimit: number;
-  handleContentChange: (content: string) => void;
+  handleContentChange: (html: string) => void;
   handleSaveContent: () => void;
   toggleEditing: () => void;
-  handleEnhanceContent: (enhancementType: string) => Promise<void>;
+  handleEnhanceContent: (enhancementType: string) => void;
   setSelectedTags: (tags: { id?: string; name: string; color: string }[]) => void;
-  handleRetryEnhancement: (enhancementType: string) => Promise<void>;
+  handleRetryEnhancement: (enhancementType: string) => void;
   hasReachedLimit: boolean;
-  fetchUsageStats: () => Promise<void>;
-  onNoteUpdate: (data: Partial<Note>) => Promise<void>;
-  activeContentType: EnhancementContentType;
-  onActiveContentTypeChange: (type: EnhancementContentType) => void;
+  fetchUsageStats: () => void;
+  onNoteUpdate: (updatedData: Partial<Note>) => void;
+  onSubjectChange: (subject: string) => void;
+  activeContentType: string;
+  onActiveContentTypeChange: (type: string) => void;
   isEditOperation: boolean;
 }
 
-export const NoteStudyViewContent = ({
+export const NoteStudyViewContent: React.FC<NoteStudyViewContentProps> = ({
   note,
   isEditing,
   fontSize,
   textAlign,
   editableContent,
+  editableSubject,
   selectedTags,
   availableTags,
+  availableSubjects,
   isSaving,
-  statsLoading = false,
+  statsLoading,
   currentUsage,
   monthlyLimit,
   handleContentChange,
@@ -51,44 +55,45 @@ export const NoteStudyViewContent = ({
   setSelectedTags,
   handleRetryEnhancement,
   hasReachedLimit,
+  fetchUsageStats,
+  onNoteUpdate,
+  onSubjectChange,
   activeContentType,
   onActiveContentTypeChange,
   isEditOperation
-}: NoteStudyViewContentProps) => {
-
-  console.log("🎯 NoteStudyViewContent - Rendering with activeContentType:", activeContentType);
-
+}) => {
   return (
-    <div className="p-6 space-y-6">
-      {/* Usage Meter */}
-      <EnhancementUsageMeter
-        statsLoading={statsLoading}
-        currentUsage={currentUsage}
-        monthlyLimit={monthlyLimit}
-        hasReachedLimit={hasReachedLimit}
-      />
-
-      {/* Main Content Area */}
+    <div className="p-6">
       {isEditing ? (
         <NoteStudyEditForm
           note={note}
           editableContent={editableContent}
+          editableSubject={editableSubject}
           selectedTags={selectedTags}
           availableTags={availableTags}
+          availableSubjects={availableSubjects}
           isSaving={isSaving}
           handleContentChange={handleContentChange}
           handleSaveContent={handleSaveContent}
           toggleEditing={toggleEditing}
           setSelectedTags={setSelectedTags}
+          onSubjectChange={onSubjectChange}
         />
       ) : (
-        <OptimizedTwoColumnView
+        <NoteStudyDisplay
           note={note}
           fontSize={fontSize}
           textAlign={textAlign}
+          statsLoading={statsLoading}
+          currentUsage={currentUsage}
+          monthlyLimit={monthlyLimit}
+          handleEnhanceContent={handleEnhanceContent}
+          handleRetryEnhancement={handleRetryEnhancement}
+          hasReachedLimit={hasReachedLimit}
+          fetchUsageStats={fetchUsageStats}
+          onNoteUpdate={onNoteUpdate}
           activeContentType={activeContentType}
-          setActiveContentType={onActiveContentTypeChange}
-          onRetryEnhancement={handleRetryEnhancement}
+          onActiveContentTypeChange={onActiveContentTypeChange}
           isEditOperation={isEditOperation}
         />
       )}

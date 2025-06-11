@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Note } from '@/types/note';
 import { Card } from '@/components/ui/card';
@@ -47,11 +46,14 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
     isEditing,
     editableContent,
     editableTitle,
+    editableSubject,
     selectedTags,
     availableTags,
+    availableSubjects,
     isSaving,
     handleContentChange,
     handleTitleChange,
+    handleSubjectChange,
     handleSaveContent,
     toggleEditing,
     setSelectedTags,
@@ -206,8 +208,10 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
               fontSize={fontSize}
               textAlign={textAlign}
               editableContent={editableContent}
+              editableSubject={editableSubject}
               selectedTags={selectedTags}
               availableTags={availableTags}
+              availableSubjects={availableSubjects}
               isSaving={isSaving}
               statsLoading={false}
               currentUsage={currentUsage}
@@ -221,6 +225,7 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
               hasReachedLimit={hasReachedLimit()}
               fetchUsageStats={fetchUsageStats}
               onNoteUpdate={onNoteUpdate}
+              onSubjectChange={handleSubjectChange}
               activeContentType={activeContentType}
               onActiveContentTypeChange={handleActiveContentTypeChange}
               isEditOperation={isProcessing}
