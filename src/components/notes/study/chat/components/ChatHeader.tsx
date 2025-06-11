@@ -40,13 +40,13 @@ export const ChatHeader = ({ note, messages, onMessageHighlight, onClose, onClea
       
       <div className="flex items-center gap-2">
         <ChatSearch 
-          messages={messages}
+          messages={messages || []}
           onMessageHighlight={onMessageHighlight}
         />
-        <ChatExport messages={messages} note={note} />
+        <ChatExport messages={messages || []} note={note} />
         
         {/* Clear Chat Button */}
-        {messages.length > 0 && onClearChat && (
+        {messages && messages.length > 0 && onClearChat && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button

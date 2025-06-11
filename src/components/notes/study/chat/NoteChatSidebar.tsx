@@ -60,7 +60,7 @@ export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps)
       >
         <ChatHeader
           note={note}
-          messages={messages}
+          messages={messages || []}
           onMessageHighlight={setHighlightedMessageId}
           onClose={onClose}
           onClearChat={handleClearChat}
@@ -74,7 +74,7 @@ export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps)
 
         <ChatTabs
           note={note}
-          messages={messages}
+          messages={messages || []}
           suggestions={suggestions}
           isProcessing={isProcessing}
           isLoading={isLoading}

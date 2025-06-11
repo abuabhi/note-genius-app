@@ -8,38 +8,107 @@ import { useErrorHandler } from './useErrorHandler';
 
 export const useChatHandlers = (note: Note) => {
   const [selectedText, setSelectedText] = useState<string>('');
+  const [messages, setMessages] = useState<ChatUIMessage[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingMessage, setStreamingMessage] = useState<string | null>(null);
   
   const { 
-    messages, 
-    setMessages,
-    isProcessing, 
-    isLoading, 
-    isStreaming, 
-    streamingMessage, 
-    sendMessage 
+    sendMessage: sendChatMessage,
+    isLoading,
+    error,
+    clearError 
   } = useNoteChat(note);
 
-  const { saveToHistory } = useNoteChatHistory(note.id);
+  const { 
+    messages: historyMessages, 
+    addMessage, 
+    refreshHistory 
+  } = useNoteChatHistory(note.id);
   
   const { 
-    errorMessage, 
-    canRetry, 
     handleError, 
-    clearErrors 
+    clearErrors,
+    canRetry
   } = useErrorHandler();
+
+  // Initialize messages from history when available
+  useState(() => {
+    if (historyMessages?.length > 0 && messages.length === 0) {
+      setMessages(historyMessages);
+    }
+  });
+
+  const saveToHistory = useCallback(async (userMessage: string, aiResponse: string) => {
+    // Create message objects
+    const userMsgObj: ChatUIMessage = {
+      id: `user-${Date.now()}`,
+      type: 'user',
+      content: userMessage,
+      timestamp: new Date().toISOString()
+    };
+    
+    const aiMsgObj: ChatUIMessage = {
+      id: `ai-${Date.now()}`,
+      type: 'ai',
+      content: aiResponse,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Add to UI state
+    addMessage(userMsgObj);
+    addMessage(aiMsgObj);
+    
+    // Add to local state
+    setMessages(prevMessages => [...prevMessages, userMsgObj, aiMsgObj]);
+    
+    return { userMessage: userMsgObj, aiMessage: aiMsgObj };
+  }, [addMessage]);
 
   const handleSendMessage = useCallback(async (message: string) => {
     try {
       clearErrors();
-      const response = await sendMessage(message);
+      setIsProcessing(true);
+      
+      // Add user message to UI immediately
+      const userMessage: ChatUIMessage = {
+        id: `user-${Date.now()}`,
+        type: 'user',
+        content: message,
+        timestamp: new Date().toISOString()
+      };
+      
+      setMessages(prevMessages => [...prevMessages, userMessage]);
+      
+      // Send message and get response
+      const response = await sendChatMessage(message);
+      setIsProcessing(false);
+      
       if (response) {
-        await saveToHistory(message, response.response);
+        // Add AI response to messages
+        const aiMessage: ChatUIMessage = {
+          id: `ai-${Date.now()}`,
+          type: 'ai',
+          content: response.content,
+          timestamp: new Date().toISOString(),
+          followUpQuestions: response.followUpQuestions,
+          suggestions: response.suggestions
+        };
+        
+        setMessages(prevMessages => [...prevMessages, aiMessage]);
+        
+        // Save conversation history
+        await saveToHistory(message, response.content);
       }
+      
+      return response;
     } catch (error) {
       console.error('Error sending message:', error);
+      setIsProcessing(false);
       handleError(error as Error);
+      return null;
     }
-  }, [sendMessage, saveToHistory, handleError, clearErrors]);
+  }, [sendChatMessage, saveToHistory, handleError, clearErrors]);
 
   const handleSelectSuggestion = useCallback(async (suggestion: string) => {
     setSelectedText('');
@@ -59,7 +128,7 @@ export const useChatHandlers = (note: Note) => {
     setMessages([]);
     setSelectedText('');
     clearErrors();
-  }, [setMessages, clearErrors]);
+  }, [clearErrors]);
 
   return {
     messages,
@@ -68,7 +137,7 @@ export const useChatHandlers = (note: Note) => {
     isLoading,
     isStreaming,
     streamingMessage,
-    errorMessage,
+    errorMessage: error,
     canRetry,
     handleSendMessage,
     handleSelectSuggestion,
