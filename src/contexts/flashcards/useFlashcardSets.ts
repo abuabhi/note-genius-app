@@ -20,10 +20,27 @@ export const useFlashcardSets = (state: FlashcardState) => {
   const deleteFlashcardSet = (id) => deleteSet(state, id);
   const fetchCategories = () => fetchCats(state);
   
-  // Enhanced fetchFlashcardsInSet method with better position ordering
+  // Enhanced fetchFlashcardsInSet method that also fetches and sets the current set
   const fetchFlashcardsInSet = async (setId: string): Promise<Flashcard[]> => {
     try {
       console.log("useFlashcardSets: Fetching flashcards for set:", setId);
+      
+      // First, fetch the flashcard set data and set it as current
+      const { data: setData, error: setError } = await supabase
+        .from('flashcard_sets')
+        .select('*')
+        .eq('id', setId)
+        .single();
+
+      if (setError) {
+        console.error("useFlashcardSets: Error fetching flashcard set:", setError);
+        throw setError;
+      }
+
+      if (setData) {
+        console.log("useFlashcardSets: Setting current set:", setData.name);
+        state.setCurrentSet(setData);
+      }
       
       // Query the flashcard_set_cards junction table to get flashcards in this set
       // Order by position first, then by created_at as fallback

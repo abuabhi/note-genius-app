@@ -52,11 +52,12 @@ import { FlashcardSetBreadcrumb } from "./FlashcardSetBreadcrumb";
 const EnhancedFlashcardSetView = () => {
   const { setId } = useParams<{ setId: string }>();
   const navigate = useNavigate();
-  const { currentSet, fetchFlashcardsInSet, deleteFlashcard, setCurrentSet } = useFlashcards();
+  const { currentSet, fetchFlashcardsInSet, deleteFlashcard, setCurrentSet, flashcardSets, fetchFlashcardSets } = useFlashcards();
   const { progressMap, fetchLearningProgress, isLoading: progressLoading } = useLearningProgress();
   
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("position");
   const [filterDifficulty, setFilterDifficulty] = useState("all");
@@ -89,11 +90,36 @@ const EnhancedFlashcardSetView = () => {
   };
 
   useEffect(() => {
-    const loadFlashcards = async () => {
-      if (!setId) return;
+    const loadFlashcardSetAndCards = async () => {
+      if (!setId) {
+        setError("No set ID provided");
+        setLoading(false);
+        return;
+      }
       
       try {
         setLoading(true);
+        setError(null);
+        
+        // Check if we have the current set, if not fetch it
+        if (!currentSet || currentSet.id !== setId) {
+          console.log("Current set not available or different, checking flashcard sets...");
+          
+          // Try to find the set in existing flashcard sets
+          let targetSet = flashcardSets.find(set => set.id === setId);
+          
+          if (!targetSet) {
+            console.log("Set not found in existing sets, fetching all sets...");
+            await fetchFlashcardSets();
+            targetSet = flashcardSets.find(set => set.id === setId);
+          }
+          
+          if (targetSet) {
+            setCurrentSet(targetSet);
+          }
+        }
+        
+        // Fetch flashcards (this will also set the current set if found)
         const cards = await fetchFlashcardsInSet(setId);
         setFlashcards(cards || []);
         
@@ -101,15 +127,43 @@ const EnhancedFlashcardSetView = () => {
         if (cards && cards.length > 0) {
           await fetchLearningProgress(cards.map(card => card.id));
         }
-      } catch (error) {
-        console.error("Error loading flashcards:", error);
+      } catch (loadError) {
+        console.error("Error loading flashcard set and cards:", loadError);
+        setError("Failed to load flashcard set. Please check if the set exists.");
       } finally {
         setLoading(false);
       }
     };
 
-    loadFlashcards();
-  }, [setId, fetchFlashcardsInSet, fetchLearningProgress]);
+    loadFlashcardSetAndCards();
+  }, [setId, currentSet, flashcardSets, fetchFlashcardsInSet, fetchLearningProgress, setCurrentSet, fetchFlashcardSets]);
+
+  // Error state
+  if (error) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="bg-red-50 border border-red-200 rounded-md p-6 text-center">
+          <h2 className="text-xl font-semibold text-red-700 mb-2">Error Loading Flashcard Set</h2>
+          <p className="mb-4 text-red-600">{error}</p>
+          <div className="flex gap-4 justify-center">
+            <Button onClick={() => navigate("/flashcards")}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Flashcards
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setError(null);
+                window.location.reload();
+              }}
+            >
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Filter and sort flashcards
   const filteredAndSortedCards = useMemo(() => {
@@ -218,7 +272,7 @@ const EnhancedFlashcardSetView = () => {
 
         <div className="flex gap-2">
           <Button asChild>
-            <Link to={`/study/${setId}`}>
+            <Link to={`/flashcards/study/${setId}`}>
               <Play className="h-4 w-4 mr-2" />
               Study Flashcards
             </Link>
@@ -513,7 +567,7 @@ const EnhancedFlashcardSetView = () => {
       {setStats.needsReviewCards > 0 && (
         <div className="mt-6 flex justify-center">
           <Button size="lg" asChild className="bg-orange-600 hover:bg-orange-700">
-            <Link to={`/study/${setId}?mode=review`}>
+            <Link to={`/flashcards/study/${setId}?mode=review`}>
               <Clock className="h-4 w-4 mr-2" />
               Review {setStats.needsReviewCards} Cards That Need Practice
             </Link>
