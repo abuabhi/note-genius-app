@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { parseCSV } from '@/utils/csvUtils';
 import { supabase } from '@/integrations/supabase/client';
@@ -47,7 +48,7 @@ export const useQuizImport = () => {
           
           // Find subject category
           const { data: subjects } = await supabase
-            .from('subject_categories')
+            .from('academic_subjects')
             .select('id')
             .eq('name', firstRow.subject_name)
             .limit(1);
@@ -90,7 +91,7 @@ export const useQuizImport = () => {
             .insert({
               title: quizTitle,
               description: firstRow.quiz_description || null,
-              category_id: subjects[0].id,
+              subject_id: subjects[0].id,
               grade_id: gradeId,
               section_id: sectionId,
               source_type: 'prebuilt',
@@ -156,7 +157,7 @@ export const useQuizImport = () => {
           console.error(`Error importing quiz "${quizTitle}":`, error);
           errorCount += quizRows.length;
           errors.push({
-            row: rows.findIndex(r => r.quiz_title === quizTitle) + 1, // +1 for heading row
+            row: rows.findIndex(r => r.quiz_title === quizTitle) + 1,
             message: error instanceof Error ? error.message : 'Unknown error'
           });
         }
@@ -209,7 +210,6 @@ export const useQuizImport = () => {
     }
   };
 
-  // Generate template CSV content for quizzes
   const getQuizTemplate = (): string => {
     return 'quiz_title,quiz_description,subject_name,grade_name,section_name,question,correct_option,option2,option3,option4,explanation,difficulty\n' +
       '"Basic Math","Elementary math questions","Mathematics","Grade 1","Arithmetic","What is 2+2?","4","3","5","6","Basic addition",1\n' +

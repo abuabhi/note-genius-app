@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useFlashcards } from '@/contexts/FlashcardContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { parseCSV } from '@/utils/csvUtils';
 
 interface CSVFlashcardRow {
   front: string;
@@ -15,11 +16,37 @@ interface CSVFlashcardRow {
 
 export const useFlashcardsImport = () => {
   const [isImporting, setIsImporting] = useState(false);
+  const [importResults, setImportResults] = useState<{
+    totalRows: number;
+    successCount: number;
+    errorCount: number;
+    errors: { row: number; message: string }[];
+  } | null>(null);
   const { fetchAcademicSubjects, createFlashcardSet, addFlashcard } = useFlashcards();
 
-  const processCSVData = async (csvData: CSVFlashcardRow[]) => {
+  const importFlashcards = async (file: File) => {
     setIsImporting(true);
+    setImportResults(null);
     
+    try {
+      const rows = await parseCSV(file) as CSVFlashcardRow[];
+      const validRows = validateCSVData(rows);
+      await processCSVData(validRows);
+    } catch (error) {
+      console.error('Error importing flashcards:', error);
+      toast.error('Failed to import flashcards');
+      setImportResults({
+        totalRows: 0,
+        successCount: 0,
+        errorCount: 1,
+        errors: [{ row: 0, message: 'Failed to parse CSV file' }]
+      });
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const processCSVData = async (csvData: CSVFlashcardRow[]) => {
     try {
       console.log('Processing CSV data with', csvData.length, 'rows');
       
@@ -38,6 +65,10 @@ export const useFlashcardsImport = () => {
       });
       
       console.log('Grouped flashcards into', flashcardsBySet.size, 'sets');
+      
+      let totalSuccess = 0;
+      let totalErrors = 0;
+      const errors: { row: number; message: string }[] = [];
       
       // Process each set
       for (const [setName, cards] of flashcardsBySet) {
@@ -75,6 +106,8 @@ export const useFlashcardsImport = () => {
         
         if (!newSet) {
           console.error('Failed to create set:', setName);
+          totalErrors += cards.length;
+          errors.push({ row: 1, message: `Failed to create set: ${setName}` });
           continue;
         }
         
@@ -99,16 +132,30 @@ export const useFlashcardsImport = () => {
           }
         }
         
+        totalSuccess += successCount;
+        totalErrors += errorCount;
+        
         console.log(`Set ${setName}: ${successCount} cards added, ${errorCount} errors`);
       }
       
-      toast.success(`Successfully imported ${csvData.length} flashcards into ${flashcardsBySet.size} sets`);
+      setImportResults({
+        totalRows: csvData.length,
+        successCount: totalSuccess,
+        errorCount: totalErrors,
+        errors
+      });
+      
+      toast.success(`Successfully imported ${totalSuccess} flashcards into ${flashcardsBySet.size} sets`);
       
     } catch (error) {
       console.error('Error processing CSV import:', error);
       toast.error('Failed to import flashcards');
-    } finally {
-      setIsImporting(false);
+      setImportResults({
+        totalRows: csvData.length,
+        successCount: 0,
+        errorCount: csvData.length,
+        errors: [{ row: 0, message: 'Processing failed' }]
+      });
     }
   };
 
@@ -148,7 +195,9 @@ export const useFlashcardsImport = () => {
   };
 
   return {
+    importFlashcards,
     isImporting,
+    importResults,
     processCSVData,
     validateCSVData
   };

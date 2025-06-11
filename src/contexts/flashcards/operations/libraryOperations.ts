@@ -13,11 +13,7 @@ export const searchLibrary = async (state: FlashcardState, query: string): Promi
     const { data, error } = await supabase
       .from('flashcard_sets')
       .select(`
-        *,
-        academic_subjects (
-          id,
-          name
-        )
+        *
       `)
       .eq('is_built_in', true)
       .or(`name.ilike.%${query}%,description.ilike.%${query}%,subject.ilike.%${query}%`)
@@ -25,10 +21,7 @@ export const searchLibrary = async (state: FlashcardState, query: string): Promi
 
     if (error) throw error;
 
-    return data?.map(set => ({
-      ...convertToFlashcardSet(set),
-      academic_subjects: set.academic_subjects
-    })) || [];
+    return data?.map(set => convertToFlashcardSet(set)) || [];
   } catch (error) {
     console.error('searchLibrary: Error searching library:', error);
     toast.error('Failed to search library');
@@ -46,11 +39,7 @@ export const fetchBuiltInSets = async (state: FlashcardState): Promise<Flashcard
     const { data, error } = await supabase
       .from('flashcard_sets')
       .select(`
-        *,
-        academic_subjects (
-          id,
-          name
-        )
+        *
       `)
       .eq('is_built_in', true)
       .order('name');
@@ -62,10 +51,7 @@ export const fetchBuiltInSets = async (state: FlashcardState): Promise<Flashcard
 
     console.log('fetchBuiltInSets: Successfully fetched', data?.length || 0, 'built-in sets');
     
-    const formattedSets = data?.map(set => ({
-      ...convertToFlashcardSet(set),
-      academic_subjects: set.academic_subjects
-    })) || [];
+    const formattedSets = data?.map(set => convertToFlashcardSet(set)) || [];
 
     return formattedSets;
   } catch (error) {

@@ -15,7 +15,7 @@ export const useSectionCSVImport = () => {
       
       // Get current subject categories for reference
       const { data: subjects, error: subjectsError } = await supabase
-        .from("subject_categories")
+        .from("academic_subjects")
         .select("id, name, grade_id");
         
       if (subjectsError) throw subjectsError;
@@ -78,7 +78,7 @@ export const useSectionCSVImport = () => {
         // Add to valid rows
         validRows.push({
           name: row.name.trim(),
-          subject_id: subject.id,
+          academic_subject_id: subject.id,
           description: row.description || null
         });
       }

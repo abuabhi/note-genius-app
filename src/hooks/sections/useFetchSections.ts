@@ -10,13 +10,17 @@ export const useFetchSections = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("sections")
-        .select("*, subject:subject_id(*)");
+        .select(`
+          *,
+          subject:academic_subjects!academic_subject_id(*)
+        `);
 
       if (error) throw error;
       
       // Transform the data to match our Section type
       return data.map(section => ({
         ...section,
+        subject_id: section.academic_subject_id,
         subject: section.subject,
       })) as Section[];
     },

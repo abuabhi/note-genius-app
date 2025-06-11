@@ -38,7 +38,7 @@ const SectionsContent = () => {
     if (section) {
       setEditingSection(section);
       setName(section.name);
-      setSubjectId(section.academic_subject_id);
+      setSubjectId(section.subject_id || "");
       setDescription(section.description || "");
     } else {
       resetForm();
@@ -51,7 +51,7 @@ const SectionsContent = () => {
 
     const sectionData = {
       name,
-      academic_subject_id: subjectId,
+      subject_id: subjectId,
       description: description || null,
     };
 
@@ -81,7 +81,7 @@ const SectionsContent = () => {
 
   // Filter sections based on subject filter
   const filteredSections = filterSubject
-    ? sections.filter(section => section.academic_subject_id === filterSubject)
+    ? sections.filter(section => section.subject_id === filterSubject)
     : sections;
 
   return (
