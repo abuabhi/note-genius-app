@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,10 +17,13 @@ export const QuizList = () => {
   const [selectedSubject, setSelectedSubject] = useState<string>("all");
   
   const { academicSubjects } = useSubjects();
-  const { data: quizzes = [], isLoading, error } = useQuizList({
+  const { data, isLoading, error } = useQuizList({
     search: searchTerm,
     subject: selectedSubject === "all" ? undefined : selectedSubject
   });
+
+  // Extract quizzes from the returned data
+  const quizzes = data?.quizzes || [];
 
   const handleTakeQuiz = (quiz: Quiz) => {
     navigate(`/quiz/${quiz.id}/take`);
