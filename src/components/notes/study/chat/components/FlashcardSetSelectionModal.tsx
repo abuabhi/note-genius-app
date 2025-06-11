@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,7 +22,7 @@ interface FlashcardSet {
   name: string;
   description?: string;
   subject?: string;
-  flashcard_count?: number;
+  card_count?: number;
 }
 
 interface FlashcardSetSelectionModalProps {
@@ -123,7 +124,7 @@ export const FlashcardSetSelectionModal = ({
                       )}
                       <div className="flex items-center gap-4 text-xs text-gray-500">
                         {suggestedSet.subject && <span>Subject: {suggestedSet.subject}</span>}
-                        <span>{suggestedSet.flashcard_count || 0} flashcards</span>
+                        <span>{suggestedSet.card_count || 0} flashcards</span>
                       </div>
                     </div>
                     {selectedSetId === suggestedSet.id && (
@@ -162,7 +163,7 @@ export const FlashcardSetSelectionModal = ({
                         )}
                         <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
                           {set.subject && <span>{set.subject}</span>}
-                          <span>{set.flashcard_count || 0} flashcards</span>
+                          <span>{set.card_count || 0} flashcards</span>
                         </div>
                       </div>
                       {selectedSetId === set.id && (
