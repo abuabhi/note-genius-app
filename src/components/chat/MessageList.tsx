@@ -1,10 +1,10 @@
 
 import { useEffect, useRef } from "react";
 import { useChat } from "@/hooks/chat";
-import { useAuth } from "@/contexts/auth"; // Updated import path
+import { useAuth } from "@/contexts/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChatMessage } from "@/types/chat";
+import { MessageRenderer } from "./MessageRenderer";
 
 interface MessageListProps {
   conversationId: string;
@@ -13,16 +13,15 @@ interface MessageListProps {
 export const MessageList = ({ conversationId }: MessageListProps) => {
   const { messages, loadingMessages, updateLastRead, subscribeToMessages } = useChat();
   const { user } = useAuth();
-  const bottomRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Subscribe to new messages
   useEffect(() => {
+    if (!conversationId) return;
+
     // Mark messages as read when conversation is opened
     updateLastRead(conversationId);
-    
-    // Scroll to bottom when messages change
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     
     // Subscribe to new messages for this conversation
     const unsubscribe = subscribeToMessages(conversationId, (newMessage) => {
@@ -33,11 +32,13 @@ export const MessageList = ({ conversationId }: MessageListProps) => {
     });
     
     return unsubscribe;
-  }, [conversationId, messages, user?.id, updateLastRead, subscribeToMessages]);
+  }, [conversationId, user?.id, updateLastRead, subscribeToMessages]);
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages]);
 
   const formatTime = (dateString: string) => {
@@ -63,7 +64,7 @@ export const MessageList = ({ conversationId }: MessageListProps) => {
     return (
       <div
         key={message.id}
-        className={`flex gap-2 mb-1 ${isCurrentUser ? "justify-end" : "justify-start"}`}
+        className={`flex gap-3 mb-4 ${isCurrentUser ? "justify-end" : "justify-start"}`}
       >
         {!isCurrentUser && (
           <div className="flex-shrink-0 w-8">
@@ -80,29 +81,52 @@ export const MessageList = ({ conversationId }: MessageListProps) => {
         )}
         
         <div
-          className={`px-3 py-2 rounded-lg text-sm max-w-[80%] ${
+          className={`px-4 py-3 rounded-lg max-w-[80%] ${
             isCurrentUser 
-              ? "bg-primary text-primary-foreground ml-auto" 
+              ? "bg-primary text-primary-foreground" 
               : "bg-accent"
           }`}
         >
-          {message.message}
-          <div className={`text-xs mt-1 ${isCurrentUser ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+          <MessageRenderer 
+            content={message.message}
+            isCurrentUser={isCurrentUser}
+          />
+          <div className={`text-xs mt-2 ${isCurrentUser ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
             {formatTime(message.created_at)}
           </div>
         </div>
+
+        {isCurrentUser && (
+          <div className="flex-shrink-0 w-8">
+            <Avatar className="h-8 w-8">
+              {user?.user_metadata?.avatar_url ? (
+                <AvatarImage src={user.user_metadata.avatar_url} alt={user?.user_metadata?.username || ''} />
+              ) : (
+                <AvatarFallback>{getInitials(user?.user_metadata?.username || user?.email || '')}</AvatarFallback>
+              )}
+            </Avatar>
+          </div>
+        )}
       </div>
     );
   };
 
+  if (loadingMessages) {
+    return (
+      <div className="flex-1 flex justify-center items-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
   return (
-    <ScrollArea className="h-[calc(100vh-16rem)] p-4">
-      {loadingMessages ? (
-        <div className="flex justify-center items-center h-full">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-        </div>
-      ) : messages && messages.length > 0 ? (
-        <div className="space-y-4">
+    <div 
+      ref={containerRef}
+      className="flex-1 overflow-y-auto p-4"
+      style={{ height: 'calc(100vh - 12rem)' }}
+    >
+      {messages && messages.length > 0 ? (
+        <div className="space-y-2">
           {messages.map((message, index, array) => renderMessageGroup(message, index, array))}
           <div ref={messagesEndRef} />
         </div>
@@ -111,6 +135,6 @@ export const MessageList = ({ conversationId }: MessageListProps) => {
           No messages yet. Start the conversation!
         </div>
       )}
-    </ScrollArea>
+    </div>
   );
 };
