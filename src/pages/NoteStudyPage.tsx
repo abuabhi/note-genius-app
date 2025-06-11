@@ -75,7 +75,7 @@ const NoteStudyPage = () => {
           description: noteData.description || "",
           content: noteData.content || noteData.description || "",
           date: new Date(noteData.created_at).toISOString().split('T')[0],
-          category: noteData.subject || "Uncategorized",
+          subject: noteData.subject || "Uncategorized",
           sourceType: (noteData.source_type as 'manual' | 'scan' | 'import') || 'manual',
           archived: noteData.archived || false,
           pinned: noteData.pinned || false,

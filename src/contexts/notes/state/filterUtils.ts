@@ -11,7 +11,7 @@ export const matchesSearchTerm = (note: Note, searchTerm: string): boolean => {
   const lowerSearchTerm = searchTerm.toLowerCase();
   return note.title.toLowerCase().includes(lowerSearchTerm) || 
     note.description.toLowerCase().includes(lowerSearchTerm) || 
-    note.category.toLowerCase().includes(lowerSearchTerm) ||
+    note.subject.toLowerCase().includes(lowerSearchTerm) ||
     (note.content && note.content.toLowerCase().includes(lowerSearchTerm)) ||
     (note.tags && note.tags.some(tag => tag.name.toLowerCase().includes(lowerSearchTerm)));
 };
@@ -50,8 +50,8 @@ export const filterNotes = (notes: Note[], searchTerm: string, filterOptions: Fi
       }
     }
     
-    // Filter by category
-    if (filterOptions.category && note.category !== filterOptions.category) {
+    // Filter by category (now using subject)
+    if (filterOptions.category && note.subject !== filterOptions.category) {
       return false;
     }
     
@@ -128,7 +128,7 @@ export const sortNotes = (notes: Note[], sortType: SortType): Note[] => {
       case 'title-desc':
         return b.title.localeCompare(a.title);
       case 'category':
-        return a.category.localeCompare(b.category);
+        return a.subject.localeCompare(b.subject);
       default:
         return 0;
     }
@@ -150,11 +150,11 @@ export const extractCategories = (notes: Note[]): string[] => {
   if (!notes.length) return [];
   
   return notes
-    .map(note => note.category)
-    .filter((category, index, self) => 
-      // Remove empty categories and duplicates
-      category && category.trim() !== '' && 
-      self.indexOf(category) === index
+    .map(note => note.subject)
+    .filter((subject, index, self) => 
+      // Remove empty subjects and duplicates
+      subject && subject.trim() !== '' && 
+      self.indexOf(subject) === index
     )
     .sort();
 };

@@ -20,7 +20,7 @@ interface SubjectTagSelectProps {
 
 export const SubjectTagSelect = ({ note, onSubjectChange }: SubjectTagSelectProps) => {
   const { availableCategories, updateNote, addCategory } = useNotes();
-  const [currentSubject, setCurrentSubject] = useState<string>(note.category || "general");
+  const [currentSubject, setCurrentSubject] = useState<string>(note.subject || "general");
 
   // Handle subject change
   const handleSubjectChange = async (value: string) => {
@@ -36,19 +36,19 @@ export const SubjectTagSelect = ({ note, onSubjectChange }: SubjectTagSelectProp
     } else {
       // If no external handler provided, update note directly
       try {
-        await updateNote(note.id, { category: value });
+        await updateNote(note.id, { subject: value });
       } catch (error) {
         console.error("Failed to update note subject:", error);
         // Reset to previous value on error
-        setCurrentSubject(note.category || "general");
+        setCurrentSubject(note.subject || "general");
       }
     }
   };
 
   // Update local state when note changes from outside
   useEffect(() => {
-    setCurrentSubject(note.category || "general");
-  }, [note.category]);
+    setCurrentSubject(note.subject || "general");
+  }, [note.subject]);
 
   // Generate color for each subject
   const getSubjectDisplay = (subject: string) => {

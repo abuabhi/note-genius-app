@@ -11,7 +11,7 @@ export const useNoteStudyEditor = (note: Note, forceRefresh: () => void) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editableContent, setEditableContent] = useState(note.content || note.description || '');
   const [editableTitle, setEditableTitle] = useState(note.title);
-  const [editableSubject, setEditableSubject] = useState(note.category || 'General');
+  const [editableSubject, setEditableSubject] = useState(note.subject || 'General');
   const [selectedTags, setSelectedTags] = useState(note.tags || []);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -19,9 +19,9 @@ export const useNoteStudyEditor = (note: Note, forceRefresh: () => void) => {
   useEffect(() => {
     setEditableContent(note.content || note.description || '');
     setEditableTitle(note.title);
-    setEditableSubject(note.category || 'General');
+    setEditableSubject(note.subject || 'General');
     setSelectedTags(note.tags || []);
-  }, [note.id, note.content, note.description, note.title, note.category, note.tags]);
+  }, [note.id, note.content, note.description, note.title, note.subject, note.tags]);
 
   const handleContentChange = useCallback((content: string) => {
     setEditableContent(content);
@@ -42,7 +42,7 @@ export const useNoteStudyEditor = (note: Note, forceRefresh: () => void) => {
         title: editableTitle,
         content: editableContent,
         description: editableContent, // Keep description in sync
-        category: editableSubject,
+        subject: editableSubject,
         tags: selectedTags
       });
       
@@ -62,11 +62,11 @@ export const useNoteStudyEditor = (note: Note, forceRefresh: () => void) => {
       // Reset to original content if canceling
       setEditableContent(note.content || note.description || '');
       setEditableTitle(note.title);
-      setEditableSubject(note.category || 'General');
+      setEditableSubject(note.subject || 'General');
       setSelectedTags(note.tags || []);
     }
     setIsEditing(!isEditing);
-  }, [isEditing, note.content, note.description, note.title, note.category, note.tags]);
+  }, [isEditing, note.content, note.description, note.title, note.subject, note.tags]);
 
   const onNoteUpdate = useCallback(async (updatedData: Partial<Note>) => {
     try {

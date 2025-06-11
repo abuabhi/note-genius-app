@@ -69,7 +69,7 @@ export const useImportState = (
         title: documentTitle,
         content: processedText,
         date: new Date().toISOString(),
-        category: "Imports",
+        subject: "Imports",
         description: `Imported ${fileType ? `from ${fileType} file` : "document"}`,
         sourceType: "import",
         importData: {

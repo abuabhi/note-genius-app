@@ -27,7 +27,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
       setTitle(initialData.title || '');
       setDescription(initialData.description || '');
       setContent(initialData.content || '');
-      setSelectedSubject(initialData.category || '');
+      setSelectedSubject(initialData.subject || '');
     }
   }, [initialData]);
 
@@ -42,7 +42,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
         description: description.trim(),
         content: content.trim(),
         date: initialData?.date || new Date().toISOString().split('T')[0],
-        category: selectedSubject || 'General',
+        subject: selectedSubject || 'General',
         sourceType: initialData?.sourceType || 'manual',
         archived: initialData?.archived || false,
         pinned: initialData?.pinned || false,
