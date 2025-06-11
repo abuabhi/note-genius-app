@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useFlashcards } from "@/contexts/FlashcardContext";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,26 +23,26 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { SubjectCategory } from "@/types/flashcard";
+import { AcademicSubject } from "@/types/flashcard";
 import { supabase } from "@/integrations/supabase/client";
 
 export function AdminSubjectList() {
-  const { categories, setCategories, fetchCategories } = useFlashcards();
+  const { academicSubjects, setAcademicSubjects, fetchAcademicSubjects } = useFlashcards();
   const [loading, setLoading] = useState(true);
   const [newSubject, setNewSubject] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    const loadCategories = async () => {
+    const loadAcademicSubjects = async () => {
       setLoading(true);
       try {
-        await fetchCategories();
+        await fetchAcademicSubjects();
       } catch (error) {
-        console.error("Error loading categories:", error);
+        console.error("Error loading academic subjects:", error);
         toast({
           title: "Error",
-          description: "Failed to load subject categories",
+          description: "Failed to load academic subjects",
           variant: "destructive"
         });
       } finally {
@@ -49,8 +50,8 @@ export function AdminSubjectList() {
       }
     };
     
-    loadCategories();
-  }, [fetchCategories, toast]);
+    loadAcademicSubjects();
+  }, [fetchAcademicSubjects, toast]);
 
   const handleAddSubject = async () => {
     if (!newSubject.trim()) {
@@ -64,7 +65,7 @@ export function AdminSubjectList() {
     
     try {
       const { data, error } = await supabase
-        .from('subject_categories')
+        .from('academic_subjects')
         .insert({ name: newSubject.trim() })
         .select()
         .single();
@@ -73,19 +74,19 @@ export function AdminSubjectList() {
       
       toast({
         title: "Success",
-        description: "Subject category added successfully",
+        description: "Academic subject added successfully",
       });
       
       setNewSubject("");
       setDialogOpen(false);
       
-      // Refresh categories
-      fetchCategories();
+      // Refresh academic subjects
+      fetchAcademicSubjects();
     } catch (error) {
       console.error("Error adding subject:", error);
       toast({
         title: "Error",
-        description: "Failed to add subject category",
+        description: "Failed to add academic subject",
         variant: "destructive"
       });
     }
@@ -99,16 +100,16 @@ export function AdminSubjectList() {
     <Card>
       <CardContent className="p-4">
         <div className="flex justify-between mb-4">
-          <h2 className="text-xl font-semibold">Subject Categories</h2>
+          <h2 className="text-xl font-semibold">Academic Subjects</h2>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button>Add Subject</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add Subject Category</DialogTitle>
+                <DialogTitle>Add Academic Subject</DialogTitle>
                 <DialogDescription>
-                  Enter the name of the new subject category.
+                  Enter the name of the new academic subject.
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
@@ -139,15 +140,15 @@ export function AdminSubjectList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {categories.length === 0 ? (
+              {academicSubjects.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center">
-                    No subject categories found
+                    No academic subjects found
                   </TableCell>
                 </TableRow>
               ) : (
-                categories.map((category) => (
-                  <CategoryRow key={category.id} category={category} />
+                academicSubjects.map((subject) => (
+                  <SubjectRow key={subject.id} subject={subject} />
                 ))
               )}
             </TableBody>
@@ -158,20 +159,20 @@ export function AdminSubjectList() {
   );
 }
 
-interface CategoryRowProps {
-  category: SubjectCategory;
+interface SubjectRowProps {
+  subject: AcademicSubject;
 }
 
-function CategoryRow({ category }: CategoryRowProps) {
-  const renderSubcategories = (subcategories?: SubjectCategory[]) => {
+function SubjectRow({ subject }: SubjectRowProps) {
+  const renderSubjects = (subcategories?: AcademicSubject[]) => {
     if (!subcategories || subcategories.length === 0) {
       return null;
     }
 
     return (
       <>
-        {subcategories.map((subcat) => (
-          <CategoryRow key={subcat.id} category={subcat} />
+        {subcategories.map((subsubject) => (
+          <SubjectRow key={subsubject.id} subject={subsubject} />
         ))}
       </>
     );
@@ -180,16 +181,16 @@ function CategoryRow({ category }: CategoryRowProps) {
   return (
     <>
       <TableRow>
-        <TableCell>{category.name}</TableCell>
-        <TableCell>{category.level}</TableCell>
-        <TableCell>{category.parent_id || "Root"}</TableCell>
+        <TableCell>{subject.name}</TableCell>
+        <TableCell>{subject.level}</TableCell>
+        <TableCell>{subject.parent_id || "Root"}</TableCell>
         <TableCell>
           <Button variant="outline" size="sm">
             Edit
           </Button>
         </TableCell>
       </TableRow>
-      {renderSubcategories(category.subcategories)}
+      {renderSubjects(subject.subcategories)}
     </>
   );
 }

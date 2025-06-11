@@ -35,7 +35,7 @@ export const CreateQuizForm = ({
   sourceId,
   onSuccess
 }: CreateQuizFormProps) => {
-  const { subjects } = useSubjects();
+  const { academicSubjects } = useSubjects();
   const { grades } = useGrades();
   const { sections } = useSections();
   const navigate = useNavigate();
@@ -65,7 +65,7 @@ export const CreateQuizForm = ({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <QuizMetadataForm 
           form={form} 
-          subjects={subjects} 
+          subjects={academicSubjects} 
           grades={grades}
           filteredSections={filteredSections}
         />

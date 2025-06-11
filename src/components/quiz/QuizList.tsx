@@ -17,32 +17,32 @@ export const QuizList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSubject, setSelectedSubject] = useState<string>("all");
   
-  const { subjects } = useSubjects();
+  const { academicSubjects } = useSubjects();
   const { quizzes, isLoading, error } = useQuizList({
     search: searchTerm,
-    subject: selectedSubject === "all" ? undefined : selectedSubject
+    subject_id: selectedSubject === "all" ? undefined : selectedSubject
   });
 
-  const filteredQuizzes = quizzes?.filter(quiz => {
-    const matchesSearch = quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      quiz.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    if (selectedSubject === "all") return matchesSearch;
-    
-    return matchesSearch && quiz.category_id === selectedSubject;
-  }) || [];
+  const handleTakeQuiz = (quiz: QuizWithQuestions) => {
+    navigate(`/quiz/${quiz.id}/take`);
+  };
+
+  const handleViewQuiz = (quiz: QuizWithQuestions) => {
+    navigate(`/quiz/${quiz.id}`);
+  };
 
   if (isLoading) {
     return (
       <div className="space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <Card key={i} className="bg-white/60 backdrop-blur-sm border-mint-100">
-            <CardContent className="p-6">
-              <div className="animate-pulse space-y-4">
-                <div className="h-6 bg-mint-200 rounded w-1/3"></div>
-                <div className="h-4 bg-mint-200 rounded w-2/3"></div>
-                <div className="h-10 bg-mint-200 rounded w-24"></div>
-              </div>
+        {[1, 2, 3].map((i) => (
+          <Card key={i} className="animate-pulse">
+            <CardHeader>
+              <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-2/3"></div>
             </CardContent>
           </Card>
         ))}
@@ -52,15 +52,9 @@ export const QuizList = () => {
 
   if (error) {
     return (
-      <Card className="bg-white/60 backdrop-blur-sm border-mint-100">
-        <CardContent className="p-6 text-center">
-          <div className="text-red-600 mb-4">Failed to load quizzes</div>
-          <Button 
-            onClick={() => window.location.reload()}
-            className="bg-mint-600 hover:bg-mint-700 text-white"
-          >
-            Try Again
-          </Button>
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-red-600">Error loading quizzes: {error.message}</p>
         </CardContent>
       </Card>
     );
@@ -68,120 +62,96 @@ export const QuizList = () => {
 
   return (
     <div className="space-y-6">
+      {/* Search and Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-mint-500 h-4 w-4" />
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search quizzes..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 border-mint-200 focus:border-mint-400"
+            className="pl-10"
           />
         </div>
-        
         <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-          <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="All Subjects" />
+          <SelectTrigger className="w-full sm:w-[200px]">
+            <SelectValue placeholder="Filter by subject" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Subjects</SelectItem>
-            {subjects.map((subject) => (
+            {academicSubjects?.map((subject) => (
               <SelectItem key={subject.id} value={subject.id}>
                 {subject.name}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-
-        <Button 
-          onClick={() => navigate('/quiz/history')}
-          variant="outline"
-          className="border-mint-200 hover:bg-mint-50 text-mint-700 whitespace-nowrap"
-        >
-          <History className="mr-2 h-4 w-4" />
-          Quiz History
-        </Button>
       </div>
 
-      {filteredQuizzes.length === 0 ? (
-        <Card className="bg-white/60 backdrop-blur-sm border-mint-100">
-          <CardContent className="p-12 text-center">
-            <HelpCircle className="h-12 w-12 text-mint-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-mint-800 mb-2">
-              {searchTerm || selectedSubject !== "all" ? "No quizzes found" : "No quizzes yet"}
-            </h3>
-            <p className="text-mint-600 mb-6">
+      {/* Quiz List */}
+      {!quizzes || quizzes.length === 0 ? (
+        <Card>
+          <CardContent className="p-6 text-center">
+            <HelpCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">No quizzes found</h3>
+            <p className="text-muted-foreground mb-4">
               {searchTerm || selectedSubject !== "all"
-                ? "Try adjusting your search terms or filters" 
-                : "Create your first quiz to get started"
-              }
+                ? "Try adjusting your search filters"
+                : "Create your first quiz to get started"}
             </p>
+            <Button onClick={() => navigate("/quiz/create")}>
+              Create Quiz
+            </Button>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredQuizzes.map((quiz: QuizWithQuestions) => (
-            <QuizCard key={quiz.id} quiz={quiz} onTakeQuiz={() => navigate(`/quiz/take/${quiz.id}`)} />
+        <div className="space-y-4">
+          {quizzes.map((quiz) => (
+            <Card key={quiz.id} className="hover:shadow-md transition-shadow">
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-xl">{quiz.title}</CardTitle>
+                    <CardDescription className="mt-1">
+                      {quiz.description || "No description available"}
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={() => handleTakeQuiz(quiz)}>
+                      <Play className="h-4 w-4 mr-2" />
+                      Take Quiz
+                    </Button>
+                    <Button variant="outline" onClick={() => handleViewQuiz(quiz)}>
+                      <History className="h-4 w-4 mr-2" />
+                      View
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <Badge variant="secondary">
+                    <HelpCircle className="h-3 w-3 mr-1" />
+                    {quiz.questions?.length || 0} questions
+                  </Badge>
+                  {quiz.subject_id && (
+                    <Badge variant="outline">
+                      {academicSubjects?.find(s => s.id === quiz.subject_id)?.name || "Unknown Subject"}
+                    </Badge>
+                  )}
+                  {quiz.is_public && (
+                    <Badge variant="default">Public</Badge>
+                  )}
+                </div>
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <Clock className="h-4 w-4 mr-1" />
+                  Created {formatDistanceToNow(new Date(quiz.created_at), { addSuffix: true })}
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}
     </div>
-  );
-};
-
-interface QuizCardProps {
-  quiz: QuizWithQuestions;
-  onTakeQuiz: () => void;
-}
-
-const QuizCard = ({ quiz, onTakeQuiz }: QuizCardProps) => {
-  const questionCount = quiz.questions?.length || 0;
-  
-  return (
-    <Card className="bg-white/60 backdrop-blur-sm border-mint-100 hover:shadow-lg transition-all duration-200 group">
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-start mb-2">
-          <Badge 
-            variant="secondary" 
-            className="bg-mint-100 text-mint-700 border-mint-200"
-          >
-            {questionCount} questions
-          </Badge>
-          <div className="text-xs text-mint-600">
-            {quiz.created_at && formatDistanceToNow(new Date(quiz.created_at), { addSuffix: true })}
-          </div>
-        </div>
-        <CardTitle className="text-lg text-mint-800 group-hover:text-mint-700 transition-colors">
-          {quiz.title}
-        </CardTitle>
-        {quiz.description && (
-          <CardDescription className="text-mint-600 line-clamp-2">
-            {quiz.description}
-          </CardDescription>
-        )}
-      </CardHeader>
-      <CardContent className="pt-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4 text-sm text-mint-600">
-            <div className="flex items-center gap-1">
-              <HelpCircle className="h-4 w-4" />
-              <span>{questionCount}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              <span>~{Math.ceil(questionCount * 1.5)}m</span>
-            </div>
-          </div>
-          <Button 
-            onClick={onTakeQuiz}
-            size="sm"
-            className="bg-mint-600 hover:bg-mint-700 text-white"
-          >
-            <Play className="mr-1 h-3 w-3" />
-            Take Quiz
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
   );
 };

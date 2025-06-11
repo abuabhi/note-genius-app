@@ -21,12 +21,11 @@ export const createFlashcardSet = async (
       .insert({
         name: setData.name,
         description: setData.description,
-        subject: setData.subject?.trim() || null, // Ensure subject is properly stored
+        subject: setData.subject?.trim() || null,
         topic: setData.topic,
-        category_id: setData.category_id,
+        subject_id: setData.subject_id,
         country_id: setData.country_id,
         user_id: user.id,
-        // Removed is_public and is_built_in as they don't exist in the schema
       })
       .select()
       .single();

@@ -36,7 +36,7 @@ export const NoteToQuizForm = ({
   sourceId,
   onSuccess
 }: NoteToQuizFormProps) => {
-  const { subjects } = useSubjects();
+  const { academicSubjects } = useSubjects();
   const navigate = useNavigate();
   
   const { 
@@ -118,7 +118,7 @@ export const NoteToQuizForm = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {subjects?.map((subject) => (
+                        {academicSubjects?.map((subject) => (
                           <SelectItem key={subject.id} value={subject.id}>
                             {subject.name}
                           </SelectItem>

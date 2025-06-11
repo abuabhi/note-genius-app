@@ -14,9 +14,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export function AdminFlashcardCreate() {
-  const { categories, createFlashcardSet, createFlashcard } = useFlashcards();
+  const { academicSubjects, createFlashcardSet, createFlashcard } = useFlashcards();
   const [isCreatingSet, setIsCreatingSet] = useState(true);
   const { toast } = useToast();
   
@@ -26,7 +27,7 @@ export function AdminFlashcardCreate() {
   const [setSubject, setSetSubject] = useState("");
   const [setTopic, setSetTopic] = useState("");
   const [isBuiltIn, setIsBuiltIn] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedSubject, setSelectedSubject] = useState("");
   
   // Card state
   const [frontContent, setFrontContent] = useState("");
@@ -50,7 +51,7 @@ export function AdminFlashcardCreate() {
         description: setDescription.trim(),
         subject: setSubject.trim(),
         topic: setTopic.trim(),
-        category_id: selectedCategory || undefined
+        subject_id: selectedSubject || undefined
       });
       
       if (newSet) {
@@ -67,7 +68,7 @@ export function AdminFlashcardCreate() {
         setSetDescription("");
         setSetSubject("");
         setSetTopic("");
-        setSelectedCategory("");
+        setSelectedSubject("");
       }
     } catch (error) {
       console.error("Error creating set:", error);
@@ -215,19 +216,19 @@ export function AdminFlashcardCreate() {
               </div>
               
               <div className="grid gap-2">
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="subject">Academic Subject</Label>
                 <Select
-                  value={selectedCategory}
-                  onValueChange={setSelectedCategory}
+                  value={selectedSubject}
+                  onValueChange={setSelectedSubject}
                 >
-                  <SelectTrigger id="category">
-                    <SelectValue placeholder="Select category" />
+                  <SelectTrigger id="subject">
+                    <SelectValue placeholder="Select academic subject" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="_none">None</SelectItem>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
+                    {academicSubjects.map((subject) => (
+                      <SelectItem key={subject.id} value={subject.id}>
+                        {subject.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -328,5 +329,3 @@ export function AdminFlashcardCreate() {
     </div>
   );
 }
-
-import { supabase } from "@/integrations/supabase/client";

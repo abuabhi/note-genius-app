@@ -1,39 +1,39 @@
 
 import { useCallback } from 'react';
-import { SubjectCategory } from '@/types/flashcard';
+import { AcademicSubject } from '@/types/flashcard';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 /**
- * Hook that provides category-related operations for flashcards
+ * Hook that provides academic subject-related operations for flashcards
  */
-export const useCategoryOperations = (
-  categories: SubjectCategory[], 
-  setCategories: React.Dispatch<React.SetStateAction<SubjectCategory[]>>
+export const useAcademicSubjectOperations = (
+  academicSubjects: AcademicSubject[], 
+  setAcademicSubjects: React.Dispatch<React.SetStateAction<AcademicSubject[]>>
 ) => {
   
-  const fetchCategories = useCallback(async (): Promise<SubjectCategory[]> => {
+  const fetchAcademicSubjects = useCallback(async (): Promise<AcademicSubject[]> => {
     try {
       const { data, error } = await supabase
-        .from('subject_categories')
+        .from('academic_subjects')
         .select('*')
         .order('name');
         
       if (error) throw error;
       
-      setCategories(data);
+      setAcademicSubjects(data);
       return data;
     } catch (error) {
-      console.error('fetchCategories: Error fetching subject categories:', error);
-      toast.error('Failed to load categories');
+      console.error('fetchAcademicSubjects: Error fetching academic subjects:', error);
+      toast.error('Failed to load academic subjects');
       return [];
     }
-  }, [setCategories]);
+  }, [setAcademicSubjects]);
 
-  const createCategory = useCallback(async (name: string, parentId?: string): Promise<void> => {
+  const createAcademicSubject = useCallback(async (name: string, parentId?: string): Promise<void> => {
     try {
       const { data, error } = await supabase
-        .from('subject_categories')
+        .from('academic_subjects')
         .insert({
           name,
           parent_id: parentId
@@ -43,54 +43,54 @@ export const useCategoryOperations = (
 
       if (error) throw error;
 
-      setCategories(prev => [...prev, data]);
-      toast.success('Category created successfully');
+      setAcademicSubjects(prev => [...prev, data]);
+      toast.success('Academic subject created successfully');
     } catch (error) {
-      console.error('createCategory: Error creating category:', error);
-      toast.error('Failed to create category');
+      console.error('createAcademicSubject: Error creating academic subject:', error);
+      toast.error('Failed to create academic subject');
     }
-  }, [setCategories]);
+  }, [setAcademicSubjects]);
 
-  const updateCategory = useCallback(async (id: string, name: string): Promise<void> => {
+  const updateAcademicSubject = useCallback(async (id: string, name: string): Promise<void> => {
     try {
       const { error } = await supabase
-        .from('subject_categories')
+        .from('academic_subjects')
         .update({ name })
         .eq('id', id);
 
       if (error) throw error;
 
-      setCategories(prev => 
-        prev.map(cat => cat.id === id ? { ...cat, name } : cat)
+      setAcademicSubjects(prev => 
+        prev.map(subject => subject.id === id ? { ...subject, name } : subject)
       );
-      toast.success('Category updated successfully');
+      toast.success('Academic subject updated successfully');
     } catch (error) {
-      console.error('updateCategory: Error updating category:', error);
-      toast.error('Failed to update category');
+      console.error('updateAcademicSubject: Error updating academic subject:', error);
+      toast.error('Failed to update academic subject');
     }
-  }, [setCategories]);
+  }, [setAcademicSubjects]);
 
-  const deleteCategory = useCallback(async (id: string): Promise<void> => {
+  const deleteAcademicSubject = useCallback(async (id: string): Promise<void> => {
     try {
       const { error } = await supabase
-        .from('subject_categories')
+        .from('academic_subjects')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
 
-      setCategories(prev => prev.filter(cat => cat.id !== id));
-      toast.success('Category deleted successfully');
+      setAcademicSubjects(prev => prev.filter(subject => subject.id !== id));
+      toast.success('Academic subject deleted successfully');
     } catch (error) {
-      console.error('deleteCategory: Error deleting category:', error);
-      toast.error('Failed to delete category');
+      console.error('deleteAcademicSubject: Error deleting academic subject:', error);
+      toast.error('Failed to delete academic subject');
     }
-  }, [setCategories]);
+  }, [setAcademicSubjects]);
 
   return {
-    fetchCategories,
-    createCategory,
-    updateCategory,
-    deleteCategory
+    fetchAcademicSubjects,
+    createAcademicSubject,
+    updateAcademicSubject,
+    deleteAcademicSubject
   };
 };

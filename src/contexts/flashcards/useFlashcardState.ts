@@ -1,19 +1,19 @@
 
 import { useState } from 'react';
-import { Flashcard, FlashcardSet, SubjectCategory } from '@/types/flashcard';
+import { Flashcard, FlashcardSet, AcademicSubject } from '@/types/flashcard';
 import { FlashcardState } from './types';
 import { useAuth } from '@/contexts/auth';
 
 export const useFlashcardState = (): FlashcardState => {
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [flashcardSets, setFlashcardSets] = useState<FlashcardSet[]>([]);
-  const [categories, setCategories] = useState<SubjectCategory[]>([]);
+  const [academicSubjects, setAcademicSubjects] = useState<AcademicSubject[]>([]);
   const [currentFlashcard, setCurrentFlashcard] = useState<Flashcard | null>(null);
   const [currentSet, setCurrentSet] = useState<FlashcardSet | null>(null);
   const [loading, setLoading] = useState({
     flashcards: false,
     sets: false,
-    categories: false,
+    academicSubjects: false,
   });
   
   const { user } = useAuth();
@@ -23,8 +23,8 @@ export const useFlashcardState = (): FlashcardState => {
     setFlashcards,
     flashcardSets,
     setFlashcardSets,
-    categories,
-    setCategories,
+    academicSubjects,
+    setAcademicSubjects,
     currentFlashcard,
     setCurrentFlashcard,
     currentSet,

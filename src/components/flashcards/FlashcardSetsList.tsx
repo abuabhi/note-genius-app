@@ -86,7 +86,7 @@ const FlashcardSetsList = () => {
             <h3 className="text-lg font-semibold">{set.name}</h3>
             <p className="text-sm text-muted-foreground">
               {set.card_count || 0} cards
-              {set.subject_categories?.name && ` • ${set.subject_categories.name}`}
+              {set.academic_subjects?.name && ` • ${set.academic_subjects.name}`}
             </p>
           </CardHeader>
           <CardContent>

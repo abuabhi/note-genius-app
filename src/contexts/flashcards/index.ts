@@ -4,7 +4,7 @@
 export { useFlashcardState } from './useFlashcardState';
 export { useFlashcardOperations } from './useFlashcardOperations';
 export { useFlashcardSets } from './useFlashcardSets';
-export { useCategoryOperations } from './useCategoryOperations';
+export { useAcademicSubjectOperations } from './useCategoryOperations';
 export { useStudyOperations } from './useStudyOperations';
 export { useLibraryOperations } from './useLibraryOperations';
 export { combineFlashcardOperations } from './useFlashcards';

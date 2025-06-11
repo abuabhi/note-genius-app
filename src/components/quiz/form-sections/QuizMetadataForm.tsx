@@ -104,7 +104,7 @@ export const QuizMetadataForm = ({ form, subjects, grades, filteredSections }: Q
       <div className="space-y-4">
         <FormField
           control={form.control}
-          name="categoryId"
+          name="subjectId"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Subject</FormLabel>
