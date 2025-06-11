@@ -54,13 +54,14 @@ const EnhancedFlashcardSetView = () => {
   const params = useParams();
   const navigate = useNavigate();
   
-  // Use the standardized :id parameter from the route
+  // Extract setId from params - use the standardized :id parameter from the route
   const setId = params.id;
   
   console.log("🔍 EnhancedFlashcardSetView: Component mounting with params:", params);
   console.log("🔍 EnhancedFlashcardSetView: Extracted setId from params.id:", setId);
   console.log("🔍 EnhancedFlashcardSetView: Current URL pathname:", window.location.pathname);
 
+  // All hooks must be called before any conditional returns
   const { currentSet, fetchFlashcardsInSet, deleteFlashcard, setCurrentSet, flashcardSets, fetchFlashcardSets, loading } = useFlashcards();
   const { progressMap, fetchLearningProgress, isLoading: progressLoading } = useLearningProgress();
   
@@ -72,26 +73,6 @@ const EnhancedFlashcardSetView = () => {
   const [filterDifficulty, setFilterDifficulty] = useState("all");
   const [filterReviewStatus, setFilterReviewStatus] = useState("all");
   const [deletingCard, setDeletingCard] = useState<string | null>(null);
-
-  // Early return for missing setId
-  if (!setId) {
-    console.error("❌ EnhancedFlashcardSetView: No setId in URL params, params:", params);
-    console.error("❌ EnhancedFlashcardSetView: Current URL:", window.location.href);
-    return (
-      <div className="container mx-auto p-6">
-        <div className="bg-red-50 border border-red-200 rounded-md p-6 text-center">
-          <h2 className="text-xl font-semibold text-red-700 mb-2">Invalid URL</h2>
-          <p className="mb-4 text-red-600">No flashcard set ID provided in the URL.</p>
-          <p className="mb-4 text-sm text-gray-600">Current URL: {window.location.pathname}</p>
-          <p className="mb-4 text-sm text-gray-600">Params: {JSON.stringify(params)}</p>
-          <Button onClick={() => navigate("/flashcards")}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Flashcards
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   // Function to get card progress from learning progress data
   const getCardProgress = (cardId: string) => {
@@ -117,6 +98,93 @@ const EnhancedFlashcardSetView = () => {
       needsReview: progress.is_difficult || correctPercentage < 70 || !progress.last_seen_at
     };
   };
+
+  // Filter and sort flashcards - MOVED BEFORE CONDITIONAL RETURNS
+  const filteredAndSortedCards = useMemo(() => {
+    let filtered = flashcards.filter(card => {
+      const matchesSearch = 
+        card.front_content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        card.back_content?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesDifficulty = filterDifficulty === "all" || 
+        (filterDifficulty === "easy" && (card.difficulty || 1) <= 2) ||
+        (filterDifficulty === "medium" && (card.difficulty || 1) === 3) ||
+        (filterDifficulty === "hard" && (card.difficulty || 1) >= 4);
+      
+      const progress = getCardProgress(card.id);
+      const matchesReviewStatus = filterReviewStatus === "all" ||
+        (filterReviewStatus === "needs_review" && progress.needsReview) ||
+        (filterReviewStatus === "reviewed" && !progress.needsReview);
+      
+      return matchesSearch && matchesDifficulty && matchesReviewStatus;
+    });
+
+    return filtered.sort((a, b) => {
+      switch (sortBy) {
+        case "front":
+          return (a.front_content || "").localeCompare(b.front_content || "");
+        case "difficulty":
+          return (a.difficulty || 1) - (b.difficulty || 1);
+        case "created_at":
+          return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+        case "review_status":
+          const aNeeds = getCardProgress(a.id).needsReview;
+          const bNeeds = getCardProgress(b.id).needsReview;
+          return bNeeds === aNeeds ? 0 : bNeeds ? 1 : -1;
+        case "position":
+        default:
+          return (a.position || 0) - (b.position || 0);
+      }
+    });
+  }, [flashcards, searchQuery, sortBy, filterDifficulty, filterReviewStatus, progressMap]);
+
+  // Calculate set statistics based on real progress data - MOVED BEFORE CONDITIONAL RETURNS
+  const setStats = useMemo(() => {
+    const totalCards = flashcards.length;
+    const reviewedCards = flashcards.filter(card => {
+      const progress = progressMap.get(card.id);
+      return progress && progress.last_seen_at;
+    }).length;
+    
+    const needsReviewCards = flashcards.filter(card => {
+      const progress = getCardProgress(card.id);
+      return progress.needsReview;
+    }).length;
+    
+    const totalProgress = flashcards.reduce((sum, card) => {
+      return sum + getCardProgress(card.id).correctPercentage;
+    }, 0);
+    
+    const avgProgress = totalCards > 0 ? Math.round(totalProgress / totalCards) : 0;
+    
+    return {
+      totalCards,
+      reviewedCards,
+      needsReviewCards,
+      averageProgress: avgProgress,
+      completionRate: totalCards > 0 ? Math.round((reviewedCards / totalCards) * 100) : 0
+    };
+  }, [flashcards, progressMap]);
+
+  // Early return for missing setId - NOW AFTER ALL HOOKS
+  if (!setId) {
+    console.error("❌ EnhancedFlashcardSetView: No setId in URL params, params:", params);
+    console.error("❌ EnhancedFlashcardSetView: Current URL:", window.location.href);
+    return (
+      <div className="container mx-auto p-6">
+        <div className="bg-red-50 border border-red-200 rounded-md p-6 text-center">
+          <h2 className="text-xl font-semibold text-red-700 mb-2">Invalid URL</h2>
+          <p className="mb-4 text-red-600">No flashcard set ID provided in the URL.</p>
+          <p className="mb-4 text-sm text-gray-600">Current URL: {window.location.pathname}</p>
+          <p className="mb-4 text-sm text-gray-600">Params: {JSON.stringify(params)}</p>
+          <Button onClick={() => navigate("/flashcards")}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Flashcards
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     const loadSetAndFlashcards = async () => {
@@ -160,6 +228,18 @@ const EnhancedFlashcardSetView = () => {
 
     loadSetAndFlashcards();
   }, [setId, fetchFlashcardsInSet, fetchFlashcardSets, fetchLearningProgress]);
+
+  const handleDeleteCard = async (cardId: string) => {
+    setDeletingCard(cardId);
+    try {
+      await deleteFlashcard(cardId);
+      setFlashcards(prev => prev.filter(card => card.id !== cardId));
+    } catch (error) {
+      console.error("Error deleting flashcard:", error);
+    } finally {
+      setDeletingCard(null);
+    }
+  };
 
   // Error state
   if (error) {
@@ -231,85 +311,6 @@ const EnhancedFlashcardSetView = () => {
       </div>
     );
   }
-
-  // Filter and sort flashcards
-  const filteredAndSortedCards = useMemo(() => {
-    let filtered = flashcards.filter(card => {
-      const matchesSearch = 
-        card.front_content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        card.back_content?.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      const matchesDifficulty = filterDifficulty === "all" || 
-        (filterDifficulty === "easy" && (card.difficulty || 1) <= 2) ||
-        (filterDifficulty === "medium" && (card.difficulty || 1) === 3) ||
-        (filterDifficulty === "hard" && (card.difficulty || 1) >= 4);
-      
-      const progress = getCardProgress(card.id);
-      const matchesReviewStatus = filterReviewStatus === "all" ||
-        (filterReviewStatus === "needs_review" && progress.needsReview) ||
-        (filterReviewStatus === "reviewed" && !progress.needsReview);
-      
-      return matchesSearch && matchesDifficulty && matchesReviewStatus;
-    });
-
-    return filtered.sort((a, b) => {
-      switch (sortBy) {
-        case "front":
-          return (a.front_content || "").localeCompare(b.front_content || "");
-        case "difficulty":
-          return (a.difficulty || 1) - (b.difficulty || 1);
-        case "created_at":
-          return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
-        case "review_status":
-          const aNeeds = getCardProgress(a.id).needsReview;
-          const bNeeds = getCardProgress(b.id).needsReview;
-          return bNeeds === aNeeds ? 0 : bNeeds ? 1 : -1;
-        case "position":
-        default:
-          return (a.position || 0) - (b.position || 0);
-      }
-    });
-  }, [flashcards, searchQuery, sortBy, filterDifficulty, filterReviewStatus, progressMap]);
-
-  const handleDeleteCard = async (cardId: string) => {
-    setDeletingCard(cardId);
-    try {
-      await deleteFlashcard(cardId);
-      setFlashcards(prev => prev.filter(card => card.id !== cardId));
-    } catch (error) {
-      console.error("Error deleting flashcard:", error);
-    } finally {
-      setDeletingCard(null);
-    }
-  };
-
-  // Calculate set statistics based on real progress data
-  const setStats = useMemo(() => {
-    const totalCards = flashcards.length;
-    const reviewedCards = flashcards.filter(card => {
-      const progress = progressMap.get(card.id);
-      return progress && progress.last_seen_at;
-    }).length;
-    
-    const needsReviewCards = flashcards.filter(card => {
-      const progress = getCardProgress(card.id);
-      return progress.needsReview;
-    }).length;
-    
-    const totalProgress = flashcards.reduce((sum, card) => {
-      return sum + getCardProgress(card.id).correctPercentage;
-    }, 0);
-    
-    const avgProgress = totalCards > 0 ? Math.round(totalProgress / totalCards) : 0;
-    
-    return {
-      totalCards,
-      reviewedCards,
-      needsReviewCards,
-      averageProgress: avgProgress,
-      completionRate: totalCards > 0 ? Math.round((reviewedCards / totalCards) * 100) : 0
-    };
-  }, [flashcards, progressMap]);
 
   console.log("✅ EnhancedFlashcardSetView: Rendering main content", {
     currentSet: currentSet?.name,
