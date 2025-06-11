@@ -79,14 +79,14 @@ export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps)
     setSelectedText('');
   }, []);
 
-  // Helper function to get error message
+  // Helper function to get error message safely
   const getErrorMessage = () => {
     const lastError = getLastError();
     if (lastError) {
       return lastError.message;
     }
     if (error) {
-      return typeof error === 'string' ? error : error.message || 'An error occurred';
+      return typeof error === 'string' ? error : 'An error occurred';
     }
     return null;
   };

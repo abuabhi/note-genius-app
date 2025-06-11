@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { StudyBreadcrumb } from './navigation/StudyBreadcrumb';
 import { NoteChatSidebar } from './chat/NoteChatSidebar';
 import { NoteChatToggle } from './chat/NoteChatToggle';
+import { FlashcardProvider } from '@/contexts/flashcards';
 
 interface NoteStudyViewProps {
   note: Note;
@@ -166,78 +167,80 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-mint-50/20">
-      <div className="max-w-7xl mx-auto p-4 space-y-6">
-        {/* Breadcrumb Navigation */}
-        <StudyBreadcrumb note={currentNote} />
+    <FlashcardProvider>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-mint-50/20">
+        <div className="max-w-7xl mx-auto p-4 space-y-6">
+          {/* Breadcrumb Navigation */}
+          <StudyBreadcrumb note={currentNote} />
 
-        {/* Main Study View Card */}
-        <Card className={`overflow-hidden transition-all duration-300 ${
-          isFullScreen ? 'fixed inset-0 z-50 rounded-none' : 'rounded-lg shadow-lg'
-        } ${isFullWidth ? 'w-full' : 'max-w-6xl mx-auto'} bg-white/95 backdrop-blur-sm border-mint-100`}>
-          
-          {/* Enhanced Header */}
-          <StudyViewHeader
-            note={currentNote}
-            fontSize={fontSize}
-            textAlign={textAlign}
-            isFullWidth={isFullWidth}
-            isFullScreen={isFullScreen}
-            isEditing={isEditing}
-            isSaving={isSaving}
-            editableTitle={editableTitle}
-            onIncreaseFontSize={handleIncreaseFontSize}
-            onDecreaseFontSize={handleDecreaseFontSize}
-            onChangeTextAlign={handleTextAlign}
-            onToggleWidth={toggleWidth}
-            onToggleFullScreen={toggleFullScreen}
-            onToggleEditing={toggleEditing}
-            onSave={handleSaveContent}
-            onTitleChange={handleTitleChange}
-            onEnhance={handleEnhancement}
-          />
+          {/* Main Study View Card */}
+          <Card className={`overflow-hidden transition-all duration-300 ${
+            isFullScreen ? 'fixed inset-0 z-50 rounded-none' : 'rounded-lg shadow-lg'
+          } ${isFullWidth ? 'w-full' : 'max-w-6xl mx-auto'} bg-white/95 backdrop-blur-sm border-mint-100`}>
+            
+            {/* Enhanced Header */}
+            <StudyViewHeader
+              note={currentNote}
+              fontSize={fontSize}
+              textAlign={textAlign}
+              isFullWidth={isFullWidth}
+              isFullScreen={isFullScreen}
+              isEditing={isEditing}
+              isSaving={isSaving}
+              editableTitle={editableTitle}
+              onIncreaseFontSize={handleIncreaseFontSize}
+              onDecreaseFontSize={handleDecreaseFontSize}
+              onChangeTextAlign={handleTextAlign}
+              onToggleWidth={toggleWidth}
+              onToggleFullScreen={toggleFullScreen}
+              onToggleEditing={toggleEditing}
+              onSave={handleSaveContent}
+              onTitleChange={handleTitleChange}
+              onEnhance={handleEnhancement}
+            />
 
-          {/* Enhanced Content View */}
-          <NoteStudyViewContent
-            note={currentNote}
-            isEditing={isEditing}
-            fontSize={fontSize}
-            textAlign={textAlign}
-            editableContent={editableContent}
-            selectedTags={selectedTags}
-            availableTags={availableTags}
-            isSaving={isSaving}
-            statsLoading={false}
-            currentUsage={currentUsage}
-            monthlyLimit={monthlyLimit}
-            handleContentChange={handleContentChange}
-            handleSaveContent={handleSaveContent}
-            toggleEditing={toggleEditing}
-            handleEnhanceContent={handleEnhanceContent}
-            setSelectedTags={setSelectedTags}
-            handleRetryEnhancement={handleRetryEnhancement}
-            hasReachedLimit={hasReachedLimit()}
-            fetchUsageStats={fetchUsageStats}
-            onNoteUpdate={onNoteUpdate}
-            activeContentType={activeContentType}
-            onActiveContentTypeChange={handleActiveContentTypeChange}
-            isEditOperation={isProcessing}
-          />
-        </Card>
+            {/* Enhanced Content View */}
+            <NoteStudyViewContent
+              note={currentNote}
+              isEditing={isEditing}
+              fontSize={fontSize}
+              textAlign={textAlign}
+              editableContent={editableContent}
+              selectedTags={selectedTags}
+              availableTags={availableTags}
+              isSaving={isSaving}
+              statsLoading={false}
+              currentUsage={currentUsage}
+              monthlyLimit={monthlyLimit}
+              handleContentChange={handleContentChange}
+              handleSaveContent={handleSaveContent}
+              toggleEditing={toggleEditing}
+              handleEnhanceContent={handleEnhanceContent}
+              setSelectedTags={setSelectedTags}
+              handleRetryEnhancement={handleRetryEnhancement}
+              hasReachedLimit={hasReachedLimit()}
+              fetchUsageStats={fetchUsageStats}
+              onNoteUpdate={onNoteUpdate}
+              activeContentType={activeContentType}
+              onActiveContentTypeChange={handleActiveContentTypeChange}
+              isEditOperation={isProcessing}
+            />
+          </Card>
+        </div>
+
+        {/* Chat Components */}
+        <NoteChatToggle 
+          isOpen={isChatOpen}
+          onToggle={() => setIsChatOpen(!isChatOpen)}
+        />
+        
+        <NoteChatSidebar
+          note={currentNote}
+          isOpen={isChatOpen}
+          onClose={() => setIsChatOpen(false)}
+        />
       </div>
-
-      {/* Chat Components */}
-      <NoteChatToggle 
-        isOpen={isChatOpen}
-        onToggle={() => setIsChatOpen(!isChatOpen)}
-      />
-      
-      <NoteChatSidebar
-        note={currentNote}
-        isOpen={isChatOpen}
-        onClose={() => setIsChatOpen(false)}
-      />
-    </div>
+    </FlashcardProvider>
   );
 };
 
