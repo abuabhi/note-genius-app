@@ -10,7 +10,7 @@ export const useCreateQuiz = () => {
     mutationFn: async (newQuiz: {
       title: string;
       description?: string;
-      category_id?: string;
+      subject_id?: string;
       section_id?: string;
       grade_id?: string;
       country_id?: string;
@@ -37,7 +37,7 @@ export const useCreateQuiz = () => {
         .insert({
           title: newQuiz.title,
           description: newQuiz.description || null,
-          category_id: newQuiz.category_id || null,
+          subject_id: newQuiz.subject_id || null,
           section_id: newQuiz.section_id || null,
           grade_id: newQuiz.grade_id || null,
           country_id: newQuiz.country_id || null,

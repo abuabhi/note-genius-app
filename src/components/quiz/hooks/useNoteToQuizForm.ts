@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 const noteToQuizFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
-  categoryId: z.string().optional(),
+  subjectId: z.string().optional(),
   questions: z.array(z.object({
     question: z.string().min(1, "Question is required"),
     explanation: z.string().optional(),
@@ -154,7 +155,7 @@ export const useNoteToQuizForm = ({
       await createQuiz({
         title: data.title,
         description: data.description,
-        category_id: data.categoryId,
+        subject_id: data.subjectId,
         source_type: sourceType,
         source_id: sourceId,
         is_public: false,

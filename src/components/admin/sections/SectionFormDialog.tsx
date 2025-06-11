@@ -19,7 +19,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Section } from "@/types/admin";
-import { SubjectCategory } from "@/types/flashcard";
+
+// Import AcademicSubject type from the database context
+interface AcademicSubject {
+  id: string;
+  name: string;
+  parent_id?: string;
+  level?: number;
+  grade_id?: string;
+  country_id?: string;
+  education_system?: string;
+  created_at: string;
+  updated_at: string;
+}
 
 interface SectionFormDialogProps {
   open: boolean;
@@ -32,7 +44,7 @@ interface SectionFormDialogProps {
   description: string;
   setDescription: (description: string) => void;
   onSubmit: (e: React.FormEvent) => void;
-  categories: SubjectCategory[];
+  categories: AcademicSubject[];
 }
 
 const SectionFormDialog = ({
@@ -84,9 +96,9 @@ const SectionFormDialog = ({
                   <SelectValue placeholder="Select a subject" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
+                  {categories.map((academicSubject) => (
+                    <SelectItem key={academicSubject.id} value={academicSubject.id}>
+                      {academicSubject.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -52,12 +52,12 @@ export const useQuizFormState = ({
   
   const [filteredSections, setFilteredSections] = useState(sections || []);
   
-  const watchedSubject = form.watch('subjectId'); // Changed from categoryId to subjectId
+  const watchedSubject = form.watch('subjectId');
   
   useEffect(() => {
     if (watchedSubject && sections) {
       setFilteredSections(sections.filter(section => 
-        section.academic_subject_id === watchedSubject // Changed from subject_id to academic_subject_id
+        section.subject_id === watchedSubject
       ));
     } else {
       setFilteredSections(sections || []);

@@ -104,7 +104,7 @@ export const NoteToQuizForm = ({
 
               <FormField
                 control={form.control}
-                name="categoryId"
+                name="subjectId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-mint-700">Subject</FormLabel>

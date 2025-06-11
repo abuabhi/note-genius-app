@@ -20,13 +20,12 @@ export interface NoteCSVRow {
   description: string;
   content: string;
   subject: string;
-  category: string;
   source_type: string;
   tags: string;
   user_email: string;
 }
 
-// Restore missing types that other components depend on
+// Academic data types
 export interface Grade {
   id: string;
   name: string;
