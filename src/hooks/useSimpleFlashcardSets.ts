@@ -55,12 +55,28 @@ export const useSimpleFlashcardSets = () => {
     return flashcardSets.filter(set => set.subject_id === subjectId);
   };
 
+  const deleteFlashcardSet = async (setId: string) => {
+    const { error } = await supabase
+      .from('flashcard_sets')
+      .delete()
+      .eq('id', setId);
+
+    if (error) {
+      console.error('Error deleting flashcard set:', error);
+      throw error;
+    }
+
+    refetch();
+  };
+
   return {
     flashcardSets,
     isLoading,
+    loading: isLoading,
     error,
     refetch,
     getFlashcardsForSet,
-    filterSetsBySubject
+    filterSetsBySubject,
+    deleteFlashcardSet
   };
 };

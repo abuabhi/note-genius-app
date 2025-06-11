@@ -39,7 +39,7 @@ const SectionsTable = ({ sections, isLoading, onEdit, onDelete }: SectionsTableP
         <TableRow key={section.id}>
           <TableCell>{section.name}</TableCell>
           <TableCell>
-            {section.academic_subjects?.name || 'No subject'}
+            {section.subject?.name || 'No subject'}
           </TableCell>
           <TableCell>{section.description || '-'}</TableCell>
           <TableCell>

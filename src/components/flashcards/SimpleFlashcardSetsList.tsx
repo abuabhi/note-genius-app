@@ -46,7 +46,7 @@ const SimpleFlashcardSetsList = () => {
   if (error) {
     return (
       <div className="text-center py-8">
-        <p className="text-red-600 mb-4">Error: {error}</p>
+        <p className="text-red-600 mb-4">Error: {error.message}</p>
         <Button onClick={() => window.location.reload()}>Retry</Button>
       </div>
     );

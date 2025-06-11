@@ -60,3 +60,19 @@ export const seedDatabase = async () => {
     console.error('Error seeding database:', error);
   }
 };
+
+export const runDatabaseSeed = async () => {
+  try {
+    await seedDatabase();
+    return {
+      categories: { success: true, message: "Academic subjects seeded successfully" },
+      sets: { success: true, message: "Database initialization completed" }
+    };
+  } catch (error) {
+    console.error('Error running database seed:', error);
+    return {
+      categories: { success: false, message: "Failed to seed academic subjects" },
+      sets: { success: false, message: "Database initialization failed" }
+    };
+  }
+};
