@@ -1,3 +1,4 @@
+
 import { useState, useMemo, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,11 +54,11 @@ const EnhancedFlashcardSetView = () => {
   const params = useParams();
   const navigate = useNavigate();
   
-  // Extract setId from params - try both 'setId' and 'id' for flexibility
+  // Extract setId from params
   const setId = params.setId || params.id;
   
-  console.log("EnhancedFlashcardSetView: URL params:", params);
-  console.log("EnhancedFlashcardSetView: Extracted setId:", setId);
+  console.log("🔍 EnhancedFlashcardSetView: Component mounting with params:", params);
+  console.log("🔍 EnhancedFlashcardSetView: Extracted setId:", setId);
 
   const { currentSet, fetchFlashcardsInSet, deleteFlashcard, setCurrentSet, flashcardSets, fetchFlashcardSets, loading } = useFlashcards();
   const { progressMap, fetchLearningProgress, isLoading: progressLoading } = useLearningProgress();
@@ -70,6 +71,23 @@ const EnhancedFlashcardSetView = () => {
   const [filterDifficulty, setFilterDifficulty] = useState("all");
   const [filterReviewStatus, setFilterReviewStatus] = useState("all");
   const [deletingCard, setDeletingCard] = useState<string | null>(null);
+
+  // Early return for missing setId
+  if (!setId) {
+    console.error("❌ EnhancedFlashcardSetView: No setId in URL params");
+    return (
+      <div className="container mx-auto p-6">
+        <div className="bg-red-50 border border-red-200 rounded-md p-6 text-center">
+          <h2 className="text-xl font-semibold text-red-700 mb-2">Invalid URL</h2>
+          <p className="mb-4 text-red-600">No flashcard set ID provided in the URL.</p>
+          <Button onClick={() => navigate("/flashcards")}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Flashcards
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   // Function to get card progress from learning progress data
   const getCardProgress = (cardId: string) => {
@@ -98,14 +116,7 @@ const EnhancedFlashcardSetView = () => {
 
   useEffect(() => {
     const loadSetAndFlashcards = async () => {
-      if (!setId) {
-        console.error("EnhancedFlashcardSetView: No setId provided in params:", params);
-        setError("No flashcard set ID provided");
-        setLocalLoading(false);
-        return;
-      }
-
-      console.log("EnhancedFlashcardSetView: Starting load for setId:", setId);
+      console.log("🚀 EnhancedFlashcardSetView: Starting load for setId:", setId);
       setLocalLoading(true);
       setError(null);
 
@@ -114,29 +125,29 @@ const EnhancedFlashcardSetView = () => {
         let targetSet = currentSet?.id === setId ? currentSet : flashcardSets.find(set => set.id === setId);
         
         if (!targetSet) {
-          console.log("EnhancedFlashcardSetView: Set not found, fetching all sets...");
+          console.log("🔄 EnhancedFlashcardSetView: Set not found, fetching all sets...");
           await fetchFlashcardSets();
         }
 
         // Fetch flashcards for this set (this also sets the current set)
-        console.log("EnhancedFlashcardSetView: Fetching flashcards for setId:", setId);
+        console.log("🔄 EnhancedFlashcardSetView: Fetching flashcards for setId:", setId);
         const cards = await fetchFlashcardsInSet(setId);
         
         if (!cards) {
           throw new Error("Failed to fetch flashcards");
         }
 
-        console.log("EnhancedFlashcardSetView: Successfully loaded", cards.length, "flashcards");
+        console.log("✅ EnhancedFlashcardSetView: Successfully loaded", cards.length, "flashcards");
         setFlashcards(cards);
         
         // Fetch learning progress for cards
         if (cards.length > 0) {
-          console.log("EnhancedFlashcardSetView: Fetching learning progress...");
+          console.log("🔄 EnhancedFlashcardSetView: Fetching learning progress...");
           await fetchLearningProgress(cards.map(card => card.id));
         }
 
       } catch (err) {
-        console.error("EnhancedFlashcardSetView: Error loading data:", err);
+        console.error("❌ EnhancedFlashcardSetView: Error loading data:", err);
         setError(err instanceof Error ? err.message : "Failed to load flashcard set");
       } finally {
         setLocalLoading(false);
@@ -146,26 +157,9 @@ const EnhancedFlashcardSetView = () => {
     loadSetAndFlashcards();
   }, [setId, fetchFlashcardsInSet, fetchFlashcardSets, fetchLearningProgress]);
 
-  // Early return for missing setId
-  if (!setId) {
-    console.error("EnhancedFlashcardSetView: No setId in URL params");
-    return (
-      <div className="container mx-auto p-6">
-        <div className="bg-red-50 border border-red-200 rounded-md p-6 text-center">
-          <h2 className="text-xl font-semibold text-red-700 mb-2">Invalid URL</h2>
-          <p className="mb-4 text-red-600">No flashcard set ID provided in the URL.</p>
-          <Button onClick={() => navigate("/flashcards")}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Flashcards
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   // Error state
   if (error) {
-    console.log("EnhancedFlashcardSetView: Rendering error state:", error);
+    console.log("❌ EnhancedFlashcardSetView: Rendering error state:", error);
     return (
       <div className="container mx-auto p-6">
         <div className="bg-red-50 border border-red-200 rounded-md p-6 text-center">
@@ -193,7 +187,7 @@ const EnhancedFlashcardSetView = () => {
 
   // Loading state
   if (localLoading || loading.sets) {
-    console.log("EnhancedFlashcardSetView: Rendering loading state");
+    console.log("⏳ EnhancedFlashcardSetView: Rendering loading state");
     return (
       <div className="container mx-auto p-6">
         <div className="mb-6">
@@ -313,7 +307,7 @@ const EnhancedFlashcardSetView = () => {
     };
   }, [flashcards, progressMap]);
 
-  console.log("EnhancedFlashcardSetView: Rendering main content", {
+  console.log("✅ EnhancedFlashcardSetView: Rendering main content", {
     currentSet: currentSet?.name,
     flashcardsCount: flashcards.length,
     setStats
@@ -349,7 +343,7 @@ const EnhancedFlashcardSetView = () => {
           </Button>
           
           <Button variant="outline" asChild>
-            <Link to={`/flashcards/${setId}/create`}>
+            <Link to={`/flashcards/create?setId=${setId}`}>
               <Plus className="h-4 w-4 mr-2" />
               Add Card
             </Link>
@@ -478,7 +472,7 @@ const EnhancedFlashcardSetView = () => {
             <h3 className="text-xl font-semibold text-mint-900 mb-2">No flashcards yet</h3>
             <p className="text-mint-700 mb-6">Add your first flashcard to start studying!</p>
             <Button asChild>
-              <Link to={`/flashcards/${setId}/create`}>
+              <Link to={`/flashcards/create?setId=${setId}`}>
                 <Plus className="h-4 w-4 mr-2" />
                 Create First Card
               </Link>
@@ -526,7 +520,7 @@ const EnhancedFlashcardSetView = () => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link to={`/flashcards/${setId}/card/${card.id}/edit`}>
+                          <Link to={`/flashcards/edit/${card.id}`}>
                             <Edit className="h-4 w-4 mr-2" />
                             Edit
                           </Link>
