@@ -144,28 +144,28 @@ export const fetchFlashcardSets = async (state: FlashcardState): Promise<Flashca
 };
 
 /**
- * Fetch categories for flashcard sets
+ * Fetch academic subjects for flashcard sets
  */
-export const fetchCategories = async (state: FlashcardState) => {
-  const { setLoading, setCategories } = state;
+export const fetchAcademicSubjects = async (state: FlashcardState) => {
+  const { setLoading, setAcademicSubjects } = state;
   
   try {
-    setLoading(prev => ({ ...prev, categories: true }));
+    setLoading(prev => ({ ...prev, academicSubjects: true }));
     
     const { data, error } = await supabase
-      .from('subject_categories')
+      .from('academic_subjects') // Changed from subject_categories to academic_subjects
       .select('*')
       .order('name');
       
     if (error) throw error;
     
-    setCategories(data);
+    setAcademicSubjects(data);
     return data;
   } catch (error) {
-    console.error('fetchCategories: Error fetching subject categories:', error);
-    toast.error('Failed to load categories');
+    console.error('fetchAcademicSubjects: Error fetching academic subjects:', error);
+    toast.error('Failed to load academic subjects');
     return [];
   } finally {
-    setLoading(prev => ({ ...prev, categories: false }));
+    setLoading(prev => ({ ...prev, academicSubjects: false }));
   }
 };
