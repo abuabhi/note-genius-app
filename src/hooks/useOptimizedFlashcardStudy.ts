@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -75,11 +76,14 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
       }
 
       if (!flashcardData || flashcardData.length === 0) {
+        console.log('📝 No flashcards found in set:', setId);
         return {
           flashcards: [],
           stats: { studiedToday: 0, masteredCount: 0, totalCards: 0 }
         };
       }
+
+      console.log('📋 Found flashcards in set:', flashcardData.length);
 
       // Step 2: Get progress data separately for the user
       const flashcardIds = flashcardData.map(item => item.flashcards.id);
@@ -134,23 +138,57 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
         };
       });
 
-      // Step 4: Filter based on mode
+      console.log('📊 All cards with progress:', allCards.map(c => ({
+        id: c.id.slice(0, 8),
+        front: c.front_content?.slice(0, 30),
+        times_seen: c.times_seen,
+        is_known: c.is_known,
+        confidence_level: c.confidence_level,
+        last_reviewed: c.last_reviewed_at ? 'Yes' : 'No'
+      })));
+
+      // Step 4: Filter based on mode - SIMPLIFIED FILTERING
       let filteredCards = allCards;
+      
       if (mode === 'review') {
+        // Review mode: cards that need review (not well known or difficult)
         filteredCards = allCards.filter(card => {
+          // Include cards that haven't been reviewed yet
           if (!card.last_reviewed_at) return true;
+          // Include difficult cards
           if (card.is_difficult) return true;
+          // Include cards with low mastery
           if (card.mastery_level && card.mastery_level < 1) return true;
-          
+          // Include cards with low success rate
           const successRate = card.times_seen > 0 
             ? (card.times_correct / card.times_seen) * 100 
             : 0;
-          return successRate < 80;
+          if (successRate < 80) return true;
+          
+          return false;
         });
       } else if (mode === 'learn') {
+        // Learn mode: new cards and cards that need more confidence
         filteredCards = allCards.filter(card => 
-          !card.last_reviewed_at || card.confidence_level < 3
+          !card.last_reviewed_at || card.confidence_level < 3 || !card.is_known
         );
+      } else {
+        // Test mode or default: include all cards
+        filteredCards = allCards;
+      }
+
+      console.log('🎯 Filtered cards for mode', mode, ':', filteredCards.length, 'out of', allCards.length);
+      console.log('🎯 Filtered cards details:', filteredCards.map(c => ({
+        id: c.id.slice(0, 8),
+        front: c.front_content?.slice(0, 30),
+        needsReview: mode === 'review' ? 'included' : 'n/a',
+        needsLearning: mode === 'learn' ? 'included' : 'n/a'
+      })));
+
+      // If no cards match the filter criteria, include all cards for study
+      if (filteredCards.length === 0 && allCards.length > 0) {
+        console.log('🔄 No cards matched filter, including all cards for study');
+        filteredCards = allCards;
       }
 
       // Step 5: Calculate stats with aligned criteria
