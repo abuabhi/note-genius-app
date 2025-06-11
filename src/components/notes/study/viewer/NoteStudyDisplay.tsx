@@ -8,16 +8,8 @@ interface NoteStudyDisplayProps {
   note: Note;
   fontSize: number;
   textAlign: TextAlignType;
-  statsLoading: boolean;
-  currentUsage: number;
-  monthlyLimit: number;
-  handleEnhanceContent: (enhancementType: string) => void;
-  handleRetryEnhancement: (enhancementType: string) => void;
-  hasReachedLimit: boolean;
-  fetchUsageStats: () => void;
-  onNoteUpdate: (updatedData: Partial<Note>) => void;
+  handleRetryEnhancement: (enhancementType: string) => Promise<void>;
   activeContentType: string;
-  onActiveContentTypeChange: (type: string) => void;
   isEditOperation: boolean;
 }
 
