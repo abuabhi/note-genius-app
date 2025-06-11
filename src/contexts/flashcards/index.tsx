@@ -58,7 +58,7 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     setLoading(newLoading);
   }, []);
 
-  // Enhanced setFlashcardSets with user validation
+  // Enhanced setFlashcardSets with user validation and immediate state update
   const enhancedSetFlashcardSets = useCallback((sets: FlashcardSet[] | ((prev: FlashcardSet[]) => FlashcardSet[])) => {
     if (!user) {
       console.warn('FlashcardProvider: Attempted to set flashcard sets without authenticated user');
@@ -118,6 +118,46 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
   // Get combined operations that include recordFlashcardReview and getFlashcardProgress
   const combinedOperations = combineFlashcardOperations(state);
 
+  // Enhanced fetchFlashcardSets that forces a state refresh
+  const enhancedFetchFlashcardSets = useCallback(async () => {
+    console.log('FlashcardProvider: Enhanced fetch flashcard sets called');
+    try {
+      const result = await flashcardSetsOperations.fetchFlashcardSets();
+      // The state should already be updated by the operation, but we can log for debugging
+      console.log('FlashcardProvider: Fetch completed, current sets count:', flashcardSets.length);
+      return result;
+    } catch (error) {
+      console.error('FlashcardProvider: Error in enhanced fetch:', error);
+      throw error;
+    }
+  }, [flashcardSetsOperations, flashcardSets.length]);
+
+  // Enhanced createFlashcardSet that immediately updates state
+  const enhancedCreateFlashcardSet = useCallback(async (setData: any) => {
+    console.log('FlashcardProvider: Enhanced create flashcard set called');
+    try {
+      const newSet = await flashcardSetsOperations.createFlashcardSet(setData);
+      
+      // Immediately update the local state to ensure it's fresh
+      enhancedSetFlashcardSets(prev => {
+        // Check if the set already exists to prevent duplicates
+        const exists = prev.some(s => s.id === newSet.id);
+        if (exists) {
+          console.log('FlashcardProvider: Set already exists in state, not adding duplicate');
+          return prev;
+        }
+        
+        console.log('FlashcardProvider: Adding new set to state');
+        return [...prev, newSet];
+      });
+      
+      return newSet;
+    } catch (error) {
+      console.error('FlashcardProvider: Error in enhanced create:', error);
+      throw error;
+    }
+  }, [flashcardSetsOperations, enhancedSetFlashcardSets]);
+
   // Create stable context value with all required properties
   const contextValue: FlashcardContextType = useMemo(() => ({
     // State properties
@@ -139,6 +179,10 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     setLoading: stableSetLoading,
     user,
     
+    // Enhanced operations
+    fetchFlashcardSets: enhancedFetchFlashcardSets,
+    createFlashcardSet: enhancedCreateFlashcardSet,
+    
     // Operations from hooks
     ...flashcardOperations,
     ...flashcardSetsOperations,
@@ -146,7 +190,11 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     ...libraryOperations,
     ...studyOperations,
     recordFlashcardReview: combinedOperations.recordFlashcardReview,
-    getFlashcardProgress: combinedOperations.getFlashcardProgress
+    getFlashcardProgress: combinedOperations.getFlashcardProgress,
+    
+    // Override with enhanced versions
+    fetchFlashcardSets: enhancedFetchFlashcardSets,
+    createFlashcardSet: enhancedCreateFlashcardSet
   }), [
     flashcards,
     flashcardSets,
@@ -158,6 +206,8 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     enhancedSetFlashcardSets,
     stableSetLoading,
     user,
+    enhancedFetchFlashcardSets,
+    enhancedCreateFlashcardSet,
     flashcardOperations,
     flashcardSetsOperations,
     categoryOperations,

@@ -54,6 +54,14 @@ const FlashcardSetCard = ({
   needsPracticeCards = 0,
   totalCards = 0,
 }: FlashcardSetCardProps) => {
+  // Ensure we have a valid set ID for routing
+  const setId = set.id;
+  
+  if (!setId) {
+    console.error('FlashcardSetCard: Missing set ID for set:', set.name);
+    return null;
+  }
+
   return (
     <Card className="group hover:shadow-lg transition-all duration-200 border-mint-100">
       <CardHeader className="pb-3">
@@ -83,7 +91,7 @@ const FlashcardSetCard = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem asChild>
-                <Link to={`/flashcards/${set.id}/edit`}>
+                <Link to={`/flashcards/sets/${setId}/edit`}>
                   <Edit className="h-4 w-4 mr-2" />
                   Edit Set
                 </Link>
@@ -105,7 +113,7 @@ const FlashcardSetCard = ({
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={() => onDelete(set.id)}
+                      onClick={() => onDelete(setId)}
                       className="bg-red-600 hover:bg-red-700"
                       disabled={isDeleting}
                     >
@@ -168,14 +176,14 @@ const FlashcardSetCard = ({
           {/* Action Buttons */}
           <div className="flex gap-2">
             <Button asChild className="flex-1 bg-mint-500 hover:bg-mint-600" size="sm">
-              <Link to={`/flashcards/${set.id}/study`}>
+              <Link to={`/flashcards/sets/${setId}/study`}>
                 <Play className="h-4 w-4 mr-2" />
                 Study
               </Link>
             </Button>
             
             <Button asChild variant="outline" className="flex-1 border-mint-200 hover:bg-mint-50" size="sm">
-              <Link to={`/flashcards/${set.id}`}>
+              <Link to={`/flashcards/sets/${setId}`}>
                 <BookOpen className="h-4 w-4 mr-2" />
                 View
               </Link>

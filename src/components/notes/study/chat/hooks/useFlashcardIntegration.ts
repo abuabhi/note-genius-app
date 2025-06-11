@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { Note } from '@/types/note';
 import { useFlashcards } from '@/contexts/flashcards';
@@ -12,15 +13,19 @@ export const useFlashcardIntegration = (note: Note) => {
   } | null>(null);
   const [lastCreatedFlashcardId, setLastCreatedFlashcardId] = useState<string | null>(null);
 
-  const { createFlashcard, flashcardSets, createFlashcardSet } = useFlashcards();
+  const { createFlashcard, flashcardSets, createFlashcardSet, fetchFlashcardSets } = useFlashcards();
 
   const findOrCreateFlashcardSet = useCallback(async (note: Note) => {
     console.log('Finding or creating flashcard set for note:', note.title);
-    console.log('Available flashcard sets:', flashcardSets.map(s => ({ id: s.id, name: s.name, subject: s.subject })));
+    
+    // Force refresh the flashcard sets to get the latest data
+    await fetchFlashcardSets();
+    
+    console.log('Available flashcard sets after refresh:', flashcardSets.map(s => ({ id: s.id, name: s.name, subject: s.subject })));
 
     // 1. Try exact note title match
     let existingSet = flashcardSets.find(set => 
-      set.name.toLowerCase() === note.title.toLowerCase()
+      set.name.toLowerCase().trim() === note.title.toLowerCase().trim()
     );
 
     if (existingSet) {
@@ -31,7 +36,7 @@ export const useFlashcardIntegration = (note: Note) => {
     // 2. Try note title + " Flashcards" match
     const noteFlashcardsName = `${note.title} Flashcards`;
     existingSet = flashcardSets.find(set => 
-      set.name.toLowerCase() === noteFlashcardsName.toLowerCase()
+      set.name.toLowerCase().trim() === noteFlashcardsName.toLowerCase().trim()
     );
 
     if (existingSet) {
@@ -39,15 +44,16 @@ export const useFlashcardIntegration = (note: Note) => {
       return existingSet;
     }
 
-    // 3. Try category/subject match (only if note has a category)
+    // 3. Try category/subject match (only if note has a category and fewer than 3 sets exist for this subject)
     if (note.category) {
-      existingSet = flashcardSets.find(set => 
-        set.subject?.toLowerCase() === note.category.toLowerCase()
+      const subjectSets = flashcardSets.filter(set => 
+        set.subject?.toLowerCase().trim() === note.category.toLowerCase().trim()
       );
-
-      if (existingSet) {
-        console.log('Found category/subject match:', existingSet.name);
-        return existingSet;
+      
+      // Only use existing subject set if there are very few sets to avoid confusion
+      if (subjectSets.length === 1) {
+        console.log('Found single category/subject match:', subjectSets[0].name);
+        return subjectSets[0];
       }
     }
 
@@ -63,30 +69,35 @@ export const useFlashcardIntegration = (note: Note) => {
 
       console.log('Created new flashcard set:', newSet);
       toast.success(`Created new flashcard set: "${noteFlashcardsName}"`);
+      
+      // Force refresh after creating to ensure state is up to date
+      await fetchFlashcardSets();
+      
       return newSet;
     } catch (error) {
       console.error('Failed to create flashcard set:', error);
       throw new Error('Failed to create flashcard set');
     }
-  }, [note, flashcardSets, createFlashcardSet]);
+  }, [note, flashcardSets, createFlashcardSet, fetchFlashcardSets]);
 
   const getSuggestedSetId = useCallback(() => {
     // Try to find the best matching set
     const exactMatch = flashcardSets.find(set => 
-      set.name.toLowerCase() === note.title.toLowerCase()
+      set.name.toLowerCase().trim() === note.title.toLowerCase().trim()
     );
     if (exactMatch) return exactMatch.id;
 
     const titleMatch = flashcardSets.find(set => 
-      set.name.toLowerCase() === `${note.title} Flashcards`.toLowerCase()
+      set.name.toLowerCase().trim() === `${note.title} Flashcards`.toLowerCase().trim()
     );
     if (titleMatch) return titleMatch.id;
 
     if (note.category) {
-      const categoryMatch = flashcardSets.find(set => 
-        set.subject?.toLowerCase() === note.category.toLowerCase()
+      const categoryMatches = flashcardSets.filter(set => 
+        set.subject?.toLowerCase().trim() === note.category.toLowerCase().trim()
       );
-      if (categoryMatch) return categoryMatch.id;
+      // Only suggest if there's exactly one match to avoid confusion
+      if (categoryMatches.length === 1) return categoryMatches[0].id;
     }
 
     return undefined;
