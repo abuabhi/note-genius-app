@@ -30,7 +30,7 @@ interface FlashcardSetSelectionModalProps {
   onClose: () => void;
   onSelectSet: (setId: string) => void;
   noteTitle: string;
-  noteCategory?: string;
+  noteSubject?: string;
   suggestedSetId?: string;
 }
 
@@ -39,7 +39,7 @@ export const FlashcardSetSelectionModal = ({
   onClose,
   onSelectSet,
   noteTitle,
-  noteCategory,
+  noteSubject,
   suggestedSetId
 }: FlashcardSetSelectionModalProps) => {
   const { flashcardSets, createFlashcardSet } = useFlashcards();
@@ -50,7 +50,7 @@ export const FlashcardSetSelectionModal = ({
   // Create new set form state
   const [newSetName, setNewSetName] = useState(`${noteTitle} Flashcards`);
   const [newSetDescription, setNewSetDescription] = useState(`Flashcards created from "${noteTitle}" note`);
-  const [newSetSubject, setNewSetSubject] = useState(noteCategory || 'General');
+  const [newSetSubject, setNewSetSubject] = useState(noteSubject || 'General');
 
   const handleSelectSet = () => {
     if (selectedSetId) {
