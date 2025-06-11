@@ -61,36 +61,35 @@ export async function processWithOpenAI(imageUrl: string, language: string): Pro
                    
                    MARKDOWN FORMATTING REQUIREMENTS:
                    - Output ONLY clean, properly formatted Markdown - NO code blocks, NO backticks, NO \`\`\`markdown wrapper
-                   - Transform numbered lists (1., 2., 3.) into proper Markdown: 1. 2. 3.
+                   - Transform numbered lists (1., 2., 3.) into proper Markdown numbered lists: 1. 2. 3.
                    - Convert bullet points or dashes into Markdown bullets: - 
-                   - Format section headers with appropriate # ## ### levels based on hierarchy
+                   - Use headers (# ## ###) ONLY for actual titles/headings, NOT for numbered items
                    - Use **bold** for emphasis where handwriting indicates importance (underlined, circled, or heavy text)
                    - Use proper line spacing between sections (blank lines)
                    - Format mathematical content with proper notation
                    - Preserve hierarchical structure and relationships
                    
-                   OUTPUT RULES:
+                   CRITICAL RULES:
+                   - NEVER use # for numbered list items (1, 2, 3, etc.)
+                   - Numbered sequences should use Markdown list syntax: "1. Item text"
+                   - Only use # for actual document titles or major section headers
                    - Extract ALL visible text with maximum accuracy
                    - Return ONLY the formatted Markdown content - no explanations, no code block wrapper
                    - Maintain original content structure but enhance with proper Markdown syntax
-                   - Use context to interpret unclear handwritten characters
-                   - For lists, ensure proper Markdown formatting with appropriate spacing
-                   - For headers/titles, use # levels based on visual hierarchy and importance
-                   - Add blank lines between different sections or topics for readability
-                   - If mathematical content exists, format it clearly and readably
                    
                    Language context: ${language}
                    
-                   EXAMPLE INPUT: Handwritten "My Notes 1. First item 2. Second item"
-                   EXAMPLE OUTPUT:
-                   # My Notes
+                   EXAMPLE INPUT: Handwritten "Shopping List 1. Milk 2. Bread 3. Eggs"
+                   CORRECT OUTPUT:
+                   # Shopping List
                    
-                   1. First item
-                   2. Second item
+                   1. Milk
+                   2. Bread
+                   3. Eggs
                    
-                   EXAMPLE INPUT: Handwritten "Important - point one - point two"
-                   EXAMPLE OUTPUT:
-                   # Important
+                   EXAMPLE INPUT: Handwritten "Notes - point one - point two"
+                   CORRECT OUTPUT:
+                   # Notes
                    
                    - Point one
                    - Point two`
@@ -100,7 +99,7 @@ export async function processWithOpenAI(imageUrl: string, language: string): Pro
           content: [
             {
               type: "text",
-              text: "Please transcribe all text from this image and format it as clean, structured Markdown. Return ONLY the formatted Markdown content without any code block wrappers. Convert handwritten lists, headers, and sections into proper Markdown syntax while preserving the original meaning and structure:"
+              text: "Please transcribe all text from this image and format it as clean, structured Markdown. Return ONLY the formatted Markdown content without any code block wrappers. Convert handwritten lists and sections into proper Markdown syntax while preserving the original meaning. Remember: use # only for actual titles/headers, not for numbered list items:"
             },
             {
               type: "image_url",
@@ -157,11 +156,13 @@ export async function processWithOpenAI(imageUrl: string, language: string): Pro
       throw new Error("OpenAI returned empty text content");
     }
     
-    // Post-process to clean up any remaining code block wrappers
+    // Post-process to clean up any remaining code block wrappers and fix numbering issues
     extractedText = extractedText
       .replace(/^```markdown\s*\n?/i, '')  // Remove opening markdown code block
       .replace(/\n?```\s*$/i, '')          // Remove closing code block
       .replace(/^```\s*\n?/i, '')          // Remove any generic opening code block
+      .replace(/^# (\d+\.)/gm, '$1')       // Fix: Convert "# 1." to "1." (remove # from numbered items)
+      .replace(/^# (\d+\))/gm, '$1')       // Fix: Convert "# 1)" to "1)" (remove # from numbered items)
       .trim();
     
     console.log(`OpenAI extracted and cleaned text length: ${extractedText.length} characters`);

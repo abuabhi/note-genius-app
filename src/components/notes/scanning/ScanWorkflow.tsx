@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileText, Loader2 } from "lucide-react";
@@ -26,7 +27,7 @@ export const ScanWorkflow = ({
   setSelectedLanguage,
   isPremiumUser = false
 }: ScanWorkflowProps) => {
-  const [activeTab, setActiveTab] = useState("upload"); // Default to upload for better UX
+  const [activeTab, setActiveTab] = useState("upload");
   const [recognizedText, setRecognizedText] = useState("");
   const [noteTitle, setNoteTitle] = useState("");
   const [noteCategory, setNoteCategory] = useState("Uncategorized");
@@ -74,7 +75,6 @@ export const ScanWorkflow = ({
   const handleSingleImage = (imageUrl: string) => {
     console.log('Processing single image');
     handleImageCaptured(imageUrl);
-    // Don't force tab switch, let user stay where they are
   };
 
   const handleMultipleImages = (files: File[]) => {
@@ -86,6 +86,20 @@ export const ScanWorkflow = ({
   const handleDropEvent = (e: React.DragEvent) => {
     console.log('Drop event triggered in ScanWorkflow');
     handleDrop(e, handleSingleImage, handleMultipleImages);
+  };
+
+  // Handle auto-generated title
+  const handleTitleGenerated = (title: string) => {
+    if (!noteTitle) { // Only set if user hasn't manually entered a title
+      setNoteTitle(title);
+    }
+  };
+
+  // Handle auto-generated subject
+  const handleSubjectGenerated = (subject: string) => {
+    if (noteCategory === "Uncategorized") { // Only set if still default
+      setNoteCategory(subject);
+    }
   };
 
   const saveBatchAsNotes = async () => {
@@ -122,7 +136,10 @@ export const ScanWorkflow = ({
   };
 
   const handleSaveNote = async () => {
+    console.log('Save note clicked', { noteTitle, capturedImage, recognizedText });
+    
     if (!noteTitle.trim()) {
+      console.log('No title provided, cannot save');
       return;
     }
 
@@ -177,8 +194,16 @@ export const ScanWorkflow = ({
     );
   }
 
+  // Debug logging
+  console.log('ScanWorkflow render state:', {
+    capturedImage: !!capturedImage,
+    recognizedText: !!recognizedText,
+    noteTitle,
+    showSaveButton: !!(capturedImage && recognizedText)
+  });
+
   return (
-    <div className="flex flex-col h-full max-h-[calc(90vh-120px)]">
+    <div className="flex flex-col h-full">
       {/* Global drag overlay */}
       {isDragOver && (
         <div className="fixed inset-0 bg-blue-100 bg-opacity-90 flex items-center justify-center z-50 pointer-events-none">
@@ -201,7 +226,7 @@ export const ScanWorkflow = ({
       )}
 
       {/* Scrollable content area */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 max-h-[calc(100vh-300px)]">
         <div className="p-1">
           {!capturedImage ? (
             <SingleImageCapture
@@ -224,6 +249,8 @@ export const ScanWorkflow = ({
                 selectedLanguage={selectedLanguage}
                 onLanguageChange={setSelectedLanguage}
                 isPremiumUser={isPremiumUser}
+                onTitleGenerated={handleTitleGenerated}
+                onSubjectGenerated={handleSubjectGenerated}
               />
               
               {recognizedText && (
@@ -232,7 +259,7 @@ export const ScanWorkflow = ({
                   setTitle={setNoteTitle}
                   category={noteCategory}
                   setCategory={setNoteCategory}
-                  isDisabled={!capturedImage || !recognizedText}
+                  isDisabled={false}
                   detectedLanguage={getLanguageName(selectedLanguage)}
                 />
               )}
@@ -241,12 +268,12 @@ export const ScanWorkflow = ({
         </div>
       </ScrollArea>
       
-      {/* Fixed footer with Save button */}
+      {/* Fixed footer with Save button - Always show when we have image and text */}
       {capturedImage && recognizedText && (
-        <div className="border-t p-4 bg-white">
+        <div className="flex-shrink-0 border-t p-4 bg-white">
           <Button
             onClick={handleSaveNote}
-            disabled={!capturedImage || !recognizedText || !noteTitle || isSaving}
+            disabled={!noteTitle.trim() || isSaving}
             className="w-full bg-mint-500 hover:bg-mint-600 text-white"
           >
             {isSaving ? (
