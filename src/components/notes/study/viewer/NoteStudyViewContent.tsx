@@ -4,12 +4,13 @@ import { Note } from '@/types/note';
 import { UserSubject } from '@/types/subject';
 import { NoteStudyEditForm } from '../editor/NoteStudyEditForm';
 import { NoteStudyDisplay } from './NoteStudyDisplay';
+import { TextAlignType } from '../hooks/useStudyViewState';
 
 interface NoteStudyViewContentProps {
   note: Note;
   isEditing: boolean;
   fontSize: number;
-  textAlign: string;
+  textAlign: TextAlignType;
   editableContent: string;
   editableSubject: string;
   selectedTags: { id?: string; name: string; color: string }[];

@@ -25,35 +25,19 @@ export const NoteStudyDisplay: React.FC<NoteStudyDisplayProps> = ({
   note,
   fontSize,
   textAlign,
-  statsLoading,
-  currentUsage,
-  monthlyLimit,
-  handleEnhanceContent,
-  handleRetryEnhancement,
-  hasReachedLimit,
-  fetchUsageStats,
-  onNoteUpdate,
   activeContentType,
-  onActiveContentTypeChange,
+  handleRetryEnhancement,
   isEditOperation
 }) => {
   return (
     <div className="space-y-6">
       <EnhancementDisplayPanel
         note={note}
+        contentType={activeContentType as any}
         fontSize={fontSize}
         textAlign={textAlign}
-        statsLoading={statsLoading}
-        currentUsage={currentUsage}
-        monthlyLimit={monthlyLimit}
-        handleEnhanceContent={handleEnhanceContent}
-        handleRetryEnhancement={handleRetryEnhancement}
-        hasReachedLimit={hasReachedLimit}
-        fetchUsageStats={fetchUsageStats}
-        onNoteUpdate={onNoteUpdate}
-        activeContentType={activeContentType}
-        onActiveContentTypeChange={onActiveContentTypeChange}
-        isEditOperation={isEditOperation}
+        isLoading={isEditOperation}
+        onRetryEnhancement={handleRetryEnhancement}
       />
     </div>
   );
