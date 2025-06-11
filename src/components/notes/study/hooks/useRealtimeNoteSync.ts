@@ -53,8 +53,8 @@ export const useRealtimeNoteSync = (note: Note) => {
             ...payload.new,
             // Ensure proper date formatting
             date: new Date(payload.new.date).toISOString().split('T')[0],
-            // Map subject to category for backward compatibility
-            category: payload.new.subject || currentNote.category || 'Uncategorized',
+            // Map subject to subject for consistency
+            subject: payload.new.subject || currentNote.subject || 'Uncategorized',
             // Ensure tags are preserved
             tags: currentNote.tags || []
           };

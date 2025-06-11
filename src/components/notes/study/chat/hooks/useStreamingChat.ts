@@ -26,7 +26,7 @@ export const useStreamingChat = (note: Note) => {
       const noteContext = {
         title: note.title,
         content: note.content || note.description,
-        subject: note.category,
+        subject: note.subject,
         enhancedContent: {
           summary: note.summary,
           keyPoints: note.key_points,

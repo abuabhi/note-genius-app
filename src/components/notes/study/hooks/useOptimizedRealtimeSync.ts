@@ -71,7 +71,7 @@ export const useOptimizedRealtimeSync = (note: Note) => {
             ...realtimeNote,
             ...payload.new,
             date: new Date(payload.new.date).toISOString().split('T')[0],
-            category: payload.new.subject || realtimeNote.category || 'Uncategorized',
+            subject: payload.new.subject || realtimeNote.subject || 'Uncategorized',
             tags: realtimeNote.tags || []
           };
           

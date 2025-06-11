@@ -84,7 +84,7 @@ export const useOptimizedNotesWithSecurity = () => {
           title: updates.title || 'temp',
           description: updates.description || '',
           content: updates.content || '',
-          category: updates.category || 'temp',
+          subject: updates.subject || 'temp',
           tags: updates.tags || [],
           sourceType: updates.sourceType || 'manual'
         });

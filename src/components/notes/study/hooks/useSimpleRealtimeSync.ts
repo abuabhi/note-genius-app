@@ -97,8 +97,8 @@ export const useSimpleRealtimeSync = (initialNote: Note) => {
             ...payload.new,
             // Ensure proper date formatting
             date: payload.new.created_at ? new Date(payload.new.created_at).toISOString().split('T')[0] : currentNote.date,
-            // Map subject to category for backward compatibility
-            category: payload.new.subject || currentNote.category || 'Uncategorized',
+            // Map subject to subject for consistency
+            subject: payload.new.subject || currentNote.subject || 'Uncategorized',
             // Ensure tags are preserved
             tags: currentNote.tags || [],
             // CRITICAL: Ensure summary_status is properly set and validated

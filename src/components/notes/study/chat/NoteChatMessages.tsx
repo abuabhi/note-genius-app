@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from 'react';
 import { ChatUIMessage } from './types/noteChat';
 import { cn } from '@/lib/utils';
@@ -304,7 +305,7 @@ export const NoteChatMessages = ({
         onClose={handleModalClose}
         onSelectSet={handleSetSelection}
         noteTitle={note.title}
-        noteCategory={note.category}
+        noteSubject={note.subject}
         suggestedSetId={suggestedSetId}
       />
     </>
