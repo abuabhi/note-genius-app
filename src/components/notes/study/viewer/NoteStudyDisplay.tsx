@@ -1,0 +1,59 @@
+
+import React from 'react';
+import { Note } from '@/types/note';
+import { EnhancementDisplayPanel } from '../enhancements/EnhancementDisplayPanel';
+
+interface NoteStudyDisplayProps {
+  note: Note;
+  fontSize: number;
+  textAlign: string;
+  statsLoading: boolean;
+  currentUsage: number;
+  monthlyLimit: number;
+  handleEnhanceContent: (enhancementType: string) => void;
+  handleRetryEnhancement: (enhancementType: string) => void;
+  hasReachedLimit: boolean;
+  fetchUsageStats: () => void;
+  onNoteUpdate: (updatedData: Partial<Note>) => void;
+  activeContentType: string;
+  onActiveContentTypeChange: (type: string) => void;
+  isEditOperation: boolean;
+}
+
+export const NoteStudyDisplay: React.FC<NoteStudyDisplayProps> = ({
+  note,
+  fontSize,
+  textAlign,
+  statsLoading,
+  currentUsage,
+  monthlyLimit,
+  handleEnhanceContent,
+  handleRetryEnhancement,
+  hasReachedLimit,
+  fetchUsageStats,
+  onNoteUpdate,
+  activeContentType,
+  onActiveContentTypeChange,
+  isEditOperation
+}) => {
+  return (
+    <div className="space-y-6">
+      <EnhancementDisplayPanel
+        note={note}
+        fontSize={fontSize}
+        textAlign={textAlign}
+        statsLoading={statsLoading}
+        currentUsage={currentUsage}
+        monthlyLimit={monthlyLimit}
+        handleEnhanceContent={handleEnhanceContent}
+        handleRetryEnhancement={handleRetryEnhancement}
+        hasReachedLimit={hasReachedLimit}
+        fetchUsageStats={fetchUsageStats}
+        onNoteUpdate={onNoteUpdate}
+        activeContentType={activeContentType}
+        onActiveContentTypeChange={onActiveContentTypeChange}
+        isEditOperation={isEditOperation}
+      />
+    </div>
+  );
+};
