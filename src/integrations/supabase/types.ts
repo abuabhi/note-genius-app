@@ -9,6 +9,64 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      academic_subjects: {
+        Row: {
+          country_id: string | null
+          created_at: string
+          education_system: string | null
+          grade_id: string | null
+          id: string
+          level: number | null
+          name: string
+          parent_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          country_id?: string | null
+          created_at?: string
+          education_system?: string | null
+          grade_id?: string | null
+          id?: string
+          level?: number | null
+          name: string
+          parent_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          country_id?: string | null
+          created_at?: string
+          education_system?: string | null
+          grade_id?: string | null
+          id?: string
+          level?: number | null
+          name?: string
+          parent_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subject_categories_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subject_categories_grade_id_fkey"
+            columns: ["grade_id"]
+            isOneToOne: false
+            referencedRelation: "grades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subject_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "academic_subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_settings: {
         Row: {
           created_at: string
@@ -511,7 +569,6 @@ export type Database = {
       flashcard_sets: {
         Row: {
           card_count: number | null
-          category_id: string | null
           country_id: string | null
           created_at: string
           description: string | null
@@ -521,13 +578,13 @@ export type Database = {
           name: string
           section_id: string | null
           subject: string | null
+          subject_id: string | null
           topic: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
           card_count?: number | null
-          category_id?: string | null
           country_id?: string | null
           created_at?: string
           description?: string | null
@@ -537,13 +594,13 @@ export type Database = {
           name: string
           section_id?: string | null
           subject?: string | null
+          subject_id?: string | null
           topic?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
           card_count?: number | null
-          category_id?: string | null
           country_id?: string | null
           created_at?: string
           description?: string | null
@@ -553,6 +610,7 @@ export type Database = {
           name?: string
           section_id?: string | null
           subject?: string | null
+          subject_id?: string | null
           topic?: string | null
           updated_at?: string
           user_id?: string | null
@@ -1118,35 +1176,35 @@ export type Database = {
       }
       quiz_performance_history: {
         Row: {
+          academic_subject: string | null
           completed_at: string | null
           created_at: string | null
           difficulty_level: number | null
           id: string
           quiz_id: string | null
           score_percentage: number | null
-          subject: string | null
           time_per_question_avg: number | null
           user_id: string
         }
         Insert: {
+          academic_subject?: string | null
           completed_at?: string | null
           created_at?: string | null
           difficulty_level?: number | null
           id?: string
           quiz_id?: string | null
           score_percentage?: number | null
-          subject?: string | null
           time_per_question_avg?: number | null
           user_id: string
         }
         Update: {
+          academic_subject?: string | null
           completed_at?: string | null
           created_at?: string | null
           difficulty_level?: number | null
           id?: string
           quiz_id?: string | null
           score_percentage?: number | null
-          subject?: string | null
           time_per_question_avg?: number | null
           user_id?: string
         }
@@ -1347,7 +1405,6 @@ export type Database = {
       }
       quizzes: {
         Row: {
-          category_id: string | null
           country_id: string | null
           created_at: string
           description: string | null
@@ -1358,12 +1415,12 @@ export type Database = {
           section_id: string | null
           source_id: string | null
           source_type: string
+          subject_id: string | null
           title: string
           updated_at: string
           user_id: string | null
         }
         Insert: {
-          category_id?: string | null
           country_id?: string | null
           created_at?: string
           description?: string | null
@@ -1374,12 +1431,12 @@ export type Database = {
           section_id?: string | null
           source_id?: string | null
           source_type?: string
+          subject_id?: string | null
           title: string
           updated_at?: string
           user_id?: string | null
         }
         Update: {
-          category_id?: string | null
           country_id?: string | null
           created_at?: string
           description?: string | null
@@ -1390,6 +1447,7 @@ export type Database = {
           section_id?: string | null
           source_id?: string | null
           source_type?: string
+          subject_id?: string | null
           title?: string
           updated_at?: string
           user_id?: string | null
@@ -1397,9 +1455,9 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "quizzes_category_id_fkey"
-            columns: ["category_id"]
+            columns: ["subject_id"]
             isOneToOne: false
-            referencedRelation: "subject_categories"
+            referencedRelation: "academic_subjects"
             referencedColumns: ["id"]
           },
           {
@@ -1582,35 +1640,35 @@ export type Database = {
       }
       sections: {
         Row: {
+          academic_subject_id: string | null
           created_at: string
           description: string | null
           id: string
           name: string
-          subject_id: string | null
           updated_at: string
         }
         Insert: {
+          academic_subject_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
           name: string
-          subject_id?: string | null
           updated_at?: string
         }
         Update: {
+          academic_subject_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
           name?: string
-          subject_id?: string | null
           updated_at?: string
         }
         Relationships: [
           {
             foreignKeyName: "sections_subject_id_fkey"
-            columns: ["subject_id"]
+            columns: ["academic_subject_id"]
             isOneToOne: false
-            referencedRelation: "subject_categories"
+            referencedRelation: "academic_subjects"
             referencedColumns: ["id"]
           },
         ]
@@ -1772,6 +1830,7 @@ export type Database = {
       }
       study_goals: {
         Row: {
+          academic_subject: string | null
           created_at: string | null
           description: string | null
           end_date: string
@@ -1780,13 +1839,13 @@ export type Database = {
           is_completed: boolean | null
           progress: number | null
           start_date: string
-          subject: string | null
           target_hours: number
           title: string
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          academic_subject?: string | null
           created_at?: string | null
           description?: string | null
           end_date: string
@@ -1795,13 +1854,13 @@ export type Database = {
           is_completed?: boolean | null
           progress?: number | null
           start_date?: string
-          subject?: string | null
           target_hours: number
           title: string
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          academic_subject?: string | null
           created_at?: string | null
           description?: string | null
           end_date?: string
@@ -1810,7 +1869,6 @@ export type Database = {
           is_completed?: boolean | null
           progress?: number | null
           start_date?: string
-          subject?: string | null
           target_hours?: number
           title?: string
           updated_at?: string | null
@@ -2056,64 +2114,6 @@ export type Database = {
           },
         ]
       }
-      subject_categories: {
-        Row: {
-          country_id: string | null
-          created_at: string
-          education_system: string | null
-          grade_id: string | null
-          id: string
-          level: number | null
-          name: string
-          parent_id: string | null
-          updated_at: string
-        }
-        Insert: {
-          country_id?: string | null
-          created_at?: string
-          education_system?: string | null
-          grade_id?: string | null
-          id?: string
-          level?: number | null
-          name: string
-          parent_id?: string | null
-          updated_at?: string
-        }
-        Update: {
-          country_id?: string | null
-          created_at?: string
-          education_system?: string | null
-          grade_id?: string | null
-          id?: string
-          level?: number | null
-          name?: string
-          parent_id?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "subject_categories_country_id_fkey"
-            columns: ["country_id"]
-            isOneToOne: false
-            referencedRelation: "countries"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "subject_categories_grade_id_fkey"
-            columns: ["grade_id"]
-            isOneToOne: false
-            referencedRelation: "grades"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "subject_categories_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "subject_categories"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       tags: {
         Row: {
           color: string | null
@@ -2286,37 +2286,37 @@ export type Database = {
       }
       todo_templates: {
         Row: {
-          category: string
           created_at: string | null
           default_priority: string | null
           description: string | null
           id: string
           is_public: boolean | null
           name: string
+          subject: string
           template_items: Json
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
-          category: string
           created_at?: string | null
           default_priority?: string | null
           description?: string | null
           id?: string
           is_public?: boolean | null
           name: string
+          subject: string
           template_items?: Json
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
-          category?: string
           created_at?: string | null
           default_priority?: string | null
           description?: string | null
           id?: string
           is_public?: boolean | null
           name?: string
+          subject?: string
           template_items?: Json
           updated_at?: string | null
           user_id?: string | null

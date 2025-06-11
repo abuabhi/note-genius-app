@@ -3,7 +3,7 @@ export interface Quiz {
   id: string;
   title: string;
   description: string | null;
-  category_id: string | null;
+  subject_id: string | null; // Changed from category_id to subject_id
   section_id: string | null;
   grade_id: string | null;
   source_type: 'prebuilt' | 'note' | 'custom';

@@ -23,7 +23,7 @@ export const useQuizFormSubmission = ({
       await createQuiz.mutateAsync({
         title: data.title,
         description: data.description,
-        category_id: data.categoryId,
+        subject_id: data.subjectId, // Changed from category_id to subject_id
         grade_id: data.gradeId,
         section_id: data.sectionId,
         country_id: data.countryId,

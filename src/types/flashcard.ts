@@ -12,10 +12,10 @@ export interface FlashcardSet {
   subject?: string;
   topic?: string;
   country_id?: string;
-  category_id?: string;
+  subject_id?: string; // Changed from category_id to subject_id
   education_system?: string;
   section_id?: string;
-  subject_categories?: {
+  academic_subjects?: {
     id?: string;
     name?: string;
   };
@@ -56,12 +56,18 @@ export interface FlashcardProgress {
   updated_at: string;
 }
 
-export interface Category {
+export interface AcademicSubject {
   id: string;
   name: string;
   description?: string;
+  parent_id?: string;
+  level?: number;
+  grade_id?: string;
+  country_id?: string;
+  education_system?: string;
   created_at?: string;
   updated_at?: string;
+  subcategories?: AcademicSubject[];
 }
 
 export type FlashcardScore = 0 | 1 | 2 | 3 | 4 | 5;
@@ -85,19 +91,9 @@ export interface CreateFlashcardSetPayload {
   topic?: string;
   is_public?: boolean;
   is_built_in?: boolean;
-  category_id?: string;
+  subject_id?: string; // Changed from category_id to subject_id
   country_id?: string;
 }
 
-export interface SubjectCategory {
-  id: string;
-  name: string;
-  parent_id?: string;
-  level?: number;
-  grade_id?: string;
-  country_id?: string;
-  education_system?: string;
-  created_at?: string;
-  updated_at?: string;
-  subcategories?: SubjectCategory[];
-}
+// Renamed from SubjectCategory to AcademicSubject for clarity
+export interface SubjectCategory extends AcademicSubject {}

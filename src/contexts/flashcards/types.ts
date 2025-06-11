@@ -1,27 +1,27 @@
 
 import { User } from '@supabase/supabase-js';
-import { FlashcardSet, Flashcard, SubjectCategory, CreateFlashcardSetPayload } from '@/types/flashcard';
+import { FlashcardSet, Flashcard, AcademicSubject, CreateFlashcardSetPayload } from '@/types/flashcard';
 
 export interface FlashcardState {
   flashcards: Flashcard[];
   flashcardSets: FlashcardSet[];
   currentFlashcard: Flashcard | null;
   currentSet: FlashcardSet | null;
-  categories: SubjectCategory[];
+  academicSubjects: AcademicSubject[]; // Changed from categories to academicSubjects
   loading: {
     flashcards: boolean;
     sets: boolean;
-    categories: boolean;
+    academicSubjects: boolean; // Changed from categories to academicSubjects
   };
   setFlashcards: React.Dispatch<React.SetStateAction<Flashcard[]>>;
   setFlashcardSets: React.Dispatch<React.SetStateAction<FlashcardSet[]>>;
   setCurrentFlashcard: React.Dispatch<React.SetStateAction<Flashcard | null>>;
   setCurrentSet: React.Dispatch<React.SetStateAction<FlashcardSet | null>>;
-  setCategories: React.Dispatch<React.SetStateAction<SubjectCategory[]>>;
+  setAcademicSubjects: React.Dispatch<React.SetStateAction<AcademicSubject[]>>; // Changed from setCategories to setAcademicSubjects
   setLoading: React.Dispatch<React.SetStateAction<{
     flashcards: boolean;
     sets: boolean;
-    categories: boolean;
+    academicSubjects: boolean; // Changed from categories to academicSubjects
   }>>;
   user: User | null;
 }
@@ -44,11 +44,11 @@ export interface FlashcardContextType extends FlashcardState {
   fetchFlashcardsInSet: (setId: string) => Promise<Flashcard[]>;
   fetchBuiltInSets: () => Promise<FlashcardSet[]>;
   
-  // Category operations
-  fetchCategories: () => Promise<SubjectCategory[]>;
-  createCategory: (name: string, parentId?: string) => Promise<void>;
-  updateCategory: (id: string, name: string) => Promise<void>;
-  deleteCategory: (id: string) => Promise<void>;
+  // Academic Subject operations (renamed from Category operations)
+  fetchAcademicSubjects: () => Promise<AcademicSubject[]>; // Changed from fetchCategories
+  createAcademicSubject: (name: string, parentId?: string) => Promise<void>; // Changed from createCategory
+  updateAcademicSubject: (id: string, name: string) => Promise<void>; // Changed from updateCategory
+  deleteAcademicSubject: (id: string) => Promise<void>; // Changed from deleteCategory
   
   // Library operations
   searchLibrary: (query: string) => Promise<FlashcardSet[]>;

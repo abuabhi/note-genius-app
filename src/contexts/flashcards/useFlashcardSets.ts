@@ -2,7 +2,7 @@
 import { FlashcardState } from './types';
 import { 
   fetchFlashcardSets as fetchSets, 
-  fetchCategories as fetchCats
+  fetchAcademicSubjects as fetchSubjects // Changed from fetchCategories to fetchAcademicSubjects
 } from './operations/fetchOperations';
 import {
   createFlashcardSet as createSet,
@@ -18,7 +18,7 @@ export const useFlashcardSets = (state: FlashcardState) => {
   const createFlashcardSet = (setData) => createSet(state, setData);
   const updateFlashcardSet = (id, setData) => updateSet(state, id, setData);
   const deleteFlashcardSet = (id) => deleteSet(state, id);
-  const fetchCategories = () => fetchCats(state);
+  const fetchAcademicSubjects = () => fetchSubjects(state); // Changed from fetchCategories to fetchAcademicSubjects
   
   // Enhanced fetchFlashcardsInSet method that also fetches and sets the current set
   const fetchFlashcardsInSet = async (setId: string): Promise<Flashcard[]> => {
@@ -127,7 +127,7 @@ export const useFlashcardSets = (state: FlashcardState) => {
     updateFlashcardSet,
     deleteFlashcardSet,
     fetchBuiltInSets,
-    fetchCategories,
+    fetchAcademicSubjects, // Changed from fetchCategories to fetchAcademicSubjects
     fetchFlashcardsInSet
   };
 };

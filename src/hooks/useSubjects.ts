@@ -3,31 +3,31 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CSVSubjectRow } from "@/types/admin";
-import { SubjectCategory } from "@/types/flashcard";
+import { AcademicSubject } from "@/types/flashcard";
 import { toast } from "sonner";
 
 export const useSubjects = () => {
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
 
-  // Fetch all subjects with grade information
-  const { data: subjects = [], isLoading } = useQuery({
-    queryKey: ["subjects"],
+  // Fetch all academic subjects with grade information
+  const { data: academicSubjects = [], isLoading } = useQuery({
+    queryKey: ["academicSubjects"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("subject_categories")
+        .from("academic_subjects") // Changed from subject_categories to academic_subjects
         .select("*, grades(*)");
 
       if (error) throw error;
-      return data as (SubjectCategory & { grades: any })[];
+      return data as (AcademicSubject & { grades: any })[];
     },
   });
 
-  // Create subject
-  const createSubject = useMutation({
-    mutationFn: async (newSubject: Omit<SubjectCategory, "id" | "created_at" | "updated_at">) => {
+  // Create academic subject
+  const createAcademicSubject = useMutation({
+    mutationFn: async (newSubject: Omit<AcademicSubject, "id" | "created_at" | "updated_at">) => {
       const { data, error } = await supabase
-        .from("subject_categories")
+        .from("academic_subjects") // Changed from subject_categories to academic_subjects
         .insert(newSubject)
         .select()
         .single();
@@ -36,7 +36,7 @@ export const useSubjects = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["subjects"] });
+      queryClient.invalidateQueries({ queryKey: ["academicSubjects"] });
       toast.success("Subject created successfully");
     },
     onError: (error) => {
@@ -45,11 +45,11 @@ export const useSubjects = () => {
     }
   });
 
-  // Update subject
-  const updateSubject = useMutation({
-    mutationFn: async ({ id, ...updatedSubject }: SubjectCategory) => {
+  // Update academic subject
+  const updateAcademicSubject = useMutation({
+    mutationFn: async ({ id, ...updatedSubject }: AcademicSubject) => {
       const { data, error } = await supabase
-        .from("subject_categories")
+        .from("academic_subjects") // Changed from subject_categories to academic_subjects
         .update(updatedSubject)
         .eq("id", id)
         .select()
@@ -59,7 +59,7 @@ export const useSubjects = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["subjects"] });
+      queryClient.invalidateQueries({ queryKey: ["academicSubjects"] });
       toast.success("Subject updated successfully");
     },
     onError: (error) => {
@@ -68,11 +68,11 @@ export const useSubjects = () => {
     }
   });
 
-  // Delete subject
-  const deleteSubject = useMutation({
+  // Delete academic subject
+  const deleteAcademicSubject = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("subject_categories")
+        .from("academic_subjects") // Changed from subject_categories to academic_subjects
         .delete()
         .eq("id", id);
 
@@ -80,7 +80,7 @@ export const useSubjects = () => {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["subjects"] });
+      queryClient.invalidateQueries({ queryKey: ["academicSubjects"] });
       toast.success("Subject deleted successfully");
     },
     onError: (error) => {
@@ -155,14 +155,14 @@ export const useSubjects = () => {
       
       // Insert valid rows
       const { data, error } = await supabase
-        .from("subject_categories")
+        .from("academic_subjects") // Changed from subject_categories to academic_subjects
         .insert(validRows)
         .select();
         
       if (error) throw error;
       
       // Refresh subjects data
-      queryClient.invalidateQueries({ queryKey: ["subjects"] });
+      queryClient.invalidateQueries({ queryKey: ["academicSubjects"] });
       
       return { 
         success: true, 
@@ -182,12 +182,12 @@ export const useSubjects = () => {
   };
 
   return {
-    subjects,
+    academicSubjects, // Changed from subjects to academicSubjects
     isLoading,
     loading,
-    createSubject,
-    updateSubject,
-    deleteSubject,
+    createAcademicSubject, // Changed from createSubject
+    updateAcademicSubject, // Changed from updateSubject
+    deleteAcademicSubject, // Changed from deleteSubject
     importSubjectsFromCSV
   };
 };
