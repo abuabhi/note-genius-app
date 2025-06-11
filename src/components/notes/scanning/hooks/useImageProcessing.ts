@@ -73,9 +73,9 @@ export const useImageProcessing = ({
         body: { 
           imageUrl: processedUrl,
           language: selectedLanguage,
-          userId: userId, // Pass user ID if available
-          useOpenAI: useOpenAI && isPremiumUser, // Only use OpenAI if user is premium
-          enhanceImage: isEnhanced // Pass enhancement flag
+          userId: userId,
+          useOpenAI: useOpenAI && isPremiumUser,
+          enhanceImage: isEnhanced
         }
       });
       
@@ -84,9 +84,14 @@ export const useImageProcessing = ({
         throw new Error(error.message || "Failed to process image");
       }
       
-      if (!data || !data.text) {
-        console.error("Invalid response data:", data);
-        throw new Error("Invalid response from OCR service");
+      if (!data || !data.success) {
+        console.error("OCR processing failed:", data);
+        throw new Error(data?.error || "OCR service returned an error");
+      }
+      
+      if (!data.text) {
+        console.error("No text returned from OCR service:", data);
+        throw new Error("No text was extracted from the image");
       }
       
       console.log("OCR processing completed successfully:", data);
@@ -105,7 +110,7 @@ export const useImageProcessing = ({
       
       toast({
         title: "Text Extracted",
-        description: `OCR processing complete with ${Math.round(data.confidence * 100)}% confidence using ${providerName}.`,
+        description: `OCR processing complete with ${Math.round((data.confidence || 0) * 100)}% confidence using ${providerName}.`,
       });
       
       return {
@@ -121,7 +126,7 @@ export const useImageProcessing = ({
       setProcessingError(errorMsg);
       toast({
         title: "Processing Failed",
-        description: "Could not extract text from the image.",
+        description: "Could not extract text from the image. Please try again or check if the image is clear and readable.",
         variant: "destructive",
       });
       return null;

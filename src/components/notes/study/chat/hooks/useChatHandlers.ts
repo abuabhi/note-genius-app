@@ -16,7 +16,7 @@ export const useChatHandlers = (note: Note) => {
   const { messages, addUserMessage, addMessage } = useNoteChatHistory(note.id);
   const { handleError, clearErrors, getLastError, canRetry } = useErrorHandler();
 
-  const handleSendMessage = useCallback(async (message: string) => {
+  const handleSendMessage = useCallback(async (message: string): Promise<void> => {
     try {
       clearErrors();
       

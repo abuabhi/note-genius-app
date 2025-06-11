@@ -7,11 +7,12 @@ import { SmartSuggestions } from './SmartSuggestions';
 import { FlashcardGeneration } from './FlashcardGeneration';
 import { Note } from '@/types/note';
 import { ChatUIMessage } from '../types/noteChat';
+import { SmartSuggestion } from '../types/suggestions';
 
 interface ChatTabsProps {
   note: Note;
   messages: ChatUIMessage[];
-  suggestions: string[];
+  suggestions: SmartSuggestion[];
   isProcessing: boolean;
   isLoading: boolean;
   isStreaming: boolean;
@@ -20,7 +21,7 @@ interface ChatTabsProps {
   selectedText: string;
   onSelectSuggestion: (suggestion: string) => void;
   onSelectFollowUp: (question: string) => void;
-  onSendMessage: (message: string) => void;
+  onSendMessage: (message: string) => Promise<void>;
   onFlashcardCreated: () => void;
 }
 

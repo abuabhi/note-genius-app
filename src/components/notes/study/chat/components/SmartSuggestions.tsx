@@ -1,8 +1,7 @@
 
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { SmartSuggestion } from '../types/noteChat';
-import { Lightbulb, MessageSquare, FileText, ArrowRight } from 'lucide-react';
+import { Lightbulb } from 'lucide-react';
+import { SmartSuggestion } from '../types/suggestions';
 
 interface SmartSuggestionsProps {
   suggestions: SmartSuggestion[];
@@ -10,48 +9,30 @@ interface SmartSuggestionsProps {
   isLoading?: boolean;
 }
 
-export const SmartSuggestions = ({ 
-  suggestions, 
-  onSelectSuggestion, 
-  isLoading 
-}: SmartSuggestionsProps) => {
-  if (suggestions.length === 0 || isLoading) return null;
-
-  const getIcon = (type: SmartSuggestion['type']) => {
-    switch (type) {
-      case 'question':
-        return <MessageSquare className="h-3 w-3" />;
-      case 'action':
-        return <ArrowRight className="h-3 w-3" />;
-      case 'summary':
-        return <FileText className="h-3 w-3" />;
-      default:
-        return <Lightbulb className="h-3 w-3" />;
-    }
-  };
+export const SmartSuggestions = ({ suggestions, onSelectSuggestion, isLoading }: SmartSuggestionsProps) => {
+  if (suggestions.length === 0) return null;
 
   return (
-    <Card className="p-3 bg-mint-50 border-mint-200">
-      <div className="flex items-center gap-2 mb-2">
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
         <Lightbulb className="h-4 w-4 text-mint-600" />
-        <span className="text-sm font-medium text-mint-700">Smart Suggestions</span>
+        <h4 className="text-sm font-medium text-gray-700">Suggested Questions</h4>
       </div>
-      <div className="space-y-1">
+      
+      <div className="grid gap-2">
         {suggestions.map((suggestion) => (
           <Button
             key={suggestion.id}
-            variant="ghost"
+            variant="outline"
             size="sm"
-            className="w-full justify-start text-left h-auto p-2 text-xs hover:bg-mint-100"
+            className="h-auto p-3 text-left justify-start text-wrap"
             onClick={() => onSelectSuggestion(suggestion.text)}
+            disabled={isLoading}
           >
-            <span className="flex items-center gap-2">
-              {getIcon(suggestion.type)}
-              <span className="truncate">{suggestion.text}</span>
-            </span>
+            {suggestion.text}
           </Button>
         ))}
       </div>
-    </Card>
+    </div>
   );
 };

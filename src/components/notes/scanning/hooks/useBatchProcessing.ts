@@ -51,22 +51,38 @@ export const useBatchProcessing = ({ selectedLanguage, isPremiumUser, uploadImag
             idx === imageIndex ? { ...img, status: 'processing' } : img
           ));
 
-          // Convert file to data URL
+          // Convert file to data URL first
           const reader = new FileReader();
-          const imageUrl = await new Promise<string>((resolve) => {
+          const dataUrl = await new Promise<string>((resolve, reject) => {
             reader.onload = (event) => resolve(event.target?.result as string);
+            reader.onerror = () => reject(new Error('Failed to read file'));
             reader.readAsDataURL(file);
           });
 
-          // Upload to storage
-          const storageUrl = await uploadImageToStorage(imageUrl);
+          console.log(`Processing image ${imageIndex + 1}: ${file.name}`);
 
-          // Process with OCR
+          // Try to upload to storage first
+          let imageUrlForProcessing = dataUrl;
+          try {
+            const storageUrl = await uploadImageToStorage(dataUrl);
+            if (storageUrl) {
+              imageUrlForProcessing = storageUrl;
+              console.log(`Image uploaded to storage: ${storageUrl}`);
+            } else {
+              console.log('Storage upload failed, using data URL for processing');
+            }
+          } catch (uploadError) {
+            console.error('Storage upload error:', uploadError);
+            console.log('Falling back to data URL for processing');
+          }
+
+          // Process with OCR using the best available URL
           const { data, error } = await supabase.functions.invoke('process-image', {
             body: {
-              imageUrl: storageUrl,
+              imageUrl: imageUrlForProcessing,
               language: selectedLanguage,
-              useOpenAI: isPremiumUser
+              useOpenAI: isPremiumUser,
+              enhanceImage: false // Disable enhancement for batch processing for better performance
             }
           });
 
@@ -74,17 +90,25 @@ export const useBatchProcessing = ({ selectedLanguage, isPremiumUser, uploadImag
             throw new Error(error.message || 'Failed to process image');
           }
 
+          if (!data || !data.success) {
+            throw new Error(data?.error || 'OCR processing failed');
+          }
+
+          console.log(`OCR processing completed for image ${imageIndex + 1}`);
+
           // Update with results
           setProcessedImages(prev => prev.map((img, idx) => 
             idx === imageIndex ? {
               ...img,
-              imageUrl: storageUrl || '',
-              recognizedText: data?.text || '',
+              imageUrl: imageUrlForProcessing,
+              recognizedText: data.text || 'No text detected',
               status: 'completed'
             } : img
           ));
 
         } catch (error) {
+          console.error(`Error processing image ${imageIndex + 1}:`, error);
+          
           // Update with error
           setProcessedImages(prev => prev.map((img, idx) => 
             idx === imageIndex ? {
