@@ -71,13 +71,20 @@ export const useSubjectDeletion = () => {
     mutationFn: async (subjectId: string) => {
       if (!user) throw new Error("User not authenticated");
       
+      console.log('Deleting subject with ID:', subjectId);
+      
       const { error } = await supabase
         .from("user_subjects")
         .delete()
         .eq("id", subjectId)
         .eq("user_id", user.id);
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting subject:', error);
+        throw error;
+      }
+      
+      console.log('Subject deleted successfully');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userSubjects"] });
@@ -94,6 +101,7 @@ export const useSubjectDeletion = () => {
       await deleteSubjectMutation.mutateAsync(subjectId);
       return true;
     } catch (error) {
+      console.error('Delete subject failed:', error);
       return false;
     }
   };
