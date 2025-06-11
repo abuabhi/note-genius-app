@@ -23,7 +23,8 @@ export function NotesCSVImport() {
         </p>
         <div className="text-sm text-blue-600">
           <strong>Required columns:</strong> title, description, user_email<br />
-          <strong>Optional columns:</strong> content, subject, category, source_type, tags (comma-separated)
+          <strong>Optional columns:</strong> content, subject, tags (comma-separated)<br />
+          <strong>Legacy support:</strong> category (will be mapped to subject - deprecated)
         </div>
       </div>
 

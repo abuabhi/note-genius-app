@@ -96,13 +96,13 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
     try {
       for (const image of completedImages) {
         // Get or create subject ID for each image
-        const subjectId = await getOrCreateSubjectId(image.category);
+        const subjectId = await getOrCreateSubjectId(image.subject); // Changed from image.category to image.subject
         
         const note = {
           title: image.title,
           description: image.recognizedText.substring(0, 100) + (image.recognizedText.length > 100 ? "..." : ""),
           date: new Date().toISOString().split('T')[0],
-          category: image.category, // Keep for backward compatibility
+          category: image.subject, // Keep for backward compatibility - maps to subject
           subject_id: subjectId, // Use proper subject ID
           content: image.recognizedText,
           sourceType: 'scan',

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -110,7 +109,7 @@ export const FileImportTab = ({ onSaveNote }: FileImportTabProps) => {
               title: documentTitle,
               content: processedText,
               date: new Date().toISOString(),
-              category: "Imports",
+              subject: "Imports", // Changed from category to subject
               description: `Imported from file`,
               sourceType: "import"
             };

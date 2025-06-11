@@ -7,7 +7,7 @@ interface ProcessedImage {
   imageUrl: string;
   recognizedText: string;
   title: string;
-  category: string;
+  subject: string; // Changed from category to subject
   status: 'pending' | 'processing' | 'completed' | 'failed';
   error?: string;
 }
@@ -28,7 +28,7 @@ export const useBatchProcessing = ({ selectedLanguage, isPremiumUser, uploadImag
       imageUrl: '',
       recognizedText: '',
       title: file.name.replace(/\.[^/.]+$/, ''),
-      category: 'Scanned Documents',
+      subject: 'Scanned Documents', // Changed from category to subject
       status: 'pending'
     }));
 

@@ -1,10 +1,19 @@
 
+/**
+ * Note: This interface defines notes which use 'subject' for categorization.
+ * This is distinct from:
+ * - Flashcard 'categories' (flashcard domain categorization)
+ * - Quiz 'categories' (quiz domain categorization) 
+ * - Goal 'categories' (goal domain categorization)
+ * 
+ * Notes use 'subject' to represent academic subjects like "Mathematics", "Science", etc.
+ */
 export interface Note {
   id: string;
   title: string;
   description: string;
   date: string;
-  subject: string; // Changed from 'category' to 'subject' to match database
+  subject: string; // Academic subject for notes (e.g., "Mathematics", "Science")
   content?: string;
   sourceType: 'manual' | 'scan' | 'import';
   archived?: boolean;
@@ -21,7 +30,7 @@ export interface Note {
     fileType?: string;
     importedAt?: string;
   };
-  subject_id?: string;
+  subject_id?: string; // Foreign key reference to user_subjects table
   
   // Enhancement fields
   summary?: string;

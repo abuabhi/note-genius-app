@@ -117,7 +117,7 @@ export const ScanWorkflow = ({
           title: image.title,
           description: image.recognizedText.substring(0, 100) + (image.recognizedText.length > 100 ? "..." : ""),
           date: new Date().toISOString().split('T')[0],
-          subject: image.category, // This maps to the subject field in the database
+          subject: image.subject, // Changed from image.category to image.subject - This maps to the subject field in the database
           content: image.recognizedText,
           sourceType: 'scan',
           scanData: {

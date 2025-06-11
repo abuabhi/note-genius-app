@@ -11,7 +11,7 @@ interface ProcessedImage {
   imageUrl: string;
   recognizedText: string;
   title: string;
-  category: string;
+  subject: string; // Changed from category to subject
   status: 'pending' | 'processing' | 'completed' | 'failed';
   error?: string;
 }
