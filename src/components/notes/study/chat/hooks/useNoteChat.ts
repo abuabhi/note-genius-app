@@ -58,25 +58,26 @@ export const useNoteChat = (note: Note) => {
       const suggestions = data?.suggestions || [];
 
       // Save the conversation to database
-      const { data: savedMessage, error: saveError } = await supabase
-        .from('note_chat_messages')
-        .insert({
-          note_id: note.id,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
-          message: message.trim(),
-          response: aiResponse
-        })
-        .select()
-        .single();
+      const { data: user } = await supabase.auth.getUser();
+      if (user.user) {
+        const { error: saveError } = await supabase
+          .from('note_chat_messages')
+          .insert({
+            note_id: note.id,
+            user_id: user.user.id,
+            message: message.trim(),
+            response: aiResponse
+          });
 
-      if (saveError) {
-        console.error('Failed to save chat message:', saveError);
-        // Don't throw here, still return the AI response
+        if (saveError) {
+          console.error('Failed to save chat message:', saveError);
+          // Don't throw here, still return the AI response
+        }
       }
 
       // Return the AI response as a UI message with enhanced features
       return {
-        id: savedMessage?.id || `temp-${Date.now()}`,
+        id: `ai-${Date.now()}`,
         type: 'ai',
         content: aiResponse,
         timestamp: new Date().toISOString(),

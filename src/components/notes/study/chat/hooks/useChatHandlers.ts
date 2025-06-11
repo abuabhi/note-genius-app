@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Note } from '@/types/note';
 import { ChatUIMessage } from '../types/noteChat';
 import { useNoteChat } from './useNoteChat';
@@ -32,12 +32,12 @@ export const useChatHandlers = (note: Note) => {
     canRetry
   } = useErrorHandler();
 
-  // Initialize messages from history when available
-  useState(() => {
-    if (historyMessages?.length > 0 && messages.length === 0) {
+  // Sync history messages with local state
+  useEffect(() => {
+    if (historyMessages && historyMessages.length > 0) {
       setMessages(historyMessages);
     }
-  });
+  }, [historyMessages]);
 
   const saveToHistory = useCallback(async (userMessage: string, aiResponse: string) => {
     // Create message objects
@@ -55,12 +55,9 @@ export const useChatHandlers = (note: Note) => {
       timestamp: new Date().toISOString()
     };
     
-    // Add to UI state
+    // Add to history (this will be persisted to database)
     addMessage(userMsgObj);
     addMessage(aiMsgObj);
-    
-    // Add to local state
-    setMessages(prevMessages => [...prevMessages, userMsgObj, aiMsgObj]);
     
     return { userMessage: userMsgObj, aiMessage: aiMsgObj };
   }, [addMessage]);
@@ -80,8 +77,8 @@ export const useChatHandlers = (note: Note) => {
       
       setMessages(prevMessages => [...prevMessages, userMessage]);
       
-      // Send message and get response
-      const response = await sendChatMessage(message);
+      // Send message and get response (pass current messages for context)
+      const response = await sendChatMessage(message, messages);
       setIsProcessing(false);
       
       if (response) {
@@ -97,7 +94,7 @@ export const useChatHandlers = (note: Note) => {
         
         setMessages(prevMessages => [...prevMessages, aiMessage]);
         
-        // Save conversation history
+        // Save conversation history to database
         await saveToHistory(message, response.content);
       }
       
@@ -108,7 +105,7 @@ export const useChatHandlers = (note: Note) => {
       handleError(error as Error);
       return null;
     }
-  }, [sendChatMessage, saveToHistory, handleError, clearErrors]);
+  }, [sendChatMessage, saveToHistory, handleError, clearErrors, messages]);
 
   const handleSelectSuggestion = useCallback(async (suggestion: string) => {
     setSelectedText('');
@@ -128,7 +125,9 @@ export const useChatHandlers = (note: Note) => {
     setMessages([]);
     setSelectedText('');
     clearErrors();
-  }, [clearErrors]);
+    // Optionally refresh history to sync with database state
+    refreshHistory();
+  }, [clearErrors, refreshHistory]);
 
   return {
     messages,

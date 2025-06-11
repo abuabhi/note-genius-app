@@ -55,9 +55,44 @@ export const useNoteChatHistory = (noteId: string) => {
     }
   }, [noteId, convertToUIMessages]);
 
-  const addMessage = useCallback((message: ChatUIMessage) => {
+  const addMessage = useCallback(async (message: ChatUIMessage) => {
+    // Update local state immediately for better UX
     setMessages(prev => [...prev, message]);
+    
+    // If this is a user message, we'll wait for the AI response before saving to DB
+    // This is handled in the chat handlers where both user and AI messages are saved together
   }, []);
+
+  const saveConversation = useCallback(async (userMessage: string, aiResponse: string) => {
+    try {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) {
+        console.error('User not authenticated');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('note_chat_messages')
+        .insert({
+          note_id: noteId,
+          user_id: user.user.id,
+          message: userMessage,
+          response: aiResponse
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Failed to save chat message:', error);
+        return;
+      }
+
+      console.log('Chat conversation saved to database');
+      return data;
+    } catch (error) {
+      console.error('Error saving conversation:', error);
+    }
+  }, [noteId]);
 
   const addUserMessage = useCallback((content: string) => {
     const userMessage: ChatUIMessage = {
@@ -81,6 +116,7 @@ export const useNoteChatHistory = (noteId: string) => {
     isLoading,
     addMessage,
     addUserMessage,
+    saveConversation,
     refreshHistory: loadHistory
   };
 };
