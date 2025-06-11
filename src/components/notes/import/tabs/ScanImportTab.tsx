@@ -20,7 +20,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
   const [selectedLanguage, setSelectedLanguage] = React.useState("eng");
   const [recognizedText, setRecognizedText] = React.useState("");
   const [noteTitle, setNoteTitle] = React.useState("");
-  const [noteCategory, setNoteCategory] = React.useState("Uncategorized");
+  const [noteSubject, setNoteSubject] = React.useState("Uncategorized");
   const [isSaving, setIsSaving] = React.useState(false);
   const [processingMode, setProcessingMode] = React.useState<'single' | 'batch'>('single');
   
@@ -55,7 +55,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
     setCapturedImage(null);
     setRecognizedText("");
     setNoteTitle("");
-    setNoteCategory("Uncategorized");
+    setNoteSubject("Uncategorized");
     setProcessingMode('single');
     resetBatchProcessing();
     resetDragState();
@@ -74,6 +74,20 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
     handleDrop(e, handleSingleImage, handleMultipleImages);
   };
 
+  // Handle auto-generated title
+  const handleTitleGenerated = (title: string) => {
+    if (!noteTitle || noteTitle === "") {
+      setNoteTitle(title);
+    }
+  };
+
+  // Handle auto-generated subject
+  const handleSubjectGenerated = (subject: string) => {
+    if (noteSubject === "Uncategorized") {
+      setNoteSubject(subject);
+    }
+  };
+
   const saveBatchAsNotes = async () => {
     setIsSaving(true);
     const completedImages = processedImages.filter(img => img.status === 'completed');
@@ -84,7 +98,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
           title: image.title,
           description: image.recognizedText.substring(0, 100) + (image.recognizedText.length > 100 ? "..." : ""),
           date: new Date().toISOString().split('T')[0],
-          category: image.category,
+          category: image.category, // This maps to subject in the database
           content: image.recognizedText,
           sourceType: 'scan',
           scanData: {
@@ -126,7 +140,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
         title: noteTitle,
         description: recognizedText.substring(0, 100) + (recognizedText.length > 100 ? "..." : ""),
         date: dateString,
-        category: noteCategory,
+        category: noteSubject, // This maps to subject in the database
         content: recognizedText,
         sourceType: 'scan',
         scanData: {
@@ -189,15 +203,17 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
                 selectedLanguage={selectedLanguage}
                 onLanguageChange={setSelectedLanguage}
                 isPremiumUser={isPremiumUser}
+                onTitleGenerated={handleTitleGenerated}
+                onSubjectGenerated={handleSubjectGenerated}
               />
               
               {recognizedText && (
                 <NoteMetadataForm 
                   title={noteTitle}
                   setTitle={setNoteTitle}
-                  category={noteCategory}
-                  setCategory={setNoteCategory}
-                  isDisabled={!capturedImage || !recognizedText}
+                  category={noteSubject}
+                  setCategory={setNoteSubject}
+                  isDisabled={false}
                   detectedLanguage={getLanguageName(selectedLanguage)}
                 />
               )}
@@ -207,11 +223,11 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
       </ScrollArea>
 
       {/* Fixed save button footer */}
-      {capturedImage && recognizedText && (
+      {capturedImage && recognizedText && noteTitle.trim() && (
         <div className="border-t pt-4 mt-4 bg-white">
           <Button
             onClick={handleSaveNote}
-            disabled={!capturedImage || !recognizedText || !noteTitle || isSaving}
+            disabled={isSaving}
             className="w-full bg-mint-500 hover:bg-mint-600 text-white"
           >
             {isSaving ? (

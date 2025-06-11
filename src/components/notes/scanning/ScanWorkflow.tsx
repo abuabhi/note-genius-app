@@ -30,7 +30,7 @@ export const ScanWorkflow = ({
   const [activeTab, setActiveTab] = useState("upload");
   const [recognizedText, setRecognizedText] = useState("");
   const [noteTitle, setNoteTitle] = useState("");
-  const [noteCategory, setNoteCategory] = useState("Uncategorized");
+  const [noteSubject, setNoteSubject] = useState("Uncategorized");
   const [isSaving, setIsSaving] = useState(false);
   const [processingMode, setProcessingMode] = useState<'single' | 'batch'>('single');
   
@@ -65,7 +65,7 @@ export const ScanWorkflow = ({
     setCapturedImage(null);
     setRecognizedText("");
     setNoteTitle("");
-    setNoteCategory("Uncategorized");
+    setNoteSubject("Uncategorized");
     setActiveTab("upload");
     setProcessingMode('single');
     resetBatchProcessing();
@@ -90,15 +90,19 @@ export const ScanWorkflow = ({
 
   // Handle auto-generated title
   const handleTitleGenerated = (title: string) => {
-    if (!noteTitle) { // Only set if user hasn't manually entered a title
+    console.log('Auto-generated title:', title);
+    if (!noteTitle || noteTitle === "") { // Only set if user hasn't manually entered a title
       setNoteTitle(title);
+      console.log('Title set to:', title);
     }
   };
 
   // Handle auto-generated subject
   const handleSubjectGenerated = (subject: string) => {
-    if (noteCategory === "Uncategorized") { // Only set if still default
-      setNoteCategory(subject);
+    console.log('Auto-generated subject:', subject);
+    if (noteSubject === "Uncategorized") { // Only set if still default
+      setNoteSubject(subject);
+      console.log('Subject set to:', subject);
     }
   };
 
@@ -112,7 +116,7 @@ export const ScanWorkflow = ({
           title: image.title,
           description: image.recognizedText.substring(0, 100) + (image.recognizedText.length > 100 ? "..." : ""),
           date: new Date().toISOString().split('T')[0],
-          category: image.category,
+          category: image.category, // This maps to the subject field in the database
           content: image.recognizedText,
           sourceType: 'scan',
           scanData: {
@@ -136,7 +140,12 @@ export const ScanWorkflow = ({
   };
 
   const handleSaveNote = async () => {
-    console.log('Save note clicked', { noteTitle, capturedImage, recognizedText });
+    console.log('Save note clicked', { 
+      noteTitle, 
+      noteSubject, 
+      capturedImage: !!capturedImage, 
+      recognizedText: !!recognizedText 
+    });
     
     if (!noteTitle.trim()) {
       console.log('No title provided, cannot save');
@@ -158,7 +167,7 @@ export const ScanWorkflow = ({
         title: noteTitle,
         description: recognizedText.substring(0, 100) + (recognizedText.length > 100 ? "..." : ""),
         date: dateString,
-        category: noteCategory,
+        category: noteSubject, // This maps to the subject field in the database
         content: recognizedText,
         sourceType: 'scan',
         scanData: {
@@ -169,6 +178,7 @@ export const ScanWorkflow = ({
         }
       };
 
+      console.log('Saving note with subject:', noteSubject);
       const success = await onSaveNote(newNote);
       if (success) {
         resetForm();
@@ -199,7 +209,8 @@ export const ScanWorkflow = ({
     capturedImage: !!capturedImage,
     recognizedText: !!recognizedText,
     noteTitle,
-    showSaveButton: !!(capturedImage && recognizedText)
+    noteSubject,
+    showSaveButton: !!(capturedImage && recognizedText && noteTitle.trim())
   });
 
   return (
@@ -226,8 +237,8 @@ export const ScanWorkflow = ({
       )}
 
       {/* Scrollable content area */}
-      <ScrollArea className="flex-1 max-h-[calc(100vh-300px)]">
-        <div className="p-1">
+      <ScrollArea className="flex-1 max-h-[calc(100vh-200px)]">
+        <div className="p-1 space-y-4">
           {!capturedImage ? (
             <SingleImageCapture
               activeTab={activeTab}
@@ -257,8 +268,8 @@ export const ScanWorkflow = ({
                 <NoteMetadataForm 
                   title={noteTitle}
                   setTitle={setNoteTitle}
-                  category={noteCategory}
-                  setCategory={setNoteCategory}
+                  category={noteSubject}
+                  setCategory={setNoteSubject}
                   isDisabled={false}
                   detectedLanguage={getLanguageName(selectedLanguage)}
                 />
@@ -268,12 +279,12 @@ export const ScanWorkflow = ({
         </div>
       </ScrollArea>
       
-      {/* Fixed footer with Save button - Always show when we have image and text */}
-      {capturedImage && recognizedText && (
+      {/* Fixed footer with Save button - Show when we have all required data */}
+      {capturedImage && recognizedText && noteTitle.trim() && (
         <div className="flex-shrink-0 border-t p-4 bg-white">
           <Button
             onClick={handleSaveNote}
-            disabled={!noteTitle.trim() || isSaving}
+            disabled={isSaving}
             className="w-full bg-mint-500 hover:bg-mint-600 text-white"
           >
             {isSaving ? (

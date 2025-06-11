@@ -44,11 +44,11 @@ export const NoteMetadataForm = ({
       </div>
       
       <div>
-        <label className="text-sm font-medium">Category</label>
+        <label className="text-sm font-medium">Subject</label>
         <Input 
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          placeholder="Category (e.g., Math, History)"
+          placeholder="Subject (e.g., Mathematics, Science, History)"
           className="mt-1"
           disabled={isDisabled}
         />

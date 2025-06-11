@@ -49,7 +49,7 @@ export async function processWithOpenAI(imageUrl: string, language: string): Pro
       messages: [
         {
           role: "system",
-          content: `You are an expert OCR system specialized in reading handwritten text with exceptional accuracy and formatting it as clean, structured Markdown.
+          content: `You are an expert OCR system specialized in reading handwritten text with exceptional accuracy and formatting it as clean, structured text.
                    
                    HANDWRITING EXPERTISE:
                    - Excel at reading cursive handwriting, print handwriting, and mixed styles
@@ -59,29 +59,29 @@ export async function processWithOpenAI(imageUrl: string, language: string): Pro
                    - Read handwritten notes in margins and annotations
                    - Handle rotated or tilted handwritten text
                    
-                   MARKDOWN FORMATTING REQUIREMENTS:
-                   - Output ONLY clean, properly formatted Markdown - NO code blocks, NO backticks, NO \`\`\`markdown wrapper
-                   - Transform numbered lists (1., 2., 3.) into proper Markdown numbered lists: 1. 2. 3.
-                   - Convert bullet points or dashes into Markdown bullets: - 
-                   - Use headers (# ## ###) ONLY for actual titles/headings, NOT for numbered items
-                   - Use **bold** for emphasis where handwriting indicates importance (underlined, circled, or heavy text)
-                   - Use proper line spacing between sections (blank lines)
+                   TEXT FORMATTING REQUIREMENTS:
+                   - Output clean, readable text WITHOUT any markdown formatting
+                   - Convert numbered lists (1., 2., 3.) into simple numbered format: "1. Item text"
+                   - Convert bullet points or dashes into simple list format with "-" 
+                   - Use line breaks for proper paragraph separation
                    - Format mathematical content with proper notation
                    - Preserve hierarchical structure and relationships
+                   - Do NOT use # symbols for headers or numbering
+                   - Do NOT use ** for bold text
+                   - Do NOT use markdown code blocks or backticks
                    
                    CRITICAL RULES:
-                   - NEVER use # for numbered list items (1, 2, 3, etc.)
-                   - Numbered sequences should use Markdown list syntax: "1. Item text"
-                   - Only use # for actual document titles or major section headers
+                   - NEVER use # symbols anywhere in the output
+                   - NEVER use markdown formatting syntax
                    - Extract ALL visible text with maximum accuracy
-                   - Return ONLY the formatted Markdown content - no explanations, no code block wrapper
-                   - Maintain original content structure but enhance with proper Markdown syntax
+                   - Return ONLY the clean text content - no explanations, no formatting
+                   - Maintain original content structure but as plain text
                    
                    Language context: ${language}
                    
                    EXAMPLE INPUT: Handwritten "Shopping List 1. Milk 2. Bread 3. Eggs"
                    CORRECT OUTPUT:
-                   # Shopping List
+                   Shopping List
                    
                    1. Milk
                    2. Bread
@@ -89,7 +89,7 @@ export async function processWithOpenAI(imageUrl: string, language: string): Pro
                    
                    EXAMPLE INPUT: Handwritten "Notes - point one - point two"
                    CORRECT OUTPUT:
-                   # Notes
+                   Notes
                    
                    - Point one
                    - Point two`
@@ -99,7 +99,7 @@ export async function processWithOpenAI(imageUrl: string, language: string): Pro
           content: [
             {
               type: "text",
-              text: "Please transcribe all text from this image and format it as clean, structured Markdown. Return ONLY the formatted Markdown content without any code block wrappers. Convert handwritten lists and sections into proper Markdown syntax while preserving the original meaning. Remember: use # only for actual titles/headers, not for numbered list items:"
+              text: "Please transcribe all text from this image as clean, readable text. Do not use any markdown formatting. Convert handwritten lists and sections into simple numbered or bulleted lists. Remember: never use # symbols or any markdown syntax:"
             },
             {
               type: "image_url",
@@ -156,24 +156,29 @@ export async function processWithOpenAI(imageUrl: string, language: string): Pro
       throw new Error("OpenAI returned empty text content");
     }
     
-    // Post-process to clean up any remaining code block wrappers and fix numbering issues
+    // Enhanced post-processing to ensure no markdown formatting remains
     extractedText = extractedText
-      .replace(/^```markdown\s*\n?/i, '')  // Remove opening markdown code block
-      .replace(/\n?```\s*$/i, '')          // Remove closing code block
-      .replace(/^```\s*\n?/i, '')          // Remove any generic opening code block
-      .replace(/^# (\d+\.)/gm, '$1')       // Fix: Convert "# 1." to "1." (remove # from numbered items)
-      .replace(/^# (\d+\))/gm, '$1')       // Fix: Convert "# 1)" to "1)" (remove # from numbered items)
+      .replace(/^```[\s\S]*?\n?/i, '')          // Remove opening code blocks
+      .replace(/\n?```\s*$/i, '')               // Remove closing code blocks
+      .replace(/^#{1,6}\s+/gm, '')              // Remove ALL # symbols at start of lines
+      .replace(/#{1,6}\s*(\d+\.)/gm, '$1')      // Convert "# 1." to "1."
+      .replace(/#{1,6}\s*(\d+\))/gm, '$1')      // Convert "# 1)" to "1)"
+      .replace(/#{1,6}\s+/g, '')                // Remove any remaining # symbols with spaces
+      .replace(/#{1,6}/g, '')                   // Remove any standalone # symbols
+      .replace(/\*\*([^*]+)\*\*/g, '$1')        // Remove bold formatting
+      .replace(/\*([^*]+)\*/g, '$1')            // Remove italic formatting
+      .replace(/`([^`]+)`/g, '$1')              // Remove inline code formatting
       .trim();
     
     console.log(`OpenAI extracted and cleaned text length: ${extractedText.length} characters`);
-    console.log("Text processed as clean Markdown format");
+    console.log("Text processed as clean plain text format");
     
     return {
       text: extractedText,
       confidence: 0.95,
       processedAt: new Date().toISOString(),
       language: language,
-      provider: "openai-vision-gpt4o-markdown"
+      provider: "openai-vision-gpt4o-plaintext"
     };
   } catch (error) {
     console.error("OpenAI processing error details:", error);
