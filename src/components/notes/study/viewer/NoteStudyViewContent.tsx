@@ -25,7 +25,7 @@ interface NoteStudyViewContentProps {
   toggleEditing: () => void;
   handleEnhanceContent: (enhancementType: string) => void;
   setSelectedTags: (tags: { id?: string; name: string; color: string }[]) => void;
-  handleRetryEnhancement: (enhancementType: string) => void;
+  handleRetryEnhancement: (enhancementType: string) => Promise<void>;
   hasReachedLimit: boolean;
   fetchUsageStats: () => void;
   onNoteUpdate: (updatedData: Partial<Note>) => void;
@@ -85,16 +85,8 @@ export const NoteStudyViewContent: React.FC<NoteStudyViewContentProps> = ({
           note={note}
           fontSize={fontSize}
           textAlign={textAlign}
-          statsLoading={statsLoading}
-          currentUsage={currentUsage}
-          monthlyLimit={monthlyLimit}
-          handleEnhanceContent={handleEnhanceContent}
           handleRetryEnhancement={handleRetryEnhancement}
-          hasReachedLimit={hasReachedLimit}
-          fetchUsageStats={fetchUsageStats}
-          onNoteUpdate={onNoteUpdate}
           activeContentType={activeContentType}
-          onActiveContentTypeChange={onActiveContentTypeChange}
           isEditOperation={isEditOperation}
         />
       )}
