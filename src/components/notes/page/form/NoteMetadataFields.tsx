@@ -13,36 +13,36 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 
 interface NoteMetadataFieldsProps {
   control: Control<any>;
-  availableCategories: string[];
-  onNewCategoryAdd: (category: string) => void;
+  availableSubjects: string[];
+  onNewSubjectAdd: (subject: string) => void;
   setValue: UseFormSetValue<any>;
 }
 
 export const NoteMetadataFields = ({
   control,
-  availableCategories,
-  onNewCategoryAdd,
+  availableSubjects,
+  onNewSubjectAdd,
   setValue
 }: NoteMetadataFieldsProps) => {
   const { subjects, isLoading: loadingSubjects } = useUserSubjects();
   
-  // Helper function to check if a category name matches an existing subject
-  const isCategoryExistingSubject = (categoryName: string): boolean => {
+  // Helper function to check if a subject name matches an existing subject
+  const isSubjectExisting = (subjectName: string): boolean => {
     return subjects.some(subject => 
-      subject.name.toLowerCase() === categoryName.toLowerCase()
+      subject.name.toLowerCase() === subjectName.toLowerCase()
     );
   };
   
-  // Get unique categories that don't overlap with subjects
-  const getUniqueCategories = () => {
-    return availableCategories.filter(category => 
-      category && 
-      category.trim() !== '' && 
-      !isCategoryExistingSubject(category)
+  // Get unique subjects that don't overlap with subjects
+  const getUniqueSubjects = () => {
+    return availableSubjects.filter(subject => 
+      subject && 
+      subject.trim() !== '' && 
+      !isSubjectExisting(subject)
     );
   };
   
-  const uniqueCategories = getUniqueCategories();
+  const uniqueSubjects = getUniqueSubjects();
 
   return (
     <>
@@ -117,15 +117,15 @@ export const NoteMetadataFields = ({
                 
                 if (value === "General") {
                   field.onChange("");
-                  setValue("category", "General");
+                  setValue("subject", "General");
                 } else {
-                  // For user subjects, find the name and update the category field
+                  // For user subjects, find the name and update the subject field
                   const selectedSubject = subjects.find(s => s.id === value);
                   if (selectedSubject) {
-                    setValue("category", selectedSubject.name);
+                    setValue("subject", selectedSubject.name);
                   } else {
-                    // For other categories without subject_id, use the value directly
-                    setValue("category", value);
+                    // For other subjects without subject_id, use the value directly
+                    setValue("subject", value);
                   }
                 }
               }} 
@@ -153,11 +153,11 @@ export const NoteMetadataFields = ({
                 </SelectGroup>
                 
                 <SelectGroup>
-                  <SelectLabel>Other Categories</SelectLabel>
+                  <SelectLabel>Other Subjects</SelectLabel>
                   <SelectItem value="General">General</SelectItem>
-                  {uniqueCategories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
+                  {uniqueSubjects.map((subject) => (
+                    <SelectItem key={subject} value={subject}>
+                      {subject}
                     </SelectItem>
                   ))}
                 </SelectGroup>
@@ -168,10 +168,10 @@ export const NoteMetadataFields = ({
         )}
       />
       
-      {/* Hidden field to store the category (needed for backward compatibility) */}
+      {/* Hidden field to store the subject (needed for backward compatibility) */}
       <FormField
         control={control}
-        name="category"
+        name="subject"
         render={({ field }) => (
           <input type="hidden" {...field} />
         )}

@@ -28,8 +28,8 @@ export interface NoteContextType {
   filterOptions: FilterOptions;
   setFilterOptions: React.Dispatch<React.SetStateAction<FilterOptions>>;
   resetFilters: () => void;
-  availableCategories: string[];
-  addCategory: (category: string) => void;
+  availableSubjects: string[];
+  addSubject: (subject: string) => void;
   setNotes: React.Dispatch<React.SetStateAction<Note[]>>; 
   tags: { id: string; name: string; color: string }[]; // Added tags property
 }

@@ -5,8 +5,8 @@ import { Badge } from "@/components/ui/badge";
 interface NoteMetadataFormProps {
   title: string;
   setTitle: (title: string) => void;
-  category: string;
-  setCategory: (category: string) => void;
+  subject: string;
+  setSubject: (subject: string) => void;
   isDisabled: boolean;
   detectedLanguage?: string;
   confidence?: number;
@@ -15,8 +15,8 @@ interface NoteMetadataFormProps {
 export const NoteMetadataForm = ({ 
   title, 
   setTitle, 
-  category, 
-  setCategory,
+  subject, 
+  setSubject,
   isDisabled,
   detectedLanguage,
   confidence
@@ -46,8 +46,8 @@ export const NoteMetadataForm = ({
       <div>
         <label className="text-sm font-medium">Subject</label>
         <Input 
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
           placeholder="Subject (e.g., Mathematics, Science, History)"
           className="mt-1"
           disabled={isDisabled}

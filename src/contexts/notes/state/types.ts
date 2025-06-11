@@ -2,12 +2,12 @@
 import { Note } from "@/types/note";
 
 // Types moved from the main types.ts
-export type SortType = 'newest' | 'oldest' | 'alphabetical' | 'date-desc' | 'date-asc' | 'title-asc' | 'title-desc' | 'category';
+export type SortType = 'newest' | 'oldest' | 'alphabetical' | 'date-desc' | 'date-asc' | 'title-asc' | 'title-desc' | 'subject';
 
 export interface FilterOptions {
   dateFrom?: Date;
   dateTo?: Date;
-  category?: string;
+  subject?: string;
   sourceType?: 'manual' | 'scan' | 'import' | ('manual' | 'scan' | 'import')[];
   hasTags?: boolean;
   tags?: string[];
@@ -23,5 +23,5 @@ export interface NotesState {
   loading: boolean;
   showArchived: boolean;
   filterOptions: FilterOptions;
-  availableCategories: string[];
+  availableSubjects: string[];
 }

@@ -4,7 +4,7 @@ import { Note } from "@/types/note";
 import { FilterOptions } from './types';
 import { useFilteredNotes } from './useFilteredNotes';
 import { usePaginatedNotes } from './usePaginatedNotes';
-import { useCategoriesState } from './useCategoriesState';
+import { useSubjectsState } from './useSubjectsState';
 
 /**
  * Main hook for managing notes state with stable updates and error handling
@@ -20,9 +20,9 @@ export function useNotesState() {
   // Filter options
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({});
   
-  // Get categories state with error handling
-  const categoriesState = useCategoriesState(notes);
-  const { availableCategories, addCategory } = categoriesState || { availableCategories: [], addCategory: () => {} };
+  // Get subjects state with error handling
+  const subjectsState = useSubjectsState(notes);
+  const { availableSubjects, addSubject } = subjectsState || { availableSubjects: [], addSubject: () => {} };
   
   // Get filtered notes with error handling
   const filteredNotes = useFilteredNotes(
@@ -91,9 +91,9 @@ export function useNotesState() {
     filterOptions,
     setFilterOptions: updateFilterOptions,
     
-    // Categories
-    availableCategories,
-    addCategory,
+    // Subjects
+    availableSubjects,
+    addSubject,
     
     // Filtered and paginated notes
     filteredNotes,

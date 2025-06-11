@@ -50,8 +50,8 @@ export const filterNotes = (notes: Note[], searchTerm: string, filterOptions: Fi
       }
     }
     
-    // Filter by category (now using subject)
-    if (filterOptions.category && note.subject !== filterOptions.category) {
+    // Filter by subject (now using subject)
+    if (filterOptions.subject && note.subject !== filterOptions.subject) {
       return false;
     }
     
@@ -127,7 +127,7 @@ export const sortNotes = (notes: Note[], sortType: SortType): Note[] => {
         return a.title.localeCompare(b.title);
       case 'title-desc':
         return b.title.localeCompare(a.title);
-      case 'category':
+      case 'subject':
         return a.subject.localeCompare(b.subject);
       default:
         return 0;
@@ -144,9 +144,9 @@ export const paginateNotes = (notes: Note[], currentPage: number, notesPerPage: 
 };
 
 /**
- * Extract unique categories from notes
+ * Extract unique subjects from notes
  */
-export const extractCategories = (notes: Note[]): string[] => {
+export const extractSubjects = (notes: Note[]): string[] => {
   if (!notes.length) return [];
   
   return notes

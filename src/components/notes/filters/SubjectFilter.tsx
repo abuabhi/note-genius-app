@@ -14,17 +14,17 @@ import { useSubjectDeletion } from "@/hooks/useSubjectDeletion";
 import { SubjectDeletionDialog } from "@/components/settings/cards/SubjectDeletionDialog";
 import { X } from 'lucide-react';
 
-interface CategoryFilterProps {
-  category?: string;
-  availableCategories: string[];
-  onCategoryChange: (category: string | undefined) => void;
+interface SubjectFilterProps {
+  subject?: string;
+  availableSubjects: string[];
+  onSubjectChange: (subject: string | undefined) => void;
 }
 
-export const CategoryFilter = ({
-  category,
-  availableCategories,
-  onCategoryChange
-}: CategoryFilterProps) => {
+export const SubjectFilter = ({
+  subject,
+  availableSubjects,
+  onSubjectChange
+}: SubjectFilterProps) => {
   const { subjects } = useUserSubjects();
   const { checkDependencies, deleteSubject, isChecking, isDeleting } = useSubjectDeletion();
   const [deletionDialog, setDeletionDialog] = useState<{
@@ -39,7 +39,7 @@ export const CategoryFilter = ({
     dependencies: null
   });
   
-  // Use only user subjects, ignore availableCategories (which are note titles)
+  // Use only user subjects, ignore availableSubjects (which are note titles)
   const userSubjects = subjects || [];
 
   const handleDeleteClick = async (e: React.MouseEvent, subjectId: string, subjectName: string) => {
@@ -62,8 +62,8 @@ export const CategoryFilter = ({
       const success = await deleteSubject(deletionDialog.subjectId);
       if (success) {
         // Reset filter if the deleted subject was selected
-        if (category === deletionDialog.subjectName) {
-          onCategoryChange(undefined);
+        if (subject === deletionDialog.subjectName) {
+          onSubjectChange(undefined);
         }
         setDeletionDialog({ open: false, subjectId: '', subjectName: '', dependencies: null });
       }
@@ -76,26 +76,26 @@ export const CategoryFilter = ({
     <>
       <FilterOption label="Subject">
         <Select
-          value={category || "_any"}
+          value={subject || "_any"}
           onValueChange={(value) => 
-            onCategoryChange(value === "_any" ? undefined : value)
+            onSubjectChange(value === "_any" ? undefined : value)
           }
         >
-          <SelectTrigger id="category" className="border-mint-200 focus:ring-mint-400">
+          <SelectTrigger id="subject" className="border-mint-200 focus:ring-mint-400">
             <SelectValue placeholder="Any subject" />
           </SelectTrigger>
           <SelectContent className="bg-white">
             <SelectItem value="_any">Any subject</SelectItem>
             
-            {userSubjects.map(subject => (
-              <SelectItem key={subject.id} value={subject.name} className="group">
+            {userSubjects.map(subjectItem => (
+              <SelectItem key={subjectItem.id} value={subjectItem.name} className="group">
                 <div className="flex items-center justify-between w-full">
-                  <span>{subject.name}</span>
+                  <span>{subjectItem.name}</span>
                   <Button
                     variant="ghost"
                     size="sm"
                     className="ml-2 h-4 w-4 p-0 opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground"
-                    onClick={(e) => handleDeleteClick(e, subject.id, subject.name)}
+                    onClick={(e) => handleDeleteClick(e, subjectItem.id, subjectItem.name)}
                     disabled={isChecking || isDeleting}
                   >
                     <X className="h-3 w-3" />

@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { FilterOptions } from "@/contexts/notes/types";
 import { X } from "lucide-react";
-import { CategoryFilter } from "./CategoryFilter";
+import { SubjectFilter } from "./SubjectFilter";
 import { DateRangeFilter } from "./DateRangeFilter";
 import { SourceTypeFilter } from "./SourceTypeFilter";
 import { TagsFilter } from "./TagsFilter";
@@ -10,7 +10,7 @@ import { TagsFilter } from "./TagsFilter";
 interface FilterMenuContentProps {
   localFilters: FilterOptions;
   setLocalFilters: (filters: FilterOptions) => void;
-  availableCategories: string[];
+  availableSubjects: string[];
   handleApplyFilters: () => void;
   handleClearFilters: () => void;
   activeFilterCount: number;
@@ -19,16 +19,16 @@ interface FilterMenuContentProps {
 export const FilterMenuContent = ({
   localFilters,
   setLocalFilters,
-  availableCategories,
+  availableSubjects,
   handleApplyFilters,
   handleClearFilters,
   activeFilterCount
 }: FilterMenuContentProps) => {
-  // Category filter handler
-  const handleCategoryChange = (category: string | undefined) => {
+  // Subject filter handler
+  const handleSubjectChange = (subject: string | undefined) => {
     setLocalFilters({
       ...localFilters,
-      category
+      subject
     });
   };
 
@@ -86,13 +86,13 @@ export const FilterMenuContent = ({
       <div className="space-y-4">
         {/* Subject and Date in same section */}
         <div className="space-y-3">
-          <CategoryFilter 
-            category={localFilters.category} 
-            availableCategories={availableCategories}
-            onCategoryChange={handleCategoryChange}
+          <SubjectFilter 
+            subject={localFilters.subject} 
+            availableSubjects={availableSubjects}
+            onSubjectChange={handleSubjectChange}
           />
           
-          <DateRangeFilter
+          <DateRangeFilter 
             dateFrom={dateFromString}
             dateTo={dateToString}
             onDateFromChange={handleDateFromChange}
@@ -100,23 +100,25 @@ export const FilterMenuContent = ({
           />
         </div>
         
-        <SourceTypeFilter
-          sourceType={Array.isArray(localFilters.sourceType) ? 
-            localFilters.sourceType as ('manual' | 'scan' | 'import')[] :
-            localFilters.sourceType ? [localFilters.sourceType as 'manual' | 'scan' | 'import'] : []
-          }
+        {/* Source type filter */}
+        <SourceTypeFilter 
+          sourceType={Array.isArray(localFilters.sourceType) ? localFilters.sourceType : []}
           onSourceTypeChange={handleSourceTypeChange}
         />
         
-        <TagsFilter
+        {/* Tags filter */}
+        <TagsFilter 
           hasTags={localFilters.hasTags}
           onHasTagsChange={handleHasTagsChange}
         />
+        
+        {/* Apply/Clear buttons */}
+        <div className="flex gap-2 pt-2 border-t border-mint-100">
+          <Button onClick={handleApplyFilters} size="sm" className="flex-1 bg-mint-600 hover:bg-mint-700">
+            Apply Filters
+          </Button>
+        </div>
       </div>
-      
-      <Button onClick={handleApplyFilters} className="w-full bg-mint-600 hover:bg-mint-700">
-        Apply Filters
-      </Button>
     </div>
   );
 };
