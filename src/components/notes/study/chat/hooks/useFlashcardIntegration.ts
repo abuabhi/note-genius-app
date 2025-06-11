@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { Note } from '@/types/note';
 import { useFlashcards } from '@/contexts/flashcards';
@@ -6,6 +5,13 @@ import { toast } from 'sonner';
 
 export const useFlashcardIntegration = (note: Note) => {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showSetSelection, setShowSetSelection] = useState(false);
+  const [pendingFlashcard, setPendingFlashcard] = useState<{
+    question: string;
+    answer: string;
+  } | null>(null);
+  const [lastCreatedFlashcardId, setLastCreatedFlashcardId] = useState<string | null>(null);
+
   const { createFlashcard, flashcardSets, createFlashcardSet } = useFlashcards();
 
   const findOrCreateFlashcardSet = useCallback(async (note: Note) => {
@@ -64,13 +70,45 @@ export const useFlashcardIntegration = (note: Note) => {
     }
   }, [note, flashcardSets, createFlashcardSet]);
 
+  const getSuggestedSetId = useCallback(() => {
+    // Try to find the best matching set
+    const exactMatch = flashcardSets.find(set => 
+      set.name.toLowerCase() === note.title.toLowerCase()
+    );
+    if (exactMatch) return exactMatch.id;
+
+    const titleMatch = flashcardSets.find(set => 
+      set.name.toLowerCase() === `${note.title} Flashcards`.toLowerCase()
+    );
+    if (titleMatch) return titleMatch.id;
+
+    if (note.category) {
+      const categoryMatch = flashcardSets.find(set => 
+        set.subject?.toLowerCase() === note.category.toLowerCase()
+      );
+      if (categoryMatch) return categoryMatch.id;
+    }
+
+    return undefined;
+  }, [note, flashcardSets]);
+
   const generateFlashcardFromChat = useCallback(async (
     question: string,
     answer: string,
-    setId?: string
+    setId?: string,
+    showModal: boolean = false
   ) => {
     setIsGenerating(true);
+    
     try {
+      // If manual selection is requested, show the modal
+      if (showModal) {
+        setPendingFlashcard({ question, answer });
+        setShowSetSelection(true);
+        setIsGenerating(false);
+        return null;
+      }
+
       let targetSetId = setId;
       
       if (!targetSetId) {
@@ -85,7 +123,8 @@ export const useFlashcardIntegration = (note: Note) => {
         subject: note.category
       });
 
-      toast.success('Flashcard created from chat!');
+      setLastCreatedFlashcardId(flashcard.id);
+      toast.success('Flashcard created successfully!');
       return flashcard;
     } catch (error) {
       console.error('Error creating flashcard from chat:', error);
@@ -95,6 +134,32 @@ export const useFlashcardIntegration = (note: Note) => {
       setIsGenerating(false);
     }
   }, [note, createFlashcard, findOrCreateFlashcardSet]);
+
+  const handleSetSelection = useCallback(async (selectedSetId: string) => {
+    if (!pendingFlashcard) return;
+    
+    setShowSetSelection(false);
+    await generateFlashcardFromChat(
+      pendingFlashcard.question,
+      pendingFlashcard.answer,
+      selectedSetId
+    );
+    setPendingFlashcard(null);
+  }, [pendingFlashcard, generateFlashcardFromChat]);
+
+  const handleModalClose = useCallback(() => {
+    setShowSetSelection(false);
+    setPendingFlashcard(null);
+    setIsGenerating(false);
+  }, []);
+
+  const showChooseDifferentSet = useCallback(() => {
+    if (!lastCreatedFlashcardId) return;
+    
+    // For the "choose different set" feature, we would need the last Q&A
+    // This is a placeholder for future implementation
+    toast.info('Choose different set feature coming soon!');
+  }, [lastCreatedFlashcardId]);
 
   const generateFlashcardsFromContent = useCallback(async (
     content: string,
@@ -132,7 +197,14 @@ export const useFlashcardIntegration = (note: Note) => {
 
   return {
     isGenerating,
+    showSetSelection,
+    suggestedSetId: getSuggestedSetId(),
+    lastCreatedFlashcardId,
     generateFlashcardFromChat,
-    generateFlashcardsFromContent
+    generateFlashcardsFromContent,
+    handleSetSelection,
+    handleModalClose,
+    showChooseDifferentSet,
+    pendingFlashcard
   };
 };
