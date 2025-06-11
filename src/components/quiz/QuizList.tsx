@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuizList } from "@/hooks/quiz/useQuizList";
 import { useSubjects } from "@/hooks/useSubjects";
-import { QuizWithQuestions } from "@/types/quiz";
+import { Quiz } from "@/types/quiz";
 import { Play, Clock, HelpCircle, Search, History } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -17,19 +18,16 @@ export const QuizList = () => {
   const [selectedSubject, setSelectedSubject] = useState<string>("all");
   
   const { academicSubjects } = useSubjects();
-  const { data, isLoading, error } = useQuizList({
+  const { data: quizzes = [], isLoading, error } = useQuizList({
     search: searchTerm,
     subject: selectedSubject === "all" ? undefined : selectedSubject
   });
 
-  // Extract quizzes from the returned data
-  const quizzes = data?.quizzes || [];
-
-  const handleTakeQuiz = (quiz: QuizWithQuestions) => {
+  const handleTakeQuiz = (quiz: Quiz) => {
     navigate(`/quiz/${quiz.id}/take`);
   };
 
-  const handleViewQuiz = (quiz: QuizWithQuestions) => {
+  const handleViewQuiz = (quiz: Quiz) => {
     navigate(`/quiz/${quiz.id}`);
   };
 
@@ -119,11 +117,11 @@ export const QuizList = () => {
                     </CardDescription>
                   </div>
                   <div className="flex gap-2">
-                    <Button onClick={() => handleTakeQuiz(quiz as QuizWithQuestions)}>
+                    <Button onClick={() => handleTakeQuiz(quiz as Quiz)}>
                       <Play className="h-4 w-4 mr-2" />
                       Take Quiz
                     </Button>
-                    <Button variant="outline" onClick={() => handleViewQuiz(quiz as QuizWithQuestions)}>
+                    <Button variant="outline" onClick={() => handleViewQuiz(quiz as Quiz)}>
                       <History className="h-4 w-4 mr-2" />
                       View
                     </Button>
