@@ -77,6 +77,7 @@ export const FlashcardsContent = ({
   onRetry,
 }: FlashcardsContentProps) => {
   console.log('🎯 FlashcardsContent - Received viewMode:', viewMode);
+  console.log('🎯 FlashcardsContent - Will render:', viewMode === 'list' ? 'LIST VIEW' : 'GRID VIEW');
 
   if (loading && page === 1) {
     return <ListLoadingSkeleton />;
@@ -117,24 +118,30 @@ export const FlashcardsContent = ({
     <div className="space-y-6">
       {/* Flashcard Sets Display */}
       {viewMode === 'list' ? (
-        <FlashcardSetListView
-          sets={sets}
-          onDeleteSet={onDeleteSet}
-          onTogglePinned={onTogglePinned}
-          deletingSet={deletingSet}
-          detailedProgressData={mappedDetailedProgressData}
-        />
+        <>
+          {console.log('🎯 FlashcardsContent - RENDERING LIST VIEW')}
+          <FlashcardSetListView
+            sets={sets}
+            onDeleteSet={onDeleteSet}
+            onTogglePinned={onTogglePinned}
+            deletingSet={deletingSet}
+            detailedProgressData={mappedDetailedProgressData}
+          />
+        </>
       ) : (
-        <FlashcardSetGrid
-          sets={sets}
-          setProgressData={setProgressData}
-          deletingSet={deletingSet}
-          onDeleteSet={onDeleteSet}
-          hasInitiallyLoaded={!loading}
-          searchQuery={filters.searchQuery}
-          subjectFilter={filters.subjectFilter}
-          detailedProgressData={mappedDetailedProgressData}
-        />
+        <>
+          {console.log('🎯 FlashcardsContent - RENDERING GRID VIEW')}
+          <FlashcardSetGrid
+            sets={sets}
+            setProgressData={setProgressData}
+            deletingSet={deletingSet}
+            onDeleteSet={onDeleteSet}
+            hasInitiallyLoaded={!loading}
+            searchQuery={filters.searchQuery}
+            subjectFilter={filters.subjectFilter}
+            detailedProgressData={mappedDetailedProgressData}
+          />
+        </>
       )}
 
       {/* Load More / Pagination */}
