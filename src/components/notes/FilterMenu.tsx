@@ -36,9 +36,6 @@ export const FilterMenu = () => {
     
     // Add legacy subjects from notes.subject field
     notes.forEach(note => {
-      if (note.category && note.category !== 'Uncategorized' && note.category.trim() !== '') {
-        subjectSet.add(note.category);
-      }
       if (note.subject && note.subject !== 'Uncategorized' && note.subject.trim() !== '') {
         subjectSet.add(note.subject);
       }

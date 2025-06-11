@@ -118,15 +118,12 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
             // Check if note has subject_id and matches via user_subjects join
             const hasSubjectIdMatch = note.user_subjects?.name === subject;
             
-            // Check legacy subject field
+            // Check legacy subject field from database
             const hasLegacySubjectMatch = note.subject === subject;
             
-            // Check category field (which is mapped from subject in the Note interface)
-            const hasCategoryMatch = note.category === subject;
+            console.log(`Note "${note.title}": subject_id match=${hasSubjectIdMatch}, legacy match=${hasLegacySubjectMatch}`);
             
-            console.log(`Note "${note.title}": subject_id match=${hasSubjectIdMatch}, legacy match=${hasLegacySubjectMatch}, category match=${hasCategoryMatch}`);
-            
-            return hasSubjectIdMatch || hasLegacySubjectMatch || hasCategoryMatch;
+            return hasSubjectIdMatch || hasLegacySubjectMatch;
           });
         }
 
@@ -137,7 +134,7 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
 
         console.log(`✅ Optimized notes query returned ${paginatedNotes.length} notes for subject: "${subject}" (${totalCount} total filtered)`);
         
-        // Transform data to match Note interface
+        // Transform data to match Note interface - standardize on 'subject'
         const transformedNotes: Note[] = paginatedNotes.map(note => ({
           id: note.id,
           title: note.title,
@@ -145,7 +142,7 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
           content: note.content || '',
           date: note.date,
           // Use the joined subject name, fallback to existing subject field, then 'Uncategorized'
-          category: note.user_subjects?.name || note.subject || 'Uncategorized',
+          subject: note.user_subjects?.name || note.subject || 'Uncategorized',
           sourceType: (note.source_type || 'manual') as 'manual' | 'import' | 'scan',
           archived: note.archived || false,
           pinned: note.pinned || false,

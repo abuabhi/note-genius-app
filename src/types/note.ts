@@ -4,7 +4,7 @@ export interface Note {
   title: string;
   description: string;
   date: string;
-  category: string;
+  subject: string; // Changed from 'category' to 'subject' to match database
   content?: string;
   sourceType: 'manual' | 'scan' | 'import';
   archived?: boolean;
