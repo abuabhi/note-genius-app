@@ -7,6 +7,8 @@ import { FlashcardProvider } from "@/contexts/FlashcardContext";
 const FlashcardSetPage = () => {
   useRequireAuth();
   
+  console.log("FlashcardSetPage: Component rendered");
+  
   return (
     <FlashcardProvider>
       <Layout>

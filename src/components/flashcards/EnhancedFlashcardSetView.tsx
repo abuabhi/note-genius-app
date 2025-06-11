@@ -53,11 +53,11 @@ import { FlashcardSetBreadcrumb } from "./FlashcardSetBreadcrumb";
 const EnhancedFlashcardSetView = () => {
   const { setId } = useParams<{ setId: string }>();
   const navigate = useNavigate();
-  const { currentSet, fetchFlashcardsInSet, deleteFlashcard, setCurrentSet, flashcardSets, fetchFlashcardSets } = useFlashcards();
+  const { currentSet, fetchFlashcardsInSet, deleteFlashcard, setCurrentSet, flashcardSets, fetchFlashcardSets, loading } = useFlashcards();
   const { progressMap, fetchLearningProgress, isLoading: progressLoading } = useLearningProgress();
   
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [localLoading, setLocalLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("position");
@@ -65,9 +65,9 @@ const EnhancedFlashcardSetView = () => {
   const [filterReviewStatus, setFilterReviewStatus] = useState("all");
   const [deletingCard, setDeletingCard] = useState<string | null>(null);
 
-  console.log("EnhancedFlashcardSetView: Rendered with setId:", setId);
+  console.log("EnhancedFlashcardSetView: Component rendered with setId:", setId);
   console.log("EnhancedFlashcardSetView: Current set:", currentSet);
-  console.log("EnhancedFlashcardSetView: All flashcard sets:", flashcardSets.length);
+  console.log("EnhancedFlashcardSetView: Loading states:", { loading, localLoading, progressLoading });
 
   // Function to get card progress from learning progress data
   const getCardProgress = (cardId: string) => {
@@ -95,67 +95,73 @@ const EnhancedFlashcardSetView = () => {
   };
 
   useEffect(() => {
-    const loadFlashcardSetAndCards = async () => {
+    const loadSetAndFlashcards = async () => {
       if (!setId) {
-        console.error("EnhancedFlashcardSetView: No set ID provided");
-        setError("No set ID provided");
-        setLoading(false);
+        console.error("EnhancedFlashcardSetView: No setId provided");
+        setError("No flashcard set ID provided");
+        setLocalLoading(false);
         return;
       }
-      
+
+      console.log("EnhancedFlashcardSetView: Starting load for setId:", setId);
+      setLocalLoading(true);
+      setError(null);
+
       try {
-        setLoading(true);
-        setError(null);
-        
-        console.log("EnhancedFlashcardSetView: Starting to load set and cards for setId:", setId);
-        
-        // First ensure we have all flashcard sets loaded
-        if (flashcardSets.length === 0) {
-          console.log("EnhancedFlashcardSetView: No sets in memory, fetching all sets...");
-          await fetchFlashcardSets();
-        }
-        
-        // Try to find the set in existing flashcard sets
-        let targetSet = flashcardSets.find(set => set.id === setId);
-        console.log("EnhancedFlashcardSetView: Target set found in memory:", !!targetSet);
+        // Check if we already have the set
+        let targetSet = currentSet?.id === setId ? currentSet : flashcardSets.find(set => set.id === setId);
         
         if (!targetSet) {
-          console.log("EnhancedFlashcardSetView: Set not found in memory, fetching all sets again...");
+          console.log("EnhancedFlashcardSetView: Set not found, fetching all sets...");
           await fetchFlashcardSets();
-          targetSet = flashcardSets.find(set => set.id === setId);
+          // Wait a moment for the state to update
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
-        
-        if (targetSet) {
-          console.log("EnhancedFlashcardSetView: Setting current set:", targetSet.name);
-          setCurrentSet(targetSet);
-        } else {
-          console.error("EnhancedFlashcardSetView: Set not found after all attempts:", setId);
-          setError("Flashcard set not found. It may have been deleted or you don't have access to it.");
-          setLoading(false);
-          return;
-        }
-        
-        // Fetch flashcards (this will also set the current set if found)
-        console.log("EnhancedFlashcardSetView: Fetching flashcards for set:", setId);
+
+        // Fetch flashcards for this set (this also sets the current set)
+        console.log("EnhancedFlashcardSetView: Fetching flashcards for setId:", setId);
         const cards = await fetchFlashcardsInSet(setId);
-        console.log("EnhancedFlashcardSetView: Fetched flashcards count:", cards?.length || 0);
-        setFlashcards(cards || []);
         
-        // Fetch learning progress for these cards
-        if (cards && cards.length > 0) {
-          console.log("EnhancedFlashcardSetView: Fetching learning progress for", cards.length, "cards");
+        if (!cards) {
+          throw new Error("Failed to fetch flashcards");
+        }
+
+        console.log("EnhancedFlashcardSetView: Successfully loaded", cards.length, "flashcards");
+        setFlashcards(cards);
+        
+        // Fetch learning progress for cards
+        if (cards.length > 0) {
+          console.log("EnhancedFlashcardSetView: Fetching learning progress...");
           await fetchLearningProgress(cards.map(card => card.id));
         }
-      } catch (loadError) {
-        console.error("EnhancedFlashcardSetView: Error loading flashcard set and cards:", loadError);
-        setError("Failed to load flashcard set. Please check if the set exists and try again.");
+
+      } catch (err) {
+        console.error("EnhancedFlashcardSetView: Error loading data:", err);
+        setError(err instanceof Error ? err.message : "Failed to load flashcard set");
       } finally {
-        setLoading(false);
+        setLocalLoading(false);
       }
     };
 
-    loadFlashcardSetAndCards();
-  }, [setId, flashcardSets, fetchFlashcardsInSet, fetchLearningProgress, setCurrentSet, fetchFlashcardSets]);
+    loadSetAndFlashcards();
+  }, [setId, fetchFlashcardsInSet, fetchFlashcardSets, fetchLearningProgress]);
+
+  // Early return for missing setId
+  if (!setId) {
+    console.error("EnhancedFlashcardSetView: No setId in URL params");
+    return (
+      <div className="container mx-auto p-6">
+        <div className="bg-red-50 border border-red-200 rounded-md p-6 text-center">
+          <h2 className="text-xl font-semibold text-red-700 mb-2">Invalid URL</h2>
+          <p className="mb-4 text-red-600">No flashcard set ID provided in the URL.</p>
+          <Button onClick={() => navigate("/flashcards")}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Flashcards
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   // Error state
   if (error) {
@@ -180,6 +186,49 @@ const EnhancedFlashcardSetView = () => {
               Try Again
             </Button>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading state
+  if (localLoading || loading.sets) {
+    console.log("EnhancedFlashcardSetView: Rendering loading state");
+    return (
+      <div className="container mx-auto p-6">
+        <div className="mb-6">
+          <Skeleton className="h-8 w-48 mb-2" />
+          <Skeleton className="h-4 w-96" />
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="border-mint-100">
+              <CardHeader className="pb-2">
+                <Skeleton className="h-4 w-20" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-12 mb-2" />
+                <Skeleton className="h-2 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i} className="h-48">
+              <CardHeader>
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-2/3 mb-4" />
+                <Skeleton className="h-2 w-full" />
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     );
@@ -264,14 +313,16 @@ const EnhancedFlashcardSetView = () => {
     };
   }, [flashcards, progressMap]);
 
-  if (!setId) {
-    return <div>Set not found</div>;
-  }
+  console.log("EnhancedFlashcardSetView: Rendering main content", {
+    currentSet: currentSet?.name,
+    flashcardsCount: flashcards.length,
+    setStats
+  });
 
   return (
     <div className="container mx-auto p-6">
       {/* Breadcrumb */}
-      <FlashcardSetBreadcrumb setName={currentSet?.name} />
+      <FlashcardSetBreadcrumb setName={currentSet?.name || "Loading..."} />
       
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
@@ -419,27 +470,8 @@ const EnhancedFlashcardSetView = () => {
         )}
       </div>
 
-      {/* Loading State */}
-      {(loading || progressLoading) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Card key={i} className="h-48">
-              <CardHeader>
-                <Skeleton className="h-6 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-4 w-full mb-2" />
-                <Skeleton className="h-4 w-2/3 mb-4" />
-                <Skeleton className="h-2 w-full" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
       {/* Empty State */}
-      {!loading && !progressLoading && flashcards.length === 0 && (
+      {flashcards.length === 0 && (
         <div className="text-center py-12">
           <div className="bg-gradient-to-br from-mint-50 to-mint-100 rounded-xl p-8 max-w-md mx-auto">
             <BookOpen className="h-16 w-16 text-mint-600 mx-auto mb-4" />
@@ -456,7 +488,7 @@ const EnhancedFlashcardSetView = () => {
       )}
 
       {/* Flashcards Grid */}
-      {!loading && !progressLoading && filteredAndSortedCards.length > 0 && (
+      {filteredAndSortedCards.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredAndSortedCards.map((card) => {
             const progress = getCardProgress(card.id);
@@ -560,7 +592,7 @@ const EnhancedFlashcardSetView = () => {
       )}
 
       {/* No Results State */}
-      {!loading && !progressLoading && filteredAndSortedCards.length === 0 && flashcards.length > 0 && (
+      {flashcards.length > 0 && filteredAndSortedCards.length === 0 && (
         <div className="text-center py-12">
           <div className="bg-gray-50 rounded-lg p-8 max-w-md mx-auto">
             <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
