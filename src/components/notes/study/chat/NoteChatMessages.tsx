@@ -9,6 +9,7 @@ import { MessageFeedback } from './components/MessageFeedback';
 import { Button } from '@/components/ui/button';
 import { useFlashcardIntegration } from './hooks/useFlashcardIntegration';
 import { useAccessibility } from './components/AccessibilityProvider';
+import { MessageRenderer } from '@/components/chat/MessageRenderer';
 import { Note } from '@/types/note';
 
 interface NoteChatMessagesProps {
@@ -95,10 +96,14 @@ export const NoteChatMessages = ({
 
   return (
     <div 
-      className="flex-1 overflow-y-auto p-4 space-y-4"
+      className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[calc(100vh-280px)]"
       role="log"
       aria-label="Chat conversation"
       aria-live="polite"
+      style={{
+        scrollbarWidth: 'thin',
+        scrollbarColor: '#cbd5e1 #f1f5f9'
+      }}
     >
       {messages.map((message) => (
         <div key={message.id}>
@@ -130,8 +135,11 @@ export const NoteChatMessages = ({
                   : 'bg-gray-100 text-gray-900'
               )}
             >
-              <div className="whitespace-pre-wrap text-sm">
-                {message.content}
+              <div className="text-sm">
+                <MessageRenderer 
+                  content={message.content}
+                  isCurrentUser={message.type === 'user'}
+                />
               </div>
               <div
                 className={cn(
@@ -202,7 +210,12 @@ export const NoteChatMessages = ({
             <Bot className="h-4 w-4 text-mint-600" aria-hidden="true" />
           </div>
           <div className="bg-gray-100 rounded-lg px-4 py-2 max-w-[80%]">
-            <div className="whitespace-pre-wrap text-sm">{streamingMessage}</div>
+            <div className="text-sm">
+              <MessageRenderer 
+                content={streamingMessage}
+                isCurrentUser={false}
+              />
+            </div>
             <div className="flex items-center gap-1 mt-1">
               <div className="w-1 h-1 bg-gray-400 rounded-full animate-pulse" />
               <div className="w-1 h-1 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />

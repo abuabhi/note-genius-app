@@ -3,83 +3,78 @@ import { useState, useCallback } from 'react';
 import { Note } from '@/types/note';
 import { ChatUIMessage } from '../types/noteChat';
 import { useNoteChat } from './useNoteChat';
-import { useStreamingChat } from './useStreamingChat';
 import { useNoteChatHistory } from './useNoteChatHistory';
 import { useErrorHandler } from './useErrorHandler';
 
 export const useChatHandlers = (note: Note) => {
   const [selectedText, setSelectedText] = useState<string>('');
-  const [useStreaming, setUseStreaming] = useState(true);
   
-  const { sendMessage, isLoading, error } = useNoteChat(note);
-  const { sendStreamingMessage, isStreaming, streamingMessage } = useStreamingChat(note);
-  const { messages, addUserMessage, addMessage } = useNoteChatHistory(note.id);
-  const { handleError, clearErrors, getLastError, canRetry } = useErrorHandler();
+  const { 
+    messages, 
+    setMessages,
+    isProcessing, 
+    isLoading, 
+    isStreaming, 
+    streamingMessage, 
+    sendMessage 
+  } = useNoteChat(note);
 
-  const handleSendMessage = useCallback(async (message: string): Promise<void> => {
+  const { saveToHistory } = useNoteChatHistory(note.id);
+  
+  const { 
+    errorMessage, 
+    canRetry, 
+    handleError, 
+    clearErrors 
+  } = useErrorHandler();
+
+  const handleSendMessage = useCallback(async (message: string) => {
     try {
       clearErrors();
-      
-      const userMessage = addUserMessage(message);
-
-      if (useStreaming) {
-        await sendStreamingMessage(
-          message,
-          messages,
-          (content) => {
-            // Handle streaming updates
-          },
-          (finalMessage) => {
-            addMessage(finalMessage);
-          }
-        );
-      } else {
-        const aiResponse = await sendMessage(message, messages);
-        if (aiResponse) {
-          addMessage(aiResponse);
-        }
+      const response = await sendMessage(message);
+      if (response) {
+        await saveToHistory(message, response.response);
       }
     } catch (error) {
-      handleError(error, 'sending message');
+      console.error('Error sending message:', error);
+      handleError(error as Error);
     }
-  }, [sendMessage, sendStreamingMessage, addUserMessage, addMessage, messages, useStreaming, handleError, clearErrors]);
+  }, [sendMessage, saveToHistory, handleError, clearErrors]);
 
-  const handleSelectSuggestion = useCallback((suggestion: string) => {
-    handleSendMessage(suggestion);
+  const handleSelectSuggestion = useCallback(async (suggestion: string) => {
+    setSelectedText('');
+    await handleSendMessage(suggestion);
   }, [handleSendMessage]);
 
-  const handleSelectFollowUp = useCallback((question: string) => {
-    handleSendMessage(question);
+  const handleSelectFollowUp = useCallback(async (question: string) => {
+    await handleSendMessage(question);
   }, [handleSendMessage]);
 
   const handleFlashcardCreated = useCallback(() => {
-    setSelectedText('');
+    // Handle flashcard creation success if needed
+    console.log('Flashcard created successfully');
   }, []);
 
-  const getErrorMessage = () => {
-    const lastError = getLastError();
-    if (lastError) {
-      return lastError.message;
-    }
-    if (error) {
-      return typeof error === 'string' ? error : 'An error occurred';
-    }
-    return null;
-  };
+  const handleClearChat = useCallback(() => {
+    setMessages([]);
+    setSelectedText('');
+    clearErrors();
+  }, [setMessages, clearErrors]);
 
   return {
     messages,
     selectedText,
-    isProcessing: isLoading || isStreaming,
+    isProcessing,
     isLoading,
     isStreaming,
     streamingMessage,
-    errorMessage: getErrorMessage(),
+    errorMessage,
     canRetry,
     handleSendMessage,
     handleSelectSuggestion,
     handleSelectFollowUp,
     handleFlashcardCreated,
+    handleClearChat,
     clearErrors
   };
 };

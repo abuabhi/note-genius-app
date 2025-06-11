@@ -32,6 +32,7 @@ export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps)
     handleSelectSuggestion,
     handleSelectFollowUp,
     handleFlashcardCreated,
+    handleClearChat,
     clearErrors
   } = useChatHandlers(note);
 
@@ -62,6 +63,7 @@ export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps)
           messages={messages}
           onMessageHighlight={setHighlightedMessageId}
           onClose={onClose}
+          onClearChat={handleClearChat}
         />
 
         <ErrorDisplay
