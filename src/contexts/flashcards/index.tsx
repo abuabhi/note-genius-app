@@ -179,22 +179,19 @@ export const FlashcardProvider: React.FC<FlashcardProviderProps> = ({ children }
     setLoading: stableSetLoading,
     user,
     
-    // Enhanced operations
-    fetchFlashcardSets: enhancedFetchFlashcardSets,
-    createFlashcardSet: enhancedCreateFlashcardSet,
-    
     // Operations from hooks
     ...flashcardOperations,
-    ...flashcardSetsOperations,
     ...categoryOperations,
     ...libraryOperations,
     ...studyOperations,
     recordFlashcardReview: combinedOperations.recordFlashcardReview,
     getFlashcardProgress: combinedOperations.getFlashcardProgress,
     
-    // Override with enhanced versions
+    // Enhanced operations (override the ones from flashcardSetsOperations)
     fetchFlashcardSets: enhancedFetchFlashcardSets,
-    createFlashcardSet: enhancedCreateFlashcardSet
+    createFlashcardSet: enhancedCreateFlashcardSet,
+    updateFlashcardSet: flashcardSetsOperations.updateFlashcardSet,
+    deleteFlashcardSet: flashcardSetsOperations.deleteFlashcardSet,
   }), [
     flashcards,
     flashcardSets,
