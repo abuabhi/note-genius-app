@@ -102,6 +102,7 @@ const FlashcardsPage = () => {
             <FlashcardsContent
               sets={allSets}
               filters={filters}
+              viewMode={viewMode}
               loading={loading}
               error={error}
               hasMore={false}

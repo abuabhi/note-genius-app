@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import FlashcardSetListView from '@/components/flashcards/components/FlashcardSetListView';
 import FlashcardSetGrid from '@/components/flashcards/components/FlashcardSetGrid';
+import { ViewMode } from '@/hooks/useViewPreferences';
 import type { FlashcardFilters } from '@/components/flashcards/components/AdvancedFlashcardFilters';
 
 // Loading skeleton component
@@ -47,6 +48,7 @@ const ErrorDisplay = ({ error, onRetry }: { error: string; onRetry: () => void }
 interface FlashcardsContentProps {
   sets: any[];
   filters: FlashcardFilters;
+  viewMode: ViewMode;
   loading: boolean;
   error: string | null;
   hasMore: boolean;
@@ -62,6 +64,7 @@ interface FlashcardsContentProps {
 export const FlashcardsContent = ({
   sets,
   filters,
+  viewMode,
   loading,
   error,
   hasMore,
@@ -73,6 +76,8 @@ export const FlashcardsContent = ({
   onLoadMore,
   onRetry,
 }: FlashcardsContentProps) => {
+  console.log('🎯 FlashcardsContent - Received viewMode:', viewMode);
+
   if (loading && page === 1) {
     return <ListLoadingSkeleton />;
   }
@@ -111,7 +116,7 @@ export const FlashcardsContent = ({
   return (
     <div className="space-y-6">
       {/* Flashcard Sets Display */}
-      {filters.viewMode === 'list' ? (
+      {viewMode === 'list' ? (
         <FlashcardSetListView
           sets={sets}
           onDeleteSet={onDeleteSet}
