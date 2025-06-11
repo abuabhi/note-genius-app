@@ -1,5 +1,5 @@
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -27,6 +27,25 @@ interface CreateQuizPayload {
 
 export const useQuizzes = () => {
   const queryClient = useQueryClient();
+  
+  const { data: quizzes = [], isLoading } = useQuery({
+    queryKey: ['quizzes'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('quizzes')
+        .select(`
+          *,
+          questions:quiz_questions(
+            *,
+            options:quiz_options(*)
+          )
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    }
+  });
   
   const createQuiz = useMutation({
     mutationFn: async (payload: CreateQuizPayload) => {
@@ -112,6 +131,103 @@ export const useQuizzes = () => {
   });
   
   return {
+    quizzes,
+    isLoading,
     createQuiz
   };
+};
+
+export const useQuiz = (quizId?: string) => {
+  return useQuery({
+    queryKey: ['quiz', quizId],
+    queryFn: async () => {
+      if (!quizId) throw new Error('Quiz ID is required');
+      
+      const { data, error } = await supabase
+        .from('quizzes')
+        .select(`
+          *,
+          questions:quiz_questions(
+            *,
+            options:quiz_options(*)
+          )
+        `)
+        .eq('id', quizId)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!quizId
+  });
+};
+
+export const useQuizResults = (userId?: string) => {
+  const fetchResults = async () => {
+    const currentUser = (await supabase.auth.getUser()).data.user?.id;
+    
+    if (!currentUser && !userId) {
+      return [];
+    }
+    
+    const { data, error } = await supabase
+      .from('quiz_results')
+      .select(`
+        *,
+        quiz:quizzes(
+          id,
+          title,
+          description
+        )
+      `)
+      .eq('user_id', userId || currentUser)
+      .order('completed_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching quiz results:', error);
+      throw error;
+    }
+    
+    return data;
+  };
+  
+  return useQuery({
+    queryKey: ['quiz-results', userId],
+    queryFn: fetchResults
+  });
+};
+
+export const useSubmitQuizResult = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ quizId, score, totalQuestions, duration, responses }: {
+      quizId: string;
+      score: number;
+      totalQuestions: number;
+      duration?: number;
+      responses: any[];
+    }) => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error('User not authenticated');
+      
+      const { data, error } = await supabase
+        .from('quiz_results')
+        .insert({
+          quiz_id: quizId,
+          user_id: user.user.id,
+          score,
+          total_questions: totalQuestions,
+          duration_seconds: duration
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quiz-results'] });
+    }
+  });
 };

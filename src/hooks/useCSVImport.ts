@@ -48,7 +48,13 @@ export const useCSVImport = () => {
 
   // Import flashcards wrapper with result tracking
   const importFlashcards = async (file: File): Promise<CSVUploadResult> => {
-    const result = await flashcardsImport.importFlashcards(file);
+    await flashcardsImport.importFlashcards(file);
+    const result: CSVUploadResult = {
+      totalRows: flashcardsImport.importResults?.totalRows || 0,
+      successCount: flashcardsImport.importResults?.successCount || 0,
+      errorCount: flashcardsImport.importResults?.errorCount || 0,
+      errors: flashcardsImport.importResults?.errors || []
+    };
     setResults(result);
     return result;
   };

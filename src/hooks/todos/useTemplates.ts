@@ -22,9 +22,10 @@ export const useTemplates = () => {
 
       if (error) throw error;
       
-      // Cast the template_items from Json to TemplateItem[]
+      // Transform the data to match TodoTemplate type
       return data.map(template => ({
         ...template,
+        category: template.subject, // Map subject to category
         template_items: template.template_items as unknown as TemplateItem[]
       })) as TodoTemplate[];
     },
