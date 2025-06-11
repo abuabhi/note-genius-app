@@ -24,6 +24,6 @@ export type GoalTemplate = {
   description: string;
   target_hours: number;
   duration_days: number;
-  category: 'beginner' | 'intermediate' | 'advanced';
+  difficulty_level: 'beginner' | 'intermediate' | 'advanced';
   subject?: string;
 };

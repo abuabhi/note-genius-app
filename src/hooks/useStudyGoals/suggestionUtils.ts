@@ -8,8 +8,8 @@ export const selectBestSuggestions = (
   count: number
 ): GoalTemplate[] => {
   // Prioritize templates based on user level
-  const priorityTemplates = availableTemplates.filter(t => t.category === userLevel);
-  const otherTemplates = availableTemplates.filter(t => t.category !== userLevel);
+  const priorityTemplates = availableTemplates.filter(t => t.difficulty_level === userLevel);
+  const otherTemplates = availableTemplates.filter(t => t.difficulty_level !== userLevel);
   
   // Combine prioritized templates with others
   const orderedTemplates = [...priorityTemplates, ...otherTemplates];

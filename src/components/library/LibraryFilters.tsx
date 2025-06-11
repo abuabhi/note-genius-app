@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { useSubjects } from "@/hooks/useSubjects";
 
 interface FiltersProps {
   filters: {
@@ -29,14 +30,7 @@ interface FiltersProps {
 }
 
 export function LibraryFilters({ filters, setFilters }: FiltersProps) {
-  const subjects = [
-    "Mathematics", 
-    "Sciences", 
-    "Languages",
-    "History",
-    "Arts",
-    "Computer Science"
-  ];
+  const { academicSubjects } = useSubjects();
   
   const gradeLevels = [
     "Elementary",
@@ -70,9 +64,9 @@ export function LibraryFilters({ filters, setFilters }: FiltersProps) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="_all">All Subjects</SelectItem>
-              {subjects.map((subject) => (
-                <SelectItem key={subject} value={subject}>
-                  {subject}
+              {academicSubjects?.map((subject) => (
+                <SelectItem key={subject.id} value={subject.name}>
+                  {subject.name}
                 </SelectItem>
               ))}
             </SelectContent>

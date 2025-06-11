@@ -103,7 +103,7 @@ export const GoalSuggestions = ({
                 <div className="flex items-start justify-between mb-2 pr-6">
                   <h4 className="font-medium text-sm">{template.title}</h4>
                   <Badge variant="outline" className="text-xs">
-                    {template.category}
+                    {template.difficulty_level}
                   </Badge>
                 </div>
                 <p className="text-xs text-muted-foreground mb-2">{template.description}</p>

@@ -9,19 +9,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Filter } from "lucide-react";
-import { SubjectCategory } from "@/types/flashcard";
+import { useSubjects } from "@/hooks/useSubjects";
 
 interface SectionsFilterProps {
   filterSubject: string;
   setFilterSubject: (value: string) => void;
-  categories: SubjectCategory[];
 }
 
 const SectionsFilter = ({
   filterSubject,
   setFilterSubject,
-  categories,
 }: SectionsFilterProps) => {
+  const { academicSubjects } = useSubjects();
+
   return (
     <div className="mb-4">
       <div className="flex items-center space-x-2">
@@ -33,9 +33,9 @@ const SectionsFilter = ({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">All Subjects</SelectItem>
-            {categories.map((category) => (
-              <SelectItem key={category.id} value={category.id}>
-                {category.name}
+            {academicSubjects?.map((subject) => (
+              <SelectItem key={subject.id} value={subject.id}>
+                {subject.name}
               </SelectItem>
             ))}
           </SelectContent>
