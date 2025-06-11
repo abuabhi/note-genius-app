@@ -66,7 +66,7 @@ export const OptimizedAppRoutes = () => {
           </LazyLoadWrapper>
         } />
         
-        {/* Flashcards routes */}
+        {/* Flashcards routes - Fixed the route parameter name to match URL structure */}
         <Route path="/flashcards" element={
           <LazyLoadWrapper>
             <FlashcardsPage />
@@ -82,12 +82,13 @@ export const OptimizedAppRoutes = () => {
             <EditFlashcardPage />
           </LazyLoadWrapper>
         } />
-        <Route path="/flashcards/sets/:id" element={
+        {/* Fixed route parameter - using :setId to match the URL pattern */}
+        <Route path="/flashcards/sets/:setId" element={
           <LazyLoadWrapper>
             <FlashcardSetPage />
           </LazyLoadWrapper>
         } />
-        <Route path="/flashcards/study/:id" element={
+        <Route path="/flashcards/study/:setId" element={
           <LazyLoadWrapper>
             <FlashcardStudyPage />
           </LazyLoadWrapper>

@@ -1,4 +1,3 @@
-
 import { useState, useMemo, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,8 +50,15 @@ import { useLearningProgress } from "@/hooks/useLearningProgress";
 import { FlashcardSetBreadcrumb } from "./FlashcardSetBreadcrumb";
 
 const EnhancedFlashcardSetView = () => {
-  const { setId } = useParams<{ setId: string }>();
+  const params = useParams();
   const navigate = useNavigate();
+  
+  // Extract setId from params - try both 'setId' and 'id' for flexibility
+  const setId = params.setId || params.id;
+  
+  console.log("EnhancedFlashcardSetView: URL params:", params);
+  console.log("EnhancedFlashcardSetView: Extracted setId:", setId);
+
   const { currentSet, fetchFlashcardsInSet, deleteFlashcard, setCurrentSet, flashcardSets, fetchFlashcardSets, loading } = useFlashcards();
   const { progressMap, fetchLearningProgress, isLoading: progressLoading } = useLearningProgress();
   
@@ -64,10 +70,6 @@ const EnhancedFlashcardSetView = () => {
   const [filterDifficulty, setFilterDifficulty] = useState("all");
   const [filterReviewStatus, setFilterReviewStatus] = useState("all");
   const [deletingCard, setDeletingCard] = useState<string | null>(null);
-
-  console.log("EnhancedFlashcardSetView: Component rendered with setId:", setId);
-  console.log("EnhancedFlashcardSetView: Current set:", currentSet);
-  console.log("EnhancedFlashcardSetView: Loading states:", { loading, localLoading, progressLoading });
 
   // Function to get card progress from learning progress data
   const getCardProgress = (cardId: string) => {
@@ -97,7 +99,7 @@ const EnhancedFlashcardSetView = () => {
   useEffect(() => {
     const loadSetAndFlashcards = async () => {
       if (!setId) {
-        console.error("EnhancedFlashcardSetView: No setId provided");
+        console.error("EnhancedFlashcardSetView: No setId provided in params:", params);
         setError("No flashcard set ID provided");
         setLocalLoading(false);
         return;
@@ -114,8 +116,6 @@ const EnhancedFlashcardSetView = () => {
         if (!targetSet) {
           console.log("EnhancedFlashcardSetView: Set not found, fetching all sets...");
           await fetchFlashcardSets();
-          // Wait a moment for the state to update
-          await new Promise(resolve => setTimeout(resolve, 100));
         }
 
         // Fetch flashcards for this set (this also sets the current set)
