@@ -1,4 +1,3 @@
-
 import { useState, useMemo, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -510,7 +509,7 @@ const EnhancedFlashcardSetView = () => {
         </div>
       )}
 
-      {/* Study Button for Needs Review Cards */}
+      {/* Study Button for Needs Review Cards - Updated URL */}
       {setStats.needsReviewCards > 0 && (
         <div className="mt-6 flex justify-center">
           <Button size="lg" asChild className="bg-orange-600 hover:bg-orange-700">
