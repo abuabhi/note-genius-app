@@ -160,7 +160,7 @@ export const NoteChatMessages = ({
                 />
               )}
 
-              {/* Flashcard creation button for AI messages */}
+              {/* Enhanced Flashcard creation button for AI messages */}
               {message.type === 'ai' && (
                 <div className="mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Button
@@ -178,7 +178,7 @@ export const NoteChatMessages = ({
                     aria-label="Create flashcard from this conversation"
                   >
                     <BookOpen className="h-3 w-3 mr-1" aria-hidden="true" />
-                    Create Flashcard
+                    {isGenerating ? 'Creating...' : 'Create Flashcard'}
                   </Button>
                 </div>
               )}
