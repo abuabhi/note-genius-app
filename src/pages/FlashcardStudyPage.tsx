@@ -9,17 +9,18 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { FlashcardProvider } from "@/contexts/FlashcardContext";
 
 const FlashcardStudyPageContent = () => {
-  const { setId, id } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
   useRequireAuth();
 
-  console.log("FlashcardStudyPage: Params received", { setId, id });
+  console.log("FlashcardStudyPage: Params received", { id });
+  console.log("FlashcardStudyPage: Current URL:", window.location.pathname);
 
-  // Use either setId or id parameter
-  const currentSetId = setId || id;
+  // Use the standardized :id parameter consistently
+  const currentSetId = id;
 
   if (!currentSetId) {
-    console.error("FlashcardStudyPage: No set ID provided in params");
+    console.error("FlashcardStudyPage: No set ID provided in params", { id });
     return (
       <Layout>
         <div className="container mx-auto p-6">
@@ -30,6 +31,7 @@ const FlashcardStudyPageContent = () => {
             <p className="mb-4 text-red-600">
               Unable to load study session - no flashcard set ID was provided.
             </p>
+            <p className="mb-4 text-sm text-gray-600">Current URL: {window.location.pathname}</p>
             <Button onClick={() => navigate("/flashcards")}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Flashcards

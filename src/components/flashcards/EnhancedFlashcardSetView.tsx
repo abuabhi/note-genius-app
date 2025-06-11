@@ -54,11 +54,12 @@ const EnhancedFlashcardSetView = () => {
   const params = useParams();
   const navigate = useNavigate();
   
-  // Extract setId from params
-  const setId = params.setId || params.id;
+  // Use the standardized :id parameter from the route
+  const setId = params.id;
   
   console.log("🔍 EnhancedFlashcardSetView: Component mounting with params:", params);
-  console.log("🔍 EnhancedFlashcardSetView: Extracted setId:", setId);
+  console.log("🔍 EnhancedFlashcardSetView: Extracted setId from params.id:", setId);
+  console.log("🔍 EnhancedFlashcardSetView: Current URL pathname:", window.location.pathname);
 
   const { currentSet, fetchFlashcardsInSet, deleteFlashcard, setCurrentSet, flashcardSets, fetchFlashcardSets, loading } = useFlashcards();
   const { progressMap, fetchLearningProgress, isLoading: progressLoading } = useLearningProgress();
@@ -74,12 +75,15 @@ const EnhancedFlashcardSetView = () => {
 
   // Early return for missing setId
   if (!setId) {
-    console.error("❌ EnhancedFlashcardSetView: No setId in URL params");
+    console.error("❌ EnhancedFlashcardSetView: No setId in URL params, params:", params);
+    console.error("❌ EnhancedFlashcardSetView: Current URL:", window.location.href);
     return (
       <div className="container mx-auto p-6">
         <div className="bg-red-50 border border-red-200 rounded-md p-6 text-center">
           <h2 className="text-xl font-semibold text-red-700 mb-2">Invalid URL</h2>
           <p className="mb-4 text-red-600">No flashcard set ID provided in the URL.</p>
+          <p className="mb-4 text-sm text-gray-600">Current URL: {window.location.pathname}</p>
+          <p className="mb-4 text-sm text-gray-600">Params: {JSON.stringify(params)}</p>
           <Button onClick={() => navigate("/flashcards")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Flashcards
@@ -310,7 +314,8 @@ const EnhancedFlashcardSetView = () => {
   console.log("✅ EnhancedFlashcardSetView: Rendering main content", {
     currentSet: currentSet?.name,
     flashcardsCount: flashcards.length,
-    setStats
+    setStats,
+    setId
   });
 
   return (

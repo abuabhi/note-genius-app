@@ -60,6 +60,7 @@ const FlashcardSetCard = ({
     return null;
   }
 
+  // Use consistent :id parameter for both URLs
   console.log('FlashcardSetCard: Rendering card for set:', {
     id: setId,
     name: set.name,
