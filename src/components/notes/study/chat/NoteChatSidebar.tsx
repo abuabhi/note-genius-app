@@ -36,6 +36,12 @@ export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps)
     clearErrors
   } = useChatHandlers(note);
 
+  // Create a wrapper function that discards the return value to match the expected type
+  const handleSendMessageWrapper = async (message: string): Promise<void> => {
+    await handleSendMessage(message);
+    // Return nothing (void)
+  };
+
   return (
     <AccessibilityProvider>
       {/* Mobile overlay */}
@@ -84,7 +90,7 @@ export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps)
           selectedText={selectedText}
           onSelectSuggestion={handleSelectSuggestion}
           onSelectFollowUp={handleSelectFollowUp}
-          onSendMessage={handleSendMessage}
+          onSendMessage={handleSendMessageWrapper}
           onFlashcardCreated={handleFlashcardCreated}
         />
       </div>
