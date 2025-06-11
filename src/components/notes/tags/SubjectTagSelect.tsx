@@ -19,16 +19,16 @@ interface SubjectTagSelectProps {
 }
 
 export const SubjectTagSelect = ({ note, onSubjectChange }: SubjectTagSelectProps) => {
-  const { availableCategories, updateNote, addCategory } = useNotes();
+  const { availableSubjects, updateNote, addSubject } = useNotes();
   const [currentSubject, setCurrentSubject] = useState<string>(note.subject || "general");
 
   // Handle subject change
   const handleSubjectChange = async (value: string) => {
     setCurrentSubject(value);
     
-    // If this is a new subject, add it to our available categories
-    if (value && value !== 'general' && !availableCategories.includes(value)) {
-      addCategory(value);
+    // If this is a new subject, add it to our available subjects
+    if (value && value !== 'general' && !availableSubjects.includes(value)) {
+      addSubject(value);
     }
     
     if (onSubjectChange) {
@@ -80,16 +80,16 @@ export const SubjectTagSelect = ({ note, onSubjectChange }: SubjectTagSelectProp
         </SelectTrigger>
         <SelectContent className="bg-white">
           <SelectItem value="general">General</SelectItem>
-          {availableCategories.map((category) => {
-            if (!category || category.trim() === '') return null;
+          {availableSubjects.map((subject) => {
+            if (!subject || subject.trim() === '') return null;
             
-            const color = generateColorFromString(category);
+            const color = generateColorFromString(subject);
             const textColor = getBestTextColor(color);
             
             return (
               <SelectItem 
-                key={category} 
-                value={category}
+                key={subject} 
+                value={subject}
                 className="flex items-center justify-between focus:bg-mint-50 focus:text-mint-700"
               >
                 <div className="flex items-center gap-2">
@@ -100,7 +100,7 @@ export const SubjectTagSelect = ({ note, onSubjectChange }: SubjectTagSelectProp
                     }}
                     className="px-2 py-0.5 font-medium"
                   >
-                    {category}
+                    {subject}
                   </Badge>
                 </div>
               </SelectItem>

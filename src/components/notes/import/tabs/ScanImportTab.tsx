@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ImageUpload } from '../../scanning/ImageUpload';
@@ -219,8 +220,8 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
                 <NoteMetadataForm 
                   title={noteTitle}
                   setTitle={setNoteTitle}
-                  category={noteSubject}
-                  setCategory={setNoteSubject}
+                  subject={noteSubject}
+                  setSubject={setNoteSubject}
                   isDisabled={false}
                   detectedLanguage={getLanguageName(selectedLanguage)}
                 />

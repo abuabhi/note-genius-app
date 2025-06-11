@@ -58,8 +58,8 @@ const NoteProviderInner = ({ children }: { children: ReactNode }) => {
     filteredNotes,
     paginatedNotes,
     totalPages,
-    availableCategories,
-    addCategory,
+    availableSubjects,
+    addSubject,
     resetFilters
   } = notesState;
 
@@ -139,8 +139,8 @@ const NoteProviderInner = ({ children }: { children: ReactNode }) => {
     filterOptions,
     setFilterOptions,
     resetFilters,
-    availableCategories,
-    addCategory,
+    availableSubjects,
+    addSubject,
     setNotes,
     tags
   };

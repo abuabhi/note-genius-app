@@ -274,8 +274,8 @@ export const ScanWorkflow = ({
                 <NoteMetadataForm 
                   title={noteTitle}
                   setTitle={setNoteTitle}
-                  category={noteSubject}
-                  setCategory={setNoteSubject}
+                  subject={noteSubject}
+                  setSubject={setNoteSubject}
                   isDisabled={false}
                   detectedLanguage={getLanguageName(selectedLanguage)}
                 />
