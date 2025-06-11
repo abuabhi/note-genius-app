@@ -29,7 +29,15 @@ export const createStudyGoal = async (goalData: Omit<StudyGoal, 'id' | 'created_
   const { data, error } = await supabase
     .from('study_goals')
     .insert({
-      ...goalData,
+      user_id: goalData.user_id,
+      title: goalData.title,
+      description: goalData.description,
+      target_hours: goalData.target_hours,
+      start_date: goalData.start_date,
+      end_date: goalData.end_date,
+      flashcard_set_id: goalData.flashcard_set_id,
+      is_completed: goalData.is_completed,
+      progress: goalData.progress,
       academic_subject: goalData.subject
     })
     .select()
@@ -49,7 +57,7 @@ export const createStudyGoal = async (goalData: Omit<StudyGoal, 'id' | 'created_
 export const updateStudyGoal = async (id: string, updates: Partial<StudyGoal>): Promise<StudyGoal> => {
   console.log('Updating study goal:', id, updates);
   
-  const updateData = { ...updates };
+  const updateData: any = { ...updates };
   if (updates.subject) {
     updateData.academic_subject = updates.subject;
     delete updateData.subject;
@@ -73,7 +81,7 @@ export const updateStudyGoal = async (id: string, updates: Partial<StudyGoal>): 
   } as StudyGoal;
 };
 
-export const deleteStudyGoal = async (id: string): Promise<void> => {
+export const deleteStudyGoal = async (id: string): Promise<boolean> => {
   console.log('Deleting study goal:', id);
   
   const { error } = await supabase
@@ -85,6 +93,8 @@ export const deleteStudyGoal = async (id: string): Promise<void> => {
     console.error('Error deleting study goal:', error);
     throw error;
   }
+
+  return true;
 };
 
 export const fetchGoals = async (user: any, setGoals: any, setLoading: any) => {
@@ -105,12 +115,16 @@ export const createGoal = async (user: any, goalData: GoalFormValues, setGoals: 
   
   try {
     const newGoal = await createStudyGoal({
-      ...goalData,
       user_id: user.id,
+      title: goalData.title,
+      description: goalData.description,
+      target_hours: goalData.target_hours,
+      start_date: goalData.start_date,
+      end_date: goalData.end_date,
+      subject: goalData.subject,
+      flashcard_set_id: goalData.flashcard_set_id,
       is_completed: false,
-      progress: 0,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      progress: 0
     });
     
     setGoals((prev: StudyGoal[]) => [newGoal, ...prev]);
@@ -133,14 +147,18 @@ export const updateGoal = async (user: any, id: string, goalData: Partial<GoalFo
   }
 };
 
-export const deleteGoal = async (user: any, id: string, setGoals: any) => {
-  if (!user) return;
+export const deleteGoal = async (user: any, id: string, setGoals: any): Promise<boolean> => {
+  if (!user) return false;
   
   try {
-    await deleteStudyGoal(id);
-    setGoals((prev: StudyGoal[]) => prev.filter(goal => goal.id !== id));
+    const success = await deleteStudyGoal(id);
+    if (success) {
+      setGoals((prev: StudyGoal[]) => prev.filter(goal => goal.id !== id));
+    }
+    return success;
   } catch (error) {
     console.error('Error deleting goal:', error);
+    return false;
   }
 };
 

@@ -51,7 +51,7 @@ export const useQuizList = (filters: {
         throw error;
       }
 
-      return data || [];
+      return { quizzes: data || [] };
     },
   });
 };

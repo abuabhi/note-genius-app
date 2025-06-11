@@ -67,7 +67,7 @@ const TakeQuizPage = () => {
   };
   
   if (quizState === 'not-started') {
-    return <QuizIntroduction quiz={quiz} onStartQuiz={startQuiz} />;
+    return <QuizIntroduction quiz={quiz as any} onStartQuiz={startQuiz} />;
   }
   
   if (quizState === 'in-progress' && quiz.questions) {
@@ -79,7 +79,7 @@ const TakeQuizPage = () => {
               <QuizTakingBreadcrumb quizTitle={quiz.title} />
             </div>
             <QuizTakingCard
-              questions={quiz.questions}
+              questions={quiz.questions as any}
               onQuizComplete={handleQuizComplete}
             />
           </div>
@@ -97,7 +97,7 @@ const TakeQuizPage = () => {
               <QuizTakingBreadcrumb quizTitle={quiz.title} />
             </div>
             <QuizResults
-              quiz={quiz}
+              quiz={quiz as any}
               score={quizResults.score}
               totalQuestions={quizResults.totalQuestions}
               duration={quizResults.duration}

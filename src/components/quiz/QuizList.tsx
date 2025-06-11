@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,10 +17,13 @@ export const QuizList = () => {
   const [selectedSubject, setSelectedSubject] = useState<string>("all");
   
   const { academicSubjects } = useSubjects();
-  const { quizzes, isLoading, error } = useQuizList({
+  const { data, isLoading, error } = useQuizList({
     search: searchTerm,
     subject: selectedSubject === "all" ? undefined : selectedSubject
   });
+
+  // Extract quizzes from the returned data
+  const quizzes = data?.quizzes || [];
 
   const handleTakeQuiz = (quiz: QuizWithQuestions) => {
     navigate(`/quiz/${quiz.id}/take`);
@@ -117,11 +119,11 @@ export const QuizList = () => {
                     </CardDescription>
                   </div>
                   <div className="flex gap-2">
-                    <Button onClick={() => handleTakeQuiz(quiz)}>
+                    <Button onClick={() => handleTakeQuiz(quiz as QuizWithQuestions)}>
                       <Play className="h-4 w-4 mr-2" />
                       Take Quiz
                     </Button>
-                    <Button variant="outline" onClick={() => handleViewQuiz(quiz)}>
+                    <Button variant="outline" onClick={() => handleViewQuiz(quiz as QuizWithQuestions)}>
                       <History className="h-4 w-4 mr-2" />
                       View
                     </Button>
@@ -132,7 +134,7 @@ export const QuizList = () => {
                 <div className="flex flex-wrap gap-2 mb-3">
                   <Badge variant="secondary">
                     <HelpCircle className="h-3 w-3 mr-1" />
-                    {quiz.questions?.length || 0} questions
+                    {(quiz as any).questions?.length || 0} questions
                   </Badge>
                   {quiz.subject_id && (
                     <Badge variant="outline">

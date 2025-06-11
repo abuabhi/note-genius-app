@@ -69,6 +69,23 @@ export const useSimpleFlashcardSets = () => {
     refetch();
   };
 
+  const fetchFlashcardSets = async () => {
+    const { data, error } = await supabase
+      .from('flashcard_sets')
+      .select(`
+        *,
+        academic_subjects(*)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching flashcard sets:', error);
+      throw error;
+    }
+
+    return data || [];
+  };
+
   return {
     flashcardSets,
     isLoading,
@@ -77,6 +94,7 @@ export const useSimpleFlashcardSets = () => {
     refetch,
     getFlashcardsForSet,
     filterSetsBySubject,
-    deleteFlashcardSet
+    deleteFlashcardSet,
+    fetchFlashcardSets
   };
 };
