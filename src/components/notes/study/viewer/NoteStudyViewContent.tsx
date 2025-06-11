@@ -87,6 +87,7 @@ export const NoteStudyViewContent: React.FC<NoteStudyViewContentProps> = ({
           textAlign={textAlign}
           handleRetryEnhancement={handleRetryEnhancement}
           activeContentType={activeContentType}
+          onActiveContentTypeChange={onActiveContentTypeChange}
           isEditOperation={isEditOperation}
         />
       )}

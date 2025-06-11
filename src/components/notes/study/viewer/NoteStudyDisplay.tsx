@@ -11,6 +11,7 @@ interface NoteStudyDisplayProps {
   textAlign: TextAlignType;
   handleRetryEnhancement: (enhancementType: string) => Promise<void>;
   activeContentType: string;
+  onActiveContentTypeChange: (type: string) => void;
   isEditOperation: boolean;
 }
 
@@ -19,15 +20,16 @@ export const NoteStudyDisplay: React.FC<NoteStudyDisplayProps> = ({
   fontSize,
   textAlign,
   activeContentType,
+  onActiveContentTypeChange,
   handleRetryEnhancement,
   isEditOperation
 }) => {
   // Convert activeContentType string to EnhancementContentType
   const contentType = activeContentType as EnhancementContentType;
   
-  // Create a no-op function for setActiveContentType since it's handled at parent level
-  const handleActiveContentTypeChange = () => {
-    // This is handled by the parent component through activeContentType prop
+  // Handle content type changes
+  const handleActiveContentTypeChange = (type: EnhancementContentType) => {
+    onActiveContentTypeChange(type);
   };
 
   return (
