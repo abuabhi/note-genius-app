@@ -55,7 +55,7 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
       try {
         console.log(`🔍 Optimized notes query - Filtering by subject: "${subject}"`);
 
-        // OPTIMIZED APPROACH: Direct query with subject name filter
+        // ENHANCED APPROACH: Query all notes and filter in memory for better performance with complex logic
         let query = supabase
           .from('notes')
           .select(`
@@ -74,25 +74,17 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
           `, { count: 'exact' })
           .eq('user_id', user.id);
 
-        // Apply subject filter efficiently using join
-        if (subject && subject !== 'all' && subject.trim() !== '') {
-          console.log(`🎯 Applying optimized subject filter: "${subject}"`);
-          // Join with user_subjects and filter by name directly in the query
-          query = query
-            .not('user_subjects', 'is', null)
-            .eq('user_subjects.name', subject);
-        }
-
-        // Apply other filters
+        // Apply archive filter
         if (!showArchived) {
           query = query.eq('archived', false);
         }
 
+        // Apply search filter at database level for performance
         if (search && search.trim() !== '') {
           query = query.ilike('title', `%${search}%`);
         }
 
-        // Apply sorting with pinned notes first (optimized ordering)
+        // Apply sorting with pinned notes first
         switch (sortBy) {
           case 'newest':
             query = query.order('pinned', { ascending: false })
@@ -108,11 +100,7 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
             break;
         }
 
-        // Apply pagination
-        const offset = (page - 1) * pageSize;
-        query = query.range(offset, offset + pageSize - 1);
-
-        // Execute the optimized query
+        // Execute the query to get all notes first
         const { data: notes, error, count } = await query;
 
         if (error) {
@@ -120,13 +108,37 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
           throw error;
         }
 
-        const finalNotes = notes || [];
-        const totalCount = count || 0;
+        let filteredNotes = notes || [];
 
-        console.log(`✅ Optimized notes query returned ${finalNotes.length} notes for subject: "${subject}"`);
+        // Apply subject filter in memory to handle both subject_id and legacy subject field
+        if (subject && subject !== 'all' && subject.trim() !== '') {
+          console.log(`🎯 Applying subject filter: "${subject}"`);
+          
+          filteredNotes = filteredNotes.filter(note => {
+            // Check if note has subject_id and matches via user_subjects join
+            const hasSubjectIdMatch = note.user_subjects?.name === subject;
+            
+            // Check legacy subject field
+            const hasLegacySubjectMatch = note.subject === subject;
+            
+            // Check category field (which is mapped from subject in the Note interface)
+            const hasCategoryMatch = note.category === subject;
+            
+            console.log(`Note "${note.title}": subject_id match=${hasSubjectIdMatch}, legacy match=${hasLegacySubjectMatch}, category match=${hasCategoryMatch}`);
+            
+            return hasSubjectIdMatch || hasLegacySubjectMatch || hasCategoryMatch;
+          });
+        }
+
+        // Apply pagination to filtered results
+        const totalCount = filteredNotes.length;
+        const offset = (page - 1) * pageSize;
+        const paginatedNotes = filteredNotes.slice(offset, offset + pageSize);
+
+        console.log(`✅ Optimized notes query returned ${paginatedNotes.length} notes for subject: "${subject}" (${totalCount} total filtered)`);
         
         // Transform data to match Note interface
-        const transformedNotes: Note[] = finalNotes.map(note => ({
+        const transformedNotes: Note[] = paginatedNotes.map(note => ({
           id: note.id,
           title: note.title,
           description: note.description || '',
@@ -155,29 +167,28 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
           notesCount: transformedNotes.length,
           hasFilters: !!(search || subject !== 'all'),
           page,
-          queryType: 'optimized_join_filter'
+          queryType: 'enhanced_memory_filter'
         });
 
-        const offset_check = (page - 1) * pageSize;
         return {
           notes: transformedNotes,
           totalCount,
-          hasMore: totalCount > offset_check + pageSize
+          hasMore: totalCount > offset + pageSize
         };
 
       } catch (error) {
         const duration = performance.now() - startTime;
         recordMetric('optimized_notes_query_error', duration, {
           error: error instanceof Error ? error.message : 'Unknown error',
-          queryType: 'optimized_join_filter'
+          queryType: 'enhanced_memory_filter'
         });
         throw error;
       }
     },
     enabled: !!user,
     ...cacheConfigs.user,
-    staleTime: 1 * 60 * 1000, // 1 minute for faster updates
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 30 * 1000, // 30 seconds for faster responsiveness
+    gcTime: 2 * 60 * 1000, // 2 minutes
   });
 
   // Optimized prefetch for next page
@@ -192,7 +203,7 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
           // Use the same optimized query logic for prefetch
           return { notes: [], totalCount: 0, hasMore: false };
         },
-        staleTime: 1 * 60 * 1000
+        staleTime: 30 * 1000
       });
     }
   };
