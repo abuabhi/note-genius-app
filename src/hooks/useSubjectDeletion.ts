@@ -73,6 +73,75 @@ export const useSubjectDeletion = () => {
       
       console.log('Deleting subject with ID:', subjectId);
       
+      // First, get the subject name to check for dependencies
+      const { data: subjectData, error: fetchError } = await supabase
+        .from("user_subjects")
+        .select("name")
+        .eq("id", subjectId)
+        .eq("user_id", user.id)
+        .single();
+        
+      if (fetchError) {
+        console.error('Error fetching subject:', fetchError);
+        throw fetchError;
+      }
+      
+      if (!subjectData) {
+        throw new Error("Subject not found");
+      }
+      
+      const subjectName = subjectData.name;
+      console.log('Subject name to delete:', subjectName);
+      
+      // Update all notes that reference this subject to use "Uncategorized"
+      const { error: notesError } = await supabase
+        .from('notes')
+        .update({ subject: 'Uncategorized' })
+        .eq('user_id', user.id)
+        .eq('subject', subjectName);
+        
+      if (notesError) {
+        console.error('Error updating notes:', notesError);
+        throw notesError;
+      }
+      
+      // Update all flashcard sets that reference this subject
+      const { error: flashcardError } = await supabase
+        .from('flashcard_sets')
+        .update({ subject: 'Uncategorized' })
+        .eq('user_id', user.id)
+        .eq('subject', subjectName);
+        
+      if (flashcardError) {
+        console.error('Error updating flashcard sets:', flashcardError);
+        throw flashcardError;
+      }
+      
+      // Update all study goals that reference this subject
+      const { error: goalsError } = await supabase
+        .from('study_goals')
+        .update({ subject: 'Uncategorized' })
+        .eq('user_id', user.id)
+        .eq('subject', subjectName);
+        
+      if (goalsError) {
+        console.error('Error updating study goals:', goalsError);
+        throw goalsError;
+      }
+      
+      // Update all study sessions that reference this subject
+      const { error: sessionsError } = await supabase
+        .from('study_sessions')
+        .update({ subject: 'Uncategorized' })
+        .eq('user_id', user.id)
+        .eq('subject', subjectName);
+        
+      if (sessionsError) {
+        console.error('Error updating study sessions:', sessionsError);
+        throw sessionsError;
+      }
+      
+      // Now delete the subject from user_subjects
       const { error } = await supabase
         .from("user_subjects")
         .delete()
