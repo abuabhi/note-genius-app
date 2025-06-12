@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useGlobalSessionTracker } from '@/hooks/useGlobalSessionTracker';
 import { isStudyRoute } from '@/hooks/useGlobalSessionTracker/types';
@@ -30,7 +29,6 @@ export const VisualFloatingTimer = () => {
     return null;
   }
 
-  // Determine background color based on state
   const getBackgroundColor = () => {
     if (isActive && isOnStudyPage) {
       return isPaused ? 'bg-orange-500/20' : 'bg-red-500/20';

@@ -1,6 +1,5 @@
-
 import { useEffect } from 'react';
-import { useGlobalSessionTracker } from './useGlobalSessionTracker';
+import { useGlobalSessionTracker } from '@/hooks/useGlobalSessionTracker';
 import { useLocation } from 'react-router-dom';
 
 interface StudySessionIntegrationProps {

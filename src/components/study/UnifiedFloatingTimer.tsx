@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Clock, Play, Pause, BookOpen, Target, FileText, X, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,9 +20,6 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
     recordActivity,
     endSession
   } = useGlobalSessionTracker();
-
-  const [isMinimized, setIsMinimized] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
 
   // Show timer if there's an active session, regardless of page
   if (!isActive) {
@@ -105,6 +101,9 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
   };
 
   const theme = getSessionTheme();
+
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   if (isMinimized) {
     return (

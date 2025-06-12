@@ -1,11 +1,10 @@
-
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 import { StudyMode } from '@/pages/study/types';
 import { Flashcard } from '@/types/flashcard';
-import { useGlobalSessionTracker } from './useGlobalSessionTracker';
+import { useGlobalSessionTracker } from '@/hooks/useGlobalSessionTracker';
 
 interface UseQuizModeProps {
   setId: string;
