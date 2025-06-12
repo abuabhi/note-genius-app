@@ -698,6 +698,114 @@ export type Database = {
         }
         Relationships: []
       }
+      help_content_analytics: {
+        Row: {
+          content_id: string
+          context: string | null
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          content_id: string
+          context?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          content_id?: string
+          context?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      help_search_analytics: {
+        Row: {
+          context: string | null
+          created_at: string
+          id: string
+          results_count: number
+          search_term: string
+          selected_result_id: string | null
+          session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          context?: string | null
+          created_at?: string
+          id?: string
+          results_count?: number
+          search_term: string
+          selected_result_id?: string | null
+          session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          context?: string | null
+          created_at?: string
+          id?: string
+          results_count?: number
+          search_term?: string
+          selected_result_id?: string | null
+          session_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      help_session_analytics: {
+        Row: {
+          context: string | null
+          created_at: string
+          end_time: string | null
+          id: string
+          pages_visited: number | null
+          searches_performed: number | null
+          session_id: string
+          start_time: string
+          total_duration_seconds: number | null
+          user_id: string
+          videos_watched: number | null
+        }
+        Insert: {
+          context?: string | null
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          pages_visited?: number | null
+          searches_performed?: number | null
+          session_id: string
+          start_time?: string
+          total_duration_seconds?: number | null
+          user_id: string
+          videos_watched?: number | null
+        }
+        Update: {
+          context?: string | null
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          pages_visited?: number | null
+          searches_performed?: number | null
+          session_id?: string
+          start_time?: string
+          total_duration_seconds?: number | null
+          user_id?: string
+          videos_watched?: number | null
+        }
+        Relationships: []
+      }
       learning_progress: {
         Row: {
           confidence_level: number

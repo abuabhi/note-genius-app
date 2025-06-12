@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { useHelp } from '@/contexts/HelpContext';
 import { searchHelp, getHelpByCategory, helpContent } from '@/data/helpContent';
 import { Search, Video, BookOpen, ArrowRight } from 'lucide-react';
 import { HelpCategory } from '@/types/help';
+import { useHelpAnalytics } from '@/hooks/help/useHelpAnalytics';
 
 const categoryLabels: Record<HelpCategory, string> = {
   'getting-started': 'Getting Started',
@@ -21,6 +22,7 @@ const categoryLabels: Record<HelpCategory, string> = {
 
 export const HelpSearch: React.FC = () => {
   const { openHelp, getContextualHelp } = useHelp();
+  const analytics = useHelpAnalytics();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<HelpCategory | null>(null);
 
@@ -35,6 +37,26 @@ export const HelpSearch: React.FC = () => {
     }
     return helpContent.slice(0, 6); // Show popular content
   }, [searchTerm, selectedCategory]);
+
+  // Track search when search term changes
+  React.useEffect(() => {
+    if (searchTerm) {
+      const delayedSearch = setTimeout(() => {
+        analytics.trackSearch(searchTerm, filteredContent.length);
+      }, 500); // Debounce search tracking
+
+      return () => clearTimeout(delayedSearch);
+    }
+  }, [searchTerm, filteredContent.length, analytics]);
+
+  const handleContentClick = useCallback((content: any) => {
+    // Track search result click if there was a search term
+    if (searchTerm) {
+      analytics.trackSearchResultClick(searchTerm, content.id);
+    }
+    
+    openHelp(content);
+  }, [searchTerm, analytics, openHelp]);
 
   const categories = Object.keys(categoryLabels) as HelpCategory[];
 
@@ -81,7 +103,7 @@ export const HelpSearch: React.FC = () => {
               <Card 
                 key={content.id} 
                 className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => openHelp(content)}
+                onClick={() => handleContentClick(content)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
@@ -129,7 +151,7 @@ export const HelpSearch: React.FC = () => {
               <Card 
                 key={content.id}
                 className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => openHelp(content)}
+                onClick={() => handleContentClick(content)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">

@@ -1,41 +1,67 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { VideoContent } from '@/types/help';
 import { Play, Pause, Volume2, VolumeX, Maximize } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { useHelpAnalytics } from '@/hooks/help/useHelpAnalytics';
 
 interface YouTubePlayerProps {
   video: VideoContent;
   autoplay?: boolean;
   showControls?: boolean;
   className?: string;
+  contentId: string; // Add content ID for analytics
 }
 
 export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
   video,
   autoplay = false,
   showControls = true,
-  className = ''
+  className = '',
+  contentId
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
+  const analytics = useHelpAnalytics();
+  const hasTrackedPlay = useRef(false);
 
   const embedUrl = `https://www.youtube-nocookie.com/embed/${video.youtubeId}?` +
     `autoplay=${autoplay ? 1 : 0}&` +
     `rel=0&` +
     `modestbranding=1&` +
     `controls=${showControls ? 1 : 0}&` +
-    `enablejsapi=1`;
+    `enablejsapi=1&` +
+    `origin=${window.location.origin}`;
 
-  const handleLoad = () => {
+  const handleLoad = useCallback(() => {
     setIsLoading(false);
-  };
+    
+    // Track video play event when iframe loads (approximate)
+    if (!hasTrackedPlay.current) {
+      // Create a mock content object for tracking
+      const mockContent = {
+        id: contentId,
+        title: video.title,
+        videoContent: video
+      };
+      
+      analytics.trackVideoEvent(mockContent as any, 'video_play');
+      hasTrackedPlay.current = true;
+    }
+  }, [analytics, contentId, video]);
 
   const handleError = () => {
     setError(true);
     setIsLoading(false);
   };
+
+  const handleChapterClick = useCallback((time: number) => {
+    // In a real implementation, you'd seek to the specific time
+    // For now, we'll just open the video at the current timestamp
+    const timestampUrl = `https://youtube.com/watch?v=${video.youtubeId}&t=${time}s`;
+    window.open(timestampUrl, '_blank');
+  }, [video.youtubeId]);
 
   if (error) {
     return (
@@ -89,7 +115,11 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
           <h4 className="text-sm font-medium text-gray-700">Chapters</h4>
           <div className="space-y-1">
             {video.chapters.map((chapter, index) => (
-              <div key={index} className="flex items-center gap-3 p-2 rounded hover:bg-gray-50 cursor-pointer">
+              <div 
+                key={index} 
+                className="flex items-center gap-3 p-2 rounded hover:bg-gray-50 cursor-pointer"
+                onClick={() => handleChapterClick(chapter.time)}
+              >
                 <span className="text-xs text-gray-500 font-mono">
                   {Math.floor(chapter.time / 60)}:{(chapter.time % 60).toString().padStart(2, '0')}
                 </span>

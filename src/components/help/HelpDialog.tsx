@@ -7,14 +7,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useHelp } from '@/contexts/HelpContext';
 import { YouTubePlayer } from './video/YouTubePlayer';
 import { HelpContentText } from './HelpContentText';
 import { HelpQuickTips } from './HelpQuickTips';
 import { HelpSearch } from './HelpSearch';
-import { Search, BookOpen, Video, Lightbulb } from 'lucide-react';
+import { BookOpen, Video, Lightbulb } from 'lucide-react';
+import { useHelpAnalytics } from '@/hooks/help/useHelpAnalytics';
 
 export const HelpDialog: React.FC = () => {
   const { 
@@ -22,14 +22,27 @@ export const HelpDialog: React.FC = () => {
     closeHelp, 
     currentContent, 
     viewMode, 
-    setViewMode,
-    searchTerm,
-    setSearchTerm 
+    setViewMode
   } = useHelp();
+  const analytics = useHelpAnalytics();
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       closeHelp();
+    }
+  };
+
+  const handleTabChange = (value: string) => {
+    setViewMode(value as any);
+    
+    // Track tab interactions
+    if (currentContent) {
+      analytics.trackVideoEvent(
+        currentContent, 
+        'interaction' as any, 
+        undefined, 
+        `tab_switch_${value}`
+      );
     }
   };
 
@@ -45,7 +58,7 @@ export const HelpDialog: React.FC = () => {
 
         <div className="flex-1 overflow-hidden">
           {currentContent ? (
-            <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as any)} className="h-full">
+            <Tabs value={viewMode} onValueChange={handleTabChange} className="h-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="text" className="flex items-center gap-2">
                   <BookOpen className="h-4 w-4" />
@@ -86,6 +99,7 @@ export const HelpDialog: React.FC = () => {
                   <TabsContent value="video" className="mt-0">
                     <YouTubePlayer 
                       video={currentContent.videoContent}
+                      contentId={currentContent.id}
                       className="w-full"
                     />
                   </TabsContent>

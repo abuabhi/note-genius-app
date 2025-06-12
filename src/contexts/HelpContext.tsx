@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import { HelpState, HelpContent, HelpContext as HelpContextType } from '@/types/help';
 import { getHelpByContext } from '@/data/helpContent';
 import { useLocation } from 'react-router-dom';
+import { useHelpAnalytics } from '@/hooks/help/useHelpAnalytics';
 
 interface HelpContextValue extends HelpState {
   openHelp: (content?: HelpContent) => void;
@@ -36,6 +37,7 @@ const getContextFromPath = (pathname: string): HelpContextType | null => {
 
 export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
+  const analytics = useHelpAnalytics();
   
   const [state, setState] = useState<HelpState>({
     isOpen: false,
@@ -54,6 +56,7 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [location.pathname]);
 
+  // Start analytics session when help is opened
   const openHelp = useCallback((content?: HelpContent) => {
     setState(prev => ({
       ...prev,
@@ -61,7 +64,13 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
       currentContent: content || null,
       viewMode: content?.videoContent ? 'video' : 'text'
     }));
-  }, []);
+
+    // Track analytics
+    analytics.startHelpSession(state.currentContext || undefined);
+    if (content) {
+      analytics.trackContentView(content, state.currentContext || undefined);
+    }
+  }, [analytics, state.currentContext]);
 
   const closeHelp = useCallback(() => {
     setState(prev => ({
@@ -70,7 +79,10 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
       currentContent: null,
       searchTerm: ''
     }));
-  }, []);
+
+    // End analytics session
+    analytics.endHelpSession();
+  }, [analytics]);
 
   const setSearchTerm = useCallback((term: string) => {
     setState(prev => ({ ...prev, searchTerm: term }));
