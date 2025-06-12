@@ -7,7 +7,6 @@ import { UpdateNotification } from '@/components/performance/ServiceWorkerManage
 import { PerformanceDebugger } from '@/components/performance/PerformanceMonitor';
 import { HealthCheck } from '@/components/monitoring/HealthCheck';
 import { HelpDialog } from '@/components/help/HelpDialog';
-import { GuideOverlay } from '@/components/guide/GuideOverlay';
 import { config } from '@/config/environment';
 import { ReactNode } from 'react';
 
@@ -20,9 +19,8 @@ export const AppProviders = ({ children }: AppProvidersProps) => {
     <AlertManager>
       {children}
       
-      {/* Help and Guide Dialogs/Overlays only - floating buttons now in EnhancedFloatingActionsHub */}
+      {/* Help Dialog only - floating buttons now positioned in Layout */}
       <HelpDialog />
-      <GuideOverlay />
       
       <ConnectionStatus />
       <UpdateNotification />
