@@ -2,7 +2,7 @@
 import { StudyMode } from "@/pages/study/types";
 import { useOptimizedFlashcardStudy } from "@/hooks/useOptimizedFlashcardStudy";
 import { useQuizMode } from "@/hooks/useQuizMode";
-import { useGlobalSessionTracker } from "@/hooks/useGlobalSessionTracker";
+import { useBasicSessionTracker } from "@/hooks/useBasicSessionTracker";
 
 interface StudySessionManagerProps {
   setId: string;
@@ -11,7 +11,7 @@ interface StudySessionManagerProps {
 }
 
 export const StudySessionManager = ({ setId, mode, children }: StudySessionManagerProps) => {
-  const { recordActivity } = useGlobalSessionTracker();
+  const { recordActivity } = useBasicSessionTracker();
   
   // Use different hooks based on mode
   const studyHook = useOptimizedFlashcardStudy({ setId, mode });

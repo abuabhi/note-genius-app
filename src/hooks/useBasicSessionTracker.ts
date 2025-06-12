@@ -23,21 +23,18 @@ export const useBasicSessionTracker = () => {
   const { user } = useAuth();
   const location = useLocation();
   
-  // Basic state
+  // Core session state
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [currentActivity, setCurrentActivity] = useState<ActivityType>('general');
   
-  // Track previous path for navigation logic
-  const previousPathRef = useRef<string>('');
-  
   // Derived state
   const isOnStudyPage = isStudyRoute(location.pathname);
   const isActive = !!sessionId;
 
-  console.log('🔄 Session State:', {
+  console.log('🎯 Session State:', {
     pathname: location.pathname,
     isOnStudyPage,
     isActive,
@@ -61,7 +58,7 @@ export const useBasicSessionTracker = () => {
     return () => clearInterval(interval);
   }, [isActive, startTime, isPaused]);
 
-  // Session creation function
+  // Start session
   const startSession = useCallback(async () => {
     if (!user) {
       console.log('❌ Cannot start session - no user');
@@ -102,7 +99,7 @@ export const useBasicSessionTracker = () => {
     }
   }, [user, location.pathname]);
 
-  // Session end function
+  // End session
   const endSession = useCallback(async () => {
     if (!sessionId || !startTime) return;
 
@@ -156,50 +153,44 @@ export const useBasicSessionTracker = () => {
     }
   }, [sessionId, currentActivity, location.pathname]);
 
-  // Simple navigation effect - SIMPLIFIED LOGIC
+  // Simple navigation effect - ULTRA SIMPLIFIED
   useEffect(() => {
-    const currentPath = location.pathname;
-    const previousPath = previousPathRef.current;
-    
-    console.log('📍 Navigation:', {
-      from: previousPath,
-      to: currentPath,
+    console.log('📍 Navigation Effect:', {
+      pathname: location.pathname,
       isOnStudyPage,
-      hasActiveSession: isActive,
-      isPaused
+      isActive,
+      isPaused,
+      user: !!user
     });
 
-    // Update previous path
-    previousPathRef.current = currentPath;
+    if (!user) return;
 
-    // Simple rules:
-    // 1. If on study page and no session -> start session
-    // 2. If on study page and paused session -> resume
-    // 3. If leaving study page and active session -> pause
-    // 4. Activity updates happen separately
-    
-    if (isOnStudyPage) {
-      if (!isActive) {
-        console.log('🚀 On study page without session - starting new session');
-        startSession();
-      } else if (isPaused) {
-        console.log('▶️ On study page with paused session - resuming');
-        setIsPaused(false);
-      }
-    } else {
-      if (isActive && !isPaused) {
-        console.log('⏸️ Left study page - pausing session');
-        setIsPaused(true);
-      }
+    // SIMPLE RULE: If on study page and no session -> start one
+    if (isOnStudyPage && !isActive) {
+      console.log('🚀 On study page without session - starting');
+      startSession();
+      return;
     }
-  }, [location.pathname]); // Only depend on pathname
 
-  // Separate effect for activity updates
-  useEffect(() => {
-    if (isOnStudyPage && isActive && !isPaused) {
+    // SIMPLE RULE: If on study page and paused session -> resume
+    if (isOnStudyPage && isActive && isPaused) {
+      console.log('▶️ On study page with paused session - resuming');
+      setIsPaused(false);
+      return;
+    }
+
+    // SIMPLE RULE: If NOT on study page and active session -> pause
+    if (!isOnStudyPage && isActive && !isPaused) {
+      console.log('⏸️ Left study page - pausing session');
+      setIsPaused(true);
+      return;
+    }
+
+    // Update activity type if on study page with active session
+    if (isOnStudyPage && isActive) {
       updateActivityType();
     }
-  }, [location.pathname, isActive, isPaused]); // Separate dependencies
+  }, [location.pathname, user, isOnStudyPage, isActive, isPaused, startSession, updateActivityType]);
 
   const togglePause = useCallback(() => {
     console.log('⏯️ Toggling pause:', !isPaused);
@@ -212,7 +203,7 @@ export const useBasicSessionTracker = () => {
     }
   }, [isOnStudyPage, isPaused]);
 
-  const updateSessionActivityData = useCallback(async (activityData: any) => {
+  const updateSessionActivity = useCallback(async (activityData: any) => {
     if (!sessionId || !isActive) return;
     
     try {
@@ -248,6 +239,6 @@ export const useBasicSessionTracker = () => {
     endSession,
     togglePause,
     recordActivity,
-    updateSessionActivity: updateSessionActivityData
+    updateSessionActivity
   };
 };

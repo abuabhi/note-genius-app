@@ -18,6 +18,7 @@ import { HelpProvider } from '@/contexts/HelpContext';
 import { ErrorProvider } from '@/contexts/ErrorContext';
 import { AppProviders } from '@/components/app/AppProviders';
 import { FlashcardProvider } from '@/contexts/flashcards';
+import { SessionDock } from '@/components/ui/floating/SessionDock';
 
 // Create a QueryClient instance with optimized settings for high concurrency
 const queryClient = new QueryClient({
@@ -80,6 +81,9 @@ function App() {
                       {/* Not Found Route - this should be last */}
                       <Route path="*" element={<NotFoundPage />} />
                     </Routes>
+                    
+                    {/* Global Session Dock - shows on all authenticated pages */}
+                    <SessionDock />
                   </Suspense>
                 </AppProviders>
               </HelpProvider>
