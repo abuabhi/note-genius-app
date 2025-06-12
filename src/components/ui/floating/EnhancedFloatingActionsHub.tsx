@@ -1,15 +1,12 @@
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
+import { HelpCircle, MessageCircle, Settings, Menu, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useHelp } from '@/contexts/HelpContext';
 import { useAuth } from '@/contexts/auth';
 import { useLocation } from 'react-router-dom';
-import { useGlobalSessionTracker } from '@/hooks/useGlobalSessionTracker';
-import { Clock, MessageCircle, HelpCircle, Compass, Play, Pause, Square, GripHorizontal } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useHelp } from '@/contexts/HelpContext';
-import { useGuide } from '@/contexts/GuideContext';
 
 interface EnhancedFloatingActionsHubProps {
   onChatToggle?: () => void;
@@ -17,397 +14,132 @@ interface EnhancedFloatingActionsHubProps {
   hasUnreadChat?: boolean;
 }
 
-interface Position {
-  x: number;
-  y: number;
-}
-
-const STORAGE_KEY = 'floating-dock-position';
-const DEFAULT_POSITION = { x: 50, y: 80 }; // Centered horizontally, lower on screen
-
-export const EnhancedFloatingActionsHub = ({ 
-  onChatToggle, 
-  isChatOpen = false, 
+export const EnhancedFloatingActionsHub = ({
+  onChatToggle,
+  isChatOpen = false,
   hasUnreadChat = false
 }: EnhancedFloatingActionsHubProps) => {
-  // ALL HOOKS MUST BE CALLED FIRST - NO CONDITIONAL LOGIC BEFORE THIS POINT
-  const { user } = useAuth();
+  const [isExpanded, setIsExpanded] = useState(false);
   const location = useLocation();
-  const [position, setPosition] = useState<Position>(DEFAULT_POSITION);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const dockRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
   
-  const {
-    isActive: isSessionActive,
-    elapsedSeconds,
-    isPaused,
-    togglePause,
-    endSession,
-    isOnStudyPage
-  } = useGlobalSessionTracker();
+  // Add safety check for help context
+  let helpContext;
+  try {
+    helpContext = useHelp();
+  } catch (error) {
+    console.warn('Help context not available:', error);
+    helpContext = null;
+  }
 
-  // Always call these hooks - they're now properly available due to provider setup
-  const helpContext = useHelp();
-  const guideContext = useGuide();
-
-  // Debug logging for chat functionality
-  useEffect(() => {
-    console.log('🚀 EnhancedFloatingActionsHub state:', {
-      location: location.pathname,
-      onChatToggle: !!onChatToggle,
-      isChatOpen,
-      isNoteStudyPage: location.pathname.includes('/notes/study/'),
-      locationState: location.state
-    });
-  }, [location.pathname, location.state, onChatToggle, isChatOpen]);
-
-  // Load position from localStorage on mount
-  useEffect(() => {
-    const savedPosition = localStorage.getItem(STORAGE_KEY);
-    if (savedPosition) {
-      try {
-        setPosition(JSON.parse(savedPosition));
-      } catch (error) {
-        console.warn('Failed to parse saved position:', error);
-      }
-    }
-  }, []);
-
-  // Save position to localStorage
-  const savePosition = useCallback((newPosition: Position) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newPosition));
-  }, []);
-
-  // Drag handlers
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (!dockRef.current) return;
-    
-    const rect = dockRef.current.getBoundingClientRect();
-    const offsetX = e.clientX - rect.left;
-    const offsetY = e.clientY - rect.top;
-    
-    setDragOffset({ x: offsetX, y: offsetY });
-    setIsDragging(true);
-    
-    e.preventDefault();
-  }, []);
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      
-      const newX = ((e.clientX - dragOffset.x) / window.innerWidth) * 100;
-      const newY = ((e.clientY - dragOffset.y) / window.innerHeight) * 100;
-      
-      // Constrain to viewport bounds
-      const constrainedX = Math.max(0, Math.min(100, newX));
-      const constrainedY = Math.max(0, Math.min(100, newY));
-      
-      setPosition({ x: constrainedX, y: constrainedY });
-    };
-
-    const handleMouseUp = () => {
-      if (isDragging) {
-        setIsDragging(false);
-        savePosition(position);
-      }
-    };
-
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, dragOffset, position, savePosition]);
-
-  // Action handlers
-  const handleHelpClick = useCallback(() => {
-    console.log('🆘 Help button clicked, helpContext:', helpContext);
-    if (helpContext && typeof helpContext.openHelp === 'function') {
-      console.log('Opening help dialog');
-      helpContext.openHelp();
-    } else {
-      console.warn('Help context or openHelp method not available');
-    }
-  }, [helpContext]);
-
-  const handleGuideClick = useCallback(() => {
-    console.log('🧭 Guide button clicked, guideContext:', guideContext);
-    if (guideContext && typeof guideContext.startGuide === 'function' && typeof guideContext.getAvailableGuides === 'function') {
-      const guides = guideContext.getAvailableGuides();
-      console.log('Available guides:', guides);
-      if (guides.length > 0) {
-        console.log('Starting guide:', guides[0].id);
-        guideContext.startGuide(guides[0].id);
-      } else {
-        console.log('⚠️ No guides available for current page');
-        // Show user-friendly message
-        if (helpContext && helpContext.openHelp) {
-          helpContext.openHelp();
-        }
-      }
-    } else {
-      console.warn('Guide context or methods not available');
-    }
-  }, [guideContext, helpContext]);
-
-  const handleEndSession = useCallback(() => {
-    endSession();
-  }, [endSession]);
-
-  // NOW WE CAN DO CONDITIONAL LOGIC AFTER ALL HOOKS ARE CALLED
-  
-  // Don't show for unauthenticated users
-  if (!user) return null;
-
-  // Define which routes are public - don't show dock on these
+  // Define which routes are public - don't show hub on these
   const publicRoutes = ['/', '/about', '/pricing', '/faq', '/contact', '/blog', '/features', '/login', '/signup'];
   const isPublicRoute = publicRoutes.includes(location.pathname);
   
-  // Don't show on public routes
-  if (isPublicRoute) return null;
-
-  // IMPROVED: Only hide during active guides when guide target is found and tooltip is visible
-  const shouldHideForGuide = guideContext?.isActive && 
-    guideContext?.currentGuide && 
-    guideContext?.currentStepIndex >= 0 &&
-    document.querySelector(guideContext.currentGuide.steps[guideContext.currentStepIndex]?.target);
-  
-  if (shouldHideForGuide) {
-    console.log('🫥 Hiding dock for active guide with target found');
+  // Don't show the hub on public routes or if user is not authenticated
+  if (isPublicRoute || !user) {
     return null;
   }
 
-  // Determine page context
-  const getPageContext = () => {
-    const path = location.pathname;
-    if (path.includes('/notes/study/')) return 'note-study';
-    if (path.startsWith('/notes')) return 'notes';
-    if (path.startsWith('/flashcards')) return 'flashcards';
-    if (path.startsWith('/quiz')) return 'quiz';
-    return 'other';
-  };
+  // Auto-collapse when route changes
+  useEffect(() => {
+    setIsExpanded(false);
+  }, [location.pathname]);
 
-  const pageContext = getPageContext();
-  
-  // FIXED: Chat should show on note study pages when onChatToggle is provided
-  const showChat = pageContext === 'note-study' && typeof onChatToggle === 'function';
-  
-  console.log('💬 Chat visibility logic:', { 
-    pageContext, 
-    onChatToggle: !!onChatToggle, 
-    showChat,
-    pathname: location.pathname
-  });
-
-  // Session timer state
-  const getSessionState = () => {
-    if (isSessionActive && isOnStudyPage && !isPaused) return 'active';
-    if (isSessionActive) return 'inactive';
-    return 'none';
-  };
-
-  const sessionState = getSessionState();
-
-  const formatTime = (totalSeconds: number) => {
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const secs = totalSeconds % 60;
-    
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  // Get timer section styles based on session state
-  const getTimerStyles = () => {
-    switch (sessionState) {
-      case 'active':
-        return {
-          bg: 'bg-red-500/20 border-red-500/30',
-          text: 'text-red-700',
-          icon: 'text-red-600'
-        };
-      case 'inactive':
-        return {
-          bg: 'bg-gray-500/20 border-gray-500/30',
-          text: 'text-gray-600',
-          icon: 'text-gray-500'
-        };
-      default:
-        return {
-          bg: 'bg-transparent border-transparent',
-          text: 'text-gray-500',
-          icon: 'text-gray-400'
-        };
+  const handleHelpClick = () => {
+    if (helpContext?.openHelp) {
+      try {
+        helpContext.openHelp();
+        setIsExpanded(false);
+      } catch (error) {
+        console.error('Error opening help:', error);
+      }
     }
   };
 
-  const timerStyles = getTimerStyles();
+  const handleChatClick = () => {
+    if (onChatToggle) {
+      onChatToggle();
+      setIsExpanded(false);
+    }
+  };
+
+  const handleSettingsClick = () => {
+    window.location.href = '/settings';
+    setIsExpanded(false);
+  };
+
+  const toggleExpanded = () => {
+    setIsExpanded(!isExpanded);
+  };
 
   return (
-    <TooltipProvider>
-      <Card 
-        ref={dockRef}
+    <div className="fixed bottom-6 right-6 z-50">
+      {/* Expanded Actions */}
+      <div 
         className={cn(
-          "fixed z-50 shadow-lg transition-all duration-200 backdrop-blur-sm cursor-move select-none",
-          "bg-white/95 border-gray-200/50",
-          isDragging ? "scale-105 shadow-xl" : "hover:shadow-xl"
+          "flex flex-col gap-3 mb-3 transition-all duration-300 ease-in-out",
+          isExpanded ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-4 scale-75 pointer-events-none"
         )}
-        style={{
-          left: `${position.x}%`,
-          top: `${position.y}%`,
-          transform: 'translate(-50%, -50%)'
-        }}
-        onMouseDown={handleMouseDown}
       >
-        <div className="flex items-center gap-1 p-2">
-          {/* Drag Handle */}
-          <div className="flex items-center justify-center w-6 h-6 cursor-grab active:cursor-grabbing">
-            <GripHorizontal className="h-3 w-3 text-gray-400" />
-          </div>
+        {/* Help Button */}
+        {helpContext && (
+          <Button
+            size="lg"
+            onClick={handleHelpClick}
+            className="h-14 w-14 rounded-full bg-blue-500 hover:bg-blue-600 shadow-lg hover:shadow-xl transition-all duration-200 group"
+            aria-label="Get Help"
+          >
+            <HelpCircle className="h-6 w-6 text-white group-hover:scale-110 transition-transform" />
+          </Button>
+        )}
 
-          {/* Session Timer - Show if session exists */}
-          {sessionState !== 'none' && (
-            <>
-              <div className="w-px h-6 bg-gray-300 mx-1" />
-              <div className={cn(
-                "flex items-center gap-2 px-2 py-1 rounded-md transition-colors",
-                timerStyles.bg
-              )}>
-                <Clock className={cn("h-4 w-4", timerStyles.icon)} />
-                <span className={cn("text-sm font-mono font-medium", timerStyles.text)}>
-                  {formatTime(elapsedSeconds)}
-                </span>
-                
-                {/* Timer Controls - Only show when active */}
-                {sessionState === 'active' && (
-                  <div className="flex gap-1">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            togglePause();
-                          }}
-                          className="h-6 w-6 p-0 hover:bg-white/20"
-                        >
-                          {isPaused ? (
-                            <Play className="h-3 w-3 text-inherit" />
-                          ) : (
-                            <Pause className="h-3 w-3 text-inherit" />
-                          )}
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {isPaused ? 'Resume' : 'Pause'}
-                      </TooltipContent>
-                    </Tooltip>
-                    
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEndSession();
-                          }}
-                          className="h-6 w-6 p-0 hover:bg-red-200/50"
-                        >
-                          <Square className="h-3 w-3 text-red-600" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        End Session
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
+        {/* Chat Button - only show if chat toggle is available */}
+        {onChatToggle && (
+          <Button
+            size="lg"
+            onClick={handleChatClick}
+            className={cn(
+              "h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 group relative",
+              isChatOpen 
+                ? "bg-orange-500 hover:bg-orange-600" 
+                : "bg-purple-500 hover:bg-purple-600"
+            )}
+            aria-label={isChatOpen ? "Close Chat" : "Open Chat"}
+          >
+            <MessageCircle className="h-6 w-6 text-white group-hover:scale-110 transition-transform" />
+            {hasUnreadChat && !isChatOpen && (
+              <Badge className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-red-500 text-white text-xs p-0 flex items-center justify-center">
+                !
+              </Badge>
+            )}
+          </Button>
+        )}
 
-          {/* Chat Button - Show on note study pages when onChatToggle is available */}
-          {showChat && (
-            <>
-              <div className="w-px h-6 bg-gray-300 mx-1" />
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      console.log('💬 Chat button clicked, calling onChatToggle');
-                      onChatToggle();
-                    }}
-                    className="h-8 w-8 rounded-full hover:bg-mint-100/50 relative"
-                  >
-                    <MessageCircle className="h-4 w-4 text-mint-600" />
-                    {hasUnreadChat && (
-                      <div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-pulse" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {isChatOpen ? 'Close Chat' : 'Open AI Chat'}
-                </TooltipContent>
-              </Tooltip>
-            </>
-          )}
+        {/* Settings Button */}
+        <Button
+          size="lg"
+          onClick={handleSettingsClick}
+          className="h-14 w-14 rounded-full bg-gray-500 hover:bg-gray-600 shadow-lg hover:shadow-xl transition-all duration-200 group"
+          aria-label="Settings"
+        >
+          <Settings className="h-6 w-6 text-white group-hover:scale-110 transition-transform" />
+        </Button>
+      </div>
 
-          {/* Help Button - Available on all authenticated pages */}
-          <div className="w-px h-6 bg-gray-300 mx-1" />
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleHelpClick();
-                }}
-                className="h-8 w-8 rounded-full hover:bg-blue-100/50"
-              >
-                <HelpCircle className="h-4 w-4 text-blue-600" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              Get help and tutorials
-            </TooltipContent>
-          </Tooltip>
-
-          {/* Guide Button - Available on all authenticated pages */}
-          <div className="w-px h-6 bg-gray-300 mx-1" />
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleGuideClick();
-                }}
-                className="h-8 w-8 rounded-full hover:bg-purple-100/50"
-              >
-                <Compass className="h-4 w-4 text-purple-600" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              Start interactive guide
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      </Card>
-    </TooltipProvider>
+      {/* Main Toggle Button */}
+      <Button
+        size="lg"
+        onClick={toggleExpanded}
+        className="h-16 w-16 rounded-full bg-mint-500 hover:bg-mint-600 shadow-lg hover:shadow-xl transition-all duration-200 group"
+        aria-label={isExpanded ? "Close Actions" : "Open Actions"}
+      >
+        {isExpanded ? (
+          <X className="h-7 w-7 text-white group-hover:scale-110 transition-transform" />
+        ) : (
+          <Menu className="h-7 w-7 text-white group-hover:scale-110 transition-transform" />
+        )}
+      </Button>
+    </div>
   );
 };
