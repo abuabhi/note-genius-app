@@ -14,6 +14,7 @@ import { StudyBreadcrumb } from './navigation/StudyBreadcrumb';
 import { NoteChatSidebar } from './chat/NoteChatSidebar';
 import { FloatingActionsHub } from '@/components/ui/floating/FloatingActionsHub';
 import { FlashcardProvider } from '@/contexts/flashcards';
+import { EnhancedFloatingActionsHub } from '@/components/ui/floating/EnhancedFloatingActionsHub';
 
 interface NoteStudyViewProps {
   note: Note;
@@ -240,11 +241,11 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
           onClose={() => setIsChatOpen(false)}
         />
         
-        {/* Floating Actions Hub with Chat Integration */}
-        <FloatingActionsHub 
+        {/* Enhanced Floating Actions Hub with Chat Integration */}
+        <EnhancedFloatingActionsHub 
           onChatToggle={() => setIsChatOpen(!isChatOpen)}
           isChatOpen={isChatOpen}
-          showChat={true}
+          hasUnreadChat={false}
         />
       </div>
     </FlashcardProvider>

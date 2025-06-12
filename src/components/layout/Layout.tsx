@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/auth';
 import { useLocation } from 'react-router-dom';
 import { useReminderToasts } from '@/hooks/useReminderToasts';
 import { AnnouncementBar } from '@/components/announcements/AnnouncementBar';
-import { FloatingActionsHub } from '@/components/ui/floating/FloatingActionsHub';
+import { EnhancedFloatingActionsHub } from '@/components/ui/floating/EnhancedFloatingActionsHub';
 
 interface LayoutProps {
   children: ReactNode;
@@ -42,8 +42,8 @@ export default function Layout({ children, showSidebar = true, showFooter = true
       </div>
       {showFooter && <Footer />}
       
-      {/* Unified Floating Actions Hub - replaces individual floating components */}
-      <FloatingActionsHub />
+      {/* Enhanced Floating Actions Hub - replaces individual floating components */}
+      <EnhancedFloatingActionsHub />
     </div>
   );
 }

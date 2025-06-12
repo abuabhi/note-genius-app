@@ -32,7 +32,7 @@ export const AppProviders = ({ children }: AppProvidersProps) => {
                 <AlertManager>
                   {children}
                   
-                  {/* Help and Guide Dialogs/Overlays only - floating buttons now in FloatingActionsHub */}
+                  {/* Help and Guide Dialogs/Overlays only - floating buttons now in EnhancedFloatingActionsHub */}
                   <HelpDialog />
                   <GuideOverlay />
                   
