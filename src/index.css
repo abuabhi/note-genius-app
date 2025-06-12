@@ -85,6 +85,10 @@
   box-shadow: 0 35px 60px -12px rgba(0, 0, 0, 0.25);
 }
 
+.shadow-4xl {
+  box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.35);
+}
+
 /* Custom Calendar Styling */
 .custom-calendar .rbc-toolbar {
   @apply mb-4 flex flex-wrap justify-between items-center;

@@ -1,9 +1,10 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Clock, Play, Pause, BookOpen, Target, FileText, X, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useGlobalSessionTracker } from '@/hooks/useGlobalSessionTracker';
+import { cn } from '@/lib/utils';
 
 interface UnifiedFloatingTimerProps {
   className?: string;
@@ -77,39 +78,49 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
     setIsMinimized(!isMinimized);
   };
 
-  // Determine colors based on pause state and study page status
-  const getCardStyles = () => {
+  // Determine enhanced theme based on state
+  const getSessionTheme = () => {
     if (!isOnStudyPage || isPaused) {
-      // Paused or not on study page - gray/muted appearance
-      return "bg-gray-500/20 border-gray-500";
+      // Paused or not on study page - enhanced contrast
+      return {
+        background: 'bg-slate-800/95 border-orange-500/60',
+        text: 'text-orange-100',
+        timeText: 'text-orange-200',
+        iconColor: 'text-orange-300',
+        progressColor: 'text-orange-400',
+        buttonHover: 'hover:bg-orange-500/20',
+        animation: ''
+      };
     }
-    // Active on study page - red appearance
-    return "bg-red-500/20 border-red-500";
+    // Active on study page - enhanced mint theme with animation
+    return {
+      background: 'bg-slate-900/95 border-mint-500/60',
+      text: 'text-mint-100',
+      timeText: 'text-mint-200',
+      iconColor: 'text-mint-300',
+      progressColor: 'text-mint-400',
+      buttonHover: 'hover:bg-mint-500/20',
+      animation: 'animate-pulse'
+    };
   };
 
-  const getTextColor = () => {
-    if (!isOnStudyPage || isPaused) {
-      return "text-gray-600";
-    }
-    return "text-red-700";
-  };
-
-  const getProgressColor = () => {
-    if (!isOnStudyPage || isPaused) {
-      return "text-gray-600";
-    }
-    return "text-red-700";
-  };
+  const theme = getSessionTheme();
 
   if (isMinimized) {
     return (
       <Card 
-        className={`fixed bottom-4 right-4 z-50 p-2 shadow-lg transition-all duration-200 cursor-pointer backdrop-blur-sm ${getCardStyles()} ${className}`}
+        className={cn(
+          "fixed bottom-4 right-4 z-50 p-3 shadow-xl transition-all duration-200 cursor-pointer backdrop-blur-sm border-2",
+          theme.background,
+          theme.animation,
+          "hover:shadow-2xl hover:scale-105",
+          className
+        )}
         onClick={handleMinimize}
       >
-        <div className="flex items-center gap-2">
-          <div className="relative w-6 h-6">
-            <svg className="w-6 h-6 transform -rotate-90" viewBox="0 0 32 32">
+        <div className="flex items-center gap-3">
+          <div className="relative w-8 h-8">
+            <svg className="w-8 h-8 transform -rotate-90" viewBox="0 0 32 32">
               <circle
                 cx="16"
                 cy="16"
@@ -117,7 +128,7 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
                 stroke="currentColor"
                 strokeWidth="2"
                 fill="transparent"
-                className={`${getTextColor()} opacity-30`}
+                className={cn(theme.text, "opacity-30")}
               />
               <circle
                 cx="16"
@@ -128,15 +139,15 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
                 fill="transparent"
                 strokeDasharray={circumference}
                 strokeDashoffset={strokeDashoffset}
-                className={`${getProgressColor()} transition-all duration-300 ease-in-out`}
+                className={cn(theme.progressColor, "transition-all duration-300 ease-in-out")}
                 strokeLinecap="round"
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <ActivityIcon className={`h-3 w-3 ${getTextColor()}`} />
+              <ActivityIcon className={cn("h-4 w-4", theme.iconColor)} />
             </div>
           </div>
-          <div className={`text-xs font-mono font-medium ${getTextColor()}`}>
+          <div className={cn("text-sm font-mono font-bold", theme.timeText)}>
             {formatTime(elapsedSeconds)}
           </div>
         </div>
@@ -146,14 +157,20 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
 
   return (
     <Card 
-      className={`fixed bottom-4 right-4 z-50 p-2 shadow-lg transition-all duration-200 backdrop-blur-sm ${getCardStyles()} ${className}`}
+      className={cn(
+        "fixed bottom-4 right-4 z-50 p-3 shadow-xl transition-all duration-200 backdrop-blur-sm border-2",
+        theme.background,
+        theme.animation,
+        "hover:shadow-2xl",
+        className
+      )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="flex items-center gap-2">
-        {/* Circular Progress with Activity Icon */}
-        <div className="relative w-8 h-8">
-          <svg className="w-8 h-8 transform -rotate-90" viewBox="0 0 32 32">
+      <div className="flex items-center gap-4">
+        {/* Enhanced Circular Progress with Activity Icon */}
+        <div className="relative w-10 h-10">
+          <svg className="w-10 h-10 transform -rotate-90" viewBox="0 0 32 32">
             <circle
               cx="16"
               cy="16"
@@ -161,7 +178,7 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
               stroke="currentColor"
               strokeWidth="2"
               fill="transparent"
-              className={`${getTextColor()} opacity-30`}
+              className={cn(theme.text, "opacity-30")}
             />
             <circle
               cx="16"
@@ -172,53 +189,74 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
               fill="transparent"
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
-              className={`${getProgressColor()} transition-all duration-300 ease-in-out`}
+              className={cn(theme.progressColor, "transition-all duration-300 ease-in-out")}
               strokeLinecap="round"
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <ActivityIcon className={`h-3 w-3 ${getTextColor()}`} />
+            <ActivityIcon className={cn("h-4 w-4", theme.iconColor)} />
+          </div>
+          {!isPaused && isOnStudyPage && (
+            <div className="absolute -top-1 -right-1 w-2 h-2 bg-mint-400 rounded-full animate-ping" />
+          )}
+        </div>
+
+        {/* Enhanced Timer Text */}
+        <div className="flex flex-col">
+          <div className={cn("text-lg font-mono font-bold tracking-wider", theme.timeText)}>
+            {formatTime(elapsedSeconds)}
+          </div>
+          <div className={cn("text-xs font-medium", theme.text)}>
+            {!isOnStudyPage ? 'Not Studying' : isPaused ? 'Paused' : 'Active'}
           </div>
         </div>
 
-        {/* Timer Text */}
-        <div className={`text-sm font-mono font-medium ${getTextColor()} ${isPaused ? 'opacity-70' : ''}`}>
-          {formatTime(elapsedSeconds)}
-        </div>
-
-        {/* Controls */}
-        <div className="flex gap-1">
+        {/* Enhanced Controls */}
+        <div className="flex gap-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={handleTogglePause}
-            className={`h-6 w-6 p-0 hover:bg-opacity-20 ${getTextColor()}`}
+            className={cn(
+              "h-8 w-8 p-0 border border-transparent transition-all duration-200",
+              theme.buttonHover,
+              "hover:border-current/20 hover:scale-110"
+            )}
             title={isPaused ? 'Resume' : 'Pause'}
           >
             {isPaused ? (
-              <Play className="h-3 w-3" />
+              <Play className={cn("h-4 w-4", theme.iconColor)} />
             ) : (
-              <Pause className="h-3 w-3" />
+              <Pause className={cn("h-4 w-4", theme.iconColor)} />
             )}
           </Button>
+          
           <Button
             variant="ghost"
             size="sm"
             onClick={handleEndSession}
-            className={`h-6 w-6 p-0 hover:bg-opacity-20 ${getTextColor()}`}
+            className={cn(
+              "h-8 w-8 p-0 border border-transparent transition-all duration-200",
+              "hover:bg-red-500/20 hover:border-red-500/20 hover:scale-110"
+            )}
             title="End Session"
           >
-            <Square className="h-3 w-3" />
+            <Square className="h-4 w-4 text-red-300 hover:text-red-200" />
           </Button>
+          
           {isHovered && (
             <Button
               variant="ghost"
               size="sm"
               onClick={handleMinimize}
-              className={`h-6 w-6 p-0 hover:bg-opacity-20 ${getTextColor()}`}
+              className={cn(
+                "h-8 w-8 p-0 border border-transparent transition-all duration-200",
+                theme.buttonHover,
+                "hover:border-current/20 hover:scale-110"
+              )}
               title="Minimize"
             >
-              <X className="h-3 w-3" />
+              <X className={cn("h-4 w-4", theme.iconColor)} />
             </Button>
           )}
         </div>
