@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/auth';
 import { useLocation } from 'react-router-dom';
 import { useReminderToasts } from '@/hooks/useReminderToasts';
 import { AnnouncementBar } from '@/components/announcements/AnnouncementBar';
-import { UnifiedFloatingTimer } from '@/components/study/UnifiedFloatingTimer';
+import { FloatingActionsHub } from '@/components/ui/floating/FloatingActionsHub';
 
 interface LayoutProps {
   children: ReactNode;
@@ -42,8 +42,8 @@ export default function Layout({ children, showSidebar = true, showFooter = true
       </div>
       {showFooter && <Footer />}
       
-      {/* Unified Floating Timer - shows for authenticated users */}
-      {user && <UnifiedFloatingTimer />}
+      {/* Unified Floating Actions Hub - replaces individual floating components */}
+      <FloatingActionsHub />
     </div>
   );
 }

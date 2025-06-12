@@ -12,7 +12,7 @@ import { useNoteEnrichment } from '@/hooks/useNoteEnrichment';
 import { toast } from 'sonner';
 import { StudyBreadcrumb } from './navigation/StudyBreadcrumb';
 import { NoteChatSidebar } from './chat/NoteChatSidebar';
-import { NoteChatToggle } from './chat/NoteChatToggle';
+import { FloatingActionsHub } from '@/components/ui/floating/FloatingActionsHub';
 import { FlashcardProvider } from '@/contexts/flashcards';
 
 interface NoteStudyViewProps {
@@ -233,16 +233,18 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
           </Card>
         </div>
 
-        {/* Chat Components */}
-        <NoteChatToggle 
-          isOpen={isChatOpen}
-          onToggle={() => setIsChatOpen(!isChatOpen)}
-        />
-        
+        {/* Chat Sidebar */}
         <NoteChatSidebar
           note={currentNote}
           isOpen={isChatOpen}
           onClose={() => setIsChatOpen(false)}
+        />
+        
+        {/* Floating Actions Hub with Chat Integration */}
+        <FloatingActionsHub 
+          onChatToggle={() => setIsChatOpen(!isChatOpen)}
+          isChatOpen={isChatOpen}
+          showChat={true}
         />
       </div>
     </FlashcardProvider>
