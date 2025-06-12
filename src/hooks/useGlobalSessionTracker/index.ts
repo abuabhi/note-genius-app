@@ -1,7 +1,11 @@
 
+
 // Re-export the basic session tracker
 export { useBasicSessionTracker as useGlobalSessionTracker } from '../useBasicSessionTracker';
 export type { ActivityType } from '../useBasicSessionTracker';
+
+// Import ActivityType for local use in the interface
+import type { ActivityType } from '../useBasicSessionTracker';
 
 // Legacy compatibility
 export interface SessionState {
@@ -13,3 +17,4 @@ export interface SessionState {
   isPaused: boolean;
   isOnStudyPage: boolean;
 }
+
