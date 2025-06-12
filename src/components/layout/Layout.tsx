@@ -73,6 +73,8 @@ export default function Layout({ children, showSidebar = true, showFooter = true
       const transformedNote = {
         ...data,
         sourceType: (data.source_type as 'manual' | 'scan' | 'import') || 'manual', // Properly cast to union type
+        summary_status: (data.summary_status as 'pending' | 'generating' | 'completed' | 'failed') || 'pending', // Cast summary_status
+        enriched_status: (data.enriched_status as 'pending' | 'generating' | 'completed' | 'failed') || 'pending', // Cast enriched_status
         tags: data.tags?.map((tagRelation: any) => ({
           id: tagRelation.tag.id,
           name: tagRelation.tag.name,
