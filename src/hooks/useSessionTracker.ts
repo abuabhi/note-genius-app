@@ -1,8 +1,21 @@
 
-// Optimized session tracker that replaces all previous session tracking implementations
-export { useOptimizedSessionTracker as useSessionTracker } from './session/useOptimizedSessionTracker';
-export type { ActivityType } from './session/useOptimizedSessionTracker';
+// Simplified session tracker that uses only the basic implementation
+export { useBasicSessionTracker as useSessionTracker } from './useBasicSessionTracker';
+export type { ActivityType } from './useBasicSessionTracker';
 
 // Legacy compatibility exports
-export { useOptimizedSessionTracker as useGlobalSessionTracker } from './session/useOptimizedSessionTracker';
-export { useOptimizedSessionTracker as useBasicSessionTracker } from './session/useOptimizedSessionTracker';
+export { useBasicSessionTracker as useGlobalSessionTracker } from './useBasicSessionTracker';
+export { useBasicSessionTracker as useOptimizedSessionTracker } from './useBasicSessionTracker';
+
+// Legacy type for compatibility
+import type { ActivityType } from './useBasicSessionTracker';
+
+export interface SessionState {
+  sessionId: string | null;
+  isActive: boolean;
+  startTime: Date | null;
+  elapsedSeconds: number;
+  currentActivity: ActivityType | null;
+  isPaused: boolean;
+  isOnStudyPage: boolean;
+}

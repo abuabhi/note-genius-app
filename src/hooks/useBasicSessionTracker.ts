@@ -1,5 +1,4 @@
-
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,15 +27,18 @@ export const useBasicSessionTracker = () => {
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [currentActivity, setCurrentActivity] = useState<ActivityType>('general');
+  
+  // Track previous location to detect transitions
+  const prevLocationRef = useRef<string>('');
   
   // Derived state
   const isOnStudyPage = isStudyRoute(location.pathname);
   const isActive = !!sessionId;
-  const currentActivity = getActivityType(location.pathname);
 
-  // Simple timer - runs every second when active
+  // Simple timer - runs every second when active and not paused
   useEffect(() => {
-    if (!isActive || !startTime) return;
+    if (!isActive || !startTime || isPaused) return;
 
     const interval = setInterval(() => {
       const now = new Date();
@@ -45,20 +47,79 @@ export const useBasicSessionTracker = () => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isActive, startTime]);
+  }, [isActive, startTime, isPaused]);
 
-  // Simple navigation handling
+  // Handle navigation changes - FIXED LOGIC
   useEffect(() => {
-    if (isOnStudyPage && !isActive) {
-      // Start session when entering study page
-      startSession();
+    const currentPath = location.pathname;
+    const prevPath = prevLocationRef.current;
+    const wasOnStudyPage = isStudyRoute(prevPath);
+    const isNowOnStudyPage = isStudyRoute(currentPath);
+    
+    console.log('🔄 Navigation detected:', {
+      from: prevPath,
+      to: currentPath,
+      wasOnStudyPage,
+      isNowOnStudyPage,
+      hasActiveSession: isActive
+    });
+
+    // Update activity type if on a study page
+    if (isNowOnStudyPage) {
+      const newActivity = getActivityType(currentPath);
+      setCurrentActivity(newActivity);
+      
+      // Update database activity type if session is active
+      if (sessionId && newActivity !== currentActivity) {
+        updateSessionActivity(newActivity);
+      }
+    }
+
+    // Handle session state based on navigation
+    if (!wasOnStudyPage && isNowOnStudyPage) {
+      // Coming from non-study page to study page - start session
+      console.log('📚 Entering study area - starting session');
+      if (!isActive) {
+        startSession();
+      } else {
+        // Resume if paused
+        setIsPaused(false);
+      }
+    } else if (wasOnStudyPage && !isNowOnStudyPage) {
+      // Leaving study page to non-study page - pause session (don't end)
+      console.log('🚪 Leaving study area - pausing session');
+      if (isActive) {
+        setIsPaused(true);
+      }
+    } else if (wasOnStudyPage && isNowOnStudyPage) {
+      // Moving between study pages - keep session active, just update activity
+      console.log('🔄 Moving between study pages - maintaining session');
+      if (isActive && isPaused) {
+        setIsPaused(false); // Resume if was paused
+      }
     }
     
-    if (isActive) {
-      // Pause when leaving study pages, resume when returning
-      setIsPaused(!isOnStudyPage);
+    // Update previous location
+    prevLocationRef.current = currentPath;
+  }, [location.pathname, isActive, sessionId, currentActivity]);
+
+  const updateSessionActivity = useCallback(async (activityType: ActivityType) => {
+    if (!sessionId) return;
+    
+    try {
+      await supabase
+        .from('study_sessions')
+        .update({
+          activity_type: activityType,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', sessionId);
+      
+      console.log('✅ Updated session activity to:', activityType);
+    } catch (error) {
+      console.error('❌ Failed to update session activity:', error);
     }
-  }, [isOnStudyPage, isActive]);
+  }, [sessionId]);
 
   const startSession = useCallback(async () => {
     if (!user || isActive) return;
@@ -67,11 +128,13 @@ export const useBasicSessionTracker = () => {
       const now = new Date();
       const activityType = getActivityType(location.pathname);
       
+      console.log('🚀 Starting new session with activity:', activityType);
+      
       const { data, error } = await supabase
         .from('study_sessions')
         .insert({
           user_id: user.id,
-          title: `Study Session`,
+          title: `Study Session - ${activityType.replace('_', ' ')}`,
           subject: activityType.replace('_', ' '),
           start_time: now.toISOString(),
           is_active: true,
@@ -87,6 +150,7 @@ export const useBasicSessionTracker = () => {
       setStartTime(now);
       setElapsedSeconds(0);
       setIsPaused(false);
+      setCurrentActivity(activityType);
       
       console.log('✅ Session started:', data.id);
     } catch (error) {
@@ -101,6 +165,8 @@ export const useBasicSessionTracker = () => {
       const endTime = new Date();
       const duration = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
 
+      console.log('🛑 Ending session:', sessionId, 'Duration:', duration);
+
       await supabase
         .from('study_sessions')
         .update({
@@ -114,6 +180,7 @@ export const useBasicSessionTracker = () => {
       setStartTime(null);
       setElapsedSeconds(0);
       setIsPaused(false);
+      setCurrentActivity('general');
       
       console.log('✅ Session ended');
     } catch (error) {
@@ -122,8 +189,9 @@ export const useBasicSessionTracker = () => {
   }, [sessionId, startTime]);
 
   const togglePause = useCallback(() => {
+    console.log('⏯️ Toggling pause:', !isPaused);
     setIsPaused(prev => !prev);
-  }, []);
+  }, [isPaused]);
 
   const recordActivity = useCallback(() => {
     // Simple activity recording - just ensure not paused if on study page
@@ -132,7 +200,7 @@ export const useBasicSessionTracker = () => {
     }
   }, [isOnStudyPage, isPaused]);
 
-  const updateSessionActivity = useCallback(async (activityData: any) => {
+  const updateSessionActivityData = useCallback(async (activityData: any) => {
     if (!sessionId || !isActive) return;
     
     try {
@@ -168,6 +236,6 @@ export const useBasicSessionTracker = () => {
     endSession,
     togglePause,
     recordActivity,
-    updateSessionActivity
+    updateSessionActivity: updateSessionActivityData
   };
 };
