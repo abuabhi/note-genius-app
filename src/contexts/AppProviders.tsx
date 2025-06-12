@@ -3,8 +3,8 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/auth/AuthProvider';
-import { FlashcardProvider } from '@/contexts/flashcards/FlashcardProvider';
-import { NotesProvider } from '@/contexts/notes/NotesProvider';
+import { FlashcardProvider } from '@/contexts/flashcards';
+import { NoteProvider } from '@/contexts/NoteContext';
 import { HelpProvider } from '@/contexts/HelpContext';
 import { GuideProvider } from '@/contexts/GuideContext';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
@@ -28,13 +28,13 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
       <Router>
         <AuthProvider>
           <FlashcardProvider>
-            <NotesProvider>
+            <NoteProvider>
               <HelpProvider>
                 <GuideProvider>
                   {children}
                 </GuideProvider>
               </HelpProvider>
-            </NotesProvider>
+            </NoteProvider>
           </FlashcardProvider>
         </AuthProvider>
       </Router>
