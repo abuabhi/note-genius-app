@@ -9,7 +9,6 @@ export interface ActivityData {
   endTime: number | null;
   duration: number;
   details?: any;
-  // Add missing properties for compatibility
   cards_reviewed?: number;
   cards_correct?: number;
   quiz_score?: number;
@@ -21,7 +20,7 @@ export interface ActivityData {
 export interface GlobalSessionState {
   sessionId: string | null;
   isActive: boolean;
-  startTime: Date | null; // Changed from number to Date
+  startTime: Date | null;
   elapsedSeconds: number;
   currentActivity: ActivityType | null;
   isPaused: boolean;
@@ -50,7 +49,7 @@ export interface TimerManagementParams {
   setSessionState: React.Dispatch<React.SetStateAction<GlobalSessionState>>;
 }
 
-// Updated STUDY_ROUTES to be more comprehensive
+// Simplified study routes configuration
 export const STUDY_ROUTES = [
   '/flashcards',
   '/notes',
@@ -58,10 +57,7 @@ export const STUDY_ROUTES = [
   '/study'
 ];
 
-// Updated isStudyRoute function to properly handle all study routes and their sub-paths
+// Simplified route checking - more precise matching
 export const isStudyRoute = (pathname: string): boolean => {
-  return STUDY_ROUTES.some(route => {
-    // Check if the path starts with the route (handles sub-paths like /flashcards/123)
-    return pathname.startsWith(route);
-  });
+  return STUDY_ROUTES.some(route => pathname.startsWith(route));
 };
