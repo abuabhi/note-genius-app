@@ -84,7 +84,7 @@ export const useGlobalSessionTracker = () => {
     updateActivityType
   );
 
-  // Use activity tracking
+  // Use enhanced activity tracking with visibility and idle detection
   const { recordActivity } = useActivityTracking(sessionState, setSessionState, isOnStudyPage);
 
   // Use timer management with continuous counting
