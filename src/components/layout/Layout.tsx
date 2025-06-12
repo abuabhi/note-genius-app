@@ -8,10 +8,6 @@ import { useLocation } from 'react-router-dom';
 import { useReminderToasts } from '@/hooks/useReminderToasts';
 import { AnnouncementBar } from '@/components/announcements/AnnouncementBar';
 import { UnifiedFloatingTimer } from '@/components/study/UnifiedFloatingTimer';
-import { HelpDialog } from '@/components/help/HelpDialog';
-import { HelpFloatingButton } from '@/components/help/HelpFloatingButton';
-import { GuideOverlay } from '@/components/guide/GuideOverlay';
-import { GuideFloatingButton } from '@/components/guide/GuideFloatingButton';
 
 interface LayoutProps {
   children: ReactNode;
@@ -45,22 +41,6 @@ export default function Layout({ children, showSidebar = true, showFooter = true
         </main>
       </div>
       {showFooter && <Footer />}
-      
-      {/* Help System - shows for authenticated users */}
-      {user && (
-        <>
-          <HelpDialog />
-          <HelpFloatingButton />
-        </>
-      )}
-      
-      {/* Guide System - shows for authenticated users */}
-      {user && (
-        <>
-          <GuideOverlay />
-          <GuideFloatingButton />
-        </>
-      )}
       
       {/* Unified Floating Timer - shows for authenticated users */}
       {user && <UnifiedFloatingTimer />}
