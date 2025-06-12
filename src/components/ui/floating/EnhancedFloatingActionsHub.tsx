@@ -51,6 +51,16 @@ export const EnhancedFloatingActionsHub = ({
   const helpContext = useHelp();
   const guideContext = useGuide();
 
+  // Debug logging for chat functionality
+  useEffect(() => {
+    console.log('EnhancedFloatingActionsHub state:', {
+      location: location.pathname,
+      onChatToggle: !!onChatToggle,
+      isChatOpen,
+      isNoteStudyPage: location.pathname.includes('/notes/study/')
+    });
+  }, [location.pathname, onChatToggle, isChatOpen]);
+
   // Load position from localStorage on mount
   useEffect(() => {
     const savedPosition = localStorage.getItem(STORAGE_KEY);
@@ -134,7 +144,7 @@ export const EnhancedFloatingActionsHub = ({
         console.log('Starting guide:', guides[0].id);
         guideContext.startGuide(guides[0].id);
       } else {
-        console.log('No guides available');
+        console.log('No guides available for current page');
       }
     } else {
       console.warn('Guide context or methods not available');
@@ -157,8 +167,10 @@ export const EnhancedFloatingActionsHub = ({
   // Don't show on public routes
   if (isPublicRoute) return null;
 
-  // Hide during active guides (but NOT during help dialog)
-  if (guideContext?.isActive) return null;
+  // IMPROVED: Only hide during active guides when guide is actually displaying tooltips
+  // Check if guide is both active AND has successfully found its target
+  const shouldHideForGuide = guideContext?.isActive && guideContext?.currentGuide && guideContext?.currentStepIndex >= 0;
+  if (shouldHideForGuide) return null;
 
   // Determine page context
   const getPageContext = () => {
@@ -171,7 +183,11 @@ export const EnhancedFloatingActionsHub = ({
   };
 
   const pageContext = getPageContext();
-  const showChat = pageContext === 'note-study' && onChatToggle;
+  
+  // FIXED: Chat should show on note study pages when onChatToggle is provided
+  const showChat = pageContext === 'note-study' && typeof onChatToggle === 'function';
+  
+  console.log('Chat visibility logic:', { pageContext, onChatToggle: !!onChatToggle, showChat });
 
   // Session timer state
   const getSessionState = () => {
@@ -304,7 +320,7 @@ export const EnhancedFloatingActionsHub = ({
             </>
           )}
 
-          {/* Chat Button - Only on note study pages */}
+          {/* Chat Button - Show on note study pages when onChatToggle is available */}
           {showChat && (
             <>
               <div className="w-px h-6 bg-gray-300 mx-1" />
@@ -315,6 +331,7 @@ export const EnhancedFloatingActionsHub = ({
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
+                      console.log('Chat button clicked, calling onChatToggle');
                       onChatToggle();
                     }}
                     className="h-8 w-8 rounded-full hover:bg-mint-100/50 relative"

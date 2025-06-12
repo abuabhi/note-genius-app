@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -26,7 +26,13 @@ export const HelpDialog: React.FC = () => {
   } = useHelp();
   const analytics = useHelpAnalytics();
 
+  // Debug logging to track state changes
+  useEffect(() => {
+    console.log('HelpDialog state changed:', { isOpen, currentContent, viewMode });
+  }, [isOpen, currentContent, viewMode]);
+
   const handleOpenChange = (open: boolean) => {
+    console.log('HelpDialog handleOpenChange called with:', open);
     if (!open) {
       closeHelp();
     }
@@ -45,6 +51,8 @@ export const HelpDialog: React.FC = () => {
       );
     }
   };
+
+  console.log('HelpDialog rendering with isOpen:', isOpen);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>

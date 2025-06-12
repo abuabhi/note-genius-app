@@ -60,6 +60,7 @@ export const GuideProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     const context = getContextFromPath(location.pathname);
     setCurrentContext(context);
+    console.log('Guide context updated:', { pathname: location.pathname, context });
   }, [location.pathname]);
 
   // Load completed guides from localStorage
@@ -77,8 +78,12 @@ export const GuideProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [user]);
 
   const startGuide = useCallback((guideId: string) => {
+    console.log('Starting guide:', guideId);
     const guide = getGuideById(guideId);
-    if (!guide) return;
+    if (!guide) {
+      console.warn('Guide not found:', guideId);
+      return;
+    }
 
     setState(prev => ({
       ...prev,
@@ -88,9 +93,11 @@ export const GuideProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }));
 
     analytics.startGuide(guide);
+    console.log('Guide started successfully:', guide.title);
   }, [analytics]);
 
   const stopGuide = useCallback(() => {
+    console.log('Stopping guide');
     if (state.currentGuide) {
       analytics.stopGuide(state.currentGuide, state.currentStepIndex);
     }
@@ -193,8 +200,13 @@ export const GuideProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [state.completedGuides, user]);
 
   const getAvailableGuides = useCallback((): Guide[] => {
-    if (!currentContext) return [];
-    return getGuidesForContext(currentContext);
+    if (!currentContext) {
+      console.log('No current context for guides');
+      return [];
+    }
+    const guides = getGuidesForContext(currentContext);
+    console.log('Available guides for context', currentContext, ':', guides);
+    return guides;
   }, [currentContext]);
 
   const isGuideCompleted = useCallback((guideId: string): boolean => {
