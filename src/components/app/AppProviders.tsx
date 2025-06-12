@@ -10,6 +10,8 @@ import { ConnectionStatus } from '@/components/performance/ConnectionManager';
 import { UpdateNotification } from '@/components/performance/ServiceWorkerManager';
 import { PerformanceDebugger } from '@/components/performance/PerformanceMonitor';
 import { HealthCheck } from '@/components/monitoring/HealthCheck';
+import { HelpProvider } from '@/contexts/HelpContext';
+import { GuideProvider } from '@/contexts/GuideContext';
 import { config } from '@/config/environment';
 import { ReactNode } from 'react';
 
@@ -23,19 +25,23 @@ export const AppProviders = ({ children }: AppProvidersProps) => {
       <EnhancedQueryProvider>
         <BrowserRouter>
           <AuthProvider>
-            <AlertManager>
-              {children}
-              <ConnectionStatus />
-              <UpdateNotification />
-              {config.features.enablePerformanceMonitoring && <PerformanceDebugger />}
-              {(config.isDevelopment || config.isStaging) && (
-                <div className="fixed bottom-4 left-4 z-50">
-                  <HealthCheck />
-                </div>
-              )}
-              <Toaster />
-              <SonnerToaster />
-            </AlertManager>
+            <HelpProvider>
+              <GuideProvider>
+                <AlertManager>
+                  {children}
+                  <ConnectionStatus />
+                  <UpdateNotification />
+                  {config.features.enablePerformanceMonitoring && <PerformanceDebugger />}
+                  {(config.isDevelopment || config.isStaging) && (
+                    <div className="fixed bottom-4 left-4 z-50">
+                      <HealthCheck />
+                    </div>
+                  )}
+                  <Toaster />
+                  <SonnerToaster />
+                </AlertManager>
+              </GuideProvider>
+            </HelpProvider>
           </AuthProvider>
         </BrowserRouter>
       </EnhancedQueryProvider>
