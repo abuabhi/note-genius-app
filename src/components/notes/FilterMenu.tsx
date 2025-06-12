@@ -52,7 +52,7 @@ export const FilterMenu = () => {
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
           <Filter className="h-4 w-4" />
-          Filter
+          All Subjects
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56">
