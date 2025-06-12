@@ -1,5 +1,5 @@
 
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import NavBar from './NavBar';
 import Footer from './Footer';
 import { CustomSidebar } from '@/components/ui/sidebar-custom';
@@ -18,6 +18,7 @@ interface LayoutProps {
 export default function Layout({ children, showSidebar = true, showFooter = true }: LayoutProps) {
   const { user } = useAuth();
   const location = useLocation();
+  const [isChatOpen, setIsChatOpen] = useState(false);
   
   // Initialize reminder toasts for authenticated users on all pages
   useReminderToasts();
@@ -28,6 +29,13 @@ export default function Layout({ children, showSidebar = true, showFooter = true
   
   // Show sidebar only for authenticated users on non-public routes
   const shouldShowSidebar = showSidebar && user && !isPublicRoute;
+
+  // Check if we're on a note study page to enable chat
+  const isNoteStudyPage = location.pathname.includes('/notes/study/');
+
+  const handleChatToggle = () => {
+    setIsChatOpen(!isChatOpen);
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -42,8 +50,12 @@ export default function Layout({ children, showSidebar = true, showFooter = true
       </div>
       {showFooter && <Footer />}
       
-      {/* Enhanced Floating Actions Hub - replaces individual floating components */}
-      <EnhancedFloatingActionsHub />
+      {/* Single Enhanced Floating Actions Hub - handles all floating functionality */}
+      <EnhancedFloatingActionsHub 
+        onChatToggle={isNoteStudyPage ? handleChatToggle : undefined}
+        isChatOpen={isChatOpen}
+        hasUnreadChat={false}
+      />
     </div>
   );
 }

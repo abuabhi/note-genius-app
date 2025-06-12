@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Note } from '@/types/note';
 import { Card } from '@/components/ui/card';
@@ -12,9 +13,7 @@ import { useNoteEnrichment } from '@/hooks/useNoteEnrichment';
 import { toast } from 'sonner';
 import { StudyBreadcrumb } from './navigation/StudyBreadcrumb';
 import { NoteChatSidebar } from './chat/NoteChatSidebar';
-import { FloatingActionsHub } from '@/components/ui/floating/FloatingActionsHub';
 import { FlashcardProvider } from '@/contexts/flashcards';
-import { EnhancedFloatingActionsHub } from '@/components/ui/floating/EnhancedFloatingActionsHub';
 
 interface NoteStudyViewProps {
   note: Note;
@@ -239,13 +238,6 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
           note={currentNote}
           isOpen={isChatOpen}
           onClose={() => setIsChatOpen(false)}
-        />
-        
-        {/* Enhanced Floating Actions Hub with Chat Integration */}
-        <EnhancedFloatingActionsHub 
-          onChatToggle={() => setIsChatOpen(!isChatOpen)}
-          isChatOpen={isChatOpen}
-          hasUnreadChat={false}
         />
       </div>
     </FlashcardProvider>
