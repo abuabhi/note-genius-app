@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 import { StudyMode } from '@/pages/study/types';
 import { Flashcard } from '@/types/flashcard';
-import { useGlobalSessionTracker } from '@/hooks/useGlobalSessionTracker';
+import { useBasicSessionTracker } from '@/hooks/useBasicSessionTracker';
 
 interface UseOptimizedFlashcardStudyProps {
   setId: string;
@@ -31,7 +31,7 @@ interface StudyStats {
 
 export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcardStudyProps) => {
   const { user } = useAuth();
-  const { updateSessionActivity, recordActivity } = useGlobalSessionTracker();
+  const { updateSessionActivity, recordActivity } = useBasicSessionTracker();
   const queryClient = useQueryClient();
   
   const [currentIndex, setCurrentIndex] = useState(0);

@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 import { StudyMode } from '@/pages/study/types';
 import { Flashcard } from '@/types/flashcard';
-import { useGlobalSessionTracker } from '@/hooks/useGlobalSessionTracker';
+import { useBasicSessionTracker } from '@/hooks/useBasicSessionTracker';
 
 interface UseQuizModeProps {
   setId: string;
@@ -26,7 +26,7 @@ interface FlashcardWithProgress extends Flashcard {
 
 export const useQuizMode = ({ setId, mode }: UseQuizModeProps) => {
   const { user } = useAuth();
-  const { updateSessionActivity, recordActivity } = useGlobalSessionTracker();
+  const { updateSessionActivity, recordActivity } = useBasicSessionTracker();
   
   const [flashcards, setFlashcards] = useState<FlashcardWithProgress[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);

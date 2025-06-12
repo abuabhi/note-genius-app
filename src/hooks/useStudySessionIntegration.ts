@@ -1,5 +1,6 @@
+
 import { useEffect } from 'react';
-import { useGlobalSessionTracker } from '@/hooks/useGlobalSessionTracker';
+import { useBasicSessionTracker } from '@/hooks/useBasicSessionTracker';
 import { useLocation } from 'react-router-dom';
 
 interface StudySessionIntegrationProps {
@@ -15,7 +16,7 @@ export const useStudySessionIntegration = ({
   cardsStudied = 0,
   isActive = true
 }: StudySessionIntegrationProps) => {
-  const { updateSessionActivity, recordActivity, isOnStudyPage } = useGlobalSessionTracker();
+  const { updateSessionActivity, recordActivity, isOnStudyPage } = useBasicSessionTracker();
   const location = useLocation();
 
   // Record activity when cards are studied
