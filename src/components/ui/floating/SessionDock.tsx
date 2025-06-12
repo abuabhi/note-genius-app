@@ -2,7 +2,7 @@
 import { Clock, Play, Pause, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useGlobalSessionTracker } from '@/hooks/useGlobalSessionTracker';
+import { useSimpleSessionTracker } from '@/hooks/useSimpleSessionTracker';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
@@ -14,7 +14,7 @@ export const SessionDock = () => {
     togglePause,
     endSession,
     isOnStudyPage
-  } = useGlobalSessionTracker();
+  } = useSimpleSessionTracker();
 
   // Don't show if no active session
   if (!isSessionActive) {

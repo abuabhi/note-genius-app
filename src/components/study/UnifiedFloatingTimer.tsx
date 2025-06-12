@@ -1,8 +1,9 @@
+
 import { useState } from 'react';
 import { Clock, Play, Pause, BookOpen, Target, FileText, X, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useGlobalSessionTracker } from '@/hooks/useGlobalSessionTracker';
+import { useSimpleSessionTracker } from '@/hooks/useSimpleSessionTracker';
 import { cn } from '@/lib/utils';
 
 interface UnifiedFloatingTimerProps {
@@ -19,7 +20,7 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
     togglePause,
     recordActivity,
     endSession
-  } = useGlobalSessionTracker();
+  } = useSimpleSessionTracker();
 
   // Show timer if there's an active session, regardless of page
   if (!isActive) {
