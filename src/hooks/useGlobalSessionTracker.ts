@@ -1,7 +1,4 @@
 
-// Re-export everything from the unified system
-export * from './useUnifiedSessionTracker';
-export { useSessionAnalytics } from './useSessionAnalytics';
-
-// Make sure useGlobalSessionTracker is properly exported
-export { useUnifiedSessionTracker as useGlobalSessionTracker } from './useUnifiedSessionTracker';
+// Simple re-export of the simplified session tracker
+export { useSimpleSessionTracker as useGlobalSessionTracker } from './useSimpleSessionTracker';
+export type { ActivityType, SimpleSessionState as SessionState } from './useSimpleSessionTracker';

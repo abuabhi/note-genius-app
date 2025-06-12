@@ -1,7 +1,4 @@
 
-// Re-export the unified session tracker as the main interface
-export { useUnifiedSessionTracker as useGlobalSessionTracker } from '../useUnifiedSessionTracker';
-export type { ActivityType, SessionState, SessionEvent, SessionEventData } from '../useUnifiedSessionTracker';
-
-// Also export the analytics hooks
-export { useSessionAnalytics } from '../useSessionAnalytics';
+// Re-export the simple session tracker
+export { useSimpleSessionTracker as useGlobalSessionTracker } from '../useSimpleSessionTracker';
+export type { ActivityType, SimpleSessionState as SessionState } from '../useSimpleSessionTracker';
