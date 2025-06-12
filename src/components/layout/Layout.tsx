@@ -72,7 +72,7 @@ export default function Layout({ children, showSidebar = true, showFooter = true
       // Transform the data to match the Note interface
       const transformedNote = {
         ...data,
-        sourceType: data.source_type || 'manual', // Ensure sourceType is provided
+        sourceType: (data.source_type as 'manual' | 'scan' | 'import') || 'manual', // Properly cast to union type
         tags: data.tags?.map((tagRelation: any) => ({
           id: tagRelation.tag.id,
           name: tagRelation.tag.name,
