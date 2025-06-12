@@ -32,22 +32,21 @@ export const SessionDock = () => {
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Determine theme based on session state - more subtle approach
-  const getSessionTheme = () => {
-    if (!isOnStudyPage) {
-      // Idle/inactive theme - subtle red
-      return {
-        background: 'bg-slate-800/90 border-red-400/40',
-        text: 'text-red-100',
-        timeText: 'text-red-200',
-        iconColor: 'text-red-300',
-        buttonHover: 'hover:bg-red-500/15',
-        indicator: 'bg-red-400'
-      };
-    }
-    
+  // More intuitive status display
+  const getSessionStatus = () => {
     if (isPaused) {
-      // Paused theme - subtle orange
+      return 'Paused';
+    }
+    if (!isOnStudyPage) {
+      return 'Away from Study';
+    }
+    return 'Active Session';
+  };
+
+  // Determine theme based on session state
+  const getSessionTheme = () => {
+    if (isPaused || !isOnStudyPage) {
+      // Paused or away from study - subtle orange
       return {
         background: 'bg-slate-800/90 border-orange-400/40',
         text: 'text-orange-100',
@@ -58,7 +57,7 @@ export const SessionDock = () => {
       };
     }
     
-    // Active theme - subtle green with very gentle pulse
+    // Active on study page - subtle mint theme
     return {
       background: 'bg-slate-800/90 border-mint-400/40',
       text: 'text-mint-100',
@@ -81,12 +80,12 @@ export const SessionDock = () => {
         <div className="flex items-center gap-3">
           <div className="relative">
             <Clock className={cn("h-4 w-4", theme.iconColor)} />
-            {/* Very subtle indicator - no flashing */}
+            {/* Subtle indicator - only when active and on study page */}
             {!isPaused && isOnStudyPage && (
               <div className={cn(
-                "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full transition-opacity duration-1000",
+                "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full",
                 theme.indicator,
-                "animate-pulse"
+                "opacity-75"
               )} />
             )}
           </div>
@@ -95,7 +94,7 @@ export const SessionDock = () => {
               {formatTime(elapsedSeconds)}
             </span>
             <span className={cn("text-xs font-medium", theme.text)}>
-              {!isOnStudyPage ? 'Not Studying' : isPaused ? 'Paused' : 'Active Session'}
+              {getSessionStatus()}
             </span>
           </div>
         </div>

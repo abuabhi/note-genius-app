@@ -53,15 +53,16 @@ export const useSessionOperations = (
       return;
     }
 
-    // If we already have an active session and it's valid, just update activity type WITHOUT restarting
+    // If we already have an active session and it's valid, just ensure it's not paused
     if (sessionState.isActive && sessionState.sessionId && validateSessionState(sessionState)) {
-      logger.info('Valid session already exists, updating activity type only - NO RESTART');
+      logger.info('Valid session already exists - ensuring it is active');
+      setSessionState(prev => ({ ...prev, isPaused: false }));
       updateActivityType();
       return;
     }
 
     try {
-      // Check for any existing active sessions in database - look for very recent ones first
+      // Check for any existing active sessions in database
       const { data: activeSessions, error: checkError } = await supabase
         .from('study_sessions')
         .select('*')
@@ -78,23 +79,23 @@ export const useSessionOperations = (
       if (activeSessions && activeSessions.length > 0) {
         const existingSession = activeSessions[0];
         const sessionAge = Date.now() - new Date(existingSession.start_time).getTime();
-        const twoHours = 2 * 60 * 60 * 1000; // Extended to 2 hours for better continuity
+        const twoHours = 2 * 60 * 60 * 1000;
         
         if (sessionAge < twoHours) {
           logger.info('🔄 Resuming existing session - MAINTAINING CONTINUITY');
           const resumedState = {
             sessionId: existingSession.id,
             isActive: true,
-            startTime: new Date(existingSession.start_time), // Convert to Date object
+            startTime: new Date(existingSession.start_time),
             elapsedSeconds: Math.floor(sessionAge / 1000),
             currentActivity: getCurrentActivityType(),
-            isPaused: false
+            isPaused: false // Ensure session is active when resuming
           };
           
           setSessionState(resumedState);
           persistSession(resumedState);
           
-          // Update the activity type for the resumed session WITHOUT affecting timing
+          // Update the activity type for the resumed session
           await updateActivityTypeInternal(existingSession.id, getCurrentActivityType());
           return;
         } else {
@@ -102,7 +103,7 @@ export const useSessionOperations = (
           logger.info('Cleaning up old session');
           const duration = Math.min(
             Math.floor(sessionAge / 1000),
-            4 * 60 * 60 // Cap at 4 hours
+            4 * 60 * 60
           );
           
           await supabase
@@ -145,7 +146,7 @@ export const useSessionOperations = (
       const newSessionState = {
         sessionId: data.id,
         isActive: true,
-        startTime: now, // Use Date object directly
+        startTime: now,
         elapsedSeconds: 0,
         currentActivity: activityType,
         isPaused: false
@@ -172,7 +173,7 @@ export const useSessionOperations = (
 
     try {
       const endTime = new Date();
-      const startTime = sessionState.startTime; // Already a Date object
+      const startTime = sessionState.startTime;
       
       const actualDurationSeconds = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
       const validatedDuration = validateSessionDuration(actualDurationSeconds);
@@ -220,7 +221,7 @@ export const useSessionOperations = (
   // Internal helper to update activity type without affecting session timing
   const updateActivityTypeInternal = useCallback(async (sessionId: string, newActivityType: ActivityType) => {
     try {
-      logger.info('🔄 Updating activity type to:', newActivityType, '(NO TIMING RESET)');
+      logger.info('🔄 Updating activity type to:', newActivityType, '(PRESERVING SESSION TIMING)');
       const { error } = await supabase
         .from('study_sessions')
         .update({
@@ -231,7 +232,7 @@ export const useSessionOperations = (
 
       if (error) throw error;
 
-      logger.info('✅ Activity type updated - SESSION TIMING MAINTAINED');
+      logger.info('✅ Activity type updated - SESSION TIMING PRESERVED');
 
     } catch (error) {
       logger.error('Error updating activity type:', error);
@@ -257,12 +258,14 @@ export const useSessionOperations = (
     // Update local state while preserving all timing information
     const updatedState = {
       ...sessionState,
-      currentActivity: newActivityType
+      currentActivity: newActivityType,
+      isPaused: false // Ensure session stays active when updating activity type
     };
     
     setSessionState(prev => ({
       ...prev,
-      currentActivity: newActivityType
+      currentActivity: newActivityType,
+      isPaused: false // Ensure session stays active
     }));
 
     persistSession(updatedState);

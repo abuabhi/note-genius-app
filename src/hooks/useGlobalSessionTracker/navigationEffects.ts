@@ -22,30 +22,16 @@ export const useNavigationEffects = (
   const wasOnStudyPage = previousLocationRef.current ? 
     isStudyRoute(previousLocationRef.current) : false;
 
-  // Helper function to determine if both routes are related study routes
+  // Updated helper function - ALL study routes are now considered related
   const areRelatedStudyRoutes = (current: string, previous: string | null): boolean => {
     if (!previous) return false;
     
-    // Both are flashcard-related routes (including main flashcards page and specific sets)
-    if (current.startsWith('/flashcards') && previous.startsWith('/flashcards')) {
-      return true;
-    }
-    
-    // Both are note-related routes
-    if (current.startsWith('/notes') && previous.startsWith('/notes')) {
-      return true;
-    }
-    
-    // Both are quiz-related routes
-    if ((current.startsWith('/quiz') || current.startsWith('/quizzes')) && 
-        (previous.startsWith('/quiz') || previous.startsWith('/quizzes'))) {
-      return true;
-    }
-    
-    return false;
+    // If both are study routes, they are considered related
+    // This prevents session resets when switching between flashcards, notes, and quiz pages
+    return isStudyRoute(current) && isStudyRoute(previous);
   };
 
-  // Handle page navigation with improved session management - only when path actually changes
+  // Handle page navigation with improved session management
   useEffect(() => {
     const previousPath = previousLocationRef.current;
     
@@ -85,13 +71,18 @@ export const useNavigationEffects = (
     // Update previous location reference
     previousLocationRef.current = currentPath;
 
-    // Check if we're moving between related study routes
+    // Check if we're moving between study routes (now all study routes are related)
     const areRelated = areRelatedStudyRoutes(currentPath, previousPath);
 
     if (isOnStudyPage && wasOnStudyPage && areRelated) {
-      // Moving between related study pages - maintain session, just update activity
-      console.log('🔄 Moving between related study pages - maintaining session, updating activity only');
+      // Moving between study pages - maintain session, just update activity type
+      console.log('🔄 Moving between study pages - maintaining session, updating activity only');
       if (sessionState.isActive) {
+        // Ensure session is not paused when on study pages
+        if (sessionState.isPaused) {
+          console.log('▶️ Resuming session when moving between study pages');
+          setSessionState(prev => ({ ...prev, isPaused: false }));
+        }
         updateActivityType();
       } else {
         // Should have a session when on study pages
@@ -99,26 +90,24 @@ export const useNavigationEffects = (
         startSession();
       }
       
-    } else if (isOnStudyPage && (!wasOnStudyPage || !areRelated)) {
-      // Entering study area from non-study page OR switching between unrelated study areas
-      if (sessionState.isActive && sessionState.isPaused) {
-        // Resume existing paused session
-        console.log('▶️ Entering study area - resuming paused session');
+    } else if (isOnStudyPage && !wasOnStudyPage) {
+      // Entering study area from non-study page
+      if (sessionState.isActive) {
+        // Resume existing session and ensure it's not paused
+        console.log('▶️ Entering study area - resuming existing session');
         setSessionState(prev => ({ ...prev, isPaused: false }));
         updateActivityType();
-      } else if (!sessionState.isActive) {
-        // Start new session
-        console.log('🚀 Entering study area - starting session');
-        startSession();
       } else {
-        // Already have active session, just update activity
-        updateActivityType();
+        // Start new session
+        console.log('🚀 Entering study area - starting new session');
+        startSession();
       }
       
     } else if (!isOnStudyPage && wasOnStudyPage) {
-      // Leaving study area for non-study page - pause session
+      // Leaving study area for non-study page - pause but don't end session
+      // This allows users to return to studying and continue their session
       if (sessionState.isActive && !sessionState.isPaused) {
-        console.log('⏸️ Leaving study area for non-study page - pausing session');
+        console.log('⏸️ Leaving study area - pausing session (can be resumed)');
         setSessionState(prev => ({ ...prev, isPaused: true }));
       }
     } else if (!isOnStudyPage && !wasOnStudyPage) {
