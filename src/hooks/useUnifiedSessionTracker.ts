@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { useLocation } from 'react-router-dom';
@@ -164,6 +163,13 @@ export const useUnifiedSessionTracker = () => {
     
     updateTimer.current = setTimeout(batchDatabaseUpdate, BATCH_UPDATE_INTERVAL);
   }, [batchDatabaseUpdate]);
+
+  // Update session activity - this method was missing
+  const updateSessionActivity = useCallback(async (activityData: any) => {
+    if (!sessionState.sessionId || !sessionState.isActive) return;
+
+    scheduleBatchUpdate(activityData);
+  }, [sessionState.sessionId, sessionState.isActive, scheduleBatchUpdate]);
 
   // Start session with error recovery
   const startSession = useCallback(async (): Promise<boolean> => {
@@ -451,6 +457,7 @@ export const useUnifiedSessionTracker = () => {
     togglePause,
     recordActivity,
     updateActivityType,
+    updateSessionActivity, // Add this method
     
     // Event system
     addEventListener,

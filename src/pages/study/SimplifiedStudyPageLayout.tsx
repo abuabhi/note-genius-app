@@ -30,7 +30,6 @@ export const SimplifiedStudyPageLayout = ({
           <SimplifiedFlashcardStudy 
             setId={setId} 
             mode={mode} 
-            currentSet={currentSet} 
           />
         )}
       </div>
