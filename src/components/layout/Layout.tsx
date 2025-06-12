@@ -1,4 +1,3 @@
-
 import { ReactNode, useEffect } from 'react';
 import NavBar from './NavBar';
 import Footer from './Footer';
@@ -11,6 +10,8 @@ import { UnifiedFloatingTimer } from '@/components/study/UnifiedFloatingTimer';
 import { HelpProvider } from '@/contexts/HelpContext';
 import { HelpDialog } from '@/components/help/HelpDialog';
 import { HelpFloatingButton } from '@/components/help/HelpFloatingButton';
+import { GuideOverlay } from '@/components/guide/GuideOverlay';
+import { GuideFloatingButton } from '@/components/guide/GuideFloatingButton';
 
 interface LayoutProps {
   children: ReactNode;
@@ -51,6 +52,14 @@ export default function Layout({ children, showSidebar = true, showFooter = true
           <>
             <HelpDialog />
             <HelpFloatingButton />
+          </>
+        )}
+        
+        {/* Guide System - shows for authenticated users */}
+        {user && (
+          <>
+            <GuideOverlay />
+            <GuideFloatingButton />
           </>
         )}
         
