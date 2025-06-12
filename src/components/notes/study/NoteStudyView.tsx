@@ -181,7 +181,7 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
 
   return (
     <FlashcardProvider>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-mint-50/20">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-mint-50/20" data-guide="study-main">
         <div className="max-w-7xl mx-auto p-4 space-y-6">
           {/* Breadcrumb Navigation */}
           <StudyBreadcrumb note={currentNote} />
@@ -189,58 +189,62 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
           {/* Main Study View Card */}
           <Card className={`overflow-hidden transition-all duration-300 ${
             isFullScreen ? 'fixed inset-0 z-50 rounded-none' : 'rounded-lg shadow-lg'
-          } ${isFullWidth ? 'w-full' : 'max-w-6xl mx-auto'} bg-white/95 backdrop-blur-sm border-mint-100`}>
+          } ${isFullWidth ? 'w-full' : 'max-w-6xl mx-auto'} bg-white/95 backdrop-blur-sm border-mint-100`} data-guide="note-content">
             
             {/* Enhanced Header */}
-            <StudyViewHeader
-              note={currentNote}
-              fontSize={fontSize}
-              textAlign={textAlign}
-              isFullWidth={isFullWidth}
-              isFullScreen={isFullScreen}
-              isEditing={isEditing}
-              isSaving={isSaving}
-              editableTitle={editableTitle}
-              onIncreaseFontSize={handleIncreaseFontSize}
-              onDecreaseFontSize={handleDecreaseFontSize}
-              onChangeTextAlign={handleTextAlign}
-              onToggleWidth={toggleWidth}
-              onToggleFullScreen={toggleFullScreen}
-              onToggleEditing={toggleEditing}
-              onSave={handleSaveContent}
-              onTitleChange={handleTitleChange}
-              onEnhance={handleEnhancement}
-            />
+            <div data-guide="note-actions">
+              <StudyViewHeader
+                note={currentNote}
+                fontSize={fontSize}
+                textAlign={textAlign}
+                isFullWidth={isFullWidth}
+                isFullScreen={isFullScreen}
+                isEditing={isEditing}
+                isSaving={isSaving}
+                editableTitle={editableTitle}
+                onIncreaseFontSize={handleIncreaseFontSize}
+                onDecreaseFontSize={handleDecreaseFontSize}
+                onChangeTextAlign={handleTextAlign}
+                onToggleWidth={toggleWidth}
+                onToggleFullScreen={toggleFullScreen}
+                onToggleEditing={toggleEditing}
+                onSave={handleSaveContent}
+                onTitleChange={handleTitleChange}
+                onEnhance={handleEnhancement}
+              />
+            </div>
 
             {/* Enhanced Content View */}
-            <NoteStudyViewContent
-              note={currentNote}
-              isEditing={isEditing}
-              fontSize={fontSize}
-              textAlign={textAlign}
-              editableContent={editableContent}
-              editableSubject={editableSubject}
-              selectedTags={selectedTags}
-              availableTags={availableTags}
-              availableSubjects={availableSubjects}
-              isSaving={isSaving}
-              statsLoading={false}
-              currentUsage={currentUsage}
-              monthlyLimit={monthlyLimit}
-              handleContentChange={handleContentChange}
-              handleSaveContent={handleSaveContent}
-              toggleEditing={toggleEditing}
-              handleEnhanceContent={handleEnhanceContent}
-              setSelectedTags={setSelectedTags}
-              handleRetryEnhancement={handleRetryEnhancement}
-              hasReachedLimit={hasReachedLimit()}
-              fetchUsageStats={fetchUsageStats}
-              onNoteUpdate={onNoteUpdate}
-              onSubjectChange={handleSubjectChange}
-              activeContentType={activeContentType}
-              onActiveContentTypeChange={handleActiveContentTypeChange}
-              isEditOperation={isProcessing}
-            />
+            <div data-guide="enhancement-tabs">
+              <NoteStudyViewContent
+                note={currentNote}
+                isEditing={isEditing}
+                fontSize={fontSize}
+                textAlign={textAlign}
+                editableContent={editableContent}
+                editableSubject={editableSubject}
+                selectedTags={selectedTags}
+                availableTags={availableTags}
+                availableSubjects={availableSubjects}
+                isSaving={isSaving}
+                statsLoading={false}
+                currentUsage={currentUsage}
+                monthlyLimit={monthlyLimit}
+                handleContentChange={handleContentChange}
+                handleSaveContent={handleSaveContent}
+                toggleEditing={toggleEditing}
+                handleEnhanceContent={handleEnhanceContent}
+                setSelectedTags={setSelectedTags}
+                handleRetryEnhancement={handleRetryEnhancement}
+                hasReachedLimit={hasReachedLimit()}
+                fetchUsageStats={fetchUsageStats}
+                onNoteUpdate={onNoteUpdate}
+                onSubjectChange={handleSubjectChange}
+                activeContentType={activeContentType}
+                onActiveContentTypeChange={handleActiveContentTypeChange}
+                isEditOperation={isProcessing}
+              />
+            </div>
           </Card>
         </div>
       </div>

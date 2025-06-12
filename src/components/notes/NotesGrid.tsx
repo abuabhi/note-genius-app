@@ -53,7 +53,7 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
 
   return (
     <>
-      <div className="flex flex-col space-y-4">
+      <div className="flex flex-col space-y-4" data-guide="notes-list">
         {notes.map((note) => (
           <NoteCard
             key={note.id}

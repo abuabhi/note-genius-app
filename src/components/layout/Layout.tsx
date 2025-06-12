@@ -4,11 +4,13 @@ import NavBar from './NavBar';
 import Footer from './Footer';
 import { CustomSidebar } from '@/components/ui/sidebar-custom';
 import { useAuth } from '@/contexts/auth';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { useReminderToasts } from '@/hooks/useReminderToasts';
 import { AnnouncementBar } from '@/components/announcements/AnnouncementBar';
 import { EnhancedFloatingActionsHub } from '@/components/ui/floating/EnhancedFloatingActionsHub';
 import { NoteChatSidebar } from '@/components/notes/study/chat/NoteChatSidebar';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface LayoutProps {
   children: ReactNode;
@@ -19,13 +21,13 @@ interface LayoutProps {
 export default function Layout({ children, showSidebar = true, showFooter = true }: LayoutProps) {
   const { user } = useAuth();
   const location = useLocation();
+  const params = useParams();
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [currentNote, setCurrentNote] = useState(null);
   
   // Initialize reminder toasts for authenticated users on all pages
   useReminderToasts();
 
-  // Define which routes are public
+  // Define which routes are public - don't show dock on these
   const publicRoutes = ['/', '/about', '/pricing', '/faq', '/contact', '/blog', '/features', '/login', '/signup'];
   const isPublicRoute = publicRoutes.includes(location.pathname);
   
@@ -34,20 +36,52 @@ export default function Layout({ children, showSidebar = true, showFooter = true
 
   // Check if we're on a note study page to enable chat
   const isNoteStudyPage = location.pathname.includes('/notes/study/');
+  const noteId = params.id; // Get note ID from URL params
+
+  console.log('🏗️ Layout - Note study page detection:', {
+    isNoteStudyPage,
+    pathname: location.pathname,
+    noteId,
+    locationState: location.state
+  });
+
+  // Fetch current note data for chat when on study page
+  const { data: currentNote } = useQuery({
+    queryKey: ['note', noteId],
+    queryFn: async () => {
+      if (!noteId || !user) return null;
+      
+      console.log('📥 Fetching note for chat:', noteId);
+      const { data, error } = await supabase
+        .from('notes')
+        .select('*')
+        .eq('id', noteId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching note:', error);
+        return null;
+      }
+
+      console.log('✅ Note fetched for chat:', data);
+      return data;
+    },
+    enabled: isNoteStudyPage && !!noteId && !!user,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
   const handleChatToggle = () => {
+    console.log('🔄 Chat toggle called, current state:', isChatOpen);
     setIsChatOpen(!isChatOpen);
   };
 
-  // Extract note data from location state when on study page
+  // Close chat when leaving study page
   useEffect(() => {
-    if (isNoteStudyPage && location.state?.note) {
-      setCurrentNote(location.state.note);
-    } else if (!isNoteStudyPage) {
-      setCurrentNote(null);
-      setIsChatOpen(false); // Close chat when leaving study page
+    if (!isNoteStudyPage) {
+      setIsChatOpen(false);
     }
-  }, [location, isNoteStudyPage]);
+  }, [isNoteStudyPage]);
 
   return (
     <div className="min-h-screen flex flex-col">
