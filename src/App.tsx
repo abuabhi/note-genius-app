@@ -15,11 +15,12 @@ import { OptimizedAppRoutes } from './components/optimized/OptimizedAppRoutes';
 import { SessionProvider } from '@/contexts/SessionContext';
 import { useStudyActivityDetector } from '@/hooks/useStudyActivityDetector';
 import OptimizedNotesPage from "@/pages/OptimizedNotesPage";
-import NoteStudyPage from "@/pages/NoteStudyPage";
+import OptimizedNoteStudyPage from "@/pages/OptimizedNoteStudyPage";
 import { NoteProvider } from '@/contexts/NoteContext';
 import { HelpProvider } from '@/contexts/HelpContext';
 import { ErrorProvider } from '@/contexts/ErrorContext';
 import { AppProviders } from '@/components/app/AppProviders';
+import { FlashcardProvider } from '@/contexts/flashcards';
 
 // Create a QueryClient instance with optimized settings for high concurrency
 const queryClient = new QueryClient({
@@ -48,56 +49,54 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <Router>
           <AuthProvider>
-            <HelpProvider>
-              <SessionProvider>
-                <AppProviders>
-                  <StudyActivityHandler />
-                  <Toaster position="top-right" />
-                  <Suspense fallback={<div>Loading...</div>}>
-                    <Routes>
-                      {/* Auth callback routes MUST be first and completely public - no auth required */}
-                      {authCallbackRoutes.map((route, index) => (
-                        <Route key={`auth-callback-${index}`} path={route.path} element={route.element} />
-                      ))}
-                      
-                      {/* Public routes */}
-                      {publicRoutes.map((route, index) => (
-                        <Route key={`public-${index}`} path={route.path} element={route.element} />
-                      ))}
-                      
-                      {/* Protected Routes */}
-                      <Route element={<ProtectedRoute />}>
-                        {/* Replace the notes route with optimized version */}
-                        <Route path="/notes" element={<OptimizedNotesPage />} />
-                        <Route path="/notes/:noteId" element={<OptimizedNotesPage />} />
-                        
-                        {/* Note study routes need NoteProvider */}
-                        <Route path="/notes/study/:id" element={
-                          <NoteProvider>
-                            <NoteStudyPage />
-                          </NoteProvider>
-                        } />
-                        
-                        {/* Standard protected routes */}
-                        {standardRoutes.map((route, index) => (
-                          <Route key={`standard-${index}`} path={route.path} element={route.element} />
+            <FlashcardProvider>
+              <HelpProvider>
+                <SessionProvider>
+                  <AppProviders>
+                    <StudyActivityHandler />
+                    <Toaster position="top-right" />
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <Routes>
+                        {/* Auth callback routes MUST be first and completely public - no auth required */}
+                        {authCallbackRoutes.map((route, index) => (
+                          <Route key={`auth-callback-${index}`} path={route.path} element={route.element} />
                         ))}
-                      </Route>
-                      
-                      {/* Admin Routes */}
-                      <Route element={<AdminRoute />}>
-                        {adminRoutes.map((route, index) => (
-                          <Route key={`admin-${index}`} path={route.path} element={route.element} />
+                        
+                        {/* Public routes */}
+                        {publicRoutes.map((route, index) => (
+                          <Route key={`public-${index}`} path={route.path} element={route.element} />
                         ))}
-                      </Route>
-                      
-                      {/* Not Found Route - this should be last */}
-                      <Route path="*" element={<NotFoundPage />} />
-                    </Routes>
-                  </Suspense>
-                </AppProviders>
-              </SessionProvider>
-            </HelpProvider>
+                        
+                        {/* Protected Routes */}
+                        <Route element={<ProtectedRoute />}>
+                          {/* Replace the notes route with optimized version */}
+                          <Route path="/notes" element={<OptimizedNotesPage />} />
+                          <Route path="/notes/:noteId" element={<OptimizedNotesPage />} />
+                          
+                          {/* Note study routes - now using OptimizedNoteStudyPage */}
+                          <Route path="/notes/study/:id" element={<OptimizedNoteStudyPage />} />
+                          
+                          {/* Standard protected routes */}
+                          {standardRoutes.map((route, index) => (
+                            <Route key={`standard-${index}`} path={route.path} element={route.element} />
+                          ))}
+                        </Route>
+                        
+                        {/* Admin Routes */}
+                        <Route element={<AdminRoute />}>
+                          {adminRoutes.map((route, index) => (
+                            <Route key={`admin-${index}`} path={route.path} element={route.element} />
+                          ))}
+                        </Route>
+                        
+                        {/* Not Found Route - this should be last */}
+                        <Route path="*" element={<NotFoundPage />} />
+                      </Routes>
+                    </Suspense>
+                  </AppProviders>
+                </SessionProvider>
+              </HelpProvider>
+            </FlashcardProvider>
           </AuthProvider>
         </Router>
       </QueryClientProvider>
