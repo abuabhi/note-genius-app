@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useOptimizedFlashcardStudy } from '@/hooks/useOptimizedFlashcardStudy';
 import { StudyMode } from '@/pages/study/types';
