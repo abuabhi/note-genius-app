@@ -1,3 +1,4 @@
+
 import { ReactNode, useEffect } from 'react';
 import NavBar from './NavBar';
 import Footer from './Footer';
@@ -7,7 +8,6 @@ import { useLocation } from 'react-router-dom';
 import { useReminderToasts } from '@/hooks/useReminderToasts';
 import { AnnouncementBar } from '@/components/announcements/AnnouncementBar';
 import { UnifiedFloatingTimer } from '@/components/study/UnifiedFloatingTimer';
-import { HelpProvider } from '@/contexts/HelpContext';
 import { HelpDialog } from '@/components/help/HelpDialog';
 import { HelpFloatingButton } from '@/components/help/HelpFloatingButton';
 import { GuideOverlay } from '@/components/guide/GuideOverlay';
@@ -34,38 +34,36 @@ export default function Layout({ children, showSidebar = true, showFooter = true
   const shouldShowSidebar = showSidebar && user && !isPublicRoute;
 
   return (
-    <HelpProvider>
-      <div className="min-h-screen flex flex-col">
-        <NavBar />
-        {/* Announcement Bar - shows for authenticated users */}
-        {user && <AnnouncementBar />}
-        <div className="flex flex-1">
-          {shouldShowSidebar && <CustomSidebar />}
-          <main className={`flex-1 ${shouldShowSidebar ? 'ml-16' : ''}`}>
-            {children}
-          </main>
-        </div>
-        {showFooter && <Footer />}
-        
-        {/* Help System - shows for authenticated users */}
-        {user && (
-          <>
-            <HelpDialog />
-            <HelpFloatingButton />
-          </>
-        )}
-        
-        {/* Guide System - shows for authenticated users */}
-        {user && (
-          <>
-            <GuideOverlay />
-            <GuideFloatingButton />
-          </>
-        )}
-        
-        {/* Unified Floating Timer - shows for authenticated users */}
-        {user && <UnifiedFloatingTimer />}
+    <div className="min-h-screen flex flex-col">
+      <NavBar />
+      {/* Announcement Bar - shows for authenticated users */}
+      {user && <AnnouncementBar />}
+      <div className="flex flex-1">
+        {shouldShowSidebar && <CustomSidebar />}
+        <main className={`flex-1 ${shouldShowSidebar ? 'ml-16' : ''}`}>
+          {children}
+        </main>
       </div>
-    </HelpProvider>
+      {showFooter && <Footer />}
+      
+      {/* Help System - shows for authenticated users */}
+      {user && (
+        <>
+          <HelpDialog />
+          <HelpFloatingButton />
+        </>
+      )}
+      
+      {/* Guide System - shows for authenticated users */}
+      {user && (
+        <>
+          <GuideOverlay />
+          <GuideFloatingButton />
+        </>
+      )}
+      
+      {/* Unified Floating Timer - shows for authenticated users */}
+      {user && <UnifiedFloatingTimer />}
+    </div>
   );
 }
