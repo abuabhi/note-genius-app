@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Clock, Play, Pause, BookOpen, Target, FileText, X, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useSimpleSessionTracker } from '@/hooks/useSimpleSessionTracker';
+import { useBasicSessionTracker } from '@/hooks/useBasicSessionTracker';
 import { cn } from '@/lib/utils';
 
 interface UnifiedFloatingTimerProps {
@@ -20,7 +20,10 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
     togglePause,
     recordActivity,
     endSession
-  } = useSimpleSessionTracker();
+  } = useBasicSessionTracker();
+
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   // Show timer if there's an active session, regardless of page
   if (!isActive) {
@@ -75,10 +78,9 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
     setIsMinimized(!isMinimized);
   };
 
-  // Determine enhanced theme based on state
+  // Determine theme based on state
   const getSessionTheme = () => {
     if (!isOnStudyPage || isPaused) {
-      // Paused or not on study page - enhanced contrast
       return {
         background: 'bg-slate-800/95 border-orange-500/60',
         text: 'text-orange-100',
@@ -89,7 +91,6 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
         animation: ''
       };
     }
-    // Active on study page - enhanced mint theme with animation
     return {
       background: 'bg-slate-900/95 border-mint-500/60',
       text: 'text-mint-100',
@@ -102,9 +103,6 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
   };
 
   const theme = getSessionTheme();
-
-  const [isMinimized, setIsMinimized] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
 
   if (isMinimized) {
     return (
@@ -168,7 +166,7 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="flex items-center gap-4">
-        {/* Enhanced Circular Progress with Activity Icon */}
+        {/* Circular Progress with Activity Icon */}
         <div className="relative w-10 h-10">
           <svg className="w-10 h-10 transform -rotate-90" viewBox="0 0 32 32">
             <circle
@@ -201,17 +199,17 @@ export const UnifiedFloatingTimer = ({ className = "" }: UnifiedFloatingTimerPro
           )}
         </div>
 
-        {/* Enhanced Timer Text */}
+        {/* Timer Text */}
         <div className="flex flex-col">
           <div className={cn("text-lg font-mono font-bold tracking-wider", theme.timeText)}>
             {formatTime(elapsedSeconds)}
           </div>
           <div className={cn("text-xs font-medium", theme.text)}>
-            {!isOnStudyPage ? 'Not Studying' : isPaused ? 'Paused' : 'Active'}
+            {!isOnStudyPage ? 'Away from Study' : isPaused ? 'Paused' : 'Active'}
           </div>
         </div>
 
-        {/* Enhanced Controls */}
+        {/* Controls */}
         <div className="flex gap-2">
           <Button
             variant="ghost"

@@ -2,22 +2,22 @@
 import { Clock, Play, Pause, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useSimpleSessionTracker } from '@/hooks/useSimpleSessionTracker';
+import { useBasicSessionTracker } from '@/hooks/useBasicSessionTracker';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 export const SessionDock = () => {
   const {
-    isActive: isSessionActive,
+    isActive,
     elapsedSeconds,
     isPaused,
     togglePause,
     endSession,
     isOnStudyPage
-  } = useSimpleSessionTracker();
+  } = useBasicSessionTracker();
 
   // Don't show if no active session
-  if (!isSessionActive) {
+  if (!isActive) {
     return null;
   }
 
@@ -32,7 +32,6 @@ export const SessionDock = () => {
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Enhanced status display based on session state
   const getSessionStatus = () => {
     if (!isOnStudyPage) {
       return 'Away from Study';
@@ -43,10 +42,8 @@ export const SessionDock = () => {
     return 'Active Session';
   };
 
-  // Determine theme based on session state
   const getSessionTheme = () => {
-    if (!isOnStudyPage) {
-      // Away from study - orange theme with subtle indicator
+    if (!isOnStudyPage || isPaused) {
       return {
         background: 'bg-slate-800/90 border-orange-400/40',
         text: 'text-orange-100',
@@ -57,19 +54,6 @@ export const SessionDock = () => {
       };
     }
     
-    if (isPaused) {
-      // Paused on study page - muted orange
-      return {
-        background: 'bg-slate-800/90 border-orange-400/40',
-        text: 'text-orange-100',
-        timeText: 'text-orange-200',
-        iconColor: 'text-orange-300',
-        buttonHover: 'hover:bg-orange-500/15',
-        indicator: 'bg-orange-400'
-      };
-    }
-    
-    // Active on study page - mint theme with pulse
     return {
       background: 'bg-slate-800/90 border-mint-400/40',
       text: 'text-mint-100',
@@ -92,7 +76,6 @@ export const SessionDock = () => {
         <div className="flex items-center gap-3">
           <div className="relative">
             <Clock className={cn("h-4 w-4", theme.iconColor)} />
-            {/* Indicator - pulse when active and on study page */}
             {!isPaused && isOnStudyPage && (
               <div className={cn(
                 "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full animate-pulse",
@@ -100,7 +83,6 @@ export const SessionDock = () => {
                 "opacity-75"
               )} />
             )}
-            {/* Static indicator when away from study but session is running */}
             {!isOnStudyPage && (
               <div className={cn(
                 "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full",

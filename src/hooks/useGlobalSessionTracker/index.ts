@@ -1,4 +1,15 @@
 
-// Re-export the simple session tracker
-export { useSimpleSessionTracker as useGlobalSessionTracker } from '../useSimpleSessionTracker';
-export type { ActivityType, SimpleSessionState as SessionState } from '../useSimpleSessionTracker';
+// Re-export the basic session tracker
+export { useBasicSessionTracker as useGlobalSessionTracker } from '../useBasicSessionTracker';
+export type { ActivityType } from '../useBasicSessionTracker';
+
+// Legacy compatibility
+export interface SessionState {
+  sessionId: string | null;
+  isActive: boolean;
+  startTime: Date | null;
+  elapsedSeconds: number;
+  currentActivity: ActivityType | null;
+  isPaused: boolean;
+  isOnStudyPage: boolean;
+}
