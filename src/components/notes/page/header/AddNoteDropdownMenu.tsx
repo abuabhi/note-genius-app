@@ -81,10 +81,9 @@ export const AddNoteDropdownMenu = ({
                 <span className="text-xs text-gray-500 mt-0.5">Create a note by importing a document</span>
               </div>
             </div>
-          </div>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };
