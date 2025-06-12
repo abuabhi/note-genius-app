@@ -116,17 +116,28 @@ export const EnhancedFloatingActionsHub = ({
 
   // Action handlers
   const handleHelpClick = useCallback(() => {
-    if (helpContext?.openHelp) {
+    console.log('Help button clicked, helpContext:', helpContext);
+    if (helpContext && typeof helpContext.openHelp === 'function') {
+      console.log('Opening help dialog');
       helpContext.openHelp();
+    } else {
+      console.warn('Help context or openHelp method not available');
     }
   }, [helpContext]);
 
   const handleGuideClick = useCallback(() => {
-    if (guideContext?.startGuide && guideContext?.getAvailableGuides) {
+    console.log('Guide button clicked, guideContext:', guideContext);
+    if (guideContext && typeof guideContext.startGuide === 'function' && typeof guideContext.getAvailableGuides === 'function') {
       const guides = guideContext.getAvailableGuides();
+      console.log('Available guides:', guides);
       if (guides.length > 0) {
+        console.log('Starting guide:', guides[0].id);
         guideContext.startGuide(guides[0].id);
+      } else {
+        console.log('No guides available');
       }
+    } else {
+      console.warn('Guide context or methods not available');
     }
   }, [guideContext]);
 
@@ -322,54 +333,46 @@ export const EnhancedFloatingActionsHub = ({
           )}
 
           {/* Help Button - Available on all authenticated pages */}
-          {helpContext && (
-            <>
-              <div className="w-px h-6 bg-gray-300 mx-1" />
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleHelpClick();
-                    }}
-                    className="h-8 w-8 rounded-full hover:bg-blue-100/50"
-                  >
-                    <HelpCircle className="h-4 w-4 text-blue-600" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  Get help and tutorials
-                </TooltipContent>
-              </Tooltip>
-            </>
-          )}
+          <div className="w-px h-6 bg-gray-300 mx-1" />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleHelpClick();
+                }}
+                className="h-8 w-8 rounded-full hover:bg-blue-100/50"
+              >
+                <HelpCircle className="h-4 w-4 text-blue-600" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              Get help and tutorials
+            </TooltipContent>
+          </Tooltip>
 
           {/* Guide Button - Available on all authenticated pages */}
-          {guideContext && (
-            <>
-              <div className="w-px h-6 bg-gray-300 mx-1" />
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleGuideClick();
-                    }}
-                    className="h-8 w-8 rounded-full hover:bg-purple-100/50"
-                  >
-                    <Compass className="h-4 w-4 text-purple-600" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  Start interactive guide
-                </TooltipContent>
-              </Tooltip>
-            </>
-          )}
+          <div className="w-px h-6 bg-gray-300 mx-1" />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleGuideClick();
+                }}
+                className="h-8 w-8 rounded-full hover:bg-purple-100/50"
+              >
+                <Compass className="h-4 w-4 text-purple-600" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              Start interactive guide
+            </TooltipContent>
+          </Tooltip>
         </div>
       </Card>
     </TooltipProvider>
