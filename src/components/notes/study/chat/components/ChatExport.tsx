@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -122,9 +121,19 @@ export const ChatExport = ({ messages, note }: ChatExportProps) => {
       return;
     }
 
+    if (messages.length === 0) {
+      toast.error('No chat messages to send');
+      return;
+    }
+
     setIsLoading(true);
     
     try {
+      console.log('Sending email with chat history...');
+      console.log('Messages count:', messages.length);
+      console.log('Note title:', note.title);
+      console.log('Recipient:', emailAddress);
+
       const chatHistory = formatChatForEmail();
       const subject = `Chat History for "${note.title}"`;
 
@@ -137,17 +146,27 @@ export const ChatExport = ({ messages, note }: ChatExportProps) => {
         }
       });
 
+      console.log('Supabase function response:', { data, error });
+
       if (error) {
+        console.error('Supabase function error:', error);
         throw new Error(error.message || 'Failed to send email');
       }
 
-      toast.success('Chat history sent successfully!');
+      if (data?.error) {
+        console.error('Function returned error:', data.error);
+        throw new Error(data.error);
+      }
+
+      console.log('Email sent successfully:', data);
+      toast.success(`Chat history sent to ${emailAddress}!`);
       setEmailDialogOpen(false);
       setEmailAddress('');
       setIsOpen(false);
     } catch (error) {
       console.error('Error sending email:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to send email');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send email';
+      toast.error(`Failed to send email: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
