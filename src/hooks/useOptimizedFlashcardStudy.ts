@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -127,8 +128,8 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
           back: flashcard.back_content,
           mastery_level: progress?.mastery_level || 0,
           last_reviewed_at: progress?.last_reviewed_at,
-          times_seen: progress?.times_seen || 0,
-          times_correct: progress?.times_correct || 0,
+          times_seen: learningProgress?.times_seen || 0,
+          times_correct: learningProgress?.times_correct || 0,
           is_known: learningProgress?.is_known || false,
           is_difficult: learningProgress?.is_difficult || false,
           confidence_level: learningProgress?.confidence_level || 0
@@ -203,11 +204,23 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcar
           flashcard_id: currentCard.id,
           mastery_level: masteryLevel,
           last_reviewed_at: new Date().toISOString(),
-          times_seen: (currentCard.times_seen || 0) + 1,
-          times_correct: choice === 'mastered' ? (currentCard.times_correct || 0) + 1 : (currentCard.times_correct || 0)
         });
 
       if (error) throw error;
+
+      // Update learning progress
+      await supabase
+        .from('learning_progress')
+        .upsert({
+          user_id: user.id,
+          flashcard_id: currentCard.id,
+          times_seen: (currentCard.times_seen || 0) + 1,
+          times_correct: choice === 'mastered' ? (currentCard.times_correct || 0) + 1 : (currentCard.times_correct || 0),
+          is_known: choice === 'mastered',
+          is_difficult: choice === 'difficult',
+          confidence_level: choice === 'mastered' ? 5 : choice === 'needs_practice' ? 3 : 1,
+          last_seen_at: new Date().toISOString()
+        });
 
       // Update session activity
       await updateSessionActivity({
