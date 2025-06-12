@@ -132,6 +132,27 @@ export const useBasicSessionTracker = () => {
     }
   }, [isOnStudyPage, isPaused]);
 
+  const updateSessionActivity = useCallback(async (activityData: any) => {
+    if (!sessionId || !isActive) return;
+    
+    try {
+      await supabase
+        .from('study_sessions')
+        .update({
+          cards_reviewed: activityData.cards_reviewed || 0,
+          cards_correct: activityData.cards_correct || 0,
+          quiz_score: activityData.quiz_score || 0,
+          quiz_total_questions: activityData.quiz_total_questions || 0,
+          notes_created: activityData.notes_created || 0,
+          notes_reviewed: activityData.notes_reviewed || 0,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', sessionId);
+    } catch (error) {
+      console.error('❌ Failed to update session activity:', error);
+    }
+  }, [sessionId, isActive]);
+
   return {
     // State
     sessionId,
@@ -146,6 +167,7 @@ export const useBasicSessionTracker = () => {
     startSession,
     endSession,
     togglePause,
-    recordActivity
+    recordActivity,
+    updateSessionActivity
   };
 };

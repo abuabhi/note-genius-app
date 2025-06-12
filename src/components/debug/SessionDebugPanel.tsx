@@ -6,14 +6,14 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSessionAnalytics } from '@/hooks/useSessionAnalytics';
-import { useUnifiedSessionTracker } from '@/hooks/useUnifiedSessionTracker';
+import { useBasicSessionTracker } from '@/hooks/useBasicSessionTracker';
 import { Activity, Download, Trash2, Bug, Clock, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const SessionDebugPanel = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { metrics, debugInfo, eventHistory, exportAnalytics, clearAnalytics } = useSessionAnalytics();
-  const sessionTracker = useUnifiedSessionTracker();
+  const { metrics, exportAnalytics, clearAnalytics } = useSessionAnalytics();
+  const sessionTracker = useBasicSessionTracker();
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -68,10 +68,9 @@ export const SessionDebugPanel = () => {
       
       <CardContent className="p-4 pt-0">
         <Tabs defaultValue="status" className="w-full">
-          <TabsList className="grid grid-cols-3 mb-4">
+          <TabsList className="grid grid-cols-2 mb-4">
             <TabsTrigger value="status" className="text-xs">Status</TabsTrigger>
             <TabsTrigger value="metrics" className="text-xs">Metrics</TabsTrigger>
-            <TabsTrigger value="events" className="text-xs">Events</TabsTrigger>
           </TabsList>
 
           <TabsContent value="status" className="space-y-3">
@@ -105,15 +104,6 @@ export const SessionDebugPanel = () => {
                 <Badge variant={sessionTracker.isOnStudyPage ? "default" : "secondary"} className="text-xs">
                   {sessionTracker.isOnStudyPage ? 'Yes' : 'No'}
                 </Badge>
-              </div>
-              <div className="flex justify-between">
-                <span>Last Activity:</span>
-                <span>
-                  {sessionTracker.lastActivityTime 
-                    ? new Date(sessionTracker.lastActivityTime).toLocaleTimeString()
-                    : 'Never'
-                  }
-                </span>
               </div>
             </div>
 
@@ -159,20 +149,6 @@ export const SessionDebugPanel = () => {
               </div>
             </div>
 
-            {Object.keys(metrics.activityDistribution).length > 0 && (
-              <div>
-                <div className="text-xs font-medium mb-2">Activity Distribution</div>
-                <div className="space-y-1">
-                  {Object.entries(metrics.activityDistribution).map(([activity, count]) => (
-                    <div key={activity} className="flex justify-between text-xs">
-                      <span className="capitalize">{activity.replace('_', ' ')}</span>
-                      <span>{count}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             <div className="flex gap-2">
               <Button
                 onClick={exportAnalytics}
@@ -193,35 +169,6 @@ export const SessionDebugPanel = () => {
                 Clear
               </Button>
             </div>
-          </TabsContent>
-
-          <TabsContent value="events">
-            <ScrollArea className="h-64">
-              <div className="space-y-2">
-                {eventHistory.slice(-10).reverse().map((event, index) => (
-                  <div key={index} className="text-xs p-2 bg-muted rounded">
-                    <div className="flex justify-between items-center">
-                      <Badge variant="outline" className="text-xs">
-                        {event.type.replace('_', ' ')}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {event.timestamp.toLocaleTimeString()}
-                      </span>
-                    </div>
-                    {event.data && (
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        {JSON.stringify(event.data, null, 2)}
-                      </div>
-                    )}
-                  </div>
-                ))}
-                {eventHistory.length === 0 && (
-                  <div className="text-center text-muted-foreground text-xs py-4">
-                    No events recorded yet
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
           </TabsContent>
         </Tabs>
       </CardContent>
