@@ -1,6 +1,6 @@
 
 // Re-export the basic session tracker
-export { useBasicSessionTracker as useGlobalSessionTracker, type ActivityType } from '../useBasicSessionTracker';
+export { useBasicSessionTracker as useGlobalSessionTracker, ActivityType } from '../useBasicSessionTracker';
 
 // Legacy compatibility
 export interface SessionState {
