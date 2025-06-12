@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Note } from '@/types/note';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,8 +12,8 @@ import { EnhancementContentType } from './enhancements/EnhancementSelector';
 import { useNoteEnrichment } from '@/hooks/useNoteEnrichment';
 import { toast } from 'sonner';
 import { StudyBreadcrumb } from './navigation/StudyBreadcrumb';
-import { NoteChatSidebar } from './chat/NoteChatSidebar';
 import { FlashcardProvider } from '@/contexts/flashcards';
+import { useLocation } from 'react-router-dom';
 
 interface NoteStudyViewProps {
   note: Note;
@@ -21,8 +21,7 @@ interface NoteStudyViewProps {
 }
 
 export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
-  // Chat state
-  const [isChatOpen, setIsChatOpen] = useState(false);
+  const location = useLocation();
 
   // Use simplified real-time sync for better performance
   const { currentNote, refreshKey, forceRefresh } = useSimpleRealtimeSync(note);
@@ -67,6 +66,18 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
     hasReachedLimit,
     isProcessing
   } = useNoteEnrichment(currentNote);
+
+  // Update location state with current note for Layout to access
+  useEffect(() => {
+    if (currentNote && location.pathname.includes('/notes/study/')) {
+      // Update location state so Layout can access the note for chat
+      window.history.replaceState(
+        { ...window.history.state, note: currentNote },
+        '',
+        location.pathname
+      );
+    }
+  }, [currentNote, location.pathname]);
 
   // CRITICAL FIX: Only allow manual enhancement requests, never automatic
   const handleEnhanceContent = async (enhancementType: string) => {
@@ -232,13 +243,6 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
             />
           </Card>
         </div>
-
-        {/* Chat Sidebar */}
-        <NoteChatSidebar
-          note={currentNote}
-          isOpen={isChatOpen}
-          onClose={() => setIsChatOpen(false)}
-        />
       </div>
     </FlashcardProvider>
   );

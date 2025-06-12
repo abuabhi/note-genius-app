@@ -8,6 +8,7 @@ import { useLocation } from 'react-router-dom';
 import { useReminderToasts } from '@/hooks/useReminderToasts';
 import { AnnouncementBar } from '@/components/announcements/AnnouncementBar';
 import { EnhancedFloatingActionsHub } from '@/components/ui/floating/EnhancedFloatingActionsHub';
+import { NoteChatSidebar } from '@/components/notes/study/chat/NoteChatSidebar';
 
 interface LayoutProps {
   children: ReactNode;
@@ -19,6 +20,7 @@ export default function Layout({ children, showSidebar = true, showFooter = true
   const { user } = useAuth();
   const location = useLocation();
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [currentNote, setCurrentNote] = useState(null);
   
   // Initialize reminder toasts for authenticated users on all pages
   useReminderToasts();
@@ -36,6 +38,16 @@ export default function Layout({ children, showSidebar = true, showFooter = true
   const handleChatToggle = () => {
     setIsChatOpen(!isChatOpen);
   };
+
+  // Extract note data from location state when on study page
+  useEffect(() => {
+    if (isNoteStudyPage && location.state?.note) {
+      setCurrentNote(location.state.note);
+    } else if (!isNoteStudyPage) {
+      setCurrentNote(null);
+      setIsChatOpen(false); // Close chat when leaving study page
+    }
+  }, [location, isNoteStudyPage]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -56,6 +68,15 @@ export default function Layout({ children, showSidebar = true, showFooter = true
         isChatOpen={isChatOpen}
         hasUnreadChat={false}
       />
+
+      {/* Global Chat Sidebar - only shows on note study pages */}
+      {isNoteStudyPage && currentNote && (
+        <NoteChatSidebar
+          note={currentNote}
+          isOpen={isChatOpen}
+          onClose={() => setIsChatOpen(false)}
+        />
+      )}
     </div>
   );
 }

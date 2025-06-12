@@ -8,24 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-
-// Optional hook imports to handle cases where providers aren't available
-let useHelp: any = null;
-let useGuide: any = null;
-
-try {
-  const helpModule = require('@/contexts/HelpContext');
-  useHelp = helpModule.useHelp;
-} catch (error) {
-  console.warn('HelpContext not available in FloatingActionsHub');
-}
-
-try {
-  const guideModule = require('@/contexts/GuideContext');
-  useGuide = guideModule.useGuide;
-} catch (error) {
-  console.warn('GuideContext not available in FloatingActionsHub');
-}
+import { useHelp } from '@/contexts/HelpContext';
+import { useGuide } from '@/contexts/GuideContext';
 
 interface EnhancedFloatingActionsHubProps {
   onChatToggle?: () => void;
@@ -62,25 +46,9 @@ export const EnhancedFloatingActionsHub = ({
     isOnStudyPage
   } = useGlobalSessionTracker();
 
-  // Safely use help context if available
-  const helpContext = useHelp ? (() => {
-    try {
-      return useHelp();
-    } catch (error) {
-      console.warn('Help context not available:', error);
-      return null;
-    }
-  })() : null;
-
-  // Safely use guide context if available
-  const guideContext = useGuide ? (() => {
-    try {
-      return useGuide();
-    } catch (error) {
-      console.warn('Guide context not available:', error);
-      return null;
-    }
-  })() : null;
+  // Safely use help and guide contexts
+  const helpContext = useHelp();
+  const guideContext = useGuide();
 
   // Don't show for unauthenticated users
   if (!user) return null;
@@ -138,8 +106,8 @@ export const EnhancedFloatingActionsHub = ({
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Get theme classes based on session state
-  const getThemeClasses = () => {
+  // Get timer section styles based on session state
+  const getTimerStyles = () => {
     switch (sessionState) {
       case 'active':
         return {
@@ -155,14 +123,14 @@ export const EnhancedFloatingActionsHub = ({
         };
       default:
         return {
-          bg: 'bg-mint-500/20 border-mint-500/30',
-          text: 'text-mint-700',
-          icon: 'text-mint-600'
+          bg: 'bg-transparent border-transparent',
+          text: 'text-gray-500',
+          icon: 'text-gray-400'
         };
     }
   };
 
-  const theme = getThemeClasses();
+  const timerStyles = getTimerStyles();
 
   // Drag handlers
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -236,7 +204,7 @@ export const EnhancedFloatingActionsHub = ({
         ref={dockRef}
         className={cn(
           "fixed z-50 shadow-lg transition-all duration-200 backdrop-blur-sm cursor-move select-none",
-          theme.bg,
+          "bg-white/95 border-gray-200/50",
           isDragging ? "scale-105 shadow-xl" : "hover:shadow-xl"
         )}
         style={{
@@ -249,16 +217,19 @@ export const EnhancedFloatingActionsHub = ({
         <div className="flex items-center gap-1 p-2">
           {/* Drag Handle */}
           <div className="flex items-center justify-center w-6 h-6 cursor-grab active:cursor-grabbing">
-            <GripHorizontal className={cn("h-3 w-3", theme.icon)} />
+            <GripHorizontal className="h-3 w-3 text-gray-400" />
           </div>
 
           {/* Session Timer - Show if session exists */}
           {sessionState !== 'none' && (
             <>
               <div className="w-px h-6 bg-gray-300 mx-1" />
-              <div className="flex items-center gap-2">
-                <Clock className={cn("h-4 w-4", theme.icon)} />
-                <span className={cn("text-sm font-mono font-medium", theme.text)}>
+              <div className={cn(
+                "flex items-center gap-2 px-2 py-1 rounded-md transition-colors",
+                timerStyles.bg
+              )}>
+                <Clock className={cn("h-4 w-4", timerStyles.icon)} />
+                <span className={cn("text-sm font-mono font-medium", timerStyles.text)}>
                   {formatTime(elapsedSeconds)}
                 </span>
                 
@@ -325,7 +296,7 @@ export const EnhancedFloatingActionsHub = ({
                       e.stopPropagation();
                       onChatToggle();
                     }}
-                    className="h-8 w-8 rounded-full hover:bg-white/20 relative"
+                    className="h-8 w-8 rounded-full hover:bg-mint-100/50 relative"
                   >
                     <MessageCircle className="h-4 w-4 text-mint-600" />
                     {hasUnreadChat && (
