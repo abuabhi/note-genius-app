@@ -181,7 +181,7 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
 
   return (
     <FlashcardProvider>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-mint-50/20" data-guide="study-main">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-mint-50/20">
         <div className="max-w-7xl mx-auto p-4 space-y-6">
           {/* Breadcrumb Navigation */}
           <StudyBreadcrumb note={currentNote} />
@@ -189,10 +189,10 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
           {/* Main Study View Card */}
           <Card className={`overflow-hidden transition-all duration-300 ${
             isFullScreen ? 'fixed inset-0 z-50 rounded-none' : 'rounded-lg shadow-lg'
-          } ${isFullWidth ? 'w-full' : 'max-w-6xl mx-auto'} bg-white/95 backdrop-blur-sm border-mint-100`} data-guide="note-content">
+          } ${isFullWidth ? 'w-full' : 'max-w-6xl mx-auto'} bg-white/95 backdrop-blur-sm border-mint-100`}>
             
             {/* Enhanced Header */}
-            <div data-guide="note-actions">
+            <div>
               <StudyViewHeader
                 note={currentNote}
                 fontSize={fontSize}
@@ -215,7 +215,7 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
             </div>
 
             {/* Enhanced Content View */}
-            <div data-guide="enhancement-tabs">
+            <div>
               <NoteStudyViewContent
                 note={currentNote}
                 isEditing={isEditing}

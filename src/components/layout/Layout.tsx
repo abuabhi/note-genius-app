@@ -7,7 +7,8 @@ import { useAuth } from '@/contexts/auth';
 import { useLocation, useParams } from 'react-router-dom';
 import { useReminderToasts } from '@/hooks/useReminderToasts';
 import { AnnouncementBar } from '@/components/announcements/AnnouncementBar';
-import { FloatingActionsHub } from '@/components/ui/floating/FloatingActionsHub';
+import { SessionDock } from '@/components/ui/floating/SessionDock';
+import { ChatFloatingButton } from '@/components/ui/floating/ChatFloatingButton';
 import { NoteChatSidebar } from '@/components/notes/study/chat/NoteChatSidebar';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -72,9 +73,9 @@ export default function Layout({ children, showSidebar = true, showFooter = true
       // Transform the data to match the Note interface
       const transformedNote = {
         ...data,
-        sourceType: (data.source_type as 'manual' | 'scan' | 'import') || 'manual', // Properly cast to union type
-        summary_status: (data.summary_status as 'pending' | 'generating' | 'completed' | 'failed') || 'pending', // Cast summary_status
-        enriched_status: (data.enriched_status as 'pending' | 'generating' | 'completed' | 'failed') || 'pending', // Cast enriched_status
+        sourceType: (data.source_type as 'manual' | 'scan' | 'import') || 'manual',
+        summary_status: (data.summary_status as 'pending' | 'generating' | 'completed' | 'failed') || 'pending',
+        enriched_status: (data.enriched_status as 'pending' | 'generating' | 'completed' | 'failed') || 'pending',
         tags: data.tags?.map((tagRelation: any) => ({
           id: tagRelation.tag.id,
           name: tagRelation.tag.name,
@@ -114,13 +115,17 @@ export default function Layout({ children, showSidebar = true, showFooter = true
       </div>
       {showFooter && <Footer />}
       
-      {/* Floating Actions Dock - shows the proper dock instead of simple button */}
-      <FloatingActionsHub 
-        onChatToggle={isNoteStudyPage ? handleChatToggle : undefined}
-        isChatOpen={isChatOpen}
-        hasUnreadChat={false}
-        showChat={isNoteStudyPage}
-      />
+      {/* Session Dock - Center Bottom */}
+      <SessionDock />
+
+      {/* Chat Button - Bottom Right on Study Pages Only */}
+      {isNoteStudyPage && (
+        <ChatFloatingButton
+          onClick={handleChatToggle}
+          isOpen={isChatOpen}
+          hasUnreadChat={false}
+        />
+      )}
 
       {/* Global Chat Sidebar - only shows on note study pages */}
       {isNoteStudyPage && currentNote && (
