@@ -23,10 +23,16 @@ export const NoteToFlashcard = ({ note, flashcardSetId, onFlashcardCreated }: No
   const { subjects } = useUserSubjects();
   const { aiFlashcardGenerationEnabled } = usePremiumFeatures();
   
-  // Find the subject name using proper lookup
-  const subjectName = note.subject_id 
-    ? subjects.find(s => s.id === note.subject_id)?.name || "General"
-    : "General";
+  // Find the subject name using proper lookup - prioritize subject_id over subject
+  const getSubjectName = () => {
+    if (note.subject_id) {
+      const foundSubject = subjects.find(s => s.id === note.subject_id);
+      return foundSubject?.name || note.subject || "General";
+    }
+    return note.subject || "General";
+  };
+
+  const subjectName = getSubjectName();
   
   // Create flashcard from the entire note content
   const handleCreateFromFullNote = async () => {

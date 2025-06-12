@@ -33,6 +33,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { FlashcardSet } from "@/types/flashcard";
+import { useUserSubjects } from "@/hooks/useUserSubjects";
 
 interface FlashcardSetCardProps {
   set: FlashcardSet;
@@ -53,6 +54,7 @@ const FlashcardSetCard = ({
   needsPracticeCards = 0,
   totalCards = 0,
 }: FlashcardSetCardProps) => {
+  const { subjects, isLoading: subjectsLoading } = useUserSubjects();
   const setId = set.id;
   
   if (!setId) {
@@ -60,10 +62,24 @@ const FlashcardSetCard = ({
     return null;
   }
 
+  // Get the subject name using proper lookup - prioritize subject_id over subject
+  const getSubjectName = () => {
+    if (set.subject_id && !subjectsLoading) {
+      const foundSubject = subjects.find(s => s.id === set.subject_id);
+      return foundSubject?.name || set.subject || "Uncategorized";
+    }
+    return set.subject || "Uncategorized";
+  };
+
+  const subjectName = getSubjectName();
+
   // Use consistent :id parameter for both URLs
   console.log('FlashcardSetCard: Rendering card for set:', {
     id: setId,
     name: set.name,
+    subject_id: set.subject_id,
+    subject: set.subject,
+    resolved_subject: subjectName,
     studyUrl: `/flashcards/study/${setId}`,
     viewUrl: `/flashcards/sets/${setId}`
   });
@@ -76,9 +92,9 @@ const FlashcardSetCard = ({
             <CardTitle className="text-lg font-semibold text-mint-900 line-clamp-2 mb-2">
               {set.name}
             </CardTitle>
-            {set.subject && (
+            {subjectName && (
               <Badge variant="secondary" className="mb-2 bg-mint-100 text-mint-700">
-                {set.subject}
+                {subjectName}
               </Badge>
             )}
             {set.description && (

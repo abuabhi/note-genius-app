@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { Note } from '@/types/note';
 import { useFlashcards } from '@/contexts/flashcards';
@@ -45,9 +44,9 @@ export const useFlashcardIntegration = (note: Note) => {
     }
 
     // 3. Try subject match (only if note has a subject and fewer than 3 sets exist for this subject)
-    if (note.subject) {
+    if (note.subject_id) {
       const subjectSets = flashcardSets.filter(set => 
-        set.subject?.toLowerCase().trim() === note.subject.toLowerCase().trim()
+        set.subject_id === note.subject_id
       );
       
       // Only use existing subject set if there are very few sets to avoid confusion
@@ -64,7 +63,8 @@ export const useFlashcardIntegration = (note: Note) => {
         name: noteFlashcardsName,
         description: `Flashcards created from "${note.title}" note`,
         subject: note.subject || 'General',
-        topic: note.title
+        topic: note.title,
+        subject_id: note.subject_id // Use the note's subject_id
       });
 
       console.log('Created new flashcard set:', newSet);
@@ -92,9 +92,9 @@ export const useFlashcardIntegration = (note: Note) => {
     );
     if (titleMatch) return titleMatch.id;
 
-    if (note.subject) {
+    if (note.subject_id) {
       const subjectMatches = flashcardSets.filter(set => 
-        set.subject?.toLowerCase().trim() === note.subject.toLowerCase().trim()
+        set.subject_id === note.subject_id
       );
       // Only suggest if there's exactly one match to avoid confusion
       if (subjectMatches.length === 1) return subjectMatches[0].id;
