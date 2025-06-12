@@ -21,7 +21,6 @@ export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps)
   const { suggestions } = useSmartSuggestions(note);
   const {
     messages,
-    selectedText,
     isProcessing,
     isLoading,
     isStreaming,
@@ -31,7 +30,6 @@ export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps)
     handleSendMessage,
     handleSelectSuggestion,
     handleSelectFollowUp,
-    handleFlashcardCreated,
     handleClearChat,
     clearErrors
   } = useChatHandlers(note);
@@ -87,11 +85,9 @@ export const NoteChatSidebar = ({ note, isOpen, onClose }: NoteChatSidebarProps)
           isStreaming={isStreaming}
           streamingMessage={streamingMessage}
           highlightedMessageId={highlightedMessageId}
-          selectedText={selectedText}
           onSelectSuggestion={handleSelectSuggestion}
           onSelectFollowUp={handleSelectFollowUp}
           onSendMessage={handleSendMessageWrapper}
-          onFlashcardCreated={handleFlashcardCreated}
         />
       </div>
     </AccessibilityProvider>

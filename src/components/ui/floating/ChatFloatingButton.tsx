@@ -16,7 +16,7 @@ export const ChatFloatingButton = ({
   return (
     <Button
       onClick={onClick}
-      className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg bg-purple-500 hover:bg-purple-600 transition-all duration-200 group"
+      className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg bg-green-500 hover:bg-green-600 transition-all duration-200 group"
       aria-label={isOpen ? "Close Chat" : "Open Chat"}
     >
       <MessageCircle className="h-6 w-6 text-white group-hover:scale-110 transition-transform" />
