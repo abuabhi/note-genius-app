@@ -32,40 +32,40 @@ export const SessionDock = () => {
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Determine theme based on session state
+  // Determine theme based on session state - more subtle approach
   const getSessionTheme = () => {
     if (!isOnStudyPage) {
-      // Idle/inactive theme - red/gray
+      // Idle/inactive theme - subtle red
       return {
-        background: 'bg-slate-800/95 border-red-500/60',
+        background: 'bg-slate-800/90 border-red-400/40',
         text: 'text-red-100',
         timeText: 'text-red-200',
         iconColor: 'text-red-300',
-        buttonHover: 'hover:bg-red-500/20',
-        animation: ''
+        buttonHover: 'hover:bg-red-500/15',
+        indicator: 'bg-red-400'
       };
     }
     
     if (isPaused) {
-      // Paused theme - yellow/orange
+      // Paused theme - subtle orange
       return {
-        background: 'bg-slate-800/95 border-orange-500/60',
+        background: 'bg-slate-800/90 border-orange-400/40',
         text: 'text-orange-100',
         timeText: 'text-orange-200',
         iconColor: 'text-orange-300',
-        buttonHover: 'hover:bg-orange-500/20',
-        animation: ''
+        buttonHover: 'hover:bg-orange-500/15',
+        indicator: 'bg-orange-400'
       };
     }
     
-    // Active theme - green/blue with pulse
+    // Active theme - subtle green with very gentle pulse
     return {
-      background: 'bg-slate-900/95 border-mint-500/60',
+      background: 'bg-slate-800/90 border-mint-400/40',
       text: 'text-mint-100',
       timeText: 'text-mint-200',
       iconColor: 'text-mint-300',
-      buttonHover: 'hover:bg-mint-500/20',
-      animation: 'animate-pulse'
+      buttonHover: 'hover:bg-mint-500/15',
+      indicator: 'bg-mint-400'
     };
   };
 
@@ -73,20 +73,25 @@ export const SessionDock = () => {
 
   return (
     <Card className={cn(
-      "fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 shadow-2xl backdrop-blur-sm border-2 hover:shadow-3xl transition-all duration-300",
+      "fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 shadow-xl backdrop-blur-sm border transition-all duration-300",
       theme.background,
-      theme.animation
+      "hover:shadow-2xl"
     )}>
-      <div className="flex items-center gap-3 px-6 py-4">
+      <div className="flex items-center gap-3 px-5 py-3">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Clock className={cn("h-5 w-5", theme.iconColor)} />
+            <Clock className={cn("h-4 w-4", theme.iconColor)} />
+            {/* Very subtle indicator - no flashing */}
             {!isPaused && isOnStudyPage && (
-              <div className="absolute -top-1 -right-1 w-2 h-2 bg-mint-400 rounded-full animate-ping" />
+              <div className={cn(
+                "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full transition-opacity duration-1000",
+                theme.indicator,
+                "animate-pulse"
+              )} />
             )}
           </div>
           <div className="flex flex-col">
-            <span className={cn("text-lg font-mono font-bold tracking-wider", theme.timeText)}>
+            <span className={cn("text-base font-mono font-semibold tracking-wide", theme.timeText)}>
               {formatTime(elapsedSeconds)}
             </span>
             <span className={cn("text-xs font-medium", theme.text)}>
@@ -95,7 +100,7 @@ export const SessionDock = () => {
           </div>
         </div>
         
-        <div className="flex gap-2 ml-2">
+        <div className="flex gap-1.5 ml-2">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -104,15 +109,15 @@ export const SessionDock = () => {
                   size="sm"
                   onClick={togglePause}
                   className={cn(
-                    "h-10 w-10 p-0 border border-transparent transition-all duration-200",
+                    "h-9 w-9 p-0 border border-transparent transition-all duration-200",
                     theme.buttonHover,
-                    "hover:border-current/20 hover:scale-110"
+                    "hover:border-current/15 hover:scale-105"
                   )}
                 >
                   {isPaused ? (
-                    <Play className={cn("h-5 w-5", theme.iconColor)} />
+                    <Play className={cn("h-4 w-4", theme.iconColor)} />
                   ) : (
-                    <Pause className={cn("h-5 w-5", theme.iconColor)} />
+                    <Pause className={cn("h-4 w-4", theme.iconColor)} />
                   )}
                 </Button>
               </TooltipTrigger>
@@ -130,11 +135,11 @@ export const SessionDock = () => {
                   size="sm"
                   onClick={endSession}
                   className={cn(
-                    "h-10 w-10 p-0 border border-transparent transition-all duration-200",
-                    "hover:bg-red-500/20 hover:border-red-500/20 hover:scale-110"
+                    "h-9 w-9 p-0 border border-transparent transition-all duration-200",
+                    "hover:bg-red-500/15 hover:border-red-500/15 hover:scale-105"
                   )}
                 >
-                  <Square className="h-5 w-5 text-red-300 hover:text-red-200" />
+                  <Square className="h-4 w-4 text-red-300 hover:text-red-200" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="top" className="bg-slate-800 text-white border-slate-600">
