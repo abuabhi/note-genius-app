@@ -16,8 +16,11 @@ export const SessionDock = () => {
     isOnStudyPage
   } = useBasicSessionTracker();
 
-  // Don't show if no active session
+  console.log('🎛️ SessionDock render:', { isActive, isPaused, isOnStudyPage, elapsedSeconds });
+
+  // Show dock if there's an active session (even if paused)
   if (!isActive) {
+    console.log('🎛️ SessionDock hidden - no active session');
     return null;
   }
 
