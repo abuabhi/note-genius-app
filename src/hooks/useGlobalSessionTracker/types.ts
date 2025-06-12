@@ -50,23 +50,18 @@ export interface TimerManagementParams {
   setSessionState: React.Dispatch<React.SetStateAction<GlobalSessionState>>;
 }
 
-// Add notes routes to STUDY_ROUTES
+// Updated STUDY_ROUTES to be more comprehensive
 export const STUDY_ROUTES = [
   '/flashcards',
-  '/flashcards/*',
   '/notes',
-  '/notes/*',
   '/quiz',
-  '/quiz/*',
   '/study'
 ];
 
-// Export the isStudyRoute function
+// Updated isStudyRoute function to properly handle all study routes and their sub-paths
 export const isStudyRoute = (pathname: string): boolean => {
   return STUDY_ROUTES.some(route => {
-    if (route.endsWith('/*')) {
-      return pathname.startsWith(route.slice(0, -2));
-    }
-    return pathname === route;
+    // Check if the path starts with the route (handles sub-paths like /flashcards/123)
+    return pathname.startsWith(route);
   });
 };

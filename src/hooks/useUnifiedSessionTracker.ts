@@ -15,7 +15,8 @@ export type SessionEvent =
   | 'activity_detected'
   | 'idle_warning'
   | 'auto_paused'
-  | 'visibility_changed';
+  | 'visibility_changed'
+  | 'activity_type_changed';
 
 export type ActivityType = 'general' | 'flashcard_study' | 'note_review' | 'quiz_taking';
 
@@ -40,7 +41,7 @@ export interface SessionEventData {
 // Session event listeners type
 type SessionEventListener = (event: SessionEventData) => void;
 
-// Study routes configuration
+// Study routes configuration - consolidated and improved
 const STUDY_ROUTES = [
   '/flashcards',
   '/notes',
@@ -50,6 +51,13 @@ const STUDY_ROUTES = [
 
 const isStudyRoute = (pathname: string): boolean => {
   return STUDY_ROUTES.some(route => pathname.startsWith(route));
+};
+
+// Helper function to check if two routes are related study routes
+const areRelatedStudyRoutes = (current: string, previous: string | null): boolean => {
+  if (!previous) return false;
+  // ALL study routes are now considered related - this prevents session resets
+  return isStudyRoute(current) && isStudyRoute(previous);
 };
 
 export const useUnifiedSessionTracker = () => {
@@ -75,6 +83,11 @@ export const useUnifiedSessionTracker = () => {
   const updateTimer = useRef<NodeJS.Timeout | null>(null);
   const activityTimer = useRef<NodeJS.Timeout | null>(null);
   const idleTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Navigation tracking refs
+  const previousLocationRef = useRef<string | null>(null);
+  const isInitialLoadRef = useRef(true);
+  const lastProcessedPathRef = useRef<string | null>(null);
 
   // Constants
   const IDLE_WARNING_TIME = 2 * 60 * 1000; // 2 minutes
@@ -173,12 +186,25 @@ export const useUnifiedSessionTracker = () => {
 
   // Start session with error recovery
   const startSession = useCallback(async (): Promise<boolean> => {
-    if (!user || sessionState.isActive) return false;
+    if (!user) return false;
 
     const currentPath = location.pathname;
     if (!isStudyRoute(currentPath)) {
       logger.info('Not starting session - not on study page');
       return false;
+    }
+
+    // If we already have an active session, just ensure it's not paused and update activity type
+    if (sessionState.isActive && sessionState.sessionId) {
+      logger.info('✅ Session already active - maintaining continuity');
+      setSessionState(prev => ({ 
+        ...prev, 
+        isPaused: false,
+        isOnStudyPage: true,
+        currentActivity: getCurrentActivityType()
+      }));
+      emitEvent('session_resumed');
+      return true;
     }
 
     try {
@@ -239,7 +265,7 @@ export const useUnifiedSessionTracker = () => {
       });
       return false;
     }
-  }, [user, sessionState.isActive, location.pathname, getCurrentActivityType, emitEvent, queryClient]);
+  }, [user, sessionState.isActive, sessionState.sessionId, location.pathname, getCurrentActivityType, emitEvent, queryClient]);
 
   // End session with validation
   const endSession = useCallback(async (): Promise<boolean> => {
@@ -337,22 +363,44 @@ export const useUnifiedSessionTracker = () => {
     emitEvent('activity_detected');
   }, [sessionState.isActive, sessionState.isPaused, emitEvent]);
 
-  // Update activity type
+  // Update activity type - CRITICAL FIX: This should NOT restart the session
   const updateActivityType = useCallback(async () => {
     if (!sessionState.sessionId || !sessionState.isActive) return;
 
     const newActivityType = getCurrentActivityType();
     if (newActivityType === sessionState.currentActivity) return;
 
+    logger.info('🔄 Updating activity type from', sessionState.currentActivity, 'to', newActivityType, '(PRESERVING SESSION TIMING)');
+
+    // Update database without affecting session timing
     scheduleBatchUpdate({ activity_type: newActivityType });
     
+    // Update local state while preserving ALL timing information
     setSessionState(prev => ({
       ...prev,
-      currentActivity: newActivityType
+      currentActivity: newActivityType,
+      isPaused: false // Ensure session stays active when updating activity type
     }));
 
-    emitEvent('activity_detected', { activityType: newActivityType });
-  }, [sessionState.sessionId, sessionState.isActive, sessionState.currentActivity, getCurrentActivityType, scheduleBatchUpdate, emitEvent]);
+    // Update persisted state
+    const currentState = {
+      ...sessionState,
+      currentActivity: newActivityType,
+      isPaused: false
+    };
+    
+    sessionStorage.setItem('unified_session_state', JSON.stringify({
+      ...currentState,
+      startTime: sessionState.startTime?.toISOString()
+    }));
+
+    emitEvent('activity_type_changed', { 
+      oldActivity: sessionState.currentActivity, 
+      newActivity: newActivityType 
+    });
+
+    logger.info('✅ Activity type updated - SESSION TIMING PRESERVED');
+  }, [sessionState, getCurrentActivityType, scheduleBatchUpdate, emitEvent]);
 
   // Toggle pause
   const togglePause = useCallback(() => {
@@ -369,6 +417,102 @@ export const useUnifiedSessionTracker = () => {
       recordActivity(); // Reset idle detection when resuming
     }
   }, [sessionState.isPaused, emitEvent, recordActivity]);
+
+  // NAVIGATION EFFECTS - Consolidated and fixed
+  useEffect(() => {
+    const currentPath = location.pathname;
+    const isOnStudy = isStudyRoute(currentPath);
+    const previousPath = previousLocationRef.current;
+    const wasOnStudyPage = previousPath ? isStudyRoute(previousPath) : false;
+
+    // Skip if we've already processed this path to prevent excessive calls
+    if (lastProcessedPathRef.current === currentPath) {
+      return;
+    }
+
+    logger.info('📍 Navigation detected:', {
+      currentPath,
+      previousPath,
+      isOnStudy,
+      wasOnStudyPage,
+      isInitialLoad: isInitialLoadRef.current,
+      hasActiveSession: sessionState.isActive,
+      sessionId: sessionState.sessionId,
+      isPaused: sessionState.isPaused,
+      areRelated: areRelatedStudyRoutes(currentPath, previousPath)
+    });
+
+    // Update processed path reference
+    lastProcessedPathRef.current = currentPath;
+
+    // Update isOnStudyPage state
+    setSessionState(prev => ({
+      ...prev,
+      isOnStudyPage: isOnStudy
+    }));
+
+    // Skip processing on initial load to avoid unwanted session creation
+    if (isInitialLoadRef.current) {
+      isInitialLoadRef.current = false;
+      previousLocationRef.current = currentPath;
+      
+      // On initial load, only start session if on study page and no active session
+      if (isOnStudy && !sessionState.isActive) {
+        logger.info('🚀 Initial load on study page - starting session');
+        startSession();
+      }
+      return;
+    }
+
+    // Update previous location reference
+    previousLocationRef.current = currentPath;
+
+    // Check if we're moving between study routes (ALL study routes are related)
+    const areRelated = areRelatedStudyRoutes(currentPath, previousPath);
+
+    if (isOnStudy && wasOnStudyPage && areRelated) {
+      // CRITICAL FIX: Moving between study pages - maintain session, just update activity type
+      logger.info('🔄 Moving between study pages - MAINTAINING SESSION, updating activity only');
+      if (sessionState.isActive) {
+        // Ensure session is not paused when on study pages
+        if (sessionState.isPaused) {
+          logger.info('▶️ Resuming session when moving between study pages');
+          setSessionState(prev => ({ ...prev, isPaused: false }));
+        }
+        updateActivityType();
+      } else {
+        // Should have a session when on study pages
+        logger.info('🚀 On study page without session - starting session');
+        startSession();
+      }
+      
+    } else if (isOnStudy && !wasOnStudyPage) {
+      // Entering study area from non-study page
+      if (sessionState.isActive) {
+        // Resume existing session and ensure it's not paused
+        logger.info('▶️ Entering study area - resuming existing session');
+        setSessionState(prev => ({ ...prev, isPaused: false }));
+        updateActivityType();
+      } else {
+        // Start new session
+        logger.info('🚀 Entering study area - starting new session');
+        startSession();
+      }
+      
+    } else if (!isOnStudy && wasOnStudyPage) {
+      // FIXED: Leaving study area for non-study page - pause but keep counter running
+      if (sessionState.isActive && !sessionState.isPaused) {
+        logger.info('⏸️ Leaving study area - pausing session (counter continues)');
+        setSessionState(prev => ({ ...prev, isPaused: true }));
+      }
+    } else if (!isOnStudy && !wasOnStudyPage) {
+      // Moving between non-study pages - ensure session is paused if active
+      if (sessionState.isActive && !sessionState.isPaused) {
+        logger.info('⏸️ On non-study page with active session - pausing');
+        setSessionState(prev => ({ ...prev, isPaused: true }));
+      }
+    }
+  }, [location.pathname, sessionState.isActive, sessionState.isPaused, startSession, updateActivityType]);
 
   // Session restoration on mount
   useEffect(() => {
@@ -401,11 +545,12 @@ export const useUnifiedSessionTracker = () => {
     }
   }, [user, location.pathname]);
 
-  // Timer management
+  // Timer management - CRITICAL: This ensures the counter keeps running
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
 
-    if (sessionState.isActive && !sessionState.isPaused && sessionState.startTime) {
+    if (sessionState.isActive && sessionState.startTime) {
+      // Timer runs regardless of pause state - this keeps the counter going
       interval = setInterval(() => {
         const now = new Date();
         const newElapsedSeconds = Math.floor((now.getTime() - sessionState.startTime!.getTime()) / 1000);
@@ -414,29 +559,24 @@ export const useUnifiedSessionTracker = () => {
           ...prev,
           elapsedSeconds: newElapsedSeconds
         }));
+
+        // Update persisted state
+        const updatedState = {
+          ...sessionState,
+          elapsedSeconds: newElapsedSeconds
+        };
+        
+        sessionStorage.setItem('unified_session_state', JSON.stringify({
+          ...updatedState,
+          startTime: sessionState.startTime?.toISOString()
+        }));
       }, 1000);
     }
 
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [sessionState.isActive, sessionState.isPaused, sessionState.startTime]);
-
-  // Navigation effects
-  useEffect(() => {
-    const isOnStudy = isStudyRoute(location.pathname);
-    
-    setSessionState(prev => ({
-      ...prev,
-      isOnStudyPage: isOnStudy
-    }));
-
-    if (isOnStudy && !sessionState.isActive) {
-      startSession();
-    } else if (isOnStudy && sessionState.isActive) {
-      updateActivityType();
-    }
-  }, [location.pathname, sessionState.isActive, startSession, updateActivityType]);
+  }, [sessionState.isActive, sessionState.startTime]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -457,7 +597,7 @@ export const useUnifiedSessionTracker = () => {
     togglePause,
     recordActivity,
     updateActivityType,
-    updateSessionActivity, // Add this method
+    updateSessionActivity,
     
     // Event system
     addEventListener,

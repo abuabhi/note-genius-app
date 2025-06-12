@@ -32,21 +32,21 @@ export const SessionDock = () => {
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // More intuitive status display
+  // Enhanced status display based on session state
   const getSessionStatus = () => {
-    if (isPaused) {
-      return 'Paused';
-    }
     if (!isOnStudyPage) {
       return 'Away from Study';
+    }
+    if (isPaused) {
+      return 'Paused';
     }
     return 'Active Session';
   };
 
   // Determine theme based on session state
   const getSessionTheme = () => {
-    if (isPaused || !isOnStudyPage) {
-      // Paused or away from study - subtle orange
+    if (!isOnStudyPage) {
+      // Away from study - orange theme with subtle indicator
       return {
         background: 'bg-slate-800/90 border-orange-400/40',
         text: 'text-orange-100',
@@ -57,7 +57,19 @@ export const SessionDock = () => {
       };
     }
     
-    // Active on study page - subtle mint theme
+    if (isPaused) {
+      // Paused on study page - muted orange
+      return {
+        background: 'bg-slate-800/90 border-orange-400/40',
+        text: 'text-orange-100',
+        timeText: 'text-orange-200',
+        iconColor: 'text-orange-300',
+        buttonHover: 'hover:bg-orange-500/15',
+        indicator: 'bg-orange-400'
+      };
+    }
+    
+    // Active on study page - mint theme with pulse
     return {
       background: 'bg-slate-800/90 border-mint-400/40',
       text: 'text-mint-100',
@@ -80,12 +92,20 @@ export const SessionDock = () => {
         <div className="flex items-center gap-3">
           <div className="relative">
             <Clock className={cn("h-4 w-4", theme.iconColor)} />
-            {/* Subtle indicator - only when active and on study page */}
+            {/* Indicator - pulse when active and on study page */}
             {!isPaused && isOnStudyPage && (
+              <div className={cn(
+                "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full animate-pulse",
+                theme.indicator,
+                "opacity-75"
+              )} />
+            )}
+            {/* Static indicator when away from study but session is running */}
+            {!isOnStudyPage && (
               <div className={cn(
                 "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full",
                 theme.indicator,
-                "opacity-75"
+                "opacity-60"
               )} />
             )}
           </div>
