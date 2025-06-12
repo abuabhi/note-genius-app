@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { Navbar } from './Navbar';
-import { Sidebar } from './Sidebar';
+import NavBar from './NavBar';
+import { AuthSidebar } from './AuthSidebar';
 import { LightweightPerformanceOverlay } from '@/components/performance/LightweightPerformanceOverlay';
 import { useOptimizedSessionTracker } from '@/hooks/session/useOptimizedSessionTracker';
 import { useOptimizedCache } from '@/hooks/performance/useOptimizedCache';
@@ -19,9 +19,9 @@ export const OptimizedLayout = ({ children }: OptimizedLayoutProps) => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      <NavBar />
       <div className="flex">
-        <Sidebar />
+        <AuthSidebar />
         <main className="flex-1 p-6">
           {children || <Outlet />}
         </main>

@@ -44,8 +44,8 @@ export const useOptimizedCache = () => {
   const lastCleanupRef = useRef<number>(0);
 
   // Get cache config for query type
-  const getCacheConfig = useCallback((queryKey: unknown[]): CacheConfig => {
-    const keyString = JSON.stringify(queryKey);
+  const getCacheConfig = useCallback((queryKey: readonly unknown[]): CacheConfig => {
+    const keyString = JSON.stringify([...queryKey]); // Convert readonly to mutable for JSON.stringify
     
     if (keyString.includes('profiles') || keyString.includes('countries') || keyString.includes('grades')) {
       return CACHE_CONFIGS.static;
@@ -128,14 +128,14 @@ export const useOptimizedCache = () => {
 
   // Optimized prefetch with cache config
   const optimizedPrefetch = useCallback(async (
-    queryKey: unknown[],
+    queryKey: readonly unknown[],
     queryFn: () => Promise<any>,
     cacheType: keyof typeof CACHE_CONFIGS = 'user'
   ) => {
     const config = CACHE_CONFIGS[cacheType];
     
     return queryClient.prefetchQuery({
-      queryKey,
+      queryKey: [...queryKey], // Convert readonly to mutable
       queryFn,
       staleTime: config.staleTime,
       gcTime: config.gcTime,
