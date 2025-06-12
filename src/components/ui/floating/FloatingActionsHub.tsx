@@ -3,14 +3,30 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { useLocation } from 'react-router-dom';
 import { useGlobalSessionTracker } from '@/hooks/useGlobalSessionTracker';
-import { useHelp } from '@/contexts/HelpContext';
-import { useGuide } from '@/contexts/GuideContext';
 import { Clock, MessageCircle, HelpCircle, Compass, Play, Pause, Square, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
+// Optional hook imports to handle cases where providers aren't available
+let useHelp: any = null;
+let useGuide: any = null;
+
+try {
+  const helpModule = require('@/contexts/HelpContext');
+  useHelp = helpModule.useHelp;
+} catch (error) {
+  console.warn('HelpContext not available in FloatingActionsHub');
+}
+
+try {
+  const guideModule = require('@/contexts/GuideContext');
+  useGuide = guideModule.useGuide;
+} catch (error) {
+  console.warn('GuideContext not available in FloatingActionsHub');
+}
 
 interface FloatingActionsHubProps {
   onChatToggle?: () => void;
@@ -37,19 +53,38 @@ export const FloatingActionsHub = ({
     endSession
   } = useGlobalSessionTracker();
 
-  const { openHelp, getContextualHelp } = useHelp();
-  const { startGuide, getAvailableGuides, isGuideCompleted, isActive: isGuideActive } = useGuide();
+  // Safely use help context if available
+  const helpContext = useHelp ? (() => {
+    try {
+      return useHelp();
+    } catch (error) {
+      console.warn('Help context not available:', error);
+      return null;
+    }
+  })() : null;
+
+  // Safely use guide context if available
+  const guideContext = useGuide ? (() => {
+    try {
+      return useGuide();
+    } catch (error) {
+      console.warn('Guide context not available:', error);
+      return null;
+    }
+  })() : null;
 
   // Don't show for unauthenticated users
   if (!user) return null;
 
   // Hide during active guides
-  if (isGuideActive) return null;
+  if (guideContext?.isActive) return null;
 
-  const contextualHelp = getContextualHelp();
+  const contextualHelp = helpContext?.getContextualHelp?.() || [];
   const hasContextualHelp = contextualHelp.length > 0;
-  const availableGuides = getAvailableGuides();
-  const uncompletedGuides = availableGuides.filter(guide => !isGuideCompleted(guide.id));
+  const availableGuides = guideContext?.getAvailableGuides?.() || [];
+  const uncompletedGuides = availableGuides.filter(guide => 
+    guideContext?.isGuideCompleted ? !guideContext.isGuideCompleted(guide.id) : true
+  );
 
   const formatTime = (totalSeconds: number) => {
     const hours = Math.floor(totalSeconds / 3600);
@@ -63,16 +98,18 @@ export const FloatingActionsHub = ({
   };
 
   const handleHelpClick = () => {
-    if (hasContextualHelp) {
-      openHelp(contextualHelp[0]);
-    } else {
-      openHelp();
+    if (helpContext?.openHelp) {
+      if (hasContextualHelp) {
+        helpContext.openHelp(contextualHelp[0]);
+      } else {
+        helpContext.openHelp();
+      }
     }
   };
 
   const handleGuideClick = () => {
-    if (availableGuides.length > 0) {
-      startGuide(availableGuides[0].id);
+    if (guideContext?.startGuide && availableGuides.length > 0) {
+      guideContext.startGuide(availableGuides[0].id);
     }
   };
 
@@ -171,42 +208,44 @@ export const FloatingActionsHub = ({
     });
   }
 
-  // Help Button
-  actions.push({
-    id: 'help',
-    component: (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleHelpClick}
-              className={cn(
-                "h-10 w-10 rounded-full hover:bg-blue-100",
-                hasContextualHelp && "animate-pulse bg-mint-50"
-              )}
-            >
-              <HelpCircle className={cn(
-                "h-5 w-5",
-                hasContextualHelp ? "text-mint-600" : "text-blue-600"
-              )} />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            {hasContextualHelp 
-              ? `Get help with ${contextualHelp[0].title.toLowerCase()}` 
-              : 'Get help and tutorials'
-            }
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    ),
-    priority: 3
-  });
+  // Help Button (only show if help context is available)
+  if (helpContext) {
+    actions.push({
+      id: 'help',
+      component: (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleHelpClick}
+                className={cn(
+                  "h-10 w-10 rounded-full hover:bg-blue-100",
+                  hasContextualHelp && "animate-pulse bg-mint-50"
+                )}
+              >
+                <HelpCircle className={cn(
+                  "h-5 w-5",
+                  hasContextualHelp ? "text-mint-600" : "text-blue-600"
+                )} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {hasContextualHelp 
+                ? `Get help with ${contextualHelp[0]?.title?.toLowerCase() || 'current page'}` 
+                : 'Get help and tutorials'
+              }
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ),
+      priority: 3
+    });
+  }
 
-  // Guide Button (only if guides available)
-  if (availableGuides.length > 0) {
+  // Guide Button (only if guides available and guide context exists)
+  if (guideContext && availableGuides.length > 0) {
     actions.push({
       id: 'guide',
       component: (
