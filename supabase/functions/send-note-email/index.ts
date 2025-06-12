@@ -1,5 +1,8 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { Resend } from "npm:resend@2.0.0";
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,16 +16,16 @@ serve(async (req) => {
   }
 
   try {
-    const { noteTitle, noteContent, recipient } = await req.json();
+    const { to, subject, message, noteTitle, contentType, content } = await req.json();
     
-    if (!noteTitle || !noteContent) {
+    if (!to || !noteTitle || !content) {
       return new Response(
-        JSON.stringify({ error: "Missing required note data" }),
+        JSON.stringify({ error: "Missing required fields" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    if (!recipient || !recipient.includes('@')) {
+    if (!to.includes('@')) {
       return new Response(
         JSON.stringify({ error: "Invalid recipient email" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -30,49 +33,74 @@ serve(async (req) => {
     }
     
     // Format the email content
-    const subject = `Note: ${noteTitle}`;
+    const emailSubject = subject || `Note: ${noteTitle} - ${contentType}`;
     const emailBody = `
       <!DOCTYPE html>
       <html>
       <head>
         <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          h1 { color: #4f46e5; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
-          .content { white-space: pre-wrap; margin-top: 20px; }
-          .footer { margin-top: 30px; font-size: 12px; color: #777; border-top: 1px solid #ddd; padding-top: 10px; }
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+          h1 { color: #4db6ac; border-bottom: 2px solid #4db6ac; padding-bottom: 10px; }
+          h2 { color: #26a69a; }
+          .content { 
+            white-space: pre-wrap; 
+            margin: 20px 0; 
+            padding: 20px; 
+            background-color: #f8f9fa; 
+            border-left: 4px solid #4db6ac; 
+            border-radius: 4px;
+          }
+          .message { 
+            background-color: #e8f5e8; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin: 20px 0;
+            border: 1px solid #4db6ac;
+          }
+          .footer { 
+            margin-top: 30px; 
+            font-size: 12px; 
+            color: #777; 
+            border-top: 1px solid #ddd; 
+            padding-top: 10px; 
+            text-align: center;
+          }
         </style>
       </head>
       <body>
-        <div class="container">
-          <h1>${noteTitle}</h1>
-          <div class="content">${noteContent.replace(/\n/g, '<br>')}</div>
-          <div class="footer">
-            This note was shared from Study Notes App.
-          </div>
+        <h1>${noteTitle}</h1>
+        <h2>${contentType}</h2>
+        
+        ${message ? `<div class="message"><strong>Personal Message:</strong><br>${message}</div>` : ''}
+        
+        <div class="content">${content.replace(/\n/g, '<br>')}</div>
+        
+        <div class="footer">
+          This note was shared from PrepGenie - Your Smart Study Companion
         </div>
       </body>
       </html>
     `;
 
-    console.log("Email would be sent with subject:", subject);
-    console.log("Recipient:", recipient || "Not specified");
+    const emailResponse = await resend.emails.send({
+      from: "PrepGenie <noreply@prepgenie.app>", // You may need to update this with your verified domain
+      to: [to],
+      subject: emailSubject,
+      html: emailBody,
+    });
+
+    console.log("Email sent successfully:", emailResponse);
     
-    // Here we would typically use a service like SendGrid, Mailgun, Resend, etc.
-    // For demonstration, we'll log the details and return a success response
-    
-    // Return more comprehensive data for debugging
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: "Email prepared successfully",
+        message: "Email sent successfully",
         emailData: {
-          subject,
-          recipient,
-          recipientCount: 1,
-          contentLength: emailBody.length,
+          subject: emailSubject,
+          recipient: to,
           status: "sent",
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          id: emailResponse.data?.id
         }
       }),
       { 
@@ -84,7 +112,10 @@ serve(async (req) => {
     console.error("Error in send-note-email function:", error);
     
     return new Response(
-      JSON.stringify({ error: error.message || "Failed to process email request" }),
+      JSON.stringify({ 
+        error: error.message || "Failed to send email",
+        details: "Please check your email configuration and try again"
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

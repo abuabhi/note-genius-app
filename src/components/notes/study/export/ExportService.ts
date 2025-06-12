@@ -452,10 +452,11 @@ class ExportService {
     }
 
     try {
-      const response = await fetch('/api/send-note-email', {
+      const response = await fetch('/functions/v1/send-note-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1aGNtd3VqemZkZG1hZm96dWJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1MjUxOTQsImV4cCI6MjA2MjEwMTE5NH0.oz_MnWdGGh76eOjQ2k69OhQhqBh4KXG0Wq_cN-VJwzw'}`
         },
         body: JSON.stringify({
           to: recipientEmail,
@@ -468,11 +469,15 @@ class ExportService {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send email');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to send email');
       }
+
+      const result = await response.json();
+      console.log('Email sent successfully:', result);
     } catch (error) {
       console.error('Error sending email:', error);
-      throw new Error('Failed to send email. Please try again.');
+      throw new Error(error instanceof Error ? error.message : 'Failed to send email. Please try again.');
     }
   }
 }
