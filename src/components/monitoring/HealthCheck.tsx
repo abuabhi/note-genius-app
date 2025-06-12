@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Activity, Database, Globe, Zap, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { config, logger } from '@/config/environment';
+import { toast } from 'sonner';
 
 interface HealthStatus {
   database: 'healthy' | 'warning' | 'error';
@@ -92,16 +93,32 @@ export const HealthCheck = () => {
       
       const cacheStatus = checkCacheHealth();
       
-      setHealth({
+      const newHealth = {
         database: databaseStatus,
         api: apiStatus,
         cache: cacheStatus,
         lastChecked: new Date()
-      });
+      };
+      
+      setHealth(newHealth);
+      
+      // Show toast notification for critical issues
+      if (databaseStatus === 'error' || apiStatus === 'error') {
+        toast.error('System Health Alert', {
+          description: 'Critical system components are experiencing issues. Please check the admin panel.'
+        });
+      } else if (databaseStatus === 'warning' || apiStatus === 'warning' || cacheStatus === 'warning') {
+        toast.warning('System Performance Warning', {
+          description: 'Some system components are running slower than expected.'
+        });
+      }
       
       logger.info('Health check completed:', { databaseStatus, apiStatus, cacheStatus });
     } catch (error) {
       logger.error('Health check failed:', error);
+      toast.error('Health Check Failed', {
+        description: 'Unable to complete system health check. Please try again.'
+      });
     } finally {
       setIsChecking(false);
     }

@@ -1,6 +1,5 @@
 
 import { AlertManager } from '@/components/monitoring/AlertManager';
-import { Toaster } from '@/components/ui/toaster';
 import { Toaster as SonnerToaster } from '@/components/ui/sonner';
 import { ConnectionStatus } from '@/components/performance/ConnectionManager';
 import { UpdateNotification } from '@/components/performance/ServiceWorkerManager';
@@ -30,7 +29,6 @@ export const AppProviders = ({ children }: AppProvidersProps) => {
           <HealthCheck />
         </div>
       )}
-      <Toaster />
       <SonnerToaster />
     </AlertManager>
   );

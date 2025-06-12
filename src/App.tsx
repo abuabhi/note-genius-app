@@ -3,7 +3,6 @@ import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/auth';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from 'sonner';
 import { publicRoutes } from './routes/publicRoutes';
 import { authCallbackRoutes } from './routes/authCallbackRoutes';
 import { standardRoutes } from './routes/standardRoutes';
@@ -54,7 +53,6 @@ function App() {
                 <SessionProvider>
                   <AppProviders>
                     <StudyActivityHandler />
-                    <Toaster position="top-right" />
                     <Suspense fallback={<div>Loading...</div>}>
                       <Routes>
                         {/* Auth callback routes MUST be first and completely public - no auth required */}
