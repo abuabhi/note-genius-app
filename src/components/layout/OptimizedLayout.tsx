@@ -2,7 +2,7 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import NavBar from './NavBar';
-import { AuthSidebar } from './AuthSidebar';
+import AuthSidebar from './AuthSidebar';
 import { LightweightPerformanceOverlay } from '@/components/performance/LightweightPerformanceOverlay';
 import { useOptimizedSessionTracker } from '@/hooks/session/useOptimizedSessionTracker';
 import { useOptimizedCache } from '@/hooks/performance/useOptimizedCache';
