@@ -83,7 +83,7 @@ serve(async (req) => {
     `;
 
     const emailResponse = await resend.emails.send({
-      from: "PrepGenie <noreply@prepgenie.app>", // You may need to update this with your verified domain
+      from: "PrepGenie <noreply@prepgenie.app>",
       to: [to],
       subject: emailSubject,
       html: emailBody,
