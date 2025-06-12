@@ -132,10 +132,6 @@ export const HealthCheck = () => {
     }
   };
 
-  if (!config.isDevelopment && !config.isStaging) {
-    return null; // Hide in production
-  }
-
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="pb-3">

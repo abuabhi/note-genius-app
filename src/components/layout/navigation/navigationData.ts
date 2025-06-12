@@ -1,3 +1,4 @@
+
 import { 
   Home, 
   BookOpen, 
@@ -16,7 +17,8 @@ import {
   Database,
   Gift,
   Heart,
-  CheckSquare
+  CheckSquare,
+  Activity
 } from "lucide-react";
 
 export interface NavigationItem {
@@ -181,6 +183,13 @@ export const navigationData: NavigationGroup[] = [
         href: "/admin",
         icon: Shield,
         description: "Administration overview"
+      },
+      {
+        id: "admin-system-monitoring",
+        title: "System Monitoring",
+        href: "/admin/system-monitoring",
+        icon: Activity,
+        description: "Monitor system health, performance, and cache management"
       },
       {
         id: "admin-feedback",

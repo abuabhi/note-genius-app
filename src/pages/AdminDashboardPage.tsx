@@ -12,11 +12,19 @@ import {
   GraduationCap,
   BookOpen,
   Upload,
-  Settings
+  Settings,
+  Activity
 } from 'lucide-react';
 
 const AdminDashboardPage = () => {
   const adminSections = [
+    {
+      title: 'System Monitoring',
+      description: 'Monitor system health, performance, and cache management',
+      icon: Activity,
+      href: '/admin/system-monitoring',
+      color: 'bg-emerald-500'
+    },
     {
       title: 'User Management',
       description: 'Manage users, roles, and permissions',

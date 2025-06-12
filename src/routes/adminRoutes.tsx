@@ -12,11 +12,13 @@ import AdminAnnouncementsPage from "@/pages/AdminAnnouncementsPage";
 import AdminTierLimitsPage from "@/pages/AdminTierLimitsPage";
 import AdminFeedbackPage from "@/pages/AdminFeedbackPage";
 import AdminFeedbackSettingsPage from "@/pages/AdminFeedbackSettingsPage";
+import AdminSystemMonitoringPage from "@/pages/AdminSystemMonitoringPage";
 import { RouteConfig } from './publicRoutes';
 
 // Admin routes
 export const adminRoutes: RouteConfig[] = [
   { path: "/admin", element: <AdminDashboardPage /> }, // Main admin dashboard
+  { path: "/admin/system-monitoring", element: <AdminSystemMonitoringPage /> },
   { path: "/admin/users", element: <AdminUsersPage /> },
   { path: "/admin/feedback", element: <AdminFeedbackPage /> },
   { path: "/admin/feedback/settings", element: <AdminFeedbackSettingsPage /> },
