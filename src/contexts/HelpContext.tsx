@@ -58,47 +58,90 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Start analytics session when help is opened
   const openHelp = useCallback((content?: HelpContent) => {
-    setState(prev => ({
-      ...prev,
-      isOpen: true,
-      currentContent: content || null,
-      viewMode: content?.videoContent ? 'video' : 'text'
-    }));
+    try {
+      setState(prev => ({
+        ...prev,
+        isOpen: true,
+        currentContent: content || null,
+        viewMode: content?.videoContent ? 'video' : 'text'
+      }));
 
-    // Track analytics
-    analytics.startHelpSession(state.currentContext || undefined);
-    if (content) {
-      analytics.trackContentView(content, state.currentContext || undefined);
+      // Track analytics with error handling
+      if (analytics?.startHelpSession) {
+        analytics.startHelpSession(state.currentContext || undefined);
+      }
+      if (content && analytics?.trackContentView) {
+        analytics.trackContentView(content, state.currentContext || undefined);
+      }
+    } catch (error) {
+      console.error('Error opening help:', error);
+      // Still allow the help dialog to open even if analytics fails
+      setState(prev => ({
+        ...prev,
+        isOpen: true,
+        currentContent: content || null,
+        viewMode: content?.videoContent ? 'video' : 'text'
+      }));
     }
   }, [analytics, state.currentContext]);
 
   const closeHelp = useCallback(() => {
-    setState(prev => ({
-      ...prev,
-      isOpen: false,
-      currentContent: null,
-      searchTerm: ''
-    }));
+    try {
+      setState(prev => ({
+        ...prev,
+        isOpen: false,
+        currentContent: null,
+        searchTerm: ''
+      }));
 
-    // End analytics session
-    analytics.endHelpSession();
+      // End analytics session with error handling
+      if (analytics?.endHelpSession) {
+        analytics.endHelpSession();
+      }
+    } catch (error) {
+      console.error('Error closing help:', error);
+      // Still allow the help dialog to close even if analytics fails
+      setState(prev => ({
+        ...prev,
+        isOpen: false,
+        currentContent: null,
+        searchTerm: ''
+      }));
+    }
   }, [analytics]);
 
   const setSearchTerm = useCallback((term: string) => {
-    setState(prev => ({ ...prev, searchTerm: term }));
+    try {
+      setState(prev => ({ ...prev, searchTerm: term }));
+    } catch (error) {
+      console.error('Error setting search term:', error);
+    }
   }, []);
 
   const setViewMode = useCallback((mode: 'text' | 'video' | 'tips') => {
-    setState(prev => ({ ...prev, viewMode: mode }));
+    try {
+      setState(prev => ({ ...prev, viewMode: mode }));
+    } catch (error) {
+      console.error('Error setting view mode:', error);
+    }
   }, []);
 
   const updateContext = useCallback((context: HelpContextType) => {
-    setState(prev => ({ ...prev, currentContext: context }));
+    try {
+      setState(prev => ({ ...prev, currentContext: context }));
+    } catch (error) {
+      console.error('Error updating context:', error);
+    }
   }, []);
 
   const getContextualHelp = useCallback((): HelpContent[] => {
-    if (!state.currentContext) return [];
-    return getHelpByContext(state.currentContext);
+    try {
+      if (!state.currentContext) return [];
+      return getHelpByContext(state.currentContext);
+    } catch (error) {
+      console.error('Error getting contextual help:', error);
+      return [];
+    }
   }, [state.currentContext]);
 
   const value: HelpContextValue = {

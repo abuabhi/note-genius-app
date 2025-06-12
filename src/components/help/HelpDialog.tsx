@@ -34,21 +34,31 @@ export const HelpDialog: React.FC = () => {
   const handleOpenChange = (open: boolean) => {
     console.log('HelpDialog handleOpenChange called with:', open);
     if (!open) {
-      closeHelp();
+      try {
+        closeHelp();
+      } catch (error) {
+        console.error('Error closing help dialog:', error);
+        // Don't rethrow the error to prevent it from bubbling up
+      }
     }
   };
 
   const handleTabChange = (value: string) => {
-    setViewMode(value as any);
-    
-    // Track tab interactions
-    if (currentContent) {
-      analytics.trackVideoEvent(
-        currentContent, 
-        'interaction' as any, 
-        undefined, 
-        `tab_switch_${value}`
-      );
+    try {
+      setViewMode(value as any);
+      
+      // Track tab interactions with error handling
+      if (currentContent && analytics?.trackVideoEvent) {
+        analytics.trackVideoEvent(
+          currentContent, 
+          'interaction' as any, 
+          undefined, 
+          `tab_switch_${value}`
+        );
+      }
+    } catch (error) {
+      console.error('Error handling tab change:', error);
+      // Continue with tab change even if analytics fails
     }
   };
 
