@@ -139,7 +139,14 @@ export const EnhancedFloatingActionsHub = ({
   // Don't show for unauthenticated users
   if (!user) return null;
 
-  // Hide during active guides
+  // Define which routes are public - don't show dock on these
+  const publicRoutes = ['/', '/about', '/pricing', '/faq', '/contact', '/blog', '/features', '/login', '/signup'];
+  const isPublicRoute = publicRoutes.includes(location.pathname);
+  
+  // Don't show on public routes
+  if (isPublicRoute) return null;
+
+  // Hide during active guides (but NOT during help dialog)
   if (guideContext?.isActive) return null;
 
   // Determine page context
