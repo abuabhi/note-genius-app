@@ -8,6 +8,7 @@ import { useActivityTracking } from './activityTracking';
 import { useTimerManagement } from './timerManagement';
 import { useNavigationEffects } from './navigationEffects';
 import { restoreSession, persistSession } from './sessionPersistence';
+import { validateSessionState, calculateContinuousElapsedTime } from './sessionValidation';
 
 export const useGlobalSessionTracker = () => {
   const { user } = useAuth();
@@ -22,23 +23,40 @@ export const useGlobalSessionTracker = () => {
     isPaused: false
   });
 
-  // Restore session on mount
+  // Restore session on mount with continuous timing calculation
   useEffect(() => {
     if (user) {
       const restored = restoreSession();
-      if (restored) {
-        console.log('🔄 Restoring session on mount:', restored);
-        setSessionState(prev => ({ ...prev, ...restored }));
+      if (restored && validateSessionState(restored)) {
+        console.log('🔄 Restoring session with continuous timing:', restored);
+        
+        // Recalculate elapsed time based on start time for accuracy
+        const correctedElapsedSeconds = calculateContinuousElapsedTime(new Date(restored.startTime));
+        
+        const restoredState = {
+          ...restored,
+          startTime: new Date(restored.startTime), // Ensure it's a Date object
+          elapsedSeconds: correctedElapsedSeconds
+        };
+        
+        setSessionState(restoredState);
+        persistSession(restoredState);
+        
+        console.log('✅ Session restored with corrected timing:', {
+          original: restored.elapsedSeconds,
+          corrected: correctedElapsedSeconds,
+          difference: correctedElapsedSeconds - restored.elapsedSeconds
+        });
       }
     }
   }, [user]);
 
-  // Persist session state changes
+  // Persist session state changes (but don't interfere with timing)
   useEffect(() => {
-    if (sessionState.isActive) {
+    if (sessionState.isActive && sessionState.sessionId) {
       persistSession(sessionState);
     }
-  }, [sessionState]);
+  }, [sessionState.isActive, sessionState.sessionId, sessionState.currentActivity, sessionState.isPaused]);
 
   // Determine activity type from current route
   const getCurrentActivityType = useCallback((): ActivityType => {
@@ -49,7 +67,7 @@ export const useGlobalSessionTracker = () => {
     return 'general';
   }, [location.pathname]);
 
-  // Use session operations
+  // Use session operations with improved continuity
   const {
     updateSessionActivity,
     startSession,
@@ -69,7 +87,7 @@ export const useGlobalSessionTracker = () => {
   // Use activity tracking
   const { recordActivity } = useActivityTracking(sessionState, setSessionState, isOnStudyPage);
 
-  // Use timer management
+  // Use timer management with continuous counting
   useTimerManagement(sessionState, setSessionState);
 
   return {

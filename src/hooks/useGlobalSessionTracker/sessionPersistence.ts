@@ -1,45 +1,45 @@
 
 import { GlobalSessionState } from './types';
 
-const SESSION_STORAGE_KEY = 'activeStudySession';
+const SESSION_STORAGE_KEY = 'study_session_state';
 
 export const persistSession = (sessionState: GlobalSessionState) => {
-  if (sessionState.isActive && sessionState.sessionId) {
-    const persistData = {
-      sessionId: sessionState.sessionId,
-      startTime: sessionState.startTime?.toISOString(), // Now startTime is Date, so toISOString() works
-      currentActivity: sessionState.currentActivity,
-      elapsedSeconds: sessionState.elapsedSeconds,
-      isPaused: sessionState.isPaused
+  try {
+    // Store with ISO string for startTime to ensure proper serialization
+    const stateToStore = {
+      ...sessionState,
+      startTime: sessionState.startTime ? sessionState.startTime.toISOString() : null
     };
-    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(persistData));
-    console.log('📦 Session persisted to localStorage:', persistData);
+    
+    sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(stateToStore));
+  } catch (error) {
+    console.error('Failed to persist session state:', error);
   }
 };
 
-export const restoreSession = (): Partial<GlobalSessionState> | null => {
+export const restoreSession = (): GlobalSessionState | null => {
   try {
-    const stored = localStorage.getItem(SESSION_STORAGE_KEY);
+    const stored = sessionStorage.getItem(SESSION_STORAGE_KEY);
     if (!stored) return null;
     
-    const data = JSON.parse(stored);
-    console.log('📦 Restoring session from localStorage:', data);
+    const parsed = JSON.parse(stored);
     
-    return {
-      sessionId: data.sessionId,
-      startTime: data.startTime ? new Date(data.startTime) : null, // Create Date object
-      currentActivity: data.currentActivity,
-      elapsedSeconds: data.elapsedSeconds || 0,
-      isPaused: data.isPaused || false,
-      isActive: true
-    };
+    // Ensure startTime is converted back to Date object if it exists
+    if (parsed.startTime) {
+      parsed.startTime = new Date(parsed.startTime);
+    }
+    
+    return parsed as GlobalSessionState;
   } catch (error) {
-    console.error('Error restoring session:', error);
+    console.error('Failed to restore session state:', error);
     return null;
   }
 };
 
 export const clearPersistedSession = () => {
-  localStorage.removeItem(SESSION_STORAGE_KEY);
-  console.log('📦 Cleared persisted session');
+  try {
+    sessionStorage.removeItem(SESSION_STORAGE_KEY);
+  } catch (error) {
+    console.error('Failed to clear persisted session:', error);
+  }
 };

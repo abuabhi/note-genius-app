@@ -15,7 +15,7 @@ export const useSessionOperations = (
 ) => {
   const queryClient = useQueryClient();
 
-  // Update session with activity data
+  // Update session with activity data (non-breaking)
   const updateSessionActivity = useCallback(async (activityData: any) => {
     if (!sessionState.sessionId || !sessionState.isActive) return;
 
@@ -53,9 +53,9 @@ export const useSessionOperations = (
       return;
     }
 
-    // If we already have an active session and it's valid, just update activity type
+    // If we already have an active session and it's valid, just update activity type WITHOUT restarting
     if (sessionState.isActive && sessionState.sessionId && validateSessionState(sessionState)) {
-      logger.info('Valid session already exists, updating activity type only');
+      logger.info('Valid session already exists, updating activity type only - NO RESTART');
       updateActivityType();
       return;
     }
@@ -81,7 +81,7 @@ export const useSessionOperations = (
         const twoHours = 2 * 60 * 60 * 1000; // Extended to 2 hours for better continuity
         
         if (sessionAge < twoHours) {
-          logger.info('🔄 Resuming existing session instead of creating new one');
+          logger.info('🔄 Resuming existing session - MAINTAINING CONTINUITY');
           const resumedState = {
             sessionId: existingSession.id,
             isActive: true,
@@ -94,8 +94,8 @@ export const useSessionOperations = (
           setSessionState(resumedState);
           persistSession(resumedState);
           
-          // Update the activity type for the resumed session
-          await updateActivityType();
+          // Update the activity type for the resumed session WITHOUT affecting timing
+          await updateActivityTypeInternal(existingSession.id, getCurrentActivityType());
           return;
         } else {
           // Session is too old, clean it up
@@ -217,7 +217,28 @@ export const useSessionOperations = (
     }
   }, [sessionState.sessionId, sessionState.startTime, queryClient]);
 
-  // Update activity type with route validation and throttling
+  // Internal helper to update activity type without affecting session timing
+  const updateActivityTypeInternal = useCallback(async (sessionId: string, newActivityType: ActivityType) => {
+    try {
+      logger.info('🔄 Updating activity type to:', newActivityType, '(NO TIMING RESET)');
+      const { error } = await supabase
+        .from('study_sessions')
+        .update({
+          activity_type: newActivityType,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', sessionId);
+
+      if (error) throw error;
+
+      logger.info('✅ Activity type updated - SESSION TIMING MAINTAINED');
+
+    } catch (error) {
+      logger.error('Error updating activity type:', error);
+    }
+  }, []);
+
+  // Update activity type with route validation and NO session restart
   const updateActivityType = useCallback(async () => {
     if (!sessionState.sessionId || !sessionState.isActive) return;
 
@@ -230,38 +251,25 @@ export const useSessionOperations = (
     const newActivityType = getCurrentActivityType();
     if (newActivityType === sessionState.currentActivity) return;
 
-    try {
-      logger.info('🔄 Updating activity type to:', newActivityType);
-      const { error } = await supabase
-        .from('study_sessions')
-        .update({
-          activity_type: newActivityType,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', sessionState.sessionId);
+    // Update in database without affecting session timing
+    await updateActivityTypeInternal(sessionState.sessionId, newActivityType);
 
-      if (error) throw error;
+    // Update local state while preserving all timing information
+    const updatedState = {
+      ...sessionState,
+      currentActivity: newActivityType
+    };
+    
+    setSessionState(prev => ({
+      ...prev,
+      currentActivity: newActivityType
+    }));
 
-      const updatedState = {
-        ...sessionState,
-        currentActivity: newActivityType
-      };
-      
-      setSessionState(prev => ({
-        ...prev,
-        currentActivity: newActivityType
-      }));
+    persistSession(updatedState);
 
-      persistSession(updatedState);
+  }, [sessionState, getCurrentActivityType, updateActivityTypeInternal]);
 
-      logger.info('✅ Activity type updated to:', newActivityType);
-
-    } catch (error) {
-      logger.error('Error updating activity type:', error);
-    }
-  }, [sessionState, getCurrentActivityType]);
-
-  // Pause/resume session
+  // Pause/resume session while maintaining elapsed time calculation
   const togglePause = useCallback(() => {
     const newState = {
       ...sessionState,
