@@ -30,6 +30,7 @@ export const EnhancedFloatingActionsHub = ({
   isChatOpen = false, 
   hasUnreadChat = false
 }: EnhancedFloatingActionsHubProps) => {
+  // ALL HOOKS MUST BE CALLED FIRST - NO CONDITIONAL LOGIC BEFORE THIS POINT
   const { user } = useAuth();
   const location = useLocation();
   const [position, setPosition] = useState<Position>(DEFAULT_POSITION);
@@ -46,15 +47,9 @@ export const EnhancedFloatingActionsHub = ({
     isOnStudyPage
   } = useGlobalSessionTracker();
 
-  // Safely use help and guide contexts
+  // Always call these hooks - they're now properly available due to provider setup
   const helpContext = useHelp();
   const guideContext = useGuide();
-
-  // Don't show for unauthenticated users
-  if (!user) return null;
-
-  // Hide during active guides
-  if (guideContext?.isActive) return null;
 
   // Load position from localStorage on mount
   useEffect(() => {
@@ -72,6 +67,80 @@ export const EnhancedFloatingActionsHub = ({
   const savePosition = useCallback((newPosition: Position) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newPosition));
   }, []);
+
+  // Drag handlers
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (!dockRef.current) return;
+    
+    const rect = dockRef.current.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+    
+    setDragOffset({ x: offsetX, y: offsetY });
+    setIsDragging(true);
+    
+    e.preventDefault();
+  }, []);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      
+      const newX = ((e.clientX - dragOffset.x) / window.innerWidth) * 100;
+      const newY = ((e.clientY - dragOffset.y) / window.innerHeight) * 100;
+      
+      // Constrain to viewport bounds
+      const constrainedX = Math.max(0, Math.min(100, newX));
+      const constrainedY = Math.max(0, Math.min(100, newY));
+      
+      setPosition({ x: constrainedX, y: constrainedY });
+    };
+
+    const handleMouseUp = () => {
+      if (isDragging) {
+        setIsDragging(false);
+        savePosition(position);
+      }
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, dragOffset, position, savePosition]);
+
+  // Action handlers
+  const handleHelpClick = useCallback(() => {
+    if (helpContext?.openHelp) {
+      helpContext.openHelp();
+    }
+  }, [helpContext]);
+
+  const handleGuideClick = useCallback(() => {
+    if (guideContext?.startGuide && guideContext?.getAvailableGuides) {
+      const guides = guideContext.getAvailableGuides();
+      if (guides.length > 0) {
+        guideContext.startGuide(guides[0].id);
+      }
+    }
+  }, [guideContext]);
+
+  const handleEndSession = useCallback(() => {
+    endSession();
+  }, [endSession]);
+
+  // NOW WE CAN DO CONDITIONAL LOGIC AFTER ALL HOOKS ARE CALLED
+  
+  // Don't show for unauthenticated users
+  if (!user) return null;
+
+  // Hide during active guides
+  if (guideContext?.isActive) return null;
 
   // Determine page context
   const getPageContext = () => {
@@ -131,72 +200,6 @@ export const EnhancedFloatingActionsHub = ({
   };
 
   const timerStyles = getTimerStyles();
-
-  // Drag handlers
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (!dockRef.current) return;
-    
-    const rect = dockRef.current.getBoundingClientRect();
-    const offsetX = e.clientX - rect.left;
-    const offsetY = e.clientY - rect.top;
-    
-    setDragOffset({ x: offsetX, y: offsetY });
-    setIsDragging(true);
-    
-    e.preventDefault();
-  };
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      
-      const newX = ((e.clientX - dragOffset.x) / window.innerWidth) * 100;
-      const newY = ((e.clientY - dragOffset.y) / window.innerHeight) * 100;
-      
-      // Constrain to viewport bounds
-      const constrainedX = Math.max(0, Math.min(100, newX));
-      const constrainedY = Math.max(0, Math.min(100, newY));
-      
-      setPosition({ x: constrainedX, y: constrainedY });
-    };
-
-    const handleMouseUp = () => {
-      if (isDragging) {
-        setIsDragging(false);
-        savePosition(position);
-      }
-    };
-
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, dragOffset, position, savePosition]);
-
-  // Action handlers
-  const handleHelpClick = () => {
-    if (helpContext?.openHelp) {
-      helpContext.openHelp();
-    }
-  };
-
-  const handleGuideClick = () => {
-    if (guideContext?.startGuide && guideContext?.getAvailableGuides) {
-      const guides = guideContext.getAvailableGuides();
-      if (guides.length > 0) {
-        guideContext.startGuide(guides[0].id);
-      }
-    }
-  };
-
-  const handleEndSession = () => {
-    endSession();
-  };
 
   return (
     <TooltipProvider>
