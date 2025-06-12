@@ -54,7 +54,12 @@ export default function Layout({ children, showSidebar = true, showFooter = true
       console.log('📥 Fetching note for chat:', noteId);
       const { data, error } = await supabase
         .from('notes')
-        .select('*')
+        .select(`
+          *,
+          tags:note_tags(
+            tag:tags(*)
+          )
+        `)
         .eq('id', noteId)
         .eq('user_id', user.id)
         .single();
@@ -64,8 +69,19 @@ export default function Layout({ children, showSidebar = true, showFooter = true
         return null;
       }
 
-      console.log('✅ Note fetched for chat:', data);
-      return data;
+      // Transform the data to match the Note interface
+      const transformedNote = {
+        ...data,
+        sourceType: data.source_type || 'manual', // Ensure sourceType is provided
+        tags: data.tags?.map((tagRelation: any) => ({
+          id: tagRelation.tag.id,
+          name: tagRelation.tag.name,
+          color: tagRelation.tag.color
+        })) || []
+      };
+
+      console.log('✅ Note fetched for chat:', transformedNote);
+      return transformedNote;
     },
     enabled: isNoteStudyPage && !!noteId && !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
