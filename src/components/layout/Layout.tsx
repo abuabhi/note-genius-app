@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/auth';
 import { useLocation, useParams } from 'react-router-dom';
 import { useReminderToasts } from '@/hooks/useReminderToasts';
 import { AnnouncementBar } from '@/components/announcements/AnnouncementBar';
-import { EnhancedFloatingActionsHub } from '@/components/ui/floating/EnhancedFloatingActionsHub';
+import { FloatingActionsHub } from '@/components/ui/floating/FloatingActionsHub';
 import { NoteChatSidebar } from '@/components/notes/study/chat/NoteChatSidebar';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -114,11 +114,12 @@ export default function Layout({ children, showSidebar = true, showFooter = true
       </div>
       {showFooter && <Footer />}
       
-      {/* Single Enhanced Floating Actions Hub - handles all floating functionality */}
-      <EnhancedFloatingActionsHub 
+      {/* Floating Actions Dock - shows the proper dock instead of simple button */}
+      <FloatingActionsHub 
         onChatToggle={isNoteStudyPage ? handleChatToggle : undefined}
         isChatOpen={isChatOpen}
         hasUnreadChat={false}
+        showChat={isNoteStudyPage}
       />
 
       {/* Global Chat Sidebar - only shows on note study pages */}
