@@ -8,6 +8,9 @@ import { useLocation } from 'react-router-dom';
 import { useReminderToasts } from '@/hooks/useReminderToasts';
 import { AnnouncementBar } from '@/components/announcements/AnnouncementBar';
 import { UnifiedFloatingTimer } from '@/components/study/UnifiedFloatingTimer';
+import { HelpProvider } from '@/contexts/HelpContext';
+import { HelpDialog } from '@/components/help/HelpDialog';
+import { HelpFloatingButton } from '@/components/help/HelpFloatingButton';
 
 interface LayoutProps {
   children: ReactNode;
@@ -30,20 +33,30 @@ export default function Layout({ children, showSidebar = true, showFooter = true
   const shouldShowSidebar = showSidebar && user && !isPublicRoute;
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <NavBar />
-      {/* Announcement Bar - shows for authenticated users */}
-      {user && <AnnouncementBar />}
-      <div className="flex flex-1">
-        {shouldShowSidebar && <CustomSidebar />}
-        <main className={`flex-1 ${shouldShowSidebar ? 'ml-16' : ''}`}>
-          {children}
-        </main>
+    <HelpProvider>
+      <div className="min-h-screen flex flex-col">
+        <NavBar />
+        {/* Announcement Bar - shows for authenticated users */}
+        {user && <AnnouncementBar />}
+        <div className="flex flex-1">
+          {shouldShowSidebar && <CustomSidebar />}
+          <main className={`flex-1 ${shouldShowSidebar ? 'ml-16' : ''}`}>
+            {children}
+          </main>
+        </div>
+        {showFooter && <Footer />}
+        
+        {/* Help System - shows for authenticated users */}
+        {user && (
+          <>
+            <HelpDialog />
+            <HelpFloatingButton />
+          </>
+        )}
+        
+        {/* Unified Floating Timer - shows for authenticated users */}
+        {user && <UnifiedFloatingTimer />}
       </div>
-      {showFooter && <Footer />}
-      
-      {/* Unified Floating Timer - shows for authenticated users */}
-      {user && <UnifiedFloatingTimer />}
-    </div>
+    </HelpProvider>
   );
 }
