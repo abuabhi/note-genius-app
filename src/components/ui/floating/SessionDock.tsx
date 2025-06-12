@@ -16,9 +16,15 @@ export const SessionDock = () => {
     isOnStudyPage
   } = useBasicSessionTracker();
 
-  console.log('🎛️ SessionDock render:', { isActive, isPaused, isOnStudyPage, elapsedSeconds });
+  console.log('🎛️ SessionDock render:', { 
+    isActive, 
+    isPaused, 
+    isOnStudyPage, 
+    elapsedSeconds,
+    showDock: isActive 
+  });
 
-  // Show dock if there's an active session (even if paused)
+  // Show dock ONLY if there's an active session
   if (!isActive) {
     console.log('🎛️ SessionDock hidden - no active session');
     return null;
@@ -68,6 +74,8 @@ export const SessionDock = () => {
   };
 
   const theme = getSessionTheme();
+
+  console.log('🎛️ SessionDock showing with theme:', theme.background);
 
   return (
     <Card className={cn(

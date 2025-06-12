@@ -23,16 +23,15 @@ export const useBasicSessionTracker = () => {
   const { user } = useAuth();
   const location = useLocation();
   
-  // Basic state - no complex objects
+  // Basic state
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [currentActivity, setCurrentActivity] = useState<ActivityType>('general');
   
-  // Track navigation state
-  const isInitialLoadRef = useRef(true);
-  const lastPathRef = useRef<string>('');
+  // Track previous path for navigation logic
+  const previousPathRef = useRef<string>('');
   
   // Derived state
   const isOnStudyPage = isStudyRoute(location.pathname);
@@ -45,10 +44,11 @@ export const useBasicSessionTracker = () => {
     isPaused,
     sessionId,
     elapsedSeconds,
-    currentActivity
+    currentActivity,
+    user: !!user
   });
 
-  // Simple timer - runs every second when active and not paused
+  // Timer - runs every second when active and not paused
   useEffect(() => {
     if (!isActive || !startTime || isPaused) return;
 
@@ -61,97 +61,12 @@ export const useBasicSessionTracker = () => {
     return () => clearInterval(interval);
   }, [isActive, startTime, isPaused]);
 
-  // Handle navigation changes - SIMPLIFIED LOGIC
-  useEffect(() => {
-    const currentPath = location.pathname;
-    const lastPath = lastPathRef.current;
-    
-    // Skip initial load to prevent unwanted session creation
-    if (isInitialLoadRef.current) {
-      console.log('🚀 Initial load, skipping navigation logic');
-      isInitialLoadRef.current = false;
-      lastPathRef.current = currentPath;
+  // Session creation function
+  const startSession = useCallback(async () => {
+    if (!user) {
+      console.log('❌ Cannot start session - no user');
       return;
     }
-
-    const wasOnStudyPage = isStudyRoute(lastPath);
-    const isNowOnStudyPage = isStudyRoute(currentPath);
-    
-    console.log('📍 Navigation:', {
-      from: lastPath,
-      to: currentPath,
-      wasOnStudyPage,
-      isNowOnStudyPage,
-      hasActiveSession: isActive,
-      isPaused
-    });
-
-    // Case 1: Moving between study pages - MAINTAIN SESSION
-    if (wasOnStudyPage && isNowOnStudyPage) {
-      console.log('🔄 Moving between study pages - maintaining session');
-      if (isActive && isPaused) {
-        console.log('▶️ Resuming paused session');
-        setIsPaused(false);
-      } else if (!isActive) {
-        console.log('🚀 No active session - starting new one');
-        startSession();
-      }
-    }
-    // Case 2: Entering study area from non-study page
-    else if (!wasOnStudyPage && isNowOnStudyPage) {
-      console.log('📚 Entering study area');
-      if (isActive) {
-        console.log('▶️ Resuming existing session');
-        setIsPaused(false);
-      } else {
-        console.log('🚀 Starting new session');
-        startSession();
-      }
-    }
-    // Case 3: Leaving study area for non-study page - PAUSE (don't end)
-    else if (wasOnStudyPage && !isNowOnStudyPage) {
-      console.log('🚪 Leaving study area - pausing session');
-      if (isActive && !isPaused) {
-        setIsPaused(true);
-      }
-    }
-    
-    // Update last path
-    lastPathRef.current = currentPath;
-  }, [location.pathname]); // ONLY depend on pathname
-
-  // Separate effect for activity type updates
-  useEffect(() => {
-    if (isOnStudyPage && isActive) {
-      const newActivity = getActivityType(location.pathname);
-      if (newActivity !== currentActivity) {
-        console.log('🏷️ Updating activity type:', newActivity);
-        setCurrentActivity(newActivity);
-        updateSessionActivity(newActivity);
-      }
-    }
-  }, [location.pathname, isActive, currentActivity]); // Separate dependencies
-
-  const updateSessionActivity = useCallback(async (activityType: ActivityType) => {
-    if (!sessionId) return;
-    
-    try {
-      await supabase
-        .from('study_sessions')
-        .update({
-          activity_type: activityType,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', sessionId);
-      
-      console.log('✅ Updated session activity to:', activityType);
-    } catch (error) {
-      console.error('❌ Failed to update session activity:', error);
-    }
-  }, [sessionId]);
-
-  const startSession = useCallback(async () => {
-    if (!user) return;
     
     try {
       const now = new Date();
@@ -187,6 +102,7 @@ export const useBasicSessionTracker = () => {
     }
   }, [user, location.pathname]);
 
+  // Session end function
   const endSession = useCallback(async () => {
     if (!sessionId || !startTime) return;
 
@@ -217,13 +133,80 @@ export const useBasicSessionTracker = () => {
     }
   }, [sessionId, startTime]);
 
+  // Update activity type
+  const updateActivityType = useCallback(async () => {
+    if (!sessionId) return;
+    
+    const newActivity = getActivityType(location.pathname);
+    if (newActivity === currentActivity) return;
+
+    try {
+      await supabase
+        .from('study_sessions')
+        .update({
+          activity_type: newActivity,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', sessionId);
+      
+      setCurrentActivity(newActivity);
+      console.log('✅ Updated activity type to:', newActivity);
+    } catch (error) {
+      console.error('❌ Failed to update activity type:', error);
+    }
+  }, [sessionId, currentActivity, location.pathname]);
+
+  // Simple navigation effect - SIMPLIFIED LOGIC
+  useEffect(() => {
+    const currentPath = location.pathname;
+    const previousPath = previousPathRef.current;
+    
+    console.log('📍 Navigation:', {
+      from: previousPath,
+      to: currentPath,
+      isOnStudyPage,
+      hasActiveSession: isActive,
+      isPaused
+    });
+
+    // Update previous path
+    previousPathRef.current = currentPath;
+
+    // Simple rules:
+    // 1. If on study page and no session -> start session
+    // 2. If on study page and paused session -> resume
+    // 3. If leaving study page and active session -> pause
+    // 4. Activity updates happen separately
+    
+    if (isOnStudyPage) {
+      if (!isActive) {
+        console.log('🚀 On study page without session - starting new session');
+        startSession();
+      } else if (isPaused) {
+        console.log('▶️ On study page with paused session - resuming');
+        setIsPaused(false);
+      }
+    } else {
+      if (isActive && !isPaused) {
+        console.log('⏸️ Left study page - pausing session');
+        setIsPaused(true);
+      }
+    }
+  }, [location.pathname]); // Only depend on pathname
+
+  // Separate effect for activity updates
+  useEffect(() => {
+    if (isOnStudyPage && isActive && !isPaused) {
+      updateActivityType();
+    }
+  }, [location.pathname, isActive, isPaused]); // Separate dependencies
+
   const togglePause = useCallback(() => {
     console.log('⏯️ Toggling pause:', !isPaused);
     setIsPaused(prev => !prev);
   }, [isPaused]);
 
   const recordActivity = useCallback(() => {
-    // Simple activity recording - just ensure not paused if on study page
     if (isOnStudyPage && isPaused) {
       setIsPaused(false);
     }
