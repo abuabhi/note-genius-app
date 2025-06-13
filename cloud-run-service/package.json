@@ -2,7 +2,7 @@
 {
   "name": "youtube-audio-extractor",
   "version": "1.0.0",
-  "description": "Production-ready YouTube audio extraction service",
+  "description": "Clean YouTube audio extraction service",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -12,9 +12,7 @@
     "express": "^4.18.2",
     "@google-cloud/storage": "^7.7.0",
     "uuid": "^9.0.1",
-    "cors": "^2.8.5",
-    "helmet": "^7.1.0",
-    "express-rate-limit": "^7.1.5"
+    "cors": "^2.8.5"
   },
   "engines": {
     "node": ">=18"
