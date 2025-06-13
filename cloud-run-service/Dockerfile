@@ -22,7 +22,7 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies (use npm install if package-lock.json doesn't exist)
+# Install dependencies (use npm install instead of npm ci)
 RUN npm install --only=production
 
 # Copy source code
