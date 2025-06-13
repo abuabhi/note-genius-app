@@ -18,7 +18,6 @@ import { HelpProvider } from '@/contexts/HelpContext';
 import { ErrorProvider } from '@/contexts/ErrorContext';
 import { AppProviders } from '@/components/app/AppProviders';
 import { FlashcardProvider } from '@/contexts/flashcards';
-import { SessionDock } from '@/components/ui/floating/SessionDock';
 import { LightweightPerformanceOverlay } from '@/components/performance/LightweightPerformanceOverlay';
 
 // Optimized QueryClient with better cache management
@@ -83,9 +82,6 @@ function App() {
                       {/* Not Found Route - this should be last */}
                       <Route path="*" element={<NotFoundPage />} />
                     </Routes>
-                    
-                    {/* Global Session Dock - shows on all authenticated pages */}
-                    <SessionDock />
                     
                     {/* Lightweight Performance Overlay - only in development */}
                     <LightweightPerformanceOverlay />

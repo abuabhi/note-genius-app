@@ -7,7 +7,6 @@ import { useAuth } from '@/contexts/auth';
 import { useLocation, useParams } from 'react-router-dom';
 import { useReminderToasts } from '@/hooks/useReminderToasts';
 import { AnnouncementBar } from '@/components/announcements/AnnouncementBar';
-import { SessionDock } from '@/components/ui/floating/SessionDock';
 import { ChatFloatingButton } from '@/components/ui/floating/ChatFloatingButton';
 import { NoteChatSidebar } from '@/components/notes/study/chat/NoteChatSidebar';
 import { useQuery } from '@tanstack/react-query';
@@ -114,9 +113,6 @@ export default function Layout({ children, showSidebar = true, showFooter = true
         </main>
       </div>
       {showFooter && <Footer />}
-      
-      {/* Session Dock - Center Bottom */}
-      <SessionDock />
 
       {/* Chat Button - Bottom Right on Study Pages Only */}
       {isNoteStudyPage && (
