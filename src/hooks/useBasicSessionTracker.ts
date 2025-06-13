@@ -28,6 +28,8 @@ export const useBasicSessionTracker = () => {
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [pausedAt, setPausedAt] = useState<Date | null>(null);
+  const [totalPausedTime, setTotalPausedTime] = useState(0);
   const [currentActivity, setCurrentActivity] = useState<ActivityType>('general');
   
   // Derived state
@@ -51,12 +53,12 @@ export const useBasicSessionTracker = () => {
 
     const interval = setInterval(() => {
       const now = new Date();
-      const elapsed = Math.floor((now.getTime() - startTime.getTime()) / 1000);
-      setElapsedSeconds(elapsed);
+      const elapsed = Math.floor((now.getTime() - startTime.getTime() - totalPausedTime) / 1000);
+      setElapsedSeconds(Math.max(0, elapsed));
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isActive, startTime, isPaused]);
+  }, [isActive, startTime, isPaused, totalPausedTime]);
 
   // Start session
   const startSession = useCallback(async () => {
@@ -91,6 +93,8 @@ export const useBasicSessionTracker = () => {
       setStartTime(now);
       setElapsedSeconds(0);
       setIsPaused(false);
+      setPausedAt(null);
+      setTotalPausedTime(0);
       setCurrentActivity(activityType);
       
       console.log('✅ Session started:', data.id);
@@ -105,30 +109,39 @@ export const useBasicSessionTracker = () => {
 
     try {
       const endTime = new Date();
-      const duration = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
+      let finalDuration = Math.floor((endTime.getTime() - startTime.getTime() - totalPausedTime) / 1000);
+      
+      // If currently paused, add the time since pause started
+      if (isPaused && pausedAt) {
+        const pauseDuration = endTime.getTime() - pausedAt.getTime();
+        finalDuration = Math.floor((endTime.getTime() - startTime.getTime() - totalPausedTime - pauseDuration) / 1000);
+      }
 
-      console.log('🛑 Ending session:', sessionId, 'Duration:', duration);
+      console.log('🛑 Ending session:', sessionId, 'Duration:', finalDuration);
 
       await supabase
         .from('study_sessions')
         .update({
           end_time: endTime.toISOString(),
-          duration: Math.max(duration, 1),
+          duration: Math.max(finalDuration, 1),
           is_active: false
         })
         .eq('id', sessionId);
 
+      // Reset all state
       setSessionId(null);
       setStartTime(null);
       setElapsedSeconds(0);
       setIsPaused(false);
+      setPausedAt(null);
+      setTotalPausedTime(0);
       setCurrentActivity('general');
       
       console.log('✅ Session ended');
     } catch (error) {
       console.error('❌ Failed to end session:', error);
     }
-  }, [sessionId, startTime]);
+  }, [sessionId, startTime, totalPausedTime, isPaused, pausedAt]);
 
   // Update activity type
   const updateActivityType = useCallback(async () => {
@@ -153,7 +166,7 @@ export const useBasicSessionTracker = () => {
     }
   }, [sessionId, currentActivity, location.pathname]);
 
-  // Simple navigation effect - ULTRA SIMPLIFIED
+  // Navigation effect
   useEffect(() => {
     console.log('📍 Navigation Effect:', {
       pathname: location.pathname,
@@ -175,6 +188,13 @@ export const useBasicSessionTracker = () => {
     // SIMPLE RULE: If on study page and paused session -> resume
     if (isOnStudyPage && isActive && isPaused) {
       console.log('▶️ On study page with paused session - resuming');
+      
+      // Calculate total paused time and resume
+      if (pausedAt) {
+        const pauseDuration = Date.now() - pausedAt.getTime();
+        setTotalPausedTime(prev => prev + pauseDuration);
+        setPausedAt(null);
+      }
       setIsPaused(false);
       return;
     }
@@ -182,6 +202,7 @@ export const useBasicSessionTracker = () => {
     // SIMPLE RULE: If NOT on study page and active session -> pause
     if (!isOnStudyPage && isActive && !isPaused) {
       console.log('⏸️ Left study page - pausing session');
+      setPausedAt(new Date());
       setIsPaused(true);
       return;
     }
@@ -193,15 +214,36 @@ export const useBasicSessionTracker = () => {
   }, [location.pathname, user, isOnStudyPage, isActive, isPaused, startSession, updateActivityType]);
 
   const togglePause = useCallback(() => {
+    if (!isActive) return;
+    
     console.log('⏯️ Toggling pause:', !isPaused);
-    setIsPaused(prev => !prev);
-  }, [isPaused]);
+    
+    if (isPaused) {
+      // Resume - calculate paused time and add it to total
+      if (pausedAt) {
+        const pauseDuration = Date.now() - pausedAt.getTime();
+        setTotalPausedTime(prev => prev + pauseDuration);
+        setPausedAt(null);
+      }
+      setIsPaused(false);
+    } else {
+      // Pause - record when we paused
+      setPausedAt(new Date());
+      setIsPaused(true);
+    }
+  }, [isPaused, isActive, pausedAt]);
 
   const recordActivity = useCallback(() => {
     if (isOnStudyPage && isPaused) {
+      // Resume if we're on study page and currently paused
+      if (pausedAt) {
+        const pauseDuration = Date.now() - pausedAt.getTime();
+        setTotalPausedTime(prev => prev + pauseDuration);
+        setPausedAt(null);
+      }
       setIsPaused(false);
     }
-  }, [isOnStudyPage, isPaused]);
+  }, [isOnStudyPage, isPaused, pausedAt]);
 
   const updateSessionActivity = useCallback(async (activityData: any) => {
     if (!sessionId || !isActive) return;
