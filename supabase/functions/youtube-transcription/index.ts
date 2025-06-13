@@ -11,7 +11,7 @@ const corsHeaders = {
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const assemblyAIKey = Deno.env.get('ASSEMBLYAI_API_KEY')!;
-const cloudRunServiceUrl = Deno.env.get('CLOUD_RUN_SERVICE_URL')!;
+const cloudRunServiceUrl = Deno.env.get('CLOUD_RUN_SERVICE_URL');
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -19,44 +19,106 @@ serve(async (req) => {
   }
 
   try {
+    // Debug environment variables
+    console.log('🔧 Environment check:');
+    console.log('- SUPABASE_URL:', supabaseUrl ? 'Set ✓' : 'Missing ✗');
+    console.log('- SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? 'Set ✓' : 'Missing ✗');
+    console.log('- ASSEMBLYAI_API_KEY:', assemblyAIKey ? 'Set ✓' : 'Missing ✗');
+    console.log('- CLOUD_RUN_SERVICE_URL:', cloudRunServiceUrl ? `Set ✓ (${cloudRunServiceUrl})` : 'Missing ✗');
+
     const { youtubeUrl } = await req.json();
     
     if (!youtubeUrl) {
       throw new Error('YouTube URL is required');
     }
 
-    console.log('Starting enhanced YouTube transcription pipeline for:', youtubeUrl);
+    console.log('🎬 Starting YouTube transcription for:', youtubeUrl);
 
-    // Step 1: Check video accessibility first
-    console.log('Step 1: Checking video accessibility...');
+    // Check if required environment variables are present
+    if (!assemblyAIKey) {
+      throw new Error('AssemblyAI API key not configured. Please set ASSEMBLYAI_API_KEY in Supabase secrets.');
+    }
+
+    if (!cloudRunServiceUrl) {
+      console.error('❌ CLOUD_RUN_SERVICE_URL not configured. This is required for video processing.');
+      
+      // Return a helpful error message
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: 'Video processing service not configured. Please contact support or try uploading audio files directly.',
+        errorType: 'configuration',
+        troubleshooting: {
+          message: 'The video extraction service is not properly configured.',
+          suggestions: [
+            'Try uploading audio files directly instead',
+            'Contact support for assistance with video processing',
+            'Check that all required services are properly deployed'
+          ]
+        }
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Step 1: Check video accessibility
+    console.log('📋 Step 1: Checking video accessibility...');
     try {
+      console.log('🔗 Making request to:', `${cloudRunServiceUrl}/check-video`);
+      
       const checkResponse = await fetch(`${cloudRunServiceUrl}/check-video`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'User-Agent': 'StudyAI-Transcription/1.0'
+        },
         body: JSON.stringify({ youtubeUrl })
       });
 
+      console.log('📋 Check response status:', checkResponse.status);
+      
+      if (!checkResponse.ok) {
+        const errorText = await checkResponse.text();
+        console.error('❌ Video check failed:', errorText);
+        throw new Error(`Video accessibility check failed: ${errorText}`);
+      }
+
       const checkData = await checkResponse.json();
+      console.log('✅ Video check result:', checkData);
+      
       if (!checkData.accessible) {
         throw new Error(`Video is not accessible: ${checkData.error}`);
       }
-      console.log('Video accessibility confirmed');
     } catch (error) {
-      console.warn('Video accessibility check failed, proceeding anyway:', error.message);
+      console.warn('⚠️ Video accessibility check failed, proceeding anyway:', error.message);
     }
 
-    // Step 2: Extract audio using enhanced Cloud Run service
-    console.log('Step 2: Extracting audio via enhanced Cloud Run...');
+    // Step 2: Extract audio
+    console.log('🎵 Step 2: Extracting audio...');
+    console.log('🔗 Making request to:', `${cloudRunServiceUrl}/extract`);
+    
     const audioExtractionResponse = await fetch(`${cloudRunServiceUrl}/extract`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'User-Agent': 'StudyAI-Transcription/1.0'
       },
       body: JSON.stringify({ youtubeUrl })
     });
 
+    console.log('🎵 Audio extraction response status:', audioExtractionResponse.status);
+    console.log('🎵 Audio extraction response headers:', Object.fromEntries(audioExtractionResponse.headers.entries()));
+
     if (!audioExtractionResponse.ok) {
-      const errorData = await audioExtractionResponse.json();
+      const errorText = await audioExtractionResponse.text();
+      console.error('❌ Audio extraction failed:', errorText);
+      
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { error: errorText, errorType: 'unknown' };
+      }
       
       // Enhanced error handling based on error type
       let userFriendlyMessage = 'Audio extraction failed';
@@ -82,22 +144,26 @@ serve(async (req) => {
     }
 
     const { audioUrl, videoInfo, cloudFileName, requestId } = await audioExtractionResponse.json();
-    console.log(`Audio extracted successfully. Request ID: ${requestId}`);
+    console.log(`✅ Audio extracted successfully. Request ID: ${requestId}`);
+    console.log('🔗 Audio URL received:', audioUrl ? 'Valid ✓' : 'Missing ✗');
 
-    // Step 3: Upload audio to AssemblyAI with retry logic
-    console.log('Step 3: Uploading audio to AssemblyAI...');
+    // Step 3: Upload audio to AssemblyAI
+    console.log('☁️ Step 3: Uploading audio to AssemblyAI...');
     let uploadUrl;
     let uploadAttempts = 0;
     const maxUploadAttempts = 3;
 
     while (uploadAttempts < maxUploadAttempts) {
       try {
+        console.log(`📤 Upload attempt ${uploadAttempts + 1}/${maxUploadAttempts}`);
+        
         const audioResponse = await fetch(audioUrl);
         if (!audioResponse.ok) {
           throw new Error(`Failed to fetch audio: ${audioResponse.statusText}`);
         }
 
         const audioArrayBuffer = await audioResponse.arrayBuffer();
+        console.log('📦 Audio file size:', audioArrayBuffer.byteLength, 'bytes');
         
         const uploadResponse = await fetch('https://api.assemblyai.com/v2/upload', {
           method: 'POST',
@@ -108,15 +174,18 @@ serve(async (req) => {
         });
 
         if (!uploadResponse.ok) {
-          throw new Error(`AssemblyAI upload failed: ${uploadResponse.statusText}`);
+          const uploadError = await uploadResponse.text();
+          console.error('❌ AssemblyAI upload error:', uploadError);
+          throw new Error(`AssemblyAI upload failed: ${uploadResponse.statusText} - ${uploadError}`);
         }
 
         const uploadData = await uploadResponse.json();
         uploadUrl = uploadData.upload_url;
+        console.log('✅ Audio uploaded to AssemblyAI successfully');
         break;
       } catch (error) {
         uploadAttempts++;
-        console.log(`Upload attempt ${uploadAttempts} failed:`, error.message);
+        console.log(`❌ Upload attempt ${uploadAttempts} failed:`, error.message);
         
         if (uploadAttempts >= maxUploadAttempts) {
           throw new Error(`Failed to upload audio after ${maxUploadAttempts} attempts: ${error.message}`);
@@ -127,10 +196,8 @@ serve(async (req) => {
       }
     }
 
-    console.log('Audio uploaded to AssemblyAI successfully');
-
-    // Step 4: Start transcription with enhanced options
-    console.log('Step 4: Starting enhanced transcription...');
+    // Step 4: Start transcription
+    console.log('🎯 Step 4: Starting transcription...');
     const transcriptionResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
       method: 'POST',
       headers: {
@@ -157,29 +224,32 @@ serve(async (req) => {
 
     if (!transcriptionResponse.ok) {
       const errorText = await transcriptionResponse.text();
+      console.error('❌ Transcription start failed:', errorText);
       throw new Error(`Failed to start transcription: ${errorText}`);
     }
 
     const { id: transcriptId } = await transcriptionResponse.json();
-    console.log(`Transcription started with ID: ${transcriptId}`);
+    console.log(`🎯 Transcription started with ID: ${transcriptId}`);
 
-    // Step 5: Poll for completion with enhanced error handling
-    console.log('Step 5: Polling for transcription completion...');
-    const transcriptData = await pollTranscriptionWithRetry(transcriptId);
+    // Step 5: Poll for completion
+    console.log('⏳ Step 5: Polling for transcription completion...');
+    const transcriptData = await pollTranscriptionWithRetry(transcriptId, assemblyAIKey);
     
-    // Step 6: Cleanup temporary files (fire and forget)
-    cleanupTempFile(cloudFileName).catch(error => 
-      console.warn('Failed to cleanup temp file:', error)
-    );
+    // Step 6: Cleanup (fire and forget)
+    if (cloudFileName) {
+      cleanupTempFile(cloudFileName, cloudRunServiceUrl).catch(error => 
+        console.warn('⚠️ Failed to cleanup temp file:', error)
+      );
+    }
 
-    console.log('Enhanced transcription pipeline completed successfully');
+    console.log('🎉 Transcription completed successfully');
     
     return new Response(JSON.stringify({
       success: true,
       requestId,
-      videoTitle: videoInfo.title,
-      videoDuration: videoInfo.duration,
-      videoUploader: videoInfo.uploader,
+      videoTitle: videoInfo?.title || 'YouTube Video',
+      videoDuration: videoInfo?.duration || 0,
+      videoUploader: videoInfo?.uploader || 'Unknown',
       transcript: transcriptData.text,
       summary: transcriptData.summary,
       chapters: transcriptData.chapters || [],
@@ -191,13 +261,14 @@ serve(async (req) => {
       languageDetected: transcriptData.language_code,
       processingTime: transcriptData.audio_duration,
       wordCount: transcriptData.words?.length || 0,
-      extractionMethod: 'enhanced_fallback'
+      extractionMethod: 'enhanced_debug'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    console.error('Enhanced YouTube transcription pipeline error:', error);
+    console.error('💥 YouTube transcription error:', error);
+    console.error('💥 Error stack:', error.stack);
     
     // Provide user-friendly error messages
     let userMessage = error.message;
@@ -215,6 +286,9 @@ serve(async (req) => {
     } else if (error.message.includes('AssemblyAI')) {
       errorType = 'transcription_failed';
       userMessage = 'Audio extraction succeeded, but transcription failed. Please try again or contact support if the issue persists.';
+    } else if (error.message.includes('not configured')) {
+      errorType = 'configuration';
+      userMessage = error.message;
     }
     
     return new Response(JSON.stringify({ 
@@ -237,7 +311,7 @@ serve(async (req) => {
   }
 });
 
-async function pollTranscriptionWithRetry(transcriptId: string): Promise<any> {
+async function pollTranscriptionWithRetry(transcriptId: string, assemblyAIKey: string): Promise<any> {
   let attempts = 0;
   const maxAttempts = 150; // 12.5 minutes max (5 second intervals)
   const retryDelay = 5000; // 5 seconds
@@ -257,20 +331,20 @@ async function pollTranscriptionWithRetry(transcriptId: string): Promise<any> {
       const data = await response.json();
       
       if (data.status === 'completed') {
-        console.log(`Transcription completed after ${attempts + 1} attempts`);
+        console.log(`✅ Transcription completed after ${attempts + 1} attempts`);
         return data;
       } else if (data.status === 'error') {
         throw new Error(`Transcription failed: ${data.error}`);
       }
       
-      console.log(`Transcription status: ${data.status}, attempt ${attempts + 1}/${maxAttempts}`);
+      console.log(`⏳ Transcription status: ${data.status}, attempt ${attempts + 1}/${maxAttempts}`);
       
       // Wait before next attempt
       await new Promise(resolve => setTimeout(resolve, retryDelay));
       attempts++;
       
     } catch (error) {
-      console.error(`Polling attempt ${attempts + 1} failed:`, error);
+      console.error(`❌ Polling attempt ${attempts + 1} failed:`, error);
       
       // If it's a network error, retry after a longer delay
       if (attempts < maxAttempts - 1) {
@@ -286,7 +360,7 @@ async function pollTranscriptionWithRetry(transcriptId: string): Promise<any> {
   throw new Error('Transcription timeout - processing took longer than expected. Please try a shorter video.');
 }
 
-async function cleanupTempFile(cloudFileName: string): Promise<void> {
+async function cleanupTempFile(cloudFileName: string, cloudRunServiceUrl: string): Promise<void> {
   try {
     const fileName = cloudFileName.split('/').pop();
     const cleanupResponse = await fetch(`${cloudRunServiceUrl}/cleanup/${fileName}`, {
@@ -294,11 +368,11 @@ async function cleanupTempFile(cloudFileName: string): Promise<void> {
     });
     
     if (cleanupResponse.ok) {
-      console.log('Temporary file cleaned up successfully');
+      console.log('🧹 Temporary file cleaned up successfully');
     } else {
-      console.warn('Cleanup response not ok:', cleanupResponse.status);
+      console.warn('⚠️ Cleanup response not ok:', cleanupResponse.status);
     }
   } catch (error) {
-    console.error('Failed to cleanup temporary file:', error);
+    console.error('❌ Failed to cleanup temporary file:', error);
   }
 }
