@@ -1,6 +1,6 @@
-
 import { useMemo } from 'react';
 import { useSessionAnalytics } from '../../useSessionAnalytics';
+import type { LearningPath, AdaptiveStep, BehavioralPattern } from './types';
 
 export interface AdaptiveLearningMetrics {
   difficultyAdjustment: 'increase' | 'decrease' | 'maintain';
@@ -107,30 +107,58 @@ export const useRealAdaptiveLearningCalculations = () => {
 };
 
 // Export functions needed by useAdaptiveLearning
-export const generateRealAdaptiveLearningPath = (userSessions: any[], sets: any[], progress: any[]) => {
+export const generateRealAdaptiveLearningPath = (userSessions: any[], sets: any[], progress: any[], userId: string): LearningPath[] => {
   // Generate learning paths based on user data
-  return sets.map((set, index) => ({
-    id: `path-${index}`,
-    subject: set.subject || set.name,
-    currentStep: 1,
-    totalSteps: 10,
-    difficulty: 'intermediate' as const,
-    estimatedCompletion: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    progress: Math.min(100, (userSessions.length * 10))
-  }));
+  return sets.map((set, index): LearningPath => {
+    const currentTime = new Date().toISOString();
+    const estimatedCompletionDays = Math.max(7, Math.min(30, userSessions.length * 2));
+    
+    // Generate adaptive steps for this learning path
+    const adaptiveSteps: AdaptiveStep[] = Array.from({ length: 10 }, (_, stepIndex) => ({
+      stepNumber: stepIndex + 1,
+      title: `Step ${stepIndex + 1}: ${set.subject || set.name}`,
+      description: `Study session ${stepIndex + 1} for ${set.subject || set.name}`,
+      resourceType: stepIndex % 3 === 0 ? 'flashcards' : stepIndex % 3 === 1 ? 'quiz' : 'review',
+      resourceId: set.id,
+      estimatedTimeMinutes: 30,
+      prerequisites: stepIndex > 0 ? [stepIndex] : [],
+      completed: stepIndex === 0, // Only first step completed by default
+      adaptiveAdjustments: []
+    }));
+
+    return {
+      id: `path-${set.id}-${index}`,
+      userId,
+      subject: set.subject || set.name || 'General Study',
+      currentStep: 1,
+      totalSteps: 10,
+      estimatedCompletionDays,
+      adaptiveSteps,
+      difficulty: 'intermediate' as const,
+      createdAt: currentTime,
+      updatedAt: currentTime
+    };
+  });
 };
 
-export const analyzeRealStudyPatterns = (userSessions: any[]) => {
+export const analyzeRealStudyPatterns = (userSessions: any[]): BehavioralPattern[] => {
   // Analyze behavioral patterns
   return [
     {
-      id: 'consistency',
-      type: 'study_consistency' as const,
-      description: 'Study session consistency analysis',
-      confidence: 85,
-      insights: ['Regular study sessions detected', 'Good consistency pattern'],
-      recommendations: ['Continue current schedule'],
-      timeframe: 'last_30_days' as const
+      patternType: 'study_timing',
+      pattern: 'Regular study sessions detected',
+      frequency: Math.min(userSessions.length, 10),
+      effectiveness: 85,
+      recommendation: 'Continue current schedule',
+      impact: 'positive'
+    },
+    {
+      patternType: 'session_length',
+      pattern: 'Consistent session duration',
+      frequency: userSessions.length,
+      effectiveness: 75,
+      recommendation: 'Good consistency pattern',
+      impact: 'positive'
     }
   ];
 };
