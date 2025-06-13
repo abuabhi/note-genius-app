@@ -130,6 +130,33 @@ export const useQuizMode = ({
     return () => clearInterval(timer);
   }, [isTimerActive, timeLeft]);
 
+  const handleQuizComplete = useCallback(async () => {
+    if (!user || !quizSession) return;
+
+    setIsTimerActive(false);
+    
+    try {
+      // Save quiz results
+      const { error } = await supabase
+        .from('quiz_results')
+        .insert({
+          user_id: user.id,
+          quiz_id: setId,
+          score: totalScore,
+          total_questions: quizSession.totalQuestions,
+          completed_at: new Date().toISOString(),
+          duration_seconds: Math.floor((Date.now() - quizSession.startTime.getTime()) / 1000)
+        });
+
+      if (error) throw error;
+
+      toast.success(`Quiz completed! Score: ${correctAnswers}/${quizSession.totalQuestions}`);
+    } catch (error) {
+      console.error('Error saving quiz results:', error);
+      toast.error('Failed to save quiz results');
+    }
+  }, [user, quizSession, totalScore, correctAnswers, setId]);
+
   const handleQuizAnswer = useCallback(async (answer: 'mastered' | 'needs_practice') => {
     if (!user || !flashcards[currentIndex] || !quizSession) return;
 
@@ -161,33 +188,6 @@ export const useQuizMode = ({
       handleNext();
     }
   }, [user, flashcards, currentIndex, quizSession, totalScore, updateSessionActivity, recordActivity]);
-
-  const handleQuizComplete = useCallback(async () => {
-    if (!user || !quizSession) return;
-
-    setIsTimerActive(false);
-    
-    try {
-      // Save quiz results
-      const { error } = await supabase
-        .from('quiz_results')
-        .insert({
-          user_id: user.id,
-          quiz_id: setId,
-          score: totalScore,
-          total_questions: quizSession.totalQuestions,
-          completed_at: new Date().toISOString(),
-          duration_seconds: Math.floor((Date.now() - quizSession.startTime.getTime()) / 1000)
-        });
-
-      if (error) throw error;
-
-      toast.success(`Quiz completed! Score: ${correctAnswers}/${quizSession.totalQuestions}`);
-    } catch (error) {
-      console.error('Error saving quiz results:', error);
-      toast.error('Failed to save quiz results');
-    }
-  }, [user, quizSession, totalScore, correctAnswers, setId]);
 
   const handleNext = useCallback(() => {
     recordActivity(); // Record user activity
