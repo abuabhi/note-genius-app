@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { useLocation } from 'react-router-dom';
@@ -7,6 +6,9 @@ import { supabase } from '@/integrations/supabase/client';
 export type ActivityType = 'general' | 'flashcard_study' | 'note_review' | 'quiz_taking';
 
 const STUDY_ROUTES = ['/flashcards', '/notes', '/quiz', '/study'];
+const PERIODIC_SAVE_INTERVAL = 30000; // 30 seconds
+const AUTO_TIMEOUT_MINUTES = 30;
+const WARNING_TIMEOUT_MINUTES = 25;
 
 const isStudyRoute = (pathname: string): boolean => {
   return STUDY_ROUTES.some(route => pathname.startsWith(route));
@@ -46,10 +48,14 @@ export const useBasicSessionTracker = () => {
   const [currentActivity, setCurrentActivity] = useState<ActivityType>('general');
   const [isEnding, setIsEnding] = useState(false);
   const [finalElapsedTime, setFinalElapsedTime] = useState<number | null>(null); // NEW: Store final time
+  const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
   
   // Use refs for stable values in timer calculations
   const pausedTimeRef = useRef(0);
   const lastPauseStartRef = useRef<Date | null>(null);
+  const periodicSaveIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutWarningRef = useRef<NodeJS.Timeout | null>(null);
+  const autoTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Derived state
   const isOnStudyPage = isStudyRoute(location.pathname);
@@ -67,7 +73,8 @@ export const useBasicSessionTracker = () => {
     currentActivity,
     user: !!user,
     hookInstances: hookInstanceCount,
-    isEnding
+    isEnding,
+    showTimeoutWarning
   });
 
   // Timer - runs every second when active and not paused and not ending
@@ -91,6 +98,136 @@ export const useBasicSessionTracker = () => {
 
     return () => clearInterval(interval);
   }, [isActive, startTime, isPaused, isEnding]);
+
+  // Periodic save to database
+  const saveSessionProgress = useCallback(async () => {
+    if (!sessionId || !startTime || !user) return;
+
+    try {
+      const now = new Date();
+      let currentDuration: number;
+      
+      if (isPaused && lastPauseStartRef.current) {
+        currentDuration = Math.floor((lastPauseStartRef.current.getTime() - startTime.getTime() - pausedTimeRef.current) / 1000);
+      } else {
+        currentDuration = Math.floor((now.getTime() - startTime.getTime() - pausedTimeRef.current) / 1000);
+      }
+
+      console.log('💾 [BASIC SESSION] Periodic save - Duration:', currentDuration, 'seconds, Paused:', isPaused);
+
+      await supabase
+        .from('study_sessions')
+        .update({
+          duration: Math.max(currentDuration, 1),
+          updated_at: now.toISOString(),
+          // Keep session active during periodic saves
+          is_active: true
+        })
+        .eq('id', sessionId);
+
+      console.log('✅ [BASIC SESSION] Periodic save completed for session:', sessionId);
+    } catch (error) {
+      console.error('❌ [BASIC SESSION] Failed to save session progress:', error);
+    }
+  }, [sessionId, startTime, isPaused, user]);
+
+  // Setup periodic saves
+  useEffect(() => {
+    if (!isActive) {
+      // Clear periodic save interval when session is not active
+      if (periodicSaveIntervalRef.current) {
+        clearInterval(periodicSaveIntervalRef.current);
+        periodicSaveIntervalRef.current = null;
+      }
+      return;
+    }
+
+    // Start periodic saves
+    periodicSaveIntervalRef.current = setInterval(saveSessionProgress, PERIODIC_SAVE_INTERVAL);
+
+    return () => {
+      if (periodicSaveIntervalRef.current) {
+        clearInterval(periodicSaveIntervalRef.current);
+        periodicSaveIntervalRef.current = null;
+      }
+    };
+  }, [isActive, saveSessionProgress]);
+
+  // Setup auto-timeout when paused
+  useEffect(() => {
+    // Clear existing timeouts
+    if (timeoutWarningRef.current) {
+      clearTimeout(timeoutWarningRef.current);
+      timeoutWarningRef.current = null;
+    }
+    if (autoTimeoutRef.current) {
+      clearTimeout(autoTimeoutRef.current);
+      autoTimeoutRef.current = null;
+    }
+    setShowTimeoutWarning(false);
+
+    if (!isActive || !isPaused) return;
+
+    console.log('⏰ [BASIC SESSION] Setting up auto-timeout timers');
+
+    // Set warning timeout
+    timeoutWarningRef.current = setTimeout(() => {
+      setShowTimeoutWarning(true);
+      console.log('⚠️ [BASIC SESSION] Showing timeout warning');
+    }, WARNING_TIMEOUT_MINUTES * 60 * 1000);
+
+    // Set auto-timeout
+    autoTimeoutRef.current = setTimeout(async () => {
+      console.log('🔔 [BASIC SESSION] Auto-timeout triggered, ending session');
+      await endSessionDueToTimeout();
+    }, AUTO_TIMEOUT_MINUTES * 60 * 1000);
+
+    return () => {
+      if (timeoutWarningRef.current) {
+        clearTimeout(timeoutWarningRef.current);
+        timeoutWarningRef.current = null;
+      }
+      if (autoTimeoutRef.current) {
+        clearTimeout(autoTimeoutRef.current);
+        autoTimeoutRef.current = null;
+      }
+    };
+  }, [isActive, isPaused]);
+
+  // Auto-timeout session end
+  const endSessionDueToTimeout = useCallback(async () => {
+    if (!sessionId || !startTime) return;
+
+    try {
+      console.log('⏰ [BASIC SESSION] Auto-ending session due to timeout');
+      
+      const endTime = new Date();
+      let finalDuration: number;
+      
+      if (lastPauseStartRef.current) {
+        finalDuration = Math.floor((lastPauseStartRef.current.getTime() - startTime.getTime() - pausedTimeRef.current) / 1000);
+      } else {
+        finalDuration = Math.floor((endTime.getTime() - startTime.getTime() - pausedTimeRef.current) / 1000);
+      }
+
+      await supabase
+        .from('study_sessions')
+        .update({
+          end_time: endTime.toISOString(),
+          duration: Math.max(finalDuration, 1),
+          is_active: false,
+          notes: 'Session auto-ended due to inactivity'
+        })
+        .eq('id', sessionId);
+
+      // Clear session state
+      clearSessionState();
+      
+      console.log('✅ [BASIC SESSION] Session auto-ended successfully');
+    } catch (error) {
+      console.error('❌ [BASIC SESSION] Failed to auto-end session:', error);
+    }
+  }, [sessionId, startTime]);
 
   // Start session
   const startSession = useCallback(async () => {
@@ -128,6 +265,7 @@ export const useBasicSessionTracker = () => {
       setIsManuallyPaused(false);
       setIsEnding(false);
       setFinalElapsedTime(null);
+      setShowTimeoutWarning(false);
       pausedTimeRef.current = 0;
       lastPauseStartRef.current = null;
       setCurrentActivity(activityType);
@@ -179,6 +317,21 @@ export const useBasicSessionTracker = () => {
   // Clear session state
   const clearSessionState = useCallback(() => {
     console.log('🧹 [BASIC SESSION] Clearing session state');
+    
+    // Clear all timeouts
+    if (periodicSaveIntervalRef.current) {
+      clearInterval(periodicSaveIntervalRef.current);
+      periodicSaveIntervalRef.current = null;
+    }
+    if (timeoutWarningRef.current) {
+      clearTimeout(timeoutWarningRef.current);
+      timeoutWarningRef.current = null;
+    }
+    if (autoTimeoutRef.current) {
+      clearTimeout(autoTimeoutRef.current);
+      autoTimeoutRef.current = null;
+    }
+    
     setSessionId(null);
     setStartTime(null);
     setElapsedSeconds(0);
@@ -186,6 +339,7 @@ export const useBasicSessionTracker = () => {
     setIsManuallyPaused(false);
     setIsEnding(false);
     setFinalElapsedTime(null);
+    setShowTimeoutWarning(false);
     pausedTimeRef.current = 0;
     lastPauseStartRef.current = null;
     setCurrentActivity('general');
@@ -275,6 +429,7 @@ export const useBasicSessionTracker = () => {
         lastPauseStartRef.current = null;
       }
       setIsPaused(false);
+      setShowTimeoutWarning(false);
       return;
     }
 
@@ -306,6 +461,7 @@ export const useBasicSessionTracker = () => {
       }
       setIsPaused(false);
       setIsManuallyPaused(false);
+      setShowTimeoutWarning(false);
     } else {
       // Pause - record when we paused and mark as manual
       lastPauseStartRef.current = new Date();
@@ -327,6 +483,7 @@ export const useBasicSessionTracker = () => {
         lastPauseStartRef.current = null;
       }
       setIsPaused(false);
+      setShowTimeoutWarning(false);
       console.log('▶️ [BASIC SESSION] Auto-resumed session due to activity');
     }
   }, [isOnStudyPage, isPaused, isManuallyPaused, isEnding]);
@@ -359,6 +516,10 @@ export const useBasicSessionTracker = () => {
     }
   }, [sessionId, isActive, isEnding]);
 
+  const dismissTimeoutWarning = useCallback(() => {
+    setShowTimeoutWarning(false);
+  }, []);
+
   // Return final elapsed time if ending, otherwise current elapsed time
   const displayElapsedSeconds = finalElapsedTime !== null ? finalElapsedTime : elapsedSeconds;
 
@@ -372,12 +533,14 @@ export const useBasicSessionTracker = () => {
     isPaused,
     isOnStudyPage,
     isEnding,
+    showTimeoutWarning,
     
     // Actions
     startSession,
     endSession, // Returns a cleanup function
     togglePause,
     recordActivity,
-    updateSessionActivity
+    updateSessionActivity,
+    dismissTimeoutWarning
   };
 };
