@@ -2,7 +2,7 @@
 #!/bin/bash
 
 # Configuration
-PROJECT_ID="your-gcp-project-id"
+PROJECT_ID="studyapp-462401"
 SERVICE_NAME="youtube-audio-extractor"
 REGION="us-central1"
 IMAGE_NAME="gcr.io/${PROJECT_ID}/${SERVICE_NAME}"
@@ -59,7 +59,7 @@ gcloud run deploy ${SERVICE_NAME} \
   --max-instances 100 \
   --set-env-vars "NODE_ENV=production" \
   --set-env-vars "GOOGLE_CLOUD_PROJECT_ID=${PROJECT_ID}" \
-  --set-env-vars "GOOGLE_CLOUD_STORAGE_BUCKET=your-bucket-name"
+  --set-env-vars "GOOGLE_CLOUD_STORAGE_BUCKET=studyapp-462401-youtube-audio-temp"
 
 # Get the service URL
 SERVICE_URL=$(gcloud run services describe ${SERVICE_NAME} --region=${REGION} --format='value(status.url)')
