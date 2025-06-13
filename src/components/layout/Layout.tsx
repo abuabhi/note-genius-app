@@ -28,7 +28,7 @@ export default function Layout({ children, showSidebar = true, showFooter = true
   useReminderToasts();
 
   // Define which routes are public - don't show dock on these
-  const publicRoutes = ['/', '/about', '/pricing', '/faq', '/contact', '/blog', '/features', '/login', '/signup'];
+  const publicRoutes = ['/', '/features', '/about', '/pricing', '/faq', '/contact', '/blog', '/login', '/signup'];
   const isPublicRoute = publicRoutes.includes(location.pathname);
   
   // Show sidebar only for authenticated users on non-public routes

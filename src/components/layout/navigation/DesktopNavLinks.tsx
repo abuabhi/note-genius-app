@@ -1,20 +1,40 @@
 
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 interface DesktopNavLinksProps {
   isPublicRoute: boolean;
 }
 
 export const DesktopNavLinks = ({ isPublicRoute }: DesktopNavLinksProps) => {
-  // Only render on public routes
-  if (!isPublicRoute) return null;
-  
+  const location = useLocation();
+
+  if (!isPublicRoute) {
+    return null;
+  }
+
+  const publicNavItems = [
+    { name: 'Features', href: '/features' },
+    { name: 'Pricing', href: '/pricing' },
+    { name: 'About', href: '/about' },
+    { name: 'FAQ', href: '/faq' },
+    { name: 'Contact', href: '/contact' },
+  ];
+
   return (
     <div className="flex items-center space-x-8">
-      <Link to="/about" className="text-mint-700 hover:text-mint-900">About</Link>
-      <Link to="/blog" className="text-mint-700 hover:text-mint-900">Blog</Link>
-      <Link to="/features" className="text-mint-700 hover:text-mint-900">Features</Link>
-      <Link to="/pricing" className="text-mint-700 hover:text-mint-900">Pricing</Link>
+      {publicNavItems.map((item) => (
+        <Link
+          key={item.name}
+          to={item.href}
+          className={`text-sm font-medium transition-colors hover:text-mint-600 ${
+            location.pathname === item.href
+              ? 'text-mint-600'
+              : 'text-gray-700'
+          }`}
+        >
+          {item.name}
+        </Link>
+      ))}
     </div>
   );
 };

@@ -7,6 +7,7 @@ import AboutPage from "@/pages/AboutPage";
 import ContactPage from "@/pages/ContactPage";
 import PricingPage from "@/pages/PricingPage";
 import FAQPage from "@/pages/FAQPage";
+import FeaturesPage from "@/pages/FeaturesPage";
 
 export interface RouteConfig {
   path: string;
@@ -16,6 +17,7 @@ export interface RouteConfig {
 // Public routes that don't require authentication
 export const publicRoutes: RouteConfig[] = [
   { path: "/", element: <HomePage /> },
+  { path: "/features", element: <FeaturesPage /> },
   { path: "/login", element: <LoginPage /> },
   { path: "/signup", element: <SignupPage /> },
   { path: "/about", element: <AboutPage /> },
