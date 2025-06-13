@@ -62,27 +62,34 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
     }
 
     try {
-      // Step 1: Extracting audio
+      // Step 1: Audio extraction via Cloud Run
       setTranscriptionState({
         status: 'extracting',
-        progress: 20,
-        message: 'Extracting audio from YouTube video...'
+        progress: 15,
+        message: 'Extracting high-quality audio from YouTube video...'
       });
 
-      // Step 2: Uploading
+      // Step 2: Processing and upload
       setTranscriptionState(prev => ({
         ...prev,
         status: 'uploading',
-        progress: 40,
-        message: 'Uploading audio for transcription...'
+        progress: 35,
+        message: 'Processing audio and preparing for transcription...'
       }));
 
-      // Step 3: Transcribing
+      // Step 3: AI transcription
       setTranscriptionState(prev => ({
         ...prev,
         status: 'transcribing',
         progress: 60,
-        message: 'Transcribing audio with AI...'
+        message: 'AI is transcribing audio with advanced language processing...'
+      }));
+
+      // Step 4: Enhanced processing
+      setTranscriptionState(prev => ({
+        ...prev,
+        progress: 85,
+        message: 'Generating summary, chapters, and insights...'
       }));
 
       const { data, error } = await supabase.functions.invoke('youtube-transcription', {
@@ -97,49 +104,95 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
         throw new Error(data.error || 'Transcription failed');
       }
 
-      // Step 4: Completed
+      // Step 5: Completed with enhanced data
       setTranscriptionState({
         status: 'completed',
         progress: 100,
-        message: 'Transcription completed successfully!',
+        message: `Transcription completed! Processed ${data.wordCount} words in ${Math.round(data.processingTime / 60)} minutes of content.`,
         videoTitle: data.videoTitle,
         transcript: data.transcript,
         summary: data.summary,
         chapters: data.chapters
       });
 
-      // Auto-populate note fields
+      // Auto-populate note fields with enhanced content
       setNoteTitle(data.videoTitle || 'YouTube Video Transcript');
-      setNoteContent(formatTranscriptContent(data));
+      setNoteContent(formatEnhancedTranscriptContent(data));
 
     } catch (error) {
       console.error('Transcription error:', error);
       setTranscriptionState({
         status: 'error',
         progress: 0,
-        message: 'Failed to transcribe video',
+        message: 'Failed to transcribe video. Please try again or contact support if the issue persists.',
         error: error instanceof Error ? error.message : 'Unknown error occurred'
       });
     }
   };
 
-  const formatTranscriptContent = (data: any) => {
+  const formatEnhancedTranscriptContent = (data: any) => {
     let content = '';
     
+    // Video metadata
+    content += `# ${data.videoTitle}\n\n`;
+    if (data.videoUploader) {
+      content += `**Channel:** ${data.videoUploader}\n`;
+    }
+    if (data.videoDuration) {
+      content += `**Duration:** ${Math.round(data.videoDuration / 60)} minutes\n`;
+    }
+    if (data.languageDetected) {
+      content += `**Language:** ${data.languageDetected.toUpperCase()}\n`;
+    }
+    content += `**Transcribed:** ${new Date().toLocaleDateString()}\n\n`;
+    
+    // AI-generated summary
     if (data.summary) {
-      content += `## Summary\n${data.summary}\n\n`;
+      content += `## 📋 AI Summary\n${data.summary}\n\n`;
     }
     
-    if (data.chapters && data.chapters.length > 0) {
-      content += `## Chapters\n`;
-      data.chapters.forEach((chapter: any, index: number) => {
-        content += `${index + 1}. **${chapter.gist}**: ${chapter.headline}\n`;
+    // Key highlights
+    if (data.highlights && data.highlights.length > 0) {
+      content += `## ✨ Key Highlights\n`;
+      data.highlights.slice(0, 5).forEach((highlight: any, index: number) => {
+        content += `${index + 1}. **${highlight.text}** (${highlight.rank} relevance)\n`;
       });
       content += '\n';
     }
     
+    // Chapter breakdown
+    if (data.chapters && data.chapters.length > 0) {
+      content += `## 📚 Chapters\n`;
+      data.chapters.forEach((chapter: any, index: number) => {
+        const startTime = Math.floor(chapter.start / 1000);
+        const minutes = Math.floor(startTime / 60);
+        const seconds = startTime % 60;
+        content += `${index + 1}. **[${minutes}:${seconds.toString().padStart(2, '0')}] ${chapter.gist}**\n   ${chapter.headline}\n\n`;
+      });
+    }
+    
+    // Speaker analysis (if multiple speakers detected)
+    if (data.speakers && data.speakers.length > 0) {
+      const speakerCount = new Set(data.speakers.map((s: any) => s.speaker)).size;
+      if (speakerCount > 1) {
+        content += `## 🎙️ Speaker Analysis\n`;
+        content += `This video contains ${speakerCount} different speakers.\n\n`;
+      }
+    }
+    
+    // Sentiment analysis summary
+    if (data.sentiment && data.sentiment.length > 0) {
+      const avgSentiment = data.sentiment.reduce((sum: number, item: any) => 
+        sum + (item.sentiment === 'POSITIVE' ? 1 : item.sentiment === 'NEGATIVE' ? -1 : 0), 0
+      ) / data.sentiment.length;
+      
+      content += `## 😊 Sentiment Analysis\n`;
+      content += `Overall tone: ${avgSentiment > 0.1 ? 'Positive' : avgSentiment < -0.1 ? 'Negative' : 'Neutral'}\n\n`;
+    }
+    
+    // Full transcript
     if (data.transcript) {
-      content += `## Full Transcript\n${data.transcript}`;
+      content += `## 📝 Full Transcript\n\n${data.transcript}`;
     }
     
     return content;
@@ -190,7 +243,12 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
         <Alert className="mt-4" variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            {error || message}
+            <div className="space-y-2">
+              <p className="font-medium">{error || message}</p>
+              <p className="text-sm opacity-90">
+                This may be due to: video privacy settings, geo-restrictions, or temporary service issues.
+              </p>
+            </div>
           </AlertDescription>
         </Alert>
       );
@@ -201,19 +259,31 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
         <Alert className="mt-4 border-green-200 bg-green-50">
           <CheckCircle className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-800">
-            {message}
+            <div className="space-y-1">
+              <p className="font-medium">🎉 Transcription Complete!</p>
+              <p className="text-sm">{message}</p>
+            </div>
           </AlertDescription>
         </Alert>
       );
     }
 
     return (
-      <div className="mt-4 space-y-2">
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          {message}
+      <div className="mt-4 space-y-3">
+        <div className="flex items-center gap-3 text-sm text-gray-700">
+          <Loader2 className="h-5 w-5 animate-spin text-mint-600" />
+          <span className="font-medium">{message}</span>
         </div>
-        <Progress value={progress} className="w-full" />
+        <div className="space-y-2">
+          <Progress value={progress} className="w-full h-2" />
+          <div className="flex justify-between text-xs text-gray-500">
+            <span>Processing...</span>
+            <span>{progress}%</span>
+          </div>
+        </div>
+        <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+          💡 Tip: This may take 2-5 minutes depending on video length. Feel free to continue using the app!
+        </div>
       </div>
     );
   };
@@ -226,7 +296,12 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-3">
               <Video className="h-5 w-5 text-red-500" />
-              <h4 className="font-medium text-gray-900">YouTube Video Transcription</h4>
+              <div>
+                <h4 className="font-medium text-gray-900">Professional YouTube Transcription</h4>
+                <p className="text-xs text-gray-600 mt-1">
+                  Powered by advanced AI for accurate transcription, summaries, and insights
+                </p>
+              </div>
             </div>
             
             <div className="space-y-2">
@@ -243,12 +318,13 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
             <Button
               onClick={handleTranscribe}
               disabled={!youtubeUrl.trim() || (transcriptionState.status !== 'idle' && transcriptionState.status !== 'error' && transcriptionState.status !== 'completed')}
-              className="w-full"
+              className="w-full bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800"
+              size="lg"
             >
               {transcriptionState.status === 'idle' || transcriptionState.status === 'error' ? (
                 <>
                   <Play className="mr-2 h-4 w-4" />
-                  Transcribe Video
+                  Start AI Transcription
                 </>
               ) : transcriptionState.status === 'completed' ? (
                 <>
