@@ -1,4 +1,5 @@
 
+
 FROM node:18-slim
 
 # Install system dependencies including Python and pip
@@ -38,3 +39,4 @@ EXPOSE 8080
 
 # Start the application
 CMD ["npm", "start"]
+
