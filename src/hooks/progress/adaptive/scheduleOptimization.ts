@@ -1,5 +1,5 @@
 
-import { useSessionAnalytics } from '../../../hooks/useSessionAnalytics';
+import { useSessionAnalytics } from '../../useSessionAnalytics';
 
 export interface OptimalTimeSlot {
   startTime: string;
@@ -26,7 +26,7 @@ export const useScheduleOptimization = () => {
     }
 
     // Analyze performance by hour
-    const hourlyStats = new Map();
+    const hourlyStats = new Map<number, { totalAccuracy: number; sessionCount: number; subjects: Set<string> }>();
     
     sessions.forEach(session => {
       const hour = new Date(session.start_time).getHours();
@@ -42,7 +42,7 @@ export const useScheduleOptimization = () => {
         });
       }
       
-      const stats = hourlyStats.get(hour);
+      const stats = hourlyStats.get(hour)!;
       stats.totalAccuracy += accuracy;
       stats.sessionCount++;
       if (session.subject) {
@@ -57,7 +57,7 @@ export const useScheduleOptimization = () => {
         endTime: `${(hour + 1).toString().padStart(2, '0')}:00`,
         efficiencyScore: Math.round(stats.totalAccuracy / stats.sessionCount),
         recommendedSubjects: Array.from(stats.subjects),
-        cognitiveLoad: stats.sessionCount > 3 ? 'low' : 'medium'
+        cognitiveLoad: (stats.sessionCount > 3 ? 'low' : 'medium') as 'low' | 'medium' | 'high'
       }))
       .sort((a, b) => b.efficiencyScore - a.efficiencyScore)
       .slice(0, 5);
