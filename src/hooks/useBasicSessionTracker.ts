@@ -44,12 +44,12 @@ export const useBasicSessionTracker = () => {
   const [isPaused, setIsPaused] = useState(false);
   const [isManuallyPaused, setIsManuallyPaused] = useState(false);
   const [currentActivity, setCurrentActivity] = useState<ActivityType>('general');
-  const [isEnding, setIsEnding] = useState(false); // NEW: Track ending state
+  const [isEnding, setIsEnding] = useState(false);
+  const [finalElapsedTime, setFinalElapsedTime] = useState<number | null>(null); // NEW: Store final time
   
   // Use refs for stable values in timer calculations
   const pausedTimeRef = useRef(0);
   const lastPauseStartRef = useRef<Date | null>(null);
-  const finalDurationRef = useRef<number | null>(null); // NEW: Store final duration
   
   // Derived state
   const isOnStudyPage = isStudyRoute(location.pathname);
@@ -63,13 +63,14 @@ export const useBasicSessionTracker = () => {
     isManuallyPaused,
     sessionId,
     elapsedSeconds,
+    finalElapsedTime,
     currentActivity,
     user: !!user,
     hookInstances: hookInstanceCount,
     isEnding
   });
 
-  // Timer - runs every second when active and not paused
+  // Timer - runs every second when active and not paused and not ending
   useEffect(() => {
     if (!isActive || !startTime || isEnding) return; // Don't update timer if ending
 
@@ -126,9 +127,9 @@ export const useBasicSessionTracker = () => {
       setIsPaused(false);
       setIsManuallyPaused(false);
       setIsEnding(false);
+      setFinalElapsedTime(null);
       pausedTimeRef.current = 0;
       lastPauseStartRef.current = null;
-      finalDurationRef.current = null;
       setCurrentActivity(activityType);
       
       console.log('✅ [BASIC SESSION] Session started:', data.id);
@@ -137,7 +138,7 @@ export const useBasicSessionTracker = () => {
     }
   }, [user, location.pathname]);
 
-  // NEW: Save session to database without clearing state
+  // Save session to database without clearing state
   const saveSession = useCallback(async () => {
     if (!sessionId || !startTime) {
       console.log('❌ [BASIC SESSION] Cannot save session - no active session');
@@ -155,8 +156,6 @@ export const useBasicSessionTracker = () => {
         // If not paused, calculate total duration minus paused time
         finalDuration = Math.floor((endTime.getTime() - startTime.getTime() - pausedTimeRef.current) / 1000);
       }
-
-      finalDurationRef.current = finalDuration;
 
       console.log('💾 [BASIC SESSION] Saving session:', sessionId, 'Duration:', finalDuration, 'seconds');
 
@@ -177,7 +176,7 @@ export const useBasicSessionTracker = () => {
     }
   }, [sessionId, startTime, isPaused]);
 
-  // NEW: Clear session state
+  // Clear session state
   const clearSessionState = useCallback(() => {
     console.log('🧹 [BASIC SESSION] Clearing session state');
     setSessionId(null);
@@ -186,13 +185,13 @@ export const useBasicSessionTracker = () => {
     setIsPaused(false);
     setIsManuallyPaused(false);
     setIsEnding(false);
+    setFinalElapsedTime(null);
     pausedTimeRef.current = 0;
     lastPauseStartRef.current = null;
-    finalDurationRef.current = null;
     setCurrentActivity('general');
   }, []);
 
-  // UPDATED: End session now manages the ending flow
+  // End session - now captures final time before setting ending state
   const endSession = useCallback(async () => {
     if (!sessionId || !startTime) {
       console.log('❌ [BASIC SESSION] Cannot end session - no active session');
@@ -200,19 +199,26 @@ export const useBasicSessionTracker = () => {
     }
 
     console.log('🛑 [BASIC SESSION] Starting session end process');
+    
+    // Calculate and store final elapsed time BEFORE setting ending state
+    let finalTime: number;
+    if (isPaused && lastPauseStartRef.current) {
+      finalTime = Math.floor((lastPauseStartRef.current.getTime() - startTime.getTime() - pausedTimeRef.current) / 1000);
+    } else {
+      const now = new Date();
+      finalTime = Math.floor((now.getTime() - startTime.getTime() - pausedTimeRef.current) / 1000);
+    }
+    
+    // Store the final elapsed time and set ending state
+    setFinalElapsedTime(finalTime);
     setIsEnding(true);
 
-    // Save the session but don't clear state yet
-    const finalDuration = await saveSession();
-    
-    // Update elapsed seconds to show the final duration
-    if (finalDuration !== null) {
-      setElapsedSeconds(finalDuration);
-    }
+    // Save the session
+    await saveSession();
 
     // Return a function that can be called to clear state later
     return clearSessionState;
-  }, [sessionId, startTime, saveSession, clearSessionState]);
+  }, [sessionId, startTime, isPaused, saveSession, clearSessionState]);
 
   // Update activity type
   const updateActivityType = useCallback(async () => {
@@ -353,20 +359,23 @@ export const useBasicSessionTracker = () => {
     }
   }, [sessionId, isActive, isEnding]);
 
+  // Return final elapsed time if ending, otherwise current elapsed time
+  const displayElapsedSeconds = finalElapsedTime !== null ? finalElapsedTime : elapsedSeconds;
+
   return {
     // State
     sessionId,
     isActive,
     startTime,
-    elapsedSeconds,
+    elapsedSeconds: displayElapsedSeconds, // Use display time
     currentActivity,
     isPaused,
     isOnStudyPage,
-    isEnding, // NEW: Expose ending state
+    isEnding,
     
     // Actions
     startSession,
-    endSession, // Now returns a cleanup function
+    endSession, // Returns a cleanup function
     togglePause,
     recordActivity,
     updateSessionActivity

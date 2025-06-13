@@ -99,7 +99,7 @@ export const SessionDock = () => {
     console.log('🛑 SessionDock - End session clicked');
     setIsLocalEnding(true);
     
-    // Call endSession which saves but doesn't clear state
+    // Call endSession which saves and sets final elapsed time
     const clearSessionState = await endSession();
     
     // Show final time for 1 second before clearing state
