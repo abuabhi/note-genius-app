@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 
 export const SessionDebugPanel = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { metrics, exportAnalytics, clearAnalytics } = useSessionAnalytics();
+  const { analytics, sessions } = useSessionAnalytics();
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -21,6 +21,24 @@ export const SessionDebugPanel = () => {
       return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const exportAnalytics = () => {
+    const data = {
+      analytics,
+      sessions: sessions.slice(0, 10), // Last 10 sessions
+      exportedAt: new Date().toISOString()
+    };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `session-analytics-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   if (!isOpen) {
@@ -64,20 +82,20 @@ export const SessionDebugPanel = () => {
           <TabsContent value="metrics" className="space-y-3">
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="bg-muted p-2 rounded">
-                <div className="font-medium">Total Events</div>
-                <div className="text-lg font-bold">{metrics.totalEvents}</div>
+                <div className="font-medium">Total Sessions</div>
+                <div className="text-lg font-bold">{analytics.totalSessions}</div>
               </div>
               <div className="bg-muted p-2 rounded">
-                <div className="font-medium">Sessions</div>
-                <div className="text-lg font-bold">{metrics.sessionStartCount}</div>
+                <div className="font-medium">Active Sessions</div>
+                <div className="text-lg font-bold">{analytics.activeSessions}</div>
               </div>
               <div className="bg-muted p-2 rounded">
-                <div className="font-medium">Avg Duration</div>
-                <div className="text-lg font-bold">{formatTime(metrics.averageSessionDuration)}</div>
+                <div className="font-medium">Total Time</div>
+                <div className="text-lg font-bold">{analytics.totalStudyTime}h</div>
               </div>
               <div className="bg-muted p-2 rounded">
-                <div className="font-medium">Idle Warnings</div>
-                <div className="text-lg font-bold">{metrics.idleWarnings}</div>
+                <div className="font-medium">Avg Session</div>
+                <div className="text-lg font-bold">{analytics.averageSessionTime}m</div>
               </div>
             </div>
 
@@ -90,15 +108,6 @@ export const SessionDebugPanel = () => {
               >
                 <Download className="h-3 w-3 mr-1" />
                 Export
-              </Button>
-              <Button
-                onClick={clearAnalytics}
-                size="sm"
-                variant="destructive"
-                className="flex-1 text-xs"
-              >
-                <Trash2 className="h-3 w-3 mr-1" />
-                Clear
               </Button>
             </div>
           </TabsContent>

@@ -1,226 +1,152 @@
-import { EnhancedStudySession } from '../../../hooks/useEnhancedStudySessions';
-import { FlashcardProgress } from '../advanced/types';
-import { 
-  LearningPath, 
-  AdaptiveStep, 
-  StepPerformance,
-  AdaptiveAdjustment,
-  BehavioralPattern 
-} from './types';
 
-export function generateAdaptiveLearningPath(
-  userSessions: EnhancedStudySession[],
-  gradeProgression: FlashcardProgress[],
-  subject: string
-): LearningPath {
-  const subjectSessions = userSessions.filter(s => 
-    s.flashcard_set_id && subject // Filter by flashcard_set_id from study_sessions table
-  );
-  
-  const subjectProgress = gradeProgression.filter(p => 
-    p.flashcard?.flashcard_set_cards?.[0]?.flashcard_sets?.subject?.toLowerCase() === subject.toLowerCase()
-  );
+import { useSessionAnalytics } from '../../../hooks/useSessionAnalytics';
 
-  // Analyze current performance to determine difficulty level
-  const avgMastery = subjectProgress.length > 0 
-    ? subjectProgress.reduce((sum, p) => sum + (p.mastery_level || 0), 0) / subjectProgress.length
-    : 0;
+export const useAdaptiveLearningCalculations = () => {
+  const { analytics, sessions } = useSessionAnalytics();
 
-  const difficulty = avgMastery < 30 ? 'beginner' : 
-                    avgMastery < 70 ? 'intermediate' : 'advanced';
+  // Calculate performance trends
+  const calculatePerformanceTrend = () => {
+    if (!sessions || sessions.length < 2) return 0;
 
-  // Generate adaptive steps based on current performance
-  const adaptiveSteps = generateAdaptiveSteps(difficulty, subjectProgress, subjectSessions);
+    const recentSessions = sessions.slice(0, 5);
+    const accuracyTrend = recentSessions.reduce((acc, session, index) => {
+      const accuracy = session.cards_correct && session.cards_reviewed 
+        ? (session.cards_correct / session.cards_reviewed) * 100 
+        : 0;
+      return acc + (accuracy * (index + 1)); // Weight recent sessions more
+    }, 0) / (recentSessions.length * (recentSessions.length + 1) / 2);
+
+    return Math.round(accuracyTrend);
+  };
+
+  // Calculate difficulty adjustment
+  const calculateDifficultyAdjustment = (currentAccuracy: number) => {
+    if (currentAccuracy > 90) return 'increase';
+    if (currentAccuracy < 60) return 'decrease';
+    return 'maintain';
+  };
+
+  // Calculate optimal study time
+  const calculateOptimalStudyTime = () => {
+    const avgSessionTime = analytics.averageSessionTime || 30;
+    const recentPerformance = calculatePerformanceTrend();
+    
+    // Adjust based on performance
+    if (recentPerformance > 80) {
+      return Math.min(avgSessionTime * 1.2, 60); // Max 60 minutes
+    } else if (recentPerformance < 60) {
+      return Math.max(avgSessionTime * 0.8, 15); // Min 15 minutes
+    }
+    
+    return avgSessionTime;
+  };
+
+  // Calculate spaced repetition intervals
+  const calculateSpacedRepetitionInterval = (
+    previousInterval: number,
+    accuracy: number,
+    repetitionCount: number
+  ) => {
+    const easeFactor = Math.max(1.3, 2.5 + (0.1 * (accuracy / 100 - 0.8) * 5));
+    
+    if (repetitionCount === 1) return 1;
+    if (repetitionCount === 2) return 6;
+    
+    return Math.round(previousInterval * easeFactor);
+  };
+
+  // Calculate learning path progression
+  const calculateLearningPathProgression = (subjectStats: any) => {
+    const totalCards = subjectStats?.totalCards || 0;
+    const masteredCards = subjectStats?.masteredCards || 0;
+    const averageAccuracy = subjectStats?.averageAccuracy || 0;
+    
+    if (totalCards === 0) return 0;
+    
+    const completionRate = masteredCards / totalCards;
+    const accuracyWeight = Math.min(averageAccuracy / 100, 1);
+    
+    return Math.round((completionRate * 0.7 + accuracyWeight * 0.3) * 100);
+  };
+
+  // Calculate cognitive load
+  const calculateCognitiveLoad = (sessionDuration: number, accuracy: number) => {
+    // Convert minutes to a load factor
+    const durationFactor = Math.min(sessionDuration / 60, 1); // Normalize to 1 hour
+    const accuracyFactor = 1 - (accuracy / 100); // Lower accuracy = higher load
+    
+    const cognitiveLoad = (durationFactor * 0.4 + accuracyFactor * 0.6) * 100;
+    
+    if (cognitiveLoad > 70) return 'high';
+    if (cognitiveLoad > 40) return 'medium';
+    return 'low';
+  };
+
+  // Calculate retention prediction
+  const calculateRetentionPrediction = (
+    lastReviewDate: Date,
+    reviewCount: number,
+    accuracy: number
+  ) => {
+    const daysSinceReview = Math.floor(
+      (Date.now() - lastReviewDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    
+    // Forgetting curve calculation
+    const retentionBase = Math.pow(accuracy / 100, 0.5);
+    const timeDecay = Math.exp(-daysSinceReview / (reviewCount + 1));
+    
+    return Math.round(retentionBase * timeDecay * 100);
+  };
+
+  // Calculate subject mastery level
+  const calculateSubjectMasteryLevel = (subjectData: any) => {
+    const sessions = subjectData?.sessions || [];
+    const totalAccuracy = sessions.reduce((sum: number, session: any) => {
+      const accuracy = session.cards_correct && session.cards_reviewed 
+        ? (session.cards_correct / session.cards_reviewed) * 100 
+        : 0;
+      return sum + accuracy;
+    }, 0);
+    
+    const avgAccuracy = sessions.length > 0 ? totalAccuracy / sessions.length : 0;
+    const consistencyScore = calculateConsistencyScore(sessions);
+    
+    const masteryScore = (avgAccuracy * 0.7 + consistencyScore * 0.3);
+    
+    if (masteryScore >= 85) return 'expert';
+    if (masteryScore >= 70) return 'advanced';
+    if (masteryScore >= 55) return 'intermediate';
+    return 'beginner';
+  };
+
+  // Calculate consistency score
+  const calculateConsistencyScore = (sessions: any[]) => {
+    if (sessions.length < 2) return 0;
+    
+    const accuracies = sessions.map((session: any) => {
+      return session.cards_correct && session.cards_reviewed 
+        ? (session.cards_correct / session.cards_reviewed) * 100 
+        : 0;
+    });
+    
+    const mean = accuracies.reduce((sum: number, acc: number) => sum + acc, 0) / accuracies.length;
+    const variance = accuracies.reduce((sum: number, acc: number) => sum + Math.pow(acc - mean, 2), 0) / accuracies.length;
+    const standardDeviation = Math.sqrt(variance);
+    
+    // Lower standard deviation = higher consistency
+    return Math.max(0, 100 - standardDeviation);
+  };
 
   return {
-    id: `path_${subject}_${Date.now()}`,
-    userId: 'current_user',
-    subject,
-    currentStep: 0,
-    totalSteps: adaptiveSteps.length,
-    estimatedCompletionDays: Math.ceil(adaptiveSteps.length / 2), // 2 steps per day average
-    adaptiveSteps,
-    difficulty,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    calculatePerformanceTrend,
+    calculateDifficultyAdjustment,
+    calculateOptimalStudyTime,
+    calculateSpacedRepetitionInterval,
+    calculateLearningPathProgression,
+    calculateCognitiveLoad,
+    calculateRetentionPrediction,
+    calculateSubjectMasteryLevel,
+    calculateConsistencyScore
   };
-}
-
-function generateAdaptiveSteps(
-  difficulty: 'beginner' | 'intermediate' | 'advanced',
-  progress: FlashcardProgress[],
-  sessions: EnhancedStudySession[]
-): AdaptiveStep[] {
-  const steps: AdaptiveStep[] = [];
-  let stepNumber = 1;
-
-  // Foundation phase
-  if (difficulty === 'beginner') {
-    steps.push(createStep(stepNumber++, 'Foundation Review', 'Review basic concepts', 'flashcards', 15));
-    steps.push(createStep(stepNumber++, 'Core Practice', 'Practice fundamental skills', 'practice', 20));
-  }
-
-  // Building phase
-  steps.push(createStep(stepNumber++, 'Concept Reinforcement', 'Strengthen understanding', 'flashcards', 25));
-  steps.push(createStep(stepNumber++, 'Application Quiz', 'Test practical application', 'quiz', 30));
-
-  // Mastery phase
-  if (difficulty === 'advanced') {
-    steps.push(createStep(stepNumber++, 'Advanced Concepts', 'Explore complex topics', 'flashcards', 35));
-    steps.push(createStep(stepNumber++, 'Synthesis Challenge', 'Combine multiple concepts', 'practice', 40));
-  }
-
-  // Review and consolidation
-  steps.push(createStep(stepNumber++, 'Comprehensive Review', 'Review all learned material', 'review', 20));
-  steps.push(createStep(stepNumber++, 'Final Assessment', 'Demonstrate mastery', 'quiz', 30));
-
-  return steps;
-}
-
-function createStep(
-  stepNumber: number,
-  title: string,
-  description: string,
-  resourceType: 'flashcards' | 'quiz' | 'review' | 'practice',
-  estimatedTimeMinutes: number
-): AdaptiveStep {
-  return {
-    stepNumber,
-    title,
-    description,
-    resourceType,
-    estimatedTimeMinutes,
-    prerequisites: stepNumber > 1 ? [stepNumber - 1] : [],
-    completed: false,
-    adaptiveAdjustments: []
-  };
-}
-
-export function analyzeStudyPatterns(sessions: EnhancedStudySession[]): BehavioralPattern[] {
-  const patterns: BehavioralPattern[] = [];
-
-  // Analyze study timing patterns
-  const timingPattern = analyzeTimingPattern(sessions);
-  if (timingPattern) patterns.push(timingPattern);
-
-  // Analyze session length patterns
-  const lengthPattern = analyzeSessionLengthPattern(sessions);
-  if (lengthPattern) patterns.push(lengthPattern);
-
-  // Analyze break frequency patterns
-  const breakPattern = analyzeBreakPattern(sessions);
-  if (breakPattern) patterns.push(breakPattern);
-
-  return patterns;
-}
-
-function analyzeTimingPattern(sessions: EnhancedStudySession[]): BehavioralPattern | null {
-  if (sessions.length < 5) return null;
-
-  const hourCounts = sessions.reduce((acc, session) => {
-    const hour = new Date(session.start_time).getHours();
-    acc[hour] = (acc[hour] || 0) + 1;
-    return acc;
-  }, {} as Record<number, number>);
-
-  const peakHour = Object.entries(hourCounts)
-    .sort(([, a], [, b]) => b - a)[0];
-
-  if (!peakHour) return null;
-
-  const [hour, frequency] = peakHour;
-  const timeRange = getTimeRange(parseInt(hour));
-  
-  return {
-    patternType: 'study_timing',
-    pattern: `Most active during ${timeRange}`,
-    frequency: frequency / sessions.length,
-    effectiveness: calculateTimingEffectiveness(sessions, parseInt(hour)),
-    recommendation: generateTimingRecommendation(parseInt(hour)),
-    impact: 'positive'
-  };
-}
-
-function analyzeSessionLengthPattern(sessions: EnhancedStudySession[]): BehavioralPattern | null {
-  if (sessions.length < 3) return null;
-
-  const avgDuration = sessions
-    .filter(s => s.duration && s.duration > 0)
-    .reduce((sum, s) => sum + (s.duration || 0), 0) / sessions.length;
-
-  const lengthCategory = avgDuration < 1800 ? 'short' : 
-                        avgDuration < 3600 ? 'medium' : 'long';
-
-  return {
-    patternType: 'session_length',
-    pattern: `Prefers ${lengthCategory} study sessions (${Math.round(avgDuration / 60)} min avg)`,
-    frequency: 1.0,
-    effectiveness: calculateLengthEffectiveness(avgDuration),
-    recommendation: generateLengthRecommendation(lengthCategory),
-    impact: avgDuration > 1200 && avgDuration < 3600 ? 'positive' : 'neutral'
-  };
-}
-
-function analyzeBreakPattern(sessions: EnhancedStudySession[]): BehavioralPattern | null {
-  // This would analyze break_time data if available
-  // For now, return a default pattern
-  return {
-    patternType: 'break_frequency',
-    pattern: 'Moderate break frequency',
-    frequency: 0.5,
-    effectiveness: 0.7,
-    recommendation: 'Consider implementing Pomodoro technique',
-    impact: 'neutral'
-  };
-}
-
-function getTimeRange(hour: number): string {
-  if (hour >= 6 && hour < 12) return 'morning (6AM-12PM)';
-  if (hour >= 12 && hour < 18) return 'afternoon (12PM-6PM)';
-  if (hour >= 18 && hour < 22) return 'evening (6PM-10PM)';
-  return 'late night/early morning';
-}
-
-function calculateTimingEffectiveness(sessions: EnhancedStudySession[], peakHour: number): number {
-  const peakSessions = sessions.filter(s => 
-    new Date(s.start_time).getHours() === peakHour
-  );
-  
-  if (peakSessions.length === 0) return 0.5;
-
-  const avgAccuracy = peakSessions
-    .filter(s => s.cards_reviewed && s.cards_reviewed > 0)
-    .reduce((sum, s) => sum + ((s.cards_correct || 0) / (s.cards_reviewed || 1)), 0) / peakSessions.length;
-
-  return Math.min(1, avgAccuracy || 0.5);
-}
-
-function calculateLengthEffectiveness(avgDuration: number): number {
-  // Optimal session length is typically 25-50 minutes
-  const optimalMin = 25 * 60; // 25 minutes
-  const optimalMax = 50 * 60; // 50 minutes
-  
-  if (avgDuration >= optimalMin && avgDuration <= optimalMax) {
-    return 0.9;
-  } else if (avgDuration < optimalMin) {
-    return Math.max(0.3, avgDuration / optimalMin * 0.7);
-  } else {
-    return Math.max(0.4, optimalMax / avgDuration * 0.8);
-  }
-}
-
-function generateTimingRecommendation(hour: number): string {
-  if (hour >= 6 && hour < 12) return 'Morning sessions are great for focus - consider complex topics';
-  if (hour >= 12 && hour < 18) return 'Afternoon energy is good for active learning';
-  if (hour >= 18 && hour < 22) return 'Evening sessions work well for review and practice';
-  return 'Consider shifting to earlier hours for better cognitive performance';
-}
-
-function generateLengthRecommendation(category: string): string {
-  switch (category) {
-    case 'short': return 'Try extending sessions to 25-45 minutes for better retention';
-    case 'medium': return 'Your session length is optimal - maintain this pattern';
-    case 'long': return 'Consider breaking into shorter sessions with breaks';
-    default: return 'Aim for 25-45 minute focused sessions';
-  }
-}
+};

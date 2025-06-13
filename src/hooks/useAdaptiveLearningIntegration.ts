@@ -1,7 +1,7 @@
 
 import { useEffect, useCallback } from 'react';
 import { useAdaptiveLearning } from './progress/adaptive';
-import { useEnhancedStudySessions } from './useEnhancedStudySessions';
+import { useSessionAnalytics } from './useSessionAnalytics';
 import { useAuth } from '@/contexts/auth';
 
 interface LearningPathCreationData {
@@ -18,7 +18,7 @@ interface LearningPathCreationData {
 export const useAdaptiveLearningIntegration = () => {
   const { user } = useAuth();
   const { adaptiveLearningInsights } = useAdaptiveLearning();
-  const { sessions } = useEnhancedStudySessions();
+  const { sessions } = useSessionAnalytics();
 
   // Auto-create learning paths when user starts studying
   const createLearningPathFromActivity = useCallback(async (data: LearningPathCreationData) => {
