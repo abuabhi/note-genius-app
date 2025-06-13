@@ -1,8 +1,9 @@
 
-import { useState, useEffect } from 'react';
 import { Clock, Play, Pause } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { useBasicSessionTracker } from '@/hooks/useBasicSessionTracker';
+import { cn } from '@/lib/utils';
 
 interface CompactFloatingTimerProps {
   activityType: 'flashcard' | 'quiz' | 'note';
@@ -14,44 +15,24 @@ interface CompactFloatingTimerProps {
 
 export const CompactFloatingTimer = ({ 
   activityType, 
-  isActive = false, 
-  onTogglePause,
-  triggerStudyActivity = false,
   className = ""
 }: CompactFloatingTimerProps) => {
-  const [seconds, setSeconds] = useState(0);
-  const [internalActive, setInternalActive] = useState(triggerStudyActivity || isActive);
+  const {
+    isActive,
+    elapsedSeconds,
+    isPaused,
+    togglePause,
+    recordActivity
+  } = useBasicSessionTracker();
 
-  useEffect(() => {
-    if (triggerStudyActivity) {
-      setInternalActive(true);
-    }
-  }, [triggerStudyActivity]);
+  // Don't render if no active session
+  if (!isActive) {
+    return null;
+  }
 
-  useEffect(() => {
-    setInternalActive(isActive);
-  }, [isActive]);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    
-    if (internalActive) {
-      interval = setInterval(() => {
-        setSeconds(seconds => seconds + 1);
-      }, 1000);
-    } else if (!internalActive && seconds !== 0) {
-      if (interval) clearInterval(interval);
-    }
-    
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [internalActive, seconds]);
-
-  const toggle = () => {
-    const newState = !internalActive;
-    setInternalActive(newState);
-    onTogglePause?.();
+  const handleTogglePause = () => {
+    recordActivity();
+    togglePause();
   };
 
   const formatTime = (totalSeconds: number) => {
@@ -65,9 +46,9 @@ export const CompactFloatingTimer = ({
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Calculate percentage for progress (max 60 minutes)
+  // Calculate progress percentage (max 60 minutes)
   const maxMinutes = 60;
-  const currentMinutes = Math.floor(seconds / 60);
+  const currentMinutes = Math.floor(elapsedSeconds / 60);
   const percentage = Math.min((currentMinutes / maxMinutes) * 100, 100);
   const radius = 16;
   const circumference = 2 * Math.PI * radius;
@@ -86,7 +67,6 @@ export const CompactFloatingTimer = ({
     }
   };
 
-  // Ensure green background with proper fallback
   const timerClassName = className || "bg-mint-500 border-mint-600";
 
   return (
@@ -125,7 +105,7 @@ export const CompactFloatingTimer = ({
         {/* Timer Display */}
         <div className="flex flex-col">
           <div className="text-sm font-mono font-medium text-white">
-            {formatTime(seconds)}
+            {formatTime(elapsedSeconds)}
           </div>
           <div className="text-xs text-mint-100 truncate max-w-24">
             {getActivityLabel()}
@@ -137,13 +117,13 @@ export const CompactFloatingTimer = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={toggle}
+            onClick={handleTogglePause}
             className="h-7 w-7 p-0 hover:bg-mint-400 text-white hover:text-white"
           >
-            {internalActive ? (
-              <Pause className="h-3 w-3" />
-            ) : (
+            {isPaused ? (
               <Play className="h-3 w-3" />
+            ) : (
+              <Pause className="h-3 w-3" />
             )}
           </Button>
         </div>

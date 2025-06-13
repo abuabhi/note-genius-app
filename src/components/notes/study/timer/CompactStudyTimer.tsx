@@ -1,8 +1,8 @@
 
-import { useState, useEffect } from 'react';
 import { Clock, Play, Pause, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { useBasicSessionTracker } from '@/hooks/useBasicSessionTracker';
 
 interface CompactStudyTimerProps {
   noteId: string;
@@ -11,38 +11,28 @@ interface CompactStudyTimerProps {
 }
 
 export const CompactStudyTimer = ({ noteId, noteName, triggerStudyActivity }: CompactStudyTimerProps) => {
-  const [seconds, setSeconds] = useState(0);
-  const [isActive, setIsActive] = useState(triggerStudyActivity);
+  const {
+    isActive,
+    elapsedSeconds,
+    isPaused,
+    togglePause,
+    endSession,
+    recordActivity
+  } = useBasicSessionTracker();
 
-  useEffect(() => {
-    if (triggerStudyActivity) {
-      setIsActive(true);
-    }
-  }, [triggerStudyActivity]);
+  // Don't render if no active session
+  if (!isActive) {
+    return null;
+  }
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    
-    if (isActive) {
-      interval = setInterval(() => {
-        setSeconds(seconds => seconds + 1);
-      }, 1000);
-    } else if (!isActive && seconds !== 0) {
-      if (interval) clearInterval(interval);
-    }
-    
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isActive, seconds]);
-
-  const reset = () => {
-    setSeconds(0);
-    setIsActive(false);
+  const handleTogglePause = () => {
+    recordActivity();
+    togglePause();
   };
 
-  const toggle = () => {
-    setIsActive(!isActive);
+  const handleReset = () => {
+    recordActivity();
+    endSession();
   };
 
   const formatTime = (totalSeconds: number) => {
@@ -58,7 +48,7 @@ export const CompactStudyTimer = ({ noteId, noteName, triggerStudyActivity }: Co
 
   // Calculate percentage for circular progress (max 60 minutes)
   const maxMinutes = 60;
-  const currentMinutes = Math.floor(seconds / 60);
+  const currentMinutes = Math.floor(elapsedSeconds / 60);
   const percentage = Math.min((currentMinutes / maxMinutes) * 100, 100);
   const radius = 16;
   const circumference = 2 * Math.PI * radius;
@@ -100,7 +90,7 @@ export const CompactStudyTimer = ({ noteId, noteName, triggerStudyActivity }: Co
         {/* Timer Display */}
         <div className="flex flex-col">
           <div className="text-sm font-mono font-medium text-gray-900">
-            {formatTime(seconds)}
+            {formatTime(elapsedSeconds)}
           </div>
           <div className="text-xs text-gray-500 truncate max-w-24">
             Study Session
@@ -112,19 +102,19 @@ export const CompactStudyTimer = ({ noteId, noteName, triggerStudyActivity }: Co
           <Button
             variant="ghost"
             size="sm"
-            onClick={toggle}
+            onClick={handleTogglePause}
             className="h-7 w-7 p-0 hover:bg-mint-50"
           >
-            {isActive ? (
-              <Pause className="h-3 w-3 text-mint-600" />
-            ) : (
+            {isPaused ? (
               <Play className="h-3 w-3 text-mint-600" />
+            ) : (
+              <Pause className="h-3 w-3 text-mint-600" />
             )}
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            onClick={reset}
+            onClick={handleReset}
             className="h-7 w-7 p-0 hover:bg-mint-50"
           >
             <RotateCcw className="h-3 w-3 text-mint-600" />

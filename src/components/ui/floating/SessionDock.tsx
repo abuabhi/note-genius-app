@@ -1,4 +1,5 @@
 
+import { useState } from 'react';
 import { Clock, Play, Pause, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -15,6 +16,8 @@ export const SessionDock = () => {
     endSession,
     isOnStudyPage
   } = useBasicSessionTracker();
+
+  const [isEnding, setIsEnding] = useState(false);
 
   console.log('🎛️ SessionDock render:', { 
     isActive, 
@@ -42,6 +45,9 @@ export const SessionDock = () => {
   };
 
   const getSessionStatus = () => {
+    if (isEnding) {
+      return 'Ending Session...';
+    }
     if (!isOnStudyPage) {
       return 'Away from Study';
     }
@@ -52,6 +58,17 @@ export const SessionDock = () => {
   };
 
   const getSessionTheme = () => {
+    if (isEnding) {
+      return {
+        background: 'bg-slate-800/90 border-red-400/40',
+        text: 'text-red-100',
+        timeText: 'text-red-200',
+        iconColor: 'text-red-300',
+        buttonHover: 'hover:bg-red-500/15',
+        indicator: 'bg-red-400'
+      };
+    }
+    
     if (!isOnStudyPage || isPaused) {
       return {
         background: 'bg-slate-800/90 border-orange-400/40',
@@ -75,6 +92,15 @@ export const SessionDock = () => {
 
   const theme = getSessionTheme();
 
+  const handleEndSession = async () => {
+    setIsEnding(true);
+    // Show final time for 1 second before ending
+    setTimeout(() => {
+      endSession();
+      setIsEnding(false);
+    }, 1000);
+  };
+
   console.log('🎛️ SessionDock showing with theme:', theme.background);
 
   return (
@@ -87,14 +113,14 @@ export const SessionDock = () => {
         <div className="flex items-center gap-3">
           <div className="relative">
             <Clock className={cn("h-4 w-4", theme.iconColor)} />
-            {!isPaused && isOnStudyPage && (
+            {!isPaused && isOnStudyPage && !isEnding && (
               <div className={cn(
                 "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full animate-pulse",
                 theme.indicator,
                 "opacity-75"
               )} />
             )}
-            {!isOnStudyPage && (
+            {!isOnStudyPage && !isEnding && (
               <div className={cn(
                 "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full",
                 theme.indicator,
@@ -120,10 +146,12 @@ export const SessionDock = () => {
                   variant="ghost"
                   size="sm"
                   onClick={togglePause}
+                  disabled={isEnding}
                   className={cn(
                     "h-9 w-9 p-0 border border-transparent transition-all duration-200",
                     theme.buttonHover,
-                    "hover:border-current/15 hover:scale-105"
+                    "hover:border-current/15 hover:scale-105",
+                    isEnding && "opacity-50 cursor-not-allowed"
                   )}
                 >
                   {isPaused ? (
@@ -145,10 +173,12 @@ export const SessionDock = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={endSession}
+                  onClick={handleEndSession}
+                  disabled={isEnding}
                   className={cn(
                     "h-9 w-9 p-0 border border-transparent transition-all duration-200",
-                    "hover:bg-red-500/15 hover:border-red-500/15 hover:scale-105"
+                    "hover:bg-red-500/15 hover:border-red-500/15 hover:scale-105",
+                    isEnding && "opacity-50 cursor-not-allowed"
                   )}
                 >
                   <Square className="h-4 w-4 text-red-300 hover:text-red-200" />
