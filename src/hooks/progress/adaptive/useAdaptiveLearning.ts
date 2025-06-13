@@ -62,8 +62,8 @@ export const useAdaptiveLearning = (preferences?: Partial<StudyPreferences>) => 
         progress: progress.length
       });
 
-      // Generate real learning paths
-      const learningPaths = generateRealAdaptiveLearningPath(userSessions, sets, progress);
+      // Generate real learning paths - now passing userId as the 4th argument
+      const learningPaths = generateRealAdaptiveLearningPath(userSessions, sets, progress, user.id);
 
       // Generate real study schedule
       const studySchedule = generateRealOptimalSchedule(userSessions, sets);
