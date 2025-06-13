@@ -19,15 +19,17 @@ import { ErrorProvider } from '@/contexts/ErrorContext';
 import { AppProviders } from '@/components/app/AppProviders';
 import { FlashcardProvider } from '@/contexts/flashcards';
 import { SessionDock } from '@/components/ui/floating/SessionDock';
+import { LightweightPerformanceOverlay } from '@/components/performance/LightweightPerformanceOverlay';
 
-// Create a QueryClient instance with optimized settings for high concurrency
+// Optimized QueryClient with better cache management
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+      gcTime: 10 * 60 * 1000, // 10 minutes
       retry: 2,
       refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
     },
     mutations: {
       retry: 1,
@@ -84,6 +86,9 @@ function App() {
                     
                     {/* Global Session Dock - shows on all authenticated pages */}
                     <SessionDock />
+                    
+                    {/* Lightweight Performance Overlay - only in development */}
+                    <LightweightPerformanceOverlay />
                   </Suspense>
                 </AppProviders>
               </HelpProvider>

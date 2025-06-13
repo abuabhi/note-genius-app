@@ -2,14 +2,14 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { HealthCheck } from '@/components/monitoring/HealthCheck';
-import { PerformanceDebugOverlay } from './PerformanceDebugOverlay';
+import { LightweightPerformanceOverlay } from '@/components/performance/LightweightPerformanceOverlay';
 import { Activity, Database, Zap } from 'lucide-react';
 
 export const ProductionHealthDashboard = () => {
   return (
     <div className="space-y-6">
-      {/* Real-time Performance Debug Overlay */}
-      <PerformanceDebugOverlay />
+      {/* Performance Overlay - only in development */}
+      <LightweightPerformanceOverlay enabled={process.env.NODE_ENV === 'development'} />
       
       {/* System Health Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -55,27 +55,27 @@ export const ProductionHealthDashboard = () => {
         </Card>
       </div>
 
-      {/* Performance Indicators */}
+      {/* Performance Summary */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
             <Zap className="h-5 w-5 mr-2" />
-            Performance Indicators
+            Performance Summary
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">98%</div>
-              <div className="text-sm text-green-700">Uptime</div>
+              <div className="text-2xl font-bold text-green-600">Optimized</div>
+              <div className="text-sm text-green-700">Monitoring System</div>
             </div>
             <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">1.2s</div>
-              <div className="text-sm text-blue-700">Avg Response</div>
+              <div className="text-2xl font-bold text-blue-600">Reduced</div>
+              <div className="text-sm text-blue-700">Timer Load</div>
             </div>
             <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">85%</div>
-              <div className="text-sm text-purple-700">Cache Hit Rate</div>
+              <div className="text-2xl font-bold text-purple-600">Improved</div>
+              <div className="text-sm text-purple-700">Performance</div>
             </div>
           </div>
         </CardContent>

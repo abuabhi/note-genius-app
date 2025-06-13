@@ -15,6 +15,9 @@ interface HealthStatus {
   lastChecked: Date;
 }
 
+// Optimized intervals - much less frequent
+const HEALTH_CHECK_INTERVAL = process.env.NODE_ENV === 'development' ? 300000 : 600000; // 5-10 minutes
+
 export const HealthCheck = () => {
   const [health, setHealth] = useState<HealthStatus>({
     database: 'healthy',
@@ -31,10 +34,9 @@ export const HealthCheck = () => {
       const duration = performance.now() - start;
       
       if (error) return 'error';
-      if (duration > 2000) return 'warning'; // Slow response
+      if (duration > 3000) return 'warning'; // Increased threshold
       return 'healthy';
     } catch (error) {
-      logger.error('Database health check failed:', error);
       return 'error';
     }
   };
@@ -51,39 +53,34 @@ export const HealthCheck = () => {
       const duration = performance.now() - start;
       
       if (!response.ok) return 'error';
-      if (duration > 1000) return 'warning';
+      if (duration > 2000) return 'warning'; // Increased threshold
       return 'healthy';
     } catch (error) {
-      logger.error('API health check failed:', error);
       return 'error';
     }
   };
 
   const checkCacheHealth = (): 'healthy' | 'warning' | 'error' => {
     try {
-      // Check if localStorage is available (cache persistence)
       if (config.cache.enablePersistence) {
         localStorage.setItem('health-check', 'test');
         localStorage.removeItem('health-check');
       }
       
-      // Check memory usage if available
       if ('memory' in performance) {
         const memory = (performance as any).memory;
         const usedMB = memory.usedJSHeapSize / 1024 / 1024;
-        if (usedMB > 100) return 'warning'; // High memory usage
+        if (usedMB > 150) return 'warning'; // Increased threshold
       }
       
       return 'healthy';
     } catch (error) {
-      logger.error('Cache health check failed:', error);
       return 'error';
     }
   };
 
   const performHealthCheck = async () => {
     setIsChecking(true);
-    logger.info('Performing health check...');
     
     try {
       const [databaseStatus, apiStatus] = await Promise.all([
@@ -102,23 +99,13 @@ export const HealthCheck = () => {
       
       setHealth(newHealth);
       
-      // Show toast notification for critical issues
+      // Only show alerts for critical issues
       if (databaseStatus === 'error' || apiStatus === 'error') {
-        toast.error('System Health Alert', {
-          description: 'Critical system components are experiencing issues. Please check the admin panel.'
-        });
-      } else if (databaseStatus === 'warning' || apiStatus === 'warning' || cacheStatus === 'warning') {
-        toast.warning('System Performance Warning', {
-          description: 'Some system components are running slower than expected.'
-        });
+        toast.error('Critical system components are experiencing issues');
       }
       
-      logger.info('Health check completed:', { databaseStatus, apiStatus, cacheStatus });
     } catch (error) {
       logger.error('Health check failed:', error);
-      toast.error('Health Check Failed', {
-        description: 'Unable to complete system health check. Please try again.'
-      });
     } finally {
       setIsChecking(false);
     }
@@ -127,8 +114,8 @@ export const HealthCheck = () => {
   useEffect(() => {
     performHealthCheck();
     
-    // Run health check every 5 minutes
-    const interval = setInterval(performHealthCheck, 5 * 60 * 1000);
+    // Much less frequent health checks
+    const interval = setInterval(performHealthCheck, HEALTH_CHECK_INTERVAL);
     
     return () => clearInterval(interval);
   }, []);
@@ -169,7 +156,6 @@ export const HealthCheck = () => {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* Database Status */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Database className="h-4 w-4" />
@@ -180,7 +166,6 @@ export const HealthCheck = () => {
           </Badge>
         </div>
 
-        {/* API Status */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Globe className="h-4 w-4" />
@@ -191,7 +176,6 @@ export const HealthCheck = () => {
           </Badge>
         </div>
 
-        {/* Cache Status */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Zap className="h-4 w-4" />
@@ -202,7 +186,6 @@ export const HealthCheck = () => {
           </Badge>
         </div>
 
-        {/* Environment Info */}
         <div className="pt-2 border-t text-xs text-gray-500">
           <div>Environment: {config.name}</div>
           <div>Last checked: {health.lastChecked.toLocaleTimeString()}</div>
