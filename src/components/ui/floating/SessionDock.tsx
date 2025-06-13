@@ -12,18 +12,21 @@ export const SessionDock = () => {
     isActive,
     elapsedSeconds,
     isPaused,
+    isEnding,
     togglePause,
     endSession,
     isOnStudyPage
   } = useBasicSessionTracker();
 
-  const [isEnding, setIsEnding] = useState(false);
+  const [isLocalEnding, setIsLocalEnding] = useState(false);
 
   console.log('🎛️ SessionDock render:', { 
     isActive, 
     isPaused, 
     isOnStudyPage, 
     elapsedSeconds,
+    isEnding,
+    isLocalEnding,
     showDock: isActive 
   });
 
@@ -45,7 +48,7 @@ export const SessionDock = () => {
   };
 
   const getSessionStatus = () => {
-    if (isEnding) {
+    if (isEnding || isLocalEnding) {
       return 'Ending Session...';
     }
     if (!isOnStudyPage) {
@@ -58,7 +61,7 @@ export const SessionDock = () => {
   };
 
   const getSessionTheme = () => {
-    if (isEnding) {
+    if (isEnding || isLocalEnding) {
       return {
         background: 'bg-slate-800/90 border-red-400/40',
         text: 'text-red-100',
@@ -94,15 +97,22 @@ export const SessionDock = () => {
 
   const handleEndSession = async () => {
     console.log('🛑 SessionDock - End session clicked');
-    setIsEnding(true);
+    setIsLocalEnding(true);
     
-    // Show final time for 1 second before ending
+    // Call endSession which saves but doesn't clear state
+    const clearSessionState = await endSession();
+    
+    // Show final time for 1 second before clearing state
     setTimeout(() => {
-      console.log('🛑 SessionDock - Actually ending session now');
-      endSession();
-      setIsEnding(false);
+      console.log('🛑 SessionDock - Clearing session state now');
+      if (clearSessionState) {
+        clearSessionState();
+      }
+      setIsLocalEnding(false);
     }, 1000);
   };
+
+  const currentlyEnding = isEnding || isLocalEnding;
 
   console.log('🎛️ SessionDock showing with theme:', theme.background);
 
@@ -116,14 +126,14 @@ export const SessionDock = () => {
         <div className="flex items-center gap-3">
           <div className="relative">
             <Clock className={cn("h-4 w-4", theme.iconColor)} />
-            {!isPaused && isOnStudyPage && !isEnding && (
+            {!isPaused && isOnStudyPage && !currentlyEnding && (
               <div className={cn(
                 "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full animate-pulse",
                 theme.indicator,
                 "opacity-75"
               )} />
             )}
-            {!isOnStudyPage && !isEnding && (
+            {!isOnStudyPage && !currentlyEnding && (
               <div className={cn(
                 "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full",
                 theme.indicator,
@@ -149,12 +159,12 @@ export const SessionDock = () => {
                   variant="ghost"
                   size="sm"
                   onClick={togglePause}
-                  disabled={isEnding}
+                  disabled={currentlyEnding}
                   className={cn(
                     "h-9 w-9 p-0 border border-transparent transition-all duration-200",
                     theme.buttonHover,
                     "hover:border-current/15 hover:scale-105",
-                    isEnding && "opacity-50 cursor-not-allowed"
+                    currentlyEnding && "opacity-50 cursor-not-allowed"
                   )}
                 >
                   {isPaused ? (
@@ -177,11 +187,11 @@ export const SessionDock = () => {
                   variant="ghost"
                   size="sm"
                   onClick={handleEndSession}
-                  disabled={isEnding}
+                  disabled={currentlyEnding}
                   className={cn(
                     "h-9 w-9 p-0 border border-transparent transition-all duration-200",
                     "hover:bg-red-500/15 hover:border-red-500/15 hover:scale-105",
-                    isEnding && "opacity-50 cursor-not-allowed"
+                    currentlyEnding && "opacity-50 cursor-not-allowed"
                   )}
                 >
                   <Square className="h-4 w-4 text-red-300 hover:text-red-200" />

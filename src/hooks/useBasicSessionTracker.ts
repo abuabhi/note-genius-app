@@ -44,10 +44,12 @@ export const useBasicSessionTracker = () => {
   const [isPaused, setIsPaused] = useState(false);
   const [isManuallyPaused, setIsManuallyPaused] = useState(false);
   const [currentActivity, setCurrentActivity] = useState<ActivityType>('general');
+  const [isEnding, setIsEnding] = useState(false); // NEW: Track ending state
   
   // Use refs for stable values in timer calculations
   const pausedTimeRef = useRef(0);
   const lastPauseStartRef = useRef<Date | null>(null);
+  const finalDurationRef = useRef<number | null>(null); // NEW: Store final duration
   
   // Derived state
   const isOnStudyPage = isStudyRoute(location.pathname);
@@ -63,12 +65,13 @@ export const useBasicSessionTracker = () => {
     elapsedSeconds,
     currentActivity,
     user: !!user,
-    hookInstances: hookInstanceCount
+    hookInstances: hookInstanceCount,
+    isEnding
   });
 
   // Timer - runs every second when active and not paused
   useEffect(() => {
-    if (!isActive || !startTime) return;
+    if (!isActive || !startTime || isEnding) return; // Don't update timer if ending
 
     const interval = setInterval(() => {
       const now = new Date();
@@ -86,7 +89,7 @@ export const useBasicSessionTracker = () => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isActive, startTime, isPaused]); // Removed totalPausedTime from dependencies
+  }, [isActive, startTime, isPaused, isEnding]);
 
   // Start session
   const startSession = useCallback(async () => {
@@ -122,8 +125,10 @@ export const useBasicSessionTracker = () => {
       setElapsedSeconds(0);
       setIsPaused(false);
       setIsManuallyPaused(false);
+      setIsEnding(false);
       pausedTimeRef.current = 0;
       lastPauseStartRef.current = null;
+      finalDurationRef.current = null;
       setCurrentActivity(activityType);
       
       console.log('✅ [BASIC SESSION] Session started:', data.id);
@@ -132,11 +137,11 @@ export const useBasicSessionTracker = () => {
     }
   }, [user, location.pathname]);
 
-  // End session
-  const endSession = useCallback(async () => {
+  // NEW: Save session to database without clearing state
+  const saveSession = useCallback(async () => {
     if (!sessionId || !startTime) {
-      console.log('❌ [BASIC SESSION] Cannot end session - no active session');
-      return;
+      console.log('❌ [BASIC SESSION] Cannot save session - no active session');
+      return null;
     }
 
     try {
@@ -151,7 +156,9 @@ export const useBasicSessionTracker = () => {
         finalDuration = Math.floor((endTime.getTime() - startTime.getTime() - pausedTimeRef.current) / 1000);
       }
 
-      console.log('🛑 [BASIC SESSION] Ending session:', sessionId, 'Duration:', finalDuration, 'seconds');
+      finalDurationRef.current = finalDuration;
+
+      console.log('💾 [BASIC SESSION] Saving session:', sessionId, 'Duration:', finalDuration, 'seconds');
 
       await supabase
         .from('study_sessions')
@@ -162,22 +169,50 @@ export const useBasicSessionTracker = () => {
         })
         .eq('id', sessionId);
 
-      // Reset all state
-      const oldSessionId = sessionId;
-      setSessionId(null);
-      setStartTime(null);
-      setElapsedSeconds(0);
-      setIsPaused(false);
-      setIsManuallyPaused(false);
-      pausedTimeRef.current = 0;
-      lastPauseStartRef.current = null;
-      setCurrentActivity('general');
-      
-      console.log('✅ [BASIC SESSION] Session ended successfully:', oldSessionId);
+      console.log('✅ [BASIC SESSION] Session saved successfully:', sessionId);
+      return finalDuration;
     } catch (error) {
-      console.error('❌ [BASIC SESSION] Failed to end session:', error);
+      console.error('❌ [BASIC SESSION] Failed to save session:', error);
+      return null;
     }
   }, [sessionId, startTime, isPaused]);
+
+  // NEW: Clear session state
+  const clearSessionState = useCallback(() => {
+    console.log('🧹 [BASIC SESSION] Clearing session state');
+    setSessionId(null);
+    setStartTime(null);
+    setElapsedSeconds(0);
+    setIsPaused(false);
+    setIsManuallyPaused(false);
+    setIsEnding(false);
+    pausedTimeRef.current = 0;
+    lastPauseStartRef.current = null;
+    finalDurationRef.current = null;
+    setCurrentActivity('general');
+  }, []);
+
+  // UPDATED: End session now manages the ending flow
+  const endSession = useCallback(async () => {
+    if (!sessionId || !startTime) {
+      console.log('❌ [BASIC SESSION] Cannot end session - no active session');
+      return;
+    }
+
+    console.log('🛑 [BASIC SESSION] Starting session end process');
+    setIsEnding(true);
+
+    // Save the session but don't clear state yet
+    const finalDuration = await saveSession();
+    
+    // Update elapsed seconds to show the final duration
+    if (finalDuration !== null) {
+      setElapsedSeconds(finalDuration);
+    }
+
+    // Return a function that can be called to clear state later
+    return clearSessionState;
+  }, [sessionId, startTime, saveSession, clearSessionState]);
 
   // Update activity type
   const updateActivityType = useCallback(async () => {
@@ -210,10 +245,11 @@ export const useBasicSessionTracker = () => {
       isActive,
       isPaused,
       isManuallyPaused,
+      isEnding,
       user: !!user
     });
 
-    if (!user) return;
+    if (!user || isEnding) return; // Don't navigate if ending
 
     // SIMPLE RULE: If on study page and no session -> start one
     if (isOnStudyPage && !isActive) {
@@ -248,10 +284,10 @@ export const useBasicSessionTracker = () => {
     if (isOnStudyPage && isActive) {
       updateActivityType();
     }
-  }, [location.pathname, user, isOnStudyPage, isActive, isPaused, isManuallyPaused, startSession, updateActivityType]);
+  }, [location.pathname, user, isOnStudyPage, isActive, isPaused, isManuallyPaused, isEnding, startSession, updateActivityType]);
 
   const togglePause = useCallback(() => {
-    if (!isActive) return;
+    if (!isActive || isEnding) return;
     
     console.log('⏯️ [BASIC SESSION] Manual toggle pause:', !isPaused);
     
@@ -270,10 +306,12 @@ export const useBasicSessionTracker = () => {
       setIsPaused(true);
       setIsManuallyPaused(true);
     }
-  }, [isPaused, isActive]);
+  }, [isPaused, isActive, isEnding]);
 
   const recordActivity = useCallback(() => {
-    console.log('📝 [BASIC SESSION] Recording activity - current state:', { isOnStudyPage, isPaused, isManuallyPaused });
+    console.log('📝 [BASIC SESSION] Recording activity - current state:', { isOnStudyPage, isPaused, isManuallyPaused, isEnding });
+    
+    if (isEnding) return; // Don't record activity if ending
     
     if (isOnStudyPage && isPaused && !isManuallyPaused) {
       // Resume if we're on study page and currently auto-paused (not manually paused)
@@ -285,11 +323,11 @@ export const useBasicSessionTracker = () => {
       setIsPaused(false);
       console.log('▶️ [BASIC SESSION] Auto-resumed session due to activity');
     }
-  }, [isOnStudyPage, isPaused, isManuallyPaused]);
+  }, [isOnStudyPage, isPaused, isManuallyPaused, isEnding]);
 
   const updateSessionActivity = useCallback(async (activityData: any) => {
-    if (!sessionId || !isActive) {
-      console.log('❌ [BASIC SESSION] Cannot update activity - no active session');
+    if (!sessionId || !isActive || isEnding) {
+      console.log('❌ [BASIC SESSION] Cannot update activity - no active session or ending');
       return;
     }
     
@@ -313,7 +351,7 @@ export const useBasicSessionTracker = () => {
     } catch (error) {
       console.error('❌ [BASIC SESSION] Failed to update session activity:', error);
     }
-  }, [sessionId, isActive]);
+  }, [sessionId, isActive, isEnding]);
 
   return {
     // State
@@ -324,10 +362,11 @@ export const useBasicSessionTracker = () => {
     currentActivity,
     isPaused,
     isOnStudyPage,
+    isEnding, // NEW: Expose ending state
     
     // Actions
     startSession,
-    endSession,
+    endSession, // Now returns a cleanup function
     togglePause,
     recordActivity,
     updateSessionActivity
