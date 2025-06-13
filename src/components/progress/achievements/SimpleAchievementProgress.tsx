@@ -389,11 +389,7 @@ export const SimpleAchievementProgress = () => {
                     </span>
                   </div>
                   
-                  <Progress 
-                    value={achievement.progress} 
-                    className="h-2" 
-                    indicatorClassName="bg-mint-600"
-                  />
+                  <Progress value={achievement.progress} className="h-2" />
                   
                   <div className="flex items-center justify-between">
                     <Badge

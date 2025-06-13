@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -199,7 +198,7 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
 
     if (status === 'completed') {
       return (
-        <Alert className="mt-4" className="border-green-200 bg-green-50">
+        <Alert className="mt-4 border-green-200 bg-green-50">
           <CheckCircle className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-800">
             {message}

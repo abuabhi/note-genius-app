@@ -24,11 +24,12 @@ export const EnhancedImportDialog = ({
 }: EnhancedImportDialogProps) => {
   const [activeTab, setActiveTab] = useState('file');
 
-  const handleImport = async (noteData: any) => {
+  const handleImport = async (noteData: any): Promise<boolean> => {
     const success = await onSaveNote(noteData);
     if (success) {
       onClose();
     }
+    return success;
   };
 
   const tabs = [
