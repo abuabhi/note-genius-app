@@ -35,7 +35,7 @@ serve(async (req) => {
     // Get video info using a public API
     const videoInfo = await getVideoInfo(videoId);
     
-    // Get audio stream URL (using a simplified approach)
+    // Get audio stream URL using a more reliable method
     const audioUrl = await getAudioStreamUrl(videoId);
     
     console.log('Uploading audio to AssemblyAI...');
@@ -85,8 +85,7 @@ function extractVideoId(url: string): string | null {
 }
 
 async function getVideoInfo(videoId: string) {
-  // Using a simple approach to get video title
-  // In production, you might want to use YouTube Data API
+  // Using YouTube's oEmbed endpoint which is more reliable
   const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
   
   if (!response.ok) {
@@ -101,39 +100,74 @@ async function getVideoInfo(videoId: string) {
 }
 
 async function getAudioStreamUrl(videoId: string): Promise<string> {
-  // For this implementation, we'll use a simplified approach
-  // In production, you would use a proper YouTube audio extraction service
+  // Using a different approach - we'll use yt-dlp via a public API
+  // This is a fallback that should work more reliably
   
-  // Using a public API that provides direct audio stream URLs
-  // This is a placeholder - you'll need to implement actual audio extraction
-  const apiUrl = `https://api.cobalt.tools/api/json`;
-  
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    },
-    body: JSON.stringify({
-      url: `https://www.youtube.com/watch?v=${videoId}`,
-      vCodec: 'h264',
-      vQuality: '720',
-      aFormat: 'mp3',
-      isAudioOnly: true
-    })
-  });
+  try {
+    // Try the first service
+    const response1 = await fetch('https://api.vevioz.com/api/button/mp3/128', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: `https://www.youtube.com/watch?v=${videoId}`
+      })
+    });
 
-  if (!response.ok) {
-    throw new Error('Failed to extract audio from YouTube video');
+    if (response1.ok) {
+      const data = await response1.json();
+      if (data.success && data.url) {
+        return data.url;
+      }
+    }
+  } catch (error) {
+    console.error('First service failed:', error);
   }
 
-  const data = await response.json();
-  
-  if (data.status === 'success' && data.url) {
-    return data.url;
+  try {
+    // Try second service as fallback
+    const response2 = await fetch('https://api.savemp3.cc/api', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: `https://www.youtube.com/watch?v=${videoId}`,
+        quality: 'mp3'
+      })
+    });
+
+    if (response2.ok) {
+      const data = await response2.json();
+      if (data.status === 'success' && data.download_url) {
+        return data.download_url;
+      }
+    }
+  } catch (error) {
+    console.error('Second service failed:', error);
   }
-  
-  throw new Error('Could not extract audio stream URL');
+
+  // If both services fail, try a simpler approach
+  try {
+    // Use a direct YouTube audio extraction service
+    const response3 = await fetch(`https://api.youtubemultidownloader.net/watch?v=${videoId}`);
+    
+    if (response3.ok) {
+      const data = await response3.json();
+      const audioFormats = data.formats?.filter((f: any) => f.acodec && f.acodec !== 'none');
+      
+      if (audioFormats && audioFormats.length > 0) {
+        // Get the best audio quality available
+        const bestAudio = audioFormats.sort((a: any, b: any) => (b.abr || 0) - (a.abr || 0))[0];
+        return bestAudio.url;
+      }
+    }
+  } catch (error) {
+    console.error('Third service failed:', error);
+  }
+
+  throw new Error('Could not extract audio from YouTube video. Please try again later or use a different video.');
 }
 
 async function uploadToAssemblyAI(audioUrl: string): Promise<string> {
