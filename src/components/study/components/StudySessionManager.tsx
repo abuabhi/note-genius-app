@@ -2,12 +2,13 @@
 import { StudyMode } from "@/pages/study/types";
 import { useOptimizedFlashcardStudy } from "@/hooks/useOptimizedFlashcardStudy";
 import { useQuizMode } from "@/hooks/useQuizMode";
+import { useBasicSessionTracker } from "@/hooks/useBasicSessionTracker";
 
 interface StudySessionManagerProps {
   setId: string;
   mode: StudyMode;
   children: (sessionData: any) => React.ReactNode;
-  // Session methods passed from parent instead of using hook directly
+  // Session methods are now managed by the unified system
   recordActivity?: () => void;
   updateSessionActivity?: (data: any) => void;
 }
@@ -16,11 +17,20 @@ export const StudySessionManager = ({
   setId, 
   mode, 
   children,
-  recordActivity = () => {},
-  updateSessionActivity = () => {}
+  recordActivity: externalRecord = () => {},
+  updateSessionActivity: externalUpdate = () => {}
 }: StudySessionManagerProps) => {
   
-  // Use different hooks based on mode, passing session methods as parameters
+  // Use the unified session tracker
+  const { recordActivity, updateSessionActivity } = useBasicSessionTracker();
+  
+  console.log('🎛️ [STUDY SESSION MANAGER] Using unified session system:', {
+    setId,
+    mode,
+    hasUnifiedSession: !!recordActivity
+  });
+  
+  // Use different hooks based on mode, passing unified session methods
   const studyHook = useOptimizedFlashcardStudy({ 
     setId, 
     mode, 
@@ -69,6 +79,7 @@ export const StudySessionManager = ({
   } : null;
 
   const handleCorrectAnswer = () => {
+    console.log('✅ [STUDY SESSION MANAGER] Correct answer - updating unified session');
     recordActivity();
     if (isQuizMode && quizData) {
       quizData.handleQuizAnswer('mastered');
@@ -78,6 +89,7 @@ export const StudySessionManager = ({
   };
 
   const handleIncorrectAnswer = () => {
+    console.log('❌ [STUDY SESSION MANAGER] Incorrect answer - updating unified session');
     recordActivity();
     if (isQuizMode && quizData) {
       quizData.handleQuizAnswer('needs_practice');
@@ -103,7 +115,7 @@ export const StudySessionManager = ({
     cardsStudied,
     mode,
     
-    // Handlers (with activity recording)
+    // Handlers (with unified session activity recording)
     handleNext: () => {
       recordActivity();
       handleNext();

@@ -1,5 +1,5 @@
 
-import { StudySessionWithDonutTracker } from '@/components/study/StudySessionWithDonutTracker';
+import { useBasicSessionTracker } from '@/hooks/useBasicSessionTracker';
 
 interface QuizStudyTrackerProps {
   quizId: string;
@@ -26,20 +26,43 @@ export const QuizStudyTracker = ({
   showDonutCounter = true,
   donutSize = 'medium'
 }: QuizStudyTrackerProps) => {
+  
+  const { recordActivity, updateSessionActivity, isActive } = useBasicSessionTracker();
+  
+  console.log('🎯 [QUIZ TRACKER] Using unified session via SessionDock:', {
+    quizId,
+    quizName,
+    score,
+    totalQuestions,
+    isActive,
+    triggerStudyActivity
+  });
+  
+  // Record quiz study activity when triggered
+  if (triggerStudyActivity && isActive) {
+    recordActivity();
+    updateSessionActivity({
+      quiz_score: score,
+      quiz_total_questions: totalQuestions
+    });
+  }
+  
   return (
-    <StudySessionWithDonutTracker
-      activityType="quiz"
-      resourceId={quizId}
-      resourceName={quizName}
-      subject={subject}
-      quizScore={score}
-      totalQuestions={totalQuestions}
-      onSessionStart={onSessionStart}
-      onSessionEnd={onSessionEnd}
-      triggerStudyActivity={triggerStudyActivity}
-      showDonutCounter={showDonutCounter}
-      donutSize={donutSize}
-      donutPosition="side"
-    />
+    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+      <div className="text-green-800 text-sm">
+        <strong>Quiz Study Tracker</strong>
+        <p className="mt-1">
+          Quiz: {quizName}
+        </p>
+        {totalQuestions > 0 && (
+          <p className="text-xs text-green-600 mt-1">
+            Score: {score}/{totalQuestions}
+          </p>
+        )}
+        <p className="text-xs text-green-600 mt-1">
+          Session managed by SessionDock • Status: {isActive ? 'Active' : 'Inactive'}
+        </p>
+      </div>
+    </div>
   );
 };

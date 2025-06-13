@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { useLocation } from 'react-router-dom';
@@ -28,11 +29,11 @@ export const useBasicSessionTracker = () => {
   // Track hook instances for debugging
   useEffect(() => {
     hookInstanceCount++;
-    console.log('🎯 useBasicSessionTracker instance created. Total instances:', hookInstanceCount);
+    console.log('🎯 [BASIC SESSION] Hook instance created. Total instances:', hookInstanceCount);
     
     return () => {
       hookInstanceCount--;
-      console.log('🎯 useBasicSessionTracker instance destroyed. Remaining instances:', hookInstanceCount);
+      console.log('🎯 [BASIC SESSION] Hook instance destroyed. Remaining instances:', hookInstanceCount);
     };
   }, []);
   
@@ -52,7 +53,7 @@ export const useBasicSessionTracker = () => {
   const isOnStudyPage = isStudyRoute(location.pathname);
   const isActive = !!sessionId;
 
-  console.log('🎯 Session State:', {
+  console.log('🎯 [BASIC SESSION] Session State:', {
     pathname: location.pathname,
     isOnStudyPage,
     isActive,
@@ -90,7 +91,7 @@ export const useBasicSessionTracker = () => {
   // Start session
   const startSession = useCallback(async () => {
     if (!user) {
-      console.log('❌ Cannot start session - no user');
+      console.log('❌ [BASIC SESSION] Cannot start session - no user');
       return;
     }
     
@@ -98,7 +99,7 @@ export const useBasicSessionTracker = () => {
       const now = new Date();
       const activityType = getActivityType(location.pathname);
       
-      console.log('🚀 Starting new session with activity:', activityType);
+      console.log('🚀 [BASIC SESSION] Starting new session with activity:', activityType);
       
       const { data, error } = await supabase
         .from('study_sessions')
@@ -125,15 +126,18 @@ export const useBasicSessionTracker = () => {
       lastPauseStartRef.current = null;
       setCurrentActivity(activityType);
       
-      console.log('✅ Session started:', data.id);
+      console.log('✅ [BASIC SESSION] Session started:', data.id);
     } catch (error) {
-      console.error('❌ Failed to start session:', error);
+      console.error('❌ [BASIC SESSION] Failed to start session:', error);
     }
   }, [user, location.pathname]);
 
   // End session
   const endSession = useCallback(async () => {
-    if (!sessionId || !startTime) return;
+    if (!sessionId || !startTime) {
+      console.log('❌ [BASIC SESSION] Cannot end session - no active session');
+      return;
+    }
 
     try {
       const endTime = new Date();
@@ -147,7 +151,7 @@ export const useBasicSessionTracker = () => {
         finalDuration = Math.floor((endTime.getTime() - startTime.getTime() - pausedTimeRef.current) / 1000);
       }
 
-      console.log('🛑 Ending session:', sessionId, 'Duration:', finalDuration);
+      console.log('🛑 [BASIC SESSION] Ending session:', sessionId, 'Duration:', finalDuration, 'seconds');
 
       await supabase
         .from('study_sessions')
@@ -159,6 +163,7 @@ export const useBasicSessionTracker = () => {
         .eq('id', sessionId);
 
       // Reset all state
+      const oldSessionId = sessionId;
       setSessionId(null);
       setStartTime(null);
       setElapsedSeconds(0);
@@ -168,9 +173,9 @@ export const useBasicSessionTracker = () => {
       lastPauseStartRef.current = null;
       setCurrentActivity('general');
       
-      console.log('✅ Session ended');
+      console.log('✅ [BASIC SESSION] Session ended successfully:', oldSessionId);
     } catch (error) {
-      console.error('❌ Failed to end session:', error);
+      console.error('❌ [BASIC SESSION] Failed to end session:', error);
     }
   }, [sessionId, startTime, isPaused]);
 
@@ -191,15 +196,15 @@ export const useBasicSessionTracker = () => {
         .eq('id', sessionId);
       
       setCurrentActivity(newActivity);
-      console.log('✅ Updated activity type to:', newActivity);
+      console.log('✅ [BASIC SESSION] Updated activity type to:', newActivity);
     } catch (error) {
-      console.error('❌ Failed to update activity type:', error);
+      console.error('❌ [BASIC SESSION] Failed to update activity type:', error);
     }
   }, [sessionId, currentActivity, location.pathname]);
 
   // Navigation effect
   useEffect(() => {
-    console.log('📍 Navigation Effect:', {
+    console.log('📍 [BASIC SESSION] Navigation Effect:', {
       pathname: location.pathname,
       isOnStudyPage,
       isActive,
@@ -212,14 +217,14 @@ export const useBasicSessionTracker = () => {
 
     // SIMPLE RULE: If on study page and no session -> start one
     if (isOnStudyPage && !isActive) {
-      console.log('🚀 On study page without session - starting');
+      console.log('🚀 [BASIC SESSION] On study page without session - starting');
       startSession();
       return;
     }
 
     // SIMPLE RULE: If on study page and paused session (but NOT manually paused) -> resume
     if (isOnStudyPage && isActive && isPaused && !isManuallyPaused) {
-      console.log('▶️ On study page with auto-paused session - resuming');
+      console.log('▶️ [BASIC SESSION] On study page with auto-paused session - resuming');
       
       // Add the pause duration to total paused time
       if (lastPauseStartRef.current) {
@@ -233,7 +238,7 @@ export const useBasicSessionTracker = () => {
 
     // SIMPLE RULE: If NOT on study page and active session (and not manually paused) -> auto pause
     if (!isOnStudyPage && isActive && !isPaused && !isManuallyPaused) {
-      console.log('⏸️ Left study page - auto-pausing session');
+      console.log('⏸️ [BASIC SESSION] Left study page - auto-pausing session');
       lastPauseStartRef.current = new Date();
       setIsPaused(true);
       return;
@@ -248,7 +253,7 @@ export const useBasicSessionTracker = () => {
   const togglePause = useCallback(() => {
     if (!isActive) return;
     
-    console.log('⏯️ Manual toggle pause:', !isPaused);
+    console.log('⏯️ [BASIC SESSION] Manual toggle pause:', !isPaused);
     
     if (isPaused) {
       // Resume - add paused time to total and clear pause state
@@ -268,6 +273,8 @@ export const useBasicSessionTracker = () => {
   }, [isPaused, isActive]);
 
   const recordActivity = useCallback(() => {
+    console.log('📝 [BASIC SESSION] Recording activity - current state:', { isOnStudyPage, isPaused, isManuallyPaused });
+    
     if (isOnStudyPage && isPaused && !isManuallyPaused) {
       // Resume if we're on study page and currently auto-paused (not manually paused)
       if (lastPauseStartRef.current) {
@@ -276,13 +283,19 @@ export const useBasicSessionTracker = () => {
         lastPauseStartRef.current = null;
       }
       setIsPaused(false);
+      console.log('▶️ [BASIC SESSION] Auto-resumed session due to activity');
     }
   }, [isOnStudyPage, isPaused, isManuallyPaused]);
 
   const updateSessionActivity = useCallback(async (activityData: any) => {
-    if (!sessionId || !isActive) return;
+    if (!sessionId || !isActive) {
+      console.log('❌ [BASIC SESSION] Cannot update activity - no active session');
+      return;
+    }
     
     try {
+      console.log('📊 [BASIC SESSION] Updating session activity:', sessionId, activityData);
+      
       await supabase
         .from('study_sessions')
         .update({
@@ -295,8 +308,10 @@ export const useBasicSessionTracker = () => {
           updated_at: new Date().toISOString()
         })
         .eq('id', sessionId);
+        
+      console.log('✅ [BASIC SESSION] Session activity updated successfully');
     } catch (error) {
-      console.error('❌ Failed to update session activity:', error);
+      console.error('❌ [BASIC SESSION] Failed to update session activity:', error);
     }
   }, [sessionId, isActive]);
 

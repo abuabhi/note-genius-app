@@ -2,7 +2,6 @@
 import { useEffect } from 'react';
 import { StudyTimeDonutCounter } from './StudyTimeDonutCounter';
 import { useStudyTimeTracker } from '@/hooks/useStudyTimeTracker';
-import { EnhancedStudySessionTracker } from './EnhancedStudySessionTracker';
 
 interface StudySessionWithDonutTrackerProps {
   activityType: 'note' | 'flashcard' | 'quiz';
@@ -37,84 +36,22 @@ export const StudySessionWithDonutTracker = ({
   donutSize = 'medium',
   donutPosition = 'side'
 }: StudySessionWithDonutTrackerProps) => {
-  const {
-    isActive,
-    isPaused,
-    startTime,
-    elapsedTime,
-    startTracking,
-    stopTracking,
-    togglePause
-  } = useStudyTimeTracker(activityType, resourceId, resourceName);
-
-  // Auto-start tracking when study activity is triggered
-  useEffect(() => {
-    if (triggerStudyActivity && !isActive) {
-      startTracking();
-      onSessionStart?.();
-    }
-  }, [triggerStudyActivity, isActive, startTracking, onSessionStart]);
-
-  // Handle session end
-  const handleSessionEnd = () => {
-    stopTracking();
-    onSessionEnd?.();
-  };
-
-  const donutCounter = showDonutCounter ? (
-    <StudyTimeDonutCounter
-      activityType={activityType}
-      isActive={isActive}
-      startTime={startTime}
-      currentSessionTime={elapsedTime}
-      onTogglePause={togglePause}
-      size={donutSize}
-      className="shrink-0"
-    />
-  ) : null;
-
-  const enhancedTracker = (
-    <EnhancedStudySessionTracker
-      activityType={activityType}
-      resourceId={resourceId}
-      resourceName={resourceName}
-      subject={subject}
-      cardsStudied={cardsStudied}
-      correctAnswers={correctAnswers}
-      quizScore={quizScore}
-      totalQuestions={totalQuestions}
-      onSessionStart={onSessionStart}
-      onSessionEnd={handleSessionEnd}
-      triggerStudyActivity={isActive}
-    />
-  );
-
-  // Render based on position preference
-  if (donutPosition === 'top') {
-    return (
-      <div className="space-y-4">
-        {donutCounter}
-        {enhancedTracker}
-      </div>
-    );
-  }
-
-  if (donutPosition === 'bottom') {
-    return (
-      <div className="space-y-4">
-        {enhancedTracker}
-        {donutCounter}
-      </div>
-    );
-  }
-
-  // Side by side layout (default)
+  
+  console.log('🔥 [CONFLICTING TRACKER] StudySessionWithDonutTracker is DISABLED to prevent session conflicts');
+  console.log('🔥 [CONFLICTING TRACKER] All session management should go through SessionDock only');
+  
+  // DISABLED: This component was creating competing sessions
+  // All session management should go through SessionDock/useBasicSessionTracker only
+  
   return (
-    <div className="flex gap-4 items-start">
-      <div className="flex-1">
-        {enhancedTracker}
+    <div className="p-4 bg-yellow-100 border border-yellow-400 rounded-lg">
+      <div className="text-yellow-800 text-sm">
+        <strong>Study Session Tracker Disabled</strong>
+        <p className="mt-1">
+          Session tracking is now managed centrally by SessionDock to prevent conflicts.
+          Your study activity is still being tracked properly.
+        </p>
       </div>
-      {donutCounter}
     </div>
   );
 };
