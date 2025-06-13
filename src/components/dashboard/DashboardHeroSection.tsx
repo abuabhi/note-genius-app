@@ -11,6 +11,7 @@ export const DashboardHeroSection = () => {
     currentStreak, 
     weeklyComparison,
     weeklyGoalProgress,
+    weeklyGoalHours,
     isLoading 
   } = useDashboardAnalytics();
 
@@ -29,12 +30,12 @@ export const DashboardHeroSection = () => {
     );
   }
 
-  // Format time display
-  const formatTime = (minutes: number) => {
-    if (minutes < 60) return `${minutes}m`;
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+  // Format time helpers
+  const formatMinutes = (minutes: number) => `${minutes}m`;
+  
+  const formatHours = (minutes: number) => {
+    const hours = Math.round((minutes / 60) * 10) / 10;
+    return `${hours}h`;
   };
 
   // Format weekly change
@@ -47,14 +48,14 @@ export const DashboardHeroSection = () => {
   const stats = [
     {
       title: "Today",
-      value: formatTime(todayStudyTimeMinutes),
+      value: formatMinutes(todayStudyTimeMinutes),
       icon: Clock,
-      description: "Study time today",
+      description: "Minutes studied today",
       color: "text-blue-600"
     },
     {
       title: "This Week", 
-      value: formatTime(weeklyStudyTimeMinutes),
+      value: formatHours(weeklyStudyTimeMinutes),
       icon: TrendingUp,
       description: `${formatWeeklyChange()} from last week`,
       color: weeklyComparison.trend === 'up' ? "text-green-600" : 
@@ -64,7 +65,7 @@ export const DashboardHeroSection = () => {
       title: "Weekly Goal",
       value: `${weeklyGoalProgress}%`,
       icon: Target,
-      description: `${formatTime(weeklyStudyTimeMinutes)} / 5h`,
+      description: `${formatHours(weeklyStudyTimeMinutes)} / ${weeklyGoalHours}h`,
       color: weeklyGoalProgress >= 100 ? "text-green-600" : "text-orange-600"
     },
     {

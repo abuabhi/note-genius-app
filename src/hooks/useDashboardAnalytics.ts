@@ -11,7 +11,7 @@ export const useDashboardAnalytics = () => {
     quizzesTaken: 0 // TODO: Add quizzes taken today calculation from sessions
   };
 
-  // Current streak from consolidated analytics
+  // Current streak from consolidated analytics (now properly calculated)
   const currentStreak = analytics.streakDays;
 
   // Weekly comparison using consolidated data
@@ -35,13 +35,16 @@ export const useDashboardAnalytics = () => {
     currentStreak,
     weeklyComparison,
     weeklyGoalProgress: analytics.weeklyGoalProgress,
+    weeklyGoalHours: analytics.weeklyGoalHours, // User's actual goal from settings
     isLoading
   };
 
   console.log('📊 Dashboard Analytics:', {
     todayStudyTimeMinutes: dashboardData.todayStudyTimeMinutes,
     totalStudyTimeMinutes: dashboardData.totalStudyTimeMinutes,
-    weeklyStudyTimeMinutes: dashboardData.weeklyStudyTimeMinutes
+    weeklyStudyTimeMinutes: dashboardData.weeklyStudyTimeMinutes,
+    weeklyGoalHours: dashboardData.weeklyGoalHours,
+    streakDays: dashboardData.currentStreak
   });
 
   return dashboardData;

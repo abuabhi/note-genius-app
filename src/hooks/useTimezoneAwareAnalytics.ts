@@ -30,6 +30,52 @@ const safePercentage = (current: number, previous: number): number => {
   return Math.round(((current - previous) / previous) * 100);
 };
 
+// Helper to calculate consecutive study streak
+const calculateConsecutiveStreak = (sessions: any[], timezone: string): number => {
+  if (!sessions || sessions.length === 0) return 0;
+
+  // Get unique study dates sorted descending
+  const studyDates = Array.from(
+    new Set(
+      sessions.map(session => {
+        const date = new Date(session.start_time);
+        return date.toLocaleDateString('en-CA', { timeZone: timezone }); // YYYY-MM-DD format
+      })
+    )
+  ).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+
+  if (studyDates.length === 0) return 0;
+
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: timezone });
+  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000)
+    .toLocaleDateString('en-CA', { timeZone: timezone });
+
+  // Start streak calculation
+  let streak = 0;
+  const mostRecentDate = studyDates[0];
+
+  // Check if user studied today or yesterday (to maintain streak)
+  if (mostRecentDate !== today && mostRecentDate !== yesterday) {
+    return 0; // Streak broken
+  }
+
+  // Count consecutive days
+  let expectedDate = today;
+  for (const studyDate of studyDates) {
+    if (studyDate === expectedDate) {
+      streak++;
+      // Move to previous day
+      const prevDay = new Date(expectedDate);
+      prevDay.setDate(prevDay.getDate() - 1);
+      expectedDate = prevDay.toLocaleDateString('en-CA', { timeZone: timezone });
+    } else {
+      break; // Non-consecutive day found
+    }
+  }
+
+  return streak;
+};
+
 export const useTimezoneAwareAnalytics = () => {
   const { user } = useAuth();
   const { timezone, isLoading: timezoneLoading } = useTimezone();
@@ -39,12 +85,21 @@ export const useTimezoneAwareAnalytics = () => {
     queryFn: async () => {
       if (!user || !timezone) return null;
 
-      console.log('🔄 Fetching cleaned timezone-aware analytics for user:', user.id, 'timezone:', timezone);
+      console.log('🔄 Fetching enhanced timezone-aware analytics for user:', user.id, 'timezone:', timezone);
       
       // Debug timezone calculations
       if (timezone.includes('Melbourne') || timezone.includes('Australia')) {
         debugTimezone(timezone);
       }
+
+      // Get user's weekly goal from profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('weekly_study_goal_hours')
+        .eq('id', user.id)
+        .single();
+
+      const weeklyGoalHours = profile?.weekly_study_goal_hours || 5;
 
       // Get study sessions with enhanced filtering - only valid, completed sessions
       const { data: sessions, error: sessionsError } = await supabase
@@ -63,7 +118,22 @@ export const useTimezoneAwareAnalytics = () => {
         throw sessionsError;
       }
 
-      console.log(`📊 Found ${sessions?.length || 0} valid sessions after cleanup`);
+      // Get quiz data
+      const { data: quizResults } = await supabase
+        .from('quiz_results')
+        .select('*')
+        .eq('user_id', user.id);
+
+      const { data: totalQuizzes } = await supabase
+        .from('quizzes')
+        .select('id')
+        .or(`user_id.eq.${user.id},is_public.eq.true`);
+
+      // Get notes count
+      const { data: notesData } = await supabase
+        .from('notes')
+        .select('id')
+        .eq('user_id', user.id);
 
       // Get flashcard sets and progress
       const { data: flashcardSets } = await supabase
@@ -90,7 +160,6 @@ export const useTimezoneAwareAnalytics = () => {
       // Calculate total study time with enhanced validation
       const totalStudyTimeSeconds = allSessions.reduce((sum, session) => {
         const validDuration = validateDuration(session.duration);
-        console.log(`Session ${session.id}: ${session.duration}s -> ${validDuration}s`);
         return sum + validDuration;
       }, 0);
 
@@ -99,7 +168,10 @@ export const useTimezoneAwareAnalytics = () => {
         ? Math.round((totalStudyTimeSeconds / allSessions.length) / 60) 
         : 0;
 
-      console.log(`📈 Study time calculation: ${totalStudyTimeSeconds}s = ${totalStudyTimeHours}h from ${allSessions.length} sessions`);
+      // Calculate quiz statistics
+      const totalQuizzesCount = totalQuizzes?.length || 0;
+      const completedQuizzesCount = quizResults?.length || 0;
+      const totalNotesCount = notesData?.length || 0;
 
       // Calculate flashcard statistics
       const totalSets = flashcardSets?.length || 0;
@@ -128,13 +200,6 @@ export const useTimezoneAwareAnalytics = () => {
       // Timezone-aware date calculations
       const startOfTodayCalc = getStartOfDayInTimezone(timezone);
       const endOfToday = getEndOfDayInTimezone(timezone);
-      
-      console.log(`🌏 ${timezone} Timezone Boundaries:`, {
-        todayString,
-        startOfToday: startOfTodayCalc.toISOString(),
-        endOfToday: endOfToday.toISOString(),
-        currentTime: new Date().toISOString()
-      });
       
       // Today's sessions using proper timezone boundaries
       const todaySessions = allSessions.filter(s => {
@@ -186,9 +251,12 @@ export const useTimezoneAwareAnalytics = () => {
       // Calculate week-over-week change
       const weeklyChange = safePercentage(weeklyStudyTimeMinutes, previousWeekTimeMinutes);
 
-      // Weekly goal progress (default 5 hours = 300 minutes)
-      const weeklyGoalMinutes = 300;
+      // Weekly goal progress using user's actual goal
+      const weeklyGoalMinutes = weeklyGoalHours * 60;
       const weeklyGoalProgress = Math.min(100, Math.round((weeklyStudyTimeMinutes / weeklyGoalMinutes) * 100));
+
+      // Enhanced consecutive streak calculation
+      const streakDays = calculateConsecutiveStreak(allSessions, timezone);
 
       const result = {
         // Session counts
@@ -212,9 +280,17 @@ export const useTimezoneAwareAnalytics = () => {
         // Session metrics
         averageSessionTime: averageSessionTimeMinutes,
         
-        // Goal tracking
+        // Goal tracking - now uses user's actual goal
         weeklyGoalProgress,
         weeklyGoalMinutes,
+        weeklyGoalHours,
+        
+        // Quiz metrics
+        totalQuizzes: totalQuizzesCount,
+        completedQuizzes: completedQuizzesCount,
+        
+        // Notes metrics
+        totalNotes: totalNotesCount,
         
         // Flashcard metrics
         totalSets,
@@ -226,8 +302,8 @@ export const useTimezoneAwareAnalytics = () => {
         recentSessions: allSessions.slice(0, 5),
         activeSessions: [],
         
-        // Streak calculation
-        streakDays: todaySessions.length > 0 ? 1 : 0,
+        // Enhanced streak calculation
+        streakDays,
         
         // Timezone info
         timezone,
@@ -242,21 +318,21 @@ export const useTimezoneAwareAnalytics = () => {
           totalCardsMastered,
           totalSets,
           flashcardAccuracy,
-          streakDays: todaySessions.length > 0 ? 1 : 0,
+          streakDays,
           studyTimeHours: validateHours(totalStudyTimeHours)
         }
       };
 
-      console.log('📈 CLEANED Analytics Summary:', {
+      console.log('📈 ENHANCED Analytics Summary:', {
         timezone,
         totalSessions: result.totalSessions,
-        totalStudyTimeHours: result.totalStudyTime,
-        totalStudyTimeMinutes: result.totalStudyTimeMinutes,
         todayMinutes: result.todayStudyTimeMinutes,
-        weeklyMinutes: result.weeklyStudyTimeMinutes,
-        weeklyChange: result.weeklyChange,
-        goalProgress: result.weeklyGoalProgress,
-        totalCardsMastered: result.totalCardsMastered
+        weeklyHours: result.weeklyStudyTime,
+        weeklyGoalProgress: result.weeklyGoalProgress,
+        streakDays: result.streakDays,
+        totalQuizzes: result.totalQuizzes,
+        completedQuizzes: result.completedQuizzes,
+        totalNotes: result.totalNotes
       });
       
       return result;
@@ -281,6 +357,10 @@ export const useTimezoneAwareAnalytics = () => {
     averageSessionTime: 0,
     weeklyGoalProgress: 0,
     weeklyGoalMinutes: 300,
+    weeklyGoalHours: 5,
+    totalQuizzes: 0,
+    completedQuizzes: 0,
+    totalNotes: 0,
     totalSets: 0,
     totalCardsReviewed: 0,
     totalCardsMastered: 0,
@@ -304,42 +384,7 @@ export const useTimezoneAwareAnalytics = () => {
   };
 
   return { 
-    analytics: analytics || {
-      totalSessions: 0,
-      todaySessions: 0,
-      weeklySessions: 0,
-      totalStudyTime: 0,
-      totalStudyTimeMinutes: 0,
-      todayStudyTime: 0,
-      todayStudyTimeMinutes: 0,
-      weeklyStudyTime: 0,
-      weeklyStudyTimeMinutes: 0,
-      previousWeekTimeMinutes: 0,
-      weeklyChange: 0,
-      averageSessionTime: 0,
-      weeklyGoalProgress: 0,
-      weeklyGoalMinutes: 300,
-      totalSets: 0,
-      totalCardsReviewed: 0,
-      totalCardsMastered: 0,
-      flashcardAccuracy: 0,
-      recentSessions: [],
-      activeSessions: [],
-      streakDays: 0,
-      timezone: timezone || 'UTC',
-      todayString: '',
-      studyTimeHours: 0,
-      stats: {
-        totalSessions: 0,
-        totalStudyTime: 0,
-        averageSessionTime: 0,
-        totalCardsMastered: 0,
-        totalSets: 0,
-        flashcardAccuracy: 0,
-        streakDays: 0,
-        studyTimeHours: 0
-      }
-    }, 
+    analytics: analytics || defaultAnalytics, 
     isLoading: analyticsLoading || timezoneLoading,
     timezone
   };

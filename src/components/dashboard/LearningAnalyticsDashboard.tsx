@@ -1,18 +1,12 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
-  Clock, 
-  Brain, 
-  Target, 
   Calendar,
-  TrendingUp, 
-  Award,
-  BookOpen,
   Activity,
-  FileText
+  FileText,
+  BookOpen,
+  CheckCircle2,
+  Circle
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useConsolidatedAnalytics } from "@/hooks/useConsolidatedAnalytics";
@@ -21,10 +15,10 @@ export const LearningAnalyticsDashboard = () => {
   const { analytics, isLoading } = useConsolidatedAnalytics();
 
   console.log('📊 LearningAnalyticsDashboard received analytics:', {
-    totalCardsMastered: analytics.totalCardsMastered,
-    totalStudyTime: analytics.totalStudyTime,
-    flashcardAccuracy: analytics.flashcardAccuracy,
-    totalSessions: analytics.totalSessions
+    totalSessions: analytics.totalSessions,
+    totalQuizzes: analytics.totalQuizzes,
+    completedQuizzes: analytics.completedQuizzes,
+    totalNotes: analytics.totalNotes
   });
 
   if (isLoading) {
@@ -42,15 +36,9 @@ export const LearningAnalyticsDashboard = () => {
     );
   }
 
-  const getAccuracyColor = (accuracy: number) => {
-    if (accuracy >= 80) return "text-green-600 bg-green-50";
-    if (accuracy >= 60) return "text-yellow-600 bg-yellow-50";
-    return "text-red-600 bg-red-50";
-  };
-
-  const getTrendIndicator = (value: number) => {
-    if (value > 0) return <TrendingUp className="h-4 w-4 text-green-500" />;
-    return <TrendingUp className="h-4 w-4 text-gray-400" />;
+  const getQuizCompletionRate = () => {
+    if (analytics.totalQuizzes === 0) return 0;
+    return Math.round((analytics.completedQuizzes / analytics.totalQuizzes) * 100);
   };
 
   return (
@@ -58,59 +46,9 @@ export const LearningAnalyticsDashboard = () => {
       <div>
         <h2 className="text-xl font-semibold mb-4 text-mint-900">Learning Analytics</h2>
         
-        {/* Primary Stats Grid */}
+        {/* Updated Stats Grid - removed Total Study Time, Cards Mastered, Accuracy Rate */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {/* Total Study Time */}
-          <Card className="hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Total Study Time</CardTitle>
-              <Clock className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{analytics.totalStudyTime}h</div>
-              <div className="flex items-center mt-2 text-sm">
-                {getTrendIndicator(analytics.todayStudyTime)}
-                <span className="ml-1 text-gray-600">
-                  {analytics.todayStudyTime}h today
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Cards Mastered - Fixed to show correct count */}
-          <Card className="hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Cards Mastered</CardTitle>
-              <Brain className="h-4 w-4 text-mint-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{analytics.totalCardsMastered}</div>
-              <div className="mt-2">
-                <Badge variant="outline" className="text-xs">
-                  <Award className="h-3 w-3 mr-1" />
-                  High retention
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Flashcard Accuracy */}
-          <Card className="hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Accuracy Rate</CardTitle>
-              <Target className="h-4 w-4 text-purple-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{analytics.flashcardAccuracy}%</div>
-              <div className="mt-2">
-                <Badge className={getAccuracyColor(analytics.flashcardAccuracy)}>
-                  {analytics.flashcardAccuracy >= 80 ? 'Excellent' : analytics.flashcardAccuracy >= 60 ? 'Good' : 'Needs Work'}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Study Sessions */}
+          {/* Total Sessions - unchanged */}
           <Card className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">Total Sessions</CardTitle>
@@ -120,6 +58,64 @@ export const LearningAnalyticsDashboard = () => {
               <div className="text-2xl font-bold text-gray-900">{analytics.totalSessions}</div>
               <div className="text-sm text-gray-600 mt-2">
                 Avg: {analytics.averageSessionTime} min/session
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Total Quizzes vs Completed - NEW */}
+          <Card className="hover:shadow-md transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Quiz Progress</CardTitle>
+              <Activity className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900">
+                {analytics.completedQuizzes}/{analytics.totalQuizzes}
+              </div>
+              <div className="text-sm text-gray-600 mt-2">
+                {getQuizCompletionRate()}% completion rate
+              </div>
+              <div className="flex items-center gap-1 mt-2">
+                {Array.from({ length: Math.min(analytics.totalQuizzes, 5) }).map((_, i) => (
+                  <div key={i}>
+                    {i < analytics.completedQuizzes ? (
+                      <CheckCircle2 className="h-3 w-3 text-green-500" />
+                    ) : (
+                      <Circle className="h-3 w-3 text-gray-300" />
+                    )}
+                  </div>
+                ))}
+                {analytics.totalQuizzes > 5 && (
+                  <span className="text-xs text-gray-500 ml-1">+{analytics.totalQuizzes - 5}</span>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Total Notes - NEW */}
+          <Card className="hover:shadow-md transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Total Notes</CardTitle>
+              <FileText className="h-4 w-4 text-mint-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900">{analytics.totalNotes}</div>
+              <div className="text-sm text-gray-600 mt-2">
+                Notes created
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Placeholder for fourth card or remove this section */}
+          <Card className="hover:shadow-md transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Flashcard Sets</CardTitle>
+              <BookOpen className="h-4 w-4 text-purple-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900">{analytics.totalSets}</div>
+              <div className="text-sm text-gray-600 mt-2">
+                Sets created
               </div>
             </CardContent>
           </Card>

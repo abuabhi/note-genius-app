@@ -21,10 +21,18 @@ export const useConsolidatedAnalytics = () => {
     weeklyStudyTimeMinutes: analytics.weeklyStudyTimeMinutes,
     previousWeekTimeMinutes: analytics.previousWeekTimeMinutes,
     
-    // Goal tracking
+    // Goal tracking - now uses user's actual goal
     weeklyGoalProgress: analytics.weeklyGoalProgress,
     weeklyGoalMinutes: analytics.weeklyGoalMinutes,
+    weeklyGoalHours: analytics.weeklyGoalHours,
     weeklyChange: analytics.weeklyChange,
+    
+    // Quiz metrics - NEW
+    totalQuizzes: analytics.totalQuizzes,
+    completedQuizzes: analytics.completedQuizzes,
+    
+    // Notes metrics - NEW  
+    totalNotes: analytics.totalNotes,
     
     // Flashcard metrics - ensure we're getting the correct mastered cards count
     totalCardsMastered: analytics.totalCardsMastered, // This should come from timezone-aware analytics
@@ -32,7 +40,7 @@ export const useConsolidatedAnalytics = () => {
     totalCardsReviewed: analytics.totalCardsReviewed,
     flashcardAccuracy: analytics.flashcardAccuracy,
     
-    // Streak and trends
+    // Streak and trends - now properly calculated
     streakDays: analytics.streakDays,
     
     // Session data - add the missing recentSessions property
@@ -44,10 +52,11 @@ export const useConsolidatedAnalytics = () => {
   };
 
   console.log('🔄 Consolidated Analytics:', {
-    totalCardsMastered: consolidatedAnalytics.totalCardsMastered,
-    totalSets: consolidatedAnalytics.totalSets,
-    flashcardAccuracy: consolidatedAnalytics.flashcardAccuracy,
-    recentSessions: consolidatedAnalytics.recentSessions?.length || 0,
+    totalQuizzes: consolidatedAnalytics.totalQuizzes,
+    completedQuizzes: consolidatedAnalytics.completedQuizzes,
+    totalNotes: consolidatedAnalytics.totalNotes,
+    streakDays: consolidatedAnalytics.streakDays,
+    weeklyGoalHours: consolidatedAnalytics.weeklyGoalHours,
     source: 'useConsolidatedAnalytics'
   });
 
