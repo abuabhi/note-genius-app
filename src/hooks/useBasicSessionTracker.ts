@@ -28,9 +28,12 @@ export const useBasicSessionTracker = () => {
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [pausedAt, setPausedAt] = useState<Date | null>(null);
-  const [totalPausedTime, setTotalPausedTime] = useState(0);
+  const [isManuallyPaused, setIsManuallyPaused] = useState(false);
   const [currentActivity, setCurrentActivity] = useState<ActivityType>('general');
+  
+  // Use refs for stable values in timer calculations
+  const pausedTimeRef = useRef(0);
+  const lastPauseStartRef = useRef<Date | null>(null);
   
   // Derived state
   const isOnStudyPage = isStudyRoute(location.pathname);
@@ -41,6 +44,7 @@ export const useBasicSessionTracker = () => {
     isOnStudyPage,
     isActive,
     isPaused,
+    isManuallyPaused,
     sessionId,
     elapsedSeconds,
     currentActivity,
@@ -49,16 +53,25 @@ export const useBasicSessionTracker = () => {
 
   // Timer - runs every second when active and not paused
   useEffect(() => {
-    if (!isActive || !startTime || isPaused) return;
+    if (!isActive || !startTime) return;
 
     const interval = setInterval(() => {
       const now = new Date();
-      const elapsed = Math.floor((now.getTime() - startTime.getTime() - totalPausedTime) / 1000);
+      let elapsed: number;
+      
+      if (isPaused && lastPauseStartRef.current) {
+        // If paused, calculate time up to when pause started
+        elapsed = Math.floor((lastPauseStartRef.current.getTime() - startTime.getTime() - pausedTimeRef.current) / 1000);
+      } else {
+        // If not paused, calculate current elapsed time minus all previous paused time
+        elapsed = Math.floor((now.getTime() - startTime.getTime() - pausedTimeRef.current) / 1000);
+      }
+      
       setElapsedSeconds(Math.max(0, elapsed));
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isActive, startTime, isPaused, totalPausedTime]);
+  }, [isActive, startTime, isPaused]); // Removed totalPausedTime from dependencies
 
   // Start session
   const startSession = useCallback(async () => {
@@ -93,8 +106,9 @@ export const useBasicSessionTracker = () => {
       setStartTime(now);
       setElapsedSeconds(0);
       setIsPaused(false);
-      setPausedAt(null);
-      setTotalPausedTime(0);
+      setIsManuallyPaused(false);
+      pausedTimeRef.current = 0;
+      lastPauseStartRef.current = null;
       setCurrentActivity(activityType);
       
       console.log('✅ Session started:', data.id);
@@ -109,12 +123,14 @@ export const useBasicSessionTracker = () => {
 
     try {
       const endTime = new Date();
-      let finalDuration = Math.floor((endTime.getTime() - startTime.getTime() - totalPausedTime) / 1000);
+      let finalDuration: number;
       
-      // If currently paused, add the time since pause started
-      if (isPaused && pausedAt) {
-        const pauseDuration = endTime.getTime() - pausedAt.getTime();
-        finalDuration = Math.floor((endTime.getTime() - startTime.getTime() - totalPausedTime - pauseDuration) / 1000);
+      if (isPaused && lastPauseStartRef.current) {
+        // If currently paused, calculate duration up to pause start
+        finalDuration = Math.floor((lastPauseStartRef.current.getTime() - startTime.getTime() - pausedTimeRef.current) / 1000);
+      } else {
+        // If not paused, calculate total duration minus paused time
+        finalDuration = Math.floor((endTime.getTime() - startTime.getTime() - pausedTimeRef.current) / 1000);
       }
 
       console.log('🛑 Ending session:', sessionId, 'Duration:', finalDuration);
@@ -133,15 +149,16 @@ export const useBasicSessionTracker = () => {
       setStartTime(null);
       setElapsedSeconds(0);
       setIsPaused(false);
-      setPausedAt(null);
-      setTotalPausedTime(0);
+      setIsManuallyPaused(false);
+      pausedTimeRef.current = 0;
+      lastPauseStartRef.current = null;
       setCurrentActivity('general');
       
       console.log('✅ Session ended');
     } catch (error) {
       console.error('❌ Failed to end session:', error);
     }
-  }, [sessionId, startTime, totalPausedTime, isPaused, pausedAt]);
+  }, [sessionId, startTime, isPaused]);
 
   // Update activity type
   const updateActivityType = useCallback(async () => {
@@ -173,6 +190,7 @@ export const useBasicSessionTracker = () => {
       isOnStudyPage,
       isActive,
       isPaused,
+      isManuallyPaused,
       user: !!user
     });
 
@@ -185,24 +203,24 @@ export const useBasicSessionTracker = () => {
       return;
     }
 
-    // SIMPLE RULE: If on study page and paused session -> resume
-    if (isOnStudyPage && isActive && isPaused) {
-      console.log('▶️ On study page with paused session - resuming');
+    // SIMPLE RULE: If on study page and paused session (but NOT manually paused) -> resume
+    if (isOnStudyPage && isActive && isPaused && !isManuallyPaused) {
+      console.log('▶️ On study page with auto-paused session - resuming');
       
-      // Calculate total paused time and resume
-      if (pausedAt) {
-        const pauseDuration = Date.now() - pausedAt.getTime();
-        setTotalPausedTime(prev => prev + pauseDuration);
-        setPausedAt(null);
+      // Add the pause duration to total paused time
+      if (lastPauseStartRef.current) {
+        const pauseDuration = Date.now() - lastPauseStartRef.current.getTime();
+        pausedTimeRef.current += pauseDuration;
+        lastPauseStartRef.current = null;
       }
       setIsPaused(false);
       return;
     }
 
-    // SIMPLE RULE: If NOT on study page and active session -> pause
-    if (!isOnStudyPage && isActive && !isPaused) {
-      console.log('⏸️ Left study page - pausing session');
-      setPausedAt(new Date());
+    // SIMPLE RULE: If NOT on study page and active session (and not manually paused) -> auto pause
+    if (!isOnStudyPage && isActive && !isPaused && !isManuallyPaused) {
+      console.log('⏸️ Left study page - auto-pausing session');
+      lastPauseStartRef.current = new Date();
       setIsPaused(true);
       return;
     }
@@ -211,39 +229,41 @@ export const useBasicSessionTracker = () => {
     if (isOnStudyPage && isActive) {
       updateActivityType();
     }
-  }, [location.pathname, user, isOnStudyPage, isActive, isPaused, startSession, updateActivityType]);
+  }, [location.pathname, user, isOnStudyPage, isActive, isPaused, isManuallyPaused, startSession, updateActivityType]);
 
   const togglePause = useCallback(() => {
     if (!isActive) return;
     
-    console.log('⏯️ Toggling pause:', !isPaused);
+    console.log('⏯️ Manual toggle pause:', !isPaused);
     
     if (isPaused) {
-      // Resume - calculate paused time and add it to total
-      if (pausedAt) {
-        const pauseDuration = Date.now() - pausedAt.getTime();
-        setTotalPausedTime(prev => prev + pauseDuration);
-        setPausedAt(null);
+      // Resume - add paused time to total and clear pause state
+      if (lastPauseStartRef.current) {
+        const pauseDuration = Date.now() - lastPauseStartRef.current.getTime();
+        pausedTimeRef.current += pauseDuration;
+        lastPauseStartRef.current = null;
       }
       setIsPaused(false);
+      setIsManuallyPaused(false);
     } else {
-      // Pause - record when we paused
-      setPausedAt(new Date());
+      // Pause - record when we paused and mark as manual
+      lastPauseStartRef.current = new Date();
       setIsPaused(true);
+      setIsManuallyPaused(true);
     }
-  }, [isPaused, isActive, pausedAt]);
+  }, [isPaused, isActive]);
 
   const recordActivity = useCallback(() => {
-    if (isOnStudyPage && isPaused) {
-      // Resume if we're on study page and currently paused
-      if (pausedAt) {
-        const pauseDuration = Date.now() - pausedAt.getTime();
-        setTotalPausedTime(prev => prev + pauseDuration);
-        setPausedAt(null);
+    if (isOnStudyPage && isPaused && !isManuallyPaused) {
+      // Resume if we're on study page and currently auto-paused (not manually paused)
+      if (lastPauseStartRef.current) {
+        const pauseDuration = Date.now() - lastPauseStartRef.current.getTime();
+        pausedTimeRef.current += pauseDuration;
+        lastPauseStartRef.current = null;
       }
       setIsPaused(false);
     }
-  }, [isOnStudyPage, isPaused, pausedAt]);
+  }, [isOnStudyPage, isPaused, isManuallyPaused]);
 
   const updateSessionActivity = useCallback(async (activityData: any) => {
     if (!sessionId || !isActive) return;
