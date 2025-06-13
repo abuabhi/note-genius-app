@@ -1,14 +1,16 @@
+
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 import { StudyMode } from '@/pages/study/types';
 import { Flashcard } from '@/types/flashcard';
-import { useBasicSessionTracker } from '@/hooks/useBasicSessionTracker';
 
 interface UseQuizModeProps {
   setId: string;
   mode: StudyMode;
+  recordActivity?: () => void;
+  updateSessionActivity?: (data: any) => void;
 }
 
 interface QuizSession {
@@ -24,9 +26,13 @@ interface FlashcardWithProgress extends Flashcard {
   next_review_date?: string;
 }
 
-export const useQuizMode = ({ setId, mode }: UseQuizModeProps) => {
+export const useQuizMode = ({ 
+  setId, 
+  mode, 
+  recordActivity = () => {}, 
+  updateSessionActivity = () => {} 
+}: UseQuizModeProps) => {
   const { user } = useAuth();
-  const { updateSessionActivity, recordActivity } = useBasicSessionTracker();
   
   const [flashcards, setFlashcards] = useState<FlashcardWithProgress[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);

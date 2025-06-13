@@ -1,6 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
-import { useBasicSessionTracker } from './useBasicSessionTracker';
+import { useState, useCallback } from 'react';
 import { logger } from '@/config/environment';
 
 export interface SessionMetrics {
@@ -19,7 +18,6 @@ export interface SessionMetrics {
 }
 
 export const useSessionAnalytics = () => {
-  const sessionTracker = useBasicSessionTracker();
   const [metrics, setMetrics] = useState<SessionMetrics>({
     totalEvents: 0,
     sessionStartCount: 0,

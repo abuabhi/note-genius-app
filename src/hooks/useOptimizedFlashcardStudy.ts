@@ -6,11 +6,12 @@ import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 import { StudyMode } from '@/pages/study/types';
 import { Flashcard } from '@/types/flashcard';
-import { useBasicSessionTracker } from '@/hooks/useBasicSessionTracker';
 
 interface UseOptimizedFlashcardStudyProps {
   setId: string;
   mode: StudyMode;
+  recordActivity?: () => void;
+  updateSessionActivity?: (data: any) => void;
 }
 
 interface OptimizedFlashcardData extends Flashcard {
@@ -29,9 +30,13 @@ interface StudyStats {
   totalCards: number;
 }
 
-export const useOptimizedFlashcardStudy = ({ setId, mode }: UseOptimizedFlashcardStudyProps) => {
+export const useOptimizedFlashcardStudy = ({ 
+  setId, 
+  mode, 
+  recordActivity = () => {}, 
+  updateSessionActivity = () => {} 
+}: UseOptimizedFlashcardStudyProps) => {
   const { user } = useAuth();
-  const { updateSessionActivity, recordActivity } = useBasicSessionTracker();
   const queryClient = useQueryClient();
   
   const [currentIndex, setCurrentIndex] = useState(0);

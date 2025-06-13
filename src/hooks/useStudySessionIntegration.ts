@@ -1,6 +1,5 @@
 
 import { useEffect } from 'react';
-import { useBasicSessionTracker } from '@/hooks/useBasicSessionTracker';
 import { useLocation } from 'react-router-dom';
 
 interface StudySessionIntegrationProps {
@@ -8,16 +7,23 @@ interface StudySessionIntegrationProps {
   mode?: string;
   cardsStudied?: number;
   isActive?: boolean;
+  // Session methods passed from parent component
+  updateSessionActivity?: (data: any) => void;
+  recordActivity?: () => void;
 }
 
 export const useStudySessionIntegration = ({
   setId,
   mode,
   cardsStudied = 0,
-  isActive = true
+  isActive = true,
+  updateSessionActivity = () => {},
+  recordActivity = () => {}
 }: StudySessionIntegrationProps) => {
-  const { updateSessionActivity, recordActivity, isOnStudyPage } = useBasicSessionTracker();
   const location = useLocation();
+  const isOnStudyPage = ['/flashcards', '/notes', '/quiz', '/study'].some(route => 
+    location.pathname.startsWith(route)
+  );
 
   // Record activity when cards are studied
   useEffect(() => {

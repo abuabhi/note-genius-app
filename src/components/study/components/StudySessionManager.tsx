@@ -2,20 +2,37 @@
 import { StudyMode } from "@/pages/study/types";
 import { useOptimizedFlashcardStudy } from "@/hooks/useOptimizedFlashcardStudy";
 import { useQuizMode } from "@/hooks/useQuizMode";
-import { useBasicSessionTracker } from "@/hooks/useBasicSessionTracker";
 
 interface StudySessionManagerProps {
   setId: string;
   mode: StudyMode;
   children: (sessionData: any) => React.ReactNode;
+  // Session methods passed from parent instead of using hook directly
+  recordActivity?: () => void;
+  updateSessionActivity?: (data: any) => void;
 }
 
-export const StudySessionManager = ({ setId, mode, children }: StudySessionManagerProps) => {
-  const { recordActivity } = useBasicSessionTracker();
+export const StudySessionManager = ({ 
+  setId, 
+  mode, 
+  children,
+  recordActivity = () => {},
+  updateSessionActivity = () => {}
+}: StudySessionManagerProps) => {
   
-  // Use different hooks based on mode
-  const studyHook = useOptimizedFlashcardStudy({ setId, mode });
-  const quizHook = useQuizMode({ setId, mode });
+  // Use different hooks based on mode, passing session methods as parameters
+  const studyHook = useOptimizedFlashcardStudy({ 
+    setId, 
+    mode, 
+    recordActivity, 
+    updateSessionActivity 
+  });
+  const quizHook = useQuizMode({ 
+    setId, 
+    mode, 
+    recordActivity, 
+    updateSessionActivity 
+  });
   
   // Select which hook to use based on mode
   const isQuizMode = mode === "test";

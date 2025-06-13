@@ -4,16 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSessionAnalytics } from '@/hooks/useSessionAnalytics';
-import { useBasicSessionTracker } from '@/hooks/useBasicSessionTracker';
-import { Activity, Download, Trash2, Bug, Clock, BarChart3 } from 'lucide-react';
+import { Bug, Download, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const SessionDebugPanel = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { metrics, exportAnalytics, clearAnalytics } = useSessionAnalytics();
-  const sessionTracker = useBasicSessionTracker();
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -25,14 +22,6 @@ export const SessionDebugPanel = () => {
     }
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   };
-
-  const getSessionStatus = () => {
-    if (!sessionTracker.isActive) return { label: 'Inactive', color: 'bg-gray-500' };
-    if (sessionTracker.isPaused) return { label: 'Paused', color: 'bg-orange-500' };
-    return { label: 'Active', color: 'bg-green-500' };
-  };
-
-  const status = getSessionStatus();
 
   if (!isOpen) {
     return (
@@ -53,7 +42,7 @@ export const SessionDebugPanel = () => {
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2">
             <Bug className="h-4 w-4" />
-            Session Debug
+            Session Debug (Read-Only)
           </CardTitle>
           <Button
             onClick={() => setIsOpen(false)}
@@ -67,67 +56,10 @@ export const SessionDebugPanel = () => {
       </CardHeader>
       
       <CardContent className="p-4 pt-0">
-        <Tabs defaultValue="status" className="w-full">
-          <TabsList className="grid grid-cols-2 mb-4">
-            <TabsTrigger value="status" className="text-xs">Status</TabsTrigger>
-            <TabsTrigger value="metrics" className="text-xs">Metrics</TabsTrigger>
+        <Tabs defaultValue="metrics" className="w-full">
+          <TabsList className="grid grid-cols-1 mb-4">
+            <TabsTrigger value="metrics" className="text-xs">Analytics</TabsTrigger>
           </TabsList>
-
-          <TabsContent value="status" className="space-y-3">
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="flex items-center gap-2">
-                <div className={cn("w-2 h-2 rounded-full", status.color)} />
-                <span className="font-medium">{status.label}</span>
-              </div>
-              <div className="text-right">
-                {sessionTracker.isActive && (
-                  <Badge variant="outline" className="text-xs">
-                    {formatTime(sessionTracker.elapsedSeconds)}
-                  </Badge>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2 text-xs">
-              <div className="flex justify-between">
-                <span>Session ID:</span>
-                <span className="font-mono text-xs">
-                  {sessionTracker.sessionId?.slice(-8) || 'None'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Activity:</span>
-                <span>{sessionTracker.currentActivity || 'None'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Study Page:</span>
-                <Badge variant={sessionTracker.isOnStudyPage ? "default" : "secondary"} className="text-xs">
-                  {sessionTracker.isOnStudyPage ? 'Yes' : 'No'}
-                </Badge>
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <Button
-                onClick={sessionTracker.togglePause}
-                disabled={!sessionTracker.isActive}
-                size="sm"
-                variant="outline"
-                className="flex-1 text-xs"
-              >
-                {sessionTracker.isPaused ? 'Resume' : 'Pause'}
-              </Button>
-              <Button
-                onClick={sessionTracker.endSession}
-                disabled={!sessionTracker.isActive}
-                size="sm"
-                variant="destructive"
-                className="flex-1 text-xs"
-              >
-                End
-              </Button>
-            </div>
-          </TabsContent>
 
           <TabsContent value="metrics" className="space-y-3">
             <div className="grid grid-cols-2 gap-2 text-xs">
