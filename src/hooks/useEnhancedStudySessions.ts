@@ -67,7 +67,9 @@ export const useEnhancedStudySessions = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Query for enhanced sessions
+  console.log('🚫 [ENHANCED SESSIONS] DISABLED - Session creation functionality removed to prevent conflicts with SessionDock');
+
+  // Query for enhanced sessions (READ-ONLY for analytics)
   const { data: sessions = [], isLoading: sessionsLoading } = useQuery({
     queryKey: ["enhanced-study-sessions", user?.id],
     queryFn: async () => {
@@ -85,7 +87,7 @@ export const useEnhancedStudySessions = () => {
     enabled: !!user,
   });
 
-  // Query for session activities
+  // Query for session activities (READ-ONLY)
   const { data: activities = [] } = useQuery({
     queryKey: ["session-activities", user?.id],
     queryFn: async () => {
@@ -106,7 +108,7 @@ export const useEnhancedStudySessions = () => {
     enabled: !!user,
   });
 
-  // Query for analytics
+  // Query for analytics (READ-ONLY)
   const { data: analytics = [] } = useQuery({
     queryKey: ["study-analytics", user?.id],
     queryFn: async () => {
@@ -125,156 +127,53 @@ export const useEnhancedStudySessions = () => {
     enabled: !!user,
   });
 
-  // Auto-create session mutation
+  // DISABLED: Auto-create session mutation - SessionDock handles all session creation
   const createAutoSession = useMutation({
-    mutationFn: async (data: {
-      activity_type: string;
-      title: string;
-      subject?: string;
-      resource_id?: string;
-    }) => {
-      if (!user) throw new Error('User not authenticated');
-
-      // Check if there's an active session within the last 5 minutes
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-      
-      const { data: recentSessions, error: recentError } = await supabase
-        .from('study_sessions')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .gte('start_time', fiveMinutesAgo)
-        .order('start_time', { ascending: false })
-        .limit(1);
-
-      if (recentError) throw recentError;
-
-      // If there's a recent active session, return it instead of creating new
-      if (recentSessions && recentSessions.length > 0) {
-        return recentSessions[0];
-      }
-
-      // Create new auto session
-      const sessionData = {
-        user_id: user.id,
-        title: data.title,
-        subject: data.subject,
-        start_time: new Date().toISOString(),
-        is_active: true,
-        activity_type: data.activity_type,
-        auto_created: true,
-        flashcard_set_id: data.activity_type === 'flashcard' ? data.resource_id : null
-      };
-
-      const { data: newSession, error } = await supabase
-        .from('study_sessions')
-        .insert(sessionData)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return newSession;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["enhanced-study-sessions"] });
+    mutationFn: async (data: any) => {
+      console.log('🚫 [ENHANCED SESSIONS] createAutoSession DISABLED - Use SessionDock instead');
+      throw new Error('Session creation disabled - SessionDock manages all sessions');
     },
     onError: (error) => {
-      console.error('Error creating auto session:', error);
+      console.error('🚫 [ENHANCED SESSIONS] Session creation blocked:', error);
     }
   });
 
-  // Track activity mutation
+  // DISABLED: Track activity mutation - SessionDock handles all activity tracking
   const trackActivity = useMutation({
-    mutationFn: async (activityData: {
-      session_id: string;
-      activity_type: 'flashcard' | 'quiz' | 'note';
-      resource_id?: string;
-      performance_data?: Record<string, any>;
-      end_time?: string;
-      duration_seconds?: number;
-    }) => {
-      const { data, error } = await supabase
-        .from('study_session_activities')
-        .insert({
-          ...activityData,
-          start_time: new Date().toISOString(),
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+    mutationFn: async (activityData: any) => {
+      console.log('🚫 [ENHANCED SESSIONS] trackActivity DISABLED - Use SessionDock instead');
+      // Don't throw error, just log and ignore
+      return null;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["session-activities"] });
+    onError: (error) => {
+      console.error('🚫 [ENHANCED SESSIONS] Activity tracking blocked:', error);
     }
   });
 
-  // Update session with performance data
+  // DISABLED: Update session with performance data - SessionDock handles all updates
   const updateSessionPerformance = useMutation({
-    mutationFn: async (data: {
-      sessionId: string;
-      cards_reviewed?: number;
-      cards_correct?: number;
-      quiz_score?: number;
-      quiz_total_questions?: number;
-      notes_created?: number;
-      notes_reviewed?: number;
-    }) => {
-      const { error } = await supabase
-        .from('study_sessions')
-        .update({
-          cards_reviewed: data.cards_reviewed,
-          cards_correct: data.cards_correct,
-          quiz_score: data.quiz_score,
-          quiz_total_questions: data.quiz_total_questions,
-          notes_created: data.notes_created,
-          notes_reviewed: data.notes_reviewed,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', data.sessionId);
-
-      if (error) throw error;
+    mutationFn: async (data: any) => {
+      console.log('🚫 [ENHANCED SESSIONS] updateSessionPerformance DISABLED - Use SessionDock instead');
+      // Don't throw error, just log and ignore
+      return null;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["enhanced-study-sessions"] });
+    onError: (error) => {
+      console.error('🚫 [ENHANCED SESSIONS] Session update blocked:', error);
     }
   });
 
-  // End session mutation
+  // DISABLED: End session mutation - SessionDock handles all session ending
   const endSession = useMutation({
     mutationFn: async (sessionId: string) => {
-      const endTime = new Date();
-      
-      const { data: session, error: fetchError } = await supabase
-        .from('study_sessions')
-        .select('start_time')
-        .eq('id', sessionId)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      const duration = Math.floor((endTime.getTime() - new Date(session.start_time).getTime()) / 1000);
-
-      const { error } = await supabase
-        .from('study_sessions')
-        .update({
-          end_time: endTime.toISOString(),
-          duration,
-          is_active: false,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', sessionId);
-
-      if (error) throw error;
+      console.log('🚫 [ENHANCED SESSIONS] endSession DISABLED - Use SessionDock instead');
+      throw new Error('Session ending disabled - SessionDock manages all sessions');
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["enhanced-study-sessions"] });
-      toast.success('Study session completed');
+    onError: (error) => {
+      console.error('🚫 [ENHANCED SESSIONS] Session ending blocked:', error);
     }
   });
 
-  // Calculate session statistics
+  // Calculate session statistics (READ-ONLY for analytics)
   const getSessionStatistics = useMemo(() => {
     if (!sessions.length) return {
       totalHours: 0,
@@ -308,7 +207,7 @@ export const useEnhancedStudySessions = () => {
     };
   }, [sessions]);
 
-  // Get filtered sessions
+  // Get filtered sessions (READ-ONLY)
   const getFilteredSessions = (filter: string) => {
     switch(filter) {
       case 'recent':
@@ -329,10 +228,12 @@ export const useEnhancedStudySessions = () => {
     analytics,
     isLoading: sessionsLoading,
     error,
+    // DISABLED MUTATIONS - All return disabled versions
     createAutoSession,
     trackActivity,
     updateSessionPerformance,
     endSession,
+    // READ-ONLY FUNCTIONS for analytics
     getSessionStatistics,
     getFilteredSessions
   };

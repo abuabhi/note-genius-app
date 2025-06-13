@@ -13,6 +13,8 @@ interface DashboardData {
 export const useOptimizedDashboard = () => {
   const [priorityData, setPriorityData] = useState<Partial<DashboardData>>({});
 
+  console.log('📊 [OPTIMIZED DASHBOARD] Using SessionDock-created sessions for all data');
+
   // Load critical data first (Today's Focus)
   const { data: todaysFocus, isLoading: todaysFocusLoading } = useQuery({
     queryKey: ['dashboard', 'todaysFocus'],
@@ -30,42 +32,59 @@ export const useOptimizedDashboard = () => {
     gcTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Load secondary data (Study Stats)
+  // Load secondary data (Study Stats) - ONLY from SessionDock sessions
   const { data: studyStats, isLoading: studyStatsLoading } = useQuery({
     queryKey: ['dashboard', 'studyStats'],
     queryFn: async () => {
       const userId = (await supabase.auth.getUser()).data.user?.id;
       const today = new Date().toISOString().split('T')[0];
       
-      const [sessionsData, analyticsData] = await Promise.all([
-        supabase
-          .from('study_sessions')
-          .select('duration, cards_reviewed, cards_correct')
-          .eq('user_id', userId)
-          .gte('start_time', today)
-          .limit(10),
-        supabase
-          .from('study_analytics')
-          .select('total_study_time, flashcard_accuracy, consistency_score')
-          .eq('user_id', userId)
-          .eq('date', today)
-          .single()
-      ]);
+      console.log('📊 [OPTIMIZED DASHBOARD] Loading study stats from SessionDock sessions only');
+      
+      // Get sessions created by SessionDock (useBasicSessionTracker)
+      const { data: sessionsData, error: sessionsError } = await supabase
+        .from('study_sessions')
+        .select('duration, cards_reviewed, cards_correct, activity_type, auto_created')
+        .eq('user_id', userId)
+        .gte('start_time', today)
+        .order('start_time', { ascending: false })
+        .limit(10);
+
+      if (sessionsError) {
+        console.error('📊 [OPTIMIZED DASHBOARD] Error loading sessions:', sessionsError);
+        throw sessionsError;
+      }
+
+      console.log('📊 [OPTIMIZED DASHBOARD] Loaded sessions:', sessionsData);
+
+      // Get analytics (read-only)
+      const { data: analyticsData, error: analyticsError } = await supabase
+        .from('study_analytics')
+        .select('total_study_time, flashcard_accuracy, consistency_score')
+        .eq('user_id', userId)
+        .eq('date', today)
+        .single();
+
+      if (analyticsError && analyticsError.code !== 'PGRST116') {
+        console.error('📊 [OPTIMIZED DASHBOARD] Error loading analytics:', analyticsError);
+      }
 
       return {
-        sessions: sessionsData.data || [],
-        analytics: analyticsData.data
+        sessions: sessionsData || [],
+        analytics: analyticsData
       };
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    enabled: !!todaysFocus, // Load after priority data
+    enabled: !!todaysFocus,
   });
 
-  // Load tertiary data (Recent Activity)
+  // Load tertiary data (Recent Activity) - ONLY from SessionDock data
   const { data: recentActivity, isLoading: recentActivityLoading } = useQuery({
     queryKey: ['dashboard', 'recentActivity'],
     queryFn: async () => {
       const userId = (await supabase.auth.getUser()).data.user?.id;
+      
+      console.log('📊 [OPTIMIZED DASHBOARD] Loading recent activity from SessionDock data');
       
       const [notesData, flashcardsData, goalsData] = await Promise.all([
         supabase
@@ -95,7 +114,7 @@ export const useOptimizedDashboard = () => {
       ].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
-    enabled: !!studyStats, // Load after secondary data
+    enabled: !!studyStats,
   });
 
   // Load goals last
@@ -112,7 +131,7 @@ export const useOptimizedDashboard = () => {
       return data || [];
     },
     staleTime: 15 * 60 * 1000, // 15 minutes
-    enabled: !!recentActivity, // Load last
+    enabled: !!recentActivity,
   });
 
   const isLoading = todaysFocusLoading;
