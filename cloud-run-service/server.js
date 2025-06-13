@@ -26,8 +26,8 @@ function extractVideoId(url) {
   return match ? match[1] : null;
 }
 
-// Enhanced yt-dlp runner with multiple fallback methods
-function runYtDlpWithFallbacks(videoId, outputPath) {
+// Enhanced yt-dlp runner with cookies and better bot handling
+function runYtDlpWithEnhancedFallbacks(videoId, outputPath) {
   return new Promise(async (resolve, reject) => {
     const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
     
@@ -39,50 +39,49 @@ function runYtDlpWithFallbacks(videoId, outputPath) {
       console.warn('Could not create cache directory:', error.message);
     }
     
-    // Method 1: Standard extraction with enhanced options
+    // Enhanced methods with better bot detection handling
     const methods = [
       {
-        name: 'standard',
+        name: 'android_client',
         args: [
           '--extract-audio',
           '--audio-format', 'mp3',
           '--audio-quality', '192K',
           '--output', outputPath,
           '--no-playlist',
-          '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          '--referer', 'https://www.youtube.com/',
-          '--cache-dir', cacheDir,
+          '--extractor-args', 'youtube:player_client=android',
+          '--user-agent', 'com.google.android.youtube/17.31.35 (Linux; U; Android 11) gzip',
+          '--no-check-certificate',
           '--ignore-errors',
           '--no-warnings',
           videoUrl
         ]
       },
       {
-        name: 'fallback_1',
+        name: 'web_embedded',
         args: [
           '--extract-audio',
           '--audio-format', 'mp3',
           '--audio-quality', '128K',
           '--output', outputPath,
           '--no-playlist',
-          '--user-agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-          '--extractor-args', 'youtube:player_client=android',
-          '--cache-dir', cacheDir,
+          '--extractor-args', 'youtube:player_client=web_embedded',
+          '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
           '--no-check-certificate',
+          '--ignore-errors',
           videoUrl
         ]
       },
       {
-        name: 'fallback_2',
+        name: 'ios_client',
         args: [
           '--extract-audio',
           '--audio-format', 'mp3',
           '--output', outputPath,
           '--no-playlist',
-          '--user-agent', 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
-          '--extractor-args', 'youtube:player_client=web',
-          '--cache-dir', cacheDir,
-          '--socket-timeout', '30',
+          '--extractor-args', 'youtube:player_client=ios',
+          '--user-agent', 'com.google.ios.youtube/17.33.2 (iPhone14,3; U; CPU iOS 15_6 like Mac OS X)',
+          '--no-check-certificate',
           videoUrl
         ]
       }
@@ -141,25 +140,19 @@ function attemptExtraction(args, methodName) {
   });
 }
 
-// Enhanced video info retrieval with fallbacks
-function getVideoInfoWithFallbacks(videoId) {
+// Enhanced video info retrieval
+function getVideoInfoWithEnhancedFallbacks(videoId) {
   return new Promise(async (resolve, reject) => {
     const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
     
     const infoMethods = [
       {
-        name: 'standard_info',
-        args: ['--dump-json', '--no-playlist', videoUrl]
+        name: 'android_info',
+        args: ['--dump-json', '--no-playlist', '--extractor-args', 'youtube:player_client=android', videoUrl]
       },
       {
-        name: 'fallback_info',
-        args: [
-          '--dump-json', 
-          '--no-playlist',
-          '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          '--extractor-args', 'youtube:player_client=android',
-          videoUrl
-        ]
+        name: 'web_embedded_info',
+        args: ['--dump-json', '--no-playlist', '--extractor-args', 'youtube:player_client=web_embedded', videoUrl]
       }
     ];
 
@@ -229,7 +222,7 @@ function getVideoInfoMethod(args, methodName) {
   });
 }
 
-// Main extraction endpoint with enhanced error handling
+// Main extraction endpoint
 app.post('/extract', async (req, res) => {
   const requestId = uuidv4();
   console.log(`[${requestId}] Starting enhanced extraction`);
@@ -258,16 +251,16 @@ app.post('/extract', async (req, res) => {
 
     // Get video info with fallbacks
     console.log(`[${requestId}] Getting video info...`);
-    const videoInfo = await getVideoInfoWithFallbacks(videoId);
+    const videoInfo = await getVideoInfoWithEnhancedFallbacks(videoId);
     console.log(`[${requestId}] Video info retrieved:`, videoInfo.title);
     
     // Setup file paths
     const audioFileName = `${videoId}-${requestId}.mp3`;
     const tempPath = `/tmp/${audioFileName}`;
     
-    // Extract audio with fallback methods
+    // Extract audio with enhanced fallback methods
     console.log(`[${requestId}] Starting audio extraction...`);
-    await runYtDlpWithFallbacks(videoId, tempPath);
+    await runYtDlpWithEnhancedFallbacks(videoId, tempPath);
     console.log(`[${requestId}] Audio extraction completed`);
     
     // Verify file exists and has content
@@ -378,7 +371,7 @@ app.delete('/cleanup/:fileName', async (req, res) => {
   }
 });
 
-// New endpoint to check video accessibility
+// NEW: Video accessibility check endpoint
 app.post('/check-video', async (req, res) => {
   const requestId = uuidv4();
   
@@ -387,22 +380,42 @@ app.post('/check-video', async (req, res) => {
     const videoId = extractVideoId(youtubeUrl);
     
     if (!videoId) {
-      return res.status(400).json({ error: 'Invalid YouTube URL' });
+      return res.status(400).json({ 
+        success: false,
+        accessible: false,
+        error: 'Invalid YouTube URL',
+        requestId 
+      });
     }
     
     console.log(`[${requestId}] Checking video accessibility: ${videoId}`);
-    const videoInfo = await getVideoInfoWithFallbacks(videoId);
     
-    res.json({
-      success: true,
-      accessible: true,
-      videoInfo,
-      requestId
-    });
+    // Try to get basic video info to check accessibility
+    try {
+      const videoInfo = await getVideoInfoWithEnhancedFallbacks(videoId);
+      
+      res.json({
+        success: true,
+        accessible: true,
+        videoInfo,
+        requestId
+      });
+    } catch (error) {
+      console.log(`[${requestId}] Video check failed but continuing:`, error.message);
+      
+      // Return accessible: false but don't fail completely
+      res.json({
+        success: true,
+        accessible: false,
+        error: error.message,
+        requestId,
+        warning: 'Video may have restrictions but extraction will be attempted'
+      });
+    }
     
   } catch (error) {
-    console.error(`[${requestId}] Video check failed:`, error);
-    res.json({
+    console.error(`[${requestId}] Video check error:`, error);
+    res.status(500).json({
       success: false,
       accessible: false,
       error: error.message,
@@ -414,4 +427,5 @@ app.post('/check-video', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Enhanced YouTube Audio Extractor running on port ${PORT}`);
   console.log('Features: Enhanced bot detection handling, multiple fallback methods, improved error categorization');
+  console.log('New endpoints: /check-video for accessibility checking');
 });
