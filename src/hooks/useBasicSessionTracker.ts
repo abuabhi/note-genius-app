@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { useLocation } from 'react-router-dom';
@@ -19,9 +18,23 @@ const getActivityType = (pathname: string): ActivityType => {
   return 'general';
 };
 
+// Add instance tracking to prevent multiple hook instances
+let hookInstanceCount = 0;
+
 export const useBasicSessionTracker = () => {
   const { user } = useAuth();
   const location = useLocation();
+  
+  // Track hook instances for debugging
+  useEffect(() => {
+    hookInstanceCount++;
+    console.log('🎯 useBasicSessionTracker instance created. Total instances:', hookInstanceCount);
+    
+    return () => {
+      hookInstanceCount--;
+      console.log('🎯 useBasicSessionTracker instance destroyed. Remaining instances:', hookInstanceCount);
+    };
+  }, []);
   
   // Core session state
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -48,7 +61,8 @@ export const useBasicSessionTracker = () => {
     sessionId,
     elapsedSeconds,
     currentActivity,
-    user: !!user
+    user: !!user,
+    hookInstances: hookInstanceCount
   });
 
   // Timer - runs every second when active and not paused

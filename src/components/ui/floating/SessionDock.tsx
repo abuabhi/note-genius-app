@@ -93,9 +93,12 @@ export const SessionDock = () => {
   const theme = getSessionTheme();
 
   const handleEndSession = async () => {
+    console.log('🛑 SessionDock - End session clicked');
     setIsEnding(true);
+    
     // Show final time for 1 second before ending
     setTimeout(() => {
+      console.log('🛑 SessionDock - Actually ending session now');
       endSession();
       setIsEnding(false);
     }, 1000);
