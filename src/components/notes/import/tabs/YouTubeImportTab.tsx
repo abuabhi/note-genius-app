@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Video, FileText, Download, Play, CheckCircle, AlertCircle } from 'lucide-react';
+import { Loader2, Video, FileText, Download, Play, CheckCircle, AlertCircle, HelpCircle, Upload, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Note } from '@/types/note';
 
@@ -15,7 +16,7 @@ interface YouTubeImportTabProps {
 }
 
 interface TranscriptionState {
-  status: 'idle' | 'extracting' | 'uploading' | 'transcribing' | 'completed' | 'error';
+  status: 'idle' | 'checking' | 'extracting' | 'uploading' | 'transcribing' | 'completed' | 'error';
   progress: number;
   message: string;
   videoTitle?: string;
@@ -23,6 +24,7 @@ interface TranscriptionState {
   summary?: string;
   chapters?: Array<{ gist: string; headline: string; start: number; end: number }>;
   error?: string;
+  errorType?: string;
 }
 
 export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
@@ -62,34 +64,35 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
     }
 
     try {
-      // Step 1: Audio extraction via Cloud Run
+      // Step 1: Checking video accessibility
       setTranscriptionState({
-        status: 'extracting',
-        progress: 15,
-        message: 'Extracting high-quality audio from YouTube video...'
+        status: 'checking',
+        progress: 10,
+        message: 'Checking video accessibility and permissions...'
       });
 
-      // Step 2: Processing and upload
+      // Step 2: Audio extraction
+      setTranscriptionState(prev => ({
+        ...prev,
+        status: 'extracting',
+        progress: 25,
+        message: 'Extracting high-quality audio with enhanced methods...'
+      }));
+
+      // Step 3: Processing and upload
       setTranscriptionState(prev => ({
         ...prev,
         status: 'uploading',
-        progress: 35,
-        message: 'Processing audio and preparing for transcription...'
+        progress: 50,
+        message: 'Processing audio and uploading for transcription...'
       }));
 
-      // Step 3: AI transcription
+      // Step 4: AI transcription
       setTranscriptionState(prev => ({
         ...prev,
         status: 'transcribing',
-        progress: 60,
+        progress: 75,
         message: 'AI is transcribing audio with advanced language processing...'
-      }));
-
-      // Step 4: Enhanced processing
-      setTranscriptionState(prev => ({
-        ...prev,
-        progress: 85,
-        message: 'Generating summary, chapters, and insights...'
       }));
 
       const { data, error } = await supabase.functions.invoke('youtube-transcription', {
@@ -108,7 +111,7 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
       setTranscriptionState({
         status: 'completed',
         progress: 100,
-        message: `Transcription completed! Processed ${data.wordCount} words in ${Math.round(data.processingTime / 60)} minutes of content.`,
+        message: `🎉 Transcription completed! Processed ${data.wordCount} words in ${Math.round(data.processingTime / 60)} minutes of content.`,
         videoTitle: data.videoTitle,
         transcript: data.transcript,
         summary: data.summary,
@@ -121,11 +124,27 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
 
     } catch (error) {
       console.error('Transcription error:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      let errorType = 'unknown';
+      
+      // Determine error type for better user guidance
+      if (errorMessage.includes('YouTube is blocking') || errorMessage.includes('blocked')) {
+        errorType = 'blocked';
+      } else if (errorMessage.includes('Video is not accessible') || errorMessage.includes('inaccessible')) {
+        errorType = 'inaccessible';
+      } else if (errorMessage.includes('Audio extraction failed') || errorMessage.includes('extraction_failed')) {
+        errorType = 'extraction_failed';
+      } else if (errorMessage.includes('transcription failed') || errorMessage.includes('AssemblyAI')) {
+        errorType = 'transcription_failed';
+      }
+      
       setTranscriptionState({
         status: 'error',
         progress: 0,
-        message: 'Failed to transcribe video. Please try again or contact support if the issue persists.',
-        error: error instanceof Error ? error.message : 'Unknown error occurred'
+        message: errorMessage,
+        error: errorMessage,
+        errorType
       });
     }
   };
@@ -233,8 +252,16 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
     }
   };
 
+  const handleRetry = () => {
+    setTranscriptionState({
+      status: 'idle',
+      progress: 0,
+      message: ''
+    });
+  };
+
   const renderStatus = () => {
-    const { status, progress, message, error } = transcriptionState;
+    const { status, progress, message, error, errorType } = transcriptionState;
 
     if (status === 'idle') return null;
 
@@ -243,11 +270,49 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
         <Alert className="mt-4" variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            <div className="space-y-2">
+            <div className="space-y-3">
               <p className="font-medium">{error || message}</p>
-              <p className="text-sm opacity-90">
-                This may be due to: video privacy settings, geo-restrictions, or temporary service issues.
-              </p>
+              
+              {/* Specific troubleshooting based on error type */}
+              {errorType === 'blocked' && (
+                <div className="text-sm space-y-2">
+                  <p className="font-medium">Why this happens:</p>
+                  <ul className="list-disc list-inside space-y-1 text-xs">
+                    <li>YouTube's bot detection system</li>
+                    <li>Age-restricted or region-locked content</li>
+                    <li>Popular videos with strict access controls</li>
+                  </ul>
+                  <p className="font-medium">Try these solutions:</p>
+                  <ul className="list-disc list-inside space-y-1 text-xs">
+                    <li>Use a different, less popular video</li>
+                    <li>Try educational or tutorial content</li>
+                    <li>Download the video and upload the audio file directly</li>
+                  </ul>
+                </div>
+              )}
+              
+              {errorType === 'inaccessible' && (
+                <div className="text-sm space-y-2">
+                  <p className="font-medium">Possible causes:</p>
+                  <ul className="list-disc list-inside space-y-1 text-xs">
+                    <li>Video is private or deleted</li>
+                    <li>Geographic restrictions</li>
+                    <li>Channel restrictions</li>
+                  </ul>
+                </div>
+              )}
+              
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleRetry}
+                  className="text-xs"
+                >
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                  Try Again
+                </Button>
+              </div>
             </div>
           </AlertDescription>
         </Alert>
@@ -297,9 +362,9 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
             <div className="flex items-center gap-2 mb-3">
               <Video className="h-5 w-5 text-red-500" />
               <div>
-                <h4 className="font-medium text-gray-900">Professional YouTube Transcription</h4>
+                <h4 className="font-medium text-gray-900">Enhanced YouTube Transcription</h4>
                 <p className="text-xs text-gray-600 mt-1">
-                  Powered by advanced AI for accurate transcription, summaries, and insights
+                  Advanced AI with multiple extraction methods and bot detection handling
                 </p>
               </div>
             </div>
@@ -324,7 +389,7 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
               {transcriptionState.status === 'idle' || transcriptionState.status === 'error' ? (
                 <>
                   <Play className="mr-2 h-4 w-4" />
-                  Start AI Transcription
+                  Start Enhanced Transcription
                 </>
               ) : transcriptionState.status === 'completed' ? (
                 <>
@@ -391,26 +456,28 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
         </Card>
       )}
 
-      {/* Feature Info */}
+      {/* Enhanced Feature Info */}
       <div>
         <div className="flex items-center gap-2 mb-3">
           <CheckCircle className="h-4 w-4 text-mint-500" />
-          <h4 className="text-sm font-medium text-gray-900">Features:</h4>
+          <h4 className="text-sm font-medium text-gray-900">Enhanced Features:</h4>
         </div>
         
         <div className="grid gap-2">
           {[
-            { text: "Extract and transcribe audio from YouTube videos" },
-            { text: "Generate automatic summaries of video content" },
-            { text: "Create chapter breakdowns for long videos" },
-            { text: "Save transcripts as searchable notes" }
+            { text: "Multiple extraction methods with bot detection handling", icon: RefreshCw },
+            { text: "Enhanced error categorization and troubleshooting", icon: HelpCircle },
+            { text: "Automatic video accessibility checking", icon: CheckCircle },
+            { text: "Advanced AI transcription with summaries and chapters", icon: Video },
+            { text: "Improved retry logic and timeout handling", icon: RefreshCw },
+            { text: "Fallback options for restricted content", icon: Upload }
           ].map((feature, index) => (
             <div 
               key={index}
               className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200"
             >
               <div className="p-1.5 bg-mint-50 rounded-md">
-                <CheckCircle className="h-3.5 w-3.5 text-mint-600" />
+                <feature.icon className="h-3.5 w-3.5 text-mint-600" />
               </div>
               <span className="text-sm text-gray-700">{feature.text}</span>
             </div>
