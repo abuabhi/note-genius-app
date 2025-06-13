@@ -1,6 +1,7 @@
 
 import React, { Suspense } from 'react';
 import { useTimezoneAwareAnalytics } from '@/hooks/useTimezoneAwareAnalytics';
+import { useSessionAnalytics } from '@/hooks/useSessionAnalytics';
 import Layout from '@/components/layout/Layout';
 
 // Lazy load components - simplified approach with proper default export handling
@@ -12,8 +13,9 @@ const LearningAnalyticsDashboard = React.lazy(() =>
 
 const OptimizedStudySessionsPage = () => {
   const { analytics, isLoading } = useTimezoneAwareAnalytics();
+  const { sessions } = useSessionAnalytics();
 
-  console.log('📊 [STUDY SESSIONS PAGE] Using unified analytics from SessionDock sessions');
+  console.log('📊 [OPTIMIZED STUDY SESSIONS] Using unified analytics from SessionDock sessions only');
 
   if (isLoading) {
     return (
@@ -37,7 +39,7 @@ const OptimizedStudySessionsPage = () => {
       <div className="container mx-auto p-6">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Study Sessions</h1>
-          <p className="text-gray-600">Track and analyze your study performance using SessionDock</p>
+          <p className="text-gray-600">Track and analyze your study performance using unified SessionDock</p>
         </div>
 
         <div className="space-y-8">
@@ -47,9 +49,9 @@ const OptimizedStudySessionsPage = () => {
 
           {/* Recent Sessions from unified analytics */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">Recent Sessions (from SessionDock)</h2>
+            <h2 className="text-xl font-semibold mb-4">Recent Sessions (Unified SessionDock)</h2>
             <div className="space-y-3">
-              {analytics.recentSessions?.map((session: any) => (
+              {sessions?.slice(0, 10)?.map((session: any) => (
                 <div key={session.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
                   <div>
                     <h3 className="font-medium">{session.subject || session.title}</h3>
@@ -58,13 +60,13 @@ const OptimizedStudySessionsPage = () => {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">{session.cards_correct}/{session.cards_reviewed}</p>
+                    <p className="font-medium">{session.cards_correct || 0}/{session.cards_reviewed || 0}</p>
                     <p className="text-sm text-gray-600">Cards</p>
                   </div>
                 </div>
               )) || (
                 <p className="text-gray-500 text-center py-8">
-                  No recent sessions found. Start studying to see your session data here!
+                  No recent sessions found. Start studying to see your unified session data here!
                 </p>
               )}
             </div>

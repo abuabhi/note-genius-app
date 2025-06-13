@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
@@ -6,32 +7,34 @@ import { StudySessionsBreadcrumb } from "@/components/study/StudySessionsBreadcr
 import { StudyAnalyticsDashboard } from "@/components/study/StudyAnalyticsDashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, History, Archive, BarChart3, Brain } from "lucide-react";
-import { useEnhancedStudySessions } from "@/hooks/useEnhancedStudySessions";
+import { useSessionAnalytics } from "@/hooks/useSessionAnalytics";
 import { useConsolidatedAnalytics } from "@/hooks/useConsolidatedAnalytics";
 import { useSessionCleanup } from "@/hooks/useSessionCleanup";
 
 const StudySessionsPage = () => {
   const { user, loading } = useRequireAuth();
   const [activeTab, setActiveTab] = useState("analytics");
-  const { getFilteredSessions, isLoading } = useEnhancedStudySessions();
+  const { sessions, isLoading } = useSessionAnalytics();
   const { analytics } = useConsolidatedAnalytics();
   
   // Clean up orphaned sessions on component mount
   useSessionCleanup();
 
-  const getTabSessions = (tab: string) => {
-    switch(tab) {
+  const getFilteredSessions = (filter: string) => {
+    switch(filter) {
       case 'recent':
-        return getFilteredSessions('recent');
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        return sessions.filter(s => new Date(s.start_time) >= oneWeekAgo);
       case 'archived':
-        return getFilteredSessions('archived');
+        return sessions.filter(s => !s.is_active);
       case 'all':
       default:
-        return getFilteredSessions('all');
+        return sessions;
     }
   };
 
-  const currentSessions = getTabSessions(activeTab === 'analytics' ? 'all' : activeTab);
+  const currentSessions = getFilteredSessions(activeTab === 'analytics' ? 'all' : activeTab);
 
   if (loading) {
     return (
@@ -70,7 +73,7 @@ const StudySessionsPage = () => {
                 <div className="flex items-center text-mint-600">
                   <Brain className="mr-2 h-5 w-5" />
                   <span className="text-sm">
-                    Intelligent learning analytics and session tracking
+                    Unified session tracking powered by SessionDock
                   </span>
                 </div>
               </div>
@@ -103,7 +106,7 @@ const StudySessionsPage = () => {
             </div>
           </div>
 
-          {/* Enhanced Sessions Content */}
+          {/* Sessions Content */}
           <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-mint-100 p-6 shadow-lg">
             <Tabs defaultValue="analytics" value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-4 md:w-auto md:inline-flex bg-mint-50 border border-mint-200">

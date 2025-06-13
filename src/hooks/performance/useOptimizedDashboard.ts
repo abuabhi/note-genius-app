@@ -13,7 +13,7 @@ interface DashboardData {
 export const useOptimizedDashboard = () => {
   const [priorityData, setPriorityData] = useState<Partial<DashboardData>>({});
 
-  console.log('📊 [OPTIMIZED DASHBOARD] Using SessionDock-created sessions for all data');
+  console.log('📊 [OPTIMIZED DASHBOARD] Using SessionDock unified sessions for all analytics');
 
   // Load critical data first (Today's Focus)
   const { data: todaysFocus, isLoading: todaysFocusLoading } = useQuery({
@@ -32,30 +32,30 @@ export const useOptimizedDashboard = () => {
     gcTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Load secondary data (Study Stats) - ONLY from SessionDock sessions
+  // Load study stats from unified SessionDock sessions only
   const { data: studyStats, isLoading: studyStatsLoading } = useQuery({
     queryKey: ['dashboard', 'studyStats'],
     queryFn: async () => {
       const userId = (await supabase.auth.getUser()).data.user?.id;
       const today = new Date().toISOString().split('T')[0];
       
-      console.log('📊 [OPTIMIZED DASHBOARD] Loading study stats from SessionDock sessions only');
+      console.log('📊 [OPTIMIZED DASHBOARD] Loading unified session data from SessionDock');
       
-      // Get sessions created by SessionDock (useBasicSessionTracker)
+      // Get ALL sessions (created by SessionDock via useBasicSessionTracker)
       const { data: sessionsData, error: sessionsError } = await supabase
         .from('study_sessions')
-        .select('duration, cards_reviewed, cards_correct, activity_type, auto_created')
+        .select('duration, cards_reviewed, cards_correct, activity_type, start_time')
         .eq('user_id', userId)
         .gte('start_time', today)
         .order('start_time', { ascending: false })
         .limit(10);
 
       if (sessionsError) {
-        console.error('📊 [OPTIMIZED DASHBOARD] Error loading sessions:', sessionsError);
+        console.error('📊 [OPTIMIZED DASHBOARD] Error loading unified sessions:', sessionsError);
         throw sessionsError;
       }
 
-      console.log('📊 [OPTIMIZED DASHBOARD] Loaded sessions:', sessionsData);
+      console.log('📊 [OPTIMIZED DASHBOARD] Loaded unified sessions:', sessionsData);
 
       // Get analytics (read-only)
       const { data: analyticsData, error: analyticsError } = await supabase
@@ -78,13 +78,13 @@ export const useOptimizedDashboard = () => {
     enabled: !!todaysFocus,
   });
 
-  // Load tertiary data (Recent Activity) - ONLY from SessionDock data
+  // Load recent activity from various sources
   const { data: recentActivity, isLoading: recentActivityLoading } = useQuery({
     queryKey: ['dashboard', 'recentActivity'],
     queryFn: async () => {
       const userId = (await supabase.auth.getUser()).data.user?.id;
       
-      console.log('📊 [OPTIMIZED DASHBOARD] Loading recent activity from SessionDock data');
+      console.log('📊 [OPTIMIZED DASHBOARD] Loading recent activity from various sources');
       
       const [notesData, flashcardsData, goalsData] = await Promise.all([
         supabase
