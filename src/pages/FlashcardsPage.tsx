@@ -9,7 +9,6 @@ import { AdvancedFlashcardFilters } from "@/components/flashcards/components/Adv
 import { useViewPreferences } from "@/hooks/useViewPreferences";
 import { useFlashcardsPageState } from "@/components/flashcards/page/useFlashcardsPageState";
 import { ErrorBoundary } from "@/components/flashcards/components/ErrorBoundary";
-import { ProductionMonitoring } from "@/components/performance/ProductionMonitoring";
 import { useEnhancedRetry } from "@/hooks/performance/useEnhancedRetry";
 import { toast } from "sonner";
 
@@ -83,7 +82,6 @@ const FlashcardsPage = () => {
   return (
     <ErrorBoundary>
       <Layout>
-        <ProductionMonitoring />
         <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
           <div className="container mx-auto p-6 space-y-6">
             <FlashcardsPageHeader 

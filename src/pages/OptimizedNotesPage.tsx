@@ -4,7 +4,6 @@ import { OptimizedNotesProvider } from '@/contexts/OptimizedNotesContext';
 import { PageBreadcrumb } from '@/components/ui/page-breadcrumb';
 import { FileText } from 'lucide-react';
 import EnhancedErrorBoundary from '@/components/error/EnhancedErrorBoundary';
-import { ProductionMonitoring } from '@/components/performance/ProductionMonitoring';
 import { CacheMonitor } from '@/components/performance/CacheMonitor';
 import { AdvancedCacheManager } from '@/components/performance/AdvancedCacheManager';
 import { SecureOptimizedNotesContent } from '@/components/notes/page/SecureOptimizedNotesContent';
@@ -25,7 +24,6 @@ const OptimizedNotesPage = () => {
   return (
     <EnhancedErrorBoundary>
       <Layout>
-        <ProductionMonitoring />
         <CacheMonitor />
         
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-mint-50/30">

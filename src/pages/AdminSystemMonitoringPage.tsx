@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProductionHealthDashboard } from '@/components/admin/monitoring/ProductionHealthDashboard';
 import { AdvancedCacheManager } from '@/components/performance/AdvancedCacheManager';
-import { ProductionPerformanceMonitor } from '@/components/admin/monitoring/ProductionPerformanceMonitor';
 import { SystemAlertsManager } from '@/components/admin/monitoring/SystemAlertsManager';
 
 const AdminSystemMonitoringPage = () => {
@@ -41,19 +40,14 @@ const AdminSystemMonitoringPage = () => {
         </div>
 
         <Tabs defaultValue="health" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="health">Health Status</TabsTrigger>
-            <TabsTrigger value="performance">Performance</TabsTrigger>
             <TabsTrigger value="cache">Cache Management</TabsTrigger>
             <TabsTrigger value="alerts">Alerts</TabsTrigger>
           </TabsList>
 
           <TabsContent value="health" className="space-y-4">
             <ProductionHealthDashboard />
-          </TabsContent>
-
-          <TabsContent value="performance" className="space-y-4">
-            <ProductionPerformanceMonitor />
           </TabsContent>
 
           <TabsContent value="cache" className="space-y-4">
