@@ -1,6 +1,7 @@
 
 import { Book, FileText, File as GoogleDocsIcon } from "lucide-react";
 import { ImportServiceCard } from "./ImportServiceCard";
+import { ComingSoonBanner } from "@/components/progress/ComingSoonBanner";
 
 interface ImportServiceGridProps {
   selectedService: string | null;
@@ -12,9 +13,9 @@ export const ImportServiceGrid = ({
   onSelectService 
 }: ImportServiceGridProps) => {
   const services = [
-    { id: 'onenote', name: 'OneNote', icon: FileText },
-    { id: 'googledocs', name: 'Google Docs', icon: GoogleDocsIcon },
-    { id: 'notion', name: 'Notion', icon: Book }
+    { id: 'onenote', name: 'OneNote', icon: FileText, comingSoon: false },
+    { id: 'googledocs', name: 'Google Docs', icon: GoogleDocsIcon, comingSoon: false },
+    { id: 'notion', name: 'Notion', icon: Book, comingSoon: true }
   ];
 
   return (
@@ -26,6 +27,7 @@ export const ImportServiceGrid = ({
           name={service.name}
           isSelected={selectedService === service.id}
           onSelect={() => onSelectService(service.id)}
+          comingSoon={service.comingSoon}
         />
       ))}
     </div>
