@@ -1,4 +1,3 @@
-
 import { useGoogleDocsAuth } from "@/integrations/google/googleDocsOAuth";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -156,7 +155,7 @@ export const DedicatedGoogleDocsImport = ({ onConnected, onBack }: DedicatedGoog
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Compact Header */}
       <div className="flex-shrink-0 space-y-4">
         <GoogleDocsHeader 
@@ -187,16 +186,14 @@ export const DedicatedGoogleDocsImport = ({ onConnected, onBack }: DedicatedGoog
 
       {/* Document List - Takes Remaining Space */}
       {isAuthenticated && (
-        <div className="flex-1 mt-4 min-h-0">
+        <div className="flex-1 mt-4 min-h-0 overflow-hidden">
           {documents.length > 0 ? (
-            <div className="h-full flex flex-col">
-              <GoogleDocsList 
-                documents={documents}
-                selectedDocs={selectedDocs}
-                onToggleSelection={toggleDocSelection}
-                onSelectionChange={handleSelectionChange}
-              />
-            </div>
+            <GoogleDocsList 
+              documents={documents}
+              selectedDocs={selectedDocs}
+              onToggleSelection={toggleDocSelection}
+              onSelectionChange={handleSelectionChange}
+            />
           ) : (
             <GoogleDocsEmptyState 
               isRefreshing={isRefreshingDocs}

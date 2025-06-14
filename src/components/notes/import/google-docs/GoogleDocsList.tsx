@@ -20,7 +20,7 @@ export const GoogleDocsList = ({
 
   return (
     <div className="flex-1 border rounded-lg overflow-hidden bg-white">
-      <ScrollArea className="h-full" style={{ height: '100%' }}>
+      <ScrollArea className="h-96">
         <div className="p-1">
           {documents.map((doc) => (
             <div 
