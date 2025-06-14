@@ -19,6 +19,15 @@ export const SubscriptionStatus: React.FC = () => {
   } = useSubscription();
   
   const { userTier } = useUserTier();
+  
+  // Debug logs to see what's happening
+  console.log('SubscriptionStatus Debug:', {
+    userTier,
+    subscribed,
+    subscriptionTier,
+    isDeanTier: userTier === UserTier.DEAN
+  });
+  
   const isDeanTier = userTier === UserTier.DEAN;
 
   const handleManageSubscription = async () => {
@@ -29,8 +38,8 @@ export const SubscriptionStatus: React.FC = () => {
     }
   };
 
-  // For Dean tier users
-  if (isDeanTier) {
+  // For Dean tier users - check both userTier and subscriptionTier
+  if (isDeanTier || subscriptionTier === UserTier.DEAN || subscriptionTier === 'DEAN') {
     return (
       <Card>
         <CardHeader>
@@ -60,7 +69,7 @@ export const SubscriptionStatus: React.FC = () => {
   }
 
   // For non-subscribed users (Scholar tier)
-  if (!subscribed) {
+  if (!subscribed && userTier === UserTier.SCHOLAR) {
     return (
       <Card>
         <CardHeader>
@@ -98,7 +107,7 @@ export const SubscriptionStatus: React.FC = () => {
             <div className="flex items-center gap-2">
               <span className="font-medium">Current Plan:</span>
               <Badge className="bg-mint-500 text-white">
-                {subscriptionTier}
+                {subscriptionTier || userTier}
               </Badge>
             </div>
             {subscriptionEnd && (
@@ -132,7 +141,7 @@ export const SubscriptionStatus: React.FC = () => {
 
         <div className="bg-mint-50 p-4 rounded-lg">
           <p className="text-sm text-mint-800">
-            <strong>Active Subscription</strong> - You have access to all {subscriptionTier?.toLowerCase()} tier features including advanced AI capabilities, increased limits, and priority support.
+            <strong>Active Subscription</strong> - You have access to all {(subscriptionTier || userTier)?.toLowerCase()} tier features including advanced AI capabilities, increased limits, and priority support.
           </p>
         </div>
       </CardContent>

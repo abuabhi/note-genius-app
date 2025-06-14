@@ -8,9 +8,18 @@ import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useUserTier, UserTier } from '@/hooks/useUserTier';
 
 export const SubscriptionManagementCard: React.FC = () => {
-  const { subscribed } = useSubscription();
+  const { subscribed, subscriptionTier } = useSubscription();
   const { userTier } = useUserTier();
-  const isDeanTier = userTier === UserTier.DEAN;
+  
+  // Debug logs to see what's happening
+  console.log('SubscriptionManagementCard Debug:', {
+    userTier,
+    subscribed,
+    subscriptionTier,
+    isDeanTier: userTier === UserTier.DEAN || subscriptionTier === UserTier.DEAN || subscriptionTier === 'DEAN'
+  });
+  
+  const isDeanTier = userTier === UserTier.DEAN || subscriptionTier === UserTier.DEAN || subscriptionTier === 'DEAN';
 
   return (
     <div className="space-y-6">
