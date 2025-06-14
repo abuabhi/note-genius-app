@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Clock, Target, TrendingUp, Calendar, BookOpen, Award, AlertTriangle } from 'lucide-react';
+import { Clock, Target, TrendingUp, Calendar, BookOpen, Award, AlertTriangle, Globe, CheckCircle } from 'lucide-react';
 import { useTimezoneAwareAnalytics } from '@/hooks/useTimezoneAwareAnalytics';
 import { useBasicSessionTracker } from '@/hooks/useBasicSessionTracker';
 
@@ -11,7 +11,12 @@ export const AnalyticsOverview = () => {
   const { analytics, isLoading, error } = useTimezoneAwareAnalytics();
   const { isActive, elapsedSeconds, isPaused } = useBasicSessionTracker();
 
-  console.log('📊 AnalyticsOverview render:', { analytics, isLoading, error });
+  console.log('📊 AnalyticsOverview render state:', { 
+    isLoading, 
+    hasError: !!error, 
+    hasAnalytics: !!analytics,
+    analyticsKeys: analytics ? Object.keys(analytics) : []
+  });
 
   const formatTime = (totalSeconds: number) => {
     const hours = Math.floor(totalSeconds / 3600);
@@ -24,8 +29,9 @@ export const AnalyticsOverview = () => {
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Show error state
   if (error) {
-    console.error('❌ Analytics error:', error);
+    console.error('❌ Analytics error in component:', error);
     return (
       <div className="space-y-6">
         <Card className="border-red-200 bg-red-50">
@@ -45,37 +51,60 @@ export const AnalyticsOverview = () => {
     );
   }
 
+  // Show loading state
   if (isLoading) {
     return (
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {[...Array(6)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader>
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-8 bg-gray-200 rounded w-1/2 mb-2"></div>
-              <div className="h-3 bg-gray-200 rounded w-full"></div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="space-y-6">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader>
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-8 bg-gray-200 rounded w-1/2 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-full"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }
 
+  // Main content with analytics data
   return (
     <div className="space-y-6">
-      {/* Debug info */}
+      {/* Success indicator */}
+      <Card className="bg-green-50 border-green-200">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-3 text-green-800">
+            <CheckCircle className="h-5 w-5" />
+            <div>
+              <p className="font-medium">Analytics loaded successfully!</p>
+              <p className="text-sm text-green-600">
+                Timezone: {analytics.timezone} • 
+                Sessions: {analytics.totalSessions} • 
+                Study Time: {analytics.totalStudyTime}h
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Timezone Info */}
       <Card className="bg-blue-50 border-blue-200">
         <CardContent className="pt-6">
-          <div className="text-sm text-blue-800">
-            <p>✅ Analytics loaded successfully!</p>
-            <p>Total Sessions: {analytics.totalSessions}</p>
-            <p>Today Study Time: {analytics.todayStudyTime}h</p>
-            <p>Weekly Study Time: {analytics.weeklyStudyTime}h</p>
-            <p>Total Quizzes: {analytics.totalQuizzes}</p>
-            <p>Total Notes: {analytics.totalNotes}</p>
-            <p>Timezone: {analytics.timezone}</p>
+          <div className="flex items-center gap-3 text-blue-800">
+            <Globe className="h-5 w-5" />
+            <div>
+              <p className="font-medium">Timezone-Aware Analytics</p>
+              <p className="text-sm text-blue-600">
+                Statistics calculated for: {analytics.timezone} • 
+                Today: {analytics.todayString} • 
+                Current time: {new Date().toLocaleString(undefined, { timeZone: analytics.timezone })}
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -112,7 +141,7 @@ export const AnalyticsOverview = () => {
           <CardContent>
             <div className="text-2xl font-bold">{analytics.todayStudyTime}h</div>
             <p className="text-xs text-muted-foreground">
-              {analytics.todaySessions} sessions completed
+              {analytics.todaySessions} sessions completed today
             </p>
           </CardContent>
         </Card>
@@ -191,7 +220,7 @@ export const AnalyticsOverview = () => {
         </Card>
       </div>
 
-      {/* Quick Stats */}
+      {/* Content Stats */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="bg-blue-50">
           <CardContent className="p-4">
@@ -235,6 +264,25 @@ export const AnalyticsOverview = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Debug Data Summary */}
+      <Card className="bg-gray-50 border-gray-200">
+        <CardHeader>
+          <CardTitle className="text-sm font-medium text-gray-700">Debug Summary</CardTitle>
+        </CardHeader>
+        <CardContent className="text-xs text-gray-600">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div>Sessions: {analytics.totalSessions}</div>
+            <div>Sets: {analytics.totalSets}</div>
+            <div>Notes: {analytics.totalNotes}</div>
+            <div>Quizzes: {analytics.totalQuizzes}</div>
+            <div>Study Time: {analytics.totalStudyTimeMinutes}min</div>
+            <div>Cards: {analytics.totalCardsReviewed}</div>
+            <div>Accuracy: {analytics.flashcardAccuracy}%</div>
+            <div>Streak: {analytics.streakDays} days</div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
