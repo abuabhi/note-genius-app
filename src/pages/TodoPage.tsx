@@ -6,6 +6,7 @@ import { TodoList } from "@/components/todos/TodoList";
 import { TodoFormDialog } from "@/components/todos/TodoFormDialog";
 import { TodoStats } from "@/components/todos/TodoStats";
 import { TodoSuggestions } from "@/components/todos/TodoSuggestions";
+import { OverdueTodosSection } from "@/components/todos/OverdueTodosSection";
 import { useTodos, TodoStatus, CreateTodoData, Todo } from "@/hooks/useTodos";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Button } from "@/components/ui/button";
@@ -103,45 +104,50 @@ const TodoPage = () => {
           </Button>
         </div>
 
-        {/* Stats */}
-        <TodoStats todos={todos} />
+        <div className="space-y-6">
+          {/* Stats */}
+          <TodoStats todos={todos} />
 
-        {/* Quick Start Templates */}
-        <TodoSuggestions onCreateFromTemplate={handleCreateFromTemplate} />
+          {/* Overdue Todos Section */}
+          <OverdueTodosSection />
 
-        {/* Main Content */}
-        <Card className="p-6">
-          <Tabs 
-            defaultValue="all" 
-            value={filter}
-            onValueChange={(value: any) => setFilter(value)}
-            className="w-full"
-          >
-            <TabsList className="grid grid-cols-3 mb-6">
-              <TabsTrigger value="all" className="flex items-center gap-1">
-                <ListTodo className="h-4 w-4" />
-                <span>All</span>
-              </TabsTrigger>
-              <TabsTrigger value="overdue" className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                <span>Overdue</span>
-              </TabsTrigger>
-              <TabsTrigger value="completed" className="flex items-center gap-1">
-                <Check className="h-4 w-4" />
-                <span>Completed</span>
-              </TabsTrigger>
-            </TabsList>
+          {/* Quick Start Templates */}
+          <TodoSuggestions onCreateFromTemplate={handleCreateFromTemplate} />
 
-            <TodoList
-              todos={todos}
-              isLoading={isLoading}
-              onUpdate={handleUpdateTodoStatus}
-              onDelete={deleteTodo.mutate}
-              onEdit={handleEdit}
-              formatDate={formatDate}
-            />
-          </Tabs>
-        </Card>
+          {/* Main Content */}
+          <Card className="p-6">
+            <Tabs 
+              defaultValue="all" 
+              value={filter}
+              onValueChange={(value: any) => setFilter(value)}
+              className="w-full"
+            >
+              <TabsList className="grid grid-cols-3 mb-6">
+                <TabsTrigger value="all" className="flex items-center gap-1">
+                  <ListTodo className="h-4 w-4" />
+                  <span>All</span>
+                </TabsTrigger>
+                <TabsTrigger value="overdue" className="flex items-center gap-1">
+                  <Clock className="h-4 w-4" />
+                  <span>Overdue</span>
+                </TabsTrigger>
+                <TabsTrigger value="completed" className="flex items-center gap-1">
+                  <Check className="h-4 w-4" />
+                  <span>Completed</span>
+                </TabsTrigger>
+              </TabsList>
+
+              <TodoList
+                todos={todos}
+                isLoading={isLoading}
+                onUpdate={handleUpdateTodoStatus}
+                onDelete={deleteTodo.mutate}
+                onEdit={handleEdit}
+                formatDate={formatDate}
+              />
+            </Tabs>
+          </Card>
+        </div>
 
         {/* Create Todo Dialog */}
         <TodoFormDialog

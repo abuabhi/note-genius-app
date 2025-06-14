@@ -379,6 +379,81 @@ export type Database = {
         }
         Relationships: []
       }
+      digest_content_cache: {
+        Row: {
+          content_data: Json
+          content_type: string
+          expires_at: string | null
+          generated_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          content_data: Json
+          content_type: string
+          expires_at?: string | null
+          generated_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          content_data?: Json
+          content_type?: string
+          expires_at?: string | null
+          generated_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      email_digest_preferences: {
+        Row: {
+          created_at: string | null
+          digest_enabled: boolean | null
+          digest_time: string | null
+          frequency: string | null
+          id: string
+          include_completed: boolean | null
+          include_goals: boolean | null
+          include_todos: boolean | null
+          last_digest_sent_at: string | null
+          only_urgent: boolean | null
+          timezone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          digest_enabled?: boolean | null
+          digest_time?: string | null
+          frequency?: string | null
+          id?: string
+          include_completed?: boolean | null
+          include_goals?: boolean | null
+          include_todos?: boolean | null
+          last_digest_sent_at?: string | null
+          only_urgent?: boolean | null
+          timezone?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          digest_enabled?: boolean | null
+          digest_time?: string | null
+          frequency?: string | null
+          id?: string
+          include_completed?: boolean | null
+          include_goals?: boolean | null
+          include_todos?: boolean | null
+          last_digest_sent_at?: string | null
+          only_urgent?: boolean | null
+          timezone?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           all_day: boolean | null
@@ -1626,14 +1701,18 @@ export type Database = {
       }
       reminders: {
         Row: {
+          archived_reason: string | null
+          auto_archived_at: string | null
           auto_tags: string[] | null
           created_at: string | null
           delivery_methods: Json
           depends_on_todo_id: string | null
           description: string | null
           due_date: string | null
+          escalation_level: string | null
           event_id: string | null
           goal_id: string | null
+          grace_period_days: number | null
           id: string
           notification_status: string | null
           priority: string
@@ -1648,14 +1727,18 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          archived_reason?: string | null
+          auto_archived_at?: string | null
           auto_tags?: string[] | null
           created_at?: string | null
           delivery_methods?: Json
           depends_on_todo_id?: string | null
           description?: string | null
           due_date?: string | null
+          escalation_level?: string | null
           event_id?: string | null
           goal_id?: string | null
+          grace_period_days?: number | null
           id?: string
           notification_status?: string | null
           priority?: string
@@ -1670,14 +1753,18 @@ export type Database = {
           user_id: string
         }
         Update: {
+          archived_reason?: string | null
+          auto_archived_at?: string | null
           auto_tags?: string[] | null
           created_at?: string | null
           delivery_methods?: Json
           depends_on_todo_id?: string | null
           description?: string | null
           due_date?: string | null
+          escalation_level?: string | null
           event_id?: string | null
           goal_id?: string | null
+          grace_period_days?: number | null
           id?: string
           notification_status?: string | null
           priority?: string
@@ -2626,6 +2713,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auto_escalate_overdue_todos: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       award_achievement: {
         Args: { p_user_id: string; p_achievement_title: string }
         Returns: boolean
@@ -2710,6 +2801,19 @@ export type Database = {
           end_date: string
           days_overdue: number
           in_grace_period: boolean
+        }[]
+      }
+      get_overdue_todos: {
+        Args: { p_user_id: string }
+        Returns: {
+          todo_id: string
+          title: string
+          description: string
+          due_date: string
+          days_overdue: number
+          in_grace_period: boolean
+          escalation_level: string
+          priority: string
         }[]
       }
       get_user_email_for_feedback: {
