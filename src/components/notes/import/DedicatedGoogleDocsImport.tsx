@@ -1,7 +1,7 @@
-
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useGoogleDocsAuth } from "@/integrations/google/googleDocsOAuth";
 import { 
   Loader2, 
@@ -298,7 +298,7 @@ export const DedicatedGoogleDocsImport = ({ onConnected, onBack }: DedicatedGoog
           {documents.length > 0 ? (
             <div className="h-full flex flex-col">
               <div className="flex-1 border rounded-lg overflow-hidden bg-white">
-                <div className="h-full overflow-y-auto">
+                <ScrollArea className="h-full">
                   {documents.map((doc) => (
                     <div 
                       key={doc.id} 
@@ -327,7 +327,7 @@ export const DedicatedGoogleDocsImport = ({ onConnected, onBack }: DedicatedGoog
                       </div>
                     </div>
                   ))}
-                </div>
+                </ScrollArea>
               </div>
             </div>
           ) : !isRefreshingDocs && !detailedError ? (
