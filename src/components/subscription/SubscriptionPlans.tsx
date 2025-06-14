@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, Star, Zap } from 'lucide-react';
+import { Check, Star, Zap, Crown, Loader2 } from 'lucide-react';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { toast } from 'sonner';
 
@@ -186,11 +186,16 @@ export const SubscriptionPlans: React.FC = () => {
                     : 'bg-gray-900 hover:bg-gray-800'
                 } text-white`}
               >
-                {loading === plan.id
-                  ? 'Processing...'
-                  : subscriptionTier === plan.id
-                  ? 'Current Plan'
-                  : `Subscribe to ${plan.name}`}
+                {loading === plan.id ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : subscriptionTier === plan.id ? (
+                  'Current Plan'
+                ) : (
+                  `Subscribe to ${plan.name}`
+                )}
               </Button>
             </CardContent>
           </Card>
