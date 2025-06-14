@@ -32,7 +32,7 @@ export const useFlashcardIntegration = (note: Note) => {
       return existingSet;
     }
 
-    // 2. Try note title + " Flashcards" match
+    // 2. Try note title + " Flashcards" match (for existing sets that may have this naming)
     const noteFlashcardsName = `${note.title} Flashcards`;
     existingSet = flashcardSets.find(set => 
       set.name.toLowerCase().trim() === noteFlashcardsName.toLowerCase().trim()
@@ -56,11 +56,11 @@ export const useFlashcardIntegration = (note: Note) => {
       }
     }
 
-    // 4. Create new set if none found
+    // 4. Create new set if none found - Use note title directly without "Flashcards" suffix
     console.log('No existing set found, creating new set');
     try {
       const newSet = await createFlashcardSet({
-        name: noteFlashcardsName,
+        name: note.title, // Changed: Use note title directly without "Flashcards" suffix
         description: `Flashcards created from "${note.title}" note`,
         subject: note.subject || 'General',
         topic: note.title,
@@ -68,7 +68,7 @@ export const useFlashcardIntegration = (note: Note) => {
       });
 
       console.log('Created new flashcard set:', newSet);
-      toast.success(`Created new flashcard set: "${noteFlashcardsName}"`);
+      toast.success(`Created new flashcard set: "${note.title}"`); // Updated toast message
       
       // Force refresh after creating to ensure state is up to date
       await fetchFlashcardSets();
