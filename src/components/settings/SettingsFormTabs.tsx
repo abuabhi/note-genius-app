@@ -1,4 +1,3 @@
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AccountSettingsCard } from "./cards/AccountSettingsCard";
 import { StudyPreferencesCard } from "./cards/StudyPreferencesCard";
@@ -14,6 +13,7 @@ import { UseFormReturn } from "react-hook-form";
 import { User } from "@supabase/supabase-js";
 import { UserTier } from "@/hooks/useUserTier";
 import { Country } from "@/hooks/useCountries";
+import { User as UserIcon, BookOpen, CreditCard, Bell, Brain, Zap, Lock } from "lucide-react";
 
 interface SettingsFormTabsProps {
   activeTab: string;
@@ -34,13 +34,29 @@ export const SettingsFormTabs = ({
   countries,
   onCountryChange
 }: SettingsFormTabsProps) => {
+  const tabs = [
+    { id: 'account', label: 'Account', icon: UserIcon, content: <AccountSettingsCard /> },
+    { id: 'subjects', label: 'Subjects', icon: BookOpen, content: <SubjectsSettingsCard /> },
+    { 
+      id: 'subscription', 
+      label: 'Subscription', 
+      icon: CreditCard, 
+      content: <SubscriptionManagementCard /> 
+    },
+    { id: 'notifications', label: 'Notifications', icon: Bell, content: <NotificationPreferencesCard /> },
+    { id: 'study', label: 'Study Preferences', icon: Brain, content: <StudyPreferencesCard /> },
+    { id: 'adaptive', label: 'Adaptive Learning', icon: Zap, content: <AdaptiveLearningCard /> },
+    { id: 'password', label: 'Password', icon: Lock, content: <PasswordChangeCard /> },
+  ];
+
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className="grid w-full grid-cols-4">
-        <TabsTrigger value="account">Account</TabsTrigger>
-        <TabsTrigger value="study">Study</TabsTrigger>
-        <TabsTrigger value="notifications">Notifications</TabsTrigger>
-        <TabsTrigger value="advanced">Advanced</TabsTrigger>
+        {tabs.map(tab => (
+          <TabsTrigger key={tab.id} value={tab.id}>
+            {tab.label}
+          </TabsTrigger>
+        ))}
       </TabsList>
       
       <TabsContent value="account" className="space-y-6">
