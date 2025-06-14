@@ -21,6 +21,7 @@ export interface StudyGoal {
 }
 
 export interface GoalFormValues {
+  id?: string; // Add optional id for editing scenarios
   title: string;
   description?: string;
   target_hours: number;

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -98,7 +99,7 @@ export const GoalFormDialog = ({
         target_hours: data.target_hours,
         start_date: format(data.start_date, 'yyyy-MM-dd'),
         end_date: format(data.end_date, 'yyyy-MM-dd'),
-        flashcard_set_id: data.flashcard_set_id || null,
+        flashcard_set_id: data.flashcard_set_id || undefined,
       };
       
       // Add the ID if we're updating an existing goal
