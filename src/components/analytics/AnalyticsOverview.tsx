@@ -11,6 +11,8 @@ export const AnalyticsOverview = () => {
   const { analytics, isLoading } = useTimezoneAwareAnalytics();
   const { isActive, elapsedSeconds, isPaused } = useBasicSessionTracker();
 
+  console.log('📊 AnalyticsOverview render:', { analytics, isLoading });
+
   const formatTime = (totalSeconds: number) => {
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -40,8 +42,37 @@ export const AnalyticsOverview = () => {
     );
   }
 
+  // Add fallback data to prevent blank display
+  const safeAnalytics = {
+    todayStudyTime: analytics?.todayStudyTime || 0,
+    todaySessions: analytics?.todaySessions || 0,
+    weeklyGoalProgress: analytics?.weeklyGoalProgress || 0,
+    weeklyStudyTime: analytics?.weeklyStudyTime || 0,
+    weeklyGoalHours: analytics?.weeklyGoalHours || 5,
+    totalStudyTime: analytics?.totalStudyTime || 0,
+    totalSessions: analytics?.totalSessions || 0,
+    totalCardsMastered: analytics?.totalCardsMastered || 0,
+    flashcardAccuracy: analytics?.flashcardAccuracy || 0,
+    streakDays: analytics?.streakDays || 0,
+    weeklyChange: analytics?.weeklyChange || 0,
+    totalQuizzes: analytics?.totalQuizzes || 0,
+    completedQuizzes: analytics?.completedQuizzes || 0,
+    totalNotes: analytics?.totalNotes || 0
+  };
+
   return (
     <div className="space-y-6">
+      {/* Debug info */}
+      <Card className="bg-yellow-50 border-yellow-200">
+        <CardContent className="pt-6">
+          <div className="text-sm text-yellow-800">
+            <p>Debug: Analytics loaded = {analytics ? 'Yes' : 'No'}</p>
+            <p>Total Sessions: {safeAnalytics.totalSessions}</p>
+            <p>Today Study Time: {safeAnalytics.todayStudyTime}h</p>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Current Session Status */}
       {isActive && (
         <Card className="border-mint-200 bg-gradient-to-r from-mint-50 to-mint-100">
@@ -72,9 +103,9 @@ export const AnalyticsOverview = () => {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics.todayStudyTime}h</div>
+            <div className="text-2xl font-bold">{safeAnalytics.todayStudyTime}h</div>
             <p className="text-xs text-muted-foreground">
-              {analytics.todaySessions} sessions completed
+              {safeAnalytics.todaySessions} sessions completed
             </p>
           </CardContent>
         </Card>
@@ -86,10 +117,10 @@ export const AnalyticsOverview = () => {
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics.weeklyGoalProgress}%</div>
-            <Progress value={analytics.weeklyGoalProgress} className="mt-2" />
+            <div className="text-2xl font-bold">{safeAnalytics.weeklyGoalProgress}%</div>
+            <Progress value={safeAnalytics.weeklyGoalProgress} className="mt-2" />
             <p className="text-xs text-muted-foreground mt-2">
-              {analytics.weeklyStudyTime}h of {analytics.weeklyGoalHours}h goal
+              {safeAnalytics.weeklyStudyTime}h of {safeAnalytics.weeklyGoalHours}h goal
             </p>
           </CardContent>
         </Card>
@@ -101,9 +132,9 @@ export const AnalyticsOverview = () => {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics.totalStudyTime}h</div>
+            <div className="text-2xl font-bold">{safeAnalytics.totalStudyTime}h</div>
             <p className="text-xs text-muted-foreground">
-              {analytics.totalSessions} total sessions
+              {safeAnalytics.totalSessions} total sessions
             </p>
           </CardContent>
         </Card>
@@ -115,9 +146,9 @@ export const AnalyticsOverview = () => {
             <BookOpen className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics.totalCardsMastered}</div>
+            <div className="text-2xl font-bold">{safeAnalytics.totalCardsMastered}</div>
             <p className="text-xs text-muted-foreground">
-              {analytics.flashcardAccuracy}% accuracy rate
+              {safeAnalytics.flashcardAccuracy}% accuracy rate
             </p>
           </CardContent>
         </Card>
@@ -129,9 +160,9 @@ export const AnalyticsOverview = () => {
             <Award className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics.streakDays}</div>
+            <div className="text-2xl font-bold">{safeAnalytics.streakDays}</div>
             <p className="text-xs text-muted-foreground">
-              {analytics.streakDays === 1 ? "day" : "days"} in a row
+              {safeAnalytics.streakDays === 1 ? "day" : "days"} in a row
             </p>
           </CardContent>
         </Card>
@@ -143,8 +174,8 @@ export const AnalyticsOverview = () => {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${analytics.weeklyChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {analytics.weeklyChange >= 0 ? '+' : ''}{analytics.weeklyChange}%
+            <div className={`text-2xl font-bold ${safeAnalytics.weeklyChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {safeAnalytics.weeklyChange >= 0 ? '+' : ''}{safeAnalytics.weeklyChange}%
             </div>
             <p className="text-xs text-muted-foreground">
               vs last week
@@ -162,7 +193,7 @@ export const AnalyticsOverview = () => {
                 <BookOpen className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <div className="text-lg font-semibold text-blue-800">{analytics.totalQuizzes}</div>
+                <div className="text-lg font-semibold text-blue-800">{safeAnalytics.totalQuizzes}</div>
                 <div className="text-sm text-blue-600">Quizzes Available</div>
               </div>
             </div>
@@ -176,7 +207,7 @@ export const AnalyticsOverview = () => {
                 <Target className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <div className="text-lg font-semibold text-green-800">{analytics.completedQuizzes}</div>
+                <div className="text-lg font-semibold text-green-800">{safeAnalytics.completedQuizzes}</div>
                 <div className="text-sm text-green-600">Quizzes Completed</div>
               </div>
             </div>
@@ -190,7 +221,7 @@ export const AnalyticsOverview = () => {
                 <Award className="h-5 w-5 text-purple-600" />
               </div>
               <div>
-                <div className="text-lg font-semibold text-purple-800">{analytics.totalNotes}</div>
+                <div className="text-lg font-semibold text-purple-800">{safeAnalytics.totalNotes}</div>
                 <div className="text-sm text-purple-600">Notes Created</div>
               </div>
             </div>

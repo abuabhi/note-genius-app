@@ -7,22 +7,17 @@ export const useTimezone = () => {
 
   useEffect(() => {
     try {
-      // Get user's timezone using Intl.DateTimeFormat
+      // Get user's timezone
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      console.log('🌍 Detected user timezone:', userTimezone);
-      setTimezone(userTimezone);
+      console.log('🌍 Detected timezone:', userTimezone);
+      setTimezone(userTimezone || 'UTC');
     } catch (error) {
-      console.warn('⚠️ Could not detect timezone, falling back to UTC:', error);
+      console.error('❌ Error detecting timezone:', error);
       setTimezone('UTC');
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const updateTimezone = (newTimezone: string) => {
-    console.log('🔄 Updating timezone to:', newTimezone);
-    setTimezone(newTimezone);
-  };
-
-  return { timezone, isLoading, updateTimezone };
+  return { timezone, isLoading };
 };
