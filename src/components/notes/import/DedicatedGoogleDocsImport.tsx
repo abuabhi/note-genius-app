@@ -1,4 +1,3 @@
-
 import { useGoogleDocsAuth } from "@/integrations/google/googleDocsOAuth";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -279,7 +278,7 @@ export const DedicatedGoogleDocsImport = ({
           isAuthenticated={isAuthenticated}
           userName={userName}
           onBack={onBack}
-          onDisconnect={handleDisconnect}
+          onDisconnect={disconnect}
         />
 
         <GoogleDocsErrorDisplay 
