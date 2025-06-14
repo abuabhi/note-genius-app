@@ -157,9 +157,9 @@ const PricingPage = () => {
 
   return (
     <Layout>
-      <div className="bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
+      <div className="bg-gradient-to-b from-mint-50 via-mint-50/30 to-mint-50/10">
         {/* Pricing Header */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center">
             <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl">
               Choose Your Plan
@@ -189,7 +189,7 @@ const PricingPage = () => {
         </div>
         
         {/* Pricing Cards */}
-        <div className="bg-gradient-to-b from-mint-50/10 via-white to-mint-50/20 py-24">
+        <div className="bg-mint-50/20 py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {tierLimits.map((tier) => {
@@ -202,31 +202,31 @@ const PricingPage = () => {
                 return (
                   <div 
                     key={tier.tier} 
-                    className={`relative rounded-lg overflow-hidden border ${
+                    className={`relative rounded-lg overflow-hidden border-2 ${
                       isPopular 
-                        ? 'border-mint-400 shadow-lg shadow-mint-100 scale-105' 
+                        ? 'border-mint-500 shadow-lg shadow-mint-100 scale-105' 
                         : isCurrentPlan
                         ? 'border-mint-500 shadow-lg ring-2 ring-mint-200'
-                        : 'border-gray-200 shadow-sm'
+                        : 'border-mint-300'
                     }`}
                   >
                     {isPopular && (
-                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                        <Badge className="bg-mint-600 text-white px-3 py-1">
+                      <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
+                        <Badge className="bg-mint-600 text-white px-4 py-2 text-sm font-medium">
                           Most Popular
                         </Badge>
                       </div>
                     )}
                     
                     {isCurrentPlan && (
-                      <div className="absolute -top-3 right-4">
+                      <div className="absolute -top-4 right-4 z-10">
                         <Badge className="bg-green-600 text-white px-3 py-1">
                           Current Plan
                         </Badge>
                       </div>
                     )}
 
-                    <div className={`p-8 ${isPopular ? 'bg-mint-50' : 'bg-white'}`}>
+                    <div className={`p-8 ${isPopular ? 'bg-mint-100' : 'bg-mint-50'}`}>
                       <div className="flex items-center gap-2 mb-4">
                         <TierIcon className="h-6 w-6 text-mint-600" />
                         <h3 className="text-xl font-semibold text-gray-900">{tier.tier}</h3>
@@ -255,7 +255,7 @@ const PricingPage = () => {
                       
                       {tierKey === 'SCHOLAR' ? (
                         <Button 
-                          className="w-full bg-gray-800 hover:bg-gray-900"
+                          className="w-full bg-mint-600 hover:bg-mint-700 text-white"
                           asChild
                         >
                           <Link to={user ? "/dashboard" : "/signup"}>
@@ -267,8 +267,8 @@ const PricingPage = () => {
                           className={`w-full ${
                             isPopular 
                               ? 'bg-mint-600 hover:bg-mint-700' 
-                              : 'bg-gray-800 hover:bg-gray-900'
-                          }`}
+                              : 'bg-mint-600 hover:bg-mint-700'
+                          } text-white`}
                           onClick={() => handleSubscribe(tierKey as 'GRADUATE' | 'MASTER')}
                           disabled={checkoutLoading === tierKey || isCurrentPlan}
                         >
@@ -286,7 +286,7 @@ const PricingPage = () => {
                       )}
                     </div>
                     
-                    <div className="px-8 py-6 bg-gray-50 border-t border-gray-100">
+                    <div className="px-8 py-6 bg-mint-50 border-t border-mint-200">
                       <ul className="space-y-4">
                         {renderTierFeatures(tier).map((feature) => (
                           <li key={feature} className="flex items-start">
@@ -314,7 +314,7 @@ const PricingPage = () => {
         </div>
 
         {/* FAQ Section */}
-        <div className="bg-gradient-to-b from-mint-50/20 via-white to-mint-50/30 py-24">
+        <div className="bg-mint-50/30 py-16">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <h2 className="text-3xl font-bold text-gray-900">Frequently Asked Questions</h2>
