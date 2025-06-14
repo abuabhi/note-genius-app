@@ -1,17 +1,12 @@
-import React, { useEffect } from 'react';
-import AppRoutes from '@/routes/AppRoutes';
+
+import React from 'react';
+import AppRoutes from '@/components/app/AppRoutes';
 import { AuthProvider } from '@/contexts/auth';
 import { HelpProvider } from '@/contexts/HelpContext';
-import { FlashcardsProvider } from '@/contexts/flashcards';
+import { FlashcardProvider } from '@/contexts/flashcards';
 import { OptimizedNotesProvider } from '@/contexts/OptimizedNotesContext';
 import { EnhancedQueryProvider } from './contexts/query';
-import { checkEnvironmentVariables } from './utils/checkEnvVars';
 import { Toaster } from 'sonner';
-import { useLocation } from 'react-router-dom';
-import { runDatabaseSeed } from './utils/databaseSeeder';
-import { useAuth } from '@/contexts/auth';
-import { supabase } from '@/integrations/supabase/client';
-
 import { SubscriptionProvider } from '@/contexts/SubscriptionContext';
 
 function App() {
@@ -20,13 +15,14 @@ function App() {
       <AuthProvider>
         <SubscriptionProvider>
           <OptimizedNotesProvider>
-            <FlashcardsProvider>
+            <FlashcardProvider>
               <HelpProvider>
                 <div className="min-h-screen bg-gray-50">
                   <AppRoutes />
+                  <Toaster />
                 </div>
               </HelpProvider>
-            </FlashcardsProvider>
+            </FlashcardProvider>
           </OptimizedNotesProvider>
         </SubscriptionProvider>
       </AuthProvider>

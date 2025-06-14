@@ -31,14 +31,20 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  const getAuthToken = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token;
+  };
+
   const checkSubscriptionStatus = async () => {
     if (!user) return;
 
     setIsLoading(true);
     try {
+      const token = await getAuthToken();
       const { data, error } = await supabase.functions.invoke('check-subscription', {
         headers: {
-          Authorization: `Bearer ${user.access_token || (await supabase.auth.getSession()).data.session?.access_token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -66,10 +72,11 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     if (!user) throw new Error('User not authenticated');
 
     try {
+      const token = await getAuthToken();
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { tier, billing },
         headers: {
-          Authorization: `Bearer ${user.access_token || (await supabase.auth.getSession()).data.session?.access_token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -88,9 +95,10 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     if (!user) throw new Error('User not authenticated');
 
     try {
+      const token = await getAuthToken();
       const { data, error } = await supabase.functions.invoke('customer-portal', {
         headers: {
-          Authorization: `Bearer ${user.access_token || (await supabase.auth.getSession()).data.session?.access_token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
