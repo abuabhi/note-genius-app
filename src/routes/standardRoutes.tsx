@@ -25,88 +25,88 @@ const StudySessionsPage = lazy(() => import('@/pages/AnalyticsPage'));
 export const standardRoutes: RouteConfig[] = [
   {
     path: '/dashboard',
-    component: DashboardPage,
+    element: DashboardPage,
     title: 'Dashboard'
   },
   {
     path: '/flashcards/*',
-    component: FlashcardsPage,
+    element: FlashcardsPage,
     title: 'Flashcards'
   },
   {
     path: '/notes/*',
-    component: NotesPage,
+    element: NotesPage,
     title: 'Notes'
   },
   {
     path: '/quiz/*',
-    component: QuizPage,
+    element: QuizPage,
     title: 'Quiz'
   },
   {
     path: '/quizzes/*',
-    component: QuizPage,
+    element: QuizPage,
     title: 'Quiz'
   },
   {
     path: '/analytics',
-    component: AnalyticsPage,
+    element: AnalyticsPage,
     title: 'Analytics'
   },
   // Legacy redirects - these will render the new AnalyticsPage
   {
     path: '/progress',
-    component: ProgressPage,
+    element: ProgressPage,
     title: 'Analytics'
   },
   {
     path: '/study-sessions',
-    component: StudySessionsPage,
+    element: StudySessionsPage,
     title: 'Analytics'
   },
   {
     path: '/goals',
-    component: GoalsPage,
+    element: GoalsPage,
     title: 'Goals'
   },
   {
     path: '/todos',
-    component: TodosPage,
+    element: TodosPage,
     title: 'ToDo'
   },
   {
     path: '/schedule',
-    component: SchedulePage,
+    element: SchedulePage,
     title: 'Schedule'
   },
   {
     path: '/reminders',
-    component: RemindersPage,
+    element: RemindersPage,
     title: 'Reminders'
   },
   {
     path: '/settings',
-    component: SettingsPage,
+    element: SettingsPage,
     title: 'Settings'
   },
   {
     path: '/feedback',
-    component: FeedbackPage,
+    element: FeedbackPage,
     title: 'Feedback'
   },
   {
     path: '/referrals',
-    component: ReferralsPage,
+    element: ReferralsPage,
     title: 'Refer & Win'
   },
   {
     path: '/collaboration',
-    component: CollaborationPage,
+    element: CollaborationPage,
     title: 'Study Groups'
   },
   {
     path: '/chat/*',
-    component: ChatPage,
+    element: ChatPage,
     title: 'Messages'
   }
 ];
