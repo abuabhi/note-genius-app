@@ -33,7 +33,7 @@ export const ImportServiceCard = ({
         {comingSoon && (
           <Badge 
             variant="outline" 
-            className="absolute -top-3 -right-3 bg-orange-100 text-orange-700 border-orange-300 text-xs font-medium px-2 py-1 whitespace-nowrap z-10"
+            className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-orange-100 text-orange-700 border-orange-300 text-xs font-medium px-2 py-1 whitespace-nowrap z-10"
           >
             Coming Soon
           </Badge>

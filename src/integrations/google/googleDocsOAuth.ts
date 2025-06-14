@@ -3,10 +3,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../supabase/client';
 
 // Configuration for Google OAuth
-const CLIENT_ID = ''; // You'll need to add your Google API client ID
+const CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID'; // This will be replaced with the actual client ID
 const REDIRECT_URI = `${window.location.origin}/auth/googledocs-callback`;
 const SCOPE = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/documents.readonly';
-const AUTH_URL = `https://accounts.google.com/o/oauth2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPE)}&response_type=code&access_type=offline&prompt=consent`;
 
 export interface GoogleDocsAuthState {
   isAuthenticated: boolean;
@@ -147,8 +146,10 @@ export const useGoogleDocsAuth = () => {
     const state = Math.random().toString(36).substring(2);
     localStorage.setItem('googleDocs_auth_state', state);
     
+    // Create auth URL - we'll need to get the actual client ID from the environment
+    const authUrl = `https://accounts.google.com/o/oauth2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPE)}&response_type=code&access_type=offline&prompt=consent&state=${state}`;
+    
     // Open popup for authentication
-    const authUrl = `${AUTH_URL}&state=${state}`;
     const popupWidth = 700;
     const popupHeight = 700;
     const left = window.screenX + (window.outerWidth - popupWidth) / 2;
