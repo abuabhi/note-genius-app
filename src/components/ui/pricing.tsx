@@ -100,7 +100,7 @@ export function Pricing({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-10 max-w-7xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-16 max-w-7xl mx-auto">
         {plans.map((plan, index) => (
           <PricingCard
             key={index}
@@ -111,12 +111,6 @@ export function Pricing({
             onSubscribe={handleSubscribe}
           />
         ))}
-      </div>
-
-      <div className="mt-16 text-center">
-        <p className="text-gray-500 text-sm">
-          All plans include a 14-day free trial. No credit card required for Scholar plan.
-        </p>
       </div>
     </div>
   );

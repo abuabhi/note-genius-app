@@ -33,7 +33,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
       whileInView={
         isDesktop
           ? {
-              y: plan.isPopular ? -20 : 0,
+              y: 0,
               opacity: 1,
               x: index === 2 ? -30 : index === 0 ? 30 : 0,
               scale: index === 0 || index === 2 ? 0.96 : 1.0,
@@ -54,12 +54,11 @@ export const PricingCard: React.FC<PricingCardProps> = ({
         plan.isPopular 
           ? "border-mint-500 shadow-mint-100 ring-2 ring-mint-500/20" 
           : "border-gray-200 hover:border-mint-300",
-        "flex flex-col min-h-full p-8",
-        !plan.isPopular && "mt-5"
+        "flex flex-col min-h-full p-8"
       )}
     >
       {plan.isPopular && (
-        <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
+        <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-10">
           <div className="bg-gradient-to-r from-mint-600 to-mint-500 text-white px-6 py-2 rounded-full flex items-center shadow-lg">
             <Star className="h-4 w-4 fill-current mr-2" />
             <span className="font-semibold text-sm">Most Popular</span>

@@ -72,7 +72,7 @@ const PricingPage = () => {
         <Pricing 
           plans={demoPlans}
           title="Choose Your Plan"
-          description="Select the perfect plan for your learning journey. All plans include access to our comprehensive study tools and features with a 14-day free trial."
+          description="Select the perfect plan for your learning journey. All plans include access to our comprehensive study tools and features."
         />
       </div>
     </Layout>
