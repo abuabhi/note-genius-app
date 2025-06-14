@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ImportServiceGrid } from "../services/ImportServiceGrid";
 import { OneNoteConnection } from "../OneNoteConnection";
-import { GoogleDocsConnection } from "../GoogleDocsConnection";
+import { DedicatedGoogleDocsImport } from "../DedicatedGoogleDocsImport";
 import { NotionConnection } from "../NotionConnection";
 
 interface ApiImportTabProps {
@@ -18,12 +18,16 @@ export const ApiImportTab = ({ onSaveNote, isPremiumUser }: ApiImportTabProps) =
     console.log("Connected with token:", accessToken);
   };
 
+  const handleBackToGrid = () => {
+    setSelectedService(null);
+  };
+
   const renderServiceConnection = () => {
     switch (selectedService) {
       case 'onenote':
         return <OneNoteConnection onConnected={handleConnection} />;
       case 'googledocs':
-        return <GoogleDocsConnection onConnected={handleConnection} />;
+        return <DedicatedGoogleDocsImport onConnected={handleConnection} onBack={handleBackToGrid} />;
       case 'notion':
         return <NotionConnection onConnected={handleConnection} />;
       default:
@@ -31,6 +35,16 @@ export const ApiImportTab = ({ onSaveNote, isPremiumUser }: ApiImportTabProps) =
     }
   };
 
+  // If a service is selected, show full-height dedicated interface
+  if (selectedService) {
+    return (
+      <div className="h-full">
+        {renderServiceConnection()}
+      </div>
+    );
+  }
+
+  // Show service grid when no service is selected
   return (
     <div className="space-y-6">
       <div>
@@ -42,14 +56,6 @@ export const ApiImportTab = ({ onSaveNote, isPremiumUser }: ApiImportTabProps) =
           onSelectService={setSelectedService}
         />
       </div>
-      
-      {selectedService && (
-        <Card className="bg-gray-50 border border-gray-200 w-full">
-          <CardContent className="p-6 w-full">
-            {renderServiceConnection()}
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };
