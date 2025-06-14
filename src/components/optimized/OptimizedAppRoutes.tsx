@@ -1,4 +1,3 @@
-
 import { Routes, Route } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { LazyLoadWrapper } from '@/components/performance/LazyLoadWrapper';
@@ -32,6 +31,7 @@ const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'));
 const ReferralsPage = lazy(() => import('@/pages/ReferralsPage'));
 const FeedbackPage = lazy(() => import('@/pages/FeedbackPage'));
 const AdminFeedbackPage = lazy(() => import('@/pages/AdminFeedbackPage'));
+const PricingPage = lazy(() => import('@/pages/PricingPage'));
 
 export const OptimizedAppRoutes = () => {
   return (
@@ -123,6 +123,13 @@ export const OptimizedAppRoutes = () => {
         <Route path="/quiz/history" element={
           <LazyLoadWrapper>
             <QuizHistoryPage />
+          </LazyLoadWrapper>
+        } />
+        
+        {/* Pricing route */}
+        <Route path="/pricing" element={
+          <LazyLoadWrapper>
+            <PricingPage />
           </LazyLoadWrapper>
         } />
         
