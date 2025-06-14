@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { PlusCircle, Target } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
