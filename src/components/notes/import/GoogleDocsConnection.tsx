@@ -16,6 +16,7 @@ export const GoogleDocsConnection = ({ onConnected }: GoogleDocsConnectionProps)
   const [isRefreshingDocs, setIsRefreshingDocs] = useState(false);
   const [documents, setDocuments] = useState<any[]>([]);
   const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
+  const [detailedError, setDetailedError] = useState<string | null>(null);
   
   // When authentication changes and we have an access token, call the callback
   useEffect(() => {
@@ -28,12 +29,30 @@ export const GoogleDocsConnection = ({ onConnected }: GoogleDocsConnectionProps)
     if (!accessToken) return;
     
     setIsRefreshingDocs(true);
+    setDetailedError(null);
+    
     try {
       console.log('Fetching Google Docs with token:', accessToken.substring(0, 20) + '...');
       
-      // First, get documents from Google Drive
+      // First, test token validity with userinfo endpoint
+      const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('User info response status:', userInfoResponse.status);
+      
+      if (!userInfoResponse.ok) {
+        const errorText = await userInfoResponse.text();
+        console.error('Token validation failed:', errorText);
+        throw new Error(`Token validation failed: ${userInfoResponse.status} - ${errorText}`);
+      }
+      
+      // Now try to fetch documents from Google Drive
       const driveResponse = await fetch(
-        'https://www.googleapis.com/drive/v3/files?q=mimeType%3D%27application%2Fvnd.google-apps.document%27&fields=files(id%2Cname%2CcreatedTime%2CmodifiedTime)&orderBy=modifiedTime%20desc&pageSize=50',
+        'https://www.googleapis.com/drive/v3/files?q=mimeType%3D%27application%2Fvnd.google-apps.document%27&fields=files(id%2Cname%2CcreatedTime%2CmodifiedTime%2Cowners%2Cpermissions)&orderBy=modifiedTime%20desc&pageSize=10',
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -43,11 +62,30 @@ export const GoogleDocsConnection = ({ onConnected }: GoogleDocsConnectionProps)
       );
 
       console.log('Google Drive API response status:', driveResponse.status);
+      console.log('Response headers:', Object.fromEntries(driveResponse.headers.entries()));
 
       if (!driveResponse.ok) {
         const errorText = await driveResponse.text();
         console.error('Google Drive API error response:', errorText);
-        throw new Error(`Failed to fetch Google Docs: ${driveResponse.status} ${driveResponse.statusText}`);
+        
+        let errorMessage = `Failed to fetch Google Docs: ${driveResponse.status} ${driveResponse.statusText}`;
+        
+        // Parse error details if available
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.error) {
+            errorMessage = `${errorMessage}\nDetails: ${errorData.error.message || errorData.error}`;
+            if (errorData.error.code === 403) {
+              errorMessage += '\n\nPossible causes:\n- API not enabled in Google Cloud Console\n- Insufficient scopes\n- App not verified for sensitive scopes';
+            }
+          }
+        } catch (e) {
+          // Error text is not JSON, use as is
+          errorMessage += `\nResponse: ${errorText}`;
+        }
+        
+        setDetailedError(errorMessage);
+        throw new Error(errorMessage);
       }
 
       const driveData = await driveResponse.json();
@@ -56,14 +94,20 @@ export const GoogleDocsConnection = ({ onConnected }: GoogleDocsConnectionProps)
       if (driveData.files && Array.isArray(driveData.files)) {
         setDocuments(driveData.files);
         toast.success(`Found ${driveData.files.length} Google Docs`);
+        
+        if (driveData.files.length === 0) {
+          setDetailedError('No Google Docs found in your account. Make sure you have documents in Google Drive.');
+        }
       } else {
         console.log('No documents in response or unexpected format:', driveData);
         setDocuments([]);
-        toast.info('No Google Docs found in your account');
+        setDetailedError('Unexpected response format from Google Drive API');
       }
     } catch (error) {
       console.error('Error fetching Google Docs:', error);
-      toast.error(`Failed to fetch Google Docs: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setDetailedError(errorMessage);
+      toast.error(`Failed to fetch Google Docs: ${errorMessage}`);
       setDocuments([]);
     } finally {
       setIsRefreshingDocs(false);
@@ -126,6 +170,7 @@ export const GoogleDocsConnection = ({ onConnected }: GoogleDocsConnectionProps)
                 disconnect();
                 setDocuments([]);
                 setSelectedDocs([]);
+                setDetailedError(null);
               }}
               className="text-blue-700 border-blue-300 hover:bg-blue-100"
             >
@@ -144,6 +189,27 @@ export const GoogleDocsConnection = ({ onConnected }: GoogleDocsConnectionProps)
           </AlertDescription>
         </Alert>
       )}
+
+      {detailedError && (
+        <Alert className="border-orange-200 bg-orange-50">
+          <AlertCircle className="h-4 w-4 text-orange-600" />
+          <AlertDescription className="text-orange-700 whitespace-pre-line">
+            <strong>API Error Details:</strong>
+            <br />
+            {detailedError}
+            <br /><br />
+            <strong>Troubleshooting Steps:</strong>
+            <br />
+            1. Verify that Google Drive API is enabled in your Google Cloud Console
+            <br />
+            2. Check that your OAuth consent screen includes the required scopes
+            <br />
+            3. Ensure you've added yourself as a test user
+            <br />
+            4. Try disconnecting and reconnecting your Google account
+          </AlertDescription>
+        </Alert>
+      )}
       
       <div className="flex gap-2">
         {isAuthenticated ? (
@@ -154,6 +220,7 @@ export const GoogleDocsConnection = ({ onConnected }: GoogleDocsConnectionProps)
                 disconnect();
                 setDocuments([]);
                 setSelectedDocs([]);
+                setDetailedError(null);
               }}
               disabled={loading}
               size="sm"
@@ -250,30 +317,21 @@ export const GoogleDocsConnection = ({ onConnected }: GoogleDocsConnectionProps)
                 </Button>
               )}
             </div>
-          ) : (
+          ) : !isRefreshingDocs && !detailedError ? (
             <div className="text-center py-8">
               <div className="text-muted-foreground mb-3">
-                {isRefreshingDocs ? 'Loading documents...' : 'No Google Docs found'}
+                Click "Refresh Documents" to load your Google Docs
               </div>
               <Button 
                 variant="outline" 
                 onClick={fetchDocuments}
                 disabled={isRefreshingDocs}
               >
-                {isRefreshingDocs ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Loading...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Try Loading Documents
-                  </>
-                )}
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Load Documents
               </Button>
             </div>
-          )}
+          ) : null}
         </div>
       )}
     </div>
