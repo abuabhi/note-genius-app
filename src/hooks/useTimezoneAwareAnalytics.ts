@@ -20,7 +20,7 @@ export const useTimezoneAwareAnalytics = () => {
     userId: user?.id,
     timezone,
     timezoneLoading,
-    enableQuery: !!user && !timezoneLoading
+    enableQuery: !!user
   });
 
   const { data: analytics, isLoading, error } = useQuery({
@@ -101,6 +101,7 @@ export const useTimezoneAwareAnalytics = () => {
         // Calculate analytics from sessions
         const allSessions = sessions || [];
         const completedSessions = allSessions.filter(s => !s.is_active && s.duration);
+        const activeSessions = allSessions.filter(s => s.is_active);
 
         // Today's sessions
         const todaySessions = allSessions.filter(session => {
@@ -169,7 +170,7 @@ export const useTimezoneAwareAnalytics = () => {
           todaySessions: todaySessions.length,
           weeklySessions: weekSessions.length,
           averageSessionTime: completedSessions.length > 0 ? Math.round(totalStudyTimeMinutes / completedSessions.length) : 0,
-          activeSessions: allSessions.filter(s => s.is_active).length,
+          activeSessions: activeSessions, // Keep as array for compatibility
           
           // Time metrics
           totalStudyTime: Math.round((totalStudyTimeMinutes / 60) * 10) / 10, // Hours
@@ -218,7 +219,7 @@ export const useTimezoneAwareAnalytics = () => {
         throw error;
       }
     },
-    enabled: !!user && !timezoneLoading, // More robust enablement
+    enabled: !!user, // Simplified enablement - just check for user
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
     retry: 2,
@@ -226,7 +227,7 @@ export const useTimezoneAwareAnalytics = () => {
   });
 
   console.log('📊 Analytics Hook Result:', {
-    isLoading,
+    isLoading: isLoading || timezoneLoading,
     hasError: !!error,
     errorMessage: error?.message,
     hasData: !!analytics,
@@ -239,7 +240,7 @@ export const useTimezoneAwareAnalytics = () => {
       todaySessions: 0,
       weeklySessions: 0,
       averageSessionTime: 0,
-      activeSessions: 0,
+      activeSessions: [], // Keep as array for compatibility
       totalStudyTime: 0,
       totalStudyTimeMinutes: 0,
       todayStudyTime: 0,
@@ -264,6 +265,7 @@ export const useTimezoneAwareAnalytics = () => {
       todayString: getTodayInTimezone(timezone || 'UTC')
     },
     isLoading: isLoading || timezoneLoading,
-    error
+    error,
+    timezone: timezone || 'UTC' // Add timezone to return object for compatibility
   };
 };
