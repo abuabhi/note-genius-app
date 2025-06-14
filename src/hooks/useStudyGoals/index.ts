@@ -1,4 +1,5 @@
-export { StudyGoal, GoalFormValues } from '@/types/study';
+
+export type { StudyGoal, GoalFormValues } from '@/types/study';
 export * from './goalOperations';
 export * from './goalSuggestions';
 export * from './goalTemplates';

@@ -3,7 +3,7 @@ import { Star, RefreshCw, Settings, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { GoalTemplate } from '@/hooks/useStudyGoals';
+import { GoalTemplate } from '@/types/study';
 
 interface GoalSuggestionsProps {
   suggestions: GoalTemplate[];
@@ -102,9 +102,6 @@ export const GoalSuggestions = ({
               >
                 <div className="flex items-start justify-between mb-2 pr-6">
                   <h4 className="font-medium text-sm">{template.title}</h4>
-                  <Badge variant="outline" className="text-xs">
-                    {template.difficulty_level}
-                  </Badge>
                 </div>
                 <p className="text-xs text-muted-foreground mb-2">{template.description}</p>
                 <div className="text-xs text-purple-600">
