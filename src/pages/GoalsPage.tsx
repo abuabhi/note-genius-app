@@ -79,7 +79,7 @@ const GoalsPage = () => {
     if (goal && action === 'view') {
       handleEditGoal(goal);
     } else if (goal && action === 'extend') {
-      // Open the overdue goal action dialog
+      // Open the goal for editing to extend deadline
       setSelectedGoal(goal);
       setFormOpen(true);
     }
