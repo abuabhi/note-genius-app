@@ -7,6 +7,7 @@ import { GoalStats } from '@/components/goals/GoalStats';
 import { GoalSuggestions } from '@/components/goals/GoalSuggestions';
 import { GoalFilters } from '@/components/goals/GoalFilters';
 import { GoalsGrid } from '@/components/goals/GoalsGrid';
+import { OverdueGoalsSection } from '@/components/goals/OverdueGoalsSection';
 import { useStudyGoals, StudyGoal, GoalFormValues } from '@/hooks/useStudyGoals';
 import { useGoalTracking } from '@/hooks/useGoalTracking';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -121,47 +122,51 @@ const GoalsPage = () => {
           </Button>
         </div>
 
-        <GoalStats goals={goals} streakBonus={streakBonus} />
+        <div className="space-y-6">
+          <GoalStats goals={goals} streakBonus={streakBonus} />
 
-        <GoalSuggestions
-          suggestions={suggestions}
-          suggestionsEnabled={suggestionsEnabled}
-          onCreateFromTemplate={handleCreateFromTemplate}
-          onDismissSuggestion={handleDismissSuggestion}
-          onToggleSuggestions={toggleSuggestions}
-          onRefreshSuggestions={refreshSuggestions}
-        />
-        
-        <div className="mb-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center mb-4">
-              <TabsList className="mb-2 sm:mb-0">
-                <TabsTrigger value="all">All Goals</TabsTrigger>
-                <TabsTrigger value="due-soon">Due Soon</TabsTrigger>
-                <TabsTrigger value="progress">By Progress</TabsTrigger>
-                <TabsTrigger value="recent">Recent</TabsTrigger>
-              </TabsList>
+          <OverdueGoalsSection />
+
+          <GoalSuggestions
+            suggestions={suggestions}
+            suggestionsEnabled={suggestionsEnabled}
+            onCreateFromTemplate={handleCreateFromTemplate}
+            onDismissSuggestion={handleDismissSuggestion}
+            onToggleSuggestions={toggleSuggestions}
+            onRefreshSuggestions={refreshSuggestions}
+          />
+          
+          <div className="mb-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center mb-4">
+                <TabsList className="mb-2 sm:mb-0">
+                  <TabsTrigger value="all">All Goals</TabsTrigger>
+                  <TabsTrigger value="due-soon">Due Soon</TabsTrigger>
+                  <TabsTrigger value="progress">By Progress</TabsTrigger>
+                  <TabsTrigger value="recent">Recent</TabsTrigger>
+                </TabsList>
+                
+                <GoalFilters
+                  searchQuery={searchQuery}
+                  filter={filter}
+                  onSearchChange={setSearchQuery}
+                  onFilterChange={setFilter}
+                />
+              </div>
               
-              <GoalFilters
-                searchQuery={searchQuery}
-                filter={filter}
-                onSearchChange={setSearchQuery}
-                onFilterChange={setFilter}
-              />
-            </div>
-            
-            <TabsContent value={activeTab} className="mt-0">
-              <GoalsGrid
-                goals={sortedGoals}
-                loading={loading}
-                searchQuery={searchQuery}
-                filter={filter}
-                onEditGoal={handleEditGoal}
-                onDeleteGoal={deleteGoal}
-                onCreateGoal={openCreateGoalDialog}
-              />
-            </TabsContent>
-          </Tabs>
+              <TabsContent value={activeTab} className="mt-0">
+                <GoalsGrid
+                  goals={sortedGoals}
+                  loading={loading}
+                  searchQuery={searchQuery}
+                  filter={filter}
+                  onEditGoal={handleEditGoal}
+                  onDeleteGoal={deleteGoal}
+                  onCreateGoal={openCreateGoalDialog}
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
         
         <GoalFormDialog

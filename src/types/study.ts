@@ -13,6 +13,11 @@ export interface StudyGoal {
   created_at: string;
   updated_at: string;
   subject: string;
+  status?: 'active' | 'paused' | 'archived' | 'completed';
+  grace_period_days?: number;
+  extension_count?: number;
+  archived_at?: string;
+  archived_reason?: string;
 }
 
 export interface GoalFormValues {

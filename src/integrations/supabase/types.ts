@@ -1939,14 +1939,19 @@ export type Database = {
       study_goals: {
         Row: {
           academic_subject: string | null
+          archived_at: string | null
+          archived_reason: string | null
           created_at: string | null
           description: string | null
           end_date: string
+          extension_count: number | null
           flashcard_set_id: string | null
+          grace_period_days: number | null
           id: string
           is_completed: boolean | null
           progress: number | null
           start_date: string
+          status: string | null
           target_hours: number
           title: string
           updated_at: string | null
@@ -1954,14 +1959,19 @@ export type Database = {
         }
         Insert: {
           academic_subject?: string | null
+          archived_at?: string | null
+          archived_reason?: string | null
           created_at?: string | null
           description?: string | null
           end_date: string
+          extension_count?: number | null
           flashcard_set_id?: string | null
+          grace_period_days?: number | null
           id?: string
           is_completed?: boolean | null
           progress?: number | null
           start_date?: string
+          status?: string | null
           target_hours: number
           title: string
           updated_at?: string | null
@@ -1969,14 +1979,19 @@ export type Database = {
         }
         Update: {
           academic_subject?: string | null
+          archived_at?: string | null
+          archived_reason?: string | null
           created_at?: string | null
           description?: string | null
           end_date?: string
+          extension_count?: number | null
           flashcard_set_id?: string | null
+          grace_period_days?: number | null
           id?: string
           is_completed?: boolean | null
           progress?: number | null
           start_date?: string
+          status?: string | null
           target_hours?: number
           title?: string
           updated_at?: string | null
@@ -2685,6 +2700,16 @@ export type Database = {
           mobile_layout: string
           priority: number
           dismissible: boolean
+        }[]
+      }
+      get_overdue_goals: {
+        Args: { p_user_id: string }
+        Returns: {
+          goal_id: string
+          title: string
+          end_date: string
+          days_overdue: number
+          in_grace_period: boolean
         }[]
       }
       get_user_email_for_feedback: {
