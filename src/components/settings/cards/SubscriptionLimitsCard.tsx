@@ -147,6 +147,9 @@ export const SubscriptionLimitsCard = () => {
 
   const TierIcon = userTier ? tierIcons[userTier] : Crown;
 
+  // Filter available tiers (exclude DEAN as it's not purchasable)
+  const availableTiers = [UserTier.SCHOLAR, UserTier.GRADUATE, UserTier.MASTER];
+
   return (
     <div className="space-y-6">
       {/* Usage Overview */}
@@ -220,7 +223,7 @@ export const SubscriptionLimitsCard = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Object.values(UserTier).filter(tier => tier !== UserTier.DEAN).map((tier) => {
+              {availableTiers.map((tier) => {
                 const TierIcon = tierIcons[tier];
                 const isCurrent = isCurrentTier(tier);
                 const canUpgrade = canUpgradeTo(tier);
@@ -261,7 +264,7 @@ export const SubscriptionLimitsCard = () => {
                         ))}
                       </ul>
                       
-                      {canUpgrade && tier !== UserTier.DEAN && (
+                      {canUpgrade && (
                         <Button 
                           onClick={() => handleUpgrade(tier)}
                           className="w-full"
