@@ -97,7 +97,7 @@ export function Pricing({
         </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-10">
         {plans.map((plan, index) => (
           <motion.div
             key={index}
@@ -122,9 +122,9 @@ export function Pricing({
               opacity: { duration: 0.5 },
             }}
             className={cn(
-              `rounded-2xl border-2 p-8 bg-mint-50 text-center lg:flex lg:flex-col lg:justify-center relative overflow-hidden`,
+              `rounded-2xl border-2 p-8 bg-mint-50 text-center lg:flex lg:flex-col lg:justify-between relative overflow-hidden`,
               plan.isPopular ? "border-mint-500 bg-mint-100 shadow-lg shadow-mint-100" : "border-mint-300",
-              "flex flex-col",
+              "flex flex-col min-h-full",
               !plan.isPopular && "mt-5",
               index === 0 || index === 2
                 ? "z-0 transform translate-x-0 translate-y-0"
@@ -132,7 +132,7 @@ export function Pricing({
             )}
           >
             {plan.isPopular && (
-              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-10">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
                 <div className="bg-mint-600 text-white px-4 py-2 rounded-full flex items-center shadow-sm">
                   <Star className="h-4 w-4 fill-current mr-2" />
                   <span className="font-semibold text-sm">Most Popular</span>
@@ -140,7 +140,7 @@ export function Pricing({
               </div>
             )}
             
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1">
               <div className="flex items-center gap-2 justify-center mb-4">
                 <h3 className="text-xl font-semibold text-gray-900">{plan.name}</h3>
               </div>
@@ -178,7 +178,7 @@ export function Pricing({
 
               <p className="text-gray-500 mb-6">{plan.description}</p>
 
-              <ul className="mt-5 gap-4 flex flex-col text-left">
+              <ul className="mt-5 gap-4 flex flex-col text-left mb-8">
                 {plan.features.map((feature, idx) => (
                   <li key={idx} className="flex items-start gap-3">
                     <Check className="h-5 w-5 text-mint-500 mt-0.5 flex-shrink-0" />
@@ -186,23 +186,23 @@ export function Pricing({
                   </li>
                 ))}
               </ul>
+            </div>
 
-              <div className="mt-8">
-                <Link
-                  to={plan.href}
-                  className={cn(
-                    buttonVariants({
-                      variant: plan.isPopular ? "default" : "outline",
-                    }),
-                    "w-full text-lg font-semibold",
-                    plan.isPopular
-                      ? "bg-mint-600 hover:bg-mint-700 text-white"
-                      : "border-mint-300 hover:bg-mint-50 hover:text-mint-700"
-                  )}
-                >
-                  {plan.buttonText}
-                </Link>
-              </div>
+            <div className="mt-auto">
+              <Link
+                to={plan.href}
+                className={cn(
+                  buttonVariants({
+                    variant: plan.isPopular ? "default" : "outline",
+                  }),
+                  "w-full text-lg font-semibold",
+                  plan.isPopular
+                    ? "bg-mint-600 hover:bg-mint-700 text-white"
+                    : "border-mint-300 hover:bg-mint-50 hover:text-mint-700"
+                )}
+              >
+                {plan.buttonText}
+              </Link>
             </div>
           </motion.div>
         ))}
