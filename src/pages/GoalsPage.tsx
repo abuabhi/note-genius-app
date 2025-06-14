@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { PlusCircle, Target } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
@@ -62,6 +61,16 @@ const GoalsPage = () => {
   
   const handleDismissSuggestion = (templateTitle: string) => {
     dismissSuggestion(templateTitle);
+  };
+
+  const handleDeleteGoal = async (goalId: string): Promise<boolean> => {
+    try {
+      await deleteGoal(goalId);
+      return true;
+    } catch (error) {
+      console.error('Error deleting goal:', error);
+      return false;
+    }
   };
 
   const filteredGoals = goals.filter(goal => {
@@ -161,7 +170,7 @@ const GoalsPage = () => {
                   searchQuery={searchQuery}
                   filter={filter}
                   onEditGoal={handleEditGoal}
-                  onDeleteGoal={(goalId: string) => deleteGoal(goalId)}
+                  onDeleteGoal={handleDeleteGoal}
                   onCreateGoal={openCreateGoalDialog}
                 />
               </TabsContent>
