@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -26,62 +25,98 @@ export const GoogleDocsConnection = ({ onConnected }: GoogleDocsConnectionProps)
   }, [isAuthenticated, accessToken, onConnected]);
 
   const fetchDocuments = async () => {
-    if (!accessToken) return;
+    if (!accessToken) {
+      setDetailedError('No access token available. Please reconnect.');
+      return;
+    }
     
     setIsRefreshingDocs(true);
     setDetailedError(null);
     
     try {
-      console.log('Fetching Google Docs with token:', accessToken.substring(0, 20) + '...');
+      console.log('🔍 Fetching Google Docs with token:', accessToken.substring(0, 20) + '...');
       
-      // First, test token validity with userinfo endpoint
+      // First, validate the token with a simple userinfo call
+      console.log('🧪 Validating token with userinfo endpoint...');
       const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        method: 'GET',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         }
       });
       
-      console.log('User info response status:', userInfoResponse.status);
+      console.log('👤 User info response:', {
+        status: userInfoResponse.status,
+        statusText: userInfoResponse.statusText,
+        headers: Object.fromEntries(userInfoResponse.headers.entries())
+      });
       
       if (!userInfoResponse.ok) {
         const errorText = await userInfoResponse.text();
-        console.error('Token validation failed:', errorText);
-        throw new Error(`Token validation failed: ${userInfoResponse.status} - ${errorText}`);
+        console.error('❌ Token validation failed:', errorText);
+        throw new Error(`Token validation failed (${userInfoResponse.status}): ${errorText}`);
       }
       
-      // Now try to fetch documents from Google Drive
-      const driveResponse = await fetch(
-        'https://www.googleapis.com/drive/v3/files?q=mimeType%3D%27application%2Fvnd.google-apps.document%27&fields=files(id%2Cname%2CcreatedTime%2CmodifiedTime%2Cowners%2Cpermissions)&orderBy=modifiedTime%20desc&pageSize=10',
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          }
+      const userInfo = await userInfoResponse.json();
+      console.log('✅ Token validated successfully for user:', userInfo.email);
+      
+      // Now try to fetch documents from Google Drive API
+      console.log('📚 Fetching documents from Google Drive API...');
+      const driveApiUrl = 'https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({
+        q: "mimeType='application/vnd.google-apps.document'",
+        fields: 'files(id,name,createdTime,modifiedTime,owners,permissions)',
+        orderBy: 'modifiedTime desc',
+        pageSize: '10'
+      });
+      
+      console.log('🔗 Drive API URL:', driveApiUrl);
+      
+      const driveResponse = await fetch(driveApiUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         }
-      );
+      });
 
-      console.log('Google Drive API response status:', driveResponse.status);
-      console.log('Response headers:', Object.fromEntries(driveResponse.headers.entries()));
+      console.log('📋 Google Drive API response:', {
+        status: driveResponse.status,
+        statusText: driveResponse.statusText,
+        headers: Object.fromEntries(driveResponse.headers.entries())
+      });
 
       if (!driveResponse.ok) {
         const errorText = await driveResponse.text();
-        console.error('Google Drive API error response:', errorText);
+        console.error('❌ Google Drive API error:', errorText);
         
-        let errorMessage = `Failed to fetch Google Docs: ${driveResponse.status} ${driveResponse.statusText}`;
+        let errorMessage = `Google Drive API Error (${driveResponse.status}): ${driveResponse.statusText}`;
         
         // Parse error details if available
         try {
           const errorData = JSON.parse(errorText);
           if (errorData.error) {
-            errorMessage = `${errorMessage}\nDetails: ${errorData.error.message || errorData.error}`;
+            errorMessage = `${errorMessage}\n\nDetails: ${errorData.error.message || errorData.error}`;
+            
+            // Provide specific guidance based on error codes
             if (errorData.error.code === 403) {
-              errorMessage += '\n\nPossible causes:\n- API not enabled in Google Cloud Console\n- Insufficient scopes\n- App not verified for sensitive scopes';
+              errorMessage += '\n\n🔧 Troubleshooting Steps:\n';
+              errorMessage += '• Ensure Google Drive API is enabled in Google Cloud Console\n';
+              errorMessage += '• Verify OAuth consent screen includes required scopes\n';
+              errorMessage += '• Check that you are added as a test user\n';
+              errorMessage += '• Try disconnecting and reconnecting your account';
+            } else if (errorData.error.code === 401) {
+              errorMessage += '\n\n🔧 Authentication Issue:\n';
+              errorMessage += '• Your access token may have expired\n';
+              errorMessage += '• Try disconnecting and reconnecting your Google account\n';
+              errorMessage += '• Ensure all required scopes are granted';
             }
           }
         } catch (e) {
           // Error text is not JSON, use as is
-          errorMessage += `\nResponse: ${errorText}`;
+          errorMessage += `\n\nRaw Response: ${errorText}`;
         }
         
         setDetailedError(errorMessage);
@@ -89,22 +124,22 @@ export const GoogleDocsConnection = ({ onConnected }: GoogleDocsConnectionProps)
       }
 
       const driveData = await driveResponse.json();
-      console.log('Google Drive API response data:', driveData);
+      console.log('📄 Google Drive API response data:', driveData);
       
       if (driveData.files && Array.isArray(driveData.files)) {
         setDocuments(driveData.files);
         toast.success(`Found ${driveData.files.length} Google Docs`);
         
         if (driveData.files.length === 0) {
-          setDetailedError('No Google Docs found in your account. Make sure you have documents in Google Drive.');
+          setDetailedError('No Google Docs found in your account. Create some documents in Google Drive first.');
         }
       } else {
-        console.log('No documents in response or unexpected format:', driveData);
+        console.log('⚠️ Unexpected response format:', driveData);
         setDocuments([]);
         setDetailedError('Unexpected response format from Google Drive API');
       }
     } catch (error) {
-      console.error('Error fetching Google Docs:', error);
+      console.error('💥 Error fetching Google Docs:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       setDetailedError(errorMessage);
       toast.error(`Failed to fetch Google Docs: ${errorMessage}`);
@@ -193,20 +228,8 @@ export const GoogleDocsConnection = ({ onConnected }: GoogleDocsConnectionProps)
       {detailedError && (
         <Alert className="border-orange-200 bg-orange-50">
           <AlertCircle className="h-4 w-4 text-orange-600" />
-          <AlertDescription className="text-orange-700 whitespace-pre-line">
-            <strong>API Error Details:</strong>
-            <br />
+          <AlertDescription className="text-orange-700 whitespace-pre-line text-xs">
             {detailedError}
-            <br /><br />
-            <strong>Troubleshooting Steps:</strong>
-            <br />
-            1. Verify that Google Drive API is enabled in your Google Cloud Console
-            <br />
-            2. Check that your OAuth consent screen includes the required scopes
-            <br />
-            3. Ensure you've added yourself as a test user
-            <br />
-            4. Try disconnecting and reconnecting your Google account
           </AlertDescription>
         </Alert>
       )}
