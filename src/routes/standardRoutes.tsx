@@ -1,145 +1,112 @@
 
-import { RouteObject } from 'react-router-dom';
-import DashboardPage from '@/pages/DashboardPage';
-import NotesPage from '@/pages/NotesPage';
-import EditNotePage from '@/pages/EditNotePage';
-import FlashcardsPage from '@/pages/FlashcardsPage';
-import CreateFlashcardPage from '@/pages/CreateFlashcardPage';
-import EditFlashcardPage from '@/pages/EditFlashcardPage';
-import FlashcardSetPage from '@/pages/FlashcardSetPage';
-import FlashcardStudyPage from '@/pages/FlashcardStudyPage';
-import FlashcardLibraryPage from '@/pages/FlashcardLibraryPage';
-import QuizPage from '@/pages/QuizPage';
-import CreateQuizPage from '@/pages/CreateQuizPage';
-import TakeQuizPage from '@/pages/TakeQuizPage';
-import QuizHistoryPage from '@/pages/QuizHistoryPage';
-import GoalsPage from '@/pages/GoalsPage';
-import ProgressPage from '@/pages/ProgressPage';
-import SchedulePage from '@/pages/SchedulePage';
-import SettingsPage from '@/pages/SettingsPage';
-import TodoPage from '@/pages/TodoPage';
-import StudySessionsPage from '@/pages/StudySessionsPage';
-import NoteStudyPage from '@/pages/NoteStudyPage';
-import NoteToFlashcardPage from '@/pages/NoteToFlashcardPage';
-import CollaborationPage from '@/pages/CollaborationPage';
-import ChatPage from '@/pages/ChatPage';
-import ConnectionsPage from '@/pages/ConnectionsPage';
-import NotificationsPage from '@/pages/NotificationsPage';
-import ReferralsPage from '@/pages/ReferralsPage';
-import FeedbackPage from '@/pages/FeedbackPage';
-import { RouteConfig } from './publicRoutes';
+import { lazy } from 'react';
+import type { RouteConfig } from './publicRoutes';
+
+// Lazy load components for better performance
+const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
+const FlashcardsPage = lazy(() => import('@/pages/FlashcardsPage'));
+const NotesPage = lazy(() => import('@/pages/NotesPage'));
+const QuizPage = lazy(() => import('@/pages/QuizPage'));
+const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
+const GoalsPage = lazy(() => import('@/pages/GoalsPage'));
+const TodosPage = lazy(() => import('@/pages/TodosPage'));
+const SchedulePage = lazy(() => import('@/pages/SchedulePage'));
+const RemindersPage = lazy(() => import('@/pages/RemindersPage'));
+const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
+const FeedbackPage = lazy(() => import('@/pages/FeedbackPage'));
+const ReferralsPage = lazy(() => import('@/pages/ReferralsPage'));
+const CollaborationPage = lazy(() => import('@/pages/CollaborationPage'));
+const ChatPage = lazy(() => import('@/pages/ChatPage'));
+
+// Legacy route redirects
+const ProgressPage = lazy(() => import('@/pages/AnalyticsPage'));
+const StudySessionsPage = lazy(() => import('@/pages/AnalyticsPage'));
 
 export const standardRoutes: RouteConfig[] = [
   {
     path: '/dashboard',
-    element: <DashboardPage />,
+    component: DashboardPage,
+    title: 'Dashboard'
   },
   {
-    path: '/notes',
-    element: <NotesPage />,
+    path: '/flashcards/*',
+    component: FlashcardsPage,
+    title: 'Flashcards'
   },
   {
-    path: '/notes/:noteId',
-    element: <EditNotePage />,
+    path: '/notes/*',
+    component: NotesPage,
+    title: 'Notes'
   },
   {
-    path: '/notes/study/:noteId',
-    element: <NoteStudyPage />,
+    path: '/quiz/*',
+    component: QuizPage,
+    title: 'Quiz'
   },
   {
-    path: '/notes/convert/:noteId',
-    element: <NoteToFlashcardPage />,
+    path: '/quizzes/*',
+    component: QuizPage,
+    title: 'Quiz'
   },
   {
-    path: '/flashcards',
-    element: <FlashcardsPage />,
+    path: '/analytics',
+    component: AnalyticsPage,
+    title: 'Analytics'
   },
-  {
-    path: '/flashcards/create',
-    element: <CreateFlashcardPage />,
-  },
-  {
-    path: '/flashcards/edit/:id',
-    element: <EditFlashcardPage />,
-  },
-  {
-    path: '/flashcards/sets/:id',
-    element: <FlashcardSetPage />,
-  },
-  {
-    path: '/flashcards/study/:id',
-    element: <FlashcardStudyPage />,
-  },
-  {
-    path: '/flashcards/library',
-    element: <FlashcardLibraryPage />,
-  },
-  {
-    path: '/quiz',
-    element: <QuizPage />,
-  },
-  {
-    path: '/quizzes',
-    element: <QuizPage />,
-  },
-  {
-    path: '/quiz/create',
-    element: <CreateQuizPage />,
-  },
-  {
-    path: '/quiz/take/:id',
-    element: <TakeQuizPage />,
-  },
-  {
-    path: '/quiz/history',
-    element: <QuizHistoryPage />,
-  },
-  {
-    path: '/goals',
-    element: <GoalsPage />,
-  },
+  // Legacy redirects - these will render the new AnalyticsPage
   {
     path: '/progress',
-    element: <ProgressPage />,
-  },
-  {
-    path: '/feedback',
-    element: <FeedbackPage />,
-  },
-  {
-    path: '/schedule',
-    element: <SchedulePage />,
-  },
-  {
-    path: '/settings',
-    element: <SettingsPage />,
-  },
-  {
-    path: '/todos',
-    element: <TodoPage />,
+    component: ProgressPage,
+    title: 'Analytics'
   },
   {
     path: '/study-sessions',
-    element: <StudySessionsPage />,
+    component: StudySessionsPage,
+    title: 'Analytics'
   },
   {
-    path: '/collaboration',
-    element: <CollaborationPage />,
+    path: '/goals',
+    component: GoalsPage,
+    title: 'Goals'
   },
   {
-    path: '/chat',
-    element: <ChatPage />,
+    path: '/todos',
+    component: TodosPage,
+    title: 'ToDo'
   },
   {
-    path: '/connections',
-    element: <ConnectionsPage />,
+    path: '/schedule',
+    component: SchedulePage,
+    title: 'Schedule'
   },
   {
-    path: '/notifications',
-    element: <NotificationsPage />,
+    path: '/reminders',
+    component: RemindersPage,
+    title: 'Reminders'
+  },
+  {
+    path: '/settings',
+    component: SettingsPage,
+    title: 'Settings'
+  },
+  {
+    path: '/feedback',
+    component: FeedbackPage,
+    title: 'Feedback'
   },
   {
     path: '/referrals',
-    element: <ReferralsPage />,
+    component: ReferralsPage,
+    title: 'Refer & Win'
   },
+  {
+    path: '/collaboration',
+    component: CollaborationPage,
+    title: 'Study Groups'
+  },
+  {
+    path: '/chat/*',
+    component: ChatPage,
+    title: 'Messages'
+  }
 ];

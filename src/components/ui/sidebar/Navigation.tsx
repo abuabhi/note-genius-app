@@ -15,8 +15,7 @@ import {
   Activity, 
   Target, 
   CheckSquare, 
-  BarChart3, 
-  Clock,
+  BarChart3,
   Gift,
   Heart
 } from "lucide-react";
@@ -96,22 +95,12 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                 />
                 <Separator className="my-2" />
                 
-                {/* Study Sessions */}
+                {/* Analytics (replaces Progress and Study Sessions) */}
                 <NavLink
-                  to="/study-sessions"
-                  icon={Clock}
-                  label="Study Sessions"
-                  isActive={pathname.includes("/study-sessions")}
-                  isCollapsed={isCollapsed}
-                />
-                <Separator className="my-2" />
-                
-                {/* Progress */}
-                <NavLink
-                  to="/progress"
+                  to="/analytics"
                   icon={BarChart3}
-                  label="Progress"
-                  isActive={pathname.includes("/progress")}
+                  label="Analytics"
+                  isActive={pathname.includes("/analytics") || pathname.includes("/progress") || pathname.includes("/study-sessions")}
                   isCollapsed={isCollapsed}
                 />
                 <Separator className="my-2" />

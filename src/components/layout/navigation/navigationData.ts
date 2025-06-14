@@ -1,4 +1,3 @@
-
 import { 
   Home, 
   BookOpen, 
@@ -8,7 +7,6 @@ import {
   Calendar, 
   Settings, 
   GraduationCap,
-  Clock,
   Users,
   MessageSquare,
   Bell,
@@ -17,8 +15,7 @@ import {
   Database,
   Gift,
   Heart,
-  CheckSquare,
-  Activity
+  CheckSquare
 } from "lucide-react";
 
 export interface NavigationItem {
@@ -87,18 +84,11 @@ export const navigationData: NavigationGroup[] = [
         description: "Manage your tasks"
       },
       {
-        id: "study-sessions",
-        title: "Study Sessions",
-        href: "/study-sessions",
-        icon: Clock,
-        description: "Track your study time"
-      },
-      {
-        id: "progress",
-        title: "Progress",
-        href: "/progress",
+        id: "analytics",
+        title: "Analytics",
+        href: "/analytics",
         icon: BarChart3,
-        description: "View your learning analytics"
+        description: "View your learning progress and session history"
       }
     ]
   },
@@ -188,7 +178,7 @@ export const navigationData: NavigationGroup[] = [
         id: "admin-system-monitoring",
         title: "System Monitoring",
         href: "/admin/system-monitoring",
-        icon: Activity,
+        icon: BarChart3,
         description: "Monitor system health, performance, and cache management"
       },
       {
