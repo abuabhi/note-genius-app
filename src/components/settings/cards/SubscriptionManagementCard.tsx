@@ -16,10 +16,11 @@ export const SubscriptionManagementCard: React.FC = () => {
     userTier,
     subscribed,
     subscriptionTier,
-    isDeanTier: userTier === UserTier.DEAN || subscriptionTier === UserTier.DEAN || subscriptionTier === 'DEAN'
+    isDeanTier: userTier === UserTier.DEAN
   });
   
-  const isDeanTier = userTier === UserTier.DEAN || subscriptionTier === UserTier.DEAN || subscriptionTier === 'DEAN';
+  // Check if user is on Dean tier (highest tier)
+  const isDeanTier = userTier === UserTier.DEAN;
 
   return (
     <div className="space-y-6">

@@ -28,6 +28,7 @@ export const SubscriptionStatus: React.FC = () => {
     isDeanTier: userTier === UserTier.DEAN
   });
   
+  // Check if user is on Dean tier (highest tier)
   const isDeanTier = userTier === UserTier.DEAN;
 
   const handleManageSubscription = async () => {
@@ -38,8 +39,8 @@ export const SubscriptionStatus: React.FC = () => {
     }
   };
 
-  // For Dean tier users - check both userTier and subscriptionTier
-  if (isDeanTier || subscriptionTier === UserTier.DEAN || subscriptionTier === 'DEAN') {
+  // For Dean tier users - they are on the highest tier
+  if (isDeanTier) {
     return (
       <Card>
         <CardHeader>
