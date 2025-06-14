@@ -49,10 +49,10 @@ export const CompactNoteCard = ({
     onNoteClick(note);
   };
 
-  // Single line of description for ultra-compact view
+  // Increased character limit for single line description
   const contentPreview = note.content 
-    ? note.content.substring(0, 120) + (note.content.length > 120 ? '...' : '')
-    : note.description.substring(0, 120) + (note.description.length > 120 ? '...' : '');
+    ? note.content.substring(0, 180) + (note.content.length > 180 ? '...' : '')
+    : note.description.substring(0, 180) + (note.description.length > 180 ? '...' : '');
 
   return (
     <Card 
@@ -83,23 +83,12 @@ export const CompactNoteCard = ({
             </div>
           </div>
           
-          {/* Right side: Reading time, Study button, and floating elements */}
+          {/* Right side: Reading time and floating elements */}
           <div className="flex items-center gap-3 shrink-0">
             {/* Reading time - green color */}
             <div className="text-xs text-green-600 font-medium">
               ~{Math.ceil((note.content || note.description).split(' ').length / 200)} min read
             </div>
-            
-            {/* Study button */}
-            <Button
-              onClick={handleStudyClick}
-              className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white font-medium rounded-lg transition-all duration-200 shadow-md shadow-mint-500/25 hover:shadow-mint-500/40 px-3 py-1 h-7"
-              size="sm"
-              type="button"
-            >
-              <Sparkles className="h-3 w-3 mr-1" />
-              Study
-            </Button>
             
             {/* Source type indicator */}
             {note.sourceType === 'scan' && (
@@ -132,10 +121,24 @@ export const CompactNoteCard = ({
           </div>
         </div>
         
-        {/* Description - two lines maximum */}
-        <p className="text-gray-600 text-sm leading-relaxed line-clamp-2 mb-2 ml-1">
-          {contentPreview}
-        </p>
+        {/* Description line with Study button */}
+        <div className="flex items-center justify-between gap-3 ml-1">
+          {/* Description - single line with increased character limit */}
+          <p className="text-gray-600 text-sm leading-relaxed truncate flex-1">
+            {contentPreview}
+          </p>
+          
+          {/* Study button - positioned at the end of description line */}
+          <Button
+            onClick={handleStudyClick}
+            className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white font-medium rounded-lg transition-all duration-200 shadow-md shadow-mint-500/25 hover:shadow-mint-500/40 px-3 py-1 h-7 shrink-0"
+            size="sm"
+            type="button"
+          >
+            <Sparkles className="h-3 w-3 mr-1" />
+            Study
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
