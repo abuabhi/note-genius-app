@@ -1,22 +1,24 @@
 
-import React from "react";
+import React, { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useOptimizedFlashcardSets } from "@/hooks/useOptimizedFlashcardSets";
 import { FlashcardsPageHeader } from "@/components/flashcards/page/FlashcardsPageHeader";
 import { FlashcardsContent } from "@/components/flashcards/page/FlashcardsContent";
 import { AdvancedFlashcardFilters } from "@/components/flashcards/components/AdvancedFlashcardFilters";
-import { useViewPreferences } from "@/hooks/useViewPreferences";
 import { useFlashcardsPageState } from "@/components/flashcards/page/useFlashcardsPageState";
 import { ErrorBoundary } from "@/components/flashcards/components/ErrorBoundary";
 import { useEnhancedRetry } from "@/hooks/performance/useEnhancedRetry";
 import { toast } from "sonner";
 
+// Use a separate type for flashcard view modes
+type FlashcardViewMode = 'card' | 'list';
+
 const FlashcardsPage = () => {
   console.log('🏠 FlashcardsPage component rendering');
   
   useRequireAuth();
-  const { viewMode, setViewMode } = useViewPreferences('flashcards', 'card');
+  const [viewMode, setViewMode] = useState<FlashcardViewMode>('card');
   const { filters, page, deletingSet, setFilters, setPage, setDeletingSet } = useFlashcardsPageState();
   const { executeWithRetry } = useEnhancedRetry();
 
@@ -100,7 +102,7 @@ const FlashcardsPage = () => {
             <FlashcardsContent
               sets={allSets}
               filters={filters}
-              viewMode={viewMode}
+              viewMode={viewMode as any} // Convert to expected type
               loading={loading}
               error={error}
               hasMore={false}

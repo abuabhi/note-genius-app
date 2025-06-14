@@ -1,12 +1,11 @@
 
 import React from 'react';
 import { Note } from "@/types/note";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Book, Sparkles, Pin, Camera, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { generateColorFromString, getBestTextColor } from "@/utils/colorUtils";
-import { format, formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
 import { NoteCardActions } from "./NoteCardActions";
 
@@ -39,8 +38,6 @@ export const CompactNoteCard = ({
   };
 
   const subjectName = getSubjectName();
-  const subjectColor = generateColorFromString(subjectName);
-  const textColor = getBestTextColor(subjectColor);
   
   const handleStudyClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -52,55 +49,62 @@ export const CompactNoteCard = ({
     onNoteClick(note);
   };
 
-  // Two lines of description for list view
+  // Single line of description for ultra-compact view
   const contentPreview = note.content 
-    ? note.content.substring(0, 200) + (note.content.length > 200 ? '...' : '')
-    : note.description.substring(0, 200) + (note.description.length > 200 ? '...' : '');
+    ? note.content.substring(0, 120) + (note.content.length > 120 ? '...' : '')
+    : note.description.substring(0, 120) + (note.description.length > 120 ? '...' : '');
 
   return (
     <Card 
-      className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-mint-500/10 hover:scale-[1.01] bg-white/90 backdrop-blur-sm border-0 shadow-md rounded-xl relative overflow-hidden py-2"
+      className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-mint-500/10 hover:scale-[1.01] bg-white/90 backdrop-blur-sm border-0 shadow-md rounded-xl relative overflow-hidden"
       onClick={handleCardClick}
     >
-      {/* Compact list layout */}
-      <CardHeader className="pb-2 pt-3 px-4">
-        {/* Title, Subject, and Date on same line */}
+      <CardContent className="p-3">
+        {/* Top line: Title, Subject, Date, Reading Time */}
         <div className="flex items-center justify-between gap-3 mb-2">
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <h3 className="text-lg font-bold text-green-700 truncate">
+            {/* Title - green color */}
+            <h3 className="text-base font-bold text-green-700 truncate flex-shrink-0 max-w-[200px]">
               {note.title}
             </h3>
             
+            {/* Subject Badge - mint green background, green text and icon */}
             <Badge 
-              className="px-2 py-1 text-xs font-medium border-0 shadow-sm shrink-0"
-              style={{ 
-                backgroundColor: '#10B981', 
-                color: 'white'
-              }}
+              className="px-2 py-1 text-xs font-medium border-0 shadow-sm shrink-0 bg-mint-100 border-mint-200 text-green-700"
             >
-              <Book className="h-3 w-3 mr-1" />
+              <Book className="h-3 w-3 mr-1 text-green-600" />
               {subjectName}
             </Badge>
             
+            {/* Date - green color */}
             <div className="flex items-center gap-1 text-sm text-green-600 font-medium shrink-0">
-              <Calendar className="h-4 w-4" />
+              <Calendar className="h-3 w-3 text-green-600" />
               <span>{formatDistanceToNow(new Date(note.date), { addSuffix: true })}</span>
             </div>
           </div>
           
-          {/* Floating elements and actions */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Right side: Reading time and floating elements */}
+          <div className="flex items-center gap-3 shrink-0">
+            {/* Reading time - green color */}
+            <div className="text-xs text-green-600 font-medium">
+              ~{Math.ceil((note.content || note.description).split(' ').length / 200)} min read
+            </div>
+            
+            {/* Source type indicator */}
             {note.sourceType === 'scan' && (
-              <div className="w-6 h-6 bg-blue-500/10 rounded-full flex items-center justify-center">
+              <div className="w-5 h-5 bg-blue-500/10 rounded-full flex items-center justify-center">
                 <Camera className="h-3 w-3 text-blue-600" />
               </div>
             )}
+            
+            {/* Pin indicator */}
             {note.pinned && (
-              <div className="w-6 h-6 bg-mint-500/10 rounded-full flex items-center justify-center">
-                <Pin size={10} className="fill-mint-600 text-mint-600" />
+              <div className="w-5 h-5 bg-mint-500/10 rounded-full flex items-center justify-center">
+                <Pin size={8} className="fill-mint-600 text-mint-600" />
               </div>
             )}
             
+            {/* Actions */}
             {onPin && onDelete && (
               <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <NoteCardActions 
@@ -116,29 +120,23 @@ export const CompactNoteCard = ({
             )}
           </div>
         </div>
-      </CardHeader>
-      
-      <CardContent className="pt-0 px-4 pb-3">
-        {/* Two lines of description */}
-        <p className="text-gray-600 text-sm leading-relaxed line-clamp-2 mb-3">
+        
+        {/* Description - two lines maximum */}
+        <p className="text-gray-600 text-sm leading-relaxed line-clamp-2 mb-3 ml-1">
           {contentPreview}
         </p>
         
-        {/* Study button and reading time */}
-        <div className="flex items-center justify-between">
+        {/* Study button */}
+        <div className="flex justify-start ml-1">
           <Button
             onClick={handleStudyClick}
-            className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white font-medium rounded-lg transition-all duration-200 shadow-md shadow-mint-500/25 hover:shadow-mint-500/40 px-4 py-2"
+            className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white font-medium rounded-lg transition-all duration-200 shadow-md shadow-mint-500/25 hover:shadow-mint-500/40 px-4 py-1.5 h-8"
             size="sm"
             type="button"
           >
             <Sparkles className="h-3 w-3 mr-1" />
             Study
           </Button>
-          
-          <div className="text-xs text-green-600 font-medium">
-            ~{Math.ceil((note.content || note.description).split(' ').length / 200)} min read
-          </div>
         </div>
       </CardContent>
     </Card>

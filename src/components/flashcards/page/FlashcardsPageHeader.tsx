@@ -2,12 +2,14 @@
 import { Button } from '@/components/ui/button';
 import { Grid, List, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { ViewMode } from '@/hooks/useViewPreferences';
+
+// Use a separate type for flashcard view modes to avoid conflicts
+type FlashcardViewMode = 'card' | 'list';
 
 interface FlashcardsPageHeaderProps {
   loading: boolean;
-  viewMode: ViewMode;
-  onViewModeChange: (mode: ViewMode) => void;
+  viewMode: FlashcardViewMode;
+  onViewModeChange: (mode: FlashcardViewMode) => void;
 }
 
 export const FlashcardsPageHeader = ({
@@ -17,7 +19,7 @@ export const FlashcardsPageHeader = ({
 }: FlashcardsPageHeaderProps) => {
   console.log('🎯 FlashcardsPageHeader - Current viewMode:', viewMode);
 
-  const handleViewModeChange = (mode: ViewMode) => {
+  const handleViewModeChange = (mode: FlashcardViewMode) => {
     console.log('🎯 FlashcardsPageHeader - Changing viewMode from', viewMode, 'to', mode);
     onViewModeChange(mode);
   };

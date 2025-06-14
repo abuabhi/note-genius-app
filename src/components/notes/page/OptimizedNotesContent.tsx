@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
 import { Note } from '@/types/note';
@@ -38,7 +37,6 @@ export const OptimizedNotesContent = () => {
   
   // Dialog states
   const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
-  const [isScanDialogOpen, setIsScanDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [creatingNote, setCreatingNote] = useState(false);
 
@@ -77,10 +75,6 @@ export const OptimizedNotesContent = () => {
       toast.error('Failed to save note');
       return null;
     }
-  };
-
-  const handleScanNote = async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
-    return handleSaveNote({ ...noteData, sourceType: 'scan' });
   };
 
   const handleImportNote = async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
@@ -125,7 +119,6 @@ export const OptimizedNotesContent = () => {
           <OptimizedNotesHeader 
             totalCount={totalCount}
             onCreateNote={() => setIsManualDialogOpen(true)}
-            onOpenScanDialog={() => setIsScanDialogOpen(true)}
             onOpenImportDialog={() => setIsImportDialogOpen(true)}
             isCreating={creatingNote}
           />
@@ -183,15 +176,15 @@ export const OptimizedNotesContent = () => {
         {/* Dialog Manager for note creation */}
         <DialogManager 
           onSaveNote={handleSaveNote}
-          onScanNote={handleScanNote}
+          onScanNote={handleSaveNote}
           onImportNote={handleImportNote}
           tierLimits={tierLimits}
           isManualDialogOpen={isManualDialogOpen}
-          isScanDialogOpen={isScanDialogOpen}
+          isScanDialogOpen={false}
           isImportDialogOpen={isImportDialogOpen}
           isSubmitting={creatingNote}
           setIsManualDialogOpen={setIsManualDialogOpen}
-          setIsScanDialogOpen={setIsScanDialogOpen}
+          setIsScanDialogOpen={() => {}}
           setIsImportDialogOpen={setIsImportDialogOpen}
         />
       </div>

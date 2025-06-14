@@ -1,11 +1,13 @@
 
 import { Button } from '@/components/ui/button';
 import { Grid2x2, LayoutList } from 'lucide-react';
-import { ViewMode } from '@/hooks/useViewPreferences';
+
+// Use a separate type for flashcard view modes to avoid conflicts
+type FlashcardViewMode = 'card' | 'list';
 
 interface ViewToggleProps {
-  viewMode: ViewMode;
-  onViewModeChange: (mode: ViewMode) => void;
+  viewMode: FlashcardViewMode;
+  onViewModeChange: (mode: FlashcardViewMode) => void;
 }
 
 export const ViewToggle = ({ viewMode, onViewModeChange }: ViewToggleProps) => {
