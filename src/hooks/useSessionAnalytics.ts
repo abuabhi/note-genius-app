@@ -1,6 +1,5 @@
-
 import { useState, useEffect, useMemo } from 'react';
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 

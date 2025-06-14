@@ -1,7 +1,6 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { useTimezone } from './useTimezone';
 import { 
   getTodayInTimezone, 
