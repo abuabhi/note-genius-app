@@ -80,10 +80,10 @@ export const GoalAnalytics: React.FC<GoalAnalyticsProps> = ({ goals }) => {
       return true; // We'd need a completion_date field for accurate calculation
     }).length;
 
-    // Subject breakdown
+    // Subject breakdown - using 'subject' instead of 'academic_subject'
     const subjectBreakdown: Record<string, { total: number; completed: number; rate: number }> = {};
     goals.forEach(goal => {
-      const subject = goal.subject || goal.academic_subject || 'Unspecified';
+      const subject = goal.subject || 'Unspecified';
       if (!subjectBreakdown[subject]) {
         subjectBreakdown[subject] = { total: 0, completed: 0, rate: 0 };
       }

@@ -68,8 +68,7 @@ const GoalsPage = () => {
 
   const handleDeleteGoal = async (goalId: string): Promise<boolean> => {
     try {
-      await deleteGoal(goalId);
-      return true;
+      return await deleteGoal(goalId);
     } catch (error) {
       console.error('Error deleting goal:', error);
       return false;
