@@ -74,7 +74,7 @@ export const useUserTier = () => {
   const [userTier, setUserTier] = useState<UserTier>(UserTier.SCHOLAR);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch user tier from profile and subscription status
+  // Fetch user tier from profile - DEAN tier is permanent and doesn't require subscription
   useEffect(() => {
     const fetchUserTier = async () => {
       if (!user) {
@@ -94,7 +94,14 @@ export const useUserTier = () => {
 
         let currentTier = profileData.user_tier as UserTier || UserTier.SCHOLAR;
 
-        // Then check subscription status to ensure tier is current
+        // DEAN tier is permanent - no subscription check needed
+        if (currentTier === UserTier.DEAN) {
+          setUserTier(currentTier);
+          setIsLoading(false);
+          return;
+        }
+
+        // For other tiers, check subscription status
         const { data: subData } = await supabase
           .from("subscribers")
           .select("subscribed, subscription_tier")
@@ -112,8 +119,8 @@ export const useUserTier = () => {
               .update({ user_tier: currentTier })
               .eq("id", user.id);
           }
-        } else if (!subData?.subscribed && currentTier !== UserTier.SCHOLAR) {
-          // If no active subscription but tier is not SCHOLAR, downgrade
+        } else if (!subData?.subscribed && currentTier !== UserTier.SCHOLAR && currentTier !== UserTier.DEAN) {
+          // If no active subscription and not DEAN tier, downgrade to SCHOLAR
           currentTier = UserTier.SCHOLAR;
           await supabase
             .from("profiles")
