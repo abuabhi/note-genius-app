@@ -11,6 +11,7 @@ interface GoogleDocsActionBarProps {
   onRefresh: () => void;
   onImport: () => void;
   onConnect: () => void;
+  isImporting?: boolean;
 }
 
 export const GoogleDocsActionBar = ({
@@ -21,7 +22,8 @@ export const GoogleDocsActionBar = ({
   loading,
   onRefresh,
   onImport,
-  onConnect
+  onConnect,
+  isImporting = false
 }: GoogleDocsActionBarProps) => {
   if (!isAuthenticated) {
     return (
@@ -50,7 +52,7 @@ export const GoogleDocsActionBar = ({
           variant="outline"
           size="sm"
           onClick={onRefresh}
-          disabled={loading || isRefreshing}
+          disabled={loading || isRefreshing || isImporting}
         >
           {isRefreshing ? (
             <Loader2 className="h-3 w-3 mr-1 animate-spin" />
@@ -67,9 +69,22 @@ export const GoogleDocsActionBar = ({
       </div>
       
       {selectedDocsCount > 0 && (
-        <Button onClick={onImport} size="sm">
-          <Copy className="h-3 w-3 mr-1" />
-          Import ({selectedDocsCount})
+        <Button 
+          onClick={onImport} 
+          size="sm"
+          disabled={isImporting || loading}
+        >
+          {isImporting ? (
+            <>
+              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              Importing...
+            </>
+          ) : (
+            <>
+              <Copy className="h-3 w-3 mr-1" />
+              Import ({selectedDocsCount})
+            </>
+          )}
         </Button>
       )}
     </div>

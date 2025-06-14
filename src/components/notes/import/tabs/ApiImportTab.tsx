@@ -9,9 +9,10 @@ import { NotionConnection } from "../NotionConnection";
 interface ApiImportTabProps {
   onSaveNote: (note: any) => Promise<boolean>;
   isPremiumUser?: boolean;
+  onImportComplete?: () => void;
 }
 
-export const ApiImportTab = ({ onSaveNote, isPremiumUser }: ApiImportTabProps) => {
+export const ApiImportTab = ({ onSaveNote, isPremiumUser, onImportComplete }: ApiImportTabProps) => {
   const [selectedService, setSelectedService] = useState<string | null>(null);
 
   const handleConnection = (accessToken: string) => {
@@ -27,7 +28,14 @@ export const ApiImportTab = ({ onSaveNote, isPremiumUser }: ApiImportTabProps) =
       case 'onenote':
         return <OneNoteConnection onConnected={handleConnection} />;
       case 'googledocs':
-        return <DedicatedGoogleDocsImport onConnected={handleConnection} onBack={handleBackToGrid} />;
+        return (
+          <DedicatedGoogleDocsImport 
+            onConnected={handleConnection} 
+            onBack={handleBackToGrid}
+            onSaveNote={onSaveNote}
+            onImportComplete={onImportComplete}
+          />
+        );
       case 'notion':
         return <NotionConnection onConnected={handleConnection} />;
       default:

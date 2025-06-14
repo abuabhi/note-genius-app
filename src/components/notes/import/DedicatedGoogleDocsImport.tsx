@@ -1,3 +1,4 @@
+
 import { useGoogleDocsAuth } from "@/integrations/google/googleDocsOAuth";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -6,19 +7,33 @@ import { GoogleDocsErrorDisplay } from "./google-docs/GoogleDocsErrorDisplay";
 import { GoogleDocsActionBar } from "./google-docs/GoogleDocsActionBar";
 import { GoogleDocsList } from "./google-docs/GoogleDocsList";
 import { GoogleDocsEmptyState } from "./google-docs/GoogleDocsEmptyState";
+import { GoogleDocsImporter } from "@/services/googleDocsImporter";
+import { DocumentContentProcessor } from "@/utils/documentContentProcessor";
+import { SubjectClassifier } from "@/utils/subjectClassifier";
+import { useUserSubjects } from "@/hooks/useUserSubjects";
+import { getOrCreateSubjectId } from "@/utils/subjectHelpers";
 
 interface DedicatedGoogleDocsImportProps {
   onConnected: (accessToken: string) => void;
   onBack: () => void;
+  onSaveNote?: (note: any) => Promise<boolean>;
+  onImportComplete?: () => void;
 }
 
-export const DedicatedGoogleDocsImport = ({ onConnected, onBack }: DedicatedGoogleDocsImportProps) => {
+export const DedicatedGoogleDocsImport = ({ 
+  onConnected, 
+  onBack, 
+  onSaveNote,
+  onImportComplete 
+}: DedicatedGoogleDocsImportProps) => {
   const { isAuthenticated, accessToken, userName, loading, error, connect, disconnect } = useGoogleDocsAuth();
   const [isRefreshingDocs, setIsRefreshingDocs] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [documents, setDocuments] = useState<any[]>([]);
   const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
   const [detailedError, setDetailedError] = useState<string | null>(null);
   const [showErrorDetails, setShowErrorDetails] = useState(false);
+  const { subjects } = useUserSubjects();
   
   useEffect(() => {
     if (isAuthenticated && accessToken) {
@@ -144,14 +159,116 @@ export const DedicatedGoogleDocsImport = ({ onConnected, onBack }: DedicatedGoog
       return;
     }
 
-    toast.success(`Importing ${selectedDocs.length} selected document${selectedDocs.length > 1 ? 's' : ''}...`);
-  };
+    if (!accessToken) {
+      toast.error('Authentication required. Please reconnect.');
+      return;
+    }
 
-  const handleDisconnect = () => {
-    disconnect();
-    setDocuments([]);
-    setSelectedDocs([]);
-    setDetailedError(null);
+    if (!onSaveNote) {
+      toast.error('Import function not available');
+      return;
+    }
+
+    setIsImporting(true);
+    const toastId = toast.loading(`Importing ${selectedDocs.length} document${selectedDocs.length > 1 ? 's' : ''}...`);
+    
+    try {
+      console.log('🚀 Starting import process for documents:', selectedDocs);
+      
+      const importer = new GoogleDocsImporter(accessToken);
+      const results = await importer.importDocuments(selectedDocs);
+      
+      let successCount = 0;
+      let failureCount = 0;
+      
+      const subjectClassifier = new SubjectClassifier(subjects || []);
+      
+      for (const result of results) {
+        if (result.success) {
+          try {
+            // Process the document content
+            const processed = DocumentContentProcessor.processDocument(result.document);
+            
+            // Classify subject based on user's existing subjects
+            const finalSubject = subjectClassifier.classifyContent(
+              processed.content + ' ' + processed.title, 
+              processed.suggestedSubject
+            );
+            
+            // Get or create subject ID
+            const subjectId = await getOrCreateSubjectId(finalSubject);
+            
+            // Create note object
+            const noteData = {
+              title: processed.title,
+              description: processed.description,
+              content: processed.content,
+              subject: finalSubject,
+              subject_id: subjectId,
+              date: new Date().toISOString().split('T')[0],
+              sourceType: 'import' as const,
+              importData: {
+                originalFileUrl: `https://docs.google.com/document/d/${result.document.id}`,
+                fileType: 'google-docs',
+                importedAt: new Date().toISOString()
+              }
+            };
+            
+            console.log('📝 Creating note:', noteData.title);
+            
+            // Save the note
+            const success = await onSaveNote(noteData);
+            
+            if (success) {
+              successCount++;
+              console.log(`✅ Successfully saved note: ${noteData.title}`);
+            } else {
+              failureCount++;
+              console.error(`❌ Failed to save note: ${noteData.title}`);
+            }
+            
+          } catch (error) {
+            console.error('Error processing document:', error);
+            failureCount++;
+          }
+        } else {
+          failureCount++;
+          console.error('Import failed for document:', result.error);
+        }
+      }
+      
+      toast.dismiss(toastId);
+      
+      // Show results
+      if (successCount > 0 && failureCount === 0) {
+        toast.success(`Successfully imported ${successCount} document${successCount > 1 ? 's' : ''}!`);
+        
+        // Close dialog and notify parent
+        if (onImportComplete) {
+          onImportComplete();
+        }
+        
+        // Reset selection
+        setSelectedDocs([]);
+        
+        // Go back to previous screen
+        setTimeout(() => {
+          onBack();
+        }, 1000);
+        
+      } else if (successCount > 0 && failureCount > 0) {
+        toast.warning(`Imported ${successCount} document${successCount > 1 ? 's' : ''}, ${failureCount} failed`);
+      } else {
+        toast.error(`Failed to import documents. Please try again.`);
+      }
+      
+    } catch (error) {
+      console.error('💥 Import process failed:', error);
+      toast.dismiss(toastId);
+      toast.error(`Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsImporting(false);
+    }
   };
 
   return (
@@ -177,10 +294,11 @@ export const DedicatedGoogleDocsImport = ({ onConnected, onBack }: DedicatedGoog
           documentsCount={documents.length}
           selectedDocsCount={selectedDocs.length}
           isRefreshing={isRefreshingDocs}
-          loading={loading}
+          loading={loading || isImporting}
           onRefresh={fetchDocuments}
           onImport={importSelectedDocs}
           onConnect={connect}
+          isImporting={isImporting}
         />
       </div>
 
