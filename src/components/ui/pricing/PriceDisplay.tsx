@@ -47,7 +47,7 @@ export const PriceDisplay: React.FC<PriceDisplayProps> = ({
           "No credit card required"
         ) : (
           <>
-            {isMonthly ? "Billed monthly" : "Billed annually"}
+            {isMonthly ? "Billed monthly" : `Billed annually (A$${isMonthly ? currentPrice : (currentPrice * 12).toFixed(2)}/year)`}
             {!isMonthly && (
               <div className="text-mint-600 font-medium mt-1">
                 Save 20% with annual billing

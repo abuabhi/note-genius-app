@@ -3,7 +3,7 @@ import Layout from "@/components/layout/Layout";
 import { Pricing } from "@/components/ui/pricing";
 
 const PricingPage = () => {
-  // Updated pricing data with proper AUD amounts that should match your Stripe configuration
+  // Updated pricing data to match Stripe configuration exactly
   const demoPlans = [
     {
       name: "SCHOLAR",
@@ -25,8 +25,8 @@ const PricingPage = () => {
     },
     {
       name: "GRADUATE",
-      price: "15.00",
-      yearlyPrice: "12.00", // 20% discount
+      price: "14.99",
+      yearlyPrice: "9.99", // A$119.92 ÷ 12 = A$9.99/month when billed annually
       period: "month",
       features: [
         "100 notes",
@@ -45,8 +45,8 @@ const PricingPage = () => {
     },
     {
       name: "MASTER",
-      price: "25.00",
-      yearlyPrice: "20.00", // 20% discount
+      price: "24.99",
+      yearlyPrice: "16.66", // A$199.92 ÷ 12 = A$16.66/month when billed annually
       period: "month",
       features: [
         "250 notes",

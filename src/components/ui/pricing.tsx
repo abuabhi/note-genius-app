@@ -100,7 +100,7 @@ export function Pricing({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-16 max-w-7xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-24 max-w-7xl mx-auto">
         {plans.map((plan, index) => (
           <PricingCard
             key={index}
