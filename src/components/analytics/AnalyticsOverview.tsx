@@ -3,15 +3,15 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Clock, Target, TrendingUp, Calendar, BookOpen, Award } from 'lucide-react';
+import { Clock, Target, TrendingUp, Calendar, BookOpen, Award, AlertTriangle } from 'lucide-react';
 import { useTimezoneAwareAnalytics } from '@/hooks/useTimezoneAwareAnalytics';
 import { useBasicSessionTracker } from '@/hooks/useBasicSessionTracker';
 
 export const AnalyticsOverview = () => {
-  const { analytics, isLoading } = useTimezoneAwareAnalytics();
+  const { analytics, isLoading, error } = useTimezoneAwareAnalytics();
   const { isActive, elapsedSeconds, isPaused } = useBasicSessionTracker();
 
-  console.log('📊 AnalyticsOverview render:', { analytics, isLoading });
+  console.log('📊 AnalyticsOverview render:', { analytics, isLoading, error });
 
   const formatTime = (totalSeconds: number) => {
     const hours = Math.floor(totalSeconds / 3600);
@@ -23,6 +23,27 @@ export const AnalyticsOverview = () => {
     }
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   };
+
+  if (error) {
+    console.error('❌ Analytics error:', error);
+    return (
+      <div className="space-y-6">
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3 text-red-800">
+              <AlertTriangle className="h-5 w-5" />
+              <div>
+                <p className="font-medium">Error loading analytics</p>
+                <p className="text-sm text-red-600">
+                  {error.message || 'An unknown error occurred'}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -42,33 +63,19 @@ export const AnalyticsOverview = () => {
     );
   }
 
-  // Add fallback data to prevent blank display
-  const safeAnalytics = {
-    todayStudyTime: analytics?.todayStudyTime || 0,
-    todaySessions: analytics?.todaySessions || 0,
-    weeklyGoalProgress: analytics?.weeklyGoalProgress || 0,
-    weeklyStudyTime: analytics?.weeklyStudyTime || 0,
-    weeklyGoalHours: analytics?.weeklyGoalHours || 5,
-    totalStudyTime: analytics?.totalStudyTime || 0,
-    totalSessions: analytics?.totalSessions || 0,
-    totalCardsMastered: analytics?.totalCardsMastered || 0,
-    flashcardAccuracy: analytics?.flashcardAccuracy || 0,
-    streakDays: analytics?.streakDays || 0,
-    weeklyChange: analytics?.weeklyChange || 0,
-    totalQuizzes: analytics?.totalQuizzes || 0,
-    completedQuizzes: analytics?.completedQuizzes || 0,
-    totalNotes: analytics?.totalNotes || 0
-  };
-
   return (
     <div className="space-y-6">
       {/* Debug info */}
-      <Card className="bg-yellow-50 border-yellow-200">
+      <Card className="bg-blue-50 border-blue-200">
         <CardContent className="pt-6">
-          <div className="text-sm text-yellow-800">
-            <p>Debug: Analytics loaded = {analytics ? 'Yes' : 'No'}</p>
-            <p>Total Sessions: {safeAnalytics.totalSessions}</p>
-            <p>Today Study Time: {safeAnalytics.todayStudyTime}h</p>
+          <div className="text-sm text-blue-800">
+            <p>✅ Analytics loaded successfully!</p>
+            <p>Total Sessions: {analytics.totalSessions}</p>
+            <p>Today Study Time: {analytics.todayStudyTime}h</p>
+            <p>Weekly Study Time: {analytics.weeklyStudyTime}h</p>
+            <p>Total Quizzes: {analytics.totalQuizzes}</p>
+            <p>Total Notes: {analytics.totalNotes}</p>
+            <p>Timezone: {analytics.timezone}</p>
           </div>
         </CardContent>
       </Card>
@@ -103,9 +110,9 @@ export const AnalyticsOverview = () => {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{safeAnalytics.todayStudyTime}h</div>
+            <div className="text-2xl font-bold">{analytics.todayStudyTime}h</div>
             <p className="text-xs text-muted-foreground">
-              {safeAnalytics.todaySessions} sessions completed
+              {analytics.todaySessions} sessions completed
             </p>
           </CardContent>
         </Card>
@@ -117,10 +124,10 @@ export const AnalyticsOverview = () => {
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{safeAnalytics.weeklyGoalProgress}%</div>
-            <Progress value={safeAnalytics.weeklyGoalProgress} className="mt-2" />
+            <div className="text-2xl font-bold">{analytics.weeklyGoalProgress}%</div>
+            <Progress value={analytics.weeklyGoalProgress} className="mt-2" />
             <p className="text-xs text-muted-foreground mt-2">
-              {safeAnalytics.weeklyStudyTime}h of {safeAnalytics.weeklyGoalHours}h goal
+              {analytics.weeklyStudyTime}h of {analytics.weeklyGoalHours}h goal
             </p>
           </CardContent>
         </Card>
@@ -132,9 +139,9 @@ export const AnalyticsOverview = () => {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{safeAnalytics.totalStudyTime}h</div>
+            <div className="text-2xl font-bold">{analytics.totalStudyTime}h</div>
             <p className="text-xs text-muted-foreground">
-              {safeAnalytics.totalSessions} total sessions
+              {analytics.totalSessions} total sessions
             </p>
           </CardContent>
         </Card>
@@ -146,9 +153,9 @@ export const AnalyticsOverview = () => {
             <BookOpen className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{safeAnalytics.totalCardsMastered}</div>
+            <div className="text-2xl font-bold">{analytics.totalCardsMastered}</div>
             <p className="text-xs text-muted-foreground">
-              {safeAnalytics.flashcardAccuracy}% accuracy rate
+              {analytics.flashcardAccuracy}% accuracy rate
             </p>
           </CardContent>
         </Card>
@@ -160,9 +167,9 @@ export const AnalyticsOverview = () => {
             <Award className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{safeAnalytics.streakDays}</div>
+            <div className="text-2xl font-bold">{analytics.streakDays}</div>
             <p className="text-xs text-muted-foreground">
-              {safeAnalytics.streakDays === 1 ? "day" : "days"} in a row
+              {analytics.streakDays === 1 ? "day" : "days"} in a row
             </p>
           </CardContent>
         </Card>
@@ -174,8 +181,8 @@ export const AnalyticsOverview = () => {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${safeAnalytics.weeklyChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {safeAnalytics.weeklyChange >= 0 ? '+' : ''}{safeAnalytics.weeklyChange}%
+            <div className={`text-2xl font-bold ${analytics.weeklyChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {analytics.weeklyChange >= 0 ? '+' : ''}{analytics.weeklyChange}%
             </div>
             <p className="text-xs text-muted-foreground">
               vs last week
@@ -193,7 +200,7 @@ export const AnalyticsOverview = () => {
                 <BookOpen className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <div className="text-lg font-semibold text-blue-800">{safeAnalytics.totalQuizzes}</div>
+                <div className="text-lg font-semibold text-blue-800">{analytics.totalQuizzes}</div>
                 <div className="text-sm text-blue-600">Quizzes Available</div>
               </div>
             </div>
@@ -207,7 +214,7 @@ export const AnalyticsOverview = () => {
                 <Target className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <div className="text-lg font-semibold text-green-800">{safeAnalytics.completedQuizzes}</div>
+                <div className="text-lg font-semibold text-green-800">{analytics.completedQuizzes}</div>
                 <div className="text-sm text-green-600">Quizzes Completed</div>
               </div>
             </div>
@@ -221,7 +228,7 @@ export const AnalyticsOverview = () => {
                 <Award className="h-5 w-5 text-purple-600" />
               </div>
               <div>
-                <div className="text-lg font-semibold text-purple-800">{safeAnalytics.totalNotes}</div>
+                <div className="text-lg font-semibold text-purple-800">{analytics.totalNotes}</div>
                 <div className="text-sm text-purple-600">Notes Created</div>
               </div>
             </div>
