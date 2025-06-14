@@ -12,7 +12,7 @@ export interface StudyGoal {
   flashcard_set_id?: string;
   created_at: string;
   updated_at: string;
-  subject: string;
+  subject?: string; // Make this optional to match database schema
   status?: 'active' | 'paused' | 'archived' | 'completed';
   grace_period_days?: number;
   extension_count?: number;
@@ -27,7 +27,7 @@ export interface GoalFormValues {
   target_hours: number;
   start_date: string;
   end_date: string;
-  subject: string;
+  subject?: string; // Make this optional to match the StudyGoal interface
   flashcard_set_id?: string;
 }
 

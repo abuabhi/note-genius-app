@@ -36,7 +36,7 @@ export const useStudyGoals = () => {
     !goal.status || goal.status === 'active' || goal.status === 'completed'
   );
 
-  const getStreakBonus = useCallback(() => {
+  const getStreakBonus = useCallback((): string | null => {
     const completedGoals = activeGoals.filter(goal => goal.is_completed);
     if (completedGoals.length >= 5) return '🔥 Goal Master!';
     if (completedGoals.length >= 3) return '⭐ On Fire!';

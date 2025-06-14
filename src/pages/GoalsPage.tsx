@@ -42,26 +42,26 @@ const GoalsPage = () => {
   const [formOpen, setFormOpen] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<StudyGoal | undefined>(undefined);
   
-  const handleCreateGoal = async (data: GoalFormValues) => {
+  const handleCreateGoal = async (data: GoalFormValues): Promise<void> => {
     await createGoal(data);
   };
   
-  const handleUpdateGoal = async (data: GoalFormValues) => {
+  const handleUpdateGoal = async (data: GoalFormValues): Promise<void> => {
     if (selectedGoal?.id) {
       await updateGoal(selectedGoal.id, data);
     }
   };
   
-  const handleEditGoal = (goal: StudyGoal) => {
+  const handleEditGoal = (goal: StudyGoal): void => {
     setSelectedGoal(goal);
     setFormOpen(true);
   };
 
-  const handleCreateFromTemplate = async (template: any) => {
+  const handleCreateFromTemplate = async (template: any): Promise<void> => {
     await createGoalFromTemplate(template);
   };
   
-  const handleDismissSuggestion = (templateTitle: string) => {
+  const handleDismissSuggestion = (templateTitle: string): void => {
     dismissSuggestion(templateTitle);
   };
 
@@ -120,10 +120,10 @@ const GoalsPage = () => {
   });
 
   const loading = authLoading || goalsLoading;
-  const streakBonus = getStreakBonus();
+  const streakBonus: string | null = getStreakBonus();
   const suggestions = getGoalSuggestions();
 
-  const openCreateGoalDialog = () => {
+  const openCreateGoalDialog = (): void => {
     setSelectedGoal(undefined);
     setFormOpen(true);
   };
