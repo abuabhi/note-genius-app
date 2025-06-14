@@ -1,5 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,8 +10,17 @@ const corsHeaders = {
 interface ReferralEmailRequest {
   referralCode: string;
   referralLink: string;
-  recipientEmail?: string;
+  recipientEmail: string;
+  senderName?: string;
+  personalMessage?: string;
 }
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+
+const logStep = (step: string, details?: any) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[REFERRAL-EMAIL] ${step}${detailsStr}`);
+};
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') {
@@ -18,23 +28,37 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { referralCode, referralLink }: ReferralEmailRequest = await req.json();
+    logStep("Function started");
 
-    // For now, we'll return a simple HTML form that allows users to send the email
-    // In the future, this could integrate with an email service like Resend
-    const emailForm = `
+    const { 
+      referralCode, 
+      referralLink, 
+      recipientEmail, 
+      senderName = "A friend",
+      personalMessage = ""
+    }: ReferralEmailRequest = await req.json();
+
+    logStep("Request data received", { recipientEmail, referralCode });
+
+    if (!recipientEmail || !referralCode || !referralLink) {
+      throw new Error("Missing required fields: recipientEmail, referralCode, or referralLink");
+    }
+
+    // Email template
+    const emailHtml = `
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Share StudyBuddy with Friends</title>
-          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <style>
             body {
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              line-height: 1.6;
+              color: #333;
               max-width: 600px;
-              margin: 40px auto;
+              margin: 0 auto;
               padding: 20px;
-              background: #f8fafc;
+              background-color: #f8fafc;
             }
             .container {
               background: white;
@@ -42,146 +66,194 @@ const handler = async (req: Request): Promise<Response> => {
               border-radius: 12px;
               box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             }
-            h1 {
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+            }
+            .logo {
+              font-size: 28px;
+              font-weight: bold;
+              color: #10b981;
+              margin-bottom: 10px;
+            }
+            .title {
+              font-size: 24px;
               color: #1f2937;
-              margin-bottom: 20px;
+              margin-bottom: 10px;
             }
-            .form-group {
-              margin-bottom: 20px;
-            }
-            label {
-              display: block;
-              margin-bottom: 8px;
-              font-weight: 600;
-              color: #374151;
-            }
-            input, textarea {
-              width: 100%;
-              padding: 12px;
-              border: 1px solid #d1d5db;
-              border-radius: 8px;
+            .subtitle {
+              color: #6b7280;
               font-size: 16px;
             }
-            textarea {
-              height: 120px;
-              resize: vertical;
+            .personal-message {
+              background: #ecfdf5;
+              border-left: 4px solid #10b981;
+              padding: 16px;
+              margin: 20px 0;
+              border-radius: 0 8px 8px 0;
             }
-            .btn {
+            .features {
+              margin: 30px 0;
+            }
+            .feature {
+              display: flex;
+              align-items: center;
+              margin: 12px 0;
+              padding: 8px 0;
+            }
+            .feature-icon {
+              color: #10b981;
+              margin-right: 12px;
+              font-weight: bold;
+            }
+            .cta-button {
+              display: inline-block;
               background: #10b981;
               color: white;
-              padding: 12px 24px;
-              border: none;
+              padding: 16px 32px;
+              text-decoration: none;
               border-radius: 8px;
-              font-size: 16px;
               font-weight: 600;
-              cursor: pointer;
-              width: 100%;
+              font-size: 18px;
+              text-align: center;
+              margin: 20px 0;
             }
-            .btn:hover {
-              background: #059669;
+            .cta-section {
+              text-align: center;
+              margin: 30px 0;
             }
-            .referral-info {
-              background: #ecfdf5;
-              border: 1px solid #a7f3d0;
+            .referral-code {
+              background: #f3f4f6;
+              border: 2px dashed #d1d5db;
               padding: 16px;
+              text-align: center;
               border-radius: 8px;
-              margin-bottom: 20px;
-            }
-            .link-box {
-              background: #f9fafb;
-              border: 1px solid #e5e7eb;
-              padding: 12px;
-              border-radius: 6px;
+              margin: 20px 0;
               font-family: monospace;
-              word-break: break-all;
+              font-size: 18px;
+              font-weight: bold;
+              color: #374151;
+            }
+            .footer {
+              text-align: center;
+              margin-top: 40px;
+              padding-top: 20px;
+              border-top: 1px solid #e5e7eb;
+              color: #6b7280;
+              font-size: 14px;
+            }
+            .footer a {
+              color: #10b981;
+              text-decoration: none;
             }
           </style>
         </head>
         <body>
           <div class="container">
-            <h1>📧 Share StudyBuddy with Friends</h1>
-            
-            <div class="referral-info">
-              <h3>Your Referral Details:</h3>
-              <p><strong>Referral Code:</strong> ${referralCode}</p>
-              <p><strong>Referral Link:</strong></p>
-              <div class="link-box">${referralLink}</div>
+            <div class="header">
+              <div class="logo">📚 PrepGenie</div>
+              <h1 class="title">You're Invited to Join PrepGenie!</h1>
+              <p class="subtitle">${senderName} thought you'd love our smart study platform</p>
             </div>
 
-            <form id="emailForm">
-              <div class="form-group">
-                <label for="recipients">Email Recipients (separate multiple emails with commas):</label>
-                <input type="email" id="recipients" name="recipients" 
-                       placeholder="friend1@example.com, friend2@example.com" required>
+            ${personalMessage ? `
+              <div class="personal-message">
+                <strong>Personal message from ${senderName}:</strong><br>
+                ${personalMessage}
               </div>
-              
-              <div class="form-group">
-                <label for="subject">Subject:</label>
-                <input type="text" id="subject" name="subject" 
-                       value="Try StudyBuddy - Great Study Platform!" required>
+            ` : ''}
+
+            <p>Hi there!</p>
+            <p>${senderName} has invited you to join <strong>PrepGenie</strong> - the smart study platform that's transforming how students learn and succeed!</p>
+
+            <div class="features">
+              <h3>🚀 What makes PrepGenie special:</h3>
+              <div class="feature">
+                <span class="feature-icon">🧠</span>
+                <span><strong>Smart AI Flashcards:</strong> Cards that adapt to your learning style</span>
               </div>
-              
-              <div class="form-group">
-                <label for="message">Personal Message:</label>
-                <textarea id="message" name="message" 
-                          placeholder="Add a personal note to your friends...">Hi there!
-
-I've been using StudyBuddy for my studies and thought you might find it helpful too. It's a comprehensive platform with smart flashcards, note organization, and progress tracking.
-
-Here's my referral link to get started:
-${referralLink}
-
-Best regards!</textarea>
+              <div class="feature">
+                <span class="feature-icon">📝</span>
+                <span><strong>Intelligent Notes:</strong> AI-powered organization and insights</span>
               </div>
+              <div class="feature">
+                <span class="feature-icon">📊</span>
+                <span><strong>Progress Tracking:</strong> See your improvement in real-time</span>
+              </div>
+              <div class="feature">
+                <span class="feature-icon">🎯</span>
+                <span><strong>Personalized Study Plans:</strong> Tailored to your goals</span>
+              </div>
+              <div class="feature">
+                <span class="feature-icon">🤝</span>
+                <span><strong>Study Groups:</strong> Collaborate with friends and classmates</span>
+              </div>
+            </div>
+
+            <div class="cta-section">
+              <p><strong>🎁 Special Bonus: Join using this link and you'll both get rewards!</strong></p>
               
-              <button type="submit" class="btn">Send Email Invitations</button>
-            </form>
+              <a href="${referralLink}" class="cta-button">
+                🚀 Start Your Learning Journey
+              </a>
+              
+              <p>Or use referral code:</p>
+              <div class="referral-code">${referralCode}</div>
+            </div>
+
+            <p>Thousands of students are already using PrepGenie to boost their grades and study more efficiently. Join them today and experience the future of learning!</p>
+
+            <div class="footer">
+              <p>This invitation was sent by ${senderName}. If you don't want to receive these emails, you can safely ignore this message.</p>
+              <p><a href="${referralLink}">Join PrepGenie</a> • <a href="https://prepgenie.io">Visit our website</a></p>
+            </div>
           </div>
-
-          <script>
-            document.getElementById('emailForm').addEventListener('submit', function(e) {
-              e.preventDefault();
-              
-              const recipients = document.getElementById('recipients').value;
-              const subject = document.getElementById('subject').value;
-              const message = document.getElementById('message').value;
-              
-              // Create mailto link with multiple recipients
-              const mailtoLink = 'mailto:' + recipients + 
-                               '?subject=' + encodeURIComponent(subject) + 
-                               '&body=' + encodeURIComponent(message);
-              
-              window.location.href = mailtoLink;
-              
-              // Show success message
-              alert('Email client opened! Your referral emails are ready to send.');
-              
-              // Close window after a delay
-              setTimeout(() => {
-                window.close();
-              }, 2000);
-            });
-          </script>
         </body>
       </html>
     `;
 
-    return new Response(emailForm, {
-      headers: {
-        'Content-Type': 'text/html',
-        ...corsHeaders,
+    // Send email using Resend
+    logStep("Sending email via Resend");
+    const emailResponse = await resend.emails.send({
+      from: "PrepGenie <no-reply@prepgenie.io>",
+      to: [recipientEmail],
+      subject: `${senderName} invited you to join PrepGenie - Smart Study Platform! 📚`,
+      html: emailHtml,
+    });
+
+    logStep("Email sent successfully", { 
+      emailId: emailResponse.data?.id,
+      recipient: recipientEmail 
+    });
+
+    return new Response(JSON.stringify({ 
+      success: true, 
+      emailId: emailResponse.data?.id,
+      message: "Referral email sent successfully!"
+    }), {
+      headers: { 
+        'Content-Type': 'application/json',
+        ...corsHeaders 
       },
+      status: 200,
     });
 
   } catch (error: any) {
-    console.error('Error in send-referral-email function:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      }
-    );
+    logStep("ERROR in send-referral-email", { 
+      message: error.message,
+      stack: error.stack 
+    });
+    
+    return new Response(JSON.stringify({ 
+      success: false,
+      error: error.message 
+    }), {
+      status: 500,
+      headers: { 
+        'Content-Type': 'application/json', 
+        ...corsHeaders 
+      },
+    });
   }
 };
 
