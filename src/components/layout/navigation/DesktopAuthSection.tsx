@@ -64,10 +64,10 @@ export const DesktopAuthSection = ({ isPublicRoute }: DesktopAuthSectionProps) =
           variant="ghost"
           size="sm"
           onClick={handleHelpClick}
-          className="h-10 w-10 p-0 hover:bg-blue-100"
+          className="h-10 w-10 p-0 hover:bg-mint-100"
           title="Get Help"
         >
-          <HelpCircle className="h-5 w-5 text-blue-600" />
+          <HelpCircle className="h-5 w-5 text-mint-600" />
         </Button>
       )}
       

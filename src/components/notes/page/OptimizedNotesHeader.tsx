@@ -65,7 +65,7 @@ export const OptimizedNotesHeader = ({
           
           <Button
             onClick={onOpenImportDialog}
-            className="bg-mint-600 hover:bg-mint-700 text-green-700 shadow-lg hover:shadow-xl transition-all duration-200 border-0 px-6"
+            className="bg-mint-500 hover:bg-mint-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 border-0 px-6"
           >
             <Import className="h-4 w-4 mr-2" />
             Import

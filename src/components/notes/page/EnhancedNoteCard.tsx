@@ -11,7 +11,8 @@ import {
   BookOpen,
   Eye,
   MoreHorizontal,
-  Star
+  Star,
+  Sparkles
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { stripMarkdown } from "../card/utils/markdownUtils";
@@ -40,6 +41,12 @@ export const EnhancedNoteCard = ({
       case 'import': return <BookOpen className="h-3 w-3" />;
       default: return <FileText className="h-3 w-3" />;
     }
+  };
+
+  const handleStudyClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onNoteClick(note);
   };
 
   // Single line of content preview for compact cards
@@ -72,6 +79,19 @@ export const EnhancedNoteCard = ({
           </div>
         </div>
       )}
+
+      {/* Study button positioned on the right middle */}
+      <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <Button
+          onClick={handleStudyClick}
+          className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white font-medium rounded-lg transition-all duration-200 shadow-md shadow-mint-500/25 hover:shadow-mint-500/40 px-3 py-1.5 h-8"
+          size="sm"
+          type="button"
+        >
+          <Sparkles className="h-3 w-3 mr-1" />
+          Study
+        </Button>
+      </div>
 
       <CardHeader className="relative p-4 pb-2">
         {/* Subject Badge */}
