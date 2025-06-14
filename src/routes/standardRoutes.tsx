@@ -1,5 +1,5 @@
 
-import { lazy } from 'react';
+import { lazy, createElement } from 'react';
 import type { RouteConfig } from './publicRoutes';
 
 // Lazy load components for better performance
@@ -25,88 +25,88 @@ const StudySessionsPage = lazy(() => import('@/pages/AnalyticsPage'));
 export const standardRoutes: RouteConfig[] = [
   {
     path: '/dashboard',
-    element: DashboardPage,
+    element: createElement(DashboardPage),
     title: 'Dashboard'
   },
   {
     path: '/flashcards/*',
-    element: FlashcardsPage,
+    element: createElement(FlashcardsPage),
     title: 'Flashcards'
   },
   {
     path: '/notes/*',
-    element: NotesPage,
+    element: createElement(NotesPage),
     title: 'Notes'
   },
   {
     path: '/quiz/*',
-    element: QuizPage,
+    element: createElement(QuizPage),
     title: 'Quiz'
   },
   {
     path: '/quizzes/*',
-    element: QuizPage,
+    element: createElement(QuizPage),
     title: 'Quiz'
   },
   {
     path: '/analytics',
-    element: AnalyticsPage,
+    element: createElement(AnalyticsPage),
     title: 'Analytics'
   },
   // Legacy redirects - these will render the new AnalyticsPage
   {
     path: '/progress',
-    element: ProgressPage,
+    element: createElement(ProgressPage),
     title: 'Analytics'
   },
   {
     path: '/study-sessions',
-    element: StudySessionsPage,
+    element: createElement(StudySessionsPage),
     title: 'Analytics'
   },
   {
     path: '/goals',
-    element: GoalsPage,
+    element: createElement(GoalsPage),
     title: 'Goals'
   },
   {
     path: '/todos',
-    element: TodosPage,
+    element: createElement(TodosPage),
     title: 'ToDo'
   },
   {
     path: '/schedule',
-    element: SchedulePage,
+    element: createElement(SchedulePage),
     title: 'Schedule'
   },
   {
     path: '/reminders',
-    element: RemindersPage,
+    element: createElement(RemindersPage),
     title: 'Reminders'
   },
   {
     path: '/settings',
-    element: SettingsPage,
+    element: createElement(SettingsPage),
     title: 'Settings'
   },
   {
     path: '/feedback',
-    element: FeedbackPage,
+    element: createElement(FeedbackPage),
     title: 'Feedback'
   },
   {
     path: '/referrals',
-    element: ReferralsPage,
+    element: createElement(ReferralsPage),
     title: 'Refer & Win'
   },
   {
     path: '/collaboration',
-    element: CollaborationPage,
+    element: createElement(CollaborationPage),
     title: 'Study Groups'
   },
   {
     path: '/chat/*',
-    element: ChatPage,
+    element: createElement(ChatPage),
     title: 'Messages'
   }
 ];
