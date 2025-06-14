@@ -32,8 +32,8 @@ export const ApiImportTab = ({ onSaveNote, isPremiumUser }: ApiImportTabProps) =
   };
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="space-y-6 w-full">
+      <div className="w-full">
         <p className="text-sm text-gray-600 mb-4">
           Connect to your favorite services to import existing notes and documents
         </p>
@@ -44,11 +44,9 @@ export const ApiImportTab = ({ onSaveNote, isPremiumUser }: ApiImportTabProps) =
       </div>
       
       {selectedService && (
-        <Card className="bg-gray-50 border border-gray-200 w-full">
-          <CardContent className="p-6 w-full">
-            {renderServiceConnection()}
-          </CardContent>
-        </Card>
+        <div className="w-full">
+          {renderServiceConnection()}
+        </div>
       )}
     </div>
   );
