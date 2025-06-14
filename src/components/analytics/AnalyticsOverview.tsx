@@ -4,18 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Clock, Target, TrendingUp, Calendar, BookOpen, Award, AlertTriangle, Globe, CheckCircle } from 'lucide-react';
-import { useTimezoneAwareAnalytics } from '@/hooks/useTimezoneAwareAnalytics';
+import { useSimpleAnalytics } from '@/hooks/useSimpleAnalytics';
 import { useBasicSessionTracker } from '@/hooks/useBasicSessionTracker';
 
 export const AnalyticsOverview = () => {
-  const { analytics, isLoading, error } = useTimezoneAwareAnalytics();
+  const { analytics, isLoading, error } = useSimpleAnalytics();
   const { isActive, elapsedSeconds, isPaused } = useBasicSessionTracker();
 
-  console.log('📊 AnalyticsOverview render state:', { 
+  console.log('📊 AnalyticsOverview state:', { 
     isLoading, 
     hasError: !!error, 
-    hasAnalytics: !!analytics,
-    analyticsKeys: analytics ? Object.keys(analytics) : []
+    hasAnalytics: !!analytics
   });
 
   const formatTime = (totalSeconds: number) => {
@@ -29,9 +28,8 @@ export const AnalyticsOverview = () => {
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Show error state
   if (error) {
-    console.error('❌ Analytics error in component:', error);
+    console.error('❌ Analytics error:', error);
     return (
       <div className="space-y-6">
         <Card className="border-red-200 bg-red-50">
@@ -51,7 +49,6 @@ export const AnalyticsOverview = () => {
     );
   }
 
-  // Show loading state
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -72,7 +69,6 @@ export const AnalyticsOverview = () => {
     );
   }
 
-  // Main content with analytics data
   return (
     <div className="space-y-6">
       {/* Success indicator */}
@@ -83,26 +79,7 @@ export const AnalyticsOverview = () => {
             <div>
               <p className="font-medium">Analytics loaded successfully!</p>
               <p className="text-sm text-green-600">
-                Timezone: {analytics.timezone} • 
-                Sessions: {analytics.totalSessions} • 
-                Study Time: {analytics.totalStudyTime}h
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Timezone Info */}
-      <Card className="bg-blue-50 border-blue-200">
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-3 text-blue-800">
-            <Globe className="h-5 w-5" />
-            <div>
-              <p className="font-medium">Timezone-Aware Analytics</p>
-              <p className="text-sm text-blue-600">
-                Statistics calculated for: {analytics.timezone} • 
-                Today: {analytics.todayString} • 
-                Current time: {new Date().toLocaleString(undefined, { timeZone: analytics.timezone })}
+                Sessions: {analytics.totalSessions} • Study Time: {analytics.totalStudyTime}h
               </p>
             </div>
           </div>
@@ -132,7 +109,6 @@ export const AnalyticsOverview = () => {
 
       {/* Key Metrics Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {/* Today's Progress */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Today's Study Time</CardTitle>
@@ -146,7 +122,6 @@ export const AnalyticsOverview = () => {
           </CardContent>
         </Card>
 
-        {/* Weekly Progress */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Weekly Goal</CardTitle>
@@ -161,7 +136,6 @@ export const AnalyticsOverview = () => {
           </CardContent>
         </Card>
 
-        {/* Total Study Time */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Study Time</CardTitle>
@@ -175,7 +149,6 @@ export const AnalyticsOverview = () => {
           </CardContent>
         </Card>
 
-        {/* Learning Progress */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Cards Mastered</CardTitle>
@@ -189,7 +162,6 @@ export const AnalyticsOverview = () => {
           </CardContent>
         </Card>
 
-        {/* Study Streak */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Study Streak</CardTitle>
@@ -203,18 +175,15 @@ export const AnalyticsOverview = () => {
           </CardContent>
         </Card>
 
-        {/* Weekly Trend */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Weekly Change</CardTitle>
+            <CardTitle className="text-sm font-medium">Flashcard Sets</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${analytics.weeklyChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {analytics.weeklyChange >= 0 ? '+' : ''}{analytics.weeklyChange}%
-            </div>
+            <div className="text-2xl font-bold">{analytics.totalSets}</div>
             <p className="text-xs text-muted-foreground">
-              vs last week
+              sets created
             </p>
           </CardContent>
         </Card>
@@ -264,25 +233,6 @@ export const AnalyticsOverview = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Debug Data Summary */}
-      <Card className="bg-gray-50 border-gray-200">
-        <CardHeader>
-          <CardTitle className="text-sm font-medium text-gray-700">Debug Summary</CardTitle>
-        </CardHeader>
-        <CardContent className="text-xs text-gray-600">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            <div>Sessions: {analytics.totalSessions}</div>
-            <div>Sets: {analytics.totalSets}</div>
-            <div>Notes: {analytics.totalNotes}</div>
-            <div>Quizzes: {analytics.totalQuizzes}</div>
-            <div>Study Time: {analytics.totalStudyTimeMinutes}min</div>
-            <div>Cards: {analytics.totalCardsReviewed}</div>
-            <div>Accuracy: {analytics.flashcardAccuracy}%</div>
-            <div>Streak: {analytics.streakDays} days</div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };

@@ -1,51 +1,39 @@
 
-import { useConsolidatedAnalytics } from './useConsolidatedAnalytics';
+import { useSimpleAnalytics } from './useSimpleAnalytics';
 
 export const useDashboardAnalytics = () => {
-  const { analytics, isLoading } = useConsolidatedAnalytics();
+  const { analytics, isLoading } = useSimpleAnalytics();
 
-  // Use consolidated analytics data directly (already validated in the consolidated hook)
   const todaysActivity = {
-    cardsReviewed: 0, // TODO: Add cards reviewed today calculation from sessions
-    studyTime: analytics.todayStudyTimeMinutes, // Use minutes from consolidated analytics
-    quizzesTaken: 0 // TODO: Add quizzes taken today calculation from sessions
+    cardsReviewed: 0,
+    studyTime: analytics.todayStudyTimeMinutes,
+    quizzesTaken: 0
   };
 
-  // Current streak from consolidated analytics (now properly calculated)
   const currentStreak = analytics.streakDays;
 
-  // Weekly comparison using consolidated data
   const weeklyComparison = {
     thisWeek: analytics.weeklyStudyTimeMinutes,
     lastWeek: analytics.previousWeekTimeMinutes,
-    trend: analytics.weeklyChange > 0 ? 'up' : analytics.weeklyChange < 0 ? 'down' : 'stable',
+    trend: 'stable' as const,
     percentageChange: analytics.weeklyChange
   };
 
-  // Transform consolidated analytics for dashboard display
   const dashboardData = {
     totalSessions: analytics.totalSessions,
-    totalStudyTime: analytics.totalStudyTime, // Hours
-    totalStudyTimeMinutes: analytics.totalStudyTimeMinutes, // Minutes
-    todayStudyTimeMinutes: analytics.todayStudyTimeMinutes, // Today in minutes
-    weeklyStudyTimeMinutes: analytics.weeklyStudyTimeMinutes, // Week in minutes
+    totalStudyTime: analytics.totalStudyTime,
+    totalStudyTimeMinutes: analytics.totalStudyTimeMinutes,
+    todayStudyTimeMinutes: analytics.todayStudyTimeMinutes,
+    weeklyStudyTimeMinutes: analytics.weeklyStudyTimeMinutes,
     totalCardsMastered: analytics.totalCardsMastered,
     flashcardAccuracy: analytics.flashcardAccuracy,
     todaysActivity,
     currentStreak,
     weeklyComparison,
     weeklyGoalProgress: analytics.weeklyGoalProgress,
-    weeklyGoalHours: analytics.weeklyGoalHours, // User's actual goal from settings
+    weeklyGoalHours: analytics.weeklyGoalHours,
     isLoading
   };
-
-  console.log('📊 Dashboard Analytics:', {
-    todayStudyTimeMinutes: dashboardData.todayStudyTimeMinutes,
-    totalStudyTimeMinutes: dashboardData.totalStudyTimeMinutes,
-    weeklyStudyTimeMinutes: dashboardData.weeklyStudyTimeMinutes,
-    weeklyGoalHours: dashboardData.weeklyGoalHours,
-    streakDays: dashboardData.currentStreak
-  });
 
   return dashboardData;
 };
