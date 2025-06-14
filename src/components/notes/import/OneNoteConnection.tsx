@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -141,11 +142,11 @@ export const OneNoteConnection = ({ onConnected }: OneNoteConnectionProps) => {
   };
   
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full">
       {/* School Account Notice */}
-      <Alert className="border-blue-200 bg-blue-50">
-        <Info className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-blue-700">
+      <Alert className="border-mint-200 bg-mint-50">
+        <Info className="h-4 w-4 text-green-600" />
+        <AlertDescription className="text-green-700">
           <strong>Using a school OneNote account?</strong> You may be asked to get admin permission. 
           As an alternative, you can export your notes as PDF and use our <strong>Files upload</strong> or <strong>Bulk PDF upload</strong> options instead.
         </AlertDescription>
@@ -327,19 +328,6 @@ export const OneNoteConnection = ({ onConnected }: OneNoteConnectionProps) => {
               </Button>
             </div>
           )}
-        </div>
-      )}
-
-      {!isAuthenticated && (
-        <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-          <div className="text-sm text-blue-700">
-            <p className="font-medium mb-1">Setup Complete:</p>
-            <ul className="list-disc list-inside space-y-1 text-xs">
-              <li>Microsoft Graph app configured in Azure portal ✓</li>
-              <li>Client ID and secret added to Supabase secrets ✓</li>
-              <li>Redirect URL configured ✓</li>
-            </ul>
-          </div>
         </div>
       )}
     </div>

@@ -44,8 +44,8 @@ export const ApiImportTab = ({ onSaveNote, isPremiumUser }: ApiImportTabProps) =
       </div>
       
       {selectedService && (
-        <Card className="bg-gray-50 border border-gray-200">
-          <CardContent className="p-4">
+        <Card className="bg-gray-50 border border-gray-200 w-full">
+          <CardContent className="p-6 w-full">
             {renderServiceConnection()}
           </CardContent>
         </Card>
