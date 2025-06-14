@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Share2, Copy, MessageCircle, Trophy, Users, Gift, Loader2 } from 'lucide-react';
+import { Share2, Copy, Trophy, Users, Gift, Loader2 } from 'lucide-react';
 import { useReferralData } from '@/hooks/referrals/useReferralData';
 
 const ReferralCardContent = () => {
@@ -14,7 +14,6 @@ const ReferralCardContent = () => {
     isLoading,
     joinContest,
     isJoiningContest,
-    shareViaWhatsApp,
     copyReferralLink
   } = useReferralData();
 
@@ -148,12 +147,15 @@ const ReferralCardContent = () => {
             
             <Button
               size="sm"
-              onClick={() => shareViaWhatsApp(referralStats.referralCode)}
+              onClick={() => {
+                // Open the main referrals page for more sharing options
+                window.location.href = '/referrals';
+              }}
               disabled={!referralStats.referralCode || referralStats.referralCode === 'LOADING...'}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+              className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
             >
-              <MessageCircle className="h-4 w-4 mr-2" />
-              WhatsApp
+              <Share2 className="h-4 w-4 mr-2" />
+              Share More
             </Button>
           </div>
         </div>
