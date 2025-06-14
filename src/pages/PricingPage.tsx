@@ -169,7 +169,7 @@ const PricingPage = () => {
             </p>
             
             {/* Billing Toggle */}
-            <div className="mt-12">
+            <div className="mt-8">
               <div className="flex items-center justify-center">
                 <span className={`mr-4 ${!annual ? 'font-semibold text-mint-700' : 'text-gray-500'}`}>
                   Monthly
@@ -189,7 +189,7 @@ const PricingPage = () => {
         </div>
         
         {/* Pricing Cards */}
-        <div className="bg-mint-50/20 py-16">
+        <div className="bg-mint-50/20 py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {tierLimits.map((tier) => {
@@ -211,7 +211,7 @@ const PricingPage = () => {
                     }`}
                   >
                     {isPopular && (
-                      <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
+                      <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-10">
                         <Badge className="bg-mint-600 text-white px-4 py-2 text-sm font-medium">
                           Most Popular
                         </Badge>
@@ -226,7 +226,7 @@ const PricingPage = () => {
                       </div>
                     )}
 
-                    <div className={`p-8 ${isPopular ? 'bg-mint-100' : 'bg-mint-50'}`}>
+                    <div className={`p-8 ${isPopular ? 'bg-mint-200' : 'bg-mint-100'}`}>
                       <div className="flex items-center gap-2 mb-4">
                         <TierIcon className="h-6 w-6 text-mint-600" />
                         <h3 className="text-xl font-semibold text-gray-900">{tier.tier}</h3>
@@ -286,7 +286,7 @@ const PricingPage = () => {
                       )}
                     </div>
                     
-                    <div className="px-8 py-6 bg-mint-50 border-t border-mint-200">
+                    <div className={`px-8 py-6 ${isPopular ? 'bg-mint-100' : 'bg-mint-50'} border-t border-mint-200`}>
                       <ul className="space-y-4">
                         {renderTierFeatures(tier).map((feature) => (
                           <li key={feature} className="flex items-start">
@@ -322,19 +322,19 @@ const PricingPage = () => {
             </div>
 
             <div className="space-y-8">
-              <div className="bg-white p-6 rounded-lg shadow-sm border border-mint-100">
+              <div className="bg-mint-50 p-6 rounded-lg shadow-sm border border-mint-200">
                 <h3 className="text-lg font-semibold text-gray-900">Can I upgrade or downgrade my plan anytime?</h3>
                 <p className="mt-2 text-gray-600">Yes, you can change your plan at any time. When upgrading, you'll have immediate access to new features. Changes are managed through our customer portal.</p>
               </div>
-              <div className="bg-white p-6 rounded-lg shadow-sm border border-mint-100">
+              <div className="bg-mint-50 p-6 rounded-lg shadow-sm border border-mint-200">
                 <h3 className="text-lg font-semibold text-gray-900">How do I cancel my subscription?</h3>
                 <p className="mt-2 text-gray-600">You can cancel your subscription at any time through the customer portal in your settings. Your access will continue until the end of your current billing period.</p>
               </div>
-              <div className="bg-white p-6 rounded-lg shadow-sm border border-mint-100">
+              <div className="bg-mint-50 p-6 rounded-lg shadow-sm border border-mint-200">
                 <h3 className="text-lg font-semibold text-gray-900">Do you offer student discounts?</h3>
                 <p className="mt-2 text-gray-600">Yes! We offer special pricing for verified students. Contact our support team with your student ID for details.</p>
               </div>
-              <div className="bg-white p-6 rounded-lg shadow-sm border border-mint-100">
+              <div className="bg-mint-50 p-6 rounded-lg shadow-sm border border-mint-200">
                 <h3 className="text-lg font-semibold text-gray-900">What payment methods do you accept?</h3>
                 <p className="mt-2 text-gray-600">We accept all major credit cards through our secure Stripe payment system.</p>
               </div>
