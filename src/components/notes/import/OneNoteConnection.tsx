@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useOneNoteAuth } from "@/integrations/microsoft/oneNoteOAuth";
-import { Loader2, Check, X, AlertCircle, ExternalLink, RefreshCw, Copy, User, LogOut } from "lucide-react";
+import { Loader2, Check, X, AlertCircle, ExternalLink, RefreshCw, Copy, User, LogOut, Info } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
@@ -142,6 +142,15 @@ export const OneNoteConnection = ({ onConnected }: OneNoteConnectionProps) => {
   
   return (
     <div className="space-y-4">
+      {/* School Account Notice */}
+      <Alert className="border-blue-200 bg-blue-50">
+        <Info className="h-4 w-4 text-blue-600" />
+        <AlertDescription className="text-blue-700">
+          <strong>Using a school OneNote account?</strong> You may be asked to get admin permission. 
+          As an alternative, you can export your notes as PDF and use our <strong>Files upload</strong> or <strong>Bulk PDF upload</strong> options instead.
+        </AlertDescription>
+      </Alert>
+
       <div className="flex items-center justify-between">
         <div>
           <h3 className="font-medium text-lg">Microsoft OneNote</h3>
