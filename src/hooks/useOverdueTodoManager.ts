@@ -38,7 +38,13 @@ export const useOverdueTodoManager = () => {
 
       if (error) throw error;
 
-      setOverdueItems(data || []);
+      // Type-cast the database response to ensure proper typing
+      const typedData: OverdueTodo[] = (data || []).map((item: any) => ({
+        ...item,
+        escalation_level: item.escalation_level as 'normal' | 'urgent' | 'critical'
+      }));
+
+      setOverdueItems(typedData);
     } catch (error) {
       console.error('Error fetching overdue todos:', error);
       toast.error('Failed to load overdue todos');

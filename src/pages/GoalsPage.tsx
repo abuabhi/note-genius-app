@@ -161,7 +161,7 @@ const GoalsPage = () => {
                   searchQuery={searchQuery}
                   filter={filter}
                   onEditGoal={handleEditGoal}
-                  onDeleteGoal={deleteGoal}
+                  onDeleteGoal={(goalId: string) => deleteGoal(goalId)}
                   onCreateGoal={openCreateGoalDialog}
                 />
               </TabsContent>

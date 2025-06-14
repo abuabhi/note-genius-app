@@ -39,7 +39,12 @@ export const useEmailDigestPreferences = () => {
       }
 
       if (data) {
-        setPreferences(data);
+        // Type-cast the database response to ensure proper typing
+        const typedData: EmailDigestPreferences = {
+          ...data,
+          frequency: data.frequency as 'daily' | 'weekly' | 'never'
+        };
+        setPreferences(typedData);
       } else {
         // Create default preferences
         const defaultPrefs = {
@@ -61,7 +66,13 @@ export const useEmailDigestPreferences = () => {
           .single();
 
         if (insertError) throw insertError;
-        setPreferences(newData);
+        
+        // Type-cast the database response
+        const typedNewData: EmailDigestPreferences = {
+          ...newData,
+          frequency: newData.frequency as 'daily' | 'weekly' | 'never'
+        };
+        setPreferences(typedNewData);
       }
     } catch (error) {
       console.error('Error fetching email digest preferences:', error);
@@ -84,7 +95,12 @@ export const useEmailDigestPreferences = () => {
 
       if (error) throw error;
 
-      setPreferences(data);
+      // Type-cast the database response
+      const typedData: EmailDigestPreferences = {
+        ...data,
+        frequency: data.frequency as 'daily' | 'weekly' | 'never'
+      };
+      setPreferences(typedData);
       toast.success('Email preferences updated');
     } catch (error) {
       console.error('Error updating email digest preferences:', error);
