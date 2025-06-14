@@ -3,8 +3,9 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, CreditCard, RefreshCw, Settings } from 'lucide-react';
+import { Calendar, CreditCard, RefreshCw, Settings, Crown } from 'lucide-react';
 import { useSubscription } from '@/contexts/SubscriptionContext';
+import { useUserTier, UserTier } from '@/hooks/useUserTier';
 import { format } from 'date-fns';
 
 export const SubscriptionStatus: React.FC = () => {
@@ -16,6 +17,9 @@ export const SubscriptionStatus: React.FC = () => {
     checkSubscriptionStatus,
     openCustomerPortal,
   } = useSubscription();
+  
+  const { userTier } = useUserTier();
+  const isDeanTier = userTier === UserTier.DEAN;
 
   const handleManageSubscription = async () => {
     try {
@@ -25,6 +29,37 @@ export const SubscriptionStatus: React.FC = () => {
     }
   };
 
+  // For Dean tier users
+  if (isDeanTier) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Crown className="h-5 w-5 text-amber-600" />
+            Subscription Status
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-6">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-4 py-2">
+                <Crown className="h-4 w-4 mr-2" />
+                DEAN TIER
+              </Badge>
+            </div>
+            <p className="text-gray-600 mb-2 font-medium">
+              You're on the highest tier available!
+            </p>
+            <p className="text-sm text-gray-500">
+              You have access to all premium features and unlimited usage.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // For non-subscribed users (Scholar tier)
   if (!subscribed) {
     return (
       <Card>
@@ -48,6 +83,7 @@ export const SubscriptionStatus: React.FC = () => {
     );
   }
 
+  // For subscribed users (Graduate/Master tier)
   return (
     <Card>
       <CardHeader>

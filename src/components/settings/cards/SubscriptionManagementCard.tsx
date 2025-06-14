@@ -5,25 +5,18 @@ import { CreditCard } from 'lucide-react';
 import { SubscriptionStatus } from '@/components/subscription/SubscriptionStatus';
 import { SubscriptionPlans } from '@/components/subscription/SubscriptionPlans';
 import { useSubscription } from '@/contexts/SubscriptionContext';
+import { useUserTier, UserTier } from '@/hooks/useUserTier';
 
 export const SubscriptionManagementCard: React.FC = () => {
   const { subscribed } = useSubscription();
+  const { userTier } = useUserTier();
+  const isDeanTier = userTier === UserTier.DEAN;
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5" />
-            Subscription & Billing
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <SubscriptionStatus />
-        </CardContent>
-      </Card>
+      <SubscriptionStatus />
 
-      {!subscribed && (
+      {!subscribed && !isDeanTier && (
         <Card>
           <CardHeader>
             <CardTitle>Upgrade Your Plan</CardTitle>
