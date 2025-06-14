@@ -23,8 +23,8 @@ const PricingPage = () => {
     },
     {
       name: "GRADUATE",
-      price: "15",
-      yearlyPrice: "12",
+      price: "15.00",
+      yearlyPrice: "12.00",
       period: "month",
       features: [
         "100 notes",
@@ -42,8 +42,8 @@ const PricingPage = () => {
     },
     {
       name: "MASTER",
-      price: "25",
-      yearlyPrice: "20",
+      price: "25.00",
+      yearlyPrice: "20.00",
       period: "month",
       features: [
         "250 notes",
