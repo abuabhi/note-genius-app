@@ -12,10 +12,18 @@ export const useDashboardAnalytics = () => {
 
   const currentStreak = analytics.streakDays;
 
+  // Calculate trend based on percentage change
+  let trend: 'up' | 'down' | 'stable' = 'stable';
+  if (analytics.weeklyChange > 5) {
+    trend = 'up';
+  } else if (analytics.weeklyChange < -5) {
+    trend = 'down';
+  }
+
   const weeklyComparison = {
     thisWeek: analytics.weeklyStudyTimeMinutes,
     lastWeek: analytics.previousWeekTimeMinutes,
-    trend: 'stable' as const,
+    trend,
     percentageChange: analytics.weeklyChange
   };
 
