@@ -1,68 +1,281 @@
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useGoogleDocsAuth } from "@/integrations/google/googleDocsOAuth";
-import { CircleCheck, Loader2, LogIn, LogOut } from "lucide-react";
+import { Loader2, Check, X, AlertCircle, ExternalLink, RefreshCw, Copy, User, LogOut, FileText } from "lucide-react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 
 interface GoogleDocsConnectionProps {
-  onConnected: (token: string) => void;
+  onConnected: (accessToken: string) => void;
 }
 
 export const GoogleDocsConnection = ({ onConnected }: GoogleDocsConnectionProps) => {
   const { isAuthenticated, accessToken, userName, loading, error, connect, disconnect } = useGoogleDocsAuth();
+  const [isRefreshingDocs, setIsRefreshingDocs] = useState(false);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
   
-  // Effect to call onConnected when authenticated
-  if (isAuthenticated && accessToken) {
-    onConnected(accessToken);
-  }
+  // When authentication changes and we have an access token, call the callback
+  useEffect(() => {
+    if (isAuthenticated && accessToken) {
+      onConnected(accessToken);
+    }
+  }, [isAuthenticated, accessToken, onConnected]);
+
+  const fetchDocuments = async () => {
+    if (!accessToken) return;
+    
+    setIsRefreshingDocs(true);
+    try {
+      console.log('Fetching Google Docs with token:', accessToken.substring(0, 20) + '...');
+      
+      // First, get documents from Google Drive
+      const driveResponse = await fetch(
+        'https://www.googleapis.com/drive/v3/files?q=mimeType%3D%27application%2Fvnd.google-apps.document%27&fields=files(id%2Cname%2CcreatedTime%2CmodifiedTime)&orderBy=modifiedTime%20desc&pageSize=50',
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      console.log('Google Drive API response status:', driveResponse.status);
+
+      if (!driveResponse.ok) {
+        const errorText = await driveResponse.text();
+        console.error('Google Drive API error response:', errorText);
+        throw new Error(`Failed to fetch Google Docs: ${driveResponse.status} ${driveResponse.statusText}`);
+      }
+
+      const driveData = await driveResponse.json();
+      console.log('Google Drive API response data:', driveData);
+      
+      if (driveData.files && Array.isArray(driveData.files)) {
+        setDocuments(driveData.files);
+        toast.success(`Found ${driveData.files.length} Google Docs`);
+      } else {
+        console.log('No documents in response or unexpected format:', driveData);
+        setDocuments([]);
+        toast.info('No Google Docs found in your account');
+      }
+    } catch (error) {
+      console.error('Error fetching Google Docs:', error);
+      toast.error(`Failed to fetch Google Docs: ${error.message}`);
+      setDocuments([]);
+    } finally {
+      setIsRefreshingDocs(false);
+    }
+  };
+
+  const toggleDocSelection = (docId: string) => {
+    setSelectedDocs(prev => 
+      prev.includes(docId) 
+        ? prev.filter(id => id !== docId)
+        : [...prev, docId]
+    );
+  };
+
+  const importSelectedDocs = async () => {
+    if (selectedDocs.length === 0) {
+      toast.error('Please select at least one document to import');
+      return;
+    }
+
+    toast.success(`Importing ${selectedDocs.length} selected document${selectedDocs.length > 1 ? 's' : ''}...`);
+    // The actual import logic will be handled by the parent component
+  };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium">Google Docs Integration</h3>
+    <div className="space-y-4 w-full">
+      <div className="flex items-center justify-between">
         <div>
-          {loading ? (
-            <Loader2 className="animate-spin h-4 w-4" />
-          ) : isAuthenticated ? (
-            <div className="flex items-center gap-2">
-              <CircleCheck className="text-green-500 h-5 w-5" /> 
-              <span className="text-sm">Connected</span>
-            </div>
-          ) : null}
+          <h3 className="font-medium text-lg">Google Docs</h3>
+          <p className="text-sm text-muted-foreground">
+            Connect to import documents from Google Docs
+          </p>
         </div>
-      </div>
-
-      {userName && (
-        <div className="text-sm">
-          <span className="font-medium">Connected Account:</span> {userName}
-        </div>
-      )}
-
-      {error && (
-        <div className="text-sm text-red-500 mt-1">
-          {error}
-        </div>
-      )}
-
-      <div className="flex gap-2">
-        {!isAuthenticated ? (
-          <Button onClick={connect} type="button" className="mt-2">
-            <LogIn className="mr-2 h-4 w-4" />
-            Connect to Google Docs
-          </Button>
+        
+        {isAuthenticated ? (
+          <Badge className="bg-green-500 hover:bg-green-600">
+            <Check className="h-3 w-3 mr-1" /> Connected
+          </Badge>
         ) : (
-          <Button onClick={disconnect} variant="outline" type="button" className="mt-2">
-            <LogOut className="mr-2 h-4 w-4" />
-            Disconnect
-          </Button>
+          <Badge className="bg-gray-400 hover:bg-gray-500">
+            <X className="h-3 w-3 mr-1" /> Not Connected
+          </Badge>
         )}
       </div>
       
-      <div className="text-xs text-muted-foreground mt-2">
-        {!isAuthenticated ? 
-          "Connect your Google account to import documents from Google Docs." :
-          "You've successfully connected your Google account. You can now import your documents."
-        }
+      {/* User Info Display */}
+      {isAuthenticated && userName && (
+        <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-blue-700">
+              <User className="h-4 w-4" />
+              <div className="text-sm">
+                <p className="font-medium">Connected as: {userName}</p>
+              </div>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                disconnect();
+                setDocuments([]);
+                setSelectedDocs([]);
+              }}
+              className="text-blue-700 border-blue-300 hover:bg-blue-100"
+            >
+              <LogOut className="h-3 w-3 mr-1" />
+              Switch Account
+            </Button>
+          </div>
+        </div>
+      )}
+      
+      {error && (
+        <Alert className="border-red-200 bg-red-50">
+          <AlertCircle className="h-4 w-4 text-red-600" />
+          <AlertDescription className="text-red-700">
+            {error}
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      <div className="flex gap-2">
+        {isAuthenticated ? (
+          <>
+            <Button 
+              variant="destructive" 
+              onClick={() => {
+                disconnect();
+                setDocuments([]);
+                setSelectedDocs([]);
+              }}
+              disabled={loading}
+              size="sm"
+            >
+              Disconnect Google Docs
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={fetchDocuments}
+              disabled={loading || isRefreshingDocs}
+              size="sm"
+            >
+              {isRefreshingDocs ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Refreshing...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Refresh Documents
+                </>
+              )}
+            </Button>
+          </>
+        ) : (
+          <Button 
+            onClick={connect} 
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Connecting...
+              </>
+            ) : (
+              <>
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Connect to Google Docs
+              </>
+            )}
+          </Button>
+        )}
       </div>
+
+      {isAuthenticated && (
+        <div className="space-y-4">
+          {documents.length > 0 ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium">Select Documents to Import:</h4>
+                <div className="text-sm text-muted-foreground">
+                  {selectedDocs.length} of {documents.length} selected
+                </div>
+              </div>
+              
+              <div className="max-h-60 overflow-y-auto border rounded-lg">
+                {documents.map((doc) => (
+                  <div 
+                    key={doc.id} 
+                    className={`p-3 border-b last:border-b-0 cursor-pointer hover:bg-gray-50 transition-colors ${
+                      selectedDocs.includes(doc.id) ? 'bg-blue-50 border-blue-200' : ''
+                    }`}
+                    onClick={() => toggleDocSelection(doc.id)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedDocs.includes(doc.id)}
+                            onChange={() => toggleDocSelection(doc.id)}
+                            className="w-4 h-4"
+                          />
+                          <FileText className="h-4 w-4 text-blue-600" />
+                          <div className="font-medium text-sm">{doc.name}</div>
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1 ml-6">
+                          Created: {new Date(doc.createdTime).toLocaleDateString()}
+                          {doc.modifiedTime && (
+                            <> • Modified: {new Date(doc.modifiedTime).toLocaleDateString()}</>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {selectedDocs.length > 0 && (
+                <Button onClick={importSelectedDocs} className="w-full">
+                  <Copy className="h-4 w-4 mr-2" />
+                  Import {selectedDocs.length} Selected Document{selectedDocs.length > 1 ? 's' : ''}
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="text-muted-foreground mb-3">
+                {isRefreshingDocs ? 'Loading documents...' : 'No Google Docs found'}
+              </div>
+              <Button 
+                variant="outline" 
+                onClick={fetchDocuments}
+                disabled={isRefreshingDocs}
+              >
+                {isRefreshingDocs ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Try Loading Documents
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

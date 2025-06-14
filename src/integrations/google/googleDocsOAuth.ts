@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../supabase/client';
 
 // Configuration for Google OAuth
-const CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID'; // This will be replaced with the actual client ID
 const REDIRECT_URI = `${window.location.origin}/auth/googledocs-callback`;
 const SCOPE = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/documents.readonly';
 
@@ -103,14 +102,14 @@ export const useGoogleDocsAuth = () => {
       }
       
       // Get user info
-      const userResponse = await fetch('https://www.googleapis.com/drive/v3/about?fields=user', {
+      const userResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
         headers: {
           'Authorization': `Bearer ${access_token}`
         }
       });
       
       const userData = await userResponse.json();
-      const userName = userData?.user?.displayName || 'Google User';
+      const userName = userData?.name || 'Google User';
       
       // Calculate expiry time
       const expiresAt = new Date();
@@ -139,27 +138,45 @@ export const useGoogleDocsAuth = () => {
     }
   };
 
-  const connect = useCallback(() => {
-    setAuthState(prev => ({ ...prev, loading: true }));
-    
-    // Generate a random state value for security
-    const state = Math.random().toString(36).substring(2);
-    localStorage.setItem('googleDocs_auth_state', state);
-    
-    // Create auth URL - we'll need to get the actual client ID from the environment
-    const authUrl = `https://accounts.google.com/o/oauth2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPE)}&response_type=code&access_type=offline&prompt=consent&state=${state}`;
-    
-    // Open popup for authentication
-    const popupWidth = 700;
-    const popupHeight = 700;
-    const left = window.screenX + (window.outerWidth - popupWidth) / 2;
-    const top = window.screenY + (window.outerHeight - popupHeight) / 2;
-    
-    window.open(
-      authUrl,
-      'GoogleDocsAuthPopup',
-      `width=${popupWidth},height=${popupHeight},left=${left},top=${top}`
-    );
+  const connect = useCallback(async () => {
+    try {
+      setAuthState(prev => ({ ...prev, loading: true }));
+      
+      // Get the client ID from our edge function
+      const { data: configData, error: configError } = await supabase.functions.invoke('googledocs-auth', {
+        body: { action: 'get_client_id' }
+      });
+      
+      if (configError || !configData?.client_id) {
+        throw new Error('Unable to get Google OAuth configuration');
+      }
+      
+      // Generate a random state value for security
+      const state = Math.random().toString(36).substring(2);
+      localStorage.setItem('googleDocs_auth_state', state);
+      
+      // Create auth URL with the actual client ID
+      const authUrl = `https://accounts.google.com/o/oauth2/auth?client_id=${configData.client_id}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPE)}&response_type=code&access_type=offline&prompt=consent&state=${state}`;
+      
+      // Open popup for authentication
+      const popupWidth = 700;
+      const popupHeight = 700;
+      const left = window.screenX + (window.outerWidth - popupWidth) / 2;
+      const top = window.screenY + (window.outerHeight - popupHeight) / 2;
+      
+      window.open(
+        authUrl,
+        'GoogleDocsAuthPopup',
+        `width=${popupWidth},height=${popupHeight},left=${left},top=${top}`
+      );
+    } catch (error) {
+      console.error('Error initiating Google auth:', error);
+      setAuthState(prev => ({
+        ...prev,
+        loading: false,
+        error: error instanceof Error ? error.message : 'Failed to start authentication'
+      }));
+    }
   }, []);
 
   const disconnect = useCallback(() => {

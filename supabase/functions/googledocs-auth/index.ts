@@ -9,7 +9,24 @@ serve(async (req) => {
   }
   
   try {
-    const { code, redirect_uri, grant_type } = await req.json();
+    const body = await req.json();
+    
+    // Handle getting client ID for auth URL
+    if (body.action === 'get_client_id') {
+      const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
+      
+      if (!clientId) {
+        throw new Error('Google Client ID not configured');
+      }
+      
+      return new Response(
+        JSON.stringify({ client_id: clientId }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Handle token exchange
+    const { code, redirect_uri, grant_type } = body;
     
     if (!code) {
       throw new Error('Authorization code is required');
