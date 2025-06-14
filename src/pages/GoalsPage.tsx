@@ -74,7 +74,7 @@ const GoalsPage = () => {
     }
   };
 
-  const handleGoalNotificationAction = (goalId: string, action: string) => {
+  const handleGoalNotificationAction = (goalId: string, action: string): void => {
     const goal = goals.find(g => g.id === goalId);
     if (goal && action === 'view') {
       handleEditGoal(goal);
