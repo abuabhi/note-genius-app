@@ -1,7 +1,6 @@
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Grid2x2, LayoutList } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Grid3X3, List, LayoutGrid } from "lucide-react";
 import { ViewMode } from '@/hooks/useViewPreferences';
 
 interface ViewToggleProps {
@@ -10,43 +9,42 @@ interface ViewToggleProps {
 }
 
 export const ViewToggle = ({ viewMode, onViewModeChange }: ViewToggleProps) => {
-  console.log('🎛️ ViewToggle - Current mode:', viewMode);
-
-  const handleCardView = () => {
-    console.log('🃏 ViewToggle - Switching to card view');
-    onViewModeChange('card');
-  };
-
-  const handleListView = () => {
-    console.log('📋 ViewToggle - Switching to list view');
-    onViewModeChange('list');
-  };
+  console.log('🎯 ViewToggle - Current viewMode:', viewMode);
 
   return (
-    <div className="flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-lg p-1 border border-mint-100/50 shadow-sm">
+    <div className="flex items-center bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200 p-1 shadow-sm">
       <Button
-        variant={viewMode === 'card' ? 'default' : 'ghost'}
+        variant={viewMode === 'grid' ? 'default' : 'ghost'}
         size="sm"
-        onClick={handleCardView}
-        className={`h-9 px-4 transition-all duration-200 ${
-          viewMode === 'card' 
-            ? 'bg-mint-600 text-white shadow-md' 
-            : 'text-gray-600 hover:text-mint-700 hover:bg-mint-50'
+        onClick={() => {
+          console.log('🎯 ViewToggle - Switching to grid mode');
+          onViewModeChange('grid');
+        }}
+        className={`h-8 px-3 transition-all duration-200 ${
+          viewMode === 'grid' 
+            ? 'bg-mint-600 text-white shadow-sm' 
+            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
         }`}
       >
-        <Grid2x2 className="h-4 w-4" />
+        <LayoutGrid className="h-4 w-4 mr-1" />
+        Grid
       </Button>
+      
       <Button
-        variant={viewMode === 'list' ? 'default' : 'ghost'}
+        variant={viewMode === 'compact' ? 'default' : 'ghost'}
         size="sm"
-        onClick={handleListView}
-        className={`h-9 px-4 transition-all duration-200 ${
-          viewMode === 'list' 
-            ? 'bg-mint-600 text-white shadow-md' 
-            : 'text-gray-600 hover:text-mint-700 hover:bg-mint-50'
+        onClick={() => {
+          console.log('🎯 ViewToggle - Switching to compact mode');
+          onViewModeChange('compact');
+        }}
+        className={`h-8 px-3 transition-all duration-200 ${
+          viewMode === 'compact' 
+            ? 'bg-mint-600 text-white shadow-sm' 
+            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
         }`}
       >
-        <LayoutList className="h-4 w-4" />
+        <List className="h-4 w-4 mr-1" />
+        List
       </Button>
     </div>
   );

@@ -118,81 +118,83 @@ export const OptimizedNotesContent = () => {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Enhanced Header with better visual hierarchy */}
-      <div className="bg-gradient-to-r from-white/95 to-mint-50/50 backdrop-blur-sm rounded-2xl border border-mint-100/60 shadow-lg shadow-mint-500/10">
-        <OptimizedNotesHeader 
-          totalCount={totalCount}
-          onCreateNote={() => setIsManualDialogOpen(true)}
-          onOpenScanDialog={() => setIsScanDialogOpen(true)}
-          onOpenImportDialog={() => setIsImportDialogOpen(true)}
-          isCreating={creatingNote}
-        />
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50/50 via-white to-mint-50/30">
+      <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
+        {/* Enhanced Header with Study View Styling */}
+        <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-white/20 shadow-xl shadow-mint-500/5 mb-8">
+          <OptimizedNotesHeader 
+            totalCount={totalCount}
+            onCreateNote={() => setIsManualDialogOpen(true)}
+            onOpenScanDialog={() => setIsScanDialogOpen(true)}
+            onOpenImportDialog={() => setIsImportDialogOpen(true)}
+            isCreating={creatingNote}
+          />
+        </div>
 
-      {/* Enhanced Filters with better spacing */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-mint-100/50 shadow-sm p-4">
-        <OptimizedNotesFilters 
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-        />
-      </div>
+        {/* Enhanced Filters */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-lg shadow-mint-500/5 p-6 mb-8">
+          <OptimizedNotesFilters 
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+          />
+        </div>
 
-      {/* Main content with improved loading states */}
-      <ProgressiveLoader 
-        isLoading={isLoading}
-        isPartiallyLoaded={notes.length > 0}
-        skeletonCount={6}
-      >
-        {notes.length === 0 ? (
-          <div className="bg-gradient-to-br from-mint-50/30 to-blue-50/20 rounded-2xl border border-mint-100/40 shadow-sm">
-            <EmptyNotesState
-              onCreateNote={() => setIsManualDialogOpen(true)}
-              isFiltered={!!(searchTerm || selectedSubject !== 'all')}
-            />
-          </div>
-        ) : (
-          <div className="space-y-8">
-            <div className="transition-all duration-300 ease-in-out">
-              <OptimizedNotesGrid 
-                notes={notes} 
-                onPin={handlePin}
-                onDelete={handleDelete}
-                viewMode={viewMode}
+        {/* Main content with improved loading states */}
+        <ProgressiveLoader 
+          isLoading={isLoading}
+          isPartiallyLoaded={notes.length > 0}
+          skeletonCount={6}
+        >
+          {notes.length === 0 ? (
+            <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-white/20 shadow-lg shadow-mint-500/5">
+              <EmptyNotesState
+                onCreateNote={() => setIsManualDialogOpen(true)}
+                isFiltered={!!(searchTerm || selectedSubject !== 'all')}
               />
             </div>
-            
-            {totalCount > 20 && (
-              <div className="flex justify-center">
-                <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-mint-100/50 shadow-sm p-4">
-                  <OptimizedNotesPagination
-                    currentPage={currentPage}
-                    totalCount={totalCount}
-                    pageSize={20}
-                    onPageChange={setCurrentPage}
-                    hasMore={hasMore}
-                  />
-                </div>
+          ) : (
+            <div className="space-y-8">
+              <div className="transition-all duration-300 ease-in-out">
+                <OptimizedNotesGrid 
+                  notes={notes} 
+                  onPin={handlePin}
+                  onDelete={handleDelete}
+                  viewMode={viewMode}
+                />
               </div>
-            )}
-          </div>
-        )}
-      </ProgressiveLoader>
+              
+              {totalCount > 20 && (
+                <div className="flex justify-center">
+                  <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-lg shadow-mint-500/5 p-6">
+                    <OptimizedNotesPagination
+                      currentPage={currentPage}
+                      totalCount={totalCount}
+                      pageSize={20}
+                      onPageChange={setCurrentPage}
+                      hasMore={hasMore}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </ProgressiveLoader>
 
-      {/* Dialog Manager for note creation */}
-      <DialogManager 
-        onSaveNote={handleSaveNote}
-        onScanNote={handleScanNote}
-        onImportNote={handleImportNote}
-        tierLimits={tierLimits}
-        isManualDialogOpen={isManualDialogOpen}
-        isScanDialogOpen={isScanDialogOpen}
-        isImportDialogOpen={isImportDialogOpen}
-        isSubmitting={creatingNote}
-        setIsManualDialogOpen={setIsManualDialogOpen}
-        setIsScanDialogOpen={setIsScanDialogOpen}
-        setIsImportDialogOpen={setIsImportDialogOpen}
-      />
+        {/* Dialog Manager for note creation */}
+        <DialogManager 
+          onSaveNote={handleSaveNote}
+          onScanNote={handleScanNote}
+          onImportNote={handleImportNote}
+          tierLimits={tierLimits}
+          isManualDialogOpen={isManualDialogOpen}
+          isScanDialogOpen={isScanDialogOpen}
+          isImportDialogOpen={isImportDialogOpen}
+          isSubmitting={creatingNote}
+          setIsManualDialogOpen={setIsManualDialogOpen}
+          setIsScanDialogOpen={setIsScanDialogOpen}
+          setIsImportDialogOpen={setIsImportDialogOpen}
+        />
+      </div>
     </div>
   );
 };

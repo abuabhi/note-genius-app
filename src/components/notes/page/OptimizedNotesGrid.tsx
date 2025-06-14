@@ -1,12 +1,12 @@
 
-import { Note } from '@/types/note';
-import { NoteCard } from '@/components/notes/card/NoteCard';
-import { CompactNoteCard } from '@/components/notes/card/CompactNoteCard';
-import { EmptyNotesState } from '@/components/notes/EmptyNotesState';
-import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
-import { NoteDetailsSheet } from '@/components/notes/NoteDetailsSheet';
+import { useState } from "react";
+import { Note } from "@/types/note";
+import { NoteDetailsSheet } from "../NoteDetailsSheet";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { ViewMode } from '@/hooks/useViewPreferences';
+import { EnhancedNoteCard } from "./EnhancedNoteCard";
+import { CompactNoteCard } from "../card/CompactNoteCard";
 
 interface OptimizedNotesGridProps {
   notes: Note[];
@@ -15,20 +15,39 @@ interface OptimizedNotesGridProps {
   viewMode: ViewMode;
 }
 
-export const OptimizedNotesGrid = ({ notes, onPin, onDelete, viewMode }: OptimizedNotesGridProps) => {
-  const navigate = useNavigate();
+export const OptimizedNotesGrid = ({ 
+  notes, 
+  onPin, 
+  onDelete, 
+  viewMode 
+}: OptimizedNotesGridProps) => {
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  console.log('🎯 OptimizedNotesGrid - Received viewMode prop:', viewMode);
-  console.log('🎯 OptimizedNotesGrid - Notes count:', notes.length);
+  const handlePin = async (id: string, isPinned: boolean) => {
+    try {
+      await onPin(id, isPinned);
+    } catch (error) {
+      console.error("Error pinning note:", error);
+      toast.error("Failed to update note pin status");
+    }
+  };
 
-  if (notes.length === 0) {
-    return <EmptyNotesState />;
-  }
+  const handleDelete = async (id: string): Promise<void> => {
+    try {
+      await onDelete(id);
+      setConfirmDelete(null);
+    } catch (error) {
+      console.error("Error deleting note:", error);
+      toast.error("Failed to delete note");
+      throw error;
+    }
+  };
 
   const handleNoteClick = (note: Note) => {
-    navigate(`/notes/${note.id}`);
+    navigate(`/notes/study/${note.id}`);
   };
 
   const handleShowDetails = (note: Note, e: React.MouseEvent) => {
@@ -37,65 +56,75 @@ export const OptimizedNotesGrid = ({ notes, onPin, onDelete, viewMode }: Optimiz
     setIsDetailsOpen(true);
   };
 
-  // Enhanced LIST VIEW with better spacing and animations
-  if (viewMode === 'list') {
-    console.log('📋 Rendering LIST view');
-    return (
-      <>
-        <div className="flex flex-col space-y-6 max-w-none">
-          {notes.map((note, index) => (
-            <div 
-              key={note.id} 
-              className="w-full animate-fade-in transition-all duration-300 hover:scale-[1.01]"
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
-              <NoteCard
-                note={note}
-                onNoteClick={handleNoteClick}
-                onShowDetails={handleShowDetails}
-                onPin={onPin}
-                onDelete={onDelete}
-                confirmDelete={null}
-              />
-            </div>
-          ))}
-        </div>
-        
-        {selectedNote && (
-          <NoteDetailsSheet 
-            note={selectedNote}
-            open={isDetailsOpen}
-            onOpenChange={setIsDetailsOpen}
-            onEdit={() => {
-              setIsDetailsOpen(false);
-              navigate(`/notes/edit/${selectedNote.id}`);
-            }}
-          />
-        )}
-      </>
-    );
-  }
+  // Separate pinned and unpinned notes
+  const pinnedNotes = notes.filter(note => note.pinned);
+  const unpinnedNotes = notes.filter(note => !note.pinned);
 
-  // Enhanced CARD VIEW with improved grid and animations
-  console.log('🃏 Rendering CARD view');
+  const renderNoteCard = (note: Note) => {
+    if (viewMode === 'compact') {
+      return (
+        <CompactNoteCard
+          key={note.id}
+          note={note}
+          onNoteClick={handleNoteClick}
+          onShowDetails={handleShowDetails}
+          onPin={handlePin}
+          onDelete={handleDelete}
+          confirmDelete={confirmDelete}
+        />
+      );
+    }
+
+    return (
+      <EnhancedNoteCard
+        key={note.id}
+        note={note}
+        onNoteClick={handleNoteClick}
+        onShowDetails={handleShowDetails}
+        onPin={handlePin}
+        onDelete={handleDelete}
+        confirmDelete={confirmDelete}
+      />
+    );
+  };
+
+  const gridClasses = viewMode === 'compact' 
+    ? "space-y-3" 
+    : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
+
   return (
-    <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {notes.map((note, index) => (
-          <div
-            key={note.id}
-            className="animate-fade-in transition-all duration-300"
-            style={{ animationDelay: `${index * 75}ms` }}
-          >
-            <CompactNoteCard 
-              note={note} 
-              onPin={onPin}
-              onDelete={onDelete}
-            />
+    <div className="space-y-8">
+      {/* Pinned Notes Section */}
+      {pinnedNotes.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+            <h3 className="text-lg font-semibold text-gray-800">Pinned Notes</h3>
+            <div className="h-px bg-gradient-to-r from-yellow-200 to-transparent flex-1 ml-4"></div>
           </div>
-        ))}
-      </div>
-      
+          <div className={gridClasses}>
+            {pinnedNotes.map(renderNoteCard)}
+          </div>
+        </div>
+      )}
+
+      {/* All Notes Section */}
+      {unpinnedNotes.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-mint-500 rounded-full"></div>
+            <h3 className="text-lg font-semibold text-gray-800">
+              {pinnedNotes.length > 0 ? 'All Notes' : 'My Notes'}
+            </h3>
+            <div className="h-px bg-gradient-to-r from-mint-200 to-transparent flex-1 ml-4"></div>
+          </div>
+          <div className={gridClasses}>
+            {unpinnedNotes.map(renderNoteCard)}
+          </div>
+        </div>
+      )}
+
+      {/* Note Details Sheet */}
       {selectedNote && (
         <NoteDetailsSheet 
           note={selectedNote}
@@ -107,6 +136,6 @@ export const OptimizedNotesGrid = ({ notes, onPin, onDelete, viewMode }: Optimiz
           }}
         />
       )}
-    </>
+    </div>
   );
 };
