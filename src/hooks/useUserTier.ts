@@ -94,14 +94,14 @@ export const useUserTier = () => {
 
         let currentTier = profileData.user_tier as UserTier || UserTier.SCHOLAR;
 
-        // DEAN tier is permanent - no subscription check needed
+        // DEAN tier is permanent - NEVER check subscriptions for DEAN users
         if (currentTier === UserTier.DEAN) {
           setUserTier(currentTier);
           setIsLoading(false);
           return;
         }
 
-        // For other tiers, check subscription status
+        // For non-DEAN tiers, check subscription status
         const { data: subData } = await supabase
           .from("subscribers")
           .select("subscribed, subscription_tier")
@@ -121,7 +121,7 @@ export const useUserTier = () => {
           }
         } else if (!subData?.subscribed && currentTier !== UserTier.SCHOLAR) {
           // If no active subscription and not DEAN tier, downgrade to SCHOLAR
-          // But only downgrade GRADUATE and MASTER tiers, not DEAN
+          // But only downgrade GRADUATE and MASTER tiers, never DEAN
           if (currentTier === UserTier.GRADUATE || currentTier === UserTier.MASTER) {
             currentTier = UserTier.SCHOLAR;
             await supabase

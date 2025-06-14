@@ -6,8 +6,7 @@ import { NotificationPreferencesCard } from "./cards/NotificationPreferencesCard
 import { AdaptiveLearningCard } from "./cards/AdaptiveLearningCard";
 import { SubjectsSettingsCard } from "./cards/SubjectsSettingsCard";
 import { PasswordChangeCard } from "./cards/PasswordChangeCard";
-import { SubscriptionManagementCard } from "./cards/SubscriptionManagementCard";
-import { SubscriptionLimitsCard } from "./cards/SubscriptionLimitsCard";
+import { MergedSubscriptionCard } from "./cards/MergedSubscriptionCard";
 import { UseFormReturn } from "react-hook-form";
 import { User } from "@supabase/supabase-js";
 import { UserTier } from "@/hooks/useUserTier";
@@ -68,8 +67,7 @@ export const SettingsFormTabs = ({
       </TabsContent>
       
       <TabsContent value="subscription" className="space-y-6">
-        <SubscriptionManagementCard />
-        <SubscriptionLimitsCard />
+        <MergedSubscriptionCard />
       </TabsContent>
       
       <TabsContent value="notifications" className="space-y-6">
