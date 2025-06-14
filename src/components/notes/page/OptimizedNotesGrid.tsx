@@ -61,7 +61,7 @@ export const OptimizedNotesGrid = ({
   const unpinnedNotes = notes.filter(note => !note.pinned);
 
   const renderNoteCard = (note: Note) => {
-    if (viewMode === 'compact') {
+    if (viewMode === 'list') {
       return (
         <CompactNoteCard
           key={note.id}
@@ -88,9 +88,9 @@ export const OptimizedNotesGrid = ({
     );
   };
 
-  const gridClasses = viewMode === 'compact' 
+  const gridClasses = viewMode === 'list' 
     ? "space-y-3" 
-    : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
+    : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4";
 
   return (
     <div className="space-y-8">

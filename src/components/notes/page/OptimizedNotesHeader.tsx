@@ -1,15 +1,15 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Import, Scan, BookOpen, Filter, Search, X } from "lucide-react";
+import { PlusCircle, Import, BookOpen } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
 import { Badge } from "@/components/ui/badge";
+import { Search, X } from "lucide-react";
 
 interface OptimizedNotesHeaderProps {
   totalCount: number;
   onCreateNote: () => void;
-  onOpenScanDialog: () => void;
   onOpenImportDialog: () => void;
   isCreating: boolean;
 }
@@ -17,7 +17,6 @@ interface OptimizedNotesHeaderProps {
 export const OptimizedNotesHeader = ({
   totalCount,
   onCreateNote,
-  onOpenScanDialog,
   onOpenImportDialog,
   isCreating
 }: OptimizedNotesHeaderProps) => {
@@ -65,18 +64,8 @@ export const OptimizedNotesHeader = ({
           </Button>
           
           <Button
-            onClick={onOpenScanDialog}
-            variant="outline"
-            className="border-2 border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 shadow-sm hover:shadow-md transition-all duration-200 px-6"
-          >
-            <Scan className="h-4 w-4 mr-2" />
-            Scan
-          </Button>
-          
-          <Button
             onClick={onOpenImportDialog}
-            variant="outline"
-            className="border-2 border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300 shadow-sm hover:shadow-md transition-all duration-200 px-6"
+            className="bg-mint-600 hover:bg-mint-700 text-green-700 shadow-lg hover:shadow-xl transition-all duration-200 border-0 px-6"
           >
             <Import className="h-4 w-4 mr-2" />
             Import

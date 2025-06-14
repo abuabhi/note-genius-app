@@ -36,33 +36,26 @@ export const EnhancedNoteCard = ({
 }: EnhancedNoteCardProps) => {
   const getSourceIcon = () => {
     switch (note.sourceType) {
-      case 'scan': return <FileText className="h-4 w-4" />;
-      case 'import': return <BookOpen className="h-4 w-4" />;
-      default: return <FileText className="h-4 w-4" />;
+      case 'scan': return <FileText className="h-3 w-3" />;
+      case 'import': return <BookOpen className="h-3 w-3" />;
+      default: return <FileText className="h-3 w-3" />;
     }
   };
 
-  const getSourceColor = () => {
-    switch (note.sourceType) {
-      case 'scan': return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'import': return 'bg-purple-100 text-purple-700 border-purple-200';
-      default: return 'bg-gray-100 text-gray-700 border-gray-200';
-    }
-  };
-
+  // Single line of content preview for compact cards
   const contentPreview = note.content 
-    ? stripMarkdown(note.content).substring(0, 120) + (note.content.length > 120 ? '...' : '')
-    : note.description.substring(0, 120) + (note.description.length > 120 ? '...' : '');
+    ? stripMarkdown(note.content).substring(0, 60) + (note.content.length > 60 ? '...' : '')
+    : note.description.substring(0, 60) + (note.description.length > 60 ? '...' : '');
 
   return (
     <Card 
       className={`
         group relative overflow-hidden transition-all duration-300 cursor-pointer
-        bg-white/95 backdrop-blur-sm border-0 shadow-lg hover:shadow-2xl
-        hover:scale-[1.02] hover:-translate-y-2
+        bg-white/95 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl
+        hover:scale-[1.02] hover:-translate-y-1
         ${note.pinned ? 'ring-2 ring-yellow-400/50 shadow-yellow-500/20' : ''}
         ${note.archived ? 'opacity-75' : ''}
-        rounded-2xl
+        rounded-xl
         before:absolute before:inset-0 before:bg-gradient-to-br before:from-mint-500/5 before:via-transparent before:to-blue-500/5 before:opacity-0 before:transition-opacity before:duration-300
         hover:before:opacity-100
       `}
@@ -73,19 +66,19 @@ export const EnhancedNoteCard = ({
       
       {/* Floating pin indicator */}
       {note.pinned && (
-        <div className="absolute top-4 right-4 z-10">
-          <div className="flex items-center justify-center w-8 h-8 bg-yellow-400 rounded-full shadow-lg">
-            <Star className="h-4 w-4 text-white fill-white" />
+        <div className="absolute top-3 right-3 z-10">
+          <div className="flex items-center justify-center w-6 h-6 bg-yellow-400 rounded-full shadow-lg">
+            <Star className="h-3 w-3 text-white fill-white" />
           </div>
         </div>
       )}
 
-      <CardHeader className="relative p-6 pb-4">
+      <CardHeader className="relative p-4 pb-2">
         {/* Subject Badge */}
-        <div className="flex items-center justify-between mb-3">
-          <Badge className={`${getSourceColor()} border font-medium`}>
+        <div className="flex items-center justify-between mb-2">
+          <Badge className="bg-mint-100 border-mint-200 text-green-700 border font-medium">
             {getSourceIcon()}
-            <span className="ml-1.5">{note.subject}</span>
+            <span className="ml-1">{note.subject}</span>
           </Badge>
           
           {/* Actions Menu */}
@@ -94,22 +87,22 @@ export const EnhancedNoteCard = ({
               <Button 
                 variant="ghost" 
                 size="icon"
-                className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 hover:bg-gray-100"
+                className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 hover:bg-gray-100"
                 onClick={(e) => e.stopPropagation()}
               >
-                <MoreHorizontal className="h-4 w-4" />
+                <MoreHorizontal className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuContent align="end" className="w-40">
               <DropdownMenuItem onClick={(e) => onShowDetails(note, e)}>
-                <Eye className="h-4 w-4 mr-2" />
+                <Eye className="h-3 w-3 mr-2" />
                 View Details
               </DropdownMenuItem>
               <DropdownMenuItem onClick={(e) => {
                 e.stopPropagation();
                 onPin(note.id, note.pinned);
               }}>
-                <Pin className="h-4 w-4 mr-2" />
+                <Pin className="h-3 w-3 mr-2" />
                 {note.pinned ? 'Unpin' : 'Pin'} Note
               </DropdownMenuItem>
               <DropdownMenuItem 
@@ -119,33 +112,33 @@ export const EnhancedNoteCard = ({
                   onDelete(note.id);
                 }}
               >
-                <Trash2 className="h-4 w-4 mr-2" />
+                <Trash2 className="h-3 w-3 mr-2" />
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
 
-        {/* Title */}
-        <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 leading-tight">
+        {/* Title - compact */}
+        <h3 className="text-lg font-bold text-green-700 mb-2 line-clamp-2 leading-tight">
           {note.title}
         </h3>
         
-        {/* Content Preview */}
-        <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">
+        {/* Content Preview - single line only */}
+        <p className="text-gray-600 text-sm leading-relaxed line-clamp-1">
           {contentPreview}
         </p>
       </CardHeader>
       
-      <CardFooter className="flex justify-between items-center px-6 py-4 pt-0">
-        {/* Date */}
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <Calendar className="h-4 w-4" />
+      <CardFooter className="flex justify-between items-center px-4 py-2">
+        {/* Date - green styling */}
+        <div className="flex items-center gap-1 text-sm text-green-600">
+          <Calendar className="h-3 w-3" />
           <span>{formatDistanceToNow(new Date(note.date), { addSuffix: true })}</span>
         </div>
         
-        {/* Word count estimate */}
-        <div className="text-xs text-gray-400">
+        {/* Word count estimate - green styling */}
+        <div className="text-xs text-green-600">
           ~{Math.ceil((note.content || note.description).split(' ').length / 200)} min read
         </div>
       </CardFooter>

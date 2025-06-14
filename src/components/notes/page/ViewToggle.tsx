@@ -31,14 +31,14 @@ export const ViewToggle = ({ viewMode, onViewModeChange }: ViewToggleProps) => {
       </Button>
       
       <Button
-        variant={viewMode === 'compact' ? 'default' : 'ghost'}
+        variant={viewMode === 'list' ? 'default' : 'ghost'}
         size="sm"
         onClick={() => {
-          console.log('🎯 ViewToggle - Switching to compact mode');
-          onViewModeChange('compact');
+          console.log('🎯 ViewToggle - Switching to list mode');
+          onViewModeChange('list');
         }}
         className={`h-8 px-3 transition-all duration-200 ${
-          viewMode === 'compact' 
+          viewMode === 'list' 
             ? 'bg-mint-600 text-white shadow-sm' 
             : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
         }`}

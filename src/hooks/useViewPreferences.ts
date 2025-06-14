@@ -1,9 +1,9 @@
 
 import { useState, useEffect } from 'react';
 
-export type ViewMode = 'card' | 'list';
+export type ViewMode = 'grid' | 'list';
 
-export const useViewPreferences = (key: string, defaultValue: ViewMode = 'card') => {
+export const useViewPreferences = (key: string, defaultValue: ViewMode = 'grid') => {
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     try {
       const saved = localStorage.getItem(`viewMode_${key}`);
