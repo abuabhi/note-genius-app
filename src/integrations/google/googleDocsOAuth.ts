@@ -1,9 +1,8 @@
-
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../supabase/client';
 
 // Configuration for Google OAuth
-const REDIRECT_URI = `${window.location.origin}/auth/googledocs-callback`;
+const REDIRECT_URI = `${window.location.origin}/auth/googledocs/callback`;
 const SCOPE = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/documents.readonly';
 
 export interface GoogleDocsAuthState {
