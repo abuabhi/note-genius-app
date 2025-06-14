@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { PlusCircle, Target } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
@@ -7,6 +8,8 @@ import { GoalSuggestions } from '@/components/goals/GoalSuggestions';
 import { GoalFilters } from '@/components/goals/GoalFilters';
 import { GoalsGrid } from '@/components/goals/GoalsGrid';
 import { OverdueGoalsSection } from '@/components/goals/OverdueGoalsSection';
+import { GoalNotifications } from '@/components/goals/GoalNotifications';
+import { GoalAnalytics } from '@/components/goals/GoalAnalytics';
 import { useStudyGoals, StudyGoal, GoalFormValues } from '@/hooks/useStudyGoals';
 import { useGoalTracking } from '@/hooks/useGoalTracking';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -73,6 +76,17 @@ const GoalsPage = () => {
     }
   };
 
+  const handleGoalNotificationAction = (goalId: string, action: string) => {
+    const goal = goals.find(g => g.id === goalId);
+    if (goal && action === 'view') {
+      handleEditGoal(goal);
+    } else if (goal && action === 'extend') {
+      // Open the overdue goal action dialog
+      setSelectedGoal(goal);
+      setFormOpen(true);
+    }
+  };
+
   const filteredGoals = goals.filter(goal => {
     // Text search
     const matchesSearch = 
@@ -96,6 +110,9 @@ const GoalsPage = () => {
       return new Date(a.end_date).getTime() - new Date(b.end_date).getTime();
     } else if (activeTab === 'progress') {
       return b.progress - a.progress;
+    } else if (activeTab === 'analytics') {
+      // No sorting needed for analytics tab
+      return 0;
     }
     // Default sorting: completed at the bottom, then by due date
     if (a.is_completed !== b.is_completed) {
@@ -134,6 +151,11 @@ const GoalsPage = () => {
         <div className="space-y-6">
           <GoalStats goals={goals} streakBonus={streakBonus} />
 
+          <GoalNotifications 
+            goals={goals} 
+            onGoalAction={handleGoalNotificationAction}
+          />
+
           <OverdueGoalsSection />
 
           <GoalSuggestions
@@ -153,26 +175,33 @@ const GoalsPage = () => {
                   <TabsTrigger value="due-soon">Due Soon</TabsTrigger>
                   <TabsTrigger value="progress">By Progress</TabsTrigger>
                   <TabsTrigger value="recent">Recent</TabsTrigger>
+                  <TabsTrigger value="analytics">Analytics</TabsTrigger>
                 </TabsList>
                 
-                <GoalFilters
-                  searchQuery={searchQuery}
-                  filter={filter}
-                  onSearchChange={setSearchQuery}
-                  onFilterChange={setFilter}
-                />
+                {activeTab !== 'analytics' && (
+                  <GoalFilters
+                    searchQuery={searchQuery}
+                    filter={filter}
+                    onSearchChange={setSearchQuery}
+                    onFilterChange={setFilter}
+                  />
+                )}
               </div>
               
               <TabsContent value={activeTab} className="mt-0">
-                <GoalsGrid
-                  goals={sortedGoals}
-                  loading={loading}
-                  searchQuery={searchQuery}
-                  filter={filter}
-                  onEditGoal={handleEditGoal}
-                  onDeleteGoal={handleDeleteGoal}
-                  onCreateGoal={openCreateGoalDialog}
-                />
+                {activeTab === 'analytics' ? (
+                  <GoalAnalytics goals={goals} />
+                ) : (
+                  <GoalsGrid
+                    goals={sortedGoals}
+                    loading={loading}
+                    searchQuery={searchQuery}
+                    filter={filter}
+                    onEditGoal={handleEditGoal}
+                    onDeleteGoal={handleDeleteGoal}
+                    onCreateGoal={openCreateGoalDialog}
+                  />
+                )}
               </TabsContent>
             </Tabs>
           </div>

@@ -3,15 +3,17 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, Calendar, Clock } from 'lucide-react';
+import { AlertTriangle, Calendar, Clock, Settings } from 'lucide-react';
 import { useOverdueGoalManager, OverdueGoal } from '@/hooks/useOverdueGoalManager';
 import { OverdueGoalActionDialog } from './OverdueGoalActionDialog';
+import { BulkOverdueActions } from './BulkOverdueActions';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 
 export const OverdueGoalsSection: React.FC = () => {
-  const { overdueGoals, loading, actions } = useOverdueGoalManager();
+  const { overdueGoals, loading, actions, refetch } = useOverdueGoalManager();
   const [selectedGoal, setSelectedGoal] = useState<OverdueGoal | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [showBulkActions, setShowBulkActions] = useState(false);
 
   if (loading) {
     return (
@@ -36,13 +38,26 @@ export const OverdueGoalsSection: React.FC = () => {
   const criticalGoals = overdueGoals.filter(goal => !goal.in_grace_period);
 
   return (
-    <>
+    <div className="space-y-4">
       <Card className="border-amber-200 bg-amber-50">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-amber-800">
-            <AlertTriangle className="h-5 w-5" />
-            Overdue Goals ({overdueGoals.length})
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-amber-800">
+              <AlertTriangle className="h-5 w-5" />
+              Overdue Goals ({overdueGoals.length})
+            </CardTitle>
+            {overdueGoals.length > 1 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowBulkActions(!showBulkActions)}
+                className="flex items-center gap-2"
+              >
+                <Settings className="h-4 w-4" />
+                {showBulkActions ? 'Hide' : 'Show'} Bulk Actions
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {criticalGoals.length > 0 && (
@@ -121,12 +136,21 @@ export const OverdueGoalsSection: React.FC = () => {
         </CardContent>
       </Card>
 
+      {/* Bulk Actions */}
+      {showBulkActions && (
+        <BulkOverdueActions
+          overdueGoals={overdueGoals}
+          actions={actions}
+          onRefresh={refetch}
+        />
+      )}
+
       <OverdueGoalActionDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         goal={selectedGoal}
         actions={actions}
       />
-    </>
+    </div>
   );
 };
