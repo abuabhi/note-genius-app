@@ -11,31 +11,29 @@ export const SubscriptionManagementCard: React.FC = () => {
   const { subscribed, subscriptionTier } = useSubscription();
   const { userTier } = useUserTier();
   
-  // Debug logs to see what's happening
-  console.log('SubscriptionManagementCard Debug:', {
-    userTier,
-    subscribed,
-    subscriptionTier,
-    isDeanTier: userTier === UserTier.DEAN
-  });
-  
   // Check if user is on Dean tier (highest tier)
   const isDeanTier = userTier === UserTier.DEAN;
 
   return (
     <div className="space-y-6">
-      <SubscriptionStatus />
-
-      {!subscribed && !isDeanTier && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Upgrade Your Plan</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <SubscriptionPlans />
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5" />
+            Subscription Management
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <SubscriptionStatus />
+          
+          {!subscribed && !isDeanTier && (
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold mb-4">Available Plans</h3>
+              <SubscriptionPlans />
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

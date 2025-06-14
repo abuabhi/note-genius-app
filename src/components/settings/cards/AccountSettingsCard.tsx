@@ -3,17 +3,12 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TimezoneSelector } from '../TimezoneSelector';
 import { User, FileText, MapPin, Clock } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { UserTier } from '@/hooks/useUserTier';
 
 interface AccountSettingsCardProps {
   form: any;
   user: any;
-  userTier: UserTier;
   countries: any[];
   onCountryChange: (value: string) => void;
 }
@@ -21,16 +16,25 @@ interface AccountSettingsCardProps {
 export const AccountSettingsCard: React.FC<AccountSettingsCardProps> = ({
   form,
   user,
-  userTier,
   countries,
   onCountryChange,
 }) => {
-  const tierColors = {
-    [UserTier.SCHOLAR]: "bg-gray-100 text-gray-800",
-    [UserTier.GRADUATE]: "bg-blue-100 text-blue-800",
-    [UserTier.MASTER]: "bg-purple-100 text-purple-800",
-    [UserTier.DEAN]: "bg-amber-100 text-amber-800",
-  };
+  // Get the available timezones
+  const COMMON_TIMEZONES = [
+    { value: 'UTC', label: 'UTC (Coordinated Universal Time)' },
+    { value: 'America/New_York', label: 'Eastern Time (US & Canada)' },
+    { value: 'America/Chicago', label: 'Central Time (US & Canada)' },
+    { value: 'America/Denver', label: 'Mountain Time (US & Canada)' },
+    { value: 'America/Los_Angeles', label: 'Pacific Time (US & Canada)' },
+    { value: 'Europe/London', label: 'London (GMT/BST)' },
+    { value: 'Europe/Paris', label: 'Central European Time' },
+    { value: 'Europe/Berlin', label: 'Berlin' },
+    { value: 'Asia/Tokyo', label: 'Tokyo' },
+    { value: 'Asia/Shanghai', label: 'Shanghai' },
+    { value: 'Asia/Kolkata', label: 'India Standard Time' },
+    { value: 'Australia/Sydney', label: 'Sydney' },
+    { value: 'Australia/Melbourne', label: 'Melbourne' },
+  ];
 
   return (
     <Card>
@@ -41,17 +45,6 @@ export const AccountSettingsCard: React.FC<AccountSettingsCardProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* User Tier Display */}
-        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-          <div>
-            <h4 className="font-medium text-gray-900">Current Plan</h4>
-            <p className="text-sm text-gray-600">Your current subscription tier</p>
-          </div>
-          <Badge className={tierColors[userTier]}>
-            {userTier}
-          </Badge>
-        </div>
-
         {/* Basic Information */}
         <div className="grid md:grid-cols-2 gap-4">
           <FormField
@@ -148,12 +141,20 @@ export const AccountSettingsCard: React.FC<AccountSettingsCardProps> = ({
                     <Clock className="h-4 w-4" />
                     Timezone
                   </FormLabel>
-                  <FormControl>
-                    <TimezoneSelector
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    />
-                  </FormControl>
+                  <Select value={field.value || 'UTC'} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your timezone" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {COMMON_TIMEZONES.map((tz) => (
+                        <SelectItem key={tz.value} value={tz.value}>
+                          {tz.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

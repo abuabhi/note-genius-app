@@ -6,11 +6,8 @@ import { NotificationPreferencesCard } from "./cards/NotificationPreferencesCard
 import { AdaptiveLearningCard } from "./cards/AdaptiveLearningCard";
 import { SubjectsSettingsCard } from "./cards/SubjectsSettingsCard";
 import { PasswordChangeCard } from "./cards/PasswordChangeCard";
-import { UpgradeTierCard } from "./cards/UpgradeTierCard";
-import { SubscriptionLimitsCard } from "./cards/SubscriptionLimitsCard";
 import { SubscriptionManagementCard } from "./cards/SubscriptionManagementCard";
-import { TimezoneSelector } from "./TimezoneSelector";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SubscriptionLimitsCard } from "./cards/SubscriptionLimitsCard";
 import { UseFormReturn } from "react-hook-form";
 import { User } from "@supabase/supabase-js";
 import { UserTier } from "@/hooks/useUserTier";
@@ -59,22 +56,11 @@ export const SettingsFormTabs = ({
       <TabsContent value="account" className="space-y-6">
         <AccountSettingsCard 
           user={user}
-          userTier={userTier}
           form={form}
           countries={countries}
           onCountryChange={onCountryChange}
         />
-        <Card>
-          <CardHeader>
-            <CardTitle>Timezone Settings</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <TimezoneSelector />
-          </CardContent>
-        </Card>
         <PasswordChangeCard />
-        <UpgradeTierCard />
-        <SubscriptionLimitsCard />
       </TabsContent>
       
       <TabsContent value="subjects" className="space-y-6">
@@ -83,6 +69,7 @@ export const SettingsFormTabs = ({
       
       <TabsContent value="subscription" className="space-y-6">
         <SubscriptionManagementCard />
+        <SubscriptionLimitsCard />
       </TabsContent>
       
       <TabsContent value="notifications" className="space-y-6">

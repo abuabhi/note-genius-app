@@ -119,13 +119,16 @@ export const useUserTier = () => {
               .update({ user_tier: currentTier })
               .eq("id", user.id);
           }
-        } else if (!subData?.subscribed && currentTier !== UserTier.SCHOLAR && currentTier !== UserTier.DEAN) {
+        } else if (!subData?.subscribed && currentTier !== UserTier.SCHOLAR) {
           // If no active subscription and not DEAN tier, downgrade to SCHOLAR
-          currentTier = UserTier.SCHOLAR;
-          await supabase
-            .from("profiles")
-            .update({ user_tier: UserTier.SCHOLAR })
-            .eq("id", user.id);
+          // But only downgrade GRADUATE and MASTER tiers, not DEAN
+          if (currentTier === UserTier.GRADUATE || currentTier === UserTier.MASTER) {
+            currentTier = UserTier.SCHOLAR;
+            await supabase
+              .from("profiles")
+              .update({ user_tier: UserTier.SCHOLAR })
+              .eq("id", user.id);
+          }
         }
 
         setUserTier(currentTier);
