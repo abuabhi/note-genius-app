@@ -3,11 +3,12 @@ import Layout from "@/components/layout/Layout";
 import { Pricing } from "@/components/ui/pricing";
 
 const PricingPage = () => {
+  // Updated pricing data with proper AUD amounts that should match your Stripe configuration
   const demoPlans = [
     {
       name: "SCHOLAR",
       price: "0",
-      yearlyPrice: "0",
+      yearlyPrice: "0", 
       period: "forever",
       features: [
         "10 notes",
@@ -15,6 +16,7 @@ const PricingPage = () => {
         "20 cards per set",
         "100 MB storage",
         "Basic features",
+        "Community support"
       ],
       description: "Perfect for trying out PrepGenie",
       buttonText: "Get Started Free",
@@ -24,7 +26,7 @@ const PricingPage = () => {
     {
       name: "GRADUATE",
       price: "15.00",
-      yearlyPrice: "12.00",
+      yearlyPrice: "12.00", // 20% discount
       period: "month",
       features: [
         "100 notes",
@@ -34,16 +36,17 @@ const PricingPage = () => {
         "AI features enabled",
         "OCR scanning",
         "Collaboration features",
+        "Email support"
       ],
       description: "Ideal for dedicated students",
-      buttonText: "Upgrade to Graduate",
+      buttonText: "Choose Graduate",
       href: "/pricing",
       isPopular: true,
     },
     {
       name: "MASTER",
       price: "25.00",
-      yearlyPrice: "20.00",
+      yearlyPrice: "20.00", // 20% discount
       period: "month",
       features: [
         "250 notes",
@@ -54,9 +57,10 @@ const PricingPage = () => {
         "Priority support",
         "Advanced analytics",
         "Team collaboration",
+        "Custom integrations"
       ],
       description: "For serious academic achievers",
-      buttonText: "Upgrade to Master",
+      buttonText: "Choose Master",
       href: "/pricing",
       isPopular: false,
     },
@@ -64,11 +68,11 @@ const PricingPage = () => {
 
   return (
     <Layout>
-      <div className="bg-gradient-to-b from-mint-50 via-mint-50/30 to-mint-50/10">
+      <div className="bg-gradient-to-b from-mint-50 via-white to-mint-50/30 min-h-screen">
         <Pricing 
           plans={demoPlans}
           title="Choose Your Plan"
-          description="Select the perfect plan for your learning journey&#10;All plans include access to our comprehensive study tools and features."
+          description="Select the perfect plan for your learning journey. All plans include access to our comprehensive study tools and features with a 14-day free trial."
         />
       </div>
     </Layout>
