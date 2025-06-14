@@ -18,17 +18,16 @@ export const ImportServiceGrid = ({
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
       {services.map(service => (
-        <div key={service.id} className="flex justify-center">
-          <ImportServiceCard 
-            icon={service.icon}
-            name={service.name}
-            isSelected={selectedService === service.id}
-            onSelect={() => onSelectService(service.id)}
-            comingSoon={service.comingSoon}
-          />
-        </div>
+        <ImportServiceCard 
+          key={service.id}
+          icon={service.icon}
+          name={service.name}
+          isSelected={selectedService === service.id}
+          onSelect={() => onSelectService(service.id)}
+          comingSoon={service.comingSoon}
+        />
       ))}
     </div>
   );
