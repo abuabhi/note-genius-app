@@ -1,8 +1,8 @@
 
-import { useSimpleAnalytics } from './useSimpleAnalytics';
+import { useUltraSimpleAnalytics } from './useUltraSimpleAnalytics';
 
 export const useConsolidatedAnalytics = () => {
-  const { analytics, isLoading } = useSimpleAnalytics();
+  const { analytics, isLoading } = useUltraSimpleAnalytics();
 
   return { 
     analytics, 

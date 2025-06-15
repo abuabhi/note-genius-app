@@ -3,12 +3,12 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Clock, Target, TrendingUp, Calendar, BookOpen, Award, AlertTriangle, Globe, CheckCircle } from 'lucide-react';
-import { useSimpleAnalytics } from '@/hooks/useSimpleAnalytics';
+import { Clock, Target, TrendingUp, Calendar, BookOpen, Award, AlertTriangle, CheckCircle } from 'lucide-react';
+import { useUltraSimpleAnalytics } from '@/hooks/useUltraSimpleAnalytics';
 import { useBasicSessionTracker } from '@/hooks/useBasicSessionTracker';
 
 export const AnalyticsOverview = () => {
-  const { analytics, isLoading, error } = useSimpleAnalytics();
+  const { analytics, isLoading, error } = useUltraSimpleAnalytics();
   const { isActive, elapsedSeconds, isPaused } = useBasicSessionTracker();
 
   console.log('📊 AnalyticsOverview state:', { 

@@ -1,8 +1,8 @@
 
-import { useSimpleAnalytics } from './useSimpleAnalytics';
+import { useUltraSimpleAnalytics } from './useUltraSimpleAnalytics';
 
 export const useDashboardAnalytics = () => {
-  const { analytics, isLoading } = useSimpleAnalytics();
+  const { analytics, isLoading } = useUltraSimpleAnalytics();
 
   const todaysActivity = {
     cardsReviewed: 0,
