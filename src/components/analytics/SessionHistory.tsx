@@ -2,30 +2,37 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Calendar, BookOpen, Target } from 'lucide-react';
-import { useSessionAnalytics } from '@/hooks/useSessionAnalytics';
+import { Clock, Calendar, Award, BookOpen } from 'lucide-react';
+import { useTimezoneAwareAnalytics } from '@/hooks/useTimezoneAwareAnalytics';
 import { format } from 'date-fns';
 
 export const SessionHistory = () => {
-  const { sessions, isLoading } = useSessionAnalytics();
-
-  const formatDuration = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`;
-    }
-    return `${minutes}m`;
-  };
+  const { analytics, isLoading } = useTimezoneAwareAnalytics();
 
   const getSessionQualityColor = (quality: string) => {
     switch (quality) {
-      case 'excellent': return 'bg-green-100 text-green-800';
-      case 'good': return 'bg-blue-100 text-blue-800';
-      case 'needs_improvement': return 'bg-yellow-100 text-yellow-800';
-      case 'poor': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'excellent':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'good':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'needs_improvement':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'poor':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'short':
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'excessive':
+        return 'bg-orange-100 text-orange-800 border-orange-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
+  };
+
+  const formatDuration = (minutes: number) => {
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
   };
 
   if (isLoading) {
@@ -34,8 +41,13 @@ export const SessionHistory = () => {
         {[...Array(5)].map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardContent className="p-4">
-              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-              <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              <div className="flex justify-between items-start">
+                <div className="space-y-2 flex-1">
+                  <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                </div>
+                <div className="h-6 bg-gray-200 rounded w-16"></div>
+              </div>
             </CardContent>
           </Card>
         ))}
@@ -43,16 +55,16 @@ export const SessionHistory = () => {
     );
   }
 
-  const completedSessions = sessions.filter(session => !session.is_active && session.duration);
+  const sessions = analytics.recentSessions || [];
 
-  if (completedSessions.length === 0) {
+  if (sessions.length === 0) {
     return (
       <Card>
-        <CardContent className="p-8 text-center">
-          <Clock className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+        <CardContent className="flex flex-col items-center justify-center py-12">
+          <Clock className="h-12 w-12 text-gray-400 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No Study Sessions Yet</h3>
-          <p className="text-gray-500">
-            Your study sessions will appear here once you start studying with SessionDock.
+          <p className="text-gray-600 text-center max-w-md">
+            Start studying to see your session history here. Your sessions will be tracked automatically!
           </p>
         </CardContent>
       </Card>
@@ -60,122 +72,86 @@ export const SessionHistory = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Session Summary */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-blue-500" />
-              <div>
-                <div className="text-lg font-semibold">{completedSessions.length}</div>
-                <div className="text-sm text-muted-foreground">Total Sessions</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-green-500" />
-              <div>
-                <div className="text-lg font-semibold">
-                  {formatDuration(completedSessions.reduce((acc, s) => acc + (s.duration || 0), 0))}
-                </div>
-                <div className="text-sm text-muted-foreground">Total Time</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <BookOpen className="h-4 w-4 text-purple-500" />
-              <div>
-                <div className="text-lg font-semibold">
-                  {completedSessions.reduce((acc, s) => acc + (s.cards_reviewed || 0), 0)}
-                </div>
-                <div className="text-sm text-muted-foreground">Cards Reviewed</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Target className="h-4 w-4 text-orange-500" />
-              <div>
-                <div className="text-lg font-semibold">
-                  {Math.round(completedSessions.reduce((acc, s) => acc + (s.duration || 0), 0) / completedSessions.length / 60)}m
-                </div>
-                <div className="text-sm text-muted-foreground">Avg Session</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold text-gray-900">Recent Study Sessions</h2>
+        <Badge variant="outline" className="text-sm">
+          {sessions.length} sessions
+        </Badge>
       </div>
-
-      {/* Recent Sessions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Study Sessions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {completedSessions.slice(0, 10).map((session) => (
-              <div key={session.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+      
+      <div className="space-y-4">
+        {sessions.map((session: any) => (
+          <Card key={session.id} className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex justify-between items-start">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h4 className="font-medium">{session.title || 'Study Session'}</h4>
-                    <Badge className={getSessionQualityColor(session.session_quality || 'good')}>
-                      {session.session_quality || 'Good'}
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="font-medium text-gray-900">
+                      {session.title || session.subject || 'Study Session'}
+                    </h3>
+                    <Badge 
+                      variant="outline" 
+                      className={`text-xs ${getSessionQualityColor(session.session_quality || 'good')}`}
+                    >
+                      {session.session_quality || 'good'}
                     </Badge>
                   </div>
                   
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {format(new Date(session.start_time), 'MMM d, yyyy')}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {formatDuration(session.duration || 0)}
-                    </span>
-                    {session.cards_reviewed && session.cards_reviewed > 0 && (
-                      <span className="flex items-center gap-1">
-                        <BookOpen className="h-3 w-3" />
-                        {session.cards_reviewed} cards
-                      </span>
+                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      {session.start_time ? format(new Date(session.start_time), 'MMM d, yyyy • h:mm a') : 'Unknown time'}
+                    </div>
+                    
+                    {session.duration && (
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4" />
+                        {formatDuration(session.duration)}
+                      </div>
                     )}
                   </div>
                   
                   {session.subject && (
-                    <div className="mt-1">
-                      <Badge variant="outline" className="text-xs">
+                    <div className="mt-2">
+                      <Badge variant="secondary" className="text-xs">
                         {session.subject}
                       </Badge>
                     </div>
                   )}
                 </div>
-
-                <div className="text-right">
-                  <div className="text-sm font-medium">
-                    {format(new Date(session.start_time), 'h:mm a')}
-                  </div>
-                  {session.cards_correct && session.cards_reviewed && (
-                    <div className="text-xs text-muted-foreground">
-                      {Math.round((session.cards_correct / session.cards_reviewed) * 100)}% accuracy
+                
+                <div className="text-right ml-4">
+                  {session.cards_reviewed > 0 && (
+                    <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
+                      <BookOpen className="h-4 w-4" />
+                      <span>{session.cards_correct || 0}/{session.cards_reviewed} cards</span>
                     </div>
+                  )}
+                  
+                  {session.cards_reviewed > 0 && (
+                    <div className="text-xs text-gray-500">
+                      {Math.round(((session.cards_correct || 0) / session.cards_reviewed) * 100)}% accuracy
+                    </div>
+                  )}
+                  
+                  {session.is_active && (
+                    <Badge variant="default" className="mt-2">
+                      Active
+                    </Badge>
                   )}
                 </div>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              
+              {session.notes && (
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <p className="text-sm text-gray-600 italic">"{session.notes}"</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 };

@@ -4,10 +4,9 @@ import Layout from "@/components/layout/Layout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
-import { BarChart3, TrendingUp, History, Award, Brain } from "lucide-react";
+import { BarChart3, TrendingUp, History, Brain } from "lucide-react";
 import { AnalyticsOverview } from "@/components/analytics/AnalyticsOverview";
 import { SessionHistory } from "@/components/analytics/SessionHistory";
-import { DetailedAnalytics } from "@/components/analytics/DetailedAnalytics";
 import { Achievements } from "@/components/progress/Achievements";
 
 const AnalyticsPage = () => {
@@ -49,7 +48,7 @@ const AnalyticsPage = () => {
                 <div className="flex items-center text-mint-600">
                   <Brain className="mr-2 h-5 w-5" />
                   <span className="text-sm">
-                    Track your progress, sessions, and achievements in one place
+                    Track your progress, sessions, and achievements
                   </span>
                 </div>
               </div>
@@ -59,7 +58,7 @@ const AnalyticsPage = () => {
           {/* Analytics Content */}
           <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-mint-100 p-6 shadow-lg">
             <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-4 md:w-auto md:inline-flex bg-mint-50 border border-mint-200">
+              <TabsList className="grid w-full grid-cols-3 md:w-auto md:inline-flex bg-mint-50 border border-mint-200">
                 <TabsTrigger 
                   value="overview" 
                   className="data-[state=active]:bg-mint-500 data-[state=active]:text-white"
@@ -75,17 +74,10 @@ const AnalyticsPage = () => {
                   Sessions
                 </TabsTrigger>
                 <TabsTrigger 
-                  value="analytics"
-                  className="data-[state=active]:bg-mint-500 data-[state=active]:text-white"
-                >
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  Analytics
-                </TabsTrigger>
-                <TabsTrigger 
                   value="achievements"
                   className="data-[state=active]:bg-mint-500 data-[state=active]:text-white"
                 >
-                  <Award className="h-4 w-4 mr-2" />
+                  <BarChart3 className="h-4 w-4 mr-2" />
                   Achievements
                 </TabsTrigger>
               </TabsList>
@@ -96,10 +88,6 @@ const AnalyticsPage = () => {
               
               <TabsContent value="sessions" className="mt-6">
                 <SessionHistory />
-              </TabsContent>
-              
-              <TabsContent value="analytics" className="mt-6">
-                <DetailedAnalytics />
               </TabsContent>
               
               <TabsContent value="achievements" className="mt-6">
