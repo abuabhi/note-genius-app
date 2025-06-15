@@ -13,6 +13,7 @@ import { useNoteEnrichment } from '@/hooks/useNoteEnrichment';
 import { toast } from 'sonner';
 import { StudyBreadcrumb } from './navigation/StudyBreadcrumb';
 import { useLocation } from 'react-router-dom';
+import { setEnhancementGenerating, setEnhancementFailed } from '@/hooks/noteEnrichment/enhancementHelpers';
 
 interface NoteStudyViewProps {
   note: Note;
@@ -78,7 +79,7 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
     }
   }, [currentNote, location.pathname]);
 
-  // CRITICAL FIX: Only allow manual enhancement requests, never automatic
+  // FIXED: Comprehensive enhancement handling for ALL types
   const handleEnhanceContent = async (enhancementType: string) => {
     console.log("🎯 EXPLICIT MANUAL enhancement requested:", enhancementType);
     console.log("🎯 This should ONLY be called from user button clicks, never tab switches");
@@ -89,18 +90,9 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
         return;
       }
 
-      // CRITICAL: Only set status to generating if this is truly a user-initiated request
-      if (enhancementType === 'summarize') {
-        console.log("🎯 Setting summary_status to generating for USER REQUEST");
-        await onNoteUpdate({
-          summary_status: 'generating'
-        });
-      } else if (enhancementType === 'enrich-note') {
-        console.log("🎯 Setting enriched_status to generating for USER REQUEST");
-        await onNoteUpdate({
-          enriched_status: 'generating'
-        });
-      }
+      // CRITICAL FIX: Set status to generating for ALL enhancement types
+      console.log("🎯 Setting status to generating for enhancement type:", enhancementType);
+      await setEnhancementGenerating(currentNote.id, enhancementType as any);
 
       const result = await enrichNote(
         currentNote.id,
@@ -111,16 +103,16 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
 
       if (result.success) {
         const fieldName = getEnhancementFieldName(enhancementType);
+        const statusFieldName = getEnhancementStatusFieldName(enhancementType);
         const updateData: any = {
           [fieldName]: result.content,
           [`${fieldName}_generated_at`]: new Date().toISOString(),
           enhancement_type: getEnhancementType(enhancementType) as 'clarity' | 'other' | 'spelling-grammar'
         };
 
-        if (enhancementType === 'summarize') {
-          updateData.summary_status = 'completed';
-        } else if (enhancementType === 'enrich-note') {
-          updateData.enriched_status = 'completed';
+        // Set the appropriate status field to completed
+        if (statusFieldName) {
+          updateData[statusFieldName] = 'completed';
         }
 
         await onNoteUpdate(updateData);
@@ -128,29 +120,15 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
         forceRefresh();
         toast.success('Enhancement completed successfully!');
       } else {
-        if (enhancementType === 'summarize') {
-          await onNoteUpdate({
-            summary_status: 'failed'
-          });
-        } else if (enhancementType === 'enrich-note') {
-          await onNoteUpdate({
-            enriched_status: 'failed'
-          });
-        }
+        // Set status to failed for the specific enhancement type
+        await setEnhancementFailed(currentNote.id, enhancementType as any);
         toast.error('Failed to enhance note');
       }
     } catch (error) {
       console.error('Error enhancing content:', error);
       
-      if (enhancementType === 'summarize') {
-        await onNoteUpdate({
-          summary_status: 'failed'
-        });
-      } else if (enhancementType === 'enrich-note') {
-        await onNoteUpdate({
-          enriched_status: 'failed'
-        });
-      }
+      // Set status to failed on error
+      await setEnhancementFailed(currentNote.id, enhancementType as any);
       
       toast.error('Failed to enhance note');
     }
@@ -271,7 +249,7 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
   );
 };
 
-// Helper functions
+// Helper functions - FIXED with comprehensive status field mapping
 const getEnhancementFieldName = (enhancementType: string): string => {
   switch (enhancementType) {
     case 'summarize':
@@ -286,6 +264,24 @@ const getEnhancementFieldName = (enhancementType: string): string => {
       return 'enriched_content';
     default:
       return 'summary';
+  }
+};
+
+// NEW: Helper function for status field names
+const getEnhancementStatusFieldName = (enhancementType: string): string | null => {
+  switch (enhancementType) {
+    case 'summarize':
+      return 'summary_status';
+    case 'extract-key-points':
+      return 'key_points_status';
+    case 'improve-clarity':
+      return 'improved_content_status';
+    case 'convert-to-markdown':
+      return 'markdown_content_status';
+    case 'enrich-note':
+      return 'enriched_status';
+    default:
+      return null;
   }
 };
 

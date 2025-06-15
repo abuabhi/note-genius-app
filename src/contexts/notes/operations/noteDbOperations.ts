@@ -21,10 +21,16 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
         summary_status: noteData.summary_status || 'pending',
         key_points: noteData.key_points,
         key_points_generated_at: noteData.key_points_generated_at,
+        key_points_status: noteData.key_points_status || 'pending',
         markdown_content: noteData.markdown_content,
         markdown_content_generated_at: noteData.markdown_content_generated_at,
+        markdown_content_status: noteData.markdown_content_status || 'pending',
         improved_content: noteData.improved_content,
         improved_content_generated_at: noteData.improved_content_generated_at,
+        improved_content_status: noteData.improved_content_status || 'pending',
+        enriched_content: noteData.enriched_content,
+        enriched_content_generated_at: noteData.enriched_content_generated_at,
+        enriched_status: noteData.enriched_status || 'pending',
         subject_id: noteData.subject_id
       })
       .select()
@@ -51,10 +57,16 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
       summary_status: noteInsertData.summary_status as 'pending' | 'generating' | 'completed' | 'failed',
       key_points: noteInsertData.key_points,
       key_points_generated_at: noteInsertData.key_points_generated_at,
+      key_points_status: noteInsertData.key_points_status as 'pending' | 'generating' | 'completed' | 'failed',
       markdown_content: noteInsertData.markdown_content,
       markdown_content_generated_at: noteInsertData.markdown_content_generated_at,
+      markdown_content_status: noteInsertData.markdown_content_status as 'pending' | 'generating' | 'completed' | 'failed',
       improved_content: noteInsertData.improved_content,
       improved_content_generated_at: noteInsertData.improved_content_generated_at,
+      improved_content_status: noteInsertData.improved_content_status as 'pending' | 'generating' | 'completed' | 'failed',
+      enriched_content: noteInsertData.enriched_content,
+      enriched_content_generated_at: noteInsertData.enriched_content_generated_at,
+      enriched_status: noteInsertData.enriched_status as 'pending' | 'generating' | 'completed' | 'failed',
       subject_id: noteInsertData.subject_id,
       scanData: noteData.sourceType === 'scan' && noteData.scanData ? {
         originalImageUrl: noteData.scanData.originalImageUrl,
@@ -135,21 +147,24 @@ export const updateNoteInDatabase = async (id: string, updatedNote: Partial<Note
   if (updatedNote.pinned !== undefined) noteUpdateData.pinned = updatedNote.pinned;
   if (updatedNote.subject_id !== undefined) noteUpdateData.subject_id = updatedNote.subject_id;
 
-  // Enhancement fields
+  // Enhancement fields with comprehensive status tracking
   if (updatedNote.summary !== undefined) noteUpdateData.summary = updatedNote.summary;
   if (updatedNote.summary_generated_at !== undefined) noteUpdateData.summary_generated_at = updatedNote.summary_generated_at;
   if (updatedNote.summary_status !== undefined) noteUpdateData.summary_status = updatedNote.summary_status;
   
   if (updatedNote.key_points !== undefined) noteUpdateData.key_points = updatedNote.key_points;
   if (updatedNote.key_points_generated_at !== undefined) noteUpdateData.key_points_generated_at = updatedNote.key_points_generated_at;
+  if (updatedNote.key_points_status !== undefined) noteUpdateData.key_points_status = updatedNote.key_points_status;
   
   if (updatedNote.markdown_content !== undefined) noteUpdateData.markdown_content = updatedNote.markdown_content;
   if (updatedNote.markdown_content_generated_at !== undefined) noteUpdateData.markdown_content_generated_at = updatedNote.markdown_content_generated_at;
+  if (updatedNote.markdown_content_status !== undefined) noteUpdateData.markdown_content_status = updatedNote.markdown_content_status;
   
   if (updatedNote.improved_content !== undefined) noteUpdateData.improved_content = updatedNote.improved_content;
   if (updatedNote.improved_content_generated_at !== undefined) noteUpdateData.improved_content_generated_at = updatedNote.improved_content_generated_at;
+  if (updatedNote.improved_content_status !== undefined) noteUpdateData.improved_content_status = updatedNote.improved_content_status;
 
-  // NEW: Enriched content fields
+  // Enriched content fields
   if (updatedNote.enriched_content !== undefined) noteUpdateData.enriched_content = updatedNote.enriched_content;
   if (updatedNote.enriched_content_generated_at !== undefined) noteUpdateData.enriched_content_generated_at = updatedNote.enriched_content_generated_at;
   if (updatedNote.enriched_status !== undefined) noteUpdateData.enriched_status = updatedNote.enriched_status;

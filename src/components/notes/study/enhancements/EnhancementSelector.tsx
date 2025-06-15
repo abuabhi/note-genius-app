@@ -59,16 +59,28 @@ export const EnhancementSelector = ({
     note.enriched_content.trim().length > 20
   );
   
-  // Check enhancement statuses - only show generating for summary if it's actually in progress
+  // FIXED: Check enhancement statuses for ALL types
   const summaryStatus = note.summary_status || "completed";
   const isGeneratingSummary = summaryStatus === 'generating' || summaryStatus === 'pending';
   const hasSummaryError = summaryStatus === 'failed';
+
+  const keyPointsStatus = note.key_points_status || "completed";
+  const isGeneratingKeyPoints = keyPointsStatus === 'generating' || keyPointsStatus === 'pending';
+  const hasKeyPointsError = keyPointsStatus === 'failed';
+
+  const markdownStatus = note.markdown_content_status || "completed";
+  const isGeneratingMarkdown = markdownStatus === 'generating' || markdownStatus === 'pending';
+  const hasMarkdownError = markdownStatus === 'failed';
+
+  const improvedStatus = note.improved_content_status || "completed";
+  const isGeneratingImproved = improvedStatus === 'generating' || improvedStatus === 'pending';
+  const hasImprovedError = improvedStatus === 'failed';
 
   const enrichedStatus = note.enriched_status || "completed";
   const isGeneratingEnriched = enrichedStatus === 'generating' || enrichedStatus === 'pending';
   const hasEnrichedError = enrichedStatus === 'failed';
 
-  console.log("🔍 EnhancementSelector - Content availability check:", {
+  console.log("🔍 EnhancementSelector - FIXED Content availability check:", {
     noteId: note.id,
     hasContent: {
       summary: hasSummary,
@@ -77,13 +89,24 @@ export const EnhancementSelector = ({
       improvedClarity: hasImprovedClarity,
       enriched: hasEnrichedContent
     },
-    summaryStatus,
-    enrichedStatus,
-    isGenerating: isGeneratingSummary || isGeneratingEnriched,
+    statuses: {
+      summaryStatus,
+      keyPointsStatus,
+      markdownStatus,
+      improvedStatus,
+      enrichedStatus
+    },
+    isGenerating: {
+      summary: isGeneratingSummary,
+      keyPoints: isGeneratingKeyPoints,
+      markdown: isGeneratingMarkdown,
+      improved: isGeneratingImproved,
+      enriched: isGeneratingEnriched
+    },
     activeTab: activeContentType
   });
 
-  // Define all enhancement options - ALWAYS show all tabs
+  // Define all enhancement options - ALWAYS show all tabs with proper status tracking
   const enhancementOptions: EnhancementOption[] = [
     {
       id: 'original',
@@ -97,7 +120,9 @@ export const EnhancementSelector = ({
       label: 'Original++',
       icon: Code,
       description: 'Original note formatted',
-      hasContent: hasMarkdown
+      hasContent: hasMarkdown,
+      isGenerating: isGeneratingMarkdown && !hasMarkdown,
+      hasError: hasMarkdownError
     },
     {
       id: 'summary',
@@ -105,7 +130,7 @@ export const EnhancementSelector = ({
       icon: Target,
       description: 'AI-generated concise summary',
       hasContent: hasSummary,
-      isGenerating: isGeneratingSummary && !hasSummary, // Only show generating if no content exists
+      isGenerating: isGeneratingSummary && !hasSummary,
       hasError: hasSummaryError
     },
     {
@@ -113,14 +138,18 @@ export const EnhancementSelector = ({
       label: 'Key Points',
       icon: List,
       description: 'Essential highlights extracted',
-      hasContent: hasKeyPoints
+      hasContent: hasKeyPoints,
+      isGenerating: isGeneratingKeyPoints && !hasKeyPoints,
+      hasError: hasKeyPointsError
     },
     {
       id: 'improved',
       label: 'Improved Clarity',
       icon: Sparkles,
       description: 'Enhanced notes version',
-      hasContent: hasImprovedClarity
+      hasContent: hasImprovedClarity,
+      isGenerating: isGeneratingImproved && !hasImprovedClarity,
+      hasError: hasImprovedError
     },
     {
       id: 'enriched',
@@ -133,7 +162,7 @@ export const EnhancementSelector = ({
     }
   ];
 
-  console.log("📋 EnhancementSelector - All tabs always visible:", {
+  console.log("📋 EnhancementSelector - All tabs with FIXED status tracking:", {
     totalTabs: enhancementOptions.length,
     tabStates: enhancementOptions.map(opt => ({
       id: opt.id,

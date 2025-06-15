@@ -27,13 +27,28 @@ export const EnhancementDisplayPanel = ({
   onCancelEnhancement,
   className = ""
 }: EnhancementDisplayPanelProps) => {
-  // Check if summary is in generating/pending state
-  const isSummaryGenerating = contentType === 'summary' && 
-    (note.summary_status === 'generating' || note.summary_status === 'pending');
+  
+  // FIXED: Check generating status for ALL enhancement types
+  const getGeneratingStatus = (type: EnhancementContentType): boolean => {
+    switch (type) {
+      case 'summary':
+        return note.summary_status === 'generating' || note.summary_status === 'pending';
+      case 'keyPoints':
+        return note.key_points_status === 'generating' || note.key_points_status === 'pending';
+      case 'improved':
+        return note.improved_content_status === 'generating' || note.improved_content_status === 'pending';
+      case 'markdown':
+        return note.markdown_content_status === 'generating' || note.markdown_content_status === 'pending';
+      case 'enriched':
+        return note.enriched_status === 'generating' || note.enriched_status === 'pending';
+      case 'original':
+        return false; // Original content doesn't have generating status
+      default:
+        return false;
+    }
+  };
 
-  // Check if enriched content is in generating/pending state
-  const isEnrichedGenerating = contentType === 'enriched' && 
-    (note.enriched_status === 'generating' || note.enriched_status === 'pending');
+  const isContentGenerating = getGeneratingStatus(contentType);
   
   // SIMPLIFIED: Direct mapping for enhancement types
   const getEnhancementTypeForRetry = (contentType: EnhancementContentType): string => {
@@ -79,6 +94,7 @@ export const EnhancementDisplayPanel = ({
       contentType: type,
       hasContent: !!content,
       contentLength: content.length,
+      isGenerating: isContentGenerating,
       contentPreview: content.substring(0, 100)
     });
     
@@ -116,8 +132,7 @@ export const EnhancementDisplayPanel = ({
     hasContent: !!content,
     contentLength: content.length,
     isLoading,
-    isSummaryGenerating,
-    isEnrichedGenerating,
+    isContentGenerating,
     title,
     contentPreview: content.substring(0, 100)
   });
@@ -125,14 +140,14 @@ export const EnhancementDisplayPanel = ({
   return (
     <div className={`flex flex-col h-full ${className}`}>
       {/* Show loading state when processing */}
-      {(isLoading || isSummaryGenerating || isEnrichedGenerating) && (
+      {(isLoading || isContentGenerating) && (
         <div className="flex-1 flex items-center justify-center p-8">
           <LoadingAnimations enhancementType={enhancementType} />
         </div>
       )}
       
       {/* Show content when not loading - with metadata header */}
-      {!isLoading && !isSummaryGenerating && !isEnrichedGenerating && content && (
+      {!isLoading && !isContentGenerating && content && (
         <div className="flex-1 overflow-auto">
           {/* Content metadata header */}
           <ContentMetadata 
@@ -153,7 +168,7 @@ export const EnhancementDisplayPanel = ({
       )}
 
       {/* Show empty state when no content and not loading - NEVER AUTO-GENERATE */}
-      {!isLoading && !isSummaryGenerating && !isEnrichedGenerating && !content && (
+      {!isLoading && !isContentGenerating && !content && (
         <div className="flex-1 overflow-auto">
           <EnhancementContent
             content=""
