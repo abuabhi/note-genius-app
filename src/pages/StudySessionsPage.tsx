@@ -9,16 +9,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, History, Archive, BarChart3, Brain } from "lucide-react";
 import { useSessionAnalytics } from "@/hooks/useSessionAnalytics";
 import { useConsolidatedAnalytics } from "@/hooks/useConsolidatedAnalytics";
-import { useSessionCleanup } from "@/hooks/useSessionCleanup";
 
 const StudySessionsPage = () => {
   const { user, loading } = useRequireAuth();
   const [activeTab, setActiveTab] = useState("analytics");
   const { sessions, isLoading } = useSessionAnalytics();
   const { analytics } = useConsolidatedAnalytics();
-  
-  // Clean up orphaned sessions on component mount
-  useSessionCleanup();
 
   const getFilteredSessions = (filter: string) => {
     switch(filter) {

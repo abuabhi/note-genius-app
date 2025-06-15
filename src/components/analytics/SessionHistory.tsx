@@ -3,11 +3,11 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Calendar, Award, BookOpen } from 'lucide-react';
-import { useTimezoneAwareAnalytics } from '@/hooks/useTimezoneAwareAnalytics';
+import { useCleanSessionAnalytics } from '@/hooks/useCleanSessionAnalytics';
 import { format } from 'date-fns';
 
 export const SessionHistory = () => {
-  const { analytics, isLoading } = useTimezoneAwareAnalytics();
+  const { sessions, isLoading } = useCleanSessionAnalytics();
 
   const getSessionQualityColor = (quality: string) => {
     switch (quality) {
@@ -28,7 +28,8 @@ export const SessionHistory = () => {
     }
   };
 
-  const formatDuration = (minutes: number) => {
+  const formatDuration = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
     if (minutes < 60) return `${minutes}m`;
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
@@ -55,16 +56,18 @@ export const SessionHistory = () => {
     );
   }
 
-  const sessions = analytics.recentSessions || [];
+  // Only show real study sessions (not auto-created ones)
+  const realSessions = sessions.filter(session => !session.auto_created);
 
-  if (sessions.length === 0) {
+  if (realSessions.length === 0) {
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
           <Clock className="h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Study Sessions Yet</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No Real Study Sessions Yet</h3>
           <p className="text-gray-600 text-center max-w-md">
-            Start studying to see your session history here. Your sessions will be tracked automatically!
+            Start studying flashcards, reviewing notes, or taking quizzes to see your session history here. 
+            Your sessions will be tracked automatically when you engage in study activities!
           </p>
         </CardContent>
       </Card>
@@ -76,12 +79,12 @@ export const SessionHistory = () => {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-gray-900">Recent Study Sessions</h2>
         <Badge variant="outline" className="text-sm">
-          {sessions.length} sessions
+          {realSessions.length} real sessions
         </Badge>
       </div>
       
       <div className="space-y-4">
-        {sessions.map((session: any) => (
+        {realSessions.map((session: any) => (
           <Card key={session.id} className="hover:shadow-md transition-shadow">
             <CardContent className="p-4">
               <div className="flex justify-between items-start">
@@ -96,6 +99,11 @@ export const SessionHistory = () => {
                     >
                       {session.session_quality || 'good'}
                     </Badge>
+                    {session.activity_type && (
+                      <Badge variant="secondary" className="text-xs">
+                        {session.activity_type.replace('_', ' ')}
+                      </Badge>
+                    )}
                   </div>
                   
                   <div className="flex items-center gap-4 text-sm text-gray-600">
@@ -143,7 +151,7 @@ export const SessionHistory = () => {
                 </div>
               </div>
               
-              {session.notes && (
+              {session.notes && !session.notes.includes('Auto-terminated') && (
                 <div className="mt-3 pt-3 border-t border-gray-100">
                   <p className="text-sm text-gray-600 italic">"{session.notes}"</p>
                 </div>

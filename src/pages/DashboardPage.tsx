@@ -8,7 +8,6 @@ import { TodosSection } from "@/components/dashboard/TodosSection";
 import { GoalsSection } from "@/components/dashboard/GoalsSection";
 import { ReferralSignupHandler } from "@/components/referrals/ReferralSignupHandler";
 import { ReferralSignupErrorBoundary } from "@/components/referrals/ReferralSignupErrorBoundary";
-import { useSessionCleanup } from "@/hooks/useSessionCleanup";
 
 const DashboardPage = () => {
   console.log('🏠 DashboardPage component rendering');
@@ -18,9 +17,6 @@ const DashboardPage = () => {
     userProfile,
     loading
   } = useRequireAuth();
-  
-  // Clean up orphaned sessions on dashboard load
-  useSessionCleanup();
   
   console.log('👤 Dashboard auth state:', {
     user: user?.id,
