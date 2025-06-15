@@ -46,7 +46,7 @@ const CreateFlashcardSet = ({ onSuccess, initialSubject }: CreateFlashcardSetPro
       const setData: CreateFlashcardSetPayload = {
         name: name.trim(),
         description: description.trim() || undefined,
-        subject: subject || undefined,
+        subject: subject === "no_subject" ? undefined : subject || undefined,
         topic: topic.trim() || undefined,
       };
       
@@ -113,7 +113,7 @@ const CreateFlashcardSet = ({ onSuccess, initialSubject }: CreateFlashcardSetPro
                   <SelectValue placeholder="Select a subject" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No subject</SelectItem>
+                  <SelectItem value="no_subject">No subject</SelectItem>
                   {userSubjects.map((userSubject) => (
                     <SelectItem key={userSubject.id} value={userSubject.name}>
                       {userSubject.name}
