@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,7 +12,7 @@ interface DashboardData {
 export const useOptimizedDashboard = () => {
   const [priorityData, setPriorityData] = useState<Partial<DashboardData>>({});
 
-  console.log('📊 [OPTIMIZED DASHBOARD] Using SessionDock unified sessions for all analytics');
+  console.log('📊 [OPTIMIZED DASHBOARD] Using UnifiedSessionTracker for all session analytics');
 
   // Load critical data first (Today's Focus)
   const { data: todaysFocus, isLoading: todaysFocusLoading } = useQuery({
@@ -29,19 +28,19 @@ export const useOptimizedDashboard = () => {
       return data || [];
     },
     staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes,
   });
 
-  // Load study stats from unified SessionDock sessions only
+  // Load study stats from UnifiedSessionTracker sessions only
   const { data: studyStats, isLoading: studyStatsLoading } = useQuery({
     queryKey: ['dashboard', 'studyStats'],
     queryFn: async () => {
       const userId = (await supabase.auth.getUser()).data.user?.id;
       const today = new Date().toISOString().split('T')[0];
       
-      console.log('📊 [OPTIMIZED DASHBOARD] Loading unified session data from SessionDock');
+      console.log('📊 [OPTIMIZED DASHBOARD] Loading session data from UnifiedSessionTracker');
       
-      // Get ALL sessions (created by SessionDock via useBasicSessionTracker)
+      // Get ALL sessions (created by UnifiedSessionTracker only)
       const { data: sessionsData, error: sessionsError } = await supabase
         .from('study_sessions')
         .select('duration, cards_reviewed, cards_correct, activity_type, start_time')
@@ -51,11 +50,11 @@ export const useOptimizedDashboard = () => {
         .limit(10);
 
       if (sessionsError) {
-        console.error('📊 [OPTIMIZED DASHBOARD] Error loading unified sessions:', sessionsError);
+        console.error('📊 [OPTIMIZED DASHBOARD] Error loading sessions:', sessionsError);
         throw sessionsError;
       }
 
-      console.log('📊 [OPTIMIZED DASHBOARD] Loaded unified sessions:', sessionsData);
+      console.log('📊 [OPTIMIZED DASHBOARD] Loaded sessions:', sessionsData);
 
       // Get analytics (read-only)
       const { data: analyticsData, error: analyticsError } = await supabase
