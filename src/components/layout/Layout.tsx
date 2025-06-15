@@ -75,11 +75,14 @@ export default function Layout({ children, showSidebar = true, showFooter = true
         return null;
       }
 
-      // Transform the data to match the Note interface
+      // Transform the data to match the Note interface with proper type casting
       const transformedNote = {
         ...data,
         sourceType: (data.source_type as 'manual' | 'scan' | 'import') || 'manual',
         summary_status: (data.summary_status as 'pending' | 'generating' | 'completed' | 'failed') || 'pending',
+        key_points_status: (data.key_points_status as 'pending' | 'generating' | 'completed' | 'failed') || 'pending',
+        markdown_content_status: (data.markdown_content_status as 'pending' | 'generating' | 'completed' | 'failed') || 'pending',
+        improved_content_status: (data.improved_content_status as 'pending' | 'generating' | 'completed' | 'failed') || 'pending',
         enriched_status: (data.enriched_status as 'pending' | 'generating' | 'completed' | 'failed') || 'pending',
         tags: data.tags?.map((tagRelation: any) => ({
           id: tagRelation.tag.id,
