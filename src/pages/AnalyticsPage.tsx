@@ -3,11 +3,11 @@ import { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
 import { BarChart3, TrendingUp, History, Brain } from "lucide-react";
 import { AnalyticsOverview } from "@/components/analytics/AnalyticsOverview";
 import { SessionHistory } from "@/components/analytics/SessionHistory";
 import { Achievements } from "@/components/progress/Achievements";
+import { StandardPageHeader } from "@/components/ui/StandardPageHeader";
 
 const AnalyticsPage = () => {
   const { user, loading } = useRequireAuth();
@@ -16,7 +16,7 @@ const AnalyticsPage = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="min-h-screen bg-gradient-to-br from-mint-50 via-white to-mint-100/30">
+        <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
           <div className="container mx-auto p-4 md:p-6">
             <div className="flex items-center justify-center h-[80vh]">
               <div className="relative w-12 h-12">
@@ -34,27 +34,21 @@ const AnalyticsPage = () => {
     return null;
   }
 
+  const breadcrumbs = [
+    { label: "Analytics" }
+  ];
+
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-mint-50 via-white to-mint-100/30">
-        <div className="container mx-auto p-4 md:p-6 space-y-8">
-          {/* Header Section */}
-          <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-mint-100 p-6 shadow-lg">
-            <PageBreadcrumb pageName="Analytics" pageIcon={<BarChart3 className="h-3 w-3" />} />
-            
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between mt-4">
-              <div>
-                <h1 className="text-3xl font-bold text-mint-900 mb-2">Learning Analytics</h1>
-                <div className="flex items-center text-mint-600">
-                  <Brain className="mr-2 h-5 w-5" />
-                  <span className="text-sm">
-                    Track your progress, sessions, and achievements
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
+      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+        <StandardPageHeader
+          title="Learning Analytics"
+          description="Track your progress, sessions, and achievements"
+          icon={<BarChart3 className="h-6 w-6 text-white" />}
+          breadcrumbs={breadcrumbs}
+        />
+        
+        <div className="container mx-auto px-6 py-8">
           {/* Analytics Content */}
           <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-mint-100 p-6 shadow-lg">
             <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="w-full">
