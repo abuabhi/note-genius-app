@@ -17,6 +17,7 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { stripMarkdown } from "../card/utils/markdownUtils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useUserSubjects } from "@/hooks/useUserSubjects";
 
 interface EnhancedNoteCardProps {
   note: Note;
@@ -35,6 +36,18 @@ export const EnhancedNoteCard = ({
   onDelete,
   confirmDelete
 }: EnhancedNoteCardProps) => {
+  const { subjects, isLoading: subjectsLoading } = useUserSubjects();
+
+  const getSubjectName = () => {
+    if (note.subject_id && !subjectsLoading && subjects.length > 0) {
+      const foundSubject = subjects.find(s => s.id === note.subject_id);
+      if (foundSubject) {
+        return foundSubject.name;
+      }
+    }
+    return note.subject || "Uncategorized";
+  };
+
   const getSourceIcon = () => {
     switch (note.sourceType) {
       case 'scan': return <FileText className="h-3 w-3" />;
@@ -52,6 +65,8 @@ export const EnhancedNoteCard = ({
   const contentPreview = note.content 
     ? stripMarkdown(note.content).substring(0, 120) + (note.content.length > 120 ? '...' : '')
     : note.description.substring(0, 120) + (note.description.length > 120 ? '...' : '');
+
+  const subjectName = getSubjectName();
 
   return (
     <Card 
@@ -71,15 +86,14 @@ export const EnhancedNoteCard = ({
           <div className="flex items-center justify-center w-6 h-6 bg-yellow-400 rounded-full shadow-lg">
             <Star className="h-3 w-3 text-white fill-white" />
           </div>
-        </div>
-      )}
+        )}
 
       <CardHeader className="relative p-6 pb-4">
         {/* Header with subject and actions */}
         <div className="flex items-center justify-between mb-3">
           <Badge className="bg-mint-100 border-mint-200 text-green-700 border font-medium">
             {getSourceIcon()}
-            <span className="ml-1">{note.subject}</span>
+            <span className="ml-1">{subjectName}</span>
           </Badge>
           
           <DropdownMenu>
