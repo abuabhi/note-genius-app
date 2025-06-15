@@ -7,7 +7,6 @@ import { generateColorFromString, getBestTextColor } from "@/utils/colorUtils";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
-import { useAuth } from "@/hooks/auth/useAuth";
 
 interface NoteCardMetadataProps {
   note: Note;
@@ -16,7 +15,6 @@ interface NoteCardMetadataProps {
 export const NoteCardMetadata = ({ note }: NoteCardMetadataProps) => {
   const navigate = useNavigate();
   const { subjects, isLoading: subjectsLoading } = useUserSubjects();
-  const { user, profile } = useAuth();
   
   // Find the subject name based on subject_id or fall back to subject
   const getSubjectName = () => {
@@ -38,8 +36,8 @@ export const NoteCardMetadata = ({ note }: NoteCardMetadataProps) => {
     navigate(`/notes/study/${note.id}`);
   };
 
-  // Get user's timezone from profile, default to browser timezone
-  const userTimezone = profile?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  // Use browser's default timezone
+  const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   
   // Create a date object and adjust for timezone
   const noteDate = new Date(note.date);

@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
 import { NoteCardActions } from "./NoteCardActions";
-import { useAuth } from "@/hooks/auth/useAuth";
 
 interface CompactNoteCardProps {
   note: Note;
@@ -28,7 +27,6 @@ export const CompactNoteCard = ({
   confirmDelete 
 }: CompactNoteCardProps) => {
   const { subjects, isLoading: subjectsLoading } = useUserSubjects();
-  const { profile } = useAuth();
   
   // Find the subject name based on subject_id or fall back to subject
   const getSubjectName = () => {
@@ -51,13 +49,10 @@ export const CompactNoteCard = ({
     onNoteClick(note);
   };
 
-  // Get user's timezone from profile, default to browser timezone
-  const userTimezone = profile?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
-  
   // Create a proper date object from the note date
   const noteDate = new Date(note.date);
   
-  // Calculate relative time using user's timezone
+  // Calculate relative time using browser timezone
   const relativeTime = formatDistanceToNow(noteDate, { 
     addSuffix: true
   });

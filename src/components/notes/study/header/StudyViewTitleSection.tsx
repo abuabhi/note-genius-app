@@ -4,7 +4,6 @@ import { Note } from "@/types/note";
 import { Input } from "@/components/ui/input";
 import { NoteTagList } from "../../details/NoteTagList";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
-import { useAuth } from "@/hooks/auth/useAuth";
 
 interface StudyViewTitleSectionProps {
   note: Note;
@@ -21,7 +20,6 @@ export const StudyViewTitleSection = ({
 }: StudyViewTitleSectionProps) => {
   const [title, setTitle] = useState(note?.title || "");
   const { subjects, isLoading: subjectsLoading } = useUserSubjects();
-  const { profile } = useAuth();
 
   useEffect(() => {
     setTitle(editableTitle || note?.title || "");
@@ -44,10 +42,10 @@ export const StudyViewTitleSection = ({
 
   const subjectName = getSubjectName();
 
-  // Get user's timezone from profile, default to browser timezone
-  const userTimezone = profile?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  // Get browser's default timezone
+  const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   
-  // Format the date using user's timezone
+  // Format the date using browser timezone
   const formattedDate = note?.date ? new Intl.DateTimeFormat('en-GB', {
     day: '2-digit',
     month: 'short',
