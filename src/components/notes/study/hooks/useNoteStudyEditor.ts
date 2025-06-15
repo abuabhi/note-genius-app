@@ -1,11 +1,12 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { Note } from '@/types/note';
 import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
+import { useUserSubjects } from '@/hooks/useUserSubjects';
 import { toast } from 'sonner';
 
 export const useNoteStudyEditor = (note: Note, forceRefresh: () => void) => {
   const { updateNote } = useOptimizedNotes();
+  const { subjects: userSubjects } = useUserSubjects();
   const [isEditing, setIsEditing] = useState(false);
   const [editableContent, setEditableContent] = useState(note.content || '');
   const [editableTitle, setEditableTitle] = useState(note.title || '');
@@ -13,20 +14,11 @@ export const useNoteStudyEditor = (note: Note, forceRefresh: () => void) => {
   const [selectedTags, setSelectedTags] = useState(note.tags || []);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Mock data for tags and subjects
+  // Mock data for tags (keeping this as is for now)
   const availableTags = [
     { id: '1', name: 'Important', color: '#ef4444' },
     { id: '2', name: 'Study', color: '#3b82f6' },
     { id: '3', name: 'Review', color: '#10b981' }
-  ];
-
-  const availableSubjects = [
-    'Mathematics',
-    'Science',
-    'History',
-    'Literature',
-    'Physics',
-    'Chemistry'
   ];
 
   // Update local state when note changes
@@ -52,10 +44,14 @@ export const useNoteStudyEditor = (note: Note, forceRefresh: () => void) => {
   const handleSaveContent = useCallback(async () => {
     setIsSaving(true);
     try {
+      // Find the subject_id for the selected subject name
+      const selectedSubjectObj = userSubjects.find(s => s.name === editableSubject);
+      
       await updateNote(note.id, {
         title: editableTitle,
         content: editableContent,
         subject: editableSubject,
+        subject_id: selectedSubjectObj?.id || null,
         tags: selectedTags
       });
       
@@ -68,7 +64,7 @@ export const useNoteStudyEditor = (note: Note, forceRefresh: () => void) => {
     } finally {
       setIsSaving(false);
     }
-  }, [note.id, editableTitle, editableContent, editableSubject, selectedTags, updateNote, forceRefresh]);
+  }, [note.id, editableTitle, editableContent, editableSubject, selectedTags, updateNote, forceRefresh, userSubjects]);
 
   const toggleEditing = useCallback(() => {
     setIsEditing(!isEditing);
@@ -91,7 +87,7 @@ export const useNoteStudyEditor = (note: Note, forceRefresh: () => void) => {
     editableSubject,
     selectedTags,
     availableTags,
-    availableSubjects,
+    availableSubjects: userSubjects,
     isSaving,
     handleContentChange,
     handleTitleChange,

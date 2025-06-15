@@ -19,7 +19,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
   const [content, setContent] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { subjects } = useUserSubjects();
+  const { subjects: userSubjects, isLoading: subjectsLoading } = useUserSubjects();
 
   // Initialize form with existing data when editing
   useEffect(() => {
@@ -37,17 +37,20 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
 
     setIsSubmitting(true);
     try {
+      // Find the subject_id for the selected subject name
+      const selectedSubjectObj = userSubjects.find(s => s.name === selectedSubject);
+      
       const noteData: Omit<Note, 'id'> = {
         title: title.trim(),
         description: description.trim(),
         content: content.trim(),
         date: initialData?.date || new Date().toISOString().split('T')[0],
-        subject: selectedSubject || 'General',
+        subject: selectedSubject || '',
+        subject_id: selectedSubjectObj?.id || null,
         sourceType: initialData?.sourceType || 'manual',
         archived: initialData?.archived || false,
         pinned: initialData?.pinned || false,
-        tags: initialData?.tags || [],
-        subject_id: initialData?.subject_id
+        tags: initialData?.tags || []
       };
 
       const result = await onSave(noteData);
@@ -85,12 +88,17 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
             <SelectValue placeholder="Select a subject" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="General">General</SelectItem>
-            {subjects.map(subject => (
-              <SelectItem key={subject.id} value={subject.name}>
-                {subject.name}
-              </SelectItem>
-            ))}
+            {subjectsLoading ? (
+              <SelectItem value="_loading" disabled>Loading subjects...</SelectItem>
+            ) : userSubjects.length > 0 ? (
+              userSubjects.map(subject => (
+                <SelectItem key={subject.id} value={subject.name}>
+                  {subject.name}
+                </SelectItem>
+              ))
+            ) : (
+              <SelectItem value="_none" disabled>No subjects found</SelectItem>
+            )}
           </SelectContent>
         </Select>
       </div>

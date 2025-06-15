@@ -6,6 +6,7 @@ import { Note } from "@/types/note";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserSubject } from "@/types/subject";
+import { useUserSubjects } from "@/hooks/useUserSubjects";
 
 interface NoteStudyEditFormProps {
   note: Note;
@@ -28,11 +29,12 @@ export const NoteStudyEditForm: React.FC<NoteStudyEditFormProps> = ({
   editableSubject,
   selectedTags,
   availableTags,
-  availableSubjects,
   handleContentChange,
   setSelectedTags,
   onSubjectChange
 }) => {
+  const { subjects: userSubjects, isLoading: subjectsLoading } = useUserSubjects();
+
   return (
     <div className="space-y-6">
       <div className="space-y-4">
@@ -53,12 +55,17 @@ export const NoteStudyEditForm: React.FC<NoteStudyEditFormProps> = ({
               <SelectValue placeholder="Select a subject" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="General">General</SelectItem>
-              {availableSubjects.map((subject) => (
-                <SelectItem key={subject.id} value={subject.name}>
-                  {subject.name}
-                </SelectItem>
-              ))}
+              {subjectsLoading ? (
+                <SelectItem value="_loading" disabled>Loading subjects...</SelectItem>
+              ) : userSubjects.length > 0 ? (
+                userSubjects.map((subject) => (
+                  <SelectItem key={subject.id} value={subject.name}>
+                    {subject.name}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value="_none" disabled>No subjects found</SelectItem>
+              )}
             </SelectContent>
           </Select>
         </div>

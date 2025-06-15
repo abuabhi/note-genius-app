@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Save } from 'lucide-react';
 import { Note } from '@/types/note';
 import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
+import { useUserSubjects } from '@/hooks/useUserSubjects';
 import { toast } from 'sonner';
 
 interface EditNoteContentProps {
@@ -19,6 +20,7 @@ interface EditNoteContentProps {
 const EditNoteContent = ({ note }: EditNoteContentProps) => {
   const navigate = useNavigate();
   const { updateNote } = useOptimizedNotes();
+  const { subjects: userSubjects, isLoading: subjectsLoading } = useUserSubjects();
   const [isLoading, setIsLoading] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -33,7 +35,13 @@ const EditNoteContent = ({ note }: EditNoteContentProps) => {
     setIsLoading(true);
 
     try {
-      await updateNote(note.id, formData);
+      // Find the subject_id for the selected subject name
+      const selectedSubjectObj = userSubjects.find(s => s.name === formData.subject);
+      
+      await updateNote(note.id, {
+        ...formData,
+        subject_id: selectedSubjectObj?.id || null
+      });
       toast.success('Note updated successfully!');
       navigate('/notes');
     } catch (error) {
@@ -106,15 +114,17 @@ const EditNoteContent = ({ note }: EditNoteContentProps) => {
                   <SelectValue placeholder="Select subject" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Mathematics">Mathematics</SelectItem>
-                  <SelectItem value="Science">Science</SelectItem>
-                  <SelectItem value="History">History</SelectItem>
-                  <SelectItem value="Literature">Literature</SelectItem>
-                  <SelectItem value="Physics">Physics</SelectItem>
-                  <SelectItem value="Chemistry">Chemistry</SelectItem>
-                  <SelectItem value="Biology">Biology</SelectItem>
-                  <SelectItem value="Geography">Geography</SelectItem>
-                  <SelectItem value="General">General</SelectItem>
+                  {subjectsLoading ? (
+                    <SelectItem value="_loading" disabled>Loading subjects...</SelectItem>
+                  ) : userSubjects.length > 0 ? (
+                    userSubjects.map((subject) => (
+                      <SelectItem key={subject.id} value={subject.name}>
+                        {subject.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="_none" disabled>No subjects found</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>

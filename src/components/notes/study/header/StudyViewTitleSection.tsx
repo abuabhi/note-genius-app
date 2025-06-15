@@ -42,8 +42,7 @@ export const StudyViewTitleSection = ({
     }
     
     // If subject_id lookup fails or doesn't exist, use the legacy subject field
-    // This ensures we don't lose the original subject when subject_id doesn't match
-    return note?.subject || "Uncategorized";
+    return note?.subject || "No Subject";
   };
 
   const subjectName = getSubjectName();
