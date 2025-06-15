@@ -2,35 +2,62 @@
 import Layout from "@/components/layout/Layout";
 import { ScalableNotesContent } from "@/components/notes/page/ScalableNotesContent";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { useOptimizedNotes } from "@/contexts/OptimizedNotesContext";
 import { toast } from "sonner";
+import { Note } from "@/types/note";
 
 const ScalableNotesPage = () => {
   useRequireAuth();
+  const { addNote } = useOptimizedNotes();
 
-  const handleSaveNote = async (noteData: any) => {
+  const handleSaveNote = async (noteData: Omit<Note, 'id'>): Promise<Note> => {
     try {
-      // Handle note saving logic here
-      toast.success("Note saved successfully!");
+      const savedNote = await addNote(noteData);
+      if (savedNote) {
+        toast.success("Note saved successfully!");
+        return savedNote;
+      } else {
+        throw new Error("Failed to save note");
+      }
     } catch (error) {
       toast.error("Failed to save note");
+      throw error;
     }
   };
 
-  const handleScanNote = async () => {
+  const handleScanNote = async (noteData: Omit<Note, 'id'>): Promise<Note> => {
     try {
-      // Handle note scanning logic here
-      toast.success("Note scan initiated");
+      const scannedNote = await addNote({
+        ...noteData,
+        sourceType: 'scan'
+      });
+      if (scannedNote) {
+        toast.success("Note scan completed successfully!");
+        return scannedNote;
+      } else {
+        throw new Error("Failed to save scanned note");
+      }
     } catch (error) {
       toast.error("Failed to scan note");
+      throw error;
     }
   };
 
-  const handleImportNote = async () => {
+  const handleImportNote = async (noteData: Omit<Note, 'id'>): Promise<Note> => {
     try {
-      // Handle note import logic here
-      toast.success("Note import initiated");
+      const importedNote = await addNote({
+        ...noteData,
+        sourceType: 'import'
+      });
+      if (importedNote) {
+        toast.success("Note import completed successfully!");
+        return importedNote;
+      } else {
+        throw new Error("Failed to import note");
+      }
     } catch (error) {
       toast.error("Failed to import note");
+      throw error;
     }
   };
 

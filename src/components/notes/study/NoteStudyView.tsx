@@ -178,10 +178,18 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
     );
   }
 
-  // Convert string array to object array for availableSubjects
+  // Convert string array to UserSubject array with proper structure
   const subjectObjects = Array.isArray(availableSubjects) 
     ? availableSubjects.map(subject => 
-        typeof subject === 'string' ? { name: subject, id: subject } : subject
+        typeof subject === 'string' 
+          ? { 
+              name: subject, 
+              id: subject,
+              user_id: 'current-user', // Add required user_id field
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            } 
+          : subject
       )
     : [];
 

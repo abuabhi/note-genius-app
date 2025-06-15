@@ -11,9 +11,21 @@ interface NoteSelectionTabProps {
   selectedNotes: Note[];
   onNotesChange: (notes: Note[]) => void;
   onNoteToggle?: (note: Note) => void;
+  onGenerateQuiz?: () => Promise<void>;
+  isGenerating?: boolean;
+  numberOfQuestions?: number;
+  onNumberOfQuestionsChange?: (count: number) => void;
 }
 
-export const NoteSelectionTab = ({ selectedNotes, onNotesChange, onNoteToggle }: NoteSelectionTabProps) => {
+export const NoteSelectionTab = ({ 
+  selectedNotes, 
+  onNotesChange, 
+  onNoteToggle,
+  onGenerateQuiz,
+  isGenerating,
+  numberOfQuestions,
+  onNumberOfQuestionsChange
+}: NoteSelectionTabProps) => {
   const { notes } = useOptimizedNotes();
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -46,6 +58,30 @@ export const NoteSelectionTab = ({ selectedNotes, onNotesChange, onNoteToggle }:
           className="pl-10"
         />
       </div>
+
+      {/* Quiz Generation Controls */}
+      {(onGenerateQuiz && numberOfQuestions !== undefined && onNumberOfQuestionsChange) && (
+        <div className="bg-mint-50 p-4 rounded-lg space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium">Number of Questions:</label>
+            <Input
+              type="number"
+              min={1}
+              max={50}
+              value={numberOfQuestions}
+              onChange={(e) => onNumberOfQuestionsChange(parseInt(e.target.value) || 1)}
+              className="w-20"
+            />
+          </div>
+          <Button
+            onClick={onGenerateQuiz}
+            disabled={selectedNotes.length === 0 || isGenerating}
+            className="w-full"
+          >
+            {isGenerating ? 'Generating...' : `Generate Quiz from ${selectedNotes.length} Notes`}
+          </Button>
+        </div>
+      )}
 
       <div className="grid gap-3 max-h-96 overflow-y-auto">
         {filteredNotes.map((note) => {

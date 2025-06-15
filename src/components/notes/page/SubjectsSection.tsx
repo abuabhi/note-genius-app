@@ -40,7 +40,7 @@ export const SubjectsSection = () => {
 
       {searchFilteredNotes.length === 0 ? (
         <EmptySubjectState 
-          hasSearchTerm={!!searchTerm}
+          subjectName={selectedSubject === 'all' ? 'All Subjects' : selectedSubject}
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

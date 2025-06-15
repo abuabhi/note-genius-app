@@ -33,6 +33,10 @@ export const NoteToQuiz = () => {
         <TabsContent value="select" className="space-y-6">
           <NoteSelectionTab
             selectedNotes={selectedNotes}
+            onNotesChange={(notes) => {
+              // Update selected notes for each note
+              notes.forEach(note => toggleNoteSelection(note));
+            }}
             onNoteToggle={toggleNoteSelection}
             onGenerateQuiz={generateQuiz}
             isGenerating={isGenerating}

@@ -9,6 +9,7 @@ import { Note } from "@/types/note";
 const NoteToFlashcardPage = () => {
   const [searchParams] = useSearchParams();
   const noteId = searchParams.get('noteId');
+  const flashcardSetId = searchParams.get('flashcardSetId');
   const { notes } = useOptimizedNotes();
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
 
@@ -21,7 +22,10 @@ const NoteToFlashcardPage = () => {
 
   return (
     <Layout>
-      <NoteToFlashcard note={selectedNote} />
+      <NoteToFlashcard 
+        note={selectedNote} 
+        flashcardSetId={flashcardSetId}
+      />
     </Layout>
   );
 };
