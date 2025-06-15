@@ -1,20 +1,26 @@
-import React, { createContext, useContext, ReactNode, useMemo } from 'react';
+
+import React, { createContext, useContext, ReactNode, useMemo, useCallback, useEffect } from 'react';
 import { Note } from '@/types/note';
-import { useOptimizedNotesQuery } from '@/hooks/performance/useOptimizedNotesQuery';
-import { useEnhancedRetry } from '@/hooks/performance/useEnhancedRetry';
-import { useProductionMetrics } from '@/hooks/performance/useProductionMetrics';
-import { useAdvancedCache } from '@/hooks/performance/useAdvancedCache';
-import { useIntelligentPrefetch } from '@/hooks/performance/useIntelligentPrefetch';
-import { useState, useCallback, useEffect } from 'react';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { useOptimizedNotes } from '@/hooks/useOptimizedNotes';
+import { useNotesOperations } from './notes/useNotesOperations';
+import { useFilteredNotes } from './notes/state/useFilteredNotes';
+import { usePaginatedNotes } from './notes/state/usePaginatedNotes';
+import { useRealtimeCollaboration } from '@/hooks/performance/useRealtimeCollaboration';
+import { useAdvancedSearch } from '@/hooks/performance/useAdvancedSearch';
+import { useIntelligentPrefetching } from '@/hooks/performance/useIntelligentPrefetching';
+import { usePerformanceMonitor } from '@/hooks/performance/usePerformanceMonitor';
+import { useState } from 'react';
 
 interface OptimizedNotesContextType {
+  // Core data
   notes: Note[];
+  filteredNotes: Note[];
+  paginatedNotes: Note[];
   totalCount: number;
-  hasMore: boolean;
-  isLoading: boolean;
-  error: any;
+  loading: boolean;
+  error: string | null;
+  
+  // Search and filtering
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   sortType: string;
@@ -23,235 +29,208 @@ interface OptimizedNotesContextType {
   setShowArchived: (show: boolean) => void;
   selectedSubject: string;
   setSelectedSubject: (subject: string) => void;
+  
+  // Pagination
   currentPage: number;
   setCurrentPage: (page: number) => void;
-  refetch: () => void;
-  prefetchNextPage: () => void;
+  totalPages: number;
+  
+  // Operations
+  refreshNotes: () => void;
   addNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
   updateNote: (id: string, updates: Partial<Note>) => Promise<void>;
   deleteNote: (id: string) => Promise<void>;
+  pinNote: (id: string, pinned: boolean) => Promise<void>;
+  archiveNote: (id: string, archived: boolean) => Promise<void>;
+  
+  // Advanced features
+  advancedSearch: (query: string, options?: any) => Promise<any[]>;
+  trackUserAction: (type: string, noteId?: string, metadata?: any) => void;
+  collaborationState: any;
+  performanceMetrics: any;
+  isRealtimeEnabled: boolean;
+  setRealtimeEnabled: (enabled: boolean) => void;
 }
 
 const OptimizedNotesContext = createContext<OptimizedNotesContextType | undefined>(undefined);
 
-export const OptimizedNotesProvider = ({ children }: { children: ReactNode }) => {
-  const { recordMetric } = useProductionMetrics('OptimizedNotesProvider');
-  const { executeWithRetry } = useEnhancedRetry({
-    maxRetries: 3,
-    baseDelay: 1000,
-    onRetry: (error, attempt) => {
-      recordMetric('notes_operation_retry', attempt, {
-        error: error.message
-      });
-    }
-  });
-
-  // Advanced caching hooks
-  const { invalidateCache, prefetchRelatedData, warmCache } = useAdvancedCache();
-  const { trackBehavior, triggerPrefetch } = useIntelligentPrefetch();
-
+// Memoized provider component
+const OptimizedNotesProviderInner = React.memo(({ children }: { children: ReactNode }) => {
+  const { notes, loading, error, refreshNotes, setNotes } = useOptimizedNotes();
+  
   // Filter and pagination state
   const [searchTerm, setSearchTerm] = useState('');
   const [sortType, setSortType] = useState('newest');
   const [showArchived, setShowArchived] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState('all');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [isRealtimeEnabled, setRealtimeEnabled] = useState(true);
+  
+  // Get filtered notes
+  const filteredNotes = useFilteredNotes(notes, searchTerm, sortType, { selectedSubject }, showArchived) || [];
+  
+  // Get pagination
+  const paginationState = usePaginatedNotes(filteredNotes);
+  const { currentPage, setCurrentPage, totalPages, paginatedNotes } = paginationState || {
+    currentPage: 1,
+    setCurrentPage: () => {},
+    totalPages: 1,
+    paginatedNotes: []
+  };
 
-  // Use optimized query
-  const {
-    notes,
-    totalCount,
-    hasMore,
-    isLoading,
-    error,
-    refetch,
-    prefetchNextPage
-  } = useOptimizedNotesQuery({
-    search: searchTerm,
-    subject: selectedSubject,
-    page: currentPage,
-    pageSize: 20,
-    sortBy: sortType as 'newest' | 'oldest' | 'alphabetical',
-    showArchived
-  });
+  // Get operations
+  const operations = useNotesOperations(
+    notes, 
+    setNotes, 
+    currentPage, 
+    setCurrentPage, 
+    paginatedNotes
+  );
 
-  // Warm cache on mount
-  useEffect(() => {
-    warmCache();
-  }, [warmCache]);
+  // Advanced features
+  const { collaborationState, broadcastUpdate } = useRealtimeCollaboration(notes, setNotes);
+  const { search: advancedSearch, updateIndex } = useAdvancedSearch(notes);
+  const { trackAction } = useIntelligentPrefetching(notes);
+  const { 
+    metrics: performanceMetrics, 
+    startMonitoring, 
+    trackRenderTime 
+  } = usePerformanceMonitor();
 
-  // Track user behavior for intelligent prefetching
-  const trackSearchBehavior = useCallback((term: string) => {
-    trackBehavior('search', { term });
-    if (term) {
-      triggerPrefetch('search-start', { term });
-    }
-  }, [trackBehavior, triggerPrefetch]);
-
-  const trackNoteAccess = useCallback((noteId: string) => {
-    trackBehavior('note-access', { noteId });
-    triggerPrefetch('note-view', { noteId });
-    prefetchRelatedData(noteId);
-  }, [trackBehavior, triggerPrefetch, prefetchRelatedData]);
-
-  const trackSubjectSelection = useCallback((subject: string) => {
-    trackBehavior('subject-select', { subject });
-  }, [trackBehavior]);
-
-  // Real database operations with proper error handling
-  const addNote = useCallback(async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
-    return executeWithRetry(async () => {
-      recordMetric('note_add_start', 1);
-      
-      const { data, error } = await supabase
-        .from('notes')
-        .insert({
-          title: noteData.title,
-          description: noteData.description,
-          content: noteData.content,
-          date: noteData.date,
-          subject: noteData.subject,
-          source_type: noteData.sourceType,
-          archived: noteData.archived || false,
-          pinned: noteData.pinned || false,
-          subject_id: noteData.subject_id,
-          summary_status: 'pending'
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      const newNote: Note = {
-        id: data.id,
-        title: data.title,
-        description: data.description || '',
-        content: data.content || '',
-        date: data.date,
-        subject: data.subject || 'Uncategorized',
-        sourceType: data.source_type as 'manual' | 'import' | 'scan',
-        archived: data.archived || false,
-        pinned: data.pinned || false,
-        subject_id: data.subject_id,
-        tags: [],
-        summary_status: 'pending'
-      };
-      
-      // Smart cache invalidation - only invalidate current query
-      invalidateCache('note-created', { noteId: newNote.id });
-      
-      recordMetric('note_add_success', 1);
-      toast.success('Note created successfully');
-      refetch();
-      
-      return newNote;
-    }, 'Add note');
-  }, [executeWithRetry, recordMetric, refetch, invalidateCache]);
-
-  const updateNote = useCallback(async (id: string, updates: Partial<Note>): Promise<void> => {
-    return executeWithRetry(async () => {
-      recordMetric('note_update_start', 1, { noteId: id });
-      
-      // Prepare update data
-      const updateData: any = {};
-      if (updates.title !== undefined) updateData.title = updates.title;
-      if (updates.description !== undefined) updateData.description = updates.description;
-      if (updates.content !== undefined) updateData.content = updates.content;
-      if (updates.subject !== undefined) updateData.subject = updates.subject;
-      if (updates.archived !== undefined) updateData.archived = updates.archived;
-      if (updates.pinned !== undefined) updateData.pinned = updates.pinned;
-      if (updates.subject_id !== undefined) updateData.subject_id = updates.subject_id;
-
-      const { error } = await supabase
-        .from('notes')
-        .update(updateData)
-        .eq('id', id);
-
-      if (error) throw error;
-      
-      // Smart cache invalidation - only invalidate affected queries
-      invalidateCache('note-updated', { noteId: id });
-      
-      recordMetric('note_update_success', 1, { noteId: id });
-      toast.success('Note updated successfully');
-      refetch();
-    }, 'Update note');
-  }, [executeWithRetry, recordMetric, refetch, invalidateCache]);
-
-  const deleteNote = useCallback(async (id: string): Promise<void> => {
-    return executeWithRetry(async () => {
-      recordMetric('note_delete_start', 1, { noteId: id });
-      
-      const { data, error } = await supabase.functions.invoke('delete-note', {
-        body: { noteId: id }
+  // Track note updates for real-time collaboration
+  const handleNoteUpdate = useCallback(async (noteId: string, updates: Partial<Note>) => {
+    const result = await operations.updateNote(noteId, updates);
+    
+    if (isRealtimeEnabled) {
+      await broadcastUpdate({
+        type: 'note_updated',
+        userId: 'current-user', // This would come from auth
+        noteId,
+        data: updates,
+        timestamp: Date.now()
       });
+    }
+    
+    return result;
+  }, [operations.updateNote, isRealtimeEnabled, broadcastUpdate]);
 
-      if (error) throw error;
-      
-      // Smart cache invalidation
-      invalidateCache('note-deleted', { noteId: id });
-      
-      recordMetric('note_delete_success', 1, { noteId: id });
-      toast.success('Note deleted successfully');
-      refetch();
-    }, 'Delete note');
-  }, [executeWithRetry, recordMetric, refetch, invalidateCache]);
+  const handleNoteCreate = useCallback(async (note: Omit<Note, 'id'>) => {
+    const result = await operations.addNote(note);
+    
+    if (result && isRealtimeEnabled) {
+      await broadcastUpdate({
+        type: 'note_created',
+        userId: 'current-user',
+        data: result,
+        timestamp: Date.now()
+      });
+    }
+    
+    return result;
+  }, [operations.addNote, isRealtimeEnabled, broadcastUpdate]);
 
-  // Enhanced search with behavior tracking - preserves current filters
-  const handleSearchChange = useCallback((term: string) => {
-    console.log(`🔍 Search change: "${searchTerm}" -> "${term}", preserving subject: ${selectedSubject}, sort: ${sortType}`);
-    setSearchTerm(term);
-    setCurrentPage(1); // Reset to first page on search
-    trackSearchBehavior(term);
-  }, [trackSearchBehavior, searchTerm, selectedSubject, sortType]);
+  const handleNoteDelete = useCallback(async (noteId: string) => {
+    await operations.deleteNote(noteId);
+    
+    if (isRealtimeEnabled) {
+      await broadcastUpdate({
+        type: 'note_deleted',
+        userId: 'current-user',
+        noteId,
+        data: {},
+        timestamp: Date.now()
+      });
+    }
+  }, [operations.deleteNote, isRealtimeEnabled, broadcastUpdate]);
 
-  // Enhanced subject change with behavior tracking - preserves current filters  
-  const handleSubjectChange = useCallback((subject: string) => {
-    console.log(`🎯 Subject change: "${selectedSubject}" -> "${subject}", preserving search: "${searchTerm}", sort: ${sortType}`);
-    setSelectedSubject(subject);
-    setCurrentPage(1);
-    trackSubjectSelection(subject);
-  }, [trackSubjectSelection, selectedSubject, searchTerm, sortType]);
+  // Track user actions for intelligent prefetching
+  const trackUserAction = useCallback((type: string, noteId?: string, metadata?: any) => {
+    trackAction(type as any, noteId, metadata);
+  }, [trackAction]);
 
-  // Enhanced sort change - preserves current filters
-  const handleSortChange = useCallback((sort: string) => {
-    console.log(`🔄 Sort change: "${sortType}" -> "${sort}", preserving subject: ${selectedSubject}, search: "${searchTerm}"`);
-    setSortType(sort);
-    setCurrentPage(1);
-  }, [sortType, selectedSubject, searchTerm]);
+  // Update search index when notes change
+  useEffect(() => {
+    if (notes.length > 0) {
+      updateIndex();
+    }
+  }, [notes, updateIndex]);
 
+  // Start performance monitoring
+  useEffect(() => {
+    startMonitoring();
+  }, [startMonitoring]);
+
+  // Track render performance
+  useEffect(() => {
+    const startTime = performance.now();
+    
+    return () => {
+      trackRenderTime('OptimizedNotesProvider', startTime);
+    };
+  }, [trackRenderTime]);
+
+  // Memoized context value
   const contextValue = useMemo(() => ({
+    // Core data
     notes,
-    totalCount,
-    hasMore,
-    isLoading,
+    filteredNotes,
+    paginatedNotes,
+    totalCount: notes.length,
+    loading,
     error,
+    
+    // Search and filtering
     searchTerm,
-    setSearchTerm: handleSearchChange,
+    setSearchTerm,
     sortType,
-    setSortType: handleSortChange,
+    setSortType,
     showArchived,
     setShowArchived,
     selectedSubject,
-    setSelectedSubject: handleSubjectChange,
+    setSelectedSubject,
+    
+    // Pagination
     currentPage,
     setCurrentPage,
-    refetch,
-    prefetchNextPage,
-    addNote,
-    updateNote,
-    deleteNote
+    totalPages,
+    
+    // Operations with real-time support
+    refreshNotes,
+    addNote: handleNoteCreate,
+    updateNote: handleNoteUpdate,
+    deleteNote: handleNoteDelete,
+    pinNote: operations.pinNote,
+    archiveNote: operations.archiveNote,
+    
+    // Advanced features
+    advancedSearch,
+    trackUserAction,
+    collaborationState,
+    performanceMetrics,
+    isRealtimeEnabled,
+    setRealtimeEnabled
   }), [
-    notes, totalCount, hasMore, isLoading, error,
-    searchTerm, handleSearchChange, sortType, handleSortChange, showArchived,
-    selectedSubject, handleSubjectChange, currentPage, refetch, prefetchNextPage,
-    addNote, updateNote, deleteNote
+    notes, filteredNotes, paginatedNotes, loading, error,
+    searchTerm, sortType, showArchived, selectedSubject, currentPage, totalPages,
+    refreshNotes, handleNoteCreate, handleNoteUpdate, handleNoteDelete,
+    operations.pinNote, operations.archiveNote,
+    advancedSearch, trackUserAction, collaborationState, performanceMetrics,
+    isRealtimeEnabled
   ]);
 
   return (
     <OptimizedNotesContext.Provider value={contextValue}>
       {children}
     </OptimizedNotesContext.Provider>
+  );
+});
+
+OptimizedNotesProviderInner.displayName = 'OptimizedNotesProviderInner';
+
+export const OptimizedNotesProvider = ({ children }: { children: ReactNode }) => {
+  return (
+    <OptimizedNotesProviderInner>
+      {children}
+    </OptimizedNotesProviderInner>
   );
 };
 

@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Note } from "@/types/note";
-import { useNotes } from "@/contexts/NoteContext";
+import { useOptimizedNotes } from "@/contexts/OptimizedNotesContext";
 import { NoteDetailsSheet } from "./NoteDetailsSheet";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -9,7 +9,7 @@ import { NoteCard } from "./card/NoteCard";
 import { EmptyNotesState } from "./EmptyNotesState";
 
 export const NotesGrid = ({ notes }: { notes: Note[] }) => {
-  const { pinNote, deleteNote } = useNotes();
+  const { pinNote, deleteNote } = useOptimizedNotes();
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const navigate = useNavigate();

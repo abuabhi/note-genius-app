@@ -5,6 +5,8 @@ import { PageBreadcrumb } from '@/components/ui/page-breadcrumb';
 import { FileText } from 'lucide-react';
 import EnhancedErrorBoundary from '@/components/error/EnhancedErrorBoundary';
 import { CacheMonitor } from '@/components/performance/CacheMonitor';
+import { PerformanceDashboard } from '@/components/performance/PerformanceDashboard';
+import { EnhancedServiceWorkerManager } from '@/components/performance/EnhancedServiceWorkerManager';
 import { SecureOptimizedNotesContent } from '@/components/notes/page/SecureOptimizedNotesContent';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 
@@ -15,6 +17,8 @@ const OptimizedNotesPage = () => {
     <EnhancedErrorBoundary>
       <Layout>
         <CacheMonitor />
+        <PerformanceDashboard />
+        <EnhancedServiceWorkerManager />
         
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-mint-50/30">
           <div className="container mx-auto p-4 md:p-6">

@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {
@@ -8,10 +7,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useNotes } from '@/contexts/NoteContext';
+import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
 
 export const NotePagination = () => {
-  const { currentPage, setCurrentPage, totalPages, notesPerPage, setNotesPerPage } = useNotes();
+  const { currentPage, setCurrentPage, totalPages } = useOptimizedNotes();
+  const notesPerPage = 20; // Fixed for optimized version
+  
+  const setNotesPerPage = (value: number) => {
+    // In optimized version, we keep this fixed but maintain interface compatibility
+    console.log('Notes per page set to:', value);
+  };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
