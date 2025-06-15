@@ -11,9 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Note } from "@/types/note";
 
 const NoteStudyPage = () => {
-  // FIXED: Use 'id' parameter instead of destructuring wrong property
-  const params = useParams();
-  const id = params.id || params['*']?.split('/').pop(); // Handle both /notes/study/:id and nested routes
+  const { id } = useParams();
   const navigate = useNavigate();
   const { notes, addNote } = useOptimizedNotes();
   const [loading, setLoading] = useState(true);
@@ -26,18 +24,17 @@ const NoteStudyPage = () => {
   // Debug logging
   useEffect(() => {
     console.log("🔍 NoteStudyPage Debug Info:", {
-      params,
-      extractedId: id,
+      id,
       pathname: window.location.pathname,
       search: window.location.search
     });
-  }, [params, id]);
+  }, [id]);
 
   // Try to find note in context first, then fetch from database if needed
   useEffect(() => {
     const loadNote = async () => {
       if (!id) {
-        console.error("❌ No note ID found in params:", params);
+        console.error("❌ No note ID found in params");
         setError("No note ID provided");
         setLoading(false);
         return;

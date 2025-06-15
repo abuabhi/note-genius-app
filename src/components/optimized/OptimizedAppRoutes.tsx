@@ -7,7 +7,6 @@ import Layout from '@/components/layout/Layout';
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const ScalableNotesPage = lazy(() => import('@/pages/ScalableNotesPage'));
 const NoteStudyPage = lazy(() => import('@/pages/NoteStudyPage'));
-const OptimizedNoteStudyPage = lazy(() => import('@/pages/OptimizedNoteStudyPage'));
 const EditNotePage = lazy(() => import('@/pages/EditNotePage'));
 const NoteToFlashcardPage = lazy(() => import('@/pages/NoteToFlashcardPage'));
 const FlashcardsPage = lazy(() => import('@/pages/FlashcardsPage'));
@@ -41,10 +40,10 @@ export const OptimizedAppRoutes = () => {
           {/* Dashboard */}
           <Route path="/dashboard" element={<DashboardPage />} />
           
-          {/* Notes routes */}
+          {/* Notes routes - SIMPLIFIED AND FIXED */}
           <Route path="/notes" element={<ScalableNotesPage />} />
-          <Route path="/notes/edit/:noteId" element={<EditNotePage />} />
-          <Route path="/notes/study/:id" element={<NoteStudyPage />} />
+          <Route path="/notes/:id" element={<NoteStudyPage />} />
+          <Route path="/notes/edit/:id" element={<EditNotePage />} />
           <Route path="/notes/to-flashcard" element={<NoteToFlashcardPage />} />
           
           {/* Flashcards routes */}

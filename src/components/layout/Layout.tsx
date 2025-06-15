@@ -35,9 +35,9 @@ export default function Layout({ children, showSidebar = true, showFooter = true
   // Show sidebar only for authenticated users on non-public routes
   const shouldShowSidebar = showSidebar && user && !isPublicRoute;
 
-  // Check if we're on a note study page to enable chat
-  const isNoteStudyPage = location.pathname.includes('/notes/study/');
-  const noteId = params.id; // Get note ID from URL params
+  // Check if we're on a note study page to enable chat - using consistent parameter name
+  const isNoteStudyPage = location.pathname.includes('/notes/') && params.id;
+  const noteId = params.id; // Consistent parameter name
 
   console.log('🏗️ Layout - Note study page detection:', {
     isNoteStudyPage,
