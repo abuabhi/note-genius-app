@@ -98,6 +98,14 @@ export const EnhancementDisplayPanel = ({
     return titles[type] || 'Content';
   };
 
+  // CRITICAL FIX: Only handle explicit retry calls, never auto-generate
+  const handleExplicitRetry = async (enhancementType: string) => {
+    console.log("🎯 EXPLICIT RETRY CALLED for:", enhancementType);
+    if (onRetryEnhancement) {
+      await onRetryEnhancement(enhancementType);
+    }
+  };
+
   const enhancementType = getEnhancementTypeForRetry(contentType);
   const content = getContentForType(contentType);
   const title = getTitleForType(contentType);
@@ -116,7 +124,7 @@ export const EnhancementDisplayPanel = ({
 
   return (
     <div className={`flex flex-col h-full ${className}`}>
-      {/* Show loading state when processing - SIMPLIFIED without cancel/retry buttons */}
+      {/* Show loading state when processing */}
       {(isLoading || isSummaryGenerating || isEnrichedGenerating) && (
         <div className="flex-1 flex items-center justify-center p-8">
           <LoadingAnimations enhancementType={enhancementType} />
@@ -139,12 +147,12 @@ export const EnhancementDisplayPanel = ({
             fontSize={fontSize}
             textAlign={textAlign}
             enhancementType={enhancementType}
-            onRetry={onRetryEnhancement}
+            onRetry={handleExplicitRetry}
           />
         </div>
       )}
 
-      {/* Show empty state when no content and not loading */}
+      {/* Show empty state when no content and not loading - NEVER AUTO-GENERATE */}
       {!isLoading && !isSummaryGenerating && !isEnrichedGenerating && !content && (
         <div className="flex-1 overflow-auto">
           <EnhancementContent
@@ -153,7 +161,7 @@ export const EnhancementDisplayPanel = ({
             fontSize={fontSize}
             textAlign={textAlign}
             enhancementType={enhancementType}
-            onRetry={onRetryEnhancement}
+            onRetry={handleExplicitRetry}
           />
         </div>
       )}

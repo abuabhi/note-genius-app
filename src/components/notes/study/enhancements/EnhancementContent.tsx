@@ -75,14 +75,19 @@ export const EnhancementContent = ({
           <div>
             <h3 className="text-lg font-medium text-foreground mb-2">No {safeTitle.toLowerCase()} available</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Generate AI-enhanced content to see {safeTitle.toLowerCase()} here
+              Click the button below to generate AI-enhanced {safeTitle.toLowerCase()}
             </p>
           </div>
           {onRetry && (
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={() => onRetry(enhancementType)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log("🎯 USER EXPLICITLY CLICKED GENERATE BUTTON for:", enhancementType);
+                onRetry(enhancementType);
+              }}
               className="text-primary hover:text-primary/80 border-primary/20 hover:border-primary/30"
             >
               <RefreshCw className="mr-2 h-4 w-4" /> Generate {safeTitle}

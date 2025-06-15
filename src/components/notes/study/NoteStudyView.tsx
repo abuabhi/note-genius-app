@@ -80,7 +80,8 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
 
   // CRITICAL FIX: Only allow manual enhancement requests, never automatic
   const handleEnhanceContent = async (enhancementType: string) => {
-    console.log("🎯 Manual enhancement requested:", enhancementType);
+    console.log("🎯 EXPLICIT MANUAL enhancement requested:", enhancementType);
+    console.log("🎯 This should ONLY be called from user button clicks, never tab switches");
     
     try {
       if (hasReachedLimit()) {
@@ -88,11 +89,14 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
         return;
       }
 
+      // CRITICAL: Only set status to generating if this is truly a user-initiated request
       if (enhancementType === 'summarize') {
+        console.log("🎯 Setting summary_status to generating for USER REQUEST");
         await onNoteUpdate({
           summary_status: 'generating'
         });
       } else if (enhancementType === 'enrich-note') {
+        console.log("🎯 Setting enriched_status to generating for USER REQUEST");
         await onNoteUpdate({
           enriched_status: 'generating'
         });
@@ -152,11 +156,14 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
     }
   };
 
+  // CRITICAL FIX: Only allow retry from explicit user actions
   const handleRetryEnhancement = async (enhancementType: string) => {
+    console.log("🎯 EXPLICIT RETRY requested by user for:", enhancementType);
     await handleEnhanceContent(enhancementType);
   };
 
   const handleActiveContentTypeChange = (type: EnhancementContentType) => {
+    console.log("🎯 Tab changed to:", type, "- this should NEVER trigger auto-generation");
     setActiveContentType(type);
   };
 
