@@ -49,7 +49,7 @@ export const NotesContent: React.FC<NotesContentProps> = ({
   }
 
   if (error) {
-    return <ErrorState error={error} />;
+    return <ErrorState message={error.message || 'Failed to load notes'} />;
   }
 
   // Map the optimized context to the legacy interface
@@ -94,10 +94,15 @@ export const NotesContent: React.FC<NotesContentProps> = ({
         onSaveNote={onSaveNote}
         onScanNote={onScanNote}
         onImportNote={onImportNote}
-        contextValue={legacyContextValue}
       />
       
-      <NotesDisplay contextValue={legacyContextValue} />
+      <NotesDisplay 
+        notes={legacyContextValue.notes}
+        paginatedNotes={legacyContextValue.paginatedNotes}
+        loading={legacyContextValue.loading}
+        isFiltered={!!(searchTerm || selectedSubject !== 'all')}
+        activeSubject={selectedSubject}
+      />
     </div>
   );
 };
