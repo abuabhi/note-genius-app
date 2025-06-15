@@ -2,6 +2,9 @@
 import { useCallback } from 'react';
 import { useUnifiedSessionTracker } from './useUnifiedSessionTracker';
 
+/**
+ * Simplified study activity tracker that uses the unified session system
+ */
 export const useStudyActivityTracker = () => {
   const { recordActivity, updateSessionActivity, isActive, startSession } = useUnifiedSessionTracker();
 

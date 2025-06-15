@@ -8,13 +8,11 @@ import { StudyAnalyticsDashboard } from "@/components/study/StudyAnalyticsDashbo
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, History, Archive, BarChart3, Brain } from "lucide-react";
 import { useSessionAnalytics } from "@/hooks/useSessionAnalytics";
-import { useConsolidatedAnalytics } from "@/hooks/useConsolidatedAnalytics";
 
 const StudySessionsPage = () => {
   const { user, loading } = useRequireAuth();
   const [activeTab, setActiveTab] = useState("analytics");
-  const { sessions, isLoading } = useSessionAnalytics();
-  const { analytics } = useConsolidatedAnalytics();
+  const { sessions, isLoading, analytics } = useSessionAnalytics();
 
   const getFilteredSessions = (filter: string) => {
     switch(filter) {
@@ -69,7 +67,7 @@ const StudySessionsPage = () => {
                 <div className="flex items-center text-mint-600">
                   <Brain className="mr-2 h-5 w-5" />
                   <span className="text-sm">
-                    Unified session tracking powered by SessionDock
+                    Unified session tracking powered by UnifiedSessionTracker
                   </span>
                 </div>
               </div>
@@ -81,7 +79,7 @@ const StudySessionsPage = () => {
                   </div>
                   <div className="mt-2">
                     <div className="text-lg font-semibold text-mint-800">
-                      {analytics.totalSessions}
+                      {analytics?.totalSessions || 0}
                     </div>
                     <div className="text-xs text-mint-600">Total Sessions</div>
                   </div>
@@ -93,7 +91,7 @@ const StudySessionsPage = () => {
                   </div>
                   <div className="mt-2">
                     <div className="text-lg font-semibold text-blue-800">
-                      {Math.round(analytics.totalStudyTimeMinutes / 60 * 10) / 10}h
+                      {Math.round((analytics?.totalStudyTimeMinutes || 0) / 60 * 10) / 10}h
                     </div>
                     <div className="text-xs text-blue-600">Total Time</div>
                   </div>

@@ -3,12 +3,10 @@ import { useUnifiedSessionTracker } from './useUnifiedSessionTracker';
 
 /**
  * Backwards compatibility wrapper for useUnifiedSessionTracker
- * This allows existing components to continue working while using the unified system
+ * This ensures existing components continue working with the unified session system
  */
 export const useBasicSessionTracker = () => {
   const unified = useUnifiedSessionTracker();
-  
-  console.log('🔄 [BASIC SESSION TRACKER] Redirecting to unified session tracker');
   
   return {
     // Map unified tracker properties to basic tracker interface
