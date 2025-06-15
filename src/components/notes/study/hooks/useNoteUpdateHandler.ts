@@ -1,38 +1,22 @@
 
-import { Note } from "@/types/note";
-import { useNotes } from "@/contexts/NoteContext";
+import { useCallback } from 'react';
+import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
+import { Note } from '@/types/note';
+import { toast } from 'sonner';
 
-/**
- * Hook for handling note updates with real-time sync
- */
-export const useNoteUpdateHandler = (currentNote: Note, forceRefresh: () => void, setRealtimeNote: (note: Note) => void) => {
-  const { updateNote } = useNotes();
+export const useNoteUpdateHandler = (noteId: string) => {
+  const { updateNote } = useOptimizedNotes();
 
-  const handleNoteUpdate = async (updatedData: Partial<Note>) => {
+  const handleNoteUpdate = useCallback(async (updates: Partial<Note>) => {
     try {
-      console.log("🎯 NoteStudyView - Handling note update with force refresh:", {
-        noteId: currentNote.id,
-        updatedFields: Object.keys(updatedData),
-        enhancementData: {
-          improved_content: updatedData.improved_content?.substring(0, 50) || 'none',
-          summary: updatedData.summary?.substring(0, 50) || 'none',
-          key_points: updatedData.key_points?.substring(0, 50) || 'none'
-        }
-      });
-      
-      await updateNote(currentNote.id, updatedData);
-      
-      // Force immediate refresh of the component
-      forceRefresh();
-      
-      // Also update local realtime state immediately with the merged note
-      const updatedNote = { ...currentNote, ...updatedData };
-      setRealtimeNote(updatedNote);
-      
+      await updateNote(noteId, updates);
+      toast.success('Note updated successfully!');
     } catch (error) {
-      console.error("❌ Error updating note:", error);
+      console.error('Error updating note:', error);
+      toast.error('Failed to update note');
+      throw error;
     }
-  };
+  }, [noteId, updateNote]);
 
   return { handleNoteUpdate };
 };

@@ -1,87 +1,65 @@
 
-import { useEffect, useState, useCallback } from "react";
-import { Note } from "@/types/note";
-import { supabase } from "@/integrations/supabase/client";
-import { useNotes } from "@/contexts/NoteContext";
+import { useState, useEffect, useCallback } from 'react';
+import { Note } from '@/types/note';
+import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
+import { supabase } from '@/integrations/supabase/client';
 
-/**
- * Hook for managing real-time note synchronization
- */
-export const useRealtimeNoteSync = (note: Note) => {
-  const { notes, setNotes } = useNotes();
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [realtimeNote, setRealtimeNote] = useState<Note>(note);
-  
-  // Get the most up-to-date note data from context or realtime updates
-  const currentNote = notes.find(n => n.id === note.id) || realtimeNote;
-  
-  // Force refresh function
+export const useRealtimeNoteSync = (initialNote: Note) => {
+  const { updateNote } = useOptimizedNotes();
+  const [currentNote, setCurrentNote] = useState<Note>(initialNote);
+  const [lastSyncTime, setLastSyncTime] = useState<number>(Date.now());
+
+  // Sync note data from database
+  const syncFromDatabase = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('notes')
+        .select('*')
+        .eq('id', initialNote.id)
+        .single();
+
+      if (error) {
+        console.error('Error syncing note:', error);
+        return;
+      }
+
+      if (data) {
+        const syncedNote: Note = {
+          ...initialNote,
+          title: data.title || initialNote.title,
+          content: data.content || initialNote.content,
+          subject: data.subject || initialNote.subject,
+          description: data.description || initialNote.description,
+          summary: data.summary,
+          summary_status: data.summary_status as any,
+          key_points: data.key_points,
+          markdown_content: data.markdown_content,
+          improved_content: data.improved_content
+        };
+
+        setCurrentNote(syncedNote);
+        setLastSyncTime(Date.now());
+      }
+    } catch (error) {
+      console.error('Unexpected error syncing note:', error);
+    }
+  }, [initialNote]);
+
+  // Force refresh from database
   const forceRefresh = useCallback(() => {
-    console.log("🔄 Forcing component refresh");
-    setRefreshKey(prev => prev + 1);
-  }, []);
+    syncFromDatabase();
+  }, [syncFromDatabase]);
 
-  // Set up real-time subscription for note updates
+  // Periodic sync
   useEffect(() => {
-    console.log("📡 Setting up real-time subscription for note:", note.id);
-    
-    const channel = supabase
-      .channel(`note_${note.id}_changes`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'notes',
-          filter: `id=eq.${note.id}`
-        },
-        (payload) => {
-          console.log("📡 Real-time note update received:", {
-            noteId: note.id,
-            newData: payload.new,
-            enhancementFields: {
-              improved_content: !!payload.new.improved_content,
-              summary: !!payload.new.summary,
-              key_points: !!payload.new.key_points,
-              markdown_content: !!payload.new.markdown_content
-            }
-          });
-          
-          // Create updated note object maintaining the type structure
-          const updatedNote: Note = {
-            ...currentNote,
-            ...payload.new,
-            // Ensure proper date formatting
-            date: new Date(payload.new.date).toISOString().split('T')[0],
-            // Map subject to subject for consistency
-            subject: payload.new.subject || currentNote.subject || 'Uncategorized',
-            // Ensure tags are preserved
-            tags: currentNote.tags || []
-          };
-          
-          setRealtimeNote(updatedNote);
-          
-          // Update the notes context as well
-          setNotes(prevNotes => 
-            prevNotes.map(n => n.id === note.id ? updatedNote : n)
-          );
-          
-          // Force a UI refresh
-          forceRefresh();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      console.log("📡 Cleaning up real-time subscription for note:", note.id);
-      supabase.removeChannel(channel);
-    };
-  }, [note.id, currentNote, setNotes, forceRefresh]);
+    const interval = setInterval(syncFromDatabase, 30000); // Sync every 30 seconds
+    return () => clearInterval(interval);
+  }, [syncFromDatabase]);
 
   return {
     currentNote,
-    refreshKey,
+    lastSyncTime,
     forceRefresh,
-    setRealtimeNote
+    refreshKey: lastSyncTime
   };
 };

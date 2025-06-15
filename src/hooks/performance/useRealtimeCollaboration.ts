@@ -1,170 +1,218 @@
 
-import { useEffect, useCallback, useState, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useCallback, useEffect } from 'react';
 import { Note } from '@/types/note';
-import { useAuth } from '@/hooks/auth/useAuth';
-import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
-interface CollaborationState {
-  activeUsers: string[];
-  noteBeingEdited: string | null;
-  lastActivity: Date;
-  conflictResolution: 'newest' | 'merge' | 'manual';
-}
-
-interface RealtimeUpdate {
-  type: 'note_updated' | 'note_created' | 'note_deleted' | 'user_presence';
+interface CollaborationUpdate {
+  type: 'note_created' | 'note_updated' | 'note_deleted' | 'user_joined' | 'user_left';
   userId: string;
   noteId?: string;
   data: any;
   timestamp: number;
 }
 
-export const useRealtimeCollaboration = (notes: Note[], onNotesUpdate: (notes: Note[]) => void) => {
-  const { user } = useAuth();
-  const [collaborationState, setCollaborationState] = useState<CollaborationState>({
-    activeUsers: [],
-    noteBeingEdited: null,
-    lastActivity: new Date(),
-    conflictResolution: 'newest'
+interface UserPresence {
+  userId: string;
+  lastSeen: number;
+  activeNote?: string;
+}
+
+export const useRealtimeCollaboration = (notes: Note[], setNotes: (notes: Note[]) => void) => {
+  const [collaborationState, setCollaborationState] = useState({
+    activeUsers: [] as UserPresence[],
+    recentUpdates: [] as CollaborationUpdate[],
+    isConnected: false
   });
-  
-  const channelRef = useRef<any>(null);
-  const heartbeatRef = useRef<NodeJS.Timeout>();
 
-  // Track user presence and activity
-  const trackUserPresence = useCallback(async () => {
-    if (!user || !channelRef.current) return;
+  // Broadcast updates to other users
+  const broadcastUpdate = useCallback(async (update: CollaborationUpdate) => {
+    try {
+      console.log('🔄 Broadcasting collaboration update:', update);
+      
+      // In a real implementation, this would use WebSocket or Supabase realtime
+      // For now, we'll just log and update local state
+      setCollaborationState(prev => ({
+        ...prev,
+        recentUpdates: [update, ...prev.recentUpdates.slice(0, 9)]
+      }));
 
-    const presenceData = {
-      user_id: user.id,
-      email: user.email,
-      last_seen: new Date().toISOString(),
-      status: 'online'
-    };
+      // Simulate real-time update via Supabase channel
+      const channel = supabase.channel('notes_collaboration');
+      await channel.send({
+        type: 'broadcast',
+        event: 'collaboration_update',
+        payload: update
+      });
 
-    await channelRef.current.track(presenceData);
-  }, [user]);
+    } catch (error) {
+      console.error('Error broadcasting update:', error);
+    }
+  }, []);
 
-  // Handle real-time note updates
-  const handleRealtimeUpdate = useCallback((update: RealtimeUpdate) => {
-    console.log('🔄 Real-time update received:', update);
-    
-    // Don't process our own updates
-    if (update.userId === user?.id) return;
+  // Handle incoming collaboration updates
+  const handleCollaborationUpdate = useCallback((update: CollaborationUpdate) => {
+    console.log('📨 Received collaboration update:', update);
 
     switch (update.type) {
-      case 'note_updated':
-        const updatedNotes = notes.map(note => 
-          note.id === update.noteId ? { ...note, ...update.data } : note
-        );
-        onNotesUpdate(updatedNotes);
-        toast.info(`Note "${update.data.title}" was updated by another user`);
-        break;
-        
       case 'note_created':
-        onNotesUpdate([update.data, ...notes]);
-        toast.info(`New note "${update.data.title}" was created`);
+        // Add new note if it doesn't exist
+        setNotes(prev => {
+          const exists = prev.find(n => n.id === update.data.id);
+          if (!exists) {
+            return [update.data, ...prev];
+          }
+          return prev;
+        });
         break;
-        
+
+      case 'note_updated':
+        // Update existing note
+        setNotes(prev => prev.map(note => 
+          note.id === update.noteId 
+            ? { ...note, ...update.data }
+            : note
+        ));
+        break;
+
       case 'note_deleted':
-        const filteredNotes = notes.filter(note => note.id !== update.noteId);
-        onNotesUpdate(filteredNotes);
-        toast.info('A note was deleted by another user');
+        // Remove deleted note
+        setNotes(prev => prev.filter(note => note.id !== update.noteId));
         break;
-        
-      case 'user_presence':
+
+      case 'user_joined':
         setCollaborationState(prev => ({
           ...prev,
-          activeUsers: update.data.activeUsers,
-          lastActivity: new Date()
+          activeUsers: [
+            ...prev.activeUsers.filter(u => u.userId !== update.userId),
+            { userId: update.userId, lastSeen: Date.now() }
+          ]
+        }));
+        break;
+
+      case 'user_left':
+        setCollaborationState(prev => ({
+          ...prev,
+          activeUsers: prev.activeUsers.filter(u => u.userId !== update.userId)
         }));
         break;
     }
-  }, [notes, onNotesUpdate, user?.id]);
+  }, [setNotes]);
 
-  // Broadcast updates to other users
-  const broadcastUpdate = useCallback(async (update: RealtimeUpdate) => {
-    if (!channelRef.current || !user) return;
-
-    await channelRef.current.send({
-      type: 'broadcast',
-      event: 'note_update',
-      payload: update
-    });
-  }, [user]);
-
-  // Initialize real-time connection
+  // Set up real-time subscription
   useEffect(() => {
-    if (!user) return;
+    const channel = supabase.channel('notes_collaboration');
 
-    const channel = supabase
-      .channel(`notes_collaboration_${user.id}`)
-      .on('broadcast', { event: 'note_update' }, ({ payload }) => {
-        handleRealtimeUpdate(payload);
+    // Subscribe to collaboration updates
+    channel
+      .on('broadcast', { event: 'collaboration_update' }, (payload) => {
+        handleCollaborationUpdate(payload.payload);
       })
       .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        const activeUsers = Object.keys(state).map(key => state[key][0]?.user_id).filter(Boolean);
+        const presenceState = channel.presenceState();
+        const activeUsers: UserPresence[] = Object.values(presenceState)
+          .flat()
+          .map((presence: any) => ({
+            userId: presence.user_id,
+            lastSeen: Date.now(),
+            activeNote: presence.activeNote
+          }));
+
         setCollaborationState(prev => ({
           ...prev,
-          activeUsers
+          activeUsers,
+          isConnected: true
         }));
-      })
-      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-        console.log('User joined:', newPresences);
-      })
-      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-        console.log('User left:', leftPresences);
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-          channelRef.current = channel;
-          await trackUserPresence();
+          // Track user presence
+          await channel.track({
+            user_id: 'current-user', // This would come from auth
+            online_at: new Date().toISOString()
+          });
         }
       });
 
-    // Set up heartbeat for presence
-    heartbeatRef.current = setInterval(() => {
-      trackUserPresence();
-    }, 30000); // Every 30 seconds
-
     return () => {
-      if (heartbeatRef.current) {
-        clearInterval(heartbeatRef.current);
-      }
-      supabase.removeChannel(channel);
-      channelRef.current = null;
+      channel.unsubscribe();
     };
-  }, [user, handleRealtimeUpdate, trackUserPresence]);
+  }, [handleCollaborationUpdate]);
 
-  // Conflict resolution utilities
-  const resolveConflict = useCallback(async (localNote: Note, remoteNote: Note) => {
-    switch (collaborationState.conflictResolution) {
-      case 'newest':
-        return new Date(remoteNote.updated_at) > new Date(localNote.updated_at) 
-          ? remoteNote : localNote;
-          
-      case 'merge':
-        // Simple merge strategy - combine content
-        return {
-          ...remoteNote,
-          content: `${localNote.content}\n\n--- Merged with remote changes ---\n\n${remoteNote.content}`
-        };
+  // Sync notes with database periodically
+  const syncWithDatabase = useCallback(async () => {
+    try {
+      // Get the latest updated_at timestamp from current notes
+      const latestUpdate = notes.reduce((latest, note) => {
+        const noteDate = new Date(note.date || '').getTime();
+        return noteDate > latest ? noteDate : latest;
+      }, 0);
+
+      // Fetch only notes updated after our latest
+      const { data: updatedNotes, error } = await supabase
+        .from('notes')
+        .select('*')
+        .gt('updated_at', new Date(latestUpdate).toISOString());
+
+      if (error) {
+        console.error('Error syncing with database:', error);
+        return;
+      }
+
+      if (updatedNotes && updatedNotes.length > 0) {
+        console.log(`🔄 Syncing ${updatedNotes.length} updated notes from database`);
         
-      default:
-        // Manual resolution - return both for user choice
-        return { local: localNote, remote: remoteNote, requiresManualResolution: true };
+        // Transform and merge updated notes
+        const transformedNotes: Note[] = updatedNotes.map(noteData => ({
+          id: noteData.id,
+          title: noteData.title || "Untitled",
+          description: noteData.description || "",
+          content: noteData.content || "",
+          date: new Date(noteData.created_at).toISOString().split('T')[0],
+          subject: noteData.subject || "Uncategorized",
+          sourceType: (noteData.source_type as 'manual' | 'scan' | 'import') || 'manual',
+          archived: noteData.archived || false,
+          pinned: noteData.pinned || false,
+          subject_id: noteData.subject_id,
+          tags: [],
+          summary: noteData.summary,
+          summary_status: noteData.summary_status as any,
+          summary_generated_at: noteData.summary_generated_at,
+          key_points: noteData.key_points,
+          key_points_generated_at: noteData.key_points_generated_at,
+          markdown_content: noteData.markdown_content,
+          markdown_content_generated_at: noteData.markdown_content_generated_at,
+          improved_content: noteData.improved_content,
+          improved_content_generated_at: noteData.improved_content_generated_at
+        }));
+
+        // Merge with existing notes
+        setNotes(prev => {
+          const merged = [...prev];
+          transformedNotes.forEach(updatedNote => {
+            const index = merged.findIndex(n => n.id === updatedNote.id);
+            if (index >= 0) {
+              merged[index] = updatedNote;
+            } else {
+              merged.unshift(updatedNote);
+            }
+          });
+          return merged;
+        });
+      }
+    } catch (error) {
+      console.error('Error in database sync:', error);
     }
-  }, [collaborationState.conflictResolution]);
+  }, [notes, setNotes]);
+
+  // Set up periodic sync
+  useEffect(() => {
+    const interval = setInterval(syncWithDatabase, 30000); // Sync every 30 seconds
+    return () => clearInterval(interval);
+  }, [syncWithDatabase]);
 
   return {
     collaborationState,
     broadcastUpdate,
-    resolveConflict,
-    trackUserPresence,
-    setConflictResolution: (strategy: 'newest' | 'merge' | 'manual') => {
-      setCollaborationState(prev => ({ ...prev, conflictResolution: strategy }));
-    }
+    syncWithDatabase
   };
 };

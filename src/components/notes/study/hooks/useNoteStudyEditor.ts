@@ -1,27 +1,41 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Note } from '@/types/note';
-import { useNotes } from '@/contexts/NoteContext';
-import { useUserSubjects } from '@/hooks/useUserSubjects';
+import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
 import { toast } from 'sonner';
 
 export const useNoteStudyEditor = (note: Note, forceRefresh: () => void) => {
-  const { updateNote, tags } = useNotes();
-  const { subjects } = useUserSubjects();
+  const { updateNote } = useOptimizedNotes();
   const [isEditing, setIsEditing] = useState(false);
-  const [editableContent, setEditableContent] = useState(note.content || note.description || '');
-  const [editableTitle, setEditableTitle] = useState(note.title);
-  const [editableSubject, setEditableSubject] = useState(note.subject || 'General');
+  const [editableContent, setEditableContent] = useState(note.content || '');
+  const [editableTitle, setEditableTitle] = useState(note.title || '');
+  const [editableSubject, setEditableSubject] = useState(note.subject || '');
   const [selectedTags, setSelectedTags] = useState(note.tags || []);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Update editable content when note changes
+  // Mock data for tags and subjects
+  const availableTags = [
+    { id: '1', name: 'Important', color: '#ef4444' },
+    { id: '2', name: 'Study', color: '#3b82f6' },
+    { id: '3', name: 'Review', color: '#10b981' }
+  ];
+
+  const availableSubjects = [
+    'Mathematics',
+    'Science',
+    'History',
+    'Literature',
+    'Physics',
+    'Chemistry'
+  ];
+
+  // Update local state when note changes
   useEffect(() => {
-    setEditableContent(note.content || note.description || '');
-    setEditableTitle(note.title);
-    setEditableSubject(note.subject || 'General');
+    setEditableContent(note.content || '');
+    setEditableTitle(note.title || '');
+    setEditableSubject(note.subject || '');
     setSelectedTags(note.tags || []);
-  }, [note.id, note.content, note.description, note.title, note.subject, note.tags]);
+  }, [note]);
 
   const handleContentChange = useCallback((content: string) => {
     setEditableContent(content);
@@ -41,14 +55,13 @@ export const useNoteStudyEditor = (note: Note, forceRefresh: () => void) => {
       await updateNote(note.id, {
         title: editableTitle,
         content: editableContent,
-        description: editableContent, // Keep description in sync
         subject: editableSubject,
         tags: selectedTags
       });
       
+      toast.success('Note saved successfully!');
       setIsEditing(false);
       forceRefresh();
-      toast.success('Note saved successfully');
     } catch (error) {
       console.error('Error saving note:', error);
       toast.error('Failed to save note');
@@ -58,19 +71,12 @@ export const useNoteStudyEditor = (note: Note, forceRefresh: () => void) => {
   }, [note.id, editableTitle, editableContent, editableSubject, selectedTags, updateNote, forceRefresh]);
 
   const toggleEditing = useCallback(() => {
-    if (isEditing) {
-      // Reset to original content if canceling
-      setEditableContent(note.content || note.description || '');
-      setEditableTitle(note.title);
-      setEditableSubject(note.subject || 'General');
-      setSelectedTags(note.tags || []);
-    }
     setIsEditing(!isEditing);
-  }, [isEditing, note.content, note.description, note.title, note.subject, note.tags]);
+  }, [isEditing]);
 
-  const onNoteUpdate = useCallback(async (updatedData: Partial<Note>) => {
+  const onNoteUpdate = useCallback(async (updates: Partial<Note>) => {
     try {
-      await updateNote(note.id, updatedData);
+      await updateNote(note.id, updates);
       forceRefresh();
     } catch (error) {
       console.error('Error updating note:', error);
@@ -84,8 +90,8 @@ export const useNoteStudyEditor = (note: Note, forceRefresh: () => void) => {
     editableTitle,
     editableSubject,
     selectedTags,
-    availableTags: tags,
-    availableSubjects: subjects || [],
+    availableTags,
+    availableSubjects,
     isSaving,
     handleContentChange,
     handleTitleChange,

@@ -1,78 +1,61 @@
 
-import { useEffect } from "react";
-import { Loader2 } from "lucide-react";
-import { SubjectTabs } from "./SubjectTabs";
-import { useUserSubjects } from "@/hooks/useUserSubjects";
-import { FilterOptions } from "@/contexts/notes/types";
+import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
+import { SubjectTabs } from './SubjectTabs';
+import { EmptySubjectState } from './EmptySubjectState';
 
-interface SubjectsSectionProps {
-  activeSubjectId: string | null;
-  setActiveSubjectId: (id: string | null) => void;
-  setFilterOptions: React.Dispatch<React.SetStateAction<FilterOptions>>;
-  filteredNotesCount: number;
-}
+export const SubjectsSection = () => {
+  const { 
+    notes,
+    selectedSubject,
+    setSelectedSubject,
+    searchTerm
+  } = useOptimizedNotes();
 
-export const SubjectsSection = ({ 
-  activeSubjectId, 
-  setActiveSubjectId, 
-  setFilterOptions,
-  filteredNotesCount
-}: SubjectsSectionProps) => {
-  const { subjects, isLoading: loadingSubjects } = useUserSubjects();
-  
-  // When subject changes, update the filter
-  useEffect(() => {
-    // Set filter based on active subject
-    if (activeSubjectId) {
-      console.log(`SubjectsSection - Setting filter for subject ID: ${activeSubjectId}`);
-      
-      // Find subject name for logging
-      const subjectName = subjects.find(s => s.id === activeSubjectId)?.name;
-      console.log(`SubjectsSection - Selected subject: ${subjectName} (ID: ${activeSubjectId})`);
-      
-      setFilterOptions(prev => ({
-        ...prev,
-        subjectId: activeSubjectId
-      }));
-    } else {
-      // Remove subject filter if "All" is selected
-      console.log("SubjectsSection - Clearing subject filter (All selected)");
-      setFilterOptions(prev => {
-        const newFilters = { ...prev };
-        if (newFilters.subjectId) {
-          delete newFilters.subjectId;
-        }
-        return newFilters;
-      });
-    }
-  }, [activeSubjectId, setFilterOptions, subjects]);
+  const handleSubjectChange = (subject: string) => {
+    setSelectedSubject(subject);
+  };
 
-  if (loadingSubjects) {
-    return (
-      <div className="flex justify-center py-8">
-        <div className="bg-white/60 backdrop-blur-sm rounded-lg border border-mint-100 p-6 shadow-sm">
-          <Loader2 className="h-6 w-6 animate-spin text-mint-500" />
-        </div>
-      </div>
-    );
-  }
+  // Filter notes by subject if one is selected
+  const filteredNotes = selectedSubject === 'all' 
+    ? notes 
+    : notes.filter(note => note.subject === selectedSubject);
 
-  if (!subjects || subjects.length === 0) {
-    console.log("SubjectsSection - No subjects available");
-    return null;
-  }
-
-  console.log(`SubjectsSection - Rendering with ${subjects.length} subjects`);
-  subjects.forEach(subject => {
-    console.log(`Available subject: ${subject.name} (ID: ${subject.id})`);
-  });
+  // Further filter by search term if present
+  const searchFilteredNotes = searchTerm
+    ? filteredNotes.filter(note => 
+        note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        note.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (note.content && note.content.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+    : filteredNotes;
 
   return (
-    <div className="bg-white/50 backdrop-blur-sm rounded-lg border border-mint-100 shadow-sm overflow-hidden">
-      <SubjectTabs 
-        activeSubjectId={activeSubjectId} 
-        onSubjectChange={setActiveSubjectId} 
-      />
+    <div className="space-y-6">
+      <div className="border-b pb-4">
+        <SubjectTabs
+          activeSubject={selectedSubject}
+          onSubjectChange={handleSubjectChange}
+        />
+      </div>
+
+      {searchFilteredNotes.length === 0 ? (
+        <EmptySubjectState 
+          selectedSubject={selectedSubject}
+          hasSearchTerm={!!searchTerm}
+        />
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {searchFilteredNotes.map((note) => (
+            <div key={note.id} className="p-4 border rounded-lg">
+              <h3 className="font-semibold">{note.title}</h3>
+              <p className="text-sm text-gray-600 mt-1">{note.description}</p>
+              <div className="mt-2 text-xs text-gray-500">
+                {note.subject} • {note.date}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

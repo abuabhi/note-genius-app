@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { Note } from '@/types/note';
 import { useNavigate } from 'react-router-dom';
@@ -62,8 +63,8 @@ export const useNoteDetails = (note: Note, onClose: (open: boolean) => void) => 
   }, [note, navigate]);
 
   // Determine preview URLs based on source type
-  const scanPreviewUrl = note.sourceType === 'scan' && note.scanData?.imageUrl ? note.scanData.imageUrl : null;
-  const importPreviewUrl = note.sourceType === 'import' && note.importData?.previewUrl ? note.importData.previewUrl : null;
+  const scanPreviewUrl = note.sourceType === 'scan' && note.scanData?.originalImageUrl ? note.scanData.originalImageUrl : null;
+  const importPreviewUrl = note.sourceType === 'import' && note.importData?.originalFileUrl ? note.importData.originalFileUrl : null;
 
   return {
     noteContent,

@@ -2,16 +2,16 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
-import { useNotes } from "@/contexts/NoteContext";
+import { useOptimizedNotes } from "@/contexts/OptimizedNotesContext";
 import { Note } from "@/types/note";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { LoadingState } from "@/components/notes/page/LoadingState";
 import { ErrorState } from "@/components/notes/page/ErrorState";
-import { EditNoteContent } from "@/components/notes/page/EditNoteContent";
+import EditNoteContent from "@/components/notes/page/EditNoteContent";
 
 const EditNotePage = () => {
   const { noteId } = useParams();
-  const { notes } = useNotes();
+  const { notes } = useOptimizedNotes();
   const [loading, setLoading] = useState(true);
   const [note, setNote] = useState<Note | null>(null);
   

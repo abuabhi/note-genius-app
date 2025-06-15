@@ -1,3 +1,4 @@
+
 import { useMemo } from "react";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Home, FileText, Filter } from "lucide-react";
@@ -7,7 +8,7 @@ export const NotesPageBreadcrumb = () => {
   const { searchTerm, selectedSubject } = useOptimizedNotes();
 
   const breadcrumbItems = useMemo(() => {
-    const items = [
+    const items: Array<{ href?: string; icon?: React.ComponentType; label: string }> = [
       { href: "/", icon: Home, label: "Home" },
       { href: "/notes", icon: FileText, label: "Notes" },
     ];

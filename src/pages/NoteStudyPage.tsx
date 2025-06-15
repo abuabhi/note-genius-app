@@ -2,7 +2,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
-import { useNotes } from "@/contexts/NoteContext";
+import { useOptimizedNotes } from "@/contexts/OptimizedNotesContext";
 import { Button } from "@/components/ui/button";
 import { NoteStudyView } from "@/components/notes/study/NoteStudyView";
 import { Loader2, ArrowLeft, AlertCircle } from "lucide-react";
@@ -13,7 +13,7 @@ import { Note } from "@/types/note";
 const NoteStudyPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { notes, setNotes } = useNotes();
+  const { notes, addNote } = useOptimizedNotes();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<Note | null>(null);
@@ -100,13 +100,11 @@ const NoteStudyPage = () => {
         setLoading(false);
         
         // Add to notes context to avoid future fetches
-        setNotes(prevNotes => {
-          const exists = prevNotes.find(n => n.id === id);
-          if (!exists) {
-            return [transformedNote, ...prevNotes];
-          }
-          return prevNotes;
-        });
+        try {
+          await addNote(transformedNote);
+        } catch (addError) {
+          console.log("Note already exists in context or failed to add:", addError);
+        }
         
       } catch (err) {
         console.error("❌ Unexpected error fetching note:", err);
@@ -116,7 +114,7 @@ const NoteStudyPage = () => {
     };
 
     loadNote();
-  }, [id, notes, setNotes]);
+  }, [id, notes, addNote]);
 
   const handleGoBack = () => {
     navigate('/notes');

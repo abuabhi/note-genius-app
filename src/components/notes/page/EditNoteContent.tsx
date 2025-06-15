@@ -1,105 +1,158 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Save } from "lucide-react";
-import { useOptimizedNotes } from "@/contexts/OptimizedNotesContext";
-import { Note } from "@/types/note";
 
-const EditNoteContent = () => {
-  const { noteId } = useParams();
-  const { notes, updateNote } = useOptimizedNotes();
-  const [loading, setLoading] = useState(true);
-  const [note, setNote] = useState<Note | null>(null);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [content, setContent] = useState("");
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft, Save } from 'lucide-react';
+import { Note } from '@/types/note';
+import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
+import { toast } from 'sonner';
+
+interface EditNoteContentProps {
+  note: Note;
+}
+
+const EditNoteContent = ({ note }: EditNoteContentProps) => {
   const navigate = useNavigate();
+  const { updateNote } = useOptimizedNotes();
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    title: note.title,
+    description: note.description,
+    content: note.content || '',
+    subject: note.subject
+  });
 
-  useEffect(() => {
-    if (notes.length > 0 && noteId) {
-      const foundNote = notes.find((n) => n.id === noteId);
-      if (foundNote) {
-        setNote(foundNote);
-        setTitle(foundNote.title);
-        setDescription(foundNote.description);
-        setContent(foundNote.content);
-      }
-      setLoading(false);
-    }
-  }, [notes, noteId]);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-  const handleSave = async () => {
-    if (note && noteId) {
-      try {
-        await updateNote(noteId, {
-          title,
-          description,
-          content,
-        });
-        navigate(`/notes/${noteId}`);
-      } catch (error) {
-        console.error("Error updating note:", error);
-      }
+    try {
+      await updateNote(note.id, formData);
+      toast.success('Note updated successfully!');
+      navigate('/notes');
+    } catch (error) {
+      console.error('Error updating note:', error);
+      toast.error('Failed to update note');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  if (loading || !note) {
-    return <div>Loading...</div>;
-  }
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="mb-4">
-        <Button variant="ghost" onClick={() => navigate(`/notes/${noteId}`)}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Note
+    <div className="container mx-auto p-6 max-w-4xl">
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate('/notes')}
+          className="gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Notes
         </Button>
-      </div>
-      <div className="mb-6">
         <h1 className="text-2xl font-bold">Edit Note</h1>
       </div>
-      <div className="mb-4">
-        <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-          Title
-        </label>
-        <input
-          type="text"
-          id="title"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-      </div>
-      <div className="mb-4">
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-          Description
-        </label>
-        <textarea
-          id="description"
-          rows={3}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-      </div>
-      <div className="mb-4">
-        <label htmlFor="content" className="block text-sm font-medium text-gray-700">
-          Content
-        </label>
-        <textarea
-          id="content"
-          rows={10}
-          className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-        />
-      </div>
-      <div>
-        <Button variant="primary" onClick={handleSave}>
-          <Save className="mr-2 h-4 w-4" />
-          Save Note
-        </Button>
-      </div>
+
+      {/* Edit Form */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Note Details</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Title */}
+            <div className="space-y-2">
+              <Label htmlFor="title">Title</Label>
+              <Input
+                id="title"
+                value={formData.title}
+                onChange={(e) => handleInputChange('title', e.target.value)}
+                placeholder="Enter note title..."
+                required
+              />
+            </div>
+
+            {/* Description */}
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => handleInputChange('description', e.target.value)}
+                placeholder="Enter note description..."
+                rows={3}
+              />
+            </div>
+
+            {/* Subject */}
+            <div className="space-y-2">
+              <Label htmlFor="subject">Subject</Label>
+              <Select
+                value={formData.subject}
+                onValueChange={(value) => handleInputChange('subject', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select subject" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Mathematics">Mathematics</SelectItem>
+                  <SelectItem value="Science">Science</SelectItem>
+                  <SelectItem value="History">History</SelectItem>
+                  <SelectItem value="Literature">Literature</SelectItem>
+                  <SelectItem value="Physics">Physics</SelectItem>
+                  <SelectItem value="Chemistry">Chemistry</SelectItem>
+                  <SelectItem value="Biology">Biology</SelectItem>
+                  <SelectItem value="Geography">Geography</SelectItem>
+                  <SelectItem value="General">General</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Content */}
+            <div className="space-y-2">
+              <Label htmlFor="content">Content</Label>
+              <Textarea
+                id="content"
+                value={formData.content}
+                onChange={(e) => handleInputChange('content', e.target.value)}
+                placeholder="Enter note content..."
+                rows={10}
+                className="min-h-[200px]"
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-4 pt-4">
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="gap-2"
+              >
+                <Save className="h-4 w-4" />
+                {isLoading ? 'Saving...' : 'Save Changes'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate('/notes')}
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };

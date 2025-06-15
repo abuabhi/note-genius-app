@@ -1,7 +1,8 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, Suspense, lazy } from "react";
 import Layout from "@/components/layout/Layout";
-import { NoteProvider } from "@/contexts/NoteContext";
+import { OptimizedNotesProvider } from "@/contexts/OptimizedNotesContext";
 import { Button } from "@/components/ui/button";
 import { Loader2, ArrowLeft, AlertCircle } from "lucide-react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
@@ -188,9 +189,9 @@ const OptimizedNoteStudyPageInner = () => {
 
 const OptimizedNoteStudyPage = () => {
   return (
-    <NoteProvider>
+    <OptimizedNotesProvider>
       <OptimizedNoteStudyPageInner />
-    </NoteProvider>
+    </OptimizedNotesProvider>
   );
 };
 

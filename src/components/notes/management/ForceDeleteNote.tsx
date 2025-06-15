@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Trash2, AlertTriangle } from 'lucide-react';
@@ -14,7 +15,7 @@ interface ForceDeleteNoteProps {
 export const ForceDeleteNote = ({ noteId }: ForceDeleteNoteProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const { user } = useAuth();
-  const { notes, setNotes } = useOptimizedNotes();
+  const { notes, refreshNotes } = useOptimizedNotes();
 
   const handleDelete = async () => {
     if (!user || !noteId) return;
@@ -33,9 +34,8 @@ export const ForceDeleteNote = ({ noteId }: ForceDeleteNoteProps) => {
         return;
       }
 
-      // 2. Remove from local state
-      const updatedNotes = notes.filter(note => note.id !== noteId);
-      setNotes(updatedNotes);
+      // 2. Refresh notes to update local state
+      refreshNotes();
 
       toast.success("Note force deleted successfully!");
     } catch (err) {

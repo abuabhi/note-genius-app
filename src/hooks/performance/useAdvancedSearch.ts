@@ -1,245 +1,165 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { Note } from '@/types/note';
-import { useBackgroundProcessor } from './useBackgroundProcessor';
-import { useMultiLevelCache } from './useMultiLevelCache';
-
-interface SearchIndex {
-  [key: string]: Set<string>; // word -> note IDs
-}
 
 interface SearchOptions {
-  includeContent: boolean;
-  includeTags: boolean;
-  includeSubject: boolean;
-  fuzzyMatch: boolean;
-  maxResults: number;
-  sortBy: 'relevance' | 'date' | 'title';
+  fuzzy?: boolean;
+  fields?: string[];
+  limit?: number;
 }
 
 interface SearchResult {
   note: Note;
   score: number;
-  matchedFields: string[];
-  highlights: { field: string; text: string }[];
+  matches: string[];
 }
 
 export const useAdvancedSearch = (notes: Note[]) => {
-  const [searchIndex, setSearchIndex] = useState<SearchIndex>({});
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const [isIndexing, setIsIndexing] = useState(false);
-  const [lastIndexUpdate, setLastIndexUpdate] = useState<Date | null>(null);
-  const { addJob, registerWorker } = useBackgroundProcessor();
-  const cache = useMultiLevelCache();
 
-  // Build search index in background
-  const buildSearchIndex = useCallback(async () => {
-    console.log('🔍 Building search index for', notes.length, 'notes');
-    setIsIndexing(true);
-    
-    const index: SearchIndex = {};
+  // Create search index for better performance
+  const searchIndex = useMemo(() => {
+    const index = new Map<string, Set<string>>();
     
     notes.forEach(note => {
-      const words = new Set<string>();
-      
-      // Index title
-      note.title.toLowerCase().split(/\s+/).forEach(word => {
-        if (word.length > 2) words.add(word.trim());
-      });
-      
-      // Index content
-      if (note.content) {
-        note.content.toLowerCase().split(/\s+/).forEach(word => {
-          if (word.length > 2) words.add(word.trim().replace(/[^\w]/g, ''));
-        });
-      }
-      
-      // Index tags
-      note.tags?.forEach(tag => {
-        words.add(tag.name.toLowerCase());
-      });
-      
-      // Index subject
-      if (note.subject) {
-        words.add(note.subject.toLowerCase());
-      }
-      
-      // Add to index
+      const searchableText = [
+        note.title,
+        note.description,
+        note.content || '',
+        note.subject,
+        ...(note.tags?.map(tag => tag.name) || [])
+      ].join(' ').toLowerCase();
+
+      // Split into words and create index
+      const words = searchableText.split(/\s+/).filter(word => word.length > 2);
       words.forEach(word => {
-        if (!index[word]) index[word] = new Set();
-        index[word].add(note.id);
+        if (!index.has(word)) {
+          index.set(word, new Set());
+        }
+        index.get(word)!.add(note.id);
       });
     });
-    
-    setSearchIndex(index);
-    setLastIndexUpdate(new Date());
-    setIsIndexing(false);
-    
-    // Cache the index
-    cache.set('search_index', index, {
-      levels: ['memory'],
-      ttl: 10 * 60 * 1000 // 10 minutes
-    });
-    
-    console.log('✅ Search index built with', Object.keys(index).length, 'terms');
-  }, [notes, cache]);
 
-  // Register background worker for indexing
-  const registerIndexWorker = useCallback(() => {
-    registerWorker('build_search_index', async ({ notes: notesToIndex }) => {
-      // This runs in background
-      await buildSearchIndex();
-    });
-  }, [registerWorker, buildSearchIndex]);
+    return index;
+  }, [notes]);
 
-  // Perform advanced search
-  const search = useCallback(async (
-    query: string, 
-    options: Partial<SearchOptions> = {}
-  ): Promise<SearchResult[]> => {
+  // Advanced search function
+  const search = useCallback(async (query: string, options: SearchOptions = {}) => {
     if (!query.trim()) return [];
-    
-    const searchOptions: SearchOptions = {
-      includeContent: true,
-      includeTags: true,
-      includeSubject: true,
-      fuzzyMatch: false,
-      maxResults: 50,
-      sortBy: 'relevance',
-      ...options
-    };
-    
-    console.log('🔍 Performing advanced search:', query, searchOptions);
-    
-    // Check cache first
-    const cacheKey = `search_${query}_${JSON.stringify(searchOptions)}`;
-    const cachedResults = cache.get(cacheKey);
-    if (cachedResults) {
-      console.log('📦 Returning cached search results');
-      return cachedResults;
-    }
-    
-    const searchTerms = query.toLowerCase().split(/\s+/).filter(term => term.length > 1);
+
+    const {
+      fuzzy = false,
+      fields = ['title', 'description', 'content', 'subject'],
+      limit = 50
+    } = options;
+
+    const searchTerms = query.toLowerCase().split(/\s+/);
     const results: SearchResult[] = [];
-    const noteScores = new Map<string, number>();
-    const noteMatches = new Map<string, Set<string>>();
-    
-    // Find matching notes using the index
-    searchTerms.forEach(term => {
-      const exactMatches = searchIndex[term] || new Set();
-      
-      // Add exact matches
-      exactMatches.forEach(noteId => {
-        noteScores.set(noteId, (noteScores.get(noteId) || 0) + 2);
-        if (!noteMatches.has(noteId)) noteMatches.set(noteId, new Set());
-        noteMatches.get(noteId)!.add(term);
-      });
-      
-      // Add fuzzy matches if enabled
-      if (searchOptions.fuzzyMatch) {
-        Object.keys(searchIndex).forEach(indexTerm => {
-          if (indexTerm.includes(term) && indexTerm !== term) {
-            searchIndex[indexTerm].forEach(noteId => {
-              noteScores.set(noteId, (noteScores.get(noteId) || 0) + 1);
-              if (!noteMatches.has(noteId)) noteMatches.set(noteId, new Set());
-              noteMatches.get(noteId)!.add(indexTerm);
-            });
+
+    notes.forEach(note => {
+      let score = 0;
+      const matches: string[] = [];
+
+      // Search in specified fields
+      fields.forEach(field => {
+        const fieldValue = (note[field as keyof Note] as string || '').toLowerCase();
+        
+        searchTerms.forEach(term => {
+          if (fieldValue.includes(term)) {
+            // Boost score based on field importance and match type
+            let fieldScore = 1;
+            if (field === 'title') fieldScore = 3;
+            else if (field === 'subject') fieldScore = 2;
+            
+            // Exact word match gets higher score
+            const exactMatch = new RegExp(`\\b${term}\\b`).test(fieldValue);
+            score += exactMatch ? fieldScore * 2 : fieldScore;
+            
+            if (!matches.includes(field)) {
+              matches.push(field);
+            }
           }
         });
-      }
-    });
-    
-    // Build results with scores and highlights
-    noteScores.forEach((score, noteId) => {
-      const note = notes.find(n => n.id === noteId);
-      if (!note) return;
-      
-      const matchedFields: string[] = [];
-      const highlights: { field: string; text: string }[] = [];
-      
-      // Check what fields matched
-      const matches = noteMatches.get(noteId) || new Set();
-      matches.forEach(term => {
-        if (note.title.toLowerCase().includes(term)) {
-          matchedFields.push('title');
-          highlights.push({
-            field: 'title',
-            text: highlightText(note.title, term)
-          });
-        }
-        if (note.content?.toLowerCase().includes(term)) {
-          matchedFields.push('content');
-          highlights.push({
-            field: 'content',
-            text: highlightText(note.content.substring(0, 200), term)
-          });
-        }
-        if (note.tags?.some(tag => tag.name.toLowerCase().includes(term))) {
-          matchedFields.push('tags');
-        }
-        if (note.subject?.toLowerCase().includes(term)) {
-          matchedFields.push('subject');
+      });
+
+      // Include tags in search
+      note.tags?.forEach(tag => {
+        if (searchTerms.some(term => tag.name.toLowerCase().includes(term))) {
+          score += 1.5;
+          matches.push('tags');
         }
       });
-      
-      results.push({
-        note,
-        score,
-        matchedFields: [...new Set(matchedFields)],
-        highlights
-      });
-    });
-    
-    // Sort results
-    results.sort((a, b) => {
-      switch (searchOptions.sortBy) {
-        case 'date':
-          // Use created_at or date field, fallback to current time
-          const aDate = new Date(a.note.created_at || a.note.date || Date.now()).getTime();
-          const bDate = new Date(b.note.created_at || b.note.date || Date.now()).getTime();
-          return bDate - aDate;
-        case 'title':
-          return a.note.title.localeCompare(b.note.title);
-        default:
-          return b.score - a.score;
+
+      // Date-based scoring (newer notes get slight boost)
+      const noteDate = new Date(note.date || '');
+      const daysSinceCreation = (Date.now() - noteDate.getTime()) / (1000 * 60 * 60 * 24);
+      score += Math.max(0, (30 - daysSinceCreation) / 30) * 0.1;
+
+      if (score > 0) {
+        results.push({
+          note,
+          score,
+          matches
+        });
       }
     });
-    
-    const finalResults = results.slice(0, searchOptions.maxResults);
-    
-    // Cache results
-    cache.set(cacheKey, finalResults, {
-      levels: ['memory'],
-      ttl: 5 * 60 * 1000 // 5 minutes
+
+    // Sort by score and apply limit
+    const sortedResults = results
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit);
+
+    // Update search history
+    setSearchHistory(prev => {
+      const newHistory = [query, ...prev.filter(h => h !== query)].slice(0, 10);
+      return newHistory;
     });
-    
-    console.log(`✅ Found ${finalResults.length} search results`);
-    return finalResults;
-  }, [searchIndex, notes, cache]);
 
-  // Helper function to highlight matched text
-  const highlightText = (text: string, term: string): string => {
-    const regex = new RegExp(`(${term})`, 'gi');
-    return text.replace(regex, '<mark>$1</mark>');
-  };
+    return sortedResults;
+  }, [notes]);
 
-  // Auto-rebuild index when notes change
+  // Get search suggestions based on content
+  const getSuggestions = useCallback((query: string) => {
+    if (!query.trim()) return [];
+
+    const suggestions: string[] = [];
+    const queryLower = query.toLowerCase();
+
+    // Get suggestions from search index
+    Array.from(searchIndex.keys())
+      .filter(word => word.startsWith(queryLower))
+      .slice(0, 5)
+      .forEach(word => suggestions.push(word));
+
+    // Add subject suggestions
+    const subjects = [...new Set(notes.map(note => note.subject))];
+    subjects
+      .filter(subject => subject.toLowerCase().includes(queryLower))
+      .slice(0, 3)
+      .forEach(subject => suggestions.push(subject));
+
+    return suggestions;
+  }, [searchIndex, notes]);
+
+  // Update search index (called when notes change)
   const updateIndex = useCallback(() => {
-    if (notes.length > 0) {
-      addJob('build_search_index', { notes }, 'medium');
-    }
-  }, [notes, addJob]);
+    setIsIndexing(true);
+    // Index is automatically updated via useMemo dependency
+    setTimeout(() => setIsIndexing(false), 100);
+  }, []);
 
-  // Initialize
-  useState(() => {
-    registerIndexWorker();
-  });
+  // Get popular search terms
+  const getPopularSearches = useCallback(() => {
+    return searchHistory.slice(0, 5);
+  }, [searchHistory]);
 
   return {
     search,
-    buildSearchIndex,
+    getSuggestions,
     updateIndex,
-    isIndexing,
-    lastIndexUpdate,
-    searchIndex
+    getPopularSearches,
+    searchHistory,
+    isIndexing
   };
 };
