@@ -43,8 +43,9 @@ const CTA = () => {
             <Button
               size="lg"
               className="bg-white text-mint-700 hover:bg-mint-50 hover:scale-105 transform transition-all duration-200"
+              asChild
             >
-              <Link to="/signup" className="flex items-center">
+              <Link to="/signup">
                 Start Free Account
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
@@ -53,8 +54,9 @@ const CTA = () => {
               variant="outline"
               size="lg"
               className="border-white/30 text-white hover:bg-white/10 backdrop-blur-sm"
+              asChild
             >
-              <Link to="/flashcards" className="flex items-center">
+              <Link to="/flashcards">
                 Try Live Demo
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>

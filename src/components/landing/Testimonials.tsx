@@ -22,13 +22,6 @@ const testimonials = [
     feature: "Progress Tracking"
   },
   {
-    content: "Study groups became so much easier! We share flashcard sets and track our collective progress. Game changer for group study.",
-    author: "David Park",
-    role: "Law Student, Harvard",
-    image: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
-    feature: "Collaboration"
-  },
-  {
     content: "The AI note enhancement turned my messy lecture notes into clear, structured study materials. It's like having a study assistant.",
     author: "Priya Patel",
     role: "Computer Science, Berkeley",
@@ -41,6 +34,13 @@ const testimonials = [
     role: "Chemistry Major, Caltech",
     image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
     feature: "Adaptive Learning"
+  },
+  {
+    content: "The document scanning feature is a game-changer. I can digitize my textbook notes in seconds and generate flashcards from them.",
+    author: "Jamie Liu",
+    role: "Biology Major, Harvard",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
+    feature: "Document Scanning"
   },
 ];
 

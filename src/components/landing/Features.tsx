@@ -1,4 +1,5 @@
-import { BookOpen, Brain, Scan, BarChart3, Users, Zap, ArrowRight } from "lucide-react";
+
+import { BookOpen, Brain, Scan, BarChart3, Zap, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
@@ -33,12 +34,6 @@ const features = [
     icon: BarChart3,
     highlight: ""
   },
-  {
-    name: "Study Collaboration",
-    description: "Share flashcard sets, join study groups, and learn together with classmates.",
-    icon: Users,
-    highlight: ""
-  },
 ];
 
 const Features = () => {
@@ -53,7 +48,7 @@ const Features = () => {
             Everything you need to study smarter
           </h2>
           <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-            From AI-powered flashcards to collaborative study groups - all the tools you need in one platform
+            From AI-powered flashcards to personalized study analytics - all the tools you need in one platform
           </p>
         </div>
 
@@ -88,8 +83,9 @@ const Features = () => {
             variant="outline"
             size="lg"
             className="border-mint-200 text-mint-700 hover:bg-mint-50"
+            asChild
           >
-            <Link to="/flashcards" className="flex items-center">
+            <Link to="/flashcards">
               See Features in Action
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>

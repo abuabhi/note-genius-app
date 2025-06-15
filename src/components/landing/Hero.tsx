@@ -43,8 +43,9 @@ const Hero = () => {
             <Button 
               size="lg" 
               className="bg-mint-500 hover:bg-mint-600 text-white"
+              asChild
             >
-              <Link to="/signup" className="flex items-center">
+              <Link to="/signup">
                 Start Learning Free
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
@@ -53,8 +54,9 @@ const Hero = () => {
               variant="outline"
               size="lg"
               className="border-mint-200 text-mint-700 hover:bg-mint-50"
+              asChild
             >
-              <Link to="/flashcards" className="flex items-center">
+              <Link to="/flashcards">
                 <Play className="mr-2 h-4 w-4" />
                 Try Demo
               </Link>
