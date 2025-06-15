@@ -5,10 +5,6 @@ import { useOptimizedNotes as useOptimizedNotesHook } from '@/hooks/useOptimized
 import { useNotesOperations } from './notes/useNotesOperations';
 import { useFilteredNotes } from './notes/state/useFilteredNotes';
 import { usePaginatedNotes } from './notes/state/usePaginatedNotes';
-import { useRealtimeCollaboration } from '@/hooks/performance/useRealtimeCollaboration';
-import { useAdvancedSearch } from '@/hooks/performance/useAdvancedSearch';
-import { useIntelligentPrefetching } from '@/hooks/performance/useIntelligentPrefetching';
-import { usePerformanceMonitor } from '@/hooks/performance/usePerformanceMonitor';
 import { useState } from 'react';
 
 interface OptimizedNotesContextType {
@@ -47,19 +43,11 @@ interface OptimizedNotesContextType {
   deleteNote: (id: string) => Promise<void>;
   pinNote: (id: string, pinned: boolean) => Promise<void>;
   archiveNote: (id: string, archived: boolean) => Promise<void>;
-  
-  // Advanced features
-  advancedSearch: (query: string, options?: any) => Promise<any[]>;
-  trackUserAction: (type: string, noteId?: string, metadata?: any) => void;
-  collaborationState: any;
-  performanceMetrics: any;
-  isRealtimeEnabled: boolean;
-  setRealtimeEnabled: (enabled: boolean) => void;
 }
 
 const OptimizedNotesContext = createContext<OptimizedNotesContextType | undefined>(undefined);
 
-// Memoized provider component
+// Simplified provider component without heavy features
 const OptimizedNotesProviderInner = React.memo(({ children }: { children: ReactNode }) => {
   const { notes, loading, error, refreshNotes, setNotes } = useOptimizedNotesHook();
   
@@ -68,10 +56,48 @@ const OptimizedNotesProviderInner = React.memo(({ children }: { children: ReactN
   const [sortType, setSortType] = useState('newest');
   const [showArchived, setShowArchived] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState('all');
-  const [isRealtimeEnabled, setRealtimeEnabled] = useState(true);
   
-  // Get filtered notes
-  const filteredNotes = useFilteredNotes(notes, searchTerm, sortType, {}, showArchived) || [];
+  // Simple search function instead of advanced indexing
+  const filteredNotes = useMemo(() => {
+    let filtered = notes;
+
+    // Apply search filter
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(note =>
+        note.title.toLowerCase().includes(searchLower) ||
+        note.description.toLowerCase().includes(searchLower) ||
+        (note.content || '').toLowerCase().includes(searchLower) ||
+        note.subject.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Apply subject filter
+    if (selectedSubject !== 'all') {
+      filtered = filtered.filter(note => note.subject === selectedSubject);
+    }
+
+    // Apply archived filter
+    if (!showArchived) {
+      filtered = filtered.filter(note => !note.archived);
+    }
+
+    // Apply sorting
+    return filtered.sort((a, b) => {
+      switch (sortType) {
+        case 'newest':
+          return new Date(b.date || '').getTime() - new Date(a.date || '').getTime();
+        case 'oldest':
+          return new Date(a.date || '').getTime() - new Date(b.date || '').getTime();
+        case 'alphabetical':
+          return a.title.localeCompare(b.title);
+        case 'subject':
+          return a.subject.localeCompare(b.subject);
+        default:
+          return 0;
+      }
+    });
+  }, [notes, searchTerm, selectedSubject, showArchived, sortType]);
   
   // Get pagination
   const paginationState = usePaginatedNotes(filteredNotes);
@@ -82,7 +108,7 @@ const OptimizedNotesProviderInner = React.memo(({ children }: { children: ReactN
     paginatedNotes: []
   };
 
-  // Get operations
+  // Get operations - simplified without real-time features
   const operations = useNotesOperations(
     notes, 
     setNotes, 
@@ -90,88 +116,6 @@ const OptimizedNotesProviderInner = React.memo(({ children }: { children: ReactN
     setCurrentPage, 
     paginatedNotes
   );
-
-  // Advanced features
-  const { collaborationState, broadcastUpdate } = useRealtimeCollaboration(notes, setNotes);
-  const { search: advancedSearch, updateIndex } = useAdvancedSearch(notes);
-  const { trackAction } = useIntelligentPrefetching(notes);
-  const { 
-    metrics: performanceMetrics, 
-    startMonitoring, 
-    trackRenderTime 
-  } = usePerformanceMonitor();
-
-  // Track note updates for real-time collaboration
-  const handleNoteUpdate = useCallback(async (noteId: string, updates: Partial<Note>) => {
-    const result = await operations.updateNote(noteId, updates);
-    
-    if (isRealtimeEnabled) {
-      await broadcastUpdate({
-        type: 'note_updated',
-        userId: 'current-user', // This would come from auth
-        noteId,
-        data: updates,
-        timestamp: Date.now()
-      });
-    }
-    
-    return result;
-  }, [operations.updateNote, isRealtimeEnabled, broadcastUpdate]);
-
-  const handleNoteCreate = useCallback(async (note: Omit<Note, 'id'>) => {
-    const result = await operations.addNote(note);
-    
-    if (result && isRealtimeEnabled) {
-      await broadcastUpdate({
-        type: 'note_created',
-        userId: 'current-user',
-        data: result,
-        timestamp: Date.now()
-      });
-    }
-    
-    return result;
-  }, [operations.addNote, isRealtimeEnabled, broadcastUpdate]);
-
-  const handleNoteDelete = useCallback(async (noteId: string) => {
-    await operations.deleteNote(noteId);
-    
-    if (isRealtimeEnabled) {
-      await broadcastUpdate({
-        type: 'note_deleted',
-        userId: 'current-user',
-        noteId,
-        data: {},
-        timestamp: Date.now()
-      });
-    }
-  }, [operations.deleteNote, isRealtimeEnabled, broadcastUpdate]);
-
-  // Track user actions for intelligent prefetching
-  const trackUserAction = useCallback((type: string, noteId?: string, metadata?: any) => {
-    trackAction(type as any, noteId, metadata);
-  }, [trackAction]);
-
-  // Update search index when notes change
-  useEffect(() => {
-    if (notes.length > 0) {
-      updateIndex();
-    }
-  }, [notes, updateIndex]);
-
-  // Start performance monitoring
-  useEffect(() => {
-    startMonitoring();
-  }, [startMonitoring]);
-
-  // Track render performance
-  useEffect(() => {
-    const startTime = performance.now();
-    
-    return () => {
-      trackRenderTime('OptimizedNotesProvider', startTime);
-    };
-  }, [trackRenderTime]);
 
   // Memoized context value
   const contextValue = useMemo(() => ({
@@ -185,7 +129,7 @@ const OptimizedNotesProviderInner = React.memo(({ children }: { children: ReactN
     error,
     
     // Additional properties for compatibility
-    hasMore: false, // For now, set to false since we're not using infinite scroll
+    hasMore: false,
     refetch: refreshNotes,
     
     // Search and filtering
@@ -203,28 +147,18 @@ const OptimizedNotesProviderInner = React.memo(({ children }: { children: ReactN
     setCurrentPage,
     totalPages,
     
-    // Operations with real-time support
+    // Operations
     refreshNotes,
-    addNote: handleNoteCreate,
-    updateNote: handleNoteUpdate,
-    deleteNote: handleNoteDelete,
+    addNote: operations.addNote,
+    updateNote: operations.updateNote,
+    deleteNote: operations.deleteNote,
     pinNote: operations.pinNote,
-    archiveNote: operations.archiveNote,
-    
-    // Advanced features
-    advancedSearch,
-    trackUserAction,
-    collaborationState,
-    performanceMetrics,
-    isRealtimeEnabled,
-    setRealtimeEnabled
+    archiveNote: operations.archiveNote
   }), [
     notes, filteredNotes, paginatedNotes, loading, error,
     searchTerm, sortType, showArchived, selectedSubject, currentPage, totalPages,
-    refreshNotes, handleNoteCreate, handleNoteUpdate, handleNoteDelete,
-    operations.pinNote, operations.archiveNote,
-    advancedSearch, trackUserAction, collaborationState, performanceMetrics,
-    isRealtimeEnabled
+    refreshNotes, operations.addNote, operations.updateNote, operations.deleteNote,
+    operations.pinNote, operations.archiveNote
   ]);
 
   return (

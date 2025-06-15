@@ -4,9 +4,6 @@ import { OptimizedNotesProvider } from '@/contexts/OptimizedNotesContext';
 import { StandardPageHeader } from '@/components/ui/StandardPageHeader';
 import { FileText } from 'lucide-react';
 import EnhancedErrorBoundary from '@/components/error/EnhancedErrorBoundary';
-import { CacheMonitor } from '@/components/performance/CacheMonitor';
-import { PerformanceDashboard } from '@/components/performance/PerformanceDashboard';
-import { EnhancedServiceWorkerManager } from '@/components/performance/EnhancedServiceWorkerManager';
 import { SecureOptimizedNotesContent } from '@/components/notes/page/SecureOptimizedNotesContent';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 
@@ -19,11 +16,7 @@ const OptimizedNotesPage = () => {
 
   return (
     <EnhancedErrorBoundary>
-      <Layout>
-        <CacheMonitor />
-        <PerformanceDashboard />
-        <EnhancedServiceWorkerManager />
-        
+      <Layout>        
         <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
           <StandardPageHeader
             title="Notes"

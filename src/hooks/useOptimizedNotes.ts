@@ -4,7 +4,7 @@ import { Note } from '@/types/note';
 import { fetchNotesFromSupabase } from '@/contexts/notes/noteUtils';
 import { toast } from 'sonner';
 
-// Cache for notes data
+// Simplified cache without heavy features
 const CACHE_KEY = 'notes_cache';
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
@@ -18,7 +18,7 @@ export const useOptimizedNotes = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load from cache first
+  // Simple cache operations
   const loadFromCache = useCallback((): Note[] | null => {
     try {
       const cached = localStorage.getItem(CACHE_KEY);
@@ -40,7 +40,6 @@ export const useOptimizedNotes = () => {
     return null;
   }, []);
 
-  // Save to cache
   const saveToCache = useCallback((notesToCache: Note[]) => {
     try {
       const cacheData: CachedData = {
@@ -53,7 +52,7 @@ export const useOptimizedNotes = () => {
     }
   }, []);
 
-  // Load notes with caching
+  // Simplified load function
   const loadNotes = useCallback(async (useCache = true) => {
     if (useCache) {
       const cachedNotes = loadFromCache();
@@ -93,7 +92,6 @@ export const useOptimizedNotes = () => {
     loadNotes(false);
   }, [loadNotes]);
 
-  // Memoized return value to prevent unnecessary re-renders
   return useMemo(() => ({
     notes,
     loading,

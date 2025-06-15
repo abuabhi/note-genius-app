@@ -1,102 +1,82 @@
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 
-export interface PerformanceMetrics {
-  renderTimes: number[];
-  apiTimes: number[];
-  memoryUsage: number[];
-  renderTime: number;
-  apiTime: number;
-  componentCount: number;
-  reRenderCount: number;
+interface PerformanceMetrics {
+  renderTimes: { component: string; time: number; timestamp: number }[];
+  memoryUsage: number;
+  queryTimes: { query: string; time: number; timestamp: number }[];
+  cacheHitRate: number;
+  totalQueries: number;
+  slowQueries: number;
 }
 
+// On-demand performance monitoring only
 export const usePerformanceMonitor = () => {
   const [metrics, setMetrics] = useState<PerformanceMetrics>({
     renderTimes: [],
-    apiTimes: [],
-    memoryUsage: [],
-    renderTime: 0,
-    apiTime: 0,
-    componentCount: 0,
-    reRenderCount: 0
+    memoryUsage: 0,
+    queryTimes: [],
+    cacheHitRate: 0,
+    totalQueries: 0,
+    slowQueries: 0
   });
 
-  const trackRenderTime = useCallback((componentName: string, startTime: number) => {
-    const renderTime = performance.now() - startTime;
-    setMetrics(prev => ({
-      ...prev,
-      renderTimes: [...prev.renderTimes.slice(-19), renderTime],
-      renderTime,
-      reRenderCount: prev.reRenderCount + 1
-    }));
-  }, []);
+  const [isMonitoring, setIsMonitoring] = useState(false);
 
-  const trackApiTime = useCallback((endpoint: string, startTime: number) => {
-    const apiTime = performance.now() - startTime;
-    setMetrics(prev => ({
-      ...prev,
-      apiTimes: [...prev.apiTimes.slice(-19), apiTime],
-      apiTime
-    }));
-  }, []);
-
-  const trackMemoryUsage = useCallback(() => {
-    if ('memory' in performance) {
-      const memoryInfo = (performance as any).memory;
-      const usage = memoryInfo.usedJSHeapSize;
-      setMetrics(prev => ({
-        ...prev,
-        memoryUsage: [...prev.memoryUsage.slice(-19), usage]
-      }));
-    }
-  }, []);
-
-  const getMemoryUsage = useCallback(() => {
-    if ('memory' in performance) {
-      const memoryInfo = (performance as any).memory;
-      return {
-        used: memoryInfo.usedJSHeapSize,
-        total: memoryInfo.totalJSHeapSize,
-        limit: memoryInfo.jsHeapSizeLimit,
-        usedJSHeapSize: memoryInfo.usedJSHeapSize,
-        jsHeapSizeLimit: memoryInfo.jsHeapSizeLimit
-      };
-    }
-    return {
-      used: 0,
-      total: 0,
-      limit: 0,
-      usedJSHeapSize: 0,
-      jsHeapSizeLimit: 0
-    };
-  }, []);
-
-  const clearMetrics = useCallback(() => {
-    setMetrics({
-      renderTimes: [],
-      apiTimes: [],
-      memoryUsage: [],
-      renderTime: 0,
-      apiTime: 0,
-      componentCount: 0,
-      reRenderCount: 0
-    });
-  }, []);
-
+  // Start monitoring manually
   const startMonitoring = useCallback(() => {
-    // Start memory tracking interval
-    const interval = setInterval(trackMemoryUsage, 5000);
-    return () => clearInterval(interval);
-  }, [trackMemoryUsage]);
+    setIsMonitoring(true);
+    console.log('🔍 Performance monitoring started');
+  }, []);
+
+  // Stop monitoring
+  const stopMonitoring = useCallback(() => {
+    setIsMonitoring(false);
+    console.log('⏹️ Performance monitoring stopped');
+  }, []);
+
+  // Track render time only when monitoring is active
+  const trackRenderTime = useCallback((component: string, startTime: number) => {
+    if (!isMonitoring) return;
+    
+    const endTime = performance.now();
+    const renderTime = endTime - startTime;
+    
+    setMetrics(prev => ({
+      ...prev,
+      renderTimes: [...prev.renderTimes.slice(-9), {
+        component,
+        time: renderTime,
+        timestamp: Date.now()
+      }]
+    }));
+  }, [isMonitoring]);
+
+  // Track query time only when monitoring is active
+  const trackQueryTime = useCallback((query: string, startTime: number) => {
+    if (!isMonitoring) return;
+    
+    const endTime = performance.now();
+    const queryTime = endTime - startTime;
+    
+    setMetrics(prev => ({
+      ...prev,
+      queryTimes: [...prev.queryTimes.slice(-9), {
+        query,
+        time: queryTime,
+        timestamp: Date.now()
+      }],
+      totalQueries: prev.totalQueries + 1,
+      slowQueries: queryTime > 1000 ? prev.slowQueries + 1 : prev.slowQueries
+    }));
+  }, [isMonitoring]);
 
   return {
     metrics,
+    isMonitoring,
+    startMonitoring,
+    stopMonitoring,
     trackRenderTime,
-    trackApiTime,
-    trackMemoryUsage,
-    getMemoryUsage,
-    clearMetrics,
-    startMonitoring
+    trackQueryTime
   };
 };
