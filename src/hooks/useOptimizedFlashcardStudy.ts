@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 import { StudyMode } from '@/pages/study/types';
 import { Flashcard } from '@/types/flashcard';
+import { useUnifiedSessionTracker } from './useUnifiedSessionTracker';
 
 interface UseOptimizedFlashcardStudyProps {
   setId: string;
@@ -32,12 +33,11 @@ interface StudyStats {
 
 export const useOptimizedFlashcardStudy = ({ 
   setId, 
-  mode, 
-  recordActivity = () => {}, 
-  updateSessionActivity = () => {} 
+  mode
 }: UseOptimizedFlashcardStudyProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { startSession, recordActivity, updateSessionActivity, isActive } = useUnifiedSessionTracker();
   
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -55,6 +55,18 @@ export const useOptimizedFlashcardStudy = ({
 
       console.log('🚀 Starting optimized flashcard fetch for set:', setId, 'mode:', mode);
       const startTime = Date.now();
+
+      // Get set details first for session title
+      const { data: setData, error: setError } = await supabase
+        .from('flashcard_sets')
+        .select('name, subject')
+        .eq('id', setId)
+        .single();
+
+      if (setError) {
+        console.error('❌ Error fetching set details:', setError);
+        throw setError;
+      }
 
       // Step 1: Get flashcards for the set
       const { data: flashcardData, error: flashcardError } = await supabase
@@ -84,7 +96,8 @@ export const useOptimizedFlashcardStudy = ({
         console.log('📝 No flashcards found in set:', setId);
         return {
           flashcards: [],
-          stats: { studiedToday: 0, masteredCount: 0, totalCards: 0 }
+          stats: { studiedToday: 0, masteredCount: 0, totalCards: 0 },
+          setInfo: setData
         };
       }
 
@@ -158,11 +171,23 @@ export const useOptimizedFlashcardStudy = ({
           studiedToday,
           masteredCount,
           totalCards: allCards.length
-        }
+        },
+        setInfo: setData
       };
     },
     enabled: !!user && !!setId
   });
+
+  // Auto-start unified session when flashcards are loaded
+  useEffect(() => {
+    if (data?.flashcards?.length && data.setInfo && !isActive) {
+      const sessionTitle = `Studying: ${data.setInfo.name}`;
+      const subject = data.setInfo.subject || 'General';
+      
+      console.log('🎯 Auto-starting flashcard study session:', sessionTitle);
+      startSession('flashcard_study', sessionTitle, subject);
+    }
+  }, [data, isActive, startSession]);
 
   useEffect(() => {
     if (data?.stats) {
@@ -227,17 +252,20 @@ export const useOptimizedFlashcardStudy = ({
           last_seen_at: new Date().toISOString()
         });
 
-      // Update session activity
+      // Update unified session activity with meaningful data
+      const newStudiedToday = studyStats.studiedToday + 1;
+      const newMasteredCount = choice === 'mastered' ? studyStats.masteredCount + 1 : studyStats.masteredCount;
+      
       await updateSessionActivity({
-        cards_reviewed: studyStats.studiedToday + 1,
-        cards_correct: choice === 'mastered' ? (studyStats.masteredCount + 1) : studyStats.masteredCount
+        cards_reviewed: newStudiedToday,
+        cards_correct: newMasteredCount
       });
 
       // Update local stats
       setStudyStats(prev => ({
         ...prev,
-        studiedToday: prev.studiedToday + 1,
-        masteredCount: choice === 'mastered' ? prev.masteredCount + 1 : prev.masteredCount
+        studiedToday: newStudiedToday,
+        masteredCount: newMasteredCount
       }));
 
       // Move to next card
@@ -245,6 +273,7 @@ export const useOptimizedFlashcardStudy = ({
 
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['optimized-flashcard-study'] });
+      queryClient.invalidateQueries({ queryKey: ['unified-analytics'] });
 
     } catch (error) {
       console.error('Error updating flashcard progress:', error);

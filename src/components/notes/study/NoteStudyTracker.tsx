@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useUnifiedSessionTracker } from '@/hooks/useUnifiedSessionTracker';
 
 interface NoteStudyTrackerProps {
@@ -35,17 +35,22 @@ export const NoteStudyTracker = ({
     triggerStudyActivity
   });
   
-  // Auto-start session if not active and user is studying
-  React.useEffect(() => {
-    if (!isActive && triggerStudyActivity) {
-      startSession('note_review', `Studying: ${noteName}`, subject);
+  // Auto-start note review session when component mounts
+  useEffect(() => {
+    if (!isActive) {
+      const sessionTitle = `Studying: ${noteName}`;
+      const sessionSubject = subject || 'Notes';
+      
+      console.log('🎯 Auto-starting note review session:', sessionTitle);
+      startSession('note_review', sessionTitle, sessionSubject);
       onSessionStart?.();
     }
-  }, [isActive, triggerStudyActivity, startSession, noteName, subject, onSessionStart]);
+  }, [isActive, startSession, noteName, subject, onSessionStart]);
   
   // Record note study activity when triggered
-  React.useEffect(() => {
+  useEffect(() => {
     if (triggerStudyActivity && isActive) {
+      console.log('📖 Recording note study activity');
       recordActivity();
       updateSessionActivity({
         notes_reviewed: 1
@@ -56,12 +61,12 @@ export const NoteStudyTracker = ({
   return (
     <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
       <div className="text-blue-800 text-sm">
-        <strong>Unified Study Tracker</strong>
+        <strong>Study Session Active</strong>
         <p className="mt-1">
           Studying: {noteName}
         </p>
         <p className="text-xs text-blue-600 mt-1">
-          Unified session tracking • Status: {isActive ? 'Active' : 'Inactive'}
+          Session tracking active • Status: {isActive ? 'Recording' : 'Inactive'}
         </p>
       </div>
     </div>

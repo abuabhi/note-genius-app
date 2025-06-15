@@ -8,34 +8,28 @@ interface StudySessionManagerProps {
   setId: string;
   mode: StudyMode;
   children: (sessionData: any) => React.ReactNode;
-  // Session methods are now managed by the unified system
-  recordActivity?: () => void;
-  updateSessionActivity?: (data: any) => void;
 }
 
 export const StudySessionManager = ({ 
   setId, 
   mode, 
-  children,
-  recordActivity: externalRecord = () => {},
-  updateSessionActivity: externalUpdate = () => {}
+  children
 }: StudySessionManagerProps) => {
   
   // Use the unified session tracker
-  const { recordActivity, updateSessionActivity } = useUnifiedSessionTracker();
+  const { recordActivity, updateSessionActivity, isActive } = useUnifiedSessionTracker();
   
   console.log('🎛️ [STUDY SESSION MANAGER] Using unified session system:', {
     setId,
     mode,
-    hasUnifiedSession: !!recordActivity
+    hasUnifiedSession: !!recordActivity,
+    isActive
   });
   
-  // Use different hooks based on mode, passing unified session methods
+  // Use different hooks based on mode
   const studyHook = useOptimizedFlashcardStudy({ 
     setId, 
-    mode, 
-    recordActivity, 
-    updateSessionActivity 
+    mode
   });
   const quizHook = useQuizMode({ 
     setId, 
@@ -114,6 +108,7 @@ export const StudySessionManager = ({
     isQuizMode,
     cardsStudied,
     mode,
+    isSessionActive: isActive,
     
     // Handlers (with unified session activity recording)
     handleNext: () => {

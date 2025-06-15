@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { useUnifiedSessionTracker } from '@/hooks/useUnifiedSessionTracker';
 
 interface SimplifiedFlashcardStudyProps {
   setId: string;
@@ -20,6 +21,8 @@ export const SimplifiedFlashcardStudy: React.FC<SimplifiedFlashcardStudyProps> =
   setId, 
   mode 
 }) => {
+  const { isActive, recordActivity } = useUnifiedSessionTracker();
+  
   const {
     flashcards,
     currentIndex,
@@ -38,12 +41,20 @@ export const SimplifiedFlashcardStudy: React.FC<SimplifiedFlashcardStudyProps> =
     setIsFlipped
   } = useOptimizedFlashcardStudy({ setId, mode });
 
+  // Log session status when study starts
+  useEffect(() => {
+    if (flashcards.length > 0 && isActive) {
+      console.log('📚 [SIMPLIFIED STUDY] Study session active with unified tracker');
+    }
+  }, [flashcards.length, isActive]);
+
   // Auto-flip prevention and session management
   useEffect(() => {
     if (isComplete) {
-      console.log('Study session completed!');
+      console.log('🎉 Study session completed!');
+      recordActivity(); // Record final activity
     }
-  }, [isComplete]);
+  }, [isComplete, recordActivity]);
 
   if (isLoading) {
     return (
@@ -103,6 +114,13 @@ export const SimplifiedFlashcardStudy: React.FC<SimplifiedFlashcardStudyProps> =
             masteredCount={masteredCount}
             showProgress={true}
           />
+          {isActive && (
+            <div className="mt-4 p-3 bg-mint-50 border border-mint-200 rounded-lg">
+              <p className="text-sm text-mint-700">
+                📊 Session data has been recorded to your analytics
+              </p>
+            </div>
+          )}
         </Card>
       </div>
     );
@@ -110,6 +128,18 @@ export const SimplifiedFlashcardStudy: React.FC<SimplifiedFlashcardStudyProps> =
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
+      {/* Session Status Indicator */}
+      {isActive && (
+        <div className="p-3 bg-mint-50 border border-mint-200 rounded-lg">
+          <div className="text-mint-800 text-sm">
+            <strong>📊 Study Session Active</strong>
+            <p className="text-xs text-mint-600 mt-1">
+              Your progress is being tracked and will appear in analytics
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Study Progress */}
       <StudyProgress
         currentIndex={currentIndex}
