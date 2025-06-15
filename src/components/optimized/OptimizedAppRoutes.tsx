@@ -1,4 +1,3 @@
-
 import { Routes, Route } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { OptimizedNotesProvider } from '@/contexts/OptimizedNotesContext';
@@ -48,7 +47,7 @@ export const OptimizedAppRoutes = () => {
           
           {/* Notes routes - SIMPLIFIED AND FIXED */}
           <Route path="/notes" element={<ScalableNotesPage />} />
-          <Route path="/notes/:id" element={<NoteStudyPage />} />
+          <Route path="/notes/study/:id" element={<NoteStudyPage />} />
           <Route path="/notes/edit/:id" element={<EditNotePage />} />
           <Route path="/notes/to-flashcard" element={<NoteToFlashcardPage />} />
           
