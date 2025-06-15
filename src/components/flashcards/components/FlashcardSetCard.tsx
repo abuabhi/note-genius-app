@@ -1,45 +1,21 @@
 
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { 
-  Play, 
-  BookOpen, 
-  Edit,
-  Trash2,
-  MoreVertical,
-  Clock,
-  TrendingUp,
-  CheckCircle,
-  AlertCircle
-} from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { BookOpen, Eye, Trash2, Users, Clock, Target, Pin, PinOff, Star } from "lucide-react";
 import { FlashcardSet } from "@/types/flashcard";
-import { useUserSubjects } from "@/hooks/useUserSubjects";
+import { formatDistanceToNow } from "date-fns";
 
 interface FlashcardSetCardProps {
   set: FlashcardSet;
-  progressPercentage: number;
-  isDeleting: boolean;
-  onDelete: (setId: string) => void;
+  progressPercentage?: number;
+  isDeleting?: boolean;
+  onDelete?: (setId: string) => void;
+  onTogglePinned?: (setId: string, isPinned: boolean) => void;
   masteredCards?: number;
   needsPracticeCards?: number;
   totalCards?: number;
@@ -47,188 +23,166 @@ interface FlashcardSetCardProps {
 
 const FlashcardSetCard = ({
   set,
-  progressPercentage,
-  isDeleting,
+  progressPercentage = 0,
+  isDeleting = false,
   onDelete,
+  onTogglePinned,
   masteredCards = 0,
   needsPracticeCards = 0,
-  totalCards = 0,
+  totalCards = 0
 }: FlashcardSetCardProps) => {
-  const { subjects, isLoading: subjectsLoading } = useUserSubjects();
-  const setId = set.id;
-  
-  if (!setId) {
-    console.error('FlashcardSetCard: Missing set ID for set:', set.name);
-    return null;
-  }
+  const [isPinned, setIsPinned] = useState(false);
 
-  // Get the subject name using proper lookup - prioritize subject_id over subject
-  const getSubjectName = () => {
-    if (set.subject_id && !subjectsLoading) {
-      const foundSubject = subjects.find(s => s.id === set.subject_id);
-      return foundSubject?.name || set.subject || "Uncategorized";
+  const handleDelete = () => {
+    if (onDelete) {
+      onDelete(set.id);
     }
-    return set.subject || "Uncategorized";
   };
 
-  const subjectName = getSubjectName();
+  const handleTogglePin = () => {
+    const newPinnedState = !isPinned;
+    setIsPinned(newPinnedState);
+    if (onTogglePinned) {
+      onTogglePinned(set.id, newPinnedState);
+    }
+  };
 
-  // Use consistent :id parameter for both URLs
-  console.log('FlashcardSetCard: Rendering card for set:', {
-    id: setId,
-    name: set.name,
-    subject_id: set.subject_id,
-    subject: set.subject,
-    resolved_subject: subjectName,
-    studyUrl: `/flashcards/study/${setId}`,
-    viewUrl: `/flashcards/sets/${setId}`
-  });
+  const handleViewClick = () => {
+    console.log('FlashcardSetCard: View button clicked for set:', set.id);
+  };
+
+  const cardCount = set.card_count || totalCards || 0;
+  const displayProgressPercentage = masteredCards > 0 && totalCards > 0 
+    ? Math.round((masteredCards / totalCards) * 100) 
+    : progressPercentage;
 
   return (
-    <Card className="group hover:shadow-lg transition-all duration-200 border-mint-100">
+    <Card className="group relative hover:shadow-lg transition-all duration-200 border-gray-200 hover:border-mint-300">
+      {/* Pin Button */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleTogglePin}
+        className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-8 w-8 p-0"
+      >
+        {isPinned ? (
+          <Pin className="h-4 w-4 text-mint-600" />
+        ) : (
+          <PinOff className="h-4 w-4 text-gray-400" />
+        )}
+      </Button>
+
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
-          <div className="flex-1 min-w-0">
-            <CardTitle className="text-lg font-semibold text-mint-900 line-clamp-2 mb-2">
+          <div className="flex-1 pr-8">
+            <CardTitle className="text-lg font-semibold text-gray-900 line-clamp-2 mb-2">
               {set.name}
             </CardTitle>
-            {subjectName && (
-              <Badge variant="secondary" className="mb-2 bg-mint-100 text-mint-700">
-                {subjectName}
-              </Badge>
-            )}
-            {set.description && (
-              <p className="text-sm text-gray-600 line-clamp-2">
-                {set.description}
-              </p>
-            )}
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <BookOpen className="h-4 w-4" />
+              <span>{cardCount} cards</span>
+              {set.subject && (
+                <>
+                  <span>•</span>
+                  <span className="text-mint-600 font-medium">{set.subject}</span>
+                </>
+              )}
+            </div>
           </div>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link to={`/flashcards/sets/${setId}/edit`}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Set
-                </Link>
-              </DropdownMenuItem>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Set
-                  </DropdownMenuItem>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Flashcard Set</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete "{set.name}"? This action cannot be undone and will remove all flashcards in this set.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => onDelete(setId)}
-                      className="bg-red-600 hover:bg-red-700"
-                      disabled={isDeleting}
-                    >
-                      {isDeleting ? "Deleting..." : "Delete"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </CardHeader>
 
-      <CardContent className="pt-0">
-        <div className="space-y-4">
-          {/* Enhanced Progress Section */}
-          {totalCards > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-gray-700">Progress</span>
-                <span className="text-mint-600 font-semibold">{progressPercentage}%</span>
-              </div>
-              <Progress value={progressPercentage} className="h-2" />
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="flex items-center gap-1 text-green-600">
-                  <CheckCircle className="h-3 w-3" />
-                  <span>{masteredCards} mastered</span>
-                </div>
-                <div className="flex items-center gap-1 text-orange-600">
-                  <AlertCircle className="h-3 w-3" />
-                  <span>{needsPracticeCards} need practice</span>
-                </div>
-              </div>
-            </div>
-          )}
+      <CardContent className="pt-0 pb-4">
+        {set.description && (
+          <p className="text-sm text-gray-600 line-clamp-2 mb-4">
+            {set.description}
+          </p>
+        )}
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 gap-4 text-center">
-            <div className="bg-gray-50 rounded-lg p-3">
-              <div className="flex items-center justify-center gap-1 mb-1">
-                <BookOpen className="h-4 w-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-700">Cards</span>
-              </div>
-              <div className="text-xl font-bold text-gray-900">
-                {totalCards || set.card_count || 0}
-              </div>
+        {/* Progress Section */}
+        {cardCount > 0 && displayProgressPercentage > 0 && (
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-600">Progress</span>
+              <span className="font-medium text-mint-700">{displayProgressPercentage}%</span>
             </div>
+            <Progress value={displayProgressPercentage} className="h-2" />
             
-            <div className="bg-mint-50 rounded-lg p-3">
-              <div className="flex items-center justify-center gap-1 mb-1">
-                <TrendingUp className="h-4 w-4 text-mint-600" />
-                <span className="text-sm font-medium text-mint-700">Mastery</span>
+            {masteredCards > 0 && totalCards > 0 && (
+              <div className="flex justify-between text-xs text-gray-500">
+                <span className="flex items-center gap-1">
+                  <Star className="h-3 w-3 text-green-500" />
+                  {masteredCards} mastered
+                </span>
+                {needsPracticeCards > 0 && (
+                  <span className="flex items-center gap-1">
+                    <Target className="h-3 w-3 text-orange-500" />
+                    {needsPracticeCards} to practice
+                  </span>
+                )}
               </div>
-              <div className="text-xl font-bold text-mint-900">
-                {progressPercentage}%
-              </div>
-            </div>
+            )}
           </div>
+        )}
 
-          {/* Action Buttons */}
-          <div className="flex gap-2">
-            <Button 
-              asChild 
-              className="flex-1 bg-mint-500 hover:bg-mint-600" 
-              size="sm"
-              onClick={() => console.log('FlashcardSetCard: Study button clicked for set:', setId)}
-            >
-              <Link to={`/flashcards/study/${setId}`}>
-                <Play className="h-4 w-4 mr-2" />
-                Study
-              </Link>
-            </Button>
-            
-            <Button 
-              asChild 
-              variant="outline" 
-              className="flex-1 border-mint-200 hover:bg-mint-50" 
-              size="sm"
-              onClick={() => console.log('FlashcardSetCard: View button clicked for set:', setId)}
-            >
-              <Link to={`/flashcards/sets/${setId}`}>
-                <BookOpen className="h-4 w-4 mr-2" />
-                View
-              </Link>
-            </Button>
+        {/* Updated timestamp */}
+        {set.updated_at && (
+          <div className="flex items-center gap-1 text-xs text-gray-500 mt-3">
+            <Clock className="h-3 w-3" />
+            <span>Updated {formatDistanceToNow(new Date(set.updated_at), { addSuffix: true })}</span>
           </div>
-
-          {/* Last Updated */}
-          <div className="flex items-center justify-center text-xs text-gray-500">
-            <Clock className="h-3 w-3 mr-1" />
-            Updated {new Date(set.updated_at || set.created_at).toLocaleDateString()}
-          </div>
-        </div>
+        )}
       </CardContent>
+
+      <CardFooter className="pt-0 flex gap-2">
+        <Button 
+          asChild 
+          className="flex-1 bg-mint-600 hover:bg-mint-700 text-white"
+          onClick={handleViewClick}
+        >
+          <Link to={`/flashcards/sets/${set.id}`}>
+            <Eye className="h-4 w-4 mr-2" />
+            View
+          </Link>
+        </Button>
+
+        <Button asChild variant="outline" size="sm">
+          <Link to={`/flashcards/study/${set.id}`}>
+            Study
+          </Link>
+        </Button>
+
+        {/* Delete Button */}
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button 
+              variant="outline" 
+              size="sm"
+              disabled={isDeleting}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Flashcard Set</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete "{set.name}"? This action cannot be undone and will remove all flashcards in this set.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleDelete}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </CardFooter>
     </Card>
   );
 };

@@ -1,3 +1,4 @@
+
 import { Routes, Route } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { OptimizedNotesProvider } from '@/contexts/OptimizedNotesContext';
@@ -13,6 +14,7 @@ const FlashcardsPage = lazy(() => import('@/pages/FlashcardsPage'));
 const CreateFlashcardSetPage = lazy(() => import('@/pages/CreateFlashcardSetPage'));
 const CreateFlashcardPage = lazy(() => import('@/pages/CreateFlashcardPage'));
 const FlashcardStudyPage = lazy(() => import('@/pages/FlashcardStudyPage'));
+const FlashcardSetPage = lazy(() => import('@/pages/FlashcardSetPage'));
 const QuizPage = lazy(() => import('@/pages/QuizPage'));
 const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
 const GoalsPage = lazy(() => import('@/pages/GoalsPage'));
@@ -51,7 +53,8 @@ export const OptimizedAppRoutes = () => {
           {/* Flashcards routes - FIXED AND ENHANCED */}
           <Route path="/flashcards" element={<FlashcardsPage />} />
           <Route path="/flashcards/create" element={<CreateFlashcardSetPage />} />
-          <Route path="/flashcards/:setId" element={<FlashcardsPage />} />
+          <Route path="/flashcards/sets/:setId" element={<FlashcardSetPage />} />
+          <Route path="/flashcards/:setId" element={<FlashcardSetPage />} />
           <Route path="/flashcards/:setId/create" element={<CreateFlashcardPage />} />
           <Route path="/flashcards/study/:id" element={<FlashcardStudyPage />} />
           
