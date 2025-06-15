@@ -74,7 +74,7 @@ export const CompactNoteCard = ({
       onClick={handleCardClick}
     >
       <CardContent className="p-3">
-        {/* Top line: Title, Subject, Date, Reading Time */}
+        {/* Top line: Title, Subject, Date */}
         <div className="flex items-center justify-between gap-3 mb-2">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             {/* Title - green color */}
@@ -97,13 +97,8 @@ export const CompactNoteCard = ({
             </div>
           </div>
           
-          {/* Right side: Reading time and floating elements */}
-          <div className="flex items-center gap-3 shrink-0">
-            {/* Reading time - green color */}
-            <div className="text-xs text-green-600 font-medium">
-              ~{Math.ceil((note.content || note.description).split(' ').length / 200)} min read
-            </div>
-            
+          {/* Right side: Source type, Pin, and Actions */}
+          <div className="flex items-center gap-2 shrink-0">
             {/* Source type indicator */}
             {note.sourceType === 'scan' && (
               <div className="w-5 h-5 bg-blue-500/10 rounded-full flex items-center justify-center">
@@ -118,19 +113,17 @@ export const CompactNoteCard = ({
               </div>
             )}
             
-            {/* Actions */}
+            {/* Actions - Always visible */}
             {onPin && onDelete && (
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                <NoteCardActions 
-                  noteId={note.id}
-                  noteTitle={note.title}
-                  noteContent={note.content || note.description || ""}
-                  isPinned={!!note.pinned} 
-                  onPin={onPin}
-                  onDelete={onDelete}
-                  iconSize={3}
-                />
-              </div>
+              <NoteCardActions 
+                noteId={note.id}
+                noteTitle={note.title}
+                noteContent={note.content || note.description || ""}
+                isPinned={!!note.pinned} 
+                onPin={onPin}
+                onDelete={onDelete}
+                iconSize={3}
+              />
             )}
           </div>
         </div>
@@ -142,16 +135,24 @@ export const CompactNoteCard = ({
             {contentPreview}
           </p>
           
-          {/* Study button - positioned at the end of description line */}
-          <Button
-            onClick={handleStudyClick}
-            className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white font-medium rounded-lg transition-all duration-200 shadow-md shadow-mint-500/25 hover:shadow-mint-500/40 px-3 py-1 h-7 shrink-0"
-            size="sm"
-            type="button"
-          >
-            <Sparkles className="h-3 w-3 mr-1" />
-            Study
-          </Button>
+          {/* Right side: Reading time and Study button */}
+          <div className="flex items-center gap-3 shrink-0">
+            {/* Reading time - moved here to avoid overlap */}
+            <div className="text-xs text-green-600 font-medium">
+              ~{Math.ceil((note.content || note.description).split(' ').length / 200)} min read
+            </div>
+            
+            {/* Study button - positioned at the end of description line */}
+            <Button
+              onClick={handleStudyClick}
+              className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white font-medium rounded-lg transition-all duration-200 shadow-md shadow-mint-500/25 hover:shadow-mint-500/40 px-3 py-1 h-7 shrink-0"
+              size="sm"
+              type="button"
+            >
+              <Sparkles className="h-3 w-3 mr-1" />
+              Study
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

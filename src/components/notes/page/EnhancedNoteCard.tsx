@@ -80,34 +80,21 @@ export const EnhancedNoteCard = ({
         </div>
       )}
 
-      {/* Study button positioned on the right middle */}
-      <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-        <Button
-          onClick={handleStudyClick}
-          className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white font-medium rounded-lg transition-all duration-200 shadow-md shadow-mint-500/25 hover:shadow-mint-500/40 px-3 py-1.5 h-8"
-          size="sm"
-          type="button"
-        >
-          <Sparkles className="h-3 w-3 mr-1" />
-          Study
-        </Button>
-      </div>
-
       <CardHeader className="relative p-4 pb-2">
-        {/* Subject Badge */}
+        {/* Subject Badge and Actions Menu */}
         <div className="flex items-center justify-between mb-2">
           <Badge className="bg-mint-100 border-mint-200 text-green-700 border font-medium">
             {getSourceIcon()}
             <span className="ml-1">{note.subject}</span>
           </Badge>
           
-          {/* Actions Menu */}
+          {/* Actions Menu - Always visible */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
                 size="icon"
-                className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 hover:bg-gray-100"
+                className="h-6 w-6 hover:bg-gray-100 shrink-0"
                 onClick={(e) => e.stopPropagation()}
               >
                 <MoreHorizontal className="h-3 w-3" />
@@ -145,9 +132,22 @@ export const EnhancedNoteCard = ({
         </h3>
         
         {/* Content Preview - single line only */}
-        <p className="text-gray-600 text-sm leading-relaxed line-clamp-1">
+        <p className="text-gray-600 text-sm leading-relaxed line-clamp-1 mb-3">
           {contentPreview}
         </p>
+
+        {/* Study button - Always visible and well positioned */}
+        <div className="flex justify-end">
+          <Button
+            onClick={handleStudyClick}
+            className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white font-medium rounded-lg transition-all duration-200 shadow-md shadow-mint-500/25 hover:shadow-mint-500/40 px-3 py-1.5 h-8"
+            size="sm"
+            type="button"
+          >
+            <Sparkles className="h-3 w-3 mr-1" />
+            Study
+          </Button>
+        </div>
       </CardHeader>
       
       <CardFooter className="flex justify-between items-center px-4 py-2">
