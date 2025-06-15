@@ -10,9 +10,10 @@ import { Note } from '@/types/note';
 interface NoteSelectionTabProps {
   selectedNotes: Note[];
   onNotesChange: (notes: Note[]) => void;
+  onNoteToggle?: (note: Note) => void;
 }
 
-export const NoteSelectionTab = ({ selectedNotes, onNotesChange }: NoteSelectionTabProps) => {
+export const NoteSelectionTab = ({ selectedNotes, onNotesChange, onNoteToggle }: NoteSelectionTabProps) => {
   const { notes } = useOptimizedNotes();
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -29,6 +30,9 @@ export const NoteSelectionTab = ({ selectedNotes, onNotesChange }: NoteSelection
     } else {
       onNotesChange([...selectedNotes, note]);
     }
+    
+    // Call the optional onNoteToggle callback if provided
+    onNoteToggle?.(note);
   };
 
   return (

@@ -17,7 +17,7 @@ interface UserPresence {
   activeNote?: string;
 }
 
-export const useRealtimeCollaboration = (notes: Note[], setNotes: (notes: Note[]) => void) => {
+export const useRealtimeCollaboration = (notes: Note[], setNotes: (notes: Note[] | ((prev: Note[]) => Note[])) => void) => {
   const [collaborationState, setCollaborationState] = useState({
     activeUsers: [] as UserPresence[],
     recentUpdates: [] as CollaborationUpdate[],
@@ -56,7 +56,7 @@ export const useRealtimeCollaboration = (notes: Note[], setNotes: (notes: Note[]
     switch (update.type) {
       case 'note_created':
         // Add new note if it doesn't exist
-        setNotes(prev => {
+        setNotes((prev: Note[]) => {
           const exists = prev.find(n => n.id === update.data.id);
           if (!exists) {
             return [update.data, ...prev];
@@ -67,7 +67,7 @@ export const useRealtimeCollaboration = (notes: Note[], setNotes: (notes: Note[]
 
       case 'note_updated':
         // Update existing note
-        setNotes(prev => prev.map(note => 
+        setNotes((prev: Note[]) => prev.map(note => 
           note.id === update.noteId 
             ? { ...note, ...update.data }
             : note
@@ -76,7 +76,7 @@ export const useRealtimeCollaboration = (notes: Note[], setNotes: (notes: Note[]
 
       case 'note_deleted':
         // Remove deleted note
-        setNotes(prev => prev.filter(note => note.id !== update.noteId));
+        setNotes((prev: Note[]) => prev.filter(note => note.id !== update.noteId));
         break;
 
       case 'user_joined':
@@ -186,7 +186,7 @@ export const useRealtimeCollaboration = (notes: Note[], setNotes: (notes: Note[]
         }));
 
         // Merge with existing notes
-        setNotes(prev => {
+        setNotes((prev: Note[]) => {
           const merged = [...prev];
           transformedNotes.forEach(updatedNote => {
             const index = merged.findIndex(n => n.id === updatedNote.id);

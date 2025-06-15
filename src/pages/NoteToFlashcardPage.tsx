@@ -21,7 +21,7 @@ const NoteToFlashcardPage = () => {
 
   return (
     <Layout>
-      <NoteToFlashcard selectedNote={selectedNote} />
+      <NoteToFlashcard note={selectedNote} />
     </Layout>
   );
 };

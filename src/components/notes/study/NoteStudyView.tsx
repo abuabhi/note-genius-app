@@ -178,6 +178,13 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
     );
   }
 
+  // Convert string array to object array for availableSubjects
+  const subjectObjects = Array.isArray(availableSubjects) 
+    ? availableSubjects.map(subject => 
+        typeof subject === 'string' ? { name: subject, id: subject } : subject
+      )
+    : [];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-mint-50/20">
       <div className="max-w-7xl mx-auto p-4 space-y-6">
@@ -223,7 +230,7 @@ export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
               editableSubject={editableSubject}
               selectedTags={selectedTags}
               availableTags={availableTags}
-              availableSubjects={availableSubjects}
+              availableSubjects={subjectObjects}
               isSaving={isSaving}
               statsLoading={false}
               currentUsage={currentUsage}

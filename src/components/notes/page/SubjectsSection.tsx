@@ -40,7 +40,6 @@ export const SubjectsSection = () => {
 
       {searchFilteredNotes.length === 0 ? (
         <EmptySubjectState 
-          selectedSubject={selectedSubject}
           hasSearchTerm={!!searchTerm}
         />
       ) : (

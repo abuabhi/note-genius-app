@@ -8,7 +8,7 @@ export const NotesPageBreadcrumb = () => {
   const { searchTerm, selectedSubject } = useOptimizedNotes();
 
   const breadcrumbItems = useMemo(() => {
-    const items: Array<{ href?: string; icon?: React.ComponentType; label: string }> = [
+    const items: Array<{ href?: string; icon?: React.ComponentType<any>; label: string }> = [
       { href: "/", icon: Home, label: "Home" },
       { href: "/notes", icon: FileText, label: "Notes" },
     ];
