@@ -86,7 +86,8 @@ export const EnhancedNoteCard = ({
           <div className="flex items-center justify-center w-6 h-6 bg-yellow-400 rounded-full shadow-lg">
             <Star className="h-3 w-3 text-white fill-white" />
           </div>
-        )}
+        </div>
+      )}
 
       <CardHeader className="relative p-6 pb-4">
         {/* Header with subject and actions */}
