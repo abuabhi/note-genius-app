@@ -1,7 +1,7 @@
 
 import Layout from '@/components/layout/Layout';
 import { NotesContent } from '@/components/notes/page/NotesContent';
-import { PageBreadcrumb } from '@/components/ui/page-breadcrumb';
+import { StandardPageHeader } from '@/components/ui/StandardPageHeader';
 import { FileText } from 'lucide-react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -57,25 +57,37 @@ const NotesPage = () => {
     return null;
   };
 
+  const breadcrumbs = [
+    { label: "Notes" }
+  ];
+
   return (
     <Layout>
-      <div className="container mx-auto p-4 md:p-6">
-        <PageBreadcrumb pageName="Notes" pageIcon={<FileText className="h-3 w-3" />} />
-        <ErrorBoundary
-          FallbackComponent={ErrorFallback}
-          onReset={() => {
-            console.log('Resetting notes page error boundary');
-          }}
-          onError={(error, errorInfo) => {
-            console.error('Notes page error caught by boundary:', error, errorInfo);
-          }}
-        >
-          <NotesContent 
-            onSaveNote={handleSaveNote}
-            onScanNote={handleScanNote}
-            onImportNote={handleImportNote}
-          />
-        </ErrorBoundary>
+      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+        <StandardPageHeader
+          title="Notes"
+          description="Create, organize, and manage your study notes"
+          icon={<FileText className="h-6 w-6 text-white" />}
+          breadcrumbs={breadcrumbs}
+        />
+        
+        <div className="container mx-auto px-6 py-8">
+          <ErrorBoundary
+            FallbackComponent={ErrorFallback}
+            onReset={() => {
+              console.log('Resetting notes page error boundary');
+            }}
+            onError={(error, errorInfo) => {
+              console.error('Notes page error caught by boundary:', error, errorInfo);
+            }}
+          >
+            <NotesContent 
+              onSaveNote={handleSaveNote}
+              onScanNote={handleScanNote}
+              onImportNote={handleImportNote}
+            />
+          </ErrorBoundary>
+        </div>
       </div>
     </Layout>
   );

@@ -22,10 +22,12 @@ const NoteToFlashcardPage = () => {
 
   return (
     <Layout>
-      <NoteToFlashcard 
-        note={selectedNote} 
-        flashcardSetId={flashcardSetId}
-      />
+      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+        <NoteToFlashcard 
+          note={selectedNote} 
+          flashcardSetId={flashcardSetId}
+        />
+      </div>
     </Layout>
   );
 };

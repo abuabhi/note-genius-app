@@ -5,49 +5,52 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreateQuizForm } from "@/components/quiz/CreateQuizForm";
 import { NoteToQuiz } from "@/components/quiz/NoteToQuiz";
-import { QuizCreateBreadcrumb } from "@/components/quiz/QuizCreateBreadcrumb";
+import { StandardPageHeader } from "@/components/ui/StandardPageHeader";
+import { PlusCircle } from "lucide-react";
 
 const CreateQuizPage = () => {
   const { userProfile } = useRequireAuth();
   const [activeTab, setActiveTab] = useState("notes");
+
+  const breadcrumbs = [
+    { label: "Quizzes", href: "/quizzes" },
+    { label: "Create Quiz" }
+  ];
   
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
-        <div className="container mx-auto p-6 max-w-6xl">
-          {/* Breadcrumbs */}
-          <div className="mb-4">
-            <QuizCreateBreadcrumb />
-          </div>
-          
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-mint-800 mb-2">Create Quiz</h1>
-            <p className="text-mint-600">Generate quizzes from your notes or create them manually</p>
-          </div>
-          
-          {/* Main Content */}
-          <div className="bg-white/60 backdrop-blur-sm rounded-lg border border-mint-100 shadow-sm">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <div className="border-b border-mint-100 px-6 pt-6">
-                <TabsList className="bg-mint-50/50">
-                  <TabsTrigger value="notes" className="data-[state=active]:bg-white data-[state=active]:text-mint-700">
-                    Generate from Notes
-                  </TabsTrigger>
-                  <TabsTrigger value="manual" className="data-[state=active]:bg-white data-[state=active]:text-mint-700">
-                    Manual Creation
-                  </TabsTrigger>
-                </TabsList>
-              </div>
-              
-              <TabsContent value="notes" className="mt-0 p-0">
-                <NoteToQuiz />
-              </TabsContent>
-              
-              <TabsContent value="manual" className="mt-0 p-6">
-                <CreateQuizForm />
-              </TabsContent>
-            </Tabs>
+      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+        <StandardPageHeader
+          title="Create Quiz"
+          description="Generate quizzes from your notes or create them manually"
+          icon={<PlusCircle className="h-6 w-6 text-white" />}
+          breadcrumbs={breadcrumbs}
+        />
+        
+        <div className="container mx-auto px-6 py-8">
+          <div className="max-w-6xl mx-auto">
+            <div className="bg-white/60 backdrop-blur-sm rounded-lg border border-mint-100 shadow-sm">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <div className="border-b border-mint-100 px-6 pt-6">
+                  <TabsList className="bg-mint-50/50">
+                    <TabsTrigger value="notes" className="data-[state=active]:bg-white data-[state=active]:text-mint-700">
+                      Generate from Notes
+                    </TabsTrigger>
+                    <TabsTrigger value="manual" className="data-[state=active]:bg-white data-[state=active]:text-mint-700">
+                      Manual Creation
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
+                
+                <TabsContent value="notes" className="mt-0 p-0">
+                  <NoteToQuiz />
+                </TabsContent>
+                
+                <TabsContent value="manual" className="mt-0 p-6">
+                  <CreateQuizForm />
+                </TabsContent>
+              </Tabs>
+            </div>
           </div>
         </div>
       </div>

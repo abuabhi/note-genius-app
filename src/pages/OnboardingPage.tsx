@@ -22,14 +22,18 @@ const OnboardingPage = () => {
   if (statusLoading) {
     return (
       <Layout>
-        <LoadingState message="Setting up your account..." />
+        <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+          <LoadingState message="Setting up your account..." />
+        </div>
       </Layout>
     );
   }
 
   return (
     <Layout>
-      <OnboardingWizard />
+      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+        <OnboardingWizard />
+      </div>
     </Layout>
   );
 };

@@ -11,13 +11,15 @@ const NoteStudyPage = lazy(() => import('@/pages/NoteStudyPage'));
 // Global loading component for route transitions
 const RouteLoadingSkeleton = () => (
   <Layout>
-    <div className="container mx-auto p-4 md:p-6">
-      <div className="space-y-6">
-        <div className="h-8 bg-gray-200 rounded animate-pulse" />
-        <div className="grid gap-4">
-          <div className="h-32 bg-gray-200 rounded animate-pulse" />
-          <div className="h-32 bg-gray-200 rounded animate-pulse" />
-          <div className="h-32 bg-gray-200 rounded animate-pulse" />
+    <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+      <div className="container mx-auto p-4 md:p-6">
+        <div className="space-y-6">
+          <div className="h-8 bg-gray-200 rounded animate-pulse" />
+          <div className="grid gap-4">
+            <div className="h-32 bg-gray-200 rounded animate-pulse" />
+            <div className="h-32 bg-gray-200 rounded animate-pulse" />
+            <div className="h-32 bg-gray-200 rounded animate-pulse" />
+          </div>
         </div>
       </div>
     </div>

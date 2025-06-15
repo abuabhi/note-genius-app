@@ -68,7 +68,7 @@ const PricingPage = () => {
 
   return (
     <Layout>
-      <div className="bg-gradient-to-b from-mint-50 via-white to-mint-50/30 min-h-screen">
+      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
         <Pricing 
           plans={demoPlans}
           title="Choose Your Plan"

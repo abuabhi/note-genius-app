@@ -17,25 +17,27 @@ export const SimplifiedStudyPageLayout = ({
   currentSet
 }: SimplifiedStudyPageLayoutProps) => {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      <div className="lg:col-span-3">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mint-600 mx-auto mb-4"></div>
-              <p>Loading flashcards...</p>
+    <div className="container mx-auto px-6 py-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-3">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mint-600 mx-auto mb-4"></div>
+                <p>Loading flashcards...</p>
+              </div>
             </div>
-          </div>
-        ) : (
-          <SimplifiedFlashcardStudy 
-            setId={setId} 
-            mode={mode} 
-          />
-        )}
-      </div>
-      
-      <div className="lg:col-span-1">
-        <SimplifiedStudyProgress />
+          ) : (
+            <SimplifiedFlashcardStudy 
+              setId={setId} 
+              mode={mode} 
+            />
+          )}
+        </div>
+        
+        <div className="lg:col-span-1">
+          <SimplifiedStudyProgress />
+        </div>
       </div>
     </div>
   );

@@ -5,7 +5,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ShieldAlert, Upload } from "lucide-react";
 import { CSVImport } from "@/components/admin/CSVImport";
 import { FlashcardProvider } from "@/contexts/FlashcardContext";
-import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
+import { StandardPageHeader } from "@/components/ui/StandardPageHeader";
 
 const AdminCSVImportPage = () => {
   const { userProfile, loading } = useRequireAuth();
@@ -14,9 +14,11 @@ const AdminCSVImportPage = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="container mx-auto p-6">
-          <div className="flex justify-center items-center h-64">
-            <span>Loading...</span>
+        <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+          <div className="container mx-auto p-6">
+            <div className="flex justify-center items-center h-64">
+              <span>Loading...</span>
+            </div>
           </div>
         </div>
       </Layout>
@@ -26,31 +28,39 @@ const AdminCSVImportPage = () => {
   if (userProfile?.user_tier !== UserTier.DEAN) {
     return (
       <Layout>
-        <div className="container mx-auto p-6">
-          <Alert variant="destructive">
-            <ShieldAlert className="h-4 w-4" />
-            <AlertDescription>
-              You don't have permission to access this page.
-            </AlertDescription>
-          </Alert>
+        <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+          <div className="container mx-auto p-6">
+            <Alert variant="destructive">
+              <ShieldAlert className="h-4 w-4" />
+              <AlertDescription>
+                You don't have permission to access this page.
+              </AlertDescription>
+            </Alert>
+          </div>
         </div>
       </Layout>
     );
   }
 
+  const breadcrumbs = [
+    { label: "Admin Dashboard", href: "/admin" },
+    { label: "CSV Import" }
+  ];
+
   return (
     <Layout>
       <FlashcardProvider>
-        <div className="container mx-auto p-6">
-          <PageBreadcrumb pageName="CSV Import" pageIcon={<Upload className="h-4 w-4" />} />
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold mb-2">CSV Import</h1>
-            <p className="text-muted-foreground">
-              Bulk import grades, subjects, sections, and flashcards using CSV files.
-            </p>
-          </div>
+        <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+          <StandardPageHeader
+            title="CSV Import"
+            description="Bulk import grades, subjects, sections, and flashcards using CSV files"
+            icon={<Upload className="h-6 w-6 text-white" />}
+            breadcrumbs={breadcrumbs}
+          />
           
-          <CSVImport />
+          <div className="container mx-auto px-6 py-8">
+            <CSVImport />
+          </div>
         </div>
       </FlashcardProvider>
     </Layout>

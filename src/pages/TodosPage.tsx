@@ -1,6 +1,8 @@
 
 import Layout from "@/components/layout/Layout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { StandardPageHeader } from "@/components/ui/StandardPageHeader";
+import { CheckSquare } from "lucide-react";
 
 const TodosPage = () => {
   const { user, loading } = useRequireAuth();
@@ -8,7 +10,7 @@ const TodosPage = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="min-h-screen bg-gradient-to-br from-mint-50 via-white to-mint-100/30">
+        <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
           <div className="container mx-auto p-4 md:p-6">
             <div className="flex items-center justify-center h-[80vh]">
               <div className="relative w-12 h-12">
@@ -26,13 +28,22 @@ const TodosPage = () => {
     return null;
   }
 
+  const breadcrumbs = [
+    { label: "ToDo List" }
+  ];
+
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-mint-50 via-white to-mint-100/30">
-        <div className="container mx-auto p-4 md:p-6">
+      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+        <StandardPageHeader
+          title="ToDo List"
+          description="Manage your tasks and stay organized"
+          icon={<CheckSquare className="h-6 w-6 text-white" />}
+          breadcrumbs={breadcrumbs}
+        />
+        
+        <div className="container mx-auto px-6 py-8">
           <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-mint-100 p-6 shadow-lg">
-            <h1 className="text-3xl font-bold text-mint-900 mb-4">ToDo List</h1>
-            <p className="text-mint-600">Manage your tasks and stay organized.</p>
             <div className="mt-8">
               <p className="text-gray-500">ToDo functionality coming soon...</p>
             </div>

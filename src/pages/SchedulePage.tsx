@@ -6,6 +6,8 @@ import { ScheduleHeader } from "@/components/schedule/ScheduleHeader";
 import { UpcomingEventsList } from "@/components/schedule/UpcomingEventsList";
 import { useEvents } from "@/hooks/events";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { StandardPageHeader } from "@/components/ui/StandardPageHeader";
+import { Calendar } from "lucide-react";
 import { toast } from "sonner";
 
 const SchedulePage = () => {
@@ -35,9 +37,11 @@ const SchedulePage = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="container mx-auto p-4 md:p-6 h-full">
-          <div className="flex justify-center items-center h-[80vh]">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mint-500" />
+        <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+          <div className="container mx-auto p-4 md:p-6 h-full">
+            <div className="flex justify-center items-center h-[80vh]">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mint-500" />
+            </div>
           </div>
         </div>
       </Layout>
@@ -49,22 +53,35 @@ const SchedulePage = () => {
     return null;
   }
 
+  const breadcrumbs = [
+    { label: "Schedule" }
+  ];
+
   return (
     <Layout>
-      <div className="container mx-auto p-4 md:p-6">
-        <ScheduleHeader selectedDate={date} onDateChange={setDate} />
+      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+        <StandardPageHeader
+          title="Schedule"
+          description="Manage your events and study calendar"
+          icon={<Calendar className="h-6 w-6 text-white" />}
+          breadcrumbs={breadcrumbs}
+        />
         
-        <div className="mt-6">
-          <ScheduleCalendar selectedDate={date} onDateChange={setDate} />
-        </div>
-        
-        <div className="mt-8">
-          <UpcomingEventsList 
-            events={upcomingEvents} 
-            isLoading={upcomingLoading} 
-            formatEventDate={formatEventDate}
-            onDeleteEvent={handleDeleteEvent}
-          />
+        <div className="container mx-auto px-6 py-8">
+          <ScheduleHeader selectedDate={date} onDateChange={setDate} />
+          
+          <div className="mt-6">
+            <ScheduleCalendar selectedDate={date} onDateChange={setDate} />
+          </div>
+          
+          <div className="mt-8">
+            <UpcomingEventsList 
+              events={upcomingEvents} 
+              isLoading={upcomingLoading} 
+              formatEventDate={formatEventDate}
+              onDeleteEvent={handleDeleteEvent}
+            />
+          </div>
         </div>
       </div>
     </Layout>

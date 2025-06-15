@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProductionHealthDashboard } from '@/components/admin/monitoring/ProductionHealthDashboard';
 import { AdvancedCacheManager } from '@/components/performance/AdvancedCacheManager';
 import { SystemAlertsManager } from '@/components/admin/monitoring/SystemAlertsManager';
+import { StandardPageHeader } from '@/components/ui/StandardPageHeader';
+import { Monitor } from 'lucide-react';
 
 const AdminSystemMonitoringPage = () => {
   const { user, userProfile } = useRequireAuth();
@@ -15,49 +17,58 @@ const AdminSystemMonitoringPage = () => {
   if (!user || userProfile?.user_tier !== UserTier.DEAN) {
     return (
       <Layout>
-        <div className="container mx-auto p-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Access Denied</CardTitle>
-              <CardDescription>
-                You need Dean-tier access to view system monitoring tools.
-              </CardDescription>
-            </CardHeader>
-          </Card>
+        <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+          <div className="container mx-auto p-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Access Denied</CardTitle>
+                <CardDescription>
+                  You need Dean-tier access to view system monitoring tools.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
         </div>
       </Layout>
     );
   }
 
+  const breadcrumbs = [
+    { label: "Admin Dashboard", href: "/admin" },
+    { label: "System Monitoring" }
+  ];
+
   return (
     <Layout>
-      <div className="container mx-auto p-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">System Monitoring</h1>
-          <p className="text-muted-foreground">
-            Monitor system health, performance metrics, and cache management
-          </p>
+      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+        <StandardPageHeader
+          title="System Monitoring"
+          description="Monitor system health, performance metrics, and cache management"
+          icon={<Monitor className="h-6 w-6 text-white" />}
+          breadcrumbs={breadcrumbs}
+        />
+
+        <div className="container mx-auto px-6 py-8">
+          <Tabs defaultValue="health" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="health">Health Status</TabsTrigger>
+              <TabsTrigger value="cache">Cache Management</TabsTrigger>
+              <TabsTrigger value="alerts">Alerts</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="health" className="space-y-4">
+              <ProductionHealthDashboard />
+            </TabsContent>
+
+            <TabsContent value="cache" className="space-y-4">
+              <AdvancedCacheManager />
+            </TabsContent>
+
+            <TabsContent value="alerts" className="space-y-4">
+              <SystemAlertsManager />
+            </TabsContent>
+          </Tabs>
         </div>
-
-        <Tabs defaultValue="health" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="health">Health Status</TabsTrigger>
-            <TabsTrigger value="cache">Cache Management</TabsTrigger>
-            <TabsTrigger value="alerts">Alerts</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="health" className="space-y-4">
-            <ProductionHealthDashboard />
-          </TabsContent>
-
-          <TabsContent value="cache" className="space-y-4">
-            <AdvancedCacheManager />
-          </TabsContent>
-
-          <TabsContent value="alerts" className="space-y-4">
-            <SystemAlertsManager />
-          </TabsContent>
-        </Tabs>
       </div>
     </Layout>
   );
