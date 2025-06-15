@@ -18,7 +18,7 @@ const FlashcardSetPage = lazy(() => import('@/pages/FlashcardSetPage'));
 const QuizPage = lazy(() => import('@/pages/QuizPage'));
 const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
 const GoalsPage = lazy(() => import('@/pages/GoalsPage'));
-const TodosPage = lazy(() => import('@/pages/TodosPage'));
+const TodoPage = lazy(() => import('@/pages/TodoPage'));
 const SchedulePage = lazy(() => import('@/pages/SchedulePage'));
 const RemindersPage = lazy(() => import('@/pages/RemindersPage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
@@ -67,7 +67,7 @@ export const OptimizedAppRoutes = () => {
           {/* Other routes */}
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/goals" element={<GoalsPage />} />
-          <Route path="/todos" element={<TodosPage />} />
+          <Route path="/todos" element={<TodoPage />} />
           <Route path="/schedule" element={<SchedulePage />} />
           <Route path="/reminders" element={<RemindersPage />} />
           <Route path="/settings" element={<SettingsPage />} />

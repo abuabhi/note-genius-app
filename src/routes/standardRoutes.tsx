@@ -9,7 +9,7 @@ const NotesPage = lazy(() => import('@/pages/NotesPage'));
 const QuizPage = lazy(() => import('@/pages/QuizPage'));
 const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
 const GoalsPage = lazy(() => import('@/pages/GoalsPage'));
-const TodosPage = lazy(() => import('@/pages/TodosPage'));
+const TodoPage = lazy(() => import('@/pages/TodoPage'));
 const SchedulePage = lazy(() => import('@/pages/SchedulePage'));
 const RemindersPage = lazy(() => import('@/pages/RemindersPage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
@@ -62,7 +62,7 @@ export const standardRoutes: RouteConfig[] = [
   },
   {
     path: '/todos',
-    element: createElement(TodosPage)
+    element: createElement(TodoPage)
   },
   {
     path: '/schedule',
