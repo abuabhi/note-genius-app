@@ -6,7 +6,7 @@ import Layout from '@/components/layout/Layout';
 // Lazy load all page components
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const NotesPage = lazy(() => import('@/pages/NotesPage'));
-const OptimizedNoteStudyPage = lazy(() => import('@/pages/OptimizedNoteStudyPage'));
+const NoteStudyPage = lazy(() => import('@/pages/NoteStudyPage'));
 
 // Global loading component for route transitions
 const RouteLoadingSkeleton = () => (
@@ -30,7 +30,7 @@ export const OptimizedRoutes = () => {
       <Routes>
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/notes" element={<NotesPage />} />
-        <Route path="/notes/:id" element={<OptimizedNoteStudyPage />} />
+        <Route path="/notes/:id" element={<NoteStudyPage />} />
         {/* Add other routes as needed */}
       </Routes>
     </Suspense>
