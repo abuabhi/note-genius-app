@@ -3,14 +3,11 @@ import { useState } from 'react';
 import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
 import { Note } from '@/types/note';
 import { ProgressiveLoader } from '@/components/performance/ProgressiveLoader';
-import { OptimizedNotesHeader } from './OptimizedNotesHeader';
 import { OptimizedNotesFilters } from './OptimizedNotesFilters';
 import { OptimizedNotesGrid } from './OptimizedNotesGrid';
 import { OptimizedNotesPagination } from './OptimizedNotesPagination';
 import { ErrorState } from './ErrorState';
 import { EmptyNotesState } from '@/components/notes/EmptyNotesState';
-import { DialogManager } from './header/DialogManager';
-import { useUserTier } from '@/hooks/useUserTier';
 import { useViewPreferences } from '@/hooks/useViewPreferences';
 import { toast } from 'sonner';
 
@@ -25,61 +22,14 @@ export const OptimizedNotesContent = () => {
     currentPage,
     setCurrentPage,
     refreshNotes,
-    addNote,
     updateNote,
     deleteNote
   } = useOptimizedNotes();
 
-  const { tierLimits } = useUserTier();
-  
   // SINGLE SOURCE OF TRUTH for view mode - only defined here
   const { viewMode, setViewMode } = useViewPreferences('notes');
-  
-  // Dialog states
-  const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [creatingNote, setCreatingNote] = useState(false);
 
   console.log('🎯 OptimizedNotesContent - MASTER viewMode:', viewMode);
-
-  const handleCreateNote = async () => {
-    setCreatingNote(true);
-    try {
-      await addNote({
-        title: 'New Note',
-        description: 'Enter your note description here...',
-        content: '',
-        date: new Date().toISOString().split('T')[0],
-        subject: 'General',
-        sourceType: 'manual'
-      });
-    } catch (error) {
-      console.error('Failed to create note:', error);
-      toast.error('Failed to create note');
-    } finally {
-      setCreatingNote(false);
-      setIsManualDialogOpen(false);
-    }
-  };
-
-  const handleSaveNote = async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
-    try {
-      const newNote = await addNote(noteData);
-      if (newNote) {
-        toast.success('Note created successfully');
-        return newNote;
-      }
-      return null;
-    } catch (error) {
-      console.error('Failed to save note:', error);
-      toast.error('Failed to save note');
-      return null;
-    }
-  };
-
-  const handleImportNote = async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
-    return handleSaveNote({ ...noteData, sourceType: 'import' });
-  };
 
   const handlePin = async (id: string, isPinned: boolean) => {
     try {
@@ -113,16 +63,6 @@ export const OptimizedNotesContent = () => {
 
   return (
     <div className="space-y-8">
-      {/* Enhanced Header with Study View Styling */}
-      <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-white/20 shadow-xl shadow-mint-500/5">
-        <OptimizedNotesHeader 
-          totalCount={totalCount}
-          onCreateNote={() => setIsManualDialogOpen(true)}
-          onOpenImportDialog={() => setIsImportDialogOpen(true)}
-          isCreating={creatingNote}
-        />
-      </div>
-
       {/* Enhanced Filters */}
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-lg shadow-mint-500/5 p-6">
         <OptimizedNotesFilters 
@@ -140,7 +80,7 @@ export const OptimizedNotesContent = () => {
         {notes.length === 0 ? (
           <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-white/20 shadow-lg shadow-mint-500/5">
             <EmptyNotesState
-              onCreateNote={() => setIsManualDialogOpen(true)}
+              onCreateNote={() => {}}
               isFiltered={!!(searchTerm || selectedSubject !== 'all')}
             />
           </div>
@@ -171,21 +111,6 @@ export const OptimizedNotesContent = () => {
           </div>
         )}
       </ProgressiveLoader>
-
-      {/* Dialog Manager for note creation */}
-      <DialogManager 
-        onSaveNote={handleSaveNote}
-        onScanNote={handleSaveNote}
-        onImportNote={handleImportNote}
-        tierLimits={tierLimits}
-        isManualDialogOpen={isManualDialogOpen}
-        isScanDialogOpen={false}
-        isImportDialogOpen={isImportDialogOpen}
-        isSubmitting={creatingNote}
-        setIsManualDialogOpen={setIsManualDialogOpen}
-        setIsScanDialogOpen={() => {}}
-        setIsImportDialogOpen={setIsImportDialogOpen}
-      />
     </div>
   );
 };
