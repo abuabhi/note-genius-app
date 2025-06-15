@@ -1,15 +1,18 @@
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useOptimizedNotes } from "@/contexts/OptimizedNotesContext";
 import Layout from "@/components/layout/Layout";
-import { NoteToFlashcard } from "@/components/notes/conversion/NoteToFlashcard";
+import { BulkNoteConversion } from "@/components/notes/conversion/BulkNoteConversion";
+import { NoteToFlashcardBreadcrumb } from "@/components/notes/conversion/NoteToFlashcardBreadcrumb";
 import { Note } from "@/types/note";
+import { FlashcardSet } from "@/types/flashcard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 
 const NoteToFlashcardPage = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const noteId = searchParams.get('noteId');
   const flashcardSetId = searchParams.get('flashcardSetId');
   const { notes, loading } = useOptimizedNotes();
@@ -25,6 +28,20 @@ const NoteToFlashcardPage = () => {
       setIsSearching(false);
     }
   }, [noteId, notes, loading]);
+
+  const handleSuccess = (flashcardSet: FlashcardSet) => {
+    // Navigate to the newly created flashcard set
+    navigate(`/flashcards/${flashcardSet.id}`);
+  };
+
+  const handleCancel = () => {
+    // Go back to the previous page or notes list
+    if (selectedNote) {
+      navigate(`/notes/study/${selectedNote.id}`);
+    } else {
+      navigate('/notes');
+    }
+  };
 
   const renderContent = () => {
     // Show loading state while searching for note
@@ -57,7 +74,7 @@ const NoteToFlashcardPage = () => {
               The note you're trying to convert could not be found. It may have been deleted or you may not have access to it.
             </p>
             <button 
-              onClick={() => window.history.back()}
+              onClick={handleCancel}
               className="px-4 py-2 bg-mint-600 text-white rounded-lg hover:bg-mint-700 transition-colors"
             >
               Go Back
@@ -67,12 +84,33 @@ const NoteToFlashcardPage = () => {
       );
     }
 
-    // Show conversion interface
+    // Show conversion interface with the full BulkNoteConversion component
+    if (selectedNote) {
+      return (
+        <BulkNoteConversion
+          notes={[selectedNote]}
+          onSuccess={handleSuccess}
+          onCancel={handleCancel}
+        />
+      );
+    }
+
+    // Fallback for when no note is selected
     return (
-      <NoteToFlashcard 
-        note={selectedNote} 
-        flashcardSetId={flashcardSetId}
-      />
+      <div className="text-center py-12">
+        <div className="max-w-md mx-auto">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">No Note Selected</h2>
+          <p className="text-gray-600 mb-4">
+            Please select a note to convert to flashcards.
+          </p>
+          <button 
+            onClick={() => navigate('/notes')}
+            className="px-4 py-2 bg-mint-600 text-white rounded-lg hover:bg-mint-700 transition-colors"
+          >
+            Browse Notes
+          </button>
+        </div>
+      </div>
     );
   };
 
@@ -80,6 +118,10 @@ const NoteToFlashcardPage = () => {
     <Layout>
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
         <div className="container mx-auto p-4 md:p-6">
+          {/* Breadcrumb Navigation */}
+          <NoteToFlashcardBreadcrumb />
+          
+          {/* Main Content */}
           {renderContent()}
         </div>
       </div>
