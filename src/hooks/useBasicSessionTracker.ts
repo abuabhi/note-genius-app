@@ -4,6 +4,7 @@ import { useUnifiedSessionTracker } from './useUnifiedSessionTracker';
 /**
  * Backwards compatibility wrapper for useUnifiedSessionTracker
  * This ensures existing components continue working with the unified session system
+ * READ-ONLY: Does not write to database, only uses unified tracker
  */
 export const useBasicSessionTracker = () => {
   const unified = useUnifiedSessionTracker();
@@ -15,7 +16,7 @@ export const useBasicSessionTracker = () => {
     isPaused: unified.isPaused,
     isOnStudyPage: unified.isOnStudyPage,
     
-    // Map methods
+    // Map methods - all delegate to unified tracker
     recordActivity: unified.recordActivity,
     updateSessionActivity: unified.updateSessionActivity,
     startSession: (title: string, subject?: string) => {

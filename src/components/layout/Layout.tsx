@@ -1,3 +1,4 @@
+
 import { ReactNode, useEffect, useState } from 'react';
 import NavBar from './NavBar';
 import Footer from './Footer';
@@ -11,7 +12,6 @@ import { NoteChatSidebar } from '@/components/notes/study/chat/NoteChatSidebar';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { UnifiedSessionDock } from "@/components/ui/floating/UnifiedSessionDock";
-import { useProperSessionCleanup } from "@/hooks/useProperSessionCleanup";
 
 interface LayoutProps {
   children: ReactNode;
@@ -102,9 +102,6 @@ export default function Layout({ children, showSidebar = true, showFooter = true
     }
   }, [isNoteStudyPage]);
 
-  // Add the proper session cleanup hook
-  useProperSessionCleanup();
-
   return (
     <div className="min-h-screen bg-gray-50">
       <NavBar />
@@ -136,7 +133,7 @@ export default function Layout({ children, showSidebar = true, showFooter = true
         />
       )}
 
-      {/* Replace SessionDock with UnifiedSessionDock */}
+      {/* ONLY ONE SESSION DOCK - UnifiedSessionDock */}
       <UnifiedSessionDock />
     </div>
   );

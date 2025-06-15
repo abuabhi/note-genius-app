@@ -10,6 +10,10 @@ interface StudySessionIntegrationProps {
   isActive?: boolean;
 }
 
+/**
+ * Integration hook for study pages
+ * READ-ONLY: Does not write to database, only uses unified tracker
+ */
 export const useStudySessionIntegration = ({
   setId,
   mode,

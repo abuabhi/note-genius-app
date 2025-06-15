@@ -4,6 +4,7 @@ import { useUnifiedSessionTracker } from './useUnifiedSessionTracker';
 
 /**
  * Simplified study activity tracker that uses the unified session system
+ * READ-ONLY: Does not write to database, only uses unified tracker
  */
 export const useStudyActivityTracker = () => {
   const { recordActivity, updateSessionActivity, isActive, startSession } = useUnifiedSessionTracker();

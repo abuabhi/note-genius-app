@@ -91,7 +91,7 @@ const StudySessionsPage = () => {
                   </div>
                   <div className="mt-2">
                     <div className="text-lg font-semibold text-blue-800">
-                      {Math.round((analytics?.totalStudyTimeMinutes || 0) / 60 * 10) / 10}h
+                      {Math.round((analytics?.totalStudyTime || 0) * 10) / 10}h
                     </div>
                     <div className="text-xs text-blue-600">Total Time</div>
                   </div>
