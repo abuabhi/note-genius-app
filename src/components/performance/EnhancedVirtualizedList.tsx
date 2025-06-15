@@ -85,13 +85,13 @@ export const EnhancedVirtualizedList = memo(<T,>({
   isLoading = false,
   threshold = 5
 }: EnhancedVirtualizedListProps<T>) => {
-  const listRef = useRef<List | VariableSizeList>(null);
+  const fixedListRef = useRef<List>(null);
+  const variableListRef = useRef<VariableSizeList>(null);
   const { addJob } = useBackgroundProcessor();
   const cache = useMultiLevelCache();
   
   // Use variable size list if itemHeight is a function
   const isVariableSize = typeof itemHeight === 'function';
-  const ListComponent = isVariableSize ? VariableSizeList : List;
 
   // Memoize item data to prevent re-renders
   const itemData = useMemo(() => ({
@@ -102,12 +102,12 @@ export const EnhancedVirtualizedList = memo(<T,>({
   }), [items, renderItem, enableCache ? cache : null, cacheKey]);
 
   // Handle infinite loading
-  const handleItemsRendered = useCallback((startIndex: number, endIndex: number) => {
-    onItemsRendered?.(startIndex, endIndex);
+  const handleItemsRendered = useCallback(({ visibleStartIndex, visibleStopIndex }: { visibleStartIndex: number; visibleStopIndex: number }) => {
+    onItemsRendered?.(visibleStartIndex, visibleStopIndex);
     
     // Check if we need to load more items
     if (hasNextPage && !isLoading && loadMore) {
-      const shouldLoadMore = endIndex >= items.length - threshold;
+      const shouldLoadMore = visibleStopIndex >= items.length - threshold;
       
       if (shouldLoadMore) {
         // Use background processor for loading more items
@@ -130,40 +130,43 @@ export const EnhancedVirtualizedList = memo(<T,>({
 
   // Scroll to item utility
   const scrollToItem = useCallback((index: number, align: 'start' | 'center' | 'end' = 'start') => {
-    listRef.current?.scrollToItem(index, align);
-  }, []);
-
-  // Calculate list props
-  const listProps = {
-    ref: listRef,
-    height,
-    width,
-    itemCount: items.length,
-    itemData,
-    className,
-    overscanCount: overscan,
-    onItemsRendered: isVariableSize ? undefined : handleItemsRendered,
-    children: ItemRenderer
-  };
+    if (isVariableSize) {
+      variableListRef.current?.scrollToItem(index, align);
+    } else {
+      fixedListRef.current?.scrollToItem(index, align);
+    }
+  }, [isVariableSize]);
 
   return (
     <div className={`virtualized-list-container ${className}`}>
       {isVariableSize ? (
         <VariableSizeList
-          {...listProps}
+          ref={variableListRef}
+          height={height}
+          width={width}
+          itemCount={items.length}
           itemSize={itemHeight as (index: number) => number}
-          onItemsRendered={({ startIndex, endIndex }) => 
-            handleItemsRendered(startIndex, endIndex)
-          }
-        />
+          itemData={itemData}
+          className={className}
+          overscanCount={overscan}
+          onItemsRendered={handleItemsRendered}
+        >
+          {ItemRenderer}
+        </VariableSizeList>
       ) : (
         <List
-          {...listProps}
+          ref={fixedListRef}
+          height={height}
+          width={width}
+          itemCount={items.length}
           itemSize={itemHeight as number}
-          onItemsRendered={({ startIndex, endIndex }) => 
-            handleItemsRendered(startIndex, endIndex)
-          }
-        />
+          itemData={itemData}
+          className={className}
+          overscanCount={overscan}
+          onItemsRendered={handleItemsRendered}
+        >
+          {ItemRenderer}
+        </List>
       )}
       
       {isLoading && (
