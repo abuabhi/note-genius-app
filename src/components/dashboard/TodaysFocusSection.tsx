@@ -1,6 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Target, Plus, BookOpen, CheckSquare } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -20,13 +21,16 @@ export const TodaysFocusSection = () => {
           </div>
           <h3 className="text-xl font-medium text-gray-900 mb-3">Ready for a fresh start!</h3>
           <p className="text-gray-500 mb-6">
-            Your workspace has been cleared. Start building your study routine with notes, goals, and todos.
+            Start building your study routine. Create your first note to begin organizing your knowledge.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button asChild>
+            <Button asChild size="lg" className="relative">
               <Link to="/notes">
                 <BookOpen className="h-4 w-4 mr-2" />
-                Create Note
+                Create First Note
+                <Badge variant="secondary" className="ml-2 bg-orange-100 text-orange-700 text-xs">
+                  Start Here
+                </Badge>
               </Link>
             </Button>
             <Button variant="outline" asChild>

@@ -35,40 +35,40 @@ export const DashboardHeroSection = () => {
             
             <p className="text-mint-100 text-lg mb-6 max-w-2xl">
               Everything has been reset and you're ready to build your perfect study routine. 
-              Start by creating your first note, setting a goal, or organizing your tasks.
+              Start by creating your first note, then set goals and organize tasks.
             </p>
 
             <div className="flex flex-wrap gap-3">
               <Button 
                 asChild 
-                variant="secondary" 
-                className="bg-white text-mint-600 hover:bg-mint-50"
+                size="lg"
+                className="bg-white text-mint-600 hover:bg-mint-50 shadow-lg font-semibold"
               >
                 <Link to="/notes">
                   <BookOpen className="h-4 w-4 mr-2" />
-                  Create First Note
+                  1. Create First Note
                 </Link>
               </Button>
               
               <Button 
                 asChild 
-                variant="outline" 
-                className="border-white/30 text-white hover:bg-white/10"
+                variant="secondary" 
+                className="bg-mint-700 text-white hover:bg-mint-800 border-none"
               >
                 <Link to="/goals">
                   <Target className="h-4 w-4 mr-2" />
-                  Set Study Goal
+                  2. Set Study Goal
                 </Link>
               </Button>
               
               <Button 
                 asChild 
-                variant="outline" 
-                className="border-white/30 text-white hover:bg-white/10"
+                variant="secondary" 
+                className="bg-mint-700 text-white hover:bg-mint-800 border-none"
               >
                 <Link to="/todos">
                   <CheckSquare className="h-4 w-4 mr-2" />
-                  Plan Tasks
+                  3. Plan Tasks
                 </Link>
               </Button>
             </div>
