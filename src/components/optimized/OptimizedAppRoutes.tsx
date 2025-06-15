@@ -45,11 +45,11 @@ export const OptimizedAppRoutes = () => {
           {/* Dashboard */}
           <Route path="/dashboard" element={<DashboardPage />} />
           
-          {/* Notes routes - SIMPLIFIED AND FIXED */}
+          {/* Notes routes - FIXED ROUTE PATH */}
           <Route path="/notes" element={<ScalableNotesPage />} />
           <Route path="/notes/study/:id" element={<NoteStudyPage />} />
           <Route path="/notes/edit/:id" element={<EditNotePage />} />
-          <Route path="/notes/to-flashcard" element={<NoteToFlashcardPage />} />
+          <Route path="/note-to-flashcard" element={<NoteToFlashcardPage />} />
           
           {/* Flashcards routes - FIXED PARAMETER NAMES */}
           <Route path="/flashcards" element={<FlashcardsPage />} />
