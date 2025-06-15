@@ -1,7 +1,7 @@
 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Plus } from "lucide-react";
+import { BookOpen, Plus, Sparkles, ArrowRight } from "lucide-react";
 import { FlashcardSet } from "@/types/flashcard";
 import FlashcardSetCard from "./FlashcardSetCard";
 
@@ -34,27 +34,69 @@ const FlashcardSetGrid = ({
 }: FlashcardSetGridProps) => {
   // Empty State when no sets exist
   if (sets.length === 0 && hasInitiallyLoaded) {
+    // If user is searching/filtering and found nothing
+    if (searchQuery || subjectFilter) {
+      return (
+        <div className="text-center py-12">
+          <div className="bg-gradient-to-br from-mint-50 to-mint-100 rounded-xl p-8 max-w-md mx-auto">
+            <BookOpen className="h-16 w-16 text-mint-600 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-mint-900 mb-2">No sets found</h3>
+            <p className="text-mint-700 mb-6">
+              Try adjusting your search terms or filters
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    // Main empty state - beautiful and encouraging
     return (
-      <div className="text-center py-12">
-        <div className="bg-gradient-to-br from-mint-50 to-mint-100 rounded-xl p-8 max-w-md mx-auto">
-          <BookOpen className="h-16 w-16 text-mint-600 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-mint-900 mb-2">
-            {searchQuery || subjectFilter ? "No sets found" : "No flashcard sets yet"}
+      <div className="text-center py-16 px-4">
+        <div className="bg-gradient-to-br from-mint-50 via-blue-50 to-mint-100 rounded-3xl p-12 max-w-2xl mx-auto shadow-lg border border-mint-100">
+          {/* Icon with sparkles effect */}
+          <div className="relative mb-8">
+            <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-mint-500 to-blue-500 rounded-3xl shadow-xl">
+              <BookOpen className="h-12 w-12 text-white" />
+            </div>
+            <Sparkles className="absolute -top-2 -right-2 h-8 w-8 text-yellow-400 animate-pulse" />
+          </div>
+
+          {/* Main message */}
+          <h3 className="text-3xl font-bold text-mint-900 mb-4">
+            Ready to start learning? 
           </h3>
-          <p className="text-mint-700 mb-6">
-            {searchQuery || subjectFilter 
-              ? "Try adjusting your search terms or filters" 
-              : "Create your first flashcard set to start studying!"
-            }
+          <p className="text-lg text-gray-700 mb-8 leading-relaxed">
+            You haven't created any flashcard sets yet. Create your first set to begin building 
+            your personalized study collection and master any subject!
           </p>
-          {!searchQuery && !subjectFilter && (
-            <Button asChild>
-              <Link to="/flashcards/create">
-                <Plus className="h-4 w-4 mr-2" />
+
+          {/* Step guidance */}
+          <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 mb-8 border border-white/40">
+            <div className="flex items-center justify-center gap-3 text-mint-700 mb-3">
+              <div className="flex items-center justify-center w-8 h-8 bg-mint-500 text-white rounded-full text-sm font-bold">
+                1
+              </div>
+              <span className="font-semibold">Create your first flashcard set</span>
+            </div>
+            <p className="text-sm text-gray-600">
+              Choose a subject, add some cards, and start studying smarter
+            </p>
+          </div>
+
+          {/* Call to action */}
+          <div className="space-y-4">
+            <Button asChild size="lg" className="bg-gradient-to-r from-mint-500 to-blue-500 hover:from-mint-600 hover:to-blue-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 px-8 py-4 text-lg">
+              <Link to="/flashcards/create" className="inline-flex items-center gap-3">
+                <Plus className="h-5 w-5" />
                 Create Your First Set
+                <ArrowRight className="h-5 w-5" />
               </Link>
             </Button>
-          )}
+            
+            <p className="text-sm text-gray-500">
+              It takes less than a minute to get started
+            </p>
+          </div>
         </div>
       </div>
     );

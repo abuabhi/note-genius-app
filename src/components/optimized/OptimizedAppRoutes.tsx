@@ -10,6 +10,8 @@ const NoteStudyPage = lazy(() => import('@/pages/NoteStudyPage'));
 const EditNotePage = lazy(() => import('@/pages/EditNotePage'));
 const NoteToFlashcardPage = lazy(() => import('@/pages/NoteToFlashcardPage'));
 const FlashcardsPage = lazy(() => import('@/pages/FlashcardsPage'));
+const CreateFlashcardSetPage = lazy(() => import('@/pages/CreateFlashcardSetPage'));
+const CreateFlashcardPage = lazy(() => import('@/pages/CreateFlashcardPage'));
 const FlashcardStudyPage = lazy(() => import('@/pages/FlashcardStudyPage'));
 const QuizPage = lazy(() => import('@/pages/QuizPage'));
 const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
@@ -46,8 +48,11 @@ export const OptimizedAppRoutes = () => {
           <Route path="/notes/edit/:id" element={<EditNotePage />} />
           <Route path="/notes/to-flashcard" element={<NoteToFlashcardPage />} />
           
-          {/* Flashcards routes */}
-          <Route path="/flashcards/*" element={<FlashcardsPage />} />
+          {/* Flashcards routes - FIXED AND ENHANCED */}
+          <Route path="/flashcards" element={<FlashcardsPage />} />
+          <Route path="/flashcards/create" element={<CreateFlashcardSetPage />} />
+          <Route path="/flashcards/:setId" element={<FlashcardsPage />} />
+          <Route path="/flashcards/:setId/create" element={<CreateFlashcardPage />} />
           <Route path="/flashcards/study/:id" element={<FlashcardStudyPage />} />
           
           {/* Quiz routes */}

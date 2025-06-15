@@ -9,6 +9,7 @@ import { AdvancedFlashcardFilters } from "@/components/flashcards/components/Adv
 import { useFlashcardsPageState } from "@/components/flashcards/page/useFlashcardsPageState";
 import { ErrorBoundary } from "@/components/flashcards/components/ErrorBoundary";
 import { useEnhancedRetry } from "@/hooks/performance/useEnhancedRetry";
+import { FlashcardProvider } from "@/contexts/flashcards/index.tsx";
 import { toast } from "sonner";
 
 // Use a separate type for flashcard view modes
@@ -83,40 +84,42 @@ const FlashcardsPage = () => {
 
   return (
     <ErrorBoundary>
-      <Layout>
-        <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
-          <div className="container mx-auto p-6 space-y-6">
-            <FlashcardsPageHeader 
-              loading={loading}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-            />
-            
-            <AdvancedFlashcardFilters
-              filters={filters}
-              onFiltersChange={handleFiltersChange}
-              totalSets={allSets.length}
-              hideViewMode={true}
-            />
-            
-            <FlashcardsContent
-              sets={allSets}
-              filters={filters}
-              viewMode={viewMode as any} // Convert to expected type
-              loading={loading}
-              error={error}
-              hasMore={false}
-              page={page}
-              deletingSet={deletingSet}
-              detailedProgressData={{}}
-              onDeleteSet={handleDeleteSet}
-              onTogglePinned={handleTogglePinned}
-              onLoadMore={handleLoadMore}
-              onRetry={handleRetry}
-            />
+      <FlashcardProvider>
+        <Layout>
+          <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+            <div className="container mx-auto p-6 space-y-6">
+              <FlashcardsPageHeader 
+                loading={loading}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+              />
+              
+              <AdvancedFlashcardFilters
+                filters={filters}
+                onFiltersChange={handleFiltersChange}
+                totalSets={allSets.length}
+                hideViewMode={true}
+              />
+              
+              <FlashcardsContent
+                sets={allSets}
+                filters={filters}
+                viewMode={viewMode as any} // Convert to expected type
+                loading={loading}
+                error={error}
+                hasMore={false}
+                page={page}
+                deletingSet={deletingSet}
+                detailedProgressData={{}}
+                onDeleteSet={handleDeleteSet}
+                onTogglePinned={handleTogglePinned}
+                onLoadMore={handleLoadMore}
+                onRetry={handleRetry}
+              />
+            </div>
           </div>
-        </div>
-      </Layout>
+        </Layout>
+      </FlashcardProvider>
     </ErrorBoundary>
   );
 };
