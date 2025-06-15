@@ -66,7 +66,11 @@ const NoteStudyPage = () => {
 
         if (fetchError) {
           console.error("❌ Error fetching note:", fetchError);
-          setError("Failed to load note from database");
+          if (fetchError.code === 'PGRST116') {
+            setError("Note not found - it may have been deleted");
+          } else {
+            setError("Failed to load note from database");
+          }
           setLoading(false);
           return;
         }
@@ -158,9 +162,13 @@ const NoteStudyPage = () => {
             <div className="mb-4 text-sm text-gray-600">
               <p>URL ID: {id || 'Not found'}</p>
               <p>Available notes: {notes.length}</p>
+              <p className="mt-2 text-green-600">
+                The database has been reset to provide a fresh start. Please create new notes to continue.
+              </p>
             </div>
             <div className="flex gap-2 justify-center">
               <Button onClick={handleGoBack}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Notes
               </Button>
               <Button 

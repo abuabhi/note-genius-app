@@ -63,10 +63,15 @@ export default function Layout({ children, showSidebar = true, showFooter = true
         `)
         .eq('id', noteId)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle(); // Use maybeSingle to handle empty results gracefully
 
       if (error) {
         console.error('Error fetching note:', error);
+        return null;
+      }
+
+      if (!data) {
+        console.log('No note found for chat');
         return null;
       }
 
@@ -88,6 +93,7 @@ export default function Layout({ children, showSidebar = true, showFooter = true
     },
     enabled: isNoteStudyPage && !!noteId && !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: false, // Don't retry if note is not found
   });
 
   const handleChatToggle = () => {
