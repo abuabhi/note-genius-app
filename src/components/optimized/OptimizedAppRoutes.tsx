@@ -50,12 +50,12 @@ export const OptimizedAppRoutes = () => {
           <Route path="/notes/edit/:id" element={<EditNotePage />} />
           <Route path="/notes/to-flashcard" element={<NoteToFlashcardPage />} />
           
-          {/* Flashcards routes - FIXED AND ENHANCED */}
+          {/* Flashcards routes - FIXED PARAMETER NAMES */}
           <Route path="/flashcards" element={<FlashcardsPage />} />
           <Route path="/flashcards/create" element={<CreateFlashcardSetPage />} />
-          <Route path="/flashcards/sets/:setId" element={<FlashcardSetPage />} />
-          <Route path="/flashcards/:setId" element={<FlashcardSetPage />} />
-          <Route path="/flashcards/:setId/create" element={<CreateFlashcardPage />} />
+          <Route path="/flashcards/sets/:id" element={<FlashcardSetPage />} />
+          <Route path="/flashcards/:id" element={<FlashcardSetPage />} />
+          <Route path="/flashcards/:id/create" element={<CreateFlashcardPage />} />
           <Route path="/flashcards/study/:id" element={<FlashcardStudyPage />} />
           
           {/* Quiz routes */}

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { BookOpen, Eye, Trash2, Users, Clock, Target, Pin, PinOff, Star } from "lucide-react";
+import { BookOpen, Play, Trash2, Users, Clock, Target, Pin, PinOff, Star } from "lucide-react";
 import { FlashcardSet } from "@/types/flashcard";
 import { formatDistanceToNow } from "date-fns";
 
@@ -47,8 +47,8 @@ const FlashcardSetCard = ({
     }
   };
 
-  const handleViewClick = () => {
-    console.log('FlashcardSetCard: View button clicked for set:', set.id);
+  const handleStudyClick = () => {
+    console.log('FlashcardSetCard: Study button clicked for set:', set.id);
   };
 
   const cardCount = set.card_count || totalCards || 0;
@@ -135,20 +135,15 @@ const FlashcardSetCard = ({
       </CardContent>
 
       <CardFooter className="pt-0 flex gap-2">
+        {/* Primary Study Button - Most Prominent */}
         <Button 
           asChild 
-          className="flex-1 bg-mint-600 hover:bg-mint-700 text-white"
-          onClick={handleViewClick}
+          className="flex-1 bg-gradient-to-r from-mint-500 to-blue-500 hover:from-mint-600 hover:to-blue-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+          onClick={handleStudyClick}
         >
           <Link to={`/flashcards/sets/${set.id}`}>
-            <Eye className="h-4 w-4 mr-2" />
-            View
-          </Link>
-        </Button>
-
-        <Button asChild variant="outline" size="sm">
-          <Link to={`/flashcards/study/${set.id}`}>
-            Study
+            <Play className="h-4 w-4 mr-2" />
+            Study Now
           </Link>
         </Button>
 
