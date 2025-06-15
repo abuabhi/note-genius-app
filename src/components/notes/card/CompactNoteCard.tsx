@@ -28,18 +28,13 @@ export const CompactNoteCard = ({
 }: CompactNoteCardProps) => {
   const { subjects, isLoading: subjectsLoading } = useUserSubjects();
   
-  // Find the subject name based on subject_id or fall back to subject
   const getSubjectName = () => {
-    // First, try to find subject by subject_id if it exists and subjects are loaded
     if (note.subject_id && !subjectsLoading && subjects.length > 0) {
       const foundSubject = subjects.find(s => s.id === note.subject_id);
       if (foundSubject) {
         return foundSubject.name;
       }
     }
-    
-    // If subject_id lookup fails or doesn't exist, use the legacy subject field
-    // This ensures we don't lose the original subject when subject_id doesn't match
     return note.subject || "Uncategorized";
   };
 
@@ -55,49 +50,35 @@ export const CompactNoteCard = ({
     onNoteClick(note);
   };
 
-  // Create a proper date object from the note date
   const noteDate = new Date(note.date);
-  
-  // Calculate relative time using browser timezone
-  const relativeTime = formatDistanceToNow(noteDate, { 
-    addSuffix: true
-  });
+  const relativeTime = formatDistanceToNow(noteDate, { addSuffix: true });
 
-  // Increased character limit for single line description
   const contentPreview = note.content 
-    ? note.content.substring(0, 180) + (note.content.length > 180 ? '...' : '')
-    : note.description.substring(0, 180) + (note.description.length > 180 ? '...' : '');
+    ? note.content.substring(0, 150) + (note.content.length > 150 ? '...' : '')
+    : note.description.substring(0, 150) + (note.description.length > 150 ? '...' : '');
 
   return (
     <Card 
       className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-mint-500/10 hover:scale-[1.01] bg-white/90 backdrop-blur-sm border-0 shadow-md rounded-xl relative overflow-hidden"
       onClick={handleCardClick}
     >
-      <CardContent className="p-3">
-        {/* Top line: Title, Subject, Date */}
-        <div className="flex items-center justify-between gap-3 mb-2">
+      <CardContent className="p-4">
+        {/* Top row: Title, Subject, and Actions */}
+        <div className="flex items-center justify-between gap-4 mb-3">
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            {/* Title - green color */}
-            <h3 className="text-base font-bold text-green-700 truncate flex-shrink-0 max-w-[200px]">
+            {/* Title */}
+            <h3 className="text-base font-bold text-green-700 truncate max-w-[200px]">
               {note.title}
             </h3>
             
-            {/* Subject Badge - mint green background, green text and icon */}
-            <Badge 
-              className="px-2 py-1 text-xs font-medium border-0 shadow-sm shrink-0 bg-mint-100 border-mint-200 text-green-700"
-            >
+            {/* Subject Badge */}
+            <Badge className="px-2 py-1 text-xs font-medium border-0 shadow-sm shrink-0 bg-mint-100 border-mint-200 text-green-700">
               <Book className="h-3 w-3 mr-1 text-green-600" />
               {subjectName}
             </Badge>
-            
-            {/* Date - green color */}
-            <div className="flex items-center gap-1 text-sm text-green-600 font-medium shrink-0">
-              <Calendar className="h-3 w-3 text-green-600" />
-              <span>{relativeTime}</span>
-            </div>
           </div>
           
-          {/* Right side: Source type, Pin, and Actions */}
+          {/* Right side indicators and actions */}
           <div className="flex items-center gap-2 shrink-0">
             {/* Source type indicator */}
             {note.sourceType === 'scan' && (
@@ -113,39 +94,45 @@ export const CompactNoteCard = ({
               </div>
             )}
             
-            {/* Actions - Always visible */}
-            {onPin && onDelete && (
-              <NoteCardActions 
-                noteId={note.id}
-                noteTitle={note.title}
-                noteContent={note.content || note.description || ""}
-                isPinned={!!note.pinned} 
-                onPin={onPin}
-                onDelete={onDelete}
-                iconSize={3}
-              />
-            )}
+            {/* Actions menu */}
+            <NoteCardActions 
+              noteId={note.id}
+              noteTitle={note.title}
+              noteContent={note.content || note.description || ""}
+              isPinned={!!note.pinned} 
+              onPin={onPin}
+              onDelete={onDelete}
+              iconSize={3}
+            />
           </div>
         </div>
         
-        {/* Description line with Study button */}
-        <div className="flex items-center justify-between gap-3 ml-1">
-          {/* Description - single line with increased character limit */}
-          <p className="text-gray-600 text-sm leading-relaxed truncate flex-1">
-            {contentPreview}
-          </p>
+        {/* Bottom row: Content, Date, Reading time, and Study button */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            {/* Content preview */}
+            <p className="text-gray-600 text-sm leading-relaxed truncate flex-1">
+              {contentPreview}
+            </p>
+            
+            {/* Date */}
+            <div className="flex items-center gap-1 text-sm text-green-600 font-medium shrink-0">
+              <Calendar className="h-3 w-3 text-green-600" />
+              <span className="whitespace-nowrap">{relativeTime}</span>
+            </div>
+          </div>
           
           {/* Right side: Reading time and Study button */}
           <div className="flex items-center gap-3 shrink-0">
-            {/* Reading time - moved here to avoid overlap */}
-            <div className="text-xs text-green-600 font-medium">
-              ~{Math.ceil((note.content || note.description).split(' ').length / 200)} min read
+            {/* Reading time */}
+            <div className="text-xs text-green-600 font-medium whitespace-nowrap">
+              ~{Math.ceil((note.content || note.description).split(' ').length / 200)} min
             </div>
             
-            {/* Study button - positioned at the end of description line */}
+            {/* Study button */}
             <Button
               onClick={handleStudyClick}
-              className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white font-medium rounded-lg transition-all duration-200 shadow-md shadow-mint-500/25 hover:shadow-mint-500/40 px-3 py-1 h-7 shrink-0"
+              className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white font-medium rounded-lg transition-all duration-200 shadow-md shadow-mint-500/25 hover:shadow-mint-500/40 px-3 py-1.5 h-7 shrink-0"
               size="sm"
               type="button"
             >

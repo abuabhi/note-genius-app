@@ -49,10 +49,9 @@ export const EnhancedNoteCard = ({
     onNoteClick(note);
   };
 
-  // Single line of content preview for compact cards
   const contentPreview = note.content 
-    ? stripMarkdown(note.content).substring(0, 60) + (note.content.length > 60 ? '...' : '')
-    : note.description.substring(0, 60) + (note.description.length > 60 ? '...' : '');
+    ? stripMarkdown(note.content).substring(0, 120) + (note.content.length > 120 ? '...' : '')
+    : note.description.substring(0, 120) + (note.description.length > 120 ? '...' : '');
 
   return (
     <Card 
@@ -63,15 +62,10 @@ export const EnhancedNoteCard = ({
         ${note.pinned ? 'ring-2 ring-yellow-400/50 shadow-yellow-500/20' : ''}
         ${note.archived ? 'opacity-75' : ''}
         rounded-xl
-        before:absolute before:inset-0 before:bg-gradient-to-br before:from-mint-500/5 before:via-transparent before:to-blue-500/5 before:opacity-0 before:transition-opacity before:duration-300
-        hover:before:opacity-100
       `}
       onClick={() => onNoteClick(note)}
     >
-      {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/10 to-mint-50/20 pointer-events-none" />
-      
-      {/* Floating pin indicator */}
+      {/* Pin indicator */}
       {note.pinned && (
         <div className="absolute top-3 right-3 z-10">
           <div className="flex items-center justify-center w-6 h-6 bg-yellow-400 rounded-full shadow-lg">
@@ -80,15 +74,14 @@ export const EnhancedNoteCard = ({
         </div>
       )}
 
-      <CardHeader className="relative p-4 pb-2">
-        {/* Subject Badge and Actions Menu */}
-        <div className="flex items-center justify-between mb-2">
+      <CardHeader className="relative p-6 pb-4">
+        {/* Header with subject and actions */}
+        <div className="flex items-center justify-between mb-3">
           <Badge className="bg-mint-100 border-mint-200 text-green-700 border font-medium">
             {getSourceIcon()}
             <span className="ml-1">{note.subject}</span>
           </Badge>
           
-          {/* Actions Menu - Always visible */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
@@ -126,38 +119,38 @@ export const EnhancedNoteCard = ({
           </DropdownMenu>
         </div>
 
-        {/* Title - compact */}
-        <h3 className="text-lg font-bold text-green-700 mb-2 line-clamp-2 leading-tight">
+        {/* Title */}
+        <h3 className="text-lg font-bold text-green-700 mb-3 line-clamp-2 leading-tight">
           {note.title}
         </h3>
         
-        {/* Content Preview - single line only */}
-        <p className="text-gray-600 text-sm leading-relaxed line-clamp-1 mb-3">
+        {/* Content Preview */}
+        <p className="text-gray-600 text-sm leading-relaxed line-clamp-3 mb-4">
           {contentPreview}
         </p>
 
-        {/* Study button - Always visible and well positioned */}
+        {/* Study button - always visible */}
         <div className="flex justify-end">
           <Button
             onClick={handleStudyClick}
-            className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white font-medium rounded-lg transition-all duration-200 shadow-md shadow-mint-500/25 hover:shadow-mint-500/40 px-3 py-1.5 h-8"
+            className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white font-medium rounded-lg transition-all duration-200 shadow-md shadow-mint-500/25 hover:shadow-mint-500/40 px-4 py-2"
             size="sm"
             type="button"
           >
-            <Sparkles className="h-3 w-3 mr-1" />
+            <Sparkles className="h-3 w-3 mr-1.5" />
             Study
           </Button>
         </div>
       </CardHeader>
       
-      <CardFooter className="flex justify-between items-center px-4 py-2">
-        {/* Date - green styling */}
+      <CardFooter className="flex justify-between items-center px-6 py-4 pt-0 border-t border-gray-100">
+        {/* Date */}
         <div className="flex items-center gap-1 text-sm text-green-600">
           <Calendar className="h-3 w-3" />
           <span>{formatDistanceToNow(new Date(note.date), { addSuffix: true })}</span>
         </div>
         
-        {/* Word count estimate - green styling */}
+        {/* Reading time */}
         <div className="text-xs text-green-600">
           ~{Math.ceil((note.content || note.description).split(' ').length / 200)} min read
         </div>
