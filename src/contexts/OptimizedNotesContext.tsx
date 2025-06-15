@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, ReactNode, useMemo, useCallback, useEffect } from 'react';
 import { Note } from '@/types/note';
-import { useOptimizedNotes } from '@/hooks/useOptimizedNotes';
+import { useOptimizedNotes as useOptimizedNotesHook } from '@/hooks/useOptimizedNotes';
 import { useNotesOperations } from './notes/useNotesOperations';
 import { useFilteredNotes } from './notes/state/useFilteredNotes';
 import { usePaginatedNotes } from './notes/state/usePaginatedNotes';
@@ -18,7 +18,12 @@ interface OptimizedNotesContextType {
   paginatedNotes: Note[];
   totalCount: number;
   loading: boolean;
+  isLoading: boolean; // Alias for compatibility
   error: string | null;
+  
+  // Additional properties for compatibility
+  hasMore: boolean;
+  refetch: () => void;
   
   // Search and filtering
   searchTerm: string;
@@ -56,7 +61,7 @@ const OptimizedNotesContext = createContext<OptimizedNotesContextType | undefine
 
 // Memoized provider component
 const OptimizedNotesProviderInner = React.memo(({ children }: { children: ReactNode }) => {
-  const { notes, loading, error, refreshNotes, setNotes } = useOptimizedNotes();
+  const { notes, loading, error, refreshNotes, setNotes } = useOptimizedNotesHook();
   
   // Filter and pagination state
   const [searchTerm, setSearchTerm] = useState('');
@@ -66,7 +71,7 @@ const OptimizedNotesProviderInner = React.memo(({ children }: { children: ReactN
   const [isRealtimeEnabled, setRealtimeEnabled] = useState(true);
   
   // Get filtered notes
-  const filteredNotes = useFilteredNotes(notes, searchTerm, sortType, { selectedSubject }, showArchived) || [];
+  const filteredNotes = useFilteredNotes(notes, searchTerm, sortType, {}, showArchived) || [];
   
   // Get pagination
   const paginationState = usePaginatedNotes(filteredNotes);
@@ -176,7 +181,12 @@ const OptimizedNotesProviderInner = React.memo(({ children }: { children: ReactN
     paginatedNotes,
     totalCount: notes.length,
     loading,
+    isLoading: loading, // Alias for compatibility
     error,
+    
+    // Additional properties for compatibility
+    hasMore: false, // For now, set to false since we're not using infinite scroll
+    refetch: refreshNotes,
     
     // Search and filtering
     searchTerm,

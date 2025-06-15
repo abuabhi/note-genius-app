@@ -1,22 +1,11 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { Trash2, AlertTriangle } from 'lucide-react';
+import { Note } from '@/types/note';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Trash } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useNotes } from '@/contexts/NoteContext';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { toast } from 'sonner';
 
 interface ForceDeleteNoteProps {
   noteId: string;
@@ -24,90 +13,51 @@ interface ForceDeleteNoteProps {
 
 export const ForceDeleteNote = ({ noteId }: ForceDeleteNoteProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteResults, setDeleteResults] = useState<any>(null);
-  const navigate = useNavigate();
-  const { setNotes } = useNotes();
+  const { user } = useAuth();
+  const { notes, setNotes } = useOptimizedNotes();
 
-  const handleForceDelete = async () => {
+  const handleDelete = async () => {
+    if (!user || !noteId) return;
+
+    setIsDeleting(true);
     try {
-      setIsDeleting(true);
-      toast.loading("Force deleting note...");
-      
-      // First log the note details for debugging
-      const { data: noteData } = await supabase
+      // 1. Delete from Supabase
+      const { error } = await supabase
         .from('notes')
-        .select('*')
-        .eq('id', noteId)
-        .single();
-      
-      console.log("Force deleting note with data:", noteData);
-      
-      // Call the edge function directly to delete the note with admin privileges
-      const { data, error } = await supabase.functions.invoke('delete-note', {
-        body: { noteId }
-      });
-      
+        .delete()
+        .eq('id', noteId);
+
       if (error) {
-        console.error("Error in edge function:", error);
-        setDeleteResults({ success: false, error: error.message || "Unknown error" });
-        toast.dismiss();
-        toast.error(`Failed to delete note: ${error.message || "Unknown error"}`);
-        throw error;
+        console.error("Supabase delete error:", error);
+        toast.error("Failed to delete note from database.");
+        return;
       }
-      
-      // Update local state to remove the deleted note
-      setNotes(prev => prev.filter(note => note.id !== noteId));
-      setDeleteResults({ success: true, data });
-      
-      toast.dismiss();
-      toast.success('Note has been permanently deleted');
-      
-      // Navigate back to notes list
-      navigate('/notes');
-    } catch (error) {
-      console.error('Error deleting note:', error);
-      setDeleteResults({ success: false, error: error.message || "Unknown error" });
-      toast.dismiss();
-      toast.error(`Failed to delete note: ${error.message || "Unknown error"}`);
+
+      // 2. Remove from local state
+      const updatedNotes = notes.filter(note => note.id !== noteId);
+      setNotes(updatedNotes);
+
+      toast.success("Note force deleted successfully!");
+    } catch (err) {
+      console.error("Force delete error:", err);
+      toast.error("Failed to force delete note.");
     } finally {
       setIsDeleting(false);
     }
   };
 
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button 
-          variant="destructive" 
-          disabled={isDeleting}
-          className="flex items-center gap-2"
-        >
-          {isDeleting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Trash className="h-4 w-4" />
-          )}
-          {isDeleting ? 'Deleting...' : 'Force Delete Note'}
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle className="text-red-600">Confirm Force Delete</AlertDialogTitle>
-          <AlertDialogDescription>
-            <p className="mb-2">This will permanently delete this note and all associated data from the database using administrative privileges.</p>
-            <p className="font-bold text-red-600">This action cannot be undone under any circumstances.</p>
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleForceDelete}
-            className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
-          >
-            Yes, Permanently Delete Note
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <Button
+      variant="destructive"
+      size="sm"
+      onClick={handleDelete}
+      disabled={isDeleting}
+      className="space-x-2"
+    >
+      <Trash2 className="h-4 w-4" />
+      <span>
+        {isDeleting ? "Deleting..." : "Force Delete"}
+      </span>
+    </Button>
   );
 };

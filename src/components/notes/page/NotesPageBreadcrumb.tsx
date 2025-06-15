@@ -1,75 +1,50 @@
+import { useMemo } from "react";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { Home, FileText, Filter } from "lucide-react";
+import { useOptimizedNotes } from "@/contexts/OptimizedNotesContext";
 
-import React from "react";
-import {
-  OptimizedBreadcrumb,
-  OptimizedBreadcrumbItem,
-  OptimizedBreadcrumbLink,
-  OptimizedBreadcrumbList,
-  OptimizedBreadcrumbPage,
-  OptimizedBreadcrumbSeparator,
-} from "@/components/ui/optimized-breadcrumb";
-import { Home, FileText } from "lucide-react";
-import { useUserSubjects } from "@/hooks/useUserSubjects";
-import { useNotes } from "@/contexts/NoteContext";
+export const NotesPageBreadcrumb = () => {
+  const { searchTerm, selectedSubject } = useOptimizedNotes();
 
-interface NotesPageBreadcrumbProps {
-  activeSubjectId?: string | null;
-}
+  const breadcrumbItems = useMemo(() => {
+    const items = [
+      { href: "/", icon: Home, label: "Home" },
+      { href: "/notes", icon: FileText, label: "Notes" },
+    ];
 
-export const NotesPageBreadcrumb = ({ activeSubjectId }: NotesPageBreadcrumbProps) => {
-  const { subjects } = useUserSubjects();
-  const { searchTerm, filteredNotes } = useNotes();
-  
-  const activeSubject = activeSubjectId 
-    ? subjects.find(s => s.id === activeSubjectId)
-    : null;
+    if (searchTerm) {
+      items.push({ label: `Search: ${searchTerm}` });
+    }
 
-  const hasFilters = searchTerm || activeSubjectId;
-  const resultsText = hasFilters ? `${filteredNotes.length} results` : '';
+    if (selectedSubject && selectedSubject !== "all") {
+      items.push({ label: `Subject: ${selectedSubject}` });
+    }
+
+    return items;
+  }, [searchTerm, selectedSubject]);
 
   return (
-    <div className="flex items-center justify-between mb-2">
-      <OptimizedBreadcrumb>
-        <OptimizedBreadcrumbList>
-          <OptimizedBreadcrumbItem>
-            <OptimizedBreadcrumbLink to="/dashboard" className="flex items-center gap-1">
-              <Home className="h-3 w-3" />
-              Dashboard
-            </OptimizedBreadcrumbLink>
-          </OptimizedBreadcrumbItem>
-          <OptimizedBreadcrumbSeparator />
-          
-          {!hasFilters ? (
-            <OptimizedBreadcrumbItem>
-              <OptimizedBreadcrumbPage className="flex items-center gap-1">
-                <FileText className="h-3 w-3" />
-                Notes
-              </OptimizedBreadcrumbPage>
-            </OptimizedBreadcrumbItem>
-          ) : (
-            <>
-              <OptimizedBreadcrumbItem>
-                <OptimizedBreadcrumbLink to="/notes" className="flex items-center gap-1">
-                  <FileText className="h-3 w-3" />
-                  Notes
-                </OptimizedBreadcrumbLink>
-              </OptimizedBreadcrumbItem>
-              <OptimizedBreadcrumbSeparator />
-              <OptimizedBreadcrumbItem>
-                <OptimizedBreadcrumbPage>
-                  {activeSubject ? activeSubject.name : 'Search Results'}
-                </OptimizedBreadcrumbPage>
-              </OptimizedBreadcrumbItem>
-            </>
-          )}
-        </OptimizedBreadcrumbList>
-      </OptimizedBreadcrumb>
-      
-      {resultsText && (
-        <span className="text-sm text-muted-foreground">
-          {resultsText}
-        </span>
-      )}
-    </div>
+    <Breadcrumb className="mb-4">
+      <BreadcrumbList>
+        {breadcrumbItems.map((item, index) => (
+          <BreadcrumbItem key={index}>
+            {index === breadcrumbItems.length - 1 ? (
+              <>
+                {item.icon && <item.icon className="h-4 w-4 mr-2" />}
+                <BreadcrumbPage>{item.label}</BreadcrumbPage>
+              </>
+            ) : (
+              <>
+                <BreadcrumbLink href={item.href}>
+                  {item.icon && <item.icon className="h-4 w-4 mr-2" />}
+                  {item.label}
+                </BreadcrumbLink>
+                <BreadcrumbSeparator />
+              </>
+            )}
+          </BreadcrumbItem>
+        ))}
+      </BreadcrumbList>
+    </Breadcrumb>
   );
 };

@@ -1,53 +1,107 @@
-
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Save } from "lucide-react";
+import { useOptimizedNotes } from "@/contexts/OptimizedNotesContext";
 import { Note } from "@/types/note";
-import { CreateNoteForm } from "@/components/notes/page/CreateNoteForm";
-import { BackButton } from "@/components/notes/page/BackButton";
-import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
-import { useNotes } from "@/contexts/NoteContext";
 
-interface EditNoteContentProps {
-  note: Note;
-}
-
-export const EditNoteContent = ({ note }: EditNoteContentProps) => {
+const EditNoteContent = () => {
+  const { noteId } = useParams();
+  const { notes, updateNote } = useOptimizedNotes();
+  const [loading, setLoading] = useState(true);
+  const [note, setNote] = useState<Note | null>(null);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [content, setContent] = useState("");
   const navigate = useNavigate();
-  const { updateNote, setNotes } = useNotes();
 
-  const handleSaveNote = async (updatedNoteData: Omit<Note, 'id'>): Promise<Note | null> => {
-    try {
-      await updateNote(note.id, updatedNoteData);
-      toast("Note updated successfully");
-      
-      // Update the notes list immediately to reflect the changes
-      setNotes(prevNotes => 
-        prevNotes.map(n => 
-          n.id === note.id 
-            ? { ...n, ...updatedNoteData, id: note.id }
-            : n
-        )
-      );
-      
-      // Navigate back to the previous page
-      navigate(-1);
-      
-      // Return the updated note (not actually used here but required by the interface)
-      return { ...updatedNoteData, id: note.id };
-    } catch (error) {
-      toast("Failed to update note", {
-        description: "There was an error updating your note"
-      });
-      return null;
+  useEffect(() => {
+    if (notes.length > 0 && noteId) {
+      const foundNote = notes.find((n) => n.id === noteId);
+      if (foundNote) {
+        setNote(foundNote);
+        setTitle(foundNote.title);
+        setDescription(foundNote.description);
+        setContent(foundNote.content);
+      }
+      setLoading(false);
+    }
+  }, [notes, noteId]);
+
+  const handleSave = async () => {
+    if (note && noteId) {
+      try {
+        await updateNote(noteId, {
+          title,
+          description,
+          content,
+        });
+        navigate(`/notes/${noteId}`);
+      } catch (error) {
+        console.error("Error updating note:", error);
+      }
     }
   };
 
+  if (loading || !note) {
+    return <div>Loading...</div>;
+  }
+
   return (
-    <div className="container mx-auto p-6">
-      <BackButton title="Edit Note" />
-      
-      <div className="bg-white shadow-sm rounded-lg border border-mint-100 p-6">
-        <CreateNoteForm onSave={handleSaveNote} initialData={note} />
+    <div className="container mx-auto p-4">
+      <div className="mb-4">
+        <Button variant="ghost" onClick={() => navigate(`/notes/${noteId}`)}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Note
+        </Button>
+      </div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">Edit Note</h1>
+      </div>
+      <div className="mb-4">
+        <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+          Title
+        </label>
+        <input
+          type="text"
+          id="title"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+      </div>
+      <div className="mb-4">
+        <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+          Description
+        </label>
+        <textarea
+          id="description"
+          rows={3}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+      </div>
+      <div className="mb-4">
+        <label htmlFor="content" className="block text-sm font-medium text-gray-700">
+          Content
+        </label>
+        <textarea
+          id="content"
+          rows={10}
+          className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+        />
+      </div>
+      <div>
+        <Button variant="primary" onClick={handleSave}>
+          <Save className="mr-2 h-4 w-4" />
+          Save Note
+        </Button>
       </div>
     </div>
   );
 };
+
+export default EditNoteContent;

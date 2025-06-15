@@ -21,7 +21,7 @@ export const NotesContent: React.FC<NotesContentProps> = ({
   const {
     notes,
     totalCount,
-    isLoading,
+    loading,
     error,
     searchTerm,
     setSearchTerm,
@@ -41,15 +41,15 @@ export const NotesContent: React.FC<NotesContentProps> = ({
   console.log('📝 [NOTES CONTENT] Using optimized context:', {
     notesCount: notes.length,
     totalCount,
-    isLoading
+    loading
   });
 
-  if (isLoading && notes.length === 0) {
+  if (loading && notes.length === 0) {
     return <LoadingState />;
   }
 
   if (error) {
-    return <ErrorState message={error.message || 'Failed to load notes'} />;
+    return <ErrorState message={error || 'Failed to load notes'} />;
   }
 
   // Map the optimized context to the legacy interface
@@ -68,7 +68,7 @@ export const NotesContent: React.FC<NotesContentProps> = ({
     currentPage,
     setCurrentPage,
     totalPages: Math.ceil(totalCount / 20),
-    loading: isLoading,
+    loading,
     availableSubjects: [],
     // Map functions with compatibility wrapper
     addNote: async (noteData: Omit<Note, 'id'>) => {

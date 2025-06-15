@@ -1,298 +1,169 @@
-
-import { useEffect, useCallback, useRef, useState } from 'react';
-import { useBackgroundProcessor } from './useBackgroundProcessor';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 interface PerformanceMetrics {
-  pageLoadTime: number;
   renderTime: number;
-  apiResponseTimes: number[];
   memoryUsage: number;
-  errorRate: number;
-  userInteractionDelay: number;
-  cacheHitRate: number;
-  networkLatency: number;
-}
-
-interface PerformanceAlert {
-  type: 'warning' | 'error' | 'info';
-  message: string;
-  metric: keyof PerformanceMetrics;
-  value: number;
-  threshold: number;
-  timestamp: number;
-}
-
-interface PerformanceThresholds {
-  pageLoadTime: number;
-  renderTime: number;
+  cacheHitRatio: number;
   apiResponseTime: number;
-  memoryUsage: number;
-  errorRate: number;
-  userInteractionDelay: number;
-  cacheHitRate: number;
-  networkLatency: number;
+  totalNotes: number;
+  activeConnections: number;
+  loadTime: number;
+  bundleSize: number;
+  timestamp: number;
 }
 
 export const usePerformanceMonitor = () => {
   const [metrics, setMetrics] = useState<PerformanceMetrics>({
-    pageLoadTime: 0,
     renderTime: 0,
-    apiResponseTimes: [],
     memoryUsage: 0,
-    errorRate: 0,
-    userInteractionDelay: 0,
-    cacheHitRate: 0,
-    networkLatency: 0
+    cacheHitRatio: 0,
+    apiResponseTime: 0,
+    totalNotes: 0,
+    activeConnections: 0,
+    loadTime: 0,
+    bundleSize: 0,
+    timestamp: Date.now()
   });
-  
-  const [alerts, setAlerts] = useState<PerformanceAlert[]>([]);
-  const [isMonitoring, setIsMonitoring] = useState(false);
-  
-  const { addJob, registerWorker } = useBackgroundProcessor();
-  const metricsRef = useRef<PerformanceMetrics>(metrics);
-  const performanceObserverRef = useRef<PerformanceObserver | null>(null);
-  
-  // Performance thresholds
-  const thresholds: PerformanceThresholds = {
-    pageLoadTime: 3000, // 3 seconds
-    renderTime: 100, // 100ms
-    apiResponseTime: 1000, // 1 second
-    memoryUsage: 100 * 1024 * 1024, // 100MB
-    errorRate: 0.05, // 5%
-    userInteractionDelay: 50, // 50ms
-    cacheHitRate: 0.8, // 80%
-    networkLatency: 200 // 200ms
-  };
 
-  // Track page load performance
-  const trackPageLoad = useCallback(() => {
-    const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-    if (navigation) {
-      const loadTime = navigation.loadEventEnd - navigation.navigationStart;
-      
-      setMetrics(prev => ({
-        ...prev,
-        pageLoadTime: loadTime
-      }));
-      
-      if (loadTime > thresholds.pageLoadTime) {
-        addAlert('warning', 'Slow page load detected', 'pageLoadTime', loadTime, thresholds.pageLoadTime);
-      }
-      
-      console.log('📊 Page load time:', loadTime + 'ms');
-    }
-  }, []);
+  const renderTimesRef = useRef<number[]>([]);
+  const apiTimesRef = useRef<number[]>([]);
+  const cacheHitsRef = useRef(0);
+  const cacheMissesRef = useRef(0);
 
   // Track render performance
   const trackRenderTime = useCallback((componentName: string, startTime: number) => {
-    const endTime = performance.now();
-    const renderTime = endTime - startTime;
+    const renderTime = performance.now() - startTime;
+    renderTimesRef.current.push(renderTime);
     
-    setMetrics(prev => ({
-      ...prev,
-      renderTime: renderTime
-    }));
-    
-    if (renderTime > thresholds.renderTime) {
-      addAlert('warning', `Slow render: ${componentName}`, 'renderTime', renderTime, thresholds.renderTime);
+    // Keep only last 100 measurements
+    if (renderTimesRef.current.length > 100) {
+      renderTimesRef.current = renderTimesRef.current.slice(-100);
     }
     
-    console.log(`⚡ ${componentName} render time:`, renderTime + 'ms');
+    console.log(`🚀 ${componentName} render time: ${renderTime.toFixed(2)}ms`);
   }, []);
 
   // Track API response times
-  const trackApiResponse = useCallback((url: string, responseTime: number) => {
-    setMetrics(prev => ({
-      ...prev,
-      apiResponseTimes: [...prev.apiResponseTimes.slice(-19), responseTime] // Keep last 20
-    }));
+  const trackApiTime = useCallback((endpoint: string, startTime: number) => {
+    const responseTime = performance.now() - startTime;
+    apiTimesRef.current.push(responseTime);
     
-    if (responseTime > thresholds.apiResponseTime) {
-      addAlert('warning', `Slow API response: ${url}`, 'apiResponseTime', responseTime, thresholds.apiResponseTime);
+    // Keep only last 50 measurements
+    if (apiTimesRef.current.length > 50) {
+      apiTimesRef.current = apiTimesRef.current.slice(-50);
     }
     
-    console.log(`🌐 API response time for ${url}:`, responseTime + 'ms');
-  }, []);
-
-  // Track memory usage
-  const trackMemoryUsage = useCallback(() => {
-    if ('memory' in performance) {
-      const memory = (performance as any).memory;
-      const used = memory.usedJSHeapSize;
-      
-      setMetrics(prev => ({
-        ...prev,
-        memoryUsage: used
-      }));
-      
-      if (used > thresholds.memoryUsage) {
-        addAlert('error', 'High memory usage detected', 'memoryUsage', used, thresholds.memoryUsage);
-      }
-      
-      console.log('💾 Memory usage:', (used / 1024 / 1024).toFixed(2) + 'MB');
-    }
-  }, []);
-
-  // Track user interaction delays
-  const trackInteractionDelay = useCallback((eventType: string, delay: number) => {
-    setMetrics(prev => ({
-      ...prev,
-      userInteractionDelay: delay
-    }));
-    
-    if (delay > thresholds.userInteractionDelay) {
-      addAlert('warning', `Slow ${eventType} interaction`, 'userInteractionDelay', delay, thresholds.userInteractionDelay);
-    }
-    
-    console.log(`👆 ${eventType} interaction delay:`, delay + 'ms');
+    console.log(`📡 API ${endpoint} response time: ${responseTime.toFixed(2)}ms`);
   }, []);
 
   // Track cache performance
-  const trackCachePerformance = useCallback((hits: number, misses: number) => {
-    const hitRate = hits / (hits + misses);
-    
-    setMetrics(prev => ({
-      ...prev,
-      cacheHitRate: hitRate
-    }));
-    
-    if (hitRate < thresholds.cacheHitRate) {
-      addAlert('info', 'Low cache hit rate', 'cacheHitRate', hitRate, thresholds.cacheHitRate);
-    }
-    
-    console.log('🎯 Cache hit rate:', (hitRate * 100).toFixed(1) + '%');
+  const trackCacheHit = useCallback(() => {
+    cacheHitsRef.current++;
   }, []);
 
-  // Add performance alert
-  const addAlert = useCallback((
-    type: 'warning' | 'error' | 'info',
-    message: string,
-    metric: keyof PerformanceMetrics,
-    value: number,
-    threshold: number
-  ) => {
-    const alert: PerformanceAlert = {
-      type,
-      message,
-      metric,
-      value,
-      threshold,
-      timestamp: Date.now()
-    };
-    
-    setAlerts(prev => [...prev.slice(-9), alert]); // Keep last 10 alerts
-    
-    console.warn('⚠️ Performance alert:', alert);
-    
-    // Send alert to background processing
-    addJob('process_performance_alert', alert, 'high');
-  }, [addJob]);
+  const trackCacheMiss = useCallback(() => {
+    cacheMissesRef.current++;
+  }, []);
 
-  // Setup performance observers
-  useEffect(() => {
-    if (!isMonitoring) return;
-
-    // Observe page performance
-    if ('PerformanceObserver' in window) {
-      performanceObserverRef.current = new PerformanceObserver((list) => {
-        list.getEntries().forEach((entry) => {
-          if (entry.entryType === 'navigation') {
-            trackPageLoad();
-          } else if (entry.entryType === 'measure') {
-            console.log('📏 Performance measure:', entry.name, entry.duration + 'ms');
-          }
-        });
-      });
-      
-      performanceObserverRef.current.observe({ 
-        entryTypes: ['navigation', 'measure', 'mark'] 
-      });
-    }
-
-    // Monitor memory usage periodically
-    const memoryInterval = setInterval(trackMemoryUsage, 30000); // Every 30 seconds
-
-    return () => {
-      if (performanceObserverRef.current) {
-        performanceObserverRef.current.disconnect();
-      }
-      clearInterval(memoryInterval);
-    };
-  }, [isMonitoring, trackPageLoad, trackMemoryUsage]);
-
-  // Register background workers for performance processing
-  useEffect(() => {
-    registerWorker('process_performance_alert', async (alert: PerformanceAlert) => {
-      // Process performance alerts (could send to analytics service)
-      console.log('📊 Processing performance alert:', alert);
-      
-      // Store in local storage for persistence
-      const existingAlerts = JSON.parse(localStorage.getItem('performance_alerts') || '[]');
-      existingAlerts.push(alert);
-      localStorage.setItem('performance_alerts', JSON.stringify(existingAlerts.slice(-50)));
-    });
-    
-    registerWorker('generate_performance_report', async () => {
-      const report = {
-        timestamp: Date.now(),
-        metrics: metricsRef.current,
-        alerts: alerts.slice(-10),
-        summary: {
-          avgApiResponseTime: metricsRef.current.apiResponseTimes.reduce((a, b) => a + b, 0) / metricsRef.current.apiResponseTimes.length || 0,
-          totalAlerts: alerts.length,
-          criticalIssues: alerts.filter(a => a.type === 'error').length
-        }
+  // Get memory usage
+  const getMemoryUsage = useCallback(() => {
+    if ('memory' in performance) {
+      const memory = (performance as any).memory;
+      return {
+        used: memory.usedJSHeapSize / 1024 / 1024, // MB
+        total: memory.totalJSHeapSize / 1024 / 1024, // MB
+        limit: memory.jsHeapSizeLimit / 1024 / 1024 // MB
       };
-      
-      console.log('📈 Performance report generated:', report);
-      return report;
+    }
+    return { used: 0, total: 0, limit: 0 };
+  }, []);
+
+  // Calculate page load time
+  const getLoadTime = useCallback(() => {
+    if (typeof window !== 'undefined' && 'performance' in window) {
+      const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+      if (navigation) {
+        // Use loadEventEnd and fetchStart as fallbacks for navigationStart
+        const startTime = navigation.fetchStart || navigation.loadEventStart || 0;
+        const endTime = navigation.loadEventEnd || performance.now();
+        return endTime - startTime;
+      }
+    }
+    return 0;
+  }, []);
+
+  // Update metrics periodically
+  const updateMetrics = useCallback(() => {
+    const memoryInfo = getMemoryUsage();
+    const avgRenderTime = renderTimesRef.current.length > 0 
+      ? renderTimesRef.current.reduce((a, b) => a + b, 0) / renderTimesRef.current.length 
+      : 0;
+    const avgApiTime = apiTimesRef.current.length > 0
+      ? apiTimesRef.current.reduce((a, b) => a + b, 0) / apiTimesRef.current.length
+      : 0;
+    const totalCacheRequests = cacheHitsRef.current + cacheMissesRef.current;
+    const cacheHitRatio = totalCacheRequests > 0 ? cacheHitsRef.current / totalCacheRequests : 0;
+
+    setMetrics({
+      renderTime: avgRenderTime,
+      memoryUsage: memoryInfo.used,
+      cacheHitRatio: cacheHitRatio * 100,
+      apiResponseTime: avgApiTime,
+      totalNotes: 0, // This would be passed from the notes context
+      activeConnections: 1, // Placeholder
+      loadTime: getLoadTime(),
+      bundleSize: 0, // This would need to be calculated during build
+      timestamp: Date.now()
     });
-  }, [registerWorker, alerts]);
+  }, [getMemoryUsage, getLoadTime]);
 
-  // Start/stop monitoring
+  // Start monitoring
   const startMonitoring = useCallback(() => {
-    setIsMonitoring(true);
-    console.log('🔍 Performance monitoring started');
-  }, []);
-
-  const stopMonitoring = useCallback(() => {
-    setIsMonitoring(false);
-    console.log('⏹️ Performance monitoring stopped');
-  }, []);
-
-  // Get performance summary
-  const getPerformanceSummary = useCallback(() => {
-    const avgApiTime = metrics.apiResponseTimes.reduce((a, b) => a + b, 0) / metrics.apiResponseTimes.length || 0;
+    console.log('📊 Starting performance monitoring...');
     
-    return {
-      overall: alerts.filter(a => a.type === 'error').length === 0 ? 'good' : 'poor',
-      pageLoadTime: metrics.pageLoadTime,
-      avgApiResponseTime: avgApiTime,
-      memoryUsage: (metrics.memoryUsage / 1024 / 1024).toFixed(2) + 'MB',
-      cacheHitRate: (metrics.cacheHitRate * 100).toFixed(1) + '%',
-      alertCount: alerts.length,
-      criticalIssues: alerts.filter(a => a.type === 'error').length
+    // Update metrics every 5 seconds
+    const interval = setInterval(updateMetrics, 5000);
+    
+    // Initial update
+    updateMetrics();
+    
+    return () => {
+      clearInterval(interval);
+      console.log('⏹️ Stopped performance monitoring');
     };
-  }, [metrics, alerts]);
+  }, [updateMetrics]);
 
-  // Update ref when metrics change
-  useEffect(() => {
-    metricsRef.current = metrics;
+  // Performance alerts
+  const checkPerformanceAlerts = useCallback(() => {
+    const alerts = [];
+    
+    if (metrics.renderTime > 100) {
+      alerts.push('High render time detected');
+    }
+    
+    if (metrics.memoryUsage > 50) {
+      alerts.push('High memory usage detected');
+    }
+    
+    if (metrics.cacheHitRatio < 50) {
+      alerts.push('Low cache hit ratio');
+    }
+    
+    if (metrics.apiResponseTime > 1000) {
+      alerts.push('Slow API responses detected');
+    }
+    
+    return alerts;
   }, [metrics]);
 
   return {
     metrics,
-    alerts,
-    isMonitoring,
-    startMonitoring,
-    stopMonitoring,
-    trackPageLoad,
     trackRenderTime,
-    trackApiResponse,
-    trackMemoryUsage,
-    trackInteractionDelay,
-    trackCachePerformance,
-    getPerformanceSummary,
-    addAlert
+    trackApiTime,
+    trackCacheHit,
+    trackCacheMiss,
+    startMonitoring,
+    checkPerformanceAlerts,
+    getMemoryUsage
   };
 };

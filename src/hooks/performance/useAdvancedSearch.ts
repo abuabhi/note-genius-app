@@ -193,7 +193,10 @@ export const useAdvancedSearch = (notes: Note[]) => {
     results.sort((a, b) => {
       switch (searchOptions.sortBy) {
         case 'date':
-          return new Date(b.note.updated_at).getTime() - new Date(a.note.updated_at).getTime();
+          // Use created_at or date field, fallback to current time
+          const aDate = new Date(a.note.created_at || a.note.date || Date.now()).getTime();
+          const bDate = new Date(b.note.created_at || b.note.date || Date.now()).getTime();
+          return bDate - aDate;
         case 'title':
           return a.note.title.localeCompare(b.note.title);
         default:

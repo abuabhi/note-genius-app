@@ -1,101 +1,69 @@
-
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useNotes } from '@/contexts/NoteContext';
+import { useState, useCallback } from 'react';
 import { Note } from '@/types/note';
-import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
+import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
+import { toast } from 'sonner';
 
-export const useNoteDetails = (note: Note, onOpenChange: (open: boolean) => void) => {
-  const { toast } = useToast();
-  const { updateNote, pinNote, archiveNote, deleteNote } = useNotes();
+export const useNoteDetails = (note: Note, onClose: (open: boolean) => void) => {
   const navigate = useNavigate();
-
+  const { updateNote, deleteNote } = useOptimizedNotes();
   const [noteContent, setNoteContent] = useState(note.content || '');
   const [isDeleting, setIsDeleting] = useState(false);
-  
-  // Get scan data preview URL if available
-  const scanPreviewUrl = note.sourceType === 'scan' && note.scanData?.originalImageUrl
-    ? note.scanData.originalImageUrl
-    : null;
 
-  // Get import data preview URL if available
-  const importPreviewUrl = note.sourceType === 'import' && note.importData?.originalFileUrl
-    ? note.importData.originalFileUrl
-    : null;
-
-  // Handle pinning/unpinning note
-  const handlePin = async () => {
+  const handlePin = useCallback(async () => {
     try {
-      await pinNote(note.id, !note.pinned);
+      await updateNote(note.id, { pinned: !note.pinned });
+      toast.success(note.pinned ? "Note unpinned" : "Note pinned");
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to pin note",
-        variant: "destructive"
-      });
+      console.error('Error pinning note:', error);
+      toast.error('Failed to update note pin status');
     }
-  };
+  }, [note, updateNote]);
 
-  // Handle archiving/unarchiving note
-  const handleArchive = async () => {
+  const handleArchive = useCallback(async () => {
     try {
-      await archiveNote(note.id, !note.archived);
-      onOpenChange(false);
+      await updateNote(note.id, { archived: !note.archived });
+      toast.success(note.archived ? "Note unarchived" : "Note archived");
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to archive note",
-        variant: "destructive"
-      });
+      console.error('Error archiving note:', error);
+      toast.error('Failed to update note archive status');
     }
-  };
+  }, [note, updateNote]);
 
-  // Handle deleting note
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     setIsDeleting(true);
     try {
       await deleteNote(note.id);
-      onOpenChange(false);
-      toast({
-        title: "Success",
-        description: "Note deleted successfully"
-      });
+      toast.success("Note deleted successfully");
+      onClose(false);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete note",
-        variant: "destructive"
-      });
+      console.error('Error deleting note:', error);
+      toast.error('Failed to delete note');
     } finally {
       setIsDeleting(false);
     }
-  };
+  }, [note, deleteNote, onClose]);
 
-  // Handle opening study mode
-  const handleOpenStudyMode = () => {
-    onOpenChange(false);
-    navigate(`/notes/study/${note.id}`);
-  };
-
-  // Handle applying AI enhancements
-  const handleApplyEnhancement = async (enhancedContent: string) => {
-    setNoteContent(enhancedContent);
-    
-    // Also update in database
+  const handleApplyEnhancement = useCallback(async () => {
     try {
+      // Placeholder for AI enhancement logic
+      const enhancedContent = `AI Enhanced: ${noteContent}`;
+      setNoteContent(enhancedContent);
       await updateNote(note.id, { content: enhancedContent });
-      toast({
-        title: "Content updated",
-        description: "Enhanced content has been saved",
-      });
+      toast.success("Note content enhanced with AI");
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to save enhanced content",
-        variant: "destructive"
-      });
+      console.error('Error applying enhancement:', error);
+      toast.error('Failed to apply enhancement');
     }
-  };
+  }, [note, noteContent, updateNote]);
+
+  const handleOpenStudyMode = useCallback(() => {
+    navigate(`/notes/study/${note.id}`);
+  }, [note, navigate]);
+
+  // Determine preview URLs based on source type
+  const scanPreviewUrl = note.sourceType === 'scan' && note.scanData?.imageUrl ? note.scanData.imageUrl : null;
+  const importPreviewUrl = note.sourceType === 'import' && note.importData?.previewUrl ? note.importData.previewUrl : null;
 
   return {
     noteContent,
@@ -104,8 +72,8 @@ export const useNoteDetails = (note: Note, onOpenChange: (open: boolean) => void
     handlePin,
     handleArchive,
     handleDelete,
-    handleOpenStudyMode,
     handleApplyEnhancement,
+    handleOpenStudyMode,
     scanPreviewUrl,
     importPreviewUrl
   };

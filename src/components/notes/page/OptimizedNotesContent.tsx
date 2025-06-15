@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
 import { Note } from '@/types/note';
@@ -17,14 +18,13 @@ export const OptimizedNotesContent = () => {
   const {
     notes,
     totalCount,
-    hasMore,
-    isLoading,
+    loading,
     error,
     searchTerm,
     selectedSubject,
     currentPage,
     setCurrentPage,
-    refetch,
+    refreshNotes,
     addNote,
     updateNote,
     deleteNote
@@ -105,8 +105,8 @@ export const OptimizedNotesContent = () => {
   if (error) {
     return (
       <ErrorState 
-        message={`Failed to load notes: ${error.message || 'Unknown error'}`}
-        onRetry={refetch}
+        message={`Failed to load notes: ${error || 'Unknown error'}`}
+        onRetry={refreshNotes}
       />
     );
   }
@@ -134,7 +134,7 @@ export const OptimizedNotesContent = () => {
 
         {/* Main content with improved loading states */}
         <ProgressiveLoader 
-          isLoading={isLoading}
+          isLoading={loading}
           isPartiallyLoaded={notes.length > 0}
           skeletonCount={6}
         >
@@ -164,7 +164,7 @@ export const OptimizedNotesContent = () => {
                       totalCount={totalCount}
                       pageSize={20}
                       onPageChange={setCurrentPage}
-                      hasMore={hasMore}
+                      hasMore={false}
                     />
                   </div>
                 </div>

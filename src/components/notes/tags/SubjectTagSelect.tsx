@@ -1,113 +1,46 @@
-
-import { useState, useEffect } from "react";
-import { useNotes } from "@/contexts/NoteContext";
-import { Note } from "@/types/note";
-import { generateColorFromString, getBestTextColor } from "@/utils/colorUtils";
+import { useState } from 'react';
+import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Check } from "lucide-react";
+} from "@/components/ui/select"
+import { Note } from '@/types/note';
 
 interface SubjectTagSelectProps {
   note: Note;
-  onSubjectChange?: (subject: string) => void;
 }
 
-export const SubjectTagSelect = ({ note, onSubjectChange }: SubjectTagSelectProps) => {
-  const { availableSubjects, updateNote, addSubject } = useNotes();
-  const [currentSubject, setCurrentSubject] = useState<string>(note.subject || "general");
+export const SubjectTagSelect: React.FC<SubjectTagSelectProps> = ({ note }) => {
+  const { updateNote } = useOptimizedNotes();
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  // Handle subject change
-  const handleSubjectChange = async (value: string) => {
-    setCurrentSubject(value);
-    
-    // If this is a new subject, add it to our available subjects
-    if (value && value !== 'general' && !availableSubjects.includes(value)) {
-      addSubject(value);
+  const handleSubjectChange = async (subject: string) => {
+    setIsUpdating(true);
+    try {
+      await updateNote(note.id, { subject });
+    } catch (error) {
+      console.error("Error updating note subject:", error);
+    } finally {
+      setIsUpdating(false);
     }
-    
-    if (onSubjectChange) {
-      onSubjectChange(value);
-    } else {
-      // If no external handler provided, update note directly
-      try {
-        await updateNote(note.id, { subject: value });
-      } catch (error) {
-        console.error("Failed to update note subject:", error);
-        // Reset to previous value on error
-        setCurrentSubject(note.subject || "general");
-      }
-    }
-  };
-
-  // Update local state when note changes from outside
-  useEffect(() => {
-    setCurrentSubject(note.subject || "general");
-  }, [note.subject]);
-
-  // Generate color for each subject
-  const getSubjectDisplay = (subject: string) => {
-    if (!subject) return null;
-    
-    const color = generateColorFromString(subject);
-    const textColor = getBestTextColor(color);
-    
-    return (
-      <Badge 
-        style={{ 
-          backgroundColor: color, 
-          color: textColor 
-        }}
-        className="px-2 py-0.5 font-medium"
-      >
-        {subject}
-      </Badge>
-    );
   };
 
   return (
-    <div className="w-full">
-      <Select value={currentSubject} onValueChange={handleSubjectChange}>
-        <SelectTrigger className="w-full border-mint-200 focus:ring-mint-400">
-          <SelectValue placeholder="Select subject">
-            {currentSubject ? getSubjectDisplay(currentSubject) : "Select subject"}
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent className="bg-white">
-          <SelectItem value="general">General</SelectItem>
-          {availableSubjects.map((subject) => {
-            if (!subject || subject.trim() === '') return null;
-            
-            const color = generateColorFromString(subject);
-            const textColor = getBestTextColor(color);
-            
-            return (
-              <SelectItem 
-                key={subject} 
-                value={subject}
-                className="flex items-center justify-between focus:bg-mint-50 focus:text-mint-700"
-              >
-                <div className="flex items-center gap-2">
-                  <Badge 
-                    style={{ 
-                      backgroundColor: color, 
-                      color: textColor 
-                    }}
-                    className="px-2 py-0.5 font-medium"
-                  >
-                    {subject}
-                  </Badge>
-                </div>
-              </SelectItem>
-            );
-          })}
-        </SelectContent>
-      </Select>
-    </div>
+    <Select onValueChange={handleSubjectChange} disabled={isUpdating}>
+      <SelectTrigger className="w-[180px]">
+        <SelectValue placeholder="Select subject" defaultValue={note.subject || ''} />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="General">General</SelectItem>
+        <SelectItem value="Personal">Personal</SelectItem>
+        <SelectItem value="Work">Work</SelectItem>
+        <SelectItem value="School">School</SelectItem>
+        <SelectItem value="Ideas">Ideas</SelectItem>
+      </SelectContent>
+    </Select>
   );
 };
