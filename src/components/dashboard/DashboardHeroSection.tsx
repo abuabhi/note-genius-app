@@ -1,111 +1,87 @@
 
 import { Card, CardContent } from "@/components/ui/card";
-import { BookOpen, Clock, Target, TrendingUp } from "lucide-react";
-import { useDashboardAnalytics } from "@/hooks/useDashboardAnalytics";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { 
+  Calendar, 
+  BookOpen, 
+  Target, 
+  CheckSquare,
+  Sparkles 
+} from "lucide-react";
+import { Link } from "react-router-dom";
+import { format } from "date-fns";
 
 export const DashboardHeroSection = () => {
-  const { 
-    todayStudyTimeMinutes, 
-    weeklyStudyTimeMinutes,
-    totalSessions, 
-    currentStreak, 
-    weeklyComparison,
-    weeklyGoalProgress,
-    weeklyGoalHours,
-    isLoading 
-  } = useDashboardAnalytics();
-
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[1, 2, 3, 4].map((i) => (
-          <Card key={i} className="animate-pulse">
-            <CardContent className="p-6">
-              <div className="h-4 bg-gray-200 rounded mb-2"></div>
-              <div className="h-8 bg-gray-200 rounded"></div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }
-
-  // Format time helpers
-  const formatMinutes = (minutes: number) => `${minutes}m`;
-  
-  const formatHours = (minutes: number) => {
-    const hours = Math.round((minutes / 60) * 10) / 10;
-    return `${hours}h`;
-  };
-
-  // Format weekly change
-  const formatWeeklyChange = () => {
-    if (weeklyComparison.percentageChange === 0) return "No change";
-    const sign = weeklyComparison.percentageChange > 0 ? "+" : "";
-    return `${sign}${weeklyComparison.percentageChange}%`;
-  };
-
-  const stats = [
-    {
-      title: "Today",
-      value: formatMinutes(todayStudyTimeMinutes),
-      icon: Clock,
-      description: "Minutes studied today",
-      color: "text-blue-600"
-    },
-    {
-      title: "This Week", 
-      value: formatHours(weeklyStudyTimeMinutes),
-      icon: TrendingUp,
-      description: `${formatWeeklyChange()} from last week`,
-      color: weeklyComparison.trend === 'up' ? "text-green-600" : 
-             weeklyComparison.trend === 'down' ? "text-red-600" : "text-gray-600"
-    },
-    {
-      title: "Weekly Goal",
-      value: `${weeklyGoalProgress}%`,
-      icon: Target,
-      description: `${formatHours(weeklyStudyTimeMinutes)} / ${weeklyGoalHours}h`,
-      color: weeklyGoalProgress >= 100 ? "text-green-600" : "text-orange-600"
-    },
-    {
-      title: "Study Streak",
-      value: `${currentStreak}`,
-      icon: BookOpen,
-      description: currentStreak === 1 ? "day" : "days",
-      color: "text-purple-600"
-    }
-  ];
+  const today = format(new Date(), "EEEE, MMMM do");
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back!</h1>
-        <p className="text-gray-600">
-          You've completed <span className="font-semibold text-mint-600">{totalSessions}</span> study sessions. 
-          Keep up the great work!
-        </p>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <Card key={stat.title} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium text-gray-600">{stat.title}</h3>
-                  <Icon className={`h-5 w-5 ${stat.color}`} />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                  <p className="text-xs text-gray-500">{stat.description}</p>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-    </div>
+    <Card className="bg-gradient-to-r from-mint-500 to-blue-600 text-white border-none shadow-xl">
+      <CardContent className="p-8">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-3">
+              <Calendar className="h-5 w-5" />
+              <span className="text-mint-100">{today}</span>
+              <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                Fresh Start
+              </Badge>
+            </div>
+            
+            <h1 className="text-3xl lg:text-4xl font-bold mb-4">
+              Welcome to your clean workspace! 
+              <Sparkles className="inline h-8 w-8 ml-2 text-yellow-300" />
+            </h1>
+            
+            <p className="text-mint-100 text-lg mb-6 max-w-2xl">
+              Everything has been reset and you're ready to build your perfect study routine. 
+              Start by creating your first note, setting a goal, or organizing your tasks.
+            </p>
+
+            <div className="flex flex-wrap gap-3">
+              <Button 
+                asChild 
+                variant="secondary" 
+                className="bg-white text-mint-600 hover:bg-mint-50"
+              >
+                <Link to="/notes">
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Create First Note
+                </Link>
+              </Button>
+              
+              <Button 
+                asChild 
+                variant="outline" 
+                className="border-white/30 text-white hover:bg-white/10"
+              >
+                <Link to="/goals">
+                  <Target className="h-4 w-4 mr-2" />
+                  Set Study Goal
+                </Link>
+              </Button>
+              
+              <Button 
+                asChild 
+                variant="outline" 
+                className="border-white/30 text-white hover:bg-white/10"
+              >
+                <Link to="/todos">
+                  <CheckSquare className="h-4 w-4 mr-2" />
+                  Plan Tasks
+                </Link>
+              </Button>
+            </div>
+          </div>
+          
+          <div className="flex-shrink-0">
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
+              <div className="text-3xl font-bold">0</div>
+              <div className="text-mint-100 text-sm">Items to focus on</div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
