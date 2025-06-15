@@ -11,7 +11,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Note } from "@/types/note";
 
 const NoteStudyPage = () => {
-  const { id } = useParams();
+  // FIXED: Use 'id' parameter instead of destructuring wrong property
+  const params = useParams();
+  const id = params.id || params['*']?.split('/').pop(); // Handle both /notes/study/:id and nested routes
   const navigate = useNavigate();
   const { notes, addNote } = useOptimizedNotes();
   const [loading, setLoading] = useState(true);
@@ -21,10 +23,21 @@ const NoteStudyPage = () => {
   // Require authentication
   useRequireAuth();
 
+  // Debug logging
+  useEffect(() => {
+    console.log("🔍 NoteStudyPage Debug Info:", {
+      params,
+      extractedId: id,
+      pathname: window.location.pathname,
+      search: window.location.search
+    });
+  }, [params, id]);
+
   // Try to find note in context first, then fetch from database if needed
   useEffect(() => {
     const loadNote = async () => {
       if (!id) {
+        console.error("❌ No note ID found in params:", params);
         setError("No note ID provided");
         setLoading(false);
         return;
@@ -145,6 +158,10 @@ const NoteStudyPage = () => {
             <p className="mb-4 text-red-600">
               {error || "The note you're looking for doesn't exist or has been deleted."}
             </p>
+            <div className="mb-4 text-sm text-gray-600">
+              <p>URL ID: {id || 'Not found'}</p>
+              <p>Available notes: {notes.length}</p>
+            </div>
             <div className="flex gap-2 justify-center">
               <Button onClick={handleGoBack}>
                 Back to Notes
