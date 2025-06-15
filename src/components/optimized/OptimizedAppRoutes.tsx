@@ -1,9 +1,11 @@
+
 import { Routes, Route } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { LazyLoadWrapper } from '@/components/performance/LazyLoadWrapper';
 
 // Lazy load pages for better performance
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
+const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
 const NotesPage = lazy(() => import('@/pages/NotesPage'));
 const EditNotePage = lazy(() => import('@/pages/EditNotePage'));
 const FlashcardsPage = lazy(() => import('@/pages/FlashcardsPage'));
@@ -41,6 +43,13 @@ export const OptimizedAppRoutes = () => {
         <Route path="/dashboard" element={
           <LazyLoadWrapper>
             <DashboardPage />
+          </LazyLoadWrapper>
+        } />
+        
+        {/* Analytics */}
+        <Route path="/analytics" element={
+          <LazyLoadWrapper>
+            <AnalyticsPage />
           </LazyLoadWrapper>
         } />
         
