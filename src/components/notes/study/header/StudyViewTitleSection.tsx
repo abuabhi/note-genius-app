@@ -33,10 +33,16 @@ export const StudyViewTitleSection = ({
 
   // Find the subject name based on subject_id or fall back to subject
   const getSubjectName = () => {
-    if (note?.subject_id && !subjectsLoading) {
+    // First, try to find subject by subject_id if it exists and subjects are loaded
+    if (note?.subject_id && !subjectsLoading && subjects.length > 0) {
       const foundSubject = subjects.find(s => s.id === note.subject_id);
-      return foundSubject?.name || note?.subject || "Uncategorized";
+      if (foundSubject) {
+        return foundSubject.name;
+      }
     }
+    
+    // If subject_id lookup fails or doesn't exist, use the legacy subject field
+    // This ensures we don't lose the original subject when subject_id doesn't match
     return note?.subject || "Uncategorized";
   };
 
