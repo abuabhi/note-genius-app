@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Clock, Target, TrendingUp, Calendar, BookOpen, Award, AlertTriangle, CheckCircle, Plus, ArrowRight } from 'lucide-react';
-import { useTimezoneAwareAnalytics } from '@/hooks/useTimezoneAwareAnalytics';
+import { useUnifiedAnalytics } from '@/hooks/useUnifiedAnalytics';
 import { useBasicSessionTracker } from '@/hooks/useBasicSessionTracker';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useQuery } from '@tanstack/react-query';
@@ -13,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
 export const AnalyticsOverview = () => {
-  const { analytics, isLoading, error } = useTimezoneAwareAnalytics();
+  const { analytics, isLoading, error } = useUnifiedAnalytics();
   const { isActive, elapsedSeconds, isPaused } = useBasicSessionTracker();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -221,7 +220,7 @@ export const AnalyticsOverview = () => {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics.todayStudyTime}h</div>
+            <div className="text-2xl font-bold">{analytics.todayStudyTimeMinutes / 60}h</div>
             <p className="text-xs text-muted-foreground">
               {analytics.todaySessions} sessions completed today
             </p>

@@ -1,5 +1,5 @@
 
-import { useBasicSessionTracker } from '@/hooks/useBasicSessionTracker';
+import { useUnifiedSessionTracker } from '@/hooks/useUnifiedSessionTracker';
 
 interface NoteStudyTrackerProps {
   noteId: string;
@@ -25,32 +25,42 @@ export const NoteStudyTracker = ({
   donutPosition = 'top'
 }: NoteStudyTrackerProps) => {
   
-  const { recordActivity, updateSessionActivity, isActive } = useBasicSessionTracker();
+  const { recordActivity, updateSessionActivity, isActive, startSession } = useUnifiedSessionTracker();
   
-  console.log('📝 [NOTE TRACKER] Using unified session via SessionDock:', {
+  console.log('📝 [NOTE TRACKER] Using unified session tracker:', {
     noteId,
     noteName,
     isActive,
     triggerStudyActivity
   });
   
+  // Auto-start session if not active and user is studying
+  React.useEffect(() => {
+    if (!isActive && triggerStudyActivity) {
+      startSession('note_review', `Studying: ${noteName}`, subject);
+      onSessionStart?.();
+    }
+  }, [isActive, triggerStudyActivity, startSession, noteName, subject, onSessionStart]);
+  
   // Record note study activity when triggered
-  if (triggerStudyActivity && isActive) {
-    recordActivity();
-    updateSessionActivity({
-      notes_reviewed: 1
-    });
-  }
+  React.useEffect(() => {
+    if (triggerStudyActivity && isActive) {
+      recordActivity();
+      updateSessionActivity({
+        notes_reviewed: 1
+      });
+    }
+  }, [triggerStudyActivity, isActive, recordActivity, updateSessionActivity]);
   
   return (
     <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
       <div className="text-blue-800 text-sm">
-        <strong>Note Study Tracker</strong>
+        <strong>Unified Study Tracker</strong>
         <p className="mt-1">
           Studying: {noteName}
         </p>
         <p className="text-xs text-blue-600 mt-1">
-          Session managed by SessionDock • Status: {isActive ? 'Active' : 'Inactive'}
+          Unified session tracking • Status: {isActive ? 'Active' : 'Inactive'}
         </p>
       </div>
     </div>

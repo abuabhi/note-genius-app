@@ -1,4 +1,3 @@
-
 import { ReactNode, useEffect, useState } from 'react';
 import NavBar from './NavBar';
 import Footer from './Footer';
@@ -11,6 +10,8 @@ import { ChatFloatingButton } from '@/components/ui/floating/ChatFloatingButton'
 import { NoteChatSidebar } from '@/components/notes/study/chat/NoteChatSidebar';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { UnifiedSessionDock } from "@/components/ui/floating/UnifiedSessionDock";
+import { useProperSessionCleanup } from "@/hooks/useProperSessionCleanup";
 
 interface LayoutProps {
   children: ReactNode;
@@ -101,8 +102,11 @@ export default function Layout({ children, showSidebar = true, showFooter = true
     }
   }, [isNoteStudyPage]);
 
+  // Add the proper session cleanup hook
+  useProperSessionCleanup();
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen bg-gray-50">
       <NavBar />
       {/* Announcement Bar - shows for authenticated users */}
       {user && <AnnouncementBar />}
@@ -131,6 +135,9 @@ export default function Layout({ children, showSidebar = true, showFooter = true
           onClose={() => setIsChatOpen(false)}
         />
       )}
+
+      {/* Replace SessionDock with UnifiedSessionDock */}
+      <UnifiedSessionDock />
     </div>
   );
 }
