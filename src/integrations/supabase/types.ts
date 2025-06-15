@@ -1125,10 +1125,13 @@ export type Database = {
           id: string
           improved_content: string | null
           improved_content_generated_at: string | null
+          improved_content_status: string | null
           key_points: string | null
           key_points_generated_at: string | null
+          key_points_status: string | null
           markdown_content: string | null
           markdown_content_generated_at: string | null
+          markdown_content_status: string | null
           pinned: boolean | null
           source_type: string
           subject: string
@@ -1152,10 +1155,13 @@ export type Database = {
           id?: string
           improved_content?: string | null
           improved_content_generated_at?: string | null
+          improved_content_status?: string | null
           key_points?: string | null
           key_points_generated_at?: string | null
+          key_points_status?: string | null
           markdown_content?: string | null
           markdown_content_generated_at?: string | null
+          markdown_content_status?: string | null
           pinned?: boolean | null
           source_type?: string
           subject?: string
@@ -1179,10 +1185,13 @@ export type Database = {
           id?: string
           improved_content?: string | null
           improved_content_generated_at?: string | null
+          improved_content_status?: string | null
           key_points?: string | null
           key_points_generated_at?: string | null
+          key_points_status?: string | null
           markdown_content?: string | null
           markdown_content_generated_at?: string | null
+          markdown_content_status?: string | null
           pinned?: boolean | null
           source_type?: string
           subject?: string
