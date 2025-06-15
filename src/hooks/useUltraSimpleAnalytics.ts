@@ -13,53 +13,78 @@ export const useUltraSimpleAnalytics = () => {
       console.log('🚀 Fetching ultra-simple analytics for user:', user.id);
 
       try {
-        // Get basic counts with SQL aggregation - no raw data
-        const [sessionsResult, setsResult, notesResult, quizzesResult] = await Promise.all([
-          // Sessions aggregation
+        // Get basic counts with simple COUNT(*) queries
+        const [sessionsCount, setsCount, notesCount, quizzesCount] = await Promise.all([
+          // Total sessions count
           supabase
             .from('study_sessions')
-            .select('count(), duration.sum(), cards_reviewed.sum(), cards_correct.sum()', { count: 'exact' })
-            .eq('user_id', user.id)
-            .not('duration', 'is', null),
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id),
           
           // Flashcard sets count
           supabase
             .from('flashcard_sets')
-            .select('count()', { count: 'exact' })
+            .select('*', { count: 'exact', head: true })
             .eq('user_id', user.id),
           
           // Notes count
           supabase
             .from('notes')
-            .select('count()', { count: 'exact' })
+            .select('*', { count: 'exact', head: true })
             .eq('user_id', user.id),
           
           // Quizzes count
           supabase
             .from('quizzes')
-            .select('count()', { count: 'exact' })
+            .select('*', { count: 'exact', head: true })
             .eq('user_id', user.id)
         ]);
 
-        console.log('📊 Raw results:', { sessionsResult, setsResult, notesResult, quizzesResult });
+        console.log('📊 Count results:', { 
+          sessions: sessionsCount.count, 
+          sets: setsCount.count, 
+          notes: notesCount.count, 
+          quizzes: quizzesCount.count 
+        });
 
-        // Parse aggregated data safely
-        const totalSessions = sessionsResult.count || 0;
-        const totalStudyTimeMinutes = 0; // Will calculate from duration sum if available
-        const totalCardsReviewed = 0; // Will calculate from cards sum if available
-        const totalCardsCorrect = 0; // Will calculate from cards sum if available
+        // Check for errors
+        if (sessionsCount.error) throw sessionsCount.error;
+        if (setsCount.error) throw setsCount.error;
+        if (notesCount.error) throw notesCount.error;
+        if (quizzesCount.error) throw quizzesCount.error;
+
+        // Get actual session data for calculations
+        const { data: sessions, error: sessionsError } = await supabase
+          .from('study_sessions')
+          .select('duration, cards_reviewed, cards_correct, start_time')
+          .eq('user_id', user.id)
+          .not('duration', 'is', null);
+
+        if (sessionsError) throw sessionsError;
+
+        console.log('📊 Sessions data:', { sessionCount: sessions?.length || 0 });
+
+        // Calculate totals from actual data
+        const totalSessions = sessionsCount.count || 0;
+        const completedSessions = sessions || [];
+        
+        const totalStudyTimeMinutes = completedSessions.reduce((acc, s) => acc + (s.duration || 0), 0);
+        const totalCardsReviewed = completedSessions.reduce((acc, s) => acc + (s.cards_reviewed || 0), 0);
+        const totalCardsCorrect = completedSessions.reduce((acc, s) => acc + (s.cards_correct || 0), 0);
 
         // Get today's data with simple date filter
         const today = new Date().toISOString().split('T')[0];
-        const { data: todayData } = await supabase
+        const { data: todayData, error: todayError } = await supabase
           .from('study_sessions')
-          .select('duration.sum(), count()', { count: 'exact' })
+          .select('duration')
           .eq('user_id', user.id)
           .gte('start_time', `${today}T00:00:00.000Z`)
           .lt('start_time', `${today}T23:59:59.999Z`);
 
-        const todayStudyTimeMinutes = 0; // Will use sum if available
-        const todaySessions = todayData?.[0]?.count || 0;
+        if (todayError) console.warn('Today data error:', todayError);
+
+        const todayStudyTimeMinutes = (todayData || []).reduce((acc, s) => acc + (s.duration || 0), 0);
+        const todaySessions = todayData?.length || 0;
 
         // Calculate basic metrics
         const totalStudyTime = Math.round((totalStudyTimeMinutes / 60) * 10) / 10;
@@ -68,14 +93,14 @@ export const useUltraSimpleAnalytics = () => {
 
         // Weekly goal defaults
         const weeklyGoalMinutes = 600; // 10 hours
-        const weeklyStudyTimeMinutes = Math.min(totalStudyTimeMinutes, weeklyGoalMinutes); // Cap at goal for now
+        const weeklyStudyTimeMinutes = Math.min(totalStudyTimeMinutes, weeklyGoalMinutes); // Simplified
         const weeklyGoalProgress = Math.min(Math.round((weeklyStudyTimeMinutes / weeklyGoalMinutes) * 100), 100);
 
         const result = {
           // Session metrics
           totalSessions,
           todaySessions,
-          weeklySessions: Math.min(totalSessions, 7), // Rough estimate
+          weeklySessions: Math.min(totalSessions, 7), // Simplified
           averageSessionTime: totalSessions > 0 ? Math.round(totalStudyTimeMinutes / totalSessions) : 0,
           activeSessions: [], // Empty for ultra-simple
           
@@ -95,11 +120,11 @@ export const useUltraSimpleAnalytics = () => {
           weeklyChange: 0, // Not calculated in ultra-simple
           
           // Content metrics
-          totalQuizzes: quizzesResult.count || 0,
+          totalQuizzes: quizzesCount.count || 0,
           completedQuizzes: 0, // Simplified
-          totalNotes: notesResult.count || 0,
+          totalNotes: notesCount.count || 0,
           totalCardsMastered: totalCardsCorrect,
-          totalSets: setsResult.count || 0,
+          totalSets: setsCount.count || 0,
           totalCardsReviewed,
           flashcardAccuracy,
           
@@ -115,45 +140,12 @@ export const useUltraSimpleAnalytics = () => {
 
       } catch (error) {
         console.error('❌ Ultra-simple analytics error:', error);
-        // Return basic fallback data
-        return {
-          totalSessions: 0,
-          todaySessions: 0,
-          weeklySessions: 0,
-          averageSessionTime: 0,
-          activeSessions: [],
-          totalStudyTime: 0,
-          totalStudyTimeMinutes: 0,
-          todayStudyTime: 0,
-          todayStudyTimeMinutes: 0,
-          weeklyStudyTime: 0,
-          weeklyStudyTimeMinutes: 0,
-          previousWeekTimeMinutes: 0,
-          weeklyGoalProgress: 0,
-          weeklyGoalMinutes: 600,
-          weeklyGoalHours: 10,
-          weeklyChange: 0,
-          totalQuizzes: 0,
-          completedQuizzes: 0,
-          totalNotes: 0,
-          totalCardsMastered: 0,
-          totalSets: 0,
-          totalCardsReviewed: 0,
-          flashcardAccuracy: 0,
-          streakDays: 0,
-          recentSessions: [],
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          todayString: new Date().toISOString().split('T')[0]
-        };
+        throw error; // Re-throw to show actual error to user
       }
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 1,
-    // Add timeout to prevent hanging
-    meta: {
-      timeout: 10000 // 10 seconds
-    }
+    retry: 1
   });
 
   return {
