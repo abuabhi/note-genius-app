@@ -12,10 +12,10 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
+import { StandardPageHeader } from "@/components/ui/StandardPageHeader";
 
 const TodoPage = () => {
-  const { user, loading } = useRequireAuth();
+  const { user, loading: authLoading } = useRequireAuth();
   const { 
     todos, 
     isLoading, 
@@ -32,6 +32,7 @@ const TodoPage = () => {
 
   const handleSubmit = async (data: CreateTodoData) => {
     await createTodo.mutateAsync(data);
+    setShowCreateDialog(false);
   };
 
   const handleEdit = (todo: Todo) => {
@@ -65,12 +66,17 @@ const TodoPage = () => {
     updateTodoStatus.mutate({ id, status });
   };
 
-  if (loading) {
+  if (authLoading) {
     return (
       <Layout>
-        <div className="container mx-auto p-4 md:p-6 h-full">
-          <div className="flex justify-center items-center h-[80vh]">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+        <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+          <div className="container mx-auto p-4 md:p-6">
+            <div className="flex items-center justify-center h-[80vh]">
+              <div className="relative w-12 h-12">
+                <div className="absolute inset-0 border-4 border-mint-100 rounded-full"></div>
+                <div className="absolute inset-0 border-4 border-mint-500 rounded-full border-t-transparent animate-spin"></div>
+              </div>
+            </div>
           </div>
         </div>
       </Layout>
@@ -78,93 +84,94 @@ const TodoPage = () => {
   }
 
   if (!user) {
-    // Will redirect via useRequireAuth
     return null;
   }
 
+  const breadcrumbs = [
+    { label: "Todo List" }
+  ];
+
+  const actions = (
+    <Button onClick={() => setShowCreateDialog(true)} className="flex items-center gap-2">
+      <Plus className="h-4 w-4" />
+      Create Todo
+    </Button>
+  );
+
   return (
     <Layout>
-      <div className="container mx-auto p-4 md:p-6">
-        <PageBreadcrumb pageName="Todo List" pageIcon={<ListTodo className="h-3 w-3" />} />
-        
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <ListTodo className="h-7 w-7" />
-              Todo List
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Organize and track your tasks and assignments
-            </p>
-          </div>
-          <Button onClick={() => setShowCreateDialog(true)} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Create Todo
-          </Button>
-        </div>
-
-        <div className="space-y-6">
-          {/* Stats */}
-          <TodoStats todos={todos} />
-
-          {/* Overdue Todos Section */}
-          <OverdueTodosSection />
-
-          {/* Quick Start Templates */}
-          <TodoSuggestions onCreateFromTemplate={handleCreateFromTemplate} />
-
-          {/* Main Content */}
-          <Card className="p-6">
-            <Tabs 
-              defaultValue="all" 
-              value={filter}
-              onValueChange={(value: any) => setFilter(value)}
-              className="w-full"
-            >
-              <TabsList className="grid grid-cols-3 mb-6">
-                <TabsTrigger value="all" className="flex items-center gap-1">
-                  <ListTodo className="h-4 w-4" />
-                  <span>All</span>
-                </TabsTrigger>
-                <TabsTrigger value="overdue" className="flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
-                  <span>Overdue</span>
-                </TabsTrigger>
-                <TabsTrigger value="completed" className="flex items-center gap-1">
-                  <Check className="h-4 w-4" />
-                  <span>Completed</span>
-                </TabsTrigger>
-              </TabsList>
-
-              <TodoList
-                todos={todos}
-                isLoading={isLoading}
-                onUpdate={handleUpdateTodoStatus}
-                onDelete={deleteTodo.mutate}
-                onEdit={handleEdit}
-                formatDate={formatDate}
-              />
-            </Tabs>
-          </Card>
-        </div>
-
-        {/* Create Todo Dialog */}
-        <TodoFormDialog
-          open={showCreateDialog}
-          onOpenChange={setShowCreateDialog}
-          onSubmit={handleSubmit}
+      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+        <StandardPageHeader
+          title="Todo List"
+          description="Organize and track your tasks and assignments"
+          icon={<ListTodo className="h-6 w-6 text-white" />}
+          breadcrumbs={breadcrumbs}
+          actions={actions}
         />
+        
+        <div className="container mx-auto px-6 py-8">
+          <div className="space-y-6">
+            {/* Stats */}
+            <TodoStats todos={todos} />
 
-        {/* Edit Todo Dialog */}
-        {editingTodo && (
+            {/* Overdue Todos Section */}
+            <OverdueTodosSection />
+
+            {/* Quick Start Templates */}
+            <TodoSuggestions onCreateFromTemplate={handleCreateFromTemplate} />
+
+            {/* Main Content */}
+            <Card className="p-6">
+              <Tabs 
+                defaultValue="all" 
+                value={filter}
+                onValueChange={(value: any) => setFilter(value)}
+                className="w-full"
+              >
+                <TabsList className="grid grid-cols-3 mb-6">
+                  <TabsTrigger value="all" className="flex items-center gap-1">
+                    <ListTodo className="h-4 w-4" />
+                    <span>All</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="overdue" className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    <span>Overdue</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="completed" className="flex items-center gap-1">
+                    <Check className="h-4 w-4" />
+                    <span>Completed</span>
+                  </TabsTrigger>
+                </TabsList>
+
+                <TodoList
+                  todos={todos}
+                  isLoading={isLoading}
+                  onUpdate={handleUpdateTodoStatus}
+                  onDelete={deleteTodo.mutate}
+                  onEdit={handleEdit}
+                  formatDate={formatDate}
+                />
+              </Tabs>
+            </Card>
+          </div>
+
+          {/* Create Todo Dialog */}
           <TodoFormDialog
-            open={!!editingTodo}
-            onOpenChange={(open) => !open && setEditingTodo(null)}
-            onSubmit={handleEditSubmit}
-            editingTodo={editingTodo}
+            open={showCreateDialog}
+            onOpenChange={setShowCreateDialog}
+            onSubmit={handleSubmit}
           />
-        )}
+
+          {/* Edit Todo Dialog */}
+          {editingTodo && (
+            <TodoFormDialog
+              open={!!editingTodo}
+              onOpenChange={(open) => !open && setEditingTodo(null)}
+              onSubmit={handleEditSubmit}
+              editingTodo={editingTodo}
+            />
+          )}
+        </div>
       </div>
     </Layout>
   );
