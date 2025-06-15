@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { useUnifiedSessionTracker } from '@/hooks/useUnifiedSessionTracker';
 
 interface NoteStudyTrackerProps {

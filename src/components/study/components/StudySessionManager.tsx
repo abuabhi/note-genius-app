@@ -2,7 +2,7 @@
 import { StudyMode } from "@/pages/study/types";
 import { useOptimizedFlashcardStudy } from "@/hooks/useOptimizedFlashcardStudy";
 import { useQuizMode } from "@/hooks/useQuizMode";
-import { useBasicSessionTracker } from "@/hooks/useBasicSessionTracker";
+import { useUnifiedSessionTracker } from "@/hooks/useUnifiedSessionTracker";
 
 interface StudySessionManagerProps {
   setId: string;
@@ -22,7 +22,7 @@ export const StudySessionManager = ({
 }: StudySessionManagerProps) => {
   
   // Use the unified session tracker
-  const { recordActivity, updateSessionActivity } = useBasicSessionTracker();
+  const { recordActivity, updateSessionActivity } = useUnifiedSessionTracker();
   
   console.log('🎛️ [STUDY SESSION MANAGER] Using unified session system:', {
     setId,

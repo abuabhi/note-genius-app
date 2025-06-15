@@ -1,10 +1,11 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Clock, Target, TrendingUp, Calendar, BookOpen, Award, AlertTriangle, CheckCircle, Plus, ArrowRight } from 'lucide-react';
 import { useUnifiedAnalytics } from '@/hooks/useUnifiedAnalytics';
-import { useBasicSessionTracker } from '@/hooks/useBasicSessionTracker';
+import { useUnifiedSessionTracker } from '@/hooks/useUnifiedSessionTracker';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,8 +13,8 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
 export const AnalyticsOverview = () => {
-  const { analytics, isLoading, error } = useUnifiedAnalytics();
-  const { isActive, elapsedSeconds, isPaused } = useBasicSessionTracker();
+  const { analytics, isLoading } = useUnifiedAnalytics();
+  const { isActive, elapsedSeconds, isPaused } = useUnifiedSessionTracker();
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -109,26 +110,6 @@ export const AnalyticsOverview = () => {
   const weeklyGoalHours = userProfile?.weekly_study_goal_hours || 5;
   const weeklyGoalMinutes = weeklyGoalHours * 60;
   const weeklyProgress = Math.min(Math.round((analytics.weeklyStudyTimeMinutes / weeklyGoalMinutes) * 100), 100);
-
-  if (error) {
-    return (
-      <div className="space-y-6">
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3 text-red-800">
-              <AlertTriangle className="h-5 w-5" />
-              <div>
-                <p className="font-medium">Error loading analytics</p>
-                <p className="text-sm text-red-600">
-                  {error.message || 'An unknown error occurred'}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   if (isLoading) {
     return (
