@@ -1,6 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 
 interface Todo {
@@ -17,31 +18,40 @@ interface Todo {
 // Simplified todos hook
 export const useSimplifiedTodos = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // Fetch todos with simple query
   const { data: todos = [], isLoading, error } = useQuery({
     queryKey: ['todos'],
     queryFn: async () => {
+      if (!user) return [];
+      
       const { data, error } = await supabase
         .from('reminders')
         .select('*')
+        .eq('user_id', user.id)
         .eq('type', 'todo')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
       return data as Todo[];
     },
+    enabled: !!user,
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
   });
 
   // Create todo mutation
   const createTodoMutation = useMutation({
     mutationFn: async (todoData: Omit<Todo, 'id' | 'created_at' | 'updated_at'>) => {
+      if (!user) throw new Error('User not authenticated');
+      
       const { data, error } = await supabase
         .from('reminders')
         .insert({
           ...todoData,
+          user_id: user.id,
           type: 'todo',
+          reminder_time: new Date().toISOString(),
         })
         .select()
         .single();
@@ -62,10 +72,13 @@ export const useSimplifiedTodos = () => {
   // Update todo mutation
   const updateTodoMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Todo> }) => {
+      if (!user) throw new Error('User not authenticated');
+      
       const { data, error } = await supabase
         .from('reminders')
         .update(updates)
         .eq('id', id)
+        .eq('user_id', user.id)
         .select()
         .single();
       
@@ -85,10 +98,13 @@ export const useSimplifiedTodos = () => {
   // Delete todo mutation
   const deleteTodoMutation = useMutation({
     mutationFn: async (todoId: string) => {
+      if (!user) throw new Error('User not authenticated');
+      
       const { error } = await supabase
         .from('reminders')
         .delete()
-        .eq('id', todoId);
+        .eq('id', todoId)
+        .eq('user_id', user.id);
       
       if (error) throw error;
     },

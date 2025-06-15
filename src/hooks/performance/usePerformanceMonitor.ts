@@ -3,8 +3,9 @@ import { useState, useCallback } from 'react';
 
 interface PerformanceMetrics {
   renderTimes: { component: string; time: number; timestamp: number }[];
-  memoryUsage: number;
+  memoryUsage: number[];
   queryTimes: { query: string; time: number; timestamp: number }[];
+  apiTimes: number[];
   cacheHitRate: number;
   totalQueries: number;
   slowQueries: number;
@@ -14,8 +15,9 @@ interface PerformanceMetrics {
 export const usePerformanceMonitor = () => {
   const [metrics, setMetrics] = useState<PerformanceMetrics>({
     renderTimes: [],
-    memoryUsage: 0,
+    memoryUsage: [],
     queryTimes: [],
+    apiTimes: [],
     cacheHitRate: 0,
     totalQueries: 0,
     slowQueries: 0
@@ -71,12 +73,65 @@ export const usePerformanceMonitor = () => {
     }));
   }, [isMonitoring]);
 
+  // Track API time
+  const trackApiTime = useCallback((startTime: number) => {
+    if (!isMonitoring) return;
+    
+    const endTime = performance.now();
+    const apiTime = endTime - startTime;
+    
+    setMetrics(prev => ({
+      ...prev,
+      apiTimes: [...prev.apiTimes.slice(-9), apiTime]
+    }));
+  }, [isMonitoring]);
+
+  // Track memory usage
+  const trackMemoryUsage = useCallback(() => {
+    if (!isMonitoring) return;
+    
+    const memory = (performance as any).memory;
+    if (memory) {
+      setMetrics(prev => ({
+        ...prev,
+        memoryUsage: [...prev.memoryUsage.slice(-9), memory.usedJSHeapSize / 1024 / 1024]
+      }));
+    }
+  }, [isMonitoring]);
+
+  // Get current memory usage
+  const getMemoryUsage = useCallback(() => {
+    const memory = (performance as any).memory;
+    return {
+      usedJSHeapSize: memory?.usedJSHeapSize || 0,
+      jsHeapSizeLimit: memory?.jsHeapSizeLimit || 0,
+      totalJSHeapSize: memory?.totalJSHeapSize || 0
+    };
+  }, []);
+
+  // Clear metrics
+  const clearMetrics = useCallback(() => {
+    setMetrics({
+      renderTimes: [],
+      memoryUsage: [],
+      queryTimes: [],
+      apiTimes: [],
+      cacheHitRate: 0,
+      totalQueries: 0,
+      slowQueries: 0
+    });
+  }, []);
+
   return {
     metrics,
     isMonitoring,
     startMonitoring,
     stopMonitoring,
     trackRenderTime,
-    trackQueryTime
+    trackQueryTime,
+    trackApiTime,
+    trackMemoryUsage,
+    getMemoryUsage,
+    clearMetrics
   };
 };

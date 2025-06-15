@@ -1,7 +1,7 @@
 
-import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 
 interface FlashcardSet {
@@ -25,28 +25,38 @@ interface Flashcard {
 // Simplified flashcards hook
 export const useSimplifiedFlashcards = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // Fetch flashcard sets with simple query
   const { data: sets = [], isLoading: setsLoading, error: setsError } = useQuery({
     queryKey: ['flashcard-sets'],
     queryFn: async () => {
+      if (!user) return [];
+      
       const { data, error } = await supabase
         .from('flashcard_sets')
         .select('*')
+        .eq('user_id', user.id)
         .order('updated_at', { ascending: false });
       
       if (error) throw error;
       return data as FlashcardSet[];
     },
+    enabled: !!user,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   // Create flashcard set mutation
   const createSetMutation = useMutation({
     mutationFn: async (setData: Omit<FlashcardSet, 'id' | 'created_at' | 'updated_at' | 'card_count'>) => {
+      if (!user) throw new Error('User not authenticated');
+      
       const { data, error } = await supabase
         .from('flashcard_sets')
-        .insert(setData)
+        .insert({
+          ...setData,
+          user_id: user.id,
+        })
         .select()
         .single();
       
@@ -66,10 +76,13 @@ export const useSimplifiedFlashcards = () => {
   // Delete flashcard set mutation
   const deleteSetMutation = useMutation({
     mutationFn: async (setId: string) => {
+      if (!user) throw new Error('User not authenticated');
+      
       const { error } = await supabase
         .from('flashcard_sets')
         .delete()
-        .eq('id', setId);
+        .eq('id', setId)
+        .eq('user_id', user.id);
       
       if (error) throw error;
     },
@@ -83,27 +96,6 @@ export const useSimplifiedFlashcards = () => {
     },
   });
 
-  // Get flashcards for a specific set
-  const useFlashcardsForSet = (setId: string | null) => {
-    return useQuery({
-      queryKey: ['flashcards', setId],
-      queryFn: async () => {
-        if (!setId) return [];
-        
-        const { data, error } = await supabase
-          .from('flashcards')
-          .select('*')
-          .eq('set_id', setId)
-          .order('created_at', { ascending: true });
-        
-        if (error) throw error;
-        return data as Flashcard[];
-      },
-      enabled: !!setId,
-      staleTime: 5 * 60 * 1000,
-    });
-  };
-
   return {
     // Data
     sets,
@@ -115,8 +107,5 @@ export const useSimplifiedFlashcards = () => {
     deleteSet: deleteSetMutation.mutate,
     isCreating: createSetMutation.isPending,
     isDeleting: deleteSetMutation.isPending,
-    
-    // Helpers
-    useFlashcardsForSet,
   };
 };

@@ -1,6 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 
 interface StudyGoal {
@@ -20,29 +21,37 @@ interface StudyGoal {
 // Simplified goals hook
 export const useSimplifiedGoals = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // Fetch goals with simple query
   const { data: goals = [], isLoading, error } = useQuery({
     queryKey: ['study-goals'],
     queryFn: async () => {
+      if (!user) return [];
+      
       const { data, error } = await supabase
         .from('study_goals')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
       return data as StudyGoal[];
     },
+    enabled: !!user,
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
   });
 
   // Create goal mutation
   const createGoalMutation = useMutation({
     mutationFn: async (goalData: Omit<StudyGoal, 'id' | 'created_at' | 'updated_at' | 'progress' | 'is_completed'>) => {
+      if (!user) throw new Error('User not authenticated');
+      
       const { data, error } = await supabase
         .from('study_goals')
         .insert({
           ...goalData,
+          user_id: user.id,
           progress: 0,
           is_completed: false,
         })
@@ -65,10 +74,13 @@ export const useSimplifiedGoals = () => {
   // Update goal mutation
   const updateGoalMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<StudyGoal> }) => {
+      if (!user) throw new Error('User not authenticated');
+      
       const { data, error } = await supabase
         .from('study_goals')
         .update(updates)
         .eq('id', id)
+        .eq('user_id', user.id)
         .select()
         .single();
       
@@ -88,10 +100,13 @@ export const useSimplifiedGoals = () => {
   // Delete goal mutation
   const deleteGoalMutation = useMutation({
     mutationFn: async (goalId: string) => {
+      if (!user) throw new Error('User not authenticated');
+      
       const { error } = await supabase
         .from('study_goals')
         .delete()
-        .eq('id', goalId);
+        .eq('id', goalId)
+        .eq('user_id', user.id);
       
       if (error) throw error;
     },

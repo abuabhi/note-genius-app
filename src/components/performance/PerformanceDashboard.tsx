@@ -25,7 +25,7 @@ export const PerformanceDashboard = () => {
 
   const getPerformanceStatus = () => {
     const avgRender = metrics.renderTimes.length > 0 
-      ? metrics.renderTimes.reduce((a, b) => a + b, 0) / metrics.renderTimes.length 
+      ? metrics.renderTimes.reduce((a, b) => a + b.time, 0) / metrics.renderTimes.length 
       : 0;
     
     if (avgRender < 16) return { status: 'excellent', color: 'green' };
@@ -65,12 +65,12 @@ export const PerformanceDashboard = () => {
           <CardContent>
             <div className="text-2xl font-bold">
               {metrics.renderTimes.length > 0 
-                ? formatTime(metrics.renderTimes[metrics.renderTimes.length - 1])
+                ? formatTime(metrics.renderTimes[metrics.renderTimes.length - 1].time)
                 : '0ms'}
             </div>
             <p className="text-xs text-muted-foreground">
               Avg: {metrics.renderTimes.length > 0 
-                ? formatTime(metrics.renderTimes.reduce((a, b) => a + b, 0) / metrics.renderTimes.length)
+                ? formatTime(metrics.renderTimes.reduce((a, b) => a + b.time, 0) / metrics.renderTimes.length)
                 : '0ms'}
             </p>
           </CardContent>
@@ -138,15 +138,15 @@ export const PerformanceDashboard = () => {
             <div>
               <h4 className="text-sm font-medium mb-2">Recent Render Times</h4>
               <div className="flex gap-1 h-8 items-end">
-                {metrics.renderTimes.slice(-20).map((time, index) => (
+                {metrics.renderTimes.slice(-20).map((entry, index) => (
                   <div
                     key={index}
                     className="bg-blue-500 rounded-t w-2"
                     style={{ 
-                      height: `${Math.min((time / 100) * 100, 100)}%`,
-                      backgroundColor: time > 50 ? '#ef4444' : time > 16 ? '#f59e0b' : '#10b981'
+                      height: `${Math.min((entry.time / 100) * 100, 100)}%`,
+                      backgroundColor: entry.time > 50 ? '#ef4444' : entry.time > 16 ? '#f59e0b' : '#10b981'
                     }}
-                    title={`${formatTime(time)}`}
+                    title={`${formatTime(entry.time)}`}
                   />
                 ))}
               </div>
@@ -160,9 +160,9 @@ export const PerformanceDashboard = () => {
                     key={index}
                     className="bg-purple-500 rounded-t w-2"
                     style={{ 
-                      height: `${(usage / memoryInfo.jsHeapSizeLimit) * 100}%`
+                      height: `${(usage / (memoryInfo.jsHeapSizeLimit / 1024 / 1024)) * 100}%`
                     }}
-                    title={`${formatBytes(usage)}`}
+                    title={`${usage.toFixed(2)}MB`}
                   />
                 ))}
               </div>
