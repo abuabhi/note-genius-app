@@ -12,22 +12,6 @@ export const FeedbackForm = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      {/* Header */}
-      <div className="text-center space-y-6">
-        <div className="flex items-center justify-center gap-3">
-          <div className="p-3 bg-gradient-to-br from-mint-400 to-mint-600 rounded-full shadow-lg">
-            <Heart className="h-8 w-8 text-white animate-pulse" />
-          </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-mint-600 to-mint-800 bg-clip-text text-transparent">
-            Share Your Feedback
-          </h1>
-          <Sparkles className="h-6 w-6 text-mint-500 animate-pulse" />
-        </div>
-        <p className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
-          Help us make your learning experience even better! Your thoughts and suggestions matter to us and shape the future of our platform.
-        </p>
-      </div>
-
       {/* Feedback Form */}
       <Card className="shadow-xl border-mint-100 bg-gradient-to-br from-white to-mint-50/30">
         <CardHeader className="bg-gradient-to-r from-mint-500 to-mint-600 text-white rounded-t-lg">
