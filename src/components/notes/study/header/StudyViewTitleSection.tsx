@@ -4,6 +4,7 @@ import { Note } from "@/types/note";
 import { Input } from "@/components/ui/input";
 import { NoteTagList } from "../../details/NoteTagList";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
+import { useAuth } from "@/hooks/auth/useAuth";
 
 interface StudyViewTitleSectionProps {
   note: Note;
@@ -20,6 +21,7 @@ export const StudyViewTitleSection = ({
 }: StudyViewTitleSectionProps) => {
   const [title, setTitle] = useState(note?.title || "");
   const { subjects, isLoading: subjectsLoading } = useUserSubjects();
+  const { profile } = useAuth();
 
   useEffect(() => {
     setTitle(editableTitle || note?.title || "");
@@ -42,6 +44,17 @@ export const StudyViewTitleSection = ({
 
   const subjectName = getSubjectName();
 
+  // Get user's timezone from profile, default to browser timezone
+  const userTimezone = profile?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  
+  // Format the date using user's timezone
+  const formattedDate = note?.date ? new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    timeZone: userTimezone
+  }).format(new Date(note.date)) : '';
+
   console.log(`StudyViewTitleSection - Note: ${note?.title}, Subject ID: ${note?.subject_id}, Subject Name: ${subjectName}`);
 
   if (isEditing) {
@@ -59,7 +72,7 @@ export const StudyViewTitleSection = ({
     <div className="space-y-1">
       <h2 className="text-xl font-bold text-green-700">{note?.title}</h2>
       <div className="text-sm flex flex-wrap gap-2 items-center">
-        <span className="font-bold text-gray-600">{note?.date}</span>
+        <span className="font-bold text-gray-600">{formattedDate}</span>
         {subjectName && (
           <span className="text-green-600 font-medium">{subjectName}</span>
         )}

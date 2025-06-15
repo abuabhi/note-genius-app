@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Book, Tag, Sparkles } from "lucide-react";
 import { Note } from "@/types/note";
 import { generateColorFromString, getBestTextColor } from "@/utils/colorUtils";
-import { format } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
+import { useAuth } from "@/hooks/auth/useAuth";
 
 interface NoteCardMetadataProps {
   note: Note;
@@ -15,6 +16,7 @@ interface NoteCardMetadataProps {
 export const NoteCardMetadata = ({ note }: NoteCardMetadataProps) => {
   const navigate = useNavigate();
   const { subjects, isLoading: subjectsLoading } = useUserSubjects();
+  const { user, profile } = useAuth();
   
   // Find the subject name based on subject_id or fall back to subject
   const getSubjectName = () => {
@@ -36,8 +38,19 @@ export const NoteCardMetadata = ({ note }: NoteCardMetadataProps) => {
     navigate(`/notes/study/${note.id}`);
   };
 
-  // Format date as dd-MMM-yyyy (e.g., 15-May-2023)
-  const formattedDate = format(new Date(note.date), "dd-MMM-yyyy");
+  // Get user's timezone from profile, default to browser timezone
+  const userTimezone = profile?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  
+  // Create a date object and adjust for timezone
+  const noteDate = new Date(note.date);
+  
+  // Format date as dd-MMM-yyyy (e.g., 15-May-2023) using user's timezone
+  const formattedDate = new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: 'short', 
+    year: 'numeric',
+    timeZone: userTimezone
+  }).format(noteDate);
 
   return (
     <div className="flex justify-between items-center w-full">
