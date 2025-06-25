@@ -1,0 +1,29 @@
+
+.virtualized-notes-list {
+  /* Ensure smooth scrolling */
+  scroll-behavior: smooth;
+}
+
+.virtualized-notes-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.virtualized-notes-list::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.virtualized-notes-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.virtualized-notes-list::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Ensure proper spacing and alignment */
+.virtualized-notes-list > div {
+  display: flex;
+  flex-direction: column;
+}

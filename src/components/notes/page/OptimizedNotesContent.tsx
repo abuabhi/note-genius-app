@@ -4,9 +4,11 @@ import { Note } from '@/types/note';
 import { ProgressiveLoader } from '@/components/performance/ProgressiveLoader';
 import { OptimizedNotesFilters } from './OptimizedNotesFilters';
 import { OptimizedNotesGrid } from './OptimizedNotesGrid';
+import { VirtualizedNotesGrid } from '../virtualization/VirtualizedNotesGrid';
 import { ErrorState } from './ErrorState';
 import { EmptyNotesState } from '@/components/notes/EmptyNotesState';
 import { useViewPreferences } from '@/hooks/useViewPreferences';
+import { useVirtualizationMetrics } from '@/hooks/notes/useVirtualizationMetrics';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
@@ -37,7 +39,24 @@ export const OptimizedNotesContent = () => {
   // SINGLE SOURCE OF TRUTH for view mode - only defined here
   const { viewMode, setViewMode } = useViewPreferences('notes');
 
+  // Virtualization control
+  const [useVirtualization, setUseVirtualization] = useState(true);
+  const virtualizationThreshold = 50;
+  const shouldVirtualize = useVirtualization && notes.length > virtualizationThreshold;
+
+  // Performance metrics
+  const { metrics, startRenderTiming, endRenderTiming } = useVirtualizationMetrics({
+    totalItems: notes.length,
+    isVirtualized: shouldVirtualize,
+    debugMode: process.env.NODE_ENV === 'development',
+  });
+
   console.log('🎯 OptimizedNotesContent - MASTER viewMode:', viewMode);
+  console.log('🚀 Virtualization Status:', { 
+    shouldVirtualize, 
+    noteCount: notes.length, 
+    threshold: virtualizationThreshold 
+  });
 
   const handlePin = async (id: string, isPinned: boolean) => {
     try {
@@ -58,6 +77,17 @@ export const OptimizedNotesContent = () => {
       toast.error('Failed to delete note');
       throw error;
     }
+  };
+
+  const handleNoteClick = (note: Note) => {
+    console.log('Note clicked:', note.id);
+    // Navigation logic will be handled by the consuming component
+  };
+
+  const handleShowDetails = (note: Note, e: React.MouseEvent) => {
+    e.stopPropagation();
+    console.log('Show details for note:', note.id);
+    // Details logic will be handled by the consuming component
   };
 
   // Create a separate error handling component to avoid re-renders
@@ -86,6 +116,25 @@ export const OptimizedNotesContent = () => {
           viewMode={viewMode}
           onViewModeChange={setViewMode}
         />
+        
+        {/* Virtualization Debug Info (Development Only) */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-4 p-3 bg-gray-50 rounded-lg text-sm">
+            <div className="flex items-center justify-between">
+              <span>Virtualization: {shouldVirtualize ? '✅ Active' : '❌ Disabled'}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setUseVirtualization(!useVirtualization)}
+              >
+                Toggle Virtualization
+              </Button>
+            </div>
+            <div className="text-xs text-gray-500 mt-1">
+              Notes: {notes.length} | Threshold: {virtualizationThreshold} | Render: {metrics.renderTime.toFixed(2)}ms
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Main content with improved loading states */}
@@ -104,16 +153,28 @@ export const OptimizedNotesContent = () => {
         ) : (
           <div className="space-y-8">
             <div className="transition-all duration-300 ease-in-out">
-              <OptimizedNotesGrid 
-                notes={notes} 
-                onPin={handlePin}
-                onDelete={handleDelete}
-                viewMode={viewMode}
-              />
+              {shouldVirtualize ? (
+                <VirtualizedNotesGrid
+                  notes={notes}
+                  onPin={handlePin}
+                  onDelete={handleDelete}
+                  onNoteClick={handleNoteClick}
+                  onShowDetails={handleShowDetails}
+                  viewMode={viewMode}
+                  height={600}
+                />
+              ) : (
+                <OptimizedNotesGrid 
+                  notes={notes} 
+                  onPin={handlePin}
+                  onDelete={handleDelete}
+                  viewMode={viewMode}
+                />
+              )}
             </div>
             
             {/* Load More Button */}
-            {hasMore && (
+            {hasMore && !shouldVirtualize && (
               <div className="flex justify-center">
                 <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-lg shadow-mint-500/5 p-6">
                   <Button
@@ -138,6 +199,9 @@ export const OptimizedNotesContent = () => {
             {totalCount > 0 && (
               <div className="text-center text-sm text-gray-500">
                 Showing {notes.length} of {totalCount} notes
+                {shouldVirtualize && (
+                  <span className="ml-2 text-mint-600">⚡ Virtualized</span>
+                )}
               </div>
             )}
           </div>
