@@ -18,7 +18,7 @@ export function CustomSidebar() {
   return (
     <motion.div
       className={cn(
-        "sidebar fixed left-0 z-40 h-screen shrink-0 border-r"
+        "sidebar fixed left-0 z-50 h-screen shrink-0 border-r"
       )}
       initial={isCollapsed ? "closed" : "open"}
       animate={isCollapsed ? "closed" : "open"}
@@ -28,7 +28,7 @@ export function CustomSidebar() {
       onMouseLeave={() => setIsCollapsed(true)}
     >
       <motion.div
-        className={`relative z-40 flex text-muted-foreground h-screen shrink-0 flex-col bg-white dark:bg-black transition-all`}
+        className={`relative z-50 flex text-muted-foreground h-screen shrink-0 flex-col bg-white dark:bg-black transition-all shadow-lg`}
         variants={contentVariants}
       >
         {/* Main Navigation - Takes up full space */}

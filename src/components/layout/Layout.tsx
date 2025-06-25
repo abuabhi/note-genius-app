@@ -112,16 +112,28 @@ export default function Layout({ children, showSidebar = true, showFooter = true
   }, [isNoteStudyPage]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <NavBar />
-      {/* Announcement Bar - shows for authenticated users */}
-      {user && <AnnouncementBar />}
-      <div className="flex flex-1">
-        {shouldShowSidebar && <CustomSidebar />}
-        <main className={`flex-1 ${shouldShowSidebar ? 'ml-16' : ''}`}>
+    <div className="min-h-screen bg-gray-50 relative">
+      {/* Navigation Bar - Fixed at top with high z-index */}
+      <div className="relative z-40">
+        <NavBar />
+        {/* Announcement Bar - shows for authenticated users */}
+        {user && <AnnouncementBar />}
+      </div>
+      
+      <div className="flex flex-1 relative">
+        {/* Sidebar with highest z-index */}
+        {shouldShowSidebar && (
+          <div className="relative z-50">
+            <CustomSidebar />
+          </div>
+        )}
+        
+        {/* Main content area */}
+        <main className={`flex-1 relative z-10 ${shouldShowSidebar ? 'ml-16' : ''}`}>
           {children}
         </main>
       </div>
+      
       {showFooter && <Footer />}
 
       {/* Chat Button - Bottom Right on Study Pages Only */}
