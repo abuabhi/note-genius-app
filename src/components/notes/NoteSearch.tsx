@@ -3,10 +3,10 @@ import { useState, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
+import { useNotesFiltersOnly } from '@/hooks/notes/useSelectiveNotesContext';
 
 export const NoteSearch = () => {
-  const { searchTerm, setSearchTerm } = useOptimizedNotes();
+  const { searchTerm, setSearchTerm } = useNotesFiltersOnly();
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
 
   useEffect(() => {
