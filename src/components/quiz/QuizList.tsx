@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -134,7 +135,7 @@ export const QuizList = () => {
                 <div className="flex flex-wrap gap-2 mb-3">
                   <Badge variant="secondary">
                     <HelpCircle className="h-3 w-3 mr-1" />
-                    {(quiz as any).questions?.length || 0} questions
+                    {(quiz as any).questionCount || 0} questions
                   </Badge>
                   {quiz.subject_id && (
                     <Badge variant="outline">

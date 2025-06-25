@@ -35,6 +35,7 @@ export interface UseNoteToQuizFormProps {
   }[];
   initialTitle?: string;
   initialDescription?: string;
+  initialSubjectId?: string;
   sourceType?: 'prebuilt' | 'note' | 'custom';
   sourceId?: string;
   onSuccess?: () => void;
@@ -44,6 +45,7 @@ export const useNoteToQuizForm = ({
   initialQuestions,
   initialTitle = '',
   initialDescription = '',
+  initialSubjectId,
   sourceType = 'note',
   sourceId,
   onSuccess
@@ -74,11 +76,12 @@ export const useNoteToQuizForm = ({
     defaultValues: {
       title: initialTitle,
       description: initialDescription,
+      subjectId: initialSubjectId,
       questions: transformedQuestions,
     },
   });
 
-  // Update form when initial questions change
+  // Update form when initial questions or subject change
   useEffect(() => {
     if (initialQuestions && initialQuestions.length > 0) {
       const transformedQuestions = initialQuestions.map(q => ({
@@ -90,7 +93,11 @@ export const useNoteToQuizForm = ({
       
       form.setValue('questions', transformedQuestions);
     }
-  }, [initialQuestions, form]);
+    
+    if (initialSubjectId) {
+      form.setValue('subjectId', initialSubjectId);
+    }
+  }, [initialQuestions, initialSubjectId, form]);
 
   const addQuestion = () => {
     const currentQuestions = form.getValues("questions");
@@ -180,7 +187,7 @@ export const useNoteToQuizForm = ({
       if (onSuccess) {
         onSuccess();
       } else {
-        navigate("/quiz");
+        navigate("/quizzes");
       }
     } catch (error) {
       console.error("Error creating quiz:", error);

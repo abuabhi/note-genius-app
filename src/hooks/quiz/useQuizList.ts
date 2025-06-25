@@ -18,7 +18,8 @@ export const useQuizList = (filters: {
           *,
           academic_subjects(name),
           grades(name),
-          sections(name)
+          sections(name),
+          quiz_questions(id)
         `);
 
       if (filters.subject) {
@@ -51,7 +52,14 @@ export const useQuizList = (filters: {
         throw error;
       }
 
-      return { quizzes: data || [] };
+      // Transform the data to include question count
+      const quizzesWithQuestionCount = data?.map(quiz => ({
+        ...quiz,
+        questions: quiz.quiz_questions || [],
+        questionCount: quiz.quiz_questions?.length || 0
+      })) || [];
+
+      return { quizzes: quizzesWithQuestionCount };
     },
   });
 };

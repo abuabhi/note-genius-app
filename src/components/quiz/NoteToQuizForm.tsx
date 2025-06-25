@@ -23,6 +23,7 @@ interface NoteToQuizFormProps {
   }[];
   initialTitle?: string;
   initialDescription?: string;
+  initialSubjectId?: string;
   sourceType?: 'prebuilt' | 'note' | 'custom';
   sourceId?: string;
   onSuccess?: () => void;
@@ -32,6 +33,7 @@ export const NoteToQuizForm = ({
   initialQuestions,
   initialTitle = '',
   initialDescription = '',
+  initialSubjectId,
   sourceType = 'note',
   sourceId,
   onSuccess
@@ -52,6 +54,7 @@ export const NoteToQuizForm = ({
     initialQuestions,
     initialTitle,
     initialDescription,
+    initialSubjectId,
     sourceType,
     sourceId,
     onSuccess
@@ -110,7 +113,7 @@ export const NoteToQuizForm = ({
                     <FormLabel className="text-mint-700">Subject</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value}
                     >
                       <FormControl>
                         <SelectTrigger className="border-mint-200 focus:ring-mint-500">
@@ -171,7 +174,7 @@ export const NoteToQuizForm = ({
             <Button
               type="button"
               variant="outline"
-              onClick={() => navigate("/quiz")}
+              onClick={() => navigate("/quizzes")}
               className="border-mint-200 text-mint-700 hover:bg-mint-50"
             >
               Cancel
