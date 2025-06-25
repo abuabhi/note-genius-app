@@ -34,7 +34,7 @@ export const QuizReviewTab = ({
     }, {});
     
     const mostCommonSubject = Object.entries(subjectCounts)
-      .sort(([,a], [,b]) => b - a)[0]?.[0];
+      .sort(([, a], [, b]) => (b as number) - (a as number))[0]?.[0];
     
     return mostCommonSubject;
   };
