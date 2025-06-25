@@ -2,10 +2,10 @@
 import React, { useEffect } from 'react';
 import { useOptimizedFlashcardStudy } from '@/hooks/useOptimizedFlashcardStudy';
 import { StudyMode } from '@/pages/study/types';
-import { FlashcardDisplayCard } from '@/components/flashcards/display/FlashcardDisplayCard';
+import { FlashcardWithProgress } from '@/components/flashcards/display/FlashcardWithProgress';
 import { StudyControls } from '@/components/flashcards/study/StudyControls';
-import { StudyProgress } from '@/components/flashcards/study/StudyProgress';
-import { StudyStats } from '@/components/flashcards/study/StudyStats';
+import { CompactStudyProgress } from '@/components/study/CompactStudyProgress';
+import { CompactStudyStats } from '@/components/study/CompactStudyStats';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -108,11 +108,10 @@ export const SimplifiedFlashcardStudy: React.FC<SimplifiedFlashcardStudyProps> =
           <p className="text-lg text-muted-foreground mb-6">
             Great job! You've studied all {totalCards} flashcards in this set.
           </p>
-          <StudyStats
+          <CompactStudyStats
             totalCards={totalCards}
             studiedToday={studiedToday}
             masteredCount={masteredCount}
-            showProgress={true}
           />
           {isActive && (
             <div className="mt-4 p-3 bg-mint-50 border border-mint-200 rounded-lg">
@@ -127,7 +126,7 @@ export const SimplifiedFlashcardStudy: React.FC<SimplifiedFlashcardStudyProps> =
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className="max-w-4xl mx-auto p-6 space-y-4">
       {/* Session Status Indicator */}
       {isActive && (
         <div className="p-3 bg-mint-50 border border-mint-200 rounded-lg">
@@ -140,20 +139,22 @@ export const SimplifiedFlashcardStudy: React.FC<SimplifiedFlashcardStudyProps> =
         </div>
       )}
 
-      {/* Study Progress */}
-      <StudyProgress
+      {/* Compact Progress */}
+      <CompactStudyProgress
         currentIndex={currentIndex}
         totalCards={totalCards}
         studiedToday={studiedToday}
         masteredCount={masteredCount}
       />
 
-      {/* Main Flashcard Display */}
+      {/* Main Flashcard Display with integrated progress donut */}
       <div className="flex justify-center">
-        <FlashcardDisplayCard
+        <FlashcardWithProgress
           flashcard={currentCard}
           isFlipped={isFlipped}
           onFlip={handleFlip}
+          currentIndex={currentIndex}
+          totalCards={totalCards}
           className="w-full max-w-2xl"
         />
       </div>
@@ -172,13 +173,14 @@ export const SimplifiedFlashcardStudy: React.FC<SimplifiedFlashcardStudyProps> =
         mode={mode}
       />
 
-      {/* Study Stats */}
-      <StudyStats
-        totalCards={totalCards}
-        studiedToday={studiedToday}
-        masteredCount={masteredCount}
-        showProgress={false}
-      />
+      {/* Compact Study Stats - only shown at the end or minimized */}
+      {(currentIndex === totalCards - 1 || isFlipped) && (
+        <CompactStudyStats
+          totalCards={totalCards}
+          studiedToday={studiedToday}
+          masteredCount={masteredCount}
+        />
+      )}
     </div>
   );
 };
