@@ -8,8 +8,8 @@ export const useQuizFilterOptions = () => {
     queryFn: async () => {
       console.log('🚀 Fetching quiz filter options...');
 
-      // Fetch subjects, grades, and sections in parallel
-      const [subjectsResponse, gradesResponse, sectionsResponse] = await Promise.all([
+      // Fetch subjects and grades in parallel (removed sections)
+      const [subjectsResponse, gradesResponse] = await Promise.all([
         supabase
           .from('academic_subjects')
           .select('id, name')
@@ -17,11 +17,7 @@ export const useQuizFilterOptions = () => {
         supabase
           .from('grades')
           .select('id, name')
-          .order('level'),
-        supabase
-          .from('sections')
-          .select('id, name')
-          .order('name')
+          .order('level')
       ]);
 
       if (subjectsResponse.error) {
@@ -34,17 +30,11 @@ export const useQuizFilterOptions = () => {
         throw gradesResponse.error;
       }
 
-      if (sectionsResponse.error) {
-        console.error('Error fetching sections:', sectionsResponse.error);
-        throw sectionsResponse.error;
-      }
-
       console.log('✅ Filter options fetched successfully');
 
       return {
         subjects: subjectsResponse.data || [],
-        grades: gradesResponse.data || [],
-        sections: sectionsResponse.data || []
+        grades: gradesResponse.data || []
       };
     },
     staleTime: 5 * 60 * 1000, // 5 minutes

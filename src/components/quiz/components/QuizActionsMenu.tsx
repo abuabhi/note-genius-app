@@ -20,12 +20,22 @@ import {
 import { DeleteQuizDialog } from '../DeleteQuizDialog';
 import { useNavigate } from 'react-router-dom';
 
-interface QuizActionsMenuProps {
-  quiz: {
+interface Quiz {
+  id: string;
+  title: string;
+  description: string | null;
+  is_public: boolean;
+  created_at: string;
+  questionCount: number;
+  user_id?: string;
+  academic_subjects?: {
     id: string;
-    title: string;
-    user_id?: string;
-  };
+    name: string;
+  } | null;
+}
+
+interface QuizActionsMenuProps {
+  quiz: Quiz;
   currentUserId?: string;
   onRefresh?: () => void;
 }

@@ -23,7 +23,6 @@ const QuizList = () => {
     search?: string;
     subject?: string;
     grade?: string;
-    section?: string;
     userOnly?: boolean;
   }>({});
   
@@ -109,7 +108,6 @@ const QuizList = () => {
         onFiltersChange={handleFiltersChange}
         subjects={filterOptions?.subjects || []}
         grades={filterOptions?.grades || []}
-        sections={filterOptions?.sections || []}
         isLoading={isLoading}
         totalQuizzes={totalQuizzes}
       />

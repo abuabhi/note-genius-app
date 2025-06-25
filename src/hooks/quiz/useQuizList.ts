@@ -5,7 +5,6 @@ import { supabase } from '@/integrations/supabase/client';
 export const useQuizList = (filters: {
   subject?: string;
   grade?: string;
-  section?: string;
   search?: string;
   userOnly?: boolean;
 } = {}) => {
@@ -26,8 +25,7 @@ export const useQuizList = (filters: {
           updated_at,
           user_id,
           subject_id,
-          grade_id,
-          section_id
+          grade_id
         `);
 
       // Apply basic filters
@@ -37,10 +35,6 @@ export const useQuizList = (filters: {
 
       if (filters.grade) {
         query = query.eq('grade_id', filters.grade);
-      }
-
-      if (filters.section) {
-        query = query.eq('section_id', filters.section);
       }
 
       if (filters.search) {
