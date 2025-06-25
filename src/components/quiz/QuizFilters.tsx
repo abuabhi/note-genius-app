@@ -1,11 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Filter, X, RefreshCw } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Search, Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface QuizFiltersProps {
@@ -16,275 +24,266 @@ interface QuizFiltersProps {
     section?: string;
     userOnly?: boolean;
   }) => void;
-  subjects?: Array<{ id: string; name: string }>;
-  grades?: Array<{ id: string; name: string }>;
-  sections?: Array<{ id: string; name: string }>;
+  subjects: Array<{ id: string; name: string }>;
+  grades: Array<{ id: string; name: string }>;
+  sections: Array<{ id: string; name: string }>;
   isLoading?: boolean;
   totalQuizzes?: number;
 }
 
-export const QuizFilters = ({
+export const QuizFilters: React.FC<QuizFiltersProps> = ({
   onFiltersChange,
-  subjects = [],
-  grades = [],
-  sections = [],
+  subjects,
+  grades,
+  sections,
   isLoading = false,
   totalQuizzes = 0
-}: QuizFiltersProps) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSubject, setSelectedSubject] = useState('');
-  const [selectedGrade, setSelectedGrade] = useState('');
-  const [selectedSection, setSelectedSection] = useState('');
+}) => {
+  const [search, setSearch] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState<string>('all');
+  const [selectedGrade, setSelectedGrade] = useState<string>('all');
+  const [selectedSection, setSelectedSection] = useState<string>('all');
   const [userOnly, setUserOnly] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
   // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => {
-      handleFiltersChange({
-        search: searchTerm,
-        subject: selectedSubject,
-        grade: selectedGrade,
-        section: selectedSection,
-        userOnly
+      onFiltersChange({
+        search: search.trim() || undefined,
+        subject: selectedSubject === 'all' ? undefined : selectedSubject,
+        grade: selectedGrade === 'all' ? undefined : selectedGrade,
+        section: selectedSection === 'all' ? undefined : selectedSection,
+        userOnly: userOnly || undefined,
       });
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchTerm, selectedSubject, selectedGrade, selectedSection, userOnly]);
+  }, [search, selectedSubject, selectedGrade, selectedSection, userOnly, onFiltersChange]);
 
-  const handleFiltersChange = (filters: any) => {
-    onFiltersChange(filters);
-  };
-
-  const clearFilters = () => {
-    setSearchTerm('');
-    setSelectedSubject('');
-    setSelectedGrade('');
-    setSelectedSection('');
+  const clearAllFilters = () => {
+    setSearch('');
+    setSelectedSubject('all');
+    setSelectedGrade('all');
+    setSelectedSection('all');
     setUserOnly(false);
-    onFiltersChange({});
   };
 
-  const activeFiltersCount = [
-    searchTerm,
-    selectedSubject,
-    selectedGrade,
-    selectedSection,
-    userOnly
-  ].filter(Boolean).length;
+  const hasActiveFilters = 
+    search.trim() !== '' || 
+    selectedSubject !== 'all' || 
+    selectedGrade !== 'all' || 
+    selectedSection !== 'all' || 
+    userOnly;
+
+  const getActiveFilterCount = () => {
+    let count = 0;
+    if (search.trim()) count++;
+    if (selectedSubject !== 'all') count++;
+    if (selectedGrade !== 'all') count++;
+    if (selectedSection !== 'all') count++;
+    if (userOnly) count++;
+    return count;
+  };
 
   return (
-    <Card className="mb-6">
-      <CardContent className="p-4">
-        <div className="space-y-4">
-          {/* Search Bar - Always Visible */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Search quizzes by title or description..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4"
-              disabled={isLoading}
-            />
-          </div>
-
-          {/* Filter Toggle */}
-          <div className="flex items-center justify-between">
-            <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-              <CollapsibleTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-2">
-                  <Filter className="h-4 w-4" />
-                  Advanced Filters
-                  {activeFiltersCount > 0 && (
-                    <Badge variant="secondary" className="ml-1">
-                      {activeFiltersCount}
-                    </Badge>
-                  )}
-                </Button>
-              </CollapsibleTrigger>
-              
-              <CollapsibleContent className="mt-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {/* Subject Filter */}
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      Subject
-                    </label>
-                    <Select value={selectedSubject} onValueChange={setSelectedSubject} disabled={isLoading}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="All subjects" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white border shadow-md z-50">
-                        <SelectItem value="">All subjects</SelectItem>
-                        {subjects.map((subject) => (
-                          <SelectItem key={subject.id} value={subject.id}>
-                            {subject.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Grade Filter */}
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      Grade
-                    </label>
-                    <Select value={selectedGrade} onValueChange={setSelectedGrade} disabled={isLoading}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="All grades" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white border shadow-md z-50">
-                        <SelectItem value="">All grades</SelectItem>
-                        {grades.map((grade) => (
-                          <SelectItem key={grade.id} value={grade.id}>
-                            {grade.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Section Filter */}
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      Section
-                    </label>
-                    <Select value={selectedSection} onValueChange={setSelectedSection} disabled={isLoading}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="All sections" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white border shadow-md z-50">
-                        <SelectItem value="">All sections</SelectItem>
-                        {sections.map((section) => (
-                          <SelectItem key={section.id} value={section.id}>
-                            {section.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* User Only Filter */}
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="userOnly"
-                      checked={userOnly}
-                      onChange={(e) => setUserOnly(e.target.checked)}
-                      className="rounded border-gray-300"
-                      disabled={isLoading}
-                    />
-                    <label htmlFor="userOnly" className="text-sm font-medium text-gray-700">
-                      My quizzes only
-                    </label>
-                  </div>
-                </div>
-
-                {/* Clear Filters */}
-                {activeFiltersCount > 0 && (
-                  <div className="mt-4 flex justify-end">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={clearFilters}
-                      className="flex items-center gap-2"
-                      disabled={isLoading}
-                    >
-                      <X className="h-4 w-4" />
-                      Clear Filters
-                    </Button>
-                  </div>
-                )}
-              </CollapsibleContent>
-            </Collapsible>
-
-            {/* Results Count */}
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                  Loading...
-                </div>
-              ) : (
-                <span>{totalQuizzes} quiz{totalQuizzes !== 1 ? 'es' : ''} found</span>
-              )}
-            </div>
-          </div>
-
-          {/* Active Filters Display */}
-          {activeFiltersCount > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {searchTerm && (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  Search: "{searchTerm}"
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-4 w-4 p-0 hover:bg-transparent"
-                    onClick={() => setSearchTerm('')}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </Badge>
-              )}
-              {selectedSubject && (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  Subject: {subjects.find(s => s.id === selectedSubject)?.name}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-4 w-4 p-0 hover:bg-transparent"
-                    onClick={() => setSelectedSubject('')}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </Badge>
-              )}
-              {selectedGrade && (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  Grade: {grades.find(g => g.id === selectedGrade)?.name}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-4 w-4 p-0 hover:bg-transparent"
-                    onClick={() => setSelectedGrade('')}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </Badge>
-              )}
-              {selectedSection && (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  Section: {sections.find(s => s.id === selectedSection)?.name}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-4 w-4 p-0 hover:bg-transparent"
-                    onClick={() => setSelectedSection('')}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </Badge>
-              )}
-              {userOnly && (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  My quizzes only
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-4 w-4 p-0 hover:bg-transparent"
-                    onClick={() => setUserOnly(false)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </Badge>
-              )}
-            </div>
+    <Card className="border-mint-200 bg-white/90 backdrop-blur-sm">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg font-semibold text-mint-800 flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Quiz Filters
+            {hasActiveFilters && (
+              <Badge variant="secondary" className="bg-mint-100 text-mint-700">
+                {getActiveFilterCount()} active
+              </Badge>
+            )}
+          </CardTitle>
+          {hasActiveFilters && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={clearAllFilters}
+              className="text-mint-600 hover:text-mint-700 hover:bg-mint-50"
+            >
+              <X className="h-4 w-4 mr-1" />
+              Clear All
+            </Button>
           )}
         </div>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder="Search quizzes..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10 border-mint-200 focus:border-mint-400 focus:ring-mint-400"
+            disabled={isLoading}
+          />
+        </div>
+
+        {/* My Quizzes Only */}
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="userOnly"
+            checked={userOnly}
+            onCheckedChange={(checked) => setUserOnly(checked as boolean)}
+            disabled={isLoading}
+          />
+          <Label htmlFor="userOnly" className="text-sm font-medium text-gray-700">
+            Show only my quizzes
+          </Label>
+        </div>
+
+        {/* Advanced Filters */}
+        <Collapsible open={isAdvancedOpen} onOpenChange={setIsAdvancedOpen}>
+          <CollapsibleTrigger asChild>
+            <Button 
+              variant="ghost" 
+              className="w-full justify-between p-0 h-auto text-mint-600 hover:text-mint-700"
+            >
+              <span className="font-medium">Advanced Filters</span>
+              {isAdvancedOpen ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </Button>
+          </CollapsibleTrigger>
+          
+          <CollapsibleContent className="space-y-4 mt-4">
+            {/* Subject Filter */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700">Subject</Label>
+              <Select
+                value={selectedSubject}
+                onValueChange={setSelectedSubject}
+                disabled={isLoading}
+              >
+                <SelectTrigger className="border-mint-200 focus:border-mint-400">
+                  <SelectValue placeholder="All Subjects" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Subjects</SelectItem>
+                  {subjects.map((subject) => (
+                    <SelectItem key={subject.id} value={subject.id}>
+                      {subject.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Grade Filter */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700">Grade</Label>
+              <Select
+                value={selectedGrade}
+                onValueChange={setSelectedGrade}
+                disabled={isLoading}
+              >
+                <SelectTrigger className="border-mint-200 focus:border-mint-400">
+                  <SelectValue placeholder="All Grades" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Grades</SelectItem>
+                  {grades.map((grade) => (
+                    <SelectItem key={grade.id} value={grade.id}>
+                      {grade.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Section Filter */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700">Section</Label>
+              <Select
+                value={selectedSection}
+                onValueChange={setSelectedSection}
+                disabled={isLoading}
+              >
+                <SelectTrigger className="border-mint-200 focus:border-mint-400">
+                  <SelectValue placeholder="All Sections" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Sections</SelectItem>
+                  {sections.map((section) => (
+                    <SelectItem key={section.id} value={section.id}>
+                      {section.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+
+        {/* Active Filters Display */}
+        {hasActiveFilters && (
+          <div className="flex flex-wrap gap-2 pt-2 border-t border-mint-100">
+            {search.trim() && (
+              <Badge variant="outline" className="bg-mint-50 text-mint-700 border-mint-200">
+                Search: "{search.trim()}"
+                <button
+                  onClick={() => setSearch('')}
+                  className="ml-1 hover:text-mint-900"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            )}
+            {selectedSubject !== 'all' && (
+              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                Subject: {subjects.find(s => s.id === selectedSubject)?.name}
+                <button
+                  onClick={() => setSelectedSubject('all')}
+                  className="ml-1 hover:text-blue-900"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            )}
+            {selectedGrade !== 'all' && (
+              <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                Grade: {grades.find(g => g.id === selectedGrade)?.name}
+                <button
+                  onClick={() => setSelectedGrade('all')}
+                  className="ml-1 hover:text-purple-900"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            )}
+            {selectedSection !== 'all' && (
+              <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                Section: {sections.find(s => s.id === selectedSection)?.name}
+                <button
+                  onClick={() => setSelectedSection('all')}
+                  className="ml-1 hover:text-orange-900"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            )}
+            {userOnly && (
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                My Quizzes Only
+                <button
+                  onClick={() => setUserOnly(false)}
+                  className="ml-1 hover:text-green-900"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

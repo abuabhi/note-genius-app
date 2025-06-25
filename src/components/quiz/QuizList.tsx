@@ -2,15 +2,17 @@
 import React, { useState } from 'react';
 import { useQuizList } from '@/hooks/quiz';
 import { useQuizFilterOptions } from '@/hooks/quiz/useQuizFilterOptions';
+import { useFavoritesManager } from '@/hooks/quiz/useFavoritesManager';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { EmptyState } from '@/components/ui/empty-state';
 import { QuizFilters } from './QuizFilters';
 import { QuizGrid } from './components/QuizGrid';
 import { QuizListView } from './components/QuizListView';
 import { ViewToggle } from './components/ViewToggle';
+import { Badge } from '@/components/ui/badge';
 
 const QuizList = () => {
   const [filters, setFilters] = useState<{
@@ -22,25 +24,13 @@ const QuizList = () => {
   }>({});
   
   const [view, setView] = useState<'grid' | 'list'>('grid');
-  const [favoriteQuizIds, setFavoriteQuizIds] = useState(new Set<string>());
+  const { favoriteQuizIds, toggleFavorite, isFavorite, getFavoriteCount } = useFavoritesManager();
 
   const { data, isLoading, error } = useQuizList(filters);
   const { data: filterOptions, isLoading: optionsLoading } = useQuizFilterOptions();
 
   const handleFiltersChange = (newFilters: typeof filters) => {
     setFilters(newFilters);
-  };
-
-  const handleToggleFavorite = (quizId: string) => {
-    setFavoriteQuizIds(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(quizId)) {
-        newSet.delete(quizId);
-      } else {
-        newSet.add(quizId);
-      }
-      return newSet;
-    });
   };
 
   if (error) {
@@ -58,6 +48,7 @@ const QuizList = () => {
 
   const quizzes = data?.quizzes || [];
   const totalQuizzes = quizzes.length;
+  const favoriteCount = getFavoriteCount();
 
   return (
     <div className="space-y-6">
@@ -71,10 +62,20 @@ const QuizList = () => {
         totalQuizzes={totalQuizzes}
       />
 
-      {/* View Toggle */}
-      <div className="flex justify-between items-center">
-        <div className="text-sm text-gray-600">
-          {totalQuizzes > 0 && `${totalQuizzes} quiz${totalQuizzes === 1 ? '' : 'es'} found`}
+      {/* View Toggle and Stats */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-gray-600">
+            {totalQuizzes > 0 && (
+              <span>{totalQuizzes} quiz{totalQuizzes === 1 ? '' : 'es'} found</span>
+            )}
+          </div>
+          {favoriteCount > 0 && (
+            <Badge variant="outline" className="flex items-center gap-1 bg-yellow-50 text-yellow-700 border-yellow-200">
+              <Heart className="h-3 w-3 fill-current" />
+              {favoriteCount} favorite{favoriteCount === 1 ? '' : 's'}
+            </Badge>
+          )}
         </div>
         <ViewToggle view={view} onViewChange={setView} />
       </div>
@@ -100,14 +101,14 @@ const QuizList = () => {
       ) : view === 'grid' ? (
         <QuizGrid
           quizzes={quizzes}
-          onToggleFavorite={handleToggleFavorite}
+          onToggleFavorite={toggleFavorite}
           favoriteQuizIds={favoriteQuizIds}
           loading={isLoading}
         />
       ) : (
         <QuizListView
           quizzes={quizzes}
-          onToggleFavorite={handleToggleFavorite}
+          onToggleFavorite={toggleFavorite}
           favoriteQuizIds={favoriteQuizIds}
           loading={isLoading}
         />
