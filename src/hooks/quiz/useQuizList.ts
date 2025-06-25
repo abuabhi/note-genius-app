@@ -1,5 +1,4 @@
 
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -99,12 +98,14 @@ export const useQuizList = (filters: {
         }, {} as Record<string, number>) || {};
 
         // Map subjects by ID with proper typing
-        const subjectsMap = subjectsData.data?.reduce((acc, s) => {
-          if (s && s.id && s.name) {
-            acc[s.id] = { id: s.id, name: s.name };
-          }
-          return acc;
-        }, {} as Record<string, { id: string; name: string }>) || {};
+        const subjectsMap: Record<string, { id: string; name: string }> = {};
+        if (subjectsData.data) {
+          subjectsData.data.forEach(subject => {
+            if (subject && subject.id && subject.name) {
+              subjectsMap[subject.id] = { id: subject.id, name: subject.name };
+            }
+          });
+        }
 
         // Transform the data to include question count and subject info
         const enrichedQuizzes = quizzes.map(quiz => ({
@@ -131,4 +132,3 @@ export const useQuizList = (filters: {
     retryDelay: 1000, // Faster retry
   });
 };
-
