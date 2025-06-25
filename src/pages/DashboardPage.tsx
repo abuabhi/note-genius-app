@@ -1,5 +1,4 @@
 
-import Layout from "@/components/layout/Layout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Loader2 } from "lucide-react";
 import { DashboardHeroSection } from "@/components/dashboard/DashboardHeroSection";
@@ -27,14 +26,12 @@ const DashboardPage = () => {
   if (loading) {
     console.log('⏳ Dashboard is loading...');
     return (
-      <Layout>
-        <div className="container mx-auto p-6 flex items-center justify-center h-[50vh]">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-            <p className="mt-2 text-muted-foreground">Loading your dashboard...</p>
-          </div>
+      <div className="container mx-auto p-6 flex items-center justify-center h-[50vh]">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <p className="mt-2 text-muted-foreground">Loading your dashboard...</p>
         </div>
-      </Layout>
+      </div>
     );
   }
   
@@ -46,7 +43,7 @@ const DashboardPage = () => {
   console.log('✅ Dashboard rendering main content');
   
   return (
-    <Layout>
+    <>
       <ReferralSignupErrorBoundary>
         <ReferralSignupHandler />
       </ReferralSignupErrorBoundary>
@@ -76,7 +73,7 @@ const DashboardPage = () => {
           </div>
         </div>
       </div>
-    </Layout>
+    </>
   );
 };
 
