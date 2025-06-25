@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useStudyViewState } from './hooks/useStudyViewState';
 import { useNoteStudyEditor } from './hooks/useNoteStudyEditor';
-import { useSimpleRealtimeSync } from './hooks/useSimpleRealtimeSync';
+import { useOptimizedStudySync } from './hooks/useOptimizedStudySync';
 import { StudyViewHeader } from './header/StudyViewHeader';
 import { NoteStudyViewContent } from './viewer/NoteStudyViewContent';
 import { EnhancementContentType } from './enhancements/EnhancementSelector';
@@ -23,8 +23,8 @@ interface NoteStudyViewProps {
 export const NoteStudyView = ({ note, isLoading }: NoteStudyViewProps) => {
   const location = useLocation();
 
-  // Use simplified real-time sync for better performance
-  const { currentNote, refreshKey, forceRefresh } = useSimpleRealtimeSync(note);
+  // Use optimized real-time sync for better performance
+  const { currentNote, refreshKey, forceRefresh } = useOptimizedStudySync(note);
 
   // Study view state management
   const {
