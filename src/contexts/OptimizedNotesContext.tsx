@@ -1,8 +1,7 @@
 
-import React, { createContext, useContext, ReactNode, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 import { Note } from '@/types/note';
-import { useOptimizedNotes as useOptimizedNotesHook } from '@/hooks/useOptimizedNotes';
-import { useNotesOperations } from './notes/useNotesOperations';
+import { useOptimizedNotesWithQuery } from '@/hooks/useOptimizedNotesWithQuery';
 
 interface OptimizedNotesContextType {
   // Core data
@@ -43,63 +42,72 @@ interface OptimizedNotesContextType {
   deleteNote: (id: string) => Promise<void>;
   pinNote: (id: string, pinned: boolean) => Promise<void>;
   archiveNote: (id: string, archived: boolean) => Promise<void>;
+  
+  // New React Query enhanced features
+  paginationMode: 'regular' | 'infinite';
+  setPaginationMode: (mode: 'regular' | 'infinite') => void;
+  isCreating: boolean;
+  isUpdating: boolean;
+  isDeleting: boolean;
+  isPinning: boolean;
 }
 
 const OptimizedNotesContext = createContext<OptimizedNotesContextType | undefined>(undefined);
 
 const OptimizedNotesProviderInner = React.memo(({ children }: { children: ReactNode }) => {
-  const optimizedNotes = useOptimizedNotesHook();
-  
-  // Get operations
-  const operations = useNotesOperations(
-    optimizedNotes.notes, 
-    optimizedNotes.setNotes, 
-    optimizedNotes.currentPage, 
-    optimizedNotes.setCurrentPage, 
-    optimizedNotes.notes // Use all notes since we're paginating at source
-  );
+  const queryHook = useOptimizedNotesWithQuery();
 
-  // Memoized context value
+  // Memoized context value with React Query integration
   const contextValue = useMemo(() => ({
     // Core data
-    notes: optimizedNotes.notes,
-    filteredNotes: optimizedNotes.notes, // Same as notes since filtering is server-side
-    paginatedNotes: optimizedNotes.notes, // Same as notes since pagination is server-side
-    totalCount: optimizedNotes.totalCount,
-    loading: optimizedNotes.loading,
-    isLoading: optimizedNotes.loading,
-    error: optimizedNotes.error,
+    notes: queryHook.notes,
+    filteredNotes: queryHook.notes, // Same as notes since filtering is server-side
+    paginatedNotes: queryHook.notes, // Same as notes since pagination is server-side
+    totalCount: queryHook.totalCount,
+    loading: queryHook.loading,
+    isLoading: queryHook.loading,
+    error: queryHook.error,
     
     // Pagination
-    hasMore: optimizedNotes.hasMore,
-    currentPage: optimizedNotes.currentPage,
-    setCurrentPage: optimizedNotes.setCurrentPage,
-    loadMore: optimizedNotes.loadMore,
+    hasMore: queryHook.hasMore,
+    currentPage: queryHook.currentPage,
+    setCurrentPage: queryHook.setCurrentPage,
+    loadMore: queryHook.loadMore,
     
     // Additional properties for compatibility
-    refetch: optimizedNotes.refreshNotes,
+    refetch: queryHook.refreshNotes,
     
     // Search and filtering
-    searchTerm: optimizedNotes.searchTerm,
-    setSearchTerm: optimizedNotes.setSearchTerm,
-    sortType: optimizedNotes.sortType,
-    setSortType: optimizedNotes.setSortType,
-    showArchived: optimizedNotes.showArchived,
-    setShowArchived: optimizedNotes.setShowArchived,
-    selectedSubject: optimizedNotes.selectedSubject,
-    setSelectedSubject: optimizedNotes.setSelectedSubject,
+    searchTerm: queryHook.searchTerm,
+    setSearchTerm: queryHook.setSearchTerm,
+    sortType: queryHook.sortType,
+    setSortType: queryHook.setSortType,
+    showArchived: queryHook.showArchived,
+    setShowArchived: queryHook.setShowArchived,
+    selectedSubject: queryHook.selectedSubject,
+    setSelectedSubject: queryHook.setSelectedSubject,
     
     // Legacy pagination (for compatibility)
-    totalPages: Math.ceil(optimizedNotes.totalCount / 20),
+    totalPages: Math.ceil(queryHook.totalCount / 20),
     
     // Operations
-    refreshNotes: optimizedNotes.refreshNotes,
-    addNote: operations.addNote,
-    updateNote: operations.updateNote,
-    deleteNote: operations.deleteNote,
-    pinNote: operations.pinNote,
-    archiveNote: operations.archiveNote
-  }), [optimizedNotes, operations]);
+    refreshNotes: queryHook.refreshNotes,
+    addNote: queryHook.addNote,
+    updateNote: queryHook.updateNote,
+    deleteNote: queryHook.deleteNote,
+    pinNote: queryHook.pinNote,
+    archiveNote: async (id: string, archived: boolean) => {
+      await queryHook.updateNote(id, { archived });
+    },
+    
+    // New React Query enhanced features
+    paginationMode: queryHook.paginationMode,
+    setPaginationMode: queryHook.setPaginationMode,
+    isCreating: queryHook.isCreating,
+    isUpdating: queryHook.isUpdating,
+    isDeleting: queryHook.isDeleting,
+    isPinning: queryHook.isPinning,
+  }), [queryHook]);
 
   return (
     <OptimizedNotesContext.Provider value={contextValue}>
