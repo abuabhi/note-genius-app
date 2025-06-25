@@ -1,7 +1,7 @@
 
 import Layout from "@/components/layout/Layout";
 import { OptimizedNotesContent } from "@/components/notes/page/OptimizedNotesContent";
-import { OptimizedNotesProvider } from "@/contexts/OptimizedNotesContext";
+import { OptimizedNotesProvider, useOptimizedNotes } from "@/contexts/OptimizedNotesContext";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { toast } from "sonner";
 import { Note } from "@/types/note";
@@ -14,7 +14,6 @@ import { useUserTier } from "@/hooks/useUserTier";
 
 // Inner component that uses the context
 const ScalableNotesPageContent = () => {
-  const { useOptimizedNotes } = require("@/contexts/OptimizedNotesContext");
   const { addNote } = useOptimizedNotes();
   const { tierLimits } = useUserTier();
   
