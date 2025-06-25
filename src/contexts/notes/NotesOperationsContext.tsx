@@ -2,7 +2,7 @@
 import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 import { Note } from '@/types/note';
 import { useNotesOperationsStateMachine } from '@/hooks/notes/useNotesOperationsStateMachine';
-import { useNotesWithStateMachine } from '@/hooks/notes/useNotesWithStateMachine';
+import { useOptimizedNotesWithQuery } from '@/hooks/useOptimizedNotesWithQuery';
 
 interface NotesOperationsContextType {
   // CRUD operations with state machine integration
@@ -47,14 +47,14 @@ const NotesOperationsContext = createContext<NotesOperationsContextType | undefi
 
 const NotesOperationsProviderInner = React.memo(({ children }: { children: ReactNode }) => {
   const operationsStateMachine = useNotesOperationsStateMachine();
-  const stateMachineHook = useNotesWithStateMachine();
+  const queryHook = useOptimizedNotesWithQuery();
 
   // Enhanced CRUD operations with state machine integration
   const operations = useMemo(() => ({
     addNote: async (noteData: Omit<Note, 'id'>) => {
       operationsStateMachine.actions.startCreate();
       try {
-        const result = await stateMachineHook.addNote(noteData);
+        const result = await queryHook.addNote(noteData);
         if (result) {
           operationsStateMachine.actions.createSuccess(result);
           return result;
@@ -72,7 +72,7 @@ const NotesOperationsProviderInner = React.memo(({ children }: { children: React
     updateNote: async (id: string, updates: Partial<Note>) => {
       operationsStateMachine.actions.startUpdate(id);
       try {
-        await stateMachineHook.updateNote(id, updates);
+        await queryHook.updateNote(id, updates);
         // Create a mock updated note for success tracking
         const updatedNote = { id, ...updates } as Note;
         operationsStateMachine.actions.updateSuccess(updatedNote);
@@ -86,7 +86,7 @@ const NotesOperationsProviderInner = React.memo(({ children }: { children: React
     deleteNote: async (id: string) => {
       operationsStateMachine.actions.startDelete(id);
       try {
-        await stateMachineHook.deleteNote(id);
+        await queryHook.deleteNote(id);
         operationsStateMachine.actions.deleteSuccess(id);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Failed to delete note';
@@ -98,7 +98,7 @@ const NotesOperationsProviderInner = React.memo(({ children }: { children: React
     pinNote: async (id: string, pinned: boolean) => {
       operationsStateMachine.actions.startUpdate(id);
       try {
-        await stateMachineHook.pinNote(id, pinned);
+        await queryHook.pinNote(id, pinned);
         const updatedNote = { id, pinned } as Note;
         operationsStateMachine.actions.updateSuccess(updatedNote);
       } catch (error) {
@@ -111,7 +111,7 @@ const NotesOperationsProviderInner = React.memo(({ children }: { children: React
     archiveNote: async (id: string, archived: boolean) => {
       operationsStateMachine.actions.startUpdate(id);
       try {
-        await stateMachineHook.updateNote(id, { archived });
+        await queryHook.updateNote(id, { archived });
         const updatedNote = { id, archived } as Note;
         operationsStateMachine.actions.updateSuccess(updatedNote);
       } catch (error) {
@@ -120,7 +120,7 @@ const NotesOperationsProviderInner = React.memo(({ children }: { children: React
         throw error;
       }
     },
-  }), [operationsStateMachine.actions, stateMachineHook]);
+  }), [operationsStateMachine.actions, queryHook]);
 
   // Memoized context value with enhanced state machine integration
   const contextValue = useMemo(() => ({
