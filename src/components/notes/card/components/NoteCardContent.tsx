@@ -18,9 +18,9 @@ export const NoteCardContent = ({ note, stripMarkdown, viewMode = 'grid' }: Note
   const isListView = viewMode === 'list';
 
   if (isListView) {
-    // Content preview for list view
+    // Content preview for list view - only visible on medium+ screens
     return (
-      <p className="text-sm text-gray-600 truncate">
+      <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
         {plainTextContent}
       </p>
     );

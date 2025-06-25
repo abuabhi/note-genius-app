@@ -35,9 +35,9 @@ export const NoteCard = ({
         className="group relative cursor-pointer bg-white border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all duration-200 rounded-lg overflow-hidden"
         onClick={() => onNoteClick(note)}
       >
-        <div className="flex items-center p-4 w-full overflow-hidden">
-          {/* Left section - fixed width for subject and title */}
-          <div className="flex items-center gap-4 min-w-0 flex-shrink-0" style={{ width: '400px' }}>
+        <div className="flex items-center p-3 w-full min-w-0">
+          {/* Left section - Subject and Title (flexible) */}
+          <div className="flex-1 min-w-0 mr-4">
             <NoteCardHeader 
               note={note}
               onPin={onPin}
@@ -46,8 +46,8 @@ export const NoteCard = ({
             />
           </div>
           
-          {/* Middle section - content preview */}
-          <div className="flex-1 min-w-0 px-4">
+          {/* Middle section - Content preview (flexible) */}
+          <div className="hidden md:flex flex-1 min-w-0 mr-4">
             <NoteCardContent 
               note={note}
               stripMarkdown={stripMarkdown}
@@ -55,18 +55,20 @@ export const NoteCard = ({
             />
           </div>
           
-          {/* Right section - metadata and actions */}
-          <div className="flex items-center gap-3 flex-shrink-0">
+          {/* Right section - Metadata and actions (fixed) */}
+          <div className="flex items-center gap-2 flex-shrink-0">
             <NoteCardMetadata note={note} viewMode={viewMode} />
-            <NoteCardActions 
-              noteId={note.id}
-              noteTitle={note.title}
-              noteContent={note.content || note.description || ""}
-              isPinned={!!note.pinned} 
-              onPin={onPin}
-              onDelete={onDelete}
-              iconSize={4}
-            />
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <NoteCardActions 
+                noteId={note.id}
+                noteTitle={note.title}
+                noteContent={note.content || note.description || ""}
+                isPinned={!!note.pinned} 
+                onPin={onPin}
+                onDelete={onDelete}
+                iconSize={3}
+              />
+            </div>
           </div>
         </div>
       </Card>
