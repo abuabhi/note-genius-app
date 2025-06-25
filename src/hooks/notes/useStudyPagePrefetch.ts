@@ -50,11 +50,16 @@ export const useStudyPagePrefetch = () => {
     queryClient.prefetchQuery({
       queryKey: ['enhancement-usage', user.id],
       queryFn: async () => {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('note_enrichment_usage')
           .select('*')
           .eq('user_id', user.id)
           .gte('created_at', startOfMonth.toISOString());
+        
+        if (error) {
+          console.error('Error fetching enhancement usage:', error);
+          return [];
+        }
         
         return data || [];
       },
