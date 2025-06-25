@@ -1,8 +1,9 @@
 
-import React, { createContext, useContext, ReactNode, useState, useMemo } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo } from 'react';
+import { useNotesFilterStateMachine } from '@/hooks/notes/useNotesFilterStateMachine';
 
 interface NotesUIContextType {
-  // Search and filtering
+  // Filter state from state machine
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   sortType: string;
@@ -11,6 +12,16 @@ interface NotesUIContextType {
   setShowArchived: (show: boolean) => void;
   selectedSubject: string;
   setSelectedSubject: (subject: string) => void;
+  
+  // Filter state machine actions
+  clearFilters: () => void;
+  resetError: () => void;
+  
+  // Filter state machine selectors
+  isFiltering: boolean;
+  hasActiveFilters: boolean;
+  activeFilterCount: number;
+  filterError: string | null;
   
   // View preferences
   viewMode: 'grid' | 'list';
@@ -26,30 +37,37 @@ interface NotesUIContextType {
 const NotesUIContext = createContext<NotesUIContextType | undefined>(undefined);
 
 const NotesUIProviderInner = React.memo(({ children }: { children: ReactNode }) => {
-  // Search and filtering state
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortType, setSortType] = useState('newest');
-  const [showArchived, setShowArchived] = useState(false);
-  const [selectedSubject, setSelectedSubject] = useState('all');
+  // Use the filter state machine
+  const filterStateMachine = useNotesFilterStateMachine();
   
-  // View preferences
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  // View preferences (not part of filter state machine)
+  const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid');
   
-  // UI states
-  const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
-  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+  // UI states (not part of filter state machine)
+  const [isFilterMenuOpen, setIsFilterMenuOpen] = React.useState(false);
+  const [selectedNoteId, setSelectedNoteId] = React.useState<string | null>(null);
 
-  // Memoized context value focused only on UI concerns
+  // Memoized context value that integrates filter state machine
   const contextValue = useMemo(() => ({
-    // Search and filtering
-    searchTerm,
-    setSearchTerm,
-    sortType,
-    setSortType,
-    showArchived,
-    setShowArchived,
-    selectedSubject,
-    setSelectedSubject,
+    // Filter state from state machine
+    searchTerm: filterStateMachine.searchTerm,
+    setSearchTerm: filterStateMachine.actions.setSearchTerm,
+    sortType: filterStateMachine.sortType,
+    setSortType: filterStateMachine.actions.setSortType,
+    showArchived: filterStateMachine.showArchived,
+    setShowArchived: filterStateMachine.actions.setShowArchived,
+    selectedSubject: filterStateMachine.selectedSubject,
+    setSelectedSubject: filterStateMachine.actions.setSelectedSubject,
+    
+    // Filter state machine actions
+    clearFilters: filterStateMachine.actions.clearFilters,
+    resetError: filterStateMachine.actions.resetError,
+    
+    // Filter state machine selectors
+    isFiltering: filterStateMachine.isFiltering,
+    hasActiveFilters: filterStateMachine.hasActiveFilters,
+    activeFilterCount: filterStateMachine.activeFilterCount,
+    filterError: filterStateMachine.error,
     
     // View preferences
     viewMode,
@@ -61,10 +79,20 @@ const NotesUIProviderInner = React.memo(({ children }: { children: ReactNode }) 
     selectedNoteId,
     setSelectedNoteId,
   }), [
-    searchTerm,
-    sortType,
-    showArchived,
-    selectedSubject,
+    filterStateMachine.searchTerm,
+    filterStateMachine.actions.setSearchTerm,
+    filterStateMachine.sortType,
+    filterStateMachine.actions.setSortType,
+    filterStateMachine.showArchived,
+    filterStateMachine.actions.setShowArchived,
+    filterStateMachine.selectedSubject,
+    filterStateMachine.actions.setSelectedSubject,
+    filterStateMachine.actions.clearFilters,
+    filterStateMachine.actions.resetError,
+    filterStateMachine.isFiltering,
+    filterStateMachine.hasActiveFilters,
+    filterStateMachine.activeFilterCount,
+    filterStateMachine.error,
     viewMode,
     isFilterMenuOpen,
     selectedNoteId,

@@ -47,7 +47,13 @@ export const useNotesFiltersOnly = () => {
     showArchived, 
     setShowArchived, 
     selectedSubject, 
-    setSelectedSubject 
+    setSelectedSubject,
+    clearFilters,
+    resetError,
+    isFiltering,
+    hasActiveFilters,
+    activeFilterCount,
+    filterError
   } = useNotesUI();
   return { 
     searchTerm, 
@@ -57,7 +63,13 @@ export const useNotesFiltersOnly = () => {
     showArchived, 
     setShowArchived, 
     selectedSubject, 
-    setSelectedSubject 
+    setSelectedSubject,
+    clearFilters,
+    resetError,
+    isFiltering,
+    hasActiveFilters,
+    activeFilterCount,
+    filterError
   };
 };
 
@@ -111,7 +123,7 @@ export const useNotesWithFilters = () => {
     isBackgroundLoading: dataContext.isBackgroundLoading,
     isFiltering: dataContext.isFiltering,
     
-    // Filters
+    // Enhanced filters with state machine
     searchTerm: uiContext.searchTerm,
     setSearchTerm: uiContext.setSearchTerm,
     sortType: uiContext.sortType,
@@ -120,6 +132,10 @@ export const useNotesWithFilters = () => {
     setShowArchived: uiContext.setShowArchived,
     selectedSubject: uiContext.selectedSubject,
     setSelectedSubject: uiContext.setSelectedSubject,
+    clearFilters: uiContext.clearFilters,
+    hasActiveFilters: uiContext.hasActiveFilters,
+    activeFilterCount: uiContext.activeFilterCount,
+    filterError: uiContext.filterError,
   };
 };
 
@@ -163,12 +179,17 @@ export const useNotesWithPagination = () => {
 export const useNotesStateMachineDebug = () => {
   const { state } = useNotesData();
   const { isAnyOperationInProgress } = useNotesOperations();
+  const { isFiltering, hasActiveFilters, activeFilterCount, filterError } = useNotesUI();
   const loadingStates = useNotesLoadingStates();
   const errorState = useNotesErrorState();
   
   return {
     currentState: state,
     isAnyOperationInProgress,
+    isFiltering,
+    hasActiveFilters,
+    activeFilterCount,
+    filterError,
     loadingStates,
     errorState,
   };

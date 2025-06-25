@@ -25,7 +25,7 @@ interface OptimizedNotesContextType {
   // Additional properties for compatibility
   refetch: () => void;
   
-  // Search and filtering
+  // Enhanced search and filtering with state machine
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   sortType: string;
@@ -34,6 +34,11 @@ interface OptimizedNotesContextType {
   setShowArchived: (show: boolean) => void;
   selectedSubject: string;
   setSelectedSubject: (subject: string) => void;
+  clearFilters: () => void;
+  hasActiveFilters: boolean;
+  activeFilterCount: number;
+  isFiltering: boolean;
+  filterError: string | null;
   
   // Legacy pagination (for compatibility)
   totalPages: number;
@@ -83,7 +88,7 @@ const OptimizedNotesProviderInner = React.memo(({ children }: { children: ReactN
     // Additional properties for compatibility
     refetch: dataContext.refreshNotes,
     
-    // Search and filtering
+    // Enhanced search and filtering with state machine
     searchTerm: uiContext.searchTerm,
     setSearchTerm: uiContext.setSearchTerm,
     sortType: uiContext.sortType,
@@ -92,6 +97,11 @@ const OptimizedNotesProviderInner = React.memo(({ children }: { children: ReactN
     setShowArchived: uiContext.setShowArchived,
     selectedSubject: uiContext.selectedSubject,
     setSelectedSubject: uiContext.setSelectedSubject,
+    clearFilters: uiContext.clearFilters,
+    hasActiveFilters: uiContext.hasActiveFilters,
+    activeFilterCount: uiContext.activeFilterCount,
+    isFiltering: uiContext.isFiltering,
+    filterError: uiContext.filterError,
     
     // Legacy pagination (for compatibility)
     totalPages: Math.ceil(dataContext.totalCount / 20),
