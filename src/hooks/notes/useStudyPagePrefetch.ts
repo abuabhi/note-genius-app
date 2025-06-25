@@ -13,7 +13,7 @@ export const useStudyPagePrefetch = () => {
 
     queryClient.prefetchQuery({
       queryKey: ['user-subjects', user.id],
-      queryFn: async () => {
+      queryFn: async (): Promise<any[]> => {
         const { data, error } = await supabase
           .from('user_subjects')
           .select('*')
@@ -35,7 +35,7 @@ export const useStudyPagePrefetch = () => {
 
     queryClient.prefetchQuery({
       queryKey: ['user-tags', user.id],
-      queryFn: async () => {
+      queryFn: async (): Promise<any[]> => {
         const { data, error } = await supabase
           .from('tags')
           .select('*')
@@ -61,7 +61,7 @@ export const useStudyPagePrefetch = () => {
 
     queryClient.prefetchQuery({
       queryKey: ['enhancement-usage', user.id],
-      queryFn: async () => {
+      queryFn: async (): Promise<any[]> => {
         try {
           const { data, error } = await supabase
             .from('note_enrichment_usage')
