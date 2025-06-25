@@ -110,7 +110,7 @@ export const useQuizList = (filters: {
         const enrichedQuizzes = quizzes.map(quiz => ({
           ...quiz,
           questionCount: countMap[quiz.id] || 0,
-          academic_subjects: quiz.subject_id && subjectsMap[quiz.subject_id] ? subjectsMap[quiz.subject_id] : null,
+          academic_subjects: quiz.subject_id && quiz.subject_id in subjectsMap ? subjectsMap[quiz.subject_id] : null,
         }));
 
         return { quizzes: enrichedQuizzes };
