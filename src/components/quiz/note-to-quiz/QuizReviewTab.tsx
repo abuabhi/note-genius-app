@@ -28,10 +28,10 @@ export const QuizReviewTab = ({
     if (subjects.length === 0) return undefined;
     
     // Find the most common subject
-    const subjectCounts = subjects.reduce((acc, subjectId) => {
+    const subjectCounts = subjects.reduce((acc: Record<string, number>, subjectId: string) => {
       acc[subjectId] = (acc[subjectId] || 0) + 1;
       return acc;
-    }, {} as Record<string, number>);
+    }, {});
     
     const mostCommonSubject = Object.entries(subjectCounts)
       .sort(([,a], [,b]) => b - a)[0]?.[0];
