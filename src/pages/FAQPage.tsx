@@ -1,127 +1,188 @@
 
 import Layout from "@/components/layout/Layout";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search, MessageCircle } from "lucide-react";
+import { useState } from "react";
 
 const FAQPage = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+
   const faqs = [
     {
-      question: "What is StudyAI?",
-      answer: "StudyAI is an intelligent learning platform that uses artificial intelligence to personalize your educational experience. Our platform adapts to your learning style, identifies knowledge gaps, and provides customized study materials to help you master any subject more efficiently."
+      id: "1",
+      question: "What is PrepGenie?",
+      answer: "PrepGenie is an AI-powered educational platform that helps students create, organize, and study their notes and learning materials. It features intelligent note enhancement, flashcard generation, study analytics, and personalized learning recommendations.",
+      category: "General"
     },
     {
-      question: "How does the AI personalization work?",
-      answer: "Our AI analyzes your study patterns, quiz results, and learning pace to create a personalized learning path. It identifies strengths and weaknesses in real-time and adjusts content difficulty accordingly. The more you use StudyAI, the better it gets at customizing your learning experience."
+      id: "2",
+      question: "How do I create my first note?",
+      answer: "To create a note, click the 'Add Note' button on your dashboard or notes page. You can create notes manually by typing, scan documents using your camera, or import files like PDFs. Choose your subject, add tags for organization, and start writing!",
+      category: "Getting Started"
     },
     {
-      question: "Which subjects does StudyAI cover?",
-      answer: "StudyAI currently covers mathematics, sciences, languages, history, and programming. We're continuously expanding our subject library based on user feedback and demands."
+      id: "3",
+      question: "What file types can I import?",
+      answer: "PrepGenie supports importing PDF files, Word documents (.docx), and images (JPG, PNG). You can also scan physical documents using your device's camera for OCR text recognition.",
+      category: "Notes"
     },
     {
-      question: "Can I use StudyAI for test preparation?",
-      answer: "Absolutely! StudyAI is excellent for standardized test prep, including SAT, ACT, GRE, GMAT, and subject-specific exams. Our platform includes practice tests, timed quizzes, and personalized study plans designed specifically for test preparation."
+      id: "4",
+      question: "How does AI flashcard generation work?",
+      answer: "Our AI analyzes your notes and automatically generates relevant flashcards based on key concepts, definitions, and important information. You can review and edit these flashcards before adding them to your study sets.",
+      category: "Flashcards"
     },
     {
-      question: "Is StudyAI suitable for different education levels?",
-      answer: "Yes, StudyAI supports learners from high school through university and professional development. The platform automatically adjusts content complexity based on your education level and learning goals."
+      id: "5",
+      question: "Can I study offline?",
+      answer: "While PrepGenie is primarily a web-based platform, some features like viewing downloaded notes and flashcards may be available offline. However, AI features and syncing require an internet connection.",
+      category: "Study"
     },
     {
-      question: "Can I track my progress over time?",
-      answer: "Yes, StudyAI provides detailed analytics that track your progress across subjects, including mastery levels, study time, improvement rates, and recommended focus areas. You can view your progress through intuitive dashboards and detailed reports."
+      id: "6",
+      question: "How is my study progress tracked?",
+      answer: "PrepGenie tracks various metrics including study time, flashcard performance, quiz scores, and learning velocity. You can view detailed analytics on your progress page to understand your learning patterns and identify areas for improvement.",
+      category: "Progress"
     },
     {
-      question: "Do you offer group or classroom features?",
-      answer: "Yes, our Teams plan includes collaborative features for study groups, classes, and educational institutions. Instructors can track group progress, assign specific materials, and identify common areas where students might need additional support."
+      id: "7",
+      question: "Is my data secure?",
+      answer: "Yes, we take data security seriously. All data is encrypted in transit and at rest. We follow industry best practices for security and privacy. Your notes and personal information are never shared with third parties without your consent.",
+      category: "Privacy"
     },
     {
-      question: "What devices can I use StudyAI on?",
-      answer: "StudyAI works on any device with an internet connection, including computers, tablets, and smartphones. Our responsive design ensures a seamless experience across all devices, and you can switch between devices while maintaining your progress."
+      id: "8",
+      question: "What subscription plans are available?",
+      answer: "We offer different subscription tiers including a free plan with basic features, and premium plans with advanced AI features, unlimited storage, and priority support. Check our pricing page for current plans and features.",
+      category: "Billing"
     },
     {
-      question: "How secure is my data with StudyAI?",
-      answer: "We take data security seriously. All personal information and study data is encrypted and stored securely. We adhere to strict privacy policies and never sell user data to third parties. You can review our complete privacy policy for more details."
+      id: "9",
+      question: "Can I collaborate with classmates?",
+      answer: "Yes! PrepGenie offers collaboration features that allow you to share flashcard sets, join study groups, and work together on learning materials. These features may vary by subscription tier.",
+      category: "Collaboration"
     },
     {
-      question: "Can I cancel my subscription anytime?",
-      answer: "Yes, you can cancel your subscription at any time. If you cancel, you'll continue to have access to your plan features until the end of your current billing period. There are no cancellation fees or hidden charges."
+      id: "10",
+      question: "How do I contact support?",
+      answer: "You can reach our support team by visiting the Contact page and sending us a message. We typically respond within 24 hours during business days. You can also access our help center for immediate answers to common questions.",
+      category: "Support"
+    },
+    {
+      id: "11",
+      question: "Can I export my notes and flashcards?",
+      answer: "Yes, you can export your notes in various formats including PDF and text files. Flashcard sets can also be exported for use in other applications or as backup files.",
+      category: "Data"
+    },
+    {
+      id: "12",
+      question: "What happens if I cancel my subscription?",
+      answer: "If you cancel your subscription, you'll retain access to premium features until the end of your billing period. After that, your account will revert to the free tier with basic features. Your data will be preserved.",
+      category: "Billing"
     }
   ];
 
+  const filteredFaqs = faqs.filter(faq =>
+    faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    faq.answer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    faq.category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const categories = Array.from(new Set(faqs.map(faq => faq.category)));
+
   return (
     <Layout>
-      <div className="bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
-        {/* FAQ Header */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl">
+      <div className="min-h-screen bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+          {/* Header */}
+          <div className="text-center mb-16">
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
               Frequently Asked Questions
             </h1>
-            <p className="mt-6 max-w-2xl mx-auto text-xl text-gray-500">
-              Find answers to the most common questions about StudyAI
+            <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+              Find quick answers to common questions about PrepGenie
             </p>
           </div>
-        </div>
 
-        {/* FAQ Accordion */}
-        <div className="bg-gradient-to-b from-mint-50/10 via-white to-mint-50/20 py-24">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-            <Accordion type="single" collapsible className="space-y-6">
-              {faqs.map((faq, index) => (
-                <AccordionItem 
-                  key={index} 
-                  value={`item-${index}`}
-                  className="bg-white rounded-lg shadow-sm border border-mint-100"
-                >
-                  <AccordionTrigger className="px-6 py-4 text-lg font-medium text-left text-gray-900 hover:text-mint-700">
-                    {faq.question}
-                  </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-4 pt-2 text-gray-600">
-                    {faq.answer}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </div>
-        </div>
-
-        {/* Still Have Questions */}
-        <div className="bg-gradient-to-b from-mint-50/20 via-white to-mint-50/30 py-24">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-3xl font-bold text-gray-900">Still Have Questions?</h2>
-            <p className="mt-4 text-xl text-gray-500">
-              Our support team is here to help
-            </p>
-            <div className="mt-10 flex justify-center gap-6">
-              <div className="bg-white p-6 rounded-lg shadow-sm border border-mint-100 w-full max-w-md">
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">Contact Support</h3>
-                <p className="text-gray-600 mb-6">
-                  Get personalized help from our customer support team
-                </p>
-                <a 
-                  href="/contact" 
-                  className="inline-block px-6 py-3 bg-mint-600 text-white rounded-md hover:bg-mint-700 transition-colors"
-                >
-                  Contact Us
-                </a>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow-sm border border-mint-100 w-full max-w-md">
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">Browse Resources</h3>
-                <p className="text-gray-600 mb-6">
-                  Explore our guides, tutorials and knowledge base
-                </p>
-                <a 
-                  href="#" 
-                  className="inline-block px-6 py-3 bg-gray-800 text-white rounded-md hover:bg-gray-900 transition-colors"
-                >
-                  Visit Resources
-                </a>
-              </div>
+          {/* Search */}
+          <div className="mb-12">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Input
+                type="text"
+                placeholder="Search FAQs..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 py-3"
+              />
             </div>
           </div>
+
+          {/* Categories */}
+          <div className="flex flex-wrap gap-2 mb-8">
+            {categories.map(category => (
+              <span key={category} className="px-3 py-1 bg-mint-100 text-mint-700 rounded-full text-sm">
+                {category}
+              </span>
+            ))}
+          </div>
+
+          {/* FAQ Accordion */}
+          <Card className="border-mint-200 mb-12">
+            <CardContent className="p-6">
+              {filteredFaqs.length === 0 ? (
+                <div className="text-center py-12">
+                  <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No results found</h3>
+                  <p className="text-gray-600">
+                    Try searching with different keywords or contact support for help.
+                  </p>
+                </div>
+              ) : (
+                <Accordion type="single" collapsible className="w-full">
+                  {filteredFaqs.map((faq) => (
+                    <AccordionItem key={faq.id} value={faq.id} className="border-b border-mint-100">
+                      <AccordionTrigger className="text-left hover:text-mint-600">
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm bg-mint-100 text-mint-700 px-2 py-1 rounded">
+                            {faq.category}
+                          </span>
+                          <span className="font-medium">{faq.question}</span>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="text-gray-700 pt-4 pb-6">
+                        {faq.answer}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Contact Support Section */}
+          <Card className="border-mint-200 bg-mint-50">
+            <CardHeader className="text-center">
+              <MessageCircle className="h-12 w-12 text-mint-600 mx-auto mb-4" />
+              <CardTitle className="text-xl text-gray-900">Still have questions?</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-gray-600 mb-6">
+                Can't find the answer you're looking for? Our support team is here to help you.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button className="bg-mint-600 hover:bg-mint-700" asChild>
+                  <a href="/contact">Contact Support</a>
+                </Button>
+                <Button variant="outline" asChild>
+                  <a href="/help">Browse Help Center</a>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </Layout>

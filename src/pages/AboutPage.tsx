@@ -11,7 +11,7 @@ const AboutPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
             <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl">
-              <span className="block">About StudyAI</span>
+              <span className="block">About PrepGenie</span>
               <span className="block text-mint-600">Transforming Education</span>
             </h1>
             <p className="mt-6 max-w-xl mx-auto text-lg text-gray-500">
@@ -29,13 +29,16 @@ const AboutPage = () => {
             </div>
             <div className="prose prose-lg mx-auto">
               <p>
-                Founded in 2023, StudyAI began with a simple question: How can we use AI to make learning more personal and effective?
+                Founded in 2023, PrepGenie began with a simple question: How can we use AI to make learning more personal and effective?
               </p>
               <p>
                 Our team of educators and AI specialists came together to create a platform that adapts to the unique learning style of each student, providing personalized guidance and support at every step of their educational journey.
               </p>
               <p>
-                Today, StudyAI serves thousands of students worldwide, helping them achieve their academic goals with the support of cutting-edge artificial intelligence.
+                Today, PrepGenie serves thousands of students worldwide, helping them achieve their academic goals with the support of cutting-edge artificial intelligence. Our platform transforms how students create, organize, and study their notes, making learning more engaging and effective than ever before.
+              </p>
+              <p>
+                From intelligent note enhancement to AI-powered flashcard generation, PrepGenie empowers students to unlock their full potential and excel in their studies.
               </p>
             </div>
           </div>
@@ -76,7 +79,7 @@ const AboutPage = () => {
           <div className="max-w-7xl mx-auto px-4 text-center">
             <h2 className="text-3xl font-bold text-gray-900">Join Our Journey</h2>
             <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-              Experience the future of education today with StudyAI's personalized learning platform.
+              Experience the future of education today with PrepGenie's personalized learning platform.
             </p>
             <div className="mt-8">
               <Button size="lg" className="bg-mint-600 hover:bg-mint-700">

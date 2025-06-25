@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 
 const Footer = () => {
@@ -16,11 +17,6 @@ const Footer = () => {
               <li>
                 <Link to="/pricing" className="text-base text-mint-800 hover:text-mint-950">
                   Pricing
-                </Link>
-              </li>
-              <li>
-                <Link to="/faq" className="text-base text-mint-800 hover:text-mint-950">
-                  FAQ
                 </Link>
               </li>
             </ul>
@@ -58,24 +54,19 @@ const Footer = () => {
                   Terms
                 </Link>
               </li>
-              <li>
-                <Link to="/cookies" className="text-base text-mint-800 hover:text-mint-950">
-                  Cookies
-                </Link>
-              </li>
             </ul>
           </div>
           <div>
             <h3 className="text-sm font-semibold text-mint-900 tracking-wider uppercase">Support</h3>
             <ul className="mt-4 space-y-4">
               <li>
-                <Link to="/support" className="text-base text-mint-800 hover:text-mint-950">
+                <Link to="/help" className="text-base text-mint-800 hover:text-mint-950">
                   Help Center
                 </Link>
               </li>
               <li>
-                <Link to="/status" className="text-base text-mint-800 hover:text-mint-950">
-                  Status
+                <Link to="/faq" className="text-base text-mint-800 hover:text-mint-950">
+                  FAQ
                 </Link>
               </li>
             </ul>
@@ -83,7 +74,7 @@ const Footer = () => {
         </div>
         <div className="mt-8 border-t border-mint-500/30 pt-8">
           <p className="text-base text-mint-900 text-center">
-            &copy; {new Date().getFullYear()} StudyAI. All rights reserved.
+            &copy; {new Date().getFullYear()} PrepGenie. All rights reserved.
           </p>
         </div>
       </div>

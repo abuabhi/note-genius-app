@@ -8,6 +8,9 @@ import ContactPage from "@/pages/ContactPage";
 import PricingPage from "@/pages/PricingPage";
 import FAQPage from "@/pages/FAQPage";
 import FeaturesPage from "@/pages/FeaturesPage";
+import PrivacyPage from "@/pages/PrivacyPage";
+import TermsPage from "@/pages/TermsPage";
+import HelpPage from "@/pages/HelpPage";
 
 export interface RouteConfig {
   path: string;
@@ -24,4 +27,7 @@ export const publicRoutes: RouteConfig[] = [
   { path: "/contact", element: <ContactPage /> },
   { path: "/pricing", element: <PricingPage /> },
   { path: "/faq", element: <FAQPage /> },
+  { path: "/privacy", element: <PrivacyPage /> },
+  { path: "/terms", element: <TermsPage /> },
+  { path: "/help", element: <HelpPage /> },
 ];
