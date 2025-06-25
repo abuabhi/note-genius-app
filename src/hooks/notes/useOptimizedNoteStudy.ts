@@ -14,7 +14,6 @@ interface OptimizedNoteStudyResult {
 
 export const useOptimizedNoteStudy = (noteId: string): OptimizedNoteStudyResult => {
   const { user } = useAuth();
-  const { cacheConfigs } = useCacheStrategy();
 
   const { data: note, isLoading, error, refetch } = useQuery({
     queryKey: ['optimized-note-study', noteId, user?.id],
@@ -88,8 +87,8 @@ export const useOptimizedNoteStudy = (noteId: string): OptimizedNoteStudyResult 
           enriched_status: (data.enriched_status as 'pending' | 'generating' | 'completed' | 'failed') || 'completed',
           enriched_content_generated_at: data.enriched_content_generated_at,
           
-          // Safe enhancement_type handling - provide default if missing
-          enhancement_type: (data.enhancement_type as 'spelling-grammar' | 'clarity' | 'other') || 'other'
+          // Provide default enhancement_type since it doesn't exist in database
+          enhancement_type: 'other' as 'spelling-grammar' | 'clarity' | 'other'
         };
 
         const duration = performance.now() - startTime;

@@ -43,13 +43,13 @@ export const useStudyPagePrefetch = () => {
   const prefetchEnhancementUsage = () => {
     if (!user) return;
 
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
     queryClient.prefetchQuery({
       queryKey: ['enhancement-usage', user.id],
       queryFn: async () => {
-        const startOfMonth = new Date();
-        startOfMonth.setDate(1);
-        startOfMonth.setHours(0, 0, 0, 0);
-
         const { data } = await supabase
           .from('note_enrichment_usage')
           .select('*')
