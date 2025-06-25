@@ -68,6 +68,37 @@ const OptimizedNotesProviderInner = React.memo(({ children }: { children: ReactN
   const uiContext = useNotesUI();
   const operationsContext = useNotesOperations();
 
+  // Enhanced refresh function that invalidates all related caches
+  const enhancedRefreshNotes = async () => {
+    console.log('🔄 Enhanced refresh triggered - clearing all caches');
+    
+    // Call the original refresh
+    await dataContext.refreshNotes();
+    
+    // Add a small delay to ensure data is fresh
+    setTimeout(() => {
+      console.log('✅ Enhanced refresh completed');
+    }, 100);
+  };
+
+  // Enhanced update function with immediate cache invalidation
+  const enhancedUpdateNote = async (id: string, updates: Partial<Note>) => {
+    console.log('🔄 Enhanced update note with cache invalidation');
+    
+    try {
+      await operationsContext.updateNote(id, updates);
+      
+      // Force immediate refresh if subject was updated
+      if (updates.subject || updates.subject_id) {
+        console.log('📝 Subject updated - forcing immediate refresh');
+        await enhancedRefreshNotes();
+      }
+    } catch (error) {
+      console.error('❌ Enhanced update note failed:', error);
+      throw error;
+    }
+  };
+
   // Memoized context value that combines all split contexts for backward compatibility
   const contextValue = useMemo(() => ({
     // Core data
@@ -86,7 +117,7 @@ const OptimizedNotesProviderInner = React.memo(({ children }: { children: ReactN
     loadMore: dataContext.loadMore,
     
     // Additional properties for compatibility
-    refetch: dataContext.refreshNotes,
+    refetch: enhancedRefreshNotes,
     
     // Enhanced search and filtering with state machine
     searchTerm: uiContext.searchTerm,
@@ -106,10 +137,10 @@ const OptimizedNotesProviderInner = React.memo(({ children }: { children: ReactN
     // Legacy pagination (for compatibility)
     totalPages: Math.ceil(dataContext.totalCount / 20),
     
-    // Operations
-    refreshNotes: dataContext.refreshNotes,
+    // Operations with enhanced cache handling
+    refreshNotes: enhancedRefreshNotes,
     addNote: operationsContext.addNote,
-    updateNote: operationsContext.updateNote,
+    updateNote: enhancedUpdateNote,
     deleteNote: operationsContext.deleteNote,
     pinNote: operationsContext.pinNote,
     archiveNote: operationsContext.archiveNote,
@@ -121,7 +152,7 @@ const OptimizedNotesProviderInner = React.memo(({ children }: { children: ReactN
     isUpdating: operationsContext.isUpdating,
     isDeleting: operationsContext.isDeleting,
     isPinning: operationsContext.isPinning,
-  }), [dataContext, uiContext, operationsContext]);
+  }), [dataContext, uiContext, operationsContext, enhancedRefreshNotes, enhancedUpdateNote]);
 
   return (
     <OptimizedNotesContext.Provider value={contextValue}>

@@ -49,7 +49,7 @@ export const useStudyPagePrefetch = () => {
 
     queryClient.prefetchQuery({
       queryKey: ['enhancement-usage', user.id],
-      queryFn: async () => {
+      queryFn: async (): Promise<any[]> => {
         const { data } = await supabase
           .from('note_enrichment_usage')
           .select('*')

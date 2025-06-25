@@ -20,7 +20,8 @@ export const FilterMenu = () => {
     setShowArchived, 
     selectedSubject, 
     setSelectedSubject,
-    notes
+    notes,
+    refreshNotes
   } = useOptimizedNotes();
   
   const { subjects, isLoading: subjectsLoading } = useUserSubjects();
@@ -47,12 +48,22 @@ export const FilterMenu = () => {
   console.log('FilterMenu - Available subjects:', allAvailableSubjects);
   console.log('FilterMenu - Current selected subject:', selectedSubject);
 
+  const handleSubjectSelect = async (subject: string) => {
+    console.log('🎯 FilterMenu - Subject selected:', subject);
+    setSelectedSubject(subject);
+    
+    // Force refresh to ensure fresh data
+    setTimeout(() => {
+      refreshNotes();
+    }, 100);
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
           <Filter className="h-4 w-4" />
-          All Subjects
+          {selectedSubject === 'all' ? 'All Subjects' : selectedSubject}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56">
@@ -72,7 +83,7 @@ export const FilterMenu = () => {
         <DropdownMenuSeparator />
         
         <DropdownMenuItem
-          onClick={() => setSelectedSubject('all')}
+          onClick={() => handleSubjectSelect('all')}
           className={selectedSubject === 'all' ? 'bg-accent' : ''}
         >
           All Subjects
@@ -81,7 +92,7 @@ export const FilterMenu = () => {
         {!subjectsLoading && allAvailableSubjects.map((subject) => (
           <DropdownMenuItem
             key={subject}
-            onClick={() => setSelectedSubject(subject)}
+            onClick={() => handleSubjectSelect(subject)}
             className={selectedSubject === subject ? 'bg-accent' : ''}
           >
             {subject}

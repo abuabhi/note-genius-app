@@ -11,6 +11,7 @@ import { ArrowLeft, Save } from 'lucide-react';
 import { Note } from '@/types/note';
 import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
 import { useUserSubjects } from '@/hooks/useUserSubjects';
+import { getOrCreateSubjectId } from '@/utils/subjectHelpers';
 import { toast } from 'sonner';
 
 interface EditNoteContentProps {
@@ -19,7 +20,7 @@ interface EditNoteContentProps {
 
 const EditNoteContent = ({ note }: EditNoteContentProps) => {
   const navigate = useNavigate();
-  const { updateNote } = useOptimizedNotes();
+  const { updateNote, refreshNotes } = useOptimizedNotes();
   const { subjects: userSubjects, isLoading: subjectsLoading } = useUserSubjects();
   const [isLoading, setIsLoading] = useState(false);
   
@@ -35,17 +36,33 @@ const EditNoteContent = ({ note }: EditNoteContentProps) => {
     setIsLoading(true);
 
     try {
-      // Find the subject_id for the selected subject name
-      const selectedSubjectObj = userSubjects.find(s => s.name === formData.subject);
+      console.log('🔄 Updating note with subject:', formData.subject);
       
-      await updateNote(note.id, {
+      // Get or create the subject_id for the selected subject
+      const subjectId = await getOrCreateSubjectId(formData.subject);
+      
+      console.log('📝 Subject ID obtained:', subjectId);
+
+      // FIXED: Update both subject_id and legacy subject field
+      const updateData = {
         ...formData,
-        subject_id: selectedSubjectObj?.id || null
-      });
+        subject_id: subjectId,
+        subject: formData.subject // Ensure legacy field is also updated
+      };
+
+      console.log('💾 Updating note with data:', updateData);
+
+      await updateNote(note.id, updateData);
+      
+      console.log('✅ Note updated successfully');
+      
+      // Force refresh the notes list to clear any cache
+      await refreshNotes();
+      
       toast.success('Note updated successfully!');
       navigate('/notes');
     } catch (error) {
-      console.error('Error updating note:', error);
+      console.error('❌ Error updating note:', error);
       toast.error('Failed to update note');
     } finally {
       setIsLoading(false);
@@ -111,22 +128,28 @@ const EditNoteContent = ({ note }: EditNoteContentProps) => {
                 onValueChange={(value) => handleInputChange('subject', value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select subject" />
+                  <SelectValue placeholder="Select a subject" />
                 </SelectTrigger>
                 <SelectContent>
-                  {subjectsLoading ? (
-                    <SelectItem value="_loading" disabled>Loading subjects...</SelectItem>
-                  ) : userSubjects.length > 0 ? (
-                    userSubjects.map((subject) => (
-                      <SelectItem key={subject.id} value={subject.name}>
-                        {subject.name}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="_none" disabled>No subjects found</SelectItem>
-                  )}
+                  {!subjectsLoading && userSubjects.map((subject) => (
+                    <SelectItem key={subject.id} value={subject.name}>
+                      {subject.name}
+                    </SelectItem>
+                  ))}
+                  {/* Allow custom subject input */}
+                  <SelectItem value="custom">+ Add New Subject</SelectItem>
                 </SelectContent>
               </Select>
+              
+              {/* Custom subject input when "custom" is selected */}
+              {formData.subject === 'custom' && (
+                <Input
+                  placeholder="Enter new subject name..."
+                  value=""
+                  onChange={(e) => handleInputChange('subject', e.target.value)}
+                  className="mt-2"
+                />
+              )}
             </div>
 
             {/* Content */}
@@ -138,23 +161,22 @@ const EditNoteContent = ({ note }: EditNoteContentProps) => {
                 onChange={(e) => handleInputChange('content', e.target.value)}
                 placeholder="Enter note content..."
                 rows={10}
-                className="min-h-[200px]"
               />
             </div>
 
             {/* Actions */}
-            <div className="flex gap-4 pt-4">
-              <Button
-                type="submit"
+            <div className="flex gap-3 pt-4">
+              <Button 
+                type="submit" 
                 disabled={isLoading}
-                className="gap-2"
+                className="flex items-center gap-2"
               >
                 <Save className="h-4 w-4" />
                 {isLoading ? 'Saving...' : 'Save Changes'}
               </Button>
-              <Button
-                type="button"
-                variant="outline"
+              <Button 
+                type="button" 
+                variant="outline" 
                 onClick={() => navigate('/notes')}
               >
                 Cancel
