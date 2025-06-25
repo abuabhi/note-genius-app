@@ -23,8 +23,8 @@ export default function NavBar() {
   };
 
   return (
-    <nav className="py-4 border-b">
-      <div className="container mx-auto px-6 flex justify-between items-center">
+    <nav className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-gray-200/60 shadow-sm">
+      <div className="container mx-auto px-6 h-16 flex justify-between items-center">
         <div className="flex items-center min-w-0">
           <AppLogo />
         </div>
@@ -41,8 +41,13 @@ export default function NavBar() {
 
         {/* Mobile Menu Button */}
         <div className="md:hidden">
-          <Button variant="ghost" onClick={toggleMenu}>
-            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={toggleMenu}
+            className="h-9 w-9 p-0 hover:bg-mint-50 transition-colors"
+          >
+            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
         </div>
 

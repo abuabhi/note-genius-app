@@ -35,11 +35,17 @@ export const DesktopAuthSection = ({ isPublicRoute }: DesktopAuthSectionProps) =
 
   if (!user) {
     return (
-      <div className="hidden md:flex items-center space-x-4">
-        <Link to="/login" className="text-mint-700 hover:text-mint-900 font-medium">
+      <div className="hidden md:flex items-center space-x-3">
+        <Link 
+          to="/login" 
+          className="text-gray-600 hover:text-mint-700 font-medium text-sm transition-colors px-3 py-2 rounded-lg hover:bg-mint-50"
+        >
           Login
         </Link>
-        <Button asChild className="bg-mint-500 hover:bg-mint-600 text-white">
+        <Button 
+          asChild 
+          className="bg-gradient-to-r from-mint-500 to-mint-600 hover:from-mint-600 hover:to-mint-700 text-white shadow-sm hover:shadow-md transition-all duration-200"
+        >
           <Link to="/signup">Sign Up</Link>
         </Button>
       </div>
@@ -47,29 +53,35 @@ export const DesktopAuthSection = ({ isPublicRoute }: DesktopAuthSectionProps) =
   }
 
   return (
-    <div className="hidden md:flex items-center space-x-4">
+    <div className="hidden md:flex items-center space-x-3">
       {/* Public Navigation Links - Desktop - Only on public routes when authenticated */}
       {isPublicRoute && (
-        <Link to="/dashboard" className="text-mint-700 hover:text-mint-900 font-medium">
+        <Link 
+          to="/dashboard" 
+          className="text-gray-600 hover:text-mint-700 font-medium text-sm transition-colors px-3 py-2 rounded-lg hover:bg-mint-50"
+        >
           Dashboard
         </Link>
       )}
       
-      {/* Reminder Bell Icon */}
-      <ReminderNavPopover />
-      
-      {/* Help Icon - Next to Reminder */}
-      {helpContext && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleHelpClick}
-          className="h-10 w-10 p-0 hover:bg-mint-100"
-          title="Get Help"
-        >
-          <HelpCircle className="h-5 w-5 text-mint-600" />
-        </Button>
-      )}
+      {/* Action buttons with subtle styling */}
+      <div className="flex items-center space-x-2 bg-gray-50/60 rounded-full px-3 py-1 backdrop-blur-sm border border-gray-200/50">
+        {/* Reminder Bell Icon */}
+        <ReminderNavPopover />
+        
+        {/* Help Icon - Next to Reminder */}
+        {helpContext && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleHelpClick}
+            className="h-8 w-8 p-0 hover:bg-mint-100 rounded-full transition-colors"
+            title="Get Help"
+          >
+            <HelpCircle className="h-4 w-4 text-mint-600" />
+          </Button>
+        )}
+      </div>
       
       {/* User Profile Section */}
       <UserSection isCollapsed={false} />
