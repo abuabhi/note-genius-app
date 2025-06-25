@@ -36,16 +36,18 @@ export const useOptimizedNotesWithQuery = () => {
     pageSize: 20
   });
 
-  // Use the appropriate query based on mode
-  const activeQuery = paginationMode === 'infinite' ? infiniteQuery : regularQuery;
+  // Extract data from the appropriate query based on mode
+  const { data, isLoading, error, refetch } = paginationMode === 'infinite' ? infiniteQuery : regularQuery;
   
-  // Extract data from the active query
-  const { data, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = activeQuery;
+  // Get infinite query specific properties safely
+  const fetchNextPage = paginationMode === 'infinite' ? infiniteQuery.fetchNextPage : undefined;
+  const hasNextPage = paginationMode === 'infinite' ? infiniteQuery.hasNextPage : false;
+  const isFetchingNextPage = paginationMode === 'infinite' ? infiniteQuery.isFetchingNextPage : false;
 
   // Process data based on query type
   const { notes, totalCount, hasMore } = useMemo(() => {
-    if (paginationMode === 'infinite' && 'pages' in activeQuery.data) {
-      const pages = activeQuery.data.pages || [];
+    if (paginationMode === 'infinite' && infiniteQuery.data) {
+      const pages = infiniteQuery.data.pages || [];
       const allNotes = pages.flatMap(page => page.notes);
       const lastPage = pages[pages.length - 1];
       
@@ -54,16 +56,16 @@ export const useOptimizedNotesWithQuery = () => {
         totalCount: lastPage?.totalCount || 0,
         hasMore: hasNextPage || false
       };
-    } else if (paginationMode === 'regular' && data && 'notes' in data) {
+    } else if (paginationMode === 'regular' && regularQuery.data) {
       return {
-        notes: data.notes,
-        totalCount: data.totalCount,
-        hasMore: data.hasMore
+        notes: regularQuery.data.notes,
+        totalCount: regularQuery.data.totalCount,
+        hasMore: regularQuery.data.hasMore
       };
     }
     
     return { notes: [], totalCount: 0, hasMore: false };
-  }, [data, paginationMode, hasNextPage, activeQuery]);
+  }, [data, paginationMode, hasNextPage, infiniteQuery.data, regularQuery.data]);
 
   // Mutations
   const createNoteMutation = useCreateNoteMutation();
@@ -73,7 +75,7 @@ export const useOptimizedNotesWithQuery = () => {
 
   // Load more function for infinite scroll
   const loadMore = useCallback(() => {
-    if (paginationMode === 'infinite' && hasNextPage && !isFetchingNextPage) {
+    if (paginationMode === 'infinite' && hasNextPage && !isFetchingNextPage && fetchNextPage) {
       fetchNextPage();
     } else if (paginationMode === 'regular' && hasMore) {
       setCurrentPage(prev => prev + 1);
