@@ -1,7 +1,7 @@
 
 import Layout from "@/components/layout/Layout";
 import { OptimizedNotesContent } from "@/components/notes/page/OptimizedNotesContent";
-import { OptimizedNotesProvider, useOptimizedNotes } from "@/contexts/OptimizedNotesContext";
+import { OptimizedNotesProvider } from "@/contexts/OptimizedNotesContext";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { toast } from "sonner";
 import { Note } from "@/types/note";
@@ -11,10 +11,12 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { DialogManager } from "@/components/notes/page/header/DialogManager";
 import { useUserTier } from "@/hooks/useUserTier";
+import { useNotesOperationsOnly } from "@/hooks/notes/useSelectiveNotesContext";
 
 // Inner component that uses the context
 const ScalableNotesPageContent = () => {
-  const { addNote } = useOptimizedNotes();
+  // Use the new selective hooks instead of the old useOptimizedNotes
+  const { addNote } = useNotesOperationsOnly();
   const { tierLimits } = useUserTier();
   
   // Dialog states
