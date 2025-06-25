@@ -1,10 +1,11 @@
 
 import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 import { Note } from '@/types/note';
-import { useNotesWithStateMachine } from '@/hooks/notes/useNotesWithStateMachine';
+import { useNotesDataStateMachine } from '@/hooks/notes/useNotesDataStateMachine';
+import { useOptimizedNotesWithQuery } from '@/hooks/useOptimizedNotesWithQuery';
 
 interface NotesDataContextType {
-  // Core data
+  // Core data from state machine
   notes: Note[];
   totalCount: number;
   error: string | null;
@@ -17,13 +18,13 @@ interface NotesDataContextType {
   isFiltering: boolean;
   isPaginating: boolean;
   
-  // Pagination
+  // Pagination from state machine
   hasMore: boolean;
   currentPage: number;
   setCurrentPage: (page: number) => void;
   loadMore: () => void;
   
-  // Pagination mode
+  // Pagination mode from state machine
   paginationMode: 'regular' | 'infinite';
   setPaginationMode: (mode: 'regular' | 'infinite') => void;
   
@@ -36,7 +37,7 @@ interface NotesDataContextType {
   clearError: () => void;
   retry: () => void;
   
-  // Data state selectors
+  // Data state selectors from state machine
   hasNotes: boolean;
   isEmpty: boolean;
   
@@ -47,72 +48,138 @@ interface NotesDataContextType {
 const NotesDataContext = createContext<NotesDataContextType | undefined>(undefined);
 
 const NotesDataProviderInner = React.memo(({ children }: { children: ReactNode }) => {
-  const stateMachineHook = useNotesWithStateMachine();
+  const dataStateMachine = useNotesDataStateMachine();
+  const queryHook = useOptimizedNotesWithQuery();
 
-  // Memoized context value focused only on data concerns with state machine enhancements
+  // Sync query hook state with data state machine
+  React.useEffect(() => {
+    if (queryHook.loading && dataStateMachine.isIdle) {
+      // Determine the type of loading based on current state
+      if (dataStateMachine.notes.length === 0) {
+        dataStateMachine.actions.startInitialLoad();
+      } else {
+        dataStateMachine.actions.startBackgroundLoad();
+      }
+    }
+  }, [queryHook.loading, dataStateMachine.isIdle, dataStateMachine.notes.length]);
+
+  React.useEffect(() => {
+    if (!queryHook.loading && queryHook.notes.length >= 0) {
+      dataStateMachine.actions.fetchSuccess(
+        queryHook.notes,
+        queryHook.totalCount,
+        queryHook.hasMore,
+        false // For now, we don't append - this would be handled by pagination logic
+      );
+    }
+  }, [queryHook.loading, queryHook.notes, queryHook.totalCount, queryHook.hasMore]);
+
+  React.useEffect(() => {
+    if (queryHook.error) {
+      dataStateMachine.actions.fetchError(queryHook.error);
+    }
+  }, [queryHook.error]);
+
+  // Enhanced load more function
+  const loadMore = React.useCallback(async () => {
+    if (dataStateMachine.hasMore && !dataStateMachine.loading) {
+      dataStateMachine.actions.startPaginate();
+      try {
+        await queryHook.loadMore();
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to load more notes';
+        dataStateMachine.actions.fetchError(errorMessage);
+      }
+    }
+  }, [dataStateMachine.hasMore, dataStateMachine.loading, queryHook.loadMore]);
+
+  // Enhanced refresh function
+  const refreshNotes = React.useCallback(async () => {
+    dataStateMachine.actions.startRefresh();
+    try {
+      await queryHook.refreshNotes();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to refresh notes';
+      dataStateMachine.actions.fetchError(errorMessage);
+    }
+  }, [queryHook.refreshNotes]);
+
+  // Enhanced page change
+  const setCurrentPage = React.useCallback((page: number) => {
+    dataStateMachine.actions.setPage(page);
+    queryHook.setCurrentPage(page);
+  }, [queryHook.setCurrentPage]);
+
+  // Enhanced pagination mode change
+  const setPaginationMode = React.useCallback((mode: 'regular' | 'infinite') => {
+    dataStateMachine.actions.setPaginationMode(mode);
+    queryHook.setPaginationMode(mode);
+  }, [queryHook.setPaginationMode]);
+
+  // Memoized context value that uses state machine for enhanced data management
   const contextValue = useMemo(() => ({
-    // Core data
-    notes: stateMachineHook.notes,
-    totalCount: stateMachineHook.totalCount,
-    error: stateMachineHook.error,
+    // Core data from state machine
+    notes: dataStateMachine.notes,
+    totalCount: dataStateMachine.totalCount,
+    error: dataStateMachine.error,
     
     // Enhanced loading states from state machine
-    loading: stateMachineHook.loading,
-    isInitialLoading: stateMachineHook.isInitialLoading,
-    isBackgroundLoading: stateMachineHook.isBackgroundLoading,
-    isRefreshing: stateMachineHook.isRefreshing,
-    isFiltering: stateMachineHook.isFiltering,
-    isPaginating: stateMachineHook.isPaginating,
+    loading: dataStateMachine.loading,
+    isInitialLoading: dataStateMachine.isInitialLoading,
+    isBackgroundLoading: dataStateMachine.isBackgroundLoading,
+    isRefreshing: dataStateMachine.isRefreshing,
+    isFiltering: dataStateMachine.isFiltering,
+    isPaginating: dataStateMachine.isPaginating,
     
-    // Pagination
-    hasMore: stateMachineHook.hasMore,
-    currentPage: stateMachineHook.currentPage,
-    setCurrentPage: stateMachineHook.setCurrentPage,
-    loadMore: stateMachineHook.loadMore,
+    // Pagination from state machine
+    hasMore: dataStateMachine.hasMore,
+    currentPage: dataStateMachine.currentPage,
+    setCurrentPage,
+    loadMore,
     
-    // Pagination mode
-    paginationMode: stateMachineHook.paginationMode,
-    setPaginationMode: stateMachineHook.setPaginationMode,
+    // Pagination mode from state machine
+    paginationMode: dataStateMachine.paginationMode,
+    setPaginationMode,
     
     // Data refresh with enhanced error handling
-    refreshNotes: stateMachineHook.refreshNotes,
+    refreshNotes,
     
     // Error handling from state machine
-    hasError: stateMachineHook.hasError,
-    canRetry: stateMachineHook.canRetry,
-    clearError: stateMachineHook.clearError,
-    retry: stateMachineHook.retry,
+    hasError: dataStateMachine.hasError,
+    canRetry: dataStateMachine.canRetry,
+    clearError: dataStateMachine.actions.clearError,
+    retry: dataStateMachine.retry,
     
-    // Data state selectors
-    hasNotes: stateMachineHook.hasNotes,
-    isEmpty: stateMachineHook.isEmpty,
+    // Data state selectors from state machine
+    hasNotes: dataStateMachine.hasNotes,
+    isEmpty: dataStateMachine.isEmpty,
     
     // State machine state for debugging
-    state: stateMachineHook.state,
+    state: dataStateMachine.state,
   }), [
-    stateMachineHook.notes,
-    stateMachineHook.totalCount,
-    stateMachineHook.error,
-    stateMachineHook.loading,
-    stateMachineHook.isInitialLoading,
-    stateMachineHook.isBackgroundLoading,
-    stateMachineHook.isRefreshing,
-    stateMachineHook.isFiltering,
-    stateMachineHook.isPaginating,
-    stateMachineHook.hasMore,
-    stateMachineHook.currentPage,
-    stateMachineHook.setCurrentPage,
-    stateMachineHook.loadMore,
-    stateMachineHook.paginationMode,
-    stateMachineHook.setPaginationMode,
-    stateMachineHook.refreshNotes,
-    stateMachineHook.hasError,
-    stateMachineHook.canRetry,
-    stateMachineHook.clearError,
-    stateMachineHook.retry,
-    stateMachineHook.hasNotes,
-    stateMachineHook.isEmpty,
-    stateMachineHook.state,
+    dataStateMachine.notes,
+    dataStateMachine.totalCount,
+    dataStateMachine.error,
+    dataStateMachine.loading,
+    dataStateMachine.isInitialLoading,
+    dataStateMachine.isBackgroundLoading,
+    dataStateMachine.isRefreshing,
+    dataStateMachine.isFiltering,
+    dataStateMachine.isPaginating,
+    dataStateMachine.hasMore,
+    dataStateMachine.currentPage,
+    setCurrentPage,
+    loadMore,
+    dataStateMachine.paginationMode,
+    setPaginationMode,
+    refreshNotes,
+    dataStateMachine.hasError,
+    dataStateMachine.canRetry,
+    dataStateMachine.actions.clearError,
+    dataStateMachine.retry,
+    dataStateMachine.hasNotes,
+    dataStateMachine.isEmpty,
+    dataStateMachine.state,
   ]);
 
   return (

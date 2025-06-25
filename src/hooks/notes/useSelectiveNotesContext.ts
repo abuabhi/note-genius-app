@@ -3,7 +3,7 @@ import { useNotesData } from '@/contexts/notes/NotesDataContext';
 import { useNotesUI } from '@/contexts/notes/NotesUIContext';
 import { useNotesOperations } from '@/contexts/notes/NotesOperationsContext';
 
-// Granular hooks for specific concerns - reduces re-renders with state machine enhancements
+// Granular hooks for specific concerns - enhanced with state machine capabilities
 export const useNotesDataOnly = () => {
   const { notes, totalCount, loading, error, hasNotes, isEmpty } = useNotesData();
   return { notes, totalCount, loading, error, hasNotes, isEmpty };
@@ -104,7 +104,7 @@ export const useNotesOperationStates = () => {
   };
 };
 
-// Combined hooks for common use cases with state machine enhancements
+// Combined hooks for common use cases with enhanced state machine capabilities
 export const useNotesWithFilters = () => {
   const dataContext = useNotesData();
   const uiContext = useNotesUI();
@@ -118,12 +118,12 @@ export const useNotesWithFilters = () => {
     hasNotes: dataContext.hasNotes,
     isEmpty: dataContext.isEmpty,
     
-    // Enhanced loading states
+    // Enhanced loading states from data state machine
     isInitialLoading: dataContext.isInitialLoading,
     isBackgroundLoading: dataContext.isBackgroundLoading,
     isFiltering: dataContext.isFiltering,
     
-    // Enhanced filters with state machine
+    // Enhanced filters with filter state machine
     searchTerm: uiContext.searchTerm,
     setSearchTerm: uiContext.setSearchTerm,
     sortType: uiContext.sortType,
@@ -151,12 +151,12 @@ export const useNotesWithPagination = () => {
     hasNotes: dataContext.hasNotes,
     isEmpty: dataContext.isEmpty,
     
-    // Enhanced loading states
+    // Enhanced loading states from data state machine
     isInitialLoading: dataContext.isInitialLoading,
     isBackgroundLoading: dataContext.isBackgroundLoading,
     isPaginating: dataContext.isPaginating,
     
-    // Pagination
+    // Pagination with enhanced state machine
     hasMore: dataContext.hasMore,
     currentPage: dataContext.currentPage,
     setCurrentPage: dataContext.setCurrentPage,
@@ -167,7 +167,7 @@ export const useNotesWithPagination = () => {
     // Data refresh with enhanced error handling
     refreshNotes: dataContext.refreshNotes,
     
-    // Error handling
+    // Enhanced error handling from data state machine
     hasError: dataContext.hasError,
     canRetry: dataContext.canRetry,
     clearError: dataContext.clearError,
@@ -175,16 +175,16 @@ export const useNotesWithPagination = () => {
   };
 };
 
-// New hook for comprehensive state machine information
+// Enhanced hook for comprehensive state machine information
 export const useNotesStateMachineDebug = () => {
-  const { state } = useNotesData();
+  const { state: dataState } = useNotesData();
   const { isAnyOperationInProgress } = useNotesOperations();
   const { isFiltering, hasActiveFilters, activeFilterCount, filterError } = useNotesUI();
   const loadingStates = useNotesLoadingStates();
   const errorState = useNotesErrorState();
   
   return {
-    currentState: state,
+    currentDataState: dataState,
     isAnyOperationInProgress,
     isFiltering,
     hasActiveFilters,
@@ -192,5 +192,13 @@ export const useNotesStateMachineDebug = () => {
     filterError,
     loadingStates,
     errorState,
+    
+    // Enhanced debug information
+    stateMachineStatus: {
+      data: dataState,
+      hasActiveFilters,
+      operationsInProgress: isAnyOperationInProgress,
+      errorCount: errorState.error ? 1 : 0,
+    },
   };
 };
