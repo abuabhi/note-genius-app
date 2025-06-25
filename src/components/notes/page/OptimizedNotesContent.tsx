@@ -1,6 +1,5 @@
 
 import { useState } from 'react';
-import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
 import { Note } from '@/types/note';
 import { ProgressiveLoader } from '@/components/performance/ProgressiveLoader';
 import { OptimizedNotesFilters } from './OptimizedNotesFilters';
@@ -12,20 +11,28 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 
+// Use selective hooks to minimize re-renders
+import { useNotesWithPagination, useNotesFiltersOnly, useNotesOperationsOnly } from '@/hooks/notes/useSelectiveNotesContext';
+
 export const OptimizedNotesContent = () => {
+  // Use selective hooks instead of the monolithic context
   const {
     notes,
     totalCount,
     loading,
-    error,
-    searchTerm,
-    selectedSubject,
     hasMore,
-    loadMore,
-    refreshNotes,
+    loadMore
+  } = useNotesWithPagination();
+
+  const {
+    searchTerm,
+    selectedSubject
+  } = useNotesFiltersOnly();
+
+  const {
     updateNote,
     deleteNote
-  } = useOptimizedNotes();
+  } = useNotesOperationsOnly();
 
   // SINGLE SOURCE OF TRUTH for view mode - only defined here
   const { viewMode, setViewMode } = useViewPreferences('notes');
@@ -53,17 +60,26 @@ export const OptimizedNotesContent = () => {
     }
   };
 
-  if (error) {
-    return (
-      <ErrorState 
-        message={`Failed to load notes: ${error || 'Unknown error'}`}
-        onRetry={refreshNotes}
-      />
-    );
-  }
+  // Create a separate error handling component to avoid re-renders
+  const ErrorHandler = () => {
+    const { refreshNotes, error } = useNotesWithPagination();
+    
+    if (error) {
+      return (
+        <ErrorState 
+          message={`Failed to load notes: ${error || 'Unknown error'}`}
+          onRetry={refreshNotes}
+        />
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="space-y-8">
+      {/* Error handling */}
+      <ErrorHandler />
+
       {/* Enhanced Filters */}
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-lg shadow-mint-500/5 p-6">
         <OptimizedNotesFilters 

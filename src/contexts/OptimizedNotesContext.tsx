@@ -1,7 +1,10 @@
 
 import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 import { Note } from '@/types/note';
-import { useOptimizedNotesWithQuery } from '@/hooks/useOptimizedNotesWithQuery';
+import { NotesContextProvider } from './notes/NotesContextProvider';
+import { useNotesData } from './notes/NotesDataContext';
+import { useNotesUI } from './notes/NotesUIContext';
+import { useNotesOperations } from './notes/NotesOperationsContext';
 
 interface OptimizedNotesContextType {
   // Core data
@@ -54,60 +57,61 @@ interface OptimizedNotesContextType {
 
 const OptimizedNotesContext = createContext<OptimizedNotesContextType | undefined>(undefined);
 
+// Inner component that consumes the split contexts and provides backward compatibility
 const OptimizedNotesProviderInner = React.memo(({ children }: { children: ReactNode }) => {
-  const queryHook = useOptimizedNotesWithQuery();
+  const dataContext = useNotesData();
+  const uiContext = useNotesUI();
+  const operationsContext = useNotesOperations();
 
-  // Memoized context value with React Query integration
+  // Memoized context value that combines all split contexts for backward compatibility
   const contextValue = useMemo(() => ({
     // Core data
-    notes: queryHook.notes,
-    filteredNotes: queryHook.notes, // Same as notes since filtering is server-side
-    paginatedNotes: queryHook.notes, // Same as notes since pagination is server-side
-    totalCount: queryHook.totalCount,
-    loading: queryHook.loading,
-    isLoading: queryHook.loading,
-    error: queryHook.error,
+    notes: dataContext.notes,
+    filteredNotes: dataContext.notes, // Same as notes since filtering is server-side
+    paginatedNotes: dataContext.notes, // Same as notes since pagination is server-side
+    totalCount: dataContext.totalCount,
+    loading: dataContext.loading,
+    isLoading: dataContext.loading,
+    error: dataContext.error,
     
     // Pagination
-    hasMore: queryHook.hasMore,
-    currentPage: queryHook.currentPage,
-    setCurrentPage: queryHook.setCurrentPage,
-    loadMore: queryHook.loadMore,
+    hasMore: dataContext.hasMore,
+    currentPage: dataContext.currentPage,
+    setCurrentPage: dataContext.setCurrentPage,
+    loadMore: dataContext.loadMore,
     
     // Additional properties for compatibility
-    refetch: queryHook.refreshNotes,
+    refetch: dataContext.refreshNotes,
     
     // Search and filtering
-    searchTerm: queryHook.searchTerm,
-    setSearchTerm: queryHook.setSearchTerm,
-    sortType: queryHook.sortType,
-    setSortType: queryHook.setSortType,
-    showArchived: queryHook.showArchived,
-    setShowArchived: queryHook.setShowArchived,
-    selectedSubject: queryHook.selectedSubject,
-    setSelectedSubject: queryHook.setSelectedSubject,
+    searchTerm: uiContext.searchTerm,
+    setSearchTerm: uiContext.setSearchTerm,
+    sortType: uiContext.sortType,
+    setSortType: uiContext.setSortType,
+    showArchived: uiContext.showArchived,
+    setShowArchived: uiContext.setShowArchived,
+    selectedSubject: uiContext.selectedSubject,
+    setSelectedSubject: uiContext.setSelectedSubject,
     
     // Legacy pagination (for compatibility)
-    totalPages: Math.ceil(queryHook.totalCount / 20),
+    totalPages: Math.ceil(dataContext.totalCount / 20),
     
     // Operations
-    refreshNotes: queryHook.refreshNotes,
-    addNote: queryHook.addNote,
-    updateNote: queryHook.updateNote,
-    deleteNote: queryHook.deleteNote,
-    pinNote: queryHook.pinNote,
-    archiveNote: async (id: string, archived: boolean) => {
-      await queryHook.updateNote(id, { archived });
-    },
+    refreshNotes: dataContext.refreshNotes,
+    addNote: operationsContext.addNote,
+    updateNote: operationsContext.updateNote,
+    deleteNote: operationsContext.deleteNote,
+    pinNote: operationsContext.pinNote,
+    archiveNote: operationsContext.archiveNote,
     
     // New React Query enhanced features
-    paginationMode: queryHook.paginationMode,
-    setPaginationMode: queryHook.setPaginationMode,
-    isCreating: queryHook.isCreating,
-    isUpdating: queryHook.isUpdating,
-    isDeleting: queryHook.isDeleting,
-    isPinning: queryHook.isPinning,
-  }), [queryHook]);
+    paginationMode: dataContext.paginationMode,
+    setPaginationMode: dataContext.setPaginationMode,
+    isCreating: operationsContext.isCreating,
+    isUpdating: operationsContext.isUpdating,
+    isDeleting: operationsContext.isDeleting,
+    isPinning: operationsContext.isPinning,
+  }), [dataContext, uiContext, operationsContext]);
 
   return (
     <OptimizedNotesContext.Provider value={contextValue}>
@@ -118,11 +122,14 @@ const OptimizedNotesProviderInner = React.memo(({ children }: { children: ReactN
 
 OptimizedNotesProviderInner.displayName = 'OptimizedNotesProviderInner';
 
+// Main provider that wraps everything
 export const OptimizedNotesProvider = ({ children }: { children: ReactNode }) => {
   return (
-    <OptimizedNotesProviderInner>
-      {children}
-    </OptimizedNotesProviderInner>
+    <NotesContextProvider>
+      <OptimizedNotesProviderInner>
+        {children}
+      </OptimizedNotesProviderInner>
+    </NotesContextProvider>
   );
 };
 
