@@ -44,7 +44,7 @@ export const NoteCardMetadata = ({ note, viewMode = 'grid' }: NoteCardMetadataPr
 
   if (isListView) {
     return (
-      <div className="flex items-center gap-3 text-sm text-gray-500">
+      <div className="flex items-center gap-3 text-sm text-gray-500 flex-shrink-0">
         {/* Read time */}
         <div className="flex items-center gap-1">
           <Clock className="h-3 w-3" />
@@ -70,36 +70,39 @@ export const NoteCardMetadata = ({ note, viewMode = 'grid' }: NoteCardMetadataPr
     );
   }
 
-  // Grid view - redesigned cleaner footer
+  // Grid view - centered footer with lime green styling
   return (
-    <div className="flex justify-between items-center w-full">
-      {/* Left side - simplified metadata */}
-      <div className="flex items-center gap-4 text-sm text-gray-500">
-        {/* Read time */}
-        <div className="flex items-center gap-1">
-          <Clock className="h-3 w-3" />
-          <span>{readTime}m</span>
+    <div className="flex flex-col items-center justify-center w-full space-y-2">
+      {/* Metadata - centered with lime green colors */}
+      <div className="flex items-center justify-center gap-4 text-sm">
+        {/* Read time in lime green */}
+        <div className="flex items-center gap-1 text-lime-500">
+          <Clock className="h-4 w-4" />
+          <span className="font-medium">{readTime}m</span>
         </div>
         
-        {/* Date */}
-        <span className="text-xs">{formattedDate}</span>
+        {/* Date in bold lime green */}
+        <div className="flex items-center gap-1 text-lime-500">
+          <Calendar className="h-4 w-4" />
+          <span className="font-bold">{formattedDate}</span>
+        </div>
 
         {/* Tags count - only if tags exist */}
         {note.tags && note.tags.length > 0 && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 text-gray-500">
             <Tag className="h-3 w-3" />
             <span className="text-xs">{note.tags.length}</span>
           </div>
         )}
       </div>
 
-      {/* Right side - cleaner Study Button */}
+      {/* Study Button - centered */}
       <Button
         onClick={handleGoToStudyMode}
-        className="bg-mint-600 hover:bg-mint-700 text-white rounded-lg px-3 py-1.5 h-auto text-xs font-medium transition-all duration-200"
+        className="bg-mint-600 hover:bg-mint-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200"
         size="sm"
       >
-        <Sparkles className="h-3 w-3 mr-1" />
+        <Sparkles className="h-4 w-4 mr-2" />
         Study
       </Button>
     </div>

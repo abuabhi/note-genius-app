@@ -32,11 +32,11 @@ export const NoteCard = ({
   if (isListView) {
     return (
       <Card 
-        className="group relative overflow-hidden transition-all duration-200 cursor-pointer bg-white border border-gray-200 hover:border-mint-300 hover:shadow-md rounded-xl p-4 w-full max-w-full"
+        className="group relative overflow-hidden transition-all duration-200 cursor-pointer bg-white border border-gray-200 hover:border-mint-300 hover:shadow-md rounded-xl p-4 w-full"
         onClick={() => onNoteClick(note)}
       >
-        <div className="flex items-center justify-between gap-4 w-full min-w-0">
-          {/* Left side - Subject, Title, Content - with proper width constraints */}
+        <div className="flex items-center justify-between gap-4 w-full">
+          {/* Left side - Subject, Title, Content - constrained width */}
           <div className="flex-1 min-w-0 max-w-[70%]">
             <NoteCardHeader 
               note={note}
@@ -47,9 +47,9 @@ export const NoteCard = ({
           </div>
           
           {/* Right side - Metadata and Actions - fixed width */}
-          <div className="flex items-center gap-3 flex-shrink-0 max-w-[30%]">
+          <div className="flex items-center gap-3 flex-shrink-0 w-auto max-w-[30%]">
             <NoteCardMetadata note={note} viewMode={viewMode} />
-            <div className="relative">
+            <div className="relative flex-shrink-0">
               <NoteCardActions 
                 noteId={note.id}
                 noteTitle={note.title}
@@ -66,7 +66,7 @@ export const NoteCard = ({
     );
   }
 
-  // Grid view with improved spacing and design
+  // Grid view with improved design
   return (
     <Card 
       className={`
@@ -75,7 +75,7 @@ export const NoteCard = ({
         hover:scale-[1.02] hover:-translate-y-1
         ${note.pinned ? 'ring-2 ring-mint-400/50 border-mint-300' : ''}
         ${note.archived ? 'opacity-75' : ''}
-        rounded-xl min-h-[260px] flex flex-col
+        rounded-xl min-h-[280px] flex flex-col
       `}
       onClick={() => onNoteClick(note)}
     >
@@ -92,7 +92,7 @@ export const NoteCard = ({
         />
       </div>
 
-      <CardHeader className="relative p-6 pb-4 flex-1">
+      <CardHeader className="relative p-6 pb-3 flex-1">
         <NoteCardHeader 
           note={note}
           onPin={onPin}
@@ -107,8 +107,8 @@ export const NoteCard = ({
         />
       </CardHeader>
       
-      {/* Redesigned footer with better spacing */}
-      <CardFooter className="flex justify-between items-center px-6 py-3 mt-auto border-t border-gray-50">
+      {/* Footer with centered design */}
+      <CardFooter className="px-6 py-4 mt-auto border-t border-gray-50">
         <NoteCardMetadata note={note} viewMode={viewMode} />
       </CardFooter>
     </Card>
