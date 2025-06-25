@@ -35,9 +35,9 @@ export const NoteCard = ({
         className="group relative cursor-pointer bg-white border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all duration-200 rounded-lg overflow-hidden"
         onClick={() => onNoteClick(note)}
       >
-        <div className="flex items-center p-3 w-full min-w-0">
-          {/* Left section - Subject and Title (flexible) */}
-          <div className="flex-1 min-w-0 mr-4">
+        <div className="flex items-center py-2 px-3 w-full min-w-0 gap-3">
+          {/* Subject and Title - compact inline */}
+          <div className="flex items-center gap-2 min-w-0 flex-shrink-0">
             <NoteCardHeader 
               note={note}
               onPin={onPin}
@@ -46,8 +46,8 @@ export const NoteCard = ({
             />
           </div>
           
-          {/* Middle section - Content preview (flexible) */}
-          <div className="hidden md:flex flex-1 min-w-0 mr-4">
+          {/* Content preview - flexible width */}
+          <div className="flex-1 min-w-0 hidden md:block">
             <NoteCardContent 
               note={note}
               stripMarkdown={stripMarkdown}
@@ -55,7 +55,7 @@ export const NoteCard = ({
             />
           </div>
           
-          {/* Right section - Metadata and actions (fixed) */}
+          {/* Metadata and actions - fixed width */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <NoteCardMetadata note={note} viewMode={viewMode} />
             <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
