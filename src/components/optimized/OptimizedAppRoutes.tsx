@@ -25,34 +25,32 @@ const LoadingFallback = () => (
 
 export const OptimizedAppRoutes = () => {
   return (
-    <Layout>
-      <Suspense fallback={<LoadingFallback />}>
-        <Routes>
-          {/* Dashboard */}
-          <Route path="/dashboard" element={<DashboardPage />} />
-          
-          {/* Flashcards routes */}
-          <Route path="/flashcards" element={<FlashcardsPage />} />
-          
-          {/* Study routes - using consistent :id parameter */}
-          <Route path="/flashcards/study/:id" element={<FlashcardStudyPage />} />
-          <Route path="/study/:id" element={<FlashcardStudyPage />} />
-          
-          {/* Notes routes */}
-          <Route path="/notes" element={<NotesPage />} />
-          <Route path="/notes/study/:noteId" element={<NoteStudyPage />} />
-          
-          {/* Analytics */}
-          <Route path="/analytics" element={<AnalyticsPage />} />
-          
-          {/* Calendar/Schedule */}
-          <Route path="/calendar" element={<SchedulePage />} />
-          <Route path="/schedule" element={<SchedulePage />} />
-          
-          {/* Catch all for 404 */}
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </Suspense>
-    </Layout>
+    <Suspense fallback={<LoadingFallback />}>
+      <Routes>
+        {/* Dashboard */}
+        <Route path="/dashboard" element={<Layout><DashboardPage /></Layout>} />
+        
+        {/* Flashcards routes */}
+        <Route path="/flashcards" element={<Layout><FlashcardsPage /></Layout>} />
+        
+        {/* Study routes - these handle their own Layout to avoid double headers */}
+        <Route path="/flashcards/study/:id" element={<FlashcardStudyPage />} />
+        <Route path="/study/:id" element={<FlashcardStudyPage />} />
+        
+        {/* Notes routes */}
+        <Route path="/notes" element={<Layout><NotesPage /></Layout>} />
+        <Route path="/notes/study/:noteId" element={<NoteStudyPage />} />
+        
+        {/* Analytics */}
+        <Route path="/analytics" element={<Layout><AnalyticsPage /></Layout>} />
+        
+        {/* Calendar/Schedule */}
+        <Route path="/calendar" element={<Layout><SchedulePage /></Layout>} />
+        <Route path="/schedule" element={<Layout><SchedulePage /></Layout>} />
+        
+        {/* Catch all for 404 */}
+        <Route path="*" element={<Layout><NotFoundPage /></Layout>} />
+      </Routes>
+    </Suspense>
   );
 };

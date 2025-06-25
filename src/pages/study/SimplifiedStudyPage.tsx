@@ -8,15 +8,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { Home, BookOpen } from "lucide-react";
 
 export const SimplifiedStudyPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -61,30 +52,6 @@ export const SimplifiedStudyPage = () => {
   if (error) {
     return (
       <div className="container mx-auto p-6">
-        <div className="mb-6">
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/dashboard" className="flex items-center gap-1">
-                  <Home className="h-3 w-3" />
-                  Dashboard
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/flashcards" className="flex items-center gap-1">
-                  <BookOpen className="h-3 w-3" />
-                  Flashcards
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Error</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </div>
-
         <Alert variant="destructive" className="max-w-2xl mx-auto">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="flex flex-col gap-4">
@@ -115,30 +82,6 @@ export const SimplifiedStudyPage = () => {
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
-        <div className="mb-6">
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/dashboard" className="flex items-center gap-1">
-                  <Home className="h-3 w-3" />
-                  Dashboard
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/flashcards" className="flex items-center gap-1">
-                  <BookOpen className="h-3 w-3" />
-                  Flashcards
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Loading...</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </div>
-
         <div className="max-w-4xl mx-auto space-y-6">
           <Skeleton className="h-8 w-64" />
           <div className="border rounded-lg p-8">
@@ -157,30 +100,6 @@ export const SimplifiedStudyPage = () => {
   if (!flashcards || flashcards.length === 0) {
     return (
       <div className="container mx-auto p-6">
-        <div className="mb-6">
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/dashboard" className="flex items-center gap-1">
-                  <Home className="h-3 w-3" />
-                  Dashboard
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/flashcards" className="flex items-center gap-1">
-                  <BookOpen className="h-3 w-3" />
-                  Flashcards
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Empty Set</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </div>
-
         <Alert className="max-w-2xl mx-auto">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="flex flex-col gap-4">
@@ -202,31 +121,6 @@ export const SimplifiedStudyPage = () => {
 
   return (
     <div className="container mx-auto p-6">
-      {/* Breadcrumb Navigation */}
-      <div className="mb-6">
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/dashboard" className="flex items-center gap-1">
-                <Home className="h-3 w-3" />
-                Dashboard
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/flashcards" className="flex items-center gap-1">
-                <BookOpen className="h-3 w-3" />
-                Flashcards
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>{setName}</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-      </div>
-
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
           <div>
