@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 
-export type ViewMode = 'grid' | 'list';
+export type ViewMode = 'grid' | 'list' | 'compact';
 
 export const useViewPreferences = (key: string, defaultValue: ViewMode = 'grid') => {
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
