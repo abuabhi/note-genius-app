@@ -38,8 +38,8 @@ export const NoteCardHeader = ({ note, onPin, onDelete, viewMode = 'grid' }: Not
     const plainTextContent = stripMarkdown(note.content || note.description || '');
     
     return (
-      <div className="flex items-center gap-3 min-w-0">
-        {/* Subject badge */}
+      <div className="flex items-center gap-3 min-w-0 w-full">
+        {/* Subject badge - fixed width */}
         <Badge 
           className="px-2 py-1 text-xs font-medium border-0 flex-shrink-0"
           style={{ 
@@ -51,12 +51,12 @@ export const NoteCardHeader = ({ note, onPin, onDelete, viewMode = 'grid' }: Not
           {subjectName}
         </Badge>
         
-        {/* Title */}
-        <h3 className="font-semibold text-gray-900 truncate flex-shrink-0 max-w-[200px]">
+        {/* Title - fixed width with green color */}
+        <h3 className="font-semibold text-green-600 truncate flex-shrink-0 w-48">
           {note.title}
         </h3>
         
-        {/* Content preview - single line */}
+        {/* Content preview - takes remaining space */}
         {plainTextContent && (
           <p className="text-sm text-gray-600 truncate flex-1 min-w-0">
             {plainTextContent}
@@ -66,7 +66,7 @@ export const NoteCardHeader = ({ note, onPin, onDelete, viewMode = 'grid' }: Not
     );
   }
 
-  // Grid view
+  // Grid view with green title
   return (
     <>
       {/* Subject badge at the top */}
@@ -83,8 +83,8 @@ export const NoteCardHeader = ({ note, onPin, onDelete, viewMode = 'grid' }: Not
         </Badge>
       </div>
       
-      {/* Title below the subject */}
-      <CardTitle className="text-lg font-semibold text-gray-900 leading-tight pr-12">
+      {/* Title below the subject - now green */}
+      <CardTitle className="text-lg font-semibold text-green-600 leading-tight pr-12">
         {note.title}
       </CardTitle>
     </>

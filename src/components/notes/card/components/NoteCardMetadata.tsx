@@ -44,7 +44,7 @@ export const NoteCardMetadata = ({ note, viewMode = 'grid' }: NoteCardMetadataPr
 
   if (isListView) {
     return (
-      <div className="flex items-center gap-4 text-sm text-gray-500">
+      <div className="flex items-center gap-3 text-sm text-gray-500">
         {/* Read time */}
         <div className="flex items-center gap-1">
           <Clock className="h-3 w-3" />
@@ -70,40 +70,36 @@ export const NoteCardMetadata = ({ note, viewMode = 'grid' }: NoteCardMetadataPr
     );
   }
 
-  // Grid view
+  // Grid view - redesigned cleaner footer
   return (
     <div className="flex justify-between items-center w-full">
-      {/* Left side - metadata */}
-      <div className="flex items-center gap-3 text-sm text-gray-600">
+      {/* Left side - simplified metadata */}
+      <div className="flex items-center gap-4 text-sm text-gray-500">
         {/* Read time */}
         <div className="flex items-center gap-1">
           <Clock className="h-3 w-3" />
-          <span className="font-medium">{readTime} min read</span>
+          <span>{readTime}m</span>
         </div>
         
         {/* Date */}
-        <span className="font-bold">
-          {formattedDate}
-        </span>
+        <span className="text-xs">{formattedDate}</span>
 
-        {/* Tags count */}
+        {/* Tags count - only if tags exist */}
         {note.tags && note.tags.length > 0 && (
           <div className="flex items-center gap-1">
-            <Tag className="h-3 w-3 text-slate-400" />
-            <span className="text-xs text-slate-500">
-              {note.tags.length}
-            </span>
+            <Tag className="h-3 w-3" />
+            <span className="text-xs">{note.tags.length}</span>
           </div>
         )}
       </div>
 
-      {/* Right side - Study Button */}
+      {/* Right side - cleaner Study Button */}
       <Button
         onClick={handleGoToStudyMode}
-        className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white font-medium rounded-xl transition-all duration-200 shadow-lg shadow-mint-500/25 hover:shadow-mint-500/40 hover:scale-[1.02] px-3 py-1.5 h-auto text-xs"
+        className="bg-mint-600 hover:bg-mint-700 text-white rounded-lg px-3 py-1.5 h-auto text-xs font-medium transition-all duration-200"
         size="sm"
       >
-        <Sparkles className="h-3 w-3 mr-1.5" />
+        <Sparkles className="h-3 w-3 mr-1" />
         Study
       </Button>
     </div>

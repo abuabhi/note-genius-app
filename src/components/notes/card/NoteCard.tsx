@@ -32,12 +32,12 @@ export const NoteCard = ({
   if (isListView) {
     return (
       <Card 
-        className="group relative overflow-hidden transition-all duration-200 cursor-pointer bg-white border border-gray-200 hover:border-mint-300 hover:shadow-md rounded-xl p-4"
+        className="group relative overflow-hidden transition-all duration-200 cursor-pointer bg-white border border-gray-200 hover:border-mint-300 hover:shadow-md rounded-xl p-4 w-full max-w-full"
         onClick={() => onNoteClick(note)}
       >
-        <div className="flex items-center justify-between gap-4">
-          {/* Left side - Subject, Title, Content */}
-          <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-4 w-full min-w-0">
+          {/* Left side - Subject, Title, Content - with proper width constraints */}
+          <div className="flex-1 min-w-0 max-w-[70%]">
             <NoteCardHeader 
               note={note}
               onPin={onPin}
@@ -46,8 +46,8 @@ export const NoteCard = ({
             />
           </div>
           
-          {/* Right side - Metadata and Actions */}
-          <div className="flex items-center gap-3 flex-shrink-0">
+          {/* Right side - Metadata and Actions - fixed width */}
+          <div className="flex items-center gap-3 flex-shrink-0 max-w-[30%]">
             <NoteCardMetadata note={note} viewMode={viewMode} />
             <div className="relative">
               <NoteCardActions 
@@ -66,7 +66,7 @@ export const NoteCard = ({
     );
   }
 
-  // Grid view (default)
+  // Grid view with improved spacing and design
   return (
     <Card 
       className={`
@@ -75,7 +75,7 @@ export const NoteCard = ({
         hover:scale-[1.02] hover:-translate-y-1
         ${note.pinned ? 'ring-2 ring-mint-400/50 border-mint-300' : ''}
         ${note.archived ? 'opacity-75' : ''}
-        rounded-xl min-h-[280px] flex flex-col
+        rounded-xl min-h-[260px] flex flex-col
       `}
       onClick={() => onNoteClick(note)}
     >
@@ -107,7 +107,8 @@ export const NoteCard = ({
         />
       </CardHeader>
       
-      <CardFooter className="flex justify-between items-center px-6 py-4 pt-0 mt-auto border-t border-gray-100">
+      {/* Redesigned footer with better spacing */}
+      <CardFooter className="flex justify-between items-center px-6 py-3 mt-auto border-t border-gray-50">
         <NoteCardMetadata note={note} viewMode={viewMode} />
       </CardFooter>
     </Card>
