@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/auth';
 import { useCacheStrategy } from './useCacheStrategy';
 import { useProductionMetrics } from './useProductionMetrics';
+import { useQueryDeduplication } from '@/hooks/notes/useQueryDeduplication';
 import { Note } from '@/types/note';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -25,6 +26,7 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
   const { user } = useAuth();
   const { cacheConfigs } = useCacheStrategy();
   const { recordMetric } = useProductionMetrics('NotesQuery');
+  const { deduplicateQuery } = useQueryDeduplication();
   const queryClient = useQueryClient();
 
   const {
@@ -50,155 +52,163 @@ export const useOptimizedNotesQuery = (params: NotesQueryParams = {}) => {
     queryFn: async (): Promise<NotesQueryResult> => {
       if (!user) return { notes: [], totalCount: 0, hasMore: false };
 
-      const startTime = performance.now();
+      const queryKeyString = JSON.stringify(queryKey);
       
-      try {
-        console.log(`🔍 Optimized notes query - Filtering by subject: "${subject}"`);
+      return deduplicateQuery(queryKeyString, async () => {
+        const startTime = performance.now();
+        
+        try {
+          console.log(`🔍 Optimized notes query - Filtering by subject: "${subject}"`);
 
-        // ENHANCED APPROACH: Query all notes and filter in memory for better performance with complex logic
-        let query = supabase
-          .from('notes')
-          .select(`
-            *,
-            user_subjects!notes_subject_id_fkey (
-              id,
-              name
-            ),
-            note_tags (
-              tags (
+          // ENHANCED APPROACH: Query all notes and filter in memory for better performance with complex logic
+          let query = supabase
+            .from('notes')
+            .select(`
+              *,
+              user_subjects!notes_subject_id_fkey (
                 id,
-                name,
-                color
+                name
+              ),
+              note_tags (
+                tags (
+                  id,
+                  name,
+                  color
+                )
               )
-            )
-          `, { count: 'exact' })
-          .eq('user_id', user.id);
+            `, { count: 'exact' })
+            .eq('user_id', user.id);
 
-        // Apply archive filter
-        if (!showArchived) {
-          query = query.eq('archived', false);
-        }
+          // Apply archive filter
+          if (!showArchived) {
+            query = query.eq('archived', false);
+          }
 
-        // Apply search filter at database level for performance
-        if (search && search.trim() !== '') {
-          query = query.ilike('title', `%${search}%`);
-        }
+          // Apply search filter at database level for performance
+          if (search && search.trim() !== '') {
+            query = query.ilike('title', `%${search}%`);
+          }
 
-        // Apply sorting with pinned notes first
-        switch (sortBy) {
-          case 'newest':
-            query = query.order('pinned', { ascending: false })
-                         .order('updated_at', { ascending: false });
-            break;
-          case 'oldest':
-            query = query.order('pinned', { ascending: false })
-                         .order('created_at', { ascending: true });
-            break;
-          case 'alphabetical':
-            query = query.order('pinned', { ascending: false })
-                         .order('title', { ascending: true });
-            break;
-        }
+          // Apply sorting with pinned notes first
+          switch (sortBy) {
+            case 'newest':
+              query = query.order('pinned', { ascending: false })
+                           .order('updated_at', { ascending: false });
+              break;
+            case 'oldest':
+              query = query.order('pinned', { ascending: false })
+                           .order('created_at', { ascending: true });
+              break;
+            case 'alphabetical':
+              query = query.order('pinned', { ascending: false })
+                           .order('title', { ascending: true });
+              break;
+          }
 
-        // Execute the query to get all notes first
-        const { data: notes, error, count } = await query;
+          // Execute the query to get all notes first
+          const { data: notes, error, count } = await query;
 
-        if (error) {
-          console.error('❌ Optimized notes query error:', error);
+          if (error) {
+            console.error('❌ Optimized notes query error:', error);
+            throw error;
+          }
+
+          let filteredNotes = notes || [];
+
+          // Apply subject filter in memory to handle both subject_id and legacy subject field
+          if (subject && subject !== 'all' && subject.trim() !== '') {
+            console.log(`🎯 Applying subject filter: "${subject}"`);
+            
+            filteredNotes = filteredNotes.filter(note => {
+              // Check if note has subject_id and matches via user_subjects join
+              const hasSubjectIdMatch = note.user_subjects?.name === subject;
+              
+              // Check legacy subject field from database
+              const hasLegacySubjectMatch = note.subject === subject;
+              
+              console.log(`Note "${note.title}": subject_id match=${hasSubjectIdMatch}, legacy match=${hasLegacySubjectMatch}`);
+              
+              return hasSubjectIdMatch || hasLegacySubjectMatch;
+            });
+          }
+
+          // Apply pagination to filtered results
+          const totalCount = filteredNotes.length;
+          const offset = (page - 1) * pageSize;
+          const paginatedNotes = filteredNotes.slice(offset, offset + pageSize);
+
+          console.log(`✅ Optimized notes query returned ${paginatedNotes.length} notes for subject: "${subject}" (${totalCount} total filtered)`);
+          
+          // Transform data to match Note interface - standardize on 'subject'
+          const transformedNotes: Note[] = paginatedNotes.map(note => ({
+            id: note.id,
+            title: note.title,
+            description: note.description || '',
+            content: note.content || '',
+            date: note.date,
+            // Use the joined subject name, fallback to existing subject field, then 'Uncategorized'
+            subject: note.user_subjects?.name || note.subject || 'Uncategorized',
+            sourceType: (note.source_type || 'manual') as 'manual' | 'import' | 'scan',
+            archived: note.archived || false,
+            pinned: note.pinned || false,
+            subject_id: note.subject_id,
+            tags: note.note_tags?.map(nt => nt.tags).filter(Boolean) || [],
+            summary: note.summary,
+            summary_generated_at: note.summary_generated_at,
+            summary_status: note.summary_status as 'pending' | 'generating' | 'completed' | 'failed',
+            key_points: note.key_points,
+            key_points_generated_at: note.key_points_generated_at,
+            markdown_content: note.markdown_content,
+            markdown_content_generated_at: note.markdown_content_generated_at,
+            improved_content: note.improved_content,
+            improved_content_generated_at: note.improved_content_generated_at
+          }));
+
+          const duration = performance.now() - startTime;
+          recordMetric('optimized_notes_query_duration', duration, {
+            notesCount: transformedNotes.length,
+            hasFilters: !!(search || subject !== 'all'),
+            page,
+            queryType: 'enhanced_memory_filter_deduplicated'
+          });
+
+          return {
+            notes: transformedNotes,
+            totalCount,
+            hasMore: totalCount > offset + pageSize
+          };
+
+        } catch (error) {
+          const duration = performance.now() - startTime;
+          recordMetric('optimized_notes_query_error', duration, {
+            error: error instanceof Error ? error.message : 'Unknown error',
+            queryType: 'enhanced_memory_filter_deduplicated'
+          });
           throw error;
         }
-
-        let filteredNotes = notes || [];
-
-        // Apply subject filter in memory to handle both subject_id and legacy subject field
-        if (subject && subject !== 'all' && subject.trim() !== '') {
-          console.log(`🎯 Applying subject filter: "${subject}"`);
-          
-          filteredNotes = filteredNotes.filter(note => {
-            // Check if note has subject_id and matches via user_subjects join
-            const hasSubjectIdMatch = note.user_subjects?.name === subject;
-            
-            // Check legacy subject field from database
-            const hasLegacySubjectMatch = note.subject === subject;
-            
-            console.log(`Note "${note.title}": subject_id match=${hasSubjectIdMatch}, legacy match=${hasLegacySubjectMatch}`);
-            
-            return hasSubjectIdMatch || hasLegacySubjectMatch;
-          });
-        }
-
-        // Apply pagination to filtered results
-        const totalCount = filteredNotes.length;
-        const offset = (page - 1) * pageSize;
-        const paginatedNotes = filteredNotes.slice(offset, offset + pageSize);
-
-        console.log(`✅ Optimized notes query returned ${paginatedNotes.length} notes for subject: "${subject}" (${totalCount} total filtered)`);
-        
-        // Transform data to match Note interface - standardize on 'subject'
-        const transformedNotes: Note[] = paginatedNotes.map(note => ({
-          id: note.id,
-          title: note.title,
-          description: note.description || '',
-          content: note.content || '',
-          date: note.date,
-          // Use the joined subject name, fallback to existing subject field, then 'Uncategorized'
-          subject: note.user_subjects?.name || note.subject || 'Uncategorized',
-          sourceType: (note.source_type || 'manual') as 'manual' | 'import' | 'scan',
-          archived: note.archived || false,
-          pinned: note.pinned || false,
-          subject_id: note.subject_id,
-          tags: note.note_tags?.map(nt => nt.tags).filter(Boolean) || [],
-          summary: note.summary,
-          summary_generated_at: note.summary_generated_at,
-          summary_status: note.summary_status as 'pending' | 'generating' | 'completed' | 'failed',
-          key_points: note.key_points,
-          key_points_generated_at: note.key_points_generated_at,
-          markdown_content: note.markdown_content,
-          markdown_content_generated_at: note.markdown_content_generated_at,
-          improved_content: note.improved_content,
-          improved_content_generated_at: note.improved_content_generated_at
-        }));
-
-        const duration = performance.now() - startTime;
-        recordMetric('optimized_notes_query_duration', duration, {
-          notesCount: transformedNotes.length,
-          hasFilters: !!(search || subject !== 'all'),
-          page,
-          queryType: 'enhanced_memory_filter'
-        });
-
-        return {
-          notes: transformedNotes,
-          totalCount,
-          hasMore: totalCount > offset + pageSize
-        };
-
-      } catch (error) {
-        const duration = performance.now() - startTime;
-        recordMetric('optimized_notes_query_error', duration, {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          queryType: 'enhanced_memory_filter'
-        });
-        throw error;
-      }
+      });
     },
     enabled: !!user,
     ...cacheConfigs.user,
-    staleTime: 30 * 1000, // 30 seconds for faster responsiveness
+    staleTime: 30 * 1000, // 30 seconds for faster responsiveness with deduplication
     gcTime: 2 * 60 * 1000, // 2 minutes
   });
 
-  // Optimized prefetch for next page
+  // Optimized prefetch for next page with deduplication
   const prefetchNextPage = () => {
     if (data?.hasMore) {
+      const nextPageKey = ['optimized-notes', user?.id, {
+        ...params,
+        page: page + 1
+      }];
+      
       queryClient.prefetchQuery({
-        queryKey: ['optimized-notes', user?.id, {
-          ...params,
-          page: page + 1
-        }],
+        queryKey: nextPageKey,
         queryFn: async () => {
-          // Use the same optimized query logic for prefetch
-          return { notes: [], totalCount: 0, hasMore: false };
+          // This will be deduplicated if already in progress
+          return deduplicateQuery(JSON.stringify(nextPageKey), async () => {
+            return { notes: [], totalCount: 0, hasMore: false };
+          });
         },
         staleTime: 30 * 1000
       });

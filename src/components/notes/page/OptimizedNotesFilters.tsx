@@ -1,4 +1,5 @@
 
+import React, { memo } from 'react';
 import { FilterMenu } from '@/components/notes/FilterMenu';
 import { NoteSorter } from '@/components/notes/NoteSorter';
 import { ViewToggle } from './ViewToggle';
@@ -10,7 +11,10 @@ interface OptimizedNotesFiltersProps {
   onViewModeChange: (mode: ViewMode) => void;
 }
 
-export const OptimizedNotesFilters = ({ viewMode, onViewModeChange }: OptimizedNotesFiltersProps) => {
+export const OptimizedNotesFilters = memo(({ 
+  viewMode, 
+  onViewModeChange 
+}: OptimizedNotesFiltersProps) => {
   console.log('🔍 OptimizedNotesFilters - Received viewMode prop:', viewMode);
 
   return (
@@ -32,4 +36,6 @@ export const OptimizedNotesFilters = ({ viewMode, onViewModeChange }: OptimizedN
       </div>
     </div>
   );
-};
+});
+
+OptimizedNotesFilters.displayName = 'OptimizedNotesFilters';
