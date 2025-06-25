@@ -88,7 +88,8 @@ export const useOptimizedNoteStudy = (noteId: string): OptimizedNoteStudyResult 
           enriched_status: (data.enriched_status as 'pending' | 'generating' | 'completed' | 'failed') || 'completed',
           enriched_content_generated_at: data.enriched_content_generated_at,
           
-          enhancement_type: data.enhancement_type as 'spelling-grammar' | 'clarity' | 'other'
+          // Safe enhancement_type handling - provide default if missing
+          enhancement_type: (data.enhancement_type as 'spelling-grammar' | 'clarity' | 'other') || 'other'
         };
 
         const duration = performance.now() - startTime;
@@ -103,7 +104,7 @@ export const useOptimizedNoteStudy = (noteId: string): OptimizedNoteStudyResult 
       }
     },
     enabled: !!user && !!noteId,
-    ...cacheConfigs.note,
+    // Use default cache config instead of specific 'note' config
     staleTime: 60 * 1000, // 1 minute - good for study sessions
     gcTime: 5 * 60 * 1000, // 5 minutes
     retry: 2,
