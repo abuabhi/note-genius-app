@@ -84,6 +84,7 @@ export const useNotesWithPagination = () => {
     notes: dataContext.notes,
     totalCount: dataContext.totalCount,
     loading: dataContext.loading,
+    error: dataContext.error,
     
     // Pagination
     hasMore: dataContext.hasMore,
@@ -92,5 +93,8 @@ export const useNotesWithPagination = () => {
     loadMore: dataContext.loadMore,
     paginationMode: dataContext.paginationMode,
     setPaginationMode: dataContext.setPaginationMode,
+    
+    // Data refresh
+    refreshNotes: dataContext.refreshNotes,
   };
 };
