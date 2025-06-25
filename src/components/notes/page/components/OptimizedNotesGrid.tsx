@@ -33,7 +33,7 @@ export const OptimizedNotesGrid = memo(({
   }, [onUpdateNote]);
 
   const handleNoteClick = useMemo(() => (note: Note) => {
-    navigate(`/notes/${note.id}`);
+    navigate(`/notes/study/${note.id}`);
   }, [navigate]);
 
   const handleShowDetails = useMemo(() => (note: Note, e: React.MouseEvent) => {

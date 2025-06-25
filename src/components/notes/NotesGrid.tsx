@@ -46,7 +46,7 @@ export const NotesGrid = ({ notes, viewMode = 'grid' }: NotesGridProps) => {
   };
 
   const handleNoteClick = (note: Note) => {
-    navigate(`/notes/${note.id}`);
+    navigate(`/notes/study/${note.id}`);
   };
 
   const handleShowDetails = (note: Note, e: React.MouseEvent) => {
