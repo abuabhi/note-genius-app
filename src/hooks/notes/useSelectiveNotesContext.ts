@@ -1,4 +1,3 @@
-
 import { useNotesData } from '@/contexts/notes/NotesDataContext';
 import { useNotesUI } from '@/contexts/notes/NotesUIContext';
 import { useNotesOperations } from '@/contexts/notes/NotesOperationsContext';
@@ -91,7 +90,14 @@ export const useNotesOperationStates = () => {
     isPinning, 
     isUpdatingNote, 
     isDeletingNote, 
-    isAnyOperationInProgress 
+    isAnyOperationInProgress,
+    activeOperationCount,
+    hasOperationError,
+    operationError,
+    clearOperationError,
+    recentOperations,
+    successfulOperationsCount,
+    failedOperationsCount,
   } = useNotesOperations();
   return { 
     isCreating, 
@@ -100,7 +106,14 @@ export const useNotesOperationStates = () => {
     isPinning, 
     isUpdatingNote, 
     isDeletingNote, 
-    isAnyOperationInProgress 
+    isAnyOperationInProgress,
+    activeOperationCount,
+    hasOperationError,
+    operationError,
+    clearOperationError,
+    recentOperations,
+    successfulOperationsCount,
+    failedOperationsCount,
   };
 };
 
@@ -178,7 +191,15 @@ export const useNotesWithPagination = () => {
 // Enhanced hook for comprehensive state machine information
 export const useNotesStateMachineDebug = () => {
   const { state: dataState } = useNotesData();
-  const { isAnyOperationInProgress } = useNotesOperations();
+  const { 
+    isAnyOperationInProgress, 
+    activeOperationCount,
+    hasOperationError,
+    operationError,
+    recentOperations,
+    successfulOperationsCount,
+    failedOperationsCount,
+  } = useNotesOperations();
   const { isFiltering, hasActiveFilters, activeFilterCount, filterError } = useNotesUI();
   const loadingStates = useNotesLoadingStates();
   const errorState = useNotesErrorState();
@@ -186,6 +207,9 @@ export const useNotesStateMachineDebug = () => {
   return {
     currentDataState: dataState,
     isAnyOperationInProgress,
+    activeOperationCount,
+    hasOperationError,
+    operationError,
     isFiltering,
     hasActiveFilters,
     activeFilterCount,
@@ -198,7 +222,16 @@ export const useNotesStateMachineDebug = () => {
       data: dataState,
       hasActiveFilters,
       operationsInProgress: isAnyOperationInProgress,
-      errorCount: errorState.error ? 1 : 0,
+      activeOperationCount,
+      errorCount: (errorState.error ? 1 : 0) + (operationError ? 1 : 0) + (filterError ? 1 : 0),
+    },
+    
+    // Operation statistics
+    operationStats: {
+      recentOperations: recentOperations.slice(0, 5), // Last 5 operations
+      successfulOperationsCount,
+      failedOperationsCount,
+      totalOperations: successfulOperationsCount + failedOperationsCount,
     },
   };
 };
