@@ -1,8 +1,8 @@
 
 import Layout from "@/components/layout/Layout";
 import { OptimizedNotesContent } from "@/components/notes/page/OptimizedNotesContent";
+import { OptimizedNotesProvider } from "@/contexts/OptimizedNotesContext";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { useOptimizedNotes } from "@/contexts/OptimizedNotesContext";
 import { toast } from "sonner";
 import { Note } from "@/types/note";
 import { StandardPageHeader } from "@/components/ui/StandardPageHeader";
@@ -12,8 +12,9 @@ import { useState } from "react";
 import { DialogManager } from "@/components/notes/page/header/DialogManager";
 import { useUserTier } from "@/hooks/useUserTier";
 
-const ScalableNotesPage = () => {
-  useRequireAuth();
+// Inner component that uses the context
+const ScalableNotesPageContent = () => {
+  const { useOptimizedNotes } = require("@/contexts/OptimizedNotesContext");
   const { addNote } = useOptimizedNotes();
   const { tierLimits } = useUserTier();
   
@@ -79,35 +80,45 @@ const ScalableNotesPage = () => {
   );
 
   return (
-    <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
-        <StandardPageHeader
-          title="Notes"
-          description="Create, organize, and manage your study notes"
-          icon={<FileText className="h-6 w-6 text-white" />}
-          breadcrumbs={breadcrumbs}
-          actions={actions}
-        />
-        
-        <div className="container mx-auto px-6 py-8">
-          <OptimizedNotesContent />
-        </div>
-
-        {/* Dialog Manager for note creation */}
-        <DialogManager 
-          onSaveNote={handleSaveNote}
-          onScanNote={handleSaveNote}
-          onImportNote={handleImportNote}
-          tierLimits={tierLimits}
-          isManualDialogOpen={isManualDialogOpen}
-          isScanDialogOpen={false}
-          isImportDialogOpen={isImportDialogOpen}
-          isSubmitting={false}
-          setIsManualDialogOpen={setIsManualDialogOpen}
-          setIsScanDialogOpen={() => {}}
-          setIsImportDialogOpen={setIsImportDialogOpen}
-        />
+    <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+      <StandardPageHeader
+        title="Notes"
+        description="Create, organize, and manage your study notes"
+        icon={<FileText className="h-6 w-6 text-white" />}
+        breadcrumbs={breadcrumbs}
+        actions={actions}
+      />
+      
+      <div className="container mx-auto px-6 py-8">
+        <OptimizedNotesContent />
       </div>
+
+      {/* Dialog Manager for note creation */}
+      <DialogManager 
+        onSaveNote={handleSaveNote}
+        onScanNote={handleSaveNote}
+        onImportNote={handleImportNote}
+        tierLimits={tierLimits}
+        isManualDialogOpen={isManualDialogOpen}
+        isScanDialogOpen={false}
+        isImportDialogOpen={isImportDialogOpen}
+        isSubmitting={false}
+        setIsManualDialogOpen={setIsManualDialogOpen}
+        setIsScanDialogOpen={() => {}}
+        setIsImportDialogOpen={setIsImportDialogOpen}
+      />
+    </div>
+  );
+};
+
+const ScalableNotesPage = () => {
+  useRequireAuth();
+
+  return (
+    <Layout>
+      <OptimizedNotesProvider>
+        <ScalableNotesPageContent />
+      </OptimizedNotesProvider>
     </Layout>
   );
 };

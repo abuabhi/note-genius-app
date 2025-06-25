@@ -1,70 +1,51 @@
 
-import { useEffect, useRef, useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { fetchNotesFromSupabase } from './noteUtils';
+import { useState, useEffect } from 'react';
 import { Note } from '@/types/note';
+import { fetchNotesFromSupabase, NotesQueryOptions } from './noteUtils';
 
-export function useFetchNotes(
-  setNotes: React.Dispatch<React.SetStateAction<Note[]>>,
-  setLoading: React.Dispatch<React.SetStateAction<boolean>>
-) {
-  const { toast } = useToast();
-  const hasFetchedRef = useRef(false);
+export const useFetchNotes = (options: NotesQueryOptions = {}) => {
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const retryCountRef = useRef(0);
-  const maxRetries = 3;
-  
-  const loadNotes = async (isRetry = false) => {
-    if (hasFetchedRef.current && !isRetry) return;
-    
+
+  useEffect(() => {
+    const loadNotes = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const result = await fetchNotesFromSupabase(options);
+        setNotes(result.notes);
+      } catch (err) {
+        console.error('Error fetching notes:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch notes');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadNotes();
+  }, [JSON.stringify(options)]);
+
+  const refetch = async () => {
     try {
-      if (!isRetry) {
-        hasFetchedRef.current = true;
-      }
-      
-      console.log('🔄 Loading notes...', isRetry ? '(retry)' : '(initial)');
+      setLoading(true);
       setError(null);
-      
-      const fetchedNotes = await fetchNotesFromSupabase();
-      
-      console.log('✅ Notes loaded successfully:', fetchedNotes.length);
-      setNotes(fetchedNotes);
-      setLoading(false);
-      retryCountRef.current = 0;
-      
-    } catch (error) {
-      console.error('❌ Error loading notes:', error);
-      setError(error instanceof Error ? error.message : 'Unknown error');
-      
-      // Auto-retry logic
-      if (retryCountRef.current < maxRetries) {
-        retryCountRef.current++;
-        console.log(`🔄 Auto-retrying... (${retryCountRef.current}/${maxRetries})`);
-        setTimeout(() => loadNotes(true), 1000 * retryCountRef.current);
-        return;
+      const result = await fetchNotesFromSupabase(options);
+      if (result.notes && result.notes.length > 0) {
+        setNotes(result.notes);
       }
-      
-      // Final failure
-      setNotes([]);
+    } catch (err) {
+      console.error('Error refetching notes:', err);
+      setError(err instanceof Error ? err.message : 'Failed to refetch notes');
+    } finally {
       setLoading(false);
-      
-      toast({
-        description: "Failed to load notes. Please refresh the page or try again.",
-        variant: "destructive",
-      });
     }
   };
 
-  const retryManually = () => {
-    retryCountRef.current = 0;
-    hasFetchedRef.current = false;
-    setLoading(true);
-    loadNotes(true);
+  return {
+    notes,
+    loading,
+    error,
+    refetch
   };
-
-  useEffect(() => {
-    loadNotes();
-  }, []);
-
-  return { error, retryManually };
-}
+};
