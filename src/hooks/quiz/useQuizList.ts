@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -71,49 +72,55 @@ export const useQuizList = (filters: {
 
       console.log(`✅ Fetched ${quizzes?.length || 0} quizzes`);
 
-      // Get question counts in a separate query for better performance
+      // Get question counts and subject data in parallel
       if (quizzes && quizzes.length > 0) {
         const quizIds = quizzes.map(q => q.id);
-        const { data: questionCounts } = await supabase
-          .from('quiz_questions')
-          .select('quiz_id')
-          .in('quiz_id', quizIds);
+        const subjectIds = quizzes.map(q => q.subject_id).filter(Boolean);
+
+        // Fetch question counts and subjects in parallel
+        const [questionCountData, subjectsData] = await Promise.all([
+          supabase
+            .from('quiz_questions')
+            .select('quiz_id')
+            .in('quiz_id', quizIds),
+          subjectIds.length > 0 
+            ? supabase
+                .from('academic_subjects')
+                .select('id, name')
+                .in('id', subjectIds)
+            : Promise.resolve({ data: [] })
+        ]);
 
         // Count questions per quiz
-        const countMap = questionCounts?.reduce((acc, q) => {
+        const countMap = questionCountData.data?.reduce((acc, q) => {
           acc[q.quiz_id] = (acc[q.quiz_id] || 0) + 1;
           return acc;
         }, {} as Record<string, number>) || {};
 
-        // Get academic subjects for the quizzes that have them
-        const subjectIds = quizzes.map(q => q.subject_id).filter(Boolean);
-        let subjectsMap = {};
-        
-        if (subjectIds.length > 0) {
-          const { data: subjects } = await supabase
-            .from('academic_subjects')
-            .select('id, name')
-            .in('id', subjectIds);
-          
-          subjectsMap = subjects?.reduce((acc, s) => {
-            acc[s.id] = s;
-            return acc;
-          }, {} as Record<string, any>) || {};
-        }
+        // Map subjects by ID
+        const subjectsMap = subjectsData.data?.reduce((acc, s) => {
+          acc[s.id] = s;
+          return acc;
+        }, {} as Record<string, any>) || {};
 
         // Transform the data to include question count and subject info
         const enrichedQuizzes = quizzes.map(quiz => ({
           ...quiz,
           questionCount: countMap[quiz.id] || 0,
           academic_subjects: quiz.subject_id ? subjectsMap[quiz.subject_id] : null,
-          // Keep the old structure for compatibility
-          quiz_questions: Array(countMap[quiz.id] || 0).fill({}),
         }));
 
         return { quizzes: enrichedQuizzes };
       }
 
-      return { quizzes: quizzes || [] };
+      // Return quizzes with default values for questionCount and academic_subjects
+      const enrichedQuizzes = quizzes?.map(quiz => ({
+        ...quiz,
+        questionCount: 0,
+        academic_subjects: null,
+      })) || [];
+
+      return { quizzes: enrichedQuizzes };
     },
     staleTime: 30 * 1000, // 30 seconds - reduced from default for better UX
     gcTime: 5 * 60 * 1000, // 5 minutes
