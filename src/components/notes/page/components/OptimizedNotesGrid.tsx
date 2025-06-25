@@ -113,6 +113,15 @@ export const OptimizedNotesGrid = memo(({
           </div>
         </div>
       )}
+
+      {/* Simple Notes Counter */}
+      {totalCount && totalCount > 0 && (
+        <div className="flex justify-center py-4">
+          <div className="text-sm text-gray-600">
+            {notes.length} of {totalCount} {totalCount === 1 ? 'note' : 'notes'}
+          </div>
+        </div>
+      )}
     </div>
   );
 });
