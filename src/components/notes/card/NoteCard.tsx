@@ -32,12 +32,12 @@ export const NoteCard = ({
   if (isListView) {
     return (
       <Card 
-        className="group relative cursor-pointer bg-white border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all duration-200 rounded-lg overflow-hidden"
+        className="group relative cursor-pointer bg-white border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all duration-200 rounded-lg overflow-hidden w-full max-w-full"
         onClick={() => onNoteClick(note)}
       >
-        <div className="flex items-center py-2 px-3 w-full min-w-0 gap-3">
-          {/* Subject and Title - compact inline */}
-          <div className="flex items-center gap-2 min-w-0 flex-shrink-0">
+        <div className="flex items-center py-2 px-3 w-full overflow-hidden">
+          {/* Subject and Title - fixed width with proper constraints */}
+          <div className="flex items-center gap-2 min-w-0 w-2/5 max-w-[40%] flex-shrink-0">
             <NoteCardHeader 
               note={note}
               onPin={onPin}
@@ -46,8 +46,8 @@ export const NoteCard = ({
             />
           </div>
           
-          {/* Content preview - flexible width */}
-          <div className="flex-1 min-w-0 hidden md:block">
+          {/* Content preview - flexible but constrained width */}
+          <div className="flex-1 min-w-0 max-w-[35%] hidden md:block px-2">
             <NoteCardContent 
               note={note}
               stripMarkdown={stripMarkdown}
@@ -56,7 +56,7 @@ export const NoteCard = ({
           </div>
           
           {/* Metadata and actions - fixed width */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0 w-1/4 max-w-[25%] justify-end">
             <NoteCardMetadata note={note} viewMode={viewMode} />
             <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
               <NoteCardActions 

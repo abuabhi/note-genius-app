@@ -43,12 +43,12 @@ export const NoteCardMetadata = ({ note, viewMode = 'grid' }: NoteCardMetadataPr
 
   if (isListView) {
     return (
-      <div className="flex items-center gap-1 text-xs text-gray-500">
-        <span className="hidden sm:inline">{readTime}m</span>
-        <span className="hidden lg:inline">{formattedDate}</span>
+      <div className="flex items-center gap-1 text-xs text-gray-500 overflow-hidden">
+        <span className="hidden sm:inline flex-shrink-0">{readTime}m</span>
+        <span className="hidden lg:inline flex-shrink-0 truncate">{formattedDate}</span>
         <Button
           onClick={handleGoToStudyMode}
-          className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 h-5 text-xs ml-1"
+          className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 h-6 text-xs flex-shrink-0"
           size="sm"
         >
           <Sparkles className="h-3 w-3 mr-1" />

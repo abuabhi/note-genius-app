@@ -18,11 +18,13 @@ export const NoteCardContent = ({ note, stripMarkdown, viewMode = 'grid' }: Note
   const isListView = viewMode === 'list';
 
   if (isListView) {
-    // Content preview for list view - single line
+    // Content preview for list view - single line with strict truncation
     return (
-      <p className="text-xs text-gray-600 truncate">
-        {plainTextContent}
-      </p>
+      <div className="min-w-0 overflow-hidden">
+        <p className="text-xs text-gray-600 truncate whitespace-nowrap">
+          {plainTextContent}
+        </p>
+      </div>
     );
   }
 
