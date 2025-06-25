@@ -31,14 +31,14 @@ export const NoteCard = ({
   
   if (isListView) {
     return (
-      <div className="w-full max-w-full overflow-hidden">
+      <div className="w-full">
         <Card 
-          className="group relative cursor-pointer bg-white border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all duration-200 rounded-lg overflow-hidden"
+          className="group relative cursor-pointer bg-white border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all duration-200 rounded-lg"
           onClick={() => onNoteClick(note)}
         >
-          <div className="flex items-center py-2 px-3 w-full max-w-full overflow-hidden gap-2">
-            {/* Subject and Title - 50% of width */}
-            <div className="flex items-center gap-2 min-w-0 w-1/2 overflow-hidden">
+          <div className="flex items-center py-3 px-4 w-full gap-3">
+            {/* Subject and Title Section - flexible width */}
+            <div className="flex items-center gap-3 min-w-0 flex-shrink-0">
               <NoteCardHeader 
                 note={note}
                 onPin={onPin}
@@ -47,8 +47,8 @@ export const NoteCard = ({
               />
             </div>
             
-            {/* Content preview - 30% of width, hidden on mobile */}
-            <div className="min-w-0 w-[30%] hidden md:block overflow-hidden">
+            {/* Content Preview - takes remaining space */}
+            <div className="flex-1 min-w-0">
               <NoteCardContent 
                 note={note}
                 stripMarkdown={stripMarkdown}
@@ -56,10 +56,10 @@ export const NoteCard = ({
               />
             </div>
             
-            {/* Metadata and actions - 20% of width */}
-            <div className="flex items-center gap-1 w-[20%] justify-end overflow-hidden">
+            {/* Metadata and Actions - fixed width */}
+            <div className="flex items-center gap-2 flex-shrink-0">
               <NoteCardMetadata note={note} viewMode={viewMode} />
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0">
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <NoteCardActions 
                   noteId={note.id}
                   noteTitle={note.title}

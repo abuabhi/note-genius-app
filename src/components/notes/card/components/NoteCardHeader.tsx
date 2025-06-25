@@ -32,15 +32,15 @@ export const NoteCardHeader = ({ note, onPin, onDelete, viewMode = 'grid' }: Not
 
   if (isListView) {
     return (
-      <div className="flex items-center gap-2 min-w-0 w-full overflow-hidden">
-        {/* Subject badge - fixed width */}
+      <div className="flex items-center gap-3">
+        {/* Subject badge - no truncation */}
         <Badge className="bg-gray-100 text-gray-700 border-0 text-xs font-medium flex-shrink-0">
           <Book className="h-3 w-3 mr-1" />
-          <span className="truncate max-w-[50px]">{subjectName}</span>
+          <span>{subjectName}</span>
         </Badge>
         
-        {/* Title - flexible width with strict truncation */}
-        <h3 className="font-semibold text-green-600 text-sm truncate min-w-0 flex-1 whitespace-nowrap overflow-hidden">
+        {/* Title - truncated */}
+        <h3 className="font-semibold text-green-600 text-sm truncate max-w-[200px]">
           {note.title}
         </h3>
       </div>
