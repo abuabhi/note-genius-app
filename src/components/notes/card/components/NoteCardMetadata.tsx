@@ -56,10 +56,10 @@ export const NoteCardMetadata = ({ note, viewMode = 'grid' }: NoteCardMetadataPr
           <span className="hidden sm:inline">{formattedDate}</span>
         </div>
         
-        {/* Study button */}
+        {/* Study button with lower z-index */}
         <Button
           onClick={handleGoToStudyMode}
-          className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 h-6 text-xs"
+          className="relative z-10 bg-green-600 hover:bg-green-700 text-white px-2 py-1 h-6 text-xs"
           size="sm"
         >
           <Sparkles className="h-3 w-3 mr-1" />

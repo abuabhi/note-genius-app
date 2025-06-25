@@ -34,7 +34,7 @@ export const NoteCardActions = ({
 
   return (
     <div 
-      className="absolute top-2 right-2"
+      className="relative z-30"
       onClick={(e) => {
         e.stopPropagation();
         e.preventDefault();
