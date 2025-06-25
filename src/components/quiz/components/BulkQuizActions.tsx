@@ -5,20 +5,10 @@ import {
   Trash2, 
   Copy, 
   Share, 
-  Archive,
   X,
   CheckSquare 
 } from 'lucide-react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { UnifiedBulkDeleteDialog } from '@/components/ui/unified/UnifiedBulkDeleteDialog';
 import { toast } from '@/hooks/use-toast';
 
 interface BulkQuizActionsProps {
@@ -44,22 +34,9 @@ export const BulkQuizActions: React.FC<BulkQuizActionsProps> = ({
   if (selectedCount === 0) return null;
 
   const handleBulkDelete = async () => {
-    try {
-      await onBulkDelete(Array.from(selectedQuizIds));
-      toast({
-        title: "Quizzes deleted",
-        description: `${selectedCount} quiz${selectedCount === 1 ? '' : 'es'} deleted successfully.`,
-      });
-      onClearSelection();
-      onRefresh();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete quizzes. Please try again.",
-        variant: "destructive",
-      });
-    }
-    setShowDeleteDialog(false);
+    await onBulkDelete(Array.from(selectedQuizIds));
+    onClearSelection();
+    onRefresh();
   };
 
   const handleDuplicate = () => {
@@ -142,26 +119,13 @@ export const BulkQuizActions: React.FC<BulkQuizActionsProps> = ({
         </div>
       </div>
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Selected Quizzes</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete {selectedCount} quiz{selectedCount === 1 ? '' : 'es'}? 
-              This action cannot be undone and all quiz data will be permanently removed.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleBulkDelete}
-              className="bg-red-600 text-white hover:bg-red-700"
-            >
-              Delete {selectedCount} Quiz{selectedCount === 1 ? '' : 'es'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <UnifiedBulkDeleteDialog
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={handleBulkDelete}
+        itemCount={selectedCount}
+        itemType="quiz"
+      />
     </>
   );
 };

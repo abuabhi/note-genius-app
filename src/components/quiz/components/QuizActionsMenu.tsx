@@ -20,7 +20,7 @@ import {
 import { DeleteQuizDialog } from '../DeleteQuizDialog';
 import { useNavigate } from 'react-router-dom';
 
-interface Quiz {
+interface QuizActionsMenuQuiz {
   id: string;
   title: string;
   description: string | null;
@@ -35,7 +35,7 @@ interface Quiz {
 }
 
 interface QuizActionsMenuProps {
-  quiz: Quiz;
+  quiz: QuizActionsMenuQuiz;
   currentUserId?: string;
   onRefresh?: () => void;
 }
@@ -138,7 +138,22 @@ export const QuizActionsMenu: React.FC<QuizActionsMenuProps> = ({
       <DeleteQuizDialog
         isOpen={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}
-        quiz={quiz}
+        quiz={{
+          id: quiz.id,
+          title: quiz.title,
+          description: quiz.description,
+          subject_id: null,
+          section_id: null,
+          grade_id: null,
+          source_type: 'custom',
+          source_id: null,
+          user_id: quiz.user_id || null,
+          is_public: quiz.is_public,
+          created_at: quiz.created_at,
+          updated_at: quiz.created_at,
+          country_id: null,
+          education_system: null
+        }}
         onSuccess={handleDeleteSuccess}
       />
     </>

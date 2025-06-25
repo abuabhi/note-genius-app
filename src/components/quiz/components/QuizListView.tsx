@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -109,7 +108,6 @@ export const QuizListView: React.FC<QuizListViewProps> = ({
                 {isSelectable && (
                   <Checkbox
                     checked={selectedQuizIds?.has(quiz.id) || false}
-                    onChange={(e) => handleSelectionChange(e, quiz.id)}
                     onClick={(e) => handleSelectionChange(e, quiz.id)}
                     className="flex-shrink-0"
                   />
@@ -147,6 +145,7 @@ export const QuizListView: React.FC<QuizListViewProps> = ({
                       />
                     </div>
                   </div>
+                  
                   
                   <div className="flex flex-wrap gap-2 mt-3">
                     <Badge variant="secondary" className="flex items-center gap-1 bg-mint-50 text-mint-700 border-mint-200">
