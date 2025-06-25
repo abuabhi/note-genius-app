@@ -27,7 +27,7 @@ const NotesGridWrapper = React.memo(() => {
   }
 
   if (error) {
-    return <ErrorState error={error} />;
+    return <ErrorState message={error} />;
   }
 
   if (notes.length === 0 && !hasActiveFilters) {
