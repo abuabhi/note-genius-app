@@ -24,7 +24,6 @@ export const OptimizedNotesGrid = memo(({
   const navigate = useNavigate();
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
-  // Memoized handlers to prevent unnecessary re-renders
   const handlePin = useMemo(() => async (id: string, isPinned: boolean) => {
     try {
       await onUpdateNote(id, { pinned: !isPinned });
@@ -42,15 +41,13 @@ export const OptimizedNotesGrid = memo(({
     // Note details functionality can be added here if needed
   }, []);
 
-  // Separate pinned and unpinned notes
   const pinnedNotes = useMemo(() => notes.filter(note => note.pinned), [notes]);
   const unpinnedNotes = useMemo(() => notes.filter(note => !note.pinned), [notes]);
 
-  // Optimize grid layout based on view mode
   const gridClasses = useMemo(() => {
     switch (viewMode) {
       case 'list':
-        return 'flex flex-col space-y-4';
+        return 'flex flex-col space-y-3';
       case 'compact':
         return 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4';
       case 'grid':
@@ -58,8 +55,6 @@ export const OptimizedNotesGrid = memo(({
         return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6';
     }
   }, [viewMode]);
-
-  console.log(`🎯 OptimizedNotesGrid rendering ${notes.length} notes in ${viewMode} mode`);
 
   return (
     <div className="space-y-8">
@@ -81,6 +76,7 @@ export const OptimizedNotesGrid = memo(({
                 onPin={handlePin}
                 onDelete={onDeleteNote}
                 confirmDelete={confirmDelete}
+                viewMode={viewMode}
               />
             ))}
           </div>
@@ -107,6 +103,7 @@ export const OptimizedNotesGrid = memo(({
                 onPin={handlePin}
                 onDelete={onDeleteNote}
                 confirmDelete={confirmDelete}
+                viewMode={viewMode}
               />
             ))}
           </div>

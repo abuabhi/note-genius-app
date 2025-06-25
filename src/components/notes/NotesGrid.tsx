@@ -7,8 +7,14 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { NoteCard } from "./card/NoteCard";
 import { EmptyNotesState } from "./EmptyNotesState";
+import { ViewMode } from "@/hooks/useViewPreferences";
 
-export const NotesGrid = ({ notes }: { notes: Note[] }) => {
+interface NotesGridProps {
+  notes: Note[];
+  viewMode?: ViewMode;
+}
+
+export const NotesGrid = ({ notes, viewMode = 'grid' }: NotesGridProps) => {
   const { pinNote, deleteNote } = useOptimizedNotes();
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -29,10 +35,8 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
   };
 
   const handleDelete = async (id: string): Promise<void> => {
-    console.log("NotesGrid - Delete initiated for note ID:", id);
     try {
       await deleteNote(id);
-      console.log("NotesGrid - Delete completed for note ID:", id);
       toast.success("Note deleted successfully");
     } catch (error) {
       console.error("NotesGrid - Error deleting note:", error);
@@ -51,9 +55,13 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
     setIsDetailsOpen(true);
   };
 
+  const gridClasses = viewMode === 'list' 
+    ? "flex flex-col space-y-3" 
+    : "flex flex-col space-y-4";
+
   return (
     <>
-      <div className="flex flex-col space-y-4" data-guide="notes-list">
+      <div className={gridClasses} data-guide="notes-list">
         {notes.map((note) => (
           <NoteCard
             key={note.id}
@@ -63,6 +71,7 @@ export const NotesGrid = ({ notes }: { notes: Note[] }) => {
             onPin={handlePin}
             onDelete={handleDelete}
             confirmDelete={null}
+            viewMode={viewMode}
           />
         ))}
       </div>

@@ -1,44 +1,38 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tag, Sparkles, Clock } from "lucide-react";
+import { Tag, Sparkles, Clock, Calendar } from "lucide-react";
 import { Note } from "@/types/note";
+import { ViewMode } from "@/hooks/useViewPreferences";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 
 interface NoteCardMetadataProps {
   note: Note;
+  viewMode?: ViewMode;
 }
 
-// Calculate estimated read time based on content length
 const calculateReadTime = (content: string): number => {
   const wordsPerMinute = 200;
   const wordCount = content.trim().split(/\s+/).length;
   const readTime = Math.ceil(wordCount / wordsPerMinute);
-  return Math.max(1, readTime); // Minimum 1 minute
+  return Math.max(1, readTime);
 };
 
-export const NoteCardMetadata = ({ note }: NoteCardMetadataProps) => {
+export const NoteCardMetadata = ({ note, viewMode = 'grid' }: NoteCardMetadataProps) => {
   const navigate = useNavigate();
   
   const handleGoToStudyMode = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    console.log("🎯 Study button clicked - Navigating to study mode for note:", note.id, note.title);
     navigate(`/notes/study/${note.id}`);
   };
 
-  // Calculate read time from content
   const content = note.content || note.description || '';
   const readTime = calculateReadTime(content);
-
-  // Use browser's default timezone
   const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  
-  // Create a date object and adjust for timezone
   const noteDate = new Date(note.date);
   
-  // Format date as dd-MMM-yyyy (e.g., 15-May-2023) using user's timezone
   const formattedDate = new Intl.DateTimeFormat('en-GB', {
     day: '2-digit',
     month: 'short', 
@@ -46,6 +40,37 @@ export const NoteCardMetadata = ({ note }: NoteCardMetadataProps) => {
     timeZone: userTimezone
   }).format(noteDate);
 
+  const isListView = viewMode === 'list';
+
+  if (isListView) {
+    return (
+      <div className="flex items-center gap-4 text-sm text-gray-500">
+        {/* Read time */}
+        <div className="flex items-center gap-1">
+          <Clock className="h-3 w-3" />
+          <span>{readTime}m</span>
+        </div>
+        
+        {/* Date */}
+        <div className="flex items-center gap-1">
+          <Calendar className="h-3 w-3" />
+          <span>{formattedDate}</span>
+        </div>
+
+        {/* Study Button */}
+        <Button
+          onClick={handleGoToStudyMode}
+          className="bg-mint-600 hover:bg-mint-700 text-white rounded-lg px-3 py-1 h-7 text-xs"
+          size="sm"
+        >
+          <Sparkles className="h-3 w-3 mr-1" />
+          Study
+        </Button>
+      </div>
+    );
+  }
+
+  // Grid view
   return (
     <div className="flex justify-between items-center w-full">
       {/* Left side - metadata */}
@@ -75,9 +100,8 @@ export const NoteCardMetadata = ({ note }: NoteCardMetadataProps) => {
       {/* Right side - Study Button */}
       <Button
         onClick={handleGoToStudyMode}
-        className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white font-medium rounded-xl transition-all duration-200 relative z-10 shadow-lg shadow-mint-500/25 hover:shadow-mint-500/40 hover:scale-[1.02] px-3 py-1.5 h-auto text-xs"
+        className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white font-medium rounded-xl transition-all duration-200 shadow-lg shadow-mint-500/25 hover:shadow-mint-500/40 hover:scale-[1.02] px-3 py-1.5 h-auto text-xs"
         size="sm"
-        type="button"
       >
         <Sparkles className="h-3 w-3 mr-1.5" />
         Study

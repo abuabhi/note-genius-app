@@ -23,14 +23,12 @@ interface VirtualizedNoteItemProps {
 export const VirtualizedNoteItem = memo(({ index, style, data }: VirtualizedNoteItemProps) => {
   const { notes, itemsPerRow, onPin, onDelete, onNoteClick, onShowDetails, viewMode } = data;
 
-  // Memoize row notes calculation
   const rowNotes = useMemo(() => {
     const startIndex = index * itemsPerRow;
     const endIndex = Math.min(startIndex + itemsPerRow, notes.length);
     return notes.slice(startIndex, endIndex);
   }, [notes, index, itemsPerRow]);
 
-  // Don't render empty rows
   if (rowNotes.length === 0) {
     return <div style={style} />;
   }
@@ -38,7 +36,7 @@ export const VirtualizedNoteItem = memo(({ index, style, data }: VirtualizedNote
   const gridClasses = useMemo(() => {
     switch (viewMode) {
       case 'list':
-        return 'flex flex-col space-y-4';
+        return 'flex flex-col space-y-3';
       case 'compact':
         return 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4';
       case 'grid':
@@ -59,6 +57,7 @@ export const VirtualizedNoteItem = memo(({ index, style, data }: VirtualizedNote
             onPin={onPin}
             onDelete={onDelete}
             confirmDelete={null}
+            viewMode={viewMode}
           />
         ))}
       </div>

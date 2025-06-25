@@ -36,7 +36,7 @@ const PinnedNotesSection = memo(({
   const gridClasses = useMemo(() => {
     switch (viewMode) {
       case 'list':
-        return "flex flex-col space-y-4";
+        return "flex flex-col space-y-3";
       case 'compact':
         return "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4";
       case 'grid':
@@ -62,6 +62,7 @@ const PinnedNotesSection = memo(({
             onPin={onPin}
             onDelete={onDelete}
             confirmDelete={null}
+            viewMode={viewMode}
           />
         ))}
       </div>
@@ -171,6 +172,7 @@ export const VirtualizedNotesGrid = memo(({
                   onPin={onPin}
                   onDelete={onDelete}
                   confirmDelete={null}
+                  viewMode={viewMode}
                 />
               ))}
             </div>
