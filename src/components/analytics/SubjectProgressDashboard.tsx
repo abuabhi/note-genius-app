@@ -142,10 +142,7 @@ export const SubjectProgressDashboard = () => {
                     <div className="mb-2">
                       <Progress 
                         value={subject.completionPercentage} 
-                        className="h-2"
-                        style={{
-                          backgroundColor: '#f3f4f6'
-                        }}
+                        className="h-2 bg-gray-100"
                       />
                     </div>
                     <div className="flex items-center justify-between text-sm text-gray-600">
