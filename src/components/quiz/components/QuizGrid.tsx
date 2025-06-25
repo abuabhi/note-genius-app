@@ -9,6 +9,7 @@ interface Quiz {
   is_public: boolean;
   created_at: string;
   questionCount: number;
+  user_id?: string;
   academic_subjects?: {
     id: string;
     name: string;
@@ -20,13 +21,23 @@ interface QuizGridProps {
   onToggleFavorite?: (quizId: string) => void;
   favoriteQuizIds?: Set<string>;
   loading?: boolean;
+  isSelectable?: boolean;
+  selectedQuizIds?: Set<string>;
+  onSelectionChange?: (quizId: string, selected: boolean) => void;
+  onRefresh?: () => void;
+  currentUserId?: string;
 }
 
 export const QuizGrid: React.FC<QuizGridProps> = ({
   quizzes,
   onToggleFavorite,
   favoriteQuizIds = new Set(),
-  loading = false
+  loading = false,
+  isSelectable = false,
+  selectedQuizIds = new Set(),
+  onSelectionChange,
+  onRefresh,
+  currentUserId
 }) => {
   if (loading) {
     return (
@@ -61,6 +72,11 @@ export const QuizGrid: React.FC<QuizGridProps> = ({
           quiz={quiz}
           onToggleFavorite={onToggleFavorite}
           isFavorite={favoriteQuizIds.has(quiz.id)}
+          isSelectable={isSelectable}
+          isSelected={selectedQuizIds.has(quiz.id)}
+          onSelectionChange={onSelectionChange}
+          onRefresh={onRefresh}
+          currentUserId={currentUserId}
         />
       ))}
     </div>

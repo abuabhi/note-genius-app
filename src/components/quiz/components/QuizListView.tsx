@@ -3,9 +3,11 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Play, Eye, Users, Clock, BookOpen, Star, StarOff } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
+import { QuizActionsMenu } from './QuizActionsMenu';
 
 interface Quiz {
   id: string;
@@ -14,6 +16,7 @@ interface Quiz {
   is_public: boolean;
   created_at: string;
   questionCount: number;
+  user_id?: string;
   academic_subjects?: {
     id: string;
     name: string;
@@ -25,14 +28,26 @@ interface QuizListViewProps {
   onToggleFavorite?: (quizId: string) => void;
   favoriteQuizIds?: Set<string>;
   loading?: boolean;
+  isSelectable?: boolean;
+  selectedQuizIds?: Set<string>;
+  onSelectionChange?: (quizId: string, selected: boolean) => void;
+  onRefresh?: () => void;
+  currentUserId?: string;
 }
 
 export const QuizListView: React.FC<QuizListViewProps> = ({
   quizzes,
   onToggleFavorite,
   favoriteQuizIds = new Set(),
-  loading = false
+  loading = false,
+  isSelectable = false,
+  selectedQuizIds = new Set(),
+  onSelectionChange,
+  onRefresh,
+  currentUserId
 }) => {
+  const navigate = useNavigate();
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -66,62 +81,97 @@ export const QuizListView: React.FC<QuizListViewProps> = ({
     onToggleFavorite?.(quizId);
   };
 
+  const handleCardClick = (quiz: Quiz) => {
+    if (!isSelectable) {
+      navigate(`/quiz/${quiz.id}`);
+    }
+  };
+
+  const handleSelectionChange = (e: React.MouseEvent, quizId: string) => {
+    e.stopPropagation();
+    const isSelected = selectedQuizIds?.has(quizId) || false;
+    onSelectionChange?.(quizId, !isSelected);
+  };
+
   return (
     <div className="space-y-4">
       {quizzes.map((quiz) => (
-        <Card key={quiz.id} className="group hover:shadow-md transition-all duration-200 border-mint-100 bg-white/80 backdrop-blur-sm">
+        <Card 
+          key={quiz.id} 
+          className={`group hover:shadow-md transition-all duration-200 border-mint-100 bg-white/80 backdrop-blur-sm ${
+            !isSelectable ? 'cursor-pointer' : ''
+          } ${selectedQuizIds?.has(quiz.id) ? 'ring-2 ring-mint-500' : ''}`}
+          onClick={() => handleCardClick(quiz)}
+        >
           <CardContent className="p-6">
             <div className="flex items-center justify-between gap-6">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-mint-800 line-clamp-1 group-hover:text-mint-700 transition-colors">
-                      {quiz.title}
-                    </h3>
-                    <p className="text-sm text-gray-600 line-clamp-2 mt-1">
-                      {quiz.description || "No description available"}
-                    </p>
+              <div className="flex items-center gap-4 flex-1 min-w-0">
+                {isSelectable && (
+                  <Checkbox
+                    checked={selectedQuizIds?.has(quiz.id) || false}
+                    onChange={(e) => handleSelectionChange(e, quiz.id)}
+                    onClick={(e) => handleSelectionChange(e, quiz.id)}
+                    className="flex-shrink-0"
+                  />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-mint-800 line-clamp-1 group-hover:text-mint-700 transition-colors">
+                        {quiz.title}
+                      </h3>
+                      <p className="text-sm text-gray-600 line-clamp-2 mt-1">
+                        {quiz.description || "No description available"}
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      {onToggleFavorite && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => handleFavoriteClick(e, quiz.id)}
+                          className="h-8 w-8 p-0 hover:bg-mint-50"
+                        >
+                          {favoriteQuizIds.has(quiz.id) ? (
+                            <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                          ) : (
+                            <StarOff className="h-4 w-4 text-gray-400 hover:text-yellow-500" />
+                          )}
+                        </Button>
+                      )}
+                      <QuizActionsMenu 
+                        quiz={quiz}
+                        currentUserId={currentUserId}
+                        onRefresh={onRefresh}
+                      />
+                    </div>
                   </div>
                   
-                  {onToggleFavorite && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => handleFavoriteClick(e, quiz.id)}
-                      className="shrink-0 h-8 w-8 p-0 hover:bg-mint-50"
-                    >
-                      {favoriteQuizIds.has(quiz.id) ? (
-                        <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                      ) : (
-                        <StarOff className="h-4 w-4 text-gray-400 hover:text-yellow-500" />
-                      )}
-                    </Button>
-                  )}
-                </div>
-                
-                <div className="flex flex-wrap gap-2 mt-3">
-                  <Badge variant="secondary" className="flex items-center gap-1 bg-mint-50 text-mint-700 border-mint-200">
-                    <BookOpen className="h-3 w-3" />
-                    {quiz.questionCount} questions
-                  </Badge>
-                  
-                  {quiz.academic_subjects?.name && (
-                    <Badge variant="outline" className="border-blue-200 text-blue-700 bg-blue-50">
-                      {quiz.academic_subjects.name}
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <Badge variant="secondary" className="flex items-center gap-1 bg-mint-50 text-mint-700 border-mint-200">
+                      <BookOpen className="h-3 w-3" />
+                      {quiz.questionCount} questions
                     </Badge>
-                  )}
-                  
-                  {quiz.is_public && (
-                    <Badge className="flex items-center gap-1 bg-green-100 text-green-700 border-green-200">
-                      <Users className="h-3 w-3" />
-                      Public
+                    
+                    {quiz.academic_subjects?.name && (
+                      <Badge variant="outline" className="border-blue-200 text-blue-700 bg-blue-50">
+                        {quiz.academic_subjects.name}
+                      </Badge>
+                    )}
+                    
+                    {quiz.is_public && (
+                      <Badge className="flex items-center gap-1 bg-green-100 text-green-700 border-green-200">
+                        <Users className="h-3 w-3" />
+                        Public
+                      </Badge>
+                    )}
+                    
+                    <Badge variant="outline" className="flex items-center gap-1 text-gray-500">
+                      <Clock className="h-3 w-3" />
+                      {formatDistanceToNow(new Date(quiz.created_at), { addSuffix: true })}
                     </Badge>
-                  )}
-                  
-                  <Badge variant="outline" className="flex items-center gap-1 text-gray-500">
-                    <Clock className="h-3 w-3" />
-                    {formatDistanceToNow(new Date(quiz.created_at), { addSuffix: true })}
-                  </Badge>
+                  </div>
                 </div>
               </div>
               

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Play, 
   Eye, 
@@ -14,9 +15,10 @@ import {
   Search,
   Info
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { QuizPreviewModal } from './QuizPreviewModal';
+import { QuizActionsMenu } from './QuizActionsMenu';
 import {
   Tooltip,
   TooltipContent,
@@ -32,6 +34,7 @@ interface QuizCardProps {
     is_public: boolean;
     created_at: string;
     questionCount: number;
+    user_id?: string;
     academic_subjects?: {
       id: string;
       name: string;
@@ -40,15 +43,26 @@ interface QuizCardProps {
   onToggleFavorite?: (quizId: string) => void;
   isFavorite?: boolean;
   showActions?: boolean;
+  isSelectable?: boolean;
+  isSelected?: boolean;
+  onSelectionChange?: (quizId: string, selected: boolean) => void;
+  onRefresh?: () => void;
+  currentUserId?: string;
 }
 
 export const QuizCard: React.FC<QuizCardProps> = ({
   quiz,
   onToggleFavorite,
   isFavorite = false,
-  showActions = true
+  showActions = true,
+  isSelectable = false,
+  isSelected = false,
+  onSelectionChange,
+  onRefresh,
+  currentUserId
 }) => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const navigate = useNavigate();
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -62,43 +76,87 @@ export const QuizCard: React.FC<QuizCardProps> = ({
     setIsPreviewOpen(true);
   };
 
+  const handleCardClick = () => {
+    if (!isSelectable) {
+      navigate(`/quiz/${quiz.id}`);
+    }
+  };
+
+  const handleSelectionChange = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onSelectionChange?.(quiz.id, !isSelected);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleCardClick();
+    }
+  };
+
   const estimatedDuration = Math.max(1, Math.ceil(quiz.questionCount * 1.5));
 
   return (
     <TooltipProvider>
-      <Card className="group hover:shadow-lg transition-all duration-300 border-mint-100 bg-white/80 backdrop-blur-sm hover:bg-white hover:scale-[1.02] transform">
+      <Card 
+        className={`group hover:shadow-lg transition-all duration-300 border-mint-100 bg-white/80 backdrop-blur-sm hover:bg-white hover:scale-[1.02] transform ${
+          !isSelectable ? 'cursor-pointer' : ''
+        } ${isSelected ? 'ring-2 ring-mint-500' : ''}`}
+        onClick={handleCardClick}
+        onKeyDown={handleKeyDown}
+        tabIndex={!isSelectable ? 0 : -1}
+        role={!isSelectable ? "button" : undefined}
+        aria-label={!isSelectable ? `View quiz: ${quiz.title}` : undefined}
+      >
         <CardHeader className="pb-3">
           <div className="flex justify-between items-start gap-3">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-2">
-                <CardTitle className="text-lg font-semibold text-mint-800 line-clamp-2 group-hover:text-mint-700 transition-colors">
-                  {quiz.title}
-                </CardTitle>
-                {onToggleFavorite && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleFavoriteClick}
-                        className="shrink-0 h-8 w-8 p-0 hover:bg-mint-50 transition-colors"
-                      >
-                        {isFavorite ? (
-                          <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                        ) : (
-                          <StarOff className="h-4 w-4 text-gray-400 hover:text-yellow-500 transition-colors" />
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{isFavorite ? 'Remove from favorites' : 'Add to favorites'}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
+            <div className="flex items-start gap-3 flex-1 min-w-0">
+              {isSelectable && (
+                <Checkbox
+                  checked={isSelected}
+                  onChange={handleSelectionChange}
+                  onClick={handleSelectionChange}
+                  className="mt-1 flex-shrink-0"
+                />
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <CardTitle className="text-lg font-semibold text-mint-800 line-clamp-2 group-hover:text-mint-700 transition-colors">
+                    {quiz.title}
+                  </CardTitle>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {onToggleFavorite && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleFavoriteClick}
+                            className="h-8 w-8 p-0 hover:bg-mint-50 transition-colors"
+                          >
+                            {isFavorite ? (
+                              <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                            ) : (
+                              <StarOff className="h-4 w-4 text-gray-400 hover:text-yellow-500 transition-colors" />
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{isFavorite ? 'Remove from favorites' : 'Add to favorites'}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                    <QuizActionsMenu 
+                      quiz={quiz}
+                      currentUserId={currentUserId}
+                      onRefresh={onRefresh}
+                    />
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600 line-clamp-2 mt-1">
+                  {quiz.description || "No description available"}
+                </p>
               </div>
-              <p className="text-sm text-gray-600 line-clamp-2 mt-1">
-                {quiz.description || "No description available"}
-              </p>
             </div>
           </div>
         </CardHeader>
@@ -210,10 +268,12 @@ export const QuizCard: React.FC<QuizCardProps> = ({
                 <Clock className="h-3 w-3" />
                 {formatDistanceToNow(new Date(quiz.created_at), { addSuffix: true })}
               </div>
-              <div className="flex items-center gap-1 text-mint-600">
-                <Info className="h-3 w-3" />
-                <span className="text-xs">Click for details</span>
-              </div>
+              {!isSelectable && (
+                <div className="flex items-center gap-1 text-mint-600">
+                  <Info className="h-3 w-3" />
+                  <span className="text-xs">Click to view details</span>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
