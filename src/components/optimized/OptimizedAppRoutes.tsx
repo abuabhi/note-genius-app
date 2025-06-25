@@ -10,6 +10,8 @@ const FlashcardsPage = lazy(() => import('@/pages/FlashcardsPage'));
 const FlashcardStudyPage = lazy(() => import('@/pages/FlashcardStudyPage'));
 const NotesPage = lazy(() => import('@/pages/NotesPage'));
 const NoteStudyPage = lazy(() => import('@/pages/NoteStudyPage'));
+const QuizPage = lazy(() => import('@/pages/QuizPage'));
+const CreateQuizPage = lazy(() => import('@/pages/CreateQuizPage'));
 const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
 const SchedulePage = lazy(() => import('@/pages/SchedulePage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
@@ -40,6 +42,12 @@ export const OptimizedAppRoutes = () => {
         {/* Notes routes */}
         <Route path="/notes" element={<Layout><NotesPage /></Layout>} />
         <Route path="/notes/study/:noteId" element={<NoteStudyPage />} />
+        
+        {/* Quiz routes */}
+        <Route path="/quiz" element={<Layout><QuizPage /></Layout>} />
+        <Route path="/quizzes" element={<Layout><QuizPage /></Layout>} />
+        <Route path="/quiz/create" element={<Layout><CreateQuizPage /></Layout>} />
+        <Route path="/quiz/:id/*" element={<Layout><QuizPage /></Layout>} />
         
         {/* Analytics */}
         <Route path="/analytics" element={<Layout><AnalyticsPage /></Layout>} />

@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { PlusCircle, Activity } from 'lucide-react';
-import Layout from '@/components/layout/Layout';
 import { QuizList } from '@/components/quiz/QuizList';
 import QuizStats from '@/components/quiz/QuizStats';
 import QuizProgressChart from '@/components/quiz/QuizProgressChart';
@@ -18,13 +17,11 @@ const QuizPage = () => {
 
   if (authLoading) {
     return (
-      <Layout>
-        <div className="container mx-auto p-4 md:p-6 h-full">
-          <div className="flex justify-center items-center h-[80vh]">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-          </div>
+      <div className="container mx-auto p-4 md:p-6 h-full">
+        <div className="flex justify-center items-center h-[80vh]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
         </div>
-      </Layout>
+      </div>
     );
   }
 
@@ -42,46 +39,44 @@ const QuizPage = () => {
   );
 
   return (
-    <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
-        <StandardPageHeader
-          title="Quiz Center"
-          description="Test your knowledge and track your progress"
-          icon={<Activity className="h-6 w-6 text-white" />}
-          breadcrumbs={breadcrumbs}
-          actions={actions}
-        />
-        
-        <div className="container mx-auto px-6 py-8">
-          <Tabs defaultValue="quizzes" className="w-full">
-            <TabsList className="grid grid-cols-4 mb-6">
-              <TabsTrigger value="quizzes">All Quizzes</TabsTrigger>
-              <TabsTrigger value="stats">Statistics</TabsTrigger>
-              <TabsTrigger value="progress">Progress</TabsTrigger>
-              <TabsTrigger value="achievements">Achievements</TabsTrigger>
-            </TabsList>
+    <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+      <StandardPageHeader
+        title="Quiz Center"
+        description="Test your knowledge and track your progress"
+        icon={<Activity className="h-6 w-6 text-white" />}
+        breadcrumbs={breadcrumbs}
+        actions={actions}
+      />
+      
+      <div className="container mx-auto px-6 py-8">
+        <Tabs defaultValue="quizzes" className="w-full">
+          <TabsList className="grid grid-cols-4 mb-6">
+            <TabsTrigger value="quizzes">All Quizzes</TabsTrigger>
+            <TabsTrigger value="stats">Statistics</TabsTrigger>
+            <TabsTrigger value="progress">Progress</TabsTrigger>
+            <TabsTrigger value="achievements">Achievements</TabsTrigger>
+          </TabsList>
 
-            <TabsContent value="quizzes">
-              <Card className="p-6">
-                <QuizList />
-              </Card>
-            </TabsContent>
+          <TabsContent value="quizzes">
+            <Card className="p-6">
+              <QuizList />
+            </Card>
+          </TabsContent>
 
-            <TabsContent value="stats">
-              <QuizStats />
-            </TabsContent>
+          <TabsContent value="stats">
+            <QuizStats />
+          </TabsContent>
 
-            <TabsContent value="progress">
-              <QuizProgressChart />
-            </TabsContent>
+          <TabsContent value="progress">
+            <QuizProgressChart />
+          </TabsContent>
 
-            <TabsContent value="achievements">
-              <QuizAchievements />
-            </TabsContent>
-          </Tabs>
-        </div>
+          <TabsContent value="achievements">
+            <QuizAchievements />
+          </TabsContent>
+        </Tabs>
       </div>
-    </Layout>
+    </div>
   );
 };
 
