@@ -70,9 +70,9 @@ export const useRequireAuth = () => {
     if (user) {
       const fetchUserData = async () => {
         try {
-          // Add timeout to prevent hanging
+          // Reduced timeout from 8000ms to 3000ms for better UX
           const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Profile fetch timeout')), 8000);
+            setTimeout(() => reject(new Error('Profile fetch timeout')), 3000);
           });
 
           // Fetch the user profile

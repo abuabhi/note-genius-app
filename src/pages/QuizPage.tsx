@@ -17,9 +17,14 @@ const QuizPage = () => {
 
   if (authLoading) {
     return (
-      <div className="container mx-auto p-4 md:p-6 h-full">
-        <div className="flex justify-center items-center h-[80vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+        <div className="container mx-auto p-4 md:p-6 h-full">
+          <div className="flex justify-center items-center h-[50vh]">
+            <div className="text-center space-y-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+              <p className="text-gray-600">Loading your quizzes...</p>
+            </div>
+          </div>
         </div>
       </div>
     );
