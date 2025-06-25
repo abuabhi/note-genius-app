@@ -1,7 +1,7 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useSubjectAnalytics } from "@/hooks/useSubjectAnalytics";
+import { StudyRecommendationsCard } from "@/components/progress/advanced/StudyRecommendationsCard";
 import { Clock, Calendar, Trophy, TrendingUp, BookOpen } from "lucide-react";
 
 export const SubjectProgressDashboard = () => {
@@ -151,36 +151,41 @@ export const SubjectProgressDashboard = () => {
         </div>
       </div>
 
-      {/* Subject Details Summary */}
-      {subjectAnalytics.subjects.length > 0 && (
-        <Card className="bg-white border-gray-200">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">Subject Breakdown</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
-                  {subjectAnalytics.subjects.filter(s => s.color === 'green').length}
+      {/* AI Study Recommendations Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <StudyRecommendationsCard />
+        
+        {/* Subject Details Summary */}
+        {subjectAnalytics.subjects.length > 0 && (
+          <Card className="bg-white border-gray-200">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">Subject Breakdown</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">
+                    {subjectAnalytics.subjects.filter(s => s.color === 'green').length}
+                  </div>
+                  <div className="text-sm text-gray-600">Excelling (85%+)</div>
                 </div>
-                <div className="text-sm text-gray-600">Excelling (85%+)</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-600">
-                  {subjectAnalytics.subjects.filter(s => s.color === 'yellow').length}
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-yellow-600">
+                    {subjectAnalytics.subjects.filter(s => s.color === 'yellow').length}
+                  </div>
+                  <div className="text-sm text-gray-600">Progressing (60-84%)</div>
                 </div>
-                <div className="text-sm text-gray-600">Progressing (60-84%)</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-red-600">
-                  {subjectAnalytics.subjects.filter(s => s.color === 'red').length}
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-red-600">
+                    {subjectAnalytics.subjects.filter(s => s.color === 'red').length}
+                  </div>
+                  <div className="text-sm text-gray-600">Needs Attention (&lt;60%)</div>
                 </div>
-                <div className="text-sm text-gray-600">Needs Attention (&lt;60%)</div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 };

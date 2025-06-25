@@ -1,8 +1,9 @@
+
 import { ProgressCard } from "../shared/ProgressCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Lightbulb, ArrowRight, Target, AlertCircle, Coffee } from "lucide-react";
-import { useAdvancedAnalytics } from "@/hooks/progress/advanced";
+import { useAdvancedAnalytics } from "@/hooks/progress/advanced/useAdvancedAnalytics";
 import { useNavigate } from "react-router-dom";
 
 export const StudyRecommendationsCard = () => {

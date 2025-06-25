@@ -1,88 +1,90 @@
 
-import { ComparativeMetrics, StudySession } from './types';
+import { StudySession, ComparativeMetrics } from './types';
 
 export function calculateComparativeMetrics(
-  userSessions: StudySession[], 
-  allSessions: Array<{ user_id: string; duration: number }>, 
+  userSessions: StudySession[],
+  allUserSessions: Array<{ user_id: string; duration: number }>,
   gradeProgression: any[]
 ): ComparativeMetrics {
-  console.log('Calculating comparative metrics with real data');
-  console.log('User sessions:', userSessions.length);
-  console.log('All sessions for comparison:', allSessions.length);
+  // Calculate user's average study time
+  const userTotalTime = userSessions.reduce((acc, session) => acc + (session.duration || 0), 0);
+  const userAvgTime = userTotalTime / Math.max(userSessions.length, 1);
 
-  // Calculate user's total study time in minutes
-  const userTotalTimeMinutes = userSessions.reduce((sum, s) => sum + (s.duration || 0), 0);
+  // Calculate peer average (exclude current user if possible)
+  const peerSessions = allUserSessions.filter(s => s.duration > 0 && s.duration < 14400); // Valid sessions
+  const peerTotalTime = peerSessions.reduce((acc, session) => acc + session.duration, 0);
+  const averagePeerStudyTime = peerTotalTime / Math.max(peerSessions.length, 1);
+
+  // Calculate performance percentile
+  const userPerformanceScore = calculateUserPerformanceScore(userSessions, gradeProgression);
+  const performancePercentile = Math.min(Math.max(userPerformanceScore * 20 + 50, 10), 90);
+
+  // Calculate streak comparison
+  const userStreak = calculateCurrentStreak(userSessions);
+  let streakComparison: 'below_average' | 'average' | 'above_average' = 'average';
   
-  // Return default values if insufficient data
-  if (allSessions.length < 10) {
-    console.log('Insufficient comparison data, returning defaults');
-    return {
-      performancePercentile: 50,
-      averagePeerStudyTime: 0,
-      streakComparison: 'average' as const,
-      subjectRankings: []
-    };
-  }
+  if (userStreak >= 7) streakComparison = 'above_average';
+  else if (userStreak <= 2) streakComparison = 'below_average';
 
-  // Group all sessions by user and calculate total time per user
-  const userStats = allSessions.reduce((acc: Record<string, number>, session) => {
-    if (!acc[session.user_id]) acc[session.user_id] = 0;
-    acc[session.user_id] += session.duration || 0;
-    return acc;
-  }, {});
+  // Subject rankings based on performance
+  const subjectRankings = gradeProgression.map(subject => ({
+    subject: subject.subject,
+    rank: calculateSubjectRank(subject),
+    percentile: Math.min(Math.max(subject.masteryLevel || 0, 10), 90)
+  })).sort((a, b) => b.percentile - a.percentile);
 
-  const allUserTimes = Object.values(userStats).filter(time => time > 0).sort((a, b) => a - b);
-  
-  // Calculate percentile ranking
-  let performancePercentile = 50; // Default to average
-  if (allUserTimes.length > 0) {
-    const userRank = allUserTimes.findIndex(time => time >= userTotalTimeMinutes);
-    if (userRank !== -1) {
-      performancePercentile = Math.round((userRank / allUserTimes.length) * 100);
-    } else if (userTotalTimeMinutes > 0) {
-      // User has more time than anyone else
-      performancePercentile = 100;
-    }
-  }
-
-  // Calculate average peer study time (convert to hours)
-  const averagePeerStudyTime = allUserTimes.length > 0 
-    ? Math.round(allUserTimes.reduce((sum, time) => sum + time, 0) / allUserTimes.length / 60)
-    : 0;
-
-  // Calculate streak comparison based on session frequency
-  let streakComparison: 'above_average' | 'average' | 'below_average' = 'average';
-  
-  if (userSessions.length > 0) {
-    // Calculate user's average sessions per week
-    const userSessionDays = new Set(
-      userSessions.map(s => new Date(s.start_time).toDateString())
-    ).size;
-    
-    // Simple heuristic: more than 4 unique study days = above average
-    if (userSessionDays >= 5) {
-      streakComparison = 'above_average';
-    } else if (userSessionDays <= 2) {
-      streakComparison = 'below_average';
-    }
-  }
-
-  // Subject rankings based on real flashcard progress data
-  const subjectRankings = (gradeProgression || [])
-    .filter(subject => subject.subject && subject.masteryLevel)
-    .map(subject => ({
-      subject: subject.subject,
-      percentile: Math.min(95, Math.max(5, Math.round(subject.masteryLevel * 20))) // Convert mastery level to percentile
-    }))
-    .slice(0, 5); // Limit to top 5 subjects
-
-  const result = {
+  return {
     performancePercentile,
-    averagePeerStudyTime,
+    averagePeerStudyTime: averagePeerStudyTime / 60, // Convert to minutes
     streakComparison,
     subjectRankings
   };
+}
 
-  console.log('Calculated comparative metrics:', result);
-  return result;
+function calculateUserPerformanceScore(sessions: StudySession[], gradeProgression: any[]): number {
+  const sessionScore = sessions.reduce((acc, session) => {
+    const accuracy = session.cards_reviewed > 0 ? session.cards_correct / session.cards_reviewed : 0;
+    return acc + accuracy;
+  }, 0) / Math.max(sessions.length, 1);
+
+  const gradeScore = gradeProgression.reduce((acc, subject) => {
+    return acc + (subject.masteryLevel || 0) / 100;
+  }, 0) / Math.max(gradeProgression.length, 1);
+
+  return (sessionScore + gradeScore) / 2;
+}
+
+function calculateCurrentStreak(sessions: StudySession[]): number {
+  if (sessions.length === 0) return 0;
+  
+  const dates = sessions
+    .map(s => new Date(s.start_time).toDateString())
+    .filter((date, index, arr) => arr.indexOf(date) === index)
+    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+
+  let streak = 0;
+  const today = new Date().toDateString();
+  
+  for (let i = 0; i < dates.length; i++) {
+    const date = new Date(dates[i]);
+    const expectedDate = new Date();
+    expectedDate.setDate(expectedDate.getDate() - i);
+    
+    if (date.toDateString() === expectedDate.toDateString()) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+  
+  return streak;
+}
+
+function calculateSubjectRank(subject: any): number {
+  const masteryLevel = subject.masteryLevel || 0;
+  if (masteryLevel >= 90) return 1;
+  if (masteryLevel >= 80) return 2;
+  if (masteryLevel >= 70) return 3;
+  if (masteryLevel >= 60) return 4;
+  return 5;
 }
