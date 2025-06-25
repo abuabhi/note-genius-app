@@ -2,7 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Import } from "lucide-react";
-import { NotesSearchBar } from "./NotesSearchBar";
+import { NoteSearch } from "@/components/notes/NoteSearch";
 import { NotesFilterSortControls } from "./NotesFilterSortControls";
 
 interface NotesHeaderTopProps {
@@ -47,7 +47,7 @@ export const NotesHeaderTop = ({
       {/* Second Row: Search and Filters */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div className="flex-1 max-w-md">
-          <NotesSearchBar />
+          <NoteSearch />
         </div>
         <div className="flex-shrink-0">
           <NotesFilterSortControls />
