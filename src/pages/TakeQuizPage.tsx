@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { useQuiz, useSubmitQuizResult } from "@/hooks/useQuizzes";
+import { useQuizDetails, useSubmitQuizResult } from "@/hooks/quiz";
 import { QuizTakingCard } from "@/components/quiz/QuizTaking/QuizTakingCard";
 import { QuizResults } from "@/components/quiz/QuizTaking/QuizResults";
 import { QuizTakingBreadcrumb } from "@/components/quiz/QuizTakingBreadcrumb";
@@ -12,10 +12,10 @@ import { QuizErrorState } from "@/components/quiz/QuizTaking/QuizErrorState";
 import { QuizIntroduction } from "@/components/quiz/QuizTaking/QuizIntroduction";
 
 const TakeQuizPage = () => {
-  const { quizId } = useParams<{ quizId: string }>();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { userProfile } = useRequireAuth();
-  const { data: quiz, isLoading, error } = useQuiz(quizId);
+  const { data: quiz, isLoading, error } = useQuizDetails(id);
   const submitResult = useSubmitQuizResult();
   
   const [quizState, setQuizState] = useState<'not-started' | 'in-progress' | 'completed'>('not-started');

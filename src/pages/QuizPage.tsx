@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { PlusCircle, Activity } from 'lucide-react';
-import { QuizList } from '@/components/quiz/QuizList';
+import QuizList from '@/components/quiz/QuizList';
 import QuizStats from '@/components/quiz/QuizStats';
 import QuizProgressChart from '@/components/quiz/QuizProgressChart';
 import QuizAchievements from '@/components/quiz/QuizAchievements';

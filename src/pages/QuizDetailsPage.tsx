@@ -5,11 +5,12 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Play, Edit, Trash2, Clock, HelpCircle } from "lucide-react";
+import { ArrowLeft, Play, Edit, Trash2, Clock, HelpCircle, Home, BookOpen } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useSubjects } from "@/hooks/useSubjects";
 import { useState } from "react";
 import { DeleteQuizDialog } from "@/components/quiz/DeleteQuizDialog";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 
 const QuizDetailsPage = () => {
   const { id: quizId } = useParams<{ id: string }>();
@@ -50,6 +51,31 @@ const QuizDetailsPage = () => {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      {/* Breadcrumb */}
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/dashboard" className="flex items-center gap-1">
+              <Home className="h-4 w-4" />
+              Dashboard
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/quizzes" className="flex items-center gap-1">
+              <BookOpen className="h-4 w-4" />
+              Quizzes
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage className="font-medium text-mint-700">
+              {quiz.title}
+            </BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
