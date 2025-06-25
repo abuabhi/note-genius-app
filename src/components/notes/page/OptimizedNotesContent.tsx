@@ -2,7 +2,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { ProgressiveLoader } from '@/components/performance/ProgressiveLoader';
 import { EmptyNotesState } from '@/components/notes/EmptyNotesState';
-import { useViewPreferences } from '@/hooks/useViewPreferences';
+import { ViewMode, useViewPreferences } from '@/hooks/useViewPreferences';
 import { useVirtualizationMetrics } from '@/hooks/notes/useVirtualizationMetrics';
 
 // Optimized selective hooks to minimize re-renders
