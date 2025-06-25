@@ -7,26 +7,33 @@ export const useDeleteQuiz = () => {
 
   return useMutation({
     mutationFn: async (quizId: string) => {
-      // Delete quiz options first
-      const { error: optionsError } = await supabase
-        .from('quiz_options')
-        .delete()
-        .in('question_id', 
-          supabase
-            .from('quiz_questions')
-            .select('id')
-            .eq('quiz_id', quizId)
-        );
+      // First, get all question IDs for this quiz
+      const { data: questions, error: questionsError } = await supabase
+        .from('quiz_questions')
+        .select('id')
+        .eq('quiz_id', quizId);
 
-      if (optionsError) throw optionsError;
+      if (questionsError) throw questionsError;
+
+      const questionIds = questions?.map(q => q.id) || [];
+
+      // Delete quiz options first (if there are questions)
+      if (questionIds.length > 0) {
+        const { error: optionsError } = await supabase
+          .from('quiz_options')
+          .delete()
+          .in('question_id', questionIds);
+
+        if (optionsError) throw optionsError;
+      }
 
       // Delete quiz questions
-      const { error: questionsError } = await supabase
+      const { error: questionsDeleteError } = await supabase
         .from('quiz_questions')
         .delete()
         .eq('quiz_id', quizId);
 
-      if (questionsError) throw questionsError;
+      if (questionsDeleteError) throw questionsDeleteError;
 
       // Delete quiz results
       const { error: resultsError } = await supabase

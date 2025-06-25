@@ -1,73 +1,79 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useQuizList } from "@/hooks/quiz/useQuizList";
+import { useSubjects } from "@/hooks/useSubjects";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useQuizList } from "@/hooks/quiz/useQuizList";
-import { useSubjects } from "@/hooks/useSubjects";
-import { useViewPreferences } from "@/hooks/useViewPreferences";
-import { Quiz } from "@/types/quiz";
-import { Play, Clock, HelpCircle, Search, History, MoreVertical, Trash2 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { ViewToggle } from "@/components/notes/page/ViewToggle";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Play, Eye, Trash2, Search, Grid3X3, List, MoreHorizontal } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { DeleteQuizDialog } from "./DeleteQuizDialog";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { Quiz } from "@/types/quiz";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
-export const QuizList = () => {
+type ViewMode = 'grid' | 'list' | 'compact';
+
+const QuizList = () => {
   const navigate = useNavigate();
   const { userProfile } = useRequireAuth();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedSubject, setSelectedSubject] = useState<string>("all");
-  const [deleteQuiz, setDeleteQuiz] = useState<Quiz | null>(null);
+  const [filters, setFilters] = useState({
+    subject: '',
+    grade: '',
+    section: '',
+    search: '',
+    userOnly: false
+  });
   
-  const { viewMode, setViewMode } = useViewPreferences('quizzes', 'grid');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [deleteQuiz, setDeleteQuiz] = useState<Quiz | null>(null);
+
+  const { data, isLoading, error, refetch } = useQuizList(filters);
   const { academicSubjects } = useSubjects();
-  const { data, isLoading, error } = useQuizList({
-    search: searchTerm,
-    subject: selectedSubject === "all" ? undefined : selectedSubject
+
+  // Helper function to ensure source_type is properly typed
+  const normalizeQuiz = (quiz: any): Quiz => ({
+    ...quiz,
+    source_type: quiz.source_type as 'prebuilt' | 'note' | 'custom'
   });
 
-  // Extract quizzes from the returned data
-  const quizzes = data?.quizzes || [];
-
-  const handleTakeQuiz = (quiz: Quiz) => {
-    navigate(`/quiz/${quiz.id}/take`);
+  const handleTakeQuiz = (quiz: any) => {
+    const normalizedQuiz = normalizeQuiz(quiz);
+    navigate(`/quiz/${normalizedQuiz.id}/take`);
   };
 
-  const handleViewQuiz = (quiz: Quiz) => {
-    navigate(`/quiz/${quiz.id}/view`);
+  const handleViewQuiz = (quiz: any) => {
+    const normalizedQuiz = normalizeQuiz(quiz);
+    navigate(`/quiz/${normalizedQuiz.id}/view`);
   };
 
-  const handleDeleteQuiz = (quiz: Quiz) => {
-    setDeleteQuiz(quiz);
+  const handleDeleteQuiz = (quiz: any) => {
+    const normalizedQuiz = normalizeQuiz(quiz);
+    setDeleteQuiz(normalizedQuiz);
   };
 
-  const isOwner = (quiz: Quiz) => userProfile?.id === quiz.user_id;
+  const handleDeleteSuccess = () => {
+    setDeleteQuiz(null);
+    refetch();
+  };
+
+  const isOwner = (quiz: any) => userProfile?.id === quiz.user_id;
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        {[1, 2, 3].map((i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader>
-              <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-              <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-8 w-32" />
+          <Skeleton className="h-10 w-24" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-48" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -75,237 +81,241 @@ export const QuizList = () => {
   if (error) {
     return (
       <Card>
-        <CardContent className="p-6">
-          <p className="text-red-600">Error loading quizzes: {error.message}</p>
+        <CardContent className="p-6 text-center">
+          <p className="text-red-600">Error loading quizzes. Please try again.</p>
+          <Button onClick={() => refetch()} className="mt-4">
+            Retry
+          </Button>
         </CardContent>
       </Card>
     );
   }
 
-  const renderQuizCard = (quiz: Quiz) => (
-    <Card key={quiz.id} className="hover:shadow-md transition-shadow">
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div className="flex-1">
-            <CardTitle className="text-xl">{quiz.title}</CardTitle>
-            <CardDescription className="mt-1">
-              {quiz.description || "No description available"}
-            </CardDescription>
+  const quizzes = data?.quizzes || [];
+
+  const renderQuizCard = (quiz: any) => {
+    const subject = academicSubjects?.find(s => s.id === quiz.subject_id);
+    
+    return (
+      <Card key={quiz.id} className="hover:shadow-lg transition-shadow">
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <div className="flex-1">
+              <CardTitle className="text-lg">{quiz.title}</CardTitle>
+              <CardDescription className="mt-1">
+                {quiz.description || "No description available"}
+              </CardDescription>
+            </div>
+            {isOwner(quiz) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDeleteQuiz(quiz)}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
-          <div className="flex gap-2 items-center">
-            <Button onClick={() => handleTakeQuiz(quiz)} size="sm">
+          
+          <div className="flex flex-wrap gap-2 mt-2">
+            <Badge variant="secondary">
+              {quiz.questionCount} questions
+            </Badge>
+            {subject && (
+              <Badge variant="outline">{subject.name}</Badge>
+            )}
+            {quiz.is_public && (
+              <Badge variant="default">Public</Badge>
+            )}
+          </div>
+        </CardHeader>
+        
+        <CardContent>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => handleTakeQuiz(quiz)}
+              className="flex-1"
+            >
               <Play className="h-4 w-4 mr-2" />
               Take Quiz
             </Button>
-            <Button variant="outline" onClick={() => handleViewQuiz(quiz)} size="sm">
-              <History className="h-4 w-4 mr-2" />
+            <Button 
+              variant="outline" 
+              onClick={() => handleViewQuiz(quiz)}
+              className="flex-1"
+            >
+              <Eye className="h-4 w-4 mr-2" />
               View
             </Button>
-            {isOwner(quiz) && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem 
-                    onClick={() => handleDeleteQuiz(quiz)}
-                    className="text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Quiz
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
           </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-wrap gap-2 mb-3">
-          <Badge variant="secondary">
-            <HelpCircle className="h-3 w-3 mr-1" />
-            {(quiz as any).questionCount || 0} questions
-          </Badge>
-          {quiz.subject_id && (
-            <Badge variant="outline">
-              {academicSubjects?.find(s => s.id === quiz.subject_id)?.name || "Unknown Subject"}
-            </Badge>
-          )}
-          {quiz.is_public && (
-            <Badge variant="default">Public</Badge>
-          )}
-        </div>
-        <div className="flex items-center text-sm text-muted-foreground">
-          <Clock className="h-4 w-4 mr-1" />
-          Created {formatDistanceToNow(new Date(quiz.created_at), { addSuffix: true })}
-        </div>
-      </CardContent>
-    </Card>
-  );
+        </CardContent>
+      </Card>
+    );
+  };
 
-  const renderListView = (quiz: Quiz) => (
-    <Card key={quiz.id} className="hover:shadow-sm transition-shadow">
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-3">
-              <h3 className="font-medium">{quiz.title}</h3>
-              <div className="flex gap-1">
+  const renderQuizList = (quiz: any) => {
+    const subject = academicSubjects?.find(s => s.id === quiz.subject_id);
+    
+    return (
+      <Card key={quiz.id} className="hover:shadow-md transition-shadow">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <h3 className="font-semibold text-lg">{quiz.title}</h3>
+              <p className="text-sm text-gray-600 mt-1">
+                {quiz.description || "No description available"}
+              </p>
+              <div className="flex items-center gap-2 mt-2">
                 <Badge variant="secondary" className="text-xs">
-                  {(quiz as any).questionCount || 0} questions
+                  {quiz.questionCount} questions
                 </Badge>
-                {quiz.subject_id && (
-                  <Badge variant="outline" className="text-xs">
-                    {academicSubjects?.find(s => s.id === quiz.subject_id)?.name}
-                  </Badge>
+                {subject && (
+                  <Badge variant="outline" className="text-xs">{subject.name}</Badge>
+                )}
+                {quiz.is_public && (
+                  <Badge variant="default" className="text-xs">Public</Badge>
                 )}
               </div>
             </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              {quiz.description || "No description available"}
-            </p>
+            
+            <div className="flex items-center gap-2 ml-4">
+              <Button size="sm" onClick={() => handleTakeQuiz(quiz)}>
+                <Play className="h-4 w-4 mr-1" />
+                Take
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => handleViewQuiz(quiz)}>
+                <Eye className="h-4 w-4 mr-1" />
+                View
+              </Button>
+              {isOwner(quiz) && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => handleDeleteQuiz(quiz)}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
-          <div className="flex gap-2 items-center ml-4">
-            <Button onClick={() => handleTakeQuiz(quiz)} size="sm">
-              <Play className="h-4 w-4 mr-1" />
-              Take
-            </Button>
-            <Button variant="outline" onClick={() => handleViewQuiz(quiz)} size="sm">
-              <History className="h-4 w-4 mr-1" />
-              View
-            </Button>
-            {isOwner(quiz) && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem 
-                    onClick={() => handleDeleteQuiz(quiz)}
-                    className="text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderQuizCompact = (quiz: any) => {
+    const subject = academicSubjects?.find(s => s.id === quiz.subject_id);
+    
+    return (
+      <div key={quiz.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+        <div className="flex-1">
+          <div className="flex items-center gap-3">
+            <h3 className="font-medium">{quiz.title}</h3>
+            <Badge variant="secondary" className="text-xs">
+              {quiz.questionCount}Q
+            </Badge>
+            {subject && (
+              <Badge variant="outline" className="text-xs">{subject.name}</Badge>
             )}
           </div>
         </div>
-      </CardContent>
-    </Card>
-  );
-
-  const renderCompactView = (quiz: Quiz) => (
-    <div key={quiz.id} className="flex items-center justify-between p-3 border rounded hover:bg-gray-50 transition-colors">
-      <div className="flex-1">
-        <div className="flex items-center gap-2">
-          <span className="font-medium">{quiz.title}</span>
-          <Badge variant="secondary" className="text-xs">
-            {(quiz as any).questionCount || 0}
-          </Badge>
-          {quiz.subject_id && (
-            <Badge variant="outline" className="text-xs">
-              {academicSubjects?.find(s => s.id === quiz.subject_id)?.name}
-            </Badge>
+        
+        <div className="flex items-center gap-1">
+          <Button size="sm" onClick={() => handleTakeQuiz(quiz)}>
+            <Play className="h-3 w-3" />
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => handleViewQuiz(quiz)}>
+            <Eye className="h-3 w-3" />
+          </Button>
+          {isOwner(quiz) && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => handleDeleteQuiz(quiz)}
+              className="text-red-600 hover:text-red-700"
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
           )}
         </div>
       </div>
-      <div className="flex gap-1">
-        <Button onClick={() => handleTakeQuiz(quiz)} size="sm" variant="ghost">
-          <Play className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" onClick={() => handleViewQuiz(quiz)} size="sm">
-          <History className="h-4 w-4" />
-        </Button>
-        {isOwner(quiz) && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem 
-                onClick={() => handleDeleteQuiz(quiz)}
-                className="text-destructive"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="space-y-6">
-      {/* Search, Filters, and View Toggle */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="flex flex-col sm:flex-row gap-4 flex-1">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search quizzes..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-            <SelectTrigger className="w-full sm:w-[200px]">
-              <SelectValue placeholder="Filter by subject" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Subjects</SelectItem>
-              {academicSubjects?.map((subject) => (
-                <SelectItem key={subject.id} value={subject.id}>
-                  {subject.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-2xl font-bold">Quizzes</h1>
+        
+        {/* View Toggle */}
+        <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as ViewMode)}>
+          <ToggleGroupItem value="grid" aria-label="Grid view">
+            <Grid3X3 className="h-4 w-4" />
+          </ToggleGroupItem>
+          <ToggleGroupItem value="list" aria-label="List view">
+            <List className="h-4 w-4" />
+          </ToggleGroupItem>
+          <ToggleGroupItem value="compact" aria-label="Compact view">
+            <MoreHorizontal className="h-4 w-4" />
+          </ToggleGroupItem>
+        </ToggleGroup>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder="Search quizzes..."
+            value={filters.search}
+            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+            className="pl-10"
+          />
         </div>
-        <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+        
+        <Select value={filters.subject} onValueChange={(value) => setFilters({ ...filters, subject: value })}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="All subjects" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All subjects</SelectItem>
+            {academicSubjects?.map((subject) => (
+              <SelectItem key={subject.id} value={subject.id}>
+                {subject.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Button
+          variant={filters.userOnly ? "default" : "outline"}
+          onClick={() => setFilters({ ...filters, userOnly: !filters.userOnly })}
+        >
+          My Quizzes
+        </Button>
       </div>
 
       {/* Quiz List */}
-      {!quizzes || quizzes.length === 0 ? (
+      {quizzes.length === 0 ? (
         <Card>
-          <CardContent className="p-6 text-center">
-            <HelpCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">No quizzes found</h3>
-            <p className="text-muted-foreground mb-4">
-              {searchTerm || selectedSubject !== "all"
-                ? "Try adjusting your search filters"
-                : "Create your first quiz to get started"}
-            </p>
-            <Button onClick={() => navigate("/quiz/create")}>
-              Create Quiz
-            </Button>
+          <CardContent className="p-12 text-center">
+            <p className="text-gray-500 text-lg">No quizzes found.</p>
+            <p className="text-gray-400 mt-2">Try adjusting your filters or create a new quiz.</p>
           </CardContent>
         </Card>
       ) : (
         <div className={
           viewMode === 'grid' 
-            ? "grid gap-4 md:grid-cols-2 lg:grid-cols-3" 
-            : "space-y-3"
+            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            : "space-y-4"
         }>
           {quizzes.map((quiz) => {
-            switch (viewMode) {
-              case 'list':
-                return renderListView(quiz);
-              case 'compact':
-                return renderCompactView(quiz);
-              default:
-                return renderQuizCard(quiz);
-            }
+            if (viewMode === 'grid') return renderQuizCard(quiz);
+            if (viewMode === 'list') return renderQuizList(quiz);
+            return renderQuizCompact(quiz);
           })}
         </div>
       )}
@@ -316,12 +326,11 @@ export const QuizList = () => {
           isOpen={!!deleteQuiz}
           onClose={() => setDeleteQuiz(null)}
           quiz={deleteQuiz}
-          onSuccess={() => {
-            setDeleteQuiz(null);
-            // Quiz list will automatically refresh due to query invalidation
-          }}
+          onSuccess={handleDeleteSuccess}
         />
       )}
     </div>
   );
 };
+
+export default QuizList;
