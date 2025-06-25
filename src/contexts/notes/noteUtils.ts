@@ -2,149 +2,146 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Note } from "@/types/note";
 
-interface DatabaseNote {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  subject: string;
-  content: string;
-  source_type: string;
-  archived: boolean;
-  pinned: boolean;
-  subject_id: string;
-  created_at: string;
-  updated_at: string;
-  summary?: string;
-  summary_status?: string;
-  summary_generated_at?: string;
-  key_points?: string;
-  key_points_generated_at?: string;
-  markdown_content?: string;
-  markdown_content_generated_at?: string;
-  improved_content?: string;
-  improved_content_generated_at?: string;
+export interface NotesQueryOptions {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  subject?: string;
+  showArchived?: boolean;
+  sortBy?: 'newest' | 'oldest' | 'alphabetical' | 'subject';
 }
 
-export const fetchNotesFromSupabase = async (): Promise<Note[]> => {
+export interface NotesQueryResult {
+  notes: Note[];
+  totalCount: number;
+  hasMore: boolean;
+}
+
+export const fetchNotesFromSupabase = async (options: NotesQueryOptions = {}): Promise<NotesQueryResult> => {
+  const {
+    page = 1,
+    pageSize = 20,
+    search = '',
+    subject = 'all',
+    showArchived = false,
+    sortBy = 'newest'
+  } = options;
+
+  const offset = (page - 1) * pageSize;
+
+  console.log(`🔍 Fetching notes - Page: ${page}, Size: ${pageSize}, Subject: "${subject}"`);
+
   try {
-    console.log('🔄 Starting simplified notes fetch...');
-    
-    // Step 1: Fetch basic notes data with timeout
-    const notesPromise = supabase
+    // Build the base query with JOIN for subjects and minimal fields for performance
+    let query = supabase
       .from('notes')
       .select(`
         id,
         title,
         description,
+        content,
         date,
         subject,
-        content,
+        subject_id,
         source_type,
         archived,
         pinned,
-        subject_id,
         created_at,
         updated_at,
-        summary,
-        summary_status,
-        summary_generated_at,
-        key_points,
-        key_points_generated_at,
-        markdown_content,
-        markdown_content_generated_at,
-        improved_content,
-        improved_content_generated_at
-      `)
-      .order('created_at', { ascending: false });
+        user_subjects!notes_subject_id_fkey (
+          id,
+          name
+        ),
+        note_tags (
+          tags (
+            id,
+            name,
+            color
+          )
+        )
+      `, { count: 'exact' })
+      .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
 
-    // Add timeout to prevent hanging
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Database query timeout')), 10000);
-    });
-
-    const { data: notesData, error: notesError } = await Promise.race([
-      notesPromise,
-      timeoutPromise
-    ]) as any;
-
-    if (notesError) {
-      console.error('❌ Error fetching notes:', notesError);
-      throw new Error(`Database error: ${notesError.message}`);
+    // Apply archived filter
+    if (!showArchived) {
+      query = query.eq('archived', false);
     }
 
-    if (!notesData || notesData.length === 0) {
-      console.log('📝 No notes found in database');
-      return [];
+    // Apply search filter at database level
+    if (search.trim()) {
+      query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%,content.ilike.%${search}%`);
     }
 
-    console.log('✅ Basic notes fetched successfully:', notesData.length);
-
-    // Step 2: Fetch subjects data separately
-    let subjectsMap: Record<string, string> = {};
-    try {
-      const { data: subjectsData } = await supabase
-        .from('user_subjects')
-        .select('id, name');
-      
-      if (subjectsData) {
-        subjectsMap = subjectsData.reduce((acc, subject) => {
-          acc[subject.id] = subject.name;
-          return acc;
-        }, {} as Record<string, string>);
-      }
-    } catch (error) {
-      console.warn('⚠️ Could not fetch subjects, using fallback');
+    // Apply subject filter
+    if (subject !== 'all') {
+      // Handle both subject_id and legacy subject field
+      query = query.or(`user_subjects.name.eq.${subject},subject.eq.${subject}`);
     }
 
-    // Step 3: Transform notes data
-    const transformedNotes: Note[] = notesData.map((note: DatabaseNote) => {
-      const resolvedSubjectName = note.subject_id && subjectsMap[note.subject_id] 
-        ? subjectsMap[note.subject_id] 
-        : note.subject || 'Uncategorized';
+    // Apply sorting with pinned notes first
+    switch (sortBy) {
+      case 'newest':
+        query = query.order('pinned', { ascending: false })
+                     .order('updated_at', { ascending: false });
+        break;
+      case 'oldest':
+        query = query.order('pinned', { ascending: false })
+                     .order('created_at', { ascending: true });
+        break;
+      case 'alphabetical':
+        query = query.order('pinned', { ascending: false })
+                     .order('title', { ascending: true });
+        break;
+      case 'subject':
+        query = query.order('pinned', { ascending: false })
+                     .order('subject', { ascending: true });
+        break;
+    }
 
-      return {
-        id: note.id,
-        title: note.title || "Untitled",
-        description: note.description || "",
-        date: new Date(note.date).toISOString().split('T')[0],
-        category: resolvedSubjectName,
-        content: note.content || "",
-        sourceType: (note.source_type as 'manual' | 'scan' | 'import') || 'manual',
-        archived: note.archived || false,
-        pinned: note.pinned || false,
-        tags: [], // Will be loaded separately if needed
-        subject_id: note.subject_id,
-        
-        // Enhancement fields
-        summary: note.summary,
-        summary_status: (note.summary_status as 'pending' | 'generating' | 'completed' | 'failed') || 'pending',
-        summary_generated_at: note.summary_generated_at,
-        key_points: note.key_points,
-        key_points_generated_at: note.key_points_generated_at,
-        markdown_content: note.markdown_content,
-        markdown_content_generated_at: note.markdown_content_generated_at,
-        improved_content: note.improved_content,
-        improved_content_generated_at: note.improved_content_generated_at
-      };
-    });
+    // Apply pagination
+    query = query.range(offset, offset + pageSize - 1);
 
-    console.log('✅ Notes transformation completed:', {
-      totalNotes: transformedNotes.length,
-      notesWithEnhancements: transformedNotes.filter(note => 
-        note.summary || note.key_points || note.improved_content || note.markdown_content
-      ).length
-    });
+    const { data: notes, error, count } = await query;
 
-    return transformedNotes;
+    if (error) {
+      console.error('❌ Error fetching notes:', error);
+      throw error;
+    }
+
+    // Transform data to match Note interface
+    const transformedNotes: Note[] = (notes || []).map(note => ({
+      id: note.id,
+      title: note.title,
+      description: note.description || '',
+      content: note.content || '',
+      date: note.date,
+      subject: note.user_subjects?.name || note.subject || 'Uncategorized',
+      sourceType: (note.source_type || 'manual') as 'manual' | 'import' | 'scan',
+      archived: note.archived || false,
+      pinned: note.pinned || false,
+      subject_id: note.subject_id,
+      tags: note.note_tags?.map(nt => nt.tags).filter(Boolean) || []
+    }));
+
+    const totalCount = count || 0;
+    const hasMore = totalCount > offset + pageSize;
+
+    console.log(`✅ Fetched ${transformedNotes.length} notes (${totalCount} total, hasMore: ${hasMore})`);
+
+    return {
+      notes: transformedNotes,
+      totalCount,
+      hasMore
+    };
+
   } catch (error) {
     console.error('❌ Error in fetchNotesFromSupabase:', error);
-    
-    // Return empty array instead of throwing to prevent complete failure
-    if (error instanceof Error) {
-      console.error('Error details:', error.message);
-    }
-    
-    return [];
+    throw error;
   }
+};
+
+// Legacy function for backward compatibility - now uses optimized version
+export const fetchNotesFromSupabaseOld = async (): Promise<Note[]> => {
+  const result = await fetchNotesFromSupabase({ pageSize: 1000 });
+  return result.notes;
 };

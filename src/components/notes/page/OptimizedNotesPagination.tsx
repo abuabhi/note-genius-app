@@ -1,6 +1,6 @@
 
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 
 interface OptimizedNotesPaginationProps {
   currentPage: number;
@@ -8,6 +8,8 @@ interface OptimizedNotesPaginationProps {
   pageSize: number;
   onPageChange: (page: number) => void;
   hasMore: boolean;
+  loading?: boolean;
+  onLoadMore?: () => void;
 }
 
 export const OptimizedNotesPagination = ({
@@ -15,12 +17,43 @@ export const OptimizedNotesPagination = ({
   totalCount,
   pageSize,
   onPageChange,
-  hasMore
+  hasMore,
+  loading = false,
+  onLoadMore
 }: OptimizedNotesPaginationProps) => {
   const totalPages = Math.ceil(totalCount / pageSize);
   const startItem = (currentPage - 1) * pageSize + 1;
   const endItem = Math.min(currentPage * pageSize, totalCount);
 
+  // If we have a loadMore function, use Load More pattern
+  if (onLoadMore) {
+    return (
+      <div className="flex flex-col items-center gap-4 px-4 py-6 bg-white/80 backdrop-blur-sm rounded-lg border border-mint-100/50">
+        <div className="text-sm text-gray-600">
+          Showing {Math.min(currentPage * pageSize, totalCount)} of {totalCount} notes
+        </div>
+        
+        {hasMore && (
+          <Button
+            onClick={onLoadMore}
+            disabled={loading}
+            className="bg-mint-600 hover:bg-mint-700 text-white px-6 py-2"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Loading...
+              </>
+            ) : (
+              `Load More Notes (${totalCount - (currentPage * pageSize)} remaining)`
+            )}
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  // Traditional pagination pattern
   return (
     <div className="flex items-center justify-between px-4 py-3 bg-white/80 backdrop-blur-sm rounded-lg border border-mint-100/50">
       <div className="text-sm text-gray-600">
@@ -32,7 +65,7 @@ export const OptimizedNotesPagination = ({
           variant="outline"
           size="sm"
           onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
+          disabled={currentPage === 1 || loading}
           className="gap-1"
         >
           <ChevronLeft className="h-4 w-4" />
@@ -48,6 +81,7 @@ export const OptimizedNotesPagination = ({
                 variant={currentPage === pageNum ? "default" : "outline"}
                 size="sm"
                 onClick={() => onPageChange(pageNum)}
+                disabled={loading}
                 className="w-8 h-8 p-0"
               >
                 {pageNum}
@@ -62,6 +96,7 @@ export const OptimizedNotesPagination = ({
                 variant="outline"
                 size="sm"
                 onClick={() => onPageChange(totalPages)}
+                disabled={loading}
                 className="w-8 h-8 p-0"
               >
                 {totalPages}
@@ -74,7 +109,7 @@ export const OptimizedNotesPagination = ({
           variant="outline"
           size="sm"
           onClick={() => onPageChange(currentPage + 1)}
-          disabled={!hasMore}
+          disabled={!hasMore || loading}
           className="gap-1"
         >
           Next

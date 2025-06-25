@@ -5,11 +5,12 @@ import { Note } from '@/types/note';
 import { ProgressiveLoader } from '@/components/performance/ProgressiveLoader';
 import { OptimizedNotesFilters } from './OptimizedNotesFilters';
 import { OptimizedNotesGrid } from './OptimizedNotesGrid';
-import { OptimizedNotesPagination } from './OptimizedNotesPagination';
 import { ErrorState } from './ErrorState';
 import { EmptyNotesState } from '@/components/notes/EmptyNotesState';
 import { useViewPreferences } from '@/hooks/useViewPreferences';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 export const OptimizedNotesContent = () => {
   const {
@@ -19,8 +20,8 @@ export const OptimizedNotesContent = () => {
     error,
     searchTerm,
     selectedSubject,
-    currentPage,
-    setCurrentPage,
+    hasMore,
+    loadMore,
     refreshNotes,
     updateNote,
     deleteNote
@@ -73,11 +74,11 @@ export const OptimizedNotesContent = () => {
 
       {/* Main content with improved loading states */}
       <ProgressiveLoader 
-        isLoading={loading}
+        isLoading={loading && notes.length === 0}
         isPartiallyLoaded={notes.length > 0}
         skeletonCount={6}
       >
-        {notes.length === 0 ? (
+        {notes.length === 0 && !loading ? (
           <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-white/20 shadow-lg shadow-mint-500/5">
             <EmptyNotesState
               onCreateNote={() => {}}
@@ -95,17 +96,32 @@ export const OptimizedNotesContent = () => {
               />
             </div>
             
-            {totalCount > 20 && (
+            {/* Load More Button */}
+            {hasMore && (
               <div className="flex justify-center">
                 <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-lg shadow-mint-500/5 p-6">
-                  <OptimizedNotesPagination
-                    currentPage={currentPage}
-                    totalCount={totalCount}
-                    pageSize={20}
-                    onPageChange={setCurrentPage}
-                    hasMore={false}
-                  />
+                  <Button
+                    onClick={loadMore}
+                    disabled={loading}
+                    className="bg-mint-600 hover:bg-mint-700 text-white px-8 py-2"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Loading...
+                      </>
+                    ) : (
+                      `Load More Notes (${totalCount - notes.length} remaining)`
+                    )}
+                  </Button>
                 </div>
+              </div>
+            )}
+            
+            {/* Notes Counter */}
+            {totalCount > 0 && (
+              <div className="text-center text-sm text-gray-500">
+                Showing {notes.length} of {totalCount} notes
               </div>
             )}
           </div>
