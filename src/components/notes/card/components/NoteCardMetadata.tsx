@@ -1,39 +1,25 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Book, Tag, Sparkles } from "lucide-react";
+import { Tag, Sparkles, Clock } from "lucide-react";
 import { Note } from "@/types/note";
-import { generateColorFromString, getBestTextColor } from "@/utils/colorUtils";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { useUserSubjects } from "@/hooks/useUserSubjects";
 
 interface NoteCardMetadataProps {
   note: Note;
 }
 
+// Calculate estimated read time based on content length
+const calculateReadTime = (content: string): number => {
+  const wordsPerMinute = 200;
+  const wordCount = content.trim().split(/\s+/).length;
+  const readTime = Math.ceil(wordCount / wordsPerMinute);
+  return Math.max(1, readTime); // Minimum 1 minute
+};
+
 export const NoteCardMetadata = ({ note }: NoteCardMetadataProps) => {
   const navigate = useNavigate();
-  const { subjects, isLoading: subjectsLoading } = useUserSubjects();
-  
-  // Find the subject name based on subject_id or fall back to subject
-  const getSubjectName = () => {
-    // First, try to find subject by subject_id if it exists and subjects are loaded
-    if (note.subject_id && !subjectsLoading && subjects.length > 0) {
-      const foundSubject = subjects.find(s => s.id === note.subject_id);
-      if (foundSubject) {
-        return foundSubject.name;
-      }
-    }
-    
-    // If subject_id lookup fails or doesn't exist, use the legacy subject field
-    // This ensures we don't lose the original subject when subject_id doesn't match
-    return note.subject || "Uncategorized";
-  };
-
-  const subjectName = getSubjectName();
-  const subjectColor = generateColorFromString(subjectName);
-  const textColor = getBestTextColor(subjectColor);
   
   const handleGoToStudyMode = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -41,6 +27,10 @@ export const NoteCardMetadata = ({ note }: NoteCardMetadataProps) => {
     console.log("🎯 Study button clicked - Navigating to study mode for note:", note.id, note.title);
     navigate(`/notes/study/${note.id}`);
   };
+
+  // Calculate read time from content
+  const content = note.content || note.description || '';
+  const readTime = calculateReadTime(content);
 
   // Use browser's default timezone
   const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -59,21 +49,15 @@ export const NoteCardMetadata = ({ note }: NoteCardMetadataProps) => {
   return (
     <div className="flex justify-between items-center w-full">
       {/* Left side - metadata */}
-      <div className="flex items-center gap-3">
-        {/* Subject badge with generated color */}
-        <Badge 
-          className="px-3 py-1.5 text-xs font-medium border-0 shadow-sm"
-          style={{ 
-            backgroundColor: subjectColor, 
-            color: textColor 
-          }}
-        >
-          <Book className="h-3 w-3 mr-1.5" />
-          {subjectName}
-        </Badge>
+      <div className="flex items-center gap-3 text-sm text-gray-600">
+        {/* Read time */}
+        <div className="flex items-center gap-1">
+          <Clock className="h-3 w-3" />
+          <span className="font-medium">{readTime} min read</span>
+        </div>
         
         {/* Date */}
-        <span className="text-sm text-gray-600 font-bold">
+        <span className="font-bold">
           {formattedDate}
         </span>
 
@@ -91,12 +75,12 @@ export const NoteCardMetadata = ({ note }: NoteCardMetadataProps) => {
       {/* Right side - Study Button */}
       <Button
         onClick={handleGoToStudyMode}
-        className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white font-medium rounded-xl transition-all duration-200 relative z-10 shadow-lg shadow-mint-500/25 hover:shadow-mint-500/40 hover:scale-[1.02] px-4 py-2 h-auto"
+        className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white font-medium rounded-xl transition-all duration-200 relative z-10 shadow-lg shadow-mint-500/25 hover:shadow-mint-500/40 hover:scale-[1.02] px-3 py-1.5 h-auto text-xs"
         size="sm"
         type="button"
       >
-        <Sparkles className="h-4 w-4 mr-2" />
-        Study Mode
+        <Sparkles className="h-3 w-3 mr-1.5" />
+        Study
       </Button>
     </div>
   );

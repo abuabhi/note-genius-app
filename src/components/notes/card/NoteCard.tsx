@@ -33,7 +33,7 @@ export const NoteCard = ({
         hover:scale-[1.02] hover:-translate-y-1
         ${note.pinned ? 'ring-2 ring-mint-400/50 shadow-mint-500/20' : ''}
         ${note.archived ? 'opacity-75' : ''}
-        rounded-2xl
+        rounded-2xl min-h-[280px]
         before:absolute before:inset-0 before:bg-gradient-to-br before:from-mint-500/5 before:via-transparent before:to-blue-500/5 before:opacity-0 before:transition-opacity before:duration-500
         hover:before:opacity-100
       `}
@@ -59,7 +59,7 @@ export const NoteCard = ({
         />
       </CardHeader>
       
-      <CardFooter className="flex justify-between items-center px-6 py-4 pt-0">
+      <CardFooter className="flex justify-between items-center px-6 py-4 pt-0 mt-auto">
         <NoteCardMetadata note={note} />
       </CardFooter>
     </Card>
