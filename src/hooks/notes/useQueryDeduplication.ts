@@ -10,7 +10,7 @@ interface QueryState {
 
 export const useQueryDeduplication = () => {
   const activeQueries = useRef<QueryState>({});
-  const QUERY_TIMEOUT = 10000; // 10 seconds
+  const QUERY_TIMEOUT = 5000; // Reduced to 5 seconds for better performance
 
   const deduplicateQuery = useCallback(async <T>(
     queryKey: string,
@@ -18,7 +18,7 @@ export const useQueryDeduplication = () => {
   ): Promise<T> => {
     const now = Date.now();
     
-    // Clean up old queries
+    // Clean up old queries more aggressively
     Object.keys(activeQueries.current).forEach(key => {
       if (now - activeQueries.current[key].timestamp > QUERY_TIMEOUT) {
         delete activeQueries.current[key];
@@ -27,11 +27,12 @@ export const useQueryDeduplication = () => {
 
     // Check if query is already in progress
     if (activeQueries.current[queryKey]) {
-      console.log('🔄 Deduplicating query:', queryKey);
+      console.log('🔄 Query deduplication hit:', queryKey);
       return activeQueries.current[queryKey].promise;
     }
 
     // Execute new query
+    console.log('🚀 New query execution:', queryKey);
     const promise = queryFn();
     activeQueries.current[queryKey] = {
       promise,
@@ -46,5 +47,13 @@ export const useQueryDeduplication = () => {
     return promise;
   }, []);
 
-  return { deduplicateQuery };
+  const clearCache = useCallback(() => {
+    activeQueries.current = {};
+  }, []);
+
+  return { 
+    deduplicateQuery,
+    clearCache,
+    getActiveQueriesCount: () => Object.keys(activeQueries.current).length
+  };
 };

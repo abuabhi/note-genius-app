@@ -20,28 +20,34 @@ export const NotesLoadMoreSection = memo(({
   currentCount,
   onLoadMore
 }: NotesLoadMoreSectionProps) => {
-  if (!hasMore || shouldVirtualize) {
-    return null;
-  }
+  if (!hasMore) return null;
 
   return (
-    <div className="flex justify-center">
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-lg shadow-mint-500/5 p-6">
-        <Button
-          onClick={onLoadMore}
-          disabled={loading}
-          className="bg-mint-600 hover:bg-mint-700 text-white px-8 py-2"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              Loading...
-            </>
-          ) : (
-            `Load More Notes (${totalCount - currentCount} remaining)`
-          )}
-        </Button>
+    <div className="flex flex-col items-center gap-4 py-8">
+      <div className="text-sm text-gray-600">
+        Showing {currentCount} of {totalCount} notes
+        {shouldVirtualize && (
+          <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+            Optimized
+          </span>
+        )}
       </div>
+      
+      <Button 
+        variant="outline" 
+        onClick={onLoadMore}
+        disabled={loading}
+        className="min-w-32"
+      >
+        {loading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Loading...
+          </>
+        ) : (
+          'Load More'
+        )}
+      </Button>
     </div>
   );
 });
