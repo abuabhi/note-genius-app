@@ -12,7 +12,7 @@ import {
   BarChart,
   Bar,
 } from "recharts";
-import { useQuizResults } from "@/hooks/useQuizzes";
+import { useQuizResults } from "@/hooks/quiz/useQuizResults";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -50,16 +50,17 @@ const QuizProgressChart = () => {
   }
   
   // Process data for score over time chart
-  const scoreData = quizResults.map((result) => {
+  const scoreData = quizResults.map((result, index) => {
     const date = new Date(result.completed_at);
     return {
-      name: `${date.getMonth() + 1}/${date.getDate()}`,
+      name: `Quiz ${index + 1}`,
+      date: `${date.getMonth() + 1}/${date.getDate()}`,
       score: Math.round((result.score / result.total_questions) * 100),
       quiz: result.quiz?.title || 'Untitled Quiz',
     };
   }).reverse();
   
-  // Process data for subjects performance
+  // Process data for subjects performance - group by quiz title
   const subjectPerformance: Record<string, { total: number; correct: number }> = {};
   quizResults.forEach((result) => {
     const quizTitle = result.quiz?.title || 'Other';
@@ -71,7 +72,7 @@ const QuizProgressChart = () => {
   });
   
   const subjectData = Object.entries(subjectPerformance).map(([subject, data]) => ({
-    name: subject,
+    name: subject.length > 20 ? subject.substring(0, 20) + '...' : subject,
     percentage: Math.round((data.correct / data.total) * 100),
     correct: data.correct,
     total: data.total,
@@ -98,7 +99,7 @@ const QuizProgressChart = () => {
                   <YAxis domain={[0, 100]} />
                   <Tooltip 
                     formatter={(value) => [`${value}%`, 'Score']}
-                    labelFormatter={(label) => `Date: ${label}`}
+                    labelFormatter={(label) => `${label}`}
                   />
                   <Legend />
                   <Line

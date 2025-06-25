@@ -1,14 +1,15 @@
 
-import { useQuizzes, useQuizResults } from "@/hooks/useQuizzes";
+import { useQuizList } from "@/hooks/quiz/useQuizList";
+import { useQuizResults } from "@/hooks/quiz/useQuizResults";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpenCheck, Award, Clock, BrainCircuit } from "lucide-react";
 
 const QuizStats = () => {
-  const { quizzes, isLoading: loadingQuizzes } = useQuizzes();
+  const { data: quizData, isLoading: loadingQuizzes } = useQuizList();
   const { data: quizResults, isLoading: loadingResults } = useQuizResults();
   
   // Calculate stats
-  const totalQuizzes = quizzes?.length || 0;
+  const totalQuizzes = quizData?.quizzes?.length || 0;
   const totalCompleted = quizResults?.length || 0;
   
   let avgScore = 0;

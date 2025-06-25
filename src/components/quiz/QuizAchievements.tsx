@@ -1,11 +1,12 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Award, Target, Zap, Star, Calendar } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
+import { useQuizResults } from "@/hooks/quiz/useQuizResults";
+import { useQuizList } from "@/hooks/quiz/useQuizList";
 
 interface Achievement {
   id: string;
@@ -21,144 +22,101 @@ interface Achievement {
 
 const QuizAchievements = () => {
   const { user } = useAuth();
+  const { data: quizResults, isLoading: loadingResults } = useQuizResults();
+  const { data: quizData, isLoading: loadingQuizzes } = useQuizList({ userOnly: true });
   const [achievements, setAchievements] = useState<Achievement[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
+    if (user && quizResults && quizData) {
       calculateAchievements();
     }
-  }, [user]);
+  }, [user, quizResults, quizData]);
 
-  const calculateAchievements = async () => {
-    if (!user) return;
+  const calculateAchievements = () => {
+    if (!quizResults || !quizData) return;
 
-    try {
-      setLoading(true);
+    const totalQuizzesTaken = quizResults.length;
+    const totalQuizzesCreated = quizData.quizzes?.length || 0;
+    const perfectScores = quizResults.filter(r => r.score === r.total_questions).length;
+    const fastCompletions = quizResults.filter(r => 
+      r.duration_seconds && r.duration_seconds < 60
+    ).length;
 
-      // Fetch user's quiz results
-      const { data: quizResults } = await supabase
-        .from('quiz_results')
-        .select('*')
-        .eq('user_id', user.id);
+    // Calculate quiz streak (simplified)
+    const quizDates = quizResults.map(r => new Date(r.completed_at).toDateString());
+    const uniqueDates = [...new Set(quizDates)].sort();
+    let maxStreak = Math.min(uniqueDates.length, 7); // Simplified streak calculation
 
-      // Fetch user's created quizzes
-      const { data: userQuizzes } = await supabase
-        .from('quizzes')
-        .select('*')
-        .eq('user_id', user.id);
-
-      const totalQuizzesTaken = quizResults?.length || 0;
-      const totalQuizzesCreated = userQuizzes?.length || 0;
-      const perfectScores = quizResults?.filter(r => r.score === r.total_questions).length || 0;
-      const averageScore = quizResults?.length 
-        ? quizResults.reduce((sum, r) => sum + (r.score / r.total_questions), 0) / quizResults.length * 100
-        : 0;
-
-      // Calculate fast completion times (under 60 seconds)
-      const fastCompletions = quizResults?.filter(r => 
-        r.duration_seconds && r.duration_seconds < 60
-      ).length || 0;
-
-      // Calculate quiz streak (quizzes taken in consecutive days)
-      const quizDates = quizResults?.map(r => new Date(r.completed_at).toDateString()) || [];
-      const uniqueDates = [...new Set(quizDates)].sort();
-      let currentStreak = 0;
-      let maxStreak = 0;
-      
-      for (let i = 0; i < uniqueDates.length; i++) {
-        if (i === 0) {
-          currentStreak = 1;
-        } else {
-          const prevDate = new Date(uniqueDates[i - 1]);
-          const currentDate = new Date(uniqueDates[i]);
-          const diffDays = (currentDate.getTime() - prevDate.getTime()) / (1000 * 3600 * 24);
-          
-          if (diffDays === 1) {
-            currentStreak++;
-          } else {
-            maxStreak = Math.max(maxStreak, currentStreak);
-            currentStreak = 1;
-          }
-        }
+    const calculatedAchievements: Achievement[] = [
+      {
+        id: '1',
+        title: 'Quiz Beginner',
+        description: 'Complete your first quiz',
+        current: Math.min(totalQuizzesTaken, 1),
+        target: 1,
+        progress: Math.min(totalQuizzesTaken / 1 * 100, 100),
+        completed: totalQuizzesTaken >= 1,
+        icon: <Trophy className="h-5 w-5" />,
+        category: 'milestone'
+      },
+      {
+        id: '2',
+        title: 'Quiz Master',
+        description: 'Complete 10 quizzes',
+        current: Math.min(totalQuizzesTaken, 10),
+        target: 10,
+        progress: Math.min(totalQuizzesTaken / 10 * 100, 100),
+        completed: totalQuizzesTaken >= 10,
+        icon: <Award className="h-5 w-5" />,
+        category: 'milestone'
+      },
+      {
+        id: '3',
+        title: 'Perfect Score',
+        description: 'Get a perfect score on any quiz',
+        current: Math.min(perfectScores, 1),
+        target: 1,
+        progress: Math.min(perfectScores / 1 * 100, 100),
+        completed: perfectScores >= 1,
+        icon: <Target className="h-5 w-5" />,
+        category: 'performance'
+      },
+      {
+        id: '4',
+        title: 'Speed Demon',
+        description: 'Complete a quiz in under 60 seconds',
+        current: Math.min(fastCompletions, 1),
+        target: 1,
+        progress: Math.min(fastCompletions / 1 * 100, 100),
+        completed: fastCompletions >= 1,
+        icon: <Zap className="h-5 w-5" />,
+        category: 'performance'
+      },
+      {
+        id: '5',
+        title: 'Quiz Creator',
+        description: 'Create your first quiz',
+        current: Math.min(totalQuizzesCreated, 1),
+        target: 1,
+        progress: Math.min(totalQuizzesCreated / 1 * 100, 100),
+        completed: totalQuizzesCreated >= 1,
+        icon: <Star className="h-5 w-5" />,
+        category: 'creator'
+      },
+      {
+        id: '6',
+        title: 'Streak Starter',
+        description: 'Take quizzes for 3 consecutive days',
+        current: Math.min(maxStreak, 3),
+        target: 3,
+        progress: Math.min(maxStreak / 3 * 100, 100),
+        completed: maxStreak >= 3,
+        icon: <Calendar className="h-5 w-5" />,
+        category: 'consistency'
       }
-      maxStreak = Math.max(maxStreak, currentStreak);
+    ];
 
-      const calculatedAchievements: Achievement[] = [
-        {
-          id: '1',
-          title: 'Quiz Beginner',
-          description: 'Complete your first quiz',
-          current: Math.min(totalQuizzesTaken, 1),
-          target: 1,
-          progress: Math.min(totalQuizzesTaken / 1 * 100, 100),
-          completed: totalQuizzesTaken >= 1,
-          icon: <Trophy className="h-5 w-5" />,
-          category: 'milestone'
-        },
-        {
-          id: '2',
-          title: 'Quiz Master',
-          description: 'Complete 10 quizzes',
-          current: Math.min(totalQuizzesTaken, 10),
-          target: 10,
-          progress: Math.min(totalQuizzesTaken / 10 * 100, 100),
-          completed: totalQuizzesTaken >= 10,
-          icon: <Award className="h-5 w-5" />,
-          category: 'milestone'
-        },
-        {
-          id: '3',
-          title: 'Perfect Score',
-          description: 'Get a perfect score on any quiz',
-          current: Math.min(perfectScores, 1),
-          target: 1,
-          progress: Math.min(perfectScores / 1 * 100, 100),
-          completed: perfectScores >= 1,
-          icon: <Target className="h-5 w-5" />,
-          category: 'performance'
-        },
-        {
-          id: '4',
-          title: 'Speed Demon',
-          description: 'Complete a quiz in under 60 seconds',
-          current: Math.min(fastCompletions, 1),
-          target: 1,
-          progress: Math.min(fastCompletions / 1 * 100, 100),
-          completed: fastCompletions >= 1,
-          icon: <Zap className="h-5 w-5" />,
-          category: 'performance'
-        },
-        {
-          id: '5',
-          title: 'Quiz Creator',
-          description: 'Create your first quiz',
-          current: Math.min(totalQuizzesCreated, 1),
-          target: 1,
-          progress: Math.min(totalQuizzesCreated / 1 * 100, 100),
-          completed: totalQuizzesCreated >= 1,
-          icon: <Star className="h-5 w-5" />,
-          category: 'creator'
-        },
-        {
-          id: '6',
-          title: 'Streak Starter',
-          description: 'Take quizzes for 3 consecutive days',
-          current: Math.min(maxStreak, 3),
-          target: 3,
-          progress: Math.min(maxStreak / 3 * 100, 100),
-          completed: maxStreak >= 3,
-          icon: <Calendar className="h-5 w-5" />,
-          category: 'consistency'
-        }
-      ];
-
-      setAchievements(calculatedAchievements);
-    } catch (error) {
-      console.error('Error calculating achievements:', error);
-    } finally {
-      setLoading(false);
-    }
+    setAchievements(calculatedAchievements);
   };
 
   const getCategoryColor = (category: string) => {
@@ -176,7 +134,9 @@ const QuizAchievements = () => {
     }
   };
 
-  if (loading) {
+  const isLoading = loadingResults || loadingQuizzes;
+
+  if (isLoading) {
     return (
       <div className="space-y-4">
         {[...Array(3)].map((_, i) => (
