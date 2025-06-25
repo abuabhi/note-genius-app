@@ -56,7 +56,7 @@ const CTA = () => {
               className="border-white/30 text-white hover:bg-white/10 backdrop-blur-sm"
               asChild
             >
-              <Link to="/flashcards">
+              <Link to="/features">
                 Try Live Demo
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>

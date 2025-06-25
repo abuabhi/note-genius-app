@@ -56,7 +56,7 @@ const Hero = () => {
               className="border-mint-200 text-mint-700 hover:bg-mint-50"
               asChild
             >
-              <Link to="/flashcards">
+              <Link to="/features">
                 <Play className="mr-2 h-4 w-4" />
                 Try Demo
               </Link>
