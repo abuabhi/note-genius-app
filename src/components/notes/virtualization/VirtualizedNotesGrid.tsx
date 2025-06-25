@@ -5,6 +5,7 @@ import { Note } from '@/types/note';
 import { ViewMode } from '@/hooks/useViewPreferences';
 import { VirtualizedNoteItem } from './VirtualizedNoteItem';
 import { useVirtualizedNotes } from '@/hooks/notes/useVirtualizedNotes';
+import { NoteCard } from '@/components/notes/card/NoteCard';
 
 interface VirtualizedNotesGridProps {
   notes: Note[];
@@ -16,7 +17,7 @@ interface VirtualizedNotesGridProps {
   height?: number;
 }
 
-// Memoized pinned notes section
+// Memoized pinned notes section using original NoteCard
 const PinnedNotesSection = memo(({ 
   pinnedNotes, 
   viewMode, 
@@ -35,12 +36,12 @@ const PinnedNotesSection = memo(({
   const gridClasses = useMemo(() => {
     switch (viewMode) {
       case 'list':
-        return "space-y-3";
+        return "flex flex-col space-y-4";
       case 'compact':
         return "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4";
       case 'grid':
       default:
-        return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4";
+        return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
     }
   }, [viewMode]);
 
@@ -53,19 +54,14 @@ const PinnedNotesSection = memo(({
       </div>
       <div className={gridClasses}>
         {pinnedNotes.map(note => (
-          <VirtualizedNoteItem
+          <NoteCard
             key={note.id}
-            index={0}
-            style={{}}
-            data={{
-              notes: [note],
-              itemsPerRow: 1,
-              onPin,
-              onDelete,
-              onNoteClick,
-              onShowDetails,
-              viewMode,
-            }}
+            note={note}
+            onNoteClick={onNoteClick}
+            onShowDetails={onShowDetails}
+            onPin={onPin}
+            onDelete={onDelete}
+            confirmDelete={null}
           />
         ))}
       </div>
@@ -119,12 +115,12 @@ export const VirtualizedNotesGrid = memo(({
   const gridClasses = useMemo(() => {
     switch (viewMode) {
       case 'list':
-        return "space-y-3";
+        return "flex flex-col space-y-4";
       case 'compact':
         return "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4";
       case 'grid':
       default:
-        return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4";
+        return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
     }
   }, [viewMode]);
 
@@ -140,7 +136,7 @@ export const VirtualizedNotesGrid = memo(({
     notes: unpinnedNotes,
   }), [getItemData, unpinnedNotes]);
 
-  // If we don't need virtualization, fall back to regular rendering
+  // If we don't need virtualization, fall back to regular rendering with original NoteCard
   if (!shouldVirtualize) {
     return (
       <div ref={containerRef} className="space-y-8">
@@ -167,19 +163,14 @@ export const VirtualizedNotesGrid = memo(({
             </div>
             <div className={gridClasses}>
               {unpinnedNotes.map(note => (
-                <VirtualizedNoteItem
+                <NoteCard
                   key={note.id}
-                  index={0}
-                  style={{}}
-                  data={{
-                    notes: [note],
-                    itemsPerRow: 1,
-                    onPin,
-                    onDelete,
-                    onNoteClick,
-                    onShowDetails,
-                    viewMode,
-                  }}
+                  note={note}
+                  onNoteClick={onNoteClick}
+                  onShowDetails={onShowDetails}
+                  onPin={onPin}
+                  onDelete={onDelete}
+                  confirmDelete={null}
                 />
               ))}
             </div>

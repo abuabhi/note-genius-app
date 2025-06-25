@@ -14,32 +14,6 @@ interface OptimizedNotesGridProps {
   shouldVirtualize?: boolean;
 }
 
-// Memoized individual note component for optimal rendering
-const MemoizedNoteCard = memo(({ 
-  note, 
-  onPin, 
-  onDelete, 
-  onNoteClick, 
-  onShowDetails 
-}: {
-  note: Note;
-  onPin: (id: string, isPinned: boolean) => void;
-  onDelete: (id: string) => Promise<void>;
-  onNoteClick: (note: Note) => void;
-  onShowDetails: (note: Note, e: React.MouseEvent) => void;
-}) => (
-  <NoteCard
-    note={note}
-    onNoteClick={onNoteClick}
-    onShowDetails={onShowDetails}
-    onPin={onPin}
-    onDelete={onDelete}
-    confirmDelete={null}
-  />
-));
-
-MemoizedNoteCard.displayName = 'MemoizedNoteCard';
-
 export const OptimizedNotesGrid = memo(({
   notes,
   viewMode,
@@ -48,7 +22,7 @@ export const OptimizedNotesGrid = memo(({
   shouldVirtualize = false
 }: OptimizedNotesGridProps) => {
   const navigate = useNavigate();
-  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   // Memoized handlers to prevent unnecessary re-renders
   const handlePin = useMemo(() => async (id: string, isPinned: boolean) => {
@@ -65,46 +39,79 @@ export const OptimizedNotesGrid = memo(({
 
   const handleShowDetails = useMemo(() => (note: Note, e: React.MouseEvent) => {
     e.stopPropagation();
-    setSelectedNote(note);
+    // Note details functionality can be added here if needed
   }, []);
+
+  // Separate pinned and unpinned notes
+  const pinnedNotes = useMemo(() => notes.filter(note => note.pinned), [notes]);
+  const unpinnedNotes = useMemo(() => notes.filter(note => !note.pinned), [notes]);
 
   // Optimize grid layout based on view mode
   const gridClasses = useMemo(() => {
     switch (viewMode) {
       case 'list':
         return 'flex flex-col space-y-4';
-      case 'grid':
-        return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6';
       case 'compact':
         return 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4';
+      case 'grid':
       default:
         return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6';
     }
   }, [viewMode]);
 
-  // Virtual scrolling for large lists (if enabled)
-  const displayNotes = useMemo(() => {
-    if (shouldVirtualize && notes.length > 50) {
-      // Basic virtualization - show first 50 items initially
-      return notes.slice(0, 50);
-    }
-    return notes;
-  }, [notes, shouldVirtualize]);
-
-  console.log(`🎯 OptimizedNotesGrid rendering ${displayNotes.length} notes in ${viewMode} mode`);
+  console.log(`🎯 OptimizedNotesGrid rendering ${notes.length} notes in ${viewMode} mode`);
 
   return (
-    <div className={gridClasses}>
-      {displayNotes.map((note) => (
-        <MemoizedNoteCard
-          key={note.id}
-          note={note}
-          onPin={handlePin}
-          onDelete={onDeleteNote}
-          onNoteClick={handleNoteClick}
-          onShowDetails={handleShowDetails}
-        />
-      ))}
+    <div className="space-y-8">
+      {/* Pinned Notes Section */}
+      {pinnedNotes.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+            <h3 className="text-lg font-semibold text-gray-800">Pinned Notes</h3>
+            <div className="h-px bg-gradient-to-r from-yellow-200 to-transparent flex-1 ml-4"></div>
+          </div>
+          <div className={gridClasses}>
+            {pinnedNotes.map((note) => (
+              <NoteCard
+                key={note.id}
+                note={note}
+                onNoteClick={handleNoteClick}
+                onShowDetails={handleShowDetails}
+                onPin={handlePin}
+                onDelete={onDeleteNote}
+                confirmDelete={confirmDelete}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* All Notes Section */}
+      {unpinnedNotes.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-mint-500 rounded-full"></div>
+            <h3 className="text-lg font-semibold text-gray-800">
+              {pinnedNotes.length > 0 ? 'All Notes' : 'My Notes'}
+            </h3>
+            <div className="h-px bg-gradient-to-r from-mint-200 to-transparent flex-1 ml-4"></div>
+          </div>
+          <div className={gridClasses}>
+            {unpinnedNotes.map((note) => (
+              <NoteCard
+                key={note.id}
+                note={note}
+                onNoteClick={handleNoteClick}
+                onShowDetails={handleShowDetails}
+                onPin={handlePin}
+                onDelete={onDeleteNote}
+                confirmDelete={confirmDelete}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 });
