@@ -1,7 +1,9 @@
 
 import { SimplifiedFlashcardStudy } from "@/components/study/SimplifiedFlashcardStudy";
-import { SimplifiedStudyProgress } from "@/components/study/SimplifiedStudyProgress";
 import { StudyMode } from "./types";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface SimplifiedStudyPageLayoutProps {
   isLoading: boolean;
@@ -10,35 +12,47 @@ interface SimplifiedStudyPageLayoutProps {
   currentSet?: any;
 }
 
-export const SimplifiedStudyPageLayout = ({
-  isLoading,
-  setId,
+export const SimplifiedStudyPageLayout = ({ 
+  isLoading, 
+  setId, 
   mode,
   currentSet
 }: SimplifiedStudyPageLayoutProps) => {
-  return (
-    <div className="container mx-auto px-6 py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-3">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mint-600 mx-auto mb-4"></div>
-                <p>Loading flashcards...</p>
-              </div>
-            </div>
-          ) : (
-            <SimplifiedFlashcardStudy 
-              setId={setId} 
-              mode={mode} 
-            />
-          )}
+  
+  console.log('SimplifiedStudyPageLayout: Rendering with props:', {
+    isLoading,
+    setId,
+    mode,
+    hasCurrentSet: !!currentSet
+  });
+
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <Skeleton className="h-8 w-64" />
+        <div className="border rounded-lg p-8">
+          <Skeleton className="h-64 w-full" />
         </div>
-        
-        <div className="lg:col-span-1">
-          <SimplifiedStudyProgress />
+        <div className="flex justify-center gap-4">
+          <Skeleton className="h-10 w-24" />
+          <Skeleton className="h-10 w-24" />
+          <Skeleton className="h-10 w-24" />
         </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  if (!setId) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          No flashcard set ID provided. Please select a flashcard set to study.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  // Use the SimplifiedFlashcardStudy component which handles all the complexity
+  return <SimplifiedFlashcardStudy setId={setId} mode={mode} />;
 };

@@ -1,85 +1,48 @@
+
 import { Routes, Route } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
-import { OptimizedNotesProvider } from '@/contexts/OptimizedNotesContext';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import Layout from '@/components/layout/Layout';
 
-// Lazy load components
+// Lazy load pages for better performance
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
-const ScalableNotesPage = lazy(() => import('@/pages/ScalableNotesPage'));
-const NoteStudyPage = lazy(() => import('@/pages/NoteStudyPage'));
-const EditNotePage = lazy(() => import('@/pages/EditNotePage'));
-const NoteToFlashcardPage = lazy(() => import('@/pages/NoteToFlashcardPage'));
 const FlashcardsPage = lazy(() => import('@/pages/FlashcardsPage'));
-const CreateFlashcardSetPage = lazy(() => import('@/pages/CreateFlashcardSetPage'));
-const CreateFlashcardPage = lazy(() => import('@/pages/CreateFlashcardPage'));
 const FlashcardStudyPage = lazy(() => import('@/pages/FlashcardStudyPage'));
-const FlashcardSetPage = lazy(() => import('@/pages/FlashcardSetPage'));
-const QuizPage = lazy(() => import('@/pages/QuizPage'));
+const NotesPage = lazy(() => import('@/pages/NotesPage'));
+const NoteStudyPage = lazy(() => import('@/pages/NoteStudyPage'));
 const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
-const GoalsPage = lazy(() => import('@/pages/GoalsPage'));
-const TodoPage = lazy(() => import('@/pages/TodoPage'));
-const SchedulePage = lazy(() => import('@/pages/SchedulePage'));
-const RemindersPage = lazy(() => import('@/pages/RemindersPage'));
-const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
-const FeedbackPage = lazy(() => import('@/pages/FeedbackPage'));
-const ReferralsPage = lazy(() => import('@/pages/ReferralsPage'));
-const CollaborationPage = lazy(() => import('@/pages/CollaborationPage'));
-const ChatPage = lazy(() => import('@/pages/ChatPage'));
-
-// Loading component
-const RouteLoader = () => (
-  <Layout>
-    <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mint-500"></div>
-      </div>
-    </div>
-  </Layout>
-);
+const CalendarPage = lazy(() => import('@/pages/CalendarPage'));
+const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 export const OptimizedAppRoutes = () => {
   return (
-    <OptimizedNotesProvider>
-      <Suspense fallback={<RouteLoader />}>
+    <Layout>
+      <Suspense fallback={<LoadingSpinner />}>
         <Routes>
           {/* Dashboard */}
           <Route path="/dashboard" element={<DashboardPage />} />
           
-          {/* Notes routes - FIXED ROUTE PATH */}
-          <Route path="/notes" element={<ScalableNotesPage />} />
-          <Route path="/notes/study/:id" element={<NoteStudyPage />} />
-          <Route path="/notes/edit/:id" element={<EditNotePage />} />
-          <Route path="/note-to-flashcard" element={<NoteToFlashcardPage />} />
-          
-          {/* Flashcards routes - FIXED PARAMETER NAMES */}
+          {/* Flashcards routes */}
           <Route path="/flashcards" element={<FlashcardsPage />} />
-          <Route path="/flashcards/create" element={<CreateFlashcardSetPage />} />
-          <Route path="/flashcards/sets/:id" element={<FlashcardSetPage />} />
-          <Route path="/flashcards/:id" element={<FlashcardSetPage />} />
-          <Route path="/flashcards/:id/create" element={<CreateFlashcardPage />} />
+          
+          {/* Study routes - using consistent :id parameter */}
           <Route path="/flashcards/study/:id" element={<FlashcardStudyPage />} />
+          <Route path="/study/:id" element={<FlashcardStudyPage />} />
           
-          {/* Quiz routes */}
-          <Route path="/quiz/*" element={<QuizPage />} />
-          <Route path="/quizzes/*" element={<QuizPage />} />
+          {/* Notes routes */}
+          <Route path="/notes" element={<NotesPage />} />
+          <Route path="/notes/study/:noteId" element={<NoteStudyPage />} />
           
-          {/* Other routes */}
+          {/* Analytics */}
           <Route path="/analytics" element={<AnalyticsPage />} />
-          <Route path="/goals" element={<GoalsPage />} />
-          <Route path="/todos" element={<TodoPage />} />
-          <Route path="/schedule" element={<SchedulePage />} />
-          <Route path="/reminders" element={<RemindersPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/feedback" element={<FeedbackPage />} />
-          <Route path="/referrals" element={<ReferralsPage />} />
-          <Route path="/collaboration" element={<CollaborationPage />} />
-          <Route path="/chat/*" element={<ChatPage />} />
           
-          {/* Legacy redirects */}
-          <Route path="/progress" element={<AnalyticsPage />} />
-          <Route path="/study-sessions" element={<AnalyticsPage />} />
+          {/* Calendar */}
+          <Route path="/calendar" element={<CalendarPage />} />
+          
+          {/* Catch all for 404 */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
-    </OptimizedNotesProvider>
+    </Layout>
   );
 };

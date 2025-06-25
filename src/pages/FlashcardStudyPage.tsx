@@ -1,10 +1,9 @@
 
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { StudyPageContent } from "@/pages/study/StudyPageContent";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { SimplifiedStudyPage } from "@/pages/study/SimplifiedStudyPage";
+import { ArrowLeft } from "lucide-react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { FlashcardProvider } from "@/contexts/FlashcardContext";
 
@@ -44,12 +43,12 @@ const FlashcardStudyPageContent = () => {
     );
   }
 
-  console.log("FlashcardStudyPage: Rendering StudyPageContent with setId:", currentSetId);
+  console.log("FlashcardStudyPage: Rendering SimplifiedStudyPage with setId:", currentSetId);
 
   return (
     <Layout>
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
-        <StudyPageContent />
+        <SimplifiedStudyPage />
       </div>
     </Layout>
   );
