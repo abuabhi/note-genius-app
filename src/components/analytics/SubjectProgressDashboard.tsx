@@ -44,12 +44,6 @@ export const SubjectProgressDashboard = () => {
     return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
   };
 
-  const getProgressColor = (percentage: number) => {
-    if (percentage >= 85) return "bg-green-500";
-    if (percentage >= 60) return "bg-yellow-500";
-    return "bg-red-500";
-  };
-
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -181,7 +175,7 @@ export const SubjectProgressDashboard = () => {
                 <div className="text-2xl font-bold text-red-600">
                   {subjectAnalytics.subjects.filter(s => s.color === 'red').length}
                 </div>
-                <div className="text-sm text-gray-600">Needs Attention (<60%)</div>
+                <div className="text-sm text-gray-600">Needs Attention (&lt;60%)</div>
               </div>
             </div>
           </CardContent>
