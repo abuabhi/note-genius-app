@@ -1,4 +1,5 @@
 
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -97,17 +98,19 @@ export const useQuizList = (filters: {
           return acc;
         }, {} as Record<string, number>) || {};
 
-        // Map subjects by ID
+        // Map subjects by ID with proper typing
         const subjectsMap = subjectsData.data?.reduce((acc, s) => {
-          acc[s.id] = s;
+          if (s && s.id && s.name) {
+            acc[s.id] = { id: s.id, name: s.name };
+          }
           return acc;
-        }, {} as Record<string, any>) || {};
+        }, {} as Record<string, { id: string; name: string }>) || {};
 
         // Transform the data to include question count and subject info
         const enrichedQuizzes = quizzes.map(quiz => ({
           ...quiz,
           questionCount: countMap[quiz.id] || 0,
-          academic_subjects: quiz.subject_id ? subjectsMap[quiz.subject_id] : null,
+          academic_subjects: quiz.subject_id && subjectsMap[quiz.subject_id] ? subjectsMap[quiz.subject_id] : null,
         }));
 
         return { quizzes: enrichedQuizzes };
@@ -123,8 +126,9 @@ export const useQuizList = (filters: {
       return { quizzes: enrichedQuizzes };
     },
     staleTime: 30 * 1000, // 30 seconds - reduced from default for better UX
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 5 * 1000, // 5 minutes
     retry: 1, // Reduced retries for faster failure feedback
     retryDelay: 1000, // Faster retry
   });
 };
+
