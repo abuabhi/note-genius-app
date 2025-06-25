@@ -36,11 +36,11 @@ export const NoteCardHeader = ({ note, onPin, onDelete, viewMode = 'grid' }: Not
         {/* Subject badge - fixed width */}
         <Badge className="bg-gray-100 text-gray-700 border-0 text-xs font-medium flex-shrink-0">
           <Book className="h-3 w-3 mr-1" />
-          <span className="truncate max-w-[60px]">{subjectName}</span>
+          <span className="truncate max-w-[50px]">{subjectName}</span>
         </Badge>
         
-        {/* Title - flexible width with truncation */}
-        <h3 className="font-semibold text-green-600 text-sm truncate min-w-0 flex-1">
+        {/* Title - flexible width with strict truncation */}
+        <h3 className="font-semibold text-green-600 text-sm truncate min-w-0 flex-1 whitespace-nowrap overflow-hidden">
           {note.title}
         </h3>
       </div>

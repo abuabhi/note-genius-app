@@ -31,47 +31,49 @@ export const NoteCard = ({
   
   if (isListView) {
     return (
-      <Card 
-        className="group relative cursor-pointer bg-white border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all duration-200 rounded-lg overflow-hidden w-full max-w-full"
-        onClick={() => onNoteClick(note)}
-      >
-        <div className="flex items-center py-2 px-3 w-full overflow-hidden">
-          {/* Subject and Title - fixed width with proper constraints */}
-          <div className="flex items-center gap-2 min-w-0 w-2/5 max-w-[40%] flex-shrink-0">
-            <NoteCardHeader 
-              note={note}
-              onPin={onPin}
-              onDelete={onDelete}
-              viewMode={viewMode}
-            />
-          </div>
-          
-          {/* Content preview - flexible but constrained width */}
-          <div className="flex-1 min-w-0 max-w-[35%] hidden md:block px-2">
-            <NoteCardContent 
-              note={note}
-              stripMarkdown={stripMarkdown}
-              viewMode={viewMode}
-            />
-          </div>
-          
-          {/* Metadata and actions - fixed width */}
-          <div className="flex items-center gap-2 flex-shrink-0 w-1/4 max-w-[25%] justify-end">
-            <NoteCardMetadata note={note} viewMode={viewMode} />
-            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              <NoteCardActions 
-                noteId={note.id}
-                noteTitle={note.title}
-                noteContent={note.content || note.description || ""}
-                isPinned={!!note.pinned} 
+      <div className="w-full max-w-full overflow-hidden">
+        <Card 
+          className="group relative cursor-pointer bg-white border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all duration-200 rounded-lg overflow-hidden"
+          onClick={() => onNoteClick(note)}
+        >
+          <div className="flex items-center py-2 px-3 w-full max-w-full overflow-hidden gap-2">
+            {/* Subject and Title - 50% of width */}
+            <div className="flex items-center gap-2 min-w-0 w-1/2 overflow-hidden">
+              <NoteCardHeader 
+                note={note}
                 onPin={onPin}
                 onDelete={onDelete}
-                iconSize={3}
+                viewMode={viewMode}
               />
             </div>
+            
+            {/* Content preview - 30% of width, hidden on mobile */}
+            <div className="min-w-0 w-[30%] hidden md:block overflow-hidden">
+              <NoteCardContent 
+                note={note}
+                stripMarkdown={stripMarkdown}
+                viewMode={viewMode}
+              />
+            </div>
+            
+            {/* Metadata and actions - 20% of width */}
+            <div className="flex items-center gap-1 w-[20%] justify-end overflow-hidden">
+              <NoteCardMetadata note={note} viewMode={viewMode} />
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0">
+                <NoteCardActions 
+                  noteId={note.id}
+                  noteTitle={note.title}
+                  noteContent={note.content || note.description || ""}
+                  isPinned={!!note.pinned} 
+                  onPin={onPin}
+                  onDelete={onDelete}
+                  iconSize={3}
+                />
+              </div>
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      </div>
     );
   }
 
