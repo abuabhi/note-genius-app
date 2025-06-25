@@ -22,10 +22,10 @@ export const NoteCardContent = ({ note, stripMarkdown, viewMode = 'grid' }: Note
     return null;
   }
 
-  // Grid view - show content preview as second line with better spacing
+  // Grid view - content as second line with beautiful styling
   return (
-    <div className="mt-3">
-      <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">
+    <div className="mt-4">
+      <p className="text-gray-600 text-sm leading-relaxed line-clamp-4 font-light">
         {plainTextContent}
       </p>
     </div>

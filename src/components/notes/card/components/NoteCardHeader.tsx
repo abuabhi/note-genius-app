@@ -39,9 +39,9 @@ export const NoteCardHeader = ({ note, onPin, onDelete, viewMode = 'grid' }: Not
     
     return (
       <div className="flex items-center gap-3 min-w-0 w-full">
-        {/* Subject badge - fixed width */}
+        {/* Subject badge - compact */}
         <Badge 
-          className="px-2 py-1 text-xs font-medium border-0 flex-shrink-0"
+          className="px-2 py-1 text-xs font-medium border-0 flex-shrink-0 whitespace-nowrap"
           style={{ 
             backgroundColor: subjectColor, 
             color: textColor 
@@ -51,8 +51,8 @@ export const NoteCardHeader = ({ note, onPin, onDelete, viewMode = 'grid' }: Not
           {subjectName}
         </Badge>
         
-        {/* Title - fixed width with green color */}
-        <h3 className="font-semibold text-green-600 truncate flex-shrink-0 w-48">
+        {/* Title - constrained width */}
+        <h3 className="font-semibold text-green-600 truncate flex-shrink-0 w-48 min-w-0">
           {note.title}
         </h3>
         
@@ -66,13 +66,13 @@ export const NoteCardHeader = ({ note, onPin, onDelete, viewMode = 'grid' }: Not
     );
   }
 
-  // Grid view with green title
+  // Grid view - beautiful and spacious
   return (
-    <>
+    <div className="space-y-4">
       {/* Subject badge at the top */}
-      <div className="mb-3">
+      <div>
         <Badge 
-          className="px-3 py-1.5 text-xs font-medium border-0"
+          className="px-3 py-1.5 text-xs font-medium border-0 rounded-full"
           style={{ 
             backgroundColor: subjectColor, 
             color: textColor 
@@ -83,10 +83,10 @@ export const NoteCardHeader = ({ note, onPin, onDelete, viewMode = 'grid' }: Not
         </Badge>
       </div>
       
-      {/* Title below the subject - now green */}
-      <CardTitle className="text-lg font-semibold text-green-600 leading-tight pr-12">
+      {/* Title - green and elegant */}
+      <CardTitle className="text-xl font-bold text-green-600 leading-tight pr-12 line-clamp-2">
         {note.title}
       </CardTitle>
-    </>
+    </div>
   );
 };

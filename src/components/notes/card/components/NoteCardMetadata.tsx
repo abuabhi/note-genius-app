@@ -44,7 +44,7 @@ export const NoteCardMetadata = ({ note, viewMode = 'grid' }: NoteCardMetadataPr
 
   if (isListView) {
     return (
-      <div className="flex items-center gap-3 text-sm text-gray-500 flex-shrink-0">
+      <div className="flex items-center gap-3 text-sm text-gray-500 flex-shrink-0 whitespace-nowrap">
         {/* Read time */}
         <div className="flex items-center gap-1">
           <Clock className="h-3 w-3" />
@@ -60,7 +60,7 @@ export const NoteCardMetadata = ({ note, viewMode = 'grid' }: NoteCardMetadataPr
         {/* Study Button */}
         <Button
           onClick={handleGoToStudyMode}
-          className="bg-mint-600 hover:bg-mint-700 text-white rounded-lg px-3 py-1 h-7 text-xs"
+          className="bg-mint-600 hover:bg-mint-700 text-white rounded-lg px-3 py-1 h-7 text-xs whitespace-nowrap"
           size="sm"
         >
           <Sparkles className="h-3 w-3 mr-1" />
@@ -70,40 +70,40 @@ export const NoteCardMetadata = ({ note, viewMode = 'grid' }: NoteCardMetadataPr
     );
   }
 
-  // Grid view - centered footer with lime green styling
+  // Grid view - beautiful, centered footer with lime green accent
   return (
-    <div className="flex flex-col items-center justify-center w-full space-y-2">
-      {/* Metadata - centered with lime green colors */}
-      <div className="flex items-center justify-center gap-4 text-sm">
+    <div className="flex flex-col items-center justify-center w-full space-y-3">
+      {/* Metadata row - perfectly centered with lime green styling */}
+      <div className="flex items-center justify-center gap-6 text-sm">
         {/* Read time in lime green */}
-        <div className="flex items-center gap-1 text-lime-500">
+        <div className="flex items-center gap-1.5 text-lime-600">
           <Clock className="h-4 w-4" />
-          <span className="font-medium">{readTime}m</span>
+          <span className="font-semibold">{readTime}m</span>
         </div>
         
         {/* Date in bold lime green */}
-        <div className="flex items-center gap-1 text-lime-500">
+        <div className="flex items-center gap-1.5 text-lime-600">
           <Calendar className="h-4 w-4" />
           <span className="font-bold">{formattedDate}</span>
         </div>
 
-        {/* Tags count - only if tags exist */}
+        {/* Tags count - subtle */}
         {note.tags && note.tags.length > 0 && (
-          <div className="flex items-center gap-1 text-gray-500">
+          <div className="flex items-center gap-1 text-gray-400">
             <Tag className="h-3 w-3" />
             <span className="text-xs">{note.tags.length}</span>
           </div>
         )}
       </div>
 
-      {/* Study Button - centered */}
+      {/* Study Button - elegant and centered */}
       <Button
         onClick={handleGoToStudyMode}
-        className="bg-mint-600 hover:bg-mint-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200"
+        className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white rounded-full px-6 py-2 text-sm font-medium transition-all duration-300 shadow-sm hover:shadow-md"
         size="sm"
       >
         <Sparkles className="h-4 w-4 mr-2" />
-        Study
+        Study Mode
       </Button>
     </div>
   );

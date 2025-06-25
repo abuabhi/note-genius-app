@@ -32,12 +32,12 @@ export const NoteCard = ({
   if (isListView) {
     return (
       <Card 
-        className="group relative overflow-hidden transition-all duration-200 cursor-pointer bg-white border border-gray-200 hover:border-mint-300 hover:shadow-md rounded-xl p-4 w-full"
+        className="group relative overflow-hidden transition-all duration-200 cursor-pointer bg-white border border-gray-200 hover:border-mint-300 hover:shadow-md rounded-xl w-full max-w-full"
         onClick={() => onNoteClick(note)}
       >
-        <div className="flex items-center justify-between gap-4 w-full">
-          {/* Left side - Subject, Title, Content - constrained width */}
-          <div className="flex-1 min-w-0 max-w-[70%]">
+        <div className="flex items-center gap-4 p-4 w-full min-w-0">
+          {/* Content - takes up most space but with constraints */}
+          <div className="flex-1 min-w-0 max-w-[calc(100%-200px)]">
             <NoteCardHeader 
               note={note}
               onPin={onPin}
@@ -46,8 +46,8 @@ export const NoteCard = ({
             />
           </div>
           
-          {/* Right side - Metadata and Actions - fixed width */}
-          <div className="flex items-center gap-3 flex-shrink-0 w-auto max-w-[30%]">
+          {/* Metadata and Actions - fixed width */}
+          <div className="flex items-center gap-3 flex-shrink-0 w-auto">
             <NoteCardMetadata note={note} viewMode={viewMode} />
             <div className="relative flex-shrink-0">
               <NoteCardActions 
@@ -66,21 +66,21 @@ export const NoteCard = ({
     );
   }
 
-  // Grid view with improved design
+  // Grid view - completely redesigned for beauty and elegance
   return (
     <Card 
       className={`
         group relative overflow-hidden transition-all duration-300 cursor-pointer
-        bg-white border border-gray-200 hover:border-mint-300 hover:shadow-lg
-        hover:scale-[1.02] hover:-translate-y-1
-        ${note.pinned ? 'ring-2 ring-mint-400/50 border-mint-300' : ''}
+        bg-white border border-gray-200 hover:border-mint-300 hover:shadow-xl
+        hover:scale-[1.02] hover:-translate-y-2
+        ${note.pinned ? 'ring-2 ring-yellow-400/30 border-yellow-300' : ''}
         ${note.archived ? 'opacity-75' : ''}
-        rounded-xl min-h-[280px] flex flex-col
+        rounded-2xl min-h-[320px] flex flex-col shadow-sm
       `}
       onClick={() => onNoteClick(note)}
     >
       {/* Actions positioned absolutely */}
-      <div className="absolute top-4 right-4 z-10">
+      <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
         <NoteCardActions 
           noteId={note.id}
           noteTitle={note.title}
@@ -92,7 +92,7 @@ export const NoteCard = ({
         />
       </div>
 
-      <CardHeader className="relative p-6 pb-3 flex-1">
+      <CardHeader className="relative p-6 pb-4 flex-1">
         <NoteCardHeader 
           note={note}
           onPin={onPin}
@@ -107,8 +107,8 @@ export const NoteCard = ({
         />
       </CardHeader>
       
-      {/* Footer with centered design */}
-      <CardFooter className="px-6 py-4 mt-auto border-t border-gray-50">
+      {/* Beautiful, clean footer */}
+      <CardFooter className="px-6 py-4 mt-auto border-t border-gray-50 bg-gray-50/30">
         <NoteCardMetadata note={note} viewMode={viewMode} />
       </CardFooter>
     </Card>
