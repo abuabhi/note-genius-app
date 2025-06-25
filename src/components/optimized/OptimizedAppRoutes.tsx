@@ -55,8 +55,9 @@ export const OptimizedAppRoutes = () => {
         <Route path="/quiz/:id/view" element={<Layout><QuizDetailsPage /></Layout>} />
         <Route path="/quiz/:id" element={<Layout><QuizDetailsPage /></Layout>} />
         
-        {/* Analytics */}
+        {/* Analytics - Enhanced routing */}
         <Route path="/analytics" element={<Layout><AnalyticsPage /></Layout>} />
+        <Route path="/progress" element={<Layout><AnalyticsPage /></Layout>} />
         
         {/* Calendar/Schedule */}
         <Route path="/calendar" element={<Layout><SchedulePage /></Layout>} />

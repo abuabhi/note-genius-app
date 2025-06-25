@@ -3,15 +3,16 @@ import { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, TrendingUp, History, Brain } from "lucide-react";
+import { BarChart3, TrendingUp, History, Brain, Target } from "lucide-react";
 import { AnalyticsOverview } from "@/components/analytics/AnalyticsOverview";
 import { SessionHistory } from "@/components/analytics/SessionHistory";
 import { Achievements } from "@/components/progress/Achievements";
+import { SubjectProgressDashboard } from "@/components/analytics/SubjectProgressDashboard";
 import { StandardPageHeader } from "@/components/ui/StandardPageHeader";
 
 const AnalyticsPage = () => {
   const { user, loading } = useRequireAuth();
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("subjects"); // Changed default to "subjects"
 
   if (loading) {
     return (
@@ -51,8 +52,15 @@ const AnalyticsPage = () => {
         <div className="container mx-auto px-6 py-8">
           {/* Analytics Content */}
           <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-mint-100 p-6 shadow-lg">
-            <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3 md:w-auto md:inline-flex bg-mint-50 border border-mint-200">
+            <Tabs defaultValue="subjects" value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-4 md:w-auto md:inline-flex bg-mint-50 border border-mint-200">
+                <TabsTrigger 
+                  value="subjects" 
+                  className="data-[state=active]:bg-mint-500 data-[state=active]:text-white"
+                >
+                  <Target className="h-4 w-4 mr-2" />
+                  Subject Analytics
+                </TabsTrigger>
                 <TabsTrigger 
                   value="overview" 
                   className="data-[state=active]:bg-mint-500 data-[state=active]:text-white"
@@ -75,6 +83,10 @@ const AnalyticsPage = () => {
                   Achievements
                 </TabsTrigger>
               </TabsList>
+              
+              <TabsContent value="subjects" className="mt-6">
+                <SubjectProgressDashboard />
+              </TabsContent>
               
               <TabsContent value="overview" className="mt-6">
                 <AnalyticsOverview />
