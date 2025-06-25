@@ -63,9 +63,7 @@ const QuizPage = () => {
           </TabsList>
 
           <TabsContent value="quizzes">
-            <Card className="p-6">
-              <QuizList />
-            </Card>
+            <QuizList />
           </TabsContent>
 
           <TabsContent value="stats">
