@@ -168,6 +168,7 @@ export const VirtualizedNotesGrid = memo(({
             <List
               ref={listRef}
               height={height}
+              width="100%"
               itemCount={totalRows}
               itemSize={virtualizedConfig.itemHeight}
               itemData={{
