@@ -1,14 +1,21 @@
 
 import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 import { Note } from '@/types/note';
-import { useOptimizedNotesWithQuery } from '@/hooks/useOptimizedNotesWithQuery';
+import { useNotesWithStateMachine } from '@/hooks/notes/useNotesWithStateMachine';
 
 interface NotesDataContextType {
   // Core data
   notes: Note[];
   totalCount: number;
-  loading: boolean;
   error: string | null;
+  
+  // Enhanced loading states from state machine
+  loading: boolean;
+  isInitialLoading: boolean;
+  isBackgroundLoading: boolean;
+  isRefreshing: boolean;
+  isFiltering: boolean;
+  isPaginating: boolean;
   
   // Pagination
   hasMore: boolean;
@@ -20,47 +27,92 @@ interface NotesDataContextType {
   paginationMode: 'regular' | 'infinite';
   setPaginationMode: (mode: 'regular' | 'infinite') => void;
   
-  // Data refresh
+  // Data refresh with enhanced error handling
   refreshNotes: () => void;
+  
+  // Error handling from state machine
+  hasError: boolean;
+  canRetry: boolean;
+  clearError: () => void;
+  retry: () => void;
+  
+  // Data state selectors
+  hasNotes: boolean;
+  isEmpty: boolean;
+  
+  // State machine state for debugging
+  state: string;
 }
 
 const NotesDataContext = createContext<NotesDataContextType | undefined>(undefined);
 
 const NotesDataProviderInner = React.memo(({ children }: { children: ReactNode }) => {
-  const queryHook = useOptimizedNotesWithQuery();
+  const stateMachineHook = useNotesWithStateMachine();
 
-  // Memoized context value focused only on data concerns
+  // Memoized context value focused only on data concerns with state machine enhancements
   const contextValue = useMemo(() => ({
     // Core data
-    notes: queryHook.notes,
-    totalCount: queryHook.totalCount,
-    loading: queryHook.loading,
-    error: queryHook.error,
+    notes: stateMachineHook.notes,
+    totalCount: stateMachineHook.totalCount,
+    error: stateMachineHook.error,
+    
+    // Enhanced loading states from state machine
+    loading: stateMachineHook.loading,
+    isInitialLoading: stateMachineHook.isInitialLoading,
+    isBackgroundLoading: stateMachineHook.isBackgroundLoading,
+    isRefreshing: stateMachineHook.isRefreshing,
+    isFiltering: stateMachineHook.isFiltering,
+    isPaginating: stateMachineHook.isPaginating,
     
     // Pagination
-    hasMore: queryHook.hasMore,
-    currentPage: queryHook.currentPage,
-    setCurrentPage: queryHook.setCurrentPage,
-    loadMore: queryHook.loadMore,
+    hasMore: stateMachineHook.hasMore,
+    currentPage: stateMachineHook.currentPage,
+    setCurrentPage: stateMachineHook.setCurrentPage,
+    loadMore: stateMachineHook.loadMore,
     
     // Pagination mode
-    paginationMode: queryHook.paginationMode,
-    setPaginationMode: queryHook.setPaginationMode,
+    paginationMode: stateMachineHook.paginationMode,
+    setPaginationMode: stateMachineHook.setPaginationMode,
     
-    // Data refresh
-    refreshNotes: queryHook.refreshNotes,
+    // Data refresh with enhanced error handling
+    refreshNotes: stateMachineHook.refreshNotes,
+    
+    // Error handling from state machine
+    hasError: stateMachineHook.hasError,
+    canRetry: stateMachineHook.canRetry,
+    clearError: stateMachineHook.clearError,
+    retry: stateMachineHook.retry,
+    
+    // Data state selectors
+    hasNotes: stateMachineHook.hasNotes,
+    isEmpty: stateMachineHook.isEmpty,
+    
+    // State machine state for debugging
+    state: stateMachineHook.state,
   }), [
-    queryHook.notes,
-    queryHook.totalCount,
-    queryHook.loading,
-    queryHook.error,
-    queryHook.hasMore,
-    queryHook.currentPage,
-    queryHook.setCurrentPage,
-    queryHook.loadMore,
-    queryHook.paginationMode,
-    queryHook.setPaginationMode,
-    queryHook.refreshNotes,
+    stateMachineHook.notes,
+    stateMachineHook.totalCount,
+    stateMachineHook.error,
+    stateMachineHook.loading,
+    stateMachineHook.isInitialLoading,
+    stateMachineHook.isBackgroundLoading,
+    stateMachineHook.isRefreshing,
+    stateMachineHook.isFiltering,
+    stateMachineHook.isPaginating,
+    stateMachineHook.hasMore,
+    stateMachineHook.currentPage,
+    stateMachineHook.setCurrentPage,
+    stateMachineHook.loadMore,
+    stateMachineHook.paginationMode,
+    stateMachineHook.setPaginationMode,
+    stateMachineHook.refreshNotes,
+    stateMachineHook.hasError,
+    stateMachineHook.canRetry,
+    stateMachineHook.clearError,
+    stateMachineHook.retry,
+    stateMachineHook.hasNotes,
+    stateMachineHook.isEmpty,
+    stateMachineHook.state,
   ]);
 
   return (

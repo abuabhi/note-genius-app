@@ -3,10 +3,34 @@ import { useNotesData } from '@/contexts/notes/NotesDataContext';
 import { useNotesUI } from '@/contexts/notes/NotesUIContext';
 import { useNotesOperations } from '@/contexts/notes/NotesOperationsContext';
 
-// Granular hooks for specific concerns - reduces re-renders
+// Granular hooks for specific concerns - reduces re-renders with state machine enhancements
 export const useNotesDataOnly = () => {
-  const { notes, totalCount, loading, error } = useNotesData();
-  return { notes, totalCount, loading, error };
+  const { notes, totalCount, loading, error, hasNotes, isEmpty } = useNotesData();
+  return { notes, totalCount, loading, error, hasNotes, isEmpty };
+};
+
+export const useNotesLoadingStates = () => {
+  const { 
+    loading, 
+    isInitialLoading, 
+    isBackgroundLoading, 
+    isRefreshing, 
+    isFiltering, 
+    isPaginating 
+  } = useNotesData();
+  return { 
+    loading, 
+    isInitialLoading, 
+    isBackgroundLoading, 
+    isRefreshing, 
+    isFiltering, 
+    isPaginating 
+  };
+};
+
+export const useNotesErrorState = () => {
+  const { error, hasError, canRetry, clearError, retry } = useNotesData();
+  return { error, hasError, canRetry, clearError, retry };
 };
 
 export const useNotesPaginationOnly = () => {
@@ -48,21 +72,44 @@ export const useNotesOperationsOnly = () => {
 };
 
 export const useNotesOperationStates = () => {
-  const { isCreating, isUpdating, isDeleting, isPinning } = useNotesOperations();
-  return { isCreating, isUpdating, isDeleting, isPinning };
+  const { 
+    isCreating, 
+    isUpdating, 
+    isDeleting, 
+    isPinning, 
+    isUpdatingNote, 
+    isDeletingNote, 
+    isAnyOperationInProgress 
+  } = useNotesOperations();
+  return { 
+    isCreating, 
+    isUpdating, 
+    isDeleting, 
+    isPinning, 
+    isUpdatingNote, 
+    isDeletingNote, 
+    isAnyOperationInProgress 
+  };
 };
 
-// Combined hooks for common use cases
+// Combined hooks for common use cases with state machine enhancements
 export const useNotesWithFilters = () => {
   const dataContext = useNotesData();
   const uiContext = useNotesUI();
   
   return {
-    // Data
+    // Enhanced data with state machine
     notes: dataContext.notes,
     totalCount: dataContext.totalCount,
     loading: dataContext.loading,
     error: dataContext.error,
+    hasNotes: dataContext.hasNotes,
+    isEmpty: dataContext.isEmpty,
+    
+    // Enhanced loading states
+    isInitialLoading: dataContext.isInitialLoading,
+    isBackgroundLoading: dataContext.isBackgroundLoading,
+    isFiltering: dataContext.isFiltering,
     
     // Filters
     searchTerm: uiContext.searchTerm,
@@ -80,11 +127,18 @@ export const useNotesWithPagination = () => {
   const dataContext = useNotesData();
   
   return {
-    // Data
+    // Enhanced data with state machine
     notes: dataContext.notes,
     totalCount: dataContext.totalCount,
     loading: dataContext.loading,
     error: dataContext.error,
+    hasNotes: dataContext.hasNotes,
+    isEmpty: dataContext.isEmpty,
+    
+    // Enhanced loading states
+    isInitialLoading: dataContext.isInitialLoading,
+    isBackgroundLoading: dataContext.isBackgroundLoading,
+    isPaginating: dataContext.isPaginating,
     
     // Pagination
     hasMore: dataContext.hasMore,
@@ -94,7 +148,28 @@ export const useNotesWithPagination = () => {
     paginationMode: dataContext.paginationMode,
     setPaginationMode: dataContext.setPaginationMode,
     
-    // Data refresh
+    // Data refresh with enhanced error handling
     refreshNotes: dataContext.refreshNotes,
+    
+    // Error handling
+    hasError: dataContext.hasError,
+    canRetry: dataContext.canRetry,
+    clearError: dataContext.clearError,
+    retry: dataContext.retry,
+  };
+};
+
+// New hook for comprehensive state machine information
+export const useNotesStateMachineDebug = () => {
+  const { state } = useNotesData();
+  const { isAnyOperationInProgress } = useNotesOperations();
+  const loadingStates = useNotesLoadingStates();
+  const errorState = useNotesErrorState();
+  
+  return {
+    currentState: state,
+    isAnyOperationInProgress,
+    loadingStates,
+    errorState,
   };
 };

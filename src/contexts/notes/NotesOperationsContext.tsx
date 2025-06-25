@@ -1,53 +1,68 @@
 
 import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 import { Note } from '@/types/note';
-import { useOptimizedNotesWithQuery } from '@/hooks/useOptimizedNotesWithQuery';
+import { useNotesWithStateMachine } from '@/hooks/notes/useNotesWithStateMachine';
 
 interface NotesOperationsContextType {
-  // CRUD operations
+  // CRUD operations with state machine integration
   addNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
   updateNote: (id: string, updates: Partial<Note>) => Promise<void>;
   deleteNote: (id: string) => Promise<void>;
   pinNote: (id: string, pinned: boolean) => Promise<void>;
   archiveNote: (id: string, archived: boolean) => Promise<void>;
   
-  // Operation states for UI feedback
+  // Enhanced operation states from state machine
   isCreating: boolean;
   isUpdating: boolean;
   isDeleting: boolean;
   isPinning: boolean;
+  
+  // Granular operation states
+  isUpdatingNote: (noteId: string) => boolean;
+  isDeletingNote: (noteId: string) => boolean;
+  
+  // General operation state
+  isAnyOperationInProgress: boolean;
 }
 
 const NotesOperationsContext = createContext<NotesOperationsContextType | undefined>(undefined);
 
 const NotesOperationsProviderInner = React.memo(({ children }: { children: ReactNode }) => {
-  const queryHook = useOptimizedNotesWithQuery();
+  const stateMachineHook = useNotesWithStateMachine();
 
-  // Memoized context value focused only on operations
+  // Memoized context value focused only on operations with state machine enhancements
   const contextValue = useMemo(() => ({
-    // CRUD operations
-    addNote: queryHook.addNote,
-    updateNote: queryHook.updateNote,
-    deleteNote: queryHook.deleteNote,
-    pinNote: queryHook.pinNote,
+    // CRUD operations with state machine integration
+    addNote: stateMachineHook.addNote,
+    updateNote: stateMachineHook.updateNote,
+    deleteNote: stateMachineHook.deleteNote,
+    pinNote: stateMachineHook.pinNote,
     archiveNote: async (id: string, archived: boolean) => {
-      await queryHook.updateNote(id, { archived });
+      await stateMachineHook.updateNote(id, { archived });
     },
     
-    // Operation states
-    isCreating: queryHook.isCreating,
-    isUpdating: queryHook.isUpdating,
-    isDeleting: queryHook.isDeleting,
-    isPinning: queryHook.isPinning,
+    // Enhanced operation states from state machine
+    isCreating: stateMachineHook.isCreating,
+    isUpdating: stateMachineHook.isUpdating,
+    isDeleting: stateMachineHook.isDeleting,
+    isPinning: stateMachineHook.isUpdating, // Pinning is an update operation
+    
+    // Granular operation states
+    isUpdatingNote: stateMachineHook.isUpdatingNote,
+    isDeletingNote: stateMachineHook.isDeletingNote,
+    
+    // General operation state
+    isAnyOperationInProgress: stateMachineHook.isCreating || stateMachineHook.isUpdating || stateMachineHook.isDeleting,
   }), [
-    queryHook.addNote,
-    queryHook.updateNote,
-    queryHook.deleteNote,
-    queryHook.pinNote,
-    queryHook.isCreating,
-    queryHook.isUpdating,
-    queryHook.isDeleting,
-    queryHook.isPinning,
+    stateMachineHook.addNote,
+    stateMachineHook.updateNote,
+    stateMachineHook.deleteNote,
+    stateMachineHook.pinNote,
+    stateMachineHook.isCreating,
+    stateMachineHook.isUpdating,
+    stateMachineHook.isDeleting,
+    stateMachineHook.isUpdatingNote,
+    stateMachineHook.isDeletingNote,
   ]);
 
   return (
