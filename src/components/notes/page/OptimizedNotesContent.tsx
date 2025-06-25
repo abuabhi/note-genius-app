@@ -42,26 +42,21 @@ export const OptimizedNotesContent = React.memo(() => {
   // SINGLE SOURCE OF TRUTH for view mode - only defined here
   const { viewMode, setViewMode } = useViewPreferences('notes');
 
-  // Virtualization control with memoized threshold
-  const [useVirtualization, setUseVirtualization] = useState(true);
+  // Virtualization control with memoized threshold - no UI toggle needed
   const virtualizationThreshold = useMemo(() => 50, []);
   const shouldVirtualize = useMemo(() => 
-    useVirtualization && notes.length > virtualizationThreshold, 
-    [useVirtualization, notes.length, virtualizationThreshold]
+    notes.length > virtualizationThreshold, 
+    [notes.length, virtualizationThreshold]
   );
 
   // Performance metrics
-  const { metrics, startRenderTiming, endRenderTiming } = useVirtualizationMetrics({
+  const { metrics } = useVirtualizationMetrics({
     totalItems: notes.length,
     isVirtualized: shouldVirtualize,
     debugMode: process.env.NODE_ENV === 'development',
   });
 
   // Memoized callbacks to prevent unnecessary re-renders
-  const handleVirtualizationToggle = useCallback(() => {
-    setUseVirtualization(!useVirtualization);
-  }, [useVirtualization]);
-
   const handleViewModeChange = useCallback((mode: ViewMode) => {
     setViewMode(mode);
   }, [setViewMode]);
@@ -84,16 +79,16 @@ export const OptimizedNotesContent = React.memo(() => {
       {/* Error handling */}
       <NotesErrorHandler />
 
-      {/* Enhanced Filters */}
+      {/* Enhanced Filters - removed virtualization toggle */}
       <NotesFiltersSection
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
-        useVirtualization={useVirtualization}
+        useVirtualization={true} // Always enabled, no user control needed
         shouldVirtualize={shouldVirtualize}
         noteCount={notes.length}
         threshold={virtualizationThreshold}
         renderTime={metrics.renderTime}
-        onVirtualizationToggle={handleVirtualizationToggle}
+        onVirtualizationToggle={() => {}} // No-op since toggle is removed
       />
 
       {/* Main content with improved loading states */}

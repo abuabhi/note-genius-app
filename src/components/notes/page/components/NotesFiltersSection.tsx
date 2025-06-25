@@ -1,13 +1,11 @@
 
-import React, { memo, useState } from 'react';
-import { ViewMode } from '@/hooks/useViewPreferences';
+import React, { memo } from 'react';
 import { OptimizedNotesFilters } from '../OptimizedNotesFilters';
-import { NotesVirtualizationToggle } from './NotesVirtualizationToggle';
+import { ViewMode } from '@/hooks/useViewPreferences';
 
 interface NotesFiltersSectionProps {
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
-  // Virtualization debug props
   useVirtualization: boolean;
   shouldVirtualize: boolean;
   noteCount: number;
@@ -19,27 +17,13 @@ interface NotesFiltersSectionProps {
 export const NotesFiltersSection = memo(({
   viewMode,
   onViewModeChange,
-  useVirtualization,
-  shouldVirtualize,
-  noteCount,
-  threshold,
-  renderTime,
-  onVirtualizationToggle
+  // Remove virtualization props - they're not needed in the UI
 }: NotesFiltersSectionProps) => {
   return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-lg shadow-mint-500/5 p-6">
-      <OptimizedNotesFilters 
+    <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-white/20 shadow-lg shadow-mint-500/5 p-6">
+      <OptimizedNotesFilters
         viewMode={viewMode}
         onViewModeChange={onViewModeChange}
-      />
-      
-      <NotesVirtualizationToggle
-        useVirtualization={useVirtualization}
-        shouldVirtualize={shouldVirtualize}
-        noteCount={noteCount}
-        threshold={threshold}
-        renderTime={renderTime}
-        onToggle={onVirtualizationToggle}
       />
     </div>
   );
