@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -23,7 +22,7 @@ interface Achievement {
 const QuizAchievements = () => {
   const { user } = useAuth();
   const { data: quizResults, isLoading: loadingResults } = useQuizResults();
-  const { data: quizData, isLoading: loadingQuizzes } = useQuizList({ userOnly: true });
+  const { data: quizData, isLoading: loadingQuizzes } = useQuizList();
   const [achievements, setAchievements] = useState<Achievement[]>([]);
 
   useEffect(() => {
@@ -36,7 +35,9 @@ const QuizAchievements = () => {
     if (!quizResults || !quizData) return;
 
     const totalQuizzesTaken = quizResults.length;
-    const totalQuizzesCreated = quizData.quizzes?.length || 0;
+    // Filter quizzes created by the current user
+    const userQuizzes = quizData.quizzes?.filter(quiz => quiz.user_id === user?.id) || [];
+    const totalQuizzesCreated = userQuizzes.length;
     const perfectScores = quizResults.filter(r => r.score === r.total_questions).length;
     const fastCompletions = quizResults.filter(r => 
       r.duration_seconds && r.duration_seconds < 60
