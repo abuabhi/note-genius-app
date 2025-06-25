@@ -135,13 +135,13 @@ const FlashcardSetCard = ({
       </CardContent>
 
       <CardFooter className="pt-0 flex gap-2">
-        {/* Primary Study Button - Most Prominent */}
+        {/* Primary Study Button - Fixed the route to correct study path */}
         <Button 
           asChild 
           className="flex-1 bg-gradient-to-r from-mint-500 to-blue-500 hover:from-mint-600 hover:to-blue-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
           onClick={handleStudyClick}
         >
-          <Link to={`/flashcards/sets/${set.id}`}>
+          <Link to={`/flashcards/study/${set.id}`}>
             <Play className="h-4 w-4 mr-2" />
             Study Now
           </Link>

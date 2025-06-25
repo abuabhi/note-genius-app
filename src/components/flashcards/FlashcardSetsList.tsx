@@ -97,7 +97,7 @@ const FlashcardSetsList = () => {
           <CardFooter className="flex justify-between">
             <div className="space-x-2">
               <Button variant="outline" asChild>
-                <Link to={`/study/${set.id}`}>Study</Link>
+                <Link to={`/flashcards/study/${set.id}`}>Study</Link>
               </Button>
               <Button 
                 variant="outline" 
