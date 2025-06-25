@@ -5,7 +5,6 @@ import { StudyMode } from '@/pages/study/types';
 import { FlashcardWithProgress } from '@/components/flashcards/display/FlashcardWithProgress';
 import { StudyControls } from '@/components/flashcards/study/StudyControls';
 import { CompactStudyProgress } from '@/components/study/CompactStudyProgress';
-import { CompactStudyStats } from '@/components/study/CompactStudyStats';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -108,11 +107,27 @@ export const SimplifiedFlashcardStudy: React.FC<SimplifiedFlashcardStudyProps> =
           <p className="text-lg text-muted-foreground mb-6">
             Great job! You've studied all {totalCards} flashcards in this set.
           </p>
-          <CompactStudyStats
-            totalCards={totalCards}
-            studiedToday={studiedToday}
-            masteredCount={masteredCount}
-          />
+          {/* Single comprehensive stats display for completion */}
+          <div className="grid grid-cols-4 gap-4 text-center">
+            <div>
+              <div className="text-2xl font-bold text-blue-600">{totalCards}</div>
+              <div className="text-sm text-muted-foreground">Total Cards</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-orange-600">{studiedToday}</div>
+              <div className="text-sm text-muted-foreground">Studied Today</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-green-600">{masteredCount}</div>
+              <div className="text-sm text-muted-foreground">Mastered</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-purple-600">
+                {totalCards > 0 ? Math.round((masteredCount / totalCards) * 100) : 0}%
+              </div>
+              <div className="text-sm text-muted-foreground">Mastery</div>
+            </div>
+          </div>
           {isActive && (
             <div className="mt-4 p-3 bg-mint-50 border border-mint-200 rounded-lg">
               <p className="text-sm text-mint-700">
@@ -139,7 +154,7 @@ export const SimplifiedFlashcardStudy: React.FC<SimplifiedFlashcardStudyProps> =
         </div>
       )}
 
-      {/* Compact Progress */}
+      {/* Compact Progress - Only at the top */}
       <CompactStudyProgress
         currentIndex={currentIndex}
         totalCards={totalCards}
@@ -172,15 +187,6 @@ export const SimplifiedFlashcardStudy: React.FC<SimplifiedFlashcardStudyProps> =
         canGoNext={currentIndex < totalCards - 1}
         mode={mode}
       />
-
-      {/* Compact Study Stats - only shown at the end or minimized */}
-      {(currentIndex === totalCards - 1 || isFlipped) && (
-        <CompactStudyStats
-          totalCards={totalCards}
-          studiedToday={studiedToday}
-          masteredCount={masteredCount}
-        />
-      )}
     </div>
   );
 };

@@ -40,17 +40,19 @@ export const FlashcardWithProgress = ({
   const frontContent = flashcard?.front_content || flashcard?.front;
   const backContent = flashcard?.back_content || flashcard?.back;
   const displayContent = isFlipped ? (backContent || "No back content") : (frontContent || "No front content");
-  const animationKey = `card-${flashcard.id}-${currentIndex}-${isFlipped ? 'back' : 'front'}`;
+  
+  // Simplified animation key to prevent double animations
+  const animationKey = `card-${currentIndex}-${isFlipped ? 'back' : 'front'}`;
 
   return (
     <div className={`mb-6 ${className}`}>
       <AnimatePresence mode="wait">
         <motion.div
           key={animationKey}
-          initial={{ rotateY: 180, opacity: 0 }}
+          initial={{ rotateY: 90, opacity: 0 }}
           animate={{ rotateY: 0, opacity: 1 }}
-          exit={{ rotateY: -180, opacity: 0 }}
-          transition={{ duration: 0.3 }}
+          exit={{ rotateY: -90, opacity: 0 }}
+          transition={{ duration: 0.2 }}
           className="w-full cursor-pointer relative"
           onClick={onFlip}
         >

@@ -33,9 +33,9 @@ export const OptimizedAppRoutes = () => {
         {/* Flashcards routes */}
         <Route path="/flashcards" element={<Layout><FlashcardsPage /></Layout>} />
         
-        {/* Study routes - these handle their own Layout to avoid double headers */}
-        <Route path="/flashcards/study/:id" element={<FlashcardStudyPage />} />
-        <Route path="/study/:id" element={<FlashcardStudyPage />} />
+        {/* Study routes - now include Layout for consistent header/sidebar */}
+        <Route path="/flashcards/study/:id" element={<Layout><FlashcardStudyPage /></Layout>} />
+        <Route path="/study/:id" element={<Layout><FlashcardStudyPage /></Layout>} />
         
         {/* Notes routes */}
         <Route path="/notes" element={<Layout><NotesPage /></Layout>} />
