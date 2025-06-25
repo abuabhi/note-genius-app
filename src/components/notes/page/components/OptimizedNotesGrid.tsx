@@ -114,11 +114,14 @@ export const OptimizedNotesGrid = memo(({
         </div>
       )}
 
-      {/* Simple Notes Counter */}
+      {/* Notes Counter */}
       {totalCount && totalCount > 0 && (
         <div className="flex justify-center py-4">
           <div className="text-sm text-gray-600">
-            {notes.length} of {totalCount} {totalCount === 1 ? 'note' : 'notes'}
+            {hasFilters || notes.length !== totalCount 
+              ? `${notes.length} of ${totalCount} ${totalCount === 1 ? 'note' : 'notes'}`
+              : `${totalCount} ${totalCount === 1 ? 'note' : 'notes'}`
+            }
           </div>
         </div>
       )}
