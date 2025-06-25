@@ -36,17 +36,23 @@ export const useStudyPagePrefetch = () => {
     queryClient.prefetchQuery({
       queryKey: ['user-tags', user.id],
       queryFn: async (): Promise<any[]> => {
-        const { data, error } = await supabase
-          .from('tags')
-          .select('*')
-          .eq('user_id', user.id);
-        
-        if (error) {
-          console.error('Error fetching user tags:', error);
+        try {
+          // Use type assertion to avoid deep type inference
+          const response = await supabase
+            .from('tags')
+            .select('*')
+            .eq('user_id', user.id) as any;
+          
+          if (response.error) {
+            console.error('Error fetching user tags:', response.error);
+            return [];
+          }
+          
+          return response.data || [];
+        } catch (err) {
+          console.error('Error in user tags query:', err);
           return [];
         }
-        
-        return data || [];
       },
       staleTime: 5 * 60 * 1000 // 5 minutes
     });
