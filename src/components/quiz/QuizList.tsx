@@ -23,14 +23,13 @@ const QuizList = () => {
     search?: string;
     subject?: string;
     grade?: string;
-    userOnly?: boolean;
   }>({});
   
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedQuizIds, setSelectedQuizIds] = useState<Set<string>>(new Set());
   
-  const { favoriteQuizIds, toggleFavorite, isFavorite, getFavoriteCount } = useFavoritesManager();
+  const { favoriteQuizIds, toggleFavorite, getFavoriteCount } = useFavoritesManager();
   const { user } = useAuth();
   const { mutateAsync: deleteQuiz } = useDeleteQuiz();
 
@@ -103,7 +102,7 @@ const QuizList = () => {
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
+      {/* Simplified Filters */}
       <QuizFilters
         onFiltersChange={handleFiltersChange}
         subjects={filterOptions?.subjects || []}

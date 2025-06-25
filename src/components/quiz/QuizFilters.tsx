@@ -10,9 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Search, Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Search, X } from 'lucide-react';
 
 interface Subject {
   id: string;
@@ -29,7 +27,6 @@ interface QuizFiltersProps {
     search?: string;
     subject?: string;
     grade?: string;
-    userOnly?: boolean;
   }) => void;
   subjects: Subject[];
   grades: Grade[];
@@ -47,8 +44,6 @@ export const QuizFilters: React.FC<QuizFiltersProps> = ({
   const [search, setSearch] = useState('');
   const [selectedSubject, setSelectedSubject] = useState<string>('');
   const [selectedGrade, setSelectedGrade] = useState<string>('');
-  const [userOnly, setUserOnly] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
@@ -56,7 +51,6 @@ export const QuizFilters: React.FC<QuizFiltersProps> = ({
       search: value || undefined,
       subject: selectedSubject || undefined,
       grade: selectedGrade || undefined,
-      userOnly
     });
   };
 
@@ -67,7 +61,6 @@ export const QuizFilters: React.FC<QuizFiltersProps> = ({
       search: search || undefined,
       subject: newSubject || undefined,
       grade: selectedGrade || undefined,
-      userOnly
     });
   };
 
@@ -78,17 +71,6 @@ export const QuizFilters: React.FC<QuizFiltersProps> = ({
       search: search || undefined,
       subject: selectedSubject || undefined,
       grade: newGrade || undefined,
-      userOnly
-    });
-  };
-
-  const handleUserOnlyChange = (checked: boolean) => {
-    setUserOnly(checked);
-    onFiltersChange({
-      search: search || undefined,
-      subject: selectedSubject || undefined,
-      grade: selectedGrade || undefined,
-      userOnly: checked
     });
   };
 
@@ -96,16 +78,15 @@ export const QuizFilters: React.FC<QuizFiltersProps> = ({
     setSearch('');
     setSelectedSubject('');
     setSelectedGrade('');
-    setUserOnly(false);
     onFiltersChange({});
   };
 
-  const hasActiveFilters = search || selectedSubject || selectedGrade || userOnly;
-  const activeFiltersCount = [search, selectedSubject, selectedGrade, userOnly].filter(Boolean).length;
+  const hasActiveFilters = search || selectedSubject || selectedGrade;
+  const activeFiltersCount = [search, selectedSubject, selectedGrade].filter(Boolean).length;
 
   return (
     <div className="space-y-4">
-      {/* Main Filter Row: Search + Subject */}
+      {/* Single Filter Row */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -131,69 +112,30 @@ export const QuizFilters: React.FC<QuizFiltersProps> = ({
             ))}
           </SelectContent>
         </Select>
-      </div>
 
-      {/* User Filter Row */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="user-only"
-            checked={userOnly}
-            onCheckedChange={handleUserOnlyChange}
-            disabled={isLoading}
-          />
-          <label htmlFor="user-only" className="text-sm font-medium text-gray-700 cursor-pointer">
-            Show only my quizzes
-          </label>
-        </div>
-
-        {/* Advanced Filters Toggle */}
-        <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
-          <CollapsibleTrigger asChild>
-            <Button variant="outline" size="sm" className="border-mint-200 text-mint-700 hover:bg-mint-50">
-              <Filter className="h-4 w-4 mr-2" />
-              Advanced
-              {showAdvanced ? (
-                <ChevronUp className="h-4 w-4 ml-1" />
-              ) : (
-                <ChevronDown className="h-4 w-4 ml-1" />
-              )}
-            </Button>
-          </CollapsibleTrigger>
-          
-          <CollapsibleContent className="mt-4">
-            <div className="bg-gray-50 rounded-lg p-4 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Grade Level</label>
-                  <Select value={selectedGrade || 'all'} onValueChange={handleGradeChange} disabled={isLoading}>
-                    <SelectTrigger className="border-mint-200">
-                      <SelectValue placeholder="All Grades" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Grades</SelectItem>
-                      {grades.map((grade) => (
-                        <SelectItem key={grade.id} value={grade.id}>
-                          {grade.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
+        <Select value={selectedGrade || 'all'} onValueChange={handleGradeChange} disabled={isLoading}>
+          <SelectTrigger className="w-full sm:w-48 border-mint-200">
+            <SelectValue placeholder="All Grades" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Grades</SelectItem>
+            {grades.map((grade) => (
+              <SelectItem key={grade.id} value={grade.id}>
+                {grade.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Active Filters Display */}
       {hasActiveFilters && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm text-gray-600">Active filters:</span>
+          <span className="text-sm text-gray-600">Filters ({activeFiltersCount}):</span>
           
           {search && (
             <Badge variant="secondary" className="bg-mint-100 text-mint-800">
-              Search: "{search}"
+              "{search}"
               <Button
                 variant="ghost"
                 size="sm"
@@ -207,7 +149,7 @@ export const QuizFilters: React.FC<QuizFiltersProps> = ({
           
           {selectedSubject && (
             <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-              Subject: {subjects.find(s => s.id === selectedSubject)?.name}
+              {subjects.find(s => s.id === selectedSubject)?.name}
               <Button
                 variant="ghost"
                 size="sm"
@@ -221,26 +163,12 @@ export const QuizFilters: React.FC<QuizFiltersProps> = ({
           
           {selectedGrade && (
             <Badge variant="secondary" className="bg-purple-100 text-purple-800">
-              Grade: {grades.find(g => g.id === selectedGrade)?.name}
+              {grades.find(g => g.id === selectedGrade)?.name}
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-4 w-4 p-0 ml-1 hover:bg-purple-200"
                 onClick={() => handleGradeChange('all')}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </Badge>
-          )}
-          
-          {userOnly && (
-            <Badge variant="secondary" className="bg-green-100 text-green-800">
-              My Quizzes Only
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-4 w-4 p-0 ml-1 hover:bg-green-200"
-                onClick={() => handleUserOnlyChange(false)}
               >
                 <X className="h-3 w-3" />
               </Button>

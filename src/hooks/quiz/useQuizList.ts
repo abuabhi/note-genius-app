@@ -6,7 +6,6 @@ export const useQuizList = (filters: {
   subject?: string;
   grade?: string;
   search?: string;
-  userOnly?: boolean;
 } = {}) => {
   return useQuery({
     queryKey: ['quizzes', filters],
@@ -41,18 +40,13 @@ export const useQuizList = (filters: {
         query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
       }
 
-      // Get current user for filtering
+      // Get current user for filtering - show public quizzes and user's own quizzes
       const { data: { user } } = await supabase.auth.getUser();
       
-      if (filters.userOnly && user) {
-        query = query.eq('user_id', user.id);
+      if (user) {
+        query = query.or(`is_public.eq.true,user_id.eq.${user.id}`);
       } else {
-        // Show public quizzes and user's own quizzes
-        if (user) {
-          query = query.or(`is_public.eq.true,user_id.eq.${user.id}`);
-        } else {
-          query = query.eq('is_public', true);
-        }
+        query = query.eq('is_public', true);
       }
 
       const { data: quizzes, error } = await query
