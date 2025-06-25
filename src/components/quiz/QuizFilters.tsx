@@ -55,7 +55,7 @@ export const QuizFilters: React.FC<QuizFiltersProps> = ({
   };
 
   const handleSubjectChange = (value: string) => {
-    const newSubject = value === 'all' ? '' : value;
+    const newSubject = value === 'none' ? '' : value;
     setSelectedSubject(newSubject);
     onFiltersChange({
       search: search || undefined,
@@ -65,7 +65,7 @@ export const QuizFilters: React.FC<QuizFiltersProps> = ({
   };
 
   const handleGradeChange = (value: string) => {
-    const newGrade = value === 'all' ? '' : value;
+    const newGrade = value === 'none' ? '' : value;
     setSelectedGrade(newGrade);
     onFiltersChange({
       search: search || undefined,
@@ -99,12 +99,12 @@ export const QuizFilters: React.FC<QuizFiltersProps> = ({
           />
         </div>
         
-        <Select value={selectedSubject || 'all'} onValueChange={handleSubjectChange} disabled={isLoading}>
+        <Select value={selectedSubject || 'none'} onValueChange={handleSubjectChange} disabled={isLoading}>
           <SelectTrigger className="w-full sm:w-48 border-mint-200">
-            <SelectValue placeholder="All Subjects" />
+            <SelectValue placeholder="Filter by Subject" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Subjects</SelectItem>
+            <SelectItem value="none">All Subjects</SelectItem>
             {subjects.map((subject) => (
               <SelectItem key={subject.id} value={subject.id}>
                 {subject.name}
@@ -113,12 +113,11 @@ export const QuizFilters: React.FC<QuizFiltersProps> = ({
           </SelectContent>
         </Select>
 
-        <Select value={selectedGrade || 'all'} onValueChange={handleGradeChange} disabled={isLoading}>
+        <Select value={selectedGrade || 'none'} onValueChange={handleGradeChange} disabled={isLoading}>
           <SelectTrigger className="w-full sm:w-48 border-mint-200">
-            <SelectValue placeholder="All Grades" />
+            <SelectValue placeholder="Filter by Grade" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Grades</SelectItem>
             {grades.map((grade) => (
               <SelectItem key={grade.id} value={grade.id}>
                 {grade.name}
@@ -154,7 +153,7 @@ export const QuizFilters: React.FC<QuizFiltersProps> = ({
                 variant="ghost"
                 size="sm"
                 className="h-4 w-4 p-0 ml-1 hover:bg-blue-200"
-                onClick={() => handleSubjectChange('all')}
+                onClick={() => handleSubjectChange('none')}
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -168,7 +167,7 @@ export const QuizFilters: React.FC<QuizFiltersProps> = ({
                 variant="ghost"
                 size="sm"
                 className="h-4 w-4 p-0 ml-1 hover:bg-purple-200"
-                onClick={() => handleGradeChange('all')}
+                onClick={() => handleGradeChange('none')}
               >
                 <X className="h-3 w-3" />
               </Button>

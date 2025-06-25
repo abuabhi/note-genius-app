@@ -135,9 +135,9 @@ export const UnifiedSessionDock = () => {
         </Card>
       )}
 
-      {/* Main Session Dock - Top Right Corner */}
+      {/* Main Session Dock - Bottom Right Corner */}
       <Card className={cn(
-        "fixed top-6 right-6 z-30 shadow-lg backdrop-blur-sm border transition-all duration-300",
+        "fixed bottom-6 right-6 z-30 shadow-lg backdrop-blur-sm border transition-all duration-300",
         theme.background,
         "hover:shadow-xl"
       )}>
@@ -193,7 +193,7 @@ export const UnifiedSessionDock = () => {
                     )}
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="bottom" className="bg-slate-800 text-white border-slate-600">
+                <TooltipContent side="top" className="bg-slate-800 text-white border-slate-600">
                   {isPaused ? 'Resume Session' : 'Pause Session'}
                 </TooltipContent>
               </Tooltip>
@@ -212,7 +212,7 @@ export const UnifiedSessionDock = () => {
                     <X className="h-3 w-3 text-red-300 hover:text-red-200" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="bottom" className="bg-slate-800 text-white border-slate-600">
+                <TooltipContent side="top" className="bg-slate-800 text-white border-slate-600">
                   End Session
                 </TooltipContent>
               </Tooltip>
