@@ -1,7 +1,7 @@
 
 import { Routes, Route } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { Skeleton } from '@/components/ui/skeleton';
 import Layout from '@/components/layout/Layout';
 
 // Lazy load pages for better performance
@@ -11,13 +11,22 @@ const FlashcardStudyPage = lazy(() => import('@/pages/FlashcardStudyPage'));
 const NotesPage = lazy(() => import('@/pages/NotesPage'));
 const NoteStudyPage = lazy(() => import('@/pages/NoteStudyPage'));
 const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
-const CalendarPage = lazy(() => import('@/pages/CalendarPage'));
+const SchedulePage = lazy(() => import('@/pages/SchedulePage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
+
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="space-y-4">
+      <Skeleton className="h-8 w-64" />
+      <Skeleton className="h-64 w-96" />
+    </div>
+  </div>
+);
 
 export const OptimizedAppRoutes = () => {
   return (
     <Layout>
-      <Suspense fallback={<LoadingSpinner />}>
+      <Suspense fallback={<LoadingFallback />}>
         <Routes>
           {/* Dashboard */}
           <Route path="/dashboard" element={<DashboardPage />} />
@@ -36,8 +45,9 @@ export const OptimizedAppRoutes = () => {
           {/* Analytics */}
           <Route path="/analytics" element={<AnalyticsPage />} />
           
-          {/* Calendar */}
-          <Route path="/calendar" element={<CalendarPage />} />
+          {/* Calendar/Schedule */}
+          <Route path="/calendar" element={<SchedulePage />} />
+          <Route path="/schedule" element={<SchedulePage />} />
           
           {/* Catch all for 404 */}
           <Route path="*" element={<NotFoundPage />} />
