@@ -5,6 +5,7 @@ import { ViewMode } from '@/hooks/useViewPreferences';
 import { NoteCard } from '@/components/notes/card/NoteCard';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { FancyNotesCounter } from './FancyNotesCounter';
 
 interface OptimizedNotesGridProps {
   notes: Note[];
@@ -12,6 +13,8 @@ interface OptimizedNotesGridProps {
   onUpdateNote: (id: string, updates: Partial<Note>) => Promise<void>;
   onDeleteNote: (id: string) => Promise<void>;
   shouldVirtualize?: boolean;
+  totalCount?: number;
+  hasFilters?: boolean;
 }
 
 export const OptimizedNotesGrid = memo(({
@@ -19,7 +22,9 @@ export const OptimizedNotesGrid = memo(({
   viewMode,
   onUpdateNote,
   onDeleteNote,
-  shouldVirtualize = false
+  shouldVirtualize = false,
+  totalCount,
+  hasFilters = false
 }: OptimizedNotesGridProps) => {
   const navigate = useNavigate();
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -58,6 +63,13 @@ export const OptimizedNotesGrid = memo(({
 
   return (
     <div className="space-y-8">
+      {/* Fancy Notes Counter */}
+      <FancyNotesCounter 
+        currentCount={notes.length}
+        totalCount={totalCount || notes.length}
+        hasFilters={hasFilters}
+      />
+
       {/* Pinned Notes Section */}
       {pinnedNotes.length > 0 && (
         <div className="space-y-4">

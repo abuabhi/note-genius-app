@@ -25,7 +25,7 @@ export default function NavBar() {
   return (
     <nav className="py-4 border-b">
       <div className="container mx-auto px-6 flex justify-between items-center">
-        <div className="flex items-center">
+        <div className="flex items-center min-w-0">
           <AppLogo />
         </div>
 
