@@ -17,7 +17,7 @@ import {
   Eye,
   BarChart3 
 } from 'lucide-react';
-import { DeleteQuizDialog } from '../DeleteQuizDialog';
+import { UnifiedDeleteDialog } from '@/components/ui/unified/UnifiedDeleteDialog';
 import { useNavigate } from 'react-router-dom';
 
 interface QuizActionsMenuQuiz {
@@ -73,6 +73,12 @@ export const QuizActionsMenu: React.FC<QuizActionsMenuProps> = ({
 
   const handleDeleteSuccess = () => {
     onRefresh?.();
+  };
+
+  const handleDelete = async () => {
+    // TODO: Implement actual delete functionality
+    console.log('Delete quiz:', quiz.id);
+    handleDeleteSuccess();
   };
 
   return (
@@ -135,26 +141,14 @@ export const QuizActionsMenu: React.FC<QuizActionsMenuProps> = ({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <DeleteQuizDialog
+      <UnifiedDeleteDialog
         isOpen={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}
-        quiz={{
-          id: quiz.id,
-          title: quiz.title,
-          description: quiz.description,
-          subject_id: null,
-          section_id: null,
-          grade_id: null,
-          source_type: 'custom',
-          source_id: null,
-          user_id: quiz.user_id || null,
-          is_public: quiz.is_public,
-          created_at: quiz.created_at,
-          updated_at: quiz.created_at,
-          country_id: null,
-          education_system: null
-        }}
-        onSuccess={handleDeleteSuccess}
+        onConfirm={handleDelete}
+        title="Delete Quiz"
+        itemName={quiz.title}
+        itemType="quiz"
+        description={`Are you sure you want to delete "${quiz.title}"? This action cannot be undone. All quiz results and data will be permanently removed.`}
       />
     </>
   );

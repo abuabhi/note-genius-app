@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -57,9 +58,8 @@ export const QuizCard: React.FC<QuizCardProps> = ({
     onToggleFavorite?.(quiz.id);
   };
 
-  const handleSelectionChange = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onSelectionChange?.(quiz.id, !isSelected);
+  const handleSelectionChange = (checked: boolean) => {
+    onSelectionChange?.(quiz.id, checked);
   };
 
   return (
@@ -75,8 +75,7 @@ export const QuizCard: React.FC<QuizCardProps> = ({
             {isSelectable && (
               <Checkbox
                 checked={isSelected}
-                onChange={handleSelectionChange}
-                onClick={handleSelectionChange}
+                onCheckedChange={handleSelectionChange}
                 className="flex-shrink-0"
               />
             )}
