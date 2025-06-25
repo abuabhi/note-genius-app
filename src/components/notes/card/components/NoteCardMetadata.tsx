@@ -1,7 +1,6 @@
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tag, Sparkles, Clock, Calendar } from "lucide-react";
+import { Clock, Calendar, Sparkles } from "lucide-react";
 import { Note } from "@/types/note";
 import { ViewMode } from "@/hooks/useViewPreferences";
 import { formatDistanceToNow } from "date-fns";
@@ -44,23 +43,12 @@ export const NoteCardMetadata = ({ note, viewMode = 'grid' }: NoteCardMetadataPr
 
   if (isListView) {
     return (
-      <div className="flex items-center gap-3 text-sm text-gray-500 flex-shrink-0 whitespace-nowrap">
-        {/* Read time */}
-        <div className="flex items-center gap-1">
-          <Clock className="h-3 w-3" />
-          <span>{readTime}m</span>
-        </div>
-        
-        {/* Date */}
-        <div className="flex items-center gap-1">
-          <Calendar className="h-3 w-3" />
-          <span>{formattedDate}</span>
-        </div>
-
-        {/* Study Button */}
+      <div className="flex items-center gap-3 text-sm text-gray-500">
+        <span>{readTime}m</span>
+        <span>{formattedDate}</span>
         <Button
           onClick={handleGoToStudyMode}
-          className="bg-mint-600 hover:bg-mint-700 text-white rounded-lg px-3 py-1 h-7 text-xs whitespace-nowrap"
+          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 h-7 text-xs"
           size="sm"
         >
           <Sparkles className="h-3 w-3 mr-1" />
@@ -70,40 +58,29 @@ export const NoteCardMetadata = ({ note, viewMode = 'grid' }: NoteCardMetadataPr
     );
   }
 
-  // Grid view - beautiful, centered footer with lime green accent
+  // Grid view - simple horizontal layout
   return (
-    <div className="flex flex-col items-center justify-center w-full space-y-3">
-      {/* Metadata row - perfectly centered with lime green styling */}
-      <div className="flex items-center justify-center gap-6 text-sm">
-        {/* Read time in lime green */}
-        <div className="flex items-center gap-1.5 text-lime-600">
-          <Clock className="h-4 w-4" />
-          <span className="font-semibold">{readTime}m</span>
+    <div className="flex items-center justify-between w-full">
+      {/* Left side - metadata */}
+      <div className="flex items-center gap-3 text-sm text-gray-500">
+        <div className="flex items-center gap-1">
+          <Clock className="h-3 w-3" />
+          <span>{readTime}m</span>
         </div>
-        
-        {/* Date in bold lime green */}
-        <div className="flex items-center gap-1.5 text-lime-600">
-          <Calendar className="h-4 w-4" />
-          <span className="font-bold">{formattedDate}</span>
+        <div className="flex items-center gap-1">
+          <Calendar className="h-3 w-3" />
+          <span>{formattedDate}</span>
         </div>
-
-        {/* Tags count - subtle */}
-        {note.tags && note.tags.length > 0 && (
-          <div className="flex items-center gap-1 text-gray-400">
-            <Tag className="h-3 w-3" />
-            <span className="text-xs">{note.tags.length}</span>
-          </div>
-        )}
       </div>
 
-      {/* Study Button - elegant and centered */}
+      {/* Right side - study button */}
       <Button
         onClick={handleGoToStudyMode}
-        className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white rounded-full px-6 py-2 text-sm font-medium transition-all duration-300 shadow-sm hover:shadow-md"
+        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm"
         size="sm"
       >
-        <Sparkles className="h-4 w-4 mr-2" />
-        Study Mode
+        <Sparkles className="h-4 w-4 mr-1" />
+        Study
       </Button>
     </div>
   );
