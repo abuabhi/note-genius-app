@@ -1,6 +1,7 @@
 
 import { useMemo, useCallback, useState, useRef } from 'react';
 import { Note } from '@/types/note';
+import { ViewMode } from '@/hooks/useViewPreferences';
 
 interface VirtualizedNotesConfig {
   itemHeight: number;
@@ -21,14 +22,14 @@ interface VirtualizedNotesReturn {
     onDelete: (id: string) => Promise<void>;
     onNoteClick: (note: Note) => void;
     onShowDetails: (note: Note, e: React.MouseEvent) => void;
-    viewMode: 'grid' | 'list';
+    viewMode: ViewMode;
   };
   resetScrollPosition: () => void;
 }
 
 interface UseVirtualizedNotesProps {
   notes: Note[];
-  viewMode: 'grid' | 'list';
+  viewMode: ViewMode;
   onPin: (id: string, isPinned: boolean) => void;
   onDelete: (id: string) => Promise<void>;
   onNoteClick: (note: Note) => void;
@@ -62,6 +63,20 @@ export const useVirtualizedNotes = ({
         itemHeight: 120, // Height for compact list cards
         itemsPerRow: 1,
         overscan: 5,
+      };
+    }
+    
+    if (viewMode === 'compact') {
+      // Compact mode - smaller cards, more items per row
+      const containerWidth = containerRef?.current?.offsetWidth || 1200;
+      const cardWidth = 240; // Smaller card width for compact mode
+      const gap = 16;
+      const itemsPerRow = Math.max(1, Math.floor((containerWidth + gap) / (cardWidth + gap)));
+      
+      return {
+        itemHeight: 200, // Smaller height for compact cards
+        itemsPerRow,
+        overscan: 3,
       };
     }
     

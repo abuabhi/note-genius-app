@@ -32,9 +32,17 @@ const PinnedNotesSection = memo(({
   onNoteClick: (note: Note) => void;
   onShowDetails: (note: Note, e: React.MouseEvent) => void;
 }) => {
-  const gridClasses = viewMode === 'list' 
-    ? "space-y-3" 
-    : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4";
+  const gridClasses = useMemo(() => {
+    switch (viewMode) {
+      case 'list':
+        return "space-y-3";
+      case 'compact':
+        return "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4";
+      case 'grid':
+      default:
+        return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4";
+    }
+  }, [viewMode]);
 
   return (
     <div className="space-y-4">
@@ -108,10 +116,17 @@ export const VirtualizedNotesGrid = memo(({
   }, [notes]);
 
   // Memoize grid classes
-  const gridClasses = useMemo(() => 
-    viewMode === 'list' ? "space-y-3" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4",
-    [viewMode]
-  );
+  const gridClasses = useMemo(() => {
+    switch (viewMode) {
+      case 'list':
+        return "space-y-3";
+      case 'compact':
+        return "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4";
+      case 'grid':
+      default:
+        return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4";
+    }
+  }, [viewMode]);
 
   // Memoize total rows calculation
   const totalRows = useMemo(() => 
