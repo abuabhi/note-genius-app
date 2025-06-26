@@ -49,12 +49,19 @@ const NotesPage = () => {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
 
+  // Convert ViewMode to the expected type for the header
+  const headerViewMode = viewMode === 'compact' ? 'grid' : viewMode as 'grid' | 'list';
+  
+  const handleViewModeChange = (mode: 'grid' | 'list') => {
+    setViewMode(mode);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
       <NotesPageHeader
         loading={false}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
+        viewMode={headerViewMode}
+        onViewModeChange={handleViewModeChange}
         onOpenManualDialog={() => setIsManualDialogOpen(true)}
         onOpenImportDialog={() => setIsImportDialogOpen(true)}
       />
@@ -77,8 +84,12 @@ const NotesPage = () => {
 
       {/* Import Dialog */}
       <ImportDialog 
-        open={isImportDialogOpen} 
-        onOpenChange={setIsImportDialogOpen} 
+        isVisible={isImportDialogOpen} 
+        onClose={() => setIsImportDialogOpen(false)}
+        onSaveNote={async (note) => {
+          // This will be handled by the import dialog internally
+          return true;
+        }}
       />
 
       {/* Manual Note Creation Dialog */}
@@ -87,7 +98,7 @@ const NotesPage = () => {
           <DialogHeader>
             <DialogTitle>Create New Note</DialogTitle>
           </DialogHeader>
-          <CreateNoteForm onSuccess={() => setIsManualDialogOpen(false)} />
+          <CreateNoteForm />
         </DialogContent>
       </Dialog>
     </div>

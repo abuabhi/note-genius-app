@@ -12,12 +12,14 @@ import { useState } from "react";
 import { DialogManager } from "@/components/notes/page/header/DialogManager";
 import { useUserTier } from "@/hooks/useUserTier";
 import { useNotesOperationsOnly } from "@/hooks/notes/useSelectiveNotesContext";
+import { useViewPreferences } from "@/hooks/useViewPreferences";
 
 // Inner component that uses the context
 const ScalableNotesPageContent = () => {
   // Use the new selective hooks instead of the old useOptimizedNotes
   const { addNote } = useNotesOperationsOnly();
   const { tierLimits } = useUserTier();
+  const { viewMode } = useViewPreferences('notes');
   
   // Dialog states
   const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
@@ -91,7 +93,7 @@ const ScalableNotesPageContent = () => {
       />
       
       <div className="container mx-auto px-6 py-8">
-        <OptimizedNotesContent />
+        <OptimizedNotesContent viewMode={viewMode} />
       </div>
 
       {/* Dialog Manager for note creation */}

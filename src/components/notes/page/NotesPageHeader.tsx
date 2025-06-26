@@ -2,12 +2,11 @@
 import { Button } from "@/components/ui/button";
 import { FileText, Plus, Import, Grid3X3, List } from "lucide-react";
 import { StandardPageHeader } from "@/components/ui/StandardPageHeader";
-import { ViewMode } from "@/hooks/useViewPreferences";
 
 interface NotesPageHeaderProps {
   loading: boolean;
-  viewMode: ViewMode;
-  onViewModeChange: (mode: ViewMode) => void;
+  viewMode: 'grid' | 'list';
+  onViewModeChange: (mode: 'grid' | 'list') => void;
   onOpenManualDialog: () => void;
   onOpenImportDialog: () => void;
 }
