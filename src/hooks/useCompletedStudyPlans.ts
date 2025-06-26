@@ -37,7 +37,8 @@ export const useCompletedStudyPlans = () => {
         related_flashcard_sets: [],
         related_notes: [],
         learning_style: (plan.study_style as 'visual' | 'auditory' | 'kinesthetic' | 'mixed') || 'mixed',
-        learning_objectives: []
+        learning_objectives: [],
+        status: (plan.status as 'active' | 'completed' | 'paused' | 'archived') || 'completed'
       })) || [];
 
       return transformedData;
