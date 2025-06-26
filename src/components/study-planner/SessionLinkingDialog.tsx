@@ -113,9 +113,9 @@ export const SessionLinkingDialog = ({
                           <Badge variant="outline" className="text-xs">
                             {goal.progress}%
                           </Badge>
-                          {goal.subject && (
+                          {goal.academic_subject && (
                             <Badge variant="secondary" className="text-xs">
-                              {goal.subject}
+                              {goal.academic_subject}
                             </Badge>
                           )}
                         </div>

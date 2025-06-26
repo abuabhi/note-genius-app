@@ -26,7 +26,7 @@ export const LinkedTodosWidget = () => {
         .eq('user_id', user.id)
         .eq('type', 'todo')
         .in('status', ['pending', 'completed'])
-        .order('due_date', { ascending: true, nullsLast: true })
+        .order('due_date', { ascending: true, nullsFirst: false })
         .limit(4);
 
       if (error) throw error;

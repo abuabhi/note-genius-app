@@ -23,7 +23,7 @@ export const SessionGoalProgress = () => {
         .select(`
           id,
           title,
-          subject,
+          academic_subject,
           target_hours,
           progress,
           start_date,
@@ -84,9 +84,9 @@ export const SessionGoalProgress = () => {
               <div className="flex-1">
                 <h4 className="font-medium text-sm">{goal.title}</h4>
                 <div className="flex items-center gap-2 mt-1">
-                  {goal.subject && (
+                  {goal.academic_subject && (
                     <Badge variant="outline" className="text-xs">
-                      {goal.subject}
+                      {goal.academic_subject}
                     </Badge>
                   )}
                   <div className="flex items-center gap-1 text-xs text-gray-500">

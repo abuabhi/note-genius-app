@@ -16,7 +16,7 @@ export const useSessionGoalIntegration = () => {
       
       const { data, error } = await supabase
         .from('study_goals')
-        .select('id, title, description, subject, target_hours, progress, end_date')
+        .select('id, title, description, academic_subject, target_hours, progress, end_date')
         .eq('user_id', user.id)
         .eq('is_completed', false)
         .order('end_date', { ascending: true });
@@ -39,7 +39,7 @@ export const useSessionGoalIntegration = () => {
         .eq('user_id', user.id)
         .eq('type', 'todo')
         .eq('status', 'pending')
-        .order('due_date', { ascending: true, nullsLast: true });
+        .order('due_date', { ascending: true, nullsFirst: false });
       
       if (error) throw error;
       return data;
