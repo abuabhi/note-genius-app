@@ -5,7 +5,7 @@ import { QuickActionsGrid } from "@/components/dashboard/QuickActionsGrid";
 import RecentActivityFeed from "@/components/dashboard/RecentActivityFeed";
 import { AnalyticsSection } from "@/components/dashboard/AnalyticsSection";
 import { TodaysFocusSection } from "@/components/dashboard/TodaysFocusSection";
-import { TopicSuggestionsSection } from "@/components/dashboard/TopicSuggestionsSection";
+import { EnhancedTopicSuggestionsSection } from "@/components/dashboard/EnhancedTopicSuggestionsSection";
 
 const DashboardPage = () => {
   return (
@@ -14,7 +14,7 @@ const DashboardPage = () => {
         <DashboardHeroSection />
         <TodaysFocusSection />
         <QuickActionsGrid isFeatureVisible={() => true} />
-        <TopicSuggestionsSection />
+        <EnhancedTopicSuggestionsSection />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <RecentActivityFeed />
           <AnalyticsSection />
