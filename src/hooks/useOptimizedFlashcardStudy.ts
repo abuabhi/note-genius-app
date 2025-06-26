@@ -49,7 +49,7 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
     console.log('📊 Session activity updated:', activityData);
   }, []);
   
-  // Simplified query with basic typing
+  // Simplified query - let TypeScript infer everything naturally
   const flashcardsQuery = useQuery({
     queryKey: ['flashcards', setId],
     queryFn: async () => {
