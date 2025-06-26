@@ -121,13 +121,31 @@ export const useStudyPlanSessions = () => {
     },
   });
 
+  // Wrapper functions to match expected signatures
+  const startSession = async (sessionId: string): Promise<void> => {
+    await startSessionMutation.mutateAsync(sessionId);
+  };
+
+  const completeSession = async (params: { sessionId: string; notes?: string; rating?: number }): Promise<void> => {
+    await completeSessionMutation.mutateAsync(params);
+  };
+
+  const rescheduleSession = async (params: {
+    sessionId: string;
+    newDate: string;
+    newStartTime: string;
+    newEndTime: string;
+  }): Promise<void> => {
+    await rescheduleSessionMutation.mutateAsync(params);
+  };
+
   return {
     sessions: sessions || [],
     sessionsLoading,
     sessionStats: getSessionStats(),
-    startSession: startSessionMutation.mutateAsync,
-    completeSession: completeSessionMutation.mutateAsync,
-    rescheduleSession: rescheduleSessionMutation.mutateAsync,
+    startSession,
+    completeSession,
+    rescheduleSession,
     isStarting: startSessionMutation.isPending,
     isCompleting: completeSessionMutation.isPending,
     isRescheduling: rescheduleSessionMutation.isPending,

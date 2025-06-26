@@ -24,7 +24,7 @@ const StudySessionsPage = () => {
   const {
     sessions,
     sessionStats,
-    isLoading: sessionsLoading,
+    sessionsLoading,
     startSession,
     completeSession,
     rescheduleSession,
@@ -54,12 +54,32 @@ const StudySessionsPage = () => {
     newStartTime: string,
     newEndTime: string
   ) => {
-    await rescheduleSession(sessionId, newDate, newStartTime, newEndTime);
+    try {
+      await rescheduleSession({ sessionId, newDate, newStartTime, newEndTime });
+    } catch (error) {
+      console.error('Failed to apply recommendation:', error);
+    }
   };
 
   const handleGenerateOptimalSchedule = () => {
     // This would regenerate the entire schedule with AI optimization
     console.log('Generate optimal schedule');
+  };
+
+  const handleStartSession = async (sessionId: string) => {
+    try {
+      await startSession(sessionId);
+    } catch (error) {
+      console.error('Failed to start session:', error);
+    }
+  };
+
+  const handleCompleteSession = async (params: { sessionId: string; notes?: string; rating?: number }) => {
+    try {
+      await completeSession(params);
+    } catch (error) {
+      console.error('Failed to complete session:', error);
+    }
   };
 
   if (loading) {
@@ -121,9 +141,9 @@ const StudySessionsPage = () => {
                 <BarChart3 className="h-8 w-8 text-green-600 mr-3" />
                 <div>
                   <div className="text-2xl font-bold text-green-700">
-                    {sessionStats.active}
+                    {sessionStats.inProgress}
                   </div>
-                  <div className="text-sm text-green-600">Active</div>
+                  <div className="text-sm text-green-600">In Progress</div>
                 </div>
               </div>
             </div>
@@ -170,8 +190,8 @@ const StudySessionsPage = () => {
               ) : (
                 <StudySessionsGrid
                   sessions={sessions}
-                  onStartSession={startSession}
-                  onCompleteSession={completeSession}
+                  onStartSession={handleStartSession}
+                  onCompleteSession={handleCompleteSession}
                   onRescheduleSession={handleRescheduleSession}
                   onSessionClick={handleSessionClick}
                   onLinkSession={handleLinkSession}

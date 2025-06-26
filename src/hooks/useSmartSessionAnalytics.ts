@@ -25,7 +25,7 @@ export const useSmartSessionAnalytics = () => {
 
   const { data: analyticsData, isLoading } = useQuery({
     queryKey: ['smart-session-analytics', user?.id],
-    queryFn: async (): Promise<SessionPerformanceData> => {
+    queryFn: async () => {
       if (!user) throw new Error('User not authenticated');
 
       // Get session data from study_plan_sessions
