@@ -1,5 +1,12 @@
 
 import React from "react";
+import { MoreHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { NoteActionsMenu } from "./actions/NoteActionsMenu";
 
 interface NoteCardActionsProps {
@@ -33,14 +40,28 @@ export const NoteCardActions = ({
   };
 
   return (
-    <NoteActionsMenu
-      noteId={noteId}
-      noteTitle={noteTitle}
-      noteContent={noteContent}
-      isPinned={isPinned}
-      onPin={onPin}
-      onDelete={handleDelete}
-      iconSize={iconSize}
-    />
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0 text-gray-400 hover:text-gray-700 hover:bg-gray-100/80 rounded-lg transition-colors"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <MoreHorizontal className={`h-${iconSize} w-${iconSize}`} />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56 shadow-xl border-gray-200/60">
+        <NoteActionsMenu
+          noteId={noteId}
+          noteTitle={noteTitle}
+          noteContent={noteContent}
+          isPinned={isPinned}
+          onPin={onPin}
+          onDelete={handleDelete}
+          iconSize={iconSize}
+        />
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
