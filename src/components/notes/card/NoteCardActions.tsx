@@ -33,22 +33,14 @@ export const NoteCardActions = ({
   };
 
   return (
-    <div 
-      className="relative z-30"
-      onClick={(e) => {
-        e.stopPropagation();
-        e.preventDefault();
-      }}
-    >
-      <NoteActionsMenu
-        noteId={noteId}
-        noteTitle={noteTitle}
-        noteContent={noteContent}
-        isPinned={isPinned}
-        onPin={onPin}
-        onDelete={handleDelete}
-        iconSize={iconSize}
-      />
-    </div>
+    <NoteActionsMenu
+      noteId={noteId}
+      noteTitle={noteTitle}
+      noteContent={noteContent}
+      isPinned={isPinned}
+      onPin={onPin}
+      onDelete={handleDelete}
+      iconSize={iconSize}
+    />
   );
 };

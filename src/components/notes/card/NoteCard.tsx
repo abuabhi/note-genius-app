@@ -6,7 +6,12 @@ import { NoteCardHeader } from "./components/NoteCardHeader";
 import { NoteCardContent } from "./components/NoteCardContent";
 import { NoteCardMetadata } from "./components/NoteCardMetadata";
 import { NoteCardActions } from "./NoteCardActions";
+import { StandardListCard } from "@/components/ui/StandardListCard";
 import { stripMarkdown } from "./utils/markdownUtils";
+import { useUserSubjects } from "@/hooks/useUserSubjects";
+import { formatDistanceToNow } from "date-fns";
+import { Clock, Calendar, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface NoteCardProps {
   note: Note;
@@ -18,6 +23,13 @@ interface NoteCardProps {
   viewMode?: ViewMode;
 }
 
+const calculateReadTime = (content: string): number => {
+  const wordsPerMinute = 200;
+  const wordCount = content.trim().split(/\s+/).length;
+  const readTime = Math.ceil(wordCount / wordsPerMinute);
+  return Math.max(1, readTime);
+};
+
 export const NoteCard = ({
   note,
   onNoteClick,
@@ -27,54 +39,75 @@ export const NoteCard = ({
   confirmDelete,
   viewMode = 'grid'
 }: NoteCardProps) => {
+  const { subjects, isLoading: subjectsLoading } = useUserSubjects();
+  const navigate = useNavigate();
+  
+  const getSubjectName = () => {
+    if (note.subject_id && !subjectsLoading && subjects.length > 0) {
+      const foundSubject = subjects.find(s => s.id === note.subject_id);
+      if (foundSubject) {
+        return foundSubject.name;
+      }
+    }
+    return note.subject || "Uncategorized";
+  };
+
+  const content = note.content || note.description || '';
+  const readTime = calculateReadTime(content);
+  const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const noteDate = new Date(note.date);
+  
+  const formattedDate = new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: 'short', 
+    year: 'numeric',
+    timeZone: userTimezone
+  }).format(noteDate);
+
+  const handleGoToStudyMode = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    navigate(`/notes/study/${note.id}`);
+  };
+
   const isListView = viewMode === 'list';
   
   if (isListView) {
     return (
-      <div className="w-full">
-        <Card 
-          className="group relative cursor-pointer bg-white border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all duration-200 rounded-lg"
-          onClick={() => onNoteClick(note)}
-        >
-          <div className="flex items-center py-3 px-4 w-full gap-3">
-            {/* Subject and Title Section - flexible width */}
-            <div className="flex items-center gap-3 min-w-0 flex-shrink-0">
-              <NoteCardHeader 
-                note={note}
-                onPin={onPin}
-                onDelete={onDelete}
-                viewMode={viewMode}
-              />
-            </div>
-            
-            {/* Content Preview - takes remaining space */}
-            <div className="flex-1 min-w-0">
-              <NoteCardContent 
-                note={note}
-                stripMarkdown={stripMarkdown}
-                viewMode={viewMode}
-              />
-            </div>
-            
-            {/* Metadata and Actions - fixed width */}
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <NoteCardMetadata note={note} viewMode={viewMode} />
-              {/* Always visible actions in list view */}
-              <div className="flex items-center">
-                <NoteCardActions 
-                  noteId={note.id}
-                  noteTitle={note.title}
-                  noteContent={note.content || note.description || ""}
-                  isPinned={!!note.pinned} 
-                  onPin={onPin}
-                  onDelete={onDelete}
-                  iconSize={3}
-                />
-              </div>
-            </div>
-          </div>
-        </Card>
-      </div>
+      <StandardListCard
+        title={note.title}
+        subjectName={getSubjectName()}
+        subjectBadgeColor="bg-mint-100 text-mint-700"
+        primaryAction={{
+          label: "Study",
+          onClick: handleGoToStudyMode,
+          icon: <Sparkles className="h-3 w-3 mr-1" />,
+          className: "bg-green-600 hover:bg-green-700 text-white px-3 py-1 h-7 text-xs"
+        }}
+        menuActions={
+          <NoteCardActions 
+            noteId={note.id}
+            noteTitle={note.title}
+            noteContent={note.content || note.description || ""}
+            isPinned={!!note.pinned} 
+            onPin={onPin}
+            onDelete={onDelete}
+            iconSize={4}
+          />
+        }
+        metadata={[
+          {
+            icon: <Clock className="h-3 w-3" />,
+            label: `${readTime}m`
+          },
+          {
+            icon: <Calendar className="h-3 w-3" />,
+            label: formattedDate
+          }
+        ]}
+        onClick={() => onNoteClick(note)}
+        isPinned={!!note.pinned}
+      />
     );
   }
 
