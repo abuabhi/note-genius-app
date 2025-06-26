@@ -25,10 +25,10 @@ export const ActiveStudyPlans = ({ showAll }: ActiveStudyPlansProps) => {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Active Study Plans</h2>
+        <h2 className="text-xl font-semibold">Plans</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(3)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
+            <Card key={i} className="animate-pulse border-2 border-gray-200">
               <CardContent className="p-6">
                 <div className="h-6 bg-gray-200 rounded mb-4"></div>
                 <div className="h-4 bg-gray-200 rounded mb-2"></div>
@@ -48,7 +48,7 @@ export const ActiveStudyPlans = ({ showAll }: ActiveStudyPlansProps) => {
     return (
       <div className="text-center py-12">
         <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No Active Study Plans</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">No Study Plans</h3>
         <p className="text-gray-600 mb-4">Create your first study plan to start organizing your learning journey.</p>
       </div>
     );
@@ -75,12 +75,7 @@ export const ActiveStudyPlans = ({ showAll }: ActiveStudyPlansProps) => {
     <>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Active Study Plans</h2>
-          {!showAll && studyPlans.length > 3 && (
-            <Button variant="outline" size="sm">
-              View All ({studyPlans.length})
-            </Button>
-          )}
+          <h2 className="text-xl font-semibold">Plans ({studyPlans.length})</h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -140,7 +135,7 @@ const StudyPlanCard = ({ plan, onDeleteClick }: {
   };
 
   return (
-    <Card className="group hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-mint-50/30 shadow-sm hover:shadow-mint-200/50">
+    <Card className="group hover:shadow-lg transition-all duration-200 border-2 border-mint-100 bg-gradient-to-br from-white to-mint-50/30 shadow-sm hover:shadow-mint-200/50">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">

@@ -12,7 +12,7 @@ import { useActiveStudyPlans } from '@/hooks/useActiveStudyPlans';
 import { useCompletedStudyPlans } from '@/hooks/useCompletedStudyPlans';
 
 export default function StudyPlannerPage() {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('plans');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const { studyPlans: activePlans, isLoading: activeLoading } = useActiveStudyPlans();
   const { studyPlans: completedPlans, isLoading: completedLoading } = useCompletedStudyPlans();
@@ -42,105 +42,74 @@ export default function StudyPlannerPage() {
       <div className="container mx-auto px-6 py-8 max-w-7xl">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="flex items-center justify-between">
-            <TabsList className="grid w-full max-w-md grid-cols-3 bg-white/80 backdrop-blur-sm border border-mint-200 shadow-sm">
+            <TabsList className="grid w-full max-w-md grid-cols-2 bg-white/80 backdrop-blur-sm border border-mint-200 shadow-sm">
               <TabsTrigger 
-                value="overview" 
+                value="plans" 
                 className="data-[state=active]:bg-mint-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
               >
-                Overview
-              </TabsTrigger>
-              <TabsTrigger 
-                value="active"
-                className="data-[state=active]:bg-mint-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
-              >
-                Active Plans
+                Plans ({totalActivePlans})
               </TabsTrigger>
               <TabsTrigger 
                 value="completed"
                 className="data-[state=active]:bg-mint-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
               >
-                Completed
+                Completed ({totalCompletedPlans})
               </TabsTrigger>
             </TabsList>
           </div>
 
-          <TabsContent value="overview" className="space-y-6">
-            {/* Compact Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="border-mint-200 hover:shadow-md transition-shadow bg-white/80 backdrop-blur-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-mint-100 rounded-lg">
-                      <Calendar className="h-5 w-5 text-mint-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Active Plans</p>
-                      <p className="text-2xl font-semibold text-mint-800">
-                        {activeLoading ? '...' : totalActivePlans}
-                      </p>
-                    </div>
+          {/* Compact Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="border-mint-200 hover:shadow-md transition-shadow bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-mint-100 rounded-lg">
+                    <Calendar className="h-5 w-5 text-mint-600" />
                   </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-blue-200 hover:shadow-md transition-shadow bg-white/80 backdrop-blur-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <TrendingUp className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Completed</p>
-                      <p className="text-2xl font-semibold text-blue-800">
-                        {completedLoading ? '...' : totalCompletedPlans}
-                      </p>
-                    </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Active Plans</p>
+                    <p className="text-2xl font-semibold text-mint-800">
+                      {activeLoading ? '...' : totalActivePlans}
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-purple-200 hover:shadow-md transition-shadow bg-white/80 backdrop-blur-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-purple-100 rounded-lg">
-                      <Clock className="h-5 w-5 text-purple-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Hours This Week</p>
-                      <p className="text-2xl font-semibold text-purple-800">
-                        {Math.round(totalHoursThisWeek)}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Quick Action Card */}
-            <Card className="border-mint-200 bg-gradient-to-br from-mint-50 to-blue-50 shadow-sm hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-2">
-                    <h3 className="text-xl font-semibold text-mint-800">Ready to start planning?</h3>
-                    <p className="text-mint-600">Create a personalized study plan and begin your focused learning journey.</p>
-                  </div>
-                  <Button 
-                    onClick={() => setShowCreateForm(true)}
-                    size="lg"
-                    className="bg-mint-600 hover:bg-mint-700 text-white px-8 shadow-md hover:shadow-lg transition-all"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Study Plan
-                  </Button>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Recent Active Plans Preview */}
-            <ActiveStudyPlans showAll={false} />
-          </TabsContent>
+            <Card className="border-blue-200 hover:shadow-md transition-shadow bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <TrendingUp className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Completed</p>
+                    <p className="text-2xl font-semibold text-blue-800">
+                      {completedLoading ? '...' : totalCompletedPlans}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-          <TabsContent value="active">
+            <Card className="border-purple-200 hover:shadow-md transition-shadow bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <Clock className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Hours This Week</p>
+                    <p className="text-2xl font-semibold text-purple-800">
+                      {Math.round(totalHoursThisWeek)}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <TabsContent value="plans">
             <ActiveStudyPlans showAll={true} />
           </TabsContent>
 
