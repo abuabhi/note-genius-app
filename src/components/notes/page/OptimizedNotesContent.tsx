@@ -2,7 +2,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { ProgressiveLoader } from '@/components/performance/ProgressiveLoader';
 import { EmptyNotesState } from '@/components/notes/EmptyNotesState';
-import { ViewMode, useViewPreferences } from '@/hooks/useViewPreferences';
 import { useVirtualizationMetrics } from '@/hooks/notes/useVirtualizationMetrics';
 
 // Optimized selective hooks to minimize re-renders
@@ -19,7 +18,11 @@ import { NotesContentGrid } from './components/NotesContentGrid';
 import { NotesLoadMoreSection } from './components/NotesLoadMoreSection';
 import { NotesCounter } from './components/NotesCounter';
 
-export const OptimizedNotesContent = React.memo(() => {
+interface OptimizedNotesContentProps {
+  viewMode: 'grid' | 'list';
+}
+
+export const OptimizedNotesContent = React.memo(({ viewMode }: OptimizedNotesContentProps) => {
   // Use selective hooks instead of the monolithic context
   const {
     notes,
@@ -39,9 +42,6 @@ export const OptimizedNotesContent = React.memo(() => {
     deleteNote
   } = useNotesOperationsOnly();
 
-  // SINGLE SOURCE OF TRUTH for view mode - only defined here
-  const { viewMode, setViewMode } = useViewPreferences('notes');
-
   // Virtualization control with memoized threshold - no UI toggle needed
   const virtualizationThreshold = useMemo(() => 50, []);
   const shouldVirtualize = useMemo(() => 
@@ -56,18 +56,12 @@ export const OptimizedNotesContent = React.memo(() => {
     debugMode: process.env.NODE_ENV === 'development',
   });
 
-  // Memoized callbacks to prevent unnecessary re-renders
-  const handleViewModeChange = useCallback((mode: ViewMode) => {
-    setViewMode(mode);
-  }, [setViewMode]);
-
   // Memoized computed values
   const isFiltered = useMemo(() => 
     !!(searchTerm || selectedSubject !== 'all'), 
     [searchTerm, selectedSubject]
   );
 
-  console.log('🎯 OptimizedNotesContent - MASTER viewMode:', viewMode);
   console.log('🚀 Virtualization Status:', { 
     shouldVirtualize, 
     noteCount: notes.length, 
@@ -75,21 +69,12 @@ export const OptimizedNotesContent = React.memo(() => {
   });
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Error handling */}
       <NotesErrorHandler />
 
-      {/* Enhanced Filters - removed virtualization toggle */}
-      <NotesFiltersSection
-        viewMode={viewMode}
-        onViewModeChange={handleViewModeChange}
-        useVirtualization={true} // Always enabled, no user control needed
-        shouldVirtualize={shouldVirtualize}
-        noteCount={notes.length}
-        threshold={virtualizationThreshold}
-        renderTime={metrics.renderTime}
-        onVirtualizationToggle={() => {}} // No-op since toggle is removed
-      />
+      {/* Filters */}
+      <NotesFiltersSection />
 
       {/* Main content with improved loading states */}
       <ProgressiveLoader 
@@ -98,14 +83,14 @@ export const OptimizedNotesContent = React.memo(() => {
         skeletonCount={6}
       >
         {notes.length === 0 && !loading ? (
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-white/20 shadow-lg shadow-mint-500/5">
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200 shadow-sm">
             <EmptyNotesState
               onCreateNote={() => {}}
               isFiltered={isFiltered}
             />
           </div>
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-6">
             <NotesContentGrid
               notes={notes}
               shouldVirtualize={shouldVirtualize}
