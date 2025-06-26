@@ -1,45 +1,13 @@
 
-
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { StudyMode } from '@/pages/study/types';
 
-// Simple internal interface - no export to avoid type conflicts
-interface SimpleFlashcard {
-  id: string;
-  front_content: string;
-  back_content: string;
-  difficulty: number;
-  set_id?: string;
-  last_reviewed?: string;
-}
-
 interface OptimizedFlashcardStudyProps {
   setId: string;
   mode: StudyMode;
 }
-
-// Remove all type annotations - let TypeScript infer everything
-const fetchFlashcards = async (setId: string) => {
-  const { data, error } = await supabase
-    .from('flashcards')
-    .select('*')
-    .eq('set_id', setId)
-    .order('created_at');
-
-  if (error) throw error;
-  
-  // Simple transformation without complex typing
-  return (data || []).map((item: any) => ({
-    id: item.id,
-    front_content: item.front_content || '',
-    back_content: item.back_content || '',
-    difficulty: item.difficulty || 1,
-    set_id: item.set_id,
-    last_reviewed: item.last_reviewed_at
-  }));
-};
 
 export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardStudyProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -56,15 +24,33 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
     console.log('📊 Session activity updated:', activityData);
   }, []);
   
-  // Minimal useQuery without type annotations
-  const { data = [], isLoading, error } = useQuery({
+  // Direct Supabase query without complex function wrapping
+  const { data: rawData, isLoading, error } = useQuery({
     queryKey: ['flashcards', setId],
-    queryFn: () => fetchFlashcards(setId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('flashcards')
+        .select('*')
+        .eq('set_id', setId)
+        .order('created_at');
+
+      if (error) throw error;
+      return data || [];
+    },
     enabled: !!setId
   });
 
-  // Use data directly without additional type assertions
-  const flashcards = data;
+  // Simple data transformation
+  const flashcards = (rawData || []).map((card: any) => ({
+    id: card.id,
+    front_content: card.front_content || '',
+    back_content: card.back_content || '',
+    front: card.front_content || '',
+    back: card.back_content || '',
+    difficulty: card.difficulty || 1,
+    set_id: card.set_id,
+    last_reviewed: card.last_reviewed_at
+  }));
 
   // Initialize session activity tracking
   useEffect(() => {
@@ -73,7 +59,7 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
     }
   }, [flashcards.length, setId, mode, updateSessionActivity]);
 
-  const currentCard = flashcards[currentIndex];
+  const currentCard = flashcards[currentIndex] || null;
   const totalCards = flashcards.length;
   const isComplete = currentIndex >= totalCards && totalCards > 0;
 
@@ -115,7 +101,6 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
           incrementStudied = true;
           break;
         case 'medium':
-          // Keep same difficulty
           incrementStudied = true;
           break;
         case 'hard':
@@ -171,25 +156,14 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
     completionPercentage: totalCards > 0 ? Math.round((currentIndex / totalCards) * 100) : 0
   };
 
-  // Simple compatibility mapping at return level only
-  const currentCardWithCompatibility = currentCard ? {
-    ...currentCard,
-    front: currentCard.front_content,
-    back: currentCard.back_content
-  } : null;
-
   return {
-    flashcards: flashcards.map(card => ({
-      ...card,
-      front: card.front_content,
-      back: card.back_content
-    })),
+    flashcards,
     currentIndex,
     isFlipped,
     isLoading,
     error: error as Error | null,
     isComplete,
-    currentCard: currentCardWithCompatibility,
+    currentCard,
     totalCards,
     studiedToday,
     masteredCount,
