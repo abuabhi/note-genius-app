@@ -13,6 +13,7 @@ import { QuizGrid } from './components/QuizGrid';
 import { QuizListView } from './components/QuizListView';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { Quiz } from '@/types/quiz';
 
 interface QuizListProps {
   viewMode: 'grid' | 'list';
@@ -52,11 +53,21 @@ const QuizList = ({ viewMode }: QuizListProps) => {
   const favoriteCount = getFavoriteCount();
 
   // Transform the data to ensure it has all required Quiz properties
-  const transformedQuizzes = quizzes.map(quiz => ({
-    ...quiz,
+  const transformedQuizzes: Quiz[] = quizzes.map(quiz => ({
+    id: quiz.id,
+    title: quiz.title,
+    description: quiz.description,
+    subject_id: quiz.subject_id,
     section_id: quiz.section_id || null,
+    grade_id: quiz.grade_id,
     source_type: quiz.source_type || 'custom' as const,
     source_id: quiz.source_id || null,
+    user_id: quiz.user_id,
+    is_public: quiz.is_public,
+    created_at: quiz.created_at,
+    updated_at: quiz.updated_at,
+    questionCount: quiz.questionCount,
+    academic_subjects: quiz.academic_subjects,
   }));
 
   return (
