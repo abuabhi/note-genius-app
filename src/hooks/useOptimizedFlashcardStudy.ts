@@ -24,24 +24,26 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
     console.log('📊 Session activity updated:', activityData);
   }, []);
   
-  // Direct Supabase query without complex function wrapping
-  const { data: rawData, isLoading, error } = useQuery({
+  // Completely break type inference by using explicit any types
+  const queryResult: any = useQuery({
     queryKey: ['flashcards', setId],
-    queryFn: async () => {
-      const { data, error } = await supabase
+    queryFn: async (): Promise<any[]> => {
+      const result: any = await supabase
         .from('flashcards')
         .select('*')
         .eq('set_id', setId)
         .order('created_at');
 
-      if (error) throw error;
-      return data || [];
+      if (result.error) throw result.error;
+      return result.data || [];
     },
     enabled: !!setId
   });
 
+  const { data: rawData = [], isLoading, error } = queryResult;
+
   // Simple data transformation
-  const flashcards = (rawData || []).map((card: any) => ({
+  const flashcards = rawData.map((card: any) => ({
     id: card.id,
     front_content: card.front_content || '',
     back_content: card.back_content || '',
