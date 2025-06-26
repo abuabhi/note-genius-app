@@ -9,6 +9,8 @@ interface SimpleFlashcard {
   id: string;
   front_content: string;
   back_content: string;
+  front: string; // Add for compatibility
+  back: string; // Add for compatibility
   difficulty: number;
   set_id?: string;
   last_reviewed?: string;
@@ -39,9 +41,9 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
     data: flashcards = [], 
     isLoading, 
     error 
-  } = useQuery<SimpleFlashcard[]>({
+  } = useQuery({
     queryKey: ['flashcards', setId],
-    queryFn: async () => {
+    queryFn: async (): Promise<SimpleFlashcard[]> => {
       const { data, error } = await supabase
         .from('flashcards')
         .select('*')
@@ -51,10 +53,12 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
       if (error) throw error;
       return (data || []).map(item => ({
         id: item.id,
-        front_content: item.front_content || item.front || '',
-        back_content: item.back_content || item.back || '',
+        front_content: item.front_content || '',
+        back_content: item.back_content || '',
+        front: item.front_content || '', // Map for compatibility
+        back: item.back_content || '', // Map for compatibility
         difficulty: item.difficulty || 1,
-        set_id: item.set_id,
+        set_id: item.flashcard_set_id,
         last_reviewed: item.last_reviewed_at
       }));
     },
