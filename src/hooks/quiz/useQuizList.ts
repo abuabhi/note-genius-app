@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const useQuizList = (filters: {
   subject?: string;
-  grade?: string;
   search?: string;
 } = {}) => {
   return useQuery({
@@ -30,10 +29,6 @@ export const useQuizList = (filters: {
       // Apply basic filters
       if (filters.subject) {
         query = query.eq('subject_id', filters.subject);
-      }
-
-      if (filters.grade) {
-        query = query.eq('grade_id', filters.grade);
       }
 
       if (filters.search) {

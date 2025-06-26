@@ -17,19 +17,12 @@ interface Subject {
   name: string;
 }
 
-interface Grade {
-  id: string;
-  name: string;
-}
-
 interface QuizFiltersProps {
   onFiltersChange: (filters: {
     search?: string;
     subject?: string;
-    grade?: string;
   }) => void;
   subjects: Subject[];
-  grades: Grade[];
   isLoading?: boolean;
   totalQuizzes: number;
 }
@@ -37,20 +30,17 @@ interface QuizFiltersProps {
 export const QuizFilters: React.FC<QuizFiltersProps> = ({
   onFiltersChange,
   subjects,
-  grades,
   isLoading = false,
   totalQuizzes
 }) => {
   const [search, setSearch] = useState('');
   const [selectedSubject, setSelectedSubject] = useState<string>('');
-  const [selectedGrade, setSelectedGrade] = useState<string>('');
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
     onFiltersChange({
       search: value || undefined,
       subject: selectedSubject || undefined,
-      grade: selectedGrade || undefined,
     });
   };
 
@@ -60,29 +50,17 @@ export const QuizFilters: React.FC<QuizFiltersProps> = ({
     onFiltersChange({
       search: search || undefined,
       subject: newSubject || undefined,
-      grade: selectedGrade || undefined,
-    });
-  };
-
-  const handleGradeChange = (value: string) => {
-    const newGrade = value === 'none' ? '' : value;
-    setSelectedGrade(newGrade);
-    onFiltersChange({
-      search: search || undefined,
-      subject: selectedSubject || undefined,
-      grade: newGrade || undefined,
     });
   };
 
   const clearFilters = () => {
     setSearch('');
     setSelectedSubject('');
-    setSelectedGrade('');
     onFiltersChange({});
   };
 
-  const hasActiveFilters = search || selectedSubject || selectedGrade;
-  const activeFiltersCount = [search, selectedSubject, selectedGrade].filter(Boolean).length;
+  const hasActiveFilters = search || selectedSubject;
+  const activeFiltersCount = [search, selectedSubject].filter(Boolean).length;
 
   return (
     <div className="space-y-4">
@@ -108,19 +86,6 @@ export const QuizFilters: React.FC<QuizFiltersProps> = ({
             {subjects.map((subject) => (
               <SelectItem key={subject.id} value={subject.id}>
                 {subject.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={selectedGrade || 'none'} onValueChange={handleGradeChange} disabled={isLoading}>
-          <SelectTrigger className="w-full sm:w-48 border-mint-200">
-            <SelectValue placeholder="Filter by Grade" />
-          </SelectTrigger>
-          <SelectContent>
-            {grades.map((grade) => (
-              <SelectItem key={grade.id} value={grade.id}>
-                {grade.name}
               </SelectItem>
             ))}
           </SelectContent>
@@ -154,20 +119,6 @@ export const QuizFilters: React.FC<QuizFiltersProps> = ({
                 size="sm"
                 className="h-4 w-4 p-0 ml-1 hover:bg-blue-200"
                 onClick={() => handleSubjectChange('none')}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </Badge>
-          )}
-          
-          {selectedGrade && (
-            <Badge variant="secondary" className="bg-purple-100 text-purple-800">
-              {grades.find(g => g.id === selectedGrade)?.name}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-4 w-4 p-0 ml-1 hover:bg-purple-200"
-                onClick={() => handleGradeChange('none')}
               >
                 <X className="h-3 w-3" />
               </Button>

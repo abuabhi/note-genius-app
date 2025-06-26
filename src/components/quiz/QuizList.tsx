@@ -22,7 +22,6 @@ const QuizList = ({ viewMode }: QuizListProps) => {
   const [filters, setFilters] = useState<{
     search?: string;
     subject?: string;
-    grade?: string;
   }>({});
   
   const { favoriteQuizIds, toggleFavorite, getFavoriteCount } = useFavoritesManager();
@@ -58,7 +57,6 @@ const QuizList = ({ viewMode }: QuizListProps) => {
       <QuizFilters
         onFiltersChange={handleFiltersChange}
         subjects={filterOptions?.subjects || []}
-        grades={filterOptions?.grades || []}
         isLoading={isLoading}
         totalQuizzes={totalQuizzes}
       />
