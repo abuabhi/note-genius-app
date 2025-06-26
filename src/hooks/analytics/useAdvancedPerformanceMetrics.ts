@@ -62,23 +62,25 @@ export const useAdvancedPerformanceMetrics = () => {
       const masteredCards = progress.filter(p => p.mastery_level >= 4).length;
       const learningEfficiency = totalStudyTime > 0 ? masteredCards / totalStudyTime : 0;
 
-      // Calculate subject mastery
-      const subjectMastery: Record<string, number> = {};
+      // Calculate subject mastery - use temporary array storage then convert to averages
+      const subjectMasteryTemp: Record<string, number[]> = {};
       progress.forEach(p => {
         // Safe access to nested flashcard data
         const flashcardData = p.flashcards as any;
         const flashcardSet = flashcardData?.flashcard_sets;
         const subject = flashcardSet?.subject || (Array.isArray(flashcardSet) ? flashcardSet[0]?.subject : null) || 'General';
         
-        if (!subjectMastery[subject]) {
-          subjectMastery[subject] = [];
+        if (!subjectMasteryTemp[subject]) {
+          subjectMasteryTemp[subject] = [];
         }
-        (subjectMastery[subject] as any).push(p.mastery_level);
+        subjectMasteryTemp[subject].push(p.mastery_level);
       });
 
-      Object.keys(subjectMastery).forEach(subject => {
-        const levels = subjectMastery[subject] as any;
-        if (Array.isArray(levels) && levels.length > 0) {
+      // Convert temporary arrays to averages
+      const subjectMastery: Record<string, number> = {};
+      Object.keys(subjectMasteryTemp).forEach(subject => {
+        const levels = subjectMasteryTemp[subject];
+        if (levels.length > 0) {
           subjectMastery[subject] = levels.reduce((a: number, b: number) => a + b, 0) / levels.length;
         } else {
           subjectMastery[subject] = 0;
