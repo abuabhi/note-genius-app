@@ -1,15 +1,17 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Calendar, Clock, Play, MoreHorizontal, Target, Trash2 } from 'lucide-react';
+import { BookOpen, Calendar, Clock, Play, MoreHorizontal, Target, Trash2, CheckCircle } from 'lucide-react';
 import { useActiveStudyPlans } from '@/hooks/useActiveStudyPlans';
 import { useDeleteStudyPlan } from '@/hooks/useDeleteStudyPlan';
+import { useConvertStudyPlanToGoal } from '@/hooks/useConvertStudyPlanToGoal';
+import { useStartStudySession } from '@/hooks/useStartStudySession';
 import { StudyPlan } from '@/types/studyPlanner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { toast } from 'sonner';
 
 interface ActiveStudyPlansProps {
   showAll: boolean;
@@ -107,6 +109,9 @@ const StudyPlanCard = ({ plan, onDeleteClick }: {
   plan: StudyPlan; 
   onDeleteClick: (plan: StudyPlan) => void;
 }) => {
+  const { convertToGoal, isLoading: isConverting } = useConvertStudyPlanToGoal();
+  const { startSession, isLoading: isStartingSession } = useStartStudySession();
+
   const startDate = new Date(plan.start_date);
   const endDate = new Date(plan.end_date);
   const now = new Date();
@@ -119,14 +124,20 @@ const StudyPlanCard = ({ plan, onDeleteClick }: {
     ? Math.round((plan.total_duration_hours / plan.study_days.length) * 10) / 10
     : 0;
 
-  const handleStartSession = () => {
-    toast.success(`Starting study session for ${plan.title}`);
-    // TODO: Navigate to study session page or create session
+  const handleStartSession = async () => {
+    try {
+      await startSession(plan);
+    } catch (error) {
+      console.error('Error starting session:', error);
+    }
   };
 
-  const handleConvertToGoal = () => {
-    toast.success(`Converting "${plan.title}" to goals`);
-    // TODO: Implement conversion to goals
+  const handleConvertToGoal = async () => {
+    try {
+      await convertToGoal(plan);
+    } catch (error) {
+      console.error('Error converting to goal:', error);
+    }
   };
 
   return (
@@ -146,6 +157,12 @@ const StudyPlanCard = ({ plan, onDeleteClick }: {
                   {plan.topic}
                 </Badge>
               )}
+              {plan.is_converted_to_goals && (
+                <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Goal Created
+                </Badge>
+              )}
             </div>
           </div>
           <DropdownMenu>
@@ -155,9 +172,9 @@ const StudyPlanCard = ({ plan, onDeleteClick }: {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleStartSession}>
+              <DropdownMenuItem onClick={handleStartSession} disabled={isStartingSession}>
                 <Play className="h-4 w-4 mr-2" />
-                Start Session
+                {isStartingSession ? 'Starting...' : 'Start Session'}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
@@ -202,18 +219,29 @@ const StudyPlanCard = ({ plan, onDeleteClick }: {
             onClick={handleStartSession}
             className="flex-1 bg-mint-600 hover:bg-mint-700 text-white shadow-sm hover:shadow-md transition-all"
             size="sm"
+            disabled={isStartingSession}
           >
             <Play className="h-4 w-4 mr-2" />
-            Start Session
+            {isStartingSession ? 'Starting...' : 'Start Session'}
           </Button>
           <Button 
             onClick={handleConvertToGoal}
             variant="outline" 
             size="sm"
-            className="border-mint-300 text-mint-700 hover:bg-mint-50 hover:border-mint-400"
+            className={`border-mint-300 hover:bg-mint-50 hover:border-mint-400 ${
+              plan.is_converted_to_goals 
+                ? 'bg-green-50 border-green-300 text-green-700 cursor-not-allowed' 
+                : 'text-mint-700'
+            }`}
+            disabled={isConverting || plan.is_converted_to_goals}
           >
             <Target className="h-4 w-4 mr-1" />
-            Goals
+            {plan.is_converted_to_goals 
+              ? 'Goal Created' 
+              : isConverting 
+                ? 'Converting...' 
+                : 'Convert To Goal'
+            }
           </Button>
         </div>
       </CardContent>
