@@ -1,23 +1,7 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { StudyMode } from '@/pages/study/types';
-
-// Database result type - what we get from Supabase
-interface FlashcardDatabaseResult {
-  id: string;
-  front_content: string;
-  back_content: string;
-  difficulty: number;
-  set_id?: string;
-  last_reviewed_at?: string;
-  created_at: string;
-  updated_at: string;
-  user_id: string;
-  is_built_in: boolean;
-  next_review_at: string;
-}
 
 // Simplified flashcard type for the hook
 interface SimpleFlashcard {
@@ -36,6 +20,20 @@ interface OptimizedFlashcardStudyProps {
   mode: StudyMode;
 }
 
+// Extract the data transformation to a separate function
+const transformFlashcardData = (rawData: any[]): SimpleFlashcard[] => {
+  return rawData.map((item: any) => ({
+    id: item.id,
+    front_content: item.front_content || '',
+    back_content: item.back_content || '',
+    front: item.front_content || '', // Map for compatibility
+    back: item.back_content || '', // Map for compatibility
+    difficulty: item.difficulty || 1,
+    set_id: item.set_id,
+    last_reviewed: item.last_reviewed_at
+  }));
+};
+
 export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardStudyProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -51,39 +49,25 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
     console.log('📊 Session activity updated:', activityData);
   }, []);
   
-  // Fetch flashcards for the set with simplified typing
-  const fetchFlashcards = async (): Promise<SimpleFlashcard[]> => {
-    const { data, error } = await supabase
-      .from('flashcards')
-      .select('*')
-      .eq('set_id', setId)
-      .order('created_at');
-
-    if (error) throw error;
-    
-    const results: SimpleFlashcard[] = (data || []).map((item: any) => ({
-      id: item.id,
-      front_content: item.front_content || '',
-      back_content: item.back_content || '',
-      front: item.front_content || '', // Map for compatibility
-      back: item.back_content || '', // Map for compatibility
-      difficulty: item.difficulty || 1,
-      set_id: item.set_id,
-      last_reviewed: item.last_reviewed_at
-    }));
-    
-    return results;
-  };
-
-  const { 
-    data: flashcards = [], 
-    isLoading, 
-    error 
-  } = useQuery<SimpleFlashcard[], Error>({
+  // Simplified query with basic typing
+  const flashcardsQuery = useQuery({
     queryKey: ['flashcards', setId],
-    queryFn: fetchFlashcards,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('flashcards')
+        .select('*')
+        .eq('set_id', setId)
+        .order('created_at');
+
+      if (error) throw error;
+      return transformFlashcardData(data || []);
+    },
     enabled: !!setId
   });
+
+  const flashcards = flashcardsQuery.data || [];
+  const isLoading = flashcardsQuery.isLoading;
+  const error = flashcardsQuery.error;
 
   // Initialize session activity tracking
   useEffect(() => {
