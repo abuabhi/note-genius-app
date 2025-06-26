@@ -52,7 +52,7 @@ const FlashcardSetFilters = ({
           />
         </div>
         
-        {/* Subject Filter */}
+        {/* Subject Filter - now using user subjects consistently */}
         <Select 
           value={subjectFilter || "all_subjects"} 
           onValueChange={(value) => {

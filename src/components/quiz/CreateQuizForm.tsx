@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { PlusCircleIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useSubjects } from "@/hooks/useSubjects";
+import { useUserSubjects } from "@/hooks/useUserSubjects"; // Changed from useSubjects
 import { useGrades } from "@/hooks/useGrades";
 import { useSections } from "@/hooks/useSections";
 import { QuizMetadataForm } from "./form-sections/QuizMetadataForm";
@@ -35,7 +35,7 @@ export const CreateQuizForm = ({
   sourceId,
   onSuccess
 }: CreateQuizFormProps) => {
-  const { academicSubjects } = useSubjects();
+  const { subjects: userSubjects } = useUserSubjects(); // Use user subjects
   const { grades } = useGrades();
   const { sections } = useSections();
   const navigate = useNavigate();
@@ -65,7 +65,7 @@ export const CreateQuizForm = ({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <QuizMetadataForm 
           form={form} 
-          subjects={academicSubjects} 
+          subjects={userSubjects} 
           grades={grades}
           filteredSections={filteredSections}
         />

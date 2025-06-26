@@ -26,8 +26,9 @@ export const useQuizList = (filters: {
           grade_id
         `);
 
-      // Apply basic filters
+      // Apply basic filters - now filtering by user_subjects
       if (filters.subject) {
+        // The subject filter now contains the user_subject ID
         query = query.eq('subject_id', filters.subject);
       }
 
@@ -55,22 +56,23 @@ export const useQuizList = (filters: {
 
       console.log(`✅ Fetched ${quizzes?.length || 0} quizzes`);
 
-      // Get question counts and subject data in parallel
+      // Get question counts and user subject data in parallel
       if (quizzes && quizzes.length > 0) {
         const quizIds = quizzes.map(q => q.id);
         const subjectIds = quizzes.map(q => q.subject_id).filter(Boolean);
 
-        // Fetch question counts and subjects in parallel
-        const [questionCountData, subjectsData] = await Promise.all([
+        // Fetch question counts and user subjects in parallel
+        const [questionCountData, userSubjectsData] = await Promise.all([
           supabase
             .from('quiz_questions')
             .select('quiz_id')
             .in('quiz_id', quizIds),
-          subjectIds.length > 0 
+          subjectIds.length > 0 && user
             ? supabase
-                .from('academic_subjects')
+                .from('user_subjects')
                 .select('id, name')
                 .in('id', subjectIds)
+                .eq('user_id', user.id)
             : Promise.resolve({ data: [] })
         ]);
 
@@ -80,21 +82,21 @@ export const useQuizList = (filters: {
           return acc;
         }, {} as Record<string, number>) || {};
 
-        // Map subjects by ID with proper typing
-        const subjectsMap: Record<string, { id: string; name: string }> = {};
-        if (subjectsData.data) {
-          subjectsData.data.forEach(subject => {
+        // Map user subjects by ID
+        const userSubjectsMap: Record<string, { id: string; name: string }> = {};
+        if (userSubjectsData.data) {
+          userSubjectsData.data.forEach(subject => {
             if (subject && subject.id && subject.name) {
-              subjectsMap[subject.id] = { id: subject.id, name: subject.name };
+              userSubjectsMap[subject.id] = { id: subject.id, name: subject.name };
             }
           });
         }
 
-        // Transform the data to include question count and subject info
+        // Transform the data to include question count and user subject info
         const enrichedQuizzes = quizzes.map(quiz => ({
           ...quiz,
           questionCount: countMap[quiz.id] || 0,
-          academic_subjects: quiz.subject_id && quiz.subject_id in subjectsMap ? subjectsMap[quiz.subject_id] : null,
+          academic_subjects: quiz.subject_id && quiz.subject_id in userSubjectsMap ? userSubjectsMap[quiz.subject_id] : null,
         }));
 
         return { quizzes: enrichedQuizzes };

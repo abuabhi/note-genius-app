@@ -10,7 +10,7 @@ export const useCreateQuiz = () => {
     mutationFn: async (newQuiz: {
       title: string;
       description?: string;
-      subject_id?: string;
+      subject_id?: string; // This should now reference user_subjects.id
       section_id?: string;
       grade_id?: string;
       country_id?: string;
@@ -31,13 +31,13 @@ export const useCreateQuiz = () => {
         }[];
       }[];
     }) => {
-      // First insert the quiz
+      // First insert the quiz with user_subject reference
       const { data: quiz, error: quizError } = await supabase
         .from('quizzes')
         .insert({
           title: newQuiz.title,
           description: newQuiz.description || null,
-          subject_id: newQuiz.subject_id || null,
+          subject_id: newQuiz.subject_id || null, // References user_subjects.id
           section_id: newQuiz.section_id || null,
           grade_id: newQuiz.grade_id || null,
           country_id: newQuiz.country_id || null,
@@ -96,7 +96,9 @@ export const useCreateQuiz = () => {
       return quiz;
     },
     onSuccess: () => {
+      // Invalidate both quizzes and user subjects cache
       queryClient.invalidateQueries({ queryKey: ['quizzes'] });
+      queryClient.invalidateQueries({ queryKey: ['quiz-filter-options'] });
       toast({
         title: "Quiz created",
         description: "Your quiz has been created successfully.",
