@@ -379,6 +379,48 @@ export type Database = {
         }
         Relationships: []
       }
+      curriculum_topics: {
+        Row: {
+          created_at: string | null
+          difficulty_level: number | null
+          grade_level: string
+          id: string
+          learning_objectives: string[] | null
+          prerequisites: string[] | null
+          related_topics: string[] | null
+          subject_name: string
+          topic_description: string | null
+          topic_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          difficulty_level?: number | null
+          grade_level: string
+          id?: string
+          learning_objectives?: string[] | null
+          prerequisites?: string[] | null
+          related_topics?: string[] | null
+          subject_name: string
+          topic_description?: string | null
+          topic_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          difficulty_level?: number | null
+          grade_level?: string
+          id?: string
+          learning_objectives?: string[] | null
+          prerequisites?: string[] | null
+          related_topics?: string[] | null
+          subject_name?: string
+          topic_description?: string | null
+          topic_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       digest_content_cache: {
         Row: {
           content_data: Json
@@ -2751,6 +2793,33 @@ export type Database = {
         }
         Relationships: []
       }
+      topic_suggestions_cache: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          subject_name: string
+          suggestions: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          subject_name: string
+          suggestions: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          subject_name?: string
+          suggestions?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_connections: {
         Row: {
           created_at: string
@@ -2890,6 +2959,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_topic_progress: {
+        Row: {
+          created_at: string | null
+          id: string
+          last_activity_at: string | null
+          progress_type: string
+          resource_count: number | null
+          subject_name: string
+          topic_name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          last_activity_at?: string | null
+          progress_type: string
+          resource_count?: number | null
+          subject_name: string
+          topic_name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          last_activity_at?: string | null
+          progress_type?: string
+          resource_count?: number | null
+          subject_name?: string
+          topic_name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -2950,6 +3055,10 @@ export type Database = {
       check_user_in_conversation: {
         Args: { conversation_uuid: string }
         Returns: boolean
+      }
+      cleanup_expired_suggestions_cache: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       dismiss_announcement: {
         Args: { announcement_uuid: string }
