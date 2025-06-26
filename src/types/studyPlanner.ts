@@ -1,3 +1,4 @@
+
 export interface StudyPlan {
   id: string;
   user_id: string;
@@ -76,9 +77,5 @@ export interface StudyPlanFormValues {
   hoursPerDay: number;
   startDate: string;
   endDate: string;
-  sessionDuration: number;
-  breakDuration: number;
-  maxSessionsPerDay: number;
   studyDays: string[];
-  preferredTimes: string[];
 }

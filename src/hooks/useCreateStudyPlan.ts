@@ -24,7 +24,7 @@ export const useCreateStudyPlan = () => {
         available_times: {},
         available_days: formData.studyDays,
         topics: formData.topic ? [{ name: formData.topic, duration_hours: 0, difficulty: 'intermediate' }] : [],
-        preferred_session_duration: formData.sessionDuration,
+        preferred_session_duration: 60, // Default to 1 hour
         study_style: 'mixed',
         status: 'active'
       };
