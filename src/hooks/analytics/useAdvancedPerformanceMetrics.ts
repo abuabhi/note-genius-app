@@ -68,7 +68,7 @@ export const useAdvancedPerformanceMetrics = () => {
         // Safe access to nested flashcard data
         const flashcardData = p.flashcards as any;
         const flashcardSet = flashcardData?.flashcard_sets;
-        const subject = flashcardSet?.subject || flashcardSet?.[0]?.subject || 'General';
+        const subject = flashcardSet?.subject || (Array.isArray(flashcardSet) ? flashcardSet[0]?.subject : null) || 'General';
         
         if (!subjectMastery[subject]) {
           subjectMastery[subject] = [];
@@ -78,8 +78,10 @@ export const useAdvancedPerformanceMetrics = () => {
 
       Object.keys(subjectMastery).forEach(subject => {
         const levels = subjectMastery[subject] as any;
-        if (Array.isArray(levels)) {
+        if (Array.isArray(levels) && levels.length > 0) {
           subjectMastery[subject] = levels.reduce((a: number, b: number) => a + b, 0) / levels.length;
+        } else {
+          subjectMastery[subject] = 0;
         }
       });
 
