@@ -1,8 +1,8 @@
-
 import React from 'react';
 import { StandardListCard } from '@/components/ui/StandardListCard';
 import { Play, CreditCard, Calendar, User, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { FlashcardSetActionsMenu } from './FlashcardSetActionsMenu';
 import { Badge } from '@/components/ui/badge';
 
 interface FlashcardSet {
@@ -83,6 +83,14 @@ export const FlashcardSetListCard = ({
         icon: <Play className="h-3 w-3 mr-1" />,
         className: "bg-mint-600 hover:bg-mint-700 text-white px-3 py-1 h-7 text-xs"
       }}
+      menuActions={
+        <FlashcardSetActionsMenu
+          set={set}
+          onTogglePinned={onTogglePinned}
+          onDelete={onDelete}
+          currentUserId={currentUserId}
+        />
+      }
       metadata={metadata}
       onClick={handleSetClick}
       isPinned={set.is_pinned}

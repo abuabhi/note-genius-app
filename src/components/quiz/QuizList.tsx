@@ -51,6 +51,14 @@ const QuizList = ({ viewMode }: QuizListProps) => {
   const totalQuizzes = quizzes.length;
   const favoriteCount = getFavoriteCount();
 
+  // Transform the data to ensure it has all required Quiz properties
+  const transformedQuizzes = quizzes.map(quiz => ({
+    ...quiz,
+    section_id: quiz.section_id || null,
+    source_type: quiz.source_type || 'custom' as const,
+    source_id: quiz.source_id || null,
+  }));
+
   return (
     <div className="space-y-6">
       {/* Filters */}
@@ -77,7 +85,7 @@ const QuizList = ({ viewMode }: QuizListProps) => {
       </div>
 
       {/* Quiz Display */}
-      {quizzes.length === 0 && !isLoading ? (
+      {transformedQuizzes.length === 0 && !isLoading ? (
         <EmptyState
           title="No quizzes found"
           description={
@@ -96,7 +104,7 @@ const QuizList = ({ viewMode }: QuizListProps) => {
         />
       ) : viewMode === 'grid' ? (
         <QuizGrid
-          quizzes={quizzes}
+          quizzes={transformedQuizzes}
           onToggleFavorite={toggleFavorite}
           favoriteQuizIds={favoriteQuizIds}
           loading={isLoading}
@@ -108,7 +116,7 @@ const QuizList = ({ viewMode }: QuizListProps) => {
         />
       ) : (
         <QuizListView
-          quizzes={quizzes}
+          quizzes={transformedQuizzes}
           onToggleFavorite={toggleFavorite}
           favoriteQuizIds={favoriteQuizIds}
           loading={isLoading}

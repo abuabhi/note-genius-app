@@ -70,6 +70,10 @@ export const NoteCard = ({
   const isListView = viewMode === 'list';
   
   if (isListView) {
+    // Get description for list view
+    const description = content ? stripMarkdown(content).substring(0, 100) : '';
+    const truncatedDescription = description.length > 100 ? description.substring(0, 97) + '...' : description;
+
     return (
       <StandardListCard
         title={note.title}
@@ -104,6 +108,13 @@ export const NoteCard = ({
         ]}
         onClick={() => onNoteClick(note)}
         isPinned={!!note.pinned}
+        secondaryActions={
+          truncatedDescription && (
+            <div className="text-xs text-gray-500 truncate max-w-xs">
+              {truncatedDescription}
+            </div>
+          )
+        }
       />
     );
   }
