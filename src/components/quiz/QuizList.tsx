@@ -52,14 +52,14 @@ const QuizList = ({ viewMode }: QuizListProps) => {
   const totalQuizzes = quizzes.length;
   const favoriteCount = getFavoriteCount();
 
-  // Transform the data to ensure it has all required Quiz properties with proper typing
-  const transformedQuizzes = quizzes.map(quiz => ({
+  // Transform the data to ensure it has all required Quiz properties
+  const transformedQuizzes: Quiz[] = quizzes.map(quiz => ({
     ...quiz,
-    section_id: (quiz as any).section_id || null,
-    source_type: (quiz as any).source_type || 'custom' as const,
-    source_id: (quiz as any).source_id || null,
-    questionCount: quiz.questionCount ?? 0, // Use nullish coalescing to ensure we always have a number
-  })) as Quiz[]; // Explicitly cast to Quiz[] to resolve type conflicts
+    section_id: quiz.section_id || null,
+    source_type: quiz.source_type || 'custom',
+    source_id: quiz.source_id || null,
+    questionCount: quiz.questionCount ?? 0,
+  }));
 
   return (
     <div className="space-y-6">

@@ -77,6 +77,7 @@ export const NoteCard = ({
     return (
       <StandardListCard
         title={note.title}
+        description={truncatedDescription || undefined}
         subjectName={getSubjectName()}
         subjectBadgeColor="bg-mint-100 text-mint-700"
         primaryAction={{
@@ -108,13 +109,6 @@ export const NoteCard = ({
         ]}
         onClick={() => onNoteClick(note)}
         isPinned={!!note.pinned}
-        secondaryActions={
-          truncatedDescription && (
-            <div className="text-xs text-gray-500 truncate max-w-xs">
-              {truncatedDescription}
-            </div>
-          )
-        }
       />
     );
   }

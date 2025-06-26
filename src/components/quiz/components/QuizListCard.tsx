@@ -85,6 +85,7 @@ export const QuizListCard = ({
   return (
     <StandardListCard
       title={quiz.title}
+      description={quiz.description || undefined}
       subjectName={subjectName}
       subjectBadgeColor="bg-blue-100 text-blue-700"
       primaryAction={{
@@ -102,13 +103,7 @@ export const QuizListCard = ({
       }
       metadata={metadata}
       onClick={handleQuizClick}
-      secondaryActions={
-        quiz.description && (
-          <div className="text-xs text-gray-500 truncate max-w-xs">
-            {quiz.description}
-          </div>
-        )
-      }
+      isPinned={false}
     />
   );
 };
