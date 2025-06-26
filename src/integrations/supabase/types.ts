@@ -1213,6 +1213,45 @@ export type Database = {
           },
         ]
       }
+      plan_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_public: boolean
+          name: string
+          subject: string
+          template_data: Json
+          updated_at: string
+          usage_count: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          name: string
+          subject: string
+          template_data?: Json
+          updated_at?: string
+          usage_count?: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          name?: string
+          subject?: string
+          template_data?: Json
+          updated_at?: string
+          usage_count?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           adaptive_learning_preferences: Json | null
@@ -2197,6 +2236,140 @@ export type Database = {
           name?: string
           owner_id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      study_plan_sessions: {
+        Row: {
+          actual_end_time: string | null
+          actual_start_time: string | null
+          completion_notes: string | null
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          id: string
+          performance_rating: number | null
+          priority: string
+          scheduled_date: string
+          scheduled_end_time: string
+          scheduled_start_time: string
+          session_type: string
+          status: string
+          study_plan_id: string
+          title: string
+          topic: string | null
+          updated_at: string
+        }
+        Insert: {
+          actual_end_time?: string | null
+          actual_start_time?: string | null
+          completion_notes?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes: number
+          id?: string
+          performance_rating?: number | null
+          priority?: string
+          scheduled_date: string
+          scheduled_end_time: string
+          scheduled_start_time: string
+          session_type?: string
+          status?: string
+          study_plan_id: string
+          title: string
+          topic?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actual_end_time?: string | null
+          actual_start_time?: string | null
+          completion_notes?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          performance_rating?: number | null
+          priority?: string
+          scheduled_date?: string
+          scheduled_end_time?: string
+          scheduled_start_time?: string
+          session_type?: string
+          status?: string
+          study_plan_id?: string
+          title?: string
+          topic?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_plan_sessions_study_plan_id_fkey"
+            columns: ["study_plan_id"]
+            isOneToOne: false
+            referencedRelation: "study_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      study_plans: {
+        Row: {
+          available_days: Json
+          available_times: Json
+          created_at: string
+          description: string | null
+          difficulty_level: string
+          end_date: string
+          id: string
+          is_converted_to_goals: boolean
+          preferred_session_duration: number
+          start_date: string
+          status: string
+          study_style: string
+          subject: string
+          title: string
+          topics: Json
+          total_hours_per_week: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          available_days?: Json
+          available_times?: Json
+          created_at?: string
+          description?: string | null
+          difficulty_level?: string
+          end_date: string
+          id?: string
+          is_converted_to_goals?: boolean
+          preferred_session_duration?: number
+          start_date: string
+          status?: string
+          study_style?: string
+          subject: string
+          title: string
+          topics?: Json
+          total_hours_per_week?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          available_days?: Json
+          available_times?: Json
+          created_at?: string
+          description?: string | null
+          difficulty_level?: string
+          end_date?: string
+          id?: string
+          is_converted_to_goals?: boolean
+          preferred_session_duration?: number
+          start_date?: string
+          status?: string
+          study_style?: string
+          subject?: string
+          title?: string
+          topics?: Json
+          total_hours_per_week?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
