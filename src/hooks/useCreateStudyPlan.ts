@@ -17,7 +17,6 @@ export const useCreateStudyPlan = () => {
       // Convert form data to database format
       const studyPlanData = {
         title: formData.title,
-        description: formData.description || null,
         subject: formData.subject,
         total_hours_per_week: totalHoursPerWeek,
         start_date: formData.startDate,

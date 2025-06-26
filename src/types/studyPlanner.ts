@@ -1,9 +1,7 @@
-
 export interface StudyPlan {
   id: string;
   user_id: string;
   title: string;
-  description?: string;
   subject: string;
   topic: string;
   total_duration_hours: number;
@@ -53,7 +51,6 @@ export interface StudyPlanSession {
 
 export interface CreateStudyPlanData {
   title: string;
-  description?: string;
   subject: string;
   topic: string;
   total_duration_hours: number;
@@ -74,7 +71,6 @@ export interface CreateStudyPlanData {
 
 export interface StudyPlanFormValues {
   title: string;
-  description: string;
   subject: string;
   topic: string;
   hoursPerDay: number;
