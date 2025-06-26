@@ -143,9 +143,6 @@ export const SubjectProgressDashboard = () => {
                       <Progress 
                         value={subject.completionPercentage} 
                         className="h-2"
-                        style={{
-                          backgroundColor: '#f3f4f6'
-                        }}
                       />
                     </div>
                     <div className="flex items-center justify-between text-sm text-gray-600">
@@ -170,21 +167,21 @@ export const SubjectProgressDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600">
-                  {subjectAnalytics.subjects.filter(s => s.color === 'green').length}
+                  {subjectAnalytics.subjects.filter(s => s.completionPercentage >= 85).length}
                 </div>
                 <div className="text-sm text-gray-600">Excelling (85%+)</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-yellow-600">
-                  {subjectAnalytics.subjects.filter(s => s.color === 'yellow').length}
+                  {subjectAnalytics.subjects.filter(s => s.completionPercentage >= 60 && s.completionPercentage < 85).length}
                 </div>
                 <div className="text-sm text-gray-600">Progressing (60-84%)</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-red-600">
-                  {subjectAnalytics.subjects.filter(s => s.color === 'red').length}
+                  {subjectAnalytics.subjects.filter(s => s.completionPercentage < 60).length}
                 </div>
-                <div className="text-sm text-gray-600">Needs Attention (<60%)</div>
+                <div className="text-sm text-gray-600">Needs Attention (&lt;60%)</div>
               </div>
             </div>
           </CardContent>
