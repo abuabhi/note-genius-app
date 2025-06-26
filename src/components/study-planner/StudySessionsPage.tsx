@@ -4,7 +4,6 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useStudyPlanSessions } from '@/hooks/useStudyPlanSessions';
 import { StudySessionsGrid } from './StudySessionsGrid';
 import { StandardPageHeader } from '@/components/ui/StandardPageHeader';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Clock, Target, TrendingUp, Filter } from 'lucide-react';
 import { Loader2 } from 'lucide-react';

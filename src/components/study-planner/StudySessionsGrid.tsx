@@ -8,9 +8,9 @@ import { format } from 'date-fns';
 
 interface StudySessionsGridProps {
   sessions: StudyPlanSession[];
-  onStartSession: (sessionId: string) => void;
-  onCompleteSession: (sessionId: string, notes?: string, rating?: number) => void;
-  onRescheduleSession: (sessionId: string) => void;
+  onStartSession: (sessionId: string) => Promise<void>;
+  onCompleteSession: (params: { sessionId: string; notes?: string; rating?: number }) => Promise<void>;
+  onRescheduleSession: (params: { sessionId: string; newDate: string; newStartTime: string; newEndTime: string }) => Promise<void>;
   isStarting?: boolean;
   isCompleting?: boolean;
 }
@@ -40,6 +40,26 @@ export const StudySessionsGrid = ({
       case 'medium': return 'border-l-yellow-500';
       case 'low': return 'border-l-green-500';
       default: return 'border-l-gray-300';
+    }
+  };
+
+  const handleCompleteSession = async (sessionId: string) => {
+    await onCompleteSession({ sessionId });
+  };
+
+  const handleRescheduleSession = async (sessionId: string) => {
+    // For now, reschedule to tomorrow at the same time
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const session = sessions.find(s => s.id === sessionId);
+    
+    if (session) {
+      await onRescheduleSession({
+        sessionId,
+        newDate: tomorrow.toISOString().split('T')[0],
+        newStartTime: session.scheduled_start_time,
+        newEndTime: session.scheduled_end_time,
+      });
     }
   };
 
@@ -104,7 +124,7 @@ export const StudySessionsGrid = ({
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => onRescheduleSession(session.id)}
+                    onClick={() => handleRescheduleSession(session.id)}
                     className="flex-1"
                   >
                     <CalendarIcon className="h-4 w-4 mr-1" />
@@ -116,7 +136,7 @@ export const StudySessionsGrid = ({
               {session.status === 'in_progress' && (
                 <Button
                   size="sm"
-                  onClick={() => onCompleteSession(session.id)}
+                  onClick={() => handleCompleteSession(session.id)}
                   disabled={isCompleting}
                   className="flex-1 bg-green-600 hover:bg-green-700"
                 >
