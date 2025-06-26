@@ -23,8 +23,8 @@ export const useCompletedStudyPlans = () => {
       const transformedData = data?.map(plan => ({
         ...plan,
         total_duration_hours: plan.total_hours_per_week || 0,
-        preferred_times: plan.available_times || {},
-        study_days: plan.available_days || [],
+        preferred_times: (plan.available_times as Record<string, any>) || {},
+        study_days: Array.isArray(plan.available_days) ? plan.available_days as string[] : [],
         session_duration_minutes: plan.preferred_session_duration || 45,
         break_duration_minutes: 10,
         max_sessions_per_day: 3,
@@ -34,7 +34,7 @@ export const useCompletedStudyPlans = () => {
         can_convert_to_goals: true,
         related_flashcard_sets: [],
         related_notes: [],
-        learning_style: plan.study_style || 'mixed',
+        learning_style: (plan.study_style as 'visual' | 'auditory' | 'kinesthetic' | 'mixed') || 'mixed',
         learning_objectives: []
       })) || [];
 

@@ -21,7 +21,10 @@ const AuthSidebar = () => {
               key={group.id}
               id={group.id}
               title={group.title}
-              items={group.items}
+              items={group.items.map(item => ({
+                ...item,
+                title: item.label // Convert label to title for compatibility
+              }))}
               isOpen={defaultAccordionValue.includes(group.id)}
             />
           ))}
