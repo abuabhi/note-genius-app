@@ -13,7 +13,7 @@ import { QuizGrid } from './components/QuizGrid';
 import { QuizListView } from './components/QuizListView';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { Quiz } from '@/types/quiz';
+import type { Quiz } from '@/types/quiz';
 
 interface QuizListProps {
   viewMode: 'grid' | 'list';
@@ -53,13 +53,13 @@ const QuizList = ({ viewMode }: QuizListProps) => {
   const favoriteCount = getFavoriteCount();
 
   // Transform the data to ensure it has all required Quiz properties
-  const transformedQuizzes = quizzes.map(quiz => ({
+  const transformedQuizzes: Quiz[] = quizzes.map(quiz => ({
     ...quiz,
     section_id: (quiz as any).section_id || null,
     source_type: (quiz as any).source_type || 'custom' as const,
     source_id: (quiz as any).source_id || null,
     questionCount: quiz.questionCount || 0,
-  })) as Quiz[];
+  }));
 
   return (
     <div className="space-y-6">
