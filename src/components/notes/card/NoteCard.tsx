@@ -71,9 +71,10 @@ export const NoteCard = ({
   const isListView = viewMode === 'list';
   
   if (isListView) {
-    // Get description for list view - allow longer descriptions
+    // Get description for list view with proper "..." truncation
+    const content = note.content || note.description || '';
     const description = content ? stripMarkdown(content).substring(0, 180) : '';
-    const truncatedDescription = description.length > 180 ? description.substring(0, 177) + '...' : description;
+    const truncatedDescription = description.length >= 180 ? description.substring(0, 177) + '...' : description;
     const subjectName = getSubjectName();
 
     return (

@@ -22,7 +22,6 @@ interface StandardListCardProps {
   metadata?: Array<{
     icon?: React.ReactNode;
     label: string;
-    className?: string;
   }>;
   primaryAction?: {
     label: string;
@@ -68,8 +67,8 @@ export const StandardListCard = ({
         {/* Row 1: Title + Description + Menu */}
         <div className="flex items-start gap-3 min-w-0">
           <div className="flex-1 min-w-0 space-y-1">
-            {/* Title */}
-            <h3 className="font-semibold text-gray-900 text-base leading-tight line-clamp-1">
+            {/* Title - Green color */}
+            <h3 className="font-semibold text-green-700 text-base leading-tight line-clamp-1">
               {title}
             </h3>
             
@@ -111,10 +110,10 @@ export const StandardListCard = ({
               {subjectName}
             </Badge>
             
-            {/* Metadata */}
+            {/* Metadata - Green color */}
             <div className="flex items-center gap-4 min-w-0 overflow-hidden">
               {metadata.map((item, index) => (
-                <div key={index} className={`flex items-center gap-1.5 text-xs text-gray-500 ${item.className || ''}`}>
+                <div key={index} className="flex items-center gap-1.5 text-xs text-green-600">
                   {item.icon}
                   <span className="truncate font-medium">{item.label}</span>
                 </div>

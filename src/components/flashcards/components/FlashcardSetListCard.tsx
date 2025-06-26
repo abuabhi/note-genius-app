@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { StandardListCard } from '@/components/ui/StandardListCard';
 import { Play, CreditCard, Calendar, User, Star } from 'lucide-react';
@@ -73,7 +72,7 @@ export const FlashcardSetListCard = ({
     });
   }
 
-  // Get description with proper length for list view
+  // Create description with proper "..." truncation
   const description = set.description ? 
     (set.description.length > 140 ? set.description.substring(0, 137) + '...' : set.description) 
     : undefined;

@@ -43,14 +43,14 @@ export const NoteCardMetadata = ({ note, viewMode = 'grid' }: NoteCardMetadataPr
 
   if (isListView) {
     return (
-      <div className="flex items-center gap-2 text-xs text-gray-500">
-        {/* Clock icon and read time */}
+      <div className="flex items-center gap-2 text-xs text-green-600">
+        {/* Clock icon and read time - Green color */}
         <div className="flex items-center gap-1">
           <Clock className="h-3 w-3" />
           <span>{readTime}m</span>
         </div>
         
-        {/* Date */}
+        {/* Date - Green color */}
         <div className="flex items-center gap-1">
           <Calendar className="h-3 w-3" />
           <span className="hidden sm:inline">{formattedDate}</span>
@@ -69,11 +69,11 @@ export const NoteCardMetadata = ({ note, viewMode = 'grid' }: NoteCardMetadataPr
     );
   }
 
-  // Grid view - simple horizontal layout
+  // Grid view - Green colors for metadata
   return (
     <div className="flex items-center justify-between w-full">
-      {/* Left side - metadata */}
-      <div className="flex items-center gap-3 text-sm text-gray-500">
+      {/* Left side - metadata in green */}
+      <div className="flex items-center gap-3 text-sm text-green-600">
         <div className="flex items-center gap-1">
           <Clock className="h-3 w-3" />
           <span>{readTime}m</span>

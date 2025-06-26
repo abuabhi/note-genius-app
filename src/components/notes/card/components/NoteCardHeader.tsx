@@ -39,8 +39,8 @@ export const NoteCardHeader = ({ note, onPin, onDelete, viewMode = 'grid' }: Not
           <span>{subjectName}</span>
         </Badge>
         
-        {/* Title - truncated */}
-        <h3 className="font-semibold text-green-600 text-sm truncate max-w-[200px]">
+        {/* Title - Green color and truncated */}
+        <h3 className="font-semibold text-green-700 text-sm truncate max-w-[200px]">
           {note.title}
         </h3>
       </div>
@@ -56,8 +56,8 @@ export const NoteCardHeader = ({ note, onPin, onDelete, viewMode = 'grid' }: Not
         {subjectName}
       </Badge>
       
-      {/* Title - green and clean */}
-      <CardTitle className="text-lg font-semibold text-green-600 leading-tight line-clamp-2 pr-8">
+      {/* Title - Green color and clean */}
+      <CardTitle className="text-lg font-semibold text-green-700 leading-tight line-clamp-2 pr-8">
         {note.title}
       </CardTitle>
     </div>

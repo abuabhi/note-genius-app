@@ -1,3 +1,4 @@
+
 export interface Quiz {
   id: string;
   title: string;
@@ -12,7 +13,7 @@ export interface Quiz {
   created_at: string;
   updated_at: string;
   // Extended properties for enhanced quiz display
-  questionCount?: number;
+  questionCount: number; // Made required instead of optional
   academic_subjects?: { id: string; name: string } | null;
 }
 

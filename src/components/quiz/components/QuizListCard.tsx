@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { StandardListCard } from '@/components/ui/StandardListCard';
 import { Quiz } from '@/types/quiz';
@@ -81,7 +80,7 @@ export const QuizListCard = ({
     academic_subjects: quiz.academic_subjects,
   };
 
-  // Get description with proper length for list view
+  // Create description with proper "..." truncation
   const description = quiz.description ? 
     (quiz.description.length > 140 ? quiz.description.substring(0, 137) + '...' : quiz.description) 
     : undefined;
