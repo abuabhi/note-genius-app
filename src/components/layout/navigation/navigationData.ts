@@ -1,241 +1,169 @@
-import { 
-  Home, 
-  BookOpen, 
-  StickyNote, 
-  Target, 
-  BarChart3, 
-  Calendar, 
-  Settings, 
+import {
+  Book,
+  BookOpen,
+  Bookmark,
+  Calendar,
+  CheckCircle,
+  ClipboardList,
+  Code,
+  Compass,
+  FileText,
+  Flask,
+  FolderKanban,
   GraduationCap,
-  Users,
+  HelpCircle,
+  Home,
+  ListChecks,
+  LucideIcon,
   MessageSquare,
-  Bell,
-  Shield,
-  Upload,
-  Database,
-  Gift,
-  Heart,
-  CheckSquare
+  Presentation,
+  Settings,
+  ShoppingBag,
+  Sliders,
+  SquareKanban,
+  Star,
+  StickyNote,
+  Table,
+  Tag,
+  Target,
+  Text,
+  User,
+  Users,
 } from "lucide-react";
 
-export interface NavigationItem {
-  id: string;
-  title: string;
+type Route = {
+  label: string;
+  icon: LucideIcon;
   href: string;
-  icon: any;
+  color?: string;
   description?: string;
-  badge?: string;
-  isNew?: boolean;
-  isAnimated?: boolean;
-  customStyle?: string;
-}
+};
 
-export interface NavigationGroup {
-  id: string;
+type Group = {
   title: string;
-  items: NavigationItem[];
-}
+  routes?: Route[];
+  items?: Route[];
+};
 
-export const navigationData: NavigationGroup[] = [
+export const routes: Route[] = [
   {
-    id: "main",
-    title: "Main",
+    label: "Home",
+    icon: Home,
+    href: "/",
+  },
+  {
+    label: "Explore",
+    icon: Compass,
+    href: "/explore",
+  },
+  {
+    label: "Bookmarks",
+    icon: Bookmark,
+    href: "/bookmarks",
+  },
+  {
+    label: "Settings",
+    icon: Settings,
+    href: "/settings",
+  },
+];
+
+export const navigationGroups: Group[] = [
+  {
+    title: "Getting Started",
     items: [
       {
-        id: "dashboard",
-        title: "Dashboard",
-        href: "/dashboard",
+        label: "Dashboard",
         icon: Home,
-        description: "Overview and quick actions"
+        href: "/dashboard",
+        description: "Your personal overview",
       },
       {
-        id: "notes",
-        title: "Notes",
+        label: "Explore",
+        icon: Compass,
+        href: "/explore",
+        description: "Discover new content and creators",
+      },
+    ],
+  },
+  {
+    title: "Content Creation",
+    items: [
+      {
+        label: "Notes",
         href: "/notes",
         icon: StickyNote,
-        description: "Manage your study notes"
+        description: "Create and manage your notes",
       },
       {
-        id: "flashcards",
-        title: "Flashcards",
+        label: "Flashcards",
         href: "/flashcards",
         icon: BookOpen,
-        description: "Study with flashcards"
+        description: "Create and study flashcards",
       },
       {
-        id: "quizzes",
-        title: "Quiz",
-        href: "/quiz",
-        icon: GraduationCap,
-        description: "Multiple-choice assessments"
+        label: "Quizzes",
+        href: "/quizzes",
+        icon: ListChecks,
+        description: "Create and take quizzes",
       },
-      {
-        id: "goals",
-        title: "Goals",
-        href: "/goals",
-        icon: Target,
-        description: "Set and track study goals"
-      },
-      {
-        id: "todos",
-        title: "ToDo",
-        href: "/todos",
-        icon: CheckSquare,
-        description: "Manage your tasks"
-      },
-      {
-        id: "analytics",
-        title: "Analytics",
-        href: "/analytics",
-        icon: BarChart3,
-        description: "View your learning progress and session history"
-      }
-    ]
+    ],
   },
   {
-    id: "feedback",
-    title: "Feedback",
-    items: [
-      {
-        id: "feedback",
-        title: "Feedback",
-        href: "/feedback",
-        icon: Heart,
-        description: "Share your thoughts and help us improve",
-        badge: "FEEDBACK",
-        isAnimated: true,
-        customStyle: "feedback"
-      }
-    ]
-  },
-  {
-    id: "rewards",
-    title: "Rewards",
-    items: [
-      {
-        id: "referrals",
-        title: "Refer & Win",
-        href: "/referrals",
-        icon: Gift,
-        description: "Refer friends and earn rewards",
-        isNew: true,
-        isAnimated: true
-      }
-    ]
-  },
-  {
-    id: "study",
     title: "Study Tools",
     items: [
       {
-        id: "schedule",
-        title: "Schedule",
-        href: "/schedule",
+        label: "Study Planner",
+        href: "/study-planner",
         icon: Calendar,
-        description: "Plan your study sessions"
+        description: "Create and manage personalized study schedules"
       },
       {
-        id: "reminders",
-        title: "Reminders",
+        label: "Goals",
+        href: "/goals",
+        icon: Target,
+        description: "Set and track your learning goals",
+      },
+      {
+        label: "Reminders",
         href: "/reminders",
-        icon: Bell,
-        description: "Manage study reminders"
-      }
-    ]
+        icon: Calendar,
+        description: "Set reminders for your study sessions",
+      },
+    ],
   },
   {
-    id: "social",
-    title: "Collaboration",
+    title: "Community",
     items: [
       {
-        id: "collaboration",
-        title: "Study Groups",
-        href: "/collaboration",
-        icon: Users,
-        description: "Connect and study together"
+        label: "Forums",
+        href: "/forums",
+        icon: MessageSquare,
+        description: "Discuss topics with other learners",
       },
       {
-        id: "chat",
-        title: "Messages",
-        href: "/chat",
-        icon: MessageSquare,
-        description: "Chat with study partners"
-      }
-    ]
+        label: "Groups",
+        href: "/groups",
+        icon: Users,
+        description: "Join or create study groups",
+      },
+    ],
   },
   {
-    id: "admin",
-    title: "Administration",
-    items: [
-      {
-        id: "admin-dashboard",
-        title: "Admin Dashboard",
-        href: "/admin",
-        icon: Shield,
-        description: "Administration overview"
-      },
-      {
-        id: "admin-system-monitoring",
-        title: "System Monitoring",
-        href: "/admin/system-monitoring",
-        icon: BarChart3,
-        description: "Monitor system health, performance, and cache management"
-      },
-      {
-        id: "admin-feedback",
-        title: "Feedback Management",
-        href: "/admin/feedback",
-        icon: MessageSquare,
-        description: "Manage user feedback and support requests"
-      },
-      {
-        id: "admin-users",
-        title: "User Management",
-        href: "/admin/users",
-        icon: Users,
-        description: "Manage user accounts and permissions"
-      },
-      {
-        id: "admin-csv-import",
-        title: "CSV Import",
-        href: "/admin/csv-import",
-        icon: Upload,
-        description: "Bulk import data from CSV files"
-      },
-      {
-        id: "admin-grades",
-        title: "Grades",
-        href: "/admin/grades",
-        icon: Database,
-        description: "Manage grade levels"
-      },
-      {
-        id: "admin-subjects",
-        title: "Subjects",
-        href: "/admin/subjects",
-        icon: BookOpen,
-        description: "Manage subjects"
-      },
-      {
-        id: "admin-sections",
-        title: "Sections",
-        href: "/admin/sections",
-        icon: Settings,
-        description: "Manage sections"
-      }
-    ]
-  },
-  {
-    id: "account",
     title: "Account",
     items: [
       {
-        id: "settings",
-        title: "Settings",
+        label: "Profile",
+        href: "/profile",
+        icon: User,
+        description: "View and edit your profile",
+      },
+      {
+        label: "Settings",
         href: "/settings",
-        icon: Settings,
-        description: "Manage your preferences"
-      }
-    ]
-  }
+        icon: Sliders,
+        description: "Manage your account settings",
+      },
+    ],
+  },
 ];
