@@ -118,11 +118,17 @@ export default function StudyPlannerPage() {
             </Card>
           </div>
 
-          <TabsContent value="plans">
+          <TabsContent value="plans" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-medium text-gray-900">My Study Plans</h2>
+            </div>
             <ActiveStudyPlans showAll={true} />
           </TabsContent>
 
-          <TabsContent value="completed">
+          <TabsContent value="completed" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-medium text-gray-900">Completed Plans</h2>
+            </div>
             <CompletedStudyPlans />
           </TabsContent>
         </Tabs>

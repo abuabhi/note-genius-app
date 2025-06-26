@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,20 +23,17 @@ export const ActiveStudyPlans = ({ showAll }: ActiveStudyPlansProps) => {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Plans</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(3)].map((_, i) => (
-            <Card key={i} className="animate-pulse border-2 border-gray-200">
-              <CardContent className="p-6">
-                <div className="h-6 bg-gray-200 rounded mb-4"></div>
-                <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded mb-4"></div>
-                <div className="h-8 bg-gray-200 rounded"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[...Array(3)].map((_, i) => (
+          <Card key={i} className="animate-pulse border-2 border-gray-200">
+            <CardContent className="p-6">
+              <div className="h-6 bg-gray-200 rounded mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded mb-4"></div>
+              <div className="h-8 bg-gray-200 rounded"></div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     );
   }
@@ -73,20 +69,14 @@ export const ActiveStudyPlans = ({ showAll }: ActiveStudyPlansProps) => {
 
   return (
     <>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Plans ({studyPlans.length})</h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {plansToShow.map((plan) => (
-            <StudyPlanCard 
-              key={plan.id} 
-              plan={plan} 
-              onDeleteClick={handleDeleteClick}
-            />
-          ))}
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {plansToShow.map((plan) => (
+          <StudyPlanCard 
+            key={plan.id} 
+            plan={plan} 
+            onDeleteClick={handleDeleteClick}
+          />
+        ))}
       </div>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
