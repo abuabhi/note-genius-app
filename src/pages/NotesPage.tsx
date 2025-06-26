@@ -1,10 +1,11 @@
 
-import { NotesContent } from '@/components/notes/page/NotesContent';
+import { OptimizedNotesContent } from '@/components/notes/page/OptimizedNotesContent';
 import { StandardPageHeader } from '@/components/ui/StandardPageHeader';
 import { FileText } from 'lucide-react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { OptimizedNotesProvider } from '@/contexts/OptimizedNotesContext';
 
 // Enhanced error fallback component with better debugging
 const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) => {
@@ -40,22 +41,6 @@ const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetError
 };
 
 const NotesPage = () => {
-  // Create placeholder functions for the required props
-  const handleSaveNote = async (note: any) => {
-    console.log('Save note:', note);
-    return null;
-  };
-
-  const handleScanNote = async (note: any) => {
-    console.log('Scan note:', note);
-    return null;
-  };
-
-  const handleImportNote = async (note: any) => {
-    console.log('Import note:', note);
-    return null;
-  };
-
   const breadcrumbs = [
     { label: "Notes" }
   ];
@@ -79,11 +64,9 @@ const NotesPage = () => {
             console.error('Notes page error caught by boundary:', error, errorInfo);
           }}
         >
-          <NotesContent 
-            onSaveNote={handleSaveNote}
-            onScanNote={handleScanNote}
-            onImportNote={handleImportNote}
-          />
+          <OptimizedNotesProvider>
+            <OptimizedNotesContent />
+          </OptimizedNotesProvider>
         </ErrorBoundary>
       </div>
     </div>
