@@ -26,6 +26,7 @@ export const useCompletedStudyPlans = () => {
         preferred_times: (plan.available_times as Record<string, any>) || {},
         study_days: Array.isArray(plan.available_days) ? plan.available_days as string[] : [],
         topics: Array.isArray(plan.topics) ? plan.topics : [],
+        difficulty_level: (plan.difficulty_level as 'beginner' | 'intermediate' | 'advanced') || 'intermediate',
         session_duration_minutes: plan.preferred_session_duration || 45,
         break_duration_minutes: 10,
         max_sessions_per_day: 3,
