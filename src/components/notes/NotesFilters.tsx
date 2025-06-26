@@ -10,8 +10,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { Search, X } from 'lucide-react';
 import { useUserSubjects } from '@/hooks/useUserSubjects';
 
@@ -59,21 +57,13 @@ export const NotesFilters: React.FC<NotesFiltersProps> = ({
     });
   };
 
-  const handleArchivedToggle = (checked: boolean) => {
-    onFiltersChange({
-      search: search || undefined,
-      subject: selectedSubject !== 'all' ? selectedSubject : undefined,
-      showArchived: checked,
-    });
-  };
-
   const clearFilters = () => {
     setSearch('');
     onFiltersChange({});
   };
 
-  const hasActiveFilters = search || selectedSubject !== 'all' || showArchived;
-  const activeFiltersCount = [search, selectedSubject !== 'all' ? selectedSubject : null, showArchived ? 'archived' : null].filter(Boolean).length;
+  const hasActiveFilters = search || selectedSubject !== 'all';
+  const activeFiltersCount = [search, selectedSubject !== 'all' ? selectedSubject : null].filter(Boolean).length;
 
   return (
     <div className="space-y-4">
@@ -114,17 +104,6 @@ export const NotesFilters: React.FC<NotesFiltersProps> = ({
             <SelectItem value="alphabetical">Alphabetical</SelectItem>
           </SelectContent>
         </Select>
-
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="show-archived"
-            checked={showArchived}
-            onCheckedChange={handleArchivedToggle}
-          />
-          <Label htmlFor="show-archived" className="text-sm font-medium">
-            Show Archived
-          </Label>
-        </div>
       </div>
 
       {/* Results Counter and Active Filters */}
@@ -159,20 +138,6 @@ export const NotesFilters: React.FC<NotesFiltersProps> = ({
                   size="sm"
                   className="h-4 w-4 p-0 ml-1 hover:bg-blue-200"
                   onClick={() => handleSubjectChange('all')}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </Badge>
-            )}
-
-            {showArchived && (
-              <Badge variant="secondary" className="bg-gray-100 text-gray-800">
-                Archived
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-4 w-4 p-0 ml-1 hover:bg-gray-200"
-                  onClick={() => handleArchivedToggle(false)}
                 >
                   <X className="h-3 w-3" />
                 </Button>

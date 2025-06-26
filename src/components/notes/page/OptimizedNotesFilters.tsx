@@ -29,9 +29,7 @@ export const OptimizedNotesFilters = memo(() => {
     if (filters.subject !== undefined) {
       setSelectedSubject(filters.subject || 'all');
     }
-    if (filters.showArchived !== undefined) {
-      setShowArchived(filters.showArchived);
-    }
+    // No longer handle showArchived since we removed the toggle
     
     // Force refresh to ensure fresh data
     setTimeout(() => {
