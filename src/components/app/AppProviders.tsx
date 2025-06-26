@@ -4,6 +4,7 @@ import { ConnectionStatus } from '@/components/performance/ConnectionManager';
 import { UpdateNotification } from '@/components/performance/ServiceWorkerManager';
 import { HealthCheck } from '@/components/monitoring/HealthCheck';
 import { HelpDialog } from '@/components/help/HelpDialog';
+import { HelpProvider } from '@/contexts/HelpContext';
 import { config } from '@/config/environment';
 import { ReactNode } from 'react';
 
@@ -13,7 +14,7 @@ interface AppProvidersProps {
 
 export const AppProviders = ({ children }: AppProvidersProps) => {
   return (
-    <>
+    <HelpProvider>
       {children}
       
       {/* Help Dialog */}
@@ -27,6 +28,6 @@ export const AppProviders = ({ children }: AppProvidersProps) => {
         </div>
       )}
       <SonnerToaster />
-    </>
+    </HelpProvider>
   );
 };
