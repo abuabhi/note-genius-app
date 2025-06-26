@@ -59,7 +59,8 @@ export const NoteCard = ({
             {/* Metadata and Actions - fixed width */}
             <div className="flex items-center gap-2 flex-shrink-0">
               <NoteCardMetadata note={note} viewMode={viewMode} />
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              {/* Always visible actions in list view */}
+              <div className="flex items-center">
                 <NoteCardActions 
                   noteId={note.id}
                   noteTitle={note.title}
@@ -88,8 +89,8 @@ export const NoteCard = ({
       `}
       onClick={() => onNoteClick(note)}
     >
-      {/* Actions positioned absolutely */}
-      <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+      {/* Actions positioned absolutely - always visible in grid view */}
+      <div className="absolute top-3 right-3 z-10">
         <NoteCardActions 
           noteId={note.id}
           noteTitle={note.title}
