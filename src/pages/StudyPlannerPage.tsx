@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Plus, BookOpen, Target, Clock, Calendar } from 'lucide-react';
-import { StudyPlannerHeader } from '@/components/study-planner/StudyPlannerHeader';
+import { StandardPageHeader } from '@/components/ui/StandardPageHeader';
 import { CreateStudyPlanForm } from '@/components/study-planner/CreateStudyPlanForm';
 import { ActiveStudyPlans } from '@/components/study-planner/ActiveStudyPlans';
 import { CompletedStudyPlans } from '@/components/study-planner/CompletedStudyPlans';
@@ -15,19 +15,13 @@ export default function StudyPlannerPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
-      <StudyPlannerHeader />
-      
-      <StudyPlannerStats />
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
-        <div className="flex items-center justify-between mb-6">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="active">Active Plans</TabsTrigger>
-            <TabsTrigger value="completed">Completed</TabsTrigger>
-          </TabsList>
-          
+    <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+      <StandardPageHeader
+        title="Study Planner"
+        description="Create personalized study schedules, track your progress, and achieve your learning goals with intelligent planning."
+        icon={<Calendar className="h-6 w-6 text-white" />}
+        breadcrumbs={[{ label: "Study Planner" }]}
+        actions={
           <Button 
             onClick={() => setShowCreateForm(true)}
             className="bg-mint-600 hover:bg-mint-700 text-white"
@@ -35,84 +29,98 @@ export default function StudyPlannerPage() {
             <Plus className="h-4 w-4 mr-2" />
             Create Study Plan
           </Button>
-        </div>
+        }
+      />
 
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="border-mint-200">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center text-mint-700">
-                  <BookOpen className="h-5 w-5 mr-2" />
-                  Getting Started
-                </CardTitle>
-                <CardDescription>
-                  Create your first study plan to organize your learning journey
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button 
-                  onClick={() => setShowCreateForm(true)}
-                  className="w-full bg-mint-100 text-mint-700 hover:bg-mint-200"
-                  variant="secondary"
-                >
-                  Start Planning
-                </Button>
-              </CardContent>
-            </Card>
+      <div className="container mx-auto px-6 py-8 max-w-7xl">
+        <StudyPlannerStats />
 
-            <Card className="border-blue-200">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center text-blue-700">
-                  <Target className="h-5 w-5 mr-2" />
-                  Set Goals
-                </CardTitle>
-                <CardDescription>
-                  Convert your study plans to trackable goals
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="outline" className="w-full border-blue-200 text-blue-700 hover:bg-blue-50">
-                  View Goals
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="border-purple-200">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center text-purple-700">
-                  <Clock className="h-5 w-5 mr-2" />
-                  Track Progress
-                </CardTitle>
-                <CardDescription>
-                  Monitor your study sessions and achievements
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="outline" className="w-full border-purple-200 text-purple-700 hover:bg-purple-50">
-                  View Analytics
-                </Button>
-              </CardContent>
-            </Card>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
+          <div className="flex items-center justify-between mb-6">
+            <TabsList className="grid w-full max-w-md grid-cols-3">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="active">Active Plans</TabsTrigger>
+              <TabsTrigger value="completed">Completed</TabsTrigger>
+            </TabsList>
           </div>
 
-          <ActiveStudyPlans showAll={false} />
-        </TabsContent>
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Card className="border-mint-200 hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center text-mint-700">
+                    <BookOpen className="h-5 w-5 mr-2" />
+                    Getting Started
+                  </CardTitle>
+                  <CardDescription>
+                    Create your first study plan to organize your learning journey
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button 
+                    onClick={() => setShowCreateForm(true)}
+                    className="w-full bg-mint-100 text-mint-700 hover:bg-mint-200"
+                    variant="secondary"
+                  >
+                    Start Planning
+                  </Button>
+                </CardContent>
+              </Card>
 
-        <TabsContent value="active">
-          <ActiveStudyPlans showAll={true} />
-        </TabsContent>
+              <Card className="border-blue-200 hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center text-blue-700">
+                    <Target className="h-5 w-5 mr-2" />
+                    Set Goals
+                  </CardTitle>
+                  <CardDescription>
+                    Convert your study plans to trackable goals
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button variant="outline" className="w-full border-blue-200 text-blue-700 hover:bg-blue-50">
+                    View Goals
+                  </Button>
+                </CardContent>
+              </Card>
 
-        <TabsContent value="completed">
-          <CompletedStudyPlans />
-        </TabsContent>
-      </Tabs>
+              <Card className="border-purple-200 hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center text-purple-700">
+                    <Clock className="h-5 w-5 mr-2" />
+                    Track Progress
+                  </CardTitle>
+                  <CardDescription>
+                    Monitor your study sessions and achievements
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button variant="outline" className="w-full border-purple-200 text-purple-700 hover:bg-purple-50">
+                    View Analytics
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
 
-      {showCreateForm && (
-        <CreateStudyPlanForm 
-          open={showCreateForm}
-          onClose={() => setShowCreateForm(false)}
-        />
-      )}
+            <ActiveStudyPlans showAll={false} />
+          </TabsContent>
+
+          <TabsContent value="active">
+            <ActiveStudyPlans showAll={true} />
+          </TabsContent>
+
+          <TabsContent value="completed">
+            <CompletedStudyPlans />
+          </TabsContent>
+        </Tabs>
+
+        {showCreateForm && (
+          <CreateStudyPlanForm 
+            open={showCreateForm}
+            onClose={() => setShowCreateForm(false)}
+          />
+        )}
+      </div>
     </div>
   );
 }
