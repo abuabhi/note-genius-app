@@ -18,12 +18,25 @@ const StudySessionsPage = () => {
     sessions,
     sessionsLoading,
     sessionStats,
-    startSession,
-    completeSession,
-    rescheduleSession,
+    startSession: startSessionMutation,
+    completeSession: completeSessionMutation,
+    rescheduleSession: rescheduleSessionMutation,
     isStarting,
     isCompleting,
   } = useStudyPlanSessions();
+
+  // Wrapper functions to match expected signatures
+  const handleStartSession = async (sessionId: string): Promise<void> => {
+    await startSessionMutation(sessionId);
+  };
+
+  const handleCompleteSession = async (params: { sessionId: string; notes?: string; rating?: number }): Promise<void> => {
+    await completeSessionMutation(params);
+  };
+
+  const handleRescheduleSession = async (params: { sessionId: string; newDate: string; newStartTime: string; newEndTime: string }): Promise<void> => {
+    await rescheduleSessionMutation(params);
+  };
 
   if (loading) {
     return (
@@ -161,9 +174,9 @@ const StudySessionsPage = () => {
           ) : (
             <StudySessionsGrid
               sessions={filteredSessions}
-              onStartSession={startSession}
-              onCompleteSession={completeSession}
-              onRescheduleSession={rescheduleSession}
+              onStartSession={handleStartSession}
+              onCompleteSession={handleCompleteSession}
+              onRescheduleSession={handleRescheduleSession}
               isStarting={isStarting}
               isCompleting={isCompleting}
             />
