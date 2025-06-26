@@ -1,176 +1,136 @@
+
+import React from "react";
 import { cn } from "@/lib/utils";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion } from "framer-motion";
-import { staggerVariants } from "./motion";
-import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { Separator } from "@/components/ui/separator";
-import { NavLink } from "./NavLink";
-import { useLocation } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
 import { 
-  LayoutDashboard, 
-  FileText, 
+  Home, 
   BookOpen, 
-  Activity, 
-  Target, 
-  CheckSquare, 
+  CreditCard, 
+  Calendar,
+  Target,
+  CheckSquare,
   BarChart3,
-  Gift,
-  Heart,
-  CalendarDays,
-  Clock
+  Settings,
+  HelpCircle,
+  LogOut
 } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/auth";
 
 interface NavigationProps {
   isCollapsed: boolean;
 }
 
+const navigationItems = [
+  { name: "Dashboard", href: "/dashboard", icon: Home },
+  { name: "Notes", href: "/notes", icon: BookOpen },
+  { name: "Flashcards", href: "/flashcards", icon: CreditCard },
+  { name: "Analytics", href: "/analytics", icon: BarChart3 },
+  { name: "Calendar", href: "/calendar", icon: Calendar },
+  { name: "Goals", href: "/goals", icon: Target },
+  { name: "Todos", href: "/todos", icon: CheckSquare },
+];
+
+const bottomItems = [
+  { name: "Settings", href: "/settings", icon: Settings },
+  { name: "Help", href: "/help", icon: HelpCircle },
+];
+
 export const Navigation = ({ isCollapsed }: NavigationProps) => {
-  const { userProfile } = useRequireAuth();
-  const { pathname } = useLocation();
-  
+  const location = useLocation();
+  const { logout } = useAuth();
+
   return (
-    <motion.ul variants={staggerVariants} className="flex h-full flex-col">
-      <div className="flex grow flex-col items-center">
-        <div className="flex h-full w-full flex-col">
-          <div className="flex grow flex-col gap-4">
-            <ScrollArea className="h-full grow p-2">
-              <div className={cn("flex w-full flex-col gap-1")}>
-                {/* Dashboard */}
-                <NavLink
-                  to="/dashboard"
-                  icon={LayoutDashboard}
-                  label="Dashboard"
-                  isActive={pathname === "/dashboard"}
-                  isCollapsed={isCollapsed}
-                />
-                <Separator className="my-2" />
-                
-                {/* Notes */}
-                <NavLink
-                  to="/notes"
-                  icon={FileText}
-                  label="Notes"
-                  isActive={pathname.includes("/notes")}
-                  isCollapsed={isCollapsed}
-                />
-                <Separator className="my-2" />
-                
-                {/* Flashcards */}
-                <NavLink
-                  to="/flashcards"
-                  icon={BookOpen}
-                  label="Flashcards"
-                  isActive={pathname.includes("/flashcards")}
-                  isCollapsed={isCollapsed}
-                />
-                <Separator className="my-2" />
-                
-                {/* Quiz */}
-                <NavLink
-                  to="/quizzes"
-                  icon={Activity}
-                  label="Quiz"
-                  isActive={pathname.includes("/quiz")}
-                  isCollapsed={isCollapsed}
-                />
-                <Separator className="my-2" />
-                
-                {/* Study Planner */}
-                <NavLink
-                  to="/study-planner"
-                  icon={CalendarDays}
-                  label="Study Planner"
-                  isActive={pathname.includes("/study-planner")}
-                  isCollapsed={isCollapsed}
-                />
-                <Separator className="my-2" />
-                
-                {/* Study Sessions - New addition */}
-                <NavLink
-                  to="/study-sessions"
-                  icon={Clock}
-                  label="Study Sessions"
-                  isActive={pathname.includes("/study-sessions")}
-                  isCollapsed={isCollapsed}
-                />
-                <Separator className="my-2" />
-                
-                {/* Goals */}
-                <NavLink
-                  to="/goals"
-                  icon={Target}
-                  label="Goals"
-                  isActive={pathname.includes("/goals")}
-                  isCollapsed={isCollapsed}
-                />
-                <Separator className="my-2" />
-                
-                {/* Todo */}
-                <NavLink
-                  to="/todos"
-                  icon={CheckSquare}
-                  label="ToDo"
-                  isActive={pathname.includes("/todos")}
-                  isCollapsed={isCollapsed}
-                />
-                <Separator className="my-2" />
-                
-                {/* Analytics (replaces Progress and Study Sessions) */}
-                <NavLink
-                  to="/analytics"
-                  icon={BarChart3}
-                  label="Analytics"
-                  isActive={pathname.includes("/analytics") || pathname.includes("/progress") || pathname.includes("/study-sessions")}
-                  isCollapsed={isCollapsed}
-                />
-                <Separator className="my-2" />
-                
-                {/* Feedback */}
-                <NavLink
-                  to="/feedback"
-                  icon={Heart}
-                  label="Feedback"
-                  isActive={pathname.includes("/feedback")}
-                  isCollapsed={isCollapsed}
-                  badge={
-                    <Badge 
-                      variant="secondary" 
-                      className="bg-primary text-primary-foreground text-xs animate-bounce ml-2"
-                    >
-                      FEEDBACK
-                    </Badge>
-                  }
-                  customClassName={cn(
-                    "animate-pulse hover:animate-none",
-                    pathname.includes("/feedback") 
-                      ? "bg-accent text-accent-foreground font-medium" 
-                      : "hover:bg-accent/50"
-                  )}
-                />
-                <Separator className="my-2" />
-                
-                {/* Refer & Win */}
-                <NavLink
-                  to="/referrals"
-                  icon={Gift}
-                  label="Refer & Win"
-                  isActive={pathname.includes("/referrals")}
-                  isCollapsed={isCollapsed}
-                  badge={
-                    <Badge 
-                      variant="secondary" 
-                      className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs animate-pulse ml-2"
-                    >
-                      NEW
-                    </Badge>
-                  }
-                />
-              </div>
-            </ScrollArea>
-          </div>
-        </div>
+    <div className="flex flex-col h-full">
+      {/* Main Navigation */}
+      <nav className="flex-1 px-2 py-4 space-y-1">
+        {navigationItems.map((item) => {
+          const isActive = location.pathname === item.href;
+          return (
+            <Link
+              key={item.name}
+              to={item.href}
+              className={cn(
+                "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors",
+                isActive
+                  ? "bg-mint-100 text-mint-900"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              )}
+            >
+              <item.icon
+                className={cn(
+                  "mr-3 flex-shrink-0 h-5 w-5",
+                  isActive ? "text-mint-500" : "text-gray-400 group-hover:text-gray-500"
+                )}
+              />
+              {!isCollapsed && (
+                <motion.span
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: "auto" }}
+                  exit={{ opacity: 0, width: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {item.name}
+                </motion.span>
+              )}
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Bottom Navigation */}
+      <div className="px-2 py-4 border-t border-gray-200 space-y-1">
+        {bottomItems.map((item) => {
+          const isActive = location.pathname === item.href;
+          return (
+            <Link
+              key={item.name}
+              to={item.href}
+              className={cn(
+                "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors",
+                isActive
+                  ? "bg-mint-100 text-mint-900"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              )}
+            >
+              <item.icon
+                className={cn(
+                  "mr-3 flex-shrink-0 h-5 w-5",
+                  isActive ? "text-mint-500" : "text-gray-400 group-hover:text-gray-500"
+                )}
+              />
+              {!isCollapsed && (
+                <motion.span
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: "auto" }}
+                  exit={{ opacity: 0, width: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {item.name}
+                </motion.span>
+              )}
+            </Link>
+          );
+        })}
+        
+        {/* Logout Button */}
+        <button
+          onClick={logout}
+          className="group flex items-center w-full px-2 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 hover:text-gray-900 transition-colors"
+        >
+          <LogOut className="mr-3 flex-shrink-0 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
+          {!isCollapsed && (
+            <motion.span
+              initial={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: "auto" }}
+              exit={{ opacity: 0, width: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              Logout
+            </motion.span>
+          )}
+        </button>
       </div>
-    </motion.ul>
+    </div>
   );
 };

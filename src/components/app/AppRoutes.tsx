@@ -18,6 +18,7 @@ import QuizPage from "@/pages/QuizPage";
 import CreateQuizPage from "@/pages/CreateQuizPage";
 import TakeQuizPage from "@/pages/TakeQuizPage";
 import AdminDashboardPage from "@/pages/AdminDashboardPage";
+import AnalyticsPage from "@/pages/AnalyticsPage";
 
 const SuggestionsPage = lazy(() => import("@/pages/SuggestionsPage"));
 
@@ -56,6 +57,8 @@ export const AppRoutes = () => {
           <Route path="/quiz" element={<ProtectedRoute><QuizPage /></ProtectedRoute>} />
           <Route path="/quiz/create" element={<ProtectedRoute><CreateQuizPage /></ProtectedRoute>} />
           <Route path="/quiz/take/:id" element={<ProtectedRoute><TakeQuizPage /></ProtectedRoute>} />
+
+          <Route path="/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
 
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
 
