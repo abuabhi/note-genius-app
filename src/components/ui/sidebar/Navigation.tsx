@@ -1,4 +1,3 @@
-
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion } from "framer-motion";
@@ -18,7 +17,8 @@ import {
   BarChart3,
   Gift,
   Heart,
-  CalendarDays
+  CalendarDays,
+  Clock
 } from "lucide-react";
 
 interface NavigationProps {
@@ -82,6 +82,16 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   icon={CalendarDays}
                   label="Study Planner"
                   isActive={pathname.includes("/study-planner")}
+                  isCollapsed={isCollapsed}
+                />
+                <Separator className="my-2" />
+                
+                {/* Study Sessions - New addition */}
+                <NavLink
+                  to="/study-sessions"
+                  icon={Clock}
+                  label="Study Sessions"
+                  isActive={pathname.includes("/study-sessions")}
                   isCollapsed={isCollapsed}
                 />
                 <Separator className="my-2" />

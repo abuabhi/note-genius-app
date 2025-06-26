@@ -1,8 +1,8 @@
-
 import { useState } from 'react';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useStudyPlanner } from '@/hooks/useStudyPlanner';
 import { useGoalsStats } from '@/hooks/useGoalsStats';
+import { useStudyPlanSessions } from '@/hooks/useStudyPlanSessions';
 import { StudyPlannerWizard } from '@/components/study-planner/StudyPlannerWizard';
 import { StudyPlansGrid } from '@/components/study-planner/StudyPlansGrid';
 import { StandardPageHeader } from '@/components/ui/StandardPageHeader';
@@ -10,10 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Calendar, Target, TrendingUp, Play } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const StudyPlannerPage = () => {
   const { user, loading } = useRequireAuth();
   const [showWizard, setShowWizard] = useState(false);
+  const navigate = useNavigate();
   
   const {
     studyPlans,
@@ -27,6 +29,7 @@ const StudyPlannerPage = () => {
   } = useStudyPlanner();
 
   const { data: goalsStats } = useGoalsStats();
+  const { sessionStats } = useStudyPlanSessions();
 
   if (loading) {
     return (
@@ -110,12 +113,15 @@ const StudyPlannerPage = () => {
               </div>
             </div>
 
-            <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
+            <div 
+              className="bg-purple-50 p-4 rounded-lg border border-purple-100 cursor-pointer hover:bg-purple-100 transition-colors"
+              onClick={() => navigate('/study-sessions')}
+            >
               <div className="flex items-center">
                 <Play className="h-8 w-8 text-purple-600 mr-3" />
                 <div>
                   <div className="text-2xl font-bold text-purple-700">
-                    0
+                    {sessionStats.total}
                   </div>
                   <div className="text-sm text-purple-600">Sessions Generated</div>
                 </div>
@@ -130,23 +136,36 @@ const StudyPlannerPage = () => {
               <p className="text-gray-600">Create and manage your personalized study schedules</p>
             </div>
             
-            <Dialog open={showWizard} onOpenChange={setShowWizard}>
-              <DialogTrigger asChild>
-                <Button className="bg-mint-500 hover:bg-mint-600 text-white shadow-lg hover:shadow-xl transition-all">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Study Plan
+            <div className="flex gap-3">
+              {sessionStats.total > 0 && (
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/study-sessions')}
+                  className="border-purple-200 text-purple-700 hover:bg-purple-50"
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  View Sessions
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Create New Study Plan</DialogTitle>
-                </DialogHeader>
-                <StudyPlannerWizard
-                  onSubmit={handleCreatePlan}
-                  isLoading={isCreating}
-                />
-              </DialogContent>
-            </Dialog>
+              )}
+              
+              <Dialog open={showWizard} onOpenChange={setShowWizard}>
+                <DialogTrigger asChild>
+                  <Button className="bg-mint-500 hover:bg-mint-600 text-white shadow-lg hover:shadow-xl transition-all">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Study Plan
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Create New Study Plan</DialogTitle>
+                  </DialogHeader>
+                  <StudyPlannerWizard
+                    onSubmit={handleCreatePlan}
+                    isLoading={isCreating}
+                  />
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
 
           {/* Plans Content */}
