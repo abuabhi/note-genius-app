@@ -66,10 +66,21 @@ export const QuizListCard = ({
   if (isFavorite) {
     metadata.push({
       icon: <Heart className="h-3 w-3 fill-current text-red-500" />,
-      label: 'Favorite',
-      className: 'text-red-500'
+      label: 'Favorite'
     });
   }
+
+  // Create a compatible quiz object for the actions menu
+  const quizForActions = {
+    id: quiz.id,
+    title: quiz.title,
+    description: quiz.description,
+    is_public: quiz.is_public,
+    created_at: quiz.created_at,
+    questionCount: quiz.questionCount || 0,
+    user_id: quiz.user_id,
+    academic_subjects: quiz.academic_subjects,
+  };
 
   return (
     <StandardListCard
@@ -84,7 +95,7 @@ export const QuizListCard = ({
       }}
       menuActions={
         <QuizActionsMenu
-          quiz={quiz}
+          quiz={quizForActions}
           currentUserId={currentUserId}
           onRefresh={onRefresh}
         />
