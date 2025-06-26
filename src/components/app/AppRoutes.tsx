@@ -1,20 +1,21 @@
-import { Routes, Route } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
-import { LazyLoadWrapper } from '@/components/performance/LazyLoadWrapper';
-import { publicRoutes } from '@/routes/publicRoutes';
 
-// Import optimized routes
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/auth/useAuth';
+import LoginPage from '@/pages/LoginPage';
 import { OptimizedAppRoutes } from '@/components/optimized/OptimizedAppRoutes';
-
-// Keep existing routes for non-optimized pages that are duplicated
-const HomePage = lazy(() => import('@/pages/HomePage'));
-const LoginPage = lazy(() => import('@/pages/LoginPage'));
-const SignupPage = lazy(() => import('@/pages/SignupPage'));
+import { publicRoutes } from '@/routes/publicRoutes';
+import { LazyLoadWrapper } from '@/components/performance/LazyLoadWrapper';
 
 const AppRoutes = () => {
+  const { user } = useAuth();
+
+  const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+    return user ? children : <Navigate to="/login" />;
+  };
+
   return (
     <Routes>
-      {/* Public routes from publicRoutes.tsx */}
+      {/* Public routes */}
       {publicRoutes.map((route) => (
         <Route
           key={route.path}
@@ -27,8 +28,24 @@ const AppRoutes = () => {
         />
       ))}
       
-      {/* Optimized application routes - all features now available */}
-      <Route path="/*" element={<OptimizedAppRoutes />} />
+      {/* Login route - redirect to dashboard if already authenticated */}
+      <Route 
+        path="/login" 
+        element={!user ? <LoginPage /> : <Navigate to="/dashboard" />} 
+      />
+      
+      {/* Protected routes */}
+      <Route 
+        path="/*" 
+        element={
+          <ProtectedRoute>
+            <OptimizedAppRoutes />
+          </ProtectedRoute>
+        } 
+      />
+      
+      {/* Root redirect */}
+      <Route path="/" element={<Navigate to="/dashboard" />} />
     </Routes>
   );
 };
