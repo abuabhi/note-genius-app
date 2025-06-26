@@ -1,7 +1,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import FlashcardSetListView from '@/components/flashcards/components/FlashcardSetListView';
+import { FlashcardSetListView } from '@/components/flashcards/components/FlashcardSetListView';
 import FlashcardSetGrid from '@/components/flashcards/components/FlashcardSetGrid';
 import { ViewMode } from '@/hooks/useViewPreferences';
 import type { FlashcardFilters } from '@/components/flashcards/components/AdvancedFlashcardFilters';
@@ -122,10 +122,10 @@ export const FlashcardsContent = ({
           {console.log('🎯 FlashcardsContent - RENDERING LIST VIEW')}
           <FlashcardSetListView
             sets={sets}
-            onDeleteSet={onDeleteSet}
             onTogglePinned={onTogglePinned}
-            deletingSet={deletingSet}
-            detailedProgressData={mappedDetailedProgressData}
+            onDelete={onDeleteSet}
+            loading={loading}
+            currentUserId={undefined}
           />
         </>
       ) : (

@@ -1,4 +1,3 @@
-
 export interface Quiz {
   id: string;
   title: string;
@@ -12,6 +11,9 @@ export interface Quiz {
   is_public: boolean;
   created_at: string;
   updated_at: string;
+  // Extended properties for enhanced quiz display
+  questionCount?: number;
+  academic_subjects?: { id: string; name: string } | null;
 }
 
 export interface QuizQuestion {

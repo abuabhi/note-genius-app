@@ -1,4 +1,3 @@
-
 import { Note } from "@/types/note";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ViewMode } from "@/hooks/useViewPreferences";
@@ -64,9 +63,7 @@ export const NoteCard = ({
     timeZone: userTimezone
   }).format(noteDate);
 
-  const handleGoToStudyMode = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
+  const handleGoToStudyMode = () => {
     navigate(`/notes/study/${note.id}`);
   };
 
