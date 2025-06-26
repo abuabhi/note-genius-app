@@ -2,7 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
-import { addDays, format, parseISO, getHours, differenceInMinutes } from 'date-fns';
+import { addDays, format, parseISO, getHours } from 'date-fns';
 
 export interface SessionPerformanceData {
   timeSlotPerformance: Record<number, number>; // hour -> average rating
@@ -25,27 +25,32 @@ export const useSmartSessionAnalytics = () => {
 
   const { data: analyticsData, isLoading } = useQuery({
     queryKey: ['smart-session-analytics', user?.id],
-    queryFn: async (): Promise<SessionPerformanceData> => {
+    queryFn: async () => {
       if (!user) throw new Error('User not authenticated');
 
-      // Get session data from study_plan_sessions with explicit typing
-      const { data: sessions, error } = await supabase
+      // Get session data from study_plan_sessions using the same pattern as useStudyPlanSessions
+      const sessionsQuery = supabase
         .from('study_plan_sessions')
-        .select('*')
-        .eq('user_id', user.id)
+        .select(`
+          *,
+          study_plans!inner(user_id)
+        `)
+        .eq('study_plans.user_id', user.id)
         .gte('scheduled_date', format(addDays(new Date(), -90), 'yyyy-MM-dd'))
         .order('scheduled_date', { ascending: false });
 
+      const { data: sessions, error } = await sessionsQuery;
       if (error) throw error;
 
-      // Get study session data for additional performance metrics with explicit typing
-      const { data: studySessions, error: studyError } = await supabase
+      // Get study session data for additional performance metrics
+      const studySessionsQuery = supabase
         .from('study_sessions')
-        .select('*')
+        .select('id, duration, user_id, start_time')
         .eq('user_id', user.id)
         .gte('start_time', addDays(new Date(), -90).toISOString())
         .order('start_time', { ascending: false });
 
+      const { data: studySessions, error: studyError } = await studySessionsQuery;
       if (studyError) throw studyError;
 
       return analyzeSessionPerformance(sessions || [], studySessions || []);
@@ -60,8 +65,8 @@ export const useSmartSessionAnalytics = () => {
   };
 };
 
-// Type the session parameters explicitly to avoid type inference issues
-interface StudyPlanSessionData {
+// Simplified interfaces that match the actual data structure
+interface SessionData {
   id: string;
   scheduled_date: string;
   scheduled_start_time: string;
@@ -70,7 +75,7 @@ interface StudyPlanSessionData {
   performance_rating: number | null;
   topic: string | null;
   status: string;
-  user_id: string;
+  [key: string]: any; // Allow additional properties
 }
 
 interface StudySessionData {
@@ -81,7 +86,7 @@ interface StudySessionData {
 }
 
 function analyzeSessionPerformance(
-  sessions: StudyPlanSessionData[], 
+  sessions: SessionData[], 
   studySessions: StudySessionData[]
 ): SessionPerformanceData {
   const timeSlotPerformance: Record<number, number[]> = {};
