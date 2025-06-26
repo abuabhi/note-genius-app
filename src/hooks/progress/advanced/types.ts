@@ -11,6 +11,18 @@ export interface StudySession {
   session_quality: string;
 }
 
+export interface FlashcardProgress {
+  id: string;
+  subject: string;
+  masteryLevel: number;
+  totalCards: number;
+  masteredCards: number;
+  gradeDistribution: Array<{
+    grade: string;
+    percentage: number;
+  }>;
+}
+
 export interface PerformancePrediction {
   weeklyGoalLikelihood: number;
   optimalStudyTimes: string[];

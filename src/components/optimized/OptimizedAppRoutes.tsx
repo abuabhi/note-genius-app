@@ -55,7 +55,7 @@ export const OptimizedAppRoutes = () => {
         <Route path="/quiz/:id/view" element={<Layout><QuizDetailsPage /></Layout>} />
         <Route path="/quiz/:id" element={<Layout><QuizDetailsPage /></Layout>} />
         
-        {/* Analytics - Enhanced routing */}
+        {/* Analytics - Fixed to avoid double Layout wrapping */}
         <Route path="/analytics" element={<Layout><AnalyticsPage /></Layout>} />
         <Route path="/progress" element={<Layout><AnalyticsPage /></Layout>} />
         
