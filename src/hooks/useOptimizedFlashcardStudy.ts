@@ -1,6 +1,5 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { StudyMode } from '@/pages/study/types';
 
@@ -15,6 +14,11 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
   const [studiedToday, setStudiedToday] = useState(0);
   const [masteredCount, setMasteredCount] = useState(0);
   
+  // Manual data fetching states
+  const [flashcards, setFlashcards] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  
   // Simple activity recording functions
   const recordActivity = useCallback(() => {
     console.log('📊 Activity recorded for flashcard study');
@@ -24,38 +28,48 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
     console.log('📊 Session activity updated:', activityData);
   }, []);
   
-  // Completely bypass TypeScript inference by accessing properties directly
-  const queryResult = useQuery({
-    queryKey: ['flashcards', setId],
-    queryFn: async () => {
-      const result = await supabase
-        .from('flashcards')
-        .select('*')
-        .eq('set_id', setId)
-        .order('created_at');
+  // Manual data fetching with useEffect
+  useEffect(() => {
+    const fetchFlashcards = async () => {
+      if (!setId) return;
+      
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        const result = await supabase
+          .from('flashcards')
+          .select('*')
+          .eq('set_id', setId)
+          .order('created_at');
 
-      if (result.error) throw result.error;
-      return result.data || [];
-    },
-    enabled: !!setId
-  }) as any;
+        if (result.error) {
+          throw result.error;
+        }
 
-  // Access properties directly without destructuring
-  const rawData = queryResult.data || [];
-  const isLoading = queryResult.isLoading;
-  const error = queryResult.error;
+        // Transform data
+        const transformedCards = (result.data || []).map((card: any) => ({
+          id: card.id,
+          front_content: card.front_content || '',
+          back_content: card.back_content || '',
+          front: card.front_content || '',
+          back: card.back_content || '',
+          difficulty: card.difficulty || 1,
+          set_id: card.set_id,
+          last_reviewed: card.last_reviewed_at
+        }));
 
-  // Simple data transformation
-  const flashcards = rawData.map((card: any) => ({
-    id: card.id,
-    front_content: card.front_content || '',
-    back_content: card.back_content || '',
-    front: card.front_content || '',
-    back: card.back_content || '',
-    difficulty: card.difficulty || 1,
-    set_id: card.set_id,
-    last_reviewed: card.last_reviewed_at
-  }));
+        setFlashcards(transformedCards);
+      } catch (err) {
+        console.error('Error fetching flashcards:', err);
+        setError(err as Error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFlashcards();
+  }, [setId]);
 
   // Initialize session activity tracking
   useEffect(() => {
@@ -166,7 +180,7 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
     currentIndex,
     isFlipped,
     isLoading,
-    error: error as Error | null,
+    error,
     isComplete,
     currentCard,
     totalCards,
