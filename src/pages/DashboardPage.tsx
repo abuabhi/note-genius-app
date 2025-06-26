@@ -2,7 +2,7 @@
 import Layout from "@/components/layout/Layout";
 import { DashboardHeroSection } from "@/components/dashboard/DashboardHeroSection";
 import { QuickActionsGrid } from "@/components/dashboard/QuickActionsGrid";
-import { RecentActivityFeed } from "@/components/dashboard/RecentActivityFeed";
+import RecentActivityFeed from "@/components/dashboard/RecentActivityFeed";
 import { AnalyticsSection } from "@/components/dashboard/AnalyticsSection";
 import { TodaysFocusSection } from "@/components/dashboard/TodaysFocusSection";
 import { TopicSuggestionsSection } from "@/components/dashboard/TopicSuggestionsSection";
@@ -13,7 +13,7 @@ const DashboardPage = () => {
       <div className="container mx-auto px-4 py-6 space-y-8">
         <DashboardHeroSection />
         <TodaysFocusSection />
-        <QuickActionsGrid />
+        <QuickActionsGrid isFeatureVisible={() => true} />
         <TopicSuggestionsSection />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <RecentActivityFeed />

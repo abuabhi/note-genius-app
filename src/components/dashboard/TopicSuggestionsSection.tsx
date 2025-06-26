@@ -16,14 +16,22 @@ export const TopicSuggestionsSection: React.FC = () => {
       
       const { data, error } = await supabase
         .from('user_topic_progress')
-        .select('subject_name, count(*)')
-        .eq('user_id', user.id)
-        .group('subject_name')
-        .order('count', { ascending: false })
-        .limit(3);
+        .select('subject_name')
+        .eq('user_id', user.id);
       
       if (error) throw error;
-      return data?.map(item => item.subject_name) || ['Mathematics'];
+      
+      // Get unique subjects and count occurrences
+      const subjectCounts = data?.reduce((acc, item) => {
+        acc[item.subject_name] = (acc[item.subject_name] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) || {};
+      
+      // Sort by count and return top subjects
+      return Object.entries(subjectCounts)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 3)
+        .map(([subject]) => subject);
     },
     enabled: !!user?.id,
   });
