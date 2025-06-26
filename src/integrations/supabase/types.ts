@@ -249,6 +249,39 @@ export type Database = {
           },
         ]
       }
+      content_analysis_cache: {
+        Row: {
+          analysis_result: Json
+          content_hash: string
+          content_type: string
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          subject: string | null
+          user_id: string
+        }
+        Insert: {
+          analysis_result?: Json
+          content_hash: string
+          content_type: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          subject?: string | null
+          user_id: string
+        }
+        Update: {
+          analysis_result?: Json
+          content_hash?: string
+          content_type?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          subject?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       contest_entries: {
         Row: {
           contest_id: string
@@ -923,6 +956,81 @@ export type Database = {
         }
         Relationships: []
       }
+      learning_insights: {
+        Row: {
+          confidence_score: number | null
+          created_at: string | null
+          expires_at: string | null
+          generated_at: string | null
+          id: string
+          insight_data: Json
+          insight_type: string
+          is_active: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string | null
+          expires_at?: string | null
+          generated_at?: string | null
+          id?: string
+          insight_data?: Json
+          insight_type: string
+          is_active?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string | null
+          expires_at?: string | null
+          generated_at?: string | null
+          id?: string
+          insight_data?: Json
+          insight_type?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      learning_patterns: {
+        Row: {
+          created_at: string | null
+          detected_at: string | null
+          id: string
+          last_confirmed_at: string | null
+          pattern_data: Json
+          pattern_type: string
+          strength_score: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          detected_at?: string | null
+          id?: string
+          last_confirmed_at?: string | null
+          pattern_data?: Json
+          pattern_type: string
+          strength_score?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          detected_at?: string | null
+          id?: string
+          last_confirmed_at?: string | null
+          pattern_data?: Json
+          pattern_type?: string
+          strength_score?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       learning_progress: {
         Row: {
           confidence_level: number
@@ -1255,6 +1363,42 @@ export type Database = {
           },
         ]
       }
+      performance_benchmarks: {
+        Row: {
+          created_at: string | null
+          grade_level: string | null
+          id: string
+          metric_type: string
+          metric_value: number
+          sample_size: number | null
+          subject_name: string
+          time_period: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          grade_level?: string | null
+          id?: string
+          metric_type: string
+          metric_value: number
+          sample_size?: number | null
+          subject_name: string
+          time_period?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          grade_level?: string | null
+          id?: string
+          metric_type?: string
+          metric_value?: number
+          sample_size?: number | null
+          subject_name?: string
+          time_period?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       plan_templates: {
         Row: {
           created_at: string
@@ -1291,6 +1435,36 @@ export type Database = {
           updated_at?: string
           usage_count?: number
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      predictive_analytics_cache: {
+        Row: {
+          accuracy_score: number | null
+          cache_key: string
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          prediction_data: Json
+          user_id: string
+        }
+        Insert: {
+          accuracy_score?: number | null
+          cache_key: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          prediction_data?: Json
+          user_id: string
+        }
+        Update: {
+          accuracy_score?: number | null
+          cache_key?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          prediction_data?: Json
+          user_id?: string
         }
         Relationships: []
       }
@@ -3055,6 +3229,10 @@ export type Database = {
       check_user_in_conversation: {
         Args: { conversation_uuid: string }
         Returns: boolean
+      }
+      cleanup_expired_analytics_cache: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       cleanup_expired_suggestions_cache: {
         Args: Record<PropertyKey, never>
