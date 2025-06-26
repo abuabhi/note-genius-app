@@ -1,4 +1,5 @@
 
+
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,7 +31,7 @@ const fetchFlashcards = async (setId: string) => {
   if (error) throw error;
   
   // Simple transformation without complex typing
-  return (data || []).map((item) => ({
+  return (data || []).map((item: any) => ({
     id: item.id,
     front_content: item.front_content || '',
     back_content: item.back_content || '',
