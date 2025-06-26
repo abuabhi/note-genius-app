@@ -61,7 +61,7 @@ const CompletedStudyPlanCard = ({ plan }: { plan: StudyPlan }) => {
   });
 
   return (
-    <Card className="border-green-200 bg-green-50/30">
+    <Card className="border-green-200 bg-gradient-to-br from-green-50/30 to-white shadow-sm hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">
@@ -69,9 +69,16 @@ const CompletedStudyPlanCard = ({ plan }: { plan: StudyPlan }) => {
               <CheckCircle className="h-5 w-5 mr-2" />
               {plan.title}
             </CardTitle>
-            <Badge variant="secondary" className="bg-green-100 text-green-700">
-              {plan.subject}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="bg-green-100 text-green-700">
+                {plan.subject}
+              </Badge>
+              {plan.topic && (
+                <Badge variant="outline" className="text-xs border-green-300 text-green-600">
+                  {plan.topic}
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -79,18 +86,18 @@ const CompletedStudyPlanCard = ({ plan }: { plan: StudyPlan }) => {
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div className="flex items-center text-gray-600">
-            <Calendar className="h-4 w-4 mr-2" />
+            <Calendar className="h-4 w-4 mr-2 text-green-500" />
             <span>Completed {formattedDate}</span>
           </div>
           <div className="flex items-center text-gray-600">
-            <Clock className="h-4 w-4 mr-2" />
+            <Clock className="h-4 w-4 mr-2 text-green-500" />
             <span>{plan.total_duration_hours}h studied</span>
           </div>
         </div>
 
-        <div className="flex items-center justify-between text-sm text-gray-600">
+        <div className="flex items-center justify-between text-sm text-gray-600 pt-2 border-t border-green-100">
           <span>{plan.sessions_completed} sessions completed</span>
-          <span>{Array.isArray(plan.topics) ? plan.topics.length : 0} topics mastered</span>
+          <span>{plan.topic ? '1 topic' : '0 topics'} mastered</span>
         </div>
 
         <div className="bg-green-100 p-3 rounded-lg">

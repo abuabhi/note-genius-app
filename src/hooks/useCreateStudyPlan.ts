@@ -21,8 +21,7 @@ export const useCreateStudyPlan = () => {
         end_date: formData.endDate,
         available_times: {},
         available_days: formData.studyDays,
-        topics: formData.topics.map(topic => ({ name: topic, duration_hours: 0, difficulty: formData.difficultyLevel })),
-        difficulty_level: formData.difficultyLevel,
+        topics: [{ name: formData.topic, duration_hours: 0, difficulty: 'intermediate' }],
         preferred_session_duration: formData.sessionDuration,
         study_style: formData.learningStyle,
         status: 'active'
