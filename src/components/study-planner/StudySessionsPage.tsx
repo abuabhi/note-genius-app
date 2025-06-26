@@ -1,21 +1,26 @@
-
 import React, { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
+import { Calendar, Grid3X3, Clock, Filter, Plus, Link as LinkIcon } from 'lucide-react';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { useStudyPlanSessions } from '@/hooks/useStudyPlanSessions';
 import { StudySessionsGrid } from './StudySessionsGrid';
 import { StudySessionsCalendar } from './StudySessionsCalendar';
 import { SessionExecutionModal } from './SessionExecutionModal';
 import { SessionRescheduleDialog } from './SessionRescheduleDialog';
-import { useStudyPlanSessions } from '@/hooks/useStudyPlanSessions';
+import { SessionLinkingDialog } from './SessionLinkingDialog'; // New import
+import { StandardPageHeader } from '@/components/ui/StandardPageHeader';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent } from '@/components/ui/card';
 import { StudyPlanSession } from '@/types/studyPlanner';
-import { Calendar, Grid, Search, Filter, Plus } from 'lucide-react';
-import { format, isToday, isTomorrow, isYesterday } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
+import { useNavigate } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 
 const StudySessionsPage = () => {
+  const { user, loading } = useRequireAuth();
+  const navigate = useNavigate();
+  
   const {
     sessions,
     sessionsLoading,
@@ -28,50 +33,27 @@ const StudySessionsPage = () => {
     isRescheduling,
   } = useStudyPlanSessions();
 
-  const [viewMode, setViewMode] = useState<'grid' | 'calendar'>('grid');
   const [selectedSession, setSelectedSession] = useState<StudyPlanSession | null>(null);
-  const [isExecutionModalOpen, setIsExecutionModalOpen] = useState(false);
-  const [isRescheduleDialogOpen, setIsRescheduleDialogOpen] = useState(false);
-  const [sessionToReschedule, setSessionToReschedule] = useState<StudyPlanSession | null>(null);
-  
-  // Filter states
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [priorityFilter, setPriorityFilter] = useState<string>('all');
-  const [subjectFilter, setSubjectFilter] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [showExecutionModal, setShowExecutionModal] = useState(false);
+  const [showRescheduleDialog, setShowRescheduleDialog] = useState(false);
+  const [showLinkingDialog, setShowLinkingDialog] = useState(false); // New state
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [currentView, setCurrentView] = useState<'grid' | 'calendar'>('grid');
 
-  // Get unique subjects for filtering
-  const subjects = useMemo(() => {
-    const subjectSet = new Set(sessions.map(s => s.topic).filter(Boolean));
-    return Array.from(subjectSet);
-  }, [sessions]);
-
-  // Filter sessions based on current filters
   const filteredSessions = useMemo(() => {
-    return sessions.filter(session => {
-      // Status filter
-      const statusMatch = statusFilter === 'all' || session.status === statusFilter;
-      
-      // Priority filter - declare before use
-      const priorityMatch = priorityFilter === 'all' || session.priority === priorityFilter;
-      
-      // Subject filter
-      const subjectMatch = subjectFilter === 'all' || session.topic === subjectFilter;
-      
-      // Search query
-      const searchMatch = searchQuery === '' || 
-        session.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (session.topic && session.topic.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (session.description && session.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    let filtered = [...sessions];
 
-      return statusMatch && priorityMatch && subjectMatch && searchMatch;
-    });
-  }, [sessions, statusFilter, priorityFilter, subjectFilter, searchQuery]);
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(session => session.status === statusFilter);
+    }
 
-  const handleSessionClick = (session: StudyPlanSession) => {
-    setSelectedSession(session);
-    setIsExecutionModalOpen(true);
-  };
+    if (priorityFilter !== 'all') {
+      filtered = filtered.filter(session => session.priority === priorityFilter);
+    }
+
+    return filtered;
+  }, [sessions, statusFilter, priorityFilter]);
 
   const handleStartSession = async (sessionId: string) => {
     await startSession(sessionId);
@@ -79,219 +61,233 @@ const StudySessionsPage = () => {
 
   const handleCompleteSession = async (params: { sessionId: string; notes?: string; rating?: number }) => {
     await completeSession(params);
+    setShowExecutionModal(false);
   };
 
   const handleRescheduleSession = (sessionId: string) => {
     const session = sessions.find(s => s.id === sessionId);
     if (session) {
-      setSessionToReschedule(session);
-      setIsRescheduleDialogOpen(true);
+      setSelectedSession(session);
+      setShowRescheduleDialog(true);
     }
   };
 
-  const handleRescheduleSubmit = async (params: { sessionId: string; newDate: string; newStartTime: string; newEndTime: string }) => {
+  const handleSessionClick = (session: StudyPlanSession) => {
+    setSelectedSession(session);
+    setShowExecutionModal(true);
+  };
+
+  // New handler for linking sessions
+  const handleLinkSession = (session: StudyPlanSession) => {
+    setSelectedSession(session);
+    setShowLinkingDialog(true);
+  };
+
+  const handleReschedule = async (params: { sessionId: string; newDate: string; newStartTime: string; newEndTime: string }) => {
     await rescheduleSession(params);
-    setIsRescheduleDialogOpen(false);
-    setSessionToReschedule(null);
+    setShowRescheduleDialog(false);
   };
 
-  const handleCalendarSessionClick = (session: StudyPlanSession) => {
-    handleSessionClick(session);
+  const handleDateClick = (date: Date) => {
+    console.log('Date clicked:', date);
   };
 
-  const handleCalendarDateClick = (date: Date) => {
-    // TODO: Implement create new session on date click
-    console.log('Create session for date:', date);
-  };
-
-  const handleCalendarSessionDrop = async (sessionId: string, newDate: string, newStartTime: string, newEndTime: string) => {
+  const handleSessionDrop = async (sessionId: string, newDate: string, newStartTime: string, newEndTime: string) => {
     await rescheduleSession({ sessionId, newDate, newStartTime, newEndTime });
   };
 
-  const getUpcomingSessions = () => {
-    const now = new Date();
-    return filteredSessions
-      .filter(session => new Date(session.scheduled_date) >= now && session.status === 'scheduled')
-      .slice(0, 3);
-  };
-
-  if (sessionsLoading) {
+  if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mint-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading study sessions...</p>
+      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+        <div className="container mx-auto p-4 md:p-6">
+          <div className="flex items-center justify-center h-[80vh]">
+            <div className="relative w-12 h-12">
+              <div className="absolute inset-0 border-4 border-mint-100 rounded-full"></div>
+              <div className="absolute inset-0 border-4 border-mint-500 rounded-full border-t-transparent animate-spin"></div>
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
+  if (!user) {
+    return null;
+  }
+
+  const breadcrumbs = [
+    { label: "Study Sessions" }
+  ];
+
+  const actions = (
+    <div className="flex gap-2">
+      <Button
+        variant="outline"
+        onClick={() => navigate('/study-planner')}
+      >
+        <Plus className="h-4 w-4 mr-2" />
+        Create Plan
+      </Button>
+    </div>
+  );
+
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Study Sessions</h1>
-          <p className="text-gray-600 mt-1">Manage and track your study sessions</p>
-        </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          New Session
-        </Button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">Scheduled</span>
-            </div>
-            <div className="text-2xl font-bold">{sessionStats.scheduled}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">In Progress</span>
-            </div>
-            <div className="text-2xl font-bold">{sessionStats.inProgress}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">Completed</span>
-            </div>
-            <div className="text-2xl font-bold">{sessionStats.completed}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">Total</span>
-            </div>
-            <div className="text-2xl font-bold">{sessionStats.total}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters and Search */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-gray-500" />
-              <Input
-                placeholder="Search sessions..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-64"
-              />
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+      <StandardPageHeader
+        title="Study Sessions"
+        description="Execute and track your planned study sessions"
+        icon={<Clock className="h-6 w-6 text-white" />}
+        breadcrumbs={breadcrumbs}
+        actions={actions}
+      />
+      
+      <div className="container mx-auto px-6 py-8">
+        <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-mint-100 p-6 shadow-lg">
+          
+          {/* Quick Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <Card>
+              <CardContent className="flex items-center p-4">
+                <Clock className="h-8 w-8 text-blue-600 mr-3" />
+                <div>
+                  <div className="text-2xl font-bold text-blue-700">
+                    {sessionStats.total}
+                  </div>
+                  <div className="text-sm text-blue-600">Total Sessions</div>
+                </div>
+              </CardContent>
+            </Card>
             
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="scheduled">Scheduled</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="skipped">Skipped</SelectItem>
-                <SelectItem value="rescheduled">Rescheduled</SelectItem>
-              </SelectContent>
-            </Select>
+            <Card>
+              <CardContent className="flex items-center p-4">
+                <Calendar className="h-8 w-8 text-yellow-600 mr-3" />
+                <div>
+                  <div className="text-2xl font-bold text-yellow-700">
+                    {sessionStats.scheduled}
+                  </div>
+                  <div className="text-sm text-yellow-600">Scheduled</div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="flex items-center p-4">
+                <div className="h-8 w-8 bg-orange-600 rounded-full flex items-center justify-center mr-3">
+                  <Clock className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-orange-700">
+                    {sessionStats.inProgress}
+                  </div>
+                  <div className="text-sm text-orange-600">In Progress</div>
+                </div>
+              </CardContent>
+            </Card>
 
-            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Priority</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
-              </SelectContent>
-            </Select>
+            <Card>
+              <CardContent className="flex items-center p-4">
+                <div className="h-8 w-8 bg-green-600 rounded-full flex items-center justify-center mr-3">
+                  <span className="text-white text-sm">✓</span>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-green-700">
+                    {sessionStats.completed}
+                  </div>
+                  <div className="text-sm text-green-600">Completed</div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-            {subjects.length > 0 && (
-              <Select value={subjectFilter} onValueChange={setSubjectFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Subject" />
+          {/* Filters and View Toggle */}
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
+            <div className="flex gap-4">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-gray-500" />
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="scheduled">Scheduled</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Subjects</SelectItem>
-                  {subjects.map(subject => (
-                    <SelectItem key={subject} value={subject!}>{subject}</SelectItem>
-                  ))}
+                  <SelectItem value="all">All Priority</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
                 </SelectContent>
               </Select>
-            )}
+            </div>
 
-            <div className="flex items-center gap-2 ml-auto">
+            <div className="flex items-center bg-white rounded-lg p-1 border">
               <Button
-                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                variant={currentView === 'grid' ? 'default' : 'ghost'}
                 size="sm"
-                onClick={() => setViewMode('grid')}
+                onClick={() => setCurrentView('grid')}
               >
-                <Grid className="h-4 w-4 mr-1" />
+                <Grid3X3 className="h-4 w-4 mr-1" />
                 Grid
               </Button>
               <Button
-                variant={viewMode === 'calendar' ? 'default' : 'outline'}
+                variant={currentView === 'calendar' ? 'default' : 'ghost'}
                 size="sm"
-                onClick={() => setViewMode('calendar')}
+                onClick={() => setCurrentView('calendar')}
               >
                 <Calendar className="h-4 w-4 mr-1" />
                 Calendar
               </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Content */}
-      <div className="space-y-6">
-        {viewMode === 'grid' ? (
-          <StudySessionsGrid
-            sessions={filteredSessions}
-            onStartSession={handleStartSession}
-            onCompleteSession={handleCompleteSession}
-            onRescheduleSession={handleRescheduleSession}
-            onSessionClick={handleSessionClick}
-            isStarting={isStarting}
-            isCompleting={isCompleting}
-          />
-        ) : (
-          <Card>
-            <CardContent className="p-6">
-              <StudySessionsCalendar
-                sessions={filteredSessions}
-                onSessionClick={handleCalendarSessionClick}
-                onDateClick={handleCalendarDateClick}
-                onSessionDrop={handleCalendarSessionDrop}
-              />
-            </CardContent>
-          </Card>
-        )}
+          {/* Sessions Content */}
+          {sessionsLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-mint-500" />
+            </div>
+          ) : (
+            <>
+              {currentView === 'grid' ? (
+                <StudySessionsGrid
+                  sessions={filteredSessions}
+                  onStartSession={handleStartSession}
+                  onCompleteSession={handleCompleteSession}
+                  onRescheduleSession={handleRescheduleSession}
+                  onSessionClick={handleSessionClick}
+                  onLinkSession={handleLinkSession} // New prop
+                  isStarting={isStarting}
+                  isCompleting={isCompleting}
+                />
+              ) : (
+                <div className="h-[800px]">
+                  <StudySessionsCalendar
+                    sessions={filteredSessions}
+                    onSessionClick={handleSessionClick}
+                    onDateClick={handleDateClick}
+                    onSessionDrop={handleSessionDrop}
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Modals */}
       <SessionExecutionModal
         session={selectedSession}
-        isOpen={isExecutionModalOpen}
-        onClose={() => {
-          setIsExecutionModalOpen(false);
-          setSelectedSession(null);
-        }}
+        isOpen={showExecutionModal}
+        onClose={() => setShowExecutionModal(false)}
         onStartSession={handleStartSession}
         onCompleteSession={handleCompleteSession}
         isStarting={isStarting}
@@ -299,14 +295,18 @@ const StudySessionsPage = () => {
       />
 
       <SessionRescheduleDialog
-        session={sessionToReschedule}
-        isOpen={isRescheduleDialogOpen}
-        onClose={() => {
-          setIsRescheduleDialogOpen(false);
-          setSessionToReschedule(null);
-        }}
-        onReschedule={handleRescheduleSubmit}
+        session={selectedSession}
+        isOpen={showRescheduleDialog}
+        onClose={() => setShowRescheduleDialog(false)}
+        onReschedule={handleReschedule}
         isRescheduling={isRescheduling}
+      />
+
+      {/* New Linking Dialog */}
+      <SessionLinkingDialog
+        session={selectedSession}
+        isOpen={showLinkingDialog}
+        onClose={() => setShowLinkingDialog(false)}
       />
     </div>
   );

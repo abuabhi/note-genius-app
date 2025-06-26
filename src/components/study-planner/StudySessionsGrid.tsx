@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { StudyPlanSession } from '@/types/studyPlanner';
-import { Calendar, Clock, Play, CheckCircle, Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar, Clock, Play, CheckCircle, Calendar as CalendarIcon, Link } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface StudySessionsGridProps {
@@ -12,6 +12,7 @@ interface StudySessionsGridProps {
   onCompleteSession: (params: { sessionId: string; notes?: string; rating?: number }) => Promise<void>;
   onRescheduleSession: (sessionId: string) => void;
   onSessionClick?: (session: StudyPlanSession) => void;
+  onLinkSession?: (session: StudyPlanSession) => void; // New prop for linking
   isStarting?: boolean;
   isCompleting?: boolean;
 }
@@ -22,6 +23,7 @@ export const StudySessionsGrid = ({
   onCompleteSession,
   onRescheduleSession,
   onSessionClick,
+  onLinkSession, // New prop
   isStarting,
   isCompleting,
 }: StudySessionsGridProps) => {
@@ -168,6 +170,21 @@ export const StudySessionsGrid = ({
                     ))}
                   </div>
                 </div>
+              )}
+              
+              {/* New Link Button */}
+              {onLinkSession && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onLinkSession(session);
+                  }}
+                  className="px-2"
+                >
+                  <Link className="h-4 w-4" />
+                </Button>
               )}
             </div>
           </CardContent>
