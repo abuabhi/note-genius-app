@@ -42,8 +42,9 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
   const [studiedToday, setStudiedToday] = useState(0);
   const [masteredCount, setMasteredCount] = useState(0);
   
-  // Get session tracking functions
-  const { recordActivity, updateSessionActivity } = useUnifiedSessionTracker();
+  // Get session tracking functions - use simpler destructuring to avoid type issues
+  const sessionTracker = useUnifiedSessionTracker();
+  const { recordActivity, updateSessionActivity } = sessionTracker;
   
   // Fetch flashcards for the set
   const { 
