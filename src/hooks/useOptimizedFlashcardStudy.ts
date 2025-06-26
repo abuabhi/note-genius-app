@@ -3,13 +3,11 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { StudyMode } from '@/pages/study/types';
 
-// Simplified flashcard type for the hook
+// Simplified flashcard type - no duplicate properties
 interface SimpleFlashcard {
   id: string;
   front_content: string;
   back_content: string;
-  front: string; // Add for compatibility
-  back: string; // Add for compatibility
   difficulty: number;
   set_id?: string;
   last_reviewed?: string;
@@ -20,14 +18,20 @@ interface OptimizedFlashcardStudyProps {
   mode: StudyMode;
 }
 
-// Extract the data transformation to a separate function
-const transformFlashcardData = (rawData: any[]): SimpleFlashcard[] => {
-  return rawData.map((item: any) => ({
+// Simple data fetcher function
+const fetchFlashcards = async (setId: string): Promise<SimpleFlashcard[]> => {
+  const { data, error } = await supabase
+    .from('flashcards')
+    .select('*')
+    .eq('set_id', setId)
+    .order('created_at');
+
+  if (error) throw error;
+  
+  return (data || []).map((item: any) => ({
     id: item.id,
     front_content: item.front_content || '',
     back_content: item.back_content || '',
-    front: item.front_content || '', // Map for compatibility
-    back: item.back_content || '', // Map for compatibility
     difficulty: item.difficulty || 1,
     set_id: item.set_id,
     last_reviewed: item.last_reviewed_at
@@ -40,7 +44,7 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
   const [studiedToday, setStudiedToday] = useState(0);
   const [masteredCount, setMasteredCount] = useState(0);
   
-  // Simple activity recording functions without complex session tracker integration
+  // Simple activity recording functions
   const recordActivity = useCallback(() => {
     console.log('📊 Activity recorded for flashcard study');
   }, []);
@@ -49,25 +53,16 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
     console.log('📊 Session activity updated:', activityData);
   }, []);
   
-  // Simplified query - let TypeScript infer everything naturally
-  const flashcardsQuery = useQuery({
+  // Use explicit typing to avoid inference issues
+  const {
+    data: flashcards = [],
+    isLoading,
+    error
+  } = useQuery({
     queryKey: ['flashcards', setId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('flashcards')
-        .select('*')
-        .eq('set_id', setId)
-        .order('created_at');
-
-      if (error) throw error;
-      return transformFlashcardData(data || []);
-    },
+    queryFn: () => fetchFlashcards(setId),
     enabled: !!setId
   });
-
-  const flashcards = flashcardsQuery.data || [];
-  const isLoading = flashcardsQuery.isLoading;
-  const error = flashcardsQuery.error;
 
   // Initialize session activity tracking
   useEffect(() => {
@@ -174,14 +169,25 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
     completionPercentage: totalCards > 0 ? Math.round((currentIndex / totalCards) * 100) : 0
   };
 
+  // Add compatibility properties for components that expect 'front' and 'back'
+  const currentCardWithCompatibility = currentCard ? {
+    ...currentCard,
+    front: currentCard.front_content,
+    back: currentCard.back_content
+  } : null;
+
   return {
-    flashcards,
+    flashcards: flashcards.map(card => ({
+      ...card,
+      front: card.front_content,
+      back: card.back_content
+    })),
     currentIndex,
     isFlipped,
     isLoading,
     error: error as Error | null,
     isComplete,
-    currentCard,
+    currentCard: currentCardWithCompatibility,
     totalCards,
     studiedToday,
     masteredCount,
