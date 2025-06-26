@@ -58,7 +58,7 @@ const QuizList = ({ viewMode }: QuizListProps) => {
     section_id: quiz.section_id || null,
     source_type: quiz.source_type || 'custom',
     source_id: quiz.source_id || null,
-    questionCount: quiz.questionCount ?? 0,
+    questionCount: quiz.questionCount || 0,
   }));
 
   return (

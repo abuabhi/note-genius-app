@@ -23,7 +23,10 @@ export const useQuizList = (filters: {
           updated_at,
           user_id,
           subject_id,
-          grade_id
+          grade_id,
+          section_id,
+          source_type,
+          source_id
         `);
 
       // Apply basic filters - now filtering by user_subjects

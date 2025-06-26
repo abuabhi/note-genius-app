@@ -1,9 +1,9 @@
+
 import React from 'react';
 import { StandardListCard } from '@/components/ui/StandardListCard';
 import { Play, CreditCard, Calendar, User, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { FlashcardSetActionsMenu } from './FlashcardSetActionsMenu';
-import { Badge } from '@/components/ui/badge';
 
 interface FlashcardSet {
   id: string;
@@ -75,6 +75,7 @@ export const FlashcardSetListCard = ({
   return (
     <StandardListCard
       title={set.name}
+      description={set.description}
       subjectName={set.subject}
       subjectBadgeColor="bg-purple-100 text-purple-700"
       primaryAction={{
@@ -94,13 +95,6 @@ export const FlashcardSetListCard = ({
       metadata={metadata}
       onClick={handleSetClick}
       isPinned={set.is_pinned}
-      secondaryActions={
-        set.description && (
-          <div className="text-xs text-gray-500 truncate max-w-xs">
-            {set.description}
-          </div>
-        )
-      }
     />
   );
 };
