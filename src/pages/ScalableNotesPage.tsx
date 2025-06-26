@@ -25,6 +25,9 @@ const ScalableNotesPageContent = () => {
   const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
+  // Convert ViewMode to the expected type for OptimizedNotesContent
+  const convertedViewMode: 'grid' | 'list' = viewMode === 'compact' ? 'grid' : viewMode as 'grid' | 'list';
+
   const handleSaveNote = async (noteData: Omit<Note, 'id'>): Promise<Note> => {
     try {
       const savedNote = await addNote(noteData);
@@ -93,7 +96,7 @@ const ScalableNotesPageContent = () => {
       />
       
       <div className="container mx-auto px-6 py-8">
-        <OptimizedNotesContent viewMode={viewMode} />
+        <OptimizedNotesContent viewMode={convertedViewMode} />
       </div>
 
       {/* Dialog Manager for note creation */}

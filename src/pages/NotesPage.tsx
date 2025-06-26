@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { ImportDialog } from '@/components/notes/import/ImportDialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CreateNoteForm } from '@/components/notes/page/CreateNoteForm';
+import { Note } from '@/types/note';
 
 // Enhanced error fallback component with better debugging
 const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) => {
@@ -49,18 +50,25 @@ const NotesPage = () => {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
 
-  // Convert ViewMode to the expected type for the header
-  const headerViewMode = viewMode === 'compact' ? 'grid' : viewMode as 'grid' | 'list';
+  // Convert ViewMode to the expected type for the header and content
+  const convertedViewMode: 'grid' | 'list' = viewMode === 'compact' ? 'grid' : viewMode as 'grid' | 'list';
   
   const handleViewModeChange = (mode: 'grid' | 'list') => {
     setViewMode(mode);
+  };
+
+  const handleSaveNote = async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
+    // This will be implemented by the form's internal logic
+    // For now, just close the dialog on success
+    setIsManualDialogOpen(false);
+    return null;
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
       <NotesPageHeader
         loading={false}
-        viewMode={headerViewMode}
+        viewMode={convertedViewMode}
         onViewModeChange={handleViewModeChange}
         onOpenManualDialog={() => setIsManualDialogOpen(true)}
         onOpenImportDialog={() => setIsImportDialogOpen(true)}
@@ -77,7 +85,7 @@ const NotesPage = () => {
           }}
         >
           <OptimizedNotesProvider>
-            <OptimizedNotesContent viewMode={viewMode} />
+            <OptimizedNotesContent viewMode={convertedViewMode} />
           </OptimizedNotesProvider>
         </ErrorBoundary>
       </div>
@@ -98,7 +106,7 @@ const NotesPage = () => {
           <DialogHeader>
             <DialogTitle>Create New Note</DialogTitle>
           </DialogHeader>
-          <CreateNoteForm />
+          <CreateNoteForm onSave={handleSaveNote} />
         </DialogContent>
       </Dialog>
     </div>
