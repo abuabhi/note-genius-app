@@ -11,12 +11,15 @@ export const useCreateStudyPlan = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // Calculate total hours per week from daily hours and study days
+      const totalHoursPerWeek = formData.hoursPerDay * formData.studyDays.length;
+
       // Convert form data to database format
       const studyPlanData = {
         title: formData.title,
         description: formData.description || null,
         subject: formData.subject,
-        total_hours_per_week: formData.totalHours,
+        total_hours_per_week: totalHoursPerWeek,
         start_date: formData.startDate,
         end_date: formData.endDate,
         available_times: {},

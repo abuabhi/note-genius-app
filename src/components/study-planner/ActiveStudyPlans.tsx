@@ -124,6 +124,11 @@ const StudyPlanCard = ({ plan, onDeleteClick }: {
   const daysPassed = Math.ceil((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
   const daysRemaining = Math.max(0, totalDays - daysPassed);
 
+  // Calculate daily hours from total weekly hours and study days
+  const dailyHours = plan.study_days.length > 0 
+    ? Math.round((plan.total_duration_hours / plan.study_days.length) * 10) / 10
+    : 0;
+
   const handleStartSession = () => {
     toast.success(`Starting study session for ${plan.title}`);
     // TODO: Navigate to study session page or create session
@@ -193,7 +198,7 @@ const StudyPlanCard = ({ plan, onDeleteClick }: {
           </div>
           <div className="flex items-center text-gray-600">
             <Clock className="h-4 w-4 mr-2 text-mint-500" />
-            <span>{plan.daily_duration_minutes}min/day</span>
+            <span>{dailyHours}h/day</span>
           </div>
         </div>
 

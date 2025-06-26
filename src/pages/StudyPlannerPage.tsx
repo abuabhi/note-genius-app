@@ -19,7 +19,16 @@ export default function StudyPlannerPage() {
 
   const totalActivePlans = activePlans.length;
   const totalCompletedPlans = completedPlans.length;
-  const totalHoursThisWeek = activePlans.reduce((total, plan) => total + (plan.daily_duration_minutes * 7 / 60), 0);
+  
+  // Calculate average daily hours from active plans
+  const avgDailyHours = activePlans.length > 0 
+    ? activePlans.reduce((total, plan) => {
+        const dailyHours = plan.study_days.length > 0 
+          ? plan.total_duration_hours / plan.study_days.length 
+          : 0;
+        return total + dailyHours;
+      }, 0) / activePlans.length
+    : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
@@ -99,9 +108,9 @@ export default function StudyPlannerPage() {
                     <Clock className="h-5 w-5 text-purple-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Hours This Week</p>
+                    <p className="text-sm text-gray-600">Avg Hours/Day</p>
                     <p className="text-2xl font-semibold text-purple-800">
-                      {Math.round(totalHoursThisWeek)}
+                      {Math.round(avgDailyHours * 10) / 10}
                     </p>
                   </div>
                 </div>
