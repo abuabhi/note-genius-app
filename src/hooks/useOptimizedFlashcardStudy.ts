@@ -1,8 +1,18 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Flashcard } from '@/types/flashcard';
 import { StudyMode } from '@/pages/study/types';
+
+// Define a simplified flashcard type to avoid type recursion
+interface SimpleFlashcard {
+  id: string;
+  front_content: string;
+  back_content: string;
+  difficulty: number;
+  set_id?: string;
+  last_reviewed?: string;
+}
 
 interface OptimizedFlashcardStudyProps {
   setId: string;
@@ -29,9 +39,9 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
     data: flashcards = [], 
     isLoading, 
     error 
-  } = useQuery({
+  } = useQuery<SimpleFlashcard[]>({
     queryKey: ['flashcards', setId],
-    queryFn: async (): Promise<Flashcard[]> => {
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('flashcards')
         .select('*')
@@ -39,7 +49,14 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
         .order('created_at');
 
       if (error) throw error;
-      return data as Flashcard[];
+      return (data || []).map(item => ({
+        id: item.id,
+        front_content: item.front_content || item.front || '',
+        back_content: item.back_content || item.back || '',
+        difficulty: item.difficulty || 1,
+        set_id: item.set_id,
+        last_reviewed: item.last_reviewed_at
+      }));
     },
     enabled: !!setId
   });
@@ -76,7 +93,7 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
     setIsFlipped(prev => !prev);
   }, [recordActivity]);
 
-  const handleCardChoice = useCallback(async (choice: 'easy' | 'medium' | 'hard' | 'mastered' | 'needs_practice'): Promise<void> => {
+  const handleCardChoice = useCallback(async (choice: 'easy' | 'medium' | 'hard' | 'mastered' | 'needs_practice') => {
     if (!currentCard) return;
     
     recordActivity();
