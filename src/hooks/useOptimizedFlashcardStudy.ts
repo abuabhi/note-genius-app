@@ -51,35 +51,37 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
     console.log('📊 Session activity updated:', activityData);
   }, []);
   
-  // Fetch flashcards for the set with explicit typing
+  // Fetch flashcards for the set with simplified typing
+  const fetchFlashcards = async (): Promise<SimpleFlashcard[]> => {
+    const { data, error } = await supabase
+      .from('flashcards')
+      .select('*')
+      .eq('set_id', setId)
+      .order('created_at');
+
+    if (error) throw error;
+    
+    const results: SimpleFlashcard[] = (data || []).map((item: any) => ({
+      id: item.id,
+      front_content: item.front_content || '',
+      back_content: item.back_content || '',
+      front: item.front_content || '', // Map for compatibility
+      back: item.back_content || '', // Map for compatibility
+      difficulty: item.difficulty || 1,
+      set_id: item.set_id,
+      last_reviewed: item.last_reviewed_at
+    }));
+    
+    return results;
+  };
+
   const { 
     data: flashcards = [], 
     isLoading, 
     error 
-  } = useQuery({
-    queryKey: ['flashcards', setId] as const,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('flashcards')
-        .select('*')
-        .eq('set_id', setId)  // Use 'set_id' instead of 'flashcard_set_id'
-        .order('created_at');
-
-      if (error) throw error;
-      
-      const results: SimpleFlashcard[] = (data || []).map((item: any) => ({
-        id: item.id,
-        front_content: item.front_content || '',
-        back_content: item.back_content || '',
-        front: item.front_content || '', // Map for compatibility
-        back: item.back_content || '', // Map for compatibility
-        difficulty: item.difficulty || 1,
-        set_id: item.set_id,
-        last_reviewed: item.last_reviewed_at
-      }));
-      
-      return results;
-    },
+  } = useQuery<SimpleFlashcard[], Error>({
+    queryKey: ['flashcards', setId],
+    queryFn: fetchFlashcards,
     enabled: !!setId
   });
 
