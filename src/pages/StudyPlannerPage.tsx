@@ -2,12 +2,13 @@
 import { useState } from 'react';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useStudyPlanner } from '@/hooks/useStudyPlanner';
+import { useGoalsStats } from '@/hooks/useGoalsStats';
 import { StudyPlannerWizard } from '@/components/study-planner/StudyPlannerWizard';
 import { StudyPlansGrid } from '@/components/study-planner/StudyPlansGrid';
 import { StandardPageHeader } from '@/components/ui/StandardPageHeader';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Calendar, Target, TrendingUp } from 'lucide-react';
+import { Plus, Calendar, Target, TrendingUp, Play } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 
 const StudyPlannerPage = () => {
@@ -24,6 +25,8 @@ const StudyPlannerPage = () => {
     isGenerating,
     isConverting,
   } = useStudyPlanner();
+
+  const { data: goalsStats } = useGoalsStats();
 
   if (loading) {
     return (
@@ -70,8 +73,8 @@ const StudyPlannerPage = () => {
         <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-mint-100 p-6 shadow-lg">
           
           {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div className="bg-mint-50 p-4 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div className="bg-mint-50 p-4 rounded-lg border border-mint-100">
               <div className="flex items-center">
                 <Target className="h-8 w-8 text-mint-600 mr-3" />
                 <div>
@@ -83,7 +86,7 @@ const StudyPlannerPage = () => {
               </div>
             </div>
             
-            <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
               <div className="flex items-center">
                 <Calendar className="h-8 w-8 text-blue-600 mr-3" />
                 <div>
@@ -95,14 +98,26 @@ const StudyPlannerPage = () => {
               </div>
             </div>
             
-            <div className="bg-green-50 p-4 rounded-lg">
+            <div className="bg-green-50 p-4 rounded-lg border border-green-100">
               <div className="flex items-center">
                 <TrendingUp className="h-8 w-8 text-green-600 mr-3" />
                 <div>
                   <div className="text-2xl font-bold text-green-700">
-                    {studyPlans?.filter(p => p.is_converted_to_goals).length || 0}
+                    {goalsStats?.goalsFromPlans || 0}
                   </div>
                   <div className="text-sm text-green-600">Goals Created</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
+              <div className="flex items-center">
+                <Play className="h-8 w-8 text-purple-600 mr-3" />
+                <div>
+                  <div className="text-2xl font-bold text-purple-700">
+                    0
+                  </div>
+                  <div className="text-sm text-purple-600">Sessions Generated</div>
                 </div>
               </div>
             </div>
@@ -117,7 +132,7 @@ const StudyPlannerPage = () => {
             
             <Dialog open={showWizard} onOpenChange={setShowWizard}>
               <DialogTrigger asChild>
-                <Button className="bg-mint-500 hover:bg-mint-600 text-white">
+                <Button className="bg-mint-500 hover:bg-mint-600 text-white shadow-lg hover:shadow-xl transition-all">
                   <Plus className="h-4 w-4 mr-2" />
                   Create Study Plan
                 </Button>
