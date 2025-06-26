@@ -24,11 +24,11 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
     console.log('📊 Session activity updated:', activityData);
   }, []);
   
-  // Completely break type inference by using explicit any types
-  const queryResult: any = useQuery({
+  // Completely bypass TypeScript inference by accessing properties directly
+  const queryResult = useQuery({
     queryKey: ['flashcards', setId],
-    queryFn: async (): Promise<any[]> => {
-      const result: any = await supabase
+    queryFn: async () => {
+      const result = await supabase
         .from('flashcards')
         .select('*')
         .eq('set_id', setId)
@@ -38,9 +38,12 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
       return result.data || [];
     },
     enabled: !!setId
-  });
+  }) as any;
 
-  const { data: rawData = [], isLoading, error } = queryResult;
+  // Access properties directly without destructuring
+  const rawData = queryResult.data || [];
+  const isLoading = queryResult.isLoading;
+  const error = queryResult.error;
 
   // Simple data transformation
   const flashcards = rawData.map((card: any) => ({
