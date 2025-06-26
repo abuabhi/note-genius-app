@@ -28,17 +28,17 @@ export const useSmartSessionAnalytics = () => {
     queryFn: async (): Promise<SessionPerformanceData> => {
       if (!user) throw new Error('User not authenticated');
 
-      // Get session data from study_plan_sessions
+      // Get session data from study_plan_sessions with explicit typing
       const { data: sessions, error } = await supabase
         .from('study_plan_sessions')
         .select('*')
         .eq('user_id', user.id)
-        .gte('scheduled_date', format(addDays(new Date(), -90), 'yyyy-MM-dd')) // Last 90 days
+        .gte('scheduled_date', format(addDays(new Date(), -90), 'yyyy-MM-dd'))
         .order('scheduled_date', { ascending: false });
 
       if (error) throw error;
 
-      // Get study session data for additional performance metrics
+      // Get study session data for additional performance metrics with explicit typing
       const { data: studySessions, error: studyError } = await supabase
         .from('study_sessions')
         .select('*')
@@ -60,7 +60,30 @@ export const useSmartSessionAnalytics = () => {
   };
 };
 
-function analyzeSessionPerformance(sessions: any[], studySessions: any[]): SessionPerformanceData {
+// Type the session parameters explicitly to avoid type inference issues
+interface StudyPlanSessionData {
+  id: string;
+  scheduled_date: string;
+  scheduled_start_time: string;
+  scheduled_end_time: string;
+  duration_minutes: number;
+  performance_rating: number | null;
+  topic: string | null;
+  status: string;
+  user_id: string;
+}
+
+interface StudySessionData {
+  id: string;
+  duration: number | null;
+  user_id: string;
+  start_time: string;
+}
+
+function analyzeSessionPerformance(
+  sessions: StudyPlanSessionData[], 
+  studySessions: StudySessionData[]
+): SessionPerformanceData {
   const timeSlotPerformance: Record<number, number[]> = {};
   const subjectDifficulty: Record<string, number[]> = {};
   const sessionDurations: Record<string, number[]> = {};
