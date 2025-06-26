@@ -10,7 +10,8 @@ interface StudySessionsGridProps {
   sessions: StudyPlanSession[];
   onStartSession: (sessionId: string) => Promise<void>;
   onCompleteSession: (params: { sessionId: string; notes?: string; rating?: number }) => Promise<void>;
-  onRescheduleSession: (params: { sessionId: string; newDate: string; newStartTime: string; newEndTime: string }) => Promise<void>;
+  onRescheduleSession: (sessionId: string) => void;
+  onSessionClick?: (session: StudyPlanSession) => void;
   isStarting?: boolean;
   isCompleting?: boolean;
 }
@@ -20,6 +21,7 @@ export const StudySessionsGrid = ({
   onStartSession,
   onCompleteSession,
   onRescheduleSession,
+  onSessionClick,
   isStarting,
   isCompleting,
 }: StudySessionsGridProps) => {
@@ -47,19 +49,13 @@ export const StudySessionsGrid = ({
     await onCompleteSession({ sessionId });
   };
 
-  const handleRescheduleSession = async (sessionId: string) => {
-    // For now, reschedule to tomorrow at the same time
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const session = sessions.find(s => s.id === sessionId);
-    
-    if (session) {
-      await onRescheduleSession({
-        sessionId,
-        newDate: tomorrow.toISOString().split('T')[0],
-        newStartTime: session.scheduled_start_time,
-        newEndTime: session.scheduled_end_time,
-      });
+  const handleCardClick = (session: StudyPlanSession, e: React.MouseEvent) => {
+    // Prevent card click when clicking buttons
+    if ((e.target as HTMLElement).closest('button')) {
+      return;
+    }
+    if (onSessionClick) {
+      onSessionClick(session);
     }
   };
 
@@ -76,7 +72,11 @@ export const StudySessionsGrid = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {sessions.map((session) => (
-        <Card key={session.id} className={`border-l-4 ${getPriorityColor(session.priority)}`}>
+        <Card 
+          key={session.id} 
+          className={`border-l-4 ${getPriorityColor(session.priority)} cursor-pointer hover:shadow-md transition-shadow`}
+          onClick={(e) => handleCardClick(session, e)}
+        >
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <CardTitle className="text-lg font-semibold">{session.title}</CardTitle>
@@ -114,7 +114,10 @@ export const StudySessionsGrid = ({
                 <>
                   <Button
                     size="sm"
-                    onClick={() => onStartSession(session.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onStartSession(session.id);
+                    }}
                     disabled={isStarting}
                     className="flex-1"
                   >
@@ -124,7 +127,10 @@ export const StudySessionsGrid = ({
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleRescheduleSession(session.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRescheduleSession(session.id);
+                    }}
                     className="flex-1"
                   >
                     <CalendarIcon className="h-4 w-4 mr-1" />
@@ -136,7 +142,10 @@ export const StudySessionsGrid = ({
               {session.status === 'in_progress' && (
                 <Button
                   size="sm"
-                  onClick={() => handleCompleteSession(session.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCompleteSession(session.id);
+                  }}
                   disabled={isCompleting}
                   className="flex-1 bg-green-600 hover:bg-green-700"
                 >

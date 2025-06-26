@@ -3,16 +3,25 @@ import { useState } from 'react';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useStudyPlanSessions } from '@/hooks/useStudyPlanSessions';
 import { StudySessionsGrid } from './StudySessionsGrid';
+import { StudySessionsCalendar } from './StudySessionsCalendar';
+import { SessionExecutionModal } from './SessionExecutionModal';
+import { SessionRescheduleDialog } from './SessionRescheduleDialog';
 import { StandardPageHeader } from '@/components/ui/StandardPageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Clock, Target, TrendingUp, Filter } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calendar, Clock, Target, TrendingUp, Filter, Grid, CalendarDays } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { StudyPlanSession } from '@/types/studyPlanner';
 
 const StudySessionsPage = () => {
   const { user, loading } = useRequireAuth();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'calendar'>('grid');
+  const [selectedSession, setSelectedSession] = useState<StudyPlanSession | null>(null);
+  const [showExecutionModal, setShowExecutionModal] = useState(false);
+  const [showRescheduleDialog, setShowRescheduleDialog] = useState(false);
   
   const {
     sessions,
@@ -23,6 +32,7 @@ const StudySessionsPage = () => {
     rescheduleSession: rescheduleSessionMutation,
     isStarting,
     isCompleting,
+    isRescheduling,
   } = useStudyPlanSessions();
 
   // Wrapper functions to match expected signatures
@@ -36,6 +46,20 @@ const StudySessionsPage = () => {
 
   const handleRescheduleSession = async (params: { sessionId: string; newDate: string; newStartTime: string; newEndTime: string }): Promise<void> => {
     await rescheduleSessionMutation(params);
+  };
+
+  const handleSessionClick = (session: StudyPlanSession) => {
+    setSelectedSession(session);
+    setShowExecutionModal(true);
+  };
+
+  const handleRescheduleClick = (session: StudyPlanSession) => {
+    setSelectedSession(session);
+    setShowRescheduleDialog(true);
+  };
+
+  const handleSessionDrop = async (sessionId: string, newDate: string, newStartTime: string, newEndTime: string) => {
+    await handleRescheduleSession({ sessionId, newDate, newStartTime, newEndTime });
   };
 
   if (loading) {
@@ -60,7 +84,7 @@ const StudySessionsPage = () => {
   // Filter sessions based on selected filters
   const filteredSessions = sessions.filter((session) => {
     const statusMatch = statusFilter === 'all' || session.status === statusFilter;
-    const priorityMatch = priorityFilter === 'all' || session.priority === priorityFilter;
+    const priorityMatch = priorityFilter === 'all' || session.priority === priorityMatch;
     return statusMatch && priorityMatch;
   });
 
@@ -132,57 +156,118 @@ const StudySessionsPage = () => {
             </Card>
           </div>
 
-          {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-gray-600" />
-              <span className="text-sm font-medium text-gray-700">Filters:</span>
-            </div>
-            
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="scheduled">Scheduled</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="skipped">Skipped</SelectItem>
-                <SelectItem value="rescheduled">Rescheduled</SelectItem>
-              </SelectContent>
-            </Select>
+          {/* Controls */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-6 justify-between">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-gray-600" />
+                <span className="text-sm font-medium text-gray-700">Filters:</span>
+              </div>
+              
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="scheduled">Scheduled</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="skipped">Skipped</SelectItem>
+                  <SelectItem value="rescheduled">Rescheduled</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Priority</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Priority</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* View Toggle */}
+            <div className="flex bg-gray-100 rounded-lg p-1">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                className="flex items-center gap-2"
+              >
+                <Grid className="h-4 w-4" />
+                Grid
+              </Button>
+              <Button
+                variant={viewMode === 'calendar' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('calendar')}
+                className="flex items-center gap-2"
+              >
+                <CalendarDays className="h-4 w-4" />
+                Calendar
+              </Button>
+            </div>
           </div>
 
-          {/* Sessions Grid */}
+          {/* Sessions Content */}
           {sessionsLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-mint-500" />
             </div>
-          ) : (
+          ) : viewMode === 'grid' ? (
             <StudySessionsGrid
               sessions={filteredSessions}
               onStartSession={handleStartSession}
               onCompleteSession={handleCompleteSession}
-              onRescheduleSession={handleRescheduleSession}
+              onRescheduleSession={(sessionId) => {
+                const session = sessions.find(s => s.id === sessionId);
+                if (session) handleRescheduleClick(session);
+              }}
+              onSessionClick={handleSessionClick}
               isStarting={isStarting}
               isCompleting={isCompleting}
             />
+          ) : (
+            <div className="h-[600px]">
+              <StudySessionsCalendar
+                sessions={filteredSessions}
+                onSessionClick={handleSessionClick}
+                onSessionDrop={handleSessionDrop}
+              />
+            </div>
           )}
         </div>
       </div>
+
+      {/* Modals */}
+      <SessionExecutionModal
+        session={selectedSession}
+        isOpen={showExecutionModal}
+        onClose={() => {
+          setShowExecutionModal(false);
+          setSelectedSession(null);
+        }}
+        onStartSession={handleStartSession}
+        onCompleteSession={handleCompleteSession}
+        isStarting={isStarting}
+        isCompleting={isCompleting}
+      />
+
+      <SessionRescheduleDialog
+        session={selectedSession}
+        isOpen={showRescheduleDialog}
+        onClose={() => {
+          setShowRescheduleDialog(false);
+          setSelectedSession(null);
+        }}
+        onReschedule={handleRescheduleSession}
+        isRescheduling={isRescheduling}
+      />
     </div>
   );
 };
