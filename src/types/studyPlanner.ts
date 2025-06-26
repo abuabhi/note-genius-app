@@ -1,4 +1,3 @@
-
 export interface StudyPlan {
   id: string;
   user_id: string;
@@ -80,12 +79,9 @@ export interface StudyPlanFormValues {
   totalHours: number;
   startDate: string;
   endDate: string;
-  dailyDurationMinutes: number;
-  difficultyLevel: 'beginner' | 'intermediate' | 'advanced';
   sessionDuration: number;
   breakDuration: number;
   maxSessionsPerDay: number;
-  learningStyle: 'visual' | 'auditory' | 'kinesthetic' | 'mixed';
   studyDays: string[];
   preferredTimes: string[];
 }

@@ -26,7 +26,7 @@ export const useActiveStudyPlans = () => {
         if (plan.topics && Array.isArray(plan.topics)) {
           const firstTopic = plan.topics[0];
           if (firstTopic && typeof firstTopic === 'object' && 'name' in firstTopic) {
-            topicName = firstTopic.name || '';
+            topicName = String(firstTopic.name) || '';
           }
         }
 
@@ -48,7 +48,7 @@ export const useActiveStudyPlans = () => {
           related_notes: [],
           learning_style: (plan.study_style as 'visual' | 'auditory' | 'kinesthetic' | 'mixed') || 'mixed',
           learning_objectives: [],
-          difficulty_level: (plan.difficulty_level as 'beginner' | 'intermediate' | 'advanced') || 'intermediate',
+          difficulty_level: 'intermediate' as 'beginner' | 'intermediate' | 'advanced',
           status: (plan.status as 'active' | 'completed' | 'paused' | 'archived') || 'active',
           is_converted_to_goals: plan.is_converted_to_goals || false
         } as StudyPlan;
