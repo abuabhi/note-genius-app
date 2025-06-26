@@ -53,22 +53,13 @@ const QuizList = ({ viewMode }: QuizListProps) => {
   const favoriteCount = getFavoriteCount();
 
   // Transform the data to ensure it has all required Quiz properties
-  const transformedQuizzes: Quiz[] = quizzes.map(quiz => ({
-    id: quiz.id,
-    title: quiz.title,
-    description: quiz.description,
-    subject_id: quiz.subject_id,
+  const transformedQuizzes = quizzes.map(quiz => ({
+    ...quiz,
     section_id: (quiz as any).section_id || null,
-    grade_id: quiz.grade_id,
     source_type: (quiz as any).source_type || 'custom' as const,
     source_id: (quiz as any).source_id || null,
-    user_id: quiz.user_id,
-    is_public: quiz.is_public,
-    created_at: quiz.created_at,
-    updated_at: quiz.updated_at,
     questionCount: quiz.questionCount || 0,
-    academic_subjects: quiz.academic_subjects,
-  }));
+  })) as Quiz[];
 
   return (
     <div className="space-y-6">
