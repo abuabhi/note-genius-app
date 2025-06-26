@@ -22,7 +22,14 @@ export const useStudyPlanner = () => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as StudyPlan[];
+      
+      // Cast the data to proper types, handling JSON fields
+      return (data || []).map(plan => ({
+        ...plan,
+        available_days: plan.available_days as string[],
+        available_times: plan.available_times as Record<string, { start: string; end: string }>,
+        topics: plan.topics as any[],
+      })) as StudyPlan[];
     },
     enabled: !!user?.id,
   });
@@ -35,8 +42,19 @@ export const useStudyPlanner = () => {
       const { data, error } = await supabase
         .from('study_plans')
         .insert({
-          ...planData,
           user_id: user.id,
+          title: planData.title,
+          description: planData.description,
+          subject: planData.subject,
+          start_date: planData.start_date,
+          end_date: planData.end_date,
+          total_hours_per_week: planData.total_hours_per_week,
+          preferred_session_duration: planData.preferred_session_duration,
+          available_days: planData.available_days as any,
+          available_times: planData.available_times as any,
+          topics: planData.topics as any,
+          difficulty_level: planData.difficulty_level,
+          study_style: planData.study_style,
         })
         .select()
         .single();
@@ -65,7 +83,19 @@ export const useStudyPlanner = () => {
       
       const { data, error } = await supabase
         .from('study_plan_sessions')
-        .insert(sessions);
+        .insert(sessions.map(session => ({
+          study_plan_id: session.study_plan_id!,
+          title: session.title!,
+          description: session.description,
+          topic: session.topic,
+          scheduled_date: session.scheduled_date!,
+          scheduled_start_time: session.scheduled_start_time!,
+          scheduled_end_time: session.scheduled_end_time!,
+          duration_minutes: session.duration_minutes!,
+          session_type: session.session_type || 'study',
+          priority: session.priority || 'medium',
+          status: session.status || 'scheduled',
+        })));
       
       if (error) throw error;
       return data;
@@ -138,7 +168,7 @@ function generateBasicSessions(plan: StudyPlan): Partial<StudyPlanSession>[] {
   let topicIndex = 0;
   
   while (currentDate <= endDate && topicIndex < plan.topics.length) {
-    const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'lowercase' });
+    const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
     
     if (plan.available_days.includes(dayName)) {
       const topic = plan.topics[topicIndex];
