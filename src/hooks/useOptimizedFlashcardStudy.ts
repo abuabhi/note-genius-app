@@ -10,7 +10,33 @@ interface OptimizedFlashcardStudyProps {
   mode: StudyMode;
 }
 
-export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardStudyProps) => {
+// Define return type explicitly to avoid circular references
+interface OptimizedFlashcardStudyReturn {
+  flashcards: Flashcard[];
+  currentIndex: number;
+  isFlipped: boolean;
+  isLoading: boolean;
+  error: Error | null;
+  isComplete: boolean;
+  currentCard: Flashcard | undefined;
+  totalCards: number;
+  studiedToday: number;
+  masteredCount: number;
+  progressStats: {
+    currentIndex: number;
+    totalCards: number;
+    studiedToday: number;
+    masteredCount: number;
+    completionPercentage: number;
+  };
+  handleNext: () => void;
+  handlePrevious: () => void;
+  handleFlip: () => void;
+  handleCardChoice: (choice: 'easy' | 'medium' | 'hard' | 'mastered' | 'needs_practice') => Promise<void>;
+  setIsFlipped: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardStudyProps): OptimizedFlashcardStudyReturn => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [studiedToday, setStudiedToday] = useState(0);
@@ -149,7 +175,7 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
     currentIndex,
     isFlipped,
     isLoading,
-    error,
+    error: error as Error | null,
     isComplete,
     currentCard,
     totalCards,
