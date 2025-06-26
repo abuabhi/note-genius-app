@@ -1,6 +1,7 @@
+
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import { useAuth } from './contexts/AuthContext';
+import { useAuth } from './hooks/auth/useAuth';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -13,17 +14,15 @@ import StudyFlashcardsPage from './pages/StudyFlashcardsPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
 import DashboardPage from './pages/DashboardPage';
 import RemindersPage from './pages/RemindersPage';
+import StudyPlannerPage from './pages/StudyPlannerPage';
 import { AppProviders } from './contexts/AppProviders';
 import { QueryProvider } from './components/app/QueryProvider';
-import { Calendar } from "lucide-react";
-
-import StudyPlannerPage from "@/pages/StudyPlannerPage";
 
 function App() {
-  const { currentUser } = useAuth();
+  const { user } = useAuth();
 
   const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-    return currentUser ? children : <Navigate to="/login" />;
+    return user ? children : <Navigate to="/login" />;
   };
 
   useEffect(() => {
@@ -36,8 +35,8 @@ function App() {
         <AppProviders>
           <div className="App min-h-screen bg-gray-50">
             <Routes>
-              <Route path="/login" element={!currentUser ? <LoginPage /> : <Navigate to="/dashboard" />} />
-              <Route path="/register" element={!currentUser ? <RegisterPage /> : <Navigate to="/dashboard" />} />
+              <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/dashboard" />} />
+              <Route path="/register" element={!user ? <RegisterPage /> : <Navigate to="/dashboard" />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/update-password" element={<UpdatePasswordPage />} />
               <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />

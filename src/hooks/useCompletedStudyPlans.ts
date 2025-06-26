@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { StudyPlan } from '@/types/studyPlanner';
 
 export const useCompletedStudyPlans = () => {
-  return useQuery({
+  const query = useQuery({
     queryKey: ['completed-study-plans'],
     queryFn: async (): Promise<StudyPlan[]> => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -21,4 +21,10 @@ export const useCompletedStudyPlans = () => {
       return data || [];
     }
   });
+
+  return {
+    studyPlans: query.data || [],
+    isLoading: query.isLoading,
+    error: query.error
+  };
 };

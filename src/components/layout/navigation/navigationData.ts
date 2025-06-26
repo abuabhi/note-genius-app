@@ -1,3 +1,4 @@
+
 import {
   Book,
   BookOpen,
@@ -8,7 +9,6 @@ import {
   Code,
   Compass,
   FileText,
-  Flask,
   FolderKanban,
   GraduationCap,
   HelpCircle,
@@ -40,9 +40,9 @@ type Route = {
 };
 
 type Group = {
+  id: string;
   title: string;
-  routes?: Route[];
-  items?: Route[];
+  items: Route[];
 };
 
 export const routes: Route[] = [
@@ -68,8 +68,9 @@ export const routes: Route[] = [
   },
 ];
 
-export const navigationGroups: Group[] = [
+export const navigationData: Group[] = [
   {
+    id: "getting-started",
     title: "Getting Started",
     items: [
       {
@@ -87,6 +88,7 @@ export const navigationGroups: Group[] = [
     ],
   },
   {
+    id: "content-creation",
     title: "Content Creation",
     items: [
       {
@@ -110,6 +112,7 @@ export const navigationGroups: Group[] = [
     ],
   },
   {
+    id: "study-tools",
     title: "Study Tools",
     items: [
       {
@@ -133,6 +136,7 @@ export const navigationGroups: Group[] = [
     ],
   },
   {
+    id: "community",
     title: "Community",
     items: [
       {
@@ -150,6 +154,7 @@ export const navigationGroups: Group[] = [
     ],
   },
   {
+    id: "account",
     title: "Account",
     items: [
       {
@@ -167,3 +172,5 @@ export const navigationGroups: Group[] = [
     ],
   },
 ];
+
+export const navigationGroups = navigationData;

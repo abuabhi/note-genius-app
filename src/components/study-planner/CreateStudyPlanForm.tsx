@@ -6,11 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, BookOpen, Target, Plus, X, Loader2 } from 'lucide-react';
-import { useUserSubjects } from '@/hooks/useUserSubjects';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon, Plus, X } from 'lucide-react';
+import { format } from 'date-fns';
 import { useCreateStudyPlan } from '@/hooks/useCreateStudyPlan';
 import { StudyPlanFormValues } from '@/types/studyPlanner';
 import { toast } from 'sonner';
@@ -21,35 +21,31 @@ interface CreateStudyPlanFormProps {
 }
 
 export const CreateStudyPlanForm = ({ open, onClose }: CreateStudyPlanFormProps) => {
-  const { subjects } = useUserSubjects();
   const { createStudyPlan, isLoading } = useCreateStudyPlan();
-  
+  const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<StudyPlanFormValues>({
     title: '',
     description: '',
     subject: '',
-    totalHours: 20,
+    totalHours: 10,
     startDate: '',
     endDate: '',
     topics: [],
     difficultyLevel: 'intermediate',
     sessionDuration: 45,
     breakDuration: 10,
-    maxSessionsPerDay: 2,
+    maxSessionsPerDay: 3,
     learningStyle: 'mixed',
-    studyDays: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
+    studyDays: [],
     preferredTimes: []
   });
 
   const [newTopic, setNewTopic] = useState('');
-  const [activeTab, setActiveTab] = useState('basics');
-
-  const handleInputChange = (field: keyof StudyPlanFormValues, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
 
   const addTopic = () => {
-    if (newTopic.trim() && !formData.topics.includes(newTopic.trim())) {
+    if (newTopic.trim()) {
       setFormData(prev => ({
         ...prev,
         topics: [...prev.topics, newTopic.trim()]
@@ -58,345 +54,327 @@ export const CreateStudyPlanForm = ({ open, onClose }: CreateStudyPlanFormProps)
     }
   };
 
-  const removeTopic = (topic: string) => {
+  const removeTopic = (index: number) => {
     setFormData(prev => ({
       ...prev,
-      topics: prev.topics.filter(t => t !== topic)
+      topics: prev.topics.filter((_, i) => i !== index)
     }));
   };
 
-  const toggleStudyDay = (day: string) => {
-    setFormData(prev => ({
-      ...prev,
-      studyDays: prev.studyDays.includes(day)
-        ? prev.studyDays.filter(d => d !== day)
-        : [...prev.studyDays, day]
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.title || !formData.subject || formData.topics.length === 0) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
-
+  const handleSubmit = async () => {
     try {
-      await createStudyPlan(formData);
+      const submitData = {
+        ...formData,
+        startDate: startDate ? format(startDate, 'yyyy-MM-dd') : '',
+        endDate: endDate ? format(endDate, 'yyyy-MM-dd') : ''
+      };
+
+      await createStudyPlan(submitData);
       toast.success('Study plan created successfully!');
       onClose();
+      
+      // Reset form
+      setFormData({
+        title: '',
+        description: '',
+        subject: '',
+        totalHours: 10,
+        startDate: '',
+        endDate: '',
+        topics: [],
+        difficultyLevel: 'intermediate',
+        sessionDuration: 45,
+        breakDuration: 10,
+        maxSessionsPerDay: 3,
+        learningStyle: 'mixed',
+        studyDays: [],
+        preferredTimes: []
+      });
+      setCurrentStep(1);
+      setStartDate(undefined);
+      setEndDate(undefined);
     } catch (error) {
       toast.error('Failed to create study plan');
     }
   };
 
-  const daysOfWeek = [
-    { key: 'monday', label: 'Mon' },
-    { key: 'tuesday', label: 'Tue' },
-    { key: 'wednesday', label: 'Wed' },
-    { key: 'thursday', label: 'Thu' },
-    { key: 'friday', label: 'Fri' },
-    { key: 'saturday', label: 'Sat' },
-    { key: 'sunday', label: 'Sun' }
-  ];
+  const renderStep = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="title">Study Plan Title</Label>
+              <Input
+                id="title"
+                value={formData.title}
+                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="e.g., Mathematics Exam Preparation"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Brief description of your study goals..."
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="subject">Subject</Label>
+              <Input
+                id="subject"
+                value={formData.subject}
+                onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
+                placeholder="e.g., Mathematics, Physics, History"
+              />
+            </div>
+          </div>
+        );
+      
+      case 2:
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>Topics to Study</Label>
+              <div className="flex gap-2 mt-2">
+                <Input
+                  value={newTopic}
+                  onChange={(e) => setNewTopic(e.target.value)}
+                  placeholder="Add a topic"
+                  onKeyPress={(e) => e.key === 'Enter' && addTopic()}
+                />
+                <Button type="button" onClick={addTopic}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="mt-2 space-y-2">
+                {formData.topics.map((topic, index) => (
+                  <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                    <span>{topic}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeTopic(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div>
+              <Label>Difficulty Level</Label>
+              <Select 
+                value={formData.difficultyLevel} 
+                onValueChange={(value: 'beginner' | 'intermediate' | 'advanced') => 
+                  setFormData(prev => ({ ...prev, difficultyLevel: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="beginner">Beginner</SelectItem>
+                  <SelectItem value="intermediate">Intermediate</SelectItem>
+                  <SelectItem value="advanced">Advanced</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+      
+      case 3:
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Start Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {startDate ? format(startDate, 'PPP') : 'Pick a date'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <div>
+                <Label>End Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {endDate ? format(endDate, 'PPP') : 'Pick a date'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+            
+            <div>
+              <Label>Total Hours to Study</Label>
+              <Input
+                type="number"
+                value={formData.totalHours}
+                onChange={(e) => setFormData(prev => ({ ...prev, totalHours: parseInt(e.target.value) || 0 }))}
+                min="1"
+                max="1000"
+              />
+            </div>
+            
+            <div>
+              <Label>Study Days</Label>
+              <div className="grid grid-cols-7 gap-2 mt-2">
+                {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
+                  <div key={day} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={day}
+                      checked={formData.studyDays.includes(day)}
+                      onCheckedChange={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          studyDays: prev.studyDays.includes(day)
+                            ? prev.studyDays.filter(d => d !== day)
+                            : [...prev.studyDays, day]
+                        }));
+                      }}
+                    />
+                    <Label htmlFor={day} className="text-sm">{day.slice(0, 3)}</Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      
+      case 4:
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Session Duration (minutes)</Label>
+                <Input
+                  type="number"
+                  value={formData.sessionDuration}
+                  onChange={(e) => setFormData(prev => ({ ...prev, sessionDuration: parseInt(e.target.value) || 45 }))}
+                  min="15"
+                  max="180"
+                />
+              </div>
+              
+              <div>
+                <Label>Break Duration (minutes)</Label>
+                <Input
+                  type="number"
+                  value={formData.breakDuration}
+                  onChange={(e) => setFormData(prev => ({ ...prev, breakDuration: parseInt(e.target.value) || 10 }))}
+                  min="5"
+                  max="60"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <Label>Max Sessions Per Day</Label>
+              <Input
+                type="number"
+                value={formData.maxSessionsPerDay}
+                onChange={(e) => setFormData(prev => ({ ...prev, maxSessionsPerDay: parseInt(e.target.value) || 3 }))}
+                min="1"
+                max="10"
+              />
+            </div>
+            
+            <div>
+              <Label>Learning Style</Label>
+              <Select 
+                value={formData.learningStyle} 
+                onValueChange={(value: 'visual' | 'auditory' | 'kinesthetic' | 'mixed') => 
+                  setFormData(prev => ({ ...prev, learningStyle: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="visual">Visual</SelectItem>
+                  <SelectItem value="auditory">Auditory</SelectItem>
+                  <SelectItem value="kinesthetic">Kinesthetic</SelectItem>
+                  <SelectItem value="mixed">Mixed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+      
+      default:
+        return null;
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center text-xl">
-            <BookOpen className="h-5 w-5 mr-2 text-mint-600" />
-            Create Study Plan
-          </DialogTitle>
+          <DialogTitle>Create Study Plan - Step {currentStep} of 4</DialogTitle>
         </DialogHeader>
-
-        <form onSubmit={handleSubmit}>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="basics">Basics</TabsTrigger>
-              <TabsTrigger value="topics">Topics</TabsTrigger>
-              <TabsTrigger value="schedule">Schedule</TabsTrigger>
-              <TabsTrigger value="preferences">Preferences</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="basics" className="space-y-4 mt-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Plan Title *</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => handleInputChange('title', e.target.value)}
-                    placeholder="e.g., Math Final Exam Preparation"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="subject">Subject *</Label>
-                  <Select value={formData.subject} onValueChange={(value) => handleInputChange('subject', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select subject" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {subjects.map((subject) => (
-                        <SelectItem key={subject.id} value={subject.name}>
-                          {subject.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  placeholder="Describe your study plan goals and objectives"
-                  rows={3}
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="totalHours">Total Hours</Label>
-                  <Input
-                    id="totalHours"
-                    type="number"
-                    min="1"
-                    max="200"
-                    value={formData.totalHours}
-                    onChange={(e) => handleInputChange('totalHours', parseInt(e.target.value))}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="startDate">Start Date</Label>
-                  <Input
-                    id="startDate"
-                    type="date"
-                    value={formData.startDate}
-                    onChange={(e) => handleInputChange('startDate', e.target.value)}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="endDate">End Date</Label>
-                  <Input
-                    id="endDate"
-                    type="date"
-                    value={formData.endDate}
-                    onChange={(e) => handleInputChange('endDate', e.target.value)}
-                  />
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="topics" className="space-y-4 mt-6">
-              <div className="space-y-4">
-                <div>
-                  <Label>Study Topics *</Label>
-                  <div className="flex gap-2 mt-2">
-                    <Input
-                      value={newTopic}
-                      onChange={(e) => setNewTopic(e.target.value)}
-                      placeholder="Enter a topic to study"
-                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTopic())}
-                    />
-                    <Button type="button" onClick={addTopic} size="sm">
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Added Topics ({formData.topics.length})</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {formData.topics.map((topic, index) => (
-                      <Badge key={index} variant="secondary" className="pr-1">
-                        {topic}
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-4 w-4 p-0 ml-1"
-                          onClick={() => removeTopic(topic)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </Badge>
-                    ))}
-                  </div>
-                  {formData.topics.length === 0 && (
-                    <p className="text-sm text-gray-500">No topics added yet</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Difficulty Level</Label>
-                  <Select value={formData.difficultyLevel} onValueChange={(value: any) => handleInputChange('difficultyLevel', value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="beginner">Beginner</SelectItem>
-                      <SelectItem value="intermediate">Intermediate</SelectItem>
-                      <SelectItem value="advanced">Advanced</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="schedule" className="space-y-4 mt-6">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>Session Duration (minutes)</Label>
-                  <Select value={formData.sessionDuration.toString()} onValueChange={(value) => handleInputChange('sessionDuration', parseInt(value))}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="15">15 minutes</SelectItem>
-                      <SelectItem value="30">30 minutes</SelectItem>
-                      <SelectItem value="45">45 minutes</SelectItem>
-                      <SelectItem value="60">1 hour</SelectItem>
-                      <SelectItem value="90">1.5 hours</SelectItem>
-                      <SelectItem value="120">2 hours</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Break Duration (minutes)</Label>
-                  <Select value={formData.breakDuration.toString()} onValueChange={(value) => handleInputChange('breakDuration', parseInt(value))}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="5">5 minutes</SelectItem>
-                      <SelectItem value="10">10 minutes</SelectItem>
-                      <SelectItem value="15">15 minutes</SelectItem>
-                      <SelectItem value="20">20 minutes</SelectItem>
-                      <SelectItem value="30">30 minutes</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Max Sessions/Day</Label>
-                  <Select value={formData.maxSessionsPerDay.toString()} onValueChange={(value) => handleInputChange('maxSessionsPerDay', parseInt(value))}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">1 session</SelectItem>
-                      <SelectItem value="2">2 sessions</SelectItem>
-                      <SelectItem value="3">3 sessions</SelectItem>
-                      <SelectItem value="4">4 sessions</SelectItem>
-                      <SelectItem value="5">5 sessions</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Study Days</Label>
-                <div className="flex gap-2">
-                  {daysOfWeek.map((day) => (
-                    <Button
-                      key={day.key}
-                      type="button"
-                      variant={formData.studyDays.includes(day.key) ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => toggleStudyDay(day.key)}
-                      className={formData.studyDays.includes(day.key) ? "bg-mint-600 hover:bg-mint-700" : ""}
-                    >
-                      {day.label}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="preferences" className="space-y-4 mt-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Learning Style</Label>
-                  <Select value={formData.learningStyle} onValueChange={(value: any) => handleInputChange('learningStyle', value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="visual">Visual Learner</SelectItem>
-                      <SelectItem value="auditory">Auditory Learner</SelectItem>
-                      <SelectItem value="kinesthetic">Kinesthetic Learner</SelectItem>
-                      <SelectItem value="mixed">Mixed Approach</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm">Study Plan Summary</CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-sm space-y-2">
-                    <p><strong>Duration:</strong> {formData.totalHours} hours over {formData.studyDays.length} days/week</p>
-                    <p><strong>Topics:</strong> {formData.topics.length} topics to cover</p>
-                    <p><strong>Sessions:</strong> {formData.sessionDuration} min sessions with {formData.breakDuration} min breaks</p>
-                    <p><strong>Difficulty:</strong> {formData.difficultyLevel}</p>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-          </Tabs>
-
-          <div className="flex justify-between mt-6 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
+        
+        <div className="space-y-6">
+          {renderStep()}
+          
+          <div className="flex justify-between">
+            <Button
+              variant="outline"
+              onClick={() => setCurrentStep(prev => Math.max(1, prev - 1))}
+              disabled={currentStep === 1}
+            >
+              Previous
             </Button>
-            <div className="flex gap-2">
-              {activeTab !== 'basics' && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    const tabs = ['basics', 'topics', 'schedule', 'preferences'];
-                    const currentIndex = tabs.indexOf(activeTab);
-                    setActiveTab(tabs[currentIndex - 1]);
-                  }}
-                >
-                  Previous
-                </Button>
-              )}
-              {activeTab !== 'preferences' ? (
-                <Button
-                  type="button"
-                  onClick={() => {
-                    const tabs = ['basics', 'topics', 'schedule', 'preferences'];
-                    const currentIndex = tabs.indexOf(activeTab);
-                    setActiveTab(tabs[currentIndex + 1]);
-                  }}
-                  className="bg-mint-600 hover:bg-mint-700"
-                >
-                  Next
-                </Button>
-              ) : (
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="bg-mint-600 hover:bg-mint-700"
-                >
-                  {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Create Study Plan
-                </Button>
-              )}
-            </div>
+            
+            {currentStep < 4 ? (
+              <Button
+                onClick={() => setCurrentStep(prev => Math.min(4, prev + 1))}
+                disabled={
+                  (currentStep === 1 && (!formData.title || !formData.subject)) ||
+                  (currentStep === 2 && formData.topics.length === 0) ||
+                  (currentStep === 3 && (!startDate || !endDate))
+                }
+              >
+                Next
+              </Button>
+            ) : (
+              <Button
+                onClick={handleSubmit}
+                disabled={isLoading}
+              >
+                {isLoading ? 'Creating...' : 'Create Study Plan'}
+              </Button>
+            )}
           </div>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
