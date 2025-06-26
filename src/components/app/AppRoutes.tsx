@@ -21,9 +21,24 @@ import AdminDashboardPage from "@/pages/AdminDashboardPage";
 
 const SuggestionsPage = lazy(() => import("@/pages/SuggestionsPage"));
 
+// Create a wrapper component to bridge the interface mismatch
+const ErrorFallbackWrapper = ({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) => {
+  const handleGoHome = () => {
+    window.location.href = '/dashboard';
+  };
+
+  return (
+    <FlashcardsErrorFallback 
+      error={error} 
+      retry={resetErrorBoundary} 
+      goHome={handleGoHome} 
+    />
+  );
+};
+
 export const AppRoutes = () => {
   return (
-    <ErrorBoundary FallbackComponent={FlashcardsErrorFallback}>
+    <ErrorBoundary FallbackComponent={ErrorFallbackWrapper}>
       <Suspense fallback={<LoadingState />}>
         <Routes>
           <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
