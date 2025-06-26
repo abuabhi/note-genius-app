@@ -2,11 +2,10 @@
 import React from 'react';
 import { StandardListCard } from '@/components/ui/StandardListCard';
 import { Quiz } from '@/types/quiz';
-import { Play, MessageCircle, Clock, Calendar, User, Heart } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { Play, MessageCircle, Calendar, User, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Badge } from '@/components/ui/badge';
 import { QuizActionsMenu } from './QuizActionsMenu';
+import { getSubjectColorClasses } from '@/utils/subjectColors';
 
 interface QuizListCardProps {
   quiz: Quiz;
@@ -47,26 +46,27 @@ export const QuizListCard = ({
 
   const metadata = [
     {
-      icon: <MessageCircle className="h-3 w-3" />,
+      icon: <MessageCircle className="h-3.5 w-3.5" />,
       label: `${questionCount} question${questionCount === 1 ? '' : 's'}`
     },
     {
-      icon: <Calendar className="h-3 w-3" />,
+      icon: <Calendar className="h-3.5 w-3.5" />,
       label: formattedDate
     }
   ];
 
   if (!isOwner) {
     metadata.push({
-      icon: <User className="h-3 w-3" />,
+      icon: <User className="h-3.5 w-3.5" />,
       label: 'Public'
     });
   }
 
   if (isFavorite) {
     metadata.push({
-      icon: <Heart className="h-3 w-3 fill-current text-red-500" />,
-      label: 'Favorite'
+      icon: <Heart className="h-3.5 w-3.5 fill-current text-red-500" />,
+      label: 'Favorite',
+      className: 'text-red-600'
     });
   }
 
@@ -87,12 +87,12 @@ export const QuizListCard = ({
       title={quiz.title}
       description={quiz.description || undefined}
       subjectName={subjectName}
-      subjectBadgeColor="bg-blue-100 text-blue-700"
+      subjectBadgeColor={getSubjectColorClasses(subjectName)}
       primaryAction={{
         label: "Take Quiz",
         onClick: handleTakeQuiz,
-        icon: <Play className="h-3 w-3 mr-1" />,
-        className: "bg-mint-600 hover:bg-mint-700 text-white px-3 py-1 h-7 text-xs"
+        icon: <Play className="h-3.5 w-3.5 mr-1.5" />,
+        className: "bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white px-4 py-2 h-8 text-xs font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
       }}
       menuActions={
         <QuizActionsMenu

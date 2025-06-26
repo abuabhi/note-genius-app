@@ -1,3 +1,4 @@
+
 import { Note } from "@/types/note";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ViewMode } from "@/hooks/useViewPreferences";
@@ -8,9 +9,9 @@ import { NoteCardActions } from "./NoteCardActions";
 import { StandardListCard } from "@/components/ui/StandardListCard";
 import { stripMarkdown } from "./utils/markdownUtils";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
-import { formatDistanceToNow } from "date-fns";
 import { Clock, Calendar, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { getSubjectColorClasses } from "@/utils/subjectColors";
 
 interface NoteCardProps {
   note: Note;
@@ -70,21 +71,22 @@ export const NoteCard = ({
   const isListView = viewMode === 'list';
   
   if (isListView) {
-    // Get description for list view
-    const description = content ? stripMarkdown(content).substring(0, 100) : '';
-    const truncatedDescription = description.length > 100 ? description.substring(0, 97) + '...' : description;
+    // Get description for list view - allow longer descriptions
+    const description = content ? stripMarkdown(content).substring(0, 180) : '';
+    const truncatedDescription = description.length > 180 ? description.substring(0, 177) + '...' : description;
+    const subjectName = getSubjectName();
 
     return (
       <StandardListCard
         title={note.title}
         description={truncatedDescription || undefined}
-        subjectName={getSubjectName()}
-        subjectBadgeColor="bg-mint-100 text-mint-700"
+        subjectName={subjectName}
+        subjectBadgeColor={getSubjectColorClasses(subjectName)}
         primaryAction={{
           label: "Study",
           onClick: handleGoToStudyMode,
-          icon: <Sparkles className="h-3 w-3 mr-1" />,
-          className: "bg-green-600 hover:bg-green-700 text-white px-3 py-1 h-7 text-xs"
+          icon: <Sparkles className="h-3.5 w-3.5 mr-1.5" />,
+          className: "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-4 py-2 h-8 text-xs font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
         }}
         menuActions={
           <NoteCardActions 
@@ -99,11 +101,11 @@ export const NoteCard = ({
         }
         metadata={[
           {
-            icon: <Clock className="h-3 w-3" />,
-            label: `${readTime}m`
+            icon: <Clock className="h-3.5 w-3.5" />,
+            label: `${readTime}m read`
           },
           {
-            icon: <Calendar className="h-3 w-3" />,
+            icon: <Calendar className="h-3.5 w-3.5" />,
             label: formattedDate
           }
         ]}

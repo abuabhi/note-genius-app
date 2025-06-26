@@ -56,7 +56,7 @@ const QuizList = ({ viewMode }: QuizListProps) => {
   const transformedQuizzes: Quiz[] = quizzes.map(quiz => ({
     ...quiz,
     section_id: quiz.section_id || null,
-    source_type: quiz.source_type || 'custom',
+    source_type: (quiz.source_type as "custom" | "prebuilt" | "note") || 'custom',
     source_id: quiz.source_id || null,
     questionCount: quiz.questionCount || 0,
   }));
