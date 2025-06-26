@@ -4,7 +4,22 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { StudyMode } from '@/pages/study/types';
 
-// Define a simplified flashcard type to avoid type recursion
+// Database result type - what we get from Supabase
+interface FlashcardDatabaseResult {
+  id: string;
+  front_content: string;
+  back_content: string;
+  difficulty: number;
+  set_id?: string;
+  last_reviewed_at?: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
+  is_built_in: boolean;
+  next_review_at: string;
+}
+
+// Simplified flashcard type for the hook
 interface SimpleFlashcard {
   id: string;
   front_content: string;
@@ -36,31 +51,34 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
     console.log('📊 Session activity updated:', activityData);
   }, []);
   
-  // Fetch flashcards for the set
+  // Fetch flashcards for the set with explicit typing
   const { 
     data: flashcards = [], 
     isLoading, 
     error 
   } = useQuery({
-    queryKey: ['flashcards', setId],
-    queryFn: async (): Promise<SimpleFlashcard[]> => {
+    queryKey: ['flashcards', setId] as const,
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('flashcards')
         .select('*')
-        .eq('flashcard_set_id', setId)
+        .eq('set_id', setId)  // Use 'set_id' instead of 'flashcard_set_id'
         .order('created_at');
 
       if (error) throw error;
-      return (data || []).map(item => ({
+      
+      const results: SimpleFlashcard[] = (data || []).map((item: any) => ({
         id: item.id,
         front_content: item.front_content || '',
         back_content: item.back_content || '',
         front: item.front_content || '', // Map for compatibility
         back: item.back_content || '', // Map for compatibility
         difficulty: item.difficulty || 1,
-        set_id: item.flashcard_set_id,
+        set_id: item.set_id,
         last_reviewed: item.last_reviewed_at
       }));
+      
+      return results;
     },
     enabled: !!setId
   });
@@ -137,7 +155,7 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
         .from('flashcards')
         .update({ 
           difficulty: newDifficulty,
-          last_reviewed: new Date().toISOString()
+          last_reviewed_at: new Date().toISOString()
         })
         .eq('id', currentCard.id);
 
