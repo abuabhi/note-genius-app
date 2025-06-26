@@ -52,13 +52,13 @@ const QuizList = ({ viewMode }: QuizListProps) => {
   const totalQuizzes = quizzes.length;
   const favoriteCount = getFavoriteCount();
 
-  // Transform the data to ensure it has all required Quiz properties
+  // Transform the data to ensure it has all required Quiz properties with proper defaults
   const transformedQuizzes: Quiz[] = quizzes.map(quiz => ({
     ...quiz,
     section_id: quiz.section_id || null,
     source_type: (quiz.source_type as "custom" | "prebuilt" | "note") || 'custom',
     source_id: quiz.source_id || null,
-    questionCount: quiz.questionCount || 0,
+    questionCount: quiz.questionCount || 0, // Ensure questionCount is always defined
   }));
 
   return (

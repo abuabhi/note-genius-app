@@ -64,8 +64,7 @@ export const FlashcardSetListCard = ({
   if (set.is_built_in) {
     metadata.push({
       icon: <Star className="h-3.5 w-3.5" />,
-      label: 'Built-in',
-      className: 'text-amber-600'
+      label: 'Built-in'
     });
   } else if (!isOwner) {
     metadata.push({
@@ -74,10 +73,15 @@ export const FlashcardSetListCard = ({
     });
   }
 
+  // Get description with proper length for list view
+  const description = set.description ? 
+    (set.description.length > 140 ? set.description.substring(0, 137) + '...' : set.description) 
+    : undefined;
+
   return (
     <StandardListCard
       title={set.name}
-      description={set.description}
+      description={description}
       subjectName={set.subject}
       subjectBadgeColor={getSubjectColorClasses(set.subject)}
       primaryAction={{

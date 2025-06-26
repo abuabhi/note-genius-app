@@ -65,8 +65,7 @@ export const QuizListCard = ({
   if (isFavorite) {
     metadata.push({
       icon: <Heart className="h-3.5 w-3.5 fill-current text-red-500" />,
-      label: 'Favorite',
-      className: 'text-red-600'
+      label: 'Favorite'
     });
   }
 
@@ -82,10 +81,15 @@ export const QuizListCard = ({
     academic_subjects: quiz.academic_subjects,
   };
 
+  // Get description with proper length for list view
+  const description = quiz.description ? 
+    (quiz.description.length > 140 ? quiz.description.substring(0, 137) + '...' : quiz.description) 
+    : undefined;
+
   return (
     <StandardListCard
       title={quiz.title}
-      description={quiz.description || undefined}
+      description={description}
       subjectName={subjectName}
       subjectBadgeColor={getSubjectColorClasses(subjectName)}
       primaryAction={{
