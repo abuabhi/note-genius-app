@@ -164,7 +164,7 @@ export const ComparativeBenchmarkChart: React.FC = () => {
                   {benchmark.trend === 'below' && 
                     `You're ${Math.round((1 - (benchmark.userValue / benchmark.benchmarkValue)) * 100)}% below average - room for improvement`}
                   {benchmark.trend === 'at' && 
-                    'You're performing at the average level'}
+                    'You\'re performing at the average level'}
                 </div>
               </div>
             ))}
