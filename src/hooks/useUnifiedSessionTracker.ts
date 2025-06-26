@@ -229,6 +229,19 @@ export const useUnifiedSessionTracker = () => {
     }
   }, []);
 
+  // Activity recording methods for flashcard study compatibility
+  const recordActivity = useCallback(() => {
+    lastActivityRef.current = new Date();
+    console.log('📊 Activity recorded for unified session');
+  }, []);
+
+  const updateSessionActivity = useCallback((activityData?: any) => {
+    recordActivity();
+    if (activityData) {
+      console.log('📊 Session activity updated:', activityData);
+    }
+  }, [recordActivity]);
+
   return {
     isActive,
     isPaused,
@@ -242,6 +255,8 @@ export const useUnifiedSessionTracker = () => {
     startSession,
     endSession,
     togglePause,
-    dismissTimeoutWarning
+    dismissTimeoutWarning,
+    recordActivity,
+    updateSessionActivity
   };
 };

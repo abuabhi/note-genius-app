@@ -1,289 +1,148 @@
-
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/auth';
-import { toast } from 'sonner';
-import { StudyMode } from '@/pages/study/types';
 import { Flashcard } from '@/types/flashcard';
-import { useUnifiedSessionTracker } from './useUnifiedSessionTracker';
+import { StudyMode } from '@/pages/study/types';
+import { useUnifiedSessionTracker } from '@/hooks/useUnifiedSessionTracker';
 
-interface UseOptimizedFlashcardStudyProps {
+interface OptimizedFlashcardStudyProps {
   setId: string;
   mode: StudyMode;
-  recordActivity?: () => void;
-  updateSessionActivity?: (data: any) => void;
 }
 
-interface OptimizedFlashcardData extends Flashcard {
-  mastery_level?: number;
-  last_reviewed_at?: string;
-  times_seen?: number;
-  times_correct?: number;
-  is_known?: boolean;
-  is_difficult?: boolean;
-  confidence_level?: number;
-}
-
-interface StudyStats {
-  studiedToday: number;
-  masteredCount: number;
-  totalCards: number;
-}
-
-export const useOptimizedFlashcardStudy = ({ 
-  setId, 
-  mode
-}: UseOptimizedFlashcardStudyProps) => {
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-  const { startSession, recordActivity, updateSessionActivity, isActive } = useUnifiedSessionTracker();
-  
+export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardStudyProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [studyStats, setStudyStats] = useState<StudyStats>({
-    studiedToday: 0,
-    masteredCount: 0,
-    totalCards: 0
-  });
-
-  // Optimized query to fetch flashcards with proper relationships
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['optimized-flashcard-study', setId, mode, user?.id],
+  const [studiedToday, setStudiedToday] = useState(0);
+  const [masteredCount, setMasteredCount] = useState(0);
+  
+  // Get session tracking functions
+  const { recordActivity, updateSessionActivity } = useUnifiedSessionTracker();
+  
+  // Fetch flashcards for the set
+  const { 
+    data: flashcards = [], 
+    isLoading, 
+    error 
+  } = useQuery({
+    queryKey: ['flashcards', setId],
     queryFn: async () => {
-      if (!user || !setId) return null;
+      const { data, error } = await supabase
+        .from('flashcards')
+        .select('*')
+        .eq('flashcard_set_id', setId)
+        .order('created_at');
 
-      console.log('🚀 Starting optimized flashcard fetch for set:', setId, 'mode:', mode);
-      const startTime = Date.now();
-
-      // Get set details first for session title
-      const { data: setData, error: setError } = await supabase
-        .from('flashcard_sets')
-        .select('name, subject')
-        .eq('id', setId)
-        .single();
-
-      if (setError) {
-        console.error('❌ Error fetching set details:', setError);
-        throw setError;
-      }
-
-      // Step 1: Get flashcards for the set
-      const { data: flashcardData, error: flashcardError } = await supabase
-        .from('flashcard_set_cards')
-        .select(`
-          position,
-          flashcards!inner (
-            id,
-            front_content,
-            back_content,
-            difficulty,
-            created_at,
-            updated_at,
-            user_id,
-            is_built_in
-          )
-        `)
-        .eq('set_id', setId)
-        .order('position', { ascending: true });
-
-      if (flashcardError) {
-        console.error('❌ Error fetching flashcards:', flashcardError);
-        throw flashcardError;
-      }
-
-      if (!flashcardData || flashcardData.length === 0) {
-        console.log('📝 No flashcards found in set:', setId);
-        return {
-          flashcards: [],
-          stats: { studiedToday: 0, masteredCount: 0, totalCards: 0 },
-          setInfo: setData
-        };
-      }
-
-      console.log('📋 Found flashcards in set:', flashcardData.length);
-
-      // Step 2: Get progress data separately for the user
-      const flashcardIds = flashcardData.map(item => item.flashcards.id);
-      
-      const [progressData, learningData] = await Promise.all([
-        supabase
-          .from('user_flashcard_progress')
-          .select('*')
-          .eq('user_id', user.id)
-          .in('flashcard_id', flashcardIds),
-        supabase
-          .from('learning_progress')
-          .select('*')
-          .eq('user_id', user.id)
-          .in('flashcard_id', flashcardIds)
-      ]);
-
-      // Create lookup maps for performance
-      const progressMap = new Map(
-        (progressData.data || []).map(p => [p.flashcard_id, p])
-      );
-      const learningMap = new Map(
-        (learningData.data || []).map(l => [l.flashcard_id, l])
-      );
-
-      // Step 3: Transform and combine data efficiently
-      const allCards: OptimizedFlashcardData[] = flashcardData.map(item => {
-        const flashcard = item.flashcards;
-        const progress = progressMap.get(flashcard.id);
-        const learningProgress = learningMap.get(flashcard.id);
-
-        return {
-          id: flashcard.id,
-          front_content: flashcard.front_content,
-          back_content: flashcard.back_content,
-          difficulty: flashcard.difficulty,
-          created_at: flashcard.created_at,
-          updated_at: flashcard.updated_at,
-          user_id: flashcard.user_id,
-          is_built_in: flashcard.is_built_in,
-          front: flashcard.front_content,
-          back: flashcard.back_content,
-          mastery_level: progress?.mastery_level || 0,
-          last_reviewed_at: progress?.last_reviewed_at,
-          times_seen: learningProgress?.times_seen || 0,
-          times_correct: learningProgress?.times_correct || 0,
-          is_known: learningProgress?.is_known || false,
-          is_difficult: learningProgress?.is_difficult || false,
-          confidence_level: learningProgress?.confidence_level || 0
-        };
-      });
-
-      const studiedToday = allCards.filter(card => {
-        if (!card.last_reviewed_at) return false;
-        const today = new Date().toDateString();
-        const lastReviewed = new Date(card.last_reviewed_at).toDateString();
-        return today === lastReviewed;
-      }).length;
-
-      const masteredCount = allCards.filter(card => card.mastery_level && card.mastery_level >= 4).length;
-
-      console.log(`⚡ Optimized fetch completed in ${Date.now() - startTime}ms`);
-
-      return {
-        flashcards: allCards,
-        stats: {
-          studiedToday,
-          masteredCount,
-          totalCards: allCards.length
-        },
-        setInfo: setData
-      };
+      if (error) throw error;
+      return data as Flashcard[];
     },
-    enabled: !!user && !!setId
+    enabled: !!setId
   });
 
-  // Auto-start unified session when flashcards are loaded
+  // Initialize session activity tracking
   useEffect(() => {
-    if (data?.flashcards?.length && data.setInfo && !isActive) {
-      const sessionTitle = `Studying: ${data.setInfo.name}`;
-      const subject = data.setInfo.subject || 'General';
-      
-      console.log('🎯 Auto-starting flashcard study session:', sessionTitle);
-      startSession('flashcard_study', sessionTitle, subject);
+    if (flashcards.length > 0) {
+      updateSessionActivity({ flashcardSetId: setId, mode });
     }
-  }, [data, isActive, startSession]);
+  }, [flashcards.length, setId, mode, updateSessionActivity]);
 
-  useEffect(() => {
-    if (data?.stats) {
-      setStudyStats(data.stats);
-    }
-  }, [data]);
-
-  const flashcards = data?.flashcards || [];
+  const currentCard = flashcards[currentIndex];
+  const totalCards = flashcards.length;
+  const isComplete = currentIndex >= totalCards && totalCards > 0;
 
   const handleNext = useCallback(() => {
     recordActivity();
-    setIsFlipped(false);
-    setCurrentIndex(prev => (prev + 1) % flashcards.length);
-  }, [flashcards.length, recordActivity]);
+    if (currentIndex < totalCards - 1) {
+      setCurrentIndex(prev => prev + 1);
+      setIsFlipped(false);
+    }
+  }, [currentIndex, totalCards, recordActivity]);
 
   const handlePrevious = useCallback(() => {
     recordActivity();
-    setIsFlipped(false);
-    setCurrentIndex(prev => (prev - 1 + flashcards.length) % flashcards.length);
-  }, [flashcards.length, recordActivity]);
+    if (currentIndex > 0) {
+      setCurrentIndex(prev => prev - 1);
+      setIsFlipped(false);
+    }
+  }, [currentIndex, recordActivity]);
 
   const handleFlip = useCallback(() => {
     recordActivity();
     setIsFlipped(prev => !prev);
   }, [recordActivity]);
 
-  const handleCardChoice = useCallback(async (choice: 'mastered' | 'needs_practice' | 'difficult') => {
-    if (!user || !flashcards[currentIndex]) return;
-
+  const handleCardChoice = useCallback(async (choice: 'easy' | 'medium' | 'hard' | 'mastered' | 'needs_practice') => {
+    if (!currentCard) return;
+    
     recordActivity();
-    const currentCard = flashcards[currentIndex];
-
+    
     try {
-      let masteryLevel = 1;
-      if (choice === 'mastered') masteryLevel = 4;
-      else if (choice === 'needs_practice') masteryLevel = 2;
-      else if (choice === 'difficult') masteryLevel = 1;
+      // Update flashcard difficulty based on choice
+      let newDifficulty = currentCard.difficulty;
+      let incrementStudied = false;
+      let incrementMastered = false;
 
-      // Update progress
+      switch (choice) {
+        case 'easy':
+          newDifficulty = Math.max(1, currentCard.difficulty - 1);
+          incrementStudied = true;
+          break;
+        case 'medium':
+          // Keep same difficulty
+          incrementStudied = true;
+          break;
+        case 'hard':
+          newDifficulty = Math.min(5, currentCard.difficulty + 1);
+          incrementStudied = true;
+          break;
+        case 'mastered':
+          newDifficulty = 1;
+          incrementStudied = true;
+          incrementMastered = true;
+          break;
+        case 'needs_practice':
+          newDifficulty = Math.min(5, currentCard.difficulty + 2);
+          incrementStudied = true;
+          break;
+      }
+
+      // Update the flashcard in the database
       const { error } = await supabase
-        .from('user_flashcard_progress')
-        .upsert({
-          user_id: user.id,
-          flashcard_id: currentCard.id,
-          mastery_level: masteryLevel,
-          last_reviewed_at: new Date().toISOString(),
-        });
+        .from('flashcards')
+        .update({ 
+          difficulty: newDifficulty,
+          last_reviewed: new Date().toISOString()
+        })
+        .eq('id', currentCard.id);
 
       if (error) throw error;
 
-      // Update learning progress
-      await supabase
-        .from('learning_progress')
-        .upsert({
-          user_id: user.id,
-          flashcard_id: currentCard.id,
-          times_seen: (currentCard.times_seen || 0) + 1,
-          times_correct: choice === 'mastered' ? (currentCard.times_correct || 0) + 1 : (currentCard.times_correct || 0),
-          is_known: choice === 'mastered',
-          is_difficult: choice === 'difficult',
-          confidence_level: choice === 'mastered' ? 5 : choice === 'needs_practice' ? 3 : 1,
-          last_seen_at: new Date().toISOString()
-        });
-
-      // Update unified session activity with meaningful data
-      const newStudiedToday = studyStats.studiedToday + 1;
-      const newMasteredCount = choice === 'mastered' ? studyStats.masteredCount + 1 : studyStats.masteredCount;
-      
-      await updateSessionActivity({
-        cards_reviewed: newStudiedToday,
-        cards_correct: newMasteredCount
-      });
-
-      // Update local stats
-      setStudyStats(prev => ({
-        ...prev,
-        studiedToday: newStudiedToday,
-        masteredCount: newMasteredCount
-      }));
+      // Update local state
+      if (incrementStudied) {
+        setStudiedToday(prev => prev + 1);
+      }
+      if (incrementMastered) {
+        setMasteredCount(prev => prev + 1);
+      }
 
       // Move to next card
-      handleNext();
-
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['optimized-flashcard-study'] });
-      queryClient.invalidateQueries({ queryKey: ['unified-analytics'] });
+      setTimeout(() => {
+        handleNext();
+      }, 500);
 
     } catch (error) {
-      console.error('Error updating flashcard progress:', error);
-      toast.error('Failed to save progress');
+      console.error('Error updating flashcard:', error);
     }
-  }, [user, flashcards, currentIndex, studyStats, updateSessionActivity, handleNext, queryClient, recordActivity]);
+  }, [currentCard, recordActivity, handleNext]);
 
-  const currentCard = useMemo(() => flashcards[currentIndex] || null, [flashcards, currentIndex]);
-  const isComplete = useMemo(() => currentIndex >= flashcards.length && flashcards.length > 0, [currentIndex, flashcards.length]);
-  const totalCards = flashcards.length;
+  // Calculate progress stats
+  const progressStats = {
+    currentIndex: Math.min(currentIndex + 1, totalCards),
+    totalCards,
+    studiedToday,
+    masteredCount,
+    completionPercentage: totalCards > 0 ? Math.round((currentIndex / totalCards) * 100) : 0
+  };
 
   return {
     flashcards,
@@ -294,8 +153,9 @@ export const useOptimizedFlashcardStudy = ({
     isComplete,
     currentCard,
     totalCards,
-    studiedToday: studyStats.studiedToday,
-    masteredCount: studyStats.masteredCount,
+    studiedToday,
+    masteredCount,
+    progressStats,
     handleNext,
     handlePrevious,
     handleFlip,
