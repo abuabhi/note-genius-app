@@ -3,7 +3,7 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
 import { Loader2 } from 'lucide-react';
 
-export const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+export const AdminRoute = () => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -16,7 +16,5 @@ export const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 
   // For now, allow any authenticated user to access admin routes
   // In a real app, you'd check for admin role here
-  return user ? <>{children}</> : <Navigate to="/login" replace />;
+  return user ? <Outlet /> : <Navigate to="/login" replace />;
 };
-
-export default AdminRoute;

@@ -12,12 +12,12 @@ export function generateStudyRecommendations(
 
   // Check if user needs to focus on weak subjects
   const weakSubjects = (gradeProgression || []).filter(subject => (subject.masteryLevel || 0) < 60);
-  if (weakSubjects.length > 0 && weakSubjects[0].subject) {
+  if (weakSubjects.length > 0) {
     recommendations.push({
       type: 'focus_subject',
       subject: weakSubjects[0].subject,
       priority: 'high',
-      message: `Focus on ${weakSubjects[0].subject} - currently at ${Math.round(weakSubjects[0].masteryLevel || 0)}% mastery`,
+      message: `Focus on ${weakSubjects[0].subject} - currently at ${weakSubjects[0].masteryLevel || 0}% mastery`,
       estimatedImpact: '+15% mastery in 2 weeks'
     });
   }
@@ -34,24 +34,11 @@ export function generateStudyRecommendations(
 
   // Check weekly goal progress
   if (performancePrediction.weeklyGoalLikelihood < 50) {
-    const weeklyHours = studyTimeAnalytics?.weeklyComparison?.thisWeek || 0;
-    const targetHours = 5;
-    const hoursNeeded = Math.max(0, targetHours - weeklyHours);
     recommendations.push({
       type: 'maintain_pace',
       priority: 'medium',
       message: 'Increase daily study time to meet weekly goals',
-      estimatedImpact: `+${Math.ceil(hoursNeeded / 7 * 60)} min/day needed`
-    });
-  }
-
-  // Difficulty adjustment recommendations
-  if (performancePrediction.difficultyProgression === 'too_easy') {
-    recommendations.push({
-      type: 'increase_difficulty',
-      priority: 'medium',
-      message: 'Consider studying more challenging material',
-      estimatedImpact: 'Accelerate learning progress'
+      estimatedImpact: `+${Math.ceil((5 - (studyTimeAnalytics?.weeklyComparison?.thisWeek || 0)) / 7 * 60)} min/day needed`
     });
   }
 

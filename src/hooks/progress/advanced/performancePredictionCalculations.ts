@@ -1,69 +1,48 @@
 
-import { StudySession, PerformancePrediction } from './types';
+import { PerformancePrediction, StudySession } from './types';
 
 export function calculatePerformancePrediction(
-  sessions: StudySession[],
-  overviewStats: any,
+  sessions: StudySession[], 
+  overviewStats: any, 
   studyTimeAnalytics: any
 ): PerformancePrediction {
-  const recentSessions = sessions.slice(0, 10);
-  const totalSessions = sessions.length;
+  const recentSessions = sessions.slice(-14); // Last 2 weeks
   
-  // Calculate weekly goal likelihood
-  const currentWeeklyTime = studyTimeAnalytics?.weeklyComparison?.thisWeek || 0;
-  const targetWeeklyTime = 5; // hours
-  const weeklyGoalLikelihood = Math.min((currentWeeklyTime / targetWeeklyTime) * 100, 100);
+  // Calculate weekly goal likelihood based on recent performance
+  const avgDailyStudyTime = (studyTimeAnalytics?.weeklyComparison?.thisWeek || 0) / 7;
+  const weeklyGoalLikelihood = Math.min(95, Math.max(5, avgDailyStudyTime * 7 / 5 * 100)); // 5 hours goal
 
-  // Determine optimal study times based on session performance
-  const sessionsByHour = new Map<number, { count: number; avgPerformance: number }>();
-  
-  recentSessions.forEach(session => {
+  // Determine optimal study times based on performance data
+  const hourlyPerformance = recentSessions.reduce((acc: Record<number, number[]>, session) => {
     const hour = new Date(session.start_time).getHours();
-    const performance = session.cards_reviewed > 0 ? 
-      (session.cards_correct / session.cards_reviewed) : 0;
-    
-    if (!sessionsByHour.has(hour)) {
-      sessionsByHour.set(hour, { count: 0, avgPerformance: 0 });
-    }
-    
-    const existing = sessionsByHour.get(hour)!;
-    existing.avgPerformance = (existing.avgPerformance * existing.count + performance) / (existing.count + 1);
-    existing.count++;
-  });
+    const efficiency = (session.cards_correct || 0) / Math.max(session.cards_reviewed || 1, 1);
+    if (!acc[hour]) acc[hour] = [];
+    acc[hour].push(efficiency);
+    return acc;
+  }, {});
 
-  const optimalStudyTimes = Array.from(sessionsByHour.entries())
-    .filter(([_, data]) => data.count >= 2)
-    .sort(([_, a], [__, b]) => b.avgPerformance - a.avgPerformance)
+  const optimalStudyTimes = Object.entries(hourlyPerformance)
+    .map(([hour, efficiencies]) => ({
+      hour: parseInt(hour),
+      avgEfficiency: efficiencies.reduce((sum, eff) => sum + eff, 0) / efficiencies.length
+    }))
+    .sort((a, b) => b.avgEfficiency - a.avgEfficiency)
     .slice(0, 3)
-    .map(([hour]) => `${hour}:00`);
+    .map(({ hour }) => {
+      if (hour >= 6 && hour < 12) return 'Morning (6-12 PM)';
+      if (hour >= 12 && hour < 18) return 'Afternoon (12-6 PM)';
+      return 'Evening (6-10 PM)';
+    });
 
-  // Assess difficulty progression
-  const recentPerformance = recentSessions.slice(0, 5).reduce((acc, session) => {
-    return acc + (session.cards_reviewed > 0 ? session.cards_correct / session.cards_reviewed : 0);
-  }, 0) / Math.min(recentSessions.length, 5);
-
-  let difficultyProgression: 'too_easy' | 'optimal' | 'too_hard' = 'optimal';
-  if (recentPerformance > 0.9) difficultyProgression = 'too_easy';
-  else if (recentPerformance < 0.6) difficultyProgression = 'too_hard';
-
-  // Calculate burnout risk
-  const recentSessionDurations = recentSessions.map(s => s.duration || 0);
-  const avgDuration = recentSessionDurations.reduce((a, b) => a + b, 0) / recentSessionDurations.length;
-  const longSessions = recentSessionDurations.filter(d => d > 7200).length; // > 2 hours
-  
-  let burnoutRisk: 'low' | 'medium' | 'high' = 'low';
-  if (longSessions > 3 || avgDuration > 5400) burnoutRisk = 'high';
-  else if (longSessions > 1 || avgDuration > 3600) burnoutRisk = 'medium';
-
-  // Recommend break frequency
-  const recommendedBreakFrequency = burnoutRisk === 'high' ? 20 : 
-                                   burnoutRisk === 'medium' ? 25 : 30;
+  // Calculate burnout risk based on study patterns
+  const recentIntensity = recentSessions.reduce((sum, s) => sum + (s.duration || 0), 0) / Math.max(recentSessions.length, 1);
+  const burnoutRisk = recentIntensity > 120 ? 'high' : recentIntensity > 60 ? 'medium' : 'low';
 
   return {
     weeklyGoalLikelihood,
-    optimalStudyTimes,
-    difficultyProgression,
+    optimalStudyTimes: [...new Set(optimalStudyTimes)],
+    difficultyProgression: 'optimal', // Simplified for now
     burnoutRisk,
-    recommendedBreakFrequency
+    recommendedBreakFrequency: burnoutRisk === 'high' ? 15 : burnoutRisk === 'medium' ? 20 : 25
   };
 }

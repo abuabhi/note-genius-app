@@ -18,7 +18,6 @@ const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
 const SchedulePage = lazy(() => import('@/pages/SchedulePage'));
 const TodoPage = lazy(() => import('@/pages/TodoPage'));
 const GoalsPage = lazy(() => import('@/pages/GoalsPage'));
-const StudyPlannerPage = lazy(() => import('@/pages/StudyPlannerPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 const LoadingFallback = () => (
@@ -56,16 +55,13 @@ export const OptimizedAppRoutes = () => {
         <Route path="/quiz/:id/view" element={<Layout><QuizDetailsPage /></Layout>} />
         <Route path="/quiz/:id" element={<Layout><QuizDetailsPage /></Layout>} />
         
-        {/* Analytics - Fixed to avoid double Layout wrapping */}
+        {/* Analytics - Enhanced routing */}
         <Route path="/analytics" element={<Layout><AnalyticsPage /></Layout>} />
         <Route path="/progress" element={<Layout><AnalyticsPage /></Layout>} />
         
         {/* Calendar/Schedule */}
         <Route path="/calendar" element={<Layout><SchedulePage /></Layout>} />
         <Route path="/schedule" element={<Layout><SchedulePage /></Layout>} />
-        
-        {/* Study Planner */}
-        <Route path="/study-planner" element={<Layout><StudyPlannerPage /></Layout>} />
         
         {/* Goals and Todos - Added routes without Layout wrapper since they already have their own Layout */}
         <Route path="/goals" element={<GoalsPage />} />

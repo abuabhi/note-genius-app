@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/auth/useAuth";
+import { useAuth } from "@/contexts/auth";
 import { useProgressAnalytics } from "../useProgressAnalytics";
 import { subMonths, format } from 'date-fns';
 import { AdvancedAnalytics, StudySession } from './types';

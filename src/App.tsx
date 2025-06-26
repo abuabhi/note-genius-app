@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { AppRoutes } from '@/components/app/AppRoutes';
+import AppRoutes from '@/components/app/AppRoutes';
 import { AuthProvider } from '@/contexts/auth';
 import { HelpProvider } from '@/contexts/HelpContext';
 import { FlashcardProvider } from '@/contexts/flashcards';

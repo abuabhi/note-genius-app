@@ -249,39 +249,6 @@ export type Database = {
           },
         ]
       }
-      content_analysis_cache: {
-        Row: {
-          analysis_result: Json
-          content_hash: string
-          content_type: string
-          created_at: string | null
-          expires_at: string | null
-          id: string
-          subject: string | null
-          user_id: string
-        }
-        Insert: {
-          analysis_result?: Json
-          content_hash: string
-          content_type: string
-          created_at?: string | null
-          expires_at?: string | null
-          id?: string
-          subject?: string | null
-          user_id: string
-        }
-        Update: {
-          analysis_result?: Json
-          content_hash?: string
-          content_type?: string
-          created_at?: string | null
-          expires_at?: string | null
-          id?: string
-          subject?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       contest_entries: {
         Row: {
           contest_id: string
@@ -409,48 +376,6 @@ export type Database = {
           flag_url?: string | null
           id?: string
           name?: string
-        }
-        Relationships: []
-      }
-      curriculum_topics: {
-        Row: {
-          created_at: string | null
-          difficulty_level: number | null
-          grade_level: string
-          id: string
-          learning_objectives: string[] | null
-          prerequisites: string[] | null
-          related_topics: string[] | null
-          subject_name: string
-          topic_description: string | null
-          topic_name: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          difficulty_level?: number | null
-          grade_level: string
-          id?: string
-          learning_objectives?: string[] | null
-          prerequisites?: string[] | null
-          related_topics?: string[] | null
-          subject_name: string
-          topic_description?: string | null
-          topic_name: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          difficulty_level?: number | null
-          grade_level?: string
-          id?: string
-          learning_objectives?: string[] | null
-          prerequisites?: string[] | null
-          related_topics?: string[] | null
-          subject_name?: string
-          topic_description?: string | null
-          topic_name?: string
-          updated_at?: string | null
         }
         Relationships: []
       }
@@ -956,81 +881,6 @@ export type Database = {
         }
         Relationships: []
       }
-      learning_insights: {
-        Row: {
-          confidence_score: number | null
-          created_at: string | null
-          expires_at: string | null
-          generated_at: string | null
-          id: string
-          insight_data: Json
-          insight_type: string
-          is_active: boolean | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          confidence_score?: number | null
-          created_at?: string | null
-          expires_at?: string | null
-          generated_at?: string | null
-          id?: string
-          insight_data?: Json
-          insight_type: string
-          is_active?: boolean | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          confidence_score?: number | null
-          created_at?: string | null
-          expires_at?: string | null
-          generated_at?: string | null
-          id?: string
-          insight_data?: Json
-          insight_type?: string
-          is_active?: boolean | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      learning_patterns: {
-        Row: {
-          created_at: string | null
-          detected_at: string | null
-          id: string
-          last_confirmed_at: string | null
-          pattern_data: Json
-          pattern_type: string
-          strength_score: number | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          detected_at?: string | null
-          id?: string
-          last_confirmed_at?: string | null
-          pattern_data?: Json
-          pattern_type: string
-          strength_score?: number | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          detected_at?: string | null
-          id?: string
-          last_confirmed_at?: string | null
-          pattern_data?: Json
-          pattern_type?: string
-          strength_score?: number | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       learning_progress: {
         Row: {
           confidence_level: number
@@ -1362,111 +1212,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      performance_benchmarks: {
-        Row: {
-          created_at: string | null
-          grade_level: string | null
-          id: string
-          metric_type: string
-          metric_value: number
-          sample_size: number | null
-          subject_name: string
-          time_period: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          grade_level?: string | null
-          id?: string
-          metric_type: string
-          metric_value: number
-          sample_size?: number | null
-          subject_name: string
-          time_period?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          grade_level?: string | null
-          id?: string
-          metric_type?: string
-          metric_value?: number
-          sample_size?: number | null
-          subject_name?: string
-          time_period?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      plan_templates: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          is_public: boolean
-          name: string
-          subject: string
-          template_data: Json
-          updated_at: string
-          usage_count: number
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_public?: boolean
-          name: string
-          subject: string
-          template_data?: Json
-          updated_at?: string
-          usage_count?: number
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_public?: boolean
-          name?: string
-          subject?: string
-          template_data?: Json
-          updated_at?: string
-          usage_count?: number
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      predictive_analytics_cache: {
-        Row: {
-          accuracy_score: number | null
-          cache_key: string
-          created_at: string | null
-          expires_at: string | null
-          id: string
-          prediction_data: Json
-          user_id: string
-        }
-        Insert: {
-          accuracy_score?: number | null
-          cache_key: string
-          created_at?: string | null
-          expires_at?: string | null
-          id?: string
-          prediction_data?: Json
-          user_id: string
-        }
-        Update: {
-          accuracy_score?: number | null
-          cache_key?: string
-          created_at?: string | null
-          expires_at?: string | null
-          id?: string
-          prediction_data?: Json
-          user_id?: string
-        }
-        Relationships: []
       }
       profiles: {
         Row: {
@@ -2455,140 +2200,6 @@ export type Database = {
         }
         Relationships: []
       }
-      study_plan_sessions: {
-        Row: {
-          actual_end_time: string | null
-          actual_start_time: string | null
-          completion_notes: string | null
-          created_at: string
-          description: string | null
-          duration_minutes: number
-          id: string
-          performance_rating: number | null
-          priority: string
-          scheduled_date: string
-          scheduled_end_time: string
-          scheduled_start_time: string
-          session_type: string
-          status: string
-          study_plan_id: string
-          title: string
-          topic: string | null
-          updated_at: string
-        }
-        Insert: {
-          actual_end_time?: string | null
-          actual_start_time?: string | null
-          completion_notes?: string | null
-          created_at?: string
-          description?: string | null
-          duration_minutes: number
-          id?: string
-          performance_rating?: number | null
-          priority?: string
-          scheduled_date: string
-          scheduled_end_time: string
-          scheduled_start_time: string
-          session_type?: string
-          status?: string
-          study_plan_id: string
-          title: string
-          topic?: string | null
-          updated_at?: string
-        }
-        Update: {
-          actual_end_time?: string | null
-          actual_start_time?: string | null
-          completion_notes?: string | null
-          created_at?: string
-          description?: string | null
-          duration_minutes?: number
-          id?: string
-          performance_rating?: number | null
-          priority?: string
-          scheduled_date?: string
-          scheduled_end_time?: string
-          scheduled_start_time?: string
-          session_type?: string
-          status?: string
-          study_plan_id?: string
-          title?: string
-          topic?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "study_plan_sessions_study_plan_id_fkey"
-            columns: ["study_plan_id"]
-            isOneToOne: false
-            referencedRelation: "study_plans"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      study_plans: {
-        Row: {
-          available_days: Json
-          available_times: Json
-          created_at: string
-          description: string | null
-          difficulty_level: string
-          end_date: string
-          id: string
-          is_converted_to_goals: boolean
-          preferred_session_duration: number
-          start_date: string
-          status: string
-          study_style: string
-          subject: string
-          title: string
-          topics: Json
-          total_hours_per_week: number
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          available_days?: Json
-          available_times?: Json
-          created_at?: string
-          description?: string | null
-          difficulty_level?: string
-          end_date: string
-          id?: string
-          is_converted_to_goals?: boolean
-          preferred_session_duration?: number
-          start_date: string
-          status?: string
-          study_style?: string
-          subject: string
-          title: string
-          topics?: Json
-          total_hours_per_week?: number
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          available_days?: Json
-          available_times?: Json
-          created_at?: string
-          description?: string | null
-          difficulty_level?: string
-          end_date?: string
-          id?: string
-          is_converted_to_goals?: boolean
-          preferred_session_duration?: number
-          start_date?: string
-          status?: string
-          study_style?: string
-          subject?: string
-          title?: string
-          topics?: Json
-          total_hours_per_week?: number
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       study_session_activities: {
         Row: {
           activity_type: string
@@ -2967,33 +2578,6 @@ export type Database = {
         }
         Relationships: []
       }
-      topic_suggestions_cache: {
-        Row: {
-          created_at: string | null
-          expires_at: string | null
-          id: string
-          subject_name: string
-          suggestions: Json
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          expires_at?: string | null
-          id?: string
-          subject_name: string
-          suggestions: Json
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          expires_at?: string | null
-          id?: string
-          subject_name?: string
-          suggestions?: Json
-          user_id?: string
-        }
-        Relationships: []
-      }
       user_connections: {
         Row: {
           created_at: string
@@ -3133,42 +2717,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_topic_progress: {
-        Row: {
-          created_at: string | null
-          id: string
-          last_activity_at: string | null
-          progress_type: string
-          resource_count: number | null
-          subject_name: string
-          topic_name: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          last_activity_at?: string | null
-          progress_type: string
-          resource_count?: number | null
-          subject_name: string
-          topic_name: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          last_activity_at?: string | null
-          progress_type?: string
-          resource_count?: number | null
-          subject_name?: string
-          topic_name?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
@@ -3229,14 +2777,6 @@ export type Database = {
       check_user_in_conversation: {
         Args: { conversation_uuid: string }
         Returns: boolean
-      }
-      cleanup_expired_analytics_cache: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_expired_suggestions_cache: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
       }
       dismiss_announcement: {
         Args: { announcement_uuid: string }
