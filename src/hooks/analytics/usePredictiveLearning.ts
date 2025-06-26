@@ -28,7 +28,7 @@ export const usePredictiveLearning = () => {
       if (error) throw error;
       
       return data ? {
-        ...data.prediction_data as PredictiveLearningData,
+        ...(data.prediction_data as unknown as PredictiveLearningData),
         accuracy: data.accuracy_score,
         lastCalculated: data.created_at
       } : null;
@@ -159,7 +159,7 @@ export const usePredictiveLearning = () => {
         .upsert({
           user_id: user.id,
           cache_key: 'predictive_learning',
-          prediction_data: predictions,
+          prediction_data: predictions as any,
           accuracy_score: retentionProbability,
           expires_at: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString() // 6 hours
         });

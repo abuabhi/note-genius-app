@@ -40,8 +40,8 @@ export const useAdvancedPerformanceMetrics = () => {
           .in('metric_type', ['avg_accuracy', 'study_velocity', 'retention_rate'])
       ]);
 
-      const sessions = sessionsData.data || [];
-      const progress = progressData.data || [];
+      const sessions = (sessionsData.data || []) as any[];
+      const progress = (progressData.data || []) as any[];
       const benchmarks = benchmarkData.data || [];
 
       // Calculate cognitive load score (based on session complexity and duration)
@@ -65,16 +65,22 @@ export const useAdvancedPerformanceMetrics = () => {
       // Calculate subject mastery
       const subjectMastery: Record<string, number> = {};
       progress.forEach(p => {
-        const subject = p.flashcards?.flashcard_sets?.subject || 'General';
+        // Safe access to nested flashcard data
+        const flashcardData = p.flashcards as any;
+        const flashcardSet = flashcardData?.flashcard_sets;
+        const subject = flashcardSet?.subject || flashcardSet?.[0]?.subject || 'General';
+        
         if (!subjectMastery[subject]) {
           subjectMastery[subject] = [];
         }
-        subjectMastery[subject].push(p.mastery_level);
+        (subjectMastery[subject] as any).push(p.mastery_level);
       });
 
       Object.keys(subjectMastery).forEach(subject => {
         const levels = subjectMastery[subject] as any;
-        subjectMastery[subject] = levels.reduce((a: number, b: number) => a + b, 0) / levels.length;
+        if (Array.isArray(levels)) {
+          subjectMastery[subject] = levels.reduce((a: number, b: number) => a + b, 0) / levels.length;
+        }
       });
 
       // Calculate comparative performance

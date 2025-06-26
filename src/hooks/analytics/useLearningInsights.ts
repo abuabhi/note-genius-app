@@ -1,49 +1,54 @@
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { LearningInsight } from '@/types/advancedAnalytics';
 
 export const useLearningInsights = () => {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Query existing insights
-  const { data: insights, isLoading } = useQuery({
+  const { data: insights = [], isLoading } = useQuery({
     queryKey: ['learning-insights', user?.id],
     queryFn: async (): Promise<LearningInsight[]> => {
       if (!user?.id) return [];
-
+      
       const { data, error } = await supabase
         .from('learning_insights')
         .select('*')
         .eq('user_id', user.id)
         .eq('is_active', true)
         .gt('expires_at', new Date().toISOString())
-        .order('confidence_score', { ascending: false });
+        .order('generated_at', { ascending: false });
 
       if (error) throw error;
-
-      return (data || []).map(insight => ({
-        id: insight.id,
-        type: insight.insight_type as any,
-        title: insight.insight_data?.title || '',
-        description: insight.insight_data?.description || '',
-        confidence: insight.confidence_score,
-        actionable: insight.insight_data?.actionable || false,
-        priority: insight.insight_data?.priority || 'medium',
-        expiresAt: insight.expires_at
-      }));
+      
+      return (data || []).map(item => {
+        const insightData = item.insight_data as any;
+        return {
+          id: item.id,
+          type: item.insight_type as LearningInsight['type'],
+          title: insightData?.title || 'Learning Insight',
+          description: insightData?.description || 'No description available',
+          confidence: item.confidence_score || 0.8,
+          actionable: insightData?.actionable || false,
+          priority: insightData?.priority || 'medium',
+          expiresAt: item.expires_at || new Date().toISOString()
+        };
+      });
     },
     enabled: !!user?.id,
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Generate new insights
-  const generateInsights = useMutation({
-    mutationFn: async () => {
+  // Mutation to generate insights
+  const generateInsightsMutation = useMutation({
+    mutationFn: async (): Promise<Omit<LearningInsight, 'id'>[]> => {
       if (!user?.id) throw new Error('User not authenticated');
-
+      
+      setIsGenerating(true);
       console.log('💡 Generating learning insights...');
 
       // Get comprehensive user data
@@ -57,8 +62,9 @@ export const useLearningInsights = () => {
         
         supabase
           .from('user_flashcard_progress')
-          .select('*, flashcards!inner(flashcard_sets!inner(subject))')
-          .eq('user_id', user.id),
+          .select('*')
+          .eq('user_id', user.id)
+          .limit(100),
         
         supabase
           .from('study_goals')
@@ -70,7 +76,6 @@ export const useLearningInsights = () => {
           .from('learning_patterns')
           .select('*')
           .eq('user_id', user.id)
-          .order('strength_score', { ascending: false })
       ]);
 
       const sessions = sessionsData.data || [];
@@ -80,105 +85,70 @@ export const useLearningInsights = () => {
 
       const newInsights: Omit<LearningInsight, 'id'>[] = [];
 
-      // Weekly goal progress insights
-      if (goals.length > 0) {
-        const currentWeekHours = sessions
-          .filter(s => new Date(s.start_time) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))
-          .reduce((acc, s) => acc + (s.duration || 0), 0) / 3600;
+      // Performance trend insight
+      const recentSessions = sessions.slice(0, 10);
+      const olderSessions = sessions.slice(10, 20);
+      
+      if (recentSessions.length > 0 && olderSessions.length > 0) {
+        const recentAvg = recentSessions.reduce((acc, s) => 
+          acc + ((s.cards_correct || 0) / Math.max(s.cards_reviewed || 1, 1)), 0) / recentSessions.length;
+        const olderAvg = olderSessions.reduce((acc, s) => 
+          acc + ((s.cards_correct || 0) / Math.max(s.cards_reviewed || 1, 1)), 0) / olderSessions.length;
         
-        const weeklyGoal = goals[0].target_hours || 5;
-        const progress_pct = (currentWeekHours / weeklyGoal) * 100;
-
-        if (progress_pct < 50) {
-          newInsights.push({
-            type: 'warning',
-            title: 'Weekly Goal Behind Schedule',
-            description: `You're at ${Math.round(progress_pct)}% of your weekly goal. Consider scheduling additional study time.`,
-            confidence: 0.9,
-            actionable: true,
-            priority: 'high',
-            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-          });
-        } else if (progress_pct > 120) {
+        const improvement = recentAvg - olderAvg;
+        
+        if (improvement > 0.1) {
           newInsights.push({
             type: 'achievement',
-            title: 'Exceeding Weekly Goal!',
-            description: `You've completed ${Math.round(progress_pct)}% of your weekly goal. Great consistency!`,
-            confidence: 1.0,
+            title: 'Great Progress!',
+            description: `Your accuracy has improved by ${Math.round(improvement * 100)}% in recent sessions. Keep up the excellent work!`,
+            confidence: 0.9,
             actionable: false,
-            priority: 'medium',
-            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+            priority: 'high',
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+          });
+        } else if (improvement < -0.1) {
+          newInsights.push({
+            type: 'warning',
+            title: 'Performance Dip Detected',
+            description: `Your accuracy has decreased by ${Math.round(Math.abs(improvement) * 100)}%. Consider taking a break or reviewing difficult topics.`,
+            confidence: 0.8,
+            actionable: true,
+            priority: 'high',
+            expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
           });
         }
       }
 
-      // Learning velocity insights
-      const recentSessions = sessions.slice(0, 20);
-      const cardsPerHour = recentSessions.length > 0 
-        ? recentSessions.reduce((acc, s) => acc + (s.cards_reviewed || 0), 0) / 
-          Math.max(recentSessions.reduce((acc, s) => acc + (s.duration || 0), 0) / 3600, 1)
-        : 0;
-
-      if (cardsPerHour > 0) {
-        if (cardsPerHour > 50) {
-          newInsights.push({
-            type: 'recommendation',
-            title: 'Consider Slowing Down',
-            description: `You're reviewing ${Math.round(cardsPerHour)} cards/hour. Slower review might improve retention.`,
-            confidence: 0.7,
-            actionable: true,
-            priority: 'medium',
-            expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
-          });
-        } else if (cardsPerHour < 15) {
-          newInsights.push({
-            type: 'recommendation',
-            title: 'Try to Increase Pace',
-            description: `At ${Math.round(cardsPerHour)} cards/hour, you might benefit from slightly faster review.`,
-            confidence: 0.6,
-            actionable: true,
-            priority: 'low',
-            expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
-          });
-        }
-      }
-
-      // Retention insights
-      const overdueCards = progress.filter(p => {
-        if (!p.next_review_at) return false;
-        return new Date(p.next_review_at) < new Date();
-      });
-
-      if (overdueCards.length > 10) {
-        newInsights.push({
-          type: 'warning',
-          title: 'Cards Need Review',
-          description: `${overdueCards.length} cards are overdue for review. Regular review improves retention.`,
-          confidence: 0.95,
-          actionable: true,
-          priority: 'high',
-          expiresAt: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString()
-        });
-      }
-
-      // Pattern-based insights
-      const studyTimePattern = patterns.find(p => p.pattern_type === 'study_time');
-      if (studyTimePattern && studyTimePattern.strength_score > 0.7) {
-        const peakHours = studyTimePattern.pattern_data?.peakHours || [];
+      // Study consistency insight
+      const last7Days = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const recentSessionsCount = sessions.filter(s => new Date(s.start_time) > last7Days).length;
+      
+      if (recentSessionsCount === 0) {
         newInsights.push({
           type: 'recommendation',
-          title: 'Optimize Study Schedule',
-          description: `Your peak performance hours are ${peakHours.map((h: number) => `${h}:00`).join(', ')}. Schedule important topics during these times.`,
-          confidence: studyTimePattern.strength_score,
+          title: 'Time to Get Back on Track',
+          description: 'You haven\'t studied in the past week. Start with a short 15-minute session to rebuild your momentum.',
+          confidence: 1.0,
           actionable: true,
+          priority: 'high',
+          expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString()
+        });
+      } else if (recentSessionsCount >= 5) {
+        newInsights.push({
+          type: 'achievement',
+          title: 'Consistent Learner!',
+          description: `You've studied ${recentSessionsCount} times this week. Your consistency is paying off!`,
+          confidence: 1.0,
+          actionable: false,
           priority: 'medium',
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
         });
       }
 
       // Subject mastery insights
       const subjectProgress = progress.reduce((acc, p) => {
-        const subject = p.flashcards?.flashcard_sets?.subject || 'General';
+        const subject = 'General'; // Default subject
         if (!acc[subject]) acc[subject] = [];
         acc[subject].push(p.mastery_level);
         return acc;
@@ -186,80 +156,94 @@ export const useLearningInsights = () => {
 
       Object.entries(subjectProgress).forEach(([subject, levels]) => {
         const avgMastery = levels.reduce((a, b) => a + b, 0) / levels.length;
+        
         if (avgMastery >= 4) {
           newInsights.push({
             type: 'achievement',
-            title: `${subject} Mastery Achieved`,
-            description: `You've achieved high mastery in ${subject}. Consider advancing to more challenging topics.`,
+            title: `${subject} Mastery Achieved!`,
+            description: `You've achieved excellent mastery in ${subject} with an average level of ${avgMastery.toFixed(1)}.`,
             confidence: 0.9,
-            actionable: true,
+            actionable: false,
             priority: 'medium',
-            expiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+            expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
           });
         } else if (avgMastery < 2) {
           newInsights.push({
             type: 'recommendation',
             title: `Focus on ${subject}`,
-            description: `${subject} needs more attention. Consider dedicating extra study time to this subject.`,
+            description: `Your ${subject} mastery is below average. Consider spending more time on this subject.`,
             confidence: 0.8,
             actionable: true,
-            priority: 'high',
-            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+            priority: 'medium',
+            expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString()
           });
         }
       });
 
-      // Save insights
-      const insightInserts = newInsights.map(insight => ({
-        user_id: user.id,
-        insight_type: insight.type,
-        insight_data: {
-          title: insight.title,
-          description: insight.description,
-          actionable: insight.actionable,
-          priority: insight.priority
-        },
-        confidence_score: insight.confidence,
-        expires_at: insight.expiresAt
-      }));
-
-      if (insightInserts.length > 0) {
-        const { error } = await supabase
-          .from('learning_insights')
-          .insert(insightInserts);
-
-        if (error) throw error;
+      // Pattern-based insights
+      const studyTimePattern = patterns.find(p => p.pattern_type === 'study_time');
+      if (studyTimePattern) {
+        const patternData = studyTimePattern.pattern_data as any;
+        const peakHours = patternData?.peakHours;
+        if (Array.isArray(peakHours) && peakHours.length > 0) {
+          newInsights.push({
+            type: 'recommendation',
+            title: 'Optimize Your Study Schedule',
+            description: `Your peak performance hours are ${peakHours.join(', ')}:00. Schedule challenging topics during these times.`,
+            confidence: 0.8,
+            actionable: true,
+            priority: 'medium',
+            expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString()
+          });
+        }
       }
 
-      console.log('✅ Generated learning insights:', newInsights.length);
+      // Store insights in database
+      if (newInsights.length > 0) {
+        const insightInserts = newInsights.map(insight => ({
+          user_id: user.id,
+          insight_type: insight.type,
+          insight_data: {
+            title: insight.title,
+            description: insight.description,
+            actionable: insight.actionable,
+            priority: insight.priority
+          },
+          confidence_score: insight.confidence,
+          expires_at: insight.expiresAt
+        }));
+
+        await supabase
+          .from('learning_insights')
+          .insert(insightInserts);
+      }
+
+      console.log('✅ Learning insights generated:', newInsights.length);
       return newInsights;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['learning-insights', user?.id] });
-    }
-  });
-
-  // Dismiss insight
-  const dismissInsight = useMutation({
-    mutationFn: async (insightId: string) => {
-      const { error } = await supabase
-        .from('learning_insights')
-        .update({ is_active: false })
-        .eq('id', insightId)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
+      setIsGenerating(false);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['learning-insights', user?.id] });
+    onError: (error) => {
+      console.error('Error generating insights:', error);
+      setIsGenerating(false);
     }
   });
+
+  // Function to dismiss an insight
+  const dismissInsight = async (insightId: string) => {
+    await supabase
+      .from('learning_insights')
+      .update({ is_active: false })
+      .eq('id', insightId)
+      .eq('user_id', user?.id);
+  };
 
   return {
-    insights: insights || [],
-    generateInsights: generateInsights.mutate,
-    dismissInsight: dismissInsight.mutate,
-    isGenerating: generateInsights.isPending,
+    insights,
+    generateInsights: generateInsightsMutation.mutate,
+    dismissInsight,
+    isGenerating,
     isLoading
   };
 };

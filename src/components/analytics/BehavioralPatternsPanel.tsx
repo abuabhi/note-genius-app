@@ -32,6 +32,10 @@ export const BehavioralPatternsPanel: React.FC = () => {
     return 'bg-gray-100 text-gray-800';
   };
 
+  const handleAnalyzePatterns = () => {
+    analyzePatterns();
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -66,7 +70,7 @@ export const BehavioralPatternsPanel: React.FC = () => {
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={analyzePatterns}
+            onClick={handleAnalyzePatterns}
             disabled={isAnalyzing}
             className="flex items-center gap-2"
           >
@@ -81,7 +85,7 @@ export const BehavioralPatternsPanel: React.FC = () => {
             <Brain className="h-12 w-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500 mb-4">No patterns detected yet</p>
             <Button 
-              onClick={analyzePatterns} 
+              onClick={handleAnalyzePatterns} 
               disabled={isAnalyzing}
               className="flex items-center gap-2"
             >
@@ -175,7 +179,7 @@ export const BehavioralPatternsPanel: React.FC = () => {
             <div className="text-center">
               <Button 
                 variant="outline" 
-                onClick={analyzePatterns}
+                onClick={handleAnalyzePatterns}
                 disabled={isAnalyzing}
                 className="flex items-center gap-2"
               >

@@ -36,6 +36,10 @@ export const LearningInsightsPanel: React.FC = () => {
     return colors[priority as keyof typeof colors] || colors.medium;
   };
 
+  const handleGenerateInsights = () => {
+    generateInsights();
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -71,7 +75,7 @@ export const LearningInsightsPanel: React.FC = () => {
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={generateInsights}
+            onClick={handleGenerateInsights}
             disabled={isGenerating}
             className="flex items-center gap-2"
           >
@@ -86,7 +90,7 @@ export const LearningInsightsPanel: React.FC = () => {
             <Lightbulb className="h-12 w-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500 mb-4">No insights available yet</p>
             <Button 
-              onClick={generateInsights} 
+              onClick={handleGenerateInsights} 
               disabled={isGenerating}
               className="flex items-center gap-2"
             >
