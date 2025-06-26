@@ -19,7 +19,7 @@ export const useStudyPlannerStats = () => {
       // Get active plans count
       const { data: activePlans } = await supabase
         .from('study_plans')
-        .select('id, total_duration_hours, completion_percentage')
+        .select('id, total_hours_per_week')
         .eq('user_id', user.id)
         .eq('status', 'active');
 
@@ -32,19 +32,14 @@ export const useStudyPlannerStats = () => {
 
       // Calculate stats
       const activePlansCount = activePlans?.length || 0;
-      const totalHoursPlanned = activePlans?.reduce((sum, plan) => sum + (plan.total_duration_hours || 0), 0) || 0;
+      const totalHoursPlanned = activePlans?.reduce((sum, plan) => sum + (plan.total_hours_per_week || 0), 0) || 0;
       const totalPlans = activePlansCount + (completedPlans?.length || 0);
       const completionRate = totalPlans > 0 ? Math.round(((completedPlans?.length || 0) / totalPlans) * 100) : 0;
-
-      // Calculate average completion rate of active plans
-      const avgCompletionRate = activePlans && activePlans.length > 0 
-        ? Math.round(activePlans.reduce((sum, plan) => sum + (plan.completion_percentage || 0), 0) / activePlans.length)
-        : 0;
 
       return {
         activePlansCount,
         totalHoursPlanned,
-        completionRate: Math.max(completionRate, avgCompletionRate),
+        completionRate,
         currentStreak: 0 // This would need session data to calculate properly
       };
     }

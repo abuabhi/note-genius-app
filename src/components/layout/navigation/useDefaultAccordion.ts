@@ -1,32 +1,20 @@
 
-import { useLocation } from "react-router-dom";
-import { navigationData } from "./navigationData";
+import { useLocation } from 'react-router-dom';
+import { navigationGroups } from './navigationData';
 
 export const useDefaultAccordion = () => {
-  const { pathname } = useLocation();
+  const location = useLocation();
   
-  // Find which accordion items should be open by default based on current path
-  const getDefaultAccordionValue = () => {
-    const currentPath = pathname;
-    const openGroups = [];
-    
-    // Check main navigation items
-    for (const group of navigationData) {
-      for (const item of group.items) {
-        if (currentPath === item.href) {
-          openGroups.push(group.id);
-          break;
-        }
-      }
-    }
-    
-    // Check admin items
-    if (currentPath.startsWith('/admin')) {
-      openGroups.push('admin');
-    }
-    
-    return openGroups;
-  };
-
-  return getDefaultAccordionValue();
+  // Find which group contains the current route
+  const activeGroup = navigationGroups.find(group =>
+    group.items.some(item => item.href === location.pathname)
+  );
+  
+  // Always open the active group and study-tools by default
+  const defaultOpen = ['study-tools'];
+  if (activeGroup && !defaultOpen.includes(activeGroup.id)) {
+    defaultOpen.push(activeGroup.id);
+  }
+  
+  return defaultOpen;
 };

@@ -18,7 +18,27 @@ export const useActiveStudyPlans = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      
+      // Transform the data to match our StudyPlan interface
+      const transformedData = data?.map(plan => ({
+        ...plan,
+        total_duration_hours: plan.total_hours_per_week || 0,
+        preferred_times: plan.available_times || {},
+        study_days: plan.available_days || [],
+        session_duration_minutes: plan.preferred_session_duration || 45,
+        break_duration_minutes: 10,
+        max_sessions_per_day: 3,
+        completion_percentage: 0,
+        current_topic_index: 0,
+        sessions_completed: 0,
+        can_convert_to_goals: true,
+        related_flashcard_sets: [],
+        related_notes: [],
+        learning_style: plan.study_style || 'mixed',
+        learning_objectives: []
+      })) || [];
+
+      return transformedData;
     }
   });
 
