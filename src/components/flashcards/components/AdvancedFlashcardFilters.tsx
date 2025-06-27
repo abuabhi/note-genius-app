@@ -1,25 +1,17 @@
 
-import React from "react";
-import { Search, Filter, SortAsc } from "lucide-react";
+import React from 'react';
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Search, Filter, Grid, List, SortAsc, SortDesc } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { FilterHeader } from "./FilterHeader";
-import { useUserSubjects } from "@/hooks/useUserSubjects";
 
 export interface FlashcardFilters {
   searchQuery: string;
   subjectFilter: string;
   difficultyFilter: string;
   progressFilter: string;
-  sortBy: string;
+  sortBy: 'name' | 'created_at' | 'updated_at' | 'card_count';
   sortOrder: 'asc' | 'desc';
   viewMode: 'grid' | 'list';
   showPinnedOnly: boolean;
@@ -38,15 +30,11 @@ export const AdvancedFlashcardFilters = ({
   totalSets,
   hideViewMode = false
 }: AdvancedFlashcardFiltersProps) => {
-  const { subjects, isLoading: subjectsLoading } = useUserSubjects();
-
-  const activeFilterCount = Object.values(filters).filter(value => 
-    value !== '' && value !== 'all' && value !== false && value !== 'grid' && value !== 'updated_at' && value !== 'desc'
-  ).length;
-
   const updateFilter = (key: keyof FlashcardFilters, value: any) => {
-    console.log('🔍 Filter updated:', key, value);
-    onFiltersChange({ ...filters, [key]: value });
+    onFiltersChange({
+      ...filters,
+      [key]: value
+    });
   };
 
   const clearFilters = () => {
@@ -57,19 +45,23 @@ export const AdvancedFlashcardFilters = ({
       progressFilter: 'all',
       sortBy: 'updated_at',
       sortOrder: 'desc',
-      viewMode: filters.viewMode,
+      viewMode: 'grid',
       showPinnedOnly: false
     });
   };
 
+  const hasActiveFilters = filters.searchQuery || 
+                          filters.subjectFilter !== 'all' || 
+                          filters.difficultyFilter !== 'all' || 
+                          filters.progressFilter !== 'all' ||
+                          filters.showPinnedOnly;
+
   return (
     <div className="space-y-4">
-      <FilterHeader totalSets={totalSets} activeFilterCount={activeFilterCount} />
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+      {/* Search and Quick Filters */}
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
             placeholder="Search flashcard sets..."
             value={filters.searchQuery}
@@ -77,79 +69,113 @@ export const AdvancedFlashcardFilters = ({
             className="pl-10"
           />
         </div>
-
-        {/* Subject Filter - Updated to use dynamic user subjects */}
-        <Select 
-          value={filters.subjectFilter} 
-          onValueChange={(value) => updateFilter('subjectFilter', value)}
-          disabled={subjectsLoading}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="All Subjects" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Subjects</SelectItem>
-            {subjects.map(subject => (
-              <SelectItem key={subject.id} value={subject.name}>
-                {subject.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {/* Difficulty Filter */}
-        <Select value={filters.difficultyFilter} onValueChange={(value) => updateFilter('difficultyFilter', value)}>
-          <SelectTrigger>
-            <SelectValue placeholder="All Difficulties" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Difficulties</SelectItem>
-            <SelectItem value="beginner">Beginner</SelectItem>
-            <SelectItem value="intermediate">Intermediate</SelectItem>
-            <SelectItem value="advanced">Advanced</SelectItem>
-          </SelectContent>
-        </Select>
-
-        {/* Sort */}
-        <Select value={filters.sortBy} onValueChange={(value) => updateFilter('sortBy', value)}>
-          <SelectTrigger>
-            <SortAsc className="h-4 w-4 mr-2" />
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="updated_at">Recently Updated</SelectItem>
-            <SelectItem value="created_at">Recently Created</SelectItem>
-            <SelectItem value="name">Name</SelectItem>
-            <SelectItem value="card_count">Card Count</SelectItem>
-          </SelectContent>
-        </Select>
+        
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge variant="outline" className="text-sm">
+            {totalSets} sets
+          </Badge>
+          
+          {hasActiveFilters && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={clearFilters}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              Clear filters
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Active Filters & Clear */}
-      {activeFilterCount > 0 && (
-        <div className="flex items-center justify-between">
-          <div className="flex flex-wrap gap-2">
-            {filters.searchQuery && (
-              <Badge variant="secondary">
-                Search: {filters.searchQuery}
-              </Badge>
-            )}
-            {filters.subjectFilter !== 'all' && (
-              <Badge variant="secondary">
-                Subject: {filters.subjectFilter}
-              </Badge>
-            )}
-            {filters.showPinnedOnly && (
-              <Badge variant="secondary">
-                Pinned Only
-              </Badge>
-            )}
+      {/* Advanced Filters */}
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+        <div className="flex flex-wrap gap-3 flex-1">
+          {/* Subject Filter */}
+          <div className="min-w-[140px]">
+            <Select
+              value={filters.subjectFilter}
+              onValueChange={(value) => updateFilter('subjectFilter', value)}
+            >
+              <SelectTrigger className="relative z-50">
+                <SelectValue placeholder="All Subjects" />
+              </SelectTrigger>
+              <SelectContent className="z-50 bg-white border shadow-lg">
+                <SelectItem value="all">All Subjects</SelectItem>
+                <SelectItem value="math">Mathematics</SelectItem>
+                <SelectItem value="science">Science</SelectItem>
+                <SelectItem value="history">History</SelectItem>
+                <SelectItem value="english">English</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <Button variant="ghost" size="sm" onClick={clearFilters}>
-            Clear all
-          </Button>
+
+          {/* Difficulty Filter */}
+          <div className="min-w-[140px]">
+            <Select
+              value={filters.difficultyFilter}
+              onValueChange={(value) => updateFilter('difficultyFilter', value)}
+            >
+              <SelectTrigger className="relative z-50">
+                <SelectValue placeholder="All Difficulties" />
+              </SelectTrigger>
+              <SelectContent className="z-50 bg-white border shadow-lg">
+                <SelectItem value="all">All Difficulties</SelectItem>
+                <SelectItem value="easy">Easy</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="hard">Hard</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Sort Options */}
+          <div className="min-w-[140px]">
+            <Select
+              value={`${filters.sortBy}-${filters.sortOrder}`}
+              onValueChange={(value) => {
+                const [sortBy, sortOrder] = value.split('-');
+                updateFilter('sortBy', sortBy);
+                updateFilter('sortOrder', sortOrder);
+              }}
+            >
+              <SelectTrigger className="relative z-50">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="z-50 bg-white border shadow-lg">
+                <SelectItem value="updated_at-desc">Recently Updated</SelectItem>
+                <SelectItem value="created_at-desc">Recently Created</SelectItem>
+                <SelectItem value="name-asc">Name A-Z</SelectItem>
+                <SelectItem value="name-desc">Name Z-A</SelectItem>
+                <SelectItem value="card_count-desc">Most Cards</SelectItem>
+                <SelectItem value="card_count-asc">Fewest Cards</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-      )}
+
+        {/* View Mode Toggle */}
+        {!hideViewMode && (
+          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+            <Button
+              variant={filters.viewMode === 'grid' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => updateFilter('viewMode', 'grid')}
+              className="h-8 w-8 p-0"
+            >
+              <Grid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={filters.viewMode === 'list' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => updateFilter('viewMode', 'list')}
+              className="h-8 w-8 p-0"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

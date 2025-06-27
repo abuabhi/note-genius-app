@@ -7,8 +7,6 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Plus, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { useUnifiedSessionTracker } from '@/hooks/useUnifiedSessionTracker';
-import { toast } from 'sonner';
 
 export const FlashcardsContent = () => {
   const navigate = useNavigate();
@@ -16,22 +14,6 @@ export const FlashcardsContent = () => {
     flashcardSets, 
     loading
   } = useFlashcards();
-  
-  const { startSession, isActive } = useUnifiedSessionTracker();
-
-  const handleTestSession = async () => {
-    try {
-      await startSession({
-        title: 'Test Study Session',
-        subject: 'General',
-        activityType: 'flashcard_study'
-      });
-      toast.success('Test session started! Timer should now be visible.');
-    } catch (error) {
-      console.error('Failed to start test session:', error);
-      toast.error('Failed to start test session');
-    }
-  };
 
   if (loading.sets) {
     return <LoadingState />;
@@ -51,43 +33,12 @@ export const FlashcardsContent = () => {
             </Button>
           }
         />
-        
-        {/* Test Session Button */}
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-700 mb-2">Test the floating timer:</p>
-          <Button
-            onClick={handleTestSession}
-            disabled={isActive}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            {isActive ? 'Session Active' : 'Start Test Session'}
-          </Button>
-        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Test Session Button - Only show if no active session */}
-      {!isActive && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-medium text-blue-900">Test Floating Timer</h3>
-              <p className="text-sm text-blue-700">Start a test session to see the floating timer</p>
-            </div>
-            <Button
-              onClick={handleTestSession}
-              size="sm"
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              Start Test Session
-            </Button>
-          </div>
-        </div>
-      )}
-      
       <FlashcardSetGrid
         sets={flashcardSets}
         setProgressData={{}}
