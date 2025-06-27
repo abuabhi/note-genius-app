@@ -1,41 +1,14 @@
 
-import { Sidebar, SidebarContent, SidebarSeparator, SidebarFooter } from "@/components/ui/sidebar";
-import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { UserTierDisplay } from "./UserTierDisplay";
-import { Accordion } from "@/components/ui/accordion";
-import { navigationGroups } from "./navigation/navigationData";
-import { NavigationGroup } from "./navigation/NavigationGroup";
-import { useDefaultAccordion } from "./navigation/useDefaultAccordion";
+import { Sidebar, SidebarContent } from "@/components/ui/sidebar";
+import { Navigation } from "@/components/ui/sidebar/Navigation";
 
 const AuthSidebar = () => {
-  const { userProfile } = useRequireAuth();
-  const defaultAccordionValue = useDefaultAccordion();
-  
   return (
     <Sidebar>
-      <SidebarContent>
-        {/* Main Navigation */}
-        <Accordion type="multiple" defaultValue={defaultAccordionValue} className="w-full">
-          {navigationGroups.map((group) => (
-            <NavigationGroup
-              key={group.id}
-              id={group.id}
-              title={group.title}
-              items={group.items.map(item => ({
-                ...item,
-                title: item.label // Convert label to title for compatibility
-              }))}
-              isOpen={defaultAccordionValue.includes(group.id)}
-            />
-          ))}
-        </Accordion>
+      <SidebarContent className="p-0">
+        {/* Simple Navigation without accordion/grouping */}
+        <Navigation isCollapsed={false} />
       </SidebarContent>
-      
-      {/* Footer with User Tier Display */}
-      <SidebarFooter>
-        <SidebarSeparator />
-        <UserTierDisplay />
-      </SidebarFooter>
     </Sidebar>
   );
 };
