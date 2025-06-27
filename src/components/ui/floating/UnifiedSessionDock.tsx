@@ -21,7 +21,7 @@ export const UnifiedSessionDock = () => {
     dismissTimeoutWarning
   } = useUnifiedSessionTracker();
 
-  console.log('🎛️ UnifiedSessionDock render:', { 
+  console.log('🎛️ [UNIFIED SESSION DOCK] Render state:', { 
     isActive, 
     isPaused, 
     isOnStudyPage, 
@@ -34,7 +34,7 @@ export const UnifiedSessionDock = () => {
 
   // Show dock ONLY if there's an active session
   if (!isActive) {
-    console.log('🎛️ UnifiedSessionDock hidden - no active session');
+    console.log('🎛️ [UNIFIED SESSION DOCK] Hidden - no active session');
     return null;
   }
 
@@ -122,7 +122,7 @@ export const UnifiedSessionDock = () => {
     }
   };
 
-  console.log('🎛️ UnifiedSessionDock showing with theme:', theme.background);
+  console.log('🎛️ [UNIFIED SESSION DOCK] Showing with theme:', theme.background);
 
   return (
     <>

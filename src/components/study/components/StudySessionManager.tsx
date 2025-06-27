@@ -16,13 +16,12 @@ export const StudySessionManager = ({
   children
 }: StudySessionManagerProps) => {
   
-  // Use the unified session tracker
+  // Use ONLY the unified session tracker - no duplicate session systems
   const { recordActivity, updateSessionActivity, isActive } = useUnifiedSessionTracker();
   
-  console.log('🎛️ [STUDY SESSION MANAGER] Using unified session system:', {
+  console.log('🎛️ [STUDY SESSION MANAGER] Using ONLY unified session system:', {
     setId,
     mode,
-    hasUnifiedSession: !!recordActivity,
     isActive
   });
   
@@ -73,7 +72,7 @@ export const StudySessionManager = ({
   } : null;
 
   const handleCorrectAnswer = () => {
-    console.log('✅ [STUDY SESSION MANAGER] Correct answer - updating unified session');
+    console.log('✅ [STUDY SESSION MANAGER] Correct answer - recording activity');
     recordActivity();
     if (isQuizMode && quizData) {
       quizData.handleQuizAnswer('mastered');
@@ -83,7 +82,7 @@ export const StudySessionManager = ({
   };
 
   const handleIncorrectAnswer = () => {
-    console.log('❌ [STUDY SESSION MANAGER] Incorrect answer - updating unified session');
+    console.log('❌ [STUDY SESSION MANAGER] Incorrect answer - recording activity');
     recordActivity();
     if (isQuizMode && quizData) {
       quizData.handleQuizAnswer('needs_practice');

@@ -119,12 +119,14 @@ export const useUnifiedSessionTracker = () => {
     try {
       if (!user) throw new Error('Not authenticated');
 
+      console.log('🎯 [UNIFIED SESSION] Starting session:', sessionData);
+
       // End any existing active session first
       if (isActive && currentSessionId) {
         await endSession('Starting new session');
       }
 
-      // Create notes field with session context and metadata
+      // Create notes field with session context and metadata - store study plan info in notes instead of FK
       let notesContent = `Session for: ${sessionData.title}`;
       if (sessionData.studyPlanId) {
         notesContent += ` | Study Plan ID: ${sessionData.studyPlanId}`;
@@ -141,9 +143,8 @@ export const useUnifiedSessionTracker = () => {
         start_time: new Date().toISOString(),
         is_active: true,
         activity_type: sessionData.activityType,
-        auto_created: false,
-        // Store IDs in the flashcard_set_id field for now (we can use this for any reference)
-        flashcard_set_id: sessionData.flashcardSetId || sessionData.studyPlanId
+        auto_created: false
+        // Remove flashcard_set_id to avoid foreign key constraint
       };
 
       const { data, error } = await supabase
@@ -152,7 +153,10 @@ export const useUnifiedSessionTracker = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ [UNIFIED SESSION] Database error:', error);
+        throw error;
+      }
 
       setIsActive(true);
       setIsPaused(false);
@@ -164,7 +168,7 @@ export const useUnifiedSessionTracker = () => {
       setShowTimeoutWarning(false);
       lastActivityRef.current = new Date();
 
-      console.log('🎯 Started new session:', {
+      console.log('✅ [UNIFIED SESSION] Started session successfully:', {
         id: data.id,
         title: sessionData.title,
         type: sessionData.activityType
@@ -172,7 +176,7 @@ export const useUnifiedSessionTracker = () => {
 
       return data.id;
     } catch (error) {
-      console.error('Error starting session:', error);
+      console.error('❌ [UNIFIED SESSION] Error starting session:', error);
       throw error;
     }
   }, [user, isActive, currentSessionId]);

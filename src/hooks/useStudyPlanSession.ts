@@ -26,12 +26,12 @@ export const useStudyPlanSession = () => {
         await endSession('Starting new study plan session');
       }
 
-      // Start new study plan session
+      // Start new study plan session - don't pass studyPlanId to avoid foreign key constraint
       const sessionId = await startSession({
         title: `Study Plan: ${studyPlan.title}`,
         subject: studyPlan.subject,
-        activityType: 'study_plan',
-        studyPlanId: studyPlan.id
+        activityType: 'study_plan'
+        // Remove studyPlanId to avoid foreign key constraint error
       });
 
       console.log('🎯 Study plan session started successfully:', sessionId);
@@ -57,7 +57,7 @@ export const useStudyPlanSession = () => {
   };
 
   const getActiveStudyPlanId = () => {
-    // Check if current session is for a study plan and extract the ID from the title or notes
+    // Check if current session is for a study plan and extract the ID from the title
     if (isActive && activityType === 'study_plan' && currentTitle) {
       // Try to find matching study plan by checking if session title contains the plan title
       const matchingPlan = studyPlans.find(plan => 
