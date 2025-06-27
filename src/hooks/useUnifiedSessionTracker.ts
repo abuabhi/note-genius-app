@@ -1,350 +1,281 @@
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useAuth } from '@/hooks/auth/useAuth';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 
-interface SessionData {
+export interface SessionData {
   title: string;
   subject?: string;
-  activityType: 'flashcard_study' | 'note_review' | 'quiz_taking' | 'study_plan' | 'general';
-  studyPlanId?: string;
+  activityType?: 'flashcard_study' | 'note_review' | 'quiz_taking' | 'study_plan' | 'general';
+  studyPlanId?: string; // Add study plan association
   flashcardSetId?: string;
-  noteId?: string;
-  quizId?: string;
+  notes?: string;
+}
+
+export interface UnifiedSessionState {
+  isActive: boolean;
+  currentSessionId: string | null;
+  startTime: Date | null;
+  elapsedSeconds: number;
+  isPaused: boolean;
+  activityType: string | null;
+  currentTitle: string | null;
+  currentSubject: string | null;
+  studyPlanId: string | null; // Add study plan ID to state
+  showInactivityWarning: boolean;
 }
 
 export const useUnifiedSessionTracker = () => {
   const { user } = useAuth();
-  const [isActive, setIsActive] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const [currentTitle, setCurrentTitle] = useState<string>('');
-  const [currentSubject, setCurrentSubject] = useState<string>('');
-  const [activityType, setActivityType] = useState<string>('general');
-  const [showInactivityWarning, setShowInactivityWarning] = useState(false);
-  
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const lastActivityRef = useRef<Date>(new Date());
+  const [sessionState, setSessionState] = useState<UnifiedSessionState>({
+    isActive: false,
+    currentSessionId: null,
+    startTime: null,
+    elapsedSeconds: 0,
+    isPaused: false,
+    activityType: null,
+    currentTitle: null,
+    currentSubject: null,
+    studyPlanId: null,
+    showInactivityWarning: false
+  });
 
-  // Clean up orphaned sessions and load active session on mount
-  useEffect(() => {
-    if (user) {
-      cleanupAndLoadActiveSession();
-    }
-  }, [user]);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastActivityRef = useRef<Date>(new Date());
 
   // Timer logic
   useEffect(() => {
-    if (isActive && !isPaused) {
-      intervalRef.current = setInterval(() => {
-        setElapsedSeconds(prev => prev + 1);
+    if (sessionState.isActive && !sessionState.isPaused) {
+      timerRef.current = setInterval(() => {
+        setSessionState(prev => ({
+          ...prev,
+          elapsedSeconds: prev.elapsedSeconds + 1
+        }));
       }, 1000);
     } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
       }
     }
 
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
       }
     };
-  }, [isActive, isPaused]);
+  }, [sessionState.isActive, sessionState.isPaused]);
 
-  // Simple inactivity detection
+  // Inactivity detection
   useEffect(() => {
-    if (!isActive || isPaused) return;
+    if (sessionState.isActive && !sessionState.isPaused) {
+      const checkInactivity = () => {
+        const timeSinceLastActivity = Date.now() - lastActivityRef.current.getTime();
+        const fiveMinutes = 5 * 60 * 1000;
+        
+        if (timeSinceLastActivity > fiveMinutes) {
+          setSessionState(prev => ({ ...prev, showInactivityWarning: true }));
+          
+          // Auto-end session after additional 2 minutes of inactivity
+          setTimeout(() => {
+            if (sessionState.showInactivityWarning) {
+              endSession('Auto-ended due to inactivity');
+            }
+          }, 2 * 60 * 1000);
+        }
+      };
 
-    const resetInactivityTimer = () => {
-      lastActivityRef.current = new Date();
-      
-      // Clear existing timeouts
-      if (inactivityTimeoutRef.current) {
-        clearTimeout(inactivityTimeoutRef.current);
-      }
-      if (warningTimeoutRef.current) {
-        clearTimeout(warningTimeoutRef.current);
-      }
-      
-      // Hide warning if showing
-      setShowInactivityWarning(false);
-      
-      // Set warning for 13 minutes (2 minutes before auto-stop)
-      warningTimeoutRef.current = setTimeout(() => {
-        setShowInactivityWarning(true);
-      }, 13 * 60 * 1000);
-      
-      // Set auto-stop for 15 minutes
-      inactivityTimeoutRef.current = setTimeout(() => {
-        endSession('Auto-stopped due to 15 minutes of inactivity');
-        toast.info('Study session stopped due to inactivity');
-      }, 15 * 60 * 1000);
-    };
-
-    // Activity event listeners
-    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
-    
-    activityEvents.forEach(event => {
-      document.addEventListener(event, resetInactivityTimer, true);
-    });
-
-    // Initial timer setup
-    resetInactivityTimer();
+      inactivityTimerRef.current = setInterval(checkInactivity, 30000); // Check every 30 seconds
+    }
 
     return () => {
-      activityEvents.forEach(event => {
-        document.removeEventListener(event, resetInactivityTimer, true);
-      });
-      if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
-      if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
+      if (inactivityTimerRef.current) {
+        clearInterval(inactivityTimerRef.current);
+      }
     };
-  }, [isActive, isPaused]);
+  }, [sessionState.isActive, sessionState.isPaused]);
 
-  const cleanupAndLoadActiveSession = async () => {
-    try {
-      if (!user) return;
+  // Activity tracking
+  const trackActivity = useCallback(() => {
+    lastActivityRef.current = new Date();
+    if (sessionState.showInactivityWarning) {
+      setSessionState(prev => ({ ...prev, showInactivityWarning: false }));
+    }
+  }, [sessionState.showInactivityWarning]);
 
-      console.log('🧹 [SESSION TRACKER] Starting cleanup and load for user:', user.id);
-
-      // First, cleanup any orphaned active sessions (older than 4 hours)
-      const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
+  // Track mouse movement and keyboard activity
+  useEffect(() => {
+    if (sessionState.isActive) {
+      const handleActivity = () => trackActivity();
       
-      const { error: cleanupError } = await supabase
-        .from('study_sessions')
-        .update({
-          is_active: false,
-          end_time: new Date().toISOString(),
-          notes: 'Auto-ended during cleanup - session was orphaned'
-        })
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .lt('start_time', fourHoursAgo);
-
-      if (cleanupError) {
-        console.error('❌ [SESSION TRACKER] Error during cleanup:', cleanupError);
-      } else {
-        console.log('🧹 [SESSION TRACKER] Cleaned up orphaned sessions');
-      }
-
-      // Now try to load the most recent active session
-      const { data, error } = await supabase
-        .from('study_sessions')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .order('start_time', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error) {
-        console.error('❌ [SESSION TRACKER] Error loading active session:', error);
-        return;
-      }
-
-      if (data) {
-        const startTime = new Date(data.start_time);
-        const now = new Date();
-        const elapsed = Math.floor((now.getTime() - startTime.getTime()) / 1000);
-        
-        // Check if session is too old (more than 4 hours)
-        if (elapsed > 4 * 60 * 60) {
-          console.log('⚠️ [SESSION TRACKER] Session too old, ending it');
-          await endSessionById(data.id);
-          return;
-        }
-        
-        setIsActive(true);
-        setCurrentSessionId(data.id);
-        setCurrentTitle(data.title || '');
-        setCurrentSubject(data.subject || '');
-        setActivityType(data.activity_type || 'general');
-        setElapsedSeconds(elapsed);
-        
-        console.log('✅ [SESSION TRACKER] Loaded active session:', {
-          id: data.id.slice(0, 8),
-          title: data.title,
-          elapsed: elapsed + 's'
-        });
-      } else {
-        console.log('📊 [SESSION TRACKER] No active session found');
-      }
-    } catch (error) {
-      console.error('❌ [SESSION TRACKER] Error in cleanup and load:', error);
+      document.addEventListener('mousemove', handleActivity);
+      document.addEventListener('keypress', handleActivity);
+      document.addEventListener('click', handleActivity);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleActivity);
+        document.removeEventListener('keypress', handleActivity);
+        document.removeEventListener('click', handleActivity);
+      };
     }
-  };
+  }, [sessionState.isActive, trackActivity]);
 
-  const endSessionById = async (sessionId: string) => {
+  const startSession = async (sessionData: SessionData): Promise<string> => {
+    if (!user) throw new Error('User not authenticated');
+
     try {
-      const { error } = await supabase
-        .from('study_sessions')
-        .update({
-          end_time: new Date().toISOString(),
-          is_active: false,
-          notes: 'Auto-ended during cleanup'
-        })
-        .eq('id', sessionId);
-
-      if (error) throw error;
-      console.log('🔚 [SESSION TRACKER] Ended session:', sessionId.slice(0, 8));
-    } catch (error) {
-      console.error('❌ [SESSION TRACKER] Error ending session:', error);
-    }
-  };
-
-  const startSession = useCallback(async (sessionData: SessionData) => {
-    try {
-      if (!user) throw new Error('Not authenticated');
-
-      console.log('🎯 [SESSION TRACKER] Starting session:', sessionData);
+      console.log('🚀 [UNIFIED SESSION] Starting new session:', sessionData);
 
       // End any existing active session first
-      if (isActive && currentSessionId) {
+      if (sessionState.isActive && sessionState.currentSessionId) {
         await endSession('Starting new session');
       }
 
-      // Also cleanup any other active sessions for this user
-      await supabase
-        .from('study_sessions')
-        .update({
-          is_active: false,
-          end_time: new Date().toISOString(),
-          notes: 'Auto-ended when starting new session'
-        })
-        .eq('user_id', user.id)
-        .eq('is_active', true);
-
-      const newSessionData = {
+      const now = new Date();
+      const newSession = {
         user_id: user.id,
         title: sessionData.title,
-        subject: sessionData.subject,
-        notes: `Session for: ${sessionData.title}`,
-        start_time: new Date().toISOString(),
+        subject: sessionData.subject || null,
+        activity_type: sessionData.activityType || 'general',
+        study_plan_id: sessionData.studyPlanId || null, // Associate with study plan
+        flashcard_set_id: sessionData.flashcardSetId || null,
+        notes: sessionData.notes || null,
+        start_time: now.toISOString(),
         is_active: true,
-        activity_type: sessionData.activityType,
-        auto_created: false
+        auto_created: false,
+        duration: null,
+        end_time: null
       };
 
       const { data, error } = await supabase
         .from('study_sessions')
-        .insert(newSessionData)
+        .insert(newSession)
         .select()
         .single();
 
-      if (error) {
-        console.error('❌ [SESSION TRACKER] Database error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      setIsActive(true);
-      setIsPaused(false);
-      setElapsedSeconds(0);
-      setCurrentSessionId(data.id);
-      setCurrentTitle(sessionData.title);
-      setCurrentSubject(sessionData.subject || '');
-      setActivityType(sessionData.activityType);
-      setShowInactivityWarning(false);
-      lastActivityRef.current = new Date();
+      console.log('✅ [UNIFIED SESSION] Session created successfully:', data.id);
 
-      console.log('✅ [SESSION TRACKER] Started session successfully:', {
-        id: data.id.slice(0, 8),
-        title: sessionData.title,
-        type: sessionData.activityType
+      setSessionState({
+        isActive: true,
+        currentSessionId: data.id,
+        startTime: now,
+        elapsedSeconds: 0,
+        isPaused: false,
+        activityType: sessionData.activityType || 'general',
+        currentTitle: sessionData.title,
+        currentSubject: sessionData.subject || null,
+        studyPlanId: sessionData.studyPlanId || null,
+        showInactivityWarning: false
       });
 
-      toast.success('Study session started!');
+      toast.success(`Session started: ${sessionData.title}`);
       return data.id;
+
     } catch (error) {
-      console.error('❌ [SESSION TRACKER] Error starting session:', error);
+      console.error('❌ [UNIFIED SESSION] Error starting session:', error);
       toast.error('Failed to start session');
       throw error;
     }
-  }, [user, isActive, currentSessionId]);
+  };
 
-  const endSession = useCallback(async (reason = 'Manual end') => {
+  const endSession = async (reason = 'Manual session end'): Promise<void> => {
+    if (!sessionState.isActive || !sessionState.currentSessionId) {
+      console.log('⚠️ [UNIFIED SESSION] No active session to end');
+      return;
+    }
+
     try {
-      if (!currentSessionId || !user) return;
+      console.log('🛑 [UNIFIED SESSION] Ending session:', sessionState.currentSessionId, 'Reason:', reason);
 
       const endTime = new Date();
-      const duration = elapsedSeconds;
+      const duration = Math.round((endTime.getTime() - (sessionState.startTime?.getTime() || Date.now())) / 1000);
 
       const { error } = await supabase
         .from('study_sessions')
         .update({
           end_time: endTime.toISOString(),
-          duration: Math.round(duration / 60), // Convert to minutes
+          duration: duration,
           is_active: false,
-          notes: `Session ended: ${reason}`
+          notes: sessionState.currentTitle ? `${sessionState.currentTitle} - ${reason}` : reason
         })
-        .eq('id', currentSessionId);
+        .eq('id', sessionState.currentSessionId);
 
       if (error) throw error;
 
+      console.log('✅ [UNIFIED SESSION] Session ended successfully. Duration:', Math.round(duration / 60), 'minutes');
+
       // Clear all timers
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
-      if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
-
-      // Reset state
-      setIsActive(false);
-      setIsPaused(false);
-      setElapsedSeconds(0);
-      setCurrentSessionId(null);
-      setCurrentTitle('');
-      setCurrentSubject('');
-      setActivityType('general');
-      setShowInactivityWarning(false);
-
-      console.log('⏹️ [SESSION TRACKER] Ended session:', {
-        duration: `${Math.floor(duration / 60)}min`,
-        reason
-      });
-
-      if (reason.includes('Manual')) {
-        toast.success('Study session ended');
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      if (inactivityTimerRef.current) {
+        clearInterval(inactivityTimerRef.current);
+        inactivityTimerRef.current = null;
       }
 
-    } catch (error) {
-      console.error('❌ [SESSION TRACKER] Error ending session:', error);
-      toast.error('Failed to end session');
-      throw error;
-    }
-  }, [currentSessionId, user, elapsedSeconds]);
+      setSessionState({
+        isActive: false,
+        currentSessionId: null,
+        startTime: null,
+        elapsedSeconds: 0,
+        isPaused: false,
+        activityType: null,
+        currentTitle: null,
+        currentSubject: null,
+        studyPlanId: null,
+        showInactivityWarning: false
+      });
 
-  const togglePause = useCallback(() => {
-    setIsPaused(!isPaused);
-    if (!isPaused) {
+      toast.success(`Session ended (${Math.round(duration / 60)} minutes)`);
+
+    } catch (error) {
+      console.error('❌ [UNIFIED SESSION] Error ending session:', error);
+      toast.error('Failed to end session properly');
+    }
+  };
+
+  const togglePause = () => {
+    setSessionState(prev => ({
+      ...prev,
+      isPaused: !prev.isPaused
+    }));
+    
+    if (!sessionState.isPaused) {
       toast.info('Session paused');
     } else {
       toast.info('Session resumed');
+      trackActivity(); // Reset activity tracking when resuming
     }
-  }, [isPaused]);
+  };
 
-  const dismissInactivityWarning = useCallback(() => {
-    setShowInactivityWarning(false);
-    if (warningTimeoutRef.current) {
-      clearTimeout(warningTimeoutRef.current);
-      warningTimeoutRef.current = null;
-    }
-  }, []);
+  const dismissInactivityWarning = () => {
+    setSessionState(prev => ({ ...prev, showInactivityWarning: false }));
+    trackActivity();
+  };
 
   return {
-    isActive,
-    isPaused,
-    elapsedSeconds,
-    currentSessionId,
-    currentTitle,
-    currentSubject,
-    activityType,
-    showInactivityWarning,
+    // State
+    isActive: sessionState.isActive,
+    currentSessionId: sessionState.currentSessionId,
+    startTime: sessionState.startTime,
+    elapsedSeconds: sessionState.elapsedSeconds,
+    isPaused: sessionState.isPaused,
+    activityType: sessionState.activityType,
+    currentTitle: sessionState.currentTitle,
+    currentSubject: sessionState.currentSubject,
+    studyPlanId: sessionState.studyPlanId,
+    showInactivityWarning: sessionState.showInactivityWarning,
+    
+    // Actions
     startSession,
     endSession,
     togglePause,
-    dismissInactivityWarning
+    dismissInactivityWarning,
+    trackActivity
   };
 };

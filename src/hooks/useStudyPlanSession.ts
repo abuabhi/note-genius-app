@@ -5,7 +5,7 @@ import { StudyPlan } from '@/types/studyPlanner';
 import { toast } from 'sonner';
 
 export const useStudyPlanSession = () => {
-  const { startSession, endSession, isActive, currentSessionId, activityType, currentTitle } = useUnifiedSessionTracker();
+  const { startSession, endSession, isActive, currentSessionId, activityType, currentTitle, studyPlanId } = useUnifiedSessionTracker();
   const { studyPlans } = useActiveStudyPlans();
 
   const startStudyPlanSession = async (studyPlan: StudyPlan) => {
@@ -26,12 +26,12 @@ export const useStudyPlanSession = () => {
         await endSession('Starting new study plan session');
       }
 
-      // Start new study plan session - don't pass studyPlanId to avoid foreign key constraint
+      // Start new study plan session with proper association
       const sessionId = await startSession({
         title: `Study Plan: ${studyPlan.title}`,
         subject: studyPlan.subject,
-        activityType: 'study_plan'
-        // Remove studyPlanId to avoid foreign key constraint error
+        activityType: 'study_plan',
+        studyPlanId: studyPlan.id // Associate session with study plan
       });
 
       console.log('🎯 Study plan session started successfully:', sessionId);
@@ -56,21 +56,12 @@ export const useStudyPlanSession = () => {
     }
   };
 
-  const getActiveStudyPlanId = () => {
-    // Check if current session is for a study plan and extract the ID from the title
-    if (isActive && activityType === 'study_plan' && currentTitle) {
-      // Try to find matching study plan by checking if session title contains the plan title
-      const matchingPlan = studyPlans.find(plan => 
-        currentTitle.includes(plan.title) || currentTitle.includes(`Study Plan: ${plan.title}`)
-      );
-      return matchingPlan?.id || null;
-    }
-    return null;
+  const isStudyPlanActive = (planId: string) => {
+    return isActive && activityType === 'study_plan' && studyPlanId === planId;
   };
 
-  const isStudyPlanActive = (planId: string) => {
-    const activeStudyPlanId = getActiveStudyPlanId();
-    return isActive && activityType === 'study_plan' && activeStudyPlanId === planId;
+  const getActiveStudyPlanId = () => {
+    return isActive && activityType === 'study_plan' ? studyPlanId : null;
   };
 
   return {

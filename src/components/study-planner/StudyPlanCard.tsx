@@ -19,7 +19,7 @@ interface StudyPlanCardProps {
 export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
   const { startStudyPlanSession, isStudyPlanActive } = useStudyPlanSession();
   const { convertToGoal, isLoading: isConverting } = useConvertStudyPlanToGoal();
-  const { analytics } = useStudyPlannerAnalytics();
+  const { analytics } = useStudyPlannerAnalytics(studyPlan.id); // Get plan-specific analytics
   const [showGoalDialog, setShowGoalDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   
@@ -37,6 +37,16 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
     } catch (error) {
       console.error('Error converting to goal:', error);
     }
+  };
+
+  // Format time display - show hours and minutes for better readability
+  const formatTime = (minutes: number) => {
+    if (minutes < 60) {
+      return `${minutes}m`;
+    }
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
   };
 
   return (
@@ -79,7 +89,7 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
             </div>
           </div>
 
-          {/* Stats Section with Real Data */}
+          {/* Stats Section with Plan-Specific Data */}
           <div className="flex items-center gap-4 min-w-0 flex-1">
             {/* Days Left */}
             <div className="flex items-center gap-1.5 text-xs text-green-600">
@@ -87,13 +97,13 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
               <span className="truncate font-medium">{daysLeft} days left</span>
             </div>
             
-            {/* Today's Study Time */}
+            {/* Plan Total Study Time */}
             <div className="flex items-center gap-1.5 text-xs text-blue-600">
               <Clock className="h-3 w-3" />
-              <span className="truncate font-medium">{analytics.todaySessionTime}m today</span>
+              <span className="truncate font-medium">{formatTime(analytics.totalSessionTime)} total</span>
             </div>
             
-            {/* Total Sessions */}
+            {/* Plan Sessions Count */}
             <div className="flex items-center gap-1.5 text-xs text-purple-600">
               <TrendingUp className="h-3 w-3" />
               <span className="truncate font-medium">{analytics.totalSessions} sessions</span>
@@ -114,13 +124,13 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
             </div>
           </div>
 
-          {/* Session Time Summary */}
+          {/* Session Time Summary - Plan Specific */}
           <div className="flex items-center justify-between p-2 bg-blue-50/50 rounded-lg">
             <div className="text-xs text-blue-700">
-              <strong>Total Study Time:</strong> {analytics.totalSessionTime}m
+              <strong>This Plan:</strong> {formatTime(analytics.totalSessionTime)}
             </div>
             <div className="text-xs text-blue-700">
-              <strong>This Week:</strong> {analytics.weeklySessionTime}m
+              <strong>This Week:</strong> {formatTime(analytics.weeklySessionTime)}
             </div>
           </div>
 

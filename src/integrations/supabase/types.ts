@@ -2655,6 +2655,7 @@ export type Database = {
           quiz_total_questions: number | null
           session_quality: string | null
           start_time: string
+          study_plan_id: string | null
           subject: string | null
           title: string
           updated_at: string | null
@@ -2681,6 +2682,7 @@ export type Database = {
           quiz_total_questions?: number | null
           session_quality?: string | null
           start_time?: string
+          study_plan_id?: string | null
           subject?: string | null
           title: string
           updated_at?: string | null
@@ -2707,6 +2709,7 @@ export type Database = {
           quiz_total_questions?: number | null
           session_quality?: string | null
           start_time?: string
+          study_plan_id?: string | null
           subject?: string | null
           title?: string
           updated_at?: string | null
@@ -2718,6 +2721,13 @@ export type Database = {
             columns: ["flashcard_set_id"]
             isOneToOne: false
             referencedRelation: "flashcard_sets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "study_sessions_study_plan_id_fkey"
+            columns: ["study_plan_id"]
+            isOneToOne: false
+            referencedRelation: "study_plans"
             referencedColumns: ["id"]
           },
         ]

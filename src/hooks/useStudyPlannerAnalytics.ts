@@ -13,25 +13,36 @@ interface StudyPlannerAnalytics {
   recentSessions: any[];
 }
 
-export const useStudyPlannerAnalytics = () => {
+interface StudyPlanSpecificAnalytics extends StudyPlannerAnalytics {
+  planSessionTime: number; // Time spent on this specific plan
+  planSessions: number; // Sessions for this specific plan
+}
+
+export const useStudyPlannerAnalytics = (studyPlanId?: string) => {
   const { user } = useAuth();
 
   const { data: analytics, isLoading } = useQuery({
-    queryKey: ['study-planner-analytics', user?.id],
-    queryFn: async (): Promise<StudyPlannerAnalytics> => {
+    queryKey: ['study-planner-analytics', user?.id, studyPlanId],
+    queryFn: async (): Promise<StudyPlannerAnalytics | StudyPlanSpecificAnalytics> => {
       if (!user) throw new Error('Not authenticated');
 
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-      // Get all study sessions
-      const { data: sessions } = await supabase
+      // Get sessions - filter by study plan if specified
+      let sessionsQuery = supabase
         .from('study_sessions')
         .select('*')
         .eq('user_id', user.id)
-        .eq('auto_created', false) // Only real sessions
+        .eq('auto_created', false)
         .order('start_time', { ascending: false });
+
+      if (studyPlanId) {
+        sessionsQuery = sessionsQuery.eq('study_plan_id', studyPlanId);
+      }
+
+      const { data: sessions } = await sessionsQuery;
 
       // Get active and completed plans
       const [activePlansResult, completedPlansResult] = await Promise.all([
@@ -50,7 +61,7 @@ export const useStudyPlannerAnalytics = () => {
       const allSessions = sessions || [];
       const completedSessions = allSessions.filter(s => !s.is_active && s.duration);
       
-      // Calculate session times
+      // Calculate session times in minutes (duration is in seconds)
       const totalSessionTime = Math.round(
         completedSessions.reduce((acc, session) => acc + (session.duration || 0), 0) / 60
       );
@@ -74,7 +85,7 @@ export const useStudyPlannerAnalytics = () => {
       const totalPlans = activePlansCount + completedPlansCount;
       const completionRate = totalPlans > 0 ? Math.round((completedPlansCount / totalPlans) * 100) : 0;
 
-      return {
+      const baseAnalytics = {
         totalSessionTime,
         todaySessionTime,
         weeklySessionTime,
@@ -83,6 +94,17 @@ export const useStudyPlannerAnalytics = () => {
         completionRate,
         recentSessions: allSessions.slice(0, 10)
       };
+
+      // If querying for a specific study plan, add plan-specific metrics
+      if (studyPlanId) {
+        return {
+          ...baseAnalytics,
+          planSessionTime: totalSessionTime, // Since we filtered by plan, this is plan-specific
+          planSessions: allSessions.length
+        } as StudyPlanSpecificAnalytics;
+      }
+
+      return baseAnalytics;
     },
     enabled: !!user,
     staleTime: 1 * 60 * 1000, // 1 minute

@@ -17,10 +17,20 @@ export default function StudyPlannerPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const { studyPlans: activePlans, isLoading: activeLoading } = useActiveStudyPlans();
   const { studyPlans: completedPlans, isLoading: completedLoading } = useCompletedStudyPlans();
-  const { analytics, isLoading: analyticsLoading } = useStudyPlannerAnalytics();
+  const { analytics, isLoading: analyticsLoading } = useStudyPlannerAnalytics(); // General analytics
 
   const totalActivePlans = activePlans.length;
   const totalCompletedPlans = completedPlans.length;
+
+  // Format time display
+  const formatTime = (minutes: number) => {
+    if (minutes < 60) {
+      return `${minutes}m`;
+    }
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
@@ -59,7 +69,7 @@ export default function StudyPlannerPage() {
             </TabsList>
           </div>
 
-          {/* Enhanced Stats with Real Data */}
+          {/* Enhanced Stats with Clean Data */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card className="border-mint-200 hover:shadow-md transition-shadow bg-white/80 backdrop-blur-sm">
               <CardContent className="p-4">
@@ -102,7 +112,7 @@ export default function StudyPlannerPage() {
                   <div>
                     <p className="text-sm text-gray-600">Today's Study</p>
                     <p className="text-2xl font-semibold text-purple-800">
-                      {analyticsLoading ? '...' : `${analytics.todaySessionTime}m`}
+                      {analyticsLoading ? '...' : formatTime(analytics.todaySessionTime)}
                     </p>
                   </div>
                 </div>
