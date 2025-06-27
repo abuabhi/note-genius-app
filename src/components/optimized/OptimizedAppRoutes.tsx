@@ -68,7 +68,7 @@ export const OptimizedAppRoutes = () => {
         <Route path="/schedule" element={<SidebarLayout><SchedulePage /></SidebarLayout>} />
         <Route path="/study-planner" element={<SidebarLayout><StudyPlannerPage /></SidebarLayout>} />
         
-        {/* Goals - Now uses SidebarLayout */}
+        {/* Goals and Todos - Now using unified SidebarLayout */}
         <Route path="/goals" element={<SidebarLayout><GoalsPage /></SidebarLayout>} />
         <Route path="/todos" element={<SidebarLayout><TodoPage /></SidebarLayout>} />
         

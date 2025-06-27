@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { Check, Clock, ListTodo, Plus } from "lucide-react";
-import Layout from "@/components/layout/Layout";
 import { TodoList } from "@/components/todos/TodoList";
 import { TodoFormDialog } from "@/components/todos/TodoFormDialog";
 import { TodoStats } from "@/components/todos/TodoStats";
@@ -68,18 +67,16 @@ const TodoPage = () => {
 
   if (authLoading) {
     return (
-      <Layout>
-        <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
-          <div className="container mx-auto p-4 md:p-6">
-            <div className="flex items-center justify-center h-[80vh]">
-              <div className="relative w-12 h-12">
-                <div className="absolute inset-0 border-4 border-mint-100 rounded-full"></div>
-                <div className="absolute inset-0 border-4 border-mint-500 rounded-full border-t-transparent animate-spin"></div>
-              </div>
+      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+        <div className="container mx-auto p-4 md:p-6">
+          <div className="flex items-center justify-center h-[80vh]">
+            <div className="relative w-12 h-12">
+              <div className="absolute inset-0 border-4 border-mint-100 rounded-full"></div>
+              <div className="absolute inset-0 border-4 border-mint-500 rounded-full border-t-transparent animate-spin"></div>
             </div>
           </div>
         </div>
-      </Layout>
+      </div>
     );
   }
 
@@ -99,81 +96,79 @@ const TodoPage = () => {
   );
 
   return (
-    <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
-        <StandardPageHeader
-          title="Todo List"
-          description="Organize and track your tasks and assignments"
-          icon={<ListTodo className="h-6 w-6 text-white" />}
-          breadcrumbs={breadcrumbs}
-          actions={actions}
-        />
-        
-        <div className="container mx-auto px-6 py-8">
-          <div className="space-y-6">
-            {/* Stats */}
-            <TodoStats todos={todos} />
+    <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+      <StandardPageHeader
+        title="Todo List"
+        description="Organize and track your tasks and assignments"
+        icon={<ListTodo className="h-6 w-6 text-white" />}
+        breadcrumbs={breadcrumbs}
+        actions={actions}
+      />
+      
+      <div className="container mx-auto px-6 py-8">
+        <div className="space-y-6">
+          {/* Stats */}
+          <TodoStats todos={todos} />
 
-            {/* Overdue Todos Section */}
-            <OverdueTodosSection />
+          {/* Overdue Todos Section */}
+          <OverdueTodosSection />
 
-            {/* Quick Start Templates */}
-            <TodoSuggestions onCreateFromTemplate={handleCreateFromTemplate} />
+          {/* Quick Start Templates */}
+          <TodoSuggestions onCreateFromTemplate={handleCreateFromTemplate} />
 
-            {/* Main Content */}
-            <Card className="p-6">
-              <Tabs 
-                defaultValue="all" 
-                value={filter}
-                onValueChange={(value: any) => setFilter(value)}
-                className="w-full"
-              >
-                <TabsList className="grid grid-cols-3 mb-6">
-                  <TabsTrigger value="all" className="flex items-center gap-1">
-                    <ListTodo className="h-4 w-4" />
-                    <span>All</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="overdue" className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    <span>Overdue</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="completed" className="flex items-center gap-1">
-                    <Check className="h-4 w-4" />
-                    <span>Completed</span>
-                  </TabsTrigger>
-                </TabsList>
+          {/* Main Content */}
+          <Card className="p-6">
+            <Tabs 
+              defaultValue="all" 
+              value={filter}
+              onValueChange={(value: any) => setFilter(value)}
+              className="w-full"
+            >
+              <TabsList className="grid grid-cols-3 mb-6">
+                <TabsTrigger value="all" className="flex items-center gap-1">
+                  <ListTodo className="h-4 w-4" />
+                  <span>All</span>
+                </TabsTrigger>
+                <TabsTrigger value="overdue" className="flex items-center gap-1">
+                  <Clock className="h-4 w-4" />
+                  <span>Overdue</span>
+                </TabsTrigger>
+                <TabsTrigger value="completed" className="flex items-center gap-1">
+                  <Check className="h-4 w-4" />
+                  <span>Completed</span>
+                </TabsTrigger>
+              </TabsList>
 
-                <TodoList
-                  todos={todos}
-                  isLoading={isLoading}
-                  onUpdate={handleUpdateTodoStatus}
-                  onDelete={deleteTodo.mutate}
-                  onEdit={handleEdit}
-                  formatDate={formatDate}
-                />
-              </Tabs>
-            </Card>
-          </div>
-
-          {/* Create Todo Dialog */}
-          <TodoFormDialog
-            open={showCreateDialog}
-            onOpenChange={setShowCreateDialog}
-            onSubmit={handleSubmit}
-          />
-
-          {/* Edit Todo Dialog */}
-          {editingTodo && (
-            <TodoFormDialog
-              open={!!editingTodo}
-              onOpenChange={(open) => !open && setEditingTodo(null)}
-              onSubmit={handleEditSubmit}
-              editingTodo={editingTodo}
-            />
-          )}
+              <TodoList
+                todos={todos}
+                isLoading={isLoading}
+                onUpdate={handleUpdateTodoStatus}
+                onDelete={deleteTodo.mutate}
+                onEdit={handleEdit}
+                formatDate={formatDate}
+              />
+            </Tabs>
+          </Card>
         </div>
+
+        {/* Create Todo Dialog */}
+        <TodoFormDialog
+          open={showCreateDialog}
+          onOpenChange={setShowCreateDialog}
+          onSubmit={handleSubmit}
+        />
+
+        {/* Edit Todo Dialog */}
+        {editingTodo && (
+          <TodoFormDialog
+            open={!!editingTodo}
+            onOpenChange={(open) => !open && setEditingTodo(null)}
+            onSubmit={handleEditSubmit}
+            editingTodo={editingTodo}
+          />
+        )}
       </div>
-    </Layout>
+    </div>
   );
 };
 
