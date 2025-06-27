@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { StudyPlan } from '@/types/studyPlanner';
 import { useStudyPlanSession } from '@/hooks/useStudyPlanSession';
 import { useConvertStudyPlanToGoal } from '@/hooks/useConvertStudyPlanToGoal';
-import { Play, Settings, Target, Calendar, Clock, BookOpen } from 'lucide-react';
+import { Play, Settings, Target, Calendar, Clock } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { GoalFormDialog } from '@/components/goals/GoalFormDialog';
 import { SessionSettingsDialog } from './SessionSettingsDialog';
@@ -29,10 +29,9 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
     await startStudyPlanSession(studyPlan);
   };
 
-  const handleSetGoal = async () => {
+  const handleSetGoal = async (data: any) => {
     try {
       await convertToGoal(studyPlan);
-      setShowGoalDialog(false);
     } catch (error) {
       console.error('Error converting to goal:', error);
     }
@@ -40,73 +39,65 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
 
   return (
     <>
-      <Card className="bg-white border border-gray-200 hover:shadow-lg transition-shadow duration-200">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg font-semibold text-gray-900 mb-2">
-            {studyPlan.title}
-          </CardTitle>
-          
-          <div className="flex items-center gap-2 mb-3">
-            <Badge className="bg-mint-100 text-mint-800 border-mint-200">
-              <BookOpen className="h-3 w-3 mr-1" />
-              {studyPlan.subject}
-            </Badge>
-            {studyPlan.topic && (
-              <Badge variant="outline" className="text-xs">
-                {studyPlan.topic}
+      <Card className="bg-white border border-gray-100 hover:shadow-md transition-all duration-200">
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <CardTitle className="text-lg font-medium text-gray-900 mb-2">
+                {studyPlan.title}
+              </CardTitle>
+              
+              <Badge className="bg-mint-50 text-mint-700 border-mint-200 text-sm">
+                {studyPlan.subject}
+              </Badge>
+            </div>
+
+            {isActive && (
+              <Badge className="bg-green-50 text-green-700 border-green-200 text-xs">
+                Active
               </Badge>
             )}
           </div>
-
-          {isActive && (
-            <Badge className="bg-green-100 text-green-800 border-green-200 w-fit">
-              Active Session
-            </Badge>
-          )}
         </CardHeader>
 
         <CardContent className="pt-0">
           <div className="space-y-4">
-            {/* Study Info Grid */}
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-gray-500" />
-                <span className="text-gray-600">{daysLeft} days left</span>
+            {/* Study Info - Clean Grid */}
+            <div className="grid grid-cols-3 gap-4 text-sm">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 text-gray-500 mb-1">
+                  <Calendar className="h-3 w-3" />
+                </div>
+                <div className="font-medium text-gray-900">{daysLeft}</div>
+                <div className="text-xs text-gray-500">days left</div>
               </div>
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-gray-500" />
-                <span className="text-gray-600">{hoursPerDay}h/day</span>
+              
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 text-gray-500 mb-1">
+                  <Clock className="h-3 w-3" />
+                </div>
+                <div className="font-medium text-gray-900">{hoursPerDay}h</div>
+                <div className="text-xs text-gray-500">per day</div>
+              </div>
+              
+              <div className="text-center">
+                <div className="font-medium text-gray-900">{studyPlan.sessions_completed}</div>
+                <div className="text-xs text-gray-500">sessions</div>
               </div>
             </div>
 
             {/* Date Range */}
-            <div className="text-sm text-gray-600">
+            <div className="text-xs text-gray-500 text-center">
               {format(new Date(studyPlan.start_date), 'MMM d')} - {format(new Date(studyPlan.end_date), 'MMM d, yyyy')}
             </div>
 
-            {/* Study Days */}
-            {studyPlan.study_days.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {studyPlan.study_days.slice(0, 4).map((day) => (
-                  <Badge key={day} variant="outline" className="text-xs">
-                    {day.slice(0, 3)}
-                  </Badge>
-                ))}
-                {studyPlan.study_days.length > 4 && (
-                  <Badge variant="outline" className="text-xs">
-                    +{studyPlan.study_days.length - 4} more
-                  </Badge>
-                )}
-              </div>
-            )}
-
-            {/* Progress */}
+            {/* Progress Bar */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Progress</span>
-                <span className="font-medium">{studyPlan.completion_percentage}%</span>
+                <span className="font-medium text-gray-900">{studyPlan.completion_percentage}%</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-gray-100 rounded-full h-2">
                 <div 
                   className="bg-mint-500 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${studyPlan.completion_percentage}%` }}
@@ -118,11 +109,11 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
             <div className="flex gap-2 pt-2">
               <Button
                 onClick={handleStartSession}
-                className="flex-1 bg-mint-600 hover:bg-mint-700 text-white"
+                className="flex-1 bg-mint-600 hover:bg-mint-700 text-white h-9"
                 disabled={isActive}
               >
                 <Play className="h-4 w-4 mr-2" />
-                {isActive ? 'Session Active' : 'Start Session'}
+                {isActive ? 'Active' : 'Start'}
               </Button>
               
               <Button
@@ -130,7 +121,7 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
                 variant="outline"
                 size="sm"
                 disabled={isConverting || studyPlan.is_converted_to_goals}
-                className="border-mint-200 text-mint-700 hover:bg-mint-50"
+                className="border-mint-200 text-mint-700 hover:bg-mint-50 h-9 px-3"
               >
                 <Target className="h-4 w-4" />
               </Button>
@@ -139,7 +130,7 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
                 onClick={() => setShowSettingsDialog(true)}
                 variant="outline"
                 size="sm"
-                className="border-gray-200 hover:bg-gray-50"
+                className="border-gray-200 hover:bg-gray-50 h-9 px-3"
               >
                 <Settings className="h-4 w-4" />
               </Button>
