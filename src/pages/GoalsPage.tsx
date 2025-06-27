@@ -1,7 +1,6 @@
 
 import { useState } from 'react';
 import { PlusCircle, Target } from 'lucide-react';
-import Layout from '@/components/layout/Layout';
 import { GoalFormDialog } from '@/components/goals/GoalFormDialog';
 import { GoalStats } from '@/components/goals/GoalStats';
 import { GoalSuggestions } from '@/components/goals/GoalSuggestions';
@@ -15,7 +14,6 @@ import { useGoalTracking } from '@/hooks/useGoalTracking';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { StandardPageHeader } from '@/components/ui/StandardPageHeader';
 
 const GoalsPage = () => {
   const { loading: authLoading } = useRequireAuth();
@@ -129,96 +127,97 @@ const GoalsPage = () => {
     setFormOpen(true);
   };
 
-  const breadcrumbs = [
-    { label: "Goals" }
-  ];
-
-  const actions = (
-    <Button onClick={openCreateGoalDialog}>
-      <PlusCircle className="mr-2 h-4 w-4" /> Create Goal
-    </Button>
-  );
-
   return (
-    <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
-        <StandardPageHeader
-          title="Study Goals"
-          description="Set, track, and achieve your study objectives automatically"
-          icon={<Target className="h-6 w-6 text-white" />}
-          breadcrumbs={breadcrumbs}
-          actions={actions}
-        />
-        
-        <div className="container mx-auto px-6 py-8">
-          <div className="space-y-6">
-            <GoalStats goals={goals} streakBonus={streakBonus} />
-
-            <GoalNotifications 
-              goals={goals} 
-              onGoalAction={handleGoalNotificationAction}
-            />
-
-            <OverdueGoalsSection />
-
-            <GoalSuggestions
-              suggestions={suggestions}
-              suggestionsEnabled={suggestionsEnabled}
-              onCreateFromTemplate={handleCreateFromTemplate}
-              onDismissSuggestion={handleDismissSuggestion}
-              onToggleSuggestions={toggleSuggestions}
-              onRefreshSuggestions={refreshSuggestions}
-            />
-            
-            <div className="mb-6">
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center mb-4">
-                  <TabsList className="mb-2 sm:mb-0">
-                    <TabsTrigger value="all">All Goals</TabsTrigger>
-                    <TabsTrigger value="due-soon">Due Soon</TabsTrigger>
-                    <TabsTrigger value="progress">By Progress</TabsTrigger>
-                    <TabsTrigger value="recent">Recent</TabsTrigger>
-                    <TabsTrigger value="analytics">Analytics</TabsTrigger>
-                  </TabsList>
-                  
-                  {activeTab !== 'analytics' && (
-                    <GoalFilters
-                      searchQuery={searchQuery}
-                      filter={filter}
-                      onSearchChange={setSearchQuery}
-                      onFilterChange={setFilter}
-                    />
-                  )}
-                </div>
-                
-                <TabsContent value={activeTab} className="mt-0">
-                  {activeTab === 'analytics' ? (
-                    <GoalAnalytics goals={goals} />
-                  ) : (
-                    <GoalsGrid
-                      goals={sortedGoals}
-                      loading={loading}
-                      searchQuery={searchQuery}
-                      filter={filter}
-                      onEditGoal={handleEditGoal}
-                      onDeleteGoal={handleDeleteGoal}
-                      onCreateGoal={openCreateGoalDialog}
-                    />
-                  )}
-                </TabsContent>
-              </Tabs>
+    <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+      {/* Simple page header without StandardPageHeader */}
+      <div className="bg-white/60 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
+        <div className="container mx-auto px-6 py-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gradient-to-br from-mint-500 to-blue-500 rounded-xl">
+                <Target className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-mint-900">Study Goals</h1>
+                <p className="text-gray-600 mt-1">Set, track, and achieve your study objectives automatically</p>
+              </div>
             </div>
+            
+            <Button onClick={openCreateGoalDialog}>
+              <PlusCircle className="mr-2 h-4 w-4" /> Create Goal
+            </Button>
           </div>
-          
-          <GoalFormDialog
-            open={formOpen}
-            onOpenChange={setFormOpen}
-            onSubmit={selectedGoal ? handleUpdateGoal : handleCreateGoal}
-            initialData={selectedGoal}
-          />
         </div>
       </div>
-    </Layout>
+      
+      <div className="container mx-auto px-6 py-8">
+        <div className="space-y-6">
+          <GoalStats goals={goals} streakBonus={streakBonus} />
+
+          <GoalNotifications 
+            goals={goals} 
+            onGoalAction={handleGoalNotificationAction}
+          />
+
+          <OverdueGoalsSection />
+
+          <GoalSuggestions
+            suggestions={suggestions}
+            suggestionsEnabled={suggestionsEnabled}
+            onCreateFromTemplate={handleCreateFromTemplate}
+            onDismissSuggestion={handleDismissSuggestion}
+            onToggleSuggestions={toggleSuggestions}
+            onRefreshSuggestions={refreshSuggestions}
+          />
+          
+          <div className="mb-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center mb-4">
+                <TabsList className="mb-2 sm:mb-0">
+                  <TabsTrigger value="all">All Goals</TabsTrigger>
+                  <TabsTrigger value="due-soon">Due Soon</TabsTrigger>
+                  <TabsTrigger value="progress">By Progress</TabsTrigger>
+                  <TabsTrigger value="recent">Recent</TabsTrigger>
+                  <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                </TabsList>
+                
+                {activeTab !== 'analytics' && (
+                  <GoalFilters
+                    searchQuery={searchQuery}
+                    filter={filter}
+                    onSearchChange={setSearchQuery}
+                    onFilterChange={setFilter}
+                  />
+                )}
+              </div>
+              
+              <TabsContent value={activeTab} className="mt-0">
+                {activeTab === 'analytics' ? (
+                  <GoalAnalytics goals={goals} />
+                ) : (
+                  <GoalsGrid
+                    goals={sortedGoals}
+                    loading={loading}
+                    searchQuery={searchQuery}
+                    filter={filter}
+                    onEditGoal={handleEditGoal}
+                    onDeleteGoal={handleDeleteGoal}
+                    onCreateGoal={openCreateGoalDialog}
+                  />
+                )}
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+        
+        <GoalFormDialog
+          open={formOpen}
+          onOpenChange={setFormOpen}
+          onSubmit={selectedGoal ? handleUpdateGoal : handleCreateGoal}
+          initialData={selectedGoal}
+        />
+      </div>
+    </div>
   );
 };
 
