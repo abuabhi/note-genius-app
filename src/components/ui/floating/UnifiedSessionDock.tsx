@@ -12,21 +12,19 @@ export const UnifiedSessionDock = () => {
     elapsedSeconds,
     isPaused,
     activityType,
-    isOnStudyPage,
-    showTimeoutWarning,
+    showInactivityWarning,
     currentTitle,
     currentSubject,
     togglePause,
     endSession,
-    dismissTimeoutWarning
+    dismissInactivityWarning
   } = useUnifiedSessionTracker();
 
-  console.log('🎛️ [UNIFIED SESSION DOCK] Render state:', { 
+  console.log('🎛️ [SESSION DOCK] Render state:', { 
     isActive, 
     isPaused, 
-    isOnStudyPage, 
     elapsedSeconds,
-    showTimeoutWarning,
+    showInactivityWarning,
     activityType,
     currentTitle,
     showDock: isActive 
@@ -34,7 +32,7 @@ export const UnifiedSessionDock = () => {
 
   // Show dock ONLY if there's an active session
   if (!isActive) {
-    console.log('🎛️ [UNIFIED SESSION DOCK] Hidden - no active session');
+    console.log('🎛️ [SESSION DOCK] Hidden - no active session');
     return null;
   }
 
@@ -65,23 +63,17 @@ export const UnifiedSessionDock = () => {
   };
 
   const getSessionStatus = () => {
-    if (showTimeoutWarning) {
-      return 'Timeout Warning!';
-    }
-    if (!isOnStudyPage && activityType !== 'study_plan') {
-      return 'Away from Study';
+    if (showInactivityWarning) {
+      return 'Inactivity Warning!';
     }
     if (isPaused) {
       return 'Paused';
-    }
-    if (activityType === 'study_plan') {
-      return 'Study Plan Active';
     }
     return 'Active Session';
   };
 
   const getSessionTheme = () => {
-    if (showTimeoutWarning) {
+    if (showInactivityWarning) {
       return {
         background: 'bg-red-900/90 border-red-400/60',
         text: 'text-red-100',
@@ -92,7 +84,7 @@ export const UnifiedSessionDock = () => {
       };
     }
     
-    if ((!isOnStudyPage && activityType !== 'study_plan') || isPaused) {
+    if (isPaused) {
       return {
         background: 'bg-slate-800/90 border-orange-400/40',
         text: 'text-orange-100',
@@ -122,21 +114,21 @@ export const UnifiedSessionDock = () => {
     }
   };
 
-  console.log('🎛️ [UNIFIED SESSION DOCK] Showing with theme:', theme.background);
+  console.log('🎛️ [SESSION DOCK] Showing with theme:', theme.background);
 
   return (
     <>
-      {/* Timeout Warning Banner - Top Right */}
-      {showTimeoutWarning && (
+      {/* Inactivity Warning Banner - Top Right */}
+      {showInactivityWarning && (
         <Card className="fixed top-20 right-6 z-40 bg-red-900/95 border-red-400/60 shadow-xl backdrop-blur-sm">
           <div className="flex items-center gap-3 px-4 py-3">
             <div className="text-red-100 text-sm font-medium">
-              ⚠️ Session will auto-end in 30 minutes
+              ⚠️ Session will auto-stop in 2 minutes due to inactivity
             </div>
             <Button
               variant="ghost"
               size="sm"
-              onClick={dismissTimeoutWarning}
+              onClick={dismissInactivityWarning}
               className="h-6 w-6 p-0 text-red-300 hover:text-red-100 hover:bg-red-500/20"
             >
               <X className="h-3 w-3" />
@@ -157,18 +149,18 @@ export const UnifiedSessionDock = () => {
               <div className={cn("h-4 w-4", theme.iconColor)}>
                 {getActivityIcon()}
               </div>
-              {!isPaused && (isOnStudyPage || activityType === 'study_plan') && !showTimeoutWarning && (
+              {!isPaused && !showInactivityWarning && (
                 <div className={cn(
                   "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full animate-pulse",
                   theme.indicator,
                   "opacity-75"
                 )} />
               )}
-              {((!isOnStudyPage && activityType !== 'study_plan') || showTimeoutWarning) && (
+              {(isPaused || showInactivityWarning) && (
                 <div className={cn(
                   "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full",
                   theme.indicator,
-                  showTimeoutWarning ? "animate-pulse" : "opacity-60"
+                  showInactivityWarning ? "animate-pulse" : "opacity-60"
                 )} />
               )}
             </div>
