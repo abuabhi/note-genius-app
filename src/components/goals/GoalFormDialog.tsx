@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -26,7 +25,7 @@ interface GoalFormData {
 interface GoalFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: () => Promise<void>;
+  onSubmit: (data: GoalFormData) => Promise<void>;
   initialData?: Partial<GoalFormData>;
 }
 
@@ -52,7 +51,8 @@ export const GoalFormDialog: React.FC<GoalFormDialogProps> = ({
     setIsSubmitting(true);
     
     try {
-      await onSubmit();
+      await onSubmit(formData);
+      onOpenChange(false);
     } catch (error) {
       console.error('Error creating goal:', error);
     } finally {
