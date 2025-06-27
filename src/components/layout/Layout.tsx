@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { NavBar } from './NavBar';
-import { Footer } from './Footer';
+import NavBar from './NavBar';
+import Footer from './Footer';
 import { UnifiedSessionDock } from '@/components/ui/floating/UnifiedSessionDock';
 import { HelpFloatingButton } from '@/components/help/HelpFloatingButton';
 
@@ -9,7 +9,7 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
-export const Layout = ({ children }: LayoutProps) => {
+const Layout = ({ children }: LayoutProps) => {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-mint-50 via-white to-blue-50">
       <NavBar />
@@ -24,3 +24,5 @@ export const Layout = ({ children }: LayoutProps) => {
     </div>
   );
 };
+
+export default Layout;
