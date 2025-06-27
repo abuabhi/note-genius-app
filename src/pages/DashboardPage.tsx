@@ -5,6 +5,7 @@ import { DashboardHeroSection } from "@/components/dashboard/DashboardHeroSectio
 import { LearningAnalyticsDashboard } from "@/components/dashboard/LearningAnalyticsDashboard";
 import { TodosSection } from "@/components/dashboard/TodosSection";
 import { GoalsSection } from "@/components/dashboard/GoalsSection";
+import { StudyPlannerSection } from "@/components/dashboard/StudyPlannerSection";
 import { ReferralSignupHandler } from "@/components/referrals/ReferralSignupHandler";
 import { ReferralSignupErrorBoundary } from "@/components/referrals/ReferralSignupErrorBoundary";
 
@@ -49,26 +50,28 @@ const DashboardPage = () => {
       </ReferralSignupErrorBoundary>
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
         <div className="container mx-auto p-6 space-y-8">
-          {/* Hero Section - Daily Overview */}
+          {/* Hero Section - Updated with complete user flow */}
           <div>
             <DashboardHeroSection />
           </div>
           
-          {/* Learning Analytics */}
+          {/* Study Planner Section - New */}
+          <div>
+            <StudyPlannerSection />
+          </div>
+          
+          {/* Simplified Analytics - Essential metrics only */}
           <div>
             <LearningAnalyticsDashboard />
           </div>
           
-          {/* Two Column Layout for Todos and Goals */}
-          <div className="grid gap-8 lg:grid-cols-2">
-            {/* Today's Todos */}
-            <div>
-              <TodosSection />
-            </div>
-            
-            {/* Active Goals */}
+          {/* Goals and Todos - More compact layout */}
+          <div className="grid gap-6 lg:grid-cols-2">
             <div>
               <GoalsSection />
+            </div>
+            <div>
+              <TodosSection />
             </div>
           </div>
         </div>
