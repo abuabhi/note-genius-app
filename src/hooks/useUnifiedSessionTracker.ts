@@ -30,10 +30,10 @@ export const useUnifiedSessionTracker = () => {
   const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastActivityRef = useRef<Date>(new Date());
 
-  // Load active session on mount
+  // Clean up orphaned sessions and load active session on mount
   useEffect(() => {
     if (user) {
-      loadActiveSession();
+      cleanupAndLoadActiveSession();
     }
   }, [user]);
 
@@ -106,20 +106,43 @@ export const useUnifiedSessionTracker = () => {
     };
   }, [isActive, isPaused]);
 
-  const loadActiveSession = async () => {
+  const cleanupAndLoadActiveSession = async () => {
     try {
       if (!user) return;
 
-      console.log('📊 [SESSION TRACKER] Loading active session for user:', user.id);
+      console.log('🧹 [SESSION TRACKER] Starting cleanup and load for user:', user.id);
 
+      // First, cleanup any orphaned active sessions (older than 4 hours)
+      const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
+      
+      const { error: cleanupError } = await supabase
+        .from('study_sessions')
+        .update({
+          is_active: false,
+          end_time: new Date().toISOString(),
+          notes: 'Auto-ended during cleanup - session was orphaned'
+        })
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .lt('start_time', fourHoursAgo);
+
+      if (cleanupError) {
+        console.error('❌ [SESSION TRACKER] Error during cleanup:', cleanupError);
+      } else {
+        console.log('🧹 [SESSION TRACKER] Cleaned up orphaned sessions');
+      }
+
+      // Now try to load the most recent active session
       const { data, error } = await supabase
         .from('study_sessions')
         .select('*')
         .eq('user_id', user.id)
         .eq('is_active', true)
-        .single();
+        .order('start_time', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('❌ [SESSION TRACKER] Error loading active session:', error);
         return;
       }
@@ -129,6 +152,13 @@ export const useUnifiedSessionTracker = () => {
         const now = new Date();
         const elapsed = Math.floor((now.getTime() - startTime.getTime()) / 1000);
         
+        // Check if session is too old (more than 4 hours)
+        if (elapsed > 4 * 60 * 60) {
+          console.log('⚠️ [SESSION TRACKER] Session too old, ending it');
+          await endSessionById(data.id);
+          return;
+        }
+        
         setIsActive(true);
         setCurrentSessionId(data.id);
         setCurrentTitle(data.title || '');
@@ -137,7 +167,7 @@ export const useUnifiedSessionTracker = () => {
         setElapsedSeconds(elapsed);
         
         console.log('✅ [SESSION TRACKER] Loaded active session:', {
-          id: data.id,
+          id: data.id.slice(0, 8),
           title: data.title,
           elapsed: elapsed + 's'
         });
@@ -145,7 +175,25 @@ export const useUnifiedSessionTracker = () => {
         console.log('📊 [SESSION TRACKER] No active session found');
       }
     } catch (error) {
-      console.error('❌ [SESSION TRACKER] Error loading active session:', error);
+      console.error('❌ [SESSION TRACKER] Error in cleanup and load:', error);
+    }
+  };
+
+  const endSessionById = async (sessionId: string) => {
+    try {
+      const { error } = await supabase
+        .from('study_sessions')
+        .update({
+          end_time: new Date().toISOString(),
+          is_active: false,
+          notes: 'Auto-ended during cleanup'
+        })
+        .eq('id', sessionId);
+
+      if (error) throw error;
+      console.log('🔚 [SESSION TRACKER] Ended session:', sessionId.slice(0, 8));
+    } catch (error) {
+      console.error('❌ [SESSION TRACKER] Error ending session:', error);
     }
   };
 
@@ -159,6 +207,17 @@ export const useUnifiedSessionTracker = () => {
       if (isActive && currentSessionId) {
         await endSession('Starting new session');
       }
+
+      // Also cleanup any other active sessions for this user
+      await supabase
+        .from('study_sessions')
+        .update({
+          is_active: false,
+          end_time: new Date().toISOString(),
+          notes: 'Auto-ended when starting new session'
+        })
+        .eq('user_id', user.id)
+        .eq('is_active', true);
 
       const newSessionData = {
         user_id: user.id,
@@ -193,7 +252,7 @@ export const useUnifiedSessionTracker = () => {
       lastActivityRef.current = new Date();
 
       console.log('✅ [SESSION TRACKER] Started session successfully:', {
-        id: data.id,
+        id: data.id.slice(0, 8),
         title: sessionData.title,
         type: sessionData.activityType
       });

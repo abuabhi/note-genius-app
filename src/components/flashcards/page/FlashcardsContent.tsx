@@ -1,179 +1,102 @@
 
+import React from 'react';
+import { useFlashcards } from '@/contexts/FlashcardContext';
+import { FlashcardSetGrid } from '@/components/flashcards/components/FlashcardSetGrid';
+import { LoadingState } from '@/components/notes/page/LoadingState';
+import { ErrorState } from '@/components/notes/page/ErrorState';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Plus, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { FlashcardSetListView } from '@/components/flashcards/components/FlashcardSetListView';
-import FlashcardSetGrid from '@/components/flashcards/components/FlashcardSetGrid';
-import { ViewMode } from '@/hooks/useViewPreferences';
-import type { FlashcardFilters } from '@/components/flashcards/components/AdvancedFlashcardFilters';
+import { useNavigate } from 'react-router-dom';
+import { useUnifiedSessionTracker } from '@/hooks/useUnifiedSessionTracker';
+import { toast } from 'sonner';
 
-// Loading skeleton component
-const ListLoadingSkeleton = () => (
-  <div className="space-y-3">
-    {Array.from({ length: 6 }).map((_, i) => (
-      <div key={i} className="bg-white border border-mint-100 rounded-lg p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex-1 space-y-2">
-            <div className="flex items-center gap-3">
-              <Skeleton className="h-4 w-4" />
-              <Skeleton className="h-5 w-48" />
-              <Skeleton className="h-5 w-16" />
-            </div>
-            <div className="flex items-center gap-4">
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-32" />
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Skeleton className="h-8 w-16" />
-            <Skeleton className="h-8 w-8" />
-          </div>
-        </div>
-      </div>
-    ))}
-  </div>
-);
+export const FlashcardsContent = () => {
+  const navigate = useNavigate();
+  const { 
+    flashcardSets, 
+    loading, 
+    error,
+    viewMode 
+  } = useFlashcards();
+  
+  const { startSession, isActive } = useUnifiedSessionTracker();
 
-const ErrorDisplay = ({ error, onRetry }: { error: string; onRetry: () => void }) => (
-  <div className="text-center py-12">
-    <div className="bg-red-50 border border-red-200 rounded-xl p-8 max-w-md mx-auto">
-      <p className="text-red-600 mb-4">Error loading flashcard sets: {error}</p>
-      <Button onClick={onRetry} variant="outline">
-        Try Again
-      </Button>
-    </div>
-  </div>
-);
+  const handleTestSession = async () => {
+    try {
+      await startSession({
+        title: 'Test Study Session',
+        subject: 'General',
+        activityType: 'flashcard_study'
+      });
+      toast.success('Test session started! Timer should now be visible.');
+    } catch (error) {
+      console.error('Failed to start test session:', error);
+      toast.error('Failed to start test session');
+    }
+  };
 
-interface FlashcardsContentProps {
-  sets: any[];
-  filters: FlashcardFilters;
-  viewMode: ViewMode;
-  loading: boolean;
-  error: string | null;
-  hasMore: boolean;
-  page: number;
-  deletingSet: string | null;
-  detailedProgressData: Record<string, any>;
-  onDeleteSet: (setId: string) => void;
-  onTogglePinned: (setId: string, isPinned: boolean) => void;
-  onLoadMore: () => void;
-  onRetry: () => void;
-}
-
-export const FlashcardsContent = ({
-  sets,
-  filters,
-  viewMode,
-  loading,
-  error,
-  hasMore,
-  page,
-  deletingSet,
-  detailedProgressData,
-  onDeleteSet,
-  onTogglePinned,
-  onLoadMore,
-  onRetry,
-}: FlashcardsContentProps) => {
-  console.log('🎯 FlashcardsContent - Received viewMode:', viewMode);
-  console.log('🎯 FlashcardsContent - Will render:', viewMode === 'list' ? 'LIST VIEW' : 'GRID VIEW');
-
-  if (loading && page === 1) {
-    return <ListLoadingSkeleton />;
+  if (loading.sets) {
+    return <LoadingState />;
   }
 
   if (error) {
-    return <ErrorDisplay error={error} onRetry={onRetry} />;
+    return <ErrorState error={error} />;
   }
 
-  // Map progress data from the optimized sets to the expected format for list view
-  const mappedDetailedProgressData = sets.reduce((acc: Record<string, any>, set) => {
-    const progressSummary = set.progress_summary;
-    if (progressSummary) {
-      acc[set.id] = {
-        masteredCards: progressSummary.mastered_cards || 0,
-        needsPracticeCards: progressSummary.needs_practice || 0,
-        totalCards: progressSummary.total_cards || 0,
-        masteredPercentage: progressSummary.mastery_percentage || 0
-      };
-    } else {
-      // Fallback for sets without progress data
-      acc[set.id] = {
-        masteredCards: 0,
-        needsPracticeCards: set.card_count || 0,
-        totalCards: set.card_count || 0,
-        masteredPercentage: 0
-      };
-    }
-    return acc;
-  }, {});
-
-  const setProgressData = sets.reduce((acc: Record<string, number>, set) => {
-    acc[set.id] = set.progress_summary?.mastery_percentage || 0;
-    return acc;
-  }, {});
+  if (!flashcardSets || flashcardSets.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 space-y-4">
+        <EmptyState
+          icon={BookOpen}
+          title="No flashcard sets yet"
+          description="Create your first flashcard set to get started with studying"
+          action={{
+            label: "Create Flashcard Set",
+            onClick: () => navigate('/flashcards/create')
+          }}
+        />
+        
+        {/* Test Session Button */}
+        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm text-blue-700 mb-2">Test the floating timer:</p>
+          <Button
+            onClick={handleTestSession}
+            disabled={isActive}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            {isActive ? 'Session Active' : 'Start Test Session'}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Flashcard Sets Display */}
-      {viewMode === 'list' ? (
-        <>
-          {console.log('🎯 FlashcardsContent - RENDERING LIST VIEW')}
-          <FlashcardSetListView
-            sets={sets}
-            onTogglePinned={onTogglePinned}
-            onDelete={onDeleteSet}
-            loading={loading}
-            currentUserId={undefined}
-          />
-        </>
-      ) : (
-        <>
-          {console.log('🎯 FlashcardsContent - RENDERING GRID VIEW')}
-          <FlashcardSetGrid
-            sets={sets}
-            setProgressData={setProgressData}
-            deletingSet={deletingSet}
-            onDeleteSet={onDeleteSet}
-            hasInitiallyLoaded={!loading}
-            searchQuery={filters.searchQuery}
-            subjectFilter={filters.subjectFilter}
-            detailedProgressData={mappedDetailedProgressData}
-          />
-        </>
-      )}
-
-      {/* Load More / Pagination */}
-      {hasMore && (
-        <div className="flex justify-center pt-6">
-          <Button
-            onClick={onLoadMore}
-            variant="outline"
-            disabled={loading}
-            className="px-8"
-          >
-            {loading ? 'Loading...' : 'Load More Sets'}
-          </Button>
-        </div>
-      )}
-
-      {/* Loading indicator for additional pages */}
-      {loading && page > 1 && (
-        <div className="flex justify-center py-4">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <div className="w-4 h-4 border-2 border-mint-300 border-t-transparent rounded-full animate-spin"></div>
-            Loading more sets...
+      {/* Test Session Button - Only show if no active session */}
+      {!isActive && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-medium text-blue-900">Test Floating Timer</h3>
+              <p className="text-sm text-blue-700">Start a test session to see the floating timer</p>
+            </div>
+            <Button
+              onClick={handleTestSession}
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Start Test Session
+            </Button>
           </div>
         </div>
       )}
-
-      {/* No more results indicator */}
-      {!hasMore && sets.length > 0 && (
-        <div className="text-center py-4 text-sm text-gray-500">
-          No more flashcard sets to load
-        </div>
-      )}
+      
+      <FlashcardSetGrid
+        flashcardSets={flashcardSets}
+        viewMode={viewMode}
+      />
     </div>
   );
 };
