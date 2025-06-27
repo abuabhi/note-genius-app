@@ -49,7 +49,7 @@ export const useTodoMutations = () => {
     },
     onSuccess: () => {
       toast.success('Todo created successfully');
-      queryClient.invalidateQueries({ queryKey: ['todos'] });
+      queryClient.invalidateQueries({ queryKey: ['todos', user?.id] });
     },
     onError: (error: Error) => {
       toast.error(`Failed to create todo: ${error.message}`);
@@ -113,7 +113,7 @@ export const useTodoMutations = () => {
     onSuccess: (data, variables) => {
       console.log('🎉 Todo status update success:', variables);
       toast.success(`Todo marked as ${variables.status}`);
-      queryClient.invalidateQueries({ queryKey: ['todos'] });
+      queryClient.invalidateQueries({ queryKey: ['todos', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['reminders'] });
     },
     onError: (error: Error, variables) => {
@@ -147,7 +147,7 @@ export const useTodoMutations = () => {
     },
     onSuccess: () => {
       toast.success('Todo deleted successfully');
-      queryClient.invalidateQueries({ queryKey: ['todos'] });
+      queryClient.invalidateQueries({ queryKey: ['todos', user?.id] });
     },
     onError: () => {
       toast.error('Failed to delete todo');
