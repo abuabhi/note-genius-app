@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { AuthProvider } from './contexts/auth/AuthProvider';
 import { AppProviders } from './components/app/AppProviders';
 import { QueryProvider } from './components/app/QueryProvider';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import AppRoutes from './components/app/AppRoutes';
 
 function App() {
@@ -14,9 +15,11 @@ function App() {
     <QueryProvider>
       <AuthProvider>
         <AppProviders>
-          <div className="App min-h-screen bg-gray-50">
-            <AppRoutes />
-          </div>
+          <SidebarProvider>
+            <div className="App min-h-screen bg-gray-50 w-full">
+              <AppRoutes />
+            </div>
+          </SidebarProvider>
         </AppProviders>
       </AuthProvider>
     </QueryProvider>

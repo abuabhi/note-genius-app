@@ -51,7 +51,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   to="/notes"
                   icon={FileText}
                   label="Notes"
-                  isActive={pathname.includes("/notes")}
+                  isActive={pathname.startsWith("/notes")}
                   isCollapsed={isCollapsed}
                 />
                 <Separator className="my-2" />
@@ -61,7 +61,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   to="/flashcards"
                   icon={BookOpen}
                   label="Flashcards"
-                  isActive={pathname.includes("/flashcards")}
+                  isActive={pathname.startsWith("/flashcards") || pathname.startsWith("/study")}
                   isCollapsed={isCollapsed}
                 />
                 <Separator className="my-2" />
@@ -71,7 +71,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   to="/quizzes"
                   icon={Activity}
                   label="Quiz"
-                  isActive={pathname.includes("/quiz")}
+                  isActive={pathname.startsWith("/quiz")}
                   isCollapsed={isCollapsed}
                 />
                 <Separator className="my-2" />
@@ -81,7 +81,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   to="/goals"
                   icon={Target}
                   label="Goals"
-                  isActive={pathname.includes("/goals")}
+                  isActive={pathname.startsWith("/goals")}
                   isCollapsed={isCollapsed}
                 />
                 <Separator className="my-2" />
@@ -91,7 +91,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   to="/study-planner"
                   icon={Calendar}
                   label="Study Planner"
-                  isActive={pathname.includes("/study-planner")}
+                  isActive={pathname.startsWith("/study-planner")}
                   isCollapsed={isCollapsed}
                 />
                 <Separator className="my-2" />
@@ -101,17 +101,17 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   to="/todos"
                   icon={CheckSquare}
                   label="ToDo"
-                  isActive={pathname.includes("/todos")}
+                  isActive={pathname.startsWith("/todos")}
                   isCollapsed={isCollapsed}
                 />
                 <Separator className="my-2" />
                 
-                {/* Analytics (replaces Progress and Study Sessions) */}
+                {/* Analytics */}
                 <NavLink
                   to="/analytics"
                   icon={BarChart3}
                   label="Analytics"
-                  isActive={pathname.includes("/analytics") || pathname.includes("/progress") || pathname.includes("/study-sessions")}
+                  isActive={pathname.startsWith("/analytics") || pathname.startsWith("/progress") || pathname.startsWith("/study-sessions")}
                   isCollapsed={isCollapsed}
                 />
                 <Separator className="my-2" />
@@ -121,7 +121,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   to="/feedback"
                   icon={Heart}
                   label="Feedback"
-                  isActive={pathname.includes("/feedback")}
+                  isActive={pathname.startsWith("/feedback")}
                   isCollapsed={isCollapsed}
                   badge={
                     <Badge 
@@ -133,7 +133,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   }
                   customClassName={cn(
                     "animate-pulse hover:animate-none",
-                    pathname.includes("/feedback") 
+                    pathname.startsWith("/feedback") 
                       ? "bg-accent text-accent-foreground font-medium" 
                       : "hover:bg-accent/50"
                   )}
@@ -145,7 +145,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   to="/referrals"
                   icon={Gift}
                   label="Refer & Win"
-                  isActive={pathname.includes("/referrals")}
+                  isActive={pathname.startsWith("/referrals")}
                   isCollapsed={isCollapsed}
                   badge={
                     <Badge 
