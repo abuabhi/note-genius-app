@@ -53,55 +53,73 @@ export const useUltraSimpleAnalytics = () => {
         if (notesCount.error) throw notesCount.error;
         if (quizzesCount.error) throw quizzesCount.error;
 
-        // Get actual session data for calculations
-        const { data: sessions, error: sessionsError } = await supabase
+        // Get today's date in YYYY-MM-DD format
+        const today = new Date();
+        const todayString = today.toISOString().split('T')[0];
+        
+        // Get start of current week (Sunday)
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        const weekStartString = startOfWeek.toISOString().split('T')[0];
+
+        // Get today's sessions with proper date filtering
+        const { data: todaySessions, error: todayError } = await supabase
           .from('study_sessions')
-          .select('duration, cards_reviewed, cards_correct, start_time')
+          .select('duration, cards_reviewed, cards_correct')
+          .eq('user_id', user.id)
+          .gte('start_time', `${todayString}T00:00:00.000Z`)
+          .lt('start_time', `${todayString}T23:59:59.999Z`)
+          .not('duration', 'is', null);
+
+        if (todayError) console.warn('Today sessions error:', todayError);
+
+        // Get this week's sessions with proper date filtering
+        const { data: weekSessions, error: weekError } = await supabase
+          .from('study_sessions')
+          .select('duration, cards_reviewed, cards_correct')
+          .eq('user_id', user.id)
+          .gte('start_time', `${weekStartString}T00:00:00.000Z`)
+          .not('duration', 'is', null);
+
+        if (weekError) console.warn('Week sessions error:', weekError);
+
+        // Get all completed sessions for totals
+        const { data: allSessions, error: allError } = await supabase
+          .from('study_sessions')
+          .select('duration, cards_reviewed, cards_correct')
           .eq('user_id', user.id)
           .not('duration', 'is', null);
 
-        if (sessionsError) throw sessionsError;
+        if (allError) console.warn('All sessions error:', allError);
 
-        console.log('📊 Sessions data:', { sessionCount: sessions?.length || 0 });
+        // Calculate metrics from actual session data
+        const todayData = todaySessions || [];
+        const weekData = weekSessions || [];
+        const allData = allSessions || [];
 
-        // Calculate totals from actual data
-        const totalSessions = sessionsCount.count || 0;
-        const completedSessions = sessions || [];
+        const todayStudyTimeMinutes = todayData.reduce((acc, s) => acc + (s.duration || 0), 0);
+        const weeklyStudyTimeMinutes = weekData.reduce((acc, s) => acc + (s.duration || 0), 0);
+        const totalStudyTimeMinutes = allData.reduce((acc, s) => acc + (s.duration || 0), 0);
         
-        const totalStudyTimeMinutes = completedSessions.reduce((acc, s) => acc + (s.duration || 0), 0);
-        const totalCardsReviewed = completedSessions.reduce((acc, s) => acc + (s.cards_reviewed || 0), 0);
-        const totalCardsCorrect = completedSessions.reduce((acc, s) => acc + (s.cards_correct || 0), 0);
+        const totalCardsReviewed = allData.reduce((acc, s) => acc + (s.cards_reviewed || 0), 0);
+        const totalCardsCorrect = allData.reduce((acc, s) => acc + (s.cards_correct || 0), 0);
 
-        // Get today's data with simple date filter
-        const today = new Date().toISOString().split('T')[0];
-        const { data: todayData, error: todayError } = await supabase
-          .from('study_sessions')
-          .select('duration')
-          .eq('user_id', user.id)
-          .gte('start_time', `${today}T00:00:00.000Z`)
-          .lt('start_time', `${today}T23:59:59.999Z`);
-
-        if (todayError) console.warn('Today data error:', todayError);
-
-        const todayStudyTimeMinutes = (todayData || []).reduce((acc, s) => acc + (s.duration || 0), 0);
-        const todaySessions = todayData?.length || 0;
-
-        // Calculate basic metrics
+        // Calculate basic metrics with realistic values
         const totalStudyTime = Math.round((totalStudyTimeMinutes / 60) * 10) / 10;
         const todayStudyTime = Math.round((todayStudyTimeMinutes / 60) * 10) / 10;
+        const weeklyStudyTime = Math.round((weeklyStudyTimeMinutes / 60) * 10) / 10;
         const flashcardAccuracy = totalCardsReviewed > 0 ? Math.round((totalCardsCorrect / totalCardsReviewed) * 100) : 0;
 
         // Weekly goal defaults
         const weeklyGoalMinutes = 600; // 10 hours
-        const weeklyStudyTimeMinutes = Math.min(totalStudyTimeMinutes, weeklyGoalMinutes); // Simplified
         const weeklyGoalProgress = Math.min(Math.round((weeklyStudyTimeMinutes / weeklyGoalMinutes) * 100), 100);
 
         const result = {
           // Session metrics
-          totalSessions,
-          todaySessions,
-          weeklySessions: Math.min(totalSessions, 7), // Simplified
-          averageSessionTime: totalSessions > 0 ? Math.round(totalStudyTimeMinutes / totalSessions) : 0,
+          totalSessions: sessionsCount.count || 0,
+          todaySessions: todayData.length,
+          weeklySessions: weekData.length,
+          averageSessionTime: allData.length > 0 ? Math.round(totalStudyTimeMinutes / allData.length) : 0,
           activeSessions: [], // Empty for ultra-simple
           
           // Time metrics
@@ -109,7 +127,7 @@ export const useUltraSimpleAnalytics = () => {
           totalStudyTimeMinutes,
           todayStudyTime,
           todayStudyTimeMinutes,
-          weeklyStudyTime: Math.round((weeklyStudyTimeMinutes / 60) * 10) / 10,
+          weeklyStudyTime,
           weeklyStudyTimeMinutes,
           previousWeekTimeMinutes: 0, // Not calculated in ultra-simple
           
@@ -132,7 +150,7 @@ export const useUltraSimpleAnalytics = () => {
           streakDays: 0, // Simplified - no streak calculation
           recentSessions: [], // Empty for ultra-simple
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          todayString: today
+          todayString
         };
 
         console.log('✅ Ultra-simple analytics result:', result);
