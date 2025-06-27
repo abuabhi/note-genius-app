@@ -29,6 +29,11 @@ import {
   Text,
   User,
   Users,
+  Activity,
+  BarChart3,
+  CheckSquare,
+  Gift,
+  Heart,
 } from "lucide-react";
 
 type Route = {
@@ -37,6 +42,10 @@ type Route = {
   href: string;
   color?: string;
   description?: string;
+  isNew?: boolean;
+  isAnimated?: boolean;
+  customStyle?: string;
+  badge?: string;
 };
 
 type Group = {
@@ -47,24 +56,58 @@ type Group = {
 
 export const routes: Route[] = [
   {
-    label: "Home",
+    label: "Dashboard",
     icon: Home,
-    href: "/",
+    href: "/dashboard",
   },
   {
-    label: "Explore",
-    icon: Compass,
-    href: "/explore",
+    label: "Notes",
+    icon: FileText,
+    href: "/notes",
   },
   {
-    label: "Bookmarks",
-    icon: Bookmark,
-    href: "/bookmarks",
+    label: "Flashcards",
+    icon: BookOpen,
+    href: "/flashcards",
   },
   {
-    label: "Settings",
-    icon: Settings,
-    href: "/settings",
+    label: "Quiz",
+    icon: Activity,
+    href: "/quizzes",
+  },
+  {
+    label: "Goals",
+    icon: Target,
+    href: "/goals",
+  },
+  {
+    label: "Study Planner",
+    icon: Calendar,
+    href: "/study-planner",
+  },
+  {
+    label: "ToDo",
+    icon: CheckSquare,
+    href: "/todos",
+  },
+  {
+    label: "Analytics",
+    icon: BarChart3,
+    href: "/analytics",
+  },
+  {
+    label: "Feedback",
+    icon: Heart,
+    href: "/feedback",
+    customStyle: "feedback",
+    badge: "FEEDBACK",
+    isAnimated: true,
+  },
+  {
+    label: "Refer & Win",
+    icon: Gift,
+    href: "/referrals",
+    isNew: true,
   },
 ];
 
@@ -78,12 +121,6 @@ export const navigationData: Group[] = [
         icon: Home,
         href: "/dashboard",
         description: "Your personal overview",
-      },
-      {
-        label: "Explore",
-        icon: Compass,
-        href: "/explore",
-        description: "Discover new content and creators",
       },
     ],
   },
@@ -128,46 +165,44 @@ export const navigationData: Group[] = [
         description: "Set and track your learning goals",
       },
       {
-        label: "Reminders",
-        href: "/reminders",
-        icon: Calendar,
-        description: "Set reminders for your study sessions",
+        label: "ToDo",
+        href: "/todos",
+        icon: CheckSquare,
+        description: "Manage your tasks and assignments",
+      },
+    ],
+  },
+  {
+    id: "analytics",
+    title: "Analytics & Progress",
+    items: [
+      {
+        label: "Analytics",
+        href: "/analytics",
+        icon: BarChart3,
+        description: "Track your learning progress",
       },
     ],
   },
   {
     id: "community",
-    title: "Community",
+    title: "Community & Support",
     items: [
       {
-        label: "Forums",
-        href: "/forums",
-        icon: MessageSquare,
-        description: "Discuss topics with other learners",
+        label: "Feedback",
+        href: "/feedback",
+        icon: Heart,
+        description: "Share your feedback with us",
+        customStyle: "feedback",
+        badge: "FEEDBACK",
+        isAnimated: true,
       },
       {
-        label: "Groups",
-        href: "/groups",
-        icon: Users,
-        description: "Join or create study groups",
-      },
-    ],
-  },
-  {
-    id: "account",
-    title: "Account",
-    items: [
-      {
-        label: "Profile",
-        href: "/profile",
-        icon: User,
-        description: "View and edit your profile",
-      },
-      {
-        label: "Settings",
-        href: "/settings",
-        icon: Sliders,
-        description: "Manage your account settings",
+        label: "Refer & Win",
+        href: "/referrals",
+        icon: Gift,
+        description: "Invite friends and earn rewards",
+        isNew: true,
       },
     ],
   },

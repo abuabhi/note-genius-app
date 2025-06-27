@@ -34,7 +34,8 @@ export const NavigationGroup = ({ id, title, items, isOpen }: NavigationGroupPro
         <AccordionContent className="pb-1">
           <div className="flex flex-col gap-1 pl-2">
             {items.map((item) => {
-              const isActive = location.pathname === item.href;
+              const isActive = location.pathname === item.href || 
+                              (item.href !== "/" && location.pathname.startsWith(item.href));
               return (
                 <NavigationItem
                   key={item.href}
