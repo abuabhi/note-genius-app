@@ -3,12 +3,13 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
+import { useSessionPersistence } from './useSessionPersistence';
 
 export interface SessionData {
   title: string;
   subject?: string;
   activityType?: 'flashcard_study' | 'note_review' | 'quiz_taking' | 'study_plan' | 'general';
-  studyPlanId?: string; // Add study plan association
+  studyPlanId?: string;
   flashcardSetId?: string;
   notes?: string;
 }
@@ -22,12 +23,19 @@ export interface UnifiedSessionState {
   activityType: string | null;
   currentTitle: string | null;
   currentSubject: string | null;
-  studyPlanId: string | null; // Add study plan ID to state
+  studyPlanId: string | null;
   showInactivityWarning: boolean;
+  isRecovering: boolean;
 }
 
 export const useUnifiedSessionTracker = () => {
   const { user } = useAuth();
+  const { 
+    saveSessionState, 
+    clearPersistedSession, 
+    recoverActiveSession 
+  } = useSessionPersistence();
+  
   const [sessionState, setSessionState] = useState<UnifiedSessionState>({
     isActive: false,
     currentSessionId: null,
@@ -38,16 +46,72 @@ export const useUnifiedSessionTracker = () => {
     currentTitle: null,
     currentSubject: null,
     studyPlanId: null,
-    showInactivityWarning: false
+    showInactivityWarning: false,
+    isRecovering: true
   });
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastActivityRef = useRef<Date>(new Date());
+  const recoveryAttempted = useRef(false);
+
+  // Session recovery on app load
+  useEffect(() => {
+    const attemptRecovery = async () => {
+      if (!user || recoveryAttempted.current) return;
+      
+      recoveryAttempted.current = true;
+      console.log('🔄 [SESSION RECOVERY] Attempting to recover active session...');
+      
+      const recoveredSession = await recoverActiveSession();
+      
+      if (recoveredSession) {
+        console.log('✅ [SESSION RECOVERY] Session recovered:', recoveredSession.sessionId);
+        
+        setSessionState({
+          isActive: true,
+          currentSessionId: recoveredSession.sessionId,
+          startTime: new Date(recoveredSession.startTime),
+          elapsedSeconds: recoveredSession.elapsedSeconds,
+          isPaused: false,
+          activityType: recoveredSession.activityType,
+          currentTitle: recoveredSession.title,
+          currentSubject: recoveredSession.subject || null,
+          studyPlanId: recoveredSession.studyPlanId || null,
+          showInactivityWarning: false,
+          isRecovering: false
+        });
+        
+        toast.success('Study session resumed');
+      } else {
+        console.log('ℹ️ [SESSION RECOVERY] No active session found');
+        setSessionState(prev => ({ ...prev, isRecovering: false }));
+      }
+    };
+
+    attemptRecovery();
+  }, [user, recoverActiveSession]);
+
+  // Persist session state changes
+  useEffect(() => {
+    if (sessionState.isActive && sessionState.currentSessionId && !sessionState.isRecovering) {
+      saveSessionState({
+        sessionId: sessionState.currentSessionId,
+        startTime: sessionState.startTime?.toISOString() || new Date().toISOString(),
+        title: sessionState.currentTitle || 'Study Session',
+        subject: sessionState.currentSubject || undefined,
+        activityType: sessionState.activityType || 'general',
+        studyPlanId: sessionState.studyPlanId || undefined,
+        elapsedSeconds: sessionState.elapsedSeconds
+      });
+    } else if (!sessionState.isActive) {
+      clearPersistedSession();
+    }
+  }, [sessionState.isActive, sessionState.currentSessionId, sessionState.elapsedSeconds, sessionState.isRecovering, saveSessionState, clearPersistedSession]);
 
   // Timer logic
   useEffect(() => {
-    if (sessionState.isActive && !sessionState.isPaused) {
+    if (sessionState.isActive && !sessionState.isPaused && !sessionState.isRecovering) {
       timerRef.current = setInterval(() => {
         setSessionState(prev => ({
           ...prev,
@@ -66,11 +130,11 @@ export const useUnifiedSessionTracker = () => {
         clearInterval(timerRef.current);
       }
     };
-  }, [sessionState.isActive, sessionState.isPaused]);
+  }, [sessionState.isActive, sessionState.isPaused, sessionState.isRecovering]);
 
   // Inactivity detection
   useEffect(() => {
-    if (sessionState.isActive && !sessionState.isPaused) {
+    if (sessionState.isActive && !sessionState.isPaused && !sessionState.isRecovering) {
       const checkInactivity = () => {
         const timeSinceLastActivity = Date.now() - lastActivityRef.current.getTime();
         const fiveMinutes = 5 * 60 * 1000;
@@ -78,7 +142,6 @@ export const useUnifiedSessionTracker = () => {
         if (timeSinceLastActivity > fiveMinutes) {
           setSessionState(prev => ({ ...prev, showInactivityWarning: true }));
           
-          // Auto-end session after additional 2 minutes of inactivity
           setTimeout(() => {
             if (sessionState.showInactivityWarning) {
               endSession('Auto-ended due to inactivity');
@@ -87,7 +150,7 @@ export const useUnifiedSessionTracker = () => {
         }
       };
 
-      inactivityTimerRef.current = setInterval(checkInactivity, 30000); // Check every 30 seconds
+      inactivityTimerRef.current = setInterval(checkInactivity, 30000);
     }
 
     return () => {
@@ -95,7 +158,7 @@ export const useUnifiedSessionTracker = () => {
         clearInterval(inactivityTimerRef.current);
       }
     };
-  }, [sessionState.isActive, sessionState.isPaused]);
+  }, [sessionState.isActive, sessionState.isPaused, sessionState.isRecovering]);
 
   // Activity tracking
   const trackActivity = useCallback(() => {
@@ -107,7 +170,7 @@ export const useUnifiedSessionTracker = () => {
 
   // Track mouse movement and keyboard activity
   useEffect(() => {
-    if (sessionState.isActive) {
+    if (sessionState.isActive && !sessionState.isRecovering) {
       const handleActivity = () => trackActivity();
       
       document.addEventListener('mousemove', handleActivity);
@@ -120,7 +183,7 @@ export const useUnifiedSessionTracker = () => {
         document.removeEventListener('click', handleActivity);
       };
     }
-  }, [sessionState.isActive, trackActivity]);
+  }, [sessionState.isActive, sessionState.isRecovering, trackActivity]);
 
   const startSession = async (sessionData: SessionData): Promise<string> => {
     if (!user) throw new Error('User not authenticated');
@@ -139,7 +202,7 @@ export const useUnifiedSessionTracker = () => {
         title: sessionData.title,
         subject: sessionData.subject || null,
         activity_type: sessionData.activityType || 'general',
-        study_plan_id: sessionData.studyPlanId || null, // Associate with study plan
+        study_plan_id: sessionData.studyPlanId || null,
         flashcard_set_id: sessionData.flashcardSetId || null,
         notes: sessionData.notes || null,
         start_time: now.toISOString(),
@@ -169,7 +232,8 @@ export const useUnifiedSessionTracker = () => {
         currentTitle: sessionData.title,
         currentSubject: sessionData.subject || null,
         studyPlanId: sessionData.studyPlanId || null,
-        showInactivityWarning: false
+        showInactivityWarning: false,
+        isRecovering: false
       });
 
       toast.success(`Session started: ${sessionData.title}`);
@@ -228,9 +292,11 @@ export const useUnifiedSessionTracker = () => {
         currentTitle: null,
         currentSubject: null,
         studyPlanId: null,
-        showInactivityWarning: false
+        showInactivityWarning: false,
+        isRecovering: false
       });
 
+      clearPersistedSession();
       toast.success(`Session ended (${Math.round(duration / 60)} minutes)`);
 
     } catch (error) {
@@ -249,7 +315,7 @@ export const useUnifiedSessionTracker = () => {
       toast.info('Session paused');
     } else {
       toast.info('Session resumed');
-      trackActivity(); // Reset activity tracking when resuming
+      trackActivity();
     }
   };
 
@@ -270,6 +336,7 @@ export const useUnifiedSessionTracker = () => {
     currentSubject: sessionState.currentSubject,
     studyPlanId: sessionState.studyPlanId,
     showInactivityWarning: sessionState.showInactivityWarning,
+    isRecovering: sessionState.isRecovering,
     
     // Actions
     startSession,

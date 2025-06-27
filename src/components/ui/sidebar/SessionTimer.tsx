@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Clock, Play, Pause, X, BookOpen, Brain, FileText, Calendar } from 'lucide-react';
+import { Clock, Play, Pause, X, BookOpen, Brain, FileText, Calendar, Loader } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useUnifiedSessionTracker } from '@/hooks/useUnifiedSessionTracker';
 import { cn } from '@/lib/utils';
@@ -18,10 +18,29 @@ export const SessionTimer = ({ isCollapsed }: SessionTimerProps) => {
     showInactivityWarning,
     currentTitle,
     currentSubject,
+    isRecovering,
     togglePause,
     endSession,
     dismissInactivityWarning
   } = useUnifiedSessionTracker();
+
+  // Show loading state during recovery
+  if (isRecovering) {
+    return (
+      <div className="mx-2 mb-2 p-2 rounded-lg border bg-blue-50 border-blue-200">
+        <div className="flex items-center gap-2">
+          {isCollapsed ? (
+            <Loader className="h-4 w-4 text-blue-600 animate-spin" />
+          ) : (
+            <>
+              <Loader className="h-4 w-4 text-blue-600 animate-spin" />
+              <span className="text-sm text-blue-800">Loading session...</span>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   // Don't show if no active session
   if (!isActive) {

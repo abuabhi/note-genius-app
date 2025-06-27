@@ -5,7 +5,17 @@ import { StudyPlan } from '@/types/studyPlanner';
 import { toast } from 'sonner';
 
 export const useStudyPlanSession = () => {
-  const { startSession, endSession, isActive, currentSessionId, activityType, currentTitle, studyPlanId } = useUnifiedSessionTracker();
+  const { 
+    startSession, 
+    endSession, 
+    isActive, 
+    currentSessionId, 
+    activityType, 
+    currentTitle, 
+    studyPlanId,
+    isRecovering 
+  } = useUnifiedSessionTracker();
+  
   const { studyPlans } = useActiveStudyPlans();
 
   const startStudyPlanSession = async (studyPlan: StudyPlan) => {
@@ -31,7 +41,7 @@ export const useStudyPlanSession = () => {
         title: `Study Plan: ${studyPlan.title}`,
         subject: studyPlan.subject,
         activityType: 'study_plan',
-        studyPlanId: studyPlan.id // Associate session with study plan
+        studyPlanId: studyPlan.id
       });
 
       console.log('🎯 Study plan session started successfully:', sessionId);
@@ -57,6 +67,9 @@ export const useStudyPlanSession = () => {
   };
 
   const isStudyPlanActive = (planId: string) => {
+    // Don't show as active during recovery to prevent UI flickering
+    if (isRecovering) return false;
+    
     return isActive && activityType === 'study_plan' && studyPlanId === planId;
   };
 
@@ -69,6 +82,7 @@ export const useStudyPlanSession = () => {
     endStudyPlanSession,
     isStudyPlanActive,
     getActiveStudyPlanId,
-    isAnySessionActive: isActive
+    isAnySessionActive: isActive,
+    isRecovering
   };
 };
