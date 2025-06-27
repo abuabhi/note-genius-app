@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { StudyPlan } from '@/types/studyPlanner';
 import { useStudyPlanSession } from '@/hooks/useStudyPlanSession';
 import { useConvertStudyPlanToGoal } from '@/hooks/useConvertStudyPlanToGoal';
-import { Play, Settings, Target, Calendar, Clock, BookOpen, TrendingUp } from 'lucide-react';
+import { Play, Settings, Target, Calendar, Clock, BookOpen, TrendingUp, Hash } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { GoalFormDialog } from '@/components/goals/GoalFormDialog';
 import { SessionSettingsDialog } from './SessionSettingsDialog';
@@ -39,27 +39,37 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
 
   return (
     <>
-      <Card className="group relative overflow-hidden bg-gradient-to-br from-white via-mint-50/30 to-blue-50/20 border border-mint-100 hover:border-mint-200 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 rounded-xl">
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-mint-500/5 via-transparent to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <Card className="group relative cursor-pointer transition-all duration-300 ease-out bg-white border border-gray-200/60 hover:border-mint-300/60 hover:shadow-lg hover:shadow-mint-500/10 hover:-translate-y-0.5 rounded-xl overflow-hidden">
+        {/* Gradient overlay for depth */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-transparent to-mint-50/20 pointer-events-none" />
         
-        <CardContent className="relative p-6 space-y-4">
+        <CardContent className="relative p-5 space-y-4">
           {/* Header Section */}
-          <div className="flex items-start justify-between">
-            <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-semibold text-mint-900 group-hover:text-mint-800 transition-colors line-clamp-2 mb-2">
+          <div className="flex items-start gap-3 min-w-0">
+            <div className="flex-1 min-w-0 space-y-3">
+              {/* Title */}
+              <h3 className="font-semibold text-green-700 text-base leading-tight line-clamp-2">
                 {studyPlan.title}
               </h3>
               
-              <div className="flex items-center gap-2">
-                <Badge className="bg-gradient-to-r from-mint-100 to-mint-50 text-mint-800 border-mint-200 font-medium">
-                  <BookOpen className="h-3 w-3 mr-1" />
+              {/* Badges Row */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Subject Badge */}
+                <Badge className="bg-mint-100 text-mint-800 border-mint-200 border text-xs font-medium px-2.5 py-1 rounded-full flex-shrink-0 shadow-sm">
+                  <BookOpen className="h-3 w-3 mr-1.5" />
                   {studyPlan.subject}
                 </Badge>
                 
+                {/* Topic Badge */}
+                <Badge className="bg-purple-100 text-purple-800 border-purple-200 border text-xs font-medium px-2.5 py-1 rounded-full flex-shrink-0 shadow-sm">
+                  <Hash className="h-3 w-3 mr-1.5" />
+                  {studyPlan.topic}
+                </Badge>
+                
+                {/* Active Badge */}
                 {isActive && (
-                  <Badge className="bg-gradient-to-r from-green-100 to-emerald-50 text-green-800 border-green-200 font-medium animate-pulse">
-                    <div className="h-2 w-2 bg-green-500 rounded-full mr-1" />
+                  <Badge className="bg-gradient-to-r from-green-100 to-emerald-50 text-green-800 border-green-200 font-medium animate-pulse px-2.5 py-1 rounded-full flex-shrink-0 shadow-sm">
+                    <div className="h-2 w-2 bg-green-500 rounded-full mr-1.5" />
                     Active
                   </Badge>
                 )}
@@ -67,30 +77,24 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
             </div>
           </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-3 gap-4 py-3">
-            <div className="text-center p-3 bg-white/60 rounded-lg border border-mint-100/50 group-hover:bg-white/80 transition-colors">
-              <div className="flex items-center justify-center mb-1">
-                <Calendar className="h-4 w-4 text-mint-600" />
-              </div>
-              <div className="text-xl font-bold text-mint-800">{daysLeft}</div>
-              <div className="text-xs text-mint-600 font-medium">days left</div>
+          {/* Stats Section */}
+          <div className="flex items-center gap-4 min-w-0 flex-1">
+            {/* Days Left */}
+            <div className="flex items-center gap-1.5 text-xs text-green-600">
+              <Calendar className="h-3 w-3" />
+              <span className="truncate font-medium">{daysLeft} days left</span>
             </div>
             
-            <div className="text-center p-3 bg-white/60 rounded-lg border border-blue-100/50 group-hover:bg-white/80 transition-colors">
-              <div className="flex items-center justify-center mb-1">
-                <Clock className="h-4 w-4 text-blue-600" />
-              </div>
-              <div className="text-xl font-bold text-blue-800">{hoursPerDay}h</div>
-              <div className="text-xs text-blue-600 font-medium">per day</div>
+            {/* Hours Per Day */}
+            <div className="flex items-center gap-1.5 text-xs text-blue-600">
+              <Clock className="h-3 w-3" />
+              <span className="truncate font-medium">{hoursPerDay}h per day</span>
             </div>
             
-            <div className="text-center p-3 bg-white/60 rounded-lg border border-purple-100/50 group-hover:bg-white/80 transition-colors">
-              <div className="flex items-center justify-center mb-1">
-                <TrendingUp className="h-4 w-4 text-purple-600" />
-              </div>
-              <div className="text-xl font-bold text-purple-800">{studyPlan.sessions_completed}</div>
-              <div className="text-xs text-purple-600 font-medium">sessions</div>
+            {/* Sessions Completed */}
+            <div className="flex items-center gap-1.5 text-xs text-purple-600">
+              <TrendingUp className="h-3 w-3" />
+              <span className="truncate font-medium">{studyPlan.sessions_completed} sessions</span>
             </div>
           </div>
 
@@ -116,13 +120,13 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-2 pt-2">
+          <div className="flex items-center justify-between gap-4">
             <Button
               onClick={handleStartSession}
               disabled={isActive}
-              className="flex-1 bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white shadow-md hover:shadow-lg transition-all duration-200 rounded-lg font-medium"
+              className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white px-4 py-2 h-8 text-xs font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex-1"
             >
-              <Play className="h-4 w-4 mr-2" />
+              <Play className="h-3 w-3 mr-1.5" />
               {isActive ? 'Active Session' : 'Start Session'}
             </Button>
             
@@ -131,21 +135,24 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
               variant="outline"
               size="sm"
               disabled={isConverting || studyPlan.is_converted_to_goals}
-              className="border-mint-200 text-mint-700 hover:bg-gradient-to-r hover:from-mint-50 hover:to-mint-100 hover:border-mint-300 transition-all duration-200 rounded-lg"
+              className="border-mint-200 text-mint-700 hover:bg-gradient-to-r hover:from-mint-50 hover:to-mint-100 hover:border-mint-300 transition-all duration-200 rounded-lg h-8 w-8 p-0"
             >
-              <Target className="h-4 w-4" />
+              <Target className="h-3 w-3" />
             </Button>
             
             <Button
               onClick={() => setShowSettingsDialog(true)}
               variant="outline"
               size="sm"
-              className="border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 rounded-lg"
+              className="border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 rounded-lg h-8 w-8 p-0"
             >
-              <Settings className="h-4 w-4" />
+              <Settings className="h-3 w-3" />
             </Button>
           </div>
         </CardContent>
+        
+        {/* Subtle bottom border for separation */}
+        <div className="absolute bottom-0 left-5 right-5 h-px bg-gradient-to-r from-transparent via-gray-200/60 to-transparent" />
       </Card>
 
       {/* Goal Creation Dialog */}
