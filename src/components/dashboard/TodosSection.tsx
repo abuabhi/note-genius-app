@@ -45,10 +45,10 @@ export const TodosSection = () => {
 
   if (isLoading) {
     return (
-      <Card className="bg-gradient-to-br from-blue-50/50 to-white border-blue-200/30 shadow-lg">
+      <Card className="bg-white border-gray-200">
         <CardHeader>
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <div className="p-1.5 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-sm">
+            <div className="p-1.5 bg-gradient-to-br from-mint-500 to-mint-600 rounded-lg">
               <CheckSquare className="h-4 w-4 text-white" />
             </div>
             Today's Todos
@@ -56,7 +56,7 @@ export const TodosSection = () => {
         </CardHeader>
         <CardContent className="space-y-3">
           {[1, 2].map(i => (
-            <div key={i} className="p-3 border border-blue-100 rounded-lg bg-white/50">
+            <div key={i} className="p-3 border border-gray-100 rounded-lg bg-white">
               <Skeleton className="h-4 w-3/4 mb-2" />
               <Skeleton className="h-3 w-1/2" />
             </div>
@@ -68,10 +68,10 @@ export const TodosSection = () => {
 
   if (todaysTodos.length === 0) {
     return (
-      <Card className="bg-gradient-to-br from-blue-50/50 to-white border-blue-200/30 shadow-lg">
+      <Card className="bg-white border-gray-200">
         <CardHeader>
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <div className="p-1.5 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-sm">
+            <div className="p-1.5 bg-gradient-to-br from-mint-500 to-mint-600 rounded-lg">
               <CheckSquare className="h-4 w-4 text-white" />
             </div>
             Today's Todos
@@ -80,15 +80,15 @@ export const TodosSection = () => {
         <CardContent>
           <div className="text-center py-8">
             <div className="mb-4">
-              <div className="p-3 bg-blue-100 rounded-full w-fit mx-auto">
-                <CheckSquare className="h-8 w-8 text-blue-400" />
+              <div className="p-3 bg-gray-100 rounded-full w-fit mx-auto">
+                <CheckSquare className="h-8 w-8 text-gray-400" />
               </div>
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">No todos for today</h3>
             <p className="text-gray-500 mb-4">
               Create your first todo to get started with task management.
             </p>
-            <Button asChild className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg">
+            <Button asChild className="bg-gradient-to-r from-mint-500 to-mint-600 hover:from-mint-600 hover:to-mint-700">
               <Link to="/todos">
                 <Plus className="h-4 w-4 mr-2" />
                 Create Todo
@@ -101,10 +101,10 @@ export const TodosSection = () => {
   }
 
   return (
-    <Card className="bg-gradient-to-br from-blue-50/50 to-white border-blue-200/30 shadow-lg">
+    <Card className="bg-white border-gray-200">
       <CardHeader>
         <CardTitle className="text-lg font-semibold flex items-center gap-2">
-          <div className="p-1.5 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-sm">
+          <div className="p-1.5 bg-gradient-to-br from-mint-500 to-mint-600 rounded-lg">
             <CheckSquare className="h-4 w-4 text-white" />
           </div>
           Today's Todos
@@ -116,7 +116,7 @@ export const TodosSection = () => {
           const isOverdue = todo.due_date && isPast(parseISO(todo.due_date)) && !isToday(parseISO(todo.due_date));
           
           return (
-            <div key={todo.id} className="p-4 border border-blue-100 rounded-xl bg-gradient-to-br from-white to-blue-50/30 hover:from-blue-50/50 hover:to-blue-100/50 transition-all duration-200 shadow-sm hover:shadow-md">
+            <div key={todo.id} className="p-4 border border-gray-100 rounded-xl bg-white hover:bg-gray-50 transition-all duration-200">
               <div className="flex items-start justify-between mb-2">
                 <div className="flex-1 min-w-0">
                   <h4 className="font-medium text-sm text-gray-800 line-clamp-1">{todo.title}</h4>
@@ -139,10 +139,10 @@ export const TodosSection = () => {
                   {isOverdue ? (
                     <AlertTriangle className="h-3 w-3 text-red-500" />
                   ) : (
-                    <Clock className="h-3 w-3 text-blue-500" />
+                    <Clock className="h-3 w-3 text-mint-500" />
                   )}
                   <span className={`text-xs font-medium ${
-                    isOverdue ? 'text-red-600' : 'text-blue-600'
+                    isOverdue ? 'text-red-600' : 'text-mint-600'
                   }`}>
                     {dueInfo}
                   </span>
@@ -152,8 +152,8 @@ export const TodosSection = () => {
           );
         })}
         
-        <div className="pt-3 border-t border-blue-100">
-          <Button variant="ghost" size="sm" asChild className="w-full text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+        <div className="pt-3 border-t border-gray-100">
+          <Button variant="ghost" size="sm" asChild className="w-full text-mint-600 hover:text-mint-700 hover:bg-mint-50">
             <Link to="/todos" className="text-sm font-medium">
               View All Todos
             </Link>

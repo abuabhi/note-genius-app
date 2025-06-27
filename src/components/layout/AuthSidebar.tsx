@@ -10,7 +10,7 @@ const AuthSidebar = () => {
 
   return (
     <div className="relative h-screen">
-      <Sidebar className="border-r border-gray-200/60 shadow-lg bg-white/80 backdrop-blur-md h-full">
+      <Sidebar className="border-r border-gray-200 bg-white h-full">
         <SidebarContent className="p-0 h-full overflow-y-auto">
           <Navigation isCollapsed={isCollapsed} />
         </SidebarContent>
