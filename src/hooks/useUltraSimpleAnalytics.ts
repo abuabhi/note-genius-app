@@ -62,33 +62,36 @@ export const useUltraSimpleAnalytics = () => {
         const startOfWeek = new Date(today);
         startOfWeek.setDate(today.getDate() - today.getDay());
 
-        // Get today's sessions with proper timezone handling
+        // Get today's sessions with proper timezone handling and validation
         const { data: todaySessions, error: todayError } = await supabase
           .from('study_sessions')
           .select('duration, cards_reviewed, cards_correct')
           .eq('user_id', user.id)
           .gte('start_time', today.toISOString())
           .lt('start_time', todayEnd.toISOString())
-          .not('duration', 'is', null);
+          .not('duration', 'is', null)
+          .lte('duration', 28800); // Max 8 hours
 
         if (todayError) console.warn('Today sessions error:', todayError);
 
-        // Get this week's sessions
+        // Get this week's sessions with validation
         const { data: weekSessions, error: weekError } = await supabase
           .from('study_sessions')
           .select('duration, cards_reviewed, cards_correct')
           .eq('user_id', user.id)
           .gte('start_time', startOfWeek.toISOString())
-          .not('duration', 'is', null);
+          .not('duration', 'is', null)
+          .lte('duration', 28800); // Max 8 hours
 
         if (weekError) console.warn('Week sessions error:', weekError);
 
-        // Get all completed sessions for totals
+        // Get all completed sessions for totals with validation
         const { data: allSessions, error: allError } = await supabase
           .from('study_sessions')
           .select('duration, cards_reviewed, cards_correct')
           .eq('user_id', user.id)
-          .not('duration', 'is', null);
+          .not('duration', 'is', null)
+          .lte('duration', 28800); // Max 8 hours
 
         if (allError) console.warn('All sessions error:', allError);
 
@@ -97,26 +100,24 @@ export const useUltraSimpleAnalytics = () => {
         const weekData = weekSessions || [];
         const allData = allSessions || [];
 
-        // Convert duration (assuming it might be in seconds, convert to minutes)
-        const convertDuration = (duration: number) => {
-          // If duration is very large, it's likely in seconds, convert to minutes
-          if (duration > 1000) {
-            return Math.round(duration / 60);
-          }
+        // Safe duration conversion with validation
+        const validateDuration = (duration: number) => {
+          if (!duration || duration < 0) return 0;
+          if (duration > 28800) return 28800; // Cap at 8 hours
           return duration;
         };
 
-        const todayStudyTimeMinutes = Math.min(
-          todayData.reduce((acc, s) => acc + convertDuration(s.duration || 0), 0),
-          24 * 60 // Max 24 hours per day
+        const todayStudyTimeMinutes = Math.round(
+          todayData.reduce((acc, s) => acc + validateDuration(s.duration || 0), 0) / 60
         );
         
-        const weeklyStudyTimeMinutes = Math.min(
-          weekData.reduce((acc, s) => acc + convertDuration(s.duration || 0), 0),
-          7 * 24 * 60 // Max 7 days * 24 hours
+        const weeklyStudyTimeMinutes = Math.round(
+          weekData.reduce((acc, s) => acc + validateDuration(s.duration || 0), 0) / 60
         );
         
-        const totalStudyTimeMinutes = allData.reduce((acc, s) => acc + convertDuration(s.duration || 0), 0);
+        const totalStudyTimeMinutes = Math.round(
+          allData.reduce((acc, s) => acc + validateDuration(s.duration || 0), 0) / 60
+        );
         
         const totalCardsReviewed = allData.reduce((acc, s) => acc + (s.cards_reviewed || 0), 0);
         const totalCardsCorrect = allData.reduce((acc, s) => acc + (s.cards_correct || 0), 0);
