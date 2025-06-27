@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -125,20 +124,26 @@ export const useUnifiedSessionTracker = () => {
         await endSession('Starting new session');
       }
 
+      // Create notes field with session context and metadata
+      let notesContent = `Session for: ${sessionData.title}`;
+      if (sessionData.studyPlanId) {
+        notesContent += ` | Study Plan ID: ${sessionData.studyPlanId}`;
+      }
+      if (sessionData.flashcardSetId) {
+        notesContent += ` | Flashcard Set ID: ${sessionData.flashcardSetId}`;
+      }
+
       const newSessionData = {
         user_id: user.id,
         title: sessionData.title,
         subject: sessionData.subject,
-        notes: `Session for: ${sessionData.title}`,
+        notes: notesContent,
         start_time: new Date().toISOString(),
         is_active: true,
         activity_type: sessionData.activityType,
         auto_created: false,
-        // Store additional metadata
-        study_plan_id: sessionData.studyPlanId,
-        flashcard_set_id: sessionData.flashcardSetId,
-        note_id: sessionData.noteId,
-        quiz_id: sessionData.quizId
+        // Store IDs in the flashcard_set_id field for now (we can use this for any reference)
+        flashcard_set_id: sessionData.flashcardSetId || sessionData.studyPlanId
       };
 
       const { data, error } = await supabase
