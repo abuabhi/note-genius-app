@@ -1,161 +1,26 @@
 
-import { ReactNode, useEffect, useState } from 'react';
-import NavBar from './NavBar';
-import Footer from './Footer';
-import { CustomSidebar } from '@/components/ui/sidebar-custom';
-import { useAuth } from '@/contexts/auth';
-import { useLocation, useParams } from 'react-router-dom';
-import { useReminderToasts } from '@/hooks/useReminderToasts';
-import { AnnouncementBar } from '@/components/announcements/AnnouncementBar';
-import { ChatFloatingButton } from '@/components/ui/floating/ChatFloatingButton';
-import { NoteChatSidebar } from '@/components/notes/study/chat/NoteChatSidebar';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { UnifiedSessionDock } from "@/components/ui/floating/UnifiedSessionDock";
+import React from 'react';
+import { NavBar } from './NavBar';
+import { Footer } from './Footer';
+import { UnifiedSessionDock } from '@/components/ui/floating/UnifiedSessionDock';
+import { HelpFloatingButton } from '@/components/help/HelpFloatingButton';
 
 interface LayoutProps {
-  children: ReactNode;
-  showSidebar?: boolean;
-  showFooter?: boolean;
+  children: React.ReactNode;
 }
 
-export default function Layout({ children, showSidebar = true, showFooter = true }: LayoutProps) {
-  const { user } = useAuth();
-  const location = useLocation();
-  const params = useParams();
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  
-  // Initialize reminder toasts for authenticated users on all pages
-  useReminderToasts();
-
-  // Define which routes are public - don't show dock on these
-  const publicRoutes = ['/', '/features', '/about', '/pricing', '/faq', '/contact', '/blog', '/login', '/signup'];
-  const isPublicRoute = publicRoutes.includes(location.pathname);
-  
-  // Show sidebar only for authenticated users on non-public routes
-  const shouldShowSidebar = showSidebar && user && !isPublicRoute;
-
-  // Check if we're on a note study page to enable chat - using consistent parameter name
-  const isNoteStudyPage = location.pathname.includes('/notes/') && params.id;
-  const noteId = params.id; // Consistent parameter name
-
-  console.log('🏗️ Layout - Note study page detection:', {
-    isNoteStudyPage,
-    pathname: location.pathname,
-    noteId,
-    locationState: location.state
-  });
-
-  // Fetch current note data for chat when on study page
-  const { data: currentNote } = useQuery({
-    queryKey: ['note', noteId],
-    queryFn: async () => {
-      if (!noteId || !user) return null;
-      
-      console.log('📥 Fetching note for chat:', noteId);
-      const { data, error } = await supabase
-        .from('notes')
-        .select(`
-          *,
-          tags:note_tags(
-            tag:tags(*)
-          )
-        `)
-        .eq('id', noteId)
-        .eq('user_id', user.id)
-        .maybeSingle(); // Use maybeSingle to handle empty results gracefully
-
-      if (error) {
-        console.error('Error fetching note:', error);
-        return null;
-      }
-
-      if (!data) {
-        console.log('No note found for chat');
-        return null;
-      }
-
-      // Transform the data to match the Note interface with proper type casting
-      const transformedNote = {
-        ...data,
-        sourceType: (data.source_type as 'manual' | 'scan' | 'import') || 'manual',
-        summary_status: (data.summary_status as 'pending' | 'generating' | 'completed' | 'failed') || 'pending',
-        key_points_status: (data.key_points_status as 'pending' | 'generating' | 'completed' | 'failed') || 'pending',
-        markdown_content_status: (data.markdown_content_status as 'pending' | 'generating' | 'completed' | 'failed') || 'pending',
-        improved_content_status: (data.improved_content_status as 'pending' | 'generating' | 'completed' | 'failed') || 'pending',
-        enriched_status: (data.enriched_status as 'pending' | 'generating' | 'completed' | 'failed') || 'pending',
-        tags: data.tags?.map((tagRelation: any) => ({
-          id: tagRelation.tag.id,
-          name: tagRelation.tag.name,
-          color: tagRelation.tag.color
-        })) || []
-      };
-
-      console.log('✅ Note fetched for chat:', transformedNote);
-      return transformedNote;
-    },
-    enabled: isNoteStudyPage && !!noteId && !!user,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: false, // Don't retry if note is not found
-  });
-
-  const handleChatToggle = () => {
-    console.log('🔄 Chat toggle called, current state:', isChatOpen);
-    setIsChatOpen(!isChatOpen);
-  };
-
-  // Close chat when leaving study page
-  useEffect(() => {
-    if (!isNoteStudyPage) {
-      setIsChatOpen(false);
-    }
-  }, [isNoteStudyPage]);
-
+export const Layout = ({ children }: LayoutProps) => {
   return (
-    <div className="min-h-screen bg-gray-50 relative">
-      {/* Navigation Bar - Fixed at top with high z-index */}
-      <div className="relative z-40">
-        <NavBar />
-        {/* Announcement Bar - shows for authenticated users */}
-        {user && <AnnouncementBar />}
-      </div>
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-mint-50 via-white to-blue-50">
+      <NavBar />
+      <main className="flex-1">
+        {children}
+      </main>
+      <Footer />
       
-      <div className="flex flex-1 relative">
-        {/* Sidebar with highest z-index */}
-        {shouldShowSidebar && (
-          <div className="relative z-50">
-            <CustomSidebar />
-          </div>
-        )}
-        
-        {/* Main content area */}
-        <main className={`flex-1 relative z-10 ${shouldShowSidebar ? 'ml-16' : ''}`}>
-          {children}
-        </main>
-      </div>
-      
-      {showFooter && <Footer />}
-
-      {/* Chat Button - Bottom Right on Study Pages Only */}
-      {isNoteStudyPage && (
-        <ChatFloatingButton
-          onClick={handleChatToggle}
-          isOpen={isChatOpen}
-          hasUnreadChat={false}
-        />
-      )}
-
-      {/* Global Chat Sidebar - only shows on note study pages */}
-      {isNoteStudyPage && currentNote && (
-        <NoteChatSidebar
-          note={currentNote}
-          isOpen={isChatOpen}
-          onClose={() => setIsChatOpen(false)}
-        />
-      )}
-
-      {/* ONLY ONE SESSION DOCK - UnifiedSessionDock */}
+      {/* Floating Components */}
       <UnifiedSessionDock />
+      <HelpFloatingButton />
     </div>
   );
-}
+};

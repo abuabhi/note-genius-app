@@ -5,11 +5,13 @@ import { StudyPlan } from '@/types/studyPlanner';
 import { toast } from 'sonner';
 
 export const useStudyPlanSession = () => {
-  const { startSession, endSession, isActive, currentSessionId, activityType } = useUnifiedSessionTracker();
+  const { startSession, endSession, isActive, currentSessionId, activityType, currentTitle } = useUnifiedSessionTracker();
   const { studyPlans } = useActiveStudyPlans();
 
   const startStudyPlanSession = async (studyPlan: StudyPlan) => {
     try {
+      console.log('🎯 Starting study plan session for:', studyPlan.title);
+      
       // Check if there's already an active session
       if (isActive) {
         const confirmEnd = window.confirm(
@@ -25,17 +27,18 @@ export const useStudyPlanSession = () => {
       }
 
       // Start new study plan session
-      await startSession({
-        title: `Study Session: ${studyPlan.title}`,
+      const sessionId = await startSession({
+        title: `Study Plan: ${studyPlan.title}`,
         subject: studyPlan.subject,
         activityType: 'study_plan',
         studyPlanId: studyPlan.id
       });
 
+      console.log('🎯 Study plan session started successfully:', sessionId);
       toast.success(`Study session started for ${studyPlan.title}`);
       return true;
     } catch (error) {
-      console.error('Error starting study plan session:', error);
+      console.error('❌ Error starting study plan session:', error);
       toast.error('Failed to start study session');
       return false;
     }
@@ -54,16 +57,20 @@ export const useStudyPlanSession = () => {
   };
 
   const getActiveStudyPlanId = () => {
-    // Extract study plan ID from current session if it's a study plan session
-    if (isActive && activityType === 'study_plan') {
-      // This would need to be stored in the session metadata
-      return currentSessionId;
+    // Check if current session is for a study plan and extract the ID from the title or notes
+    if (isActive && activityType === 'study_plan' && currentTitle) {
+      // Try to find matching study plan by checking if session title contains the plan title
+      const matchingPlan = studyPlans.find(plan => 
+        currentTitle.includes(plan.title) || currentTitle.includes(`Study Plan: ${plan.title}`)
+      );
+      return matchingPlan?.id || null;
     }
     return null;
   };
 
   const isStudyPlanActive = (planId: string) => {
-    return isActive && activityType === 'study_plan' && getActiveStudyPlanId() === planId;
+    const activeStudyPlanId = getActiveStudyPlanId();
+    return isActive && activityType === 'study_plan' && activeStudyPlanId === planId;
   };
 
   return {

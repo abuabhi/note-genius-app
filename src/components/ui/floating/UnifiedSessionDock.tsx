@@ -1,5 +1,5 @@
 
-import { Clock, Play, Pause, X, BookOpen, Brain, FileText } from 'lucide-react';
+import { Clock, Play, Pause, X, BookOpen, Brain, FileText, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useUnifiedSessionTracker } from '@/hooks/useUnifiedSessionTracker';
@@ -27,6 +27,8 @@ export const UnifiedSessionDock = () => {
     isOnStudyPage, 
     elapsedSeconds,
     showTimeoutWarning,
+    activityType,
+    currentTitle,
     showDock: isActive 
   });
 
@@ -55,6 +57,8 @@ export const UnifiedSessionDock = () => {
         return <FileText className="h-4 w-4" />;
       case 'quiz_taking':
         return <Brain className="h-4 w-4" />;
+      case 'study_plan':
+        return <Calendar className="h-4 w-4" />;
       default:
         return <Clock className="h-4 w-4" />;
     }
@@ -64,11 +68,14 @@ export const UnifiedSessionDock = () => {
     if (showTimeoutWarning) {
       return 'Timeout Warning!';
     }
-    if (!isOnStudyPage) {
+    if (!isOnStudyPage && activityType !== 'study_plan') {
       return 'Away from Study';
     }
     if (isPaused) {
       return 'Paused';
+    }
+    if (activityType === 'study_plan') {
+      return 'Study Plan Active';
     }
     return 'Active Session';
   };
@@ -85,7 +92,7 @@ export const UnifiedSessionDock = () => {
       };
     }
     
-    if (!isOnStudyPage || isPaused) {
+    if ((!isOnStudyPage && activityType !== 'study_plan') || isPaused) {
       return {
         background: 'bg-slate-800/90 border-orange-400/40',
         text: 'text-orange-100',
@@ -109,7 +116,10 @@ export const UnifiedSessionDock = () => {
   const theme = getSessionTheme();
 
   const handleEndSession = () => {
-    endSession('Manual session end');
+    const confirmEnd = window.confirm('Are you sure you want to end this study session?');
+    if (confirmEnd) {
+      endSession('Manual session end via floating dock');
+    }
   };
 
   console.log('🎛️ UnifiedSessionDock showing with theme:', theme.background);
@@ -121,7 +131,7 @@ export const UnifiedSessionDock = () => {
         <Card className="fixed top-20 right-6 z-40 bg-red-900/95 border-red-400/60 shadow-xl backdrop-blur-sm">
           <div className="flex items-center gap-3 px-4 py-3">
             <div className="text-red-100 text-sm font-medium">
-              ⚠️ Session will auto-end in 5 minutes
+              ⚠️ Session will auto-end in 30 minutes
             </div>
             <Button
               variant="ghost"
@@ -147,14 +157,14 @@ export const UnifiedSessionDock = () => {
               <div className={cn("h-4 w-4", theme.iconColor)}>
                 {getActivityIcon()}
               </div>
-              {!isPaused && isOnStudyPage && !showTimeoutWarning && (
+              {!isPaused && (isOnStudyPage || activityType === 'study_plan') && !showTimeoutWarning && (
                 <div className={cn(
                   "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full animate-pulse",
                   theme.indicator,
                   "opacity-75"
                 )} />
               )}
-              {(!isOnStudyPage || showTimeoutWarning) && (
+              {((!isOnStudyPage && activityType !== 'study_plan') || showTimeoutWarning) && (
                 <div className={cn(
                   "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full",
                   theme.indicator,
@@ -170,6 +180,18 @@ export const UnifiedSessionDock = () => {
                 {getSessionStatus()}
               </span>
             </div>
+          </div>
+          
+          {/* Session Info */}
+          <div className="flex flex-col min-w-0 max-w-32">
+            <span className={cn("text-xs font-medium truncate", theme.text)}>
+              {currentTitle || 'Study Session'}
+            </span>
+            {currentSubject && (
+              <span className={cn("text-xs opacity-75 truncate", theme.text)}>
+                {currentSubject}
+              </span>
+            )}
           </div>
           
           <div className="flex gap-1">
