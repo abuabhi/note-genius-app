@@ -31,11 +31,11 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
   return (
     <motion.div 
       variants={staggerVariants} 
-      className="flex h-full flex-col bg-white/50 backdrop-blur-sm"
+      className="flex h-full flex-col bg-white"
     >
       <div className="flex grow flex-col">
-        <ScrollArea className="flex-1 px-3 py-4">
-          <div className={cn("flex w-full flex-col gap-1")}>
+        <ScrollArea className="flex-1 px-4 py-6">
+          <div className={cn("flex w-full flex-col gap-2")}>
             {/* Dashboard */}
             <NavLink
               to="/dashboard"
@@ -118,17 +118,11 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
               badge={
                 <Badge 
                   variant="secondary" 
-                  className="bg-mint-100 text-mint-700 text-xs ml-2 px-2 py-0.5"
+                  className="bg-mint-100 text-mint-700 text-xs ml-2 px-2 py-0.5 font-medium"
                 >
                   NEW
                 </Badge>
               }
-              customClassName={cn(
-                "hover:bg-mint-50 transition-colors duration-200",
-                pathname.startsWith("/feedback") 
-                  ? "bg-mint-100 text-mint-700 font-medium border-r-2 border-mint-500" 
-                  : "hover:bg-mint-50"
-              )}
             />
             
             {/* Refer & Win */}
@@ -141,7 +135,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
               badge={
                 <Badge 
                   variant="secondary" 
-                  className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 text-xs ml-2 px-2 py-0.5"
+                  className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 text-xs ml-2 px-2 py-0.5 font-medium"
                 >
                   WIN
                 </Badge>

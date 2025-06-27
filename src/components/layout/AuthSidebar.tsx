@@ -10,13 +10,13 @@ const AuthSidebar = () => {
 
   return (
     <div className="relative h-screen">
-      <Sidebar className="border-r border-gray-200 bg-white h-full">
+      <Sidebar className="border-r border-gray-100 bg-white h-full shadow-sm">
         <SidebarContent className="p-0 h-full overflow-y-auto">
           <Navigation isCollapsed={isCollapsed} />
         </SidebarContent>
       </Sidebar>
       
-      {/* Fixed Timer at Bottom-Left */}
+      {/* Fixed Timer at Bottom-Left - Enhanced Integration */}
       <div className="fixed bottom-4 left-4 z-50">
         <SessionTimer isCollapsed={isCollapsed} />
       </div>

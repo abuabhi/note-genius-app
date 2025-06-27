@@ -27,14 +27,14 @@ export const SessionTimer = ({ isCollapsed }: SessionTimerProps) => {
   // Show loading state during recovery
   if (isRecovering) {
     return (
-      <div className="mx-2 mb-2 p-2 rounded-lg border bg-blue-50 border-blue-200">
+      <div className="bg-white border border-blue-200 rounded-xl shadow-lg p-3 backdrop-blur-sm">
         <div className="flex items-center gap-2">
           {isCollapsed ? (
             <Loader className="h-4 w-4 text-blue-600 animate-spin" />
           ) : (
             <>
               <Loader className="h-4 w-4 text-blue-600 animate-spin" />
-              <span className="text-sm text-blue-800">Loading session...</span>
+              <span className="text-sm text-blue-800 font-medium">Loading session...</span>
             </>
           )}
         </div>
@@ -113,23 +113,25 @@ export const SessionTimer = ({ isCollapsed }: SessionTimerProps) => {
   };
 
   if (isCollapsed) {
-    // Collapsed state - show minimal indicator
+    // Collapsed state - enhanced minimal indicator
     return (
       <div className={cn(
-        "mx-2 mb-2 p-2 rounded-lg border transition-all duration-200",
+        "bg-white border rounded-xl shadow-lg p-3 backdrop-blur-sm transition-all duration-300 hover:shadow-xl",
         theme.background
       )}>
-        <div className="flex flex-col items-center gap-1">
+        <div className="flex flex-col items-center gap-2">
           <div className="relative">
-            {getActivityIcon()}
+            <div className={cn("h-5 w-5", theme.iconColor)}>
+              {getActivityIcon()}
+            </div>
             {!isPaused && (
               <div className={cn(
-                "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full animate-pulse",
+                "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full animate-pulse",
                 theme.indicator
               )} />
             )}
           </div>
-          <span className={cn("text-xs font-mono font-semibold", theme.timeText)}>
+          <span className={cn("text-sm font-mono font-bold", theme.timeText)}>
             {formatTime(elapsedSeconds)}
           </span>
         </div>
@@ -137,15 +139,15 @@ export const SessionTimer = ({ isCollapsed }: SessionTimerProps) => {
     );
   }
 
-  // Expanded state - show full timer
+  // Expanded state - enhanced full timer
   return (
     <div className={cn(
-      "mx-3 mb-3 p-3 rounded-lg border transition-all duration-200",
+      "bg-white border rounded-xl shadow-lg p-4 backdrop-blur-sm transition-all duration-300 hover:shadow-xl min-w-64",
       theme.background
     )}>
       {/* Inactivity Warning */}
       {showInactivityWarning && (
-        <div className="mb-2 p-2 bg-red-100 border border-red-200 rounded text-xs text-red-800">
+        <div className="mb-3 p-2 bg-red-100 border border-red-200 rounded-lg text-xs text-red-800">
           <div className="flex items-center gap-2">
             <span>⚠️ Session will auto-stop in 2 minutes</span>
             <Button
@@ -161,35 +163,35 @@ export const SessionTimer = ({ isCollapsed }: SessionTimerProps) => {
       )}
 
       {/* Main Timer Display */}
-      <div className="flex items-center gap-3 mb-3">
+      <div className="flex items-center gap-3 mb-4">
         <div className="relative">
-          <div className={cn("h-5 w-5", theme.iconColor)}>
+          <div className={cn("h-6 w-6", theme.iconColor)}>
             {getActivityIcon()}
           </div>
           {!isPaused && !showInactivityWarning && (
             <div className={cn(
-              "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full animate-pulse",
+              "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full animate-pulse",
               theme.indicator
             )} />
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <div className={cn("text-lg font-mono font-bold", theme.timeText)}>
+          <div className={cn("text-xl font-mono font-bold", theme.timeText)}>
             {formatTime(elapsedSeconds)}
           </div>
-          <div className={cn("text-xs", theme.text)}>
+          <div className={cn("text-sm font-medium", theme.text)}>
             {isPaused ? 'Paused' : showInactivityWarning ? 'Inactive' : 'Active Session'}
           </div>
         </div>
       </div>
 
       {/* Session Info */}
-      <div className="mb-3">
-        <div className={cn("text-sm font-medium truncate", theme.text)}>
+      <div className="mb-4">
+        <div className={cn("text-sm font-semibold truncate", theme.text)}>
           {currentTitle || 'Study Session'}
         </div>
         {currentSubject && (
-          <div className={cn("text-xs opacity-75 truncate", theme.text)}>
+          <div className={cn("text-xs opacity-75 truncate mt-1", theme.text)}>
             {currentSubject}
           </div>
         )}
@@ -202,14 +204,14 @@ export const SessionTimer = ({ isCollapsed }: SessionTimerProps) => {
           size="sm"
           onClick={togglePause}
           className={cn(
-            "flex-1 h-8 text-xs",
-            "hover:bg-white/50 border-current/20"
+            "flex-1 h-9 text-sm font-medium",
+            "hover:bg-white/70 border-current/30 transition-all duration-200"
           )}
         >
           {isPaused ? (
-            <Play className="h-3 w-3 mr-1" />
+            <Play className="h-4 w-4 mr-2" />
           ) : (
-            <Pause className="h-3 w-3 mr-1" />
+            <Pause className="h-4 w-4 mr-2" />
           )}
           {isPaused ? 'Resume' : 'Pause'}
         </Button>
@@ -218,9 +220,9 @@ export const SessionTimer = ({ isCollapsed }: SessionTimerProps) => {
           variant="outline"
           size="sm"
           onClick={handleEndSession}
-          className="h-8 w-8 p-0 hover:bg-red-50 hover:border-red-200"
+          className="h-9 w-9 p-0 hover:bg-red-50 hover:border-red-200 transition-all duration-200"
         >
-          <X className="h-3 w-3 text-red-500" />
+          <X className="h-4 w-4 text-red-500" />
         </Button>
       </div>
     </div>
