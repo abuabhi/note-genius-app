@@ -1,19 +1,10 @@
+
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
-import { 
-  Bell, 
-  Calendar, 
-  Clock, 
-  Target, 
-  X, 
-  CheckCircle,
-  AlertTriangle
-} from "lucide-react";
+import { CheckCircle, AlertTriangle, Sparkles } from "lucide-react";
 import { Reminder } from "@/hooks/useReminders";
+import { ReminderCard } from "./ReminderCard";
 
 interface RemindersListProps {
   reminders: Reminder[];
@@ -33,79 +24,21 @@ export const RemindersList = ({ reminders, loading, onDismiss }: RemindersListPr
       return newSet;
     });
   };
-  
-  const getIconForType = (type: Reminder['type']) => {
-    switch (type) {
-      case 'study_event':
-        return <Calendar className="h-4 w-4 text-blue-500" />;
-      case 'goal_deadline':
-        return <Target className="h-4 w-4 text-green-500" />;
-      case 'flashcard_review':
-        return <Clock className="h-4 w-4 text-purple-500" />;
-      default:
-        return <Bell className="h-4 w-4 text-gray-500" />;
-    }
-  };
-  
-  const getTypeLabel = (type: Reminder['type']) => {
-    switch (type) {
-      case 'study_event':
-        return 'Event';
-      case 'goal_deadline':
-        return 'Goal';
-      case 'flashcard_review':
-        return 'Flashcards';
-      default:
-        return 'Reminder';
-    }
-  };
-  
-  const getReminderTimeDisplay = (reminderTime: string) => {
-    const reminderDate = new Date(reminderTime);
-    const now = new Date();
-    
-    // Check if it's today
-    if (
-      reminderDate.getDate() === now.getDate() &&
-      reminderDate.getMonth() === now.getMonth() &&
-      reminderDate.getFullYear() === now.getFullYear()
-    ) {
-      return `Today at ${format(reminderDate, 'h:mm a')}`;
-    }
-    
-    // Check if it's tomorrow
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    if (
-      reminderDate.getDate() === tomorrow.getDate() &&
-      reminderDate.getMonth() === tomorrow.getMonth() &&
-      reminderDate.getFullYear() === tomorrow.getFullYear()
-    ) {
-      return `Tomorrow at ${format(reminderDate, 'h:mm a')}`;
-    }
-    
-    // Otherwise, show full date
-    return format(reminderDate, 'MMM d, yyyy h:mm a');
-  };
 
   if (loading) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-4">
         {[1, 2, 3].map((i) => (
-          <Card key={i} className="overflow-hidden">
-            <CardContent className="p-4">
-              <div className="flex justify-between items-start">
-                <div className="flex gap-3">
-                  <Skeleton className="h-6 w-6 rounded-full" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-5 w-40" />
-                    <Skeleton className="h-4 w-20" />
-                  </div>
-                </div>
-                <Skeleton className="h-8 w-16" />
+          <div key={i} className="p-4 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 animate-pulse">
+            <div className="flex gap-3">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-1/2" />
+                <Skeleton className="h-3 w-1/4" />
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         ))}
       </div>
     );
@@ -113,12 +46,26 @@ export const RemindersList = ({ reminders, loading, onDismiss }: RemindersListPr
   
   if (reminders.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center p-6 text-center border rounded-lg bg-muted/10">
-        <CheckCircle className="h-12 w-12 text-green-500 mb-2" />
-        <h3 className="font-medium text-lg mb-1">All caught up!</h3>
-        <p className="text-muted-foreground text-sm">
-          You don't have any pending reminders.
+      <div className="text-center py-16 px-6">
+        <div className="relative mb-6">
+          <div className="w-24 h-24 bg-gradient-to-br from-mint-100 via-mint-50 to-blue-100 rounded-full flex items-center justify-center mx-auto shadow-lg">
+            <CheckCircle className="h-12 w-12 text-mint-600" />
+          </div>
+          <div className="absolute -top-1 -right-1 w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center shadow-lg">
+            <Sparkles className="h-4 w-4 text-white" />
+          </div>
+        </div>
+        
+        <h3 className="font-bold text-xl text-gray-900 mb-2">All caught up!</h3>
+        <p className="text-gray-600 leading-relaxed max-w-sm mx-auto">
+          You're doing amazing! No pending reminders at the moment. Keep up the great work!
         </p>
+        
+        <div className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-400">
+          <div className="w-2 h-2 bg-mint-300 rounded-full animate-pulse"></div>
+          <span>Stay organized and focused</span>
+          <div className="w-2 h-2 bg-blue-300 rounded-full animate-pulse"></div>
+        </div>
       </div>
     );
   }
@@ -136,65 +83,55 @@ export const RemindersList = ({ reminders, loading, onDismiss }: RemindersListPr
   
   return (
     <div className="space-y-4">
+      {/* Overdue alert */}
       {overdueReminders.length > 0 && (
-        <div className="flex items-center gap-2 text-sm bg-amber-50 border border-amber-200 rounded p-2 text-amber-700">
-          <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0" />
-          <span>You have {overdueReminders.length} overdue {overdueReminders.length === 1 ? 'reminder' : 'reminders'}</span>
+        <div className="p-4 rounded-xl bg-gradient-to-r from-amber-50 via-amber-50 to-orange-50 border border-amber-200 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-amber-100 rounded-full">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+            </div>
+            <div>
+              <h4 className="font-semibold text-amber-800 text-sm">
+                {overdueReminders.length} Overdue Reminder{overdueReminders.length !== 1 ? 's' : ''}
+              </h4>
+              <p className="text-amber-700 text-xs">
+                These reminders need your attention
+              </p>
+            </div>
+          </div>
         </div>
       )}
       
-      {sortedReminders.map((reminder) => {
-        const isPast = new Date(reminder.reminder_time) < now;
-        
-        return (
-          <Card 
-            key={reminder.id}
-            className={`overflow-hidden ${
-              isPast ? 'border-amber-300 bg-amber-50' : ''
-            }`}
-          >
-            <CardContent className="p-4">
-              <div className="flex justify-between items-start">
-                <div className="flex gap-3">
-                  <div className="mt-1">
-                    {getIconForType(reminder.type)}
-                  </div>
-                  <div>
-                    <div className="font-medium">{reminder.title}</div>
-                    <div className="text-sm text-muted-foreground flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      <span>{getReminderTimeDisplay(reminder.reminder_time)}</span>
-                      {isPast && <Badge variant="outline" className="text-xs bg-amber-100 text-amber-800 ml-1">Overdue</Badge>}
-                    </div>
-                    {reminder.description && (
-                      <div className="mt-1 text-sm">{reminder.description}</div>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs">
-                    {getTypeLabel(reminder.type)}
-                  </Badge>
-                  <Button 
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => handleDismiss(reminder.id)}
-                    disabled={dismissingIds.has(reminder.id)}
-                  >
-                    {dismissingIds.has(reminder.id) ? (
-                      <div className="h-4 w-4 border-2 border-t-transparent border-muted-foreground rounded-full animate-spin" />
-                    ) : (
-                      <X className="h-4 w-4" />
-                    )}
-                  </Button>
+      {/* Reminders list */}
+      <div className="space-y-3">
+        {sortedReminders.map((reminder) => (
+          <div key={reminder.id} className="relative">
+            {dismissingIds.has(reminder.id) && (
+              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-xl flex items-center justify-center z-10">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <div className="w-4 h-4 border-2 border-mint-500 border-t-transparent rounded-full animate-spin"></div>
+                  <span>Dismissing...</span>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        );
-      })}
+            )}
+            <ReminderCard 
+              reminder={reminder} 
+              onDismiss={handleDismiss}
+            />
+          </div>
+        ))}
+      </div>
+      
+      {/* Footer */}
+      {sortedReminders.length > 5 && (
+        <div className="text-center pt-2">
+          <div className="inline-flex items-center gap-2 text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-full">
+            <div className="w-1 h-1 bg-gray-400 rounded-full animate-pulse"></div>
+            <span>Showing all {sortedReminders.length} reminders</span>
+            <div className="w-1 h-1 bg-gray-400 rounded-full animate-pulse"></div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
