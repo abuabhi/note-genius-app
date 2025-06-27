@@ -37,7 +37,7 @@ const SidebarLayout = ({ children }: SidebarLayoutProps) => {
   return (
     <div className="min-h-screen flex w-full bg-gradient-to-br from-mint-50 via-white to-blue-50">
       <AuthSidebar />
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-h-screen">
         <SidebarInset className="flex-1 flex flex-col">
           {/* Enhanced Header */}
           <header className="flex h-16 shrink-0 items-center justify-between px-6 bg-white/80 backdrop-blur-md border-b border-gray-200/60 shadow-sm">
@@ -86,13 +86,13 @@ const SidebarLayout = ({ children }: SidebarLayoutProps) => {
             </div>
           </header>
           
-          {/* Main content */}
-          <main className="flex-1 overflow-auto">
+          {/* Main content with proper spacing for footer */}
+          <main className="flex-1 overflow-auto pb-4">
             {children}
           </main>
         </SidebarInset>
         
-        {/* Footer moved outside SidebarInset for full-width coverage */}
+        {/* Footer positioned to create seamless integration */}
         <Footer />
       </div>
       
