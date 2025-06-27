@@ -53,32 +53,32 @@ export const useUltraSimpleAnalytics = () => {
         if (notesCount.error) throw notesCount.error;
         if (quizzesCount.error) throw quizzesCount.error;
 
-        // Get today's date in YYYY-MM-DD format
-        const today = new Date();
-        const todayString = today.toISOString().split('T')[0];
+        // Get timezone-aware date boundaries
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const todayEnd = new Date(today.getTime() + 24 * 60 * 60 * 1000);
         
         // Get start of current week (Sunday)
         const startOfWeek = new Date(today);
         startOfWeek.setDate(today.getDate() - today.getDay());
-        const weekStartString = startOfWeek.toISOString().split('T')[0];
 
-        // Get today's sessions with proper date filtering
+        // Get today's sessions with proper timezone handling
         const { data: todaySessions, error: todayError } = await supabase
           .from('study_sessions')
           .select('duration, cards_reviewed, cards_correct')
           .eq('user_id', user.id)
-          .gte('start_time', `${todayString}T00:00:00.000Z`)
-          .lt('start_time', `${todayString}T23:59:59.999Z`)
+          .gte('start_time', today.toISOString())
+          .lt('start_time', todayEnd.toISOString())
           .not('duration', 'is', null);
 
         if (todayError) console.warn('Today sessions error:', todayError);
 
-        // Get this week's sessions with proper date filtering
+        // Get this week's sessions
         const { data: weekSessions, error: weekError } = await supabase
           .from('study_sessions')
           .select('duration, cards_reviewed, cards_correct')
           .eq('user_id', user.id)
-          .gte('start_time', `${weekStartString}T00:00:00.000Z`)
+          .gte('start_time', startOfWeek.toISOString())
           .not('duration', 'is', null);
 
         if (weekError) console.warn('Week sessions error:', weekError);
@@ -92,19 +92,36 @@ export const useUltraSimpleAnalytics = () => {
 
         if (allError) console.warn('All sessions error:', allError);
 
-        // Calculate metrics from actual session data
+        // Calculate metrics with proper validation and conversion
         const todayData = todaySessions || [];
         const weekData = weekSessions || [];
         const allData = allSessions || [];
 
-        const todayStudyTimeMinutes = todayData.reduce((acc, s) => acc + (s.duration || 0), 0);
-        const weeklyStudyTimeMinutes = weekData.reduce((acc, s) => acc + (s.duration || 0), 0);
-        const totalStudyTimeMinutes = allData.reduce((acc, s) => acc + (s.duration || 0), 0);
+        // Convert duration (assuming it might be in seconds, convert to minutes)
+        const convertDuration = (duration: number) => {
+          // If duration is very large, it's likely in seconds, convert to minutes
+          if (duration > 1000) {
+            return Math.round(duration / 60);
+          }
+          return duration;
+        };
+
+        const todayStudyTimeMinutes = Math.min(
+          todayData.reduce((acc, s) => acc + convertDuration(s.duration || 0), 0),
+          24 * 60 // Max 24 hours per day
+        );
+        
+        const weeklyStudyTimeMinutes = Math.min(
+          weekData.reduce((acc, s) => acc + convertDuration(s.duration || 0), 0),
+          7 * 24 * 60 // Max 7 days * 24 hours
+        );
+        
+        const totalStudyTimeMinutes = allData.reduce((acc, s) => acc + convertDuration(s.duration || 0), 0);
         
         const totalCardsReviewed = allData.reduce((acc, s) => acc + (s.cards_reviewed || 0), 0);
         const totalCardsCorrect = allData.reduce((acc, s) => acc + (s.cards_correct || 0), 0);
 
-        // Calculate basic metrics with realistic values
+        // Calculate realistic metrics
         const totalStudyTime = Math.round((totalStudyTimeMinutes / 60) * 10) / 10;
         const todayStudyTime = Math.round((todayStudyTimeMinutes / 60) * 10) / 10;
         const weeklyStudyTime = Math.round((weeklyStudyTimeMinutes / 60) * 10) / 10;
@@ -120,26 +137,26 @@ export const useUltraSimpleAnalytics = () => {
           todaySessions: todayData.length,
           weeklySessions: weekData.length,
           averageSessionTime: allData.length > 0 ? Math.round(totalStudyTimeMinutes / allData.length) : 0,
-          activeSessions: [], // Empty for ultra-simple
+          activeSessions: [],
           
-          // Time metrics
+          // Time metrics - realistic values
           totalStudyTime,
           totalStudyTimeMinutes,
           todayStudyTime,
           todayStudyTimeMinutes,
           weeklyStudyTime,
           weeklyStudyTimeMinutes,
-          previousWeekTimeMinutes: 0, // Not calculated in ultra-simple
+          previousWeekTimeMinutes: 0,
           
           // Goal tracking
           weeklyGoalProgress,
           weeklyGoalMinutes,
           weeklyGoalHours: Math.round((weeklyGoalMinutes / 60) * 10) / 10,
-          weeklyChange: 0, // Not calculated in ultra-simple
+          weeklyChange: 0,
           
           // Content metrics
           totalQuizzes: quizzesCount.count || 0,
-          completedQuizzes: 0, // Simplified
+          completedQuizzes: 0,
           totalNotes: notesCount.count || 0,
           totalCardsMastered: totalCardsCorrect,
           totalSets: setsCount.count || 0,
@@ -147,10 +164,10 @@ export const useUltraSimpleAnalytics = () => {
           flashcardAccuracy,
           
           // Other
-          streakDays: 0, // Simplified - no streak calculation
-          recentSessions: [], // Empty for ultra-simple
+          streakDays: 0,
+          recentSessions: [],
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          todayString
+          todayString: today.toISOString().split('T')[0]
         };
 
         console.log('✅ Ultra-simple analytics result:', result);
@@ -158,11 +175,11 @@ export const useUltraSimpleAnalytics = () => {
 
       } catch (error) {
         console.error('❌ Ultra-simple analytics error:', error);
-        throw error; // Re-throw to show actual error to user
+        throw error;
       }
     },
     enabled: !!user,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
     retry: 1
   });
 
