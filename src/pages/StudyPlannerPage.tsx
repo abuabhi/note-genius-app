@@ -10,25 +10,17 @@ import { ActiveStudyPlans } from '@/components/study-planner/ActiveStudyPlans';
 import { CompletedStudyPlans } from '@/components/study-planner/CompletedStudyPlans';
 import { useActiveStudyPlans } from '@/hooks/useActiveStudyPlans';
 import { useCompletedStudyPlans } from '@/hooks/useCompletedStudyPlans';
+import { useStudyPlannerAnalytics } from '@/hooks/useStudyPlannerAnalytics';
 
 export default function StudyPlannerPage() {
   const [activeTab, setActiveTab] = useState('plans');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const { studyPlans: activePlans, isLoading: activeLoading } = useActiveStudyPlans();
   const { studyPlans: completedPlans, isLoading: completedLoading } = useCompletedStudyPlans();
+  const { analytics, isLoading: analyticsLoading } = useStudyPlannerAnalytics();
 
   const totalActivePlans = activePlans.length;
   const totalCompletedPlans = completedPlans.length;
-  
-  // Calculate average daily hours from active plans
-  const avgDailyHours = activePlans.length > 0 
-    ? activePlans.reduce((total, plan) => {
-        const dailyHours = plan.study_days.length > 0 
-          ? plan.total_duration_hours / plan.study_days.length 
-          : 0;
-        return total + dailyHours;
-      }, 0) / activePlans.length
-    : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
@@ -67,8 +59,8 @@ export default function StudyPlannerPage() {
             </TabsList>
           </div>
 
-          {/* Compact Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Enhanced Stats with Real Data */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card className="border-mint-200 hover:shadow-md transition-shadow bg-white/80 backdrop-blur-sm">
               <CardContent className="p-4">
                 <div className="flex items-center space-x-3">
@@ -108,9 +100,25 @@ export default function StudyPlannerPage() {
                     <Clock className="h-5 w-5 text-purple-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Avg Hours/Day</p>
+                    <p className="text-sm text-gray-600">Today's Study</p>
                     <p className="text-2xl font-semibold text-purple-800">
-                      {Math.round(avgDailyHours * 10) / 10}
+                      {analyticsLoading ? '...' : `${analytics.todaySessionTime}m`}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-green-200 hover:shadow-md transition-shadow bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <TrendingUp className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Total Sessions</p>
+                    <p className="text-2xl font-semibold text-green-800">
+                      {analyticsLoading ? '...' : analytics.totalSessions}
                     </p>
                   </div>
                 </div>

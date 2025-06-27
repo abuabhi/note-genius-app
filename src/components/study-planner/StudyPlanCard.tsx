@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { StudyPlan } from '@/types/studyPlanner';
 import { useStudyPlanSession } from '@/hooks/useStudyPlanSession';
 import { useConvertStudyPlanToGoal } from '@/hooks/useConvertStudyPlanToGoal';
+import { useStudyPlannerAnalytics } from '@/hooks/useStudyPlannerAnalytics';
 import { Play, Settings, Target, Calendar, Clock, BookOpen, TrendingUp, Hash } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { GoalFormDialog } from '@/components/goals/GoalFormDialog';
@@ -18,12 +19,13 @@ interface StudyPlanCardProps {
 export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
   const { startStudyPlanSession, isStudyPlanActive } = useStudyPlanSession();
   const { convertToGoal, isLoading: isConverting } = useConvertStudyPlanToGoal();
+  const { analytics } = useStudyPlannerAnalytics();
   const [showGoalDialog, setShowGoalDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   
   const isActive = isStudyPlanActive(studyPlan.id);
   const daysLeft = differenceInDays(new Date(studyPlan.end_date), new Date());
-  const hoursPerDay = Math.round(studyPlan.total_duration_hours / 7);
+  const hoursPerDay = Math.round(studyPlan.total_hours_per_week / 7);
 
   const handleStartSession = async () => {
     await startStudyPlanSession(studyPlan);
@@ -77,7 +79,7 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
             </div>
           </div>
 
-          {/* Stats Section */}
+          {/* Stats Section with Real Data */}
           <div className="flex items-center gap-4 min-w-0 flex-1">
             {/* Days Left */}
             <div className="flex items-center gap-1.5 text-xs text-green-600">
@@ -85,16 +87,16 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
               <span className="truncate font-medium">{daysLeft} days left</span>
             </div>
             
-            {/* Hours Per Day */}
+            {/* Today's Study Time */}
             <div className="flex items-center gap-1.5 text-xs text-blue-600">
               <Clock className="h-3 w-3" />
-              <span className="truncate font-medium">{hoursPerDay}h per day</span>
+              <span className="truncate font-medium">{analytics.todaySessionTime}m today</span>
             </div>
             
-            {/* Sessions Completed */}
+            {/* Total Sessions */}
             <div className="flex items-center gap-1.5 text-xs text-purple-600">
               <TrendingUp className="h-3 w-3" />
-              <span className="truncate font-medium">{studyPlan.sessions_completed} sessions</span>
+              <span className="truncate font-medium">{analytics.totalSessions} sessions</span>
             </div>
           </div>
 
@@ -109,6 +111,16 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
                 className="bg-gradient-to-r from-mint-500 to-mint-600 h-2.5 rounded-full transition-all duration-500 shadow-sm"
                 style={{ width: `${studyPlan.completion_percentage}%` }}
               />
+            </div>
+          </div>
+
+          {/* Session Time Summary */}
+          <div className="flex items-center justify-between p-2 bg-blue-50/50 rounded-lg">
+            <div className="text-xs text-blue-700">
+              <strong>Total Study Time:</strong> {analytics.totalSessionTime}m
+            </div>
+            <div className="text-xs text-blue-700">
+              <strong>This Week:</strong> {analytics.weeklySessionTime}m
             </div>
           </div>
 
@@ -164,7 +176,7 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
           title: `${studyPlan.title} - Study Goal`,
           description: `Converted from study plan: ${studyPlan.title}`,
           subject: studyPlan.subject,
-          target_hours: studyPlan.total_duration_hours,
+          target_hours: studyPlan.total_hours_per_week,
           start_date: studyPlan.start_date,
           end_date: studyPlan.end_date
         }}
