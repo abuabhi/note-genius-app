@@ -1,4 +1,5 @@
 
+import React, { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
@@ -33,6 +34,7 @@ export const useOptimizedReminders = (options?: {
         .from('reminders')
         .select(`
           id,
+          user_id,
           title,
           description,
           reminder_time,
@@ -41,6 +43,8 @@ export const useOptimizedReminders = (options?: {
           status,
           priority,
           escalation_level,
+          delivery_methods,
+          recurrence,
           created_at,
           updated_at
         `)
@@ -68,22 +72,7 @@ export const useOptimizedReminders = (options?: {
   });
 
   // Set up realtime subscription for instant updates
-  useQuery({
-    queryKey: ['reminder-realtime', user?.id],
-    queryFn: () => null,
-    enabled: !!user && enableRealtime,
-    staleTime: Infinity,
-    gcTime: Infinity,
-    refetchInterval: false,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    meta: {
-      skipCache: true,
-    },
-  });
-
-  // Set up realtime subscription
-  React.useEffect(() => {
+  useEffect(() => {
     if (!user || !enableRealtime) return;
 
     console.log('🔄 Setting up optimized realtime subscription');
@@ -134,15 +123,12 @@ export const useOptimizedReminders = (options?: {
       return reminderId;
     },
     onMutate: async (reminderId) => {
-      // Cancel outgoing refetches
       await queryClient.cancelQueries({ 
         queryKey: ['optimized-reminders', user?.id] 
       });
 
-      // Snapshot previous value
       const previousReminders = queryClient.getQueryData(['optimized-reminders', user?.id]);
 
-      // Optimistically update cache
       queryClient.setQueryData(
         ['optimized-reminders', user?.id, { limit, status }],
         (old: Reminder[] = []) => old.filter(r => r.id !== reminderId)
@@ -151,7 +137,6 @@ export const useOptimizedReminders = (options?: {
       return { previousReminders };
     },
     onError: (err, reminderId, context) => {
-      // Rollback on error
       if (context?.previousReminders) {
         queryClient.setQueryData(
           ['optimized-reminders', user?.id, { limit, status }],
@@ -165,7 +150,6 @@ export const useOptimizedReminders = (options?: {
       console.log('✅ Reminder dismissed successfully:', reminderId);
       toast.success('Reminder dismissed');
       
-      // Smart invalidation - only relevant queries
       queryClient.invalidateQueries({
         queryKey: ['optimized-reminders', user?.id],
         exact: false,

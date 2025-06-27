@@ -25,7 +25,7 @@ export const OptimizedReminderPopover = () => {
   // Get any overdue reminders for urgent styling
   const now = new Date();
   const hasOverdueReminders = reminders.some(
-    r => r.status === 'pending' && new Date(r.reminder_time) < now
+    r => r.status === 'pending' && r.reminder_time && new Date(r.reminder_time) < now
   );
   
   return (
