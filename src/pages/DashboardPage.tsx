@@ -50,14 +50,9 @@ const DashboardPage = () => {
       </ReferralSignupErrorBoundary>
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
         <div className="container mx-auto p-6 space-y-8">
-          {/* Hero Section - Updated with complete user flow */}
+          {/* Hero Section - Streamlined */}
           <div>
             <DashboardHeroSection />
-          </div>
-          
-          {/* Study Planner Section - New */}
-          <div>
-            <StudyPlannerSection />
           </div>
           
           {/* Simplified Analytics - Essential metrics only */}
@@ -65,8 +60,11 @@ const DashboardPage = () => {
             <LearningAnalyticsDashboard />
           </div>
           
-          {/* Goals and Todos - More compact layout */}
-          <div className="grid gap-6 lg:grid-cols-2">
+          {/* 3-Column Layout: Study Plans | Goals | Todos */}
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div>
+              <StudyPlannerSection />
+            </div>
             <div>
               <GoalsSection />
             </div>
