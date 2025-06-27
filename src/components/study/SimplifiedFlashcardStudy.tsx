@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useOptimizedFlashcardStudy } from '@/hooks/useOptimizedFlashcardStudy';
 import { StudyMode } from '@/pages/study/types';
@@ -20,7 +19,7 @@ export const SimplifiedFlashcardStudy: React.FC<SimplifiedFlashcardStudyProps> =
   setId, 
   mode 
 }) => {
-  const { isActive, recordActivity } = useUnifiedSessionTracker();
+  const { isActive } = useUnifiedSessionTracker();
   
   const {
     flashcards,
@@ -51,9 +50,9 @@ export const SimplifiedFlashcardStudy: React.FC<SimplifiedFlashcardStudyProps> =
   useEffect(() => {
     if (isComplete) {
       console.log('🎉 Study session completed!');
-      recordActivity(); // Record final activity
+      // No need to record activity anymore - timer is manual only
     }
-  }, [isComplete, recordActivity]);
+  }, [isComplete]);
 
   if (isLoading) {
     return (

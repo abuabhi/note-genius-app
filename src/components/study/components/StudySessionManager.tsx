@@ -17,7 +17,7 @@ export const StudySessionManager = ({
 }: StudySessionManagerProps) => {
   
   // Use ONLY the unified session tracker - no duplicate session systems
-  const { recordActivity, updateSessionActivity, isActive } = useUnifiedSessionTracker();
+  const { isActive } = useUnifiedSessionTracker();
   
   console.log('🎛️ [STUDY SESSION MANAGER] Using ONLY unified session system:', {
     setId,
@@ -25,16 +25,14 @@ export const StudySessionManager = ({
     isActive
   });
   
-  // Use different hooks based on mode
+  // Use different hooks based on mode - no activity recording needed
   const studyHook = useOptimizedFlashcardStudy({ 
     setId, 
     mode
   });
   const quizHook = useQuizMode({ 
     setId, 
-    mode, 
-    recordActivity, 
-    updateSessionActivity 
+    mode
   });
   
   // Select which hook to use based on mode
@@ -72,8 +70,7 @@ export const StudySessionManager = ({
   } : null;
 
   const handleCorrectAnswer = () => {
-    console.log('✅ [STUDY SESSION MANAGER] Correct answer - recording activity');
-    recordActivity();
+    console.log('✅ [STUDY SESSION MANAGER] Correct answer');
     if (isQuizMode && quizData) {
       quizData.handleQuizAnswer('mastered');
     } else if (studyData) {
@@ -82,8 +79,7 @@ export const StudySessionManager = ({
   };
 
   const handleIncorrectAnswer = () => {
-    console.log('❌ [STUDY SESSION MANAGER] Incorrect answer - recording activity');
-    recordActivity();
+    console.log('❌ [STUDY SESSION MANAGER] Incorrect answer');
     if (isQuizMode && quizData) {
       quizData.handleQuizAnswer('needs_practice');
     } else if (studyData) {
@@ -109,19 +105,10 @@ export const StudySessionManager = ({
     mode,
     isSessionActive: isActive,
     
-    // Handlers (with unified session activity recording)
-    handleNext: () => {
-      recordActivity();
-      handleNext();
-    },
-    handlePrevious: () => {
-      recordActivity();
-      handlePrevious();
-    },
-    handleFlip: () => {
-      recordActivity();
-      handleFlip();
-    },
+    // Handlers (no activity recording needed - timer is manual only)
+    handleNext,
+    handlePrevious,
+    handleFlip,
     handleCorrectAnswer,
     handleIncorrectAnswer,
     setIsFlipped,
