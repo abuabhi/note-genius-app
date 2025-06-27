@@ -25,7 +25,7 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
   
   const isActive = isStudyPlanActive(studyPlan.id);
   const daysLeft = differenceInDays(new Date(studyPlan.end_date), new Date());
-  const hoursPerDay = Math.round(studyPlan.total_hours_per_week / 7);
+  const hoursPerDay = Math.round(studyPlan.total_duration_hours / 7);
 
   const handleStartSession = async () => {
     await startStudyPlanSession(studyPlan);
@@ -176,7 +176,7 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
           title: `${studyPlan.title} - Study Goal`,
           description: `Converted from study plan: ${studyPlan.title}`,
           subject: studyPlan.subject,
-          target_hours: studyPlan.total_hours_per_week,
+          target_hours: studyPlan.total_duration_hours,
           start_date: studyPlan.start_date,
           end_date: studyPlan.end_date
         }}
