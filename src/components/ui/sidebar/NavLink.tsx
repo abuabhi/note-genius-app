@@ -25,27 +25,27 @@ export const NavLink = ({
   customClassName
 }: NavLinkProps) => {
   return (
-    <Link
-      to={to}
-      className={cn(
-        "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
-        isActive && !customClassName && "bg-muted text-mint-600",
-        customClassName
-      )}
-    >
-      <Icon className="h-4 w-4" />
-      <motion.li variants={itemVariants}>
-        {!isCollapsed && (
-          badge ? (
-            <div className="ml-2 flex items-center gap-2">
-              <p className="text-sm font-medium">{label}</p>
-              {badge}
-            </div>
-          ) : (
-            <p className="ml-2 text-sm font-medium">{label}</p>
-          )
+    <motion.div variants={itemVariants}>
+      <Link
+        to={to}
+        className={cn(
+          "flex items-center w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group",
+          "hover:bg-mint-50 hover:text-mint-700 hover:shadow-sm",
+          isActive && !customClassName && "bg-mint-100 text-mint-700 shadow-sm border-r-2 border-mint-500",
+          customClassName
         )}
-      </motion.li>
-    </Link>
+      >
+        <Icon className={cn(
+          "h-5 w-5 transition-colors duration-200",
+          isActive ? "text-mint-600" : "text-gray-600 group-hover:text-mint-600"
+        )} />
+        {!isCollapsed && (
+          <div className="ml-3 flex items-center justify-between flex-1">
+            <span className="truncate">{label}</span>
+            {badge}
+          </div>
+        )}
+      </Link>
+    </motion.div>
   );
 };

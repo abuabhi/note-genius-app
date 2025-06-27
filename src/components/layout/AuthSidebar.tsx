@@ -4,9 +4,8 @@ import { Navigation } from "@/components/ui/sidebar/Navigation";
 
 const AuthSidebar = () => {
   return (
-    <Sidebar>
+    <Sidebar className="border-r border-gray-200/60 shadow-lg bg-white/80 backdrop-blur-md">
       <SidebarContent className="p-0">
-        {/* Simple Navigation without accordion/grouping */}
         <Navigation isCollapsed={false} />
       </SidebarContent>
     </Sidebar>

@@ -39,73 +39,85 @@ export const UserSection = ({ isCollapsed }: UserSectionProps) => {
   };
   
   return (
-    <div className="flex h-[54px] w-full shrink-0 border-b p-2">
-      <div className="mt-[1.5px] flex w-full">
-        <DropdownMenu modal={false}>
-          <DropdownMenuTrigger className="w-full" asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex w-fit items-center gap-2 px-2" 
+    <div className="flex items-center">
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger className="w-full" asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex items-center gap-3 px-3 py-2 h-auto hover:bg-mint-50 rounded-lg transition-all duration-200" 
+          >
+            <Avatar className='rounded-full size-8 ring-2 ring-mint-100'>
+              <AvatarFallback className="bg-gradient-to-br from-mint-500 to-mint-600 text-white font-medium">
+                {user?.email?.charAt(0).toUpperCase() || "S"}
+              </AvatarFallback>
+            </Avatar>
+            <motion.div
+              variants={itemVariants}
+              className="flex items-center gap-2"
             >
-              <Avatar className='rounded size-4'>
-                <AvatarFallback>{user?.email?.charAt(0).toUpperCase() || "S"}</AvatarFallback>
-              </Avatar>
-              <motion.li
-                variants={itemVariants}
-                className="flex w-fit items-center gap-2"
-              >
-                {!isCollapsed && (
-                  <>
-                    <p className="text-sm font-medium">
+              {!isCollapsed && (
+                <>
+                  <div className="text-left">
+                    <p className="text-sm font-medium text-gray-900">
                       {userProfile?.username || "StudyApp"}
                     </p>
-                    <ChevronsUpDown className="h-4 w-4 text-muted-foreground/50" />
-                  </>
-                )}
-              </motion.li>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <DropdownMenuItem
-              asChild
-              className="flex items-center gap-2"
-            >
-              <Link to="/notifications">
-                <Bell className="h-4 w-4" /> Notifications
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              asChild
-              className="flex items-center gap-2"
-            >
-              <Link to="/settings">
-                <Settings className="h-4 w-4" /> Settings
-              </Link>
-            </DropdownMenuItem>
-            {isAdmin && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  asChild
-                  className="flex items-center gap-2"
-                >
-                  <Link to="/admin">
-                    <Shield className="h-4 w-4" /> Admin Panel
-                  </Link>
-                </DropdownMenuItem>
-              </>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={handleLogout}
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              <LogOut className="h-4 w-4" /> Sign out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+                    <p className="text-xs text-gray-500">
+                      {user?.email}
+                    </p>
+                  </div>
+                  <ChevronsUpDown className="h-4 w-4 text-gray-400" />
+                </>
+              )}
+            </motion.div>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent 
+          align="end" 
+          className="w-56 bg-white/95 backdrop-blur-md border border-gray-200/60 shadow-lg"
+        >
+          <DropdownMenuItem
+            asChild
+            className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-mint-50"
+          >
+            <Link to="/notifications">
+              <Bell className="h-4 w-4 text-gray-600" /> 
+              <span>Notifications</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            asChild
+            className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-mint-50"
+          >
+            <Link to="/settings">
+              <Settings className="h-4 w-4 text-gray-600" /> 
+              <span>Settings</span>
+            </Link>
+          </DropdownMenuItem>
+          {isAdmin && (
+            <>
+              <DropdownMenuSeparator className="bg-gray-200/60" />
+              <DropdownMenuItem
+                asChild
+                className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-mint-50"
+              >
+                <Link to="/admin">
+                  <Shield className="h-4 w-4 text-gray-600" /> 
+                  <span>Admin Panel</span>
+                </Link>
+              </DropdownMenuItem>
+            </>
+          )}
+          <DropdownMenuSeparator className="bg-gray-200/60" />
+          <DropdownMenuItem
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-red-50 text-red-600"
+          >
+            <LogOut className="h-4 w-4" /> 
+            <span>Sign out</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };
