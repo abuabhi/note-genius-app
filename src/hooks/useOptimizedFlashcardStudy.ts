@@ -1,4 +1,5 @@
 
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { StudyMode } from '@/pages/study/types';
@@ -37,7 +38,8 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
       setError(null);
       
       try {
-        const result = await supabase
+        // Use explicit any typing to avoid complex inference
+        const result: any = await (supabase as any)
           .from('flashcards')
           .select('*')
           .eq('set_id', setId)
@@ -137,8 +139,8 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
           break;
       }
 
-      // Update the flashcard in the database
-      const { error } = await supabase
+      // Update the flashcard in the database - use explicit any typing
+      const updateResult: any = await (supabase as any)
         .from('flashcards')
         .update({ 
           difficulty: newDifficulty,
@@ -146,7 +148,7 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
         })
         .eq('id', currentCard.id);
 
-      if (error) throw error;
+      if (updateResult.error) throw updateResult.error;
 
       // Update local state
       if (incrementStudied) {
@@ -194,3 +196,4 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
     setIsFlipped
   };
 };
+
