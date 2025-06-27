@@ -1,9 +1,8 @@
 
 import React from 'react';
 import { useFlashcards } from '@/contexts/FlashcardContext';
-import { FlashcardSetGrid } from '@/components/flashcards/components/FlashcardSetGrid';
+import FlashcardSetGrid from '@/components/flashcards/components/FlashcardSetGrid';
 import { LoadingState } from '@/components/notes/page/LoadingState';
-import { ErrorState } from '@/components/notes/page/ErrorState';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Plus, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,9 +14,7 @@ export const FlashcardsContent = () => {
   const navigate = useNavigate();
   const { 
     flashcardSets, 
-    loading, 
-    error,
-    viewMode 
+    loading
   } = useFlashcards();
   
   const { startSession, isActive } = useUnifiedSessionTracker();
@@ -40,21 +37,19 @@ export const FlashcardsContent = () => {
     return <LoadingState />;
   }
 
-  if (error) {
-    return <ErrorState error={error} />;
-  }
-
   if (!flashcardSets || flashcardSets.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 space-y-4">
         <EmptyState
-          icon={BookOpen}
+          icon={<BookOpen className="h-16 w-16" />}
           title="No flashcard sets yet"
           description="Create your first flashcard set to get started with studying"
-          action={{
-            label: "Create Flashcard Set",
-            onClick: () => navigate('/flashcards/create')
-          }}
+          action={
+            <Button onClick={() => navigate('/flashcards/create')}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Flashcard Set
+            </Button>
+          }
         />
         
         {/* Test Session Button */}
@@ -94,8 +89,13 @@ export const FlashcardsContent = () => {
       )}
       
       <FlashcardSetGrid
-        flashcardSets={flashcardSets}
-        viewMode={viewMode}
+        sets={flashcardSets}
+        setProgressData={{}}
+        deletingSet={null}
+        onDeleteSet={() => {}}
+        hasInitiallyLoaded={true}
+        searchQuery=""
+        subjectFilter={undefined}
       />
     </div>
   );

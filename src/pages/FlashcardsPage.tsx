@@ -99,21 +99,7 @@ const FlashcardsPage = () => {
               hideViewMode={true}
             />
             
-            <FlashcardsContent
-              sets={allSets}
-              filters={filters}
-              viewMode={viewMode as any} // Convert to expected type
-              loading={loading}
-              error={error}
-              hasMore={false}
-              page={page}
-              deletingSet={deletingSet}
-              detailedProgressData={{}}
-              onDeleteSet={handleDeleteSet}
-              onTogglePinned={handleTogglePinned}
-              onLoadMore={handleLoadMore}
-              onRetry={handleRetry}
-            />
+            <FlashcardsContent />
           </div>
         </div>
       </FlashcardProvider>
