@@ -15,14 +15,14 @@ interface Todo {
   updated_at: string;
 }
 
-// Simplified todos hook
+// Simplified todos hook with user-scoped query keys for SaaS scalability
 export const useSimplifiedTodos = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  // Fetch todos with simple query
+  // Fetch todos with user-scoped query key for proper isolation
   const { data: todos = [], isLoading, error } = useQuery({
-    queryKey: ['todos'],
+    queryKey: ['todos', user?.id],
     queryFn: async () => {
       if (!user) return [];
       
@@ -37,10 +37,12 @@ export const useSimplifiedTodos = () => {
       return data as Todo[];
     },
     enabled: !!user,
-    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+    staleTime: 2 * 60 * 1000, // 2 minutes - consistent cache strategy
+    gcTime: 5 * 60 * 1000, // 5 minutes cache retention
+    refetchOnWindowFocus: true, // Auto-refresh when window regains focus
   });
 
-  // Create todo mutation
+  // Create todo mutation with optimistic updates
   const createTodoMutation = useMutation({
     mutationFn: async (todoData: Omit<Todo, 'id' | 'created_at' | 'updated_at'>) => {
       if (!user) throw new Error('User not authenticated');
@@ -59,17 +61,42 @@ export const useSimplifiedTodos = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['todos'] });
-      toast.success('Todo created successfully');
+    onMutate: async (newTodo) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['todos', user?.id] });
+      
+      // Snapshot previous value
+      const previousTodos = queryClient.getQueryData(['todos', user?.id]);
+      
+      // Optimistically update cache
+      queryClient.setQueryData(['todos', user?.id], (old: Todo[] = []) => [
+        {
+          ...newTodo,
+          id: 'temp-' + Date.now(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        ...old,
+      ]);
+      
+      return { previousTodos };
     },
-    onError: (error) => {
-      console.error('Error creating todo:', error);
+    onError: (err, newTodo, context) => {
+      // Rollback on error
+      if (context?.previousTodos) {
+        queryClient.setQueryData(['todos', user?.id], context.previousTodos);
+      }
+      console.error('Error creating todo:', err);
       toast.error('Failed to create todo');
+    },
+    onSuccess: () => {
+      // Invalidate and refetch to get server data
+      queryClient.invalidateQueries({ queryKey: ['todos', user?.id] });
+      toast.success('Todo created successfully');
     },
   });
 
-  // Update todo mutation
+  // Update todo mutation with optimistic updates
   const updateTodoMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Todo> }) => {
       if (!user) throw new Error('User not authenticated');
@@ -85,17 +112,35 @@ export const useSimplifiedTodos = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['todos'] });
-      toast.success('Todo updated successfully');
+    onMutate: async ({ id, updates }) => {
+      await queryClient.cancelQueries({ queryKey: ['todos', user?.id] });
+      
+      const previousTodos = queryClient.getQueryData(['todos', user?.id]);
+      
+      queryClient.setQueryData(['todos', user?.id], (old: Todo[] = []) =>
+        old.map(todo => 
+          todo.id === id 
+            ? { ...todo, ...updates, updated_at: new Date().toISOString() }
+            : todo
+        )
+      );
+      
+      return { previousTodos };
     },
-    onError: (error) => {
-      console.error('Error updating todo:', error);
+    onError: (err, variables, context) => {
+      if (context?.previousTodos) {
+        queryClient.setQueryData(['todos', user?.id], context.previousTodos);
+      }
+      console.error('Error updating todo:', err);
       toast.error('Failed to update todo');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todos', user?.id] });
+      toast.success('Todo updated successfully');
     },
   });
 
-  // Delete todo mutation
+  // Delete todo mutation with optimistic updates
   const deleteTodoMutation = useMutation({
     mutationFn: async (todoId: string) => {
       if (!user) throw new Error('User not authenticated');
@@ -108,13 +153,27 @@ export const useSimplifiedTodos = () => {
       
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['todos'] });
-      toast.success('Todo deleted successfully');
+    onMutate: async (todoId) => {
+      await queryClient.cancelQueries({ queryKey: ['todos', user?.id] });
+      
+      const previousTodos = queryClient.getQueryData(['todos', user?.id]);
+      
+      queryClient.setQueryData(['todos', user?.id], (old: Todo[] = []) =>
+        old.filter(todo => todo.id !== todoId)
+      );
+      
+      return { previousTodos };
     },
-    onError: (error) => {
-      console.error('Error deleting todo:', error);
+    onError: (err, todoId, context) => {
+      if (context?.previousTodos) {
+        queryClient.setQueryData(['todos', user?.id], context.previousTodos);
+      }
+      console.error('Error deleting todo:', err);
       toast.error('Failed to delete todo');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todos', user?.id] });
+      toast.success('Todo deleted successfully');
     },
   });
 
