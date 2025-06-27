@@ -22,54 +22,55 @@ const StudyPlannerPage = lazy(() => import('@/pages/StudyPlannerPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="space-y-4">
-      <Skeleton className="h-8 w-64" />
-      <Skeleton className="h-64 w-96" />
+  <div className="flex items-center justify-center min-h-[50vh]">
+    <div className="space-y-4 w-full max-w-md">
+      <Skeleton className="h-8 w-64 mx-auto" />
+      <Skeleton className="h-64 w-full" />
+      <div className="grid grid-cols-2 gap-4">
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-32 w-full" />
+      </div>
     </div>
   </div>
 );
 
 export const OptimizedAppRoutes = () => {
   return (
-    <Suspense fallback={<LoadingFallback />}>
+    <Suspense fallback={<SidebarLayout><LoadingFallback /></SidebarLayout>}>
       <Routes>
-        {/* Dashboard */}
+        {/* All routes now use unified SidebarLayout */}
         <Route path="/dashboard" element={<SidebarLayout><DashboardPage /></SidebarLayout>} />
         
         {/* Flashcards routes */}
         <Route path="/flashcards" element={<SidebarLayout><FlashcardsPage /></SidebarLayout>} />
-        
-        {/* Study routes - now include SidebarLayout for consistent sidebar */}
         <Route path="/flashcards/study/:id" element={<SidebarLayout><FlashcardStudyPage /></SidebarLayout>} />
         <Route path="/study/:id" element={<SidebarLayout><FlashcardStudyPage /></SidebarLayout>} />
         
-        {/* Notes routes */}
+        {/* Notes routes - all unified with SidebarLayout */}
         <Route path="/notes" element={<SidebarLayout><NotesPage /></SidebarLayout>} />
-        <Route path="/notes/study/:noteId" element={<NoteStudyPage />} />
+        <Route path="/notes/study/:noteId" element={<SidebarLayout><NoteStudyPage /></SidebarLayout>} />
         
         {/* Quiz routes */}
         <Route path="/quiz" element={<SidebarLayout><QuizPage /></SidebarLayout>} />
         <Route path="/quizzes" element={<SidebarLayout><QuizPage /></SidebarLayout>} />
         <Route path="/quiz/create" element={<SidebarLayout><CreateQuizPage /></SidebarLayout>} />
-        <Route path="/quiz/:id/take" element={<TakeQuizPage />} />
+        <Route path="/quiz/:id/take" element={<SidebarLayout><TakeQuizPage /></SidebarLayout>} />
         <Route path="/quiz/:id/view" element={<SidebarLayout><QuizDetailsPage /></SidebarLayout>} />
         <Route path="/quiz/:id" element={<SidebarLayout><QuizDetailsPage /></SidebarLayout>} />
         
-        {/* Analytics */}
+        {/* Analytics and Progress */}
         <Route path="/analytics" element={<SidebarLayout><AnalyticsPage /></SidebarLayout>} />
         <Route path="/progress" element={<SidebarLayout><AnalyticsPage /></SidebarLayout>} />
+        <Route path="/study-sessions" element={<SidebarLayout><AnalyticsPage /></SidebarLayout>} />
         
-        {/* Calendar/Schedule */}
+        {/* Calendar and Planning */}
         <Route path="/calendar" element={<SidebarLayout><SchedulePage /></SidebarLayout>} />
         <Route path="/schedule" element={<SidebarLayout><SchedulePage /></SidebarLayout>} />
+        <Route path="/study-planner" element={<SidebarLayout><StudyPlannerPage /></SidebarLayout>} />
         
-        {/* Goals and Todos - now with SidebarLayout */}
+        {/* Goals and Todos */}
         <Route path="/goals" element={<SidebarLayout><GoalsPage /></SidebarLayout>} />
         <Route path="/todos" element={<SidebarLayout><TodoPage /></SidebarLayout>} />
-        
-        {/* Study Planner */}
-        <Route path="/study-planner" element={<SidebarLayout><StudyPlannerPage /></SidebarLayout>} />
         
         {/* Catch all for 404 */}
         <Route path="*" element={<SidebarLayout><NotFoundPage /></SidebarLayout>} />

@@ -55,25 +55,29 @@ export const NotesGrid = ({ notes, viewMode = 'grid' }: NotesGridProps) => {
     setIsDetailsOpen(true);
   };
 
+  // Enhanced grid layout for better scaling with many cards
   const gridClasses = viewMode === 'list' 
     ? "flex flex-col space-y-3" 
-    : "flex flex-col space-y-4";
+    : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4";
 
   return (
     <>
-      <div className={gridClasses} data-guide="notes-list">
-        {notes.map((note) => (
-          <NoteCard
-            key={note.id}
-            note={note}
-            onNoteClick={handleNoteClick}
-            onShowDetails={handleShowDetails}
-            onPin={handlePin}
-            onDelete={handleDelete}
-            confirmDelete={null}
-            viewMode={viewMode}
-          />
-        ))}
+      {/* Optimized container for large datasets */}
+      <div className="w-full">
+        <div className={gridClasses} data-guide="notes-list">
+          {notes.map((note) => (
+            <NoteCard
+              key={note.id}
+              note={note}
+              onNoteClick={handleNoteClick}
+              onShowDetails={handleShowDetails}
+              onPin={handlePin}
+              onDelete={handleDelete}
+              confirmDelete={null}
+              viewMode={viewMode}
+            />
+          ))}
+        </div>
       </div>
       
       {selectedNote && (

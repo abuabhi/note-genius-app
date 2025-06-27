@@ -59,13 +59,13 @@ const NotesPage = () => {
 
   const handleSaveNote = async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
     // This will be implemented by the form's internal logic
-    // For now, just close the dialog on success
     setIsManualDialogOpen(false);
     return null;
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+    // Removed background gradient - now handled by SidebarLayout
+    <div className="h-full">
       <NotesPageHeader
         loading={false}
         viewMode={convertedViewMode}
@@ -95,7 +95,6 @@ const NotesPage = () => {
         isVisible={isImportDialogOpen} 
         onClose={() => setIsImportDialogOpen(false)}
         onSaveNote={async (note) => {
-          // This will be handled by the import dialog internally
           return true;
         }}
       />
