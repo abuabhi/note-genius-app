@@ -1,13 +1,15 @@
 
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Loader2 } from "lucide-react";
-import { DashboardHeroSection } from "@/components/dashboard/DashboardHeroSection";
+import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
+import { StudySuggestions } from "@/components/analytics/StudySuggestions";
 import { LearningAnalyticsDashboard } from "@/components/dashboard/LearningAnalyticsDashboard";
 import { TodosSection } from "@/components/dashboard/TodosSection";
 import { GoalsSection } from "@/components/dashboard/GoalsSection";
 import { StudyPlannerSection } from "@/components/dashboard/StudyPlannerSection";
 import { ReferralSignupHandler } from "@/components/referrals/ReferralSignupHandler";
 import { ReferralSignupErrorBoundary } from "@/components/referrals/ReferralSignupErrorBoundary";
+import { useConsolidatedAnalytics } from "@/hooks/useConsolidatedAnalytics";
 
 const DashboardPage = () => {
   console.log('🏠 DashboardPage component rendering');
@@ -17,6 +19,8 @@ const DashboardPage = () => {
     userProfile,
     loading
   } = useRequireAuth();
+  
+  const { analytics } = useConsolidatedAnalytics();
   
   console.log('👤 Dashboard auth state:', {
     user: user?.id,
@@ -50,10 +54,11 @@ const DashboardPage = () => {
       </ReferralSignupErrorBoundary>
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
         <div className="container mx-auto p-6 space-y-8">
-          {/* Hero Section - Streamlined */}
-          <div>
-            <DashboardHeroSection />
-          </div>
+          {/* Welcome Banner - Original beautiful section */}
+          <WelcomeBanner />
+          
+          {/* AI Study Suggestions - Original suggestions section */}
+          <StudySuggestions subjectAnalytics={analytics} />
           
           {/* Simplified Analytics - Essential metrics only */}
           <div>
