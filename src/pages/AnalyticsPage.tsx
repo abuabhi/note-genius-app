@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, TrendingUp, History, Target, Trophy, FileText, Brain } from "lucide-react";
-import { OptimizedSubjectProgressDashboard } from "@/components/analytics/OptimizedSubjectProgressDashboard";
+import { EnhancedSubjectProgressDashboard } from "@/components/analytics/EnhancedSubjectProgressDashboard";
 import { StandardPageHeader } from "@/components/ui/StandardPageHeader";
 import { NotesAnalytics } from "@/components/analytics/redesigned/NotesAnalytics";
 import { FlashcardsAnalytics } from "@/components/analytics/redesigned/FlashcardsAnalytics";
@@ -83,7 +83,7 @@ const AnalyticsPage = () => {
             </TabsList>
             
             <TabsContent value="subjects" className="mt-6">
-              <OptimizedSubjectProgressDashboard />
+              <EnhancedSubjectProgressDashboard />
             </TabsContent>
             
             <TabsContent value="overview" className="mt-6">
