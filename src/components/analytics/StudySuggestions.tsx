@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useStudySuggestions } from "@/hooks/useStudySuggestions";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useStudySessions } from "@/hooks/useStudySessions";
+import { useUnifiedSessionTracker } from "@/hooks/useUnifiedSessionTracker";
 import { toast } from "sonner";
 
 interface StudySuggestionsProps {
@@ -16,7 +16,7 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
   const { suggestions, isLoading } = useStudySuggestions(subjectAnalytics);
   const navigate = useNavigate();
   const location = useLocation();
-  const { startSession } = useStudySessions();
+  const { startSession, isStarting } = useUnifiedSessionTracker();
 
   const handleSuggestionClick = async (suggestion: any) => {
     try {
@@ -25,16 +25,17 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
       // Handle different suggestion types with smart contextual actions
       switch (suggestion.type) {
         case 'schedule':
-          // For schedule suggestions: Start a study session directly
-          console.log("🚀 Starting study session for:", suggestion.subject);
+          // For schedule suggestions: Start a unified session that shows timer
+          console.log("🚀 Starting unified session for:", suggestion.subject);
           
           const sessionData = {
             title: suggestion.subject ? `${suggestion.subject} Study Session` : "Study Session",
-            subject: suggestion.subject || null,
-            notes: `Started from AI suggestion: ${suggestion.title}`
+            subject: suggestion.subject || undefined,
+            notes: `Started from AI suggestion: ${suggestion.title}`,
+            activityType: 'general' as const
           };
 
-          await startSession.mutateAsync(sessionData);
+          await startSession(sessionData);
           toast.success(`Study session started! Timer is now active.`);
           break;
 
@@ -149,11 +150,11 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
                     <Button
                       size="sm"
                       onClick={() => handleSuggestionClick(suggestion)}
-                      disabled={startSession.isPending}
+                      disabled={isStarting}
                       className="bg-purple-600 hover:bg-purple-700 text-white h-8 text-xs whitespace-nowrap"
                     >
                       {suggestion.type === 'schedule'
-                        ? startSession.isPending 
+                        ? isStarting 
                           ? 'Starting...'
                           : 'Start Session Now'
                         : suggestion.type === 'focus'
