@@ -122,8 +122,7 @@ export const useStudySessionNotifications = () => {
           status: 'pending',
           delivery_methods: ['in_app'],
           recurrence: 'none',
-          priority: notification.urgency,
-          auto_tags: ['study_session', notification.type]
+          priority: notification.urgency
         });
 
       if (error) {
@@ -183,7 +182,7 @@ export const useStudySessionNotifications = () => {
   const dismissStudyNotification = (notificationId: string) => {
     // Find corresponding reminder and dismiss it
     const reminder = reminders.find(r => 
-      r.auto_tags?.includes('study_session') && 
+      r.type === 'study_event' && 
       r.title.toLowerCase().includes(notificationId.split('-')[0])
     );
     
