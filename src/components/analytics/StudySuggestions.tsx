@@ -20,63 +20,73 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
   const [sessionDefaults, setSessionDefaults] = useState({ title: "", subject: "" });
 
   const handleSuggestionClick = (suggestion: any) => {
-    const currentPath = location.pathname;
+    try {
+      console.log("🎯 CTA clicked:", suggestion);
+      const currentPath = location.pathname;
 
-    // Handle different suggestion types with smart contextual actions
-    switch (suggestion.type) {
-      case 'schedule':
-        if (suggestion.actionUrl === '/study-sessions' && currentPath === '/study-sessions') {
-          // User is already on study sessions page - open creation dialog
-          if (suggestion.id.includes('plan-behind') || suggestion.id === 'start-today') {
-            setSessionDefaults({
-              title: suggestion.subject ? `${suggestion.subject} Study Session` : "Study Session",
-              subject: suggestion.subject || ""
-            });
-            setCreateSessionOpen(true);
+      // Handle different suggestion types with smart contextual actions
+      switch (suggestion.type) {
+        case 'schedule':
+          if (suggestion.actionUrl === '/study-sessions' && currentPath === '/study-sessions') {
+            // User is already on study sessions page - open creation dialog
+            if (suggestion.id.includes('plan-behind') || suggestion.id === 'start-today') {
+              setSessionDefaults({
+                title: suggestion.subject ? `${suggestion.subject} Study Session` : "Study Session",
+                subject: suggestion.subject || ""
+              });
+              setCreateSessionOpen(true);
+            }
+          } else if (suggestion.actionUrl) {
+            // Navigate to different page
+            console.log("🚀 Navigating to:", suggestion.actionUrl);
+            if (suggestion.subject) {
+              navigate(`${suggestion.actionUrl}?subject=${encodeURIComponent(suggestion.subject)}`);
+            } else {
+              navigate(suggestion.actionUrl);
+            }
           }
-        } else if (suggestion.actionUrl) {
-          // Navigate to different page
+          break;
+
+        case 'focus':
+          // Navigate to flashcards with subject filter
+          console.log("🎯 Navigating to flashcards with subject:", suggestion.subject);
           if (suggestion.subject) {
-            navigate(`${suggestion.actionUrl}?subject=${encodeURIComponent(suggestion.subject)}`);
+            navigate(`/flashcards?subject=${encodeURIComponent(suggestion.subject)}`);
           } else {
+            navigate('/flashcards');
+          }
+          break;
+
+        case 'performance':
+          // Navigate to flashcards for performance improvement
+          console.log("📈 Navigating to flashcards for performance:", suggestion.subject);
+          if (suggestion.subject) {
+            navigate(`/flashcards?subject=${encodeURIComponent(suggestion.subject)}`);
+          } else {
+            navigate('/flashcards');
+          }
+          break;
+
+        case 'motivation':
+          // For motivation suggestions, just show encouraging message
+          if (suggestion.subject) {
+            toast.success(`Keep up the great work in ${suggestion.subject}!`);
+          } else {
+            toast.success("You're doing amazing! Keep up the momentum!");
+          }
+          break;
+
+        default:
+          // Fallback to actionUrl if provided
+          if (suggestion.actionUrl) {
+            console.log("🔄 Fallback navigation to:", suggestion.actionUrl);
             navigate(suggestion.actionUrl);
           }
-        }
-        break;
-
-      case 'focus':
-        // Navigate to flashcards with subject filter
-        if (suggestion.subject) {
-          navigate(`/flashcards?subject=${encodeURIComponent(suggestion.subject)}`);
-        } else {
-          navigate('/flashcards');
-        }
-        break;
-
-      case 'performance':
-        // Navigate to flashcards for performance improvement
-        if (suggestion.subject) {
-          navigate(`/flashcards?subject=${encodeURIComponent(suggestion.subject)}`);
-        } else {
-          navigate('/flashcards');
-        }
-        break;
-
-      case 'motivation':
-        // For motivation suggestions, just show encouraging message and maybe navigate to relevant section
-        if (suggestion.subject) {
-          toast.success(`Keep up the great work in ${suggestion.subject}!`);
-        } else {
-          toast.success("You're doing amazing! Keep up the momentum!");
-        }
-        break;
-
-      default:
-        // Fallback to actionUrl if provided
-        if (suggestion.actionUrl) {
-          navigate(suggestion.actionUrl);
-        }
-        break;
+          break;
+      }
+    } catch (error) {
+      console.error("❌ Error handling suggestion click:", error);
+      toast.error("Navigation error occurred. Please try again.");
     }
   };
 
@@ -126,8 +136,8 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
                 key={suggestion.id || index}
                 className="p-4 bg-white rounded-lg border border-purple-100 hover:shadow-md transition-shadow"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-lg">{suggestion.icon}</span>
                       <h4 className="font-medium text-sm">{suggestion.title}</h4>
@@ -144,12 +154,16 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
                         {suggestion.priority}
                       </Badge>
                     </div>
-                    <p className="text-xs text-gray-600 mb-3">{suggestion.description}</p>
-                    {suggestion.actionable && (
+                    <p className="text-xs text-gray-600">{suggestion.description}</p>
+                  </div>
+                  
+                  {/* Button moved to the right side */}
+                  {suggestion.actionable && (
+                    <div className="flex-shrink-0">
                       <Button
                         size="sm"
                         onClick={() => handleSuggestionClick(suggestion)}
-                        className="bg-purple-600 hover:bg-purple-700 text-white h-8 text-xs"
+                        className="bg-purple-600 hover:bg-purple-700 text-white h-8 text-xs whitespace-nowrap"
                       >
                         {suggestion.type === 'schedule' && suggestion.id === 'start-today' 
                           ? 'Start Session Now'
@@ -162,8 +176,8 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
                           : 'Take Action'
                         }
                       </Button>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

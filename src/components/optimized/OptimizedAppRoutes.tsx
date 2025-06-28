@@ -15,6 +15,7 @@ const CreateQuizPage = lazy(() => import('@/pages/CreateQuizPage'));
 const TakeQuizPage = lazy(() => import('@/pages/TakeQuizPage'));
 const QuizDetailsPage = lazy(() => import('@/pages/QuizDetailsPage'));
 const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
+const StudySessionsPage = lazy(() => import('@/pages/StudySessionsPage'));
 const SchedulePage = lazy(() => import('@/pages/SchedulePage'));
 const TodoPage = lazy(() => import('@/pages/TodoPage'));
 const GoalsPage = lazy(() => import('@/pages/GoalsPage'));
@@ -61,7 +62,9 @@ export const OptimizedAppRoutes = () => {
         {/* Analytics and Progress */}
         <Route path="/analytics" element={<SidebarLayout><AnalyticsPage /></SidebarLayout>} />
         <Route path="/progress" element={<SidebarLayout><AnalyticsPage /></SidebarLayout>} />
-        <Route path="/study-sessions" element={<SidebarLayout><AnalyticsPage /></SidebarLayout>} />
+        
+        {/* Study Sessions - Fixed to use StudySessionsPage instead of AnalyticsPage */}
+        <Route path="/study-sessions" element={<SidebarLayout><StudySessionsPage /></SidebarLayout>} />
         
         {/* Calendar and Planning */}
         <Route path="/calendar" element={<SidebarLayout><SchedulePage /></SidebarLayout>} />
