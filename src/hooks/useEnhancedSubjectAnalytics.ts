@@ -2,7 +2,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { useStableStats } from './useStableStats';
 import { useMemo } from 'react';
 
 export interface SubjectProgress {
@@ -16,49 +15,72 @@ export interface SubjectProgress {
   sessionCount: number;
   averageScore: number;
   color: 'green' | 'yellow' | 'red';
-  lastStudyDate?: string;
-  weeklyStudyTime: number;
-  monthlyStudyTime: number;
+  masteredCards: number;
+  totalCards: number;
 }
 
-export interface StudyTimeInsights {
-  dailyAverage: number;
-  weeklyAverage: number;
-  monthlyAverage: number;
-  last7Days: number;
-  last30Days: number;
-  thisWeek: number;
-  thisMonth: number;
+export interface SubjectSuggestion {
+  name: string;
+  reason: string;
+  confidence: number;
+  basedOn: string[];
 }
 
 export interface EnhancedSubjectAnalytics {
   subjects: SubjectProgress[];
-  totalStudyTime: number;
+  totalStudyTimeHours: number;
+  totalStudyTimeMinutes: number;
   sessionsThisWeek: number;
-  averageScore: number;
+  last7DaysMinutes: number;
+  last30DaysMinutes: number;
   longestStreak: number;
-  studyTimeInsights: StudyTimeInsights;
-  subjectSuggestions: string[];
-  hasSubjects: boolean;
+  weeklyAverageMinutes: number;
+  monthlyAverageMinutes: number;
+  dailyAverageMinutes: number;
+  suggestions: SubjectSuggestion[];
+  performanceSummary: {
+    excelling: number;
+    progressing: number;
+    needsAttention: number;
+  };
 }
 
 export const useEnhancedSubjectAnalytics = () => {
   const { user } = useAuth();
-  const { stats } = useStableStats();
 
-  const { data: subjectAnalytics, isLoading } = useQuery({
+  const { data: analyticsData, isLoading } = useQuery({
     queryKey: ['enhanced-subject-analytics', user?.id],
     queryFn: async () => {
       if (!user) throw new Error('User not authenticated');
 
-      console.log('🔍 Fetching enhanced subject analytics');
+      console.log('🔍 Fetching enhanced subject analytics data');
 
-      // Parallel queries for better performance
-      const [userSubjects, flashcardSets, quizResults, studySessions] = await Promise.all([
+      // Calculate date ranges
+      const now = new Date();
+      const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const thisWeekStart = new Date(now.setDate(now.getDate() - now.getDay()));
+      thisWeekStart.setHours(0, 0, 0, 0);
+
+      // Parallel data fetching
+      const [
+        userSubjects,
+        studySessions,
+        flashcardSets,
+        quizResults,
+        allFlashcards
+      ] = await Promise.all([
         supabase
           .from('user_subjects')
           .select('*')
           .eq('user_id', user.id),
+        
+        supabase
+          .from('study_sessions')
+          .select('*')
+          .eq('user_id', user.id)
+          .not('duration', 'is', null)
+          .gte('start_time', last30Days.toISOString()),
         
         supabase
           .from('flashcard_sets')
@@ -81,32 +103,84 @@ export const useEnhancedSubjectAnalytics = () => {
             )
           `)
           .eq('user_id', user.id)
-          .gte('completed_at', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()),
+          .gte('completed_at', last30Days.toISOString()),
         
         supabase
-          .from('study_sessions')
+          .from('flashcards')
           .select('*')
-          .eq('user_id', user.id)
-          .not('duration', 'is', null)
-          .gte('start_time', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
+          .in(
+            'flashcard_set_id',
+            (await supabase
+              .from('flashcard_sets')
+              .select('id')
+              .eq('user_id', user.id)
+            ).data?.map(set => set.id) || []
+          )
       ]);
 
       if (userSubjects.error) throw userSubjects.error;
+      if (studySessions.error) throw studySessions.error;
       if (flashcardSets.error) throw flashcardSets.error;
       if (quizResults.error) throw quizResults.error;
-      if (studySessions.error) throw studySessions.error;
 
-      // Calculate time periods
-      const now = new Date();
-      const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const sessions = studySessions.data || [];
+      const subjects = userSubjects.data || [];
+      const sets = flashcardSets.data || [];
+      const results = quizResults.data || [];
+      const flashcards = allFlashcards.data || [];
 
-      // Initialize subjects with enhanced data
+      console.log('📊 Data fetched:', {
+        sessions: sessions.length,
+        subjects: subjects.length,
+        sets: sets.length,
+        results: results.length,
+        flashcards: flashcards.length
+      });
+
+      // Calculate time-based metrics
+      const totalStudyTimeMinutes = sessions.reduce((acc, session) => 
+        acc + Math.floor((session.duration || 0) / 60), 0
+      );
+      
+      const last7DaysSessions = sessions.filter(s => 
+        new Date(s.start_time) >= last7Days
+      );
+      const last7DaysMinutes = last7DaysSessions.reduce((acc, session) => 
+        acc + Math.floor((session.duration || 0) / 60), 0
+      );
+
+      const thisWeekSessions = sessions.filter(s => 
+        new Date(s.start_time) >= thisWeekStart
+      );
+      const sessionsThisWeek = thisWeekSessions.length;
+
+      // Calculate averages
+      const weeklyAverageMinutes = Math.round(totalStudyTimeMinutes / 4); // 4 weeks
+      const monthlyAverageMinutes = totalStudyTimeMinutes;
+      const dailyAverageMinutes = Math.round(last7DaysMinutes / 7);
+
+      // Calculate streak
+      const studyDates = [...new Set(sessions.map(s => s.start_time.split('T')[0]))].sort().reverse();
+      let longestStreak = 0;
+      if (studyDates.length > 0) {
+        const today = new Date().toISOString().split('T')[0];
+        if (studyDates.includes(today)) {
+          longestStreak = 1;
+          for (let i = 1; i < studyDates.length; i++) {
+            const expectedDate = new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            if (studyDates.includes(expectedDate)) {
+              longestStreak++;
+            } else {
+              break;
+            }
+          }
+        }
+      }
+
+      // Process subjects
       const subjectProgressMap = new Map<string, SubjectProgress>();
       
-      userSubjects.data?.forEach(subject => {
+      subjects.forEach(subject => {
         subjectProgressMap.set(subject.name, {
           id: subject.id,
           name: subject.name,
@@ -118,53 +192,40 @@ export const useEnhancedSubjectAnalytics = () => {
           sessionCount: 0,
           averageScore: 0,
           color: 'red',
-          weeklyStudyTime: 0,
-          monthlyStudyTime: 0
+          masteredCards: 0,
+          totalCards: 0
         });
       });
 
-      // Process study sessions with time period calculations
-      studySessions.data?.forEach(session => {
-        const sessionDate = new Date(session.start_time);
-        const sessionMinutes = Math.floor((session.duration || 0) / 60);
-        
+      // Calculate study time per subject
+      sessions.forEach(session => {
         if (session.subject && subjectProgressMap.has(session.subject)) {
           const subject = subjectProgressMap.get(session.subject)!;
-          subject.totalStudyTimeMinutes += sessionMinutes;
+          subject.totalStudyTimeMinutes += Math.floor((session.duration || 0) / 60);
           subject.sessionCount += 1;
-          
-          if (sessionDate >= last7Days) {
-            subject.weeklyStudyTime += sessionMinutes;
-          }
-          if (sessionDate >= last30Days) {
-            subject.monthlyStudyTime += sessionMinutes;
-          }
-          
-          const sessionDateString = sessionDate.toISOString().split('T')[0];
-          if (!subject.lastStudyDate || sessionDateString > subject.lastStudyDate) {
-            subject.lastStudyDate = sessionDateString;
-          }
         }
       });
 
-      // Process flashcard mastery
-      flashcardSets.data?.forEach(set => {
+      // Calculate flashcard mastery
+      sets.forEach(set => {
         if (set.subject && subjectProgressMap.has(set.subject)) {
           const subject = subjectProgressMap.get(set.subject)!;
-          const flashcards = set.flashcards || [];
+          const setFlashcards = set.flashcards || [];
           
-          if (flashcards.length > 0) {
-            const masteredCards = flashcards.filter(card => 
+          if (setFlashcards.length > 0) {
+            const masteredCards = setFlashcards.filter(card => 
               card.user_flashcard_progress?.[0]?.mastery_level >= 4
             ).length;
-            subject.flashcardMastery = Math.round((masteredCards / flashcards.length) * 100);
+            subject.masteredCards += masteredCards;
+            subject.totalCards += setFlashcards.length;
+            subject.flashcardMastery = Math.round((subject.masteredCards / subject.totalCards) * 100);
           }
         }
       });
 
-      // Process quiz performance
+      // Calculate quiz performance
       const quizBySubject = new Map<string, number[]>();
-      quizResults.data?.forEach(result => {
+      results.forEach(result => {
         const subjectName = result.quizzes?.academic_subjects?.name;
         if (subjectName) {
           if (!quizBySubject.has(subjectName)) {
@@ -184,8 +245,12 @@ export const useEnhancedSubjectAnalytics = () => {
       });
 
       // Calculate study consistency
+      const recentSessions = sessions.filter(s => 
+        new Date(s.start_time) >= new Date(Date.now() - 28 * 24 * 60 * 60 * 1000)
+      );
+
       const sessionsBySubject = new Map<string, number>();
-      studySessions.data?.forEach(session => {
+      recentSessions.forEach(session => {
         if (session.subject && subjectProgressMap.has(session.subject)) {
           sessionsBySubject.set(
             session.subject, 
@@ -202,7 +267,7 @@ export const useEnhancedSubjectAnalytics = () => {
       });
 
       // Calculate final completion percentage and assign colors
-      const subjects = Array.from(subjectProgressMap.values()).map(subject => {
+      const processedSubjects = Array.from(subjectProgressMap.values()).map(subject => {
         const flashcardWeight = 0.4;
         const quizWeight = 0.4;
         const consistencyWeight = 0.2;
@@ -224,76 +289,144 @@ export const useEnhancedSubjectAnalytics = () => {
         return subject;
       }).sort((a, b) => b.completionPercentage - a.completionPercentage);
 
-      // Calculate study time insights
-      const totalSessionsLast7Days = studySessions.data?.filter(s => 
-        new Date(s.start_time) >= last7Days
-      ).reduce((acc, s) => acc + Math.floor((s.duration || 0) / 60), 0) || 0;
+      // Generate intelligent subject suggestions
+      const suggestions = generateSubjectSuggestions(sets, results, sessions, processedSubjects);
 
-      const totalSessionsLast30Days = studySessions.data?.filter(s => 
-        new Date(s.start_time) >= last30Days
-      ).reduce((acc, s) => acc + Math.floor((s.duration || 0) / 60), 0) || 0;
-
-      const totalSessionsThisWeek = studySessions.data?.filter(s => 
-        new Date(s.start_time) >= startOfWeek
-      ).reduce((acc, s) => acc + Math.floor((s.duration || 0) / 60), 0) || 0;
-
-      const totalSessionsThisMonth = studySessions.data?.filter(s => 
-        new Date(s.start_time) >= startOfMonth
-      ).reduce((acc, s) => acc + Math.floor((s.duration || 0) / 60), 0) || 0;
-
-      const studyTimeInsights: StudyTimeInsights = {
-        dailyAverage: Math.round(totalSessionsLast30Days / 30),
-        weeklyAverage: Math.round(totalSessionsLast30Days / 4.3),
-        monthlyAverage: totalSessionsLast30Days,
-        last7Days: totalSessionsLast7Days,
-        last30Days: totalSessionsLast30Days,
-        thisWeek: totalSessionsThisWeek,
-        thisMonth: totalSessionsThisMonth
+      // Calculate performance summary
+      const performanceSummary = {
+        excelling: processedSubjects.filter(s => s.completionPercentage >= 85).length,
+        progressing: processedSubjects.filter(s => s.completionPercentage >= 60 && s.completionPercentage < 85).length,
+        needsAttention: processedSubjects.filter(s => s.completionPercentage < 60).length,
       };
 
-      // Subject suggestions for new users
-      const subjectSuggestions = [
-        'Mathematics', 'Science', 'History', 'Literature', 'Physics',
-        'Chemistry', 'Biology', 'Computer Science', 'Psychology', 'Philosophy'
-      ];
-
-      console.log('✅ Enhanced subject analytics calculated');
+      console.log('✅ Enhanced analytics calculated successfully');
 
       return {
-        subjects,
-        totalStudyTime: stats.studyTimeHours,
-        sessionsThisWeek: stats.weeklySessions,
-        averageScore: subjects.reduce((acc, s) => acc + s.averageScore, 0) / Math.max(subjects.length, 1),
-        longestStreak: stats.streakDays,
-        studyTimeInsights,
-        subjectSuggestions,
-        hasSubjects: subjects.length > 0
+        subjects: processedSubjects,
+        totalStudyTimeHours: Math.round((totalStudyTimeMinutes / 60) * 10) / 10,
+        totalStudyTimeMinutes,
+        sessionsThisWeek,
+        last7DaysMinutes,
+        last30DaysMinutes: totalStudyTimeMinutes,
+        longestStreak,
+        weeklyAverageMinutes,
+        monthlyAverageMinutes,
+        dailyAverageMinutes,
+        suggestions,
+        performanceSummary
       } as EnhancedSubjectAnalytics;
     },
     enabled: !!user,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 
   return {
-    subjectAnalytics: subjectAnalytics || {
+    analyticsData: analyticsData || {
       subjects: [],
-      totalStudyTime: 0,
+      totalStudyTimeHours: 0,
+      totalStudyTimeMinutes: 0,
       sessionsThisWeek: 0,
-      averageScore: 0,
+      last7DaysMinutes: 0,
+      last30DaysMinutes: 0,
       longestStreak: 0,
-      studyTimeInsights: {
-        dailyAverage: 0,
-        weeklyAverage: 0,
-        monthlyAverage: 0,
-        last7Days: 0,
-        last30Days: 0,
-        thisWeek: 0,
-        thisMonth: 0
-      },
-      subjectSuggestions: [],
-      hasSubjects: false
+      weeklyAverageMinutes: 0,
+      monthlyAverageMinutes: 0,
+      dailyAverageMinutes: 0,
+      suggestions: [],
+      performanceSummary: {
+        excelling: 0,
+        progressing: 0,
+        needsAttention: 0
+      }
     },
     isLoading
   };
 };
+
+// Helper function to generate intelligent subject suggestions
+function generateSubjectSuggestions(
+  flashcardSets: any[],
+  quizResults: any[],
+  studySessions: any[],
+  existingSubjects: SubjectProgress[]
+): SubjectSuggestion[] {
+  const suggestions: SubjectSuggestion[] = [];
+  const existingSubjectNames = new Set(existingSubjects.map(s => s.name.toLowerCase()));
+
+  // Extract subjects from flashcard sets
+  const flashcardSubjects = flashcardSets
+    .map(set => set.subject)
+    .filter(subject => subject && !existingSubjectNames.has(subject.toLowerCase()));
+
+  // Extract subjects from quiz results
+  const quizSubjects = quizResults
+    .map(result => result.quizzes?.academic_subjects?.name)
+    .filter(subject => subject && !existingSubjectNames.has(subject.toLowerCase()));
+
+  // Extract subjects from study sessions
+  const sessionSubjects = studySessions
+    .map(session => session.subject)
+    .filter(subject => subject && !existingSubjectNames.has(subject.toLowerCase()));
+
+  // Count frequency and create suggestions
+  const subjectFrequency = new Map<string, { count: number; sources: string[] }>();
+  
+  flashcardSubjects.forEach(subject => {
+    const key = subject.toLowerCase();
+    if (!subjectFrequency.has(key)) {
+      subjectFrequency.set(key, { count: 0, sources: [] });
+    }
+    const data = subjectFrequency.get(key)!;
+    data.count += 1;
+    if (!data.sources.includes('flashcards')) data.sources.push('flashcards');
+  });
+
+  quizSubjects.forEach(subject => {
+    const key = subject.toLowerCase();
+    if (!subjectFrequency.has(key)) {
+      subjectFrequency.set(key, { count: 0, sources: [] });
+    }
+    const data = subjectFrequency.get(key)!;
+    data.count += 1;
+    if (!data.sources.includes('quizzes')) data.sources.push('quizzes');
+  });
+
+  sessionSubjects.forEach(subject => {
+    const key = subject.toLowerCase();
+    if (!subjectFrequency.has(key)) {
+      subjectFrequency.set(key, { count: 0, sources: [] });
+    }
+    const data = subjectFrequency.get(key)!;
+    data.count += 1;
+    if (!data.sources.includes('study sessions')) data.sources.push('study sessions');
+  });
+
+  // Convert to suggestions
+  Array.from(subjectFrequency.entries())
+    .sort(([, a], [, b]) => b.count - a.count)
+    .slice(0, 5)
+    .forEach(([subject, data]) => {
+      const confidence = Math.min(data.count * 20, 100);
+      suggestions.push({
+        name: subject.charAt(0).toUpperCase() + subject.slice(1),
+        reason: `Based on your ${data.sources.join(', ')}`,
+        confidence,
+        basedOn: data.sources
+      });
+    });
+
+  // Add default suggestions if no data-based suggestions
+  if (suggestions.length === 0) {
+    const defaultSuggestions = [
+      { name: 'Mathematics', reason: 'Popular subject', confidence: 70, basedOn: ['general'] },
+      { name: 'Science', reason: 'Core academic subject', confidence: 65, basedOn: ['general'] },
+      { name: 'History', reason: 'Commonly studied', confidence: 60, basedOn: ['general'] },
+      { name: 'Literature', reason: 'Language arts', confidence: 55, basedOn: ['general'] },
+      { name: 'Geography', reason: 'Social studies', confidence: 50, basedOn: ['general'] }
+    ];
+    suggestions.push(...defaultSuggestions.slice(0, 3));
+  }
+
+  return suggestions;
+}
