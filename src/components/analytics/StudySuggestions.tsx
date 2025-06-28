@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useStudySuggestions } from "@/hooks/useStudySuggestions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Brain, ArrowRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 
 interface StudySuggestionsProps {
@@ -15,35 +15,112 @@ interface StudySuggestionsProps {
 export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) => {
   const { suggestions, isLoading } = useStudySuggestions(subjectAnalytics);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSuggestionAction = (suggestion: any) => {
     console.log('🎯 Acting on suggestion:', suggestion);
     
+    const currentPath = location.pathname;
+    
     switch (suggestion.type) {
       case 'focus':
-        // Navigate to flashcards page for subject focus
-        navigate('/flashcards');
-        toast.success(`Opening flashcards to focus on ${suggestion.title}`);
+        if (currentPath === '/flashcards') {
+          // Already on flashcards page - apply subject filter or scroll to top
+          if (suggestion.subject) {
+            navigate(`/flashcards?subject=${encodeURIComponent(suggestion.subject)}`);
+            toast.success(`Filtering flashcards for ${suggestion.subject}`);
+          } else {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            toast.success('Focus on your flashcard studies!');
+          }
+        } else {
+          // Navigate to flashcards with subject filter
+          const url = suggestion.subject 
+            ? `/flashcards?subject=${encodeURIComponent(suggestion.subject)}`
+            : '/flashcards';
+          navigate(url);
+          toast.success(`Opening flashcards to focus on ${suggestion.title.replace('Focus on ', '')}`);
+        }
         break;
+        
       case 'schedule':
-        // Navigate to study sessions or planner
-        navigate('/study-sessions');
-        toast.success('Opening study sessions to schedule your time');
+        if (currentPath === '/study-sessions') {
+          // Already on study sessions - trigger contextual action
+          if (suggestion.subject) {
+            // Scroll to analytics section or refresh data
+            const analyticsSection = document.querySelector('[data-testid="analytics-section"]');
+            if (analyticsSection) {
+              analyticsSection.scrollIntoView({ behavior: 'smooth' });
+            } else {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+            toast.success(`Let's focus on your ${suggestion.subject} study plan!`);
+          } else {
+            // Scroll to session creation area or show call-to-action
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            toast.success('Ready to start a new study session? Check the options above!');
+          }
+        } else if (currentPath === '/study-planner') {
+          // Already on study planner - contextual action
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          toast.success('Time to work on your study plans!');
+        } else {
+          // Navigate to appropriate page based on suggestion content
+          if (suggestion.title.includes('study plan') || suggestion.actionUrl === '/study-planner') {
+            navigate('/study-planner');
+            toast.success('Opening study planner to organize your schedule');
+          } else {
+            navigate('/study-sessions');
+            toast.success('Opening study sessions to schedule your time');
+          }
+        }
         break;
+        
       case 'performance':
-        // Navigate to flashcards for performance improvement
-        navigate('/flashcards');
-        toast.success('Opening practice materials to boost performance');
+        if (currentPath === '/flashcards') {
+          // Already on flashcards - apply subject filter or show performance focus
+          if (suggestion.subject) {
+            navigate(`/flashcards?subject=${encodeURIComponent(suggestion.subject)}`);
+            toast.success(`Let's boost your ${suggestion.subject} performance!`);
+          } else {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            toast.success('Time to practice and improve your performance!');
+          }
+        } else {
+          // Navigate to flashcards with subject filter
+          const url = suggestion.subject 
+            ? `/flashcards?subject=${encodeURIComponent(suggestion.subject)}`
+            : '/flashcards';
+          navigate(url);
+          toast.success('Opening practice materials to boost performance');
+        }
         break;
+        
       case 'motivation':
-        // Navigate to goals or achievements
-        navigate('/goals');
-        toast.success('Keep up the great momentum!');
+        if (currentPath === '/goals') {
+          // Already on goals page - scroll to top or refresh
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          toast.success('Keep up the excellent work on your goals!');
+        } else if (currentPath === '/progress') {
+          // Already on progress page - show motivation
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          toast.success('Look at your amazing progress! Keep it up!');
+        } else {
+          // Navigate to goals or progress page
+          navigate('/goals');
+          toast.success('Keep up the great momentum!');
+        }
         break;
+        
       default:
-        // Fallback to flashcards page
-        navigate('/flashcards');
-        toast.success('Taking action on your study suggestion');
+        // Fallback behavior
+        if (currentPath === '/flashcards') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          toast.success('Ready to study? Let\'s make progress!');
+        } else {
+          navigate('/flashcards');
+          toast.success('Taking action on your study suggestion');
+        }
         break;
     }
   };
