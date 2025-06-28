@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -51,17 +52,18 @@ export const useUnifiedSubjectAnalytics = () => {
       console.log('🔍 Fetching unified subject analytics');
 
       try {
-        // Try using the database function first
-        const { data, error } = await supabase.rpc('get_unified_subject_analytics', {
-          p_user_id: user.id
-        });
+        // Try using the database function first with proper typing
+        const { data, error } = await supabase.rpc(
+          'get_unified_subject_analytics' as any,
+          { p_user_id: user.id }
+        ) as { data: any[] | null; error: any };
 
         if (error) {
           console.log('⚠️ Database function not available, using fallback method:', error.message);
           return await getFallbackSubjectAnalytics(user.id);
         }
 
-        return data || [];
+        return Array.isArray(data) ? data : [];
       } catch (error) {
         console.log('⚠️ Database function failed, using fallback method:', error);
         return await getFallbackSubjectAnalytics(user.id);
@@ -81,20 +83,21 @@ export const useUnifiedSubjectAnalytics = () => {
       console.log('🎯 Fetching subject recommendations');
 
       try {
-        // Try using the database function first
-        const { data, error } = await supabase.rpc('get_subject_recommendations', {
-          p_user_id: user.id
-        });
+        // Try using the database function first with proper typing
+        const { data, error } = await supabase.rpc(
+          'get_subject_recommendations' as any,
+          { p_user_id: user.id }
+        ) as { data: any[] | null; error: any };
 
         if (error) {
           console.log('⚠️ Recommendations function not available, using fallback method');
-          return getFallbackRecommendations(rawAnalytics || []);
+          return getFallbackRecommendations(Array.isArray(rawAnalytics) ? rawAnalytics : []);
         }
 
-        return data || [];
+        return Array.isArray(data) ? data : [];
       } catch (error) {
         console.log('⚠️ Recommendations function failed, using fallback method');
-        return getFallbackRecommendations(rawAnalytics || []);
+        return getFallbackRecommendations(Array.isArray(rawAnalytics) ? rawAnalytics : []);
       }
     },
     enabled: !!user && !!rawAnalytics,
@@ -155,6 +158,19 @@ export const useUnifiedSubjectAnalytics = () => {
       };
     }
 
+    // Ensure rawAnalytics is an array before processing
+    if (!Array.isArray(rawAnalytics)) {
+      console.warn('Raw analytics is not an array:', rawAnalytics);
+      return {
+        subjects: [],
+        recommendations: [],
+        totalStudyTime: basicStats.totalStudyTime,
+        sessionsThisWeek: basicStats.sessionsThisWeek,
+        averageScore: basicStats.averageScore,
+        longestStreak: basicStats.longestStreak
+      };
+    }
+
     const subjects: UnifiedSubjectAnalytics[] = rawAnalytics.map((subject: any) => {
       // Calculate completion percentage based on multiple factors
       const flashcardWeight = 0.4;
@@ -199,18 +215,21 @@ export const useUnifiedSubjectAnalytics = () => {
         notes_count: subject.notes_count,
         last_activity_date: subject.last_activity_date,
         learning_velocity: subject.learning_velocity,
-        completion_percentage,
+        completion_percentage: completionPercentage,
         color
       };
     }).sort((a, b) => b.completion_percentage - a.completion_percentage);
 
-    const recommendations: SubjectRecommendation[] = rawRecommendations.map((rec: any) => ({
-      subject_name: rec.subject_name,
-      recommendation_type: rec.recommendation_type,
-      priority: rec.priority as 'high' | 'medium' | 'low',
-      message: rec.message,
-      action_items: rec.action_items || []
-    }));
+    // Ensure rawRecommendations is an array before processing
+    const recommendations: SubjectRecommendation[] = Array.isArray(rawRecommendations) 
+      ? rawRecommendations.map((rec: any) => ({
+          subject_name: rec.subject_name,
+          recommendation_type: rec.recommendation_type,
+          priority: rec.priority as 'high' | 'medium' | 'low',
+          message: rec.message,
+          action_items: Array.isArray(rec.action_items) ? rec.action_items : []
+        }))
+      : [];
 
     // Calculate average score from subjects
     const averageScore = subjects.length > 0 
