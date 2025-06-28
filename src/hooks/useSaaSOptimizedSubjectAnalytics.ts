@@ -1,272 +1,387 @@
 
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/auth';
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth";
 
-interface SubjectAnalytics {
+export interface SubjectAnalytics {
   subjects: Array<{
     id: string;
     name: string;
     completionPercentage: number;
     totalStudyTimeMinutes: number;
     sessionCount: number;
+    activityTypes: string[];
+    flashcardProgress?: {
+      totalCards: number;
+      masteredCards: number;
+      averageGrade: string;
+    };
+    quizProgress?: {
+      totalAttempts: number;
+      averageScore: number;
+      bestScore: number;
+    };
+    studyPlanProgress?: {
+      totalSessions: number;
+      completedSessions: number;
+    };
   }>;
   totalStudyTime: number;
   sessionsThisWeek: number;
-  last7DaysFormatted?: string;
-  last30DaysFormatted?: string;
+  last7DaysFormatted: string | null;
+  last30DaysFormatted: string | null;
 }
 
 export const useSaaSOptimizedSubjectAnalytics = () => {
   const { user } = useAuth();
 
-  const { data: subjectAnalytics, isLoading, error } = useQuery({
+  const { data: subjectAnalytics, isLoading } = useQuery({
     queryKey: ['subject-analytics', user?.id],
     queryFn: async (): Promise<SubjectAnalytics> => {
       if (!user?.id) {
         throw new Error('User not authenticated');
       }
 
-      console.log('🔍 Fetching comprehensive subject analytics');
-      console.log('🔍 Fetching analytics for user:', user.id);
+      console.log('🔍 Fetching subject analytics for user:', user.id);
 
-      try {
-        // Get flashcard sets with progress data
-        const { data: flashcardSets, error: flashcardError } = await supabase
-          .from('flashcard_sets')
-          .select(`
-            id,
-            name,
-            subject,
-            card_count,
-            created_at,
-            user_flashcard_progress!inner(
-              user_id,
-              last_reviewed_at,
-              repetition,
-              ease_factor
-            )
-          `)
-          .eq('user_id', user.id);
+      // Get subjects with actual activity only
+      const subjectsWithActivity = await getSubjectsWithActivity(user.id);
+      
+      // Calculate time-based metrics
+      const timeMetrics = await calculateTimeMetrics(user.id);
 
-        if (flashcardError) {
-          console.error('❌ Error fetching flashcard sets:', flashcardError);
-        } else {
-          console.log('📚 Found flashcard sets:', flashcardSets?.length || 0);
-        }
+      console.log('📊 Found subjects with activity:', subjectsWithActivity.length);
 
-        // Get study sessions
-        const { data: studySessions, error: sessionError } = await supabase
-          .from('study_sessions')
-          .select('*')
-          .eq('user_id', user.id);
-
-        if (sessionError) {
-          console.error('❌ Error fetching study sessions:', sessionError);
-        } else {
-          console.log('📖 Found study sessions:', studySessions?.length || 0);
-        }
-
-        // Get user subjects
-        const { data: userSubjects, error: subjectsError } = await supabase
-          .from('user_subjects')
-          .select('*')
-          .eq('user_id', user.id);
-
-        if (subjectsError) {
-          console.error('❌ Error fetching user subjects:', subjectsError);
-        } else {
-          console.log('🎯 Found user subjects:', userSubjects?.length || 0);
-        }
-
-        // Get quiz results
-        const { data: quizResults, error: quizError } = await supabase
-          .from('quiz_results')
-          .select(`
-            id,
-            score,
-            total_questions,
-            completed_at,
-            quizzes!inner(
-              id,
-              title,
-              subject_id,
-              academic_subjects(name)
-            )
-          `)
-          .eq('user_id', user.id);
-
-        if (quizError) {
-          console.error('❌ Error fetching quiz results:', quizError);
-        } else {
-          console.log('🧠 Found quiz results:', quizResults?.length || 0);
-        }
-
-        // Get study plans
-        const { data: studyPlans, error: plansError } = await supabase
-          .from('study_plans')
-          .select('*')
-          .eq('user_id', user.id);
-
-        if (plansError) {
-          console.error('❌ Error fetching study plans:', plansError);
-        } else {
-          console.log('📋 Found study plans:', studyPlans?.length || 0);
-        }
-
-        // Create subject map from all data sources
-        const subjectMap = new Map<string, {
-          id: string;
-          name: string;
-          studyTimeMinutes: number;
-          sessionCount: number;
-          totalItems: number;
-          completedItems: number;
-        }>();
-
-        // Process user subjects first
-        if (userSubjects) {
-          userSubjects.forEach(subject => {
-            subjectMap.set(subject.name, {
-              id: subject.id,
-              name: subject.name,
-              studyTimeMinutes: 0,
-              sessionCount: 0,
-              totalItems: 0,
-              completedItems: 0
-            });
-          });
-        }
-
-        // Process flashcard sets
-        if (flashcardSets) {
-          flashcardSets.forEach(set => {
-            const subjectName = set.subject || 'General';
-            if (!subjectMap.has(subjectName)) {
-              subjectMap.set(subjectName, {
-                id: set.id,
-                name: subjectName,
-                studyTimeMinutes: 0,
-                sessionCount: 0,
-                totalItems: 0,
-                completedItems: 0
-              });
-            }
-            
-            const subject = subjectMap.get(subjectName)!;
-            subject.totalItems += set.card_count || 0;
-            
-            // Count completed items based on progress
-            if (set.user_flashcard_progress) {
-              const progressCount = Array.isArray(set.user_flashcard_progress) 
-                ? set.user_flashcard_progress.length 
-                : 1;
-              subject.completedItems += progressCount;
-            }
-          });
-        }
-
-        // Process quiz results
-        if (quizResults) {
-          quizResults.forEach(result => {
-            const subjectName = result.quizzes?.academic_subjects?.name || 
-                             result.quizzes?.title || 'General';
-            
-            if (!subjectMap.has(subjectName)) {
-              subjectMap.set(subjectName, {
-                id: result.id,
-                name: subjectName,
-                studyTimeMinutes: 0,
-                sessionCount: 0,
-                totalItems: 0,
-                completedItems: 0
-              });
-            }
-            
-            const subject = subjectMap.get(subjectName)!;
-            subject.totalItems += result.total_questions;
-            subject.completedItems += result.score;
-            subject.sessionCount += 1;
-          });
-        }
-
-        // Process study sessions
-        if (studySessions) {
-          studySessions.forEach(session => {
-            const subjectName = session.subject || 'General';
-            
-            if (!subjectMap.has(subjectName)) {
-              subjectMap.set(subjectName, {
-                id: session.id,
-                name: subjectName,
-                studyTimeMinutes: 0,
-                sessionCount: 0,
-                totalItems: 0,
-                completedItems: 0
-              });
-            }
-            
-            const subject = subjectMap.get(subjectName)!;
-            subject.studyTimeMinutes += session.duration ? Math.floor(session.duration / 60) : 0;
-            subject.sessionCount += 1;
-          });
-        }
-
-        // Convert map to array with completion percentages
-        const subjects = Array.from(subjectMap.values()).map(subject => ({
-          id: subject.id,
-          name: subject.name,
-          completionPercentage: subject.totalItems > 0 
-            ? Math.round((subject.completedItems / subject.totalItems) * 100)
-            : 0,
-          totalStudyTimeMinutes: subject.studyTimeMinutes,
-          sessionCount: subject.sessionCount
-        }));
-
-        // Calculate totals
-        const totalStudyTime = studySessions?.reduce((acc, session) => {
-          return acc + (session.duration || 0);
-        }, 0) || 0;
-
-        const sessionsThisWeek = studySessions?.filter(session => {
-          const sessionDate = new Date(session.start_time);
-          const weekAgo = new Date();
-          weekAgo.setDate(weekAgo.getDate() - 7);
-          return sessionDate >= weekAgo;
-        }).length || 0;
-
-        console.log('✅ Processed subjects:', subjects.length);
-        console.log('🎉 Analytics result:', {
-          subjectsCount: subjects.length,
-          totalStudyTime: totalStudyTime / 3600, // Convert to hours
-          sessionsThisWeek
-        });
-
-        return {
-          subjects,
-          totalStudyTime: totalStudyTime / 3600, // Convert to hours
-          sessionsThisWeek,
-          last7DaysFormatted: `${Math.floor(totalStudyTime / 3600)}h`,
-          last30DaysFormatted: `${Math.floor(totalStudyTime / 3600)}h`
-        };
-
-      } catch (error) {
-        console.error('❌ Error in analytics query:', error);
-        throw error;
-      }
+      return {
+        subjects: subjectsWithActivity,
+        ...timeMetrics
+      };
     },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
   return {
     subjectAnalytics: subjectAnalytics || {
       subjects: [],
       totalStudyTime: 0,
-      sessionsThisWeek: 0
+      sessionsThisWeek: 0,
+      last7DaysFormatted: null,
+      last30DaysFormatted: null
     },
-    isLoading,
-    error
+    isLoading
   };
 };
+
+async function getSubjectsWithActivity(userId: string) {
+  const subjects = new Map();
+
+  // 1. Get subjects from flashcard sets with actual progress
+  const { data: flashcardData } = await supabase
+    .from('flashcard_sets')
+    .select(`
+      subject,
+      id,
+      card_count,
+      flashcard_set_cards!inner (
+        flashcard_id,
+        flashcards!inner (
+          id,
+          user_flashcard_progress!inner (
+            mastery_level,
+            grade,
+            last_reviewed_at
+          )
+        )
+      )
+    `)
+    .eq('user_id', userId)
+    .not('subject', 'is', null);
+
+  if (flashcardData) {
+    for (const set of flashcardData) {
+      if (!set.subject || !set.flashcard_set_cards?.length) continue;
+
+      const subjectName = set.subject;
+      if (!subjects.has(subjectName)) {
+        subjects.set(subjectName, {
+          id: `subject-${subjectName}`,
+          name: subjectName,
+          activityTypes: [],
+          totalStudyTimeMinutes: 0,
+          sessionCount: 0
+        });
+      }
+
+      const subject = subjects.get(subjectName);
+      
+      // Calculate flashcard progress
+      const totalCards = set.flashcard_set_cards.length;
+      const masteredCards = set.flashcard_set_cards.filter(card => 
+        card.flashcards?.user_flashcard_progress?.[0]?.mastery_level >= 4
+      ).length;
+      
+      const grades = set.flashcard_set_cards
+        .map(card => card.flashcards?.user_flashcard_progress?.[0]?.grade)
+        .filter(Boolean);
+      
+      const averageGrade = calculateAverageGrade(grades);
+
+      if (!subject.flashcardProgress) {
+        subject.flashcardProgress = {
+          totalCards: 0,
+          masteredCards: 0,
+          averageGrade: 'C'
+        };
+      }
+
+      subject.flashcardProgress.totalCards += totalCards;
+      subject.flashcardProgress.masteredCards += masteredCards;
+      subject.flashcardProgress.averageGrade = averageGrade;
+
+      if (!subject.activityTypes.includes('flashcards')) {
+        subject.activityTypes.push('flashcards');
+      }
+    }
+  }
+
+  // 2. Get subjects from quiz results
+  const { data: quizData } = await supabase
+    .from('quiz_results')
+    .select(`
+      score,
+      total_questions,
+      quizzes!inner (
+        title,
+        subject_id,
+        user_subjects!inner (
+          name
+        )
+      )
+    `)
+    .eq('user_id', userId);
+
+  if (quizData) {
+    for (const result of quizData) {
+      const subjectName = result.quizzes?.user_subjects?.name;
+      if (!subjectName) continue;
+
+      if (!subjects.has(subjectName)) {
+        subjects.set(subjectName, {
+          id: `subject-${subjectName}`,
+          name: subjectName,
+          activityTypes: [],
+          totalStudyTimeMinutes: 0,
+          sessionCount: 0
+        });
+      }
+
+      const subject = subjects.get(subjectName);
+      
+      if (!subject.quizProgress) {
+        subject.quizProgress = {
+          totalAttempts: 0,
+          averageScore: 0,
+          bestScore: 0
+        };
+      }
+
+      const scorePercentage = (result.score / result.total_questions) * 100;
+      subject.quizProgress.totalAttempts += 1;
+      subject.quizProgress.bestScore = Math.max(subject.quizProgress.bestScore, scorePercentage);
+      
+      // Calculate running average
+      const currentTotal = subject.quizProgress.averageScore * (subject.quizProgress.totalAttempts - 1);
+      subject.quizProgress.averageScore = (currentTotal + scorePercentage) / subject.quizProgress.totalAttempts;
+
+      if (!subject.activityTypes.includes('quizzes')) {
+        subject.activityTypes.push('quizzes');
+      }
+    }
+  }
+
+  // 3. Get subjects from study sessions
+  const { data: sessionData } = await supabase
+    .from('study_sessions')
+    .select('subject, duration, end_time')
+    .eq('user_id', userId)
+    .not('subject', 'is', null)
+    .not('end_time', 'is', null);
+
+  if (sessionData) {
+    for (const session of sessionData) {
+      if (!session.subject) continue;
+
+      const subjectName = session.subject;
+      if (!subjects.has(subjectName)) {
+        subjects.set(subjectName, {
+          id: `subject-${subjectName}`,
+          name: subjectName,
+          activityTypes: [],
+          totalStudyTimeMinutes: 0,
+          sessionCount: 0
+        });
+      }
+
+      const subject = subjects.get(subjectName);
+      subject.sessionCount += 1;
+      subject.totalStudyTimeMinutes += Math.floor((session.duration || 0) / 60);
+
+      if (!subject.activityTypes.includes('study_sessions')) {
+        subject.activityTypes.push('study_sessions');
+      }
+    }
+  }
+
+  // 4. Get subjects from study plans
+  const { data: studyPlanData } = await supabase
+    .from('study_plans')
+    .select(`
+      subject,
+      status,
+      study_plan_sessions (
+        status
+      )
+    `)
+    .eq('user_id', userId);
+
+  if (studyPlanData) {
+    for (const plan of studyPlanData) {
+      if (!plan.subject) continue;
+
+      const subjectName = plan.subject;
+      if (!subjects.has(subjectName)) {
+        subjects.set(subjectName, {
+          id: `subject-${subjectName}`,
+          name: subjectName,
+          activityTypes: [],
+          totalStudyTimeMinutes: 0,
+          sessionCount: 0
+        });
+      }
+
+      const subject = subjects.get(subjectName);
+      
+      if (!subject.studyPlanProgress) {
+        subject.studyPlanProgress = {
+          totalSessions: 0,
+          completedSessions: 0
+        };
+      }
+
+      const sessions = plan.study_plan_sessions || [];
+      subject.studyPlanProgress.totalSessions += sessions.length;
+      subject.studyPlanProgress.completedSessions += sessions.filter(s => s.status === 'completed').length;
+
+      if (!subject.activityTypes.includes('study_plans')) {
+        subject.activityTypes.push('study_plans');
+      }
+    }
+  }
+
+  // Calculate completion percentages for each subject
+  const subjectsArray = Array.from(subjects.values()).map(subject => {
+    const completionPercentage = calculateSubjectCompletion(subject);
+    return {
+      ...subject,
+      completionPercentage
+    };
+  });
+
+  console.log('📈 Subjects with calculated progress:', subjectsArray.map(s => ({
+    name: s.name,
+    completion: s.completionPercentage,
+    activities: s.activityTypes
+  })));
+
+  return subjectsArray;
+}
+
+function calculateSubjectCompletion(subject: any): number {
+  const completions = [];
+
+  // Flashcard completion (based on mastery)
+  if (subject.flashcardProgress) {
+    const { totalCards, masteredCards } = subject.flashcardProgress;
+    if (totalCards > 0) {
+      completions.push((masteredCards / totalCards) * 100);
+    }
+  }
+
+  // Quiz completion (based on average score)
+  if (subject.quizProgress) {
+    completions.push(subject.quizProgress.averageScore);
+  }
+
+  // Study plan completion
+  if (subject.studyPlanProgress) {
+    const { totalSessions, completedSessions } = subject.studyPlanProgress;
+    if (totalSessions > 0) {
+      completions.push((completedSessions / totalSessions) * 100);
+    }
+  }
+
+  // Study session engagement (simplified metric)
+  if (subject.sessionCount > 0) {
+    // Give some base completion for having study sessions
+    const engagementScore = Math.min(subject.sessionCount * 10, 80);
+    completions.push(engagementScore);
+  }
+
+  // Return weighted average if we have multiple completion types
+  if (completions.length === 0) return 0;
+  
+  const average = completions.reduce((sum, comp) => sum + comp, 0) / completions.length;
+  return Math.round(Math.min(100, Math.max(0, average)));
+}
+
+function calculateAverageGrade(grades: string[]): string {
+  if (!grades.length) return 'C';
+  
+  const gradeValues = { 'A': 4, 'B': 3, 'C': 2, 'D': 1, 'F': 0 };
+  const gradeNames = ['F', 'D', 'C', 'B', 'A'];
+  
+  const average = grades.reduce((sum, grade) => sum + (gradeValues[grade as keyof typeof gradeValues] || 2), 0) / grades.length;
+  return gradeNames[Math.round(average)] || 'C';
+}
+
+async function calculateTimeMetrics(userId: string) {
+  const now = new Date();
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  // Get study sessions for time calculations
+  const { data: sessions } = await supabase
+    .from('study_sessions')
+    .select('duration, start_time, end_time')
+    .eq('user_id', userId)
+    .not('end_time', 'is', null)
+    .gte('start_time', monthAgo.toISOString());
+
+  if (!sessions?.length) {
+    return {
+      totalStudyTime: 0,
+      sessionsThisWeek: 0,
+      last7DaysFormatted: null,
+      last30DaysFormatted: null
+    };
+  }
+
+  const totalMinutes = sessions.reduce((sum, session) => sum + Math.floor((session.duration || 0) / 60), 0);
+  const weekSessions = sessions.filter(s => new Date(s.start_time) >= weekAgo);
+  const weekMinutes = weekSessions.reduce((sum, session) => sum + Math.floor((session.duration || 0) / 60), 0);
+
+  return {
+    totalStudyTime: totalMinutes / 60, // Convert to hours
+    sessionsThisWeek: weekSessions.length,
+    last7DaysFormatted: formatTime(weekMinutes),
+    last30DaysFormatted: formatTime(totalMinutes)
+  };
+}
+
+function formatTime(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+}
