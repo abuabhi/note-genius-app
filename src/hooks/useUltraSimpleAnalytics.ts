@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface StudySession {
   id: string;
   user_id: string;
+  title: string; // Add title property that WelcomeBanner expects
   start_time: string;
   end_time?: string;
   duration?: number;
@@ -13,6 +14,8 @@ interface StudySession {
   cards_reviewed?: number;
   cards_correct?: number;
   quiz_total_questions?: number;
+  subject?: string;
+  notes?: string;
   created_at: string;
   updated_at: string;
 }
