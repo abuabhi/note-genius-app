@@ -5,6 +5,7 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { StudySessionList } from "@/components/study/StudySessionList";
 import { StudySessionsBreadcrumb } from "@/components/study/StudySessionsBreadcrumb";
 import { StudyAnalyticsDashboard } from "@/components/study/StudyAnalyticsDashboard";
+import { StudySuggestions } from "@/components/analytics/StudySuggestions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, History, Archive, BarChart3, Brain } from "lucide-react";
 import { useSessionAnalytics } from "@/hooks/useSessionAnalytics";
@@ -99,6 +100,9 @@ const StudySessionsPage = () => {
               </div>
             </div>
           </div>
+
+          {/* AI Study Suggestions */}
+          <StudySuggestions subjectAnalytics={analytics} />
 
           {/* Sessions Content */}
           <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-mint-100 p-6 shadow-lg">
