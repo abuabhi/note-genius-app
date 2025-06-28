@@ -5,9 +5,26 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NotificationHistory } from '@/components/notifications/NotificationHistory';
 import { NotificationPreferences } from '@/components/notifications/NotificationPreferences';
 import { NotificationSettingsPanel } from '@/components/dashboard/NotificationSettingsPanel';
+import { StudySuggestions } from '@/components/analytics/StudySuggestions';
+import { useUltraSimpleAnalytics } from '@/hooks/useUltraSimpleAnalytics';
 import { Bell, History, Settings, BrainCircuit } from 'lucide-react';
 
 const NotificationsPage = () => {
+  const { analytics, isLoading } = useUltraSimpleAnalytics();
+
+  // Transform analytics data to match what StudySuggestions expects
+  const subjectAnalytics = {
+    subjects: analytics ? [
+      // Create mock subject data from analytics
+      {
+        name: 'General Studies',
+        completionPercentage: Math.min(100, (analytics.totalStudyTimeMinutes / 60) * 10), // Rough completion estimate
+        last7DaysTime: analytics.weeklyStudyTimeMinutes,
+        totalTime: analytics.totalStudyTimeMinutes
+      }
+    ] : []
+  };
+
   return (
     <>
       <Helmet>
@@ -58,7 +75,13 @@ const NotificationsPage = () => {
               </TabsContent>
               
               <TabsContent value="smart-settings" className="mt-6">
-                <NotificationSettingsPanel />
+                <div className="space-y-6">
+                  {/* AI Study Suggestions */}
+                  <StudySuggestions subjectAnalytics={subjectAnalytics} />
+                  
+                  {/* Notification Settings Panel */}
+                  <NotificationSettingsPanel />
+                </div>
               </TabsContent>
             </Tabs>
           </div>
