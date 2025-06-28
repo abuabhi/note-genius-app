@@ -37,6 +37,24 @@ export const useTimezoneAwareAnalytics = () => {
     staleTime: 1 * 60 * 1000,
   });
 
+  // Query for flashcard sets to get totalSets
+  const { data: flashcardSets = [] } = useQuery({
+    queryKey: ['user-flashcard-sets', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from('flashcard_sets')
+        .select('id')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+  });
+
   // Calculate analytics with timezone-aware date boundaries
   const analytics = useMemo(() => {
     if (!sessions.length || !timezone) return {
@@ -51,12 +69,16 @@ export const useTimezoneAwareAnalytics = () => {
       weeklyStudyTimeMinutes: 0,
       previousWeekTimeMinutes: 0,
       totalCardsMastered: 0,
+      totalCardsReviewed: 0,
       flashcardAccuracy: 0,
       streakDays: 0,
       weeklyGoalMinutes: 300, // 5 hours default
       weeklyGoalProgress: 0,
       weeklyChange: 0,
-      todayString: new Date().toISOString().split('T')[0]
+      todayString: new Date().toISOString().split('T')[0],
+      totalSets: flashcardSets.length,
+      recentSessions: [],
+      timezone: timezone || 'UTC'
     };
 
     // Calculate date boundaries in the user's timezone
@@ -175,14 +197,18 @@ export const useTimezoneAwareAnalytics = () => {
       weeklyStudyTimeMinutes,
       previousWeekTimeMinutes,
       totalCardsMastered,
+      totalCardsReviewed,
       flashcardAccuracy,
       streakDays,
       weeklyGoalMinutes,
       weeklyGoalProgress,
       weeklyChange,
-      todayString: todayInTimezone
+      todayString: todayInTimezone,
+      totalSets: flashcardSets.length,
+      recentSessions: sessions.slice(0, 10),
+      timezone: timezone || 'UTC'
     };
-  }, [sessions, timezone]);
+  }, [sessions, timezone, flashcardSets.length]);
 
   return {
     analytics,
