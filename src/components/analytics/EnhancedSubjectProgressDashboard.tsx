@@ -16,7 +16,7 @@ const EnhancedSubjectProgressDashboard = memo(() => {
           <div className="space-y-4">
             <div className="h-6 bg-gray-200 rounded animate-pulse"></div>
             <div className="grid grid-cols-2 gap-4">
-              {Array.from({ length: 6 }, (_, i) => (
+              {Array.from({ length: 4 }, (_, i) => (
                 <Card key={i} className="animate-pulse">
                   <CardContent className="p-4">
                     <div className="h-4 bg-gray-200 rounded mb-2"></div>
@@ -123,18 +123,6 @@ const EnhancedSubjectProgressDashboard = memo(() => {
               value={subjectAnalytics.last30DaysFormatted || "No data"}
               icon={TrendingUp}
               color="orange"
-            />
-            <MetricCard
-              title="Avg Session"
-              value={subjectAnalytics.averageSessionDuration ? formatTime(subjectAnalytics.averageSessionDuration) : "No data"}
-              icon={Clock}
-              color="indigo"
-            />
-            <MetricCard
-              title="Streak Days"
-              value={subjectAnalytics.currentStreak || 0}
-              icon={Zap}
-              color="yellow"
             />
           </div>
         </div>
