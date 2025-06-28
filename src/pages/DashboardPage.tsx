@@ -1,3 +1,4 @@
+
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Loader2 } from "lucide-react";
 import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
