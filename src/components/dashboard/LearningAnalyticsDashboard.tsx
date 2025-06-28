@@ -1,5 +1,4 @@
 
-import { AnalyticsSection } from "./AnalyticsSection";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -81,14 +80,11 @@ export const LearningAnalyticsDashboard = () => {
     );
   }
 
+  // Only show getting started card for new users, nothing for existing users
+  // since analytics are already shown in the WelcomeBanner
   return (
     <div className="space-y-6">
-      {/* Getting Started or Analytics */}
-      {hasStudyData ? (
-        <div>
-          <AnalyticsSection />
-        </div>
-      ) : (
+      {!hasStudyData && (
         <div>
           <GettingStartedCard />
         </div>
