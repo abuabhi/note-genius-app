@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, TrendingUp, History, Target, Trophy, FileText, Brain } from "lucide-react";
-import { OptimizedSubjectProgressDashboard } from "@/components/analytics/OptimizedSubjectProgressDashboard";
+import { EnhancedSubjectProgressDashboard } from "@/components/analytics/EnhancedSubjectProgressDashboard";
 import { StandardPageHeader } from "@/components/ui/StandardPageHeader";
 import { NotesAnalytics } from "@/components/analytics/redesigned/NotesAnalytics";
 import { FlashcardsAnalytics } from "@/components/analytics/redesigned/FlashcardsAnalytics";
@@ -42,7 +42,7 @@ const AnalyticsPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
       <StandardPageHeader
         title="Learning Analytics"
-        description="Track your progress across subjects, content types, and study sessions"
+        description="Track your progress across subjects, content types, and study sessions with AI-powered insights"
         icon={<BarChart3 className="h-6 w-6 text-white" />}
         breadcrumbs={breadcrumbs}
       />
@@ -83,7 +83,7 @@ const AnalyticsPage = () => {
             </TabsList>
             
             <TabsContent value="subjects" className="mt-6">
-              <OptimizedSubjectProgressDashboard />
+              <EnhancedSubjectProgressDashboard />
             </TabsContent>
             
             <TabsContent value="overview" className="mt-6">
