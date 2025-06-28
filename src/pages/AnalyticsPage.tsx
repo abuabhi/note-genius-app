@@ -2,14 +2,14 @@
 import { useState } from "react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, TrendingUp, History, Target, Trophy, FileText, Brain, Clock } from "lucide-react";
-import { SubjectProgressDashboard } from "@/components/analytics/SubjectProgressDashboard";
+import { BarChart3, TrendingUp, History, Target, Trophy, FileText, Brain } from "lucide-react";
+import { OptimizedSubjectProgressDashboard } from "@/components/analytics/OptimizedSubjectProgressDashboard";
 import { StandardPageHeader } from "@/components/ui/StandardPageHeader";
 import { NotesAnalytics } from "@/components/analytics/redesigned/NotesAnalytics";
 import { FlashcardsAnalytics } from "@/components/analytics/redesigned/FlashcardsAnalytics";
 import { QuizAnalytics } from "@/components/analytics/redesigned/QuizAnalytics";
 import { EnhancedSessionHistory } from "@/components/analytics/redesigned/EnhancedSessionHistory";
-import { StudyAchievements } from "@/components/analytics/redesigned/StudyAchievements";
+import { OptimizedStudyAchievements } from "@/components/analytics/redesigned/OptimizedStudyAchievements";
 
 const AnalyticsPage = () => {
   const { user, loading } = useRequireAuth();
@@ -83,7 +83,7 @@ const AnalyticsPage = () => {
             </TabsList>
             
             <TabsContent value="subjects" className="mt-6">
-              <SubjectProgressDashboard />
+              <OptimizedSubjectProgressDashboard />
             </TabsContent>
             
             <TabsContent value="overview" className="mt-6">
@@ -140,7 +140,7 @@ const AnalyticsPage = () => {
             </TabsContent>
             
             <TabsContent value="achievements" className="mt-6">
-              <StudyAchievements />
+              <OptimizedStudyAchievements />
             </TabsContent>
           </Tabs>
         </div>
