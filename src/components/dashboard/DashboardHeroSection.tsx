@@ -1,6 +1,12 @@
 
 import { EnhancedDashboardHeroSection } from "./EnhancedDashboardHeroSection";
+import { StudySessionNotificationManager } from "./StudySessionNotificationManager";
 
 export const DashboardHeroSection = () => {
-  return <EnhancedDashboardHeroSection />;
+  return (
+    <>
+      <StudySessionNotificationManager />
+      <EnhancedDashboardHeroSection />
+    </>
+  );
 };
