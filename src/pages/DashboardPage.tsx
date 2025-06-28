@@ -9,7 +9,7 @@ import { GoalsSection } from "@/components/dashboard/GoalsSection";
 import { StudyPlannerSection } from "@/components/dashboard/StudyPlannerSection";
 import { ReferralSignupHandler } from "@/components/referrals/ReferralSignupHandler";
 import { ReferralSignupErrorBoundary } from "@/components/referrals/ReferralSignupErrorBoundary";
-import { useConsolidatedAnalytics } from "@/hooks/useConsolidatedAnalytics";
+import { useUltraSimpleAnalytics } from "@/hooks/useUltraSimpleAnalytics";
 
 const DashboardPage = () => {
   console.log('🏠 DashboardPage component rendering');
@@ -20,7 +20,20 @@ const DashboardPage = () => {
     loading
   } = useRequireAuth();
   
-  const { analytics } = useConsolidatedAnalytics();
+  const { analytics, isLoading: analyticsLoading } = useUltraSimpleAnalytics();
+  
+  // Transform analytics data to match what StudySuggestions expects
+  const subjectAnalytics = {
+    subjects: analytics ? [
+      // Create mock subject data from analytics
+      {
+        name: 'General Studies',
+        completionPercentage: Math.min(100, (analytics.totalStudyTimeMinutes / 60) * 10), // Rough completion estimate
+        last7DaysTime: analytics.weeklyStudyTimeMinutes,
+        totalTime: analytics.totalStudyTimeMinutes
+      }
+    ] : []
+  };
   
   console.log('👤 Dashboard auth state:', {
     user: user?.id,
@@ -58,7 +71,7 @@ const DashboardPage = () => {
           <WelcomeBanner />
           
           {/* AI Study Suggestions - Original suggestions section */}
-          <StudySuggestions subjectAnalytics={analytics} />
+          <StudySuggestions subjectAnalytics={subjectAnalytics} />
           
           {/* Simplified Analytics - Essential metrics only */}
           <div>
