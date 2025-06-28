@@ -1,6 +1,5 @@
 
 import { AnalyticsSection } from "./AnalyticsSection";
-import { NotificationSettingsPanel } from "./NotificationSettingsPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -78,10 +77,6 @@ export const LearningAnalyticsDashboard = () => {
     return (
       <div className="space-y-6">
         <div className="animate-pulse bg-mint-50 h-48 rounded-lg border border-mint-200"></div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="animate-pulse bg-mint-50 h-32 rounded-lg border border-mint-200"></div>
-          <div className="animate-pulse bg-mint-50 h-32 rounded-lg border border-mint-200"></div>
-        </div>
       </div>
     );
   }
@@ -90,26 +85,12 @@ export const LearningAnalyticsDashboard = () => {
     <div className="space-y-6">
       {/* Getting Started or Analytics */}
       {hasStudyData ? (
-        <div className="space-y-6">
-          {/* Analytics */}
-          <div>
-            <AnalyticsSection />
-          </div>
-          
-          {/* Notification Settings */}
-          <div>
-            <NotificationSettingsPanel />
-          </div>
+        <div>
+          <AnalyticsSection />
         </div>
       ) : (
-        <div className="space-y-6">
-          {/* Getting Started */}
+        <div>
           <GettingStartedCard />
-          
-          {/* Notification Settings (always show) */}
-          <div>
-            <NotificationSettingsPanel />
-          </div>
         </div>
       )}
     </div>

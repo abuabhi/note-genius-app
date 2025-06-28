@@ -20,6 +20,7 @@ const SchedulePage = lazy(() => import('@/pages/SchedulePage'));
 const TodoPage = lazy(() => import('@/pages/TodoPage'));
 const GoalsPage = lazy(() => import('@/pages/GoalsPage'));
 const StudyPlannerPage = lazy(() => import('@/pages/StudyPlannerPage'));
+const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 const LoadingFallback = () => (
@@ -74,6 +75,9 @@ export const OptimizedAppRoutes = () => {
         {/* Goals and Todos - Now using unified SidebarLayout */}
         <Route path="/goals" element={<SidebarLayout><GoalsPage /></SidebarLayout>} />
         <Route path="/todos" element={<SidebarLayout><TodoPage /></SidebarLayout>} />
+        
+        {/* Notifications route */}
+        <Route path="/notifications" element={<SidebarLayout><NotificationsPage /></SidebarLayout>} />
         
         {/* Catch all for 404 */}
         <Route path="*" element={<SidebarLayout><NotFoundPage /></SidebarLayout>} />
