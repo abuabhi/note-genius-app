@@ -3,7 +3,6 @@ import React from 'react';
 import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import AuthSidebar from './AuthSidebar';
 import Footer from './Footer';
-import { UnifiedSessionDock } from '@/components/ui/floating/UnifiedSessionDock';
 import { ReminderNavPopover } from '@/components/reminders/ReminderNavPopover';
 import { UserSection } from '@/components/ui/sidebar/UserSection';
 import { useHelp } from '@/contexts/HelpContext';
@@ -99,9 +98,6 @@ const SidebarLayout = ({ children }: SidebarLayoutProps) => {
           </div>
         </SidebarInset>
       </div>
-      
-      {/* Floating Components */}
-      <UnifiedSessionDock />
     </div>
   );
 };
