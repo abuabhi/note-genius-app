@@ -8,8 +8,9 @@ import { NoteChatSidebar } from "@/components/notes/study/chat/NoteChatSidebar";
 import { Loader2, ArrowLeft, AlertCircle } from "lucide-react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useOptimizedNoteStudy } from "@/hooks/notes/useOptimizedNoteStudy";
+import { OptimizedNotesProvider } from "@/contexts/OptimizedNotesContext";
 
-const NoteStudyPage = () => {
+const NoteStudyPageContent = () => {
   const { noteId } = useParams();
   const navigate = useNavigate();
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -96,6 +97,14 @@ const NoteStudyPage = () => {
         />
       )}
     </div>
+  );
+};
+
+const NoteStudyPage = () => {
+  return (
+    <OptimizedNotesProvider>
+      <NoteStudyPageContent />
+    </OptimizedNotesProvider>
   );
 };
 
