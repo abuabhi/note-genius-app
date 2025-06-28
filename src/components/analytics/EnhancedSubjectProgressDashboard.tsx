@@ -111,13 +111,13 @@ const EnhancedSubjectProgressDashboard = memo(() => {
               icon={Calendar}
             />
             <MetricCard
-              title="Average Score"
-              value={`${Math.round(subjectAnalytics.averageScore)}%`}
+              title="Last 7 Days"
+              value={subjectAnalytics.last7DaysFormatted || "No data"}
               icon={Trophy}
             />
             <MetricCard
-              title="Longest Streak"
-              value={`${subjectAnalytics.longestStreak} days`}
+              title="Last 30 Days"
+              value={subjectAnalytics.last30DaysFormatted || "No data"}
               icon={TrendingUp}
             />
           </div>
