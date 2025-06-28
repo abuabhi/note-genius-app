@@ -1,11 +1,11 @@
 
 import { EnhancedDashboardHeroSection } from "./EnhancedDashboardHeroSection";
-import { StudySessionNotificationManager } from "./StudySessionNotificationManager";
+import { AdaptiveNotificationManager } from "./AdaptiveNotificationManager";
 
 export const DashboardHeroSection = () => {
   return (
     <>
-      <StudySessionNotificationManager />
+      <AdaptiveNotificationManager />
       <EnhancedDashboardHeroSection />
     </>
   );
