@@ -1,9 +1,8 @@
 
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Note } from '@/types/note';
-import { useCacheStrategy } from '@/hooks/performance/useCacheStrategy';
 
 interface OptimizedNoteStudyResult {
   note: Note | null;

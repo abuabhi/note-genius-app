@@ -48,7 +48,7 @@ export const OptimizedAppRoutes = () => {
         <Route path="/flashcards/study/:id" element={<SidebarLayout><FlashcardStudyPage /></SidebarLayout>} />
         <Route path="/study/:id" element={<SidebarLayout><FlashcardStudyPage /></SidebarLayout>} />
         
-        {/* Notes routes - all unified with SidebarLayout */}
+        {/* Notes routes - Fixed parameter name to noteId */}
         <Route path="/notes" element={<SidebarLayout><NotesPage /></SidebarLayout>} />
         <Route path="/notes/study/:noteId" element={<SidebarLayout><NoteStudyPage /></SidebarLayout>} />
         
