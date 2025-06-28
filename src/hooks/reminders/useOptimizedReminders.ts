@@ -1,10 +1,23 @@
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
-import { Reminder, ReminderStatus } from './types';
+import { Reminder, ReminderStatus, ReminderType, ReminderRecurrence, DeliveryMethod } from './types';
+
+// Helper function to transform raw database data to our Reminder type
+const transformReminderData = (rawData: any[]): Reminder[] => {
+  return rawData.map(item => ({
+    ...item,
+    type: item.type as ReminderType,
+    status: item.status as ReminderStatus,
+    recurrence: item.recurrence as ReminderRecurrence,
+    delivery_methods: Array.isArray(item.delivery_methods) 
+      ? item.delivery_methods as DeliveryMethod[]
+      : ['in_app' as DeliveryMethod]
+  }));
+};
 
 // Optimized reminder hook with aggressive caching and performance optimizations
 export const useOptimizedReminders = (options?: {
@@ -61,7 +74,9 @@ export const useOptimizedReminders = (options?: {
       }
 
       console.log('✅ Fetched optimized reminders:', data?.length || 0);
-      return data || [];
+      
+      // Transform the raw data to match our TypeScript types
+      return transformReminderData(data || []);
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes - aggressive caching
