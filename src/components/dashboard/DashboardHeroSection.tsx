@@ -24,7 +24,8 @@ export const DashboardHeroSection = () => {
     elapsedSeconds, 
     isPaused,
     startSession, 
-    togglePause,
+    pauseSession, 
+    resumeSession,
     endSession 
   } = useUnifiedSessionTracker();
   
@@ -67,8 +68,13 @@ export const DashboardHeroSection = () => {
 
   const handleSessionControl = async () => {
     try {
-      await togglePause();
-      toast.success(isPaused ? "Session resumed" : "Session paused");
+      if (isPaused) {
+        await resumeSession();
+        toast.success("Session resumed");
+      } else {
+        await pauseSession();
+        toast.success("Session paused");
+      }
     } catch (error) {
       console.error('Error controlling session:', error);
       toast.error("Failed to control session");
