@@ -31,7 +31,8 @@ export const useTimezoneAwareAnalytics = () => {
 
   // Enhanced analytics with timezone awareness and profile data
   const enhancedAnalytics = useMemo(() => {
-    const weeklyGoalHours = userProfile?.weekly_study_goal_hours || 5;
+    // Access weekly_study_goal_hours from userProfile, with fallback to 5
+    const weeklyGoalHours = (userProfile as any)?.weekly_study_goal_hours || 5;
     const weeklyGoalMinutes = weeklyGoalHours * 60;
     
     // Calculate weekly goal progress
@@ -53,8 +54,6 @@ export const useTimezoneAwareAnalytics = () => {
       // Timezone and date info
       timezone,
       todayString,
-      
-      // All analytics properties are now available from the base analytics object
     };
   }, [analytics, userProfile, todayString, timezone]);
 
