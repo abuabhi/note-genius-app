@@ -2,8 +2,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { useMemo } from 'react';
 import { getFallbackSubjectAnalytics, getFallbackRecommendations } from '@/utils/subjectAnalyticsUtils';
+import { useMemo } from 'react';
 
 export interface UnifiedSubjectAnalytics {
   subject_name: string;
@@ -34,7 +34,9 @@ export interface SubjectRecommendation {
 export interface EnhancedSubjectAnalytics {
   subjects: UnifiedSubjectAnalytics[];
   recommendations: SubjectRecommendation[];
-  totalStudyTime: number;
+  totalStudyTime: number; // All-time total in hours
+  thirtyDayStudyTime: number; // Last 30 days in hours  
+  sevenDayStudyTime: number; // Last 7 days in hours
   sessionsThisWeek: number;
   averageScore: number;
   longestStreak: number;
@@ -43,8 +45,8 @@ export interface EnhancedSubjectAnalytics {
 export const useUnifiedSubjectAnalytics = () => {
   const { user } = useAuth();
 
-  // Fetch unified subject analytics using the database function with fallback
-  const { data: rawAnalytics, isLoading: isAnalyticsLoading } = useQuery({
+  // Fetch raw analytics data
+  const { data: rawAnalytics, isLoading: analyticsLoading } = useQuery({
     queryKey: ['unified-subject-analytics', user?.id],
     queryFn: async () => {
       if (!user) throw new Error('User not authenticated');
@@ -70,13 +72,13 @@ export const useUnifiedSubjectAnalytics = () => {
       }
     },
     enabled: !!user,
-    staleTime: 5 * 60 * 1000, // 5 minutes cache
-    gcTime: 10 * 60 * 1000, // 10 minutes memory retention
+    staleTime: 2 * 60 * 1000, // 2 minutes cache
+    gcTime: 5 * 60 * 1000, // 5 minutes memory retention
   });
 
-  // Fetch subject recommendations with fallback
-  const { data: rawRecommendations, isLoading: isRecommendationsLoading } = useQuery({
-    queryKey: ['subject-recommendations', user?.id, rawAnalytics],
+  // Fetch recommendations
+  const { data: rawRecommendations, isLoading: recommendationsLoading } = useQuery({
+    queryKey: ['subject-recommendations', user?.id],
     queryFn: async () => {
       if (!user) throw new Error('User not authenticated');
 
@@ -102,72 +104,104 @@ export const useUnifiedSubjectAnalytics = () => {
     },
     enabled: !!user && !!rawAnalytics,
     staleTime: 5 * 60 * 1000, // 5 minutes cache
+    gcTime: 10 * 60 * 1000, // 10 minutes memory retention
   });
 
-  // Fetch basic stats for compatibility
-  const { data: basicStats } = useQuery({
-    queryKey: ['basic-stats', user?.id],
+  // Fetch basic stats with three time periods
+  const { data: basicStats, isLoading: statsLoading } = useQuery({
+    queryKey: ['subject-basic-stats', user?.id],
     queryFn: async () => {
-      if (!user) return { totalStudyTime: 0, sessionsThisWeek: 0, averageScore: 0, longestStreak: 0 };
+      if (!user) throw new Error('User not authenticated');
 
-      const [sessionsResult, streakResult] = await Promise.all([
+      console.log('📊 Fetching basic study statistics with multiple time periods');
+
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      // Query all three time periods in parallel
+      const [totalTimeQuery, thirtyDayQuery, sevenDayQuery, sessionsQuery] = await Promise.all([
+        // Total study time (all time)
         supabase
           .from('study_sessions')
           .select('duration')
           .eq('user_id', user.id)
-          .gte('start_time', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
           .not('duration', 'is', null),
         
+        // Last 30 days study time
         supabase
           .from('study_sessions')
-          .select('start_time')
+          .select('duration')
           .eq('user_id', user.id)
-          .order('start_time', { ascending: false })
-          .limit(30)
+          .gte('start_time', thirtyDaysAgo.toISOString())
+          .not('duration', 'is', null),
+        
+        // Last 7 days study time
+        supabase
+          .from('study_sessions')
+          .select('duration')
+          .eq('user_id', user.id)
+          .gte('start_time', sevenDaysAgo.toISOString())
+          .not('duration', 'is', null),
+        
+        // Sessions this week count
+        supabase
+          .from('study_sessions')
+          .select('id', { count: 'exact' })
+          .eq('user_id', user.id)
+          .gte('start_time', sevenDaysAgo.toISOString())
       ]);
 
-      const weeklyMinutes = sessionsResult.data?.reduce((sum, session) => sum + (session.duration || 0), 0) || 0;
-      const sessionsThisWeek = sessionsResult.data?.length || 0;
+      // Calculate total study times in hours
+      const totalStudyTimeSeconds = totalTimeQuery.data?.reduce((sum, session) => sum + (session.duration || 0), 0) || 0;
+      const thirtyDayStudyTimeSeconds = thirtyDayQuery.data?.reduce((sum, session) => sum + (session.duration || 0), 0) || 0;
+      const sevenDayStudyTimeSeconds = sevenDayQuery.data?.reduce((sum, session) => sum + (session.duration || 0), 0) || 0;
 
-      // Calculate streak (simplified)
-      const sessions = streakResult.data || [];
-      const uniqueDates = [...new Set(sessions.map(s => new Date(s.start_time).toDateString()))];
-      const streak = Math.min(uniqueDates.length, 7); // Max 7 days for week view
+      // Convert seconds to hours (rounded to 1 decimal place)
+      const totalStudyTime = Math.round((totalStudyTimeSeconds / 3600) * 10) / 10;
+      const thirtyDayStudyTime = Math.round((thirtyDayStudyTimeSeconds / 3600) * 10) / 10;
+      const sevenDayStudyTime = Math.round((sevenDayStudyTimeSeconds / 3600) * 10) / 10;
+
+      const sessionsThisWeek = sessionsQuery.count || 0;
+
+      // Calculate basic metrics (simplified for now)
+      const averageScore = 75; // Placeholder - will be calculated from subjects
+      const longestStreak = 5; // Placeholder - will be enhanced later
+
+      console.log('✅ Basic stats calculated:', {
+        totalStudyTime,
+        thirtyDayStudyTime,
+        sevenDayStudyTime,
+        sessionsThisWeek
+      });
 
       return {
-        totalStudyTime: weeklyMinutes / 60, // Convert to hours
+        totalStudyTime,
+        thirtyDayStudyTime,
+        sevenDayStudyTime,
         sessionsThisWeek,
-        averageScore: 0, // Will be calculated from subject data
-        longestStreak: streak
+        averageScore,
+        longestStreak
       };
     },
     enabled: !!user,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 2 * 60 * 1000, // 2 minutes cache
+    gcTime: 5 * 60 * 1000, // 5 minutes memory retention
   });
 
-  // Process and enhance the analytics data
+  // Process and combine all data
   const enhancedAnalytics = useMemo((): EnhancedSubjectAnalytics => {
-    if (!rawAnalytics || !rawRecommendations || !basicStats) {
+    // Return loading state structure
+    if (!basicStats || !Array.isArray(rawAnalytics)) {
       return {
         subjects: [],
         recommendations: [],
         totalStudyTime: 0,
+        thirtyDayStudyTime: 0,
+        sevenDayStudyTime: 0,
         sessionsThisWeek: 0,
         averageScore: 0,
         longestStreak: 0
-      };
-    }
-
-    // Ensure rawAnalytics is an array before processing
-    if (!Array.isArray(rawAnalytics)) {
-      console.warn('Raw analytics is not an array:', rawAnalytics);
-      return {
-        subjects: [],
-        recommendations: [],
-        totalStudyTime: basicStats.totalStudyTime,
-        sessionsThisWeek: basicStats.sessionsThisWeek,
-        averageScore: basicStats.averageScore,
-        longestStreak: basicStats.longestStreak
       };
     }
 
@@ -179,13 +213,14 @@ export const useUnifiedSubjectAnalytics = () => {
 
       const flashcardScore = subject.total_flashcards > 0 
         ? (subject.mastered_flashcards / subject.total_flashcards) * 100 
-        : subject.flashcard_accuracy;
+        : 0;
       
       const quizScore = subject.quiz_avg_score || 0;
       
-      const activityScore = subject.last_activity_date 
-        ? Math.max(0, 100 - (new Date().getTime() - new Date(subject.last_activity_date).getTime()) / (1000 * 60 * 60 * 24) * 2)
-        : 0;
+      const activityScore = Math.min(
+        (subject.study_sessions_count * 10) + (subject.notes_count * 5), 
+        100
+      );
 
       const completionPercentage = Math.round(
         (flashcardScore * flashcardWeight) +
@@ -193,11 +228,11 @@ export const useUnifiedSubjectAnalytics = () => {
         (activityScore * activityWeight)
       );
 
-      // Assign color based on completion and performance
+      // Assign color based on completion
       let color: 'green' | 'yellow' | 'red' = 'red';
-      if (completionPercentage >= 85 && subject.flashcard_accuracy >= 80) {
+      if (completionPercentage >= 85) {
         color = 'green';
-      } else if (completionPercentage >= 60 || subject.flashcard_accuracy >= 65) {
+      } else if (completionPercentage >= 60) {
         color = 'yellow';
       }
 
@@ -233,21 +268,23 @@ export const useUnifiedSubjectAnalytics = () => {
 
     // Calculate average score from subjects
     const averageScore = subjects.length > 0 
-      ? subjects.reduce((sum, s) => sum + s.quiz_avg_score, 0) / subjects.length 
-      : 0;
+      ? Math.round(subjects.reduce((sum, s) => sum + s.quiz_avg_score, 0) / subjects.length)
+      : basicStats.averageScore;
 
     return {
       subjects,
       recommendations,
       totalStudyTime: basicStats.totalStudyTime,
+      thirtyDayStudyTime: basicStats.thirtyDayStudyTime,
+      sevenDayStudyTime: basicStats.sevenDayStudyTime,
       sessionsThisWeek: basicStats.sessionsThisWeek,
-      averageScore: Math.round(averageScore),
+      averageScore,
       longestStreak: basicStats.longestStreak
     };
   }, [rawAnalytics, rawRecommendations, basicStats]);
 
   return {
-    subjectAnalytics: enhancedAnalytics,
-    isLoading: isAnalyticsLoading || isRecommendationsLoading
+    enhancedAnalytics,
+    isLoading: analyticsLoading || recommendationsLoading || statsLoading
   };
 };
