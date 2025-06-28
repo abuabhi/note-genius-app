@@ -486,13 +486,23 @@ export type Database = {
           created_at: string | null
           digest_enabled: boolean | null
           digest_time: string | null
+          flashcards_limit: number | null
           frequency: string | null
           id: string
           include_completed: boolean | null
+          include_flashcards: boolean | null
           include_goals: boolean | null
+          include_notes: boolean | null
+          include_quizzes: boolean | null
+          include_recommendations: boolean | null
+          include_streaks: boolean | null
+          include_study_sessions: boolean | null
           include_todos: boolean | null
           last_digest_sent_at: string | null
+          notes_limit: number | null
           only_urgent: boolean | null
+          quizzes_limit: number | null
+          study_sessions_limit: number | null
           timezone: string | null
           updated_at: string | null
           user_id: string
@@ -501,13 +511,23 @@ export type Database = {
           created_at?: string | null
           digest_enabled?: boolean | null
           digest_time?: string | null
+          flashcards_limit?: number | null
           frequency?: string | null
           id?: string
           include_completed?: boolean | null
+          include_flashcards?: boolean | null
           include_goals?: boolean | null
+          include_notes?: boolean | null
+          include_quizzes?: boolean | null
+          include_recommendations?: boolean | null
+          include_streaks?: boolean | null
+          include_study_sessions?: boolean | null
           include_todos?: boolean | null
           last_digest_sent_at?: string | null
+          notes_limit?: number | null
           only_urgent?: boolean | null
+          quizzes_limit?: number | null
+          study_sessions_limit?: number | null
           timezone?: string | null
           updated_at?: string | null
           user_id: string
@@ -516,13 +536,23 @@ export type Database = {
           created_at?: string | null
           digest_enabled?: boolean | null
           digest_time?: string | null
+          flashcards_limit?: number | null
           frequency?: string | null
           id?: string
           include_completed?: boolean | null
+          include_flashcards?: boolean | null
           include_goals?: boolean | null
+          include_notes?: boolean | null
+          include_quizzes?: boolean | null
+          include_recommendations?: boolean | null
+          include_streaks?: boolean | null
+          include_study_sessions?: boolean | null
           include_todos?: boolean | null
           last_digest_sent_at?: string | null
+          notes_limit?: number | null
           only_urgent?: boolean | null
+          quizzes_limit?: number | null
+          study_sessions_limit?: number | null
           timezone?: string | null
           updated_at?: string | null
           user_id?: string

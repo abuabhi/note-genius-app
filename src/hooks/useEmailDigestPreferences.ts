@@ -15,6 +15,18 @@ export interface EmailDigestPreferences {
   include_todos: boolean;
   include_completed: boolean;
   only_urgent: boolean;
+  // New content type preferences
+  include_notes: boolean;
+  include_flashcards: boolean;
+  include_quizzes: boolean;
+  include_study_sessions: boolean;
+  include_streaks: boolean;
+  include_recommendations: boolean;
+  // Content limits
+  notes_limit: number;
+  flashcards_limit: number;
+  quizzes_limit: number;
+  study_sessions_limit: number;
   last_digest_sent_at?: string;
 }
 
@@ -46,7 +58,7 @@ export const useEmailDigestPreferences = () => {
         };
         setPreferences(typedData);
       } else {
-        // Create default preferences
+        // Create default preferences with new fields
         const defaultPrefs = {
           user_id: user.id,
           digest_enabled: true,
@@ -57,6 +69,18 @@ export const useEmailDigestPreferences = () => {
           include_todos: true,
           include_completed: false,
           only_urgent: false,
+          // New content preferences
+          include_notes: true,
+          include_flashcards: true,
+          include_quizzes: true,
+          include_study_sessions: true,
+          include_streaks: true,
+          include_recommendations: true,
+          // Content limits
+          notes_limit: 5,
+          flashcards_limit: 5,
+          quizzes_limit: 3,
+          study_sessions_limit: 5,
         };
         
         const { data: newData, error: insertError } = await supabase
