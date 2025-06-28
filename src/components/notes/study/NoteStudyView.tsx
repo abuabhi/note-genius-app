@@ -1,11 +1,10 @@
-
 import React from "react";
 import { Note } from "@/types/note";
 import { StudyViewHeader } from "./header/StudyViewHeader";
 import { NoteStudyViewContent } from "./viewer/NoteStudyViewContent";
 import { useStudyViewState } from "./hooks/useStudyViewState";
 import { useNoteStudyEditor } from "./hooks/useNoteStudyEditor";
-import { useNoteEnhancement } from "@/hooks/useNoteEnrichment";
+import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
 import { useNoteEnhancementRetry } from "./hooks/useNoteEnhancementRetry";
 import { UserSubject } from "@/types/subject";
 
