@@ -1,6 +1,21 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+
+interface StudySession {
+  id: string;
+  user_id: string;
+  start_time: string;
+  end_time?: string;
+  duration?: number;
+  is_active: boolean;
+  cards_reviewed?: number;
+  cards_correct?: number;
+  quiz_total_questions?: number;
+  created_at: string;
+  updated_at: string;
+}
 
 export const useUltraSimpleAnalytics = () => {
   const { user } = useAuth();
@@ -44,7 +59,7 @@ export const useUltraSimpleAnalytics = () => {
 
         if (sessionsError) throw sessionsError;
 
-        const sessions = allSessions || [];
+        const sessions = (allSessions || []) as StudySession[];
         console.log('📊 Found sessions:', sessions.length);
 
         // Get content counts
@@ -54,34 +69,48 @@ export const useUltraSimpleAnalytics = () => {
           supabase.from('quizzes').select('id').eq('user_id', user.id)
         ]);
 
-        // Filter sessions by time periods
+        // Helper function to safely parse dates
+        const parseSessionDate = (dateString: string): Date | null => {
+          try {
+            return new Date(dateString);
+          } catch {
+            return null;
+          }
+        };
+
+        // Filter sessions by time periods with proper type checking
         const todaySessions = sessions.filter(session => {
           if (!session.start_time) return false;
-          const sessionDate = new Date(session.start_time);
+          const sessionDate = parseSessionDate(session.start_time);
+          if (!sessionDate) return false;
           return sessionDate >= today && sessionDate < todayEnd;
         });
 
         const weekSessions = sessions.filter(session => {
           if (!session.start_time) return false;
-          const sessionDate = new Date(session.start_time);
+          const sessionDate = parseSessionDate(session.start_time);
+          if (!sessionDate) return false;
           return sessionDate >= startOfWeek;
         });
 
         const prevWeekSessions = sessions.filter(session => {
           if (!session.start_time) return false;
-          const sessionDate = new Date(session.start_time);
+          const sessionDate = parseSessionDate(session.start_time);
+          if (!sessionDate) return false;
           return sessionDate >= startOfPrevWeek && sessionDate < endOfPrevWeek;
         });
 
-        // Calculate streak properly
+        // Calculate streak properly with type safety
         let streakDays = 0;
-        const sessionDates = new Set();
+        const sessionDates = new Set<string>();
         
         // Group sessions by date
         sessions.forEach(session => {
           if (session.start_time && session.duration && session.duration > 0) {
-            const sessionDate = new Date(session.start_time).toDateString();
-            sessionDates.add(sessionDate);
+            const sessionDate = parseSessionDate(session.start_time);
+            if (sessionDate) {
+              sessionDates.add(sessionDate.toDateString());
+            }
           }
         });
 
