@@ -29,7 +29,16 @@ export const CreateSessionDialog = ({
   const [notes, setNotes] = useState("");
   
   const { startSession } = useStudySessions();
-  const { flashcardSets } = useFlashcards();
+  
+  // Safely try to get flashcard context - it might not be available in all contexts
+  let flashcardSets: any[] = [];
+  try {
+    const flashcardContext = useFlashcards();
+    flashcardSets = flashcardContext?.flashcardSets || [];
+  } catch (error) {
+    console.warn('FlashcardContext not available in CreateSessionDialog:', error);
+    // Continue without flashcard sets - they're optional
+  }
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
