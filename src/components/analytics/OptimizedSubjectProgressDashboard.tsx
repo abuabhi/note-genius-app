@@ -1,12 +1,11 @@
-
 import React, { memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { useOptimizedSubjectAnalytics } from "@/hooks/useOptimizedSubjectAnalytics";
+import { useSaaSOptimizedSubjectAnalytics } from "@/hooks/useSaaSOptimizedSubjectAnalytics";
 import { Clock, Calendar, Trophy, TrendingUp, BookOpen } from "lucide-react";
 
 const OptimizedSubjectProgressDashboard = memo(() => {
-  const { subjectAnalytics, isLoading } = useOptimizedSubjectAnalytics();
+  const { subjectAnalytics, isLoading } = useSaaSOptimizedSubjectAnalytics();
 
   if (isLoading) {
     return (
@@ -107,13 +106,13 @@ const OptimizedSubjectProgressDashboard = memo(() => {
               icon={Calendar}
             />
             <MetricCard
-              title="Average Score"
-              value={`${Math.round(subjectAnalytics.averageScore)}%`}
+              title="Last 7 Days"
+              value={subjectAnalytics.last7DaysFormatted || "No data"}
               icon={Trophy}
             />
             <MetricCard
-              title="Longest Streak"
-              value={`${subjectAnalytics.longestStreak} days`}
+              title="Last 30 Days"
+              value={subjectAnalytics.last30DaysFormatted || "No data"}
               icon={TrendingUp}
             />
           </div>

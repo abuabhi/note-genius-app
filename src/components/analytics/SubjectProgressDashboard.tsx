@@ -1,11 +1,10 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { useSubjectAnalytics } from "@/hooks/useSubjectAnalytics";
+import { useSaaSOptimizedSubjectAnalytics } from "@/hooks/useSaaSOptimizedSubjectAnalytics";
 import { Clock, Calendar, Trophy, TrendingUp, BookOpen } from "lucide-react";
 
 export const SubjectProgressDashboard = () => {
-  const { subjectAnalytics, isLoading } = useSubjectAnalytics();
+  const { subjectAnalytics, isLoading } = useSaaSOptimizedSubjectAnalytics();
 
   if (isLoading) {
     return (
@@ -89,12 +88,12 @@ export const SubjectProgressDashboard = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                   <Trophy className="h-4 w-4" />
-                  Average Score
+                  Last 7 Days
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="text-2xl font-bold text-gray-900">
-                  {Math.round(subjectAnalytics.averageScore)}%
+                  {subjectAnalytics.last7DaysFormatted || "No data"}
                 </div>
               </CardContent>
             </Card>
@@ -103,12 +102,12 @@ export const SubjectProgressDashboard = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                   <TrendingUp className="h-4 w-4" />
-                  Longest Streak
+                  Last 30 Days
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="text-2xl font-bold text-gray-900">
-                  {subjectAnalytics.longestStreak} days
+                  {subjectAnalytics.last30DaysFormatted || "No data"}
                 </div>
               </CardContent>
             </Card>
