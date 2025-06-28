@@ -1,4 +1,3 @@
-
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Loader2 } from "lucide-react";
 import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
@@ -10,6 +9,7 @@ import { StudyPlannerSection } from "@/components/dashboard/StudyPlannerSection"
 import { ReferralSignupHandler } from "@/components/referrals/ReferralSignupHandler";
 import { ReferralSignupErrorBoundary } from "@/components/referrals/ReferralSignupErrorBoundary";
 import { useUltraSimpleAnalytics } from "@/hooks/useUltraSimpleAnalytics";
+import { LearningToolkitSection } from "@/components/dashboard/LearningToolkitSection";
 
 const DashboardPage = () => {
   console.log('🏠 DashboardPage component rendering');
@@ -67,11 +67,14 @@ const DashboardPage = () => {
       </ReferralSignupErrorBoundary>
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
         <div className="container mx-auto p-6 space-y-8">
-          {/* Welcome Banner - Original beautiful section */}
+          {/* Welcome Banner - Enhanced gradient */}
           <WelcomeBanner />
           
-          {/* AI Study Suggestions - Original suggestions section */}
+          {/* AI Study Suggestions - With fixed percentage formatting */}
           <StudySuggestions subjectAnalytics={subjectAnalytics} />
+          
+          {/* Learning Toolkit - New optimized section */}
+          <LearningToolkitSection />
           
           {/* Simplified Analytics - Essential metrics only */}
           <div>

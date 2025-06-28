@@ -119,7 +119,8 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
                 {suggestion.title}
               </h4>
               <p className="text-xs text-gray-600 mb-3 font-medium">
-                {suggestion.description}
+                {/* Fix percentage formatting to show whole numbers */}
+                {suggestion.description.replace(/(\d+\.\d+)%/g, (match, num) => `${Math.round(parseFloat(num))}%`)}
               </p>
               
               {suggestion.actionable && (
