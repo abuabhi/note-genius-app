@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useStudySuggestions } from "@/hooks/useStudySuggestions";
 import { useNavigate, useLocation } from "react-router-dom";
-import { CreateSessionDialog } from "@/components/study/CreateSessionDialog";
+import { useStudySessions } from "@/hooks/useStudySessions";
 import { toast } from "sonner";
 
 interface StudySuggestionsProps {
@@ -16,35 +16,26 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
   const { suggestions, isLoading } = useStudySuggestions(subjectAnalytics);
   const navigate = useNavigate();
   const location = useLocation();
-  const [createSessionOpen, setCreateSessionOpen] = useState(false);
-  const [sessionDefaults, setSessionDefaults] = useState({ title: "", subject: "" });
+  const { startSession } = useStudySessions();
 
-  const handleSuggestionClick = (suggestion: any) => {
+  const handleSuggestionClick = async (suggestion: any) => {
     try {
       console.log("🎯 CTA clicked:", suggestion);
-      const currentPath = location.pathname;
 
       // Handle different suggestion types with smart contextual actions
       switch (suggestion.type) {
         case 'schedule':
-          if (suggestion.actionUrl === '/study-sessions' && currentPath === '/study-sessions') {
-            // User is already on study sessions page - open creation dialog
-            if (suggestion.id.includes('plan-behind') || suggestion.id === 'start-today') {
-              setSessionDefaults({
-                title: suggestion.subject ? `${suggestion.subject} Study Session` : "Study Session",
-                subject: suggestion.subject || ""
-              });
-              setCreateSessionOpen(true);
-            }
-          } else if (suggestion.actionUrl) {
-            // Navigate to different page
-            console.log("🚀 Navigating to:", suggestion.actionUrl);
-            if (suggestion.subject) {
-              navigate(`${suggestion.actionUrl}?subject=${encodeURIComponent(suggestion.subject)}`);
-            } else {
-              navigate(suggestion.actionUrl);
-            }
-          }
+          // For schedule suggestions: Start a study session directly
+          console.log("🚀 Starting study session for:", suggestion.subject);
+          
+          const sessionData = {
+            title: suggestion.subject ? `${suggestion.subject} Study Session` : "Study Session",
+            subject: suggestion.subject || null,
+            notes: `Started from AI suggestion: ${suggestion.title}`
+          };
+
+          await startSession.mutateAsync(sessionData);
+          toast.success(`Study session started! Timer is now active.`);
           break;
 
         case 'focus':
@@ -77,16 +68,12 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
           break;
 
         default:
-          // Fallback to actionUrl if provided
-          if (suggestion.actionUrl) {
-            console.log("🔄 Fallback navigation to:", suggestion.actionUrl);
-            navigate(suggestion.actionUrl);
-          }
+          console.log("🔄 Unknown suggestion type:", suggestion.type);
           break;
       }
     } catch (error) {
       console.error("❌ Error handling suggestion click:", error);
-      toast.error("Navigation error occurred. Please try again.");
+      toast.error("Action failed. Please try again.");
     }
   };
 
@@ -118,79 +105,71 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
   }
 
   return (
-    <>
-      <Card className="mb-6 bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <span className="text-xl">🤖</span>
-            AI Study Suggestions
-            <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
-              {suggestions.length} personalized
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {suggestions.map((suggestion, index) => (
-              <div 
-                key={suggestion.id || index}
-                className="p-4 bg-white rounded-lg border border-purple-100 hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-lg">{suggestion.icon}</span>
-                      <h4 className="font-medium text-sm">{suggestion.title}</h4>
-                      <Badge 
-                        variant="outline" 
-                        className={`text-xs ${
-                          suggestion.priority === 'high' 
-                            ? 'bg-red-50 text-red-700 border-red-200' 
-                            : suggestion.priority === 'medium'
-                            ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                            : 'bg-gray-50 text-gray-700 border-gray-200'
-                        }`}
-                      >
-                        {suggestion.priority}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-gray-600">{suggestion.description}</p>
+    <Card className="mb-6 bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <span className="text-xl">🤖</span>
+          AI Study Suggestions
+          <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+            {suggestions.length} personalized
+          </Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {suggestions.map((suggestion, index) => (
+            <div 
+              key={suggestion.id || index}
+              className="p-4 bg-white rounded-lg border border-purple-100 hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg">{suggestion.icon}</span>
+                    <h4 className="font-medium text-sm">{suggestion.title}</h4>
+                    <Badge 
+                      variant="outline" 
+                      className={`text-xs ${
+                        suggestion.priority === 'high' 
+                          ? 'bg-red-50 text-red-700 border-red-200' 
+                          : suggestion.priority === 'medium'
+                          ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                          : 'bg-gray-50 text-gray-700 border-gray-200'
+                      }`}
+                    >
+                      {suggestion.priority}
+                    </Badge>
                   </div>
-                  
-                  {/* Button moved to the right side */}
-                  {suggestion.actionable && (
-                    <div className="flex-shrink-0">
-                      <Button
-                        size="sm"
-                        onClick={() => handleSuggestionClick(suggestion)}
-                        className="bg-purple-600 hover:bg-purple-700 text-white h-8 text-xs whitespace-nowrap"
-                      >
-                        {suggestion.type === 'schedule' && suggestion.id === 'start-today' 
-                          ? 'Start Session Now'
-                          : suggestion.type === 'schedule'
-                          ? 'Continue Plan'
-                          : suggestion.type === 'focus'
-                          ? 'Study Now'
-                          : suggestion.type === 'performance'
-                          ? 'Improve'
-                          : 'Take Action'
-                        }
-                      </Button>
-                    </div>
-                  )}
+                  <p className="text-xs text-gray-600">{suggestion.description}</p>
                 </div>
+                
+                {/* Button moved to the right side */}
+                {suggestion.actionable && (
+                  <div className="flex-shrink-0">
+                    <Button
+                      size="sm"
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      disabled={startSession.isPending}
+                      className="bg-purple-600 hover:bg-purple-700 text-white h-8 text-xs whitespace-nowrap"
+                    >
+                      {suggestion.type === 'schedule'
+                        ? startSession.isPending 
+                          ? 'Starting...'
+                          : 'Start Session Now'
+                        : suggestion.type === 'focus'
+                        ? 'Study Now'
+                        : suggestion.type === 'performance'
+                        ? 'Improve Now'
+                        : 'Take Action'
+                      }
+                    </Button>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      <CreateSessionDialog
-        open={createSessionOpen}
-        onOpenChange={setCreateSessionOpen}
-        defaultTitle={sessionDefaults.title}
-        defaultSubject={sessionDefaults.subject}
-      />
-    </>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 };

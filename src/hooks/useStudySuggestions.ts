@@ -11,7 +11,6 @@ export interface StudySuggestion {
   description: string;
   actionable: boolean;
   icon: '🎯' | '📚' | '⚡' | '🔥' | '📈' | '💪' | '🎉';
-  actionUrl?: string;
   subject?: string;
 }
 
@@ -69,7 +68,6 @@ export const useStudySuggestions = (subjectAnalytics?: any) => {
             description: `You're ${sessionsDifference} session${sessionsDifference > 1 ? 's' : ''} behind schedule this week`,
             actionable: true,
             icon: '🎯',
-            actionUrl: '/study-sessions',
             subject: plan.subject
           });
         } else if (actualSessions >= targetSessionsPerWeek) {
@@ -100,7 +98,6 @@ export const useStudySuggestions = (subjectAnalytics?: any) => {
           description: `Currently at ${worstSubject.completionPercentage}% completion - needs attention`,
           actionable: true,
           icon: '📚',
-          actionUrl: '/flashcards',
           subject: worstSubject.name
         });
       }
@@ -134,8 +131,7 @@ export const useStudySuggestions = (subjectAnalytics?: any) => {
           title: 'Start your study session today',
           description: 'You haven\'t studied yet today. Even a short 15-minute session helps!',
           actionable: true,
-          icon: '⚡',
-          actionUrl: '/study-sessions'
+          icon: '⚡'
         });
       }
 
@@ -173,7 +169,6 @@ export const useStudySuggestions = (subjectAnalytics?: any) => {
           description: 'You\'re making progress! Focus on quiz practice to improve retention',
           actionable: true,
           icon: '📈',
-          actionUrl: '/flashcards',
           subject: subject.name
         });
       }
