@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Note } from "@/types/note";
 import { StudyViewHeader } from "./header/StudyViewHeader";
@@ -56,7 +57,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
     monthlyLimit,
     hasReachedLimit,
     enrichNote
-  } = useNoteEnhancement(note);
+  } = useNoteEnrichment(note);
 
   const {
     handleRetryEnhancement,
