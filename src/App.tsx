@@ -8,7 +8,7 @@ import AppRoutes from './components/app/AppRoutes';
 
 function App() {
   useEffect(() => {
-    document.title = 'StudySphere';
+    document.title = 'PrepGenie';
   }, []);
 
   return (

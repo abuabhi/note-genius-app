@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'studymate-v1';
+const CACHE_NAME = 'prepgenie-v1';
 const urlsToCache = [
   '/',
   '/static/js/bundle.js',

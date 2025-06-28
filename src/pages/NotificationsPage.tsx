@@ -11,7 +11,7 @@ const NotificationsPage = () => {
   return (
     <>
       <Helmet>
-        <title>Notifications - StudyMate</title>
+        <title>Notifications - PrepGenie</title>
         <meta name="description" content="Manage your notifications and preferences" />
       </Helmet>
       
