@@ -17,7 +17,8 @@ import {
   BarChart3,
   Gift,
   Heart,
-  Calendar
+  Calendar,
+  Settings
 } from "lucide-react";
 
 interface NavigationProps {
@@ -105,6 +106,15 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
               icon={BarChart3}
               label="Analytics"
               isActive={pathname.startsWith("/analytics") || pathname.startsWith("/progress") || pathname.startsWith("/study-sessions")}
+              isCollapsed={isCollapsed}
+            />
+            
+            {/* Settings */}
+            <NavLink
+              to="/settings"
+              icon={Settings}
+              label="Settings"
+              isActive={pathname.startsWith("/settings")}
               isCollapsed={isCollapsed}
             />
             

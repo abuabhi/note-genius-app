@@ -22,6 +22,7 @@ const TodoPage = lazy(() => import('@/pages/TodoPage'));
 const GoalsPage = lazy(() => import('@/pages/GoalsPage'));
 const StudyPlannerPage = lazy(() => import('@/pages/StudyPlannerPage'));
 const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'));
+const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 // Admin Pages
@@ -94,6 +95,9 @@ export const OptimizedAppRoutes = () => {
         
         {/* Notifications route */}
         <Route path="/notifications" element={<SidebarLayout><NotificationsPage /></SidebarLayout>} />
+        
+        {/* Settings route */}
+        <Route path="/settings" element={<SidebarLayout><SettingsPage /></SidebarLayout>} />
         
         {/* Admin Routes - Protected with AdminRoute and using SidebarLayout */}
         <Route path="/admin/*" element={<AdminRoute />}>
