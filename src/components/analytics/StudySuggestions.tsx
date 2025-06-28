@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useStudySuggestions } from "@/hooks/useStudySuggestions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Brain, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface StudySuggestionsProps {
   subjectAnalytics?: any;
@@ -13,6 +14,39 @@ interface StudySuggestionsProps {
 
 export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) => {
   const { suggestions, isLoading } = useStudySuggestions(subjectAnalytics);
+  const navigate = useNavigate();
+
+  const handleSuggestionAction = (suggestion: any) => {
+    console.log('🎯 Acting on suggestion:', suggestion);
+    
+    switch (suggestion.type) {
+      case 'focus':
+        // Navigate to flashcards page for subject focus
+        navigate('/flashcards');
+        toast.success(`Opening flashcards to focus on ${suggestion.title}`);
+        break;
+      case 'schedule':
+        // Navigate to study sessions or planner
+        navigate('/study-sessions');
+        toast.success('Opening study sessions to schedule your time');
+        break;
+      case 'performance':
+        // Navigate to flashcards for performance improvement
+        navigate('/flashcards');
+        toast.success('Opening practice materials to boost performance');
+        break;
+      case 'motivation':
+        // Navigate to goals or achievements
+        navigate('/goals');
+        toast.success('Keep up the great momentum!');
+        break;
+      default:
+        // Fallback to flashcards page
+        navigate('/flashcards');
+        toast.success('Taking action on your study suggestion');
+        break;
+    }
+  };
 
   if (isLoading) {
     return (
@@ -105,6 +139,7 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
                 <Button
                   size="sm"
                   variant="ghost"
+                  onClick={() => handleSuggestionAction(suggestion)}
                   className="text-purple-600 hover:text-purple-800 hover:bg-purple-100 flex-shrink-0"
                 >
                   <ArrowRight className="h-4 w-4" />

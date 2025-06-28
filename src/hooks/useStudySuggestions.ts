@@ -11,6 +11,8 @@ export interface StudySuggestion {
   description: string;
   actionable: boolean;
   icon: '🎯' | '📚' | '⚡' | '🔥' | '📈' | '💪' | '🎉';
+  actionUrl?: string;
+  subject?: string;
 }
 
 export const useStudySuggestions = (subjectAnalytics?: any) => {
@@ -66,7 +68,9 @@ export const useStudySuggestions = (subjectAnalytics?: any) => {
             title: `Continue studying ${plan.title}`,
             description: `You're ${sessionsDifference} session${sessionsDifference > 1 ? 's' : ''} behind schedule this week`,
             actionable: true,
-            icon: '🎯'
+            icon: '🎯',
+            actionUrl: '/study-sessions',
+            subject: plan.subject
           });
         } else if (actualSessions >= targetSessionsPerWeek) {
           suggestions.push({
@@ -76,7 +80,8 @@ export const useStudySuggestions = (subjectAnalytics?: any) => {
             title: `Great progress on ${plan.title}`,
             description: 'You\'re meeting your study plan goals! Keep it up',
             actionable: false,
-            icon: '🎉'
+            icon: '🎉',
+            subject: plan.subject
           });
         }
       });
@@ -94,7 +99,9 @@ export const useStudySuggestions = (subjectAnalytics?: any) => {
           title: `Focus on ${worstSubject.name}`,
           description: `Currently at ${worstSubject.completionPercentage}% completion - needs attention`,
           actionable: true,
-          icon: '📚'
+          icon: '📚',
+          actionUrl: '/flashcards',
+          subject: worstSubject.name
         });
       }
 
@@ -107,7 +114,8 @@ export const useStudySuggestions = (subjectAnalytics?: any) => {
           title: `Excellent work in ${bestSubject.name}`,
           description: `${bestSubject.completionPercentage}% completion - maintain this momentum with regular reviews`,
           actionable: false,
-          icon: '💪'
+          icon: '💪',
+          subject: bestSubject.name
         });
       }
 
@@ -126,7 +134,8 @@ export const useStudySuggestions = (subjectAnalytics?: any) => {
           title: 'Start your study session today',
           description: 'You haven\'t studied yet today. Even a short 15-minute session helps!',
           actionable: true,
-          icon: '⚡'
+          icon: '⚡',
+          actionUrl: '/study-sessions'
         });
       }
 
@@ -163,7 +172,9 @@ export const useStudySuggestions = (subjectAnalytics?: any) => {
           title: `Boost your ${subject.name} performance`,
           description: 'You\'re making progress! Focus on quiz practice to improve retention',
           actionable: true,
-          icon: '📈'
+          icon: '📈',
+          actionUrl: '/flashcards',
+          subject: subject.name
         });
       }
 
