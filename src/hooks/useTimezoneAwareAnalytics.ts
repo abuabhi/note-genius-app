@@ -54,18 +54,7 @@ export const useTimezoneAwareAnalytics = () => {
       timezone,
       todayString,
       
-      // Flashcard metrics (provide defaults if not available)
-      flashcardAccuracy: analytics.flashcardAccuracy || 0,
-      totalCardsMastered: analytics.totalCardsMastered || 0,
-      totalSets: analytics.totalSets || 0,
-      totalCardsReviewed: analytics.totalCardsReviewed || 0,
-      
-      // Streak and performance
-      streakDays: analytics.streakDays || 0,
-      weeklyChange: analytics.weeklyChange || 0,
-      
-      // Active sessions
-      activeSessions: analytics.activeSessions || 0,
+      // All analytics properties are now available from the base analytics object
     };
   }, [analytics, userProfile, todayString, timezone]);
 

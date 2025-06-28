@@ -21,6 +21,10 @@ export interface UnifiedAnalytics {
   recentSessions: any[];
   todaySessions: number;
   weeklySessions: number;
+  // Add missing properties
+  flashcardAccuracy: number;
+  totalCardsMastered: number;
+  totalSets: number;
 }
 
 export const useUnifiedAnalytics = () => {
@@ -48,6 +52,42 @@ export const useUnifiedAnalytics = () => {
     staleTime: 1 * 60 * 1000, // 1 minute
   });
 
+  // Query for flashcard sets count
+  const { data: flashcardSets = [] } = useQuery({
+    queryKey: ["flashcard-sets-count", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from('flashcard_sets')
+        .select('id')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+
+  // Query for flashcard progress
+  const { data: flashcardProgress = [] } = useQuery({
+    queryKey: ["flashcard-progress", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from('user_flashcard_progress')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+
   // Calculate unified analytics
   const analytics = useMemo((): UnifiedAnalytics => {
     if (!sessions.length) return {
@@ -66,7 +106,10 @@ export const useUnifiedAnalytics = () => {
       weeklyChange: 0,
       recentSessions: [],
       todaySessions: 0,
-      weeklySessions: 0
+      weeklySessions: 0,
+      flashcardAccuracy: 0,
+      totalCardsMastered: 0,
+      totalSets: 0
     };
 
     const now = new Date();
@@ -107,6 +150,9 @@ export const useUnifiedAnalytics = () => {
       }
     }
 
+    // Calculate flashcard metrics
+    const masteredCards = flashcardProgress.filter(p => p.mastery_level >= 3).length;
+
     return {
       totalSessions: sessions.length,
       activeSessions: sessions.filter(s => s.is_active).length,
@@ -123,9 +169,12 @@ export const useUnifiedAnalytics = () => {
       weeklyChange: 0, // Simplified for now
       recentSessions: sessions.slice(0, 10),
       todaySessions: todaySessions.length,
-      weeklySessions: weeklySessions.length
+      weeklySessions: weeklySessions.length,
+      flashcardAccuracy: averageAccuracy,
+      totalCardsMastered: masteredCards,
+      totalSets: flashcardSets.length
     };
-  }, [sessions]);
+  }, [sessions, flashcardSets, flashcardProgress]);
 
   return {
     analytics,
