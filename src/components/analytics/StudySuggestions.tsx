@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +15,8 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
   const { suggestions, isLoading } = useStudySuggestions(subjectAnalytics);
   const navigate = useNavigate();
   const location = useLocation();
-  const { startSession, isStarting } = useUnifiedSessionTracker();
+  const { startSession } = useUnifiedSessionTracker();
+  const [isStarting, setIsStarting] = useState(false);
 
   const handleSuggestionClick = async (suggestion: any) => {
     try {
@@ -28,6 +28,7 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
           // For schedule suggestions: Start a unified session that shows timer
           console.log("🚀 Starting unified session for:", suggestion.subject);
           
+          setIsStarting(true);
           const sessionData = {
             title: suggestion.subject ? `${suggestion.subject} Study Session` : "Study Session",
             subject: suggestion.subject || undefined,
@@ -37,6 +38,7 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
 
           await startSession(sessionData);
           toast.success(`Study session started! Timer is now active.`);
+          setIsStarting(false);
           break;
 
         case 'focus':
@@ -75,6 +77,7 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
     } catch (error) {
       console.error("❌ Error handling suggestion click:", error);
       toast.error("Action failed. Please try again.");
+      setIsStarting(false);
     }
   };
 
