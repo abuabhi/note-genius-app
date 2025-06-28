@@ -2,7 +2,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { useSaaSOptimizedSubjectAnalytics } from './useSaaSOptimizedSubjectAnalytics';
 
 export interface StudySuggestion {
   id: string;
@@ -14,14 +13,14 @@ export interface StudySuggestion {
   icon: '🎯' | '📚' | '⚡' | '🔥' | '📈' | '💪' | '🎉';
 }
 
-export const useStudySuggestions = () => {
+export const useStudySuggestions = (subjectAnalytics?: any) => {
   const { user } = useAuth();
-  const { subjectAnalytics, isLoading: analyticsLoading } = useSaaSOptimizedSubjectAnalytics();
 
   const { data: suggestions, isLoading } = useQuery({
-    queryKey: ['study-suggestions', user?.id],
+    queryKey: ['study-suggestions', user?.id, subjectAnalytics?.subjects?.length],
     queryFn: async () => {
       if (!user) throw new Error('User not authenticated');
+      if (!subjectAnalytics?.subjects) return [];
 
       console.log('🤖 Generating AI study suggestions');
 
@@ -175,12 +174,12 @@ export const useStudySuggestions = () => {
       // Limit to top 4 suggestions
       return suggestions.slice(0, 4);
     },
-    enabled: !!user && !analyticsLoading,
+    enabled: !!user && !!subjectAnalytics?.subjects,
     staleTime: 10 * 60 * 1000, // 10 minutes cache
   });
 
   return {
     suggestions: suggestions || [],
-    isLoading: isLoading || analyticsLoading
+    isLoading: isLoading || !subjectAnalytics?.subjects
   };
 };

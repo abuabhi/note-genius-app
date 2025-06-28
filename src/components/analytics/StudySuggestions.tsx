@@ -7,8 +7,12 @@ import { useStudySuggestions } from "@/hooks/useStudySuggestions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Brain, ArrowRight } from "lucide-react";
 
-export const StudySuggestions = () => {
-  const { suggestions, isLoading } = useStudySuggestions();
+interface StudySuggestionsProps {
+  subjectAnalytics?: any;
+}
+
+export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) => {
+  const { suggestions, isLoading } = useStudySuggestions(subjectAnalytics);
 
   if (isLoading) {
     return (

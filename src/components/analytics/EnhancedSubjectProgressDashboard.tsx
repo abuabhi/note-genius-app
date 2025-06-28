@@ -1,253 +1,185 @@
 
-import React from 'react';
+import React, { memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
 import { useSaaSOptimizedSubjectAnalytics } from "@/hooks/useSaaSOptimizedSubjectAnalytics";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Target, BookOpen, Brain, FileText, CalendarDays, Clock, Users } from "lucide-react";
 import { StudySuggestions } from "./StudySuggestions";
+import { Clock, Calendar, Trophy, TrendingUp, BookOpen } from "lucide-react";
 
-export const EnhancedSubjectProgressDashboard = () => {
+const EnhancedSubjectProgressDashboard = memo(() => {
   const { subjectAnalytics, isLoading } = useSaaSOptimizedSubjectAnalytics();
 
   if (isLoading) {
     return (
-      <div className="space-y-8">
-        {/* Overview Cards Skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader className="pb-2">
-                <Skeleton className="h-4 w-24" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-8 w-16 mb-2" />
-                <Skeleton className="h-3 w-20" />
-              </CardContent>
-            </Card>
-          ))}
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <div className="h-6 bg-gray-200 rounded animate-pulse"></div>
+            <div className="grid grid-cols-2 gap-4">
+              {Array.from({ length: 4 }, (_, i) => (
+                <Card key={i} className="animate-pulse">
+                  <CardContent className="p-4">
+                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-8 bg-gray-200 rounded"></div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className="h-6 bg-gray-200 rounded animate-pulse"></div>
+            <div className="space-y-3">
+              {Array.from({ length: 3 }, (_, i) => (
+                <div key={i} className="h-16 bg-gray-200 rounded animate-pulse"></div>
+              ))}
+            </div>
+          </div>
         </div>
-        
-        {/* Subject Progress Skeleton */}
-        <Card className="animate-pulse">
-          <CardHeader>
-            <Skeleton className="h-6 w-48" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="space-y-2">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-2 w-full" />
-                <div className="flex gap-2">
-                  <Skeleton className="h-5 w-16" />
-                  <Skeleton className="h-5 w-16" />
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
       </div>
     );
   }
 
-  const { subjects, totalStudyTime, sessionsThisWeek, averageScore, last7DaysFormatted, last30DaysFormatted } = subjectAnalytics;
+  const formatTime = (minutes: number) => {
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+  };
+
+  const MetricCard = memo(({ title, value, icon: Icon, color = "gray" }: {
+    title: string;
+    value: string | number;
+    icon: React.ComponentType<any>;
+    color?: string;
+  }) => (
+    <Card className={`bg-white border-${color}-200`}>
+      <CardHeader className="pb-2">
+        <CardTitle className={`text-sm font-medium text-${color}-600 flex items-center gap-2`}>
+          <Icon className="h-4 w-4" />
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className={`text-2xl font-bold text-${color}-900`}>
+          {value}
+        </div>
+      </CardContent>
+    </Card>
+  ));
+
+  const SubjectCard = memo(({ subject }: { subject: any }) => (
+    <Card className="bg-white border-gray-200 hover:shadow-sm transition-shadow">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="font-medium text-gray-900">{subject.name}</h3>
+          <span className="text-sm text-gray-600">
+            {subject.completionPercentage}%
+          </span>
+        </div>
+        <div className="mb-2">
+          <Progress 
+            value={subject.completionPercentage} 
+            className="h-2"
+          />
+        </div>
+        <div className="flex items-center justify-between text-sm text-gray-600">
+          <span>{formatTime(subject.totalStudyTimeMinutes)} studied</span>
+          <span>{subject.sessionCount} sessions</span>
+        </div>
+      </CardContent>
+    </Card>
+  ));
 
   return (
-    <div className="space-y-8">
-      {/* Enhanced Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-blue-700 flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Last 7 Days
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-900 mb-1">
-              {last7DaysFormatted}
-            </div>
-            <p className="text-xs text-blue-600">
-              Recent activity
-            </p>
-          </CardContent>
-        </Card>
+    <div className="space-y-6">
+      {/* AI Study Suggestions */}
+      <StudySuggestions subjectAnalytics={subjectAnalytics} />
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Panel - Learning Analytics */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold text-gray-900">Learning Analytics</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <MetricCard
+              title="Total Study Time"
+              value={formatTime(Math.round(subjectAnalytics.totalStudyTime * 60))}
+              icon={Clock}
+            />
+            <MetricCard
+              title="Sessions This Week"
+              value={subjectAnalytics.sessionsThisWeek}
+              icon={Calendar}
+            />
+            <MetricCard
+              title="Average Score"
+              value={`${Math.round(subjectAnalytics.averageScore)}%`}
+              icon={Trophy}
+            />
+            <MetricCard
+              title="Longest Streak"
+              value={`${subjectAnalytics.longestStreak} days`}
+              icon={TrendingUp}
+            />
+          </div>
+        </div>
 
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-green-700 flex items-center gap-2">
-              <CalendarDays className="h-4 w-4" />
-              Last 30 Days
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-900 mb-1">
-              {last30DaysFormatted}
-            </div>
-            <p className="text-xs text-green-600">
-              Monthly overview
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-purple-700 flex items-center gap-2">
-              <Target className="h-4 w-4" />
-              Average Score
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-900 mb-1">
-              {averageScore}%
-            </div>
-            <p className="text-xs text-purple-600">
-              Across all subjects
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-orange-700 flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Active Subjects
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-900 mb-1">
-              {subjects.length}
-            </div>
-            <p className="text-xs text-orange-600">
-              With study activity
-            </p>
-          </CardContent>
-        </Card>
+        {/* Right Panel - Subject Progress */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold text-gray-900">Subject Progress</h2>
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {subjectAnalytics.subjects.length === 0 ? (
+              <Card className="bg-gray-50 border-gray-200">
+                <CardContent className="flex flex-col items-center justify-center py-8">
+                  <BookOpen className="h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Subjects Yet</h3>
+                  <p className="text-gray-600 text-center">
+                    Create flashcard sets or take quizzes to see your subject progress here.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              subjectAnalytics.subjects.map((subject) => (
+                <SubjectCard key={subject.id} subject={subject} />
+              ))
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* AI Study Suggestions */}
-      <StudySuggestions />
-
-      {/* Subject Progress Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold text-mint-900 flex items-center gap-2">
-            <BookOpen className="h-5 w-5" />
-            Subject Progress Details
-          </CardTitle>
-          <p className="text-mint-600 text-sm">
-            Comprehensive view of your learning progress across all subjects
-          </p>
-        </CardHeader>
-        <CardContent>
-          {subjects.length === 0 ? (
-            <div className="text-center py-8">
-              <BookOpen className="h-12 w-12 text-mint-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-mint-900 mb-2">No Study Activity Yet</h3>
-              <p className="text-mint-600">
-                Start creating flashcards, taking quizzes, or making notes to see your progress here
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {subjects.map((subject) => (
-                <div
-                  key={subject.id}
-                  className="bg-gradient-to-r from-white to-mint-50/30 rounded-lg p-6 border border-mint-100"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <h3 className="text-lg font-semibold text-mint-900">
-                        {subject.name}
-                      </h3>
-                      <Badge
-                        variant="outline"
-                        className={`${
-                          subject.color === 'green'
-                            ? 'bg-green-100 text-green-800 border-green-200'
-                            : subject.color === 'yellow'
-                            ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
-                            : 'bg-red-100 text-red-800 border-red-200'
-                        }`}
-                      >
-                        {subject.completionPercentage}% Complete
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-mint-600">
-                      {subject.hasFlashcards && (
-                        <div className="flex items-center gap-1">
-                          <Brain className="h-4 w-4" />
-                          <span>Flashcards</span>
-                        </div>
-                      )}
-                      {subject.hasNotes && (
-                        <div className="flex items-center gap-1">
-                          <FileText className="h-4 w-4" />
-                          <span>Notes</span>
-                        </div>
-                      )}
-                      {subject.hasQuizzes && (
-                        <div className="flex items-center gap-1">
-                          <Target className="h-4 w-4" />
-                          <span>Quizzes</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="mb-4">
-                    <Progress 
-                      value={subject.completionPercentage} 
-                      className="h-3"
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <p className="text-mint-600 mb-1">Flashcard Mastery</p>
-                      <p className="font-semibold text-mint-900">{subject.flashcardMastery}%</p>
-                    </div>
-                    <div>
-                      <p className="text-mint-600 mb-1">Quiz Performance</p>
-                      <p className="font-semibold text-mint-900">{subject.quizPerformance}%</p>
-                    </div>
-                    <div>
-                      <p className="text-mint-600 mb-1">Study Time</p>
-                      <p className="font-semibold text-mint-900">
-                        {Math.floor(subject.totalStudyTimeMinutes / 60)}h {subject.totalStudyTimeMinutes % 60}m
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-mint-600 mb-1">Sessions</p>
-                      <p className="font-semibold text-mint-900">{subject.sessionCount}</p>
-                    </div>
-                  </div>
-                  
-                  {(subject.last7DaysTime > 0 || subject.last30DaysTime > 0) && (
-                    <div className="mt-4 pt-4 border-t border-mint-200">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <p className="text-mint-600 mb-1">Last 7 Days</p>
-                          <p className="font-medium text-mint-800">
-                            {Math.floor(subject.last7DaysTime / 60)}h {subject.last7DaysTime % 60}m in {subject.last7DaysSessions} session{subject.last7DaysSessions !== 1 ? 's' : ''}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-mint-600 mb-1">Last 30 Days</p>
-                          <p className="font-medium text-mint-800">
-                            {Math.floor(subject.last30DaysTime / 60)}h {subject.last30DaysTime % 60}m in {subject.last30DaysSessions} session{subject.last30DaysSessions !== 1 ? 's' : ''}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+      {/* Subject Details Summary */}
+      {subjectAnalytics.subjects.length > 0 && (
+        <Card className="bg-white border-gray-200">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold">Subject Breakdown</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">
+                  {subjectAnalytics.subjects.filter(s => s.completionPercentage >= 85).length}
                 </div>
-              ))}
+                <div className="text-sm text-gray-600">Excelling (85%+)</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-yellow-600">
+                  {subjectAnalytics.subjects.filter(s => s.completionPercentage >= 60 && s.completionPercentage < 85).length}
+                </div>
+                <div className="text-sm text-gray-600">Progressing (60-84%)</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-red-600">
+                  {subjectAnalytics.subjects.filter(s => s.completionPercentage < 60).length}
+                </div>
+                <div className="text-sm text-gray-600">Needs Attention (&lt;60%)</div>
+              </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
-};
+});
+
+EnhancedSubjectProgressDashboard.displayName = 'EnhancedSubjectProgressDashboard';
+
+export { EnhancedSubjectProgressDashboard };

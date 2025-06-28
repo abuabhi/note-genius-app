@@ -83,7 +83,9 @@ const AnalyticsPage = () => {
             </TabsList>
             
             <TabsContent value="subjects" className="mt-6">
-              <EnhancedSubjectProgressDashboard />
+              <div className="error-boundary">
+                <EnhancedSubjectProgressDashboard />
+              </div>
             </TabsContent>
             
             <TabsContent value="overview" className="mt-6">
