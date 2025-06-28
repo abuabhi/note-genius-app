@@ -21,11 +21,11 @@ export const NotificationSettingsPanel = () => {
 
   if (isLoading) {
     return (
-      <Card className="border-mint-200">
+      <Card className="border-mint-200 bg-white/60 backdrop-blur-sm">
         <CardContent className="p-4">
           <div className="animate-pulse space-y-2">
-            <div className="h-4 bg-gray-200 rounded w-32"></div>
-            <div className="h-3 bg-gray-200 rounded w-24"></div>
+            <div className="h-4 bg-mint-100 rounded w-32"></div>
+            <div className="h-3 bg-mint-100 rounded w-24"></div>
           </div>
         </CardContent>
       </Card>
@@ -33,7 +33,7 @@ export const NotificationSettingsPanel = () => {
   }
 
   return (
-    <Card className="border-mint-200 hover:shadow-md transition-shadow">
+    <Card className="border-mint-200 hover:shadow-md transition-shadow bg-white/60 backdrop-blur-sm">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
@@ -49,6 +49,7 @@ export const NotificationSettingsPanel = () => {
             variant="ghost"
             size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
+            className="hover:bg-mint-50"
           >
             <Settings className="h-4 w-4" />
           </Button>
@@ -58,10 +59,10 @@ export const NotificationSettingsPanel = () => {
       <CardContent className="space-y-4">
         {/* Quick Toggles */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
             <div className="flex items-center gap-2">
               <Target className="h-4 w-4 text-blue-600" />
-              <span className="text-sm font-medium">Study Reminders</span>
+              <span className="text-sm font-medium text-blue-800">Study Reminders</span>
             </div>
             <Switch
               checked={settings.studyReminders}
@@ -71,10 +72,10 @@ export const NotificationSettingsPanel = () => {
             />
           </div>
           
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-100">
             <div className="flex items-center gap-2">
               <Trophy className="h-4 w-4 text-yellow-600" />
-              <span className="text-sm font-medium">Achievements</span>
+              <span className="text-sm font-medium text-yellow-800">Achievements</span>
             </div>
             <Switch
               checked={settings.achievements}
@@ -87,7 +88,7 @@ export const NotificationSettingsPanel = () => {
 
         {/* AI Recommendations */}
         {adaptiveInsights?.hasRecommendations && (
-          <div className="bg-mint-50 p-3 rounded-lg border border-mint-200">
+          <div className="bg-gradient-to-r from-mint-50 to-blue-50 p-4 rounded-lg border border-mint-200">
             <div className="flex items-center gap-2 mb-2">
               <BrainCircuit className="h-4 w-4 text-mint-600" />
               <span className="text-sm font-semibold text-mint-800">
@@ -110,10 +111,10 @@ export const NotificationSettingsPanel = () => {
 
         {/* Advanced Settings */}
         {isExpanded && (
-          <div className="space-y-4 pt-4 border-t border-gray-100">
+          <div className="space-y-4 pt-4 border-t border-mint-100">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">Notification Frequency</span>
+                <span className="text-sm font-medium text-gray-700">Notification Frequency</span>
                 <span className="text-xs text-gray-500">
                   {settings.frequency === 1 ? 'Minimal' : 
                    settings.frequency === 2 ? 'Moderate' : 'Frequent'}
@@ -132,8 +133,8 @@ export const NotificationSettingsPanel = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Browser Notifications</span>
+              <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-100">
+                <span className="text-sm font-medium text-purple-800">Browser Notifications</span>
                 <Switch
                   checked={settings.browserNotifications}
                   onCheckedChange={(checked) => 
@@ -142,8 +143,8 @@ export const NotificationSettingsPanel = () => {
                 />
               </div>
               
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Quiet Hours</span>
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                <span className="text-sm font-medium text-gray-800">Quiet Hours</span>
                 <Switch
                   checked={settings.respectQuietHours}
                   onCheckedChange={(checked) => 
@@ -155,13 +156,17 @@ export const NotificationSettingsPanel = () => {
 
             {/* Optimal Times */}
             <div>
-              <span className="text-sm font-medium">Preferred Notification Times</span>
+              <span className="text-sm font-medium text-gray-700">Preferred Notification Times</span>
               <div className="flex flex-wrap gap-2 mt-2">
                 {['Morning', 'Lunch', 'Evening'].map((time) => (
                   <Badge
                     key={time}
                     variant={settings.preferredTimes.includes(time.toLowerCase()) ? "default" : "outline"}
-                    className="cursor-pointer text-xs"
+                    className={`cursor-pointer text-xs transition-colors ${
+                      settings.preferredTimes.includes(time.toLowerCase()) 
+                        ? 'bg-mint-500 hover:bg-mint-600 text-white' 
+                        : 'hover:bg-mint-50 hover:border-mint-300'
+                    }`}
                     onClick={() => {
                       const timeKey = time.toLowerCase();
                       const newTimes = settings.preferredTimes.includes(timeKey)
@@ -179,7 +184,7 @@ export const NotificationSettingsPanel = () => {
         )}
 
         {/* Status Indicator */}
-        <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-gray-100">
+        <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-mint-100">
           <span>
             Adaptive learning {settings.adaptiveLearning ? 'enabled' : 'disabled'}
           </span>

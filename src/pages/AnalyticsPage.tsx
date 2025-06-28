@@ -11,7 +11,7 @@ import { StandardPageHeader } from "@/components/ui/StandardPageHeader";
 
 const AnalyticsPage = () => {
   const { user, loading } = useRequireAuth();
-  const [activeTab, setActiveTab] = useState("subjects"); // Changed default to "subjects"
+  const [activeTab, setActiveTab] = useState("subjects");
 
   if (loading) {
     return (
