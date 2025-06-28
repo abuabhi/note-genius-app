@@ -3,13 +3,13 @@ import { useAuth } from "@/contexts/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Bell, Star, Clock } from "lucide-react";
+import { Calendar, Clock, TrendingUp, Zap, Star } from "lucide-react";
 import { format } from "date-fns";
-import { useConsolidatedAnalytics } from "@/hooks/useConsolidatedAnalytics";
+import { useUltraSimpleAnalytics } from "@/hooks/useUltraSimpleAnalytics";
 
 export function WelcomeBanner() {
   const { user } = useAuth();
-  const { analytics } = useConsolidatedAnalytics();
+  const { analytics, isLoading } = useUltraSimpleAnalytics();
   
   const { data: userProfile } = useQuery({
     queryKey: ["userProfile", user?.id],
@@ -39,72 +39,111 @@ export function WelcomeBanner() {
     return "evening";
   };
 
+  const formatStudyTime = (minutes: number) => {
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+  };
+
   // Get user's name from profile, fall back to first part of email if no username
   const displayName = userProfile?.username || user?.email?.split('@')[0] || "Genius";
   const timeOfDay = getTimeOfDay();
 
+  if (isLoading) {
+    return (
+      <div className="mb-8 animate-pulse">
+        <div className="h-48 bg-gradient-to-r from-mint-50 to-blue-50 rounded-2xl border border-mint-200"></div>
+      </div>
+    );
+  }
+
   return (
-    <Card className="mb-8 bg-gradient-to-r from-mint-50 to-mint-100 border-mint-200">
-      <CardContent className="p-6">
-        <div className="flex flex-col md:flex-row justify-between gap-4">
-          <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-mint-800">
-              Good {timeOfDay}, {displayName}!
-            </h2>
-            <p className="text-mint-700">
-              {new Date().toLocaleDateString(undefined, { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              })}
-            </p>
+    <div className="mb-8 relative overflow-hidden rounded-2xl bg-gradient-to-br from-mint-500 via-mint-600 to-blue-600 text-white shadow-2xl">
+      {/* Background decoration */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-white/5 to-transparent rounded-full transform translate-x-32 -translate-y-32"></div>
+      
+      <CardContent className="relative p-8">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+          {/* Left side - Greeting */}
+          <div className="space-y-4">
+            <div>
+              <h1 className="text-3xl lg:text-4xl font-bold mb-2">
+                Good {timeOfDay}, {displayName}! ✨
+              </h1>
+              <p className="text-mint-100 text-lg">
+                {format(new Date(), "EEEE, MMMM d, yyyy")}
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-2 text-mint-100">
+              <Calendar className="h-5 w-5" />
+              <span>Ready to continue your learning journey?</span>
+            </div>
           </div>
           
-          <div className="flex flex-wrap gap-4 md:gap-6">
-            {/* Show latest session if available */}
-            {analytics.recentSessions && analytics.recentSessions.length > 0 && (
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-mint-200 rounded-full">
-                  <Clock className="h-4 w-4 text-mint-700" />
+          {/* Right side - Key metrics */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6 w-full lg:w-auto">
+            {/* Today's Study Time */}
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-white/20 rounded-lg">
+                  <Clock className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <p className="text-xs text-mint-600">Last study session</p>
-                  <p className="font-medium text-mint-800">
-                    {format(new Date(analytics.recentSessions[0].start_time), "MMM d")} - {analytics.recentSessions[0].title}
+                  <p className="text-xs text-mint-100 mb-1">Today's Focus</p>
+                  <p className="text-xl font-bold text-white">
+                    {formatStudyTime(analytics.todayStudyTimeMinutes)}
                   </p>
                 </div>
               </div>
-            )}
-            
-            {/* Show total study time */}
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-mint-200 rounded-full">
-                <Star className="h-4 w-4 text-mint-700" />
-              </div>
-              <div>
-                <p className="text-xs text-mint-600">Total study time</p>
-                <p className="font-medium text-mint-800">
-                  {analytics.totalStudyTime}h
-                </p>
+            </div>
+
+            {/* Total Study Time */}
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-white/20 rounded-lg">
+                  <TrendingUp className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs text-mint-100 mb-1">Total Progress</p>
+                  <p className="text-xl font-bold text-white">
+                    {formatStudyTime(analytics.totalStudyTimeMinutes)}
+                  </p>
+                </div>
               </div>
             </div>
-            
-            {/* Show today's study time */}
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-mint-200 rounded-full">
-                <Bell className="h-4 w-4 text-mint-700" />
-              </div>
-              <div>
-                <p className="text-xs text-mint-600">Today's study time</p>
-                <p className="font-medium text-mint-800">
-                  {analytics.todayStudyTime}h
-                </p>
+
+            {/* Study Streak */}
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-white/20 rounded-lg">
+                  <Zap className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs text-mint-100 mb-1">Study Streak</p>
+                  <p className="text-xl font-bold text-white">
+                    {analytics.streakDays} {analytics.streakDays === 1 ? 'day' : 'days'}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Bottom section - Recent activity hint */}
+        {analytics.recentSessions && analytics.recentSessions.length > 0 && (
+          <div className="mt-6 pt-6 border-t border-white/20">
+            <div className="flex items-center gap-2 text-mint-100">
+              <Star className="h-4 w-4" />
+              <span className="text-sm">
+                Last session: {analytics.recentSessions[0].title} • {format(new Date(analytics.recentSessions[0].start_time), "MMM d")}
+              </span>
+            </div>
+          </div>
+        )}
       </CardContent>
-    </Card>
+    </div>
   );
 }

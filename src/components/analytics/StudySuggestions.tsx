@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +7,7 @@ import { useStudySuggestions } from "@/hooks/useStudySuggestions";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useUnifiedSessionTracker } from "@/hooks/useUnifiedSessionTracker";
 import { toast } from "sonner";
+import { Sparkles, Brain, Target, Zap } from "lucide-react";
 
 interface StudySuggestionsProps {
   subjectAnalytics?: any;
@@ -87,21 +89,43 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
     }
   };
 
+  const getPriorityIcon = (priority: string) => {
+    switch (priority) {
+      case 'high': return <Target className="h-4 w-4 text-red-600" />;
+      case 'medium': return <Zap className="h-4 w-4 text-yellow-600" />;
+      default: return <Brain className="h-4 w-4 text-blue-600" />;
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'bg-red-50 text-red-700 border-red-200';
+      case 'medium': return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+      default: return 'bg-blue-50 text-blue-700 border-blue-200';
+    }
+  };
+
   if (isLoading) {
     return (
-      <Card className="mb-6">
+      <Card className="mb-8 bg-gradient-to-br from-purple-50 via-blue-50 to-mint-50 border-purple-200 shadow-lg">
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <div className="w-5 h-5 bg-purple-200 rounded animate-pulse"></div>
-            AI Study Suggestions
-          </CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-purple-100 rounded-lg animate-pulse">
+              <div className="w-6 h-6 bg-purple-200 rounded"></div>
+            </div>
+            <div>
+              <div className="h-6 w-48 bg-purple-100 rounded animate-pulse mb-2"></div>
+              <div className="h-4 w-32 bg-purple-50 rounded animate-pulse"></div>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="p-4 bg-gray-100 rounded-lg animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-full"></div>
+              <div key={i} className="p-4 bg-white/60 rounded-xl border border-purple-100 animate-pulse">
+                <div className="h-4 bg-purple-100 rounded w-3/4 mb-3"></div>
+                <div className="h-3 bg-purple-50 rounded w-full mb-2"></div>
+                <div className="h-3 bg-purple-50 rounded w-2/3"></div>
               </div>
             ))}
           </div>
@@ -115,67 +139,81 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
   }
 
   return (
-    <Card className="mb-6 bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+    <Card className="mb-8 bg-gradient-to-br from-purple-50 via-blue-50 to-mint-50 border-purple-200 shadow-lg">
       <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <span className="text-xl">🤖</span>
-          AI Study Suggestions
-          <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
-            {suggestions.length} personalized
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg">
+              <Sparkles className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <CardTitle className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                AI Study Suggestions
+              </CardTitle>
+              <p className="text-sm text-purple-600 mt-1">
+                Personalized recommendations just for you
+              </p>
+            </div>
+          </div>
+          <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 font-semibold">
+            {suggestions.length} Smart Tips
           </Badge>
-        </CardTitle>
+        </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {suggestions.map((suggestion, index) => (
             <div 
               key={suggestion.id || index}
-              className="p-4 bg-white rounded-lg border border-purple-100 hover:shadow-md transition-shadow"
+              className="group p-5 bg-white/80 backdrop-blur-sm rounded-xl border border-purple-100 hover:border-purple-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-lg">{suggestion.icon}</span>
-                    <h4 className="font-medium text-sm">{suggestion.title}</h4>
-                    <Badge 
-                      variant="outline" 
-                      className={`text-xs ${
-                        suggestion.priority === 'high' 
-                          ? 'bg-red-50 text-red-700 border-red-200' 
-                          : suggestion.priority === 'medium'
-                          ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                          : 'bg-gray-50 text-gray-700 border-gray-200'
-                      }`}
-                    >
-                      {suggestion.priority}
-                    </Badge>
+              <div className="space-y-4">
+                {/* Header with icon and priority */}
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="text-2xl">{suggestion.icon}</div>
+                    <div className="flex items-center gap-2">
+                      {getPriorityIcon(suggestion.priority)}
+                      <Badge 
+                        variant="outline" 
+                        className={`text-xs font-medium ${getPriorityColor(suggestion.priority)}`}
+                      >
+                        {suggestion.priority}
+                      </Badge>
+                    </div>
                   </div>
-                  <p className="text-xs text-gray-600">{suggestion.description}</p>
                 </div>
                 
-                {/* Button moved to the right side */}
+                {/* Content */}
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2 leading-snug">
+                    {suggestion.title}
+                  </h4>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    {suggestion.description}
+                  </p>
+                </div>
+                
+                {/* Action button */}
                 {suggestion.actionable && (
-                  <div className="flex-shrink-0">
-                    <Button
-                      size="sm"
-                      onClick={() => handleSuggestionClick(suggestion)}
-                      disabled={isStarting || (suggestion.type === 'schedule' && isActive)}
-                      className="bg-purple-600 hover:bg-purple-700 text-white h-8 text-xs whitespace-nowrap"
-                    >
-                      {suggestion.type === 'schedule'
-                        ? isActive
-                          ? 'Session Active'
-                          : isStarting 
-                          ? 'Starting...'
-                          : 'Start Session Now'
-                        : suggestion.type === 'focus'
-                        ? 'Study Now'
-                        : suggestion.type === 'performance'
-                        ? 'Improve Now'
-                        : 'Take Action'
-                      }
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    disabled={isStarting || (suggestion.type === 'schedule' && isActive)}
+                    className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 group-hover:shadow-md"
+                  >
+                    {suggestion.type === 'schedule'
+                      ? isActive
+                        ? 'Session Active'
+                        : isStarting 
+                        ? 'Starting...'
+                        : 'Start Now'
+                      : suggestion.type === 'focus'
+                      ? 'Study This'
+                      : suggestion.type === 'performance'
+                      ? 'Improve Now'
+                      : 'Take Action'
+                    }
+                  </Button>
                 )}
               </div>
             </div>
