@@ -3,16 +3,16 @@ import React, { memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { useUnifiedSubjectAnalytics } from "@/hooks/useUnifiedSubjectAnalytics";
-import { Clock, Calendar, Trophy, TrendingUp, BookOpen, Target, AlertCircle, Lightbulb, ArrowRight } from "lucide-react";
+import { Clock, Calendar, Trophy, TrendingUp, BookOpen, AlertCircle, CheckCircle, Target, Brain } from "lucide-react";
 
 const EnhancedSubjectProgressDashboard = memo(() => {
-  const { subjectAnalytics, isLoading } = useUnifiedSubjectAnalytics();
+  const { enhancedAnalytics, isLoading } = useUnifiedSubjectAnalytics();
 
   if (isLoading) {
     return (
       <div className="space-y-8">
+        {/* Loading skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {Array.from({ length: 3 }, (_, i) => (
             <Card key={i} className="animate-pulse">
@@ -23,9 +23,16 @@ const EnhancedSubjectProgressDashboard = memo(() => {
             </Card>
           ))}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: 6 }, (_, i) => (
-            <div key={i} className="h-32 bg-gray-200 rounded animate-pulse"></div>
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-4">
+                <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                <div className="h-6 bg-gray-200 rounded mb-2"></div>
+                <div className="h-2 bg-gray-200 rounded mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded"></div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </div>
@@ -39,99 +46,83 @@ const EnhancedSubjectProgressDashboard = memo(() => {
     return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
   };
 
+  const getSubjectColor = (percentage: number) => {
+    if (percentage >= 85) return "text-green-600";
+    if (percentage >= 60) return "text-yellow-600";
+    return "text-red-600";
+  };
+
+  const getSubjectBorderColor = (percentage: number) => {
+    if (percentage >= 85) return "border-green-200";
+    if (percentage >= 60) return "border-yellow-200";
+    return "border-red-200";
+  };
+
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-100 text-red-700 border-red-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-      default: return 'bg-green-100 text-green-700 border-green-200';
+      case 'high': return 'bg-red-100 text-red-800 border-red-200';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'low': return 'bg-green-100 text-green-800 border-green-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
-  const getSubjectColor = (percentage: number) => {
-    if (percentage >= 85) return 'border-green-200 bg-gradient-to-br from-green-50 to-green-100';
-    if (percentage >= 60) return 'border-yellow-200 bg-gradient-to-br from-yellow-50 to-yellow-100';
-    return 'border-red-200 bg-gradient-to-br from-red-50 to-red-100';
-  };
-
-  const getProgressColor = (percentage: number) => {
-    if (percentage >= 85) return 'bg-green-500';
-    if (percentage >= 60) return 'bg-yellow-500';
-    return 'bg-red-500';
-  };
-
-  const MetricCard = memo(({ title, value, icon: Icon, description }: {
+  const MetricCard = memo(({ title, value, icon: Icon, description, color = "mint" }: {
     title: string;
     value: string | number;
     icon: React.ComponentType<any>;
     description?: string;
+    color?: string;
   }) => (
-    <Card className="bg-white border-mint-200 hover:shadow-md transition-all duration-200">
+    <Card className={`bg-gradient-to-br from-${color}-50 to-white border-${color}-200 hover:shadow-lg transition-all`}>
       <CardContent className="p-6">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-mint-100 rounded-lg">
-            <Icon className="h-5 w-5 text-mint-600" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-mint-600">{title}</p>
-            <p className="text-2xl font-bold text-mint-900">{value}</p>
-            {description && (
-              <p className="text-xs text-gray-500 mt-1">{description}</p>
-            )}
+        <div className="flex items-center justify-between mb-2">
+          <Icon className={`h-6 w-6 text-${color}-600`} />
+          <div className={`text-2xl font-bold text-${color}-900`}>
+            {value}
           </div>
         </div>
+        <h3 className={`font-medium text-${color}-800 mb-1`}>{title}</h3>
+        {description && (
+          <p className={`text-sm text-${color}-600`}>{description}</p>
+        )}
       </CardContent>
     </Card>
   ));
 
   const SubjectCard = memo(({ subject }: { subject: any }) => (
-    <Card className={`transition-all duration-200 hover:shadow-md ${getSubjectColor(subject.completionPercentage)}`}>
-      <CardContent className="p-4">
-        <div className="space-y-3">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-gray-900 truncate">{subject.name}</h3>
-            <Badge variant="outline" className="text-xs font-medium">
-              {subject.completionPercentage}%
-            </Badge>
+    <Card className={`hover:shadow-lg transition-all ${getSubjectBorderColor(subject.completionPercentage)} border-2`}>
+      <CardContent className="p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold text-gray-900 truncate">{subject.name}</h3>
+          <Badge variant="outline" className={getSubjectColor(subject.completionPercentage)}>
+            {subject.completionPercentage}%
+          </Badge>
+        </div>
+        
+        <div className="mb-4">
+          <Progress 
+            value={subject.completionPercentage} 
+            className="h-3"
+          />
+        </div>
+        
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-gray-500" />
+            <span className="text-gray-600">{formatTime(subject.totalStudyTimeMinutes)}</span>
           </div>
-
-          {/* Progress Bar */}
-          <div className="space-y-1">
-            <Progress 
-              value={subject.completionPercentage} 
-              className="h-2"
-              style={{
-                '--progress-background': getProgressColor(subject.completionPercentage)
-              } as React.CSSProperties}
-            />
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-gray-500" />
+            <span className="text-gray-600">{subject.sessionCount} sessions</span>
           </div>
-
-          {/* Metrics Grid */}
-          <div className="grid grid-cols-2 gap-2 pt-2">
-            <div className="text-center">
-              <p className="text-lg font-bold text-gray-900">{formatTime(subject.totalStudyTimeMinutes)}</p>
-              <p className="text-xs text-gray-600">Study Time</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-bold text-gray-900">{subject.sessionCount}</p>
-              <p className="text-xs text-gray-600">Sessions</p>
-            </div>
+          <div className="flex items-center gap-2">
+            <Brain className="h-4 w-4 text-gray-500" />
+            <span className="text-gray-600">{subject.flashcardMastery}% mastery</span>
           </div>
-
-          {/* Performance Metrics */}
-          <div className="grid grid-cols-3 gap-1 pt-2 border-t border-gray-200">
-            <div className="text-center">
-              <p className="text-sm font-medium text-gray-900">{subject.flashcardMastery}%</p>
-              <p className="text-xs text-gray-500">Cards</p>
-            </div>
-            <div className="text-center">
-              <p className="text-sm font-medium text-gray-900">{subject.averageScore}%</p>
-              <p className="text-xs text-gray-500">Quizzes</p>
-            </div>
-            <div className="text-center">
-              <p className="text-sm font-medium text-gray-900">{subject.studyConsistency}%</p>
-              <p className="text-xs text-gray-500">Consistency</p>
-            </div>
+          <div className="flex items-center gap-2">
+            <Trophy className="h-4 w-4 text-gray-500" />
+            <span className="text-gray-600">{subject.averageScore}% avg</span>
           </div>
         </div>
       </CardContent>
@@ -139,154 +130,172 @@ const EnhancedSubjectProgressDashboard = memo(() => {
   ));
 
   const RecommendationCard = memo(({ recommendation }: { recommendation: any }) => (
-    <Card className="bg-white border-mint-200 hover:shadow-sm transition-all duration-200">
+    <Card className="border-l-4 border-l-blue-500">
       <CardContent className="p-4">
-        <div className="flex items-start gap-3">
-          <div className="p-2 bg-mint-100 rounded-lg text-mint-600">
-            <Lightbulb className="h-4 w-4" />
-          </div>
-          
-          <div className="flex-1 space-y-2">
-            <div className="flex items-center justify-between">
-              <Badge className={getPriorityColor(recommendation.priority)}>
-                {recommendation.priority.toUpperCase()}
-              </Badge>
-              {recommendation.subject && (
-                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                  {recommendation.subject}
-                </span>
-              )}
-            </div>
-            
-            <p className="text-sm text-gray-800 font-medium">
-              {recommendation.message}
-            </p>
-            
-            {recommendation.actionItems?.length > 0 && (
-              <div className="space-y-1">
-                <p className="text-xs font-medium text-gray-600">Action Items:</p>
-                <ul className="text-xs text-gray-600 space-y-1">
-                  {recommendation.actionItems.slice(0, 2).map((item: string, idx: number) => (
-                    <li key={idx} className="flex items-center gap-1">
-                      <ArrowRight className="h-3 w-3 text-mint-500" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
+        <div className="flex items-start justify-between mb-2">
+          <h4 className="font-medium text-gray-900">{recommendation.subject_name}</h4>
+          <Badge className={getPriorityColor(recommendation.priority)}>
+            {recommendation.priority}
+          </Badge>
         </div>
+        <p className="text-sm text-gray-600 mb-3">{recommendation.message}</p>
+        {recommendation.action_items && recommendation.action_items.length > 0 && (
+          <div className="space-y-1">
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Action Items:</span>
+            <ul className="text-xs text-gray-600 space-y-1">
+              {recommendation.action_items.map((item: string, index: number) => (
+                <li key={index} className="flex items-center gap-2">
+                  <div className="h-1 w-1 bg-blue-500 rounded-full"></div>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </CardContent>
     </Card>
   ));
 
   return (
     <div className="space-y-8">
-      {/* Top Section - Key Metrics */}
+      {/* Key Metrics Section */}
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Learning Overview</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Study Analytics Overview</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <MetricCard
             title="Total Study Time"
-            value={formatTime(Math.round(subjectAnalytics.totalStudyTime * 60))}
+            value={formatTime(enhancedAnalytics.totalStudyTimeMinutes)}
             icon={Clock}
-            description="All time"
+            description="All time across subjects"
+            color="blue"
           />
           <MetricCard
             title="Last 30 Days"
-            value={formatTime(Math.round(subjectAnalytics.thirtyDayStudyTime * 60))}
+            value={formatTime(enhancedAnalytics.last30DaysMinutes)}
             icon={Calendar}
-            description="Recent activity"
+            description="Recent study activity"
+            color="green"
           />
           <MetricCard
             title="Last 7 Days"
-            value={formatTime(Math.round(subjectAnalytics.sevenDayStudyTime * 60))}
+            value={formatTime(enhancedAnalytics.last7DaysMinutes)}
             icon={TrendingUp}
-            description="This week"
+            description="This week's progress"
+            color="purple"
           />
         </div>
       </div>
 
-      {/* Middle Section - Subject Progress Grid */}
+      {/* Subject Progress Section */}
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">Subject Progress</h2>
-          <span className="text-sm text-gray-500">
-            {subjectAnalytics.subjects.length} subject{subjectAnalytics.subjects.length !== 1 ? 's' : ''}
-          </span>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">Subject Progress</h2>
+          <div className="text-sm text-gray-500">
+            {enhancedAnalytics.subjects.length} subjects tracked
+          </div>
         </div>
         
-        {subjectAnalytics.subjects.length === 0 ? (
+        {enhancedAnalytics.subjects.length === 0 ? (
           <Card className="bg-gray-50 border-gray-200">
             <CardContent className="flex flex-col items-center justify-center py-12">
-              <BookOpen className="h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Subjects Yet</h3>
+              <BookOpen className="h-16 w-16 text-gray-400 mb-4" />
+              <h3 className="text-xl font-medium text-gray-900 mb-2">No Subjects Yet</h3>
               <p className="text-gray-600 text-center max-w-md">
-                Create flashcard sets or take quizzes to see your subject progress here.
+                Create flashcard sets, take quizzes, or start study sessions to see your subject progress here.
               </p>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {subjectAnalytics.subjects.map((subject) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {enhancedAnalytics.subjects.map((subject) => (
               <SubjectCard key={subject.id} subject={subject} />
             ))}
           </div>
         )}
       </div>
 
-      {/* Subject Performance Summary */}
-      {subjectAnalytics.subjects.length > 0 && (
+      {/* Study Recommendations Section */}
+      {enhancedAnalytics.recommendations && enhancedAnalytics.recommendations.length > 0 && (
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Performance Summary</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Study Recommendations</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {enhancedAnalytics.recommendations.map((recommendation, index) => (
+              <RecommendationCard key={index} recommendation={recommendation} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Study Insights Section */}
+      {enhancedAnalytics.subjects.length > 0 && (
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Study Insights</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+            <Card className="bg-gradient-to-br from-mint-50 to-white border-mint-200">
               <CardContent className="p-6 text-center">
-                <Trophy className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-green-800">
-                  {subjectAnalytics.subjects.filter(s => s.completionPercentage >= 85).length}
+                <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-3" />
+                <div className="text-2xl font-bold text-green-800 mb-1">
+                  {enhancedAnalytics.subjects.filter(s => s.completionPercentage >= 85).length}
                 </div>
-                <div className="text-sm text-green-700">Excelling (85%+)</div>
+                <p className="text-sm text-green-600">Excelling (85%+)</p>
               </CardContent>
             </Card>
             
-            <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
+            <Card className="bg-gradient-to-br from-yellow-50 to-white border-yellow-200">
               <CardContent className="p-6 text-center">
-                <Target className="h-8 w-8 text-yellow-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-yellow-800">
-                  {subjectAnalytics.subjects.filter(s => s.completionPercentage >= 60 && s.completionPercentage < 85).length}
+                <Target className="h-8 w-8 text-yellow-600 mx-auto mb-3" />
+                <div className="text-2xl font-bold text-yellow-800 mb-1">
+                  {enhancedAnalytics.subjects.filter(s => s.completionPercentage >= 60 && s.completionPercentage < 85).length}
                 </div>
-                <div className="text-sm text-yellow-700">Progressing (60-84%)</div>
+                <p className="text-sm text-yellow-600">Progressing (60-84%)</p>
               </CardContent>
             </Card>
             
-            <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
+            <Card className="bg-gradient-to-br from-red-50 to-white border-red-200">
               <CardContent className="p-6 text-center">
-                <AlertCircle className="h-8 w-8 text-red-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-red-800">
-                  {subjectAnalytics.subjects.filter(s => s.completionPercentage < 60).length}
+                <AlertCircle className="h-8 w-8 text-red-600 mx-auto mb-3" />
+                <div className="text-2xl font-bold text-red-800 mb-1">
+                  {enhancedAnalytics.subjects.filter(s => s.completionPercentage < 60).length}
                 </div>
-                <div className="text-sm text-red-700">Needs Attention (&lt;60%)</div>
+                <p className="text-sm text-red-600">Needs Attention (&lt;60%)</p>
               </CardContent>
             </Card>
           </div>
         </div>
       )}
 
-      {/* Bottom Section - Study Recommendations */}
-      {subjectAnalytics.recommendations && subjectAnalytics.recommendations.length > 0 && (
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Lightbulb className="h-5 w-5 text-mint-600" />
-            Study Recommendations
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {subjectAnalytics.recommendations.slice(0, 4).map((recommendation, index) => (
-              <RecommendationCard key={index} recommendation={recommendation} />
-            ))}
-          </div>
-        </div>
+      {/* Study Time Averages */}
+      {enhancedAnalytics.subjects.length > 0 && (
+        <Card className="bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-indigo-900">
+              <TrendingUp className="h-6 w-6 text-indigo-600" />
+              Study Time Insights
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-indigo-800">
+                  {formatTime(Math.round(enhancedAnalytics.totalStudyTimeMinutes / Math.max(enhancedAnalytics.subjects.length, 1)))}
+                </div>
+                <p className="text-sm text-indigo-600">Avg per Subject</p>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-indigo-800">
+                  {formatTime(Math.round(enhancedAnalytics.last30DaysMinutes / 30))}
+                </div>
+                <p className="text-sm text-indigo-600">Daily Average (30d)</p>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-indigo-800">
+                  {formatTime(Math.round(enhancedAnalytics.last7DaysMinutes / 7))}
+                </div>
+                <p className="text-sm text-indigo-600">Daily Average (7d)</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
