@@ -15,12 +15,18 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
   const { suggestions, isLoading } = useStudySuggestions(subjectAnalytics);
   const navigate = useNavigate();
   const location = useLocation();
-  const { startSession } = useUnifiedSessionTracker();
+  const { startSession, isActive, currentTitle } = useUnifiedSessionTracker();
   const [isStarting, setIsStarting] = useState(false);
 
   const handleSuggestionClick = async (suggestion: any) => {
     try {
       console.log("🎯 CTA clicked:", suggestion);
+
+      // Check if session is already active for schedule suggestions
+      if (suggestion.type === 'schedule' && isActive) {
+        toast.info(`Session already active: ${currentTitle}. End current session to start a new one.`);
+        return;
+      }
 
       // Handle different suggestion types with smart contextual actions
       switch (suggestion.type) {
@@ -153,11 +159,13 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
                     <Button
                       size="sm"
                       onClick={() => handleSuggestionClick(suggestion)}
-                      disabled={isStarting}
+                      disabled={isStarting || (suggestion.type === 'schedule' && isActive)}
                       className="bg-purple-600 hover:bg-purple-700 text-white h-8 text-xs whitespace-nowrap"
                     >
                       {suggestion.type === 'schedule'
-                        ? isStarting 
+                        ? isActive
+                          ? 'Session Active'
+                          : isStarting 
                           ? 'Starting...'
                           : 'Start Session Now'
                         : suggestion.type === 'focus'

@@ -1,237 +1,233 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useTimezone } from '@/hooks/useTimezone';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  getTodayInTimezone, 
-  getStartOfDayInTimezone, 
-  getEndOfDayInTimezone,
-  getWeekStartInTimezone,
-  getWeekEndInTimezone
-} from '@/utils/timezoneUtils';
+import { useMemo } from 'react';
 
 export const useTimezoneAwareAnalytics = () => {
   const { user } = useAuth();
-  const { timezone, isLoading: timezoneLoading } = useTimezone();
+
+  // Get user's timezone from their profile or browser
+  const { data: userTimezone } = useQuery({
+    queryKey: ['user-timezone', user?.id],
+    queryFn: async () => {
+      if (!user) return 'UTC';
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('timezone')
+        .eq('id', user.id)
+        .single();
+      
+      return profile?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+    },
+    enabled: !!user,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  });
+
+  const timezone = userTimezone || 'UTC';
 
   console.log('🔍 Analytics Hook Debug:', {
     hasUser: !!user,
     userId: user?.id,
     timezone,
-    timezoneLoading,
-    enableQuery: !!user
+    timezoneLoading: !userTimezone,
+    enableQuery: !!user && !!userTimezone
   });
 
   const { data: analytics, isLoading, error } = useQuery({
-    queryKey: ['timezone-aware-analytics', user?.id, timezone],
+    queryKey: ['timezone-analytics', user?.id, timezone],
     queryFn: async () => {
-      console.log('📊 Starting analytics query with:', { userId: user?.id, timezone });
+      if (!user) throw new Error('User not authenticated');
 
-      if (!user) {
-        console.log('❌ No user found');
-        throw new Error('User not authenticated');
-      }
+      console.log('📊 Fetching analytics for timezone:', timezone);
 
-      try {
-        // Get timezone boundaries
-        const todayString = getTodayInTimezone(timezone);
-        const todayStart = getStartOfDayInTimezone(timezone);
-        const todayEnd = getEndOfDayInTimezone(timezone);
-        const weekStart = getWeekStartInTimezone(timezone, 0);
-        const weekEnd = getWeekEndInTimezone(timezone, 0);
-        const lastWeekStart = getWeekStartInTimezone(timezone, 1);
-        const lastWeekEnd = getWeekEndInTimezone(timezone, 1);
+      // Calculate date boundaries in user's timezone
+      const now = new Date();
+      const todayInTimezone = new Date(now.toLocaleString("en-US", { timeZone: timezone }));
+      const todayString = todayInTimezone.toISOString().split('T')[0];
+      
+      const weekAgo = new Date(todayInTimezone.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const weekAgoString = weekAgo.toISOString().split('T')[0];
+      
+      const twoWeeksAgo = new Date(todayInTimezone.getTime() - 14 * 24 * 60 * 60 * 1000);
+      const twoWeeksAgoString = twoWeeksAgo.toISOString().split('T')[0];
 
-        console.log('🕐 Timezone boundaries:', {
-          todayString,
-          todayStart: todayStart.toISOString(),
-          todayEnd: todayEnd.toISOString(),
-          weekStart: weekStart.toISOString(),
-          weekEnd: weekEnd.toISOString()
-        });
-
-        // Fetch all sessions
-        const { data: sessions, error: sessionsError } = await supabase
+      // Fetch all data in parallel
+      const [
+        sessionsResult,
+        flashcardSetsResult,
+        progressResult,
+        notesResult,
+        quizzesResult
+      ] = await Promise.all([
+        // Study sessions - Fix time calculation bug
+        supabase
           .from('study_sessions')
           .select('*')
           .eq('user_id', user.id)
-          .order('start_time', { ascending: false });
-
-        if (sessionsError) {
-          console.error('❌ Sessions query error:', sessionsError);
-          throw sessionsError;
-        }
-
-        console.log('📊 Raw sessions data:', { 
-          sessionCount: sessions?.length || 0,
-          sessions: sessions?.slice(0, 3) // Log first 3 for debugging
-        });
-
-        // Fetch flashcard sets count
-        const { data: flashcardSets, error: setsError } = await supabase
+          .eq('auto_created', false)
+          .order('start_time', { ascending: false }),
+        
+        // Flashcard sets and progress
+        supabase
           .from('flashcard_sets')
-          .select('id')
-          .eq('user_id', user.id);
-
-        if (setsError) {
-          console.log('⚠️ Flashcard sets query failed:', setsError);
-        }
-
-        // Fetch notes count
-        const { data: notes, error: notesError } = await supabase
+          .select(`
+            id, name, created_at,
+            flashcard_set_cards(count),
+            user_flashcard_progress(mastery_level, last_score)
+          `)
+          .eq('user_id', user.id),
+        
+        // User flashcard progress for mastery calculation
+        supabase
+          .from('user_flashcard_progress')
+          .select('mastery_level, last_score, grade')
+          .eq('user_id', user.id),
+        
+        // Notes count
+        supabase
           .from('notes')
           .select('id')
-          .eq('user_id', user.id);
+          .eq('user_id', user.id),
+        
+        // Quizzes
+        supabase
+          .from('quiz_results')
+          .select('*')
+          .eq('user_id', user.id)
+      ]);
 
-        if (notesError) {
-          console.log('⚠️ Notes query failed:', notesError);
-        }
+      const sessions = sessionsResult.data || [];
+      const flashcardSets = flashcardSetsResult.data || [];
+      const progressData = progressResult.data || [];
+      const notes = notesResult.data || [];
+      const quizResults = quizzesResult.data || [];
 
-        // Fetch quiz count
-        const { data: quizzes, error: quizzesError } = await supabase
-          .from('quizzes')
-          .select('id')
-          .eq('user_id', user.id);
+      // Filter sessions by date ranges
+      const todaySessions = sessions.filter(s => 
+        s.start_time.startsWith(todayString)
+      );
+      
+      const weeklySessions = sessions.filter(s => 
+        s.start_time >= weekAgoString
+      );
+      
+      const previousWeekSessions = sessions.filter(s => 
+        s.start_time >= twoWeeksAgoString && s.start_time < weekAgoString
+      );
 
-        if (quizzesError) {
-          console.log('⚠️ Quizzes query failed:', quizzesError);
-        }
+      // Calculate time metrics - FIX: Convert seconds to minutes properly
+      const calculateTimeFromSessions = (sessionList: any[]) => {
+        return sessionList
+          .filter(s => !s.is_active && s.duration) // Only completed sessions
+          .reduce((total, s) => total + (s.duration || 0), 0); // Duration is in seconds
+      };
 
-        // Calculate analytics from sessions
-        const allSessions = sessions || [];
-        const completedSessions = allSessions.filter(s => !s.is_active && s.duration);
-        const activeSessions = allSessions.filter(s => s.is_active);
+      const totalStudyTimeSeconds = calculateTimeFromSessions(sessions);
+      const todayStudyTimeSeconds = calculateTimeFromSessions(todaySessions);
+      const weeklyStudyTimeSeconds = calculateTimeFromSessions(weeklySessions);
+      const previousWeekTimeSeconds = calculateTimeFromSessions(previousWeekSessions);
 
-        // Today's sessions
-        const todaySessions = allSessions.filter(session => {
-          if (!session.start_time) return false;
-          const sessionDate = new Date(session.start_time);
-          return sessionDate >= todayStart && sessionDate <= todayEnd;
-        });
+      // Convert seconds to minutes and hours properly
+      const totalStudyTimeMinutes = Math.round(totalStudyTimeSeconds / 60);
+      const todayStudyTimeMinutes = Math.round(todayStudyTimeSeconds / 60);
+      const weeklyStudyTimeMinutes = Math.round(weeklyStudyTimeSeconds / 60);
+      const previousWeekTimeMinutes = Math.round(previousWeekTimeSeconds / 60);
 
-        // This week's sessions
-        const weekSessions = allSessions.filter(session => {
-          if (!session.start_time) return false;
-          const sessionDate = new Date(session.start_time);
-          return sessionDate >= weekStart && sessionDate <= weekEnd;
-        });
+      // Calculate other metrics
+      const completedSessions = sessions.filter(s => !s.is_active);
+      const averageSessionTime = completedSessions.length > 0 
+        ? Math.round(totalStudyTimeSeconds / completedSessions.length) 
+        : 0;
 
-        // Last week's sessions
-        const lastWeekSessions = allSessions.filter(session => {
-          if (!session.start_time) return false;
-          const sessionDate = new Date(session.start_time);
-          return sessionDate >= lastWeekStart && sessionDate <= lastWeekEnd;
-        });
+      const totalCardsReviewed = sessions.reduce((acc, s) => acc + (s.cards_reviewed || 0), 0);
+      const totalCardsCorrect = sessions.reduce((acc, s) => acc + (s.cards_correct || 0), 0);
+      const flashcardAccuracy = totalCardsReviewed > 0 
+        ? Math.round((totalCardsCorrect / totalCardsReviewed) * 100) 
+        : 0;
 
-        // Calculate metrics
-        const totalStudyTimeMinutes = completedSessions.reduce((acc, s) => acc + (s.duration || 0), 0);
-        const todayStudyTimeMinutes = todaySessions.reduce((acc, s) => acc + (s.duration || 0), 0);
-        const weeklyStudyTimeMinutes = weekSessions.reduce((acc, s) => acc + (s.duration || 0), 0);
-        const lastWeekTimeMinutes = lastWeekSessions.reduce((acc, s) => acc + (s.duration || 0), 0);
+      const totalCardsMastered = progressData.filter(p => p.mastery_level >= 4).length;
 
-        const totalCardsReviewed = allSessions.reduce((acc, s) => acc + (s.cards_reviewed || 0), 0);
-        const totalCardsCorrect = allSessions.reduce((acc, s) => acc + (s.cards_correct || 0), 0);
-        const flashcardAccuracy = totalCardsReviewed > 0 ? Math.round((totalCardsCorrect / totalCardsReviewed) * 100) : 0;
-
-        // Calculate streak (simplified - consecutive days with sessions)
-        const today = new Date();
-        let streakDays = 0;
-        for (let i = 0; i < 30; i++) {
-          const checkDate = new Date(today);
-          checkDate.setDate(today.getDate() - i);
-          const dayString = checkDate.toISOString().split('T')[0];
-          
-          const hasSessions = allSessions.some(session => {
-            if (!session.start_time) return false;
-            const sessionDate = new Date(session.start_time);
-            return sessionDate.toISOString().split('T')[0] === dayString;
-          });
-          
-          if (hasSessions) {
+      // Calculate streak
+      let streakDays = 0;
+      const uniqueStudyDates = [...new Set(sessions.map(s => s.start_time.split('T')[0]))].sort().reverse();
+      
+      if (uniqueStudyDates.includes(todayString)) {
+        streakDays = 1;
+        for (let i = 1; i < uniqueStudyDates.length; i++) {
+          const expectedDate = new Date(todayInTimezone.getTime() - i * 24 * 60 * 60 * 1000)
+            .toISOString().split('T')[0];
+          if (uniqueStudyDates.includes(expectedDate)) {
             streakDays++;
-          } else if (i > 0) {
-            break; // Break streak if no sessions found (but not on first day)
+          } else {
+            break;
           }
         }
-
-        // Weekly goal (default to 10 hours = 600 minutes)
-        const weeklyGoalMinutes = 600;
-        const weeklyGoalProgress = Math.min(Math.round((weeklyStudyTimeMinutes / weeklyGoalMinutes) * 100), 100);
-        
-        // Weekly change calculation
-        const weeklyChange = lastWeekTimeMinutes > 0 
-          ? Math.round(((weeklyStudyTimeMinutes - lastWeekTimeMinutes) / lastWeekTimeMinutes) * 100)
-          : weeklyStudyTimeMinutes > 0 ? 100 : 0;
-
-        const result = {
-          // Session metrics
-          totalSessions: allSessions.length,
-          todaySessions: todaySessions.length,
-          weeklySessions: weekSessions.length,
-          averageSessionTime: completedSessions.length > 0 ? Math.round(totalStudyTimeMinutes / completedSessions.length) : 0,
-          activeSessions: activeSessions, // Keep as array for compatibility
-          
-          // Time metrics
-          totalStudyTime: Math.round((totalStudyTimeMinutes / 60) * 10) / 10, // Hours
-          totalStudyTimeMinutes,
-          todayStudyTime: Math.round((todayStudyTimeMinutes / 60) * 10) / 10, // Hours
-          todayStudyTimeMinutes,
-          weeklyStudyTime: Math.round((weeklyStudyTimeMinutes / 60) * 10) / 10, // Hours
-          weeklyStudyTimeMinutes,
-          previousWeekTimeMinutes: lastWeekTimeMinutes,
-          
-          // Goal tracking
-          weeklyGoalProgress,
-          weeklyGoalMinutes,
-          weeklyGoalHours: Math.round((weeklyGoalMinutes / 60) * 10) / 10,
-          weeklyChange,
-          
-          // Quiz metrics
-          totalQuizzes: quizzes?.length || 0,
-          completedQuizzes: allSessions.filter(s => (s.quiz_total_questions || 0) > 0).length,
-          
-          // Notes metrics
-          totalNotes: notes?.length || 0,
-          
-          // Flashcard metrics
-          totalCardsMastered: totalCardsCorrect, // Using correct cards as "mastered"
-          totalSets: flashcardSets?.length || 0,
-          totalCardsReviewed,
-          flashcardAccuracy,
-          
-          // Streak and trends
-          streakDays,
-          
-          // Session data
-          recentSessions: allSessions.slice(0, 10),
-          
-          // Timezone info
-          timezone,
-          todayString
-        };
-
-        console.log('✅ Analytics calculated successfully:', result);
-        return result;
-
-      } catch (error) {
-        console.error('❌ Analytics calculation error:', error);
-        throw error;
       }
-    },
-    enabled: !!user, // Simplified enablement - just check for user
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
-    retry: 2,
-    retryDelay: 1000
-  });
 
-  console.log('📊 Analytics Hook Result:', {
-    isLoading: isLoading || timezoneLoading,
-    hasError: !!error,
-    errorMessage: error?.message,
-    hasData: !!analytics,
-    dataKeys: analytics ? Object.keys(analytics) : []
+      // Weekly goal progress (default 5 hours = 300 minutes)
+      const weeklyGoalMinutes = 300; // 5 hours
+      const weeklyGoalProgress = Math.min((weeklyStudyTimeMinutes / weeklyGoalMinutes) * 100, 100);
+
+      // Calculate weekly change
+      const weeklyChange = previousWeekTimeMinutes > 0 
+        ? Math.round(((weeklyStudyTimeMinutes - previousWeekTimeMinutes) / previousWeekTimeMinutes) * 100)
+        : weeklyStudyTimeMinutes > 0 ? 100 : 0;
+
+      const result = {
+        totalSessions: sessions.length,
+        todaySessions: todaySessions.length,
+        weeklySessions: weeklySessions.length,
+        averageSessionTime,
+        activeSessions: sessions.filter(s => s.is_active).length,
+        
+        // Time metrics - properly converted
+        totalStudyTime: Math.round((totalStudyTimeMinutes / 60) * 10) / 10, // Hours with 1 decimal
+        totalStudyTimeMinutes,
+        todayStudyTime: Math.round((todayStudyTimeMinutes / 60) * 10) / 10,
+        todayStudyTimeMinutes,
+        weeklyStudyTime: Math.round((weeklyStudyTimeMinutes / 60) * 10) / 10,
+        weeklyStudyTimeMinutes,
+        previousWeekTimeMinutes,
+        
+        // Goal tracking
+        weeklyGoalProgress,
+        weeklyGoalMinutes,
+        weeklyGoalHours: Math.round(weeklyGoalMinutes / 60),
+        weeklyChange,
+        
+        // Performance metrics
+        totalQuizzes: quizResults.length,
+        completedQuizzes: quizResults.filter(q => q.completed_at).length,
+        totalNotes: notes.length,
+        totalCardsMastered,
+        totalSets: flashcardSets.length,
+        totalCardsReviewed,
+        flashcardAccuracy,
+        streakDays,
+        
+        // Recent data
+        recentSessions: sessions.slice(0, 10),
+        
+        // Timezone info
+        timezone,
+        todayString
+      };
+
+      console.log('📊 Analytics Hook Result:', {
+        isLoading: false,
+        hasError: false,
+        errorMessage: error,
+        hasData: !!result,
+        dataKeys: Object.keys(result)
+      });
+
+      return result;
+    },
+    enabled: !!user && !!userTimezone,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    retry: 1
   });
 
   return {
@@ -240,7 +236,7 @@ export const useTimezoneAwareAnalytics = () => {
       todaySessions: 0,
       weeklySessions: 0,
       averageSessionTime: 0,
-      activeSessions: [], // Keep as array for compatibility
+      activeSessions: 0,
       totalStudyTime: 0,
       totalStudyTimeMinutes: 0,
       todayStudyTime: 0,
@@ -249,8 +245,8 @@ export const useTimezoneAwareAnalytics = () => {
       weeklyStudyTimeMinutes: 0,
       previousWeekTimeMinutes: 0,
       weeklyGoalProgress: 0,
-      weeklyGoalMinutes: 600,
-      weeklyGoalHours: 10,
+      weeklyGoalMinutes: 300,
+      weeklyGoalHours: 5,
       weeklyChange: 0,
       totalQuizzes: 0,
       completedQuizzes: 0,
@@ -262,10 +258,9 @@ export const useTimezoneAwareAnalytics = () => {
       streakDays: 0,
       recentSessions: [],
       timezone: timezone || 'UTC',
-      todayString: getTodayInTimezone(timezone || 'UTC')
+      todayString: new Date().toISOString().split('T')[0]
     },
-    isLoading: isLoading || timezoneLoading,
-    error,
-    timezone: timezone || 'UTC' // Add timezone to return object for compatibility
+    isLoading: isLoading || !userTimezone,
+    error
   };
 };
