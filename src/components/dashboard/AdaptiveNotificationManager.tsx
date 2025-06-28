@@ -1,17 +1,29 @@
 
 import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useNotificationSettings } from '@/hooks/useNotificationSettings';
 import { useStudySessionNotifications } from '@/hooks/useStudySessionNotifications';
 import { useSmartStudyTiming } from '@/hooks/useSmartStudyTiming';
+import { useNotificationDeduplication } from '@/hooks/useNotificationDeduplication';
 import { toast } from 'sonner';
 
 export const AdaptiveNotificationManager = () => {
+  const location = useLocation();
   const { getEffectiveSettings } = useNotificationSettings();
   const { studyNotifications } = useStudySessionNotifications();
   const { showBrowserNotification, canShowBrowserNotifications } = useSmartStudyTiming();
+  const { shouldShowNotification, markNotificationShown } = useNotificationDeduplication({
+    cooldownMinutes: 30,
+    maxPerHour: 2
+  });
 
   useEffect(() => {
     const effectiveSettings = getEffectiveSettings();
+    
+    // Don't show notifications on analytics page to prevent spam
+    if (location.pathname === '/analytics') {
+      return;
+    }
     
     // Filter notifications based on user preferences
     const filteredNotifications = studyNotifications.filter(notification => {
@@ -24,24 +36,25 @@ export const AdaptiveNotificationManager = () => {
         case 'milestone_celebration':
           return effectiveSettings.achievements;
         case 'gentle_nudge':
-          return effectiveSettings.frequency >= 2; // Only show nudges if frequency is moderate or higher
+          return effectiveSettings.frequency >= 2;
         default:
           return true;
       }
     });
 
-    // Apply frequency limits
+    // Apply frequency limits and deduplication
     const maxNotifications = effectiveSettings.frequency === 1 ? 1 : 
                             effectiveSettings.frequency === 2 ? 2 : 3;
     
     const prioritizedNotifications = filteredNotifications
+      .filter(notification => shouldShowNotification(notification.id))
       .sort((a, b) => {
         const priorityOrder = { high: 3, medium: 2, low: 1 };
         return priorityOrder[b.urgency] - priorityOrder[a.urgency];
       })
       .slice(0, maxNotifications);
 
-    // Show notifications
+    // Show notifications with deduplication
     prioritizedNotifications.forEach(notification => {
       // Browser notification for high priority items
       if (notification.urgency === 'high' && 
@@ -54,7 +67,7 @@ export const AdaptiveNotificationManager = () => {
         );
       }
 
-      // Always show in-app toast (filtered by settings above)
+      // Show in-app toast with deduplication
       toast(notification.title, {
         description: notification.message,
         action: {
@@ -69,8 +82,19 @@ export const AdaptiveNotificationManager = () => {
         },
         duration: notification.urgency === 'high' ? 8000 : 5000,
       });
+
+      // Mark notification as shown
+      markNotificationShown(notification.id);
     });
-  }, [studyNotifications, getEffectiveSettings, showBrowserNotification, canShowBrowserNotifications]);
+  }, [
+    studyNotifications, 
+    getEffectiveSettings, 
+    showBrowserNotification, 
+    canShowBrowserNotifications,
+    shouldShowNotification,
+    markNotificationShown,
+    location.pathname
+  ]);
 
   // This component doesn't render anything - it just manages adaptive notifications
   return null;

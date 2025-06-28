@@ -21,17 +21,18 @@ export const useStudySessionNotifications = () => {
   const sessionData = useActiveStudySessionData();
   const { reminders, dismissReminder } = useOptimizedReminderNotifications();
 
-  // Generate smart notifications based on study session data
+  // Generate smart notifications based on study session data with unique IDs
   const studyNotifications = useMemo((): StudySessionNotification[] => {
     const notifications: StudySessionNotification[] = [];
     const now = new Date();
     const currentHour = now.getHours();
+    const todayKey = now.toISOString().split('T')[0]; // YYYY-MM-DD format
 
-    // Session reminder notifications
+    // Session reminder notifications with time-based unique IDs
     if (sessionData.hasActivePlans && sessionData.todayProgress.completionPercentage < 50) {
       if (currentHour >= 8 && currentHour <= 10) {
         notifications.push({
-          id: 'morning-motivation',
+          id: `morning-motivation-${todayKey}`,
           type: 'session_reminder',
           title: 'Good Morning! Ready to Learn?',
           message: 'Start your day with a focused study session. You have active study plans waiting.',
@@ -42,7 +43,7 @@ export const useStudySessionNotifications = () => {
         });
       } else if (currentHour >= 12 && currentHour <= 13) {
         notifications.push({
-          id: 'lunch-learning',
+          id: `lunch-learning-${todayKey}-${currentHour}`, // Include hour to prevent spam
           type: 'gentle_nudge',
           title: 'Lunch Break Learning',
           message: 'Perfect time for a quick 15-minute study session while you take a break.',
@@ -52,7 +53,7 @@ export const useStudySessionNotifications = () => {
         });
       } else if (currentHour >= 18 && currentHour <= 20) {
         notifications.push({
-          id: 'evening-productivity',
+          id: `evening-productivity-${todayKey}`,
           type: 'session_reminder',
           title: 'Evening Study Time',
           message: 'You\'re behind on today\'s study goal. A quick session can get you back on track!',
@@ -66,7 +67,7 @@ export const useStudySessionNotifications = () => {
     // Streak warning notifications
     if (sessionData.streakDays > 0 && sessionData.todayProgress.completionPercentage === 0 && currentHour > 16) {
       notifications.push({
-        id: 'streak-warning',
+        id: `streak-warning-${todayKey}-${sessionData.streakDays}`,
         type: 'streak_warning',
         title: `Don't Break Your ${sessionData.streakDays}-Day Streak!`,
         message: 'You haven\'t studied today yet. Keep your learning momentum going with a quick session.',
@@ -79,7 +80,7 @@ export const useStudySessionNotifications = () => {
     // Milestone celebration notifications
     if (sessionData.todayProgress.completionPercentage >= 100) {
       notifications.push({
-        id: 'milestone-celebration',
+        id: `milestone-celebration-${todayKey}`,
         type: 'milestone_celebration',
         title: 'Daily Goal Achieved! 🎉',
         message: `Congratulations! You've completed ${sessionData.todayProgress.timeStudiedMinutes} minutes of focused learning today.`,
@@ -92,7 +93,7 @@ export const useStudySessionNotifications = () => {
     // Continue session notifications (when user has active session)
     if (sessionData.urgentAction === 'continue_session') {
       notifications.push({
-        id: 'continue-session',
+        id: `continue-session-${todayKey}-${sessionData.currentActivePlan?.id}`,
         type: 'session_reminder',
         title: 'Study Session Active',
         message: `Continue your ${sessionData.currentActivePlan?.title} session. You're in the zone!`,
