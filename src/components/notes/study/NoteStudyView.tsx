@@ -119,7 +119,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
           handleEnhanceContent={handleEnhanceContent}
           setSelectedTags={setSelectedTags}
           handleRetryEnhancement={handleRetryEnhancement}
-          hasReachedLimit={hasReachedLimit}
+          hasReachedLimit={hasReachedLimit()}
           fetchUsageStats={() => {}}
           onNoteUpdate={onNoteUpdate}
           onSubjectChange={handleSubjectChange}
