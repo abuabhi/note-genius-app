@@ -60,9 +60,14 @@ export const useNotificationSettings = () => {
           .single();
 
         if (profile?.notification_preferences) {
+          // Ensure notification_preferences is an object before spreading
+          const notificationPrefs = typeof profile.notification_preferences === 'object' && profile.notification_preferences !== null
+            ? profile.notification_preferences as Record<string, any>
+            : {};
+          
           const savedSettings = {
             ...DEFAULT_SETTINGS,
-            ...profile.notification_preferences
+            ...notificationPrefs
           };
           setSettings(savedSettings);
         }
