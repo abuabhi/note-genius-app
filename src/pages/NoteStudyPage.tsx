@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { Loader2, ArrowLeft, AlertCircle } from "lucide-react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useOptimizedNoteStudy } from "@/hooks/notes/useOptimizedNoteStudy";
 import { OptimizedNotesProvider } from "@/contexts/OptimizedNotesContext";
+import { FlashcardProvider } from "@/contexts/FlashcardContext";
 
 const NoteStudyPageContent = () => {
   const { noteId } = useParams();
@@ -102,9 +102,11 @@ const NoteStudyPageContent = () => {
 
 const NoteStudyPage = () => {
   return (
-    <OptimizedNotesProvider>
-      <NoteStudyPageContent />
-    </OptimizedNotesProvider>
+    <FlashcardProvider>
+      <OptimizedNotesProvider>
+        <NoteStudyPageContent />
+      </OptimizedNotesProvider>
+    </FlashcardProvider>
   );
 };
 
