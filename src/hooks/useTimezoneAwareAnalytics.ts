@@ -44,13 +44,30 @@ export const useTimezoneAwareAnalytics = () => {
 
     return {
       ...analytics,
+      // Goal tracking
       weeklyGoalMinutes,
       weeklyGoalHours,
       weeklyGoalProgress,
       previousWeekTimeMinutes,
+      
+      // Timezone and date info
+      timezone,
       todayString,
+      
+      // Flashcard metrics (provide defaults if not available)
+      flashcardAccuracy: analytics.flashcardAccuracy || 0,
+      totalCardsMastered: analytics.totalCardsMastered || 0,
+      totalSets: analytics.totalSets || 0,
+      totalCardsReviewed: analytics.totalCardsReviewed || 0,
+      
+      // Streak and performance
+      streakDays: analytics.streakDays || 0,
+      weeklyChange: analytics.weeklyChange || 0,
+      
+      // Active sessions
+      activeSessions: analytics.activeSessions || 0,
     };
-  }, [analytics, userProfile, todayString]);
+  }, [analytics, userProfile, todayString, timezone]);
 
   const isLoading = analyticsLoading || timezoneLoading;
 
