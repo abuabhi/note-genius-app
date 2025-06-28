@@ -91,6 +91,7 @@ const NoteStudyPage = () => {
       {isChatOpen && (
         <NoteChatSidebar 
           note={note}
+          isOpen={isChatOpen}
           onClose={() => setIsChatOpen(false)}
         />
       )}
