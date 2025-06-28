@@ -1,54 +1,38 @@
 
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/auth";
-import { getFallbackSubjectAnalytics, getFallbackRecommendations } from "@/utils/subjectAnalyticsUtils";
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/auth';
 
-export interface SubjectAnalytics {
-  id: string;
-  name: string;
-  completionPercentage: number;
-  totalStudyTimeMinutes: number;
-  sessionCount: number;
-  lastActivity?: string;
-  averageAccuracy?: number;
-  masteredCards?: number;
-  totalCards?: number;
-}
-
-export interface SaaSOptimizedSubjectAnalytics {
-  subjects: SubjectAnalytics[];
-  totalStudyTime: number; // in hours
+interface SubjectAnalytics {
+  subjects: Array<{
+    id: string;
+    name: string;
+    completionPercentage: number;
+    totalStudyTimeMinutes: number;
+    sessionCount: number;
+  }>;
+  totalStudyTime: number;
   sessionsThisWeek: number;
-  last7DaysFormatted: string;
-  last30DaysFormatted: string;
-  recommendations: any[];
+  last7DaysFormatted?: string;
+  last30DaysFormatted?: string;
 }
 
 export const useSaaSOptimizedSubjectAnalytics = () => {
   const { user } = useAuth();
 
   const { data: subjectAnalytics, isLoading, error } = useQuery({
-    queryKey: ["saas-optimized-subject-analytics", user?.id],
-    queryFn: async (): Promise<SaaSOptimizedSubjectAnalytics> => {
+    queryKey: ['subject-analytics', user?.id],
+    queryFn: async (): Promise<SubjectAnalytics> => {
       if (!user?.id) {
-        console.log("❌ No authenticated user found for analytics");
-        throw new Error("User not authenticated");
+        throw new Error('User not authenticated');
       }
 
-      console.log("🔍 Fetching analytics for user:", user.id);
+      console.log('🔍 Fetching comprehensive subject analytics');
+      console.log('🔍 Fetching analytics for user:', user.id);
 
       try {
-        // Check authentication first
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        console.log("🔐 Auth check result:", authUser?.id);
-
-        if (!authUser) {
-          throw new Error("Authentication verification failed");
-        }
-
-        // Fetch flashcard sets directly with user ID
-        const { data: flashcardSets, error: setsError } = await supabase
+        // Get flashcard sets with progress data
+        const { data: flashcardSets, error: flashcardError } = await supabase
           .from('flashcard_sets')
           .select(`
             id,
@@ -56,235 +40,231 @@ export const useSaaSOptimizedSubjectAnalytics = () => {
             subject,
             card_count,
             created_at,
-            updated_at
+            user_flashcard_progress!inner(
+              user_id,
+              last_reviewed_at,
+              repetition,
+              ease_factor
+            )
           `)
           .eq('user_id', user.id);
 
-        if (setsError) {
-          console.error("❌ Error fetching flashcard sets:", setsError);
+        if (flashcardError) {
+          console.error('❌ Error fetching flashcard sets:', flashcardError);
         } else {
-          console.log("📚 Found flashcard sets:", flashcardSets?.length || 0);
+          console.log('📚 Found flashcard sets:', flashcardSets?.length || 0);
         }
 
-        // Fetch study sessions directly with user ID
-        const { data: studySessions, error: sessionsError } = await supabase
+        // Get study sessions
+        const { data: studySessions, error: sessionError } = await supabase
           .from('study_sessions')
           .select('*')
-          .eq('user_id', user.id)
-          .gte('start_time', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+          .eq('user_id', user.id);
 
-        if (sessionsError) {
-          console.error("❌ Error fetching study sessions:", sessionsError);
+        if (sessionError) {
+          console.error('❌ Error fetching study sessions:', sessionError);
         } else {
-          console.log("📖 Found study sessions:", studySessions?.length || 0);
+          console.log('📖 Found study sessions:', studySessions?.length || 0);
         }
 
-        // Fetch user subjects directly with user ID
+        // Get user subjects
         const { data: userSubjects, error: subjectsError } = await supabase
           .from('user_subjects')
           .select('*')
           .eq('user_id', user.id);
 
         if (subjectsError) {
-          console.error("❌ Error fetching user subjects:", subjectsError);
+          console.error('❌ Error fetching user subjects:', subjectsError);
         } else {
-          console.log("🎯 Found user subjects:", userSubjects?.length || 0);
+          console.log('🎯 Found user subjects:', userSubjects?.length || 0);
         }
 
-        // Fetch flashcard progress directly with user ID
-        const { data: flashcardProgress, error: progressError } = await supabase
-          .from('user_flashcard_progress')
+        // Get quiz results
+        const { data: quizResults, error: quizError } = await supabase
+          .from('quiz_results')
           .select(`
-            *,
-            flashcard (
+            id,
+            score,
+            total_questions,
+            completed_at,
+            quizzes!inner(
               id,
-              flashcard_set_cards (
-                set_id,
-                flashcard_sets (
-                  id,
-                  name,
-                  subject
-                )
-              )
+              title,
+              subject_id,
+              academic_subjects(name)
             )
           `)
           .eq('user_id', user.id);
 
-        if (progressError) {
-          console.error("❌ Error fetching flashcard progress:", progressError);
+        if (quizError) {
+          console.error('❌ Error fetching quiz results:', quizError);
         } else {
-          console.log("📊 Found flashcard progress:", flashcardProgress?.length || 0);
+          console.log('🧠 Found quiz results:', quizResults?.length || 0);
         }
 
-        // Process the data to create unified analytics
-        const subjectMap = new Map<string, SubjectAnalytics>();
+        // Get study plans
+        const { data: studyPlans, error: plansError } = await supabase
+          .from('study_plans')
+          .select('*')
+          .eq('user_id', user.id);
 
-        // Initialize with user subjects
-        userSubjects?.forEach(subject => {
-          subjectMap.set(subject.name, {
-            id: subject.id,
-            name: subject.name,
-            completionPercentage: 0,
-            totalStudyTimeMinutes: 0,
-            sessionCount: 0,
-            lastActivity: undefined,
-            averageAccuracy: 0,
-            masteredCards: 0,
-            totalCards: 0
-          });
-        });
+        if (plansError) {
+          console.error('❌ Error fetching study plans:', plansError);
+        } else {
+          console.log('📋 Found study plans:', studyPlans?.length || 0);
+        }
 
-        // Add flashcard sets as subjects if not already present
-        flashcardSets?.forEach(set => {
-          const subjectName = set.subject || set.name;
-          if (!subjectMap.has(subjectName)) {
-            subjectMap.set(subjectName, {
-              id: set.id,
-              name: subjectName,
-              completionPercentage: 0,
-              totalStudyTimeMinutes: 0,
+        // Create subject map from all data sources
+        const subjectMap = new Map<string, {
+          id: string;
+          name: string;
+          studyTimeMinutes: number;
+          sessionCount: number;
+          totalItems: number;
+          completedItems: number;
+        }>();
+
+        // Process user subjects first
+        if (userSubjects) {
+          userSubjects.forEach(subject => {
+            subjectMap.set(subject.name, {
+              id: subject.id,
+              name: subject.name,
+              studyTimeMinutes: 0,
               sessionCount: 0,
-              lastActivity: set.updated_at,
-              averageAccuracy: 0,
-              masteredCards: 0,
-              totalCards: set.card_count || 0
+              totalItems: 0,
+              completedItems: 0
             });
-          } else {
-            const existing = subjectMap.get(subjectName)!;
-            existing.totalCards = (existing.totalCards || 0) + (set.card_count || 0);
-            if (!existing.lastActivity || set.updated_at > existing.lastActivity) {
-              existing.lastActivity = set.updated_at;
+          });
+        }
+
+        // Process flashcard sets
+        if (flashcardSets) {
+          flashcardSets.forEach(set => {
+            const subjectName = set.subject || 'General';
+            if (!subjectMap.has(subjectName)) {
+              subjectMap.set(subjectName, {
+                id: set.id,
+                name: subjectName,
+                studyTimeMinutes: 0,
+                sessionCount: 0,
+                totalItems: 0,
+                completedItems: 0
+              });
             }
-          }
-        });
-
-        // Add study session data
-        studySessions?.forEach(session => {
-          if (session.subject) {
-            const subject = subjectMap.get(session.subject);
-            if (subject) {
-              subject.sessionCount += 1;
-              subject.totalStudyTimeMinutes += Math.floor((session.duration || 0) / 60);
-              
-              const sessionDate = new Date(session.start_time).toISOString();
-              if (!subject.lastActivity || sessionDate > subject.lastActivity) {
-                subject.lastActivity = sessionDate;
-              }
+            
+            const subject = subjectMap.get(subjectName)!;
+            subject.totalItems += set.card_count || 0;
+            
+            // Count completed items based on progress
+            if (set.user_flashcard_progress) {
+              const progressCount = Array.isArray(set.user_flashcard_progress) 
+                ? set.user_flashcard_progress.length 
+                : 1;
+              subject.completedItems += progressCount;
             }
-          }
-        });
+          });
+        }
 
-        // Calculate flashcard progress
-        flashcardProgress?.forEach(progress => {
-          const flashcardSet = progress.flashcard?.flashcard_set_cards?.[0]?.flashcard_sets;
-          if (flashcardSet) {
-            const subjectName = flashcardSet.subject || flashcardSet.name;
-            const subject = subjectMap.get(subjectName);
-            if (subject) {
-              if ((progress.mastery_level || 0) >= 4) {
-                subject.masteredCards = (subject.masteredCards || 0) + 1;
-              }
+        // Process quiz results
+        if (quizResults) {
+          quizResults.forEach(result => {
+            const subjectName = result.quizzes?.academic_subjects?.name || 
+                             result.quizzes?.title || 'General';
+            
+            if (!subjectMap.has(subjectName)) {
+              subjectMap.set(subjectName, {
+                id: result.id,
+                name: subjectName,
+                studyTimeMinutes: 0,
+                sessionCount: 0,
+                totalItems: 0,
+                completedItems: 0
+              });
             }
-          }
+            
+            const subject = subjectMap.get(subjectName)!;
+            subject.totalItems += result.total_questions;
+            subject.completedItems += result.score;
+            subject.sessionCount += 1;
+          });
+        }
+
+        // Process study sessions
+        if (studySessions) {
+          studySessions.forEach(session => {
+            const subjectName = session.subject || 'General';
+            
+            if (!subjectMap.has(subjectName)) {
+              subjectMap.set(subjectName, {
+                id: session.id,
+                name: subjectName,
+                studyTimeMinutes: 0,
+                sessionCount: 0,
+                totalItems: 0,
+                completedItems: 0
+              });
+            }
+            
+            const subject = subjectMap.get(subjectName)!;
+            subject.studyTimeMinutes += session.duration ? Math.floor(session.duration / 60) : 0;
+            subject.sessionCount += 1;
+          });
+        }
+
+        // Convert map to array with completion percentages
+        const subjects = Array.from(subjectMap.values()).map(subject => ({
+          id: subject.id,
+          name: subject.name,
+          completionPercentage: subject.totalItems > 0 
+            ? Math.round((subject.completedItems / subject.totalItems) * 100)
+            : 0,
+          totalStudyTimeMinutes: subject.studyTimeMinutes,
+          sessionCount: subject.sessionCount
+        }));
+
+        // Calculate totals
+        const totalStudyTime = studySessions?.reduce((acc, session) => {
+          return acc + (session.duration || 0);
+        }, 0) || 0;
+
+        const sessionsThisWeek = studySessions?.filter(session => {
+          const sessionDate = new Date(session.start_time);
+          const weekAgo = new Date();
+          weekAgo.setDate(weekAgo.getDate() - 7);
+          return sessionDate >= weekAgo;
+        }).length || 0;
+
+        console.log('✅ Processed subjects:', subjects.length);
+        console.log('🎉 Analytics result:', {
+          subjectsCount: subjects.length,
+          totalStudyTime: totalStudyTime / 3600, // Convert to hours
+          sessionsThisWeek
         });
 
-        // Calculate completion percentages and accuracy
-        subjectMap.forEach(subject => {
-          if (subject.totalCards && subject.totalCards > 0) {
-            subject.completionPercentage = Math.round(((subject.masteredCards || 0) / subject.totalCards) * 100);
-            subject.averageAccuracy = subject.completionPercentage;
-          } else if (subject.sessionCount > 0) {
-            // Estimate completion based on session count
-            subject.completionPercentage = Math.min(subject.sessionCount * 10, 100);
-          }
-        });
-
-        const subjects = Array.from(subjectMap.values());
-        console.log("✅ Processed subjects:", subjects.length);
-
-        // Calculate summary statistics
-        const totalStudyTimeMinutes = studySessions?.reduce((acc, session) => acc + (session.duration || 0), 0) || 0;
-        const totalStudyTimeHours = totalStudyTimeMinutes / 3600;
-
-        const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-        const sessionsThisWeek = studySessions?.filter(s => new Date(s.start_time) >= weekAgo).length || 0;
-
-        // Format time periods
-        const formatTime = (minutes: number) => {
-          if (minutes < 60) return `${Math.round(minutes)}m`;
-          const hours = Math.floor(minutes / 60);
-          const remainingMinutes = Math.round(minutes % 60);
-          return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
-        };
-
-        const last7DaysMinutes = studySessions?.filter(s => 
-          new Date(s.start_time) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-        ).reduce((acc, s) => acc + (s.duration || 0), 0) || 0;
-
-        const last30DaysMinutes = studySessions?.filter(s => 
-          new Date(s.start_time) >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-        ).reduce((acc, s) => acc + (s.duration || 0), 0) || 0;
-
-        const result = {
+        return {
           subjects,
-          totalStudyTime: totalStudyTimeHours,
+          totalStudyTime: totalStudyTime / 3600, // Convert to hours
           sessionsThisWeek,
-          last7DaysFormatted: formatTime(last7DaysMinutes / 60),
-          last30DaysFormatted: formatTime(last30DaysMinutes / 60),
-          recommendations: getFallbackRecommendations(subjects)
+          last7DaysFormatted: `${Math.floor(totalStudyTime / 3600)}h`,
+          last30DaysFormatted: `${Math.floor(totalStudyTime / 3600)}h`
         };
-
-        console.log("🎉 Analytics result:", {
-          subjectsCount: result.subjects.length,
-          totalStudyTime: result.totalStudyTime,
-          sessionsThisWeek: result.sessionsThisWeek
-        });
-
-        return result;
 
       } catch (error) {
-        console.error("❌ Analytics query failed:", error);
-        
-        // Fallback to basic analytics
-        console.log("🔄 Using fallback analytics method");
-        const fallbackSubjects = await getFallbackSubjectAnalytics(user.id);
-        
-        return {
-          subjects: fallbackSubjects.map(s => ({
-            id: s.subject_id || s.subject_name,
-            name: s.subject_name,
-            completionPercentage: s.flashcard_accuracy || 0,
-            totalStudyTimeMinutes: s.total_study_minutes || 0,
-            sessionCount: s.study_sessions_count || 0,
-            lastActivity: s.last_activity_date,
-            averageAccuracy: s.flashcard_accuracy || 0,
-            masteredCards: s.mastered_flashcards || 0,
-            totalCards: s.total_flashcards || 0
-          })),
-          totalStudyTime: (fallbackSubjects.reduce((acc, s) => acc + (s.total_study_minutes || 0), 0) / 60),
-          sessionsThisWeek: fallbackSubjects.reduce((acc, s) => acc + (s.study_sessions_count || 0), 0),
-          last7DaysFormatted: "No data",
-          last30DaysFormatted: "No data",
-          recommendations: getFallbackRecommendations(fallbackSubjects)
-        };
+        console.error('❌ Error in analytics query:', error);
+        throw error;
       }
     },
     enabled: !!user?.id,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    retry: (failureCount, error) => {
-      console.log(`🔄 Retry attempt ${failureCount} for analytics:`, error);
-      return failureCount < 2;
-    }
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
   return {
     subjectAnalytics: subjectAnalytics || {
       subjects: [],
       totalStudyTime: 0,
-      sessionsThisWeek: 0,
-      last7DaysFormatted: "No data",
-      last30DaysFormatted: "No data",
-      recommendations: []
+      sessionsThisWeek: 0
     },
     isLoading,
     error
