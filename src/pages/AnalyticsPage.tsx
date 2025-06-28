@@ -2,12 +2,14 @@
 import { useState } from "react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, TrendingUp, History, Brain, Target } from "lucide-react";
-import { AnalyticsOverview } from "@/components/analytics/AnalyticsOverview";
-import { SessionHistory } from "@/components/analytics/SessionHistory";
-import { Achievements } from "@/components/progress/Achievements";
+import { BarChart3, TrendingUp, History, Target, Trophy, FileText, Brain, Clock } from "lucide-react";
 import { SubjectProgressDashboard } from "@/components/analytics/SubjectProgressDashboard";
 import { StandardPageHeader } from "@/components/ui/StandardPageHeader";
+import { NotesAnalytics } from "@/components/analytics/redesigned/NotesAnalytics";
+import { FlashcardsAnalytics } from "@/components/analytics/redesigned/FlashcardsAnalytics";
+import { QuizAnalytics } from "@/components/analytics/redesigned/QuizAnalytics";
+import { EnhancedSessionHistory } from "@/components/analytics/redesigned/EnhancedSessionHistory";
+import { StudyAchievements } from "@/components/analytics/redesigned/StudyAchievements";
 
 const AnalyticsPage = () => {
   const { user, loading } = useRequireAuth();
@@ -40,7 +42,7 @@ const AnalyticsPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
       <StandardPageHeader
         title="Learning Analytics"
-        description="Track your progress, sessions, and achievements"
+        description="Track your progress across subjects, content types, and study sessions"
         icon={<BarChart3 className="h-6 w-6 text-white" />}
         breadcrumbs={breadcrumbs}
       />
@@ -62,20 +64,20 @@ const AnalyticsPage = () => {
                 className="data-[state=active]:bg-mint-500 data-[state=active]:text-white"
               >
                 <TrendingUp className="h-4 w-4 mr-2" />
-                Overview
+                Content Overview
               </TabsTrigger>
               <TabsTrigger 
                 value="sessions"
                 className="data-[state=active]:bg-mint-500 data-[state=active]:text-white"
               >
                 <History className="h-4 w-4 mr-2" />
-                Sessions
+                Study Sessions
               </TabsTrigger>
               <TabsTrigger 
                 value="achievements"
                 className="data-[state=active]:bg-mint-500 data-[state=active]:text-white"
               >
-                <BarChart3 className="h-4 w-4 mr-2" />
+                <Trophy className="h-4 w-4 mr-2" />
                 Achievements
               </TabsTrigger>
             </TabsList>
@@ -85,15 +87,60 @@ const AnalyticsPage = () => {
             </TabsContent>
             
             <TabsContent value="overview" className="mt-6">
-              <AnalyticsOverview />
+              <div className="space-y-8">
+                {/* Content Type Navigation */}
+                <div className="flex flex-wrap gap-4 p-4 bg-mint-50 rounded-lg border border-mint-200">
+                  <div className="flex items-center gap-2 text-mint-700">
+                    <FileText className="h-5 w-5" />
+                    <span className="font-medium">Notes</span>
+                  </div>
+                  <div className="w-px h-6 bg-mint-300"></div>
+                  <div className="flex items-center gap-2 text-blue-700">
+                    <Brain className="h-5 w-5" />
+                    <span className="font-medium">Flashcards</span>
+                  </div>
+                  <div className="w-px h-6 bg-mint-300"></div>
+                  <div className="flex items-center gap-2 text-purple-700">
+                    <BarChart3 className="h-5 w-5" />
+                    <span className="font-medium">Quizzes</span>
+                  </div>
+                </div>
+
+                {/* Notes Analytics */}
+                <div>
+                  <h3 className="text-xl font-semibold text-mint-900 mb-4 flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-mint-600" />
+                    Notes Analytics
+                  </h3>
+                  <NotesAnalytics />
+                </div>
+
+                {/* Flashcards Analytics */}
+                <div>
+                  <h3 className="text-xl font-semibold text-blue-900 mb-4 flex items-center gap-2">
+                    <Brain className="h-5 w-5 text-blue-600" />
+                    Flashcards Analytics
+                  </h3>
+                  <FlashcardsAnalytics />
+                </div>
+
+                {/* Quiz Analytics */}
+                <div>
+                  <h3 className="text-xl font-semibold text-purple-900 mb-4 flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-purple-600" />
+                    Quiz Analytics
+                  </h3>
+                  <QuizAnalytics />
+                </div>
+              </div>
             </TabsContent>
             
             <TabsContent value="sessions" className="mt-6">
-              <SessionHistory />
+              <EnhancedSessionHistory />
             </TabsContent>
             
             <TabsContent value="achievements" className="mt-6">
-              <Achievements />
+              <StudyAchievements />
             </TabsContent>
           </Tabs>
         </div>
