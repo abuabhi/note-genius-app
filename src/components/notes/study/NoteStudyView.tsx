@@ -1,9 +1,12 @@
 
+import React from "react";
 import { Note } from "@/types/note";
 import { StudyViewHeader } from "./header/StudyViewHeader";
 import { NoteStudyViewContent } from "./viewer/NoteStudyViewContent";
 import { useStudyViewState } from "./hooks/useStudyViewState";
 import { useNoteStudyEditor } from "./hooks/useNoteStudyEditor";
+import { useNoteEnhancement } from "@/hooks/useNoteEnrichment";
+import { useNoteEnhancementRetry } from "./hooks/useNoteEnhancementRetry";
 import { UserSubject } from "@/types/subject";
 
 interface NoteStudyViewProps {
@@ -25,31 +28,50 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
     setActiveContentType
   } = useStudyViewState();
 
+  // Create a simple refresh function
+  const forceRefresh = () => {
+    window.location.reload();
+  };
+
   const {
     isEditing,
-    isSaving,
     editableContent,
     editableTitle,
     editableSubject,
     selectedTags,
     availableTags,
     availableSubjects,
-    statsLoading,
+    isSaving,
+    handleContentChange,
+    handleTitleChange,
+    handleSubjectChange,
+    handleSaveContent,
+    toggleEditing,
+    setSelectedTags,
+    onNoteUpdate
+  } = useNoteStudyEditor(note, forceRefresh);
+
+  // Use enhancement hooks for the missing functionality
+  const {
     currentUsage,
     monthlyLimit,
     hasReachedLimit,
-    handleContentChange,
-    handleSaveContent,
-    toggleEditing,
-    handleEnhanceContent,
-    setSelectedTags,
+    enrichNote
+  } = useNoteEnhancement(note);
+
+  const {
     handleRetryEnhancement,
-    fetchUsageStats,
-    onNoteUpdate,
-    onSubjectChange,
-    onTitleChange,
-    isEditOperation
-  } = useNoteStudyEditor(note);
+    isEnhancing
+  } = useNoteEnhancementRetry(note, forceRefresh);
+
+  // Handle enhancement
+  const handleEnhanceContent = async (enhancementType: string) => {
+    try {
+      await enrichNote(note.id, note.content || '', enhancementType as any, note.title);
+    } catch (error) {
+      console.error('Enhancement failed:', error);
+    }
+  };
 
   const handleEnhance = (enhancedContent: string) => {
     handleEnhanceContent('improve');
@@ -73,7 +95,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
         onToggleFullScreen={toggleFullScreen}
         onToggleEditing={toggleEditing}
         onSave={handleSaveContent}
-        onTitleChange={onTitleChange}
+        onTitleChange={handleTitleChange}
         onEnhance={handleEnhance}
       />
       <div className="container mx-auto px-4 py-6">
@@ -88,7 +110,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
           availableTags={availableTags}
           availableSubjects={availableSubjects || [] as UserSubject[]}
           isSaving={isSaving}
-          statsLoading={statsLoading}
+          statsLoading={false}
           currentUsage={currentUsage}
           monthlyLimit={monthlyLimit}
           handleContentChange={handleContentChange}
@@ -98,12 +120,12 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
           setSelectedTags={setSelectedTags}
           handleRetryEnhancement={handleRetryEnhancement}
           hasReachedLimit={hasReachedLimit}
-          fetchUsageStats={fetchUsageStats}
+          fetchUsageStats={() => {}}
           onNoteUpdate={onNoteUpdate}
-          onSubjectChange={onSubjectChange}
+          onSubjectChange={handleSubjectChange}
           activeContentType={activeContentType}
           onActiveContentTypeChange={setActiveContentType}
-          isEditOperation={isEditOperation}
+          isEditOperation={isEnhancing}
         />
       </div>
     </div>
