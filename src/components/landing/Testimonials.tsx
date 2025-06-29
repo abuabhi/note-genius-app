@@ -3,63 +3,63 @@ const testimonials = [
   {
     content: "The AI flashcard generation is incredible! I just upload my VCE Biology notes and get perfectly formatted study cards that helped me achieve a study score of 45.",
     author: "Priya Sharma",
-    role: "Year 12 Student, Nossal High School",
+    role: "Year 12 Student",
     image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
     feature: "AI Flashcards"
   },
   {
     content: "The study planner is a game-changer! It automatically schedules my HSC prep around my part-time job and helps me balance all my subjects effectively.",
     author: "Wei Chen",
-    role: "Year 12 Student, James Ruse Agricultural High",
+    role: "Year 12 Student",
     image: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
     feature: "Study Planning"
   },
   {
     content: "My SAT prep became so much easier with the adaptive quizzes. They focus on exactly what I'm struggling with and track my improvement over time.",
     author: "Arjun Patel",
-    role: "Grade 11 Student, Melbourne High School",
+    role: "Grade 11 Student",
     image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
     feature: "Smart Quizzes"
   },
   {
     content: "The OCR scanning is perfect for my handwritten math notes. I can scan my equations and the AI creates practice problems automatically - saved me hours!",
     author: "Jessica Zhang",
-    role: "Year 11 Student, Presbyterian Ladies College",
+    role: "Year 11 Student",
     image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
     feature: "Document Scanning"
   },
   {
     content: "The learning analytics help me understand my study patterns perfectly. I can see when I'm most productive and plan my hardest subjects like Physics accordingly.",
     author: "Ravi Kumar",
-    role: "First Year Engineering, University of Melbourne",
+    role: "First Year Engineering Student",
     image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
     feature: "Learning Analytics"
   },
   {
     content: "From struggling with chemistry to getting A+ grades - the AI note enhancement breaks down complex organic chemistry reactions into easy concepts I can actually understand.",
     author: "Emma Liu",
-    role: "Year 12 Student, Mac.Robertson Girls' High",
+    role: "Year 12 Student",
     image: "https://images.unsplash.com/photo-1607990281513-2c110a25bd8c?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
     feature: "Note Enhancement"
   },
   {
     content: "The smart goal tracking keeps me motivated through my HSC year. Breaking down my ATAR goal into smaller, achievable milestones has made all the difference.",
     author: "Dev Singh",
-    role: "Year 12 Student, Baulkham Hills High",
+    role: "Year 12 Student",
     image: "https://images.unsplash.com/photo-1566492031773-4f4e44671d66?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
     feature: "Goal Tracking"
   },
   {
     content: "The AI todo suggestions are spot-on! It knows exactly when to remind me about assignments and even suggests the best times to work on different subjects based on my schedule.",
     author: "Lily Wang",
-    role: "Year 10 Student, Sydney Girls High School",
+    role: "Year 10 Student",
     image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
     feature: "Smart ToDos"
   },
   {
     content: "The dashboard gives me a complete overview of my academic progress. I love seeing my study streaks and completion rates - it keeps me motivated every day!",
     author: "Aditya Gupta",
-    role: "Grade 12 Student, Suzanne Cory High School",
+    role: "Grade 12 Student",
     image: "https://images.unsplash.com/photo-1558203728-00f45181dd84?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
     feature: "Study Dashboard"
   }
@@ -111,10 +111,9 @@ const Testimonials = () => {
 
         {/* Trust indicators */}
         <div className="mt-16 text-center">
-          <p className="text-sm text-gray-500 mb-4">Helping students succeed at</p>
+          <p className="text-sm text-gray-500 mb-4">Helping students succeed worldwide</p>
           <div className="flex justify-center items-center gap-2 text-gray-400 text-sm flex-wrap">
-            <span>Nossal High • Melbourne High • James Ruse Agricultural High • Mac.Robertson Girls' High</span>
-            <span className="hidden md:inline">• Baulkham Hills High • Sydney Girls High • University of Melbourne</span>
+            <span>Australia • India • Singapore • United States • Canada • United Kingdom</span>
           </div>
         </div>
       </div>
