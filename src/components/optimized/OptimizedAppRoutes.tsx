@@ -23,6 +23,8 @@ const GoalsPage = lazy(() => import('@/pages/GoalsPage'));
 const StudyPlannerPage = lazy(() => import('@/pages/StudyPlannerPage'));
 const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
+const FeedbackPage = lazy(() => import('@/pages/FeedbackPage'));
+const ReferralsPage = lazy(() => import('@/pages/ReferralsPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 // Admin Pages
@@ -98,6 +100,10 @@ export const OptimizedAppRoutes = () => {
         
         {/* Settings route */}
         <Route path="/settings" element={<SidebarLayout><SettingsPage /></SidebarLayout>} />
+        
+        {/* Feedback and Referrals routes - Fixed missing routes */}
+        <Route path="/feedback" element={<SidebarLayout><FeedbackPage /></SidebarLayout>} />
+        <Route path="/referrals" element={<SidebarLayout><ReferralsPage /></SidebarLayout>} />
         
         {/* Admin Routes - Protected with AdminRoute and using SidebarLayout */}
         <Route path="/admin/*" element={<AdminRoute />}>

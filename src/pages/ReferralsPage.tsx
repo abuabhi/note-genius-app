@@ -1,5 +1,4 @@
 
-import Layout from "@/components/layout/Layout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Loader2, Gift } from "lucide-react";
 import { ReferralHeroSection } from "@/components/referrals/ReferralHeroSection";
@@ -18,16 +17,14 @@ const ReferralsPageContent = () => {
   if (loading) {
     console.log('⏳ Referrals page is loading...');
     return (
-      <Layout>
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-mint-50">
-          <div className="max-w-7xl mx-auto p-6 flex items-center justify-center h-[50vh]">
-            <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto text-mint-500" />
-              <p className="mt-2 text-gray-600">Loading referrals...</p>
-            </div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-mint-50">
+        <div className="max-w-7xl mx-auto p-6 flex items-center justify-center h-[50vh]">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto text-mint-500" />
+            <p className="mt-2 text-gray-600">Loading referrals...</p>
           </div>
         </div>
-      </Layout>
+      </div>
     );
   }
   
@@ -39,49 +36,45 @@ const ReferralsPageContent = () => {
   console.log('✅ Referrals page rendering main content');
   
   return (
-    <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-mint-50">
-        <div className="max-w-7xl mx-auto p-6 space-y-8">
-          <PageBreadcrumb pageName="Refer & Win" pageIcon={<Gift className="h-4 w-4" />} />
-          
-          <ReferralHeroSection />
-          <Suspense fallback={
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-mint-500" />
-              <span className="ml-2 text-gray-600">Loading stats...</span>
-            </div>
-          }>
-            <ReferralStatsSection />
-          </Suspense>
-          <Suspense fallback={
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-mint-500" />
-              <span className="ml-2 text-gray-600">Loading sharing options...</span>
-            </div>
-          }>
-            <ReferralSharingSection />
-          </Suspense>
-          <ReferralPrizesSection />
-          <ReferralFAQSection />
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-mint-50">
+      <div className="max-w-7xl mx-auto p-6 space-y-8">
+        <PageBreadcrumb pageName="Refer & Win" pageIcon={<Gift className="h-4 w-4" />} />
+        
+        <ReferralHeroSection />
+        <Suspense fallback={
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-mint-500" />
+            <span className="ml-2 text-gray-600">Loading stats...</span>
+          </div>
+        }>
+          <ReferralStatsSection />
+        </Suspense>
+        <Suspense fallback={
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-mint-500" />
+            <span className="ml-2 text-gray-600">Loading sharing options...</span>
+          </div>
+        }>
+          <ReferralSharingSection />
+        </Suspense>
+        <ReferralPrizesSection />
+        <ReferralFAQSection />
       </div>
-    </Layout>
+    </div>
   );
 };
 
 const ReferralsPage = () => {
   return (
     <Suspense fallback={
-      <Layout>
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-mint-50">
-          <div className="max-w-7xl mx-auto p-6 flex items-center justify-center h-[50vh]">
-            <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto text-mint-500" />
-              <p className="mt-2 text-gray-600">Loading referrals...</p>
-            </div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-mint-50">
+        <div className="max-w-7xl mx-auto p-6 flex items-center justify-center h-[50vh]">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto text-mint-500" />
+            <p className="mt-2 text-gray-600">Loading referrals...</p>
           </div>
         </div>
-      </Layout>
+      </div>
     }>
       <ReferralsPageContent />
     </Suspense>
