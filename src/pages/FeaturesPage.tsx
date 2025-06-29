@@ -1,375 +1,274 @@
 
-import Layout from "@/components/layout/Layout";
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "react-router-dom";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Layout from "@/components/layout/Layout";
 import { 
   BookOpen, 
   Brain, 
   Scan, 
   BarChart3, 
-  Users, 
   Zap, 
-  ArrowRight,
-  Clock,
+  Calendar, 
   Target,
-  Calendar,
-  MessageSquare,
-  Bell,
   CheckSquare,
-  Upload,
-  FileText,
-  HelpCircle,
   Settings,
-  Smartphone,
-  Globe,
-  Download,
-  Video,
-  Camera,
-  Lightbulb,
-  Trophy,
-  Repeat,
-  PieChart,
-  Star
+  Youtube,
+  ArrowRight,
+  Play,
+  Star,
+  Users,
+  Clock
 } from "lucide-react";
 
-const featureCategories = [
+const features = [
   {
-    id: "ai-powered",
-    title: "AI-Powered Study Tools",
-    description: "Revolutionary AI features that transform how you study",
-    features: [
+    category: "AI-Powered Study Tools",
+    items: [
       {
         name: "AI Flashcard Generation",
-        description: "Transform any note into smart flashcards automatically with advanced AI processing.",
+        description: "Transform your notes into smart flashcards automatically with AI-powered content processing and spaced repetition.",
         icon: Brain,
-        badges: ["AI-Powered", "Premium"],
-        demoLink: "/notes"
+        highlight: "Popular",
+        color: "from-mint-500 to-mint-600",
+        demoType: "interactive"
+      },
+      {
+        name: "Smart Quiz Creation", 
+        description: "Generate adaptive quizzes from your content that adjust difficulty based on your performance and learning progress.",
+        icon: Zap,
+        highlight: "AI-Powered",
+        color: "from-mint-400 to-mint-500",
+        demoType: "interactive"
+      },
+      {
+        name: "YouTube Video Summary",
+        description: "Convert YouTube educational videos into structured notes and flashcards with AI-powered transcription and summarization.",
+        icon: Youtube,
+        highlight: "Coming Soon",
+        color: "from-mint-600 to-mint-700",
+        demoType: "preview"
       },
       {
         name: "Smart Note Enhancement",
-        description: "Get AI-generated summaries, explanations, key concepts, and study guides from your notes.",
-        icon: Lightbulb,
-        badges: ["AI-Powered"],
-        demoLink: "/notes"
-      },
-      {
-        name: "Adaptive Quiz Generation",
-        description: "Create personalized quizzes that adapt to your learning progress and weak areas.",
-        icon: HelpCircle,
-        badges: ["AI-Powered", "Adaptive"],
-        demoLink: "/quiz"
-      },
-      {
-        name: "YouTube Video Transcription",
-        description: "Convert YouTube lectures into searchable notes with AI-powered transcription and summaries.",
-        icon: Video,
-        badges: ["AI-Powered", "New"],
-        demoLink: "/notes"
+        description: "Get AI-generated summaries, explanations, and study guides from your notes instantly.",
+        icon: BookOpen,
+        highlight: "",
+        color: "from-mint-300 to-mint-400",
+        demoType: "interactive"
       }
     ]
   },
   {
-    id: "content-management",
-    title: "Content & Import Tools",
-    description: "Digitize and organize your study materials effortlessly",
-    features: [
+    category: "Content Management",
+    items: [
       {
-        name: "OCR Document Scanning",
-        description: "Scan handwritten notes, textbooks, and documents with advanced OCR technology.",
+        name: "Document Scanning",
+        description: "Scan handwritten notes, textbooks, and documents with OCR technology for instant digitization.",
         icon: Scan,
-        badges: ["Premium"],
-        demoLink: "/notes"
+        highlight: "",
+        color: "from-mint-500 to-mint-600",
+        demoType: "demo"
       },
       {
-        name: "Multi-Format Import",
-        description: "Import from Evernote, Google Docs, Notion, OneNote, PDFs, and more.",
-        icon: Upload,
-        badges: ["Premium"],
-        demoLink: "/notes"
-      },
-      {
-        name: "Bulk PDF Processing",
-        description: "Process multiple PDF files at once and extract searchable content.",
-        icon: FileText,
-        badges: ["Premium"],
-        demoLink: "/notes"
-      },
-      {
-        name: "Camera Capture",
-        description: "Instantly capture and digitize notes using your device's camera.",
-        icon: Camera,
-        badges: ["Mobile"],
-        demoLink: "/notes"
+        name: "Multi-format Import",
+        description: "Import from PDF, Word, Google Docs, Notion, and other platforms to centralize your study materials.",
+        icon: BookOpen,
+        highlight: "",
+        color: "from-mint-400 to-mint-500",
+        demoType: "demo"
       }
     ]
   },
   {
-    id: "study-progress",
-    title: "Study & Progress Tracking",
-    description: "Monitor your learning journey with detailed analytics",
-    features: [
+    category: "Study & Analytics",
+    items: [
       {
-        name: "Advanced Analytics",
-        description: "Track study time, performance trends, mastery levels, and learning velocity.",
+        name: "Learning Analytics",
+        description: "Track your study time, performance trends, mastery levels, and get personalized insights to improve faster.",
         icon: BarChart3,
-        badges: ["Analytics"],
-        demoLink: "/progress"
-      },
-      {
-        name: "Spaced Repetition",
-        description: "Optimized review scheduling based on forgetting curves and retention rates.",
-        icon: Repeat,
-        badges: ["Science-Based"],
-        demoLink: "/flashcards"
+        highlight: "Analytics",
+        color: "from-mint-400 to-mint-600",
+        demoType: "chart"
       },
       {
         name: "Study Session Tracking",
-        description: "Monitor focused study time with detailed session analytics and insights.",
+        description: "Monitor your study sessions with detailed analytics, time tracking, and progress visualization.",
         icon: Clock,
-        badges: ["Premium"],
-        demoLink: "/study-sessions"
-      },
+        highlight: "",
+        color: "from-mint-500 to-mint-600",
+        demoType: "chart"
+      }
+    ]
+  },
+  {
+    category: "Planning & Organization",
+    items: [
       {
-        name: "Achievement System",
-        description: "Earn badges and track milestones to stay motivated throughout your studies.",
-        icon: Trophy,
-        badges: ["Gamification"],
-        demoLink: "/progress"
+        name: "Personalized Study Plans",
+        description: "Create intelligent study schedules that adapt to your goals, deadlines, and learning patterns.",
+        icon: Calendar,
+        highlight: "Smart",
+        color: "from-mint-600 to-mint-700",
+        demoType: "interactive"
       },
       {
         name: "Goal Management",
-        description: "Set SMART study goals and track progress with automated reminders.",
+        description: "Set academic goals, track progress, and receive intelligent recommendations to stay on track.",
         icon: Target,
-        badges: ["Productivity"],
-        demoLink: "/goals"
-      }
-    ]
-  },
-  {
-    id: "collaboration",
-    title: "Collaboration & Sharing",
-    description: "Study together and share knowledge with classmates",
-    features: [
-      {
-        name: "Study Groups",
-        description: "Create and join study groups with real-time collaboration features.",
-        icon: Users,
-        badges: ["Social"],
-        demoLink: "/collaboration"
+        highlight: "",
+        color: "from-mint-400 to-mint-500",
+        demoType: "interactive"
       },
       {
-        name: "Real-time Chat",
-        description: "Discuss concepts and get help from study partners with built-in messaging.",
-        icon: MessageSquare,
-        badges: ["Real-time"],
-        demoLink: "/chat"
-      },
-      {
-        name: "Content Sharing",
-        description: "Share flashcard sets, notes, and quizzes with permission controls.",
-        icon: Users,
-        badges: ["Premium"],
-        demoLink: "/collaboration"
-      },
-      {
-        name: "Note Chat Assistant",
-        description: "AI-powered chat that answers questions about your specific notes and content.",
-        icon: Brain,
-        badges: ["AI-Powered", "New"],
-        demoLink: "/notes"
-      }
-    ]
-  },
-  {
-    id: "organization",
-    title: "Organization & Planning",
-    description: "Stay organized with smart scheduling and task management",
-    features: [
-      {
-        name: "Smart Scheduling",
-        description: "AI-powered study schedule optimization based on your goals and availability.",
-        icon: Calendar,
-        badges: ["AI-Powered"],
-        demoLink: "/schedule"
-      },
-      {
-        name: "Study Reminders",
-        description: "Automated reminders for study sessions, reviews, and important deadlines.",
-        icon: Bell,
-        badges: ["Automation"],
-        demoLink: "/reminders"
-      },
-      {
-        name: "Todo Management",
-        description: "Comprehensive task management with dependencies and smart suggestions.",
+        name: "Smart ToDo System",
+        description: "AI-powered task management that suggests study priorities based on deadlines and difficulty.",
         icon: CheckSquare,
-        badges: ["Productivity"],
-        demoLink: "/todos"
-      },
-      {
-        name: "Subject Organization",
-        description: "Organize content by subjects, grades, and custom tags for easy discovery.",
-        icon: BookOpen,
-        badges: ["Organization"],
-        demoLink: "/notes"
-      }
-    ]
-  },
-  {
-    id: "advanced",
-    title: "Advanced Features",
-    description: "Professional-grade tools for serious learners",
-    features: [
-      {
-        name: "Multi-language Support",
-        description: "Study in multiple languages with OCR and AI support for various languages.",
-        icon: Globe,
-        badges: ["International"],
-        demoLink: "/settings"
-      },
-      {
-        name: "Export & Backup",
-        description: "Export your data in multiple formats (PDF, JSON, CSV) with cloud backup.",
-        icon: Download,
-        badges: ["Data"],
-        demoLink: "/settings"
-      },
-      {
-        name: "API Integrations",
-        description: "Connect with external tools and services through our comprehensive API.",
-        icon: Settings,
-        badges: ["Developer"],
-        demoLink: "/settings"
-      },
-      {
-        name: "Mobile Optimization",
-        description: "Full-featured mobile experience with offline study capabilities.",
-        icon: Smartphone,
-        badges: ["Mobile"],
-        demoLink: "/"
+        highlight: "",
+        color: "from-mint-500 to-mint-600",
+        demoType: "interactive"
       }
     ]
   }
 ];
 
-const stats = [
-  { label: "AI-Generated Flashcards", value: "500K+" },
-  { label: "Study Sessions Tracked", value: "2M+" },
-  { label: "Notes Enhanced", value: "100K+" },
-  { label: "Students Helped", value: "50K+" }
-];
+const InteractiveDemo = ({ feature }: { feature: any }) => {
+  const [activeDemo, setActiveDemo] = useState<string | null>(null);
+
+  const renderDemo = () => {
+    switch (feature.demoType) {
+      case "interactive":
+        return (
+          <div className="bg-gray-50 rounded-lg p-4 mt-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-medium text-gray-700">Try {feature.name}</span>
+              <Button size="sm" variant="outline" onClick={() => setActiveDemo(feature.name)}>
+                <Play className="h-3 w-3 mr-1" />
+                Demo
+              </Button>
+            </div>
+            {activeDemo === feature.name && (
+              <div className="bg-white rounded border p-3 text-sm text-gray-600">
+                Interactive demo for {feature.name} would appear here. This showcases the core functionality in a simplified format.
+              </div>
+            )}
+          </div>
+        );
+      
+      case "chart":
+        return (
+          <div className="bg-gray-50 rounded-lg p-4 mt-4">
+            <div className="h-20 bg-gradient-to-r from-mint-100 to-mint-200 rounded flex items-center justify-center">
+              <BarChart3 className="h-8 w-8 text-mint-600" />
+              <span className="ml-2 text-mint-700 font-medium">Sample Analytics Chart</span>
+            </div>
+          </div>
+        );
+      
+      case "preview":
+        return (
+          <div className="bg-gray-50 rounded-lg p-4 mt-4">
+            <div className="flex items-center text-mint-600">
+              <Youtube className="h-4 w-4 mr-2" />
+              <span className="text-sm font-medium">Feature launching soon with full demo</span>
+            </div>
+          </div>
+        );
+      
+      default:
+        return (
+          <div className="bg-gray-50 rounded-lg p-4 mt-4">
+            <div className="text-center text-sm text-gray-600">
+              Live demo available in the full application
+            </div>
+          </div>
+        );
+    }
+  };
+
+  return renderDemo();
+};
 
 const FeaturesPage = () => {
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
+      <div className="min-h-screen bg-gradient-to-b from-mint-50/20 via-white to-mint-50/30">
         {/* Hero Section */}
-        <div className="px-4 sm:px-6 lg:px-8 pt-12 pb-16 max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
           <div className="text-center">
             <div className="inline-flex items-center px-4 py-2 bg-mint-100 rounded-full text-mint-700 text-sm mb-8">
               🚀 Complete Study Solution
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-              Everything You Need to
-              <span className="block text-mint-500 mt-2">
-                Study Smarter
-              </span>
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+              Everything you need to
+              <span className="block text-mint-500 mt-2">study smarter, not harder</span>
             </h1>
-            <p className="mt-6 text-xl text-gray-600 max-w-3xl mx-auto">
-              From AI-powered flashcards to collaborative study groups - discover all the features that make PrepGenie the most comprehensive study platform for students.
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+              From AI-powered flashcards to personalized study plans and detailed analytics - explore all the tools that make StudyAI the complete learning platform.
             </p>
             
             {/* Stats */}
-            <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-8">
-              {stats.map((stat, index) => (
-                <div key={index} className="text-center">
-                  <div className="text-3xl font-bold text-mint-600">{stat.value}</div>
-                  <div className="text-sm text-gray-600">{stat.label}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* CTA Buttons */}
-            <div className="mt-12 flex flex-col sm:flex-row justify-center gap-4">
-              <Button size="lg" className="bg-mint-500 hover:bg-mint-600 text-white">
-                <Link to="/signup" className="flex items-center">
-                  Start Learning Free
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="border-mint-200 text-mint-700 hover:bg-mint-50"
-              >
-                <Link to="/dashboard" className="flex items-center">
-                  Try Live Demo
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
+            <div className="flex justify-center flex-wrap gap-8 py-6">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-mint-600">15K+</div>
+                <div className="text-sm text-gray-600">Active Students</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-mint-600">50K+</div>
+                <div className="text-sm text-gray-600">Flashcard Sets</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-mint-600">1M+</div>
+                <div className="text-sm text-gray-600">Study Sessions</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-mint-600">95%</div>
+                <div className="text-sm text-gray-600">Success Rate</div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Feature Categories */}
-        <div className="px-4 sm:px-6 lg:px-8 pb-24 max-w-7xl mx-auto">
-          {featureCategories.map((category, categoryIndex) => (
-            <div key={category.id} className="mb-20">
+        {/* Features Sections */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
+          {features.map((category, categoryIndex) => (
+            <div key={categoryIndex} className="mb-20">
               <div className="text-center mb-12">
                 <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                  {category.title}
+                  {category.category}
                 </h2>
-                <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                  {category.description}
-                </p>
+                <div className="w-20 h-1 bg-gradient-to-r from-mint-400 to-mint-600 mx-auto rounded-full"></div>
               </div>
 
-              <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-2">
-                {category.features.map((feature, index) => (
+              <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                {category.items.map((feature, index) => (
                   <div
                     key={index}
-                    className="group relative rounded-2xl transition-all duration-200 hover:scale-105"
+                    className="relative group rounded-2xl transition-all duration-300 hover:scale-105 hover:-translate-y-2"
                   >
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-mint-300 to-neutral-300 rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-200" />
-                    <div className="relative h-full p-8 bg-white rounded-2xl border border-mint-100">
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-mint-300 to-neutral-300 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-300" />
+                    <div className="relative h-full p-8 bg-white rounded-2xl border border-mint-100 shadow-sm group-hover:shadow-2xl transition-all duration-300">
                       <div className="flex items-start justify-between mb-6">
-                        <span className="inline-flex items-center justify-center p-4 rounded-xl bg-gradient-to-br from-mint-400 to-neutral-400">
+                        <div className={`inline-flex items-center justify-center p-4 rounded-2xl bg-gradient-to-r ${feature.color} shadow-lg`}>
                           <feature.icon className="h-7 w-7 text-white" />
-                        </span>
-                        <div className="flex flex-wrap gap-2">
-                          {feature.badges.map((badge, badgeIndex) => (
-                            <Badge 
-                              key={badgeIndex} 
-                              variant="secondary"
-                              className={`text-xs ${
-                                badge === 'AI-Powered' ? 'bg-purple-100 text-purple-700' :
-                                badge === 'Premium' ? 'bg-yellow-100 text-yellow-700' :
-                                badge === 'New' ? 'bg-green-100 text-green-700' :
-                                'bg-mint-100 text-mint-700'
-                              }`}
-                            >
-                              {badge}
-                            </Badge>
-                          ))}
                         </div>
+                        {feature.highlight && (
+                          <Badge 
+                            variant="secondary" 
+                            className="bg-mint-100 text-mint-700 text-xs px-3 py-1 font-medium border border-mint-200"
+                          >
+                            {feature.highlight}
+                          </Badge>
+                        )}
                       </div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                        {feature.name}
-                      </h3>
-                      <p className="text-gray-600 mb-6 leading-relaxed">
-                        {feature.description}
-                      </p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-mint-200 text-mint-700 hover:bg-mint-50"
-                      >
-                        <Link to={feature.demoLink} className="flex items-center">
-                          Try Feature
-                          <ArrowRight className="ml-2 h-3 w-3" />
-                        </Link>
-                      </Button>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-3">{feature.name}</h3>
+                      <p className="text-gray-600 leading-relaxed mb-6">{feature.description}</p>
+                      
+                      {/* Interactive Demo */}
+                      <InteractiveDemo feature={feature} />
                     </div>
                   </div>
                 ))}
@@ -378,36 +277,47 @@ const FeaturesPage = () => {
           ))}
         </div>
 
-        {/* Final CTA Section */}
-        <div className="bg-gradient-to-r from-mint-500 to-mint-600 py-16">
+        {/* CTA Section */}
+        <div className="bg-gradient-to-b from-mint-50/30 to-mint-100/50 py-20">
           <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-white mb-4">
-              Ready to Transform Your Study Experience?
+            <div className="inline-flex items-center px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-mint-700 text-sm mb-8 border border-mint-200">
+              <Star className="h-4 w-4 mr-2" />
+              <span>Join 15,000+ successful students</span>
+            </div>
+            <h2 className="text-4xl font-bold text-gray-900 mb-6">
+              Ready to transform your study routine?
             </h2>
-            <p className="text-xl text-mint-100 mb-8">
-              Join thousands of students who are already studying smarter with PrepGenie's AI-powered features.
+            <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
+              Start using AI-powered study tools, create personalized study plans, and track your learning progress today.
             </p>
+            
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Button
                 size="lg"
-                className="bg-white text-mint-700 hover:bg-mint-50"
+                className="bg-mint-600 hover:bg-mint-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                asChild
               >
-                <Link to="/signup" className="flex items-center">
-                  Get Started Free
+                <Link to="/signup">
+                  Start Free Account
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
               <Button
                 variant="outline"
                 size="lg"
-                className="border-white/30 text-white hover:bg-white/10"
+                className="border-2 border-mint-300 text-mint-700 hover:bg-mint-50 hover:border-mint-400 bg-white shadow-md hover:shadow-lg transition-all duration-200"
+                asChild
               >
-                <Link to="/contact" className="flex items-center">
-                  Contact Sales
+                <Link to="/login">
+                  Sign In to Continue
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
             </div>
+            
+            <p className="mt-6 text-sm text-gray-500">
+              ✓ Free forever plan ✓ No credit card required ✓ Full access to core features
+            </p>
           </div>
         </div>
       </div>
