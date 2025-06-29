@@ -18,7 +18,6 @@ import {
   Gift,
   Heart,
   Calendar,
-  CalendarDays,
   Settings
 } from "lucide-react";
 
@@ -80,15 +79,6 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
               icon={Calendar}
               label="Study Planner"
               isActive={pathname.startsWith("/study-planner")}
-              isCollapsed={isCollapsed}
-            />
-            
-            {/* Academic Calendar */}
-            <NavLink
-              to="/academic-calendar"
-              icon={CalendarDays}
-              label="Academic Calendar"
-              isActive={pathname.startsWith("/academic-calendar")}
               isCollapsed={isCollapsed}
             />
             

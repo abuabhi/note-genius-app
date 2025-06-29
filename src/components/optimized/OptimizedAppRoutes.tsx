@@ -7,7 +7,6 @@ import SidebarLayout from '@/components/layout/SidebarLayout';
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const NotesPage = lazy(() => import('@/pages/NotesPage'));
 const NoteStudyPage = lazy(() => import('@/pages/NoteStudyPage'));
-const AcademicCalendarPage = lazy(() => import('@/pages/AcademicCalendarPage'));
 
 // Global loading component for route transitions
 const RouteLoadingSkeleton = () => (
@@ -44,11 +43,6 @@ export const OptimizedAppRoutes = () => {
         <Route path="/notes/:id" element={
           <SidebarLayout>
             <NoteStudyPage />
-          </SidebarLayout>
-        } />
-        <Route path="/academic-calendar" element={
-          <SidebarLayout>
-            <AcademicCalendarPage />
           </SidebarLayout>
         } />
         {/* Add other routes as needed */}
