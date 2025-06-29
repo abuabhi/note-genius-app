@@ -9,7 +9,10 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  console.log('🔄 Test digest function called with method:', req.method);
+
   if (req.method === 'OPTIONS') {
+    console.log('✅ Handling CORS preflight request');
     return new Response(null, { headers: corsHeaders })
   }
 
@@ -18,7 +21,14 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
     const resendApiKey = Deno.env.get('RESEND_API_KEY')
     
+    console.log('🔧 Environment check:', {
+      hasSupabaseUrl: !!supabaseUrl,
+      hasSupabaseKey: !!supabaseKey,
+      hasResendKey: !!resendApiKey
+    });
+    
     if (!resendApiKey) {
+      console.error('❌ RESEND_API_KEY not configured');
       throw new Error('RESEND_API_KEY not configured')
     }
 
@@ -27,7 +37,10 @@ serve(async (req) => {
 
     // Get user from authorization header
     const authHeader = req.headers.get('authorization')
+    console.log('🔐 Auth header present:', !!authHeader);
+    
     if (!authHeader) {
+      console.error('❌ No authorization header');
       return new Response(
         JSON.stringify({ error: 'Authorization header required' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -37,7 +50,10 @@ serve(async (req) => {
     const token = authHeader.replace('Bearer ', '')
     const { data: { user }, error: userError } = await supabase.auth.getUser(token)
     
+    console.log('👤 User auth result:', { userId: user?.id, error: userError?.message });
+    
     if (userError || !user) {
+      console.error('❌ Invalid authorization:', userError?.message);
       return new Response(
         JSON.stringify({ error: 'Invalid authorization' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -51,7 +67,13 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .single()
 
+    console.log('⚙️ Preferences query result:', { 
+      hasPreferences: !!preferences, 
+      error: prefsError?.message 
+    });
+
     if (prefsError || !preferences) {
+      console.error('❌ Email digest preferences not found:', prefsError?.message);
       return new Response(
         JSON.stringify({ error: 'Email digest preferences not found. Please configure your email preferences first.' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -60,6 +82,8 @@ serve(async (req) => {
 
     // Send test email
     const testTime = new Date().toLocaleString()
+    console.log('📧 Sending test email to:', user.email);
+    
     const { error: emailError } = await resend.emails.send({
       from: 'StudyMate <noreply@studymate.app>',
       to: [user.email || ''],
@@ -98,8 +122,11 @@ serve(async (req) => {
     })
 
     if (emailError) {
+      console.error('❌ Email sending error:', emailError);
       throw emailError
     }
+
+    console.log('✅ Test email sent successfully to:', user.email);
 
     return new Response(
       JSON.stringify({ 
@@ -115,7 +142,7 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error sending test email:', error)
+    console.error('❌ Error in send-test-digest function:', error)
     
     return new Response(
       JSON.stringify({ error: error.message || 'Failed to send test email' }),

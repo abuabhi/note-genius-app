@@ -22,31 +22,44 @@ export const DeliverySettingsSection = ({ preferences, updatePreferences }: Deli
 
   const handleSendTestEmail = async () => {
     setSendingTest(true);
+    console.log('🔄 Starting test email send process...');
+    
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        toast.error('Not authenticated');
+        console.error('❌ No authentication session found');
+        toast.error('Please log in to send test emails');
         return;
       }
 
-      const response = await fetch('/functions/v1/send-test-digest', {
-        method: 'POST',
+      console.log('✅ Authentication session valid, calling edge function...');
+
+      const { data, error } = await supabase.functions.invoke('send-test-digest', {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
       });
 
-      const result = await response.json();
-      
-      if (response.ok) {
-        toast.success(`Test email sent successfully to ${result.sentTo}!`);
-      } else {
-        toast.error(result.error || 'Failed to send test email');
+      console.log('📧 Edge function response:', { data, error });
+
+      if (error) {
+        console.error('❌ Edge function error:', error);
+        throw error;
       }
+
+      if (data?.error) {
+        console.error('❌ Function returned error:', data.error);
+        toast.error(data.error);
+        return;
+      }
+
+      console.log('✅ Test email sent successfully:', data);
+      toast.success(`Test email sent successfully to ${data.sentTo || 'your email'}!`);
+      
     } catch (error) {
-      console.error('Error sending test email:', error);
-      toast.error('Failed to send test email');
+      console.error('❌ Error in test email process:', error);
+      toast.error(error?.message || 'Failed to send test email. Please check your email preferences and try again.');
     } finally {
       setSendingTest(false);
     }
@@ -87,7 +100,7 @@ export const DeliverySettingsSection = ({ preferences, updatePreferences }: Deli
                     updatePreferences({ frequency })
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-10">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -104,6 +117,7 @@ export const DeliverySettingsSection = ({ preferences, updatePreferences }: Deli
                   type="time"
                   value={preferences.digest_time}
                   onChange={(e) => updatePreferences({ digest_time: e.target.value })}
+                  className="h-10"
                 />
               </div>
             </div>
@@ -115,7 +129,7 @@ export const DeliverySettingsSection = ({ preferences, updatePreferences }: Deli
                 value={preferences.timezone}
                 onValueChange={(timezone) => updatePreferences({ timezone })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-10">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="max-h-80">
@@ -149,7 +163,7 @@ export const DeliverySettingsSection = ({ preferences, updatePreferences }: Deli
                 onClick={handleSendTestEmail}
                 disabled={sendingTest}
                 variant="outline"
-                className="w-full"
+                className="w-full h-10"
               >
                 {sendingTest ? (
                   <>

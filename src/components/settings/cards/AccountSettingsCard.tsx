@@ -5,6 +5,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/comp
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { User, FileText, MapPin, Clock, Smartphone } from 'lucide-react';
+import { getTimezonesByRegion, getCurrentTimeInTimezone } from '@/utils/timezoneData';
 
 interface AccountSettingsCardProps {
   form: any;
@@ -19,22 +20,7 @@ export const AccountSettingsCard: React.FC<AccountSettingsCardProps> = ({
   countries,
   onCountryChange,
 }) => {
-  // Get the available timezones
-  const COMMON_TIMEZONES = [
-    { value: 'UTC', label: 'UTC (Coordinated Universal Time)' },
-    { value: 'America/New_York', label: 'Eastern Time (US & Canada)' },
-    { value: 'America/Chicago', label: 'Central Time (US & Canada)' },
-    { value: 'America/Denver', label: 'Mountain Time (US & Canada)' },
-    { value: 'America/Los_Angeles', label: 'Pacific Time (US & Canada)' },
-    { value: 'Europe/London', label: 'London (GMT/BST)' },
-    { value: 'Europe/Paris', label: 'Central European Time' },
-    { value: 'Europe/Berlin', label: 'Berlin' },
-    { value: 'Asia/Tokyo', label: 'Tokyo' },
-    { value: 'Asia/Shanghai', label: 'Shanghai' },
-    { value: 'Asia/Kolkata', label: 'India Standard Time' },
-    { value: 'Australia/Sydney', label: 'Sydney' },
-    { value: 'Australia/Melbourne', label: 'Melbourne' },
-  ];
+  const timezonesByRegion = getTimezonesByRegion();
 
   return (
     <Card>
@@ -54,7 +40,7 @@ export const AccountSettingsCard: React.FC<AccountSettingsCardProps> = ({
               <FormItem>
                 <FormLabel>Username</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter your username" {...field} />
+                  <Input placeholder="Enter your username" {...field} className="h-10" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -73,6 +59,7 @@ export const AccountSettingsCard: React.FC<AccountSettingsCardProps> = ({
                     {...field} 
                     value={user?.email || ''}
                     disabled
+                    className="h-10"
                   />
                 </FormControl>
                 <FormMessage />
@@ -92,7 +79,7 @@ export const AccountSettingsCard: React.FC<AccountSettingsCardProps> = ({
                 School/Institution
               </FormLabel>
               <FormControl>
-                <Input placeholder="Enter your school or institution" {...field} />
+                <Input placeholder="Enter your school or institution" {...field} className="h-10" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -118,7 +105,7 @@ export const AccountSettingsCard: React.FC<AccountSettingsCardProps> = ({
                     onCountryChange(value);
                   }}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-10">
                         <SelectValue placeholder="Select your country" />
                       </SelectTrigger>
                     </FormControl>
@@ -146,15 +133,27 @@ export const AccountSettingsCard: React.FC<AccountSettingsCardProps> = ({
                   </FormLabel>
                   <Select value={field.value || 'UTC'} onValueChange={field.onChange}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-10">
                         <SelectValue placeholder="Select your timezone" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
-                      {COMMON_TIMEZONES.map((tz) => (
-                        <SelectItem key={tz.value} value={tz.value}>
-                          {tz.label}
-                        </SelectItem>
+                    <SelectContent className="max-h-80">
+                      {Object.entries(timezonesByRegion).map(([region, timezones]) => (
+                        <div key={region}>
+                          <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground border-b">
+                            {region}
+                          </div>
+                          {timezones.map((tz) => (
+                            <SelectItem key={tz.value} value={tz.value}>
+                              <div className="flex flex-col">
+                                <span>{tz.label}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  Current: {getCurrentTimeInTimezone(tz.value)}
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </div>
                       ))}
                     </SelectContent>
                   </Select>
@@ -162,6 +161,11 @@ export const AccountSettingsCard: React.FC<AccountSettingsCardProps> = ({
                 </FormItem>
               )}
             />
+          </div>
+          
+          {/* Current timezone info */}
+          <div className="text-xs text-muted-foreground">
+            Current time in selected timezone: {getCurrentTimeInTimezone(form.watch('timezone') || 'UTC')}
           </div>
         </div>
 
@@ -180,6 +184,7 @@ export const AccountSettingsCard: React.FC<AccountSettingsCardProps> = ({
                   placeholder="+1234567890" 
                   {...field}
                   type="tel"
+                  className="h-10"
                 />
               </FormControl>
               <FormMessage />
