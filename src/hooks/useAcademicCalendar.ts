@@ -2,6 +2,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { useCountries } from '@/hooks/useCountries';
+import { useState, useEffect } from 'react';
 
 interface AcademicEvent {
   name: string;
@@ -23,11 +25,38 @@ interface UserAcademicPreferences {
   academic_year?: string;
 }
 
+// Geolocation detection hook
+const useGeolocation = () => {
+  const [countryCode, setCountryCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    const detectCountry = async () => {
+      try {
+        // Try to get location from IP
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+        if (data.country_code) {
+          setCountryCode(data.country_code);
+        }
+      } catch (error) {
+        console.error('Failed to detect country:', error);
+        setCountryCode('US'); // Fallback to US
+      }
+    };
+
+    detectCountry();
+  }, []);
+
+  return countryCode;
+};
+
 export const useAcademicCalendar = () => {
-  const { user } = useRequireAuth();
+  const { user, userProfile } = useRequireAuth();
+  const { countries, userCountry } = useCountries();
+  const detectedCountryCode = useGeolocation();
 
   // Fetch user's academic preferences
-  const { data: userPreferences } = useQuery({
+  const { data: userPreferences, isLoading: preferencesLoading } = useQuery({
     queryKey: ['user-academic-preferences', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
@@ -44,17 +73,43 @@ export const useAcademicCalendar = () => {
     enabled: !!user?.id
   });
 
-  // Fetch academic calendar data based on preferences
-  const { data: calendarData, isLoading } = useQuery({
-    queryKey: ['academic-calendar', userPreferences?.country_code, userPreferences?.institution_type],
+  // Determine country code priority: user preferences > user profile > geolocation > default
+  const resolvedCountryCode = userPreferences?.country_code || 
+                             userCountry?.code || 
+                             detectedCountryCode || 
+                             'US';
+
+  // Auto-create user preferences if they don't exist and we have a resolved country
+  useEffect(() => {
+    const createPreferences = async () => {
+      if (user?.id && !userPreferences && !preferencesLoading && resolvedCountryCode) {
+        try {
+          await supabase
+            .from('user_academic_preferences')
+            .insert({
+              user_id: user.id,
+              country_code: resolvedCountryCode,
+              institution_type: 'university'
+            });
+        } catch (error) {
+          console.error('Failed to create academic preferences:', error);
+        }
+      }
+    };
+
+    createPreferences();
+  }, [user?.id, userPreferences, preferencesLoading, resolvedCountryCode]);
+
+  // Fetch academic calendar data based on resolved country
+  const { data: calendarData, isLoading: calendarLoading } = useQuery({
+    queryKey: ['academic-calendar', resolvedCountryCode, userPreferences?.institution_type || 'university'],
     queryFn: async () => {
-      const countryCode = userPreferences?.country_code || 'US';
       const institutionType = userPreferences?.institution_type || 'university';
       
       const { data, error } = await supabase
         .from('academic_calendars')
         .select('*')
-        .eq('country_code', countryCode)
+        .eq('country_code', resolvedCountryCode)
         .eq('institution_type', institutionType)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -63,15 +118,37 @@ export const useAcademicCalendar = () => {
       if (error) throw error;
       return data;
     },
-    enabled: true
+    enabled: !!resolvedCountryCode
   });
 
-  // Parse calendar data
-  const parsedCalendarData = calendarData?.calendar_data as AcademicCalendarData | null;
+  // Parse calendar data with proper type checking
+  const parsedCalendarData = (() => {
+    if (!calendarData?.calendar_data) return null;
+    
+    try {
+      const data = calendarData.calendar_data as unknown;
+      
+      // Type guard to ensure the data structure is correct
+      if (typeof data === 'object' && data !== null) {
+        const calendarObj = data as Record<string, unknown>;
+        
+        if (Array.isArray(calendarObj.terms) && 
+            Array.isArray(calendarObj.holidays) && 
+            Array.isArray(calendarObj.exam_periods)) {
+          return data as AcademicCalendarData;
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Failed to parse calendar data:', error);
+      return null;
+    }
+  })();
 
   // Get current status and upcoming events
   const getCurrentStatus = () => {
-    if (!parsedCalendarData) return 'No calendar data';
+    if (!parsedCalendarData) return 'No calendar data available';
     
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
@@ -166,14 +243,22 @@ export const useAcademicCalendar = () => {
     });
   };
 
+  const getCountryName = () => {
+    const country = countries.find(c => c.code === resolvedCountryCode);
+    return country?.name || resolvedCountryCode;
+  };
+
   return {
     userPreferences,
     calendarData: parsedCalendarData,
-    isLoading,
+    isLoading: preferencesLoading || calendarLoading,
     currentStatus: getCurrentStatus(),
     upcomingEvents: getUpcomingEvents(),
     formatDate,
-    countryCode: userPreferences?.country_code || 'US',
-    institutionType: userPreferences?.institution_type || 'University'
+    countryCode: resolvedCountryCode,
+    countryName: getCountryName(),
+    institutionType: userPreferences?.institution_type || 'University',
+    countries,
+    userCountry
   };
 };

@@ -1,7 +1,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, Clock, ExternalLink } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, MapPin, Clock, ExternalLink, GraduationCap, BookOpen } from 'lucide-react';
 import { useAcademicCalendar } from '@/hooks/useAcademicCalendar';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,7 +13,7 @@ export const AcademicCalendarWidget = () => {
     currentStatus, 
     upcomingEvents, 
     formatDate, 
-    countryCode, 
+    countryName, 
     institutionType,
     isLoading 
   } = useAcademicCalendar();
@@ -23,14 +24,20 @@ export const AcademicCalendarWidget = () => {
 
   if (isLoading) {
     return (
-      <Card className="h-full">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Calendar className="h-5 w-5" />
-            Academic Calendar
-          </CardTitle>
+      <Card className="h-full bg-gradient-to-br from-white via-blue-50/30 to-mint-50/30 border-blue-100/50 shadow-lg hover:shadow-xl transition-all duration-300">
+        <CardHeader className="pb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-gradient-to-br from-blue-500 to-mint-500 rounded-xl shadow-md">
+              <Calendar className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <CardTitle className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-mint-600 bg-clip-text text-transparent">
+                Academic Calendar
+              </CardTitle>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-16 w-full" />
@@ -40,46 +47,100 @@ export const AcademicCalendarWidget = () => {
     );
   }
 
-  return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Calendar className="h-5 w-5 text-mint-600" />
-          Academic Calendar
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Context */}
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-          <MapPin className="h-3 w-3" />
-          <span>{countryCode} • {institutionType}</span>
-        </div>
+  const getStatusBadgeVariant = (status: string) => {
+    if (status.includes('Finals') || status.includes('Exam')) return 'destructive';
+    if (status.includes('Break') || status.includes('Holiday')) return 'secondary';
+    if (status.includes('Semester') || status.includes('Term')) return 'default';
+    return 'outline';
+  };
 
-        {/* Current Status */}
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-mint-500" />
-            <span className="text-sm font-medium">Current Status</span>
+  const getEventIcon = (type: string) => {
+    switch (type) {
+      case 'exam': return <BookOpen className="h-3 w-3" />;
+      case 'term': return <GraduationCap className="h-3 w-3" />;
+      default: return <Calendar className="h-3 w-3" />;
+    }
+  };
+
+  const getEventColor = (type: string) => {
+    switch (type) {
+      case 'exam': return 'text-red-600';
+      case 'term': return 'text-blue-600';
+      case 'holiday': return 'text-green-600';
+      default: return 'text-mint-600';
+    }
+  };
+
+  return (
+    <Card className="h-full bg-gradient-to-br from-white via-blue-50/30 to-mint-50/30 border-blue-100/50 shadow-lg hover:shadow-xl transition-all duration-300 group">
+      <CardHeader className="pb-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-gradient-to-br from-blue-500 to-mint-500 rounded-xl shadow-md group-hover:shadow-lg transition-all duration-300">
+            <Calendar className="h-5 w-5 text-white" />
           </div>
-          <p className="text-sm text-muted-foreground pl-6">{currentStatus}</p>
+          <div>
+            <CardTitle className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-mint-600 bg-clip-text text-transparent">
+              Academic Calendar
+            </CardTitle>
+            <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
+              <MapPin className="h-3 w-3" />
+              <span>{countryName} • {institutionType}</span>
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        {/* Current Status */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-blue-500" />
+            <span className="text-sm font-medium text-gray-700">Current Period</span>
+          </div>
+          <div className="ml-6">
+            <Badge 
+              variant={getStatusBadgeVariant(currentStatus)} 
+              className="text-xs font-medium shadow-sm"
+            >
+              {currentStatus}
+            </Badge>
+          </div>
         </div>
 
         {/* Upcoming Events */}
         {upcomingEvents.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium">Upcoming</h4>
-            <div className="space-y-1">
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <ExternalLink className="h-3.5 w-3.5 text-mint-500" />
+              Upcoming Events
+            </h4>
+            <div className="space-y-2">
               {upcomingEvents.map((event, index) => (
-                <div key={index} className="flex justify-between items-center text-sm">
-                  <span className="text-muted-foreground truncate">
-                    {event.name}
-                  </span>
-                  <span className="text-xs text-mint-600 font-medium">
+                <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-white/60 hover:bg-white/80 transition-colors duration-200 border border-gray-100/50">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div className={`${getEventColor(event.type)}`}>
+                      {getEventIcon(event.type)}
+                    </div>
+                    <span className="text-sm text-gray-600 truncate">
+                      {event.name}
+                    </span>
+                  </div>
+                  <Badge 
+                    variant="outline" 
+                    className={`text-xs font-medium ${getEventColor(event.type)} border-current/20 bg-current/5 ml-2 flex-shrink-0`}
+                  >
                     {formatDate(event.date)}
-                  </span>
+                  </Badge>
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {upcomingEvents.length === 0 && (
+          <div className="text-center py-4">
+            <Calendar className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+            <p className="text-sm text-gray-500">No upcoming events</p>
           </div>
         )}
 
@@ -88,9 +149,9 @@ export const AcademicCalendarWidget = () => {
           variant="outline" 
           size="sm" 
           onClick={handleViewFullCalendar}
-          className="w-full mt-4 text-mint-600 border-mint-200 hover:bg-mint-50"
+          className="w-full mt-4 bg-gradient-to-r from-blue-50 to-mint-50 hover:from-blue-100 hover:to-mint-100 text-blue-700 border-blue-200/50 hover:border-blue-300/50 shadow-sm hover:shadow-md transition-all duration-300 group"
         >
-          <ExternalLink className="h-3 w-3 mr-2" />
+          <ExternalLink className="h-3.5 w-3.5 mr-2 group-hover:scale-110 transition-transform duration-200" />
           View Full Calendar
         </Button>
       </CardContent>
