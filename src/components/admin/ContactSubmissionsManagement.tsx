@@ -1,20 +1,18 @@
 
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Mail, Calendar, User, MessageSquare, CheckCircle, Clock } from 'lucide-react';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
 interface ContactSubmission {
   id: string;
   name: string;
   email: string;
-  subject: string;
+  subject: string | null;
   message: string;
   status: string;
   created_at: string;
@@ -23,242 +21,207 @@ interface ContactSubmission {
   admin_notes: string | null;
 }
 
-export const ContactSubmissionsManagement: React.FC = () => {
-  const [selectedSubmission, setSelectedSubmission] = useState<ContactSubmission | null>(null);
-  const [adminNotes, setAdminNotes] = useState('');
-  const queryClient = useQueryClient();
+export const ContactSubmissionsManagement = () => {
+  const [submissions, setSubmissions] = useState<ContactSubmission[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [adminNotes, setAdminNotes] = useState<{ [key: string]: string }>({});
+  const { toast } = useToast();
 
-  const { data: submissions, isLoading, error } = useQuery({
-    queryKey: ['contact-submissions'],
-    queryFn: async () => {
-      const { data, error } = await supabase
+  const fetchSubmissions = async () => {
+    try {
+      // Use type assertion to bypass the type checking issue
+      const { data, error } = await (supabase as any)
         .from('contact_submissions')
         .select('*')
         .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data as ContactSubmission[];
-    }
-  });
 
-  const updateSubmissionMutation = useMutation({
-    mutationFn: async ({ id, status, adminNotes }: { id: string; status: string; adminNotes?: string }) => {
-      const updates: any = { 
-        status,
-        updated_at: new Date().toISOString()
+      if (error) {
+        console.error('Error fetching contact submissions:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch contact submissions",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setSubmissions(data || []);
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateStatus = async (id: string, status: string, notes?: string) => {
+    try {
+      const updateData: any = { 
+        status, 
+        updated_at: new Date().toISOString() 
       };
       
-      if (adminNotes !== undefined) {
-        updates.admin_notes = adminNotes;
-      }
-      
       if (status === 'responded') {
-        updates.responded_at = new Date().toISOString();
+        updateData.responded_at = new Date().toISOString();
+      }
+      
+      if (notes) {
+        updateData.admin_notes = notes;
       }
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('contact_submissions')
-        .update(updates)
+        .update(updateData)
         .eq('id', id);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contact-submissions'] });
-      toast.success('Submission updated successfully');
-      setSelectedSubmission(null);
-      setAdminNotes('');
-    },
-    onError: (error) => {
-      console.error('Error updating submission:', error);
-      toast.error('Failed to update submission');
-    }
-  });
 
-  const handleStatusUpdate = (submission: ContactSubmission, newStatus: string) => {
-    updateSubmissionMutation.mutate({
-      id: submission.id,
-      status: newStatus,
-      adminNotes: adminNotes || submission.admin_notes || undefined
-    });
-  };
+      if (error) {
+        console.error('Error updating submission:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update submission status",
+          variant: "destructive",
+        });
+        return;
+      }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'new': return 'bg-blue-500';
-      case 'in_progress': return 'bg-yellow-500';
-      case 'responded': return 'bg-green-500';
-      default: return 'bg-gray-500';
+      toast({
+        title: "Success",
+        description: "Submission status updated successfully",
+      });
+
+      // Refresh the data
+      fetchSubmissions();
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'new': return <Mail className="h-4 w-4" />;
-      case 'in_progress': return <Clock className="h-4 w-4" />;
-      case 'responded': return <CheckCircle className="h-4 w-4" />;
-      default: return <MessageSquare className="h-4 w-4" />;
-    }
-  };
+  useEffect(() => {
+    fetchSubmissions();
+  }, []);
 
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mint-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading contact submissions...</p>
-        </div>
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <Card key={i} className="animate-pulse">
+            <CardContent className="p-6">
+              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+              <div className="h-3 bg-gray-200 rounded w-1/2 mb-4"></div>
+              <div className="h-20 bg-gray-200 rounded w-full"></div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     );
   }
 
-  if (error) {
+  if (submissions.length === 0) {
     return (
-      <div className="text-center p-8">
-        <p className="text-red-600">Error loading contact submissions</p>
-      </div>
+      <Card>
+        <CardContent className="p-8 text-center">
+          <p className="text-gray-600">No contact submissions found.</p>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
     <div className="space-y-6">
-      {selectedSubmission ? (
-        <Card>
+      {submissions.map((submission) => (
+        <Card key={submission.id} className="border-l-4 border-l-blue-500">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Contact Submission Details
-              </CardTitle>
-              <Button 
-                variant="outline" 
-                onClick={() => {setSelectedSubmission(null); setAdminNotes('');}}
-              >
-                Back to List
-              </Button>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle className="text-lg">{submission.subject || 'Contact Form Submission'}</CardTitle>
+                <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                  <span><strong>From:</strong> {submission.name} ({submission.email})</span>
+                  <span><strong>Date:</strong> {format(new Date(submission.created_at), 'MMM dd, yyyy HH:mm')}</span>
+                </div>
+              </div>
+              <Badge variant={
+                submission.status === 'new' ? 'default' :
+                submission.status === 'in_progress' ? 'secondary' :
+                submission.status === 'responded' ? 'outline' : 'default'
+              }>
+                {submission.status}
+              </Badge>
             </div>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Contact Information</h3>
-                <p><strong>Name:</strong> {selectedSubmission.name}</p>
-                <p><strong>Email:</strong> {selectedSubmission.email}</p>
-                <p><strong>Subject:</strong> {selectedSubmission.subject}</p>
+          <CardContent className="space-y-4">
+            <div>
+              <h4 className="font-medium mb-2">Message:</h4>
+              <div className="bg-gray-50 p-3 rounded-lg whitespace-pre-wrap">
+                {submission.message}
               </div>
+            </div>
+
+            {submission.admin_notes && (
               <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Status & Timing</h3>
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge className={`${getStatusColor(selectedSubmission.status)} text-white`}>
-                    {getStatusIcon(selectedSubmission.status)}
-                    <span className="ml-1 capitalize">{selectedSubmission.status.replace('_', ' ')}</span>
-                  </Badge>
+                <h4 className="font-medium mb-2">Admin Notes:</h4>
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  {submission.admin_notes}
                 </div>
-                <p><strong>Submitted:</strong> {format(new Date(selectedSubmission.created_at), 'PPp')}</p>
-                {selectedSubmission.responded_at && (
-                  <p><strong>Responded:</strong> {format(new Date(selectedSubmission.responded_at), 'PPp')}</p>
-                )}
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">Admin Notes:</label>
+                <Textarea
+                  placeholder="Add notes about this submission..."
+                  value={adminNotes[submission.id] || ''}
+                  onChange={(e) => setAdminNotes({
+                    ...adminNotes,
+                    [submission.id]: e.target.value
+                  })}
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => updateStatus(submission.id, 'in_progress', adminNotes[submission.id])}
+                  disabled={submission.status === 'in_progress'}
+                >
+                  Mark In Progress
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => updateStatus(submission.id, 'responded', adminNotes[submission.id])}
+                  disabled={submission.status === 'responded'}
+                >
+                  Mark Responded
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => updateStatus(submission.id, 'new', adminNotes[submission.id])}
+                  disabled={submission.status === 'new'}
+                >
+                  Reset to New
+                </Button>
               </div>
             </div>
 
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">Message</h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="whitespace-pre-wrap">{selectedSubmission.message}</p>
+            {submission.responded_at && (
+              <div className="text-sm text-green-600">
+                Responded on: {format(new Date(submission.responded_at), 'MMM dd, yyyy HH:mm')}
               </div>
-            </div>
-
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">Admin Notes</h3>
-              <Textarea
-                value={adminNotes || selectedSubmission.admin_notes || ''}
-                onChange={(e) => setAdminNotes(e.target.value)}
-                placeholder="Add admin notes..."
-                rows={3}
-              />
-            </div>
-
-            <div className="flex gap-2 flex-wrap">
-              <Button 
-                onClick={() => handleStatusUpdate(selectedSubmission, 'in_progress')}
-                disabled={updateSubmissionMutation.isPending}
-                variant="outline"
-              >
-                Mark In Progress
-              </Button>
-              <Button 
-                onClick={() => handleStatusUpdate(selectedSubmission, 'responded')}
-                disabled={updateSubmissionMutation.isPending}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                Mark as Responded
-              </Button>
-              <Button 
-                onClick={() => window.open(`mailto:${selectedSubmission.email}?subject=Re: ${selectedSubmission.subject}&body=Hi ${selectedSubmission.name},%0A%0A`)}
-                variant="outline"
-              >
-                <Mail className="h-4 w-4 mr-2" />
-                Reply via Email
-              </Button>
-            </div>
+            )}
           </CardContent>
         </Card>
-      ) : (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">Contact Submissions</h2>
-            <div className="text-sm text-gray-600">
-              Total: {submissions?.length || 0}
-            </div>
-          </div>
-
-          {!submissions || submissions.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-8">
-                <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">No contact submissions yet</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {submissions.map((submission) => (
-                <Card key={submission.id} className="hover:shadow-md transition-shadow cursor-pointer">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-semibold text-gray-900">{submission.name}</h3>
-                          <Badge className={`${getStatusColor(submission.status)} text-white`}>
-                            {getStatusIcon(submission.status)}
-                            <span className="ml-1 capitalize">{submission.status.replace('_', ' ')}</span>
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-gray-600 mb-1">{submission.email}</p>
-                        <p className="text-sm font-medium text-gray-800 mb-2">{submission.subject}</p>
-                        <p className="text-sm text-gray-600 line-clamp-2">{submission.message}</p>
-                        <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
-                          <Calendar className="h-3 w-3" />
-                          {format(new Date(submission.created_at), 'PPp')}
-                        </div>
-                      </div>
-                      <Button 
-                        onClick={() => {
-                          setSelectedSubmission(submission);
-                          setAdminNotes(submission.admin_notes || '');
-                        }}
-                        variant="outline"
-                        size="sm"
-                      >
-                        View Details
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      ))}
     </div>
   );
 };
