@@ -1,47 +1,68 @@
 
 const testimonials = [
   {
-    content: "The AI flashcard generation is incredible! I just upload my AP Biology notes and get perfectly formatted study cards that helped me ace my exams.",
-    author: "Emma Rodriguez",
-    role: "High School Junior, Lincoln High",
+    content: "The AI flashcard generation is incredible! I just upload my VCE Biology notes and get perfectly formatted study cards that helped me achieve a study score of 45.",
+    author: "Priya Sharma",
+    role: "Year 12 Student, Nossal High School",
     image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
     feature: "AI Flashcards"
   },
   {
-    content: "The study planner changed everything for me. It automatically schedules my study sessions around my work schedule and helps me stay consistent.",
-    author: "Marcus Thompson",
-    role: "Community College Student, Mesa CC",
+    content: "The study planner is a game-changer! It automatically schedules my HSC prep around my part-time job and helps me balance all my subjects effectively.",
+    author: "Wei Chen",
+    role: "Year 12 Student, James Ruse Agricultural High",
     image: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
     feature: "Study Planning"
   },
   {
-    content: "My SAT prep became so much easier with the adaptive quizzes. They focus on exactly what I'm struggling with and track my improvement.",
-    author: "Sophia Chen",
-    role: "High School Senior, Roosevelt High",
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
+    content: "My SAT prep became so much easier with the adaptive quizzes. They focus on exactly what I'm struggling with and track my improvement over time.",
+    author: "Arjun Patel",
+    role: "Grade 11 Student, Melbourne High School",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
     feature: "Smart Quizzes"
   },
   {
-    content: "The OCR scanning is a game-changer for my math notes. I can scan my handwritten equations and the AI creates practice problems automatically.",
-    author: "Jordan Kim",
-    role: "High School Sophomore, Valley Prep",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
+    content: "The OCR scanning is perfect for my handwritten math notes. I can scan my equations and the AI creates practice problems automatically - saved me hours!",
+    author: "Jessica Zhang",
+    role: "Year 11 Student, Presbyterian Ladies College",
+    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
     feature: "Document Scanning"
   },
   {
-    content: "The learning analytics help me understand my study patterns. I can see when I'm most productive and plan my hardest subjects accordingly.",
-    author: "Ashley Martinez",
-    role: "College Freshman, City College",
-    image: "https://images.unsplash.com/photo-1607990281513-2c110a25bd8c?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
+    content: "The learning analytics help me understand my study patterns perfectly. I can see when I'm most productive and plan my hardest subjects like Physics accordingly.",
+    author: "Ravi Kumar",
+    role: "First Year Engineering, University of Melbourne",
+    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
     feature: "Learning Analytics"
   },
   {
-    content: "From struggling with chemistry to getting A's - the AI note enhancement breaks down complex topics into easy-to-understand concepts.",
-    author: "Tyler Johnson",
-    role: "High School Junior, Oak Ridge High",
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
+    content: "From struggling with chemistry to getting A+ grades - the AI note enhancement breaks down complex organic chemistry reactions into easy concepts I can actually understand.",
+    author: "Emma Liu",
+    role: "Year 12 Student, Mac.Robertson Girls' High",
+    image: "https://images.unsplash.com/photo-1607990281513-2c110a25bd8c?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
     feature: "Note Enhancement"
   },
+  {
+    content: "The smart goal tracking keeps me motivated through my HSC year. Breaking down my ATAR goal into smaller, achievable milestones has made all the difference.",
+    author: "Dev Singh",
+    role: "Year 12 Student, Baulkham Hills High",
+    image: "https://images.unsplash.com/photo-1566492031773-4f4e44671d66?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
+    feature: "Goal Tracking"
+  },
+  {
+    content: "The AI todo suggestions are spot-on! It knows exactly when to remind me about assignments and even suggests the best times to work on different subjects based on my schedule.",
+    author: "Lily Wang",
+    role: "Year 10 Student, Sydney Girls High School",
+    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
+    feature: "Smart ToDos"
+  },
+  {
+    content: "The dashboard gives me a complete overview of my academic progress. I love seeing my study streaks and completion rates - it keeps me motivated every day!",
+    author: "Aditya Gupta",
+    role: "Grade 12 Student, Suzanne Cory High School",
+    image: "https://images.unsplash.com/photo-1558203728-00f45181dd84?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80",
+    feature: "Study Dashboard"
+  }
 ];
 
 const Testimonials = () => {
@@ -53,10 +74,10 @@ const Testimonials = () => {
             💬 Student Success Stories
           </div>
           <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">
-            Trusted by high school and college students
+            Trusted by high school and university students worldwide
           </h2>
           <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-            See how students are achieving better grades and building effective study habits
+            See how students across Australia, India, and beyond are achieving better grades and building effective study habits
           </p>
         </div>
         
@@ -91,8 +112,9 @@ const Testimonials = () => {
         {/* Trust indicators */}
         <div className="mt-16 text-center">
           <p className="text-sm text-gray-500 mb-4">Helping students succeed at</p>
-          <div className="flex justify-center items-center gap-8 text-gray-400 text-sm">
-            <span>Roosevelt High • Lincoln High • Valley Prep • Mesa Community College • City College • Oak Ridge High</span>
+          <div className="flex justify-center items-center gap-2 text-gray-400 text-sm flex-wrap">
+            <span>Nossal High • Melbourne High • James Ruse Agricultural High • Mac.Robertson Girls' High</span>
+            <span className="hidden md:inline">• Baulkham Hills High • Sydney Girls High • University of Melbourne</span>
           </div>
         </div>
       </div>
