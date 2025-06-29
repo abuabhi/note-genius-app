@@ -15,56 +15,57 @@ export const useSettingsFormSubmission = (
     try {
       console.log("Form submitted with values:", data);
       
-      const isDeanUser = userTier === UserTier.DEAN;
-      
-      // Handle country update for DEAN users
-      if (isDeanUser && data.countryId) {
-        const result = await updateUserCountry(data.countryId);
-        if (!result.success) {
-          toast.error("Failed to update country preference");
-          return;
-        }
+      if (!user) {
+        toast.error("User not authenticated");
+        return false;
       }
       
-      // Save preferences to user profile
-      if (user) {
-        const notificationPreferences = {
-          email: data.emailNotifications,
-          in_app: data.inAppNotifications,
-          adaptive: data.adaptiveNotifications,
-          study_session_reminders: data.studySessionReminders,
-          goal_deadline_reminders: data.goalDeadlineReminders,
-          reminder_frequency: data.reminderFrequency,
-          quiet_hours_enabled: data.quietHoursEnabled,
-          quiet_hours_start: data.quietHoursStart,
-          quiet_hours_end: data.quietHoursEnd,
-        };
+      // Prepare notification preferences
+      const notificationPreferences = {
+        email: data.emailNotifications,
+        in_app: data.inAppNotifications,
+        adaptive: data.adaptiveNotifications,
+        study_session_reminders: data.studySessionReminders,
+        goal_deadline_reminders: data.goalDeadlineReminders,
+        reminder_frequency: data.reminderFrequency,
+        quiet_hours_enabled: data.quietHoursEnabled,
+        quiet_hours_start: data.quietHoursStart,
+        quiet_hours_end: data.quietHoursEnd,
+      };
 
-        const adaptiveLearningPreferences = {
-          difficulty: data.adaptiveDifficulty,
-          study_style: data.studyStyle,
-          session_length: data.preferredSessionLength,
-          max_daily_time: data.maxDailyStudyTime,
-          break_frequency: data.breakFrequency,
-          adaptation_sensitivity: data.adaptationSensitivity,
-          real_time_adaptations: data.enableRealTimeAdaptations,
-          learning_paths: data.enableLearningPaths,
-        };
+      const adaptiveLearningPreferences = {
+        difficulty: data.adaptiveDifficulty,
+        study_style: data.studyStyle,
+        session_length: data.preferredSessionLength,
+        max_daily_time: data.maxDailyStudyTime,
+        break_frequency: data.breakFrequency,
+        adaptation_sensitivity: data.adaptationSensitivity,
+        real_time_adaptations: data.enableRealTimeAdaptations,
+        learning_paths: data.enableLearningPaths,
+      };
 
-        const { error } = await supabase
-          .from('profiles')
-          .update({
-            weekly_study_goal_hours: data.weeklyStudyGoalHours,
-            notification_preferences: notificationPreferences,
-            adaptive_learning_preferences: adaptiveLearningPreferences
-          })
-          .eq('id', user.id);
-          
-        if (error) {
-          console.error("Error saving preferences:", error);
-          toast.error("Failed to save preferences");
-          return;
-        }
+      // Prepare the update data
+      const updateData: any = {
+        username: data.username || null,
+        school: data.school || null,
+        whatsapp_phone: data.whatsapp_phone || null,
+        country_id: data.country_id || null,
+        timezone: data.timezone || 'UTC',
+        weekly_study_goal_hours: data.weeklyStudyGoalHours,
+        notification_preferences: notificationPreferences,
+        adaptive_learning_preferences: adaptiveLearningPreferences,
+      };
+
+      // Update user profile
+      const { error } = await supabase
+        .from('profiles')
+        .update(updateData)
+        .eq('id', user.id);
+        
+      if (error) {
+        console.error("Error saving preferences:", error);
+        toast.error("Failed to save preferences");
+        return false;
       }
       
       toast.success("Settings saved successfully");

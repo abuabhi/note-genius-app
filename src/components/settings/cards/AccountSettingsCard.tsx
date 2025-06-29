@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User, FileText, MapPin, Clock } from 'lucide-react';
+import { User, FileText, MapPin, Clock, Smartphone } from 'lucide-react';
 
 interface AccountSettingsCardProps {
   form: any;
@@ -113,7 +113,10 @@ export const AccountSettingsCard: React.FC<AccountSettingsCardProps> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Country</FormLabel>
-                  <Select value={field.value || ''} onValueChange={onCountryChange}>
+                  <Select value={field.value || ''} onValueChange={(value) => {
+                    field.onChange(value);
+                    onCountryChange(value);
+                  }}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select your country" />
@@ -168,7 +171,10 @@ export const AccountSettingsCard: React.FC<AccountSettingsCardProps> = ({
           name="whatsapp_phone"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>WhatsApp Phone Number (Optional)</FormLabel>
+              <FormLabel className="flex items-center gap-2">
+                <Smartphone className="h-4 w-4" />
+                WhatsApp Phone Number (Optional)
+              </FormLabel>
               <FormControl>
                 <Input 
                   placeholder="+1234567890" 

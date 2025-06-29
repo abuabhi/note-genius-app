@@ -8,9 +8,18 @@ const reminderRecurrenceSchema = z.enum(['none', 'daily', 'weekly', 'monthly']);
 const deliveryMethodSchema = z.enum(['in_app', 'email', 'whatsapp']);
 
 export const settingsFormSchema = z.object({
+  // Basic account information
+  username: z.string().optional(),
   email: z.string().email().optional(),
+  school: z.string().optional(),
+  whatsapp_phone: z.string().optional(),
+  
+  // Location and timezone
+  country_id: z.string().optional(),
+  timezone: z.string().default("UTC"),
+  
+  // Language and preferences
   language: z.string().default("en"),
-  countryId: z.string().optional(),
   
   // Weekly study goal field
   weeklyStudyGoalHours: z.number().min(1).max(50).default(5),

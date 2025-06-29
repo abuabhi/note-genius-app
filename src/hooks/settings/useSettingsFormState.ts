@@ -14,9 +14,13 @@ export const useSettingsFormState = () => {
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsFormSchema),
     defaultValues: {
-      email: user?.email || "user@example.com",
+      username: "",
+      email: user?.email || "",
+      school: "",
+      whatsapp_phone: "",
+      country_id: "",
+      timezone: "UTC",
       language: "en",
-      countryId: "",
       weeklyStudyGoalHours: 5,
       // Adaptive Learning defaults
       adaptiveDifficulty: "adaptive",

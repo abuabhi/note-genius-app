@@ -53,7 +53,7 @@ export const useSettingsForm = () => {
 
   useEffect(() => {
     if (userCountry) {
-      form.setValue("countryId", userCountry.id);
+      form.setValue("country_id", userCountry.id);
     }
   }, [userCountry, form]);
 
@@ -72,7 +72,7 @@ export const useSettingsForm = () => {
   };
 
   const handleCountryChange = async (countryId: string) => {
-    form.setValue("countryId", countryId, { 
+    form.setValue("country_id", countryId, { 
       shouldDirty: true,
       shouldValidate: true 
     });

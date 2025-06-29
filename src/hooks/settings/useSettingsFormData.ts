@@ -24,16 +24,22 @@ export const useSettingsFormData = (
         if (error) throw error;
         
         if (data) {
-          // Use any type to bypass TypeScript issues with newly added columns
-          const profileData = data as any;
+          // Load basic account information
+          form.setValue("username", data.username || "");
+          form.setValue("email", user.email || "");
+          form.setValue("school", data.school || "");
+          form.setValue("whatsapp_phone", data.whatsapp_phone || "");
+          form.setValue("country_id", data.country_id || "");
+          form.setValue("timezone", data.timezone || "UTC");
           
-          form.setValue("weeklyStudyGoalHours", profileData.weekly_study_goal_hours || 5);
+          // Load study goal
+          form.setValue("weeklyStudyGoalHours", data.weekly_study_goal_hours || 5);
           
           // Load notification preferences if they exist
-          if (profileData.notification_preferences) {
-            const notifPrefs = typeof profileData.notification_preferences === 'string' 
-              ? JSON.parse(profileData.notification_preferences) 
-              : profileData.notification_preferences;
+          if (data.notification_preferences) {
+            const notifPrefs = typeof data.notification_preferences === 'string' 
+              ? JSON.parse(data.notification_preferences) 
+              : data.notification_preferences;
             
             form.setValue("emailNotifications", notifPrefs.email ?? true);
             form.setValue("inAppNotifications", notifPrefs.in_app ?? true);
@@ -47,10 +53,10 @@ export const useSettingsFormData = (
           }
 
           // Load adaptive learning preferences if they exist
-          if (profileData.adaptive_learning_preferences) {
-            const adaptivePrefs = typeof profileData.adaptive_learning_preferences === 'string'
-              ? JSON.parse(profileData.adaptive_learning_preferences)
-              : profileData.adaptive_learning_preferences;
+          if (data.adaptive_learning_preferences) {
+            const adaptivePrefs = typeof data.adaptive_learning_preferences === 'string'
+              ? JSON.parse(data.adaptive_learning_preferences)
+              : data.adaptive_learning_preferences;
 
             form.setValue("adaptiveDifficulty", adaptivePrefs.difficulty ?? "adaptive");
             form.setValue("studyStyle", adaptivePrefs.study_style ?? "distributed");
