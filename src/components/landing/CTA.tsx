@@ -6,19 +6,19 @@ import { ArrowRight, Star, Zap, Clock } from "lucide-react";
 const CTA = () => {
   return (
     <div className="relative overflow-hidden bg-gradient-to-b from-mint-50/30 to-mint-100/50">
-      <div className="absolute inset-0 bg-gradient-to-br from-mint-400/80 via-mint-500/70 to-neutral-300/40" />
+      <div className="absolute inset-0 bg-gradient-to-br from-mint-500/90 via-mint-600/80 to-mint-700/70" />
       <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5" />
       <div className="relative max-w-7xl mx-auto py-24 px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <div className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-white text-sm mb-8">
+          <div className="inline-flex items-center px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm mb-8 border border-white/30">
             <Star className="h-4 w-4 mr-2" />
-            <span>Join 10,000+ successful students</span>
+            <span>Join 15,000+ successful students</span>
           </div>
           <h2 className="text-4xl font-bold tracking-tight text-white md:text-5xl">
             Ready to study smarter?
           </h2>
           <p className="mt-4 text-xl text-mint-50 max-w-2xl mx-auto">
-            Start creating AI-powered flashcards, enhanced notes, and adaptive quizzes today. No credit card required.
+            Start creating AI-powered study plans, flashcards, quizzes, and track your learning analytics today. No credit card required.
           </p>
 
           {/* Feature highlights */}
@@ -42,7 +42,7 @@ const CTA = () => {
           <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
             <Button
               size="lg"
-              className="bg-white text-mint-700 hover:bg-mint-50 hover:scale-105 transform transition-all duration-200"
+              className="bg-white text-mint-700 hover:bg-mint-50 hover:scale-105 transform transition-all duration-200 shadow-xl font-semibold"
               asChild
             >
               <Link to="/signup">
@@ -53,11 +53,11 @@ const CTA = () => {
             <Button
               variant="outline"
               size="lg"
-              className="border-white/30 text-white hover:bg-white/10 backdrop-blur-sm"
+              className="border-2 border-white/40 text-white hover:bg-white/10 backdrop-blur-sm bg-white/5 hover:border-white/60 transition-all duration-200"
               asChild
             >
               <Link to="/features">
-                Try Live Demo
+                Try Interactive Demo
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
