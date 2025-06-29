@@ -23,7 +23,6 @@ interface OpenHolidaysEvent {
 }
 
 class OpenHolidaysService {
-  private readonly baseUrl = 'https://openholidaysapi.org';
   private cache = new Map<string, any>();
   private cacheExpiry = new Map<string, number>();
   private readonly CACHE_DURATION = 60 * 60 * 1000; // 1 hour
@@ -47,16 +46,36 @@ class OpenHolidaysService {
     return null;
   }
 
+  private async makeProxyRequest(endpoint: string, params?: Record<string, string>) {
+    try {
+      const response = await fetch('https://zuhcmwujzfddmafozubd.supabase.co/functions/v1/academic-calendar-proxy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ endpoint, params })
+      });
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Proxy request failed');
+      }
+      
+      return result.data;
+    } catch (error) {
+      console.error('Proxy request error:', error);
+      throw error;
+    }
+  }
+
   async getCountries(): Promise<OpenHolidaysCountry[]> {
     const cacheKey = 'countries';
     const cached = this.getCache(cacheKey);
     if (cached) return cached;
 
     try {
-      const response = await fetch(`${this.baseUrl}/Countries`);
-      if (!response.ok) throw new Error('Failed to fetch countries');
-      
-      const data = await response.json();
+      const data = await this.makeProxyRequest('Countries');
       this.setCache(cacheKey, data);
       return data;
     } catch (error) {
@@ -71,10 +90,7 @@ class OpenHolidaysService {
     if (cached) return cached;
 
     try {
-      const response = await fetch(`${this.baseUrl}/Subdivisions?countryIsoCode=${countryCode}`);
-      if (!response.ok) throw new Error('Failed to fetch subdivisions');
-      
-      const data = await response.json();
+      const data = await this.makeProxyRequest('Subdivisions', { countryIsoCode: countryCode });
       this.setCache(cacheKey, data);
       return data;
     } catch (error) {
@@ -89,15 +105,17 @@ class OpenHolidaysService {
     if (cached) return cached;
 
     try {
-      let url = `${this.baseUrl}/PublicHolidays?countryIsoCode=${countryCode}&validFrom=${year}-01-01&validTo=${year}-12-31`;
+      const params: Record<string, string> = {
+        countryIsoCode: countryCode,
+        validFrom: `${year}-01-01`,
+        validTo: `${year}-12-31`
+      };
+      
       if (subdivisionCode) {
-        url += `&subdivisionCode=${subdivisionCode}`;
+        params.subdivisionCode = subdivisionCode;
       }
 
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to fetch public holidays');
-      
-      const data = await response.json();
+      const data = await this.makeProxyRequest('PublicHolidays', params);
       this.setCache(cacheKey, data);
       return data;
     } catch (error) {
@@ -112,15 +130,17 @@ class OpenHolidaysService {
     if (cached) return cached;
 
     try {
-      let url = `${this.baseUrl}/SchoolHolidays?countryIsoCode=${countryCode}&validFrom=${year}-01-01&validTo=${year}-12-31`;
+      const params: Record<string, string> = {
+        countryIsoCode: countryCode,
+        validFrom: `${year}-01-01`,
+        validTo: `${year}-12-31`
+      };
+      
       if (subdivisionCode) {
-        url += `&subdivisionCode=${subdivisionCode}`;
+        params.subdivisionCode = subdivisionCode;
       }
 
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to fetch school holidays');
-      
-      const data = await response.json();
+      const data = await this.makeProxyRequest('SchoolHolidays', params);
       this.setCache(cacheKey, data);
       return data;
     } catch (error) {

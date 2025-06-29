@@ -77,7 +77,7 @@ export const OptimizedAppRoutes = () => {
         <Route path="/quizzes" element={<SidebarLayout><QuizPage /></SidebarLayout>} />
         <Route path="/quiz/create" element={<SidebarLayout><CreateQuizPage /></SidebarLayout>} />
         <Route path="/quiz/:id/take" element={<SidebarLayout><TakeQuizPage /></SidebarLayout>} />
-        <Route path="/quiz/:id/view" element={<SidebarLayout><QuizDetailsPage /></SidebarLayout>} />
+        <Route path="/quiz/:id/view" element={<SidebarLayout><QuizDetailsPage /></SitebarLayout>} />
         <Route path="/quiz/:id" element={<SidebarLayout><QuizDetailsPage /></SidebarLayout>} />
         
         {/* Analytics and Progress */}
@@ -95,7 +95,7 @@ export const OptimizedAppRoutes = () => {
         
         {/* Goals and Todos - Now using unified SidebarLayout */}
         <Route path="/goals" element={<SidebarLayout><GoalsPage /></SidebarLayout>} />
-        <Route path="/todos" element={<SidebarLayout><TodoPage /></SidebarLayout>} />
+        <Route path="/todos" element={<SidebarLayout><TodoPage /></SitebarLayout>} />
         
         {/* Notifications route */}
         <Route path="/notifications" element={<SidebarLayout><NotificationsPage /></SidebarLayout>} />
@@ -115,7 +115,7 @@ export const OptimizedAppRoutes = () => {
           <Route path="feedback" element={<SidebarLayout><AdminFeedbackPage /></SidebarLayout>} />
           <Route path="feedback/settings" element={<SidebarLayout><AdminFeedbackSettingsPage /></SidebarLayout>} />
           <Route path="analytics" element={<SidebarLayout><AdminAnalyticsPage /></SidebarLayout>} />
-          <Route path="announcements" element={<SidebarLayout><AdminAnnouncementsPage /></SidebarLayout>} />
+          <Route path="announcements" element={<SidebarLayout><AdminAnnouncementsPage /></SitebarLayout>} />
           <Route path="flashcards" element={<SidebarLayout><AdminFlashcardPage /></SidebarLayout>} />
           <Route path="sections" element={<SidebarLayout><AdminSectionsPage /></SidebarLayout>} />
           <Route path="grades" element={<SidebarLayout><AdminGradesPage /></SidebarLayout>} />
