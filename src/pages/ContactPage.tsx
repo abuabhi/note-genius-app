@@ -5,9 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, CheckCircle, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
@@ -17,6 +18,7 @@ const ContactPage = () => {
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -28,20 +30,50 @@ const ContactPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!formData.name.trim()) {
+      toast.error("Please enter your name");
+      return;
+    }
+    
+    if (!formData.email.trim()) {
+      toast.error("Please enter your email address");
+      return;
+    }
+    
+    if (!formData.message.trim()) {
+      toast.error("Please enter your message");
+      return;
+    }
+    
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      // Create mailto link with form data
-      const subject = encodeURIComponent(formData.subject || 'Contact Form Submission');
-      const body = encodeURIComponent(
-        `Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`
-      );
-      const mailtoLink = `mailto:hello@prepgenie.io?subject=${subject}&body=${body}`;
-      
-      // Open user's email client
-      window.location.href = mailtoLink;
-      
-      toast.success("Email client opened! Please send the email to complete your message.");
+      const { error } = await supabase.functions.invoke('send-contact-email', {
+        body: {
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          subject: formData.subject.trim() || 'Contact Form Submission',
+          message: formData.message.trim()
+        }
+      });
+
+      if (error) {
+        console.error('Error sending contact form:', error);
+        toast.error("Failed to send your message. Please try again or email us directly at hello@prepgenie.io");
+        return;
+      }
+
+      toast.success("Message sent successfully! We'll get back to you soon.");
+      setIsSubmitted(true);
       
       // Reset form
       setFormData({
@@ -50,12 +82,47 @@ const ContactPage = () => {
         subject: '',
         message: ''
       });
+      
     } catch (error) {
-      toast.error("Error opening email client. Please email us directly at hello@prepgenie.io");
+      console.error('Error sending contact form:', error);
+      toast.error("Failed to send your message. Please try again or email us directly at hello@prepgenie.io");
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (isSubmitted) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-6">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl mb-4">
+                Message Sent Successfully!
+              </h1>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">
+                Thank you for contacting us! We've received your message and will get back to you as soon as possible, typically within 24 hours during business days.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button 
+                  onClick={() => setIsSubmitted(false)}
+                  className="bg-mint-600 hover:bg-mint-700"
+                >
+                  Send Another Message
+                </Button>
+                <Button variant="outline" asChild>
+                  <a href="/help">Visit Help Center</a>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -89,6 +156,7 @@ const ContactPage = () => {
                       value={formData.name}
                       onChange={handleInputChange}
                       className="mt-1"
+                      disabled={isSubmitting}
                     />
                   </div>
                   
@@ -102,6 +170,7 @@ const ContactPage = () => {
                       value={formData.email}
                       onChange={handleInputChange}
                       className="mt-1"
+                      disabled={isSubmitting}
                     />
                   </div>
                   
@@ -114,6 +183,8 @@ const ContactPage = () => {
                       value={formData.subject}
                       onChange={handleInputChange}
                       className="mt-1"
+                      disabled={isSubmitting}
+                      placeholder="General Inquiry"
                     />
                   </div>
                   
@@ -128,6 +199,7 @@ const ContactPage = () => {
                       onChange={handleInputChange}
                       className="mt-1"
                       placeholder="Tell us how we can help you..."
+                      disabled={isSubmitting}
                     />
                   </div>
                   
@@ -136,7 +208,7 @@ const ContactPage = () => {
                     disabled={isSubmitting}
                     className="w-full bg-mint-600 hover:bg-mint-700"
                   >
-                    {isSubmitting ? "Opening Email Client..." : "Send Message"}
+                    {isSubmitting ? "Sending..." : "Send Message"}
                   </Button>
                 </form>
               </CardContent>
