@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      academic_calendars: {
+        Row: {
+          academic_year: string
+          calendar_data: Json
+          country_code: string
+          created_at: string
+          id: string
+          institution_type: string
+          state_region: string | null
+          updated_at: string
+        }
+        Insert: {
+          academic_year: string
+          calendar_data?: Json
+          country_code: string
+          created_at?: string
+          id?: string
+          institution_type?: string
+          state_region?: string | null
+          updated_at?: string
+        }
+        Update: {
+          academic_year?: string
+          calendar_data?: Json
+          country_code?: string
+          created_at?: string
+          id?: string
+          institution_type?: string
+          state_region?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       academic_subjects: {
         Row: {
           country_id: string | null
@@ -3030,6 +3063,39 @@ export type Database = {
           id?: string
           subject_name?: string
           suggestions?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_academic_preferences: {
+        Row: {
+          academic_year: string | null
+          country_code: string
+          created_at: string
+          id: string
+          institution_type: string
+          state_region: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          academic_year?: string | null
+          country_code?: string
+          created_at?: string
+          id?: string
+          institution_type?: string
+          state_region?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          academic_year?: string | null
+          country_code?: string
+          created_at?: string
+          id?: string
+          institution_type?: string
+          state_region?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

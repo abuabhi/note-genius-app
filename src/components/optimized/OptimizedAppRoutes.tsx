@@ -26,6 +26,7 @@ const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
 const FeedbackPage = lazy(() => import('@/pages/FeedbackPage'));
 const ReferralsPage = lazy(() => import('@/pages/ReferralsPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
+const AcademicCalendarPage = lazy(() => import('@/pages/AcademicCalendarPage'));
 
 // Admin Pages
 const AdminDashboardPage = lazy(() => import('@/pages/AdminDashboardPage'));
@@ -90,6 +91,7 @@ export const OptimizedAppRoutes = () => {
         <Route path="/calendar" element={<SidebarLayout><SchedulePage /></SidebarLayout>} />
         <Route path="/schedule" element={<SidebarLayout><SchedulePage /></SidebarLayout>} />
         <Route path="/study-planner" element={<SidebarLayout><StudyPlannerPage /></SidebarLayout>} />
+        <Route path="/academic-calendar" element={<SidebarLayout><AcademicCalendarPage /></SidebarLayout>} />
         
         {/* Goals and Todos - Now using unified SidebarLayout */}
         <Route path="/goals" element={<SidebarLayout><GoalsPage /></SidebarLayout>} />

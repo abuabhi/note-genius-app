@@ -7,6 +7,7 @@ import { LearningAnalyticsDashboard } from "@/components/dashboard/LearningAnaly
 import { TodosSection } from "@/components/dashboard/TodosSection";
 import { GoalsSection } from "@/components/dashboard/GoalsSection";
 import { StudyPlannerSection } from "@/components/dashboard/StudyPlannerSection";
+import { AcademicCalendarWidget } from "@/components/dashboard/AcademicCalendarWidget";
 import { ReferralSignupHandler } from "@/components/referrals/ReferralSignupHandler";
 import { ReferralSignupErrorBoundary } from "@/components/referrals/ReferralSignupErrorBoundary";
 import { useUltraSimpleAnalytics } from "@/hooks/useUltraSimpleAnalytics";
@@ -82,16 +83,23 @@ const DashboardPage = () => {
             <LearningAnalyticsDashboard />
           </div>
           
-          {/* 3-Column Layout: Study Plans | Goals | Todos */}
-          <div className="grid gap-6 lg:grid-cols-3">
-            <div>
-              <StudyPlannerSection />
+          {/* 2+2 Grid Layout: Academic Calendar + Study Plans | Goals + Todos */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-6 lg:grid-cols-2">
+              <div>
+                <AcademicCalendarWidget />
+              </div>
+              <div>
+                <StudyPlannerSection />
+              </div>
             </div>
-            <div>
-              <GoalsSection />
-            </div>
-            <div>
-              <TodosSection />
+            <div className="grid gap-6 lg:grid-cols-2">
+              <div>
+                <GoalsSection />
+              </div>
+              <div>
+                <TodosSection />
+              </div>
             </div>
           </div>
         </div>
