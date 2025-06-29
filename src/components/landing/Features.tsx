@@ -1,4 +1,3 @@
-
 import { BookOpen, Brain, Scan, BarChart3, Zap, Calendar, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -16,35 +15,35 @@ const features = [
     description: "Generate adaptive quizzes from your content that adjust difficulty based on your performance and learning progress.",
     icon: Zap,
     highlight: "AI-Powered",
-    color: "from-blue-500 to-blue-600"
+    color: "from-mint-400 to-mint-500"
   },
   {
     name: "Personalized Study Plans",
     description: "Create intelligent study schedules that adapt to your goals, deadlines, and learning patterns for optimal results.",
     icon: Calendar,
     highlight: "New",
-    color: "from-purple-500 to-purple-600"
+    color: "from-mint-600 to-mint-700"
   },
   {
     name: "Smart Note Enhancement",
     description: "Upload, scan, or write notes. Get AI-generated summaries, explanations, and study guides instantly.",
     icon: BookOpen,
     highlight: "",
-    color: "from-green-500 to-green-600"
+    color: "from-mint-300 to-mint-400"
   },
   {
     name: "Document Scanning",
     description: "Scan handwritten notes, textbooks, and documents with OCR technology for instant digitization and processing.",
     icon: Scan,
     highlight: "",
-    color: "from-orange-500 to-orange-600"
+    color: "from-mint-500 to-mint-600"
   },
   {
     name: "Learning Analytics",
     description: "Track your study time, performance trends, mastery levels, and get personalized insights to improve faster.",
     icon: BarChart3,
     highlight: "Analytics",
-    color: "from-pink-500 to-pink-600"
+    color: "from-mint-400 to-mint-600"
   },
 ];
 
