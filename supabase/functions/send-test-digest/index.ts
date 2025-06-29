@@ -80,12 +80,12 @@ serve(async (req) => {
       )
     }
 
-    // Send test email using Resend's default verified domain
+    // Send test email using custom verified domain
     const testTime = new Date().toLocaleString()
     console.log('📧 Sending test email to:', user.email);
     
     const { error: emailError } = await resend.emails.send({
-      from: 'StudyMate <onboarding@resend.dev>',
+      from: 'PrepGenie <noreply@prepgenie.io>',
       to: [user.email || ''],
       subject: `📧 Test Email Digest - ${testTime}`,
       html: `
@@ -115,12 +115,6 @@ serve(async (req) => {
           <div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin-top: 20px; border-left: 4px solid #059669;">
             <p style="margin: 0; color: #374151; font-size: 14px;">
               This is a test email. Your actual daily digest will contain your real study data and will be sent according to your scheduled time.
-            </p>
-          </div>
-          
-          <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin-top: 20px; border-left: 4px solid #f59e0b;">
-            <p style="margin: 0; color: #92400e; font-size: 14px;">
-              <strong>Note:</strong> This test email is sent from our default domain. Your actual digest emails will be sent from the same address until you set up a custom domain.
             </p>
           </div>
         </div>
