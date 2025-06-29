@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -146,7 +145,6 @@ export const useAcademicCalendar = () => {
     }
   })();
 
-  // Get current status and upcoming events
   const getCurrentStatus = () => {
     if (!parsedCalendarData) return 'No calendar data available';
     
