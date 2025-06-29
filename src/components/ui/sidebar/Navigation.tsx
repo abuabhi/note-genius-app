@@ -73,21 +73,21 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
               isCollapsed={isCollapsed}
             />
             
-            {/* Goals */}
-            <NavLink
-              to="/goals"
-              icon={Target}
-              label="Goals"
-              isActive={pathname.startsWith("/goals")}
-              isCollapsed={isCollapsed}
-            />
-            
             {/* Study Planner */}
             <NavLink
               to="/study-planner"
               icon={Calendar}
               label="Study Planner"
               isActive={pathname.startsWith("/study-planner")}
+              isCollapsed={isCollapsed}
+            />
+            
+            {/* Goals */}
+            <NavLink
+              to="/goals"
+              icon={Target}
+              label="Goals"
+              isActive={pathname.startsWith("/goals")}
               isCollapsed={isCollapsed}
             />
             
@@ -106,15 +106,6 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
               icon={BarChart3}
               label="Analytics"
               isActive={pathname.startsWith("/analytics") || pathname.startsWith("/progress") || pathname.startsWith("/study-sessions")}
-              isCollapsed={isCollapsed}
-            />
-            
-            {/* Settings */}
-            <NavLink
-              to="/settings"
-              icon={Settings}
-              label="Settings"
-              isActive={pathname.startsWith("/settings")}
               isCollapsed={isCollapsed}
             />
             
@@ -150,6 +141,15 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   WIN
                 </Badge>
               }
+            />
+            
+            {/* Settings */}
+            <NavLink
+              to="/settings"
+              icon={Settings}
+              label="Settings"
+              isActive={pathname.startsWith("/settings")}
+              isCollapsed={isCollapsed}
             />
           </div>
         </ScrollArea>
