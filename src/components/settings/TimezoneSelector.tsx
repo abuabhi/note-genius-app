@@ -3,26 +3,11 @@ import { useTimezone } from '@/hooks/useTimezone';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Clock } from 'lucide-react';
-
-// Common timezones - you can expand this list
-const COMMON_TIMEZONES = [
-  { value: 'UTC', label: 'UTC (Coordinated Universal Time)' },
-  { value: 'America/New_York', label: 'Eastern Time (US & Canada)' },
-  { value: 'America/Chicago', label: 'Central Time (US & Canada)' },
-  { value: 'America/Denver', label: 'Mountain Time (US & Canada)' },
-  { value: 'America/Los_Angeles', label: 'Pacific Time (US & Canada)' },
-  { value: 'Europe/London', label: 'London (GMT/BST)' },
-  { value: 'Europe/Paris', label: 'Central European Time' },
-  { value: 'Europe/Berlin', label: 'Berlin' },
-  { value: 'Asia/Tokyo', label: 'Tokyo' },
-  { value: 'Asia/Shanghai', label: 'Shanghai' },
-  { value: 'Asia/Kolkata', label: 'India Standard Time' },
-  { value: 'Australia/Sydney', label: 'Sydney' },
-  { value: 'Australia/Melbourne', label: 'Melbourne' },
-];
+import { COMPREHENSIVE_TIMEZONES, getTimezonesByRegion, getCurrentTimeInTimezone } from '@/utils/timezoneData';
 
 export const TimezoneSelector = () => {
   const { timezone, updateTimezone, isLoading } = useTimezone();
+  const timezonesByRegion = getTimezonesByRegion();
 
   const handleTimezoneChange = (newTimezone: string) => {
     updateTimezone(newTimezone);
@@ -42,17 +27,29 @@ export const TimezoneSelector = () => {
         <SelectTrigger id="timezone">
           <SelectValue placeholder="Select your timezone" />
         </SelectTrigger>
-        <SelectContent>
-          {COMMON_TIMEZONES.map((tz) => (
-            <SelectItem key={tz.value} value={tz.value}>
-              {tz.label}
-            </SelectItem>
+        <SelectContent className="max-h-80">
+          {Object.entries(timezonesByRegion).map(([region, timezones]) => (
+            <div key={region}>
+              <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground border-b">
+                {region}
+              </div>
+              {timezones.map((tz) => (
+                <SelectItem key={tz.value} value={tz.value}>
+                  <div className="flex flex-col">
+                    <span>{tz.label}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {tz.offset} • Current: {getCurrentTimeInTimezone(tz.value)}
+                    </span>
+                  </div>
+                </SelectItem>
+              ))}
+            </div>
           ))}
         </SelectContent>
       </Select>
       <p className="text-sm text-gray-500">
         Your timezone is used to calculate daily and weekly study statistics accurately.
-        Current time: {new Date().toLocaleString(undefined, { timeZone: timezone })}
+        Current time: {getCurrentTimeInTimezone(timezone)}
       </p>
     </div>
   );

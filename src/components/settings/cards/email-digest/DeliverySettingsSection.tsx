@@ -9,6 +9,7 @@ import { EmailDigestPreferences } from "@/hooks/useEmailDigestPreferences";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { COMPREHENSIVE_TIMEZONES, getTimezonesByRegion, getCurrentTimeInTimezone } from "@/utils/timezoneData";
 
 interface DeliverySettingsSectionProps {
   preferences: EmailDigestPreferences;
@@ -17,6 +18,7 @@ interface DeliverySettingsSectionProps {
 
 export const DeliverySettingsSection = ({ preferences, updatePreferences }: DeliverySettingsSectionProps) => {
   const [sendingTest, setSendingTest] = useState(false);
+  const timezonesByRegion = getTimezonesByRegion();
 
   const handleSendTestEmail = async () => {
     setSendingTest(true);
@@ -106,7 +108,7 @@ export const DeliverySettingsSection = ({ preferences, updatePreferences }: Deli
               </div>
             </div>
 
-            {/* Timezone */}
+            {/* Timezone with regional grouping */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Timezone</label>
               <Select
@@ -116,19 +118,29 @@ export const DeliverySettingsSection = ({ preferences, updatePreferences }: Deli
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="UTC">UTC</SelectItem>
-                  <SelectItem value="America/New_York">Eastern Time</SelectItem>
-                  <SelectItem value="America/Chicago">Central Time</SelectItem>
-                  <SelectItem value="America/Denver">Mountain Time</SelectItem>
-                  <SelectItem value="America/Los_Angeles">Pacific Time</SelectItem>
-                  <SelectItem value="Europe/London">London</SelectItem>
-                  <SelectItem value="Europe/Paris">Paris</SelectItem>
-                  <SelectItem value="Asia/Tokyo">Tokyo</SelectItem>
-                  <SelectItem value="Asia/Shanghai">Shanghai</SelectItem>
-                  <SelectItem value="Asia/Kolkata">India</SelectItem>
+                <SelectContent className="max-h-80">
+                  {Object.entries(timezonesByRegion).map(([region, timezones]) => (
+                    <div key={region}>
+                      <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground border-b">
+                        {region}
+                      </div>
+                      {timezones.map((tz) => (
+                        <SelectItem key={tz.value} value={tz.value}>
+                          <div className="flex flex-col">
+                            <span>{tz.label}</span>
+                            <span className="text-xs text-muted-foreground">
+                              Current: {getCurrentTimeInTimezone(tz.value)}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </div>
+                  ))}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                Current time in selected timezone: {getCurrentTimeInTimezone(preferences.timezone)}
+              </p>
             </div>
 
             {/* Test Email Button */}

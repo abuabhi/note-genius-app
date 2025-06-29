@@ -1,5 +1,6 @@
 
 // Enhanced timezone utility functions with proper Intl.DateTimeFormat support
+import { findTimezoneByValue } from './timezoneData';
 
 export const getDateInTimezone = (date: Date, timezone: string): Date => {
   // Get the date as it appears in the specified timezone
@@ -151,7 +152,7 @@ export const isDateInTimezone = (utcDateString: string, targetDate: string, time
   return dateInTimezone === targetDate;
 };
 
-// Debug helper for timezone calculations
+// Enhanced debug helper with timezone data integration
 export const debugTimezone = (timezone: string) => {
   const now = new Date();
   const today = getTodayInTimezone(timezone);
@@ -161,8 +162,10 @@ export const debugTimezone = (timezone: string) => {
   const weekEnd = getWeekEndInTimezone(timezone, 0);
   const lastWeekStart = getWeekStartInTimezone(timezone, 1);
   const lastWeekEnd = getWeekEndInTimezone(timezone, 1);
+  const timezoneInfo = findTimezoneByValue(timezone);
   
   console.log(`🌏 Timezone Debug for ${timezone}:`, {
+    timezoneInfo,
     now: now.toISOString(),
     todayInTimezone: today,
     startOfDayUTC: startOfDay.toISOString(),
