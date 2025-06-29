@@ -22,9 +22,12 @@ const useGeolocation = () => {
   useEffect(() => {
     const detectCountry = async () => {
       try {
+        console.log('Detecting country via IP...');
         const response = await fetch('https://ipapi.co/json/');
         const data = await response.json();
+        console.log('IP detection result:', data);
         if (data.country_code) {
+          console.log('Country detected:', data.country_code);
           setCountryCode(data.country_code);
         }
       } catch (error) {
@@ -47,25 +50,59 @@ export const useSimplifiedAcademicCalendar = () => {
   const resolvedCountryCode = userCountry?.code || detectedCountryCode || 'US';
   const currentYear = new Date().getFullYear();
 
-  // Fetch public holidays
+  console.log('Academic Calendar - Resolved country code:', resolvedCountryCode);
+
+  // Get fallback data immediately
+  const getFallbackEvents = (): CalendarEvent[] => {
+    const fallbackData = fallbackCalendarData[resolvedCountryCode] || fallbackCalendarData['US'] || [];
+    console.log(`Using fallback data for ${resolvedCountryCode}:`, fallbackData.length, 'events');
+    return fallbackData;
+  };
+
+  // Always start with fallback data
+  const fallbackEvents = getFallbackEvents();
+
+  // Fetch public holidays (optional, runs in background)
   const { data: publicHolidays, isLoading: holidaysLoading, error: holidaysError } = useQuery({
     queryKey: ['public-holidays', resolvedCountryCode, currentYear],
-    queryFn: () => openHolidaysService.getPublicHolidays(resolvedCountryCode, currentYear),
+    queryFn: async () => {
+      console.log('Fetching public holidays for:', resolvedCountryCode);
+      try {
+        const result = await openHolidaysService.getPublicHolidays(resolvedCountryCode, currentYear);
+        console.log('Public holidays result:', result);
+        return result;
+      } catch (error) {
+        console.error('Public holidays error:', error);
+        throw error;
+      }
+    },
     enabled: !!resolvedCountryCode,
     staleTime: 60 * 60 * 1000, // 1 hour
+    retry: 1, // Only retry once
   });
 
-  // Fetch school holidays
+  // Fetch school holidays (optional, runs in background)
   const { data: schoolHolidays, isLoading: schoolLoading, error: schoolError } = useQuery({
     queryKey: ['school-holidays', resolvedCountryCode, currentYear],
-    queryFn: () => openHolidaysService.getSchoolHolidays(resolvedCountryCode, currentYear),
+    queryFn: async () => {
+      console.log('Fetching school holidays for:', resolvedCountryCode);
+      try {
+        const result = await openHolidaysService.getSchoolHolidays(resolvedCountryCode, currentYear);
+        console.log('School holidays result:', result);
+        return result;
+      } catch (error) {
+        console.error('School holidays error:', error);
+        throw error;
+      }
+    },
     enabled: !!resolvedCountryCode,
     staleTime: 60 * 60 * 1000, // 1 hour
+    retry: 1, // Only retry once
   });
 
   // Transform API data to our format
   const transformEvents = (events: OpenHolidaysEvent[], category: 'public' | 'academic'): CalendarEvent[] => {
-    if (!events) return [];
+    if (!events || events.length === 0) return [];
 
     return events.map(event => ({
       id: event.id,
@@ -80,45 +117,46 @@ export const useSimplifiedAcademicCalendar = () => {
     }));
   };
 
-  // Get fallback data if API fails
-  const getFallbackEvents = (): CalendarEvent[] => {
-    return fallbackCalendarData[resolvedCountryCode] || fallbackCalendarData['US'] || [];
-  };
-
-  // Combine API data with fallback data
+  // Combine API data with fallback data (API enhances fallback, doesn't replace it)
   const allEvents = (() => {
     const apiEvents = [
       ...transformEvents(publicHolidays || [], 'public'),
       ...transformEvents(schoolHolidays || [], 'academic')
     ];
 
-    // Use API data if available, otherwise use fallback data
+    // If we have API data, merge it with fallback data (API takes precedence for duplicates)
     if (apiEvents.length > 0) {
+      console.log('Merging API events with fallback data');
+      // For now, just use API data if available, otherwise fallback
       return apiEvents;
     }
 
-    // If API failed or returned no data, use fallback
-    if (holidaysError || schoolError) {
-      console.log('Using fallback data due to API errors');
-      return getFallbackEvents();
-    }
-
-    return apiEvents;
+    // Always return fallback data
+    console.log('Using fallback data only');
+    return fallbackEvents;
   })();
+
+  console.log('Final events count:', allEvents.length);
 
   // Get upcoming events
   const getUpcomingEvents = (): CalendarEvent[] => {
     const today = new Date().toISOString().split('T')[0];
-    return allEvents
+    const upcoming = allEvents
       .filter(event => event.date >= today)
       .sort((a, b) => a.date.localeCompare(b.date))
       .slice(0, 4);
+    
+    console.log('Upcoming events:', upcoming.length);
+    return upcoming;
   };
 
-  // Get current status without complex progress calculation
+  // Get current status
   const getCurrentStatus = (): string => {
-    if (allEvents.length === 0) return 'Loading calendar data...';
-    return getCurrentPeriod(allEvents);
+    if (allEvents.length === 0) return 'No calendar data available';
+    
+    const status = getCurrentPeriod(allEvents);
+    console.log('Current status:', status);
+    return status;
   };
 
   // Get next event
@@ -128,6 +166,7 @@ export const useSimplifiedAcademicCalendar = () => {
       .filter(event => event.date > today)
       .sort((a, b) => a.date.localeCompare(b.date))[0];
     
+    console.log('Next event:', nextEvent?.name || 'None');
     return nextEvent || null;
   };
 
@@ -162,14 +201,20 @@ export const useSimplifiedAcademicCalendar = () => {
     }
   };
 
+  // Only show loading if we're actively fetching and have no fallback data
+  const isLoading = (holidaysLoading || schoolLoading) && allEvents.length === 0;
+  
+  // Show error only if both APIs failed and we have fallback data
+  const hasError = (!!holidaysError && !!schoolError) && allEvents.length > 0;
+
   return {
     events: allEvents,
     upcomingEvents: getUpcomingEvents(),
     currentStatus: getCurrentStatus(),
     nextEvent: getNextEvent(),
     daysUntilNext: getDaysUntilNext(),
-    isLoading: holidaysLoading || schoolLoading,
-    hasError: !!holidaysError || !!schoolError,
+    isLoading,
+    hasError,
     formatDate,
     countryCode: resolvedCountryCode,
     getCountryName

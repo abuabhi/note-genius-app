@@ -47,8 +47,12 @@ class OpenHolidaysService {
   }
 
   private async makeProxyRequest(endpoint: string, params?: Record<string, string>) {
+    const url = 'https://zuhcmwujzfddmafozubd.supabase.co/functions/v1/academic-calendar-proxy';
+    
+    console.log(`OpenHolidays Service - Making proxy request to: ${endpoint}`, params);
+    
     try {
-      const response = await fetch('https://zuhcmwujzfddmafozubd.supabase.co/functions/v1/academic-calendar-proxy', {
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -56,7 +60,16 @@ class OpenHolidaysService {
         body: JSON.stringify({ endpoint, params })
       });
 
+      console.log(`OpenHolidays Service - Proxy response status: ${response.status}`);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`OpenHolidays Service - Proxy error: ${response.status}`, errorText);
+        throw new Error(`Proxy request failed: ${response.status} ${response.statusText}`);
+      }
+
       const result = await response.json();
+      console.log('OpenHolidays Service - Proxy result:', result);
       
       if (!result.success) {
         throw new Error(result.error || 'Proxy request failed');
@@ -64,7 +77,7 @@ class OpenHolidaysService {
       
       return result.data;
     } catch (error) {
-      console.error('Proxy request error:', error);
+      console.error('OpenHolidays Service - Proxy request error:', error);
       throw error;
     }
   }
@@ -72,14 +85,18 @@ class OpenHolidaysService {
   async getCountries(): Promise<OpenHolidaysCountry[]> {
     const cacheKey = 'countries';
     const cached = this.getCache(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      console.log('OpenHolidays Service - Using cached countries');
+      return cached;
+    }
 
     try {
       const data = await this.makeProxyRequest('Countries');
       this.setCache(cacheKey, data);
-      return data;
+      console.log(`OpenHolidays Service - Fetched ${data?.length || 0} countries`);
+      return data || [];
     } catch (error) {
-      console.error('Error fetching countries:', error);
+      console.error('OpenHolidays Service - Error fetching countries:', error);
       return [];
     }
   }
@@ -87,14 +104,18 @@ class OpenHolidaysService {
   async getSubdivisions(countryCode: string): Promise<OpenHolidaysSubdivision[]> {
     const cacheKey = `subdivisions-${countryCode}`;
     const cached = this.getCache(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      console.log(`OpenHolidays Service - Using cached subdivisions for ${countryCode}`);
+      return cached;
+    }
 
     try {
       const data = await this.makeProxyRequest('Subdivisions', { countryIsoCode: countryCode });
       this.setCache(cacheKey, data);
-      return data;
+      console.log(`OpenHolidays Service - Fetched ${data?.length || 0} subdivisions for ${countryCode}`);
+      return data || [];
     } catch (error) {
-      console.error('Error fetching subdivisions:', error);
+      console.error(`OpenHolidays Service - Error fetching subdivisions for ${countryCode}:`, error);
       return [];
     }
   }
@@ -102,7 +123,10 @@ class OpenHolidaysService {
   async getPublicHolidays(countryCode: string, year: number, subdivisionCode?: string): Promise<OpenHolidaysEvent[]> {
     const cacheKey = `holidays-${countryCode}-${year}-${subdivisionCode || 'nationwide'}`;
     const cached = this.getCache(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      console.log(`OpenHolidays Service - Using cached public holidays for ${countryCode} ${year}`);
+      return cached;
+    }
 
     try {
       const params: Record<string, string> = {
@@ -117,9 +141,10 @@ class OpenHolidaysService {
 
       const data = await this.makeProxyRequest('PublicHolidays', params);
       this.setCache(cacheKey, data);
-      return data;
+      console.log(`OpenHolidays Service - Fetched ${data?.length || 0} public holidays for ${countryCode} ${year}`);
+      return data || [];
     } catch (error) {
-      console.error('Error fetching public holidays:', error);
+      console.error(`OpenHolidays Service - Error fetching public holidays for ${countryCode} ${year}:`, error);
       return [];
     }
   }
@@ -127,7 +152,10 @@ class OpenHolidaysService {
   async getSchoolHolidays(countryCode: string, year: number, subdivisionCode?: string): Promise<OpenHolidaysEvent[]> {
     const cacheKey = `school-holidays-${countryCode}-${year}-${subdivisionCode || 'nationwide'}`;
     const cached = this.getCache(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      console.log(`OpenHolidays Service - Using cached school holidays for ${countryCode} ${year}`);
+      return cached;
+    }
 
     try {
       const params: Record<string, string> = {
@@ -142,9 +170,10 @@ class OpenHolidaysService {
 
       const data = await this.makeProxyRequest('SchoolHolidays', params);
       this.setCache(cacheKey, data);
-      return data;
+      console.log(`OpenHolidays Service - Fetched ${data?.length || 0} school holidays for ${countryCode} ${year}`);
+      return data || [];
     } catch (error) {
-      console.error('Error fetching school holidays:', error);
+      console.error(`OpenHolidays Service - Error fetching school holidays for ${countryCode} ${year}:`, error);
       return [];
     }
   }
