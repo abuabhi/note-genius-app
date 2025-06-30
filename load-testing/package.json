@@ -1,0 +1,30 @@
+
+{
+  "name": "studyai-load-testing",
+  "version": "1.0.0",
+  "description": "Load testing suite for StudyAI application",
+  "main": "run-tests.sh",
+  "scripts": {
+    "test:artillery": "artillery run artillery.yml --output results/artillery-report.json",
+    "test:k6": "k6 run --out json=results/k6-results.json k6-load-test.js",
+    "test:edge-functions": "k6 run --out json=results/edge-functions-results.json edge-functions-test.js",
+    "test:all": "./run-tests.sh",
+    "report": "node generate-report.js",
+    "install:tools": "npm install -g artillery k6"
+  },
+  "dependencies": {
+    "artillery": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  },
+  "keywords": [
+    "load-testing",
+    "performance",
+    "artillery",
+    "k6",
+    "monitoring"
+  ],
+  "author": "StudyAI Team",
+  "license": "MIT"
+}

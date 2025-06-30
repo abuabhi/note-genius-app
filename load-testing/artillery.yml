@@ -1,0 +1,73 @@
+
+config:
+  target: 'http://localhost:8080'
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 120
+      arrivalRate: 10
+      name: "Ramp up load"
+    - duration: 300
+      arrivalRate: 15
+      name: "Sustained load"
+    - duration: 60
+      arrivalRate: 5
+      name: "Cool down"
+  plugins:
+    metrics-by-endpoint:
+      useOnlyRequestNames: true
+
+scenarios:
+  - name: "User Authentication Flow"
+    weight: 30
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "test@example.com"
+            password: "testpassword"
+          capture:
+            - json: "$.access_token"
+              as: "token"
+      - get:
+          url: "/api/user/profile"
+          headers:
+            Authorization: "Bearer {{ token }}"
+
+  - name: "Notes Management"
+    weight: 25
+    flow:
+      - post:
+          url: "/api/notes"
+          json:
+            title: "Test Note {{ $randomString() }}"
+            content: "This is a test note content"
+            subject_id: "{{ $randomInt(1, 10) }}"
+      - get:
+          url: "/api/notes"
+          qs:
+            limit: 20
+            offset: 0
+
+  - name: "Flashcard Study Session"
+    weight: 25
+    flow:
+      - get:
+          url: "/api/flashcards/sets"
+      - post:
+          url: "/api/study/session"
+          json:
+            flashcard_set_id: "{{ $randomInt(1, 5) }}"
+            mode: "review"
+
+  - name: "Quiz Taking"
+    weight: 20
+    flow:
+      - get:
+          url: "/api/quizzes"
+      - post:
+          url: "/api/quiz/attempt"
+          json:
+            quiz_id: "{{ $randomInt(1, 5) }}"
+            answers: [1, 2, 1, 3]
