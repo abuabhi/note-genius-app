@@ -7,6 +7,8 @@ const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const FlashcardsPage = lazy(() => import('@/pages/FlashcardsPage'));
 const NotesPage = lazy(() => import('@/pages/NotesPage'));
 const QuizPage = lazy(() => import('@/pages/QuizPage'));
+const TakeQuizPage = lazy(() => import('@/pages/TakeQuizPage'));
+const CreateQuizPage = lazy(() => import('@/pages/CreateQuizPage'));
 const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
 const GoalsPage = lazy(() => import('@/pages/GoalsPage'));
 const TodoPage = lazy(() => import('@/pages/TodoPage'));
@@ -17,6 +19,8 @@ const FeedbackPage = lazy(() => import('@/pages/FeedbackPage'));
 const ReferralsPage = lazy(() => import('@/pages/ReferralsPage'));
 const CollaborationPage = lazy(() => import('@/pages/CollaborationPage'));
 const ChatPage = lazy(() => import('@/pages/ChatPage'));
+const HelpPage = lazy(() => import('@/pages/HelpPage'));
+const FAQPage = lazy(() => import('@/pages/FAQPage'));
 
 // Legacy route redirects
 const ProgressPage = lazy(() => import('@/pages/AnalyticsPage'));
@@ -42,6 +46,18 @@ export const standardRoutes: RouteConfig[] = [
   {
     path: '/quizzes/*',
     element: createElement(QuizPage)
+  },
+  {
+    path: '/quizzes',
+    element: createElement(QuizPage)
+  },
+  {
+    path: '/quiz/create',
+    element: createElement(CreateQuizPage)
+  },
+  {
+    path: '/quiz/:id/take',
+    element: createElement(TakeQuizPage)
   },
   {
     path: '/analytics',
@@ -91,5 +107,13 @@ export const standardRoutes: RouteConfig[] = [
   {
     path: '/chat/*',
     element: createElement(ChatPage)
+  },
+  {
+    path: '/help',
+    element: createElement(HelpPage)
+  },
+  {
+    path: '/faq',
+    element: createElement(FAQPage)
   }
 ];

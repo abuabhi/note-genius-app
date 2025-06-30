@@ -5,11 +5,7 @@ import HomePage from "@/pages/HomePage";
 import AboutPage from "@/pages/AboutPage";
 import PricingPage from "@/pages/PricingPage";
 import LoginPage from "@/pages/LoginPage";
-import HelpPage from "@/pages/HelpPage";
 import ContactPage from "@/pages/ContactPage";
-import FeedbackPage from "@/pages/FeedbackPage";
-import ReferralsPage from "@/pages/ReferralsPage";
-import FAQPage from "@/pages/FAQPage";
 import { SignUpForm } from "@/components/auth/SignUpForm";
 
 export interface RouteConfig {
@@ -17,16 +13,12 @@ export interface RouteConfig {
   element: React.ReactElement;
 }
 
-// Public routes (no authentication required)
+// Public routes (no authentication required) - only truly public pages
 export const publicRoutes: RouteConfig[] = [
   { path: "/", element: <HomePage /> },
   { path: "/about", element: <AboutPage /> },
   { path: "/pricing", element: <PricingPage /> },
   { path: "/login", element: <LoginPage /> },
   { path: "/signup", element: <SignUpForm /> },
-  { path: "/help", element: <HelpPage /> },
   { path: "/contact", element: <ContactPage /> },
-  { path: "/feedback", element: <FeedbackPage /> },
-  { path: "/referrals", element: <ReferralsPage /> },
-  { path: "/faq", element: <FAQPage /> },
 ];

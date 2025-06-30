@@ -1,15 +1,15 @@
 
 import React from 'react';
-import NotionAuthCallback from '@/components/auth/NotionAuthCallback';
-import EvernoteAuthCallback from '@/components/auth/EvernoteAuthCallback';
-import MicrosoftAuthCallback from '@/components/auth/MicrosoftAuthCallback';
-import GoogleDocsAuthCallback from '@/components/auth/GoogleDocsAuthCallback';
 import { RouteConfig } from './publicRoutes';
+import { EvernoteAuthCallback } from '@/components/auth/EvernoteAuthCallback';
+import { NotionAuthCallback } from '@/components/auth/NotionAuthCallback';
+import { GoogleDocsAuthCallback } from '@/components/auth/GoogleDocsAuthCallback';
+import { MicrosoftAuthCallback } from '@/components/auth/MicrosoftAuthCallback';
 
-// Auth callback routes
+// Auth callback routes - these need to be accessible without full authentication
 export const authCallbackRoutes: RouteConfig[] = [
-  { path: "/auth/notion/callback", element: <NotionAuthCallback /> },
   { path: "/auth/evernote/callback", element: <EvernoteAuthCallback /> },
-  { path: "/auth/microsoft-callback", element: <MicrosoftAuthCallback /> },
-  { path: "/oauth2callback", element: <GoogleDocsAuthCallback /> },
+  { path: "/auth/notion/callback", element: <NotionAuthCallback /> },
+  { path: "/auth/google-docs/callback", element: <GoogleDocsAuthCallback /> },
+  { path: "/auth/microsoft/callback", element: <MicrosoftAuthCallback /> },
 ];
