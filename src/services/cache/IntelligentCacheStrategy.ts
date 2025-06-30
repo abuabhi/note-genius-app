@@ -1,278 +1,299 @@
-import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useRef } from 'react';
-
-interface CacheConfig {
-  staleTime: number;
-  gcTime: number;
-  maxAge?: number;
-  priority: 'low' | 'medium' | 'high';
-  prefetchOnHover?: boolean;
+interface MemoryInfo {
+  usedJSHeapSize: number;
+  totalJSHeapSize: number;
+  jsHeapSizeLimit: number;
 }
 
-interface CacheMetrics {
+interface PerformanceWithMemory extends Performance {
+  memory?: MemoryInfo;
+}
+
+interface CacheEntry {
+  data: any;
+  timestamp: number;
+  ttl: number;
+  priority: 'high' | 'normal' | 'low';
+  tags: string[];
+  accessCount: number;
+  lastAccessed: number;
+  size?: number;
+}
+
+interface CacheOptions {
+  ttl?: number;
+  priority?: 'high' | 'normal' | 'low';
+  tags?: string[];
+}
+
+interface AccessPattern {
   hits: number;
   misses: number;
-  evictions: number;
-  memoryUsage: number;
-  averageAccessTime: number;
+  writes: number;
+  expirations: number;
 }
 
-class IntelligentCacheManager {
-  private accessPatterns: Map<string, number[]> = new Map();
-  private hitRates: Map<string, number> = new Map();
-  private metrics: CacheMetrics = {
-    hits: 0,
-    misses: 0,
-    evictions: 0,
-    memoryUsage: 0,
-    averageAccessTime: 0,
-  };
+class IntelligentCacheStrategy {
+  private cache = new Map<string, CacheEntry>();
+  private accessPatterns = new Map<string, AccessPattern>();
+  private memoryPressureThreshold = 150 * 1024 * 1024; // 150MB
+  private maxCacheSize = 1000;
+  private ttlDefault = 10 * 60 * 1000; // 10 minutes
+  private cleanupInterval: NodeJS.Timeout | null = null;
 
-  // Adaptive cache configurations based on usage patterns
-  private cacheConfigs: Record<string, CacheConfig> = {
-    // High-frequency, rarely changing data
-    static: {
-      staleTime: 30 * 60 * 1000, // 30 minutes
-      gcTime: 60 * 60 * 1000, // 1 hour
-      priority: 'high',
-      prefetchOnHover: false,
-    },
-    
-    // User-specific data
-    user: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 15 * 60 * 1000, // 15 minutes
-      priority: 'high',
-      prefetchOnHover: true,
-    },
-    
-    // Frequently changing data
-    dynamic: {
-      staleTime: 2 * 60 * 1000, // 2 minutes
-      gcTime: 5 * 60 * 1000, // 5 minutes
-      priority: 'medium',
-      prefetchOnHover: false,
-    },
-    
-    // Background/analytics data
-    background: {
-      staleTime: 10 * 60 * 1000, // 10 minutes
-      gcTime: 30 * 60 * 1000, // 30 minutes
-      priority: 'low',
-      prefetchOnHover: false,
-    },
-    
-    // Real-time data
-    realtime: {
-      staleTime: 30 * 1000, // 30 seconds
-      gcTime: 2 * 60 * 1000, // 2 minutes
-      priority: 'medium',
-      prefetchOnHover: false,
-    }
-  };
-
-  getCacheConfig(queryKey: readonly unknown[]): CacheConfig {
-    const keyString = JSON.stringify([...queryKey]);
-    
-    // Analyze access patterns to determine optimal config
-    const accessTimes = this.accessPatterns.get(keyString) || [];
-    const recentAccesses = accessTimes.filter(time => Date.now() - time < 60000).length;
-    
-    if (keyString.includes('profile') || keyString.includes('settings')) {
-      return this.cacheConfigs.static;
-    }
-    
-    if (keyString.includes('user') || keyString.includes('dashboard')) {
-      return this.cacheConfigs.user;
-    }
-    
-    if (keyString.includes('realtime') || keyString.includes('notifications')) {
-      return this.cacheConfigs.realtime;
-    }
-    
-    if (keyString.includes('analytics') || keyString.includes('metrics')) {
-      return this.cacheConfigs.background;
-    }
-    
-    // Adaptive configuration based on access frequency
-    if (recentAccesses > 5) {
-      return {
-        ...this.cacheConfigs.dynamic,
-        staleTime: this.cacheConfigs.dynamic.staleTime * 0.5, // More aggressive refresh
-        priority: 'high'
-      };
-    }
-    
-    return this.cacheConfigs.dynamic;
+  constructor() {
+    this.startCleanupInterval();
+    this.setupMemoryPressureDetection();
   }
 
-  recordAccess(queryKey: readonly unknown[]): void {
-    const keyString = JSON.stringify([...queryKey]);
-    const now = Date.now();
-    
-    const accesses = this.accessPatterns.get(keyString) || [];
-    accesses.push(now);
-    
-    // Keep only recent accesses (last hour)
-    const recentAccesses = accesses.filter(time => now - time < 3600000);
-    this.accessPatterns.set(keyString, recentAccesses);
-  }
+  set(key: string, data: any, options: CacheOptions = {}): void {
+    const ttl = options.ttl || this.ttlDefault;
+    const priority = options.priority || 'normal';
+    const tags = options.tags || [];
 
-  recordHit(queryKey: readonly unknown[]): void {
-    this.metrics.hits++;
-    this.recordAccess(queryKey);
-    
-    const keyString = JSON.stringify([...queryKey]);
-    const currentHitRate = this.hitRates.get(keyString) || 0;
-    this.hitRates.set(keyString, currentHitRate + 1);
-  }
-
-  recordMiss(queryKey: readonly unknown[]): void {
-    this.metrics.misses++;
-    this.recordAccess(queryKey);
-  }
-
-  // Predictive prefetching based on usage patterns
-  getPrefetchCandidates(): string[][] {
-    const candidates: string[][] = [];
-    const now = Date.now();
-    
-    for (const [keyString, accesses] of this.accessPatterns) {
-      // If accessed frequently in the last 10 minutes, likely to be accessed again
-      const recentAccesses = accesses.filter(time => now - time < 600000);
-      if (recentAccesses.length >= 3) {
-        try {
-          const queryKey = JSON.parse(keyString);
-          candidates.push(queryKey);
-        } catch (error) {
-          // Invalid JSON, skip
-        }
-      }
+    // Check memory pressure before adding
+    if (this.isMemoryPressureHigh() && priority === 'low') {
+      console.log('🚫 [CACHE] Skipping low priority cache due to memory pressure');
+      return;
     }
-    
-    return candidates.slice(0, 5); // Limit to top 5 candidates
-  }
 
-  getMetrics(): CacheMetrics & { hitRate: string } {
-    const total = this.metrics.hits + this.metrics.misses;
-    const hitRate = total > 0 ? ((this.metrics.hits / total) * 100).toFixed(1) : '0';
-    
-    return {
-      ...this.metrics,
-      hitRate: `${hitRate}%`
+    // Clean up if cache is full
+    if (this.cache.size >= this.maxCacheSize) {
+      this.evictLeastRecentlyUsed();
+    }
+
+    const entry: CacheEntry = {
+      data,
+      timestamp: Date.now(),
+      ttl,
+      priority,
+      tags,
+      accessCount: 0,
+      lastAccessed: Date.now(),
+      size: this.estimateSize(data)
     };
+
+    this.cache.set(key, entry);
+    this.updateAccessPattern(key, 'write');
+
+    console.log(`💾 [CACHE] Stored: ${key} (Size: ${entry.size} bytes, TTL: ${ttl}ms)`);
   }
 
-  // Memory pressure handling
-  handleMemoryPressure(): void {
-    this.metrics.evictions++;
+  get(key: string): any {
+    const entry = this.cache.get(key);
     
-    // Sort queries by priority and access frequency
-    const queries = Array.from(this.accessPatterns.entries())
-      .map(([keyString, accesses]) => ({
-        keyString,
-        lastAccess: Math.max(...accesses),
-        accessCount: accesses.length,
-        priority: this.getCacheConfig(JSON.parse(keyString)).priority
-      }))
-      .sort((a, b) => {
-        // Sort by priority first, then by last access
-        const priorityOrder = { low: 0, medium: 1, high: 2 };
-        if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
-          return priorityOrder[a.priority] - priorityOrder[b.priority];
-        }
-        return a.lastAccess - b.lastAccess;
-      });
-    
-    // Remove oldest, lowest priority entries
-    const toRemove = queries.slice(0, Math.floor(queries.length * 0.2));
-    toRemove.forEach(({ keyString }) => {
-      this.accessPatterns.delete(keyString);
-      this.hitRates.delete(keyString);
+    if (!entry) {
+      this.updateAccessPattern(key, 'miss');
+      return null;
+    }
+
+    // Check if expired
+    if (Date.now() - entry.timestamp > entry.ttl) {
+      this.cache.delete(key);
+      this.updateAccessPattern(key, 'expired');
+      console.log(`⏰ [CACHE] Expired: ${key}`);
+      return null;
+    }
+
+    // Update access stats
+    entry.accessCount++;
+    entry.lastAccessed = Date.now();
+    this.updateAccessPattern(key, 'hit');
+
+    console.log(`✅ [CACHE] Hit: ${key} (Access count: ${entry.accessCount})`);
+    return entry.data;
+  }
+
+  invalidate(key: string): void {
+    if (this.cache.has(key)) {
+      this.cache.delete(key);
+      console.log(`🗑️ [CACHE] Invalidated: ${key}`);
+    }
+  }
+
+  invalidateByTags(tags: string[]): void {
+    let invalidatedCount = 0;
+    this.cache.forEach((entry, key) => {
+      if (entry.tags.some(tag => tags.includes(tag))) {
+        this.cache.delete(key);
+        invalidatedCount++;
+      }
     });
+    console.log(`🗑️ [CACHE] Invalidated ${invalidatedCount} entries with tags: ${tags.join(', ')}`);
   }
 
-  // Cleanup old data
-  cleanup(): void {
-    const now = Date.now();
-    const maxAge = 24 * 60 * 60 * 1000; // 24 hours
-    
-    for (const [keyString, accesses] of this.accessPatterns) {
-      const recentAccesses = accesses.filter(time => now - time < maxAge);
-      if (recentAccesses.length === 0) {
-        this.accessPatterns.delete(keyString);
-        this.hitRates.delete(keyString);
-      } else {
-        this.accessPatterns.set(keyString, recentAccesses);
+  clear(): void {
+    this.cache.clear();
+    this.accessPatterns.clear();
+    console.log('🧹 [CACHE] Cache cleared');
+  }
+
+  private isMemoryPressureHigh(): boolean {
+    try {
+      const perf = performance as PerformanceWithMemory;
+      if (perf.memory?.usedJSHeapSize) {
+        const memoryUsage = perf.memory.usedJSHeapSize;
+        return memoryUsage > this.memoryPressureThreshold;
       }
+    } catch (error) {
+      console.warn('⚠️ [CACHE] Memory API not available, using fallback detection');
     }
+    
+    // Fallback: use cache size as proxy for memory pressure
+    return this.cache.size > this.maxCacheSize * 0.8;
+  }
+
+  handleMemoryPressure(): void {
+    console.log('🚨 [CACHE] Memory pressure detected, performing aggressive cleanup');
+    
+    // Remove low priority items first
+    const lowPriorityKeys = Array.from(this.cache.entries())
+      .filter(([_, entry]) => entry.priority === 'low')
+      .map(([key]) => key);
+    
+    lowPriorityKeys.forEach(key => this.cache.delete(key));
+    
+    // If still high pressure, remove least recently used items
+    if (this.isMemoryPressureHigh()) {
+      const lruKeys = Array.from(this.cache.entries())
+        .sort(([, a], [, b]) => a.lastAccessed - b.lastAccessed)
+        .slice(0, Math.floor(this.cache.size * 0.3))
+        .map(([key]) => key);
+      
+      lruKeys.forEach(key => this.cache.delete(key));
+    }
+    
+    console.log(`🧹 [CACHE] Cleanup completed, cache size: ${this.cache.size}`);
+  }
+
+  private setupMemoryPressureDetection(): void {
+    // Check memory pressure every 30 seconds
+    setInterval(() => {
+      if (this.isMemoryPressureHigh()) {
+        this.handleMemoryPressure();
+      }
+    }, 30000);
+  }
+
+  private evictLeastRecentlyUsed(): void {
+    let lruKey: string | null = null;
+    let lruTimestamp = Date.now();
+
+    this.cache.forEach((entry, key) => {
+      if (entry.lastAccessed < lruTimestamp) {
+        lruTimestamp = entry.lastAccessed;
+        lruKey = key;
+      }
+    });
+
+    if (lruKey) {
+      this.cache.delete(lruKey);
+      console.log(`🗑️ [CACHE] Evicted LRU entry: ${lruKey}`);
+    }
+  }
+
+  private performCleanup(): void {
+    const now = Date.now();
+    let expiredCount = 0;
+
+    this.cache.forEach((entry, key) => {
+      if (now - entry.timestamp > entry.ttl) {
+        this.cache.delete(key);
+        expiredCount++;
+      }
+    });
+
+    if (expiredCount > 0) {
+      console.log(`🧹 [CACHE] Cleaned up ${expiredCount} expired entries`);
+    }
+  }
+
+  private updateAccessPattern(key: string, type: 'hit' | 'miss' | 'write' | 'expired'): void {
+    const pattern = this.accessPatterns.get(key) || { hits: 0, misses: 0, writes: 0, expirations: 0 };
+    
+    switch (type) {
+      case 'hit':
+        pattern.hits++;
+        break;
+      case 'miss':
+        pattern.misses++;
+        break;
+      case 'write':
+        pattern.writes++;
+        break;
+      case 'expired':
+        pattern.expirations++;
+        break;
+    }
+
+    this.accessPatterns.set(key, pattern);
+  }
+
+  private estimateSize(data: any): number {
+    try {
+      const str = JSON.stringify(data);
+      return new TextEncoder().encode(str).length;
+    } catch (error) {
+      console.warn('⚠️ [CACHE] Could not estimate size of data');
+      return 0;
+    }
+  }
+
+  private startCleanupInterval(): void {
+    this.cleanupInterval = setInterval(() => {
+      this.performCleanup();
+    }, 60000); // Every minute
+  }
+
+  destroy(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+    }
+    this.clear();
+  }
+
+  getMetrics(): {
+    size: number;
+    hitRate: string;
+    memoryUsage: string;
+    totalHits: number;
+    totalMisses: number;
+    averageAccessCount: number;
+  } {
+    const totalEntries = Array.from(this.accessPatterns.values());
+    const totalHits = totalEntries.reduce((sum, pattern) => sum + pattern.hits, 0);
+    const totalMisses = totalEntries.reduce((sum, pattern) => sum + pattern.misses, 0);
+    const totalAccesses = totalHits + totalMisses;
+    const hitRate = totalAccesses > 0 ? ((totalHits / totalAccesses) * 100).toFixed(1) : '0';
+    
+    const cacheEntries = Array.from(this.cache.values());
+    const averageAccessCount = cacheEntries.length > 0 
+      ? (cacheEntries.reduce((sum, entry) => sum + entry.accessCount, 0) / cacheEntries.length).toFixed(1)
+      : '0';
+    
+    let memoryUsage = 'Unknown';
+    try {
+      const perf = performance as PerformanceWithMemory;
+      if (perf.memory?.usedJSHeapSize) {
+        memoryUsage = `${Math.round(perf.memory.usedJSHeapSize / 1024 / 1024)}MB`;
+      }
+    } catch (error) {
+      // Fallback to cache size estimation
+      const estimatedSize = cacheEntries.reduce((sum, entry) => sum + (entry.size || 0), 0);
+      memoryUsage = `~${Math.round(estimatedSize / 1024)}KB (estimated)`;
+    }
+
+    return {
+      size: this.cache.size,
+      hitRate: `${hitRate}%`,
+      memoryUsage,
+      totalHits,
+      totalMisses,
+      averageAccessCount: parseFloat(averageAccessCount),
+    };
   }
 }
 
-export const intelligentCacheManager = new IntelligentCacheManager();
+const intelligentCacheManager = new IntelligentCacheStrategy();
 
-export const useIntelligentCache = () => {
-  const queryClient = useQueryClient();
-  const cleanupIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Set up automatic cleanup
-  useEffect(() => {
-    cleanupIntervalRef.current = setInterval(() => {
-      intelligentCacheManager.cleanup();
-      
-      // Check memory usage and handle pressure if needed
-      if (performance.memory && (performance.memory as any).usedJSHeapSize > 100 * 1024 * 1024) {
-        intelligentCacheManager.handleMemoryPressure();
-      }
-    }, 5 * 60 * 1000); // Every 5 minutes
-    
-    return () => {
-      if (cleanupIntervalRef.current) {
-        clearInterval(cleanupIntervalRef.current);
-      }
-    };
-  }, []);
-
-  // Intelligent prefetching
-  const prefetchIntelligently = useCallback(async () => {
-    const candidates = intelligentCacheManager.getPrefetchCandidates();
-    
-    for (const queryKey of candidates) {
-      const config = intelligentCacheManager.getCacheConfig(queryKey);
-      if (config.prefetchOnHover) {
-        try {
-          await queryClient.prefetchQuery({
-            queryKey,
-            staleTime: config.staleTime,
-            gcTime: config.gcTime,
-          });
-        } catch (error) {
-          // Prefetch failed, not critical
-          console.debug('Prefetch failed for:', queryKey);
-        }
-      }
-    }
-  }, [queryClient]);
-
-  // Enhanced query with intelligent caching
-  const intelligentQuery = useCallback((queryKey: readonly unknown[]) => {
-    const config = intelligentCacheManager.getCacheConfig(queryKey);
-    intelligentCacheManager.recordAccess(queryKey);
-    
-    return {
-      queryKey: [...queryKey],
-      staleTime: config.staleTime,
-      gcTime: config.gcTime,
-      meta: {
-        priority: config.priority,
-      },
-    };
-  }, []);
-
-  return {
-    intelligentQuery,
-    prefetchIntelligently,
-    getCacheMetrics: intelligentCacheManager.getMetrics.bind(intelligentCacheManager),
-    handleMemoryPressure: intelligentCacheManager.handleMemoryPressure.bind(intelligentCacheManager),
-  };
-};
+export { IntelligentCacheStrategy, intelligentCacheManager, CacheOptions };
