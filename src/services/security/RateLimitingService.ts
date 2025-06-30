@@ -38,11 +38,11 @@ class RateLimitingService {
   checkRateLimit(key: string, type: string = 'default'): boolean {
     if (!config.features.enableErrorReporting) return true; // Disabled in development
     
-    const config = this.configs[type] || this.defaultConfig;
+    const rateLimitConfig = this.configs[type] || this.defaultConfig;
     const now = Date.now();
     const entry = this.limits.get(key) || {
       count: 0,
-      resetTime: now + config.windowMs,
+      resetTime: now + rateLimitConfig.windowMs,
       blocked: false
     };
 
@@ -59,7 +59,7 @@ class RateLimitingService {
     // Reset window if expired
     if (now >= entry.resetTime) {
       entry.count = 0;
-      entry.resetTime = now + config.windowMs;
+      entry.resetTime = now + rateLimitConfig.windowMs;
       entry.blocked = false;
       entry.blockUntil = undefined;
     }
@@ -68,16 +68,16 @@ class RateLimitingService {
     entry.count++;
 
     // Check if limit exceeded
-    if (entry.count > config.maxRequests) {
+    if (entry.count > rateLimitConfig.maxRequests) {
       entry.blocked = true;
-      entry.blockUntil = now + config.blockDurationMs;
+      entry.blockUntil = now + rateLimitConfig.blockDurationMs;
       
       logger.warn('Rate limit exceeded', {
         key,
         type,
         count: entry.count,
-        limit: config.maxRequests,
-        blockDuration: config.blockDurationMs
+        limit: rateLimitConfig.maxRequests,
+        blockDuration: rateLimitConfig.blockDurationMs
       });
 
       this.limits.set(key, entry);
@@ -94,14 +94,14 @@ class RateLimitingService {
     resetTime: number;
     blocked: boolean;
   } {
-    const config = this.configs[type] || this.defaultConfig;
+    const rateLimitConfig = this.configs[type] || this.defaultConfig;
     const entry = this.limits.get(key);
     
     if (!entry) {
       return {
         allowed: true,
-        remaining: config.maxRequests,
-        resetTime: Date.now() + config.windowMs,
+        remaining: rateLimitConfig.maxRequests,
+        resetTime: Date.now() + rateLimitConfig.windowMs,
         blocked: false
       };
     }
@@ -110,8 +110,8 @@ class RateLimitingService {
     const isBlocked = entry.blocked && entry.blockUntil && now < entry.blockUntil;
     
     return {
-      allowed: !isBlocked && entry.count <= config.maxRequests,
-      remaining: Math.max(0, config.maxRequests - entry.count),
+      allowed: !isBlocked && entry.count <= rateLimitConfig.maxRequests,
+      remaining: Math.max(0, rateLimitConfig.maxRequests - entry.count),
       resetTime: entry.resetTime,
       blocked: isBlocked
     };
