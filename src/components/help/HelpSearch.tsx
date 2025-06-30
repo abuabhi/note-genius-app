@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -17,7 +16,11 @@ const categoryLabels: Record<HelpCategory, string> = {
   'study-sessions': 'Study Sessions',
   'progress': 'Progress',
   'settings': 'Settings',
-  'advanced': 'Advanced'
+  'advanced': 'Advanced',
+  'ai-features': 'AI Features',
+  'reminders': 'Reminders',
+  'import-export': 'Import & Export',
+  'analytics': 'Analytics'
 };
 
 export const HelpSearch: React.FC = () => {
