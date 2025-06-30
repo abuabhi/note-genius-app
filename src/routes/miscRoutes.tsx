@@ -1,12 +1,13 @@
+
 import React from 'react';
-import NoteToFlashcardPage from "@/pages/NoteToFlashcardPage";
-import OnboardingPage from "@/pages/OnboardingPage";
+import { Navigate } from 'react-router-dom';
+import Layout from "@/components/layout/Layout";
 import NotFoundPage from "@/pages/NotFoundPage";
+import OnboardingPage from "@/pages/OnboardingPage";
 import { RouteConfig } from './publicRoutes';
 
-// Other miscellaneous routes
+// Miscellaneous routes
 export const miscRoutes: RouteConfig[] = [
-  { path: "/note-to-flashcard", element: <NoteToFlashcardPage /> },
-  { path: "/onboarding", element: <OnboardingPage /> },
-  { path: "*", element: <NotFoundPage /> },
+  { path: "/onboarding", element: <OnboardingPage /> }, // OnboardingPage already has Layout internally
+  { path: "*", element: <NotFoundPage /> } // NotFoundPage already has Layout internally
 ];

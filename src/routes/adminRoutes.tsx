@@ -1,5 +1,6 @@
 
 import React from 'react';
+import SidebarLayout from "@/components/layout/SidebarLayout";
 import AdminDashboardPage from "@/pages/AdminDashboardPage";
 import AdminUsersPage from "@/pages/AdminUsersPage";
 import AdminFlashcardPage from "@/pages/AdminFlashcardPage";
@@ -16,20 +17,20 @@ import AdminSystemMonitoringPage from "@/pages/AdminSystemMonitoringPage";
 import AdminContactSubmissionsPage from "@/pages/AdminContactSubmissionsPage";
 import { RouteConfig } from './publicRoutes';
 
-// Admin routes
+// Admin routes - wrapped with SidebarLayout for sidebar/header
 export const adminRoutes: RouteConfig[] = [
-  { path: "/admin", element: <AdminDashboardPage /> }, // Main admin dashboard
-  { path: "/admin/system-monitoring", element: <AdminSystemMonitoringPage /> },
-  { path: "/admin/users", element: <AdminUsersPage /> },
-  { path: "/admin/contact-submissions", element: <AdminContactSubmissionsPage /> },
-  { path: "/admin/feedback", element: <AdminFeedbackPage /> },
-  { path: "/admin/feedback/settings", element: <AdminFeedbackSettingsPage /> },
-  { path: "/admin/analytics", element: <AdminAnalyticsPage /> },
-  { path: "/admin/announcements", element: <AdminAnnouncementsPage /> },
-  { path: "/admin/flashcards", element: <AdminFlashcardPage /> },
-  { path: "/admin/sections", element: <AdminSectionsPage /> },
-  { path: "/admin/grades", element: <AdminGradesPage /> },
-  { path: "/admin/subjects", element: <AdminSubjectsPage /> },
-  { path: "/admin/csv-import", element: <AdminCSVImportPage /> },
-  { path: "/admin/tier-limits", element: <AdminTierLimitsPage /> },
+  { path: "/admin", element: <SidebarLayout><AdminDashboardPage /></SidebarLayout> },
+  { path: "/admin/system-monitoring", element: <SidebarLayout><AdminSystemMonitoringPage /></SidebarLayout> },
+  { path: "/admin/users", element: <SidebarLayout><AdminUsersPage /></SidebarLayout> },
+  { path: "/admin/contact-submissions", element: <SidebarLayout><AdminContactSubmissionsPage /></SidebarLayout> },
+  { path: "/admin/feedback", element: <SidebarLayout><AdminFeedbackPage /></SidebarLayout> },
+  { path: "/admin/feedback/settings", element: <SidebarLayout><AdminFeedbackSettingsPage /></SidebarLayout> },
+  { path: "/admin/analytics", element: <SidebarLayout><AdminAnalyticsPage /></SidebarLayout> },
+  { path: "/admin/announcements", element: <SidebarLayout><AdminAnnouncementsPage /></SidebarLayout> },
+  { path: "/admin/flashcards", element: <SidebarLayout><AdminFlashcardPage /></SidebarLayout> },
+  { path: "/admin/sections", element: <SidebarLayout><AdminSectionsPage /></SidebarLayout> },
+  { path: "/admin/grades", element: <SidebarLayout><AdminGradesPage /></SidebarLayout> },
+  { path: "/admin/subjects", element: <SidebarLayout><AdminSubjectsPage /></SidebarLayout> },
+  { path: "/admin/csv-import", element: <SidebarLayout><AdminCSVImportPage /></SidebarLayout> },
+  { path: "/admin/tier-limits", element: <SidebarLayout><AdminTierLimitsPage /></SidebarLayout> },
 ];

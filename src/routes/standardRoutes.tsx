@@ -1,6 +1,7 @@
 
-import { lazy, createElement } from 'react';
+import React, { lazy } from 'react';
 import type { RouteConfig } from './publicRoutes';
+import SidebarLayout from '@/components/layout/SidebarLayout';
 
 // Lazy load components for better performance
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
@@ -29,91 +30,91 @@ const StudySessionsPage = lazy(() => import('@/pages/AnalyticsPage'));
 export const standardRoutes: RouteConfig[] = [
   {
     path: '/dashboard',
-    element: createElement(DashboardPage)
+    element: <SidebarLayout><DashboardPage /></SidebarLayout>
   },
   {
     path: '/flashcards/*',
-    element: createElement(FlashcardsPage)
+    element: <SidebarLayout><FlashcardsPage /></SidebarLayout>
   },
   {
     path: '/notes/*',
-    element: createElement(NotesPage)
+    element: <SidebarLayout><NotesPage /></SidebarLayout>
   },
   {
     path: '/quiz/*',
-    element: createElement(QuizPage)
+    element: <SidebarLayout><QuizPage /></SidebarLayout>
   },
   {
     path: '/quizzes/*',
-    element: createElement(QuizPage)
+    element: <SidebarLayout><QuizPage /></SidebarLayout>
   },
   {
     path: '/quizzes',
-    element: createElement(QuizPage)
+    element: <SidebarLayout><QuizPage /></SidebarLayout>
   },
   {
     path: '/quiz/create',
-    element: createElement(CreateQuizPage)
+    element: <SidebarLayout><CreateQuizPage /></SidebarLayout>
   },
   {
     path: '/quiz/:id/take',
-    element: createElement(TakeQuizPage)
+    element: <SidebarLayout><TakeQuizPage /></SidebarLayout>
   },
   {
     path: '/analytics',
-    element: createElement(AnalyticsPage)
+    element: <SidebarLayout><AnalyticsPage /></SidebarLayout>
   },
   // Legacy redirects - these will render the new AnalyticsPage
   {
     path: '/progress',
-    element: createElement(ProgressPage)
+    element: <SidebarLayout><ProgressPage /></SidebarLayout>
   },
   {
     path: '/study-sessions',
-    element: createElement(StudySessionsPage)
+    element: <SidebarLayout><StudySessionsPage /></SidebarLayout>
   },
   {
     path: '/goals',
-    element: createElement(GoalsPage)
+    element: <SidebarLayout><GoalsPage /></SidebarLayout>
   },
   {
     path: '/todos',
-    element: createElement(TodoPage)
+    element: <SidebarLayout><TodoPage /></SidebarLayout>
   },
   {
     path: '/schedule',
-    element: createElement(SchedulePage)
+    element: <SidebarLayout><SchedulePage /></SidebarLayout>
   },
   {
     path: '/reminders',
-    element: createElement(RemindersPage)
+    element: <SidebarLayout><RemindersPage /></SidebarLayout>
   },
   {
     path: '/settings',
-    element: createElement(SettingsPage)
+    element: <SidebarLayout><SettingsPage /></SidebarLayout>
   },
   {
     path: '/feedback',
-    element: createElement(FeedbackPage)
+    element: <SidebarLayout><FeedbackPage /></SidebarLayout>
   },
   {
     path: '/referrals',
-    element: createElement(ReferralsPage)
+    element: <SidebarLayout><ReferralsPage /></SidebarLayout>
   },
   {
     path: '/collaboration',
-    element: createElement(CollaborationPage)
+    element: <SidebarLayout><CollaborationPage /></SidebarLayout>
   },
   {
     path: '/chat/*',
-    element: createElement(ChatPage)
+    element: <SidebarLayout><ChatPage /></SidebarLayout>
   },
   {
     path: '/help',
-    element: createElement(HelpPage)
+    element: <SidebarLayout><HelpPage /></SidebarLayout>
   },
   {
     path: '/faq',
-    element: createElement(FAQPage)
+    element: <SidebarLayout><FAQPage /></SidebarLayout>
   }
 ];
