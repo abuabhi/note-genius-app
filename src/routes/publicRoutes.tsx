@@ -9,6 +9,7 @@ import HelpPage from "@/pages/HelpPage";
 import ContactPage from "@/pages/ContactPage";
 import FeedbackPage from "@/pages/FeedbackPage";
 import ReferralsPage from "@/pages/ReferralsPage";
+import FAQPage from "@/pages/FAQPage";
 import { SignUpForm } from "@/components/auth/SignUpForm";
 
 export interface RouteConfig {
@@ -27,4 +28,5 @@ export const publicRoutes: RouteConfig[] = [
   { path: "/contact", element: <ContactPage /> },
   { path: "/feedback", element: <FeedbackPage /> },
   { path: "/referrals", element: <ReferralsPage /> },
+  { path: "/faq", element: <FAQPage /> },
 ];
