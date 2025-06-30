@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -63,16 +64,16 @@ export const ReminderNavPopover = () => {
         <Button 
           variant="ghost" 
           size="icon" 
-          className="relative h-9 w-9 rounded-full hover:bg-gray-100 transition-colors"
+          className="relative h-9 w-9 rounded-full hover:bg-mint-50 transition-colors"
           aria-label={`${totalCount} reminders`}
         >
-          <Bell className="h-5 w-5" />
+          <Bell className="h-5 w-5 text-mint-600" />
           {totalCount > 0 && (
             <Badge 
               className={`absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs font-medium transition-all duration-200 ${
                 hasOverdueReminders 
-                  ? 'bg-red-500 text-white animate-pulse shadow-lg' 
-                  : 'bg-blue-500 text-white shadow-md'
+                  ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/50' 
+                  : 'bg-red-500 text-white shadow-md shadow-red-500/30 animate-pulse'
               }`}
             >
               {totalCount > 99 ? '99+' : totalCount}
@@ -86,22 +87,22 @@ export const ReminderNavPopover = () => {
         sideOffset={8}
       >
         {/* Header */}
-        <div className="flex justify-between items-center p-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+        <div className="flex justify-between items-center p-4 border-b bg-gradient-to-r from-mint-50 to-mint-100">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-full">
-              <Bell className="h-4 w-4 text-blue-600" />
+            <div className="p-2 bg-mint-100 rounded-full">
+              <Bell className="h-4 w-4 text-mint-600" />
             </div>
             <div>
               <h4 className="text-sm font-semibold text-gray-900">Reminders</h4>
               {totalCount > 0 && (
                 <div className="flex items-center gap-2 text-xs text-gray-600">
                   {pendingCount > 0 && (
-                    <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                    <Badge variant="outline" className="bg-mint-50 text-mint-700 border-mint-200">
                       {pendingCount} pending
                     </Badge>
                   )}
                   {sentCount > 0 && (
-                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                    <Badge variant="outline" className="bg-mint-50 text-mint-700 border-mint-200">
                       {sentCount} sent
                     </Badge>
                   )}
@@ -116,11 +117,11 @@ export const ReminderNavPopover = () => {
                 size="sm"
                 onClick={handleDismissAll}
                 disabled={isBatchDismissing}
-                className="text-xs px-2 py-1 h-auto hover:bg-blue-100 text-blue-700"
+                className="text-xs px-2 py-1 h-auto hover:bg-mint-100 text-mint-700"
               >
                 {isBatchDismissing ? (
                   <>
-                    <div className="w-3 h-3 border border-blue-500 border-t-transparent rounded-full animate-spin mr-1" />
+                    <div className="w-3 h-3 border border-mint-500 border-t-transparent rounded-full animate-spin mr-1" />
                     Dismissing...
                   </>
                 ) : (
@@ -155,7 +156,7 @@ export const ReminderNavPopover = () => {
         </div>
 
         {/* Footer */}
-        <div className="border-t px-4 py-2 bg-gray-50">
+        <div className="border-t px-4 py-2 bg-mint-50">
           <div className="flex items-center justify-between text-xs text-gray-500">
             <span>Real-time updates enabled</span>
             <Button size="sm" onClick={() => setShowAddReminder(true)}>
