@@ -27,11 +27,21 @@ export const useHelp = () => {
 const getContextFromPath = (pathname: string): HelpContextType | null => {
   if (pathname === '/') return 'dashboard';
   if (pathname === '/notes') return 'notes-list';
+  if (pathname.includes('/notes/create')) return 'note-creation';
+  if (pathname.includes('/notes/edit')) return 'note-editing';
   if (pathname.includes('/notes/study/')) return 'note-study';
   if (pathname === '/flashcards') return 'flashcards-list';
+  if (pathname.includes('/flashcards/create')) return 'flashcard-creation';
+  if (pathname.includes('/flashcards/study')) return 'flashcard-study';
   if (pathname === '/study-sessions') return 'study-session';
   if (pathname === '/progress') return 'progress-overview';
   if (pathname === '/settings') return 'settings';
+  if (pathname.includes('/import')) return 'import';
+  if (pathname.includes('/export')) return 'export';
+  if (pathname.includes('/reminders')) return 'reminders';
+  if (pathname.includes('/analytics')) return 'analytics';
+  if (pathname.includes('/chat')) return 'ai-chat';
+  if (pathname.includes('/enhance')) return 'note-enhancement';
   return null;
 };
 

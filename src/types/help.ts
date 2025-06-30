@@ -35,7 +35,11 @@ export type HelpCategory =
   | 'study-sessions'
   | 'progress'
   | 'settings'
-  | 'advanced';
+  | 'advanced'
+  | 'ai-features'
+  | 'reminders'
+  | 'import-export'
+  | 'analytics';
 
 export type HelpContext = 
   | 'dashboard'
@@ -50,7 +54,11 @@ export type HelpContext =
   | 'progress-overview'
   | 'settings'
   | 'import'
-  | 'export';
+  | 'export'
+  | 'ai-chat'
+  | 'note-enhancement'
+  | 'reminders'
+  | 'analytics';
 
 export interface HelpState {
   isOpen: boolean;
