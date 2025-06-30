@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -168,7 +169,7 @@ export const ReminderNavPopover = () => {
       {showAddReminder && (
         <ReminderFormDialog
           open={showAddReminder}
-          onClose={() => setShowAddReminder(false)}
+          onOpenChange={setShowAddReminder}
           onReminderCreated={() => setShowAddReminder(false)}
         />
       )}

@@ -83,7 +83,7 @@ export const RemindersView = () => {
       {showAddReminder && (
         <ReminderFormDialog
           open={showAddReminder}
-          onClose={() => setShowAddReminder(false)}
+          onOpenChange={setShowAddReminder}
           onReminderCreated={() => setShowAddReminder(false)}
         />
       )}
