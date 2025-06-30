@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useReminders, Reminder } from "@/hooks/useReminders";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -83,7 +82,7 @@ export const RemindersView = () => {
       </CardContent>
       {showAddReminder && (
         <ReminderFormDialog
-          isOpen={showAddReminder}
+          open={showAddReminder}
           onClose={() => setShowAddReminder(false)}
           onReminderCreated={() => setShowAddReminder(false)}
         />
