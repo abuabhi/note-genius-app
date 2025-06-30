@@ -64,69 +64,90 @@ serve(async (req) => {
       );
     }
 
-    // Send notification email to admin
-    const adminEmailResponse = await resend.emails.send({
-      from: "PrepGenie Contact <noreply@prepgenie.io>",
-      to: ["hello@prepgenie.io"],
-      subject: `New Contact Form Submission: ${subject || 'General Inquiry'}`,
-      html: `
-        <h2>New Contact Form Submission</h2>
-        <p><strong>From:</strong> ${name} (${email})</p>
-        <p><strong>Subject:</strong> ${subject || 'General Inquiry'}</p>
-        <p><strong>Message:</strong></p>
-        <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 10px 0;">
-          ${message.replace(/\n/g, '<br>')}
-        </div>
-        <p><strong>Submitted at:</strong> ${new Date().toLocaleString()}</p>
-        <hr>
-        <p style="font-size: 12px; color: #666;">
-          Submission ID: ${submission.id}
-        </p>
-      `,
-    });
+    console.log('Contact submission stored successfully:', submission.id);
 
-    // Send confirmation email to user
-    const userEmailResponse = await resend.emails.send({
-      from: "PrepGenie Support <hello@prepgenie.io>",
-      to: [email],
-      subject: "We received your message - PrepGenie Support",
-      html: `
-        <h2>Thank you for contacting PrepGenie!</h2>
-        <p>Hi ${name},</p>
-        <p>We have received your message and will get back to you as soon as possible, typically within 24 hours during business days.</p>
-        
-        <div style="background-color: #f8f9ff; padding: 15px; border-radius: 5px; border-left: 4px solid #4f46e5; margin: 20px 0;">
-          <h3 style="margin-top: 0; color: #4f46e5;">Your Message:</h3>
+    // Send notification email to admin (this is the critical one)
+    let adminEmailSuccess = false;
+    try {
+      const adminEmailResponse = await resend.emails.send({
+        from: "PrepGenie Contact <noreply@prepgenie.io>",
+        to: ["hello@prepgenie.io"],
+        subject: `New Contact Form Submission: ${subject || 'General Inquiry'}`,
+        html: `
+          <h2>New Contact Form Submission</h2>
+          <p><strong>From:</strong> ${name} (${email})</p>
           <p><strong>Subject:</strong> ${subject || 'General Inquiry'}</p>
           <p><strong>Message:</strong></p>
-          <div style="background-color: white; padding: 10px; border-radius: 3px; margin-top: 5px;">
+          <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 10px 0;">
             ${message.replace(/\n/g, '<br>')}
           </div>
-        </div>
+          <p><strong>Submitted at:</strong> ${new Date().toLocaleString()}</p>
+          <hr>
+          <p style="font-size: 12px; color: #666;">
+            Submission ID: ${submission.id}
+          </p>
+        `,
+      });
 
-        <p>If you have any urgent questions, you can also:</p>
-        <ul>
-          <li>Check our <a href="https://prepgenie.io/help" style="color: #4f46e5;">Help Center</a></li>
-          <li>Browse our <a href="https://prepgenie.io/faq" style="color: #4f46e5;">FAQ</a></li>
-        </ul>
+      console.log('Admin email sent successfully:', adminEmailResponse);
+      adminEmailSuccess = true;
+    } catch (adminEmailError) {
+      console.error('Failed to send admin email:', adminEmailError);
+      // Continue execution - we'll still return success if data was stored
+    }
 
-        <p>Best regards,<br>The PrepGenie Team</p>
-        
-        <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e5e5;">
-        <p style="font-size: 12px; color: #666;">
-          This is an automated confirmation email. Please do not reply directly to this email.
-        </p>
-      `,
-    });
+    // Send confirmation email to user (optional - don't let this fail the request)
+    let userEmailSuccess = false;
+    try {
+      const userEmailResponse = await resend.emails.send({
+        from: "PrepGenie Support <hello@prepgenie.io>",
+        to: [email],
+        subject: "We received your message - PrepGenie Support",
+        html: `
+          <h2>Thank you for contacting PrepGenie!</h2>
+          <p>Hi ${name},</p>
+          <p>We have received your message and will get back to you as soon as possible, typically within 24 hours during business days.</p>
+          
+          <div style="background-color: #f8f9ff; padding: 15px; border-radius: 5px; border-left: 4px solid #4f46e5; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #4f46e5;">Your Message:</h3>
+            <p><strong>Subject:</strong> ${subject || 'General Inquiry'}</p>
+            <p><strong>Message:</strong></p>
+            <div style="background-color: white; padding: 10px; border-radius: 3px; margin-top: 5px;">
+              ${message.replace(/\n/g, '<br>')}
+            </div>
+          </div>
 
-    console.log('Admin email sent:', adminEmailResponse);
-    console.log('User confirmation sent:', userEmailResponse);
+          <p>If you have any urgent questions, you can also:</p>
+          <ul>
+            <li>Check our <a href="https://prepgenie.io/help" style="color: #4f46e5;">Help Center</a></li>
+            <li>Browse our <a href="https://prepgenie.io/faq" style="color: #4f46e5;">FAQ</a></li>
+          </ul>
 
+          <p>Best regards,<br>The PrepGenie Team</p>
+          
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e5e5;">
+          <p style="font-size: 12px; color: #666;">
+            This is an automated confirmation email. Please do not reply directly to this email.
+          </p>
+        `,
+      });
+
+      console.log('User confirmation email sent successfully:', userEmailResponse);
+      userEmailSuccess = true;
+    } catch (userEmailError) {
+      console.error('Failed to send user confirmation email (non-critical):', userEmailError);
+      // Don't fail the request - this is optional
+    }
+
+    // Return success as long as the submission was stored
+    // The admin email failure is logged but doesn't prevent success response
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: 'Your message has been sent successfully!',
-        submissionId: submission.id
+        submissionId: submission.id,
+        adminEmailSent: adminEmailSuccess,
+        userEmailSent: userEmailSuccess
       }),
       {
         status: 200,
