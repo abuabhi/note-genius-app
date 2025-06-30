@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,13 +34,13 @@ export const ScalableRemindersList = ({
       <div className="p-4">
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="p-3 rounded-lg bg-gray-50 animate-pulse">
+            <div key={i} className="p-3 rounded-lg bg-mint-50 animate-pulse border border-mint-200">
               <div className="flex gap-3">
-                <Skeleton className="h-8 w-8 rounded-full" />
+                <Skeleton className="h-8 w-8 rounded-full bg-mint-200" />
                 <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-1/2" />
-                  <Skeleton className="h-3 w-1/4" />
+                  <Skeleton className="h-4 w-3/4 bg-mint-200" />
+                  <Skeleton className="h-3 w-1/2 bg-mint-200" />
+                  <Skeleton className="h-3 w-1/4 bg-mint-200" />
                 </div>
               </div>
             </div>
@@ -55,23 +54,23 @@ export const ScalableRemindersList = ({
     return (
       <div className="text-center py-12 px-6">
         <div className="relative mb-6">
-          <div className="w-20 h-20 bg-mint-50 rounded-full flex items-center justify-center mx-auto shadow-sm">
+          <div className="w-20 h-20 bg-mint-50 rounded-full flex items-center justify-center mx-auto shadow-sm border border-mint-200">
             <CheckCircle className="h-10 w-10 text-mint-600" />
           </div>
-          <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center shadow-sm">
+          <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-r from-mint-400 to-mint-500 rounded-full flex items-center justify-center shadow-sm">
             <Sparkles className="h-3 w-3 text-white" />
           </div>
         </div>
         
-        <h3 className="font-bold text-lg text-gray-900 mb-2">All caught up!</h3>
-        <p className="text-gray-600 leading-relaxed max-w-sm mx-auto">
+        <h3 className="font-bold text-lg text-mint-800 mb-2">All caught up!</h3>
+        <p className="text-mint-700 leading-relaxed max-w-sm mx-auto">
           You're doing amazing! No pending reminders at the moment. Keep up the great work!
         </p>
         
-        <div className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-400">
-          <div className="w-2 h-2 bg-mint-300 rounded-full animate-[pulse_3s_ease-in-out_infinite]"></div>
+        <div className="mt-6 flex items-center justify-center gap-2 text-sm text-mint-600">
+          <div className="w-2 h-2 bg-mint-300 rounded-full animate-heartbeat"></div>
           <span>Stay organized and focused</span>
-          <div className="w-2 h-2 bg-mint-300 rounded-full animate-[pulse_3s_ease-in-out_infinite]"></div>
+          <div className="w-2 h-2 bg-mint-300 rounded-full animate-heartbeat"></div>
         </div>
       </div>
     );
@@ -109,7 +108,7 @@ export const ScalableRemindersList = ({
     <div className="space-y-4 p-4">
       {/* Overdue alert */}
       {overdueReminders.length > 0 && (
-        <div className="p-3 rounded-lg bg-red-25 border border-red-100">
+        <div className="p-3 rounded-lg bg-red-25 border border-red-200">
           <div className="flex items-center gap-3">
             <div className="p-1.5 bg-red-100 rounded-full">
               <AlertTriangle className="h-3 w-3 text-red-600" />
@@ -132,7 +131,7 @@ export const ScalableRemindersList = ({
           <div key={reminder.id} className="relative">
             {isReminderDismissing(reminder.id) && (
               <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex items-center gap-2 text-sm text-mint-600">
                   <div className="w-4 h-4 border-2 border-mint-500 border-t-transparent rounded-full animate-spin"></div>
                   <span>Dismissing...</span>
                 </div>
@@ -154,7 +153,7 @@ export const ScalableRemindersList = ({
             variant="ghost"
             size="sm"
             onClick={() => setExpandedView(!expandedView)}
-            className="text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+            className="text-xs text-mint-600 hover:text-mint-800 hover:bg-mint-100"
           >
             <ChevronDown className={`w-3 h-3 mr-1 transition-transform ${expandedView ? 'rotate-180' : ''}`} />
             {expandedView ? 'Show Less' : `Show ${remainingCount} More`}
@@ -170,11 +169,11 @@ export const ScalableRemindersList = ({
             size="sm"
             onClick={onLoadMore}
             disabled={loading}
-            className="text-xs"
+            className="text-xs border-mint-200 text-mint-700 hover:bg-mint-50"
           >
             {loading ? (
               <>
-                <div className="w-3 h-3 border border-gray-400 border-t-transparent rounded-full animate-spin mr-1" />
+                <div className="w-3 h-3 border border-mint-500 border-t-transparent rounded-full animate-spin mr-1" />
                 Loading...
               </>
             ) : (
@@ -187,10 +186,10 @@ export const ScalableRemindersList = ({
       {/* Performance footer */}
       {sortedReminders.length > 10 && (
         <div className="text-center pt-2">
-          <div className="inline-flex items-center gap-2 text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-full">
-            <div className="w-1 h-1 bg-mint-400 rounded-full animate-[pulse_3s_ease-in-out_infinite]"></div>
+          <div className="inline-flex items-center gap-2 text-xs text-mint-600 bg-mint-50 px-3 py-1.5 rounded-full border border-mint-200">
+            <div className="w-1 h-1 bg-mint-400 rounded-full animate-heartbeat"></div>
             <span>Showing {displayedReminders.length} of {sortedReminders.length} reminders</span>
-            <div className="w-1 h-1 bg-mint-400 rounded-full animate-[pulse_3s_ease-in-out_infinite]"></div>
+            <div className="w-1 h-1 bg-mint-400 rounded-full animate-heartbeat"></div>
           </div>
         </div>
       )}

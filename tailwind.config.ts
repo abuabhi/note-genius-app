@@ -1,3 +1,4 @@
+
 import { Config } from "tailwindcss";
 
 export default {
@@ -108,11 +109,38 @@ export default {
           to: {
             height: '0'
           }
+        },
+        'heartbeat': {
+          '0%': { 
+            opacity: '1',
+            transform: 'scale(1)'
+          },
+          '14%': { 
+            opacity: '0.6',
+            transform: 'scale(1.1)'
+          },
+          '28%': { 
+            opacity: '1',
+            transform: 'scale(1)'
+          },
+          '42%': { 
+            opacity: '0.8',
+            transform: 'scale(1.05)'
+          },
+          '70%': { 
+            opacity: '1',
+            transform: 'scale(1)'
+          },
+          '100%': { 
+            opacity: '1',
+            transform: 'scale(1)'
+          }
         }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out'
+        'accordion-up': 'accordion-up 0.2s ease-out',
+        'heartbeat': 'heartbeat 2.5s ease-in-out infinite'
       }
     }
   },

@@ -1,4 +1,5 @@
 
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Bell, Clock, X, CalendarClock, BrainCircuit, AlertTriangle } from "lucide-react";
@@ -36,15 +37,15 @@ export const ReminderCard = ({ reminder, onDismiss, compact = false }: ReminderC
   const getTypeGradient = (type: string) => {
     switch (type) {
       case 'study_event':
-        return 'bg-mint-25 border-mint-100 hover:bg-mint-50';
+        return 'bg-mint-50 border-mint-300 hover:bg-mint-100';
       case 'goal_deadline':
-        return 'bg-mint-25 border-mint-100 hover:bg-mint-50';
+        return 'bg-mint-50 border-mint-300 hover:bg-mint-100';
       case 'flashcard_review':
-        return 'bg-mint-25 border-mint-100 hover:bg-mint-50';
+        return 'bg-mint-50 border-mint-300 hover:bg-mint-100';
       case 'todo':
-        return 'bg-orange-25 border-orange-100 hover:bg-orange-50';
+        return 'bg-orange-50 border-orange-200 hover:bg-orange-100';
       default:
-        return 'bg-mint-25 border-mint-100 hover:bg-mint-50';
+        return 'bg-mint-50 border-mint-300 hover:bg-mint-100';
     }
   };
 
@@ -85,8 +86,8 @@ export const ReminderCard = ({ reminder, onDismiss, compact = false }: ReminderC
     <div 
       className={`
         group relative rounded-lg ${getTypeGradient(reminder.type)} 
-        border transition-all duration-200 hover:shadow-sm
-        ${overdue ? 'border-red-200 bg-red-25' : ''}
+        border-2 transition-all duration-200 hover:shadow-sm
+        ${overdue ? 'border-red-300 bg-red-50' : ''}
         ${compact ? 'p-3' : 'p-4'}
       `}
     >
@@ -96,9 +97,9 @@ export const ReminderCard = ({ reminder, onDismiss, compact = false }: ReminderC
       )}
       
       <div className="relative flex items-start gap-3">
-        {/* Icon with subtle background */}
+        {/* Icon with mint background */}
         <div className={`
-          flex-shrink-0 p-1.5 rounded-md bg-white/50 border border-white/60
+          flex-shrink-0 p-1.5 rounded-md bg-mint-100 border border-mint-200
           ${compact ? 'p-1' : 'p-1.5'}
         `}>
           {getTypeIcon(reminder.type)}
@@ -109,16 +110,16 @@ export const ReminderCard = ({ reminder, onDismiss, compact = false }: ReminderC
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
               <h4 className={`
-                font-medium text-gray-900 leading-tight
+                font-medium leading-tight
                 ${compact ? 'text-sm' : 'text-base'}
-                ${overdue ? 'text-red-800' : ''}
+                ${overdue ? 'text-red-800' : 'text-mint-800'}
               `}>
                 {reminder.title}
               </h4>
               {reminder.description && !compact && (
                 <p className={`
                   text-sm mt-1 leading-relaxed line-clamp-2
-                  ${overdue ? 'text-red-700' : 'text-gray-600'}
+                  ${overdue ? 'text-red-700' : 'text-mint-700'}
                 `}>
                   {reminder.description}
                 </p>
@@ -129,9 +130,9 @@ export const ReminderCard = ({ reminder, onDismiss, compact = false }: ReminderC
             <Badge 
               variant="secondary" 
               className={`
-                flex-shrink-0 bg-white/70 border-white/60 text-xs
+                flex-shrink-0 bg-mint-100 border-mint-200 text-xs
                 ${compact ? 'px-1.5 py-0.5' : 'px-2 py-0.5'}
-                ${overdue ? 'bg-red-50 text-red-700 border-red-100' : 'text-mint-700'}
+                ${overdue ? 'bg-red-100 text-red-700 border-red-200' : 'text-mint-700'}
               `}
             >
               {getTypeLabel(reminder.type)}
@@ -142,7 +143,7 @@ export const ReminderCard = ({ reminder, onDismiss, compact = false }: ReminderC
           <div className="flex items-center justify-between mt-2">
             <div className={`
               flex items-center gap-1 text-xs
-              ${overdue ? 'text-red-600' : 'text-gray-500'}
+              ${overdue ? 'text-red-600' : 'text-mint-600'}
             `}>
               <Clock className="h-3 w-3" />
               <span className="font-medium">
@@ -157,7 +158,7 @@ export const ReminderCard = ({ reminder, onDismiss, compact = false }: ReminderC
                 size="sm" 
                 className={`
                   opacity-0 group-hover:opacity-100 transition-opacity duration-200 
-                  hover:bg-gray-100
+                  hover:bg-mint-100 text-mint-600
                   ${compact ? 'h-6 w-6 p-0' : 'h-7 w-7 p-0'}
                 `}
                 onClick={() => onDismiss(reminder.id)}
@@ -171,3 +172,4 @@ export const ReminderCard = ({ reminder, onDismiss, compact = false }: ReminderC
     </div>
   );
 };
+

@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -72,8 +71,8 @@ export const ReminderNavPopover = () => {
             <Badge 
               className={`absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs font-medium transition-all duration-200 ${
                 hasOverdueReminders 
-                  ? 'bg-red-500 text-white animate-[pulse_3s_ease-in-out_infinite] shadow-lg shadow-red-500/50' 
-                  : 'bg-red-500 text-white shadow-md shadow-red-500/30 animate-[pulse_3s_ease-in-out_infinite]'
+                  ? 'bg-red-500 text-white animate-heartbeat shadow-lg shadow-red-500/50' 
+                  : 'bg-red-500 text-white shadow-md shadow-red-500/30 animate-heartbeat'
               }`}
             >
               {totalCount > 99 ? '99+' : totalCount}
@@ -93,9 +92,9 @@ export const ReminderNavPopover = () => {
               <Bell className="h-4 w-4 text-mint-600" />
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-gray-900">Reminders</h4>
+              <h4 className="text-sm font-semibold text-mint-800">Reminders</h4>
               {totalCount > 0 && (
-                <div className="flex items-center gap-2 text-xs text-gray-600">
+                <div className="flex items-center gap-2 text-xs text-mint-600">
                   {pendingCount > 0 && (
                     <Badge variant="outline" className="bg-mint-50 text-mint-700 border-mint-200">
                       {pendingCount} pending
@@ -136,7 +135,7 @@ export const ReminderNavPopover = () => {
               variant="ghost"
               size="icon"
               onClick={() => setOpen(false)}
-              className="h-6 w-6 hover:bg-gray-100"
+              className="h-6 w-6 hover:bg-mint-100 text-mint-600"
             >
               <X className="h-3 w-3" />
             </Button>
@@ -157,9 +156,9 @@ export const ReminderNavPopover = () => {
 
         {/* Footer */}
         <div className="border-t px-4 py-2 bg-mint-50">
-          <div className="flex items-center justify-center text-xs text-gray-500">
+          <div className="flex items-center justify-center text-xs text-mint-600">
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-mint-400 rounded-full animate-[pulse_3s_ease-in-out_infinite]"></div>
+              <div className="w-2 h-2 bg-mint-400 rounded-full animate-heartbeat"></div>
               <span>Real-time updates enabled</span>
             </div>
           </div>
