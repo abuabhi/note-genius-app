@@ -1,33 +1,34 @@
-
-import { Toaster as SonnerToaster } from '@/components/ui/sonner';
-import { ConnectionStatus } from '@/components/performance/ConnectionManager';
-import { UpdateNotification } from '@/components/performance/ServiceWorkerManager';
-import { HealthCheck } from '@/components/monitoring/HealthCheck';
-import { HelpDialog } from '@/components/help/HelpDialog';
+import React, { ReactNode } from 'react';
+import { BrowserRouter } from 'react-router-dom';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { QueryProvider } from '@/contexts/QueryContext';
+import { ThemeProvider } from '@/components/ui/theme-provider';
+import { Toaster } from '@/components/ui/toaster';
 import { HelpProvider } from '@/contexts/HelpContext';
-import { config } from '@/config/environment';
-import { ReactNode } from 'react';
+import { ErrorProvider } from '@/contexts/ErrorContext';
+import { MonitoringProvider } from '@/providers/MonitoringProvider';
 
 interface AppProvidersProps {
   children: ReactNode;
 }
 
-export const AppProviders = ({ children }: AppProvidersProps) => {
+export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   return (
-    <HelpProvider>
-      {children}
-      
-      {/* Help Dialog */}
-      <HelpDialog />
-      
-      <ConnectionStatus />
-      <UpdateNotification />
-      {(config.isDevelopment || config.isStaging) && (
-        <div className="fixed bottom-4 left-4 z-50">
-          <HealthCheck />
-        </div>
-      )}
-      <SonnerToaster />
-    </HelpProvider>
+    <MonitoringProvider>
+      <BrowserRouter>
+        <QueryProvider>
+          <AuthProvider>
+            <HelpProvider>
+              <ErrorProvider>
+                <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+                  <Toaster />
+                  {children}
+                </ThemeProvider>
+              </ErrorProvider>
+            </HelpProvider>
+          </AuthProvider>
+        </QueryProvider>
+      </BrowserRouter>
+    </MonitoringProvider>
   );
 };
