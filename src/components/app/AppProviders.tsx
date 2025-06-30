@@ -8,6 +8,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { HelpProvider } from '@/contexts/HelpContext';
 import { ErrorProvider } from '@/contexts/ErrorContext';
 import { MonitoringProvider } from '@/providers/MonitoringProvider';
+import { SecurityProvider } from '@/components/security/SecurityProvider';
+import SecurityErrorBoundary from '@/components/error/SecurityErrorBoundary';
 
 interface AppProvidersProps {
   children: ReactNode;
@@ -16,20 +18,24 @@ interface AppProvidersProps {
 export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   return (
     <MonitoringProvider>
-      <BrowserRouter>
-        <QueryProvider>
-          <AuthProvider>
-            <HelpProvider>
-              <ErrorProvider>
-                <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-                  <Toaster />
-                  {children}
-                </ThemeProvider>
-              </ErrorProvider>
-            </HelpProvider>
-          </AuthProvider>
-        </QueryProvider>
-      </BrowserRouter>
+      <SecurityErrorBoundary>
+        <BrowserRouter>
+          <QueryProvider>
+            <AuthProvider>
+              <SecurityProvider>
+                <HelpProvider>
+                  <ErrorProvider>
+                    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+                      <Toaster />
+                      {children}
+                    </ThemeProvider>
+                  </ErrorProvider>
+                </HelpProvider>
+              </SecurityProvider>
+            </AuthProvider>
+          </QueryProvider>
+        </BrowserRouter>
+      </SecurityErrorBoundary>
     </MonitoringProvider>
   );
 };
