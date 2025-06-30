@@ -69,9 +69,9 @@ export const ScalableRemindersList = ({
         </p>
         
         <div className="mt-6 flex items-center justify-center gap-2 text-sm text-mint-600">
-          <div className="w-2 h-2 bg-mint-300 rounded-full animate-heartbeat"></div>
+          <div className="w-2 h-2 bg-mint-300 rounded-full"></div>
           <span>Stay organized and focused</span>
-          <div className="w-2 h-2 bg-mint-300 rounded-full animate-heartbeat"></div>
+          <div className="w-2 h-2 bg-mint-300 rounded-full"></div>
         </div>
       </div>
     );
@@ -188,9 +188,9 @@ export const ScalableRemindersList = ({
       {sortedReminders.length > 10 && (
         <div className="text-center pt-2">
           <div className="inline-flex items-center gap-2 text-xs text-mint-600 bg-mint-50 px-3 py-1.5 rounded-full border border-mint-200">
-            <div className="w-1 h-1 bg-mint-400 rounded-full animate-heartbeat"></div>
+            <div className="w-1 h-1 bg-mint-400 rounded-full"></div>
             <span>Showing {displayedReminders.length} of {sortedReminders.length} reminders</span>
-            <div className="w-1 h-1 bg-mint-400 rounded-full animate-heartbeat"></div>
+            <div className="w-1 h-1 bg-mint-400 rounded-full"></div>
           </div>
         </div>
       )}

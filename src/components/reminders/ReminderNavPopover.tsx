@@ -36,7 +36,7 @@ export const ReminderNavPopover = () => {
   const sentCount = reminders.filter(r => r.status === 'sent').length;
   const totalCount = pendingCount + sentCount;
   
-  // Get overdue reminders for urgent styling
+  // Get overdue reminders for styling
   const now = new Date();
   const hasOverdueReminders = reminders.some(
     r => r.status === 'pending' && r.reminder_time && new Date(r.reminder_time) < now
@@ -70,11 +70,7 @@ export const ReminderNavPopover = () => {
           <Bell className="h-5 w-5 text-mint-600" />
           {totalCount > 0 && (
             <Badge 
-              className={`absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs font-medium transition-all duration-200 ${
-                hasOverdueReminders 
-                  ? 'bg-red-500 text-white animate-heartbeat shadow-lg shadow-red-500/50' 
-                  : 'bg-red-500 text-white shadow-md shadow-red-500/30 animate-heartbeat'
-              }`}
+              className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs font-medium bg-mint-500 text-white shadow-md"
             >
               {totalCount > 99 ? '99+' : totalCount}
             </Badge>
@@ -159,7 +155,7 @@ export const ReminderNavPopover = () => {
         <div className="border-t px-4 py-2 bg-mint-50">
           <div className="flex items-center justify-center text-xs text-mint-600">
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-mint-400 rounded-full animate-heartbeat"></div>
+              <div className="w-2 h-2 bg-mint-400 rounded-full"></div>
               <span>Real-time updates enabled</span>
             </div>
           </div>
