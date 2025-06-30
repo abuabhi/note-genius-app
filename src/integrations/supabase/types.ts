@@ -3327,6 +3327,13 @@ export type Database = {
         Args: { p_user_id: string; p_achievement_title: string }
         Returns: boolean
       }
+      batch_dismiss_reminders: {
+        Args: { p_user_id: string; p_reminder_ids: string[] }
+        Returns: {
+          dismissed_count: number
+          failed_ids: string[]
+        }[]
+      }
       calculate_arr: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -3433,6 +3440,30 @@ export type Database = {
       get_user_email_for_feedback: {
         Args: { feedback_user_id: string }
         Returns: string
+      }
+      get_user_reminders_paginated: {
+        Args: {
+          p_user_id: string
+          p_limit?: number
+          p_offset?: number
+          p_status?: string[]
+        }
+        Returns: {
+          id: string
+          user_id: string
+          title: string
+          description: string
+          reminder_time: string
+          due_date: string
+          type: string
+          status: string
+          priority: string
+          escalation_level: string
+          delivery_methods: Json
+          recurrence: string
+          created_at: string
+          updated_at: string
+        }[]
       }
       process_referral_signup: {
         Args: { referred_user_id: string; referral_code_used: string }

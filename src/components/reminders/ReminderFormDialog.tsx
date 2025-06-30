@@ -1,64 +1,20 @@
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon, Bell } from "lucide-react";
-import { useReminders, ReminderType, ReminderRecurrence, DeliveryMethod } from "@/hooks/useReminders";
-
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-
-const reminderFormSchema = z.object({
-  title: z.string().min(3, { message: "Title must be at least 3 characters" }),
-  description: z.string().optional(),
-  type: z.string(),
-  reminderDate: z.date({ required_error: "Reminder date is required" }),
-  reminderTime: z
-    .string()
-    .regex(/^\d{2}:\d{2}$/, { message: "Time must be in HH:MM format" }),
-  recurrence: z.string().default("none"),
-  deliveryMethods: z
-    .array(z.string())
-    .refine((value) => value.length > 0, {
-      message: "Select at least one delivery method",
-    }),
-});
-
-type ReminderFormValues = z.infer<typeof reminderFormSchema>;
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { CalendarIcon, Plus } from "lucide-react";
+import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ReminderFormDialogProps {
   isOpen: boolean;
@@ -66,319 +22,215 @@ interface ReminderFormDialogProps {
   onReminderCreated: () => void;
 }
 
-export function ReminderFormDialog({
-  isOpen,
-  onClose,
-  onReminderCreated,
-}: ReminderFormDialogProps) {
-  const { createReminder } = useReminders();
-  const [isPending, setIsPending] = useState(false);
-
-  const form = useForm<ReminderFormValues>({
-    resolver: zodResolver(reminderFormSchema),
-    defaultValues: {
-      title: "",
-      description: "",
-      type: "study",
-      reminderDate: new Date(),
-      reminderTime: format(new Date(), "HH:mm"),
-      recurrence: "none",
-      deliveryMethods: ["in_app"],
-    },
+export const ReminderFormDialog = ({ isOpen, onClose, onReminderCreated }: ReminderFormDialogProps) => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    reminderTime: new Date(),
+    type: "general" as const,
+    priority: "medium" as const,
+    deliveryMethods: ["in_app"] as string[],
+    recurrence: "none" as const,
   });
 
-  const onSubmit = async (values: ReminderFormValues) => {
-    try {
-      setIsPending(true);
-      
-      // Combine date and time
-      const reminderTime = new Date(values.reminderDate);
-      const [hours, minutes] = values.reminderTime.split(":").map(Number);
-      reminderTime.setHours(hours, minutes, 0, 0);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
 
-      await createReminder.mutateAsync({
-        title: values.title,
-        description: values.description,
-        reminder_time: reminderTime,
-        type: values.type as ReminderType,
-        delivery_methods: values.deliveryMethods as DeliveryMethod[],
-        recurrence: values.recurrence as ReminderRecurrence,
+    setIsSubmitting(true);
+    
+    try {
+      const { error } = await supabase.from('reminders').insert({
+        user_id: user.id,
+        title: formData.title,
+        description: formData.description,
+        reminder_time: formData.reminderTime.toISOString(),
+        type: formData.type,
+        priority: formData.priority,
+        delivery_methods: formData.deliveryMethods,
+        recurrence: formData.recurrence,
+        status: 'pending',
       });
-      
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Reminder created successfully",
+      });
+
+      // Invalidate queries to refresh the data
+      queryClient.invalidateQueries({
+        queryKey: ['scalable-reminders', user.id],
+        exact: false,
+      });
+
       onReminderCreated();
+      onClose();
+      
+      // Reset form
+      setFormData({
+        title: "",
+        description: "",
+        reminderTime: new Date(),
+        type: "general",
+        priority: "medium",
+        deliveryMethods: ["in_app"],
+        recurrence: "none",
+      });
+    } catch (error) {
+      console.error('Error creating reminder:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create reminder. Please try again.",
+        variant: "destructive",
+      });
     } finally {
-      setIsPending(false);
+      setIsSubmitting(false);
     }
+  };
+
+  const handleDeliveryMethodChange = (method: string, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      deliveryMethods: checked 
+        ? [...prev.deliveryMethods, method]
+        : prev.deliveryMethods.filter(m => m !== method)
+    }));
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="text-xl flex items-center gap-2">
-            <Bell className="h-5 w-5 text-primary" />
-            Create Reminder
+          <DialogTitle className="flex items-center gap-2">
+            <Plus className="h-5 w-5" />
+            Create New Reminder
           </DialogTitle>
-          <DialogDescription>
-            Set up a new reminder for your study sessions, events, or goals.
-          </DialogDescription>
         </DialogHeader>
-
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4 py-4"
-          >
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Reminder title" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">Title *</Label>
+            <Input
+              id="title"
+              value={formData.title}
+              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              placeholder="Enter reminder title"
+              required
             />
+          </div>
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description (optional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Add details about your reminder"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              placeholder="Enter reminder description (optional)"
+              rows={3}
             />
+          </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Reminder Type</FormLabel>
-                    <FormControl>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="study">Study Session</SelectItem>
-                          <SelectItem value="event">Event</SelectItem>
-                          <SelectItem value="goal">Goal</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="recurrence"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Recurrence</FormLabel>
-                    <FormControl>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select recurrence" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">One-time</SelectItem>
-                          <SelectItem value="daily">Daily</SelectItem>
-                          <SelectItem value="weekly">Weekly</SelectItem>
-                          <SelectItem value="monthly">Monthly</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="reminderDate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Date</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={
-                              "w-full pl-3 text-left font-normal flex justify-start items-center"
-                            }
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          initialFocus
-                          disabled={(date) => date < new Date()}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="reminderTime"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Time</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="time"
-                        placeholder="Select time"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="deliveryMethods"
-              render={() => (
-                <FormItem>
-                  <FormLabel>Notification Methods</FormLabel>
-                  <div className="flex flex-col gap-2">
-                    <FormField
-                      control={form.control}
-                      name="deliveryMethods"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center gap-2 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value?.includes("in_app")}
-                              onCheckedChange={(checked) => {
-                                const current = field.value || [];
-                                if (checked) {
-                                  field.onChange([...current, "in_app"]);
-                                } else {
-                                  field.onChange(current.filter((v) => v !== "in_app"));
-                                }
-                              }}
-                            />
-                          </FormControl>
-                          <FormLabel className="font-normal cursor-pointer">
-                            In-app notification
-                          </FormLabel>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="deliveryMethods"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center gap-2 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value?.includes("email")}
-                              onCheckedChange={(checked) => {
-                                const current = field.value || [];
-                                if (checked) {
-                                  field.onChange([...current, "email"]);
-                                } else {
-                                  field.onChange(current.filter((v) => v !== "email"));
-                                }
-                              }}
-                            />
-                          </FormControl>
-                          <FormLabel className="font-normal cursor-pointer">
-                            Email
-                          </FormLabel>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="deliveryMethods"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center gap-2 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value?.includes("whatsapp")}
-                              onCheckedChange={(checked) => {
-                                const current = field.value || [];
-                                if (checked) {
-                                  field.onChange([...current, "whatsapp"]);
-                                } else {
-                                  field.onChange(current.filter((v) => v !== "whatsapp"));
-                                }
-                              }}
-                            />
-                          </FormControl>
-                          <FormLabel className="font-normal cursor-pointer">
-                            WhatsApp
-                          </FormLabel>
-                          <span className="text-xs text-muted-foreground">(requires phone setup)</span>
-                        </FormItem>
-                      )}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Reminder Time *</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {format(formData.reminderTime, "PPP p")}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={formData.reminderTime}
+                    onSelect={(date) => {
+                      if (date) {
+                        setFormData(prev => ({ ...prev, reminderTime: date }));
+                      }
+                    }}
+                    initialFocus
+                  />
+                  <div className="p-3 border-t">
+                    <Input
+                      type="time"
+                      value={format(formData.reminderTime, "HH:mm")}
+                      onChange={(e) => {
+                        const [hours, minutes] = e.target.value.split(':');
+                        const newDate = new Date(formData.reminderTime);
+                        newDate.setHours(parseInt(hours), parseInt(minutes));
+                        setFormData(prev => ({ ...prev, reminderTime: newDate }));
+                      }}
                     />
                   </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                </PopoverContent>
+              </Popover>
+            </div>
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                className="mt-2"
+            <div className="space-y-2">
+              <Label>Priority</Label>
+              <Select
+                value={formData.priority}
+                onValueChange={(value: "low" | "medium" | "high") => 
+                  setFormData(prev => ({ ...prev, priority: value }))
+                }
               >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isPending} className="mt-2">
-                {isPending ? "Creating..." : "Create Reminder"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Delivery Methods</Label>
+            <div className="flex flex-wrap gap-4">
+              {[
+                { id: 'in_app', label: 'In-App Notification' },
+                { id: 'email', label: 'Email' },
+                { id: 'whatsapp', label: 'WhatsApp' },
+              ].map((method) => (
+                <div key={method.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={method.id}
+                    checked={formData.deliveryMethods.includes(method.id)}
+                    onCheckedChange={(checked) => 
+                      handleDeliveryMethodChange(method.id, checked as boolean)
+                    }
+                  />
+                  <Label htmlFor={method.id} className="text-sm">
+                    {method.label}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Creating..." : "Create Reminder"}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );
-}
+};
