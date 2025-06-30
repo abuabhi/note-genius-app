@@ -14,7 +14,7 @@ export const useProductionMonitoring = (componentName: string) => {
   useEffect(() => {
     if (user?.id) {
       userSessionTracker.setUserId(user.id);
-      logger.info('User authenticated', { userId: user.id }, { component: componentName });
+      logger.info('User authenticated', { userId: user.id, component: componentName });
     }
   }, [user?.id, componentName]);
 
@@ -31,10 +31,7 @@ export const useProductionMonitoring = (componentName: string) => {
 
     userSessionTracker.trackError(componentName, error.message);
     
-    logger.error('Component error tracked', error, {
-      component: componentName,
-      userId: user?.id,
-    });
+    logger.error('Component error tracked', error);
   }, [componentName, user?.id]);
 
   // Performance tracking wrapper
@@ -83,7 +80,8 @@ export const useProductionMonitoring = (componentName: string) => {
     }
   ): Promise<T> => {
     try {
-      logger.debug(`Starting async operation: ${operationName}`, options?.context, {
+      logger.debug(`Starting async operation: ${operationName}`, {
+        ...options?.context,
         component: componentName,
         userId: user?.id,
       });
@@ -96,17 +94,13 @@ export const useProductionMonitoring = (componentName: string) => {
       logger.debug(`Completed async operation: ${operationName}`, {
         success: true,
         ...options?.context,
-      }, {
         component: componentName,
         userId: user?.id,
       });
 
       return result;
     } catch (error) {
-      logger.error(`Failed async operation: ${operationName}`, error as Error, {
-        component: componentName,
-        userId: user?.id,
-      });
+      logger.error(`Failed async operation: ${operationName}`, error as Error);
       throw error;
     }
   }, [componentName, user?.id, measureAsyncOperation]);
@@ -118,13 +112,13 @@ export const useProductionMonitoring = (componentName: string) => {
     monitorAsyncOperation,
     logger: {
       debug: (message: string, data?: Record<string, any>) => 
-        logger.debug(message, data, { component: componentName, userId: user?.id }),
+        logger.debug(message, { ...data, component: componentName, userId: user?.id }),
       info: (message: string, data?: Record<string, any>) => 
-        logger.info(message, data, { component: componentName, userId: user?.id }),
+        logger.info(message, { ...data, component: componentName, userId: user?.id }),
       warn: (message: string, data?: Record<string, any>) => 
-        logger.warn(message, data, { component: componentName, userId: user?.id }),
+        logger.warn(message, { ...data, component: componentName, userId: user?.id }),
       error: (message: string, error?: Error | Record<string, any>) => 
-        logger.error(message, error, { component: componentName, userId: user?.id }),
+        logger.error(message, error || {}),
     },
   };
 };

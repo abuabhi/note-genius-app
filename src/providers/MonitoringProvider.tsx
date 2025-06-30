@@ -32,7 +32,7 @@ export const MonitoringProvider: React.FC<MonitoringProviderProps> = ({ children
         productionErrorTracker.trackPerformance({
           type: 'page_load',
           name: 'initial_page_load',
-          duration: navigationTiming.loadEventEnd - navigationTiming.navigationStart,
+          duration: navigationTiming.loadEventEnd - navigationTiming.fetchStart,
           success: true,
           component: 'App',
           vitals: {

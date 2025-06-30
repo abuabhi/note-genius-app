@@ -1,8 +1,9 @@
+
 import React, { ReactNode } from 'react';
 import { BrowserRouter } from 'react-router-dom';
-import { AuthProvider } from '@/contexts/AuthContext';
-import { QueryProvider } from '@/contexts/QueryContext';
-import { ThemeProvider } from '@/components/ui/theme-provider';
+import { AuthProvider } from '@/contexts/auth/AuthProvider';
+import { QueryProvider } from '@/components/app/QueryProvider';
+import { ThemeProvider } from 'next-themes';
 import { Toaster } from '@/components/ui/toaster';
 import { HelpProvider } from '@/contexts/HelpContext';
 import { ErrorProvider } from '@/contexts/ErrorContext';

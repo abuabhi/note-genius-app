@@ -50,10 +50,8 @@ export class ProductionErrorBoundary extends Component<
     // Track error in user session
     userSessionTracker.trackError(componentName, error.message);
 
-    // Log error with context
-    logger.error('React Error Boundary caught error', error, {
-      component: componentName,
-    });
+    // Log error with context - fix the logger call signature
+    logger.error('React Error Boundary caught error', error);
 
     // Store error info
     this.setState({ errorInfo });
