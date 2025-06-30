@@ -1,299 +1,329 @@
-interface MemoryInfo {
-  usedJSHeapSize: number;
-  totalJSHeapSize: number;
-  jsHeapSizeLimit: number;
-}
+import { z } from 'zod';
 
 interface PerformanceWithMemory extends Performance {
-  memory?: MemoryInfo;
+  memory?: {
+    usedJSHeapSize: number;
+    totalJSHeapSize: number;
+    jsHeapSizeLimit: number;
+  };
 }
 
-interface CacheEntry {
-  data: any;
+interface CacheEntry<T = any> {
+  data: T;
   timestamp: number;
-  ttl: number;
-  priority: 'high' | 'normal' | 'low';
-  tags: string[];
   accessCount: number;
   lastAccessed: number;
-  size?: number;
+  priority: number;
+  tags: string[];
+  size: number;
 }
 
-interface CacheOptions {
-  ttl?: number;
-  priority?: 'high' | 'normal' | 'low';
-  tags?: string[];
-}
-
-interface AccessPattern {
+interface CacheMetrics {
+  hitRate: string;
+  totalRequests: number;
   hits: number;
   misses: number;
-  writes: number;
-  expirations: number;
+  memoryUsage: string;
+  entryCount: number;
+  avgAccessTime: number;
+  evictions: number;
 }
 
-class IntelligentCacheStrategy {
-  private cache = new Map<string, CacheEntry>();
-  private accessPatterns = new Map<string, AccessPattern>();
-  private memoryPressureThreshold = 150 * 1024 * 1024; // 150MB
-  private maxCacheSize = 1000;
-  private ttlDefault = 10 * 60 * 1000; // 10 minutes
-  private cleanupInterval: NodeJS.Timeout | null = null;
+interface CacheConfig {
+  maxSize: number;
+  maxAge: number;
+  maxMemoryUsage: number;
+  compressionThreshold: number;
+  enableCompression: boolean;
+  enablePersistence: boolean;
+  persistenceKey: string;
+}
 
-  constructor() {
+export class IntelligentCacheManager {
+  private cache = new Map<string, CacheEntry>();
+  private accessTimes = new Map<string, number[]>();
+  private metrics: CacheMetrics = {
+    hitRate: '0%',
+    totalRequests: 0,
+    hits: 0,
+    misses: 0,
+    memoryUsage: '0MB',
+    entryCount: 0,
+    avgAccessTime: 0,
+    evictions: 0,
+  };
+
+  private config: CacheConfig = {
+    maxSize: 1000,
+    maxAge: 5 * 60 * 1000, // 5 minutes
+    maxMemoryUsage: 100 * 1024 * 1024, // 100MB
+    compressionThreshold: 1024, // 1KB
+    enableCompression: true,
+    enablePersistence: true,
+    persistenceKey: 'intelligent-cache',
+  };
+
+  constructor(config?: Partial<CacheConfig>) {
+    if (config) {
+      this.config = { ...this.config, ...config };
+    }
+    this.loadFromPersistence();
     this.startCleanupInterval();
-    this.setupMemoryPressureDetection();
   }
 
-  set(key: string, data: any, options: CacheOptions = {}): void {
-    const ttl = options.ttl || this.ttlDefault;
-    const priority = options.priority || 'normal';
-    const tags = options.tags || [];
+  set<T>(key: string, data: T, options?: { tags?: string[]; priority?: number; ttl?: number }): void {
+    const now = Date.now();
+    const size = this.estimateSize(data);
+    const maxAge = options?.ttl ?? this.config.maxAge;
 
     // Check memory pressure before adding
-    if (this.isMemoryPressureHigh() && priority === 'low') {
-      console.log('🚫 [CACHE] Skipping low priority cache due to memory pressure');
-      return;
+    if (this.shouldEvictForMemory(size)) {
+      this.performMemoryPressureEviction();
     }
 
-    // Clean up if cache is full
-    if (this.cache.size >= this.maxCacheSize) {
-      this.evictLeastRecentlyUsed();
-    }
-
-    const entry: CacheEntry = {
-      data,
-      timestamp: Date.now(),
-      ttl,
-      priority,
-      tags,
+    const entry: CacheEntry<T> = {
+      data: this.config.enableCompression && size > this.config.compressionThreshold 
+        ? this.compress(data) 
+        : data,
+      timestamp: now,
       accessCount: 0,
-      lastAccessed: Date.now(),
-      size: this.estimateSize(data)
+      lastAccessed: now,
+      priority: options?.priority ?? 1,
+      tags: options?.tags ?? [],
+      size,
     };
 
     this.cache.set(key, entry);
-    this.updateAccessPattern(key, 'write');
-
-    console.log(`💾 [CACHE] Stored: ${key} (Size: ${entry.size} bytes, TTL: ${ttl}ms)`);
+    this.updateMetrics();
+    this.persistCache();
   }
 
-  get(key: string): any {
+  get<T>(key: string): T | null {
+    const now = Date.now();
+    this.metrics.totalRequests++;
+
     const entry = this.cache.get(key);
-    
     if (!entry) {
-      this.updateAccessPattern(key, 'miss');
+      this.metrics.misses++;
+      this.updateHitRate();
       return null;
     }
 
     // Check if expired
-    if (Date.now() - entry.timestamp > entry.ttl) {
+    if (now - entry.timestamp > this.config.maxAge) {
       this.cache.delete(key);
-      this.updateAccessPattern(key, 'expired');
-      console.log(`⏰ [CACHE] Expired: ${key}`);
+      this.metrics.misses++;
+      this.updateHitRate();
       return null;
     }
 
-    // Update access stats
+    // Update access metrics
     entry.accessCount++;
-    entry.lastAccessed = Date.now();
-    this.updateAccessPattern(key, 'hit');
+    entry.lastAccessed = now;
+    this.recordAccessTime(key, now);
 
-    console.log(`✅ [CACHE] Hit: ${key} (Access count: ${entry.accessCount})`);
-    return entry.data;
+    this.metrics.hits++;
+    this.updateHitRate();
+
+    // Decompress if needed
+    const data = this.isCompressed(entry.data) ? this.decompress(entry.data) : entry.data;
+    return data as T;
   }
 
-  invalidate(key: string): void {
-    if (this.cache.has(key)) {
-      this.cache.delete(key);
-      console.log(`🗑️ [CACHE] Invalidated: ${key}`);
+  private recordAccessTime(key: string, time: number): void {
+    if (!this.accessTimes.has(key)) {
+      this.accessTimes.set(key, []);
     }
-  }
-
-  invalidateByTags(tags: string[]): void {
-    let invalidatedCount = 0;
-    this.cache.forEach((entry, key) => {
-      if (entry.tags.some(tag => tags.includes(tag))) {
-        this.cache.delete(key);
-        invalidatedCount++;
-      }
-    });
-    console.log(`🗑️ [CACHE] Invalidated ${invalidatedCount} entries with tags: ${tags.join(', ')}`);
-  }
-
-  clear(): void {
-    this.cache.clear();
-    this.accessPatterns.clear();
-    console.log('🧹 [CACHE] Cache cleared');
-  }
-
-  private isMemoryPressureHigh(): boolean {
-    try {
-      const perf = performance as PerformanceWithMemory;
-      if (perf.memory?.usedJSHeapSize) {
-        const memoryUsage = perf.memory.usedJSHeapSize;
-        return memoryUsage > this.memoryPressureThreshold;
-      }
-    } catch (error) {
-      console.warn('⚠️ [CACHE] Memory API not available, using fallback detection');
+    const times = this.accessTimes.get(key)!;
+    times.push(time);
+    if (times.length > 100) {
+      times.shift();
     }
-    
-    // Fallback: use cache size as proxy for memory pressure
-    return this.cache.size > this.maxCacheSize * 0.8;
-  }
-
-  handleMemoryPressure(): void {
-    console.log('🚨 [CACHE] Memory pressure detected, performing aggressive cleanup');
-    
-    // Remove low priority items first
-    const lowPriorityKeys = Array.from(this.cache.entries())
-      .filter(([_, entry]) => entry.priority === 'low')
-      .map(([key]) => key);
-    
-    lowPriorityKeys.forEach(key => this.cache.delete(key));
-    
-    // If still high pressure, remove least recently used items
-    if (this.isMemoryPressureHigh()) {
-      const lruKeys = Array.from(this.cache.entries())
-        .sort(([, a], [, b]) => a.lastAccessed - b.lastAccessed)
-        .slice(0, Math.floor(this.cache.size * 0.3))
-        .map(([key]) => key);
-      
-      lruKeys.forEach(key => this.cache.delete(key));
-    }
-    
-    console.log(`🧹 [CACHE] Cleanup completed, cache size: ${this.cache.size}`);
-  }
-
-  private setupMemoryPressureDetection(): void {
-    // Check memory pressure every 30 seconds
-    setInterval(() => {
-      if (this.isMemoryPressureHigh()) {
-        this.handleMemoryPressure();
-      }
-    }, 30000);
-  }
-
-  private evictLeastRecentlyUsed(): void {
-    let lruKey: string | null = null;
-    let lruTimestamp = Date.now();
-
-    this.cache.forEach((entry, key) => {
-      if (entry.lastAccessed < lruTimestamp) {
-        lruTimestamp = entry.lastAccessed;
-        lruKey = key;
-      }
-    });
-
-    if (lruKey) {
-      this.cache.delete(lruKey);
-      console.log(`🗑️ [CACHE] Evicted LRU entry: ${lruKey}`);
-    }
-  }
-
-  private performCleanup(): void {
-    const now = Date.now();
-    let expiredCount = 0;
-
-    this.cache.forEach((entry, key) => {
-      if (now - entry.timestamp > entry.ttl) {
-        this.cache.delete(key);
-        expiredCount++;
-      }
-    });
-
-    if (expiredCount > 0) {
-      console.log(`🧹 [CACHE] Cleaned up ${expiredCount} expired entries`);
-    }
-  }
-
-  private updateAccessPattern(key: string, type: 'hit' | 'miss' | 'write' | 'expired'): void {
-    const pattern = this.accessPatterns.get(key) || { hits: 0, misses: 0, writes: 0, expirations: 0 };
-    
-    switch (type) {
-      case 'hit':
-        pattern.hits++;
-        break;
-      case 'miss':
-        pattern.misses++;
-        break;
-      case 'write':
-        pattern.writes++;
-        break;
-      case 'expired':
-        pattern.expirations++;
-        break;
-    }
-
-    this.accessPatterns.set(key, pattern);
   }
 
   private estimateSize(data: any): number {
     try {
-      const str = JSON.stringify(data);
-      return new TextEncoder().encode(str).length;
-    } catch (error) {
-      console.warn('⚠️ [CACHE] Could not estimate size of data');
-      return 0;
+      return new Blob([JSON.stringify(data)]).size;
+    } catch {
+      return JSON.stringify(data).length * 2;
     }
+  }
+
+  private compress(data: any): any {
+    // Simple compression simulation - in real implementation use actual compression
+    return { __compressed: true, data: JSON.stringify(data) };
+  }
+
+  private decompress(data: any): any {
+    if (this.isCompressed(data)) {
+      return JSON.parse(data.data);
+    }
+    return data;
+  }
+
+  private isCompressed(data: any): boolean {
+    return data && typeof data === 'object' && data.__compressed === true;
+  }
+
+  private shouldEvictForMemory(newEntrySize: number): boolean {
+    const currentMemory = this.getCurrentMemoryUsage();
+    return currentMemory + newEntrySize > this.config.maxMemoryUsage;
+  }
+
+  private getCurrentMemoryUsage(): number {
+    let total = 0;
+    for (const entry of this.cache.values()) {
+      total += entry.size;
+    }
+    return total;
+  }
+
+  private performMemoryPressureEviction(): void {
+    const entries = Array.from(this.cache.entries());
+    
+    // Sort by LRU with priority weighting
+    entries.sort(([, a], [, b]) => {
+      const scoreA = a.lastAccessed * a.priority;
+      const scoreB = b.lastAccessed * b.priority;
+      return scoreA - scoreB;
+    });
+
+    // Remove 25% of entries
+    const toRemove = Math.ceil(entries.length * 0.25);
+    for (let i = 0; i < toRemove && i < entries.length; i++) {
+      this.cache.delete(entries[i][0]);
+      this.metrics.evictions++;
+    }
+  }
+
+  private updateMetrics(): void {
+    this.metrics.entryCount = this.cache.size;
+    this.metrics.memoryUsage = `${(this.getCurrentMemoryUsage() / 1024 / 1024).toFixed(2)}MB`;
+    
+    // Calculate average access time
+    let totalAccessTime = 0;
+    let accessCount = 0;
+    for (const times of this.accessTimes.values()) {
+      if (times.length > 1) {
+        for (let i = 1; i < times.length; i++) {
+          totalAccessTime += times[i] - times[i-1];
+          accessCount++;
+        }
+      }
+    }
+    this.metrics.avgAccessTime = accessCount > 0 ? totalAccessTime / accessCount : 0;
+  }
+
+  private updateHitRate(): void {
+    const rate = this.metrics.totalRequests > 0 
+      ? (this.metrics.hits / this.metrics.totalRequests * 100).toFixed(1)
+      : '0';
+    this.metrics.hitRate = `${rate}%`;
   }
 
   private startCleanupInterval(): void {
-    this.cleanupInterval = setInterval(() => {
-      this.performCleanup();
-    }, 60000); // Every minute
+    setInterval(() => {
+      this.cleanup();
+    }, 60000); // Cleanup every minute
   }
 
-  destroy(): void {
-    if (this.cleanupInterval) {
-      clearInterval(this.cleanupInterval);
-      this.cleanupInterval = null;
+  private cleanup(): void {
+    const now = Date.now();
+    const expired: string[] = [];
+
+    for (const [key, entry] of this.cache.entries()) {
+      if (now - entry.timestamp > this.config.maxAge) {
+        expired.push(key);
+      }
     }
-    this.clear();
+
+    expired.forEach(key => this.cache.delete(key));
+    
+    if (expired.length > 0) {
+      this.updateMetrics();
+      this.persistCache();
+    }
   }
 
-  getMetrics(): {
-    size: number;
-    hitRate: string;
-    memoryUsage: string;
-    totalHits: number;
-    totalMisses: number;
-    averageAccessCount: number;
-  } {
-    const totalEntries = Array.from(this.accessPatterns.values());
-    const totalHits = totalEntries.reduce((sum, pattern) => sum + pattern.hits, 0);
-    const totalMisses = totalEntries.reduce((sum, pattern) => sum + pattern.misses, 0);
-    const totalAccesses = totalHits + totalMisses;
-    const hitRate = totalAccesses > 0 ? ((totalHits / totalAccesses) * 100).toFixed(1) : '0';
-    
-    const cacheEntries = Array.from(this.cache.values());
-    const averageAccessCount = cacheEntries.length > 0 
-      ? (cacheEntries.reduce((sum, entry) => sum + entry.accessCount, 0) / cacheEntries.length).toFixed(1)
-      : '0';
-    
-    let memoryUsage = 'Unknown';
+  private loadFromPersistence(): void {
+    if (!this.config.enablePersistence || typeof localStorage === 'undefined') return;
+
     try {
-      const perf = performance as PerformanceWithMemory;
-      if (perf.memory?.usedJSHeapSize) {
-        memoryUsage = `${Math.round(perf.memory.usedJSHeapSize / 1024 / 1024)}MB`;
+      const stored = localStorage.getItem(this.config.persistenceKey);
+      if (stored) {
+        const data = JSON.parse(stored);
+        this.cache = new Map(data.entries);
+        this.metrics = { ...this.metrics, ...data.metrics };
       }
     } catch (error) {
-      // Fallback to cache size estimation
-      const estimatedSize = cacheEntries.reduce((sum, entry) => sum + (entry.size || 0), 0);
-      memoryUsage = `~${Math.round(estimatedSize / 1024)}KB (estimated)`;
+      console.warn('Failed to load cache from persistence:', error);
     }
+  }
 
-    return {
-      size: this.cache.size,
-      hitRate: `${hitRate}%`,
-      memoryUsage,
-      totalHits,
-      totalMisses,
-      averageAccessCount: parseFloat(averageAccessCount),
+  private persistCache(): void {
+    if (!this.config.enablePersistence || typeof localStorage === 'undefined') return;
+
+    try {
+      const data = {
+        entries: Array.from(this.cache.entries()),
+        metrics: this.metrics,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem(this.config.persistenceKey, JSON.stringify(data));
+    } catch (error) {
+      console.warn('Failed to persist cache:', error);
+    }
+  }
+
+  handleMemoryPressure(): void {
+    const performanceMemory = performance as PerformanceWithMemory;
+    if (performanceMemory.memory) {
+      const memoryUsage = performanceMemory.memory.usedJSHeapSize;
+      const memoryLimit = performanceMemory.memory.jsHeapSizeLimit;
+      
+      if (memoryUsage / memoryLimit > 0.8) {
+        this.performMemoryPressureEviction();
+      }
+    } else {
+      // Fallback: aggressive cleanup when memory API unavailable
+      this.performMemoryPressureEviction();
+    }
+  }
+
+  getMetrics(): CacheMetrics {
+    return { ...this.metrics };
+  }
+
+  clear(): void {
+    this.cache.clear();
+    this.accessTimes.clear();
+    this.metrics = {
+      hitRate: '0%',
+      totalRequests: 0,
+      hits: 0,
+      misses: 0,
+      memoryUsage: '0MB',
+      entryCount: 0,
+      avgAccessTime: 0,
+      evictions: 0,
     };
+    this.persistCache();
+  }
+
+  invalidateByTag(tag: string): void {
+    const toDelete: string[] = [];
+    for (const [key, entry] of this.cache.entries()) {
+      if (entry.tags.includes(tag)) {
+        toDelete.push(key);
+      }
+    }
+    toDelete.forEach(key => this.cache.delete(key));
+    this.updateMetrics();
+    this.persistCache();
   }
 }
 
-const intelligentCacheManager = new IntelligentCacheStrategy();
+export const intelligentCacheManager = new IntelligentCacheManager();
 
-export { IntelligentCacheStrategy, intelligentCacheManager, CacheOptions };
+// Fix the export to use 'export type' for type-only exports
+export type { CacheEntry, CacheMetrics, CacheConfig };
