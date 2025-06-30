@@ -84,7 +84,6 @@ export const RemindersView = () => {
         <ReminderFormDialog
           open={showAddReminder}
           onOpenChange={setShowAddReminder}
-          onReminderCreated={() => setShowAddReminder(false)}
         />
       )}
     </Card>
