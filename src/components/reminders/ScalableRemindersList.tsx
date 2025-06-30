@@ -55,10 +55,10 @@ export const ScalableRemindersList = ({
     return (
       <div className="text-center py-12 px-6">
         <div className="relative mb-6">
-          <div className="w-20 h-20 bg-gradient-to-br from-mint-100 via-mint-50 to-mint-100 rounded-full flex items-center justify-center mx-auto shadow-lg">
+          <div className="w-20 h-20 bg-mint-50 rounded-full flex items-center justify-center mx-auto shadow-sm">
             <CheckCircle className="h-10 w-10 text-mint-600" />
           </div>
-          <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center shadow-lg">
+          <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center shadow-sm">
             <Sparkles className="h-3 w-3 text-white" />
           </div>
         </div>
@@ -69,9 +69,9 @@ export const ScalableRemindersList = ({
         </p>
         
         <div className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-400">
-          <div className="w-2 h-2 bg-mint-300 rounded-full animate-pulse"></div>
+          <div className="w-2 h-2 bg-mint-300 rounded-full animate-[pulse_3s_ease-in-out_infinite]"></div>
           <span>Stay organized and focused</span>
-          <div className="w-2 h-2 bg-mint-300 rounded-full animate-pulse"></div>
+          <div className="w-2 h-2 bg-mint-300 rounded-full animate-[pulse_3s_ease-in-out_infinite]"></div>
         </div>
       </div>
     );
@@ -109,7 +109,7 @@ export const ScalableRemindersList = ({
     <div className="space-y-4 p-4">
       {/* Overdue alert */}
       {overdueReminders.length > 0 && (
-        <div className="p-3 rounded-lg bg-gradient-to-r from-red-50 via-red-50 to-orange-50 border border-red-200 shadow-sm">
+        <div className="p-3 rounded-lg bg-red-25 border border-red-100">
           <div className="flex items-center gap-3">
             <div className="p-1.5 bg-red-100 rounded-full">
               <AlertTriangle className="h-3 w-3 text-red-600" />
@@ -188,9 +188,9 @@ export const ScalableRemindersList = ({
       {sortedReminders.length > 10 && (
         <div className="text-center pt-2">
           <div className="inline-flex items-center gap-2 text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-full">
-            <div className="w-1 h-1 bg-mint-400 rounded-full animate-pulse"></div>
+            <div className="w-1 h-1 bg-mint-400 rounded-full animate-[pulse_3s_ease-in-out_infinite]"></div>
             <span>Showing {displayedReminders.length} of {sortedReminders.length} reminders</span>
-            <div className="w-1 h-1 bg-mint-400 rounded-full animate-pulse"></div>
+            <div className="w-1 h-1 bg-mint-400 rounded-full animate-[pulse_3s_ease-in-out_infinite]"></div>
           </div>
         </div>
       )}

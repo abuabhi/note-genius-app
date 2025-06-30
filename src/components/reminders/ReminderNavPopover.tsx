@@ -72,8 +72,8 @@ export const ReminderNavPopover = () => {
             <Badge 
               className={`absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs font-medium transition-all duration-200 ${
                 hasOverdueReminders 
-                  ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/50' 
-                  : 'bg-red-500 text-white shadow-md shadow-red-500/30 animate-pulse'
+                  ? 'bg-red-500 text-white animate-[pulse_3s_ease-in-out_infinite] shadow-lg shadow-red-500/50' 
+                  : 'bg-red-500 text-white shadow-md shadow-red-500/30 animate-[pulse_3s_ease-in-out_infinite]'
               }`}
             >
               {totalCount > 99 ? '99+' : totalCount}
@@ -87,7 +87,7 @@ export const ReminderNavPopover = () => {
         sideOffset={8}
       >
         {/* Header */}
-        <div className="flex justify-between items-center p-4 border-b bg-gradient-to-r from-mint-50 to-mint-100">
+        <div className="flex justify-between items-center p-4 border-b bg-mint-50">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-mint-100 rounded-full">
               <Bell className="h-4 w-4 text-mint-600" />
@@ -157,11 +157,11 @@ export const ReminderNavPopover = () => {
 
         {/* Footer */}
         <div className="border-t px-4 py-2 bg-mint-50">
-          <div className="flex items-center justify-between text-xs text-gray-500">
-            <span>Real-time updates enabled</span>
-            <Button size="sm" onClick={() => setShowAddReminder(true)}>
-              Add Reminder
-            </Button>
+          <div className="flex items-center justify-center text-xs text-gray-500">
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 bg-mint-400 rounded-full animate-[pulse_3s_ease-in-out_infinite]"></div>
+              <span>Real-time updates enabled</span>
+            </div>
           </div>
         </div>
       </PopoverContent>
