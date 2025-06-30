@@ -7,6 +7,9 @@ import AboutPage from "@/pages/AboutPage";
 import PricingPage from "@/pages/PricingPage";
 import LoginPage from "@/pages/LoginPage";
 import ContactPage from "@/pages/ContactPage";
+import FeaturesPage from "@/pages/FeaturesPage";
+import TermsPage from "@/pages/TermsPage";
+import PrivacyPage from "@/pages/PrivacyPage";
 import { SignUpForm } from "@/components/auth/SignUpForm";
 
 export interface RouteConfig {
@@ -22,31 +25,7 @@ export const publicRoutes: RouteConfig[] = [
   { path: "/login", element: <LoginPage /> }, // LoginPage already has Layout internally
   { path: "/signup", element: <Layout><SignUpForm /></Layout> },
   { path: "/contact", element: <ContactPage /> }, // ContactPage already has Layout internally
-  { 
-    path: "/terms", 
-    element: <Layout>
-      <div className="container mx-auto px-6 py-8">
-        <h1 className="text-3xl font-bold mb-6">Terms of Service</h1>
-        <p>Terms of service content coming soon...</p>
-      </div>
-    </Layout> 
-  },
-  { 
-    path: "/privacy", 
-    element: <Layout>
-      <div className="container mx-auto px-6 py-8">
-        <h1 className="text-3xl font-bold mb-6">Privacy Policy</h1>
-        <p>Privacy policy content coming soon...</p>
-      </div>
-    </Layout> 
-  },
-  { 
-    path: "/features", 
-    element: <Layout>
-      <div className="container mx-auto px-6 py-8">
-        <h1 className="text-3xl font-bold mb-6">Features</h1>
-        <p>Features page content coming soon...</p>
-      </div>
-    </Layout> 
-  }
+  { path: "/terms", element: <TermsPage /> }, // TermsPage already has Layout internally
+  { path: "/privacy", element: <PrivacyPage /> }, // PrivacyPage already has Layout internally
+  { path: "/features", element: <FeaturesPage /> } // FeaturesPage already has Layout internally
 ];

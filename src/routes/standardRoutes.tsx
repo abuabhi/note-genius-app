@@ -22,6 +22,7 @@ const CollaborationPage = lazy(() => import('@/pages/CollaborationPage'));
 const ChatPage = lazy(() => import('@/pages/ChatPage'));
 const HelpPage = lazy(() => import('@/pages/HelpPage'));
 const FAQPage = lazy(() => import('@/pages/FAQPage'));
+const StudyPlannerPage = lazy(() => import('@/pages/StudyPlannerPage'));
 
 // Legacy route redirects
 const ProgressPage = lazy(() => import('@/pages/AnalyticsPage'));
@@ -84,6 +85,10 @@ export const standardRoutes: RouteConfig[] = [
   {
     path: '/schedule',
     element: <SidebarLayout><SchedulePage /></SidebarLayout>
+  },
+  {
+    path: '/study-planner',
+    element: <SidebarLayout><StudyPlannerPage /></SidebarLayout>
   },
   {
     path: '/reminders',
