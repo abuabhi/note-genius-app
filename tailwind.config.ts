@@ -115,19 +115,19 @@ export default {
             opacity: '1',
             transform: 'scale(1)'
           },
-          '14%': { 
-            opacity: '0.6',
-            transform: 'scale(1.1)'
+          '10%': { 
+            opacity: '0.7',
+            transform: 'scale(1.05)'
           },
-          '28%': { 
+          '20%': { 
             opacity: '1',
             transform: 'scale(1)'
           },
-          '42%': { 
+          '30%': { 
             opacity: '0.8',
-            transform: 'scale(1.05)'
+            transform: 'scale(1.02)'
           },
-          '70%': { 
+          '40%': { 
             opacity: '1',
             transform: 'scale(1)'
           },
@@ -140,7 +140,7 @@ export default {
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
-        'heartbeat': 'heartbeat 2.5s ease-in-out infinite'
+        'heartbeat': 'heartbeat 5s ease-in-out infinite'
       }
     }
   },

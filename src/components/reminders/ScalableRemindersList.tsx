@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -108,16 +109,16 @@ export const ScalableRemindersList = ({
     <div className="space-y-4 p-4">
       {/* Overdue alert */}
       {overdueReminders.length > 0 && (
-        <div className="p-3 rounded-lg bg-red-25 border border-red-200">
+        <div className="p-3 rounded-lg bg-mint-50 border border-mint-300">
           <div className="flex items-center gap-3">
-            <div className="p-1.5 bg-red-100 rounded-full">
-              <AlertTriangle className="h-3 w-3 text-red-600" />
+            <div className="p-1.5 bg-mint-200 rounded-full">
+              <AlertTriangle className="h-3 w-3 text-mint-600" />
             </div>
             <div>
-              <h4 className="font-semibold text-red-800 text-sm">
+              <h4 className="font-semibold text-mint-800 text-sm">
                 {overdueReminders.length} Overdue Reminder{overdueReminders.length !== 1 ? 's' : ''}
               </h4>
-              <p className="text-red-700 text-xs">
+              <p className="text-mint-700 text-xs">
                 These reminders need your attention
               </p>
             </div>
