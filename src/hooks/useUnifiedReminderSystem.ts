@@ -1,21 +1,27 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { Database } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 import { useCallback, useEffect, useMemo } from 'react';
-import { Reminder, ReminderType, DeliveryMethod, ReminderStatus } from './reminders/types';
+import { Reminder, ReminderType, DeliveryMethod, ReminderStatus, ReminderRecurrence } from './reminders/types';
 
 interface UnifiedReminderSystemOptions {
   enableRealtime?: boolean;
   enableNotifications?: boolean;
   limit?: number;
+  status?: string[];
 }
 
 export const useUnifiedReminderSystem = (options: UnifiedReminderSystemOptions = {}) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { enableRealtime = true, enableNotifications = true, limit = 1000 } = options;
+  const { 
+    enableRealtime = false, 
+    enableNotifications = false, 
+    limit = 50,
+    status = ['pending', 'sent'] 
+  } = options;
 
   console.log('🔄 useUnifiedReminderSystem initialized with options:', options);
 
@@ -24,48 +30,50 @@ export const useUnifiedReminderSystem = (options: UnifiedReminderSystemOptions =
     data: rawReminders = [],
     isLoading,
     error,
-    refetch
+    refetch: refresh
   } = useQuery({
     queryKey: ['unified-reminders', user?.id],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user?.id) {
+        console.log('🔔 No user ID, returning empty reminders');
+        return [];
+      }
 
-      console.log('📡 Fetching reminders for user:', user.id);
+      console.log('🔔 Fetching reminders for user:', user.id, 'with status:', status);
       
       const { data, error } = await supabase
         .from('reminders')
         .select(`
           *,
-          events:event_id(*),
-          goals:goal_id(*)
+          events!reminders_event_id_fkey(id, title),
+          goals!reminders_goal_id_fkey(id, title)
         `)
         .eq('user_id', user.id)
-        .in('status', ['pending', 'sent'])
-        .order('reminder_time', { ascending: true })
+        .in('status', status)
+        .order('reminder_time', { ascending: true, nullsLast: true })
+        .order('created_at', { ascending: false })
         .limit(limit);
 
       if (error) {
-        console.error('❌ Error fetching reminders:', error);
+        console.error('❌ Failed to fetch reminders:', error);
         throw error;
       }
 
-      console.log('✅ Raw reminders fetched:', data?.length || 0);
-      
-      // Transform database response to proper Reminder type
       const transformedReminders: Reminder[] = (data || []).map(item => ({
         ...item,
         type: item.type as ReminderType,
         status: item.status as ReminderStatus,
+        recurrence: item.recurrence as ReminderRecurrence,
         delivery_methods: Array.isArray(item.delivery_methods) 
           ? (item.delivery_methods as string[]).map(method => method as DeliveryMethod)
           : ['in_app' as DeliveryMethod]
       }));
 
-      console.log('✅ Transformed reminders:', transformedReminders.length);
+      console.log('✅ Fetched reminders:', transformedReminders.length, 'items');
       return transformedReminders;
     },
-    enabled: !!user,
-    staleTime: 30000, // Cache for 30 seconds
+    enabled: !!user?.id,
+    staleTime: 1000 * 60 * 2, // 2 minutes
     refetchOnWindowFocus: false,
   });
 
@@ -231,6 +239,6 @@ export const useUnifiedReminderSystem = (options: UnifiedReminderSystemOptions =
     batchDismissReminders: batchDismissMutation.mutate,
     dismissAll,
     isDismissing: dismissMutation.isPending || batchDismissMutation.isPending,
-    refresh: refetch,
+    refresh: refresh,
   };
 };
