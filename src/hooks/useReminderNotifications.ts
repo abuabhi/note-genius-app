@@ -1,9 +1,10 @@
 
 import { useUnifiedReminderSystem } from './useUnifiedReminderSystem';
 
-// Backward-compatible wrapper that uses the unified notification system
+// DEPRECATED: This hook is now a thin wrapper around useUnifiedReminderSystem
+// All functionality has been moved to the unified system to prevent duplicates
 export const useReminderNotifications = () => {
-  console.log('🔄 useReminderNotifications: Using unified system internally');
+  console.warn('⚠️ useReminderNotifications is deprecated. Use useUnifiedReminderSystem directly.');
   
   const {
     reminders,
@@ -15,7 +16,8 @@ export const useReminderNotifications = () => {
     refresh
   } = useUnifiedReminderSystem({
     enableRealtime: true,
-    enableNotifications: true
+    enableNotifications: true,
+    limit: 1000
   });
 
   const dismissAll = async () => {

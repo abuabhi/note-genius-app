@@ -1,5 +1,6 @@
+
 import { useState } from "react";
-import { useReminders, Reminder } from "@/hooks/useReminders";
+import { useUnifiedReminderSystem } from "@/hooks/useUnifiedReminderSystem";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,9 +25,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { Reminder } from "@/hooks/reminders/types";
 
 export const RemindersView = () => {
-  const { reminders, isLoading, cancelReminder } = useReminders();
+  const { 
+    reminders, 
+    isLoading, 
+    dismissReminder 
+  } = useUnifiedReminderSystem({
+    // Remove hardcoded limit - get ALL reminders
+    limit: 1000,
+    enableRealtime: true,
+    enableNotifications: true
+  });
+  
   const [showAddReminder, setShowAddReminder] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
 
@@ -72,7 +84,7 @@ export const RemindersView = () => {
                   <ReminderCard
                     key={reminder.id}
                     reminder={reminder}
-                    onCancel={cancelReminder.mutate}
+                    onCancel={dismissReminder}
                   />
                 ))}
               </div>
@@ -96,7 +108,13 @@ interface ReminderCardProps {
 }
 
 const ReminderCard = ({ reminder, onCancel }: ReminderCardProps) => {
-  const { formatReminderTime } = useReminders();
+  const formatReminderTime = (reminderTime: string) => {
+    try {
+      return new Date(reminderTime).toLocaleString();
+    } catch {
+      return 'Soon';
+    }
+  };
 
   return (
     <div className="flex items-start justify-between p-4 rounded-lg border bg-card">

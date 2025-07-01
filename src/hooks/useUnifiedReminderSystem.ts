@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { Reminder, DeliveryMethod } from './reminders/types';
 
 interface UnifiedReminderSystemOptions {
@@ -15,7 +15,8 @@ interface UnifiedReminderSystemOptions {
 export const useUnifiedReminderSystem = (options: UnifiedReminderSystemOptions = {}) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { enableRealtime = true, enableNotifications = true, limit = 20 } = options;
+  const { enableRealtime = true, enableNotifications = true, limit = 1000 } = options;
+  const [optimisticDismissals, setOptimisticDismissals] = useState<Set<string>>(new Set());
 
   // Main query for reminders
   const {
@@ -62,63 +63,94 @@ export const useUnifiedReminderSystem = (options: UnifiedReminderSystemOptions =
     enabled: !!user?.id,
   });
 
-  const reminders = queryData?.reminders || [];
-  const totalCount = queryData?.totalCount || 0;
+  // Filter out optimistically dismissed reminders
+  const filteredReminders = (queryData?.reminders || []).filter(r => !optimisticDismissals.has(r.id));
+  const reminders = filteredReminders;
+  const totalCount = (queryData?.totalCount || 0) - optimisticDismissals.size;
   const unreadCount = reminders.filter(r => r.status === 'sent').length;
 
-  // Single dismiss mutation
+  // Single dismiss mutation using batch function for consistency
   const dismissMutation = useMutation({
     mutationFn: async (id: string) => {
-      console.log('🗑️ Dismissing reminder:', id);
+      console.log('🗑️ Dismissing reminder via batch function:', id);
       
-      const { error } = await supabase
-        .from('reminders')
-        .update({ 
-          status: 'cancelled',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id)
-        .eq('user_id', user?.id || '');
+      // Use batch dismiss function even for single dismissal
+      const { data, error } = await supabase.rpc('batch_dismiss_reminders', {
+        p_user_id: user?.id || '',
+        p_reminder_ids: [id]
+      });
 
       if (error) throw error;
-      return id;
+      return data;
     },
-    onSuccess: (id) => {
+    onMutate: async (id: string) => {
+      // Optimistic update: immediately hide the reminder
+      setOptimisticDismissals(prev => new Set(prev).add(id));
+    },
+    onSuccess: (data, id) => {
       console.log('✅ Reminder dismissed:', id);
       toast.success('Reminder dismissed');
+      // Clear from optimistic dismissals and invalidate
+      setOptimisticDismissals(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
       queryClient.invalidateQueries({ queryKey: ['unified-reminders'] });
     },
-    onError: (error) => {
+    onError: (error, id) => {
       console.error('❌ Failed to dismiss reminder:', error);
       toast.error('Failed to dismiss reminder');
+      // Revert optimistic update
+      setOptimisticDismissals(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
     },
   });
 
-  // Batch dismiss mutation  
+  // Batch dismiss mutation using proper database function
   const batchDismissMutation = useMutation({
     mutationFn: async (ids: string[]) => {
-      console.log('🗑️ Batch dismissing reminders:', ids.length);
+      console.log('🗑️ Batch dismissing reminders via database function:', ids.length);
       
-      const { error } = await supabase
-        .from('reminders')
-        .update({ 
-          status: 'cancelled',
-          updated_at: new Date().toISOString()
-        })
-        .in('id', ids)
-        .eq('user_id', user?.id || '');
+      const { data, error } = await supabase.rpc('batch_dismiss_reminders', {
+        p_user_id: user?.id || '',
+        p_reminder_ids: ids
+      });
 
       if (error) throw error;
-      return ids;
+      return data;
     },
-    onSuccess: (ids) => {
+    onMutate: async (ids: string[]) => {
+      // Optimistic update: immediately hide all reminders
+      setOptimisticDismissals(prev => {
+        const newSet = new Set(prev);
+        ids.forEach(id => newSet.add(id));
+        return newSet;
+      });
+    },
+    onSuccess: (data, ids) => {
       console.log('✅ Batch dismissed reminders:', ids.length);
       toast.success(`Dismissed ${ids.length} reminders`);
+      // Clear from optimistic dismissals and invalidate
+      setOptimisticDismissals(prev => {
+        const newSet = new Set(prev);
+        ids.forEach(id => newSet.delete(id));
+        return newSet;
+      });
       queryClient.invalidateQueries({ queryKey: ['unified-reminders'] });
     },
-    onError: (error) => {
+    onError: (error, ids) => {
       console.error('❌ Failed to batch dismiss reminders:', error);
       toast.error('Failed to dismiss reminders');
+      // Revert optimistic updates
+      setOptimisticDismissals(prev => {
+        const newSet = new Set(prev);
+        ids.forEach(id => newSet.delete(id));
+        return newSet;
+      });
     },
   });
 
@@ -134,7 +166,7 @@ export const useUnifiedReminderSystem = (options: UnifiedReminderSystemOptions =
     }
   };
 
-  // Set up realtime subscription
+  // Set up realtime subscription with smart filtering
   useEffect(() => {
     if (!enableRealtime || !user?.id) return;
 
@@ -152,7 +184,18 @@ export const useUnifiedReminderSystem = (options: UnifiedReminderSystemOptions =
         },
         (payload) => {
           console.log('🔔 Realtime reminder update:', payload);
-          queryClient.invalidateQueries({ queryKey: ['unified-reminders'] });
+          
+          // Smart filtering: Don't invalidate if it's a cancelled reminder
+          // This prevents dismissed reminders from reappearing
+          if (payload.eventType === 'UPDATE' && payload.new?.status === 'cancelled') {
+            console.log('🚫 Ignoring cancelled reminder update to prevent reappearing');
+            return;
+          }
+          
+          // Debounce invalidations to prevent rapid-fire updates
+          setTimeout(() => {
+            queryClient.invalidateQueries({ queryKey: ['unified-reminders'] });
+          }, 500);
         }
       )
       .subscribe();

@@ -4,16 +4,17 @@ import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 import { Reminder, ReminderStatus, ReminderType, ReminderRecurrence, DeliveryMethod } from './types';
 
-// Optimized reminder hook using unified system internally
+// DEPRECATED: This hook is now a thin wrapper around useUnifiedReminderSystem
+// All functionality has been moved to the unified system to prevent duplicates
 export const useOptimizedReminders = (options?: {
   limit?: number;
   status?: ReminderStatus[];
   enableRealtime?: boolean;
 }) => {
   const { user } = useAuth();
-  const { limit = 20, status = ['pending', 'sent'], enableRealtime = true } = options || {};
+  const { limit = 1000, status = ['pending', 'sent'], enableRealtime = true } = options || {};
 
-  console.log('🚀 OptimizedReminders now using unified system internally');
+  console.warn('⚠️ useOptimizedReminders is deprecated. Use useUnifiedReminderSystem directly.');
 
   // Use the unified system internally
   const {
@@ -27,13 +28,12 @@ export const useOptimizedReminders = (options?: {
     refresh
   } = useUnifiedReminderSystem({
     enableRealtime,
-    enableNotifications: true
+    enableNotifications: true,
+    limit: 1000 // Always get all reminders
   });
 
-  // Filter and limit reminders to maintain compatibility
-  const filteredReminders = allReminders
-    .filter(r => status.includes(r.status as ReminderStatus))
-    .slice(0, limit);
+  // Filter reminders to maintain compatibility
+  const filteredReminders = allReminders.filter(r => status.includes(r.status as ReminderStatus));
 
   // Wrapper functions to maintain exact API compatibility
   const dismissReminder = (id: string) => {

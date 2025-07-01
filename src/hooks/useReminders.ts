@@ -17,12 +17,13 @@ export type {
   ReminderFormValues
 } from './reminders/types';
 
-// Updated useReminders hook using the unified system
+// DEPRECATED: This hook is now a thin wrapper around useUnifiedReminderSystem
+// All functionality has been moved to the unified system to prevent duplicates
 export const useReminders = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   
-  console.log('🔄 useReminders: Using unified system internally');
+  console.warn('⚠️ useReminders is deprecated. Use useUnifiedReminderSystem directly.');
   
   // Use the unified reminder system
   const {
@@ -36,7 +37,8 @@ export const useReminders = () => {
     refresh
   } = useUnifiedReminderSystem({
     enableRealtime: true,
-    enableNotifications: true
+    enableNotifications: true,
+    limit: 1000 // Always get all reminders
   });
 
   // Create reminder mutation

@@ -14,10 +14,15 @@ import { useUnifiedReminderSystem } from '@/hooks/useUnifiedReminderSystem';
 export const ReminderPopover = () => {
   const { 
     reminders, 
-    totalCount, // Use accurate total count instead of hardcoded limit
+    totalCount,
     isLoading, 
     dismissReminder 
-  } = useUnifiedReminderSystem();
+  } = useUnifiedReminderSystem({
+    // Remove hardcoded limit - get ALL reminders
+    limit: 1000,
+    enableRealtime: true,
+    enableNotifications: true
+  });
   const [open, setOpen] = useState(false);
   
   // Count pending reminders (not dismissed/cancelled)

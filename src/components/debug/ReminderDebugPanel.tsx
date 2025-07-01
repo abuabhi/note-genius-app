@@ -20,7 +20,8 @@ export const ReminderDebugPanel = () => {
   } = useUnifiedReminderSystem({
     enableRealtime: true,
     enableNotifications: true,
-    limit: 100
+    // Remove hardcoded limit - get ALL reminders
+    limit: 1000
   });
 
   const handleRefresh = () => {

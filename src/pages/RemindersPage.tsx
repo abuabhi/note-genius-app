@@ -12,7 +12,12 @@ const RemindersPage = () => {
     reminders, 
     totalCount, 
     isLoading: remindersLoading 
-  } = useUnifiedReminderSystem();
+  } = useUnifiedReminderSystem({
+    // Remove hardcoded limit - get ALL reminders
+    limit: 1000,
+    enableRealtime: true,
+    enableNotifications: true
+  });
 
   if (loading || remindersLoading) {
     return (

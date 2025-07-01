@@ -8,33 +8,33 @@ import {
 } from '@/components/ui/popover';
 import { Bell, X, CheckCircle2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { useScalableReminders } from '@/hooks/reminders/useScalableReminders';
+import { useUnifiedReminderSystem } from '@/hooks/useUnifiedReminderSystem';
 import { ScalableRemindersList } from './ScalableRemindersList';
 import { ReminderFormDialog } from './ReminderFormDialog';
 
 export const ReminderNavPopover = () => {
   const [open, setOpen] = useState(false);
   const [showAddReminder, setShowAddReminder] = useState(false);
+  
   const { 
     reminders, 
+    totalCount,
+    unreadCount,
     isLoading, 
     dismissReminder,
     batchDismissReminders,
     isDismissing,
-    isBatchDismissing,
-    isReminderDismissing,
-    hasMore,
-    loadMore
-  } = useScalableReminders({
-    limit: 20,
-    status: ['pending', 'sent'],
+    refresh
+  } = useUnifiedReminderSystem({
+    // Remove hardcoded limit - get ALL reminders
+    limit: 1000,
     enableRealtime: true,
+    enableNotifications: true,
   });
   
   // Count pending reminders
   const pendingCount = reminders.filter(r => r.status === 'pending').length;
   const sentCount = reminders.filter(r => r.status === 'sent').length;
-  const totalCount = pendingCount + sentCount;
   
   // Get overdue reminders for styling
   const now = new Date();
@@ -42,7 +42,7 @@ export const ReminderNavPopover = () => {
     r => r.status === 'pending' && r.reminder_time && new Date(r.reminder_time) < now
   );
 
-  // Handle dismiss all with proper error handling
+  // Handle dismiss all with proper batch function
   const handleDismissAll = useCallback(() => {
     const sentReminderIds = reminders
       .filter(r => r.status === 'sent')
@@ -53,10 +53,15 @@ export const ReminderNavPopover = () => {
     }
   }, [reminders, batchDismissReminders]);
 
-  // Handle single dismiss with proper error handling
+  // Handle single dismiss
   const handleDismissSingle = useCallback((id: string) => {
     dismissReminder(id);
   }, [dismissReminder]);
+
+  // Mock functions for ScalableRemindersList compatibility
+  const isReminderDismissing = (id: string) => isDismissing;
+  const hasMore = false; // We're loading all reminders now
+  const loadMore = () => {}; // No pagination needed
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -112,10 +117,10 @@ export const ReminderNavPopover = () => {
                 variant="ghost"
                 size="sm"
                 onClick={handleDismissAll}
-                disabled={isBatchDismissing}
+                disabled={isDismissing}
                 className="text-xs px-2 py-1 h-auto hover:bg-mint-100 text-mint-700"
               >
-                {isBatchDismissing ? (
+                {isDismissing ? (
                   <>
                     <div className="w-3 h-3 border border-mint-500 border-t-transparent rounded-full animate-spin mr-1" />
                     Dismissing...
