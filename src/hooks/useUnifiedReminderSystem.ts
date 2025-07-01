@@ -1,118 +1,128 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
+import { useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { Reminder, ReminderStatus, ReminderType, ReminderRecurrence, DeliveryMethod } from './reminders/types';
+import { Reminder } from './reminders/types';
 
-// Helper function to transform raw database data to our Reminder type
-const transformReminderData = (rawData: any[]): Reminder[] => {
-  return rawData.map(item => ({
-    ...item,
-    type: item.type as ReminderType,
-    status: item.status as ReminderStatus,
-    recurrence: item.recurrence as ReminderRecurrence,
-    delivery_methods: Array.isArray(item.delivery_methods) 
-      ? item.delivery_methods as DeliveryMethod[]
-      : ['in_app' as DeliveryMethod]
-  }));
-};
-
-export const useUnifiedReminderSystem = (options?: {
+export interface UnifiedReminderSystemOptions {
   enableRealtime?: boolean;
   enableNotifications?: boolean;
-}) => {
+  limit?: number;
+  status?: ('pending' | 'sent' | 'cancelled' | 'failed')[];
+}
+
+export const useUnifiedReminderSystem = (options: UnifiedReminderSystemOptions = {}) => {
+  const { 
+    enableRealtime = true, 
+    enableNotifications = true,
+    limit = 50,
+    status = ['pending', 'sent']
+  } = options;
+  
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { enableRealtime = true, enableNotifications = true } = options || {};
+  
+  console.log('🚀 UnifiedReminderSystem: Initializing with options:', options);
 
-  console.log('🚀 UnifiedReminderSystem: Single source of truth for all reminders');
-
-  // Main reminders query with optimized caching
-  const {
-    data: reminders = [],
-    isLoading,
-    error,
-    refetch
+  // Core reminders query - single source of truth
+  const { 
+    data: reminders = [], 
+    isLoading, 
+    error, 
+    refetch: refresh 
   } = useQuery({
-    queryKey: ['unified-reminders', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-
-      console.log('📡 UnifiedReminderSystem: Fetching reminders for user:', user.id);
-
+    queryKey: ['unified-reminders', user?.id, { limit, status }],
+    queryFn: async (): Promise<Reminder[]> => {
+      if (!user?.id) return [];
+      
+      console.log('📊 UnifiedReminderSystem: Fetching reminders for user:', user.id);
+      
       const { data, error } = await supabase
         .from('reminders')
-        .select(`
-          id,
-          user_id,
-          title,
-          description,
-          reminder_time,
-          due_date,
-          type,
-          status,
-          priority,
-          escalation_level,
-          delivery_methods,
-          recurrence,
-          created_at,
-          updated_at
-        `)
+        .select('*')
         .eq('user_id', user.id)
-        .in('status', ['pending', 'sent'])
-        .order('reminder_time', { ascending: true })
-        .limit(100); // Reasonable limit for UI performance
+        .in('status', status)
+        .order('reminder_time', { ascending: true, nullsLast: true })
+        .order('created_at', { ascending: false })
+        .limit(limit);
 
       if (error) {
-        console.error('❌ UnifiedReminderSystem: Error fetching reminders:', error);
+        console.error('❌ UnifiedReminderSystem: Query error:', error);
         throw error;
       }
 
       console.log('✅ UnifiedReminderSystem: Fetched reminders:', data?.length || 0);
-      return transformReminderData(data || []);
+      return data || [];
     },
-    enabled: !!user,
-    staleTime: 30 * 1000, // 30 seconds
-    gcTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    enabled: !!user?.id,
+    staleTime: 30000, // 30 seconds
+    refetchInterval: enableRealtime ? 60000 : false, // 1 minute if realtime enabled
   });
 
-  // Get accurate total count
-  const { data: totalCount = 0 } = useQuery({
-    queryKey: ['unified-reminders-count', user?.id],
-    queryFn: async () => {
-      if (!user) return 0;
-
-      const { count, error } = await supabase
+  // Dismiss single reminder mutation
+  const dismissMutation = useMutation({
+    mutationFn: async (id: string) => {
+      console.log('🗑️ UnifiedReminderSystem: Dismissing reminder:', id);
+      
+      const { error } = await supabase
         .from('reminders')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .in('status', ['pending', 'sent']);
+        .update({ 
+          status: 'cancelled',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .eq('user_id', user?.id || '');
 
-      if (error) {
-        console.error('❌ UnifiedReminderSystem: Error counting reminders:', error);
-        return 0;
-      }
-
-      console.log('📊 UnifiedReminderSystem: Total count:', count);
-      return count || 0;
+      if (error) throw error;
+      return id;
     },
-    enabled: !!user,
-    staleTime: 30 * 1000,
-    refetchOnWindowFocus: false,
+    onSuccess: () => {
+      console.log('✅ UnifiedReminderSystem: Reminder dismissed successfully');
+      queryClient.invalidateQueries({ queryKey: ['unified-reminders'] });
+    },
+    onError: (error) => {
+      console.error('❌ UnifiedReminderSystem: Failed to dismiss reminder:', error);
+      toast.error('Failed to dismiss reminder');
+    },
   });
 
-  // Set up realtime subscription
+  // Batch dismiss reminders mutation
+  const batchDismissMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      console.log('🗑️ UnifiedReminderSystem: Batch dismissing reminders:', ids.length);
+      
+      const { error } = await supabase
+        .from('reminders')
+        .update({ 
+          status: 'cancelled',
+          updated_at: new Date().toISOString()
+        })
+        .in('id', ids)
+        .eq('user_id', user?.id || '');
+
+      if (error) throw error;
+      return ids;
+    },
+    onSuccess: (ids) => {
+      console.log('✅ UnifiedReminderSystem: Batch dismissed reminders:', ids.length);
+      queryClient.invalidateQueries({ queryKey: ['unified-reminders'] });
+    },
+    onError: (error) => {
+      console.error('❌ UnifiedReminderSystem: Failed to batch dismiss reminders:', error);
+      toast.error('Failed to dismiss reminders');
+    },
+  });
+
+  // Realtime subscription for live updates
   useEffect(() => {
-    if (!user || !enableRealtime) return;
+    if (!enableRealtime || !user?.id) return;
 
     console.log('🔄 UnifiedReminderSystem: Setting up realtime subscription');
-
+    
     const channel = supabase
-      .channel('unified-reminders-realtime')
+      .channel(`reminders-${user.id}`)
       .on(
         'postgres_changes',
         {
@@ -122,156 +132,85 @@ export const useUnifiedReminderSystem = (options?: {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          console.log('🔔 UnifiedReminderSystem: Realtime update:', payload.eventType);
-          
-          // Smart cache invalidation
-          queryClient.invalidateQueries({
-            queryKey: ['unified-reminders', user.id],
-            exact: false,
-          });
-          queryClient.invalidateQueries({
-            queryKey: ['unified-reminders-count', user.id],
-            exact: false,
-          });
+          console.log('🔄 UnifiedReminderSystem: Realtime update:', payload.eventType);
+          queryClient.invalidateQueries({ queryKey: ['unified-reminders'] });
         }
       )
       .subscribe();
 
     return () => {
-      console.log('🔌 UnifiedReminderSystem: Cleaning up realtime subscription');
+      console.log('🔄 UnifiedReminderSystem: Cleaning up realtime subscription');
       supabase.removeChannel(channel);
     };
   }, [user?.id, enableRealtime, queryClient]);
 
-  // Unified dismiss mutation
-  const dismissMutation = useMutation({
-    mutationFn: async (reminderId: string) => {
-      console.log('🗑️ UnifiedReminderSystem: Dismissing reminder:', reminderId);
+  // Browser notifications for due reminders
+  useEffect(() => {
+    if (!enableNotifications || !reminders.length) return;
+
+    const now = new Date();
+    const dueReminders = reminders.filter(reminder => {
+      if (reminder.status !== 'pending') return false;
       
-      const { error } = await supabase
-        .from('reminders')
-        .update({ 
-          status: 'cancelled',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', reminderId)
-        .eq('user_id', user?.id || '');
-
-      if (error) throw error;
-      return reminderId;
-    },
-    onMutate: async (reminderId) => {
-      // Optimistic update
-      await queryClient.cancelQueries({ 
-        queryKey: ['unified-reminders', user?.id] 
-      });
-
-      const previousReminders = queryClient.getQueryData(['unified-reminders', user?.id]);
-
-      queryClient.setQueryData(
-        ['unified-reminders', user?.id],
-        (old: Reminder[] = []) => old.filter(r => r.id !== reminderId)
-      );
-
-      return { previousReminders };
-    },
-    onError: (err, reminderId, context) => {
-      if (context?.previousReminders) {
-        queryClient.setQueryData(
-          ['unified-reminders', user?.id],
-          context.previousReminders
-        );
-      }
-      console.error('❌ UnifiedReminderSystem: Failed to dismiss reminder:', err);
-      toast.error('Failed to dismiss reminder');
-    },
-    onSuccess: (reminderId) => {
-      console.log('✅ UnifiedReminderSystem: Reminder dismissed successfully:', reminderId);
-      toast.success('Reminder dismissed');
+      const reminderTime = reminder.reminder_time ? new Date(reminder.reminder_time) : null;
+      const dueDate = reminder.due_date ? new Date(reminder.due_date) : null;
       
-      // Refresh counts
-      queryClient.invalidateQueries({
-        queryKey: ['unified-reminders-count', user?.id],
-      });
-    },
-  });
-
-  // Batch dismiss mutation
-  const batchDismissMutation = useMutation({
-    mutationFn: async (reminderIds: string[]) => {
-      console.log('🗑️ UnifiedReminderSystem: Batch dismissing reminders:', reminderIds.length);
+      const isReminderDue = reminderTime && reminderTime <= now;
+      const isDueDatePassed = dueDate && dueDate <= now;
       
-      const { error } = await supabase
-        .from('reminders')
-        .update({ 
-          status: 'cancelled',
-          updated_at: new Date().toISOString()
-        })
-        .in('id', reminderIds)
-        .eq('user_id', user?.id || '');
-
-      if (error) throw error;
-      return reminderIds;
-    },
-    onMutate: async (reminderIds) => {
-      await queryClient.cancelQueries({ 
-        queryKey: ['unified-reminders', user?.id] 
-      });
-
-      const previousReminders = queryClient.getQueryData(['unified-reminders', user?.id]);
-
-      queryClient.setQueryData(
-        ['unified-reminders', user?.id],
-        (old: Reminder[] = []) => old.filter(r => !reminderIds.includes(r.id))
-      );
-
-      return { previousReminders };
-    },
-    onError: (err, reminderIds, context) => {
-      if (context?.previousReminders) {
-        queryClient.setQueryData(
-          ['unified-reminders', user?.id],
-          context.previousReminders
-        );
-      }
-      console.error('❌ UnifiedReminderSystem: Failed to batch dismiss reminders:', err);
-      toast.error('Failed to dismiss reminders');
-    },
-    onSuccess: (reminderIds) => {
-      console.log('✅ UnifiedReminderSystem: Batch dismissed reminders:', reminderIds.length);
-      toast.success(`Dismissed ${reminderIds.length} reminders`);
-      
-      queryClient.invalidateQueries({
-        queryKey: ['unified-reminders-count', user?.id],
-      });
-    },
-  });
-
-  const dismissReminder = useCallback((id: string) => {
-    dismissMutation.mutate(id);
-  }, [dismissMutation]);
-
-  const batchDismissReminders = useCallback((ids: string[]) => {
-    batchDismissMutation.mutate(ids);
-  }, [batchDismissMutation]);
-
-  const refresh = useCallback(() => {
-    queryClient.invalidateQueries({ 
-      queryKey: ['unified-reminders', user?.id] 
+      return isReminderDue || isDueDatePassed;
     });
-    queryClient.invalidateQueries({ 
-      queryKey: ['unified-reminders-count', user?.id] 
-    });
-  }, [queryClient, user?.id]);
+
+    if (dueReminders.length > 0 && Notification.permission === 'granted') {
+      dueReminders.slice(0, 3).forEach(reminder => { // Limit to 3 notifications
+        new Notification(reminder.title, {
+          body: reminder.description || 'You have a reminder due',
+          icon: '/favicon.ico',
+          tag: `reminder-${reminder.id}`,
+        });
+      });
+    }
+  }, [reminders, enableNotifications]);
+
+  // Request notification permission
+  useEffect(() => {
+    if (enableNotifications && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, [enableNotifications]);
+
+  // Calculate counts
+  const totalCount = reminders.length;
+  const unreadCount = reminders.filter(r => r.status === 'sent').length;
+
+  // Dismiss all method (for backward compatibility)
+  const dismissAll = useCallback(async () => {
+    const sentReminderIds = reminders
+      .filter(r => r.status === 'sent')
+      .map(r => r.id);
+    
+    if (sentReminderIds.length > 0) {
+      console.log('🗑️ UnifiedReminderSystem: Dismissing all sent reminders:', sentReminderIds.length);
+      batchDismissMutation.mutate(sentReminderIds);
+    }
+  }, [reminders, batchDismissMutation]);
+
+  console.log('📊 UnifiedReminderSystem: Current state:', {
+    totalCount,
+    unreadCount,
+    isLoading,
+    isDismissing: dismissMutation.isPending || batchDismissMutation.isPending
+  });
 
   return {
     reminders,
     totalCount,
-    unreadCount: reminders.filter(r => r.status === 'sent').length,
+    unreadCount,
     isLoading,
-    error,
-    dismissReminder,
-    batchDismissReminders,
+    error: error as Error | null,
+    dismissReminder: dismissMutation.mutate,
+    batchDismissReminders: batchDismissMutation.mutate,
+    dismissAll, // Added this method
     isDismissing: dismissMutation.isPending || batchDismissMutation.isPending,
     refresh,
   };
