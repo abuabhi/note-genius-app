@@ -22,6 +22,8 @@ export const useReminders = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   
+  console.log('🔄 useReminders: Using unified system internally');
+  
   // Use the unified reminder system
   const {
     reminders,
@@ -29,8 +31,9 @@ export const useReminders = () => {
     isLoading,
     error,
     dismissReminder: unifiedDismiss,
-    batchDismissReminders,
-    isDismissing
+    batchDismissReminders: unifiedBatchDismiss,
+    isDismissing,
+    refresh
   } = useUnifiedReminderSystem({
     enableRealtime: true,
     enableNotifications: true
@@ -39,7 +42,7 @@ export const useReminders = () => {
   // Create reminder mutation
   const createReminderMutation = useMutation({
     mutationFn: async (reminderData: any) => {
-      console.log('📝 Creating reminder:', reminderData);
+      console.log('📝 useReminders: Creating reminder via unified system:', reminderData);
       
       const { error, data } = await supabase
         .from('reminders')
@@ -58,15 +61,10 @@ export const useReminders = () => {
     },
     onSuccess: () => {
       toast.success('Reminder created successfully');
-      queryClient.invalidateQueries({ 
-        queryKey: ['unified-reminders', user?.id] 
-      });
-      queryClient.invalidateQueries({ 
-        queryKey: ['unified-reminders-count', user?.id] 
-      });
+      refresh();
     },
     onError: (error) => {
-      console.error('❌ Failed to create reminder:', error);
+      console.error('❌ useReminders: Failed to create reminder:', error);
       toast.error('Failed to create reminder');
     },
   });
@@ -74,7 +72,7 @@ export const useReminders = () => {
   // Cancel reminder mutation
   const cancelReminderMutation = useMutation({
     mutationFn: async (reminderId: string) => {
-      console.log('❌ Cancelling reminder:', reminderId);
+      console.log('❌ useReminders: Cancelling reminder via unified system:', reminderId);
       
       const { error } = await supabase
         .from('reminders')
@@ -90,15 +88,10 @@ export const useReminders = () => {
     },
     onSuccess: () => {
       toast.success('Reminder cancelled');
-      queryClient.invalidateQueries({ 
-        queryKey: ['unified-reminders', user?.id] 
-      });
-      queryClient.invalidateQueries({ 
-        queryKey: ['unified-reminders-count', user?.id] 
-      });
+      refresh();
     },
     onError: (error) => {
-      console.error('❌ Failed to cancel reminder:', error);
+      console.error('❌ useReminders: Failed to cancel reminder:', error);
       toast.error('Failed to cancel reminder');
     },
   });
@@ -106,7 +99,7 @@ export const useReminders = () => {
   // Backward-compatible dismiss mutation
   const dismissReminder = useMutation({
     mutationFn: async (id: string) => {
-      console.log('🗑️ Using unified dismiss for:', id);
+      console.log('🗑️ useReminders: Using unified dismiss for:', id);
       unifiedDismiss(id);
       return true;
     },
@@ -126,7 +119,7 @@ export const useReminders = () => {
 
   return {
     reminders,
-    totalCount, // Now accurate, not hardcoded to 20
+    totalCount,
     isLoading,
     error,
     dismissReminder,
@@ -136,15 +129,8 @@ export const useReminders = () => {
     formatReminderTime,
     
     // Additional methods for full compatibility
-    refresh: () => {
-      queryClient.invalidateQueries({ 
-        queryKey: ['unified-reminders', user?.id] 
-      });
-      queryClient.invalidateQueries({ 
-        queryKey: ['unified-reminders-count', user?.id] 
-      });
-    },
-    batchDismiss: batchDismissReminders,
+    refresh,
+    batchDismiss: unifiedBatchDismiss,
   };
 };
 

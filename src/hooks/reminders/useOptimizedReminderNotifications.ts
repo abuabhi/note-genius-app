@@ -1,27 +1,30 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { useOptimizedReminders } from './useOptimizedReminders';
+import { useUnifiedReminderSystem } from '../useUnifiedReminderSystem';
 import { useAuth } from '@/contexts/auth';
 import { Reminder } from './types';
 
-// Smart notification system with exponential backoff and minimal polling
+// Optimized notification system using unified system internally
 export const useOptimizedReminderNotifications = () => {
   const { user } = useAuth();
-  const [unreadCount, setUnreadCount] = useState(0);
   const [hasNotified, setHasNotified] = useState(new Set<string>());
 
-  // Use optimized reminders with realtime updates
+  console.log('🔔 OptimizedReminderNotifications now using unified system internally');
+
+  // Use unified system internally
   const { 
     reminders, 
     isLoading, 
-    dismissReminder, 
-    batchDismissReminders,
+    dismissReminder: unifiedDismiss, 
+    batchDismissReminders: unifiedBatchDismiss,
     isDismissing 
-  } = useOptimizedReminders({
-    limit: 50, // Fetch more for notification processing
-    status: ['pending', 'sent'],
+  } = useUnifiedReminderSystem({
     enableRealtime: true,
+    enableNotifications: true,
   });
+
+  // Calculate unread count (sent reminders)
+  const unreadCount = reminders.filter(r => r.status === 'sent').length;
 
   // Process due reminders for notifications
   const processDueReminders = useCallback(() => {
@@ -36,7 +39,7 @@ export const useOptimizedReminderNotifications = () => {
       return reminderTimeDue || dueDateDue;
     });
 
-    console.log('⏰ Processing due reminders:', dueReminders.length);
+    console.log('⏰ Processing due reminders via unified system:', dueReminders.length);
 
     // Show notifications for new due reminders
     dueReminders.forEach(reminder => {
@@ -53,10 +56,6 @@ export const useOptimizedReminderNotifications = () => {
         setHasNotified(prev => new Set(prev).add(reminder.id));
       }
     });
-
-    // Update unread count
-    const sentReminders = reminders.filter(r => r.status === 'sent');
-    setUnreadCount(sentReminders.length);
   }, [reminders, hasNotified]);
 
   // Process due reminders when reminders change
@@ -64,19 +63,17 @@ export const useOptimizedReminderNotifications = () => {
     processDueReminders();
   }, [processDueReminders]);
 
-  // Smart polling with exponential backoff - only when not using realtime
+  // Request notification permission
   useEffect(() => {
     if (!user) return;
 
-    // Request notification permission
     if (Notification.permission === 'default') {
       Notification.requestPermission().then(permission => {
         console.log('🔔 Notification permission:', permission);
       });
     }
 
-    // No additional polling needed - realtime handles updates
-    console.log('🚀 Optimized notification system initialized');
+    console.log('🚀 Optimized notification system initialized with unified backend');
   }, [user]);
 
   const dismissAll = useCallback(async () => {
@@ -85,21 +82,21 @@ export const useOptimizedReminderNotifications = () => {
       .map(r => r.id);
     
     if (sentReminderIds.length > 0) {
-      batchDismissReminders(sentReminderIds);
-      setUnreadCount(0);
+      console.log('🗑️ OptimizedNotifications dismissing all via unified system:', sentReminderIds.length);
+      unifiedBatchDismiss(sentReminderIds);
       setHasNotified(new Set());
     }
-  }, [reminders, batchDismissReminders]);
+  }, [reminders, unifiedBatchDismiss]);
 
   const dismissSingle = useCallback(async (id: string) => {
-    dismissReminder(id);
-    setUnreadCount(prev => Math.max(0, prev - 1));
+    console.log('🗑️ OptimizedNotifications dismissing single via unified system:', id);
+    unifiedDismiss(id);
     setHasNotified(prev => {
       const newSet = new Set(prev);
       newSet.delete(id);
       return newSet;
     });
-  }, [dismissReminder]);
+  }, [unifiedDismiss]);
 
   return {
     reminders,
@@ -108,6 +105,6 @@ export const useOptimizedReminderNotifications = () => {
     isDismissing,
     dismissReminder: dismissSingle,
     dismissAll,
-    refresh: () => {}, // No manual refresh needed with realtime
+    refresh: () => {}, // No manual refresh needed with unified system
   };
 };

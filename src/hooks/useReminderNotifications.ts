@@ -3,32 +3,44 @@ import { useUnifiedReminderSystem } from './useUnifiedReminderSystem';
 
 // Backward-compatible wrapper that uses the unified notification system
 export const useReminderNotifications = () => {
+  console.log('🔄 useReminderNotifications: Using unified system internally');
+  
   const {
     reminders,
     unreadCount,
     totalCount,
     isLoading,
-    dismissReminder,
-    dismissAll,
+    dismissReminder: unifiedDismiss,
+    batchDismissReminders: unifiedBatchDismiss,
     refresh
   } = useUnifiedReminderSystem({
     enableRealtime: true,
     enableNotifications: true
   });
 
+  const dismissAll = async () => {
+    const sentReminderIds = reminders
+      .filter(r => r.status === 'sent')
+      .map(r => r.id);
+    
+    if (sentReminderIds.length > 0) {
+      console.log('🗑️ useReminderNotifications: Dismissing all via unified system:', sentReminderIds.length);
+      unifiedBatchDismiss(sentReminderIds);
+    }
+    return true; // Backward compatibility
+  };
+
   return {
     pendingReminders: reminders, // Backward compatibility
     unreadCount,
-    totalCount, // Now accurate count
+    totalCount,
     loading: isLoading,
     dismissReminder: async (id: string) => {
-      dismissReminder(id);
+      console.log('🗑️ useReminderNotifications: Dismissing via unified system:', id);
+      unifiedDismiss(id);
       return true; // Backward compatibility
     },
-    dismissAll: async () => {
-      await dismissAll();
-      return true; // Backward compatibility
-    },
+    dismissAll,
     refresh,
     processReminders: () => {}, // No-op for backward compatibility
   };
