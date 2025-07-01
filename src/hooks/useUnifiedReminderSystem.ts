@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { Reminder } from './reminders/types';
+import { Reminder, ReminderType, ReminderStatus } from './reminders/types';
 
 export interface UnifiedReminderSystemOptions {
   enableRealtime?: boolean;
@@ -44,7 +44,7 @@ export const useUnifiedReminderSystem = (options: UnifiedReminderSystemOptions =
         .select('*')
         .eq('user_id', user.id)
         .in('status', status)
-        .order('reminder_time', { ascending: true, nullsLast: true })
+        .order('reminder_time', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false })
         .limit(limit);
 
@@ -54,7 +54,18 @@ export const useUnifiedReminderSystem = (options: UnifiedReminderSystemOptions =
       }
 
       console.log('✅ UnifiedReminderSystem: Fetched reminders:', data?.length || 0);
-      return data || [];
+      
+      // Transform database response to match Reminder type
+      const transformedData = (data || []).map(item => ({
+        ...item,
+        type: item.type as ReminderType,
+        status: item.status as ReminderStatus,
+        delivery_methods: Array.isArray(item.delivery_methods) 
+          ? item.delivery_methods as string[]
+          : (item.delivery_methods as any)?.length ? item.delivery_methods as string[] : ['in_app']
+      })) as Reminder[];
+
+      return transformedData;
     },
     enabled: !!user?.id,
     staleTime: 30000, // 30 seconds
@@ -210,7 +221,7 @@ export const useUnifiedReminderSystem = (options: UnifiedReminderSystemOptions =
     error: error as Error | null,
     dismissReminder: dismissMutation.mutate,
     batchDismissReminders: batchDismissMutation.mutate,
-    dismissAll, // Added this method
+    dismissAll,
     isDismissing: dismissMutation.isPending || batchDismissMutation.isPending,
     refresh,
   };
