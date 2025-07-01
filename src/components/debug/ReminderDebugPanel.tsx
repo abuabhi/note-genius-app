@@ -5,9 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useUnifiedReminderSystem } from '@/hooks/useUnifiedReminderSystem';
 
 export const ReminderDebugPanel = () => {
   const { user } = useAuth();
+  const { 
+    reminders, 
+    totalCount, 
+    unreadCount, 
+    refresh,
+    dismissAll 
+  } = useUnifiedReminderSystem();
   const [debugInfo, setDebugInfo] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
@@ -26,6 +34,9 @@ export const ReminderDebugPanel = () => {
       if (error) throw error;
       setDebugInfo(data);
       toast.success('Debug info loaded');
+      
+      // Also refresh the unified system
+      refresh();
     } catch (error) {
       console.error('Debug error:', error);
       toast.error('Failed to load debug info');
@@ -44,7 +55,8 @@ export const ReminderDebugPanel = () => {
       toast.success(`Processed ${data.processed || 0} reminders`);
       console.log('Process result:', data);
       
-      // Refresh debug info
+      // Refresh unified system after processing
+      await refresh();
       await fetchDebugInfo();
     } catch (error) {
       console.error('Process error:', error);
@@ -84,6 +96,22 @@ export const ReminderDebugPanel = () => {
     }
   };
 
+  const clearAllReminders = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      await dismissAll();
+      toast.success('All reminders dismissed');
+      await refresh();
+    } catch (error) {
+      console.error('Clear all error:', error);
+      toast.error('Failed to clear all reminders');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!user) {
     return (
       <Card>
@@ -97,9 +125,21 @@ export const ReminderDebugPanel = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>🔧 Reminder Debug Panel</CardTitle>
+        <CardTitle>🔧 Unified Reminder Debug Panel</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Current System Status */}
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <h4 className="font-semibold mb-2">Current System Status:</h4>
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div>Total Count: <strong>{totalCount}</strong></div>
+            <div>Displayed: <strong>{reminders.length}</strong></div>
+            <div>Unread: <strong>{unreadCount}</strong></div>
+            <div>Pending: <strong>{reminders.filter(r => r.status === 'pending').length}</strong></div>
+            <div>Sent: <strong>{reminders.filter(r => r.status === 'sent').length}</strong></div>
+          </div>
+        </div>
+        
         <div className="flex flex-wrap gap-2">
           <Button onClick={fetchDebugInfo} disabled={loading}>
             Load Debug Info
@@ -109,6 +149,12 @@ export const ReminderDebugPanel = () => {
           </Button>
           <Button onClick={testEmailNotification} disabled={loading} variant="outline">
             Send Test Email
+          </Button>
+          <Button onClick={clearAllReminders} disabled={loading} variant="destructive">
+            Clear All Reminders
+          </Button>
+          <Button onClick={refresh} disabled={loading} variant="secondary">
+            Refresh System
           </Button>
         </div>
         

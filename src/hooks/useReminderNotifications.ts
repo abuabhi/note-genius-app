@@ -1,20 +1,25 @@
 
-import { useOptimizedReminderNotifications } from './reminders/useOptimizedReminderNotifications';
+import { useUnifiedReminderSystem } from './useUnifiedReminderSystem';
 
-// Backward-compatible wrapper that uses the optimized notification system
+// Backward-compatible wrapper that uses the unified notification system
 export const useReminderNotifications = () => {
   const {
     reminders,
     unreadCount,
+    totalCount,
     isLoading,
     dismissReminder,
     dismissAll,
     refresh
-  } = useOptimizedReminderNotifications();
+  } = useUnifiedReminderSystem({
+    enableRealtime: true,
+    enableNotifications: true
+  });
 
   return {
     pendingReminders: reminders, // Backward compatibility
     unreadCount,
+    totalCount, // Now accurate count
     loading: isLoading,
     dismissReminder: async (id: string) => {
       dismissReminder(id);

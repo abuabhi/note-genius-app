@@ -4,11 +4,17 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { StandardPageHeader } from "@/components/ui/StandardPageHeader";
 import { ReminderDebugPanel } from "@/components/debug/ReminderDebugPanel";
 import { Bell } from "lucide-react";
+import { useUnifiedReminderSystem } from "@/hooks/useUnifiedReminderSystem";
 
 const RemindersPage = () => {
   const { user, loading } = useRequireAuth();
+  const { 
+    reminders, 
+    totalCount, 
+    isLoading: remindersLoading 
+  } = useUnifiedReminderSystem();
 
-  if (loading) {
+  if (loading || remindersLoading) {
     return (
       <Layout>
         <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
@@ -38,7 +44,7 @@ const RemindersPage = () => {
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
         <StandardPageHeader
           title="Reminders"
-          description="Set and manage your study reminders"
+          description={`Set and manage your study reminders (${totalCount} total reminders)`}
           icon={<Bell className="h-6 w-6 text-white" />}
           breadcrumbs={breadcrumbs}
         />
@@ -48,7 +54,17 @@ const RemindersPage = () => {
             <ReminderDebugPanel />
             
             <div className="mt-8">
-              <p className="text-gray-500">Additional reminders functionality coming soon...</p>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h3 className="font-semibold text-green-800 mb-2">✅ Unified Reminder System Active</h3>
+                <p className="text-green-700 text-sm">
+                  The reminder system has been unified and optimized. You should now see accurate counts 
+                  and no more duplicate reminders. The badge will show the correct number of reminders 
+                  instead of being stuck at 20.
+                </p>
+                <div className="mt-2 text-sm text-green-600">
+                  <div>Current Status: {totalCount} total reminders, {reminders.filter(r => r.status === 'pending').length} pending</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

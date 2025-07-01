@@ -1,6 +1,5 @@
 
-import { useOptimizedReminders } from './reminders/useOptimizedReminders';
-import { useOptimizedReminderNotifications } from './reminders/useOptimizedReminderNotifications';
+import { useUnifiedReminderSystem } from './useUnifiedReminderSystem';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
@@ -18,26 +17,26 @@ export type {
   ReminderFormValues
 } from './reminders/types';
 
-// Backward-compatible wrapper that uses the optimized system
+// Updated useReminders hook using the unified system
 export const useReminders = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   
-  // Use the optimized reminders system
+  // Use the unified reminder system
   const {
     reminders,
+    totalCount,
     isLoading,
     error,
-    dismissReminder: optimizedDismiss,
+    dismissReminder: unifiedDismiss,
     batchDismissReminders,
     isDismissing
-  } = useOptimizedReminders({
-    limit: 50,
-    status: ['pending', 'sent'],
+  } = useUnifiedReminderSystem({
     enableRealtime: true,
+    enableNotifications: true
   });
 
-  // Create reminder mutation for backward compatibility
+  // Create reminder mutation
   const createReminderMutation = useMutation({
     mutationFn: async (reminderData: any) => {
       console.log('📝 Creating reminder:', reminderData);
@@ -60,7 +59,10 @@ export const useReminders = () => {
     onSuccess: () => {
       toast.success('Reminder created successfully');
       queryClient.invalidateQueries({ 
-        queryKey: ['optimized-reminders', user?.id] 
+        queryKey: ['unified-reminders', user?.id] 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['unified-reminders-count', user?.id] 
       });
     },
     onError: (error) => {
@@ -69,7 +71,7 @@ export const useReminders = () => {
     },
   });
 
-  // Cancel reminder mutation for backward compatibility
+  // Cancel reminder mutation
   const cancelReminderMutation = useMutation({
     mutationFn: async (reminderId: string) => {
       console.log('❌ Cancelling reminder:', reminderId);
@@ -89,7 +91,10 @@ export const useReminders = () => {
     onSuccess: () => {
       toast.success('Reminder cancelled');
       queryClient.invalidateQueries({ 
-        queryKey: ['optimized-reminders', user?.id] 
+        queryKey: ['unified-reminders', user?.id] 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['unified-reminders-count', user?.id] 
       });
     },
     onError: (error) => {
@@ -101,12 +106,12 @@ export const useReminders = () => {
   // Backward-compatible dismiss mutation
   const dismissReminder = useMutation({
     mutationFn: async (id: string) => {
-      console.log('🗑️ Using backward-compatible dismiss for:', id);
-      optimizedDismiss(id);
+      console.log('🗑️ Using unified dismiss for:', id);
+      unifiedDismiss(id);
       return true;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reminders'] });
+      // Invalidation is handled by the unified system
     },
   });
 
@@ -121,6 +126,7 @@ export const useReminders = () => {
 
   return {
     reminders,
+    totalCount, // Now accurate, not hardcoded to 20
     isLoading,
     error,
     dismissReminder,
@@ -128,15 +134,19 @@ export const useReminders = () => {
     createReminder: createReminderMutation,
     cancelReminder: cancelReminderMutation,
     formatReminderTime,
+    
     // Additional methods for full compatibility
     refresh: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ['optimized-reminders', user?.id] 
+        queryKey: ['unified-reminders', user?.id] 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['unified-reminders-count', user?.id] 
       });
     },
     batchDismiss: batchDismissReminders,
   };
 };
 
-// Export the optimized hooks as well
-export { useOptimizedReminders, useOptimizedReminderNotifications };
+// Export the unified hook as well
+export { useUnifiedReminderSystem };
