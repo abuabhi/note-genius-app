@@ -36,7 +36,7 @@ export const ReminderDebugPanel = () => {
       toast.success('Debug info loaded');
       
       // Also refresh the unified system
-      refresh();
+      await refresh();
     } catch (error) {
       console.error('Debug error:', error);
       toast.error('Failed to load debug info');
@@ -112,6 +112,19 @@ export const ReminderDebugPanel = () => {
     }
   };
 
+  const handleRefreshClick = async () => {
+    setLoading(true);
+    try {
+      await refresh();
+      toast.success('System refreshed');
+    } catch (error) {
+      console.error('Refresh error:', error);
+      toast.error('Failed to refresh system');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!user) {
     return (
       <Card>
@@ -153,7 +166,7 @@ export const ReminderDebugPanel = () => {
           <Button onClick={clearAllReminders} disabled={loading} variant="destructive">
             Clear All Reminders
           </Button>
-          <Button onClick={refresh} disabled={loading} variant="secondary">
+          <Button onClick={handleRefreshClick} disabled={loading} variant="secondary">
             Refresh System
           </Button>
         </div>
