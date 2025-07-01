@@ -23,6 +23,10 @@ export const ReminderDebugPanel = () => {
     limit: 100
   });
 
+  const handleRefresh = () => {
+    refresh();
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -44,7 +48,7 @@ export const ReminderDebugPanel = () => {
         </CardHeader>
         <CardContent>
           <p className="text-red-500">Error: {error.message}</p>
-          <Button onClick={refresh} className="mt-2">
+          <Button onClick={handleRefresh} className="mt-2">
             Retry
           </Button>
         </CardContent>
@@ -65,7 +69,7 @@ export const ReminderDebugPanel = () => {
           <div className="flex gap-4 items-center">
             <Badge variant="outline">Total: {totalCount}</Badge>
             <Badge variant="destructive">Unread: {unreadCount}</Badge>
-            <Button onClick={refresh} size="sm" variant="outline">
+            <Button onClick={handleRefresh} size="sm" variant="outline">
               Refresh
             </Button>
             <Button 
