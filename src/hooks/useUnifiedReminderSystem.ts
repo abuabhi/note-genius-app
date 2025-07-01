@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 import { useCallback, useEffect, useMemo } from 'react';
-import { Reminder, ReminderType, DeliveryMethod } from './reminders/types';
+import { Reminder, ReminderType, DeliveryMethod, ReminderStatus } from './reminders/types';
 
 interface UnifiedReminderSystemOptions {
   enableRealtime?: boolean;
@@ -55,8 +55,9 @@ export const useUnifiedReminderSystem = (options: UnifiedReminderSystemOptions =
       const transformedReminders: Reminder[] = (data || []).map(item => ({
         ...item,
         type: item.type as ReminderType,
+        status: item.status as ReminderStatus,
         delivery_methods: Array.isArray(item.delivery_methods) 
-          ? (item.delivery_methods as unknown as DeliveryMethod[])
+          ? (item.delivery_methods as string[]).map(method => method as DeliveryMethod)
           : ['in_app' as DeliveryMethod]
       }));
 
@@ -195,7 +196,16 @@ export const useUnifiedReminderSystem = (options: UnifiedReminderSystemOptions =
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          console.log('🔄 Realtime reminder change detected:', payload.eventType, payload.new?.id);
+          console.log('🔄 Realtime reminder change detected:', payload.eventType);
+          
+          // Safely access the payload data
+          const reminderData = payload.new && typeof payload.new === 'object' && 'id' in payload.new 
+            ? payload.new as { id: string }
+            : null;
+          
+          if (reminderData) {
+            console.log('🔄 Reminder ID:', reminderData.id);
+          }
           
           // Debounced invalidation to prevent too many refetches
           setTimeout(() => {
