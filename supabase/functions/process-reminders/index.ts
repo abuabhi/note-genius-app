@@ -20,20 +20,23 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
     const supabase = createClient(supabaseUrl, supabaseKey)
     
-    // Get current time
+    // Get current time in different formats
     const now = new Date()
+    const utcNow = now.toISOString()
     const today = now.toISOString().split('T')[0] // Today's date in YYYY-MM-DD format
     
-    console.log(`Processing reminders at ${now.toISOString()}`)
+    console.log(`🔄 Processing reminders at ${utcNow}`)
+    console.log(`📅 Today's date: ${today}`)
     
     // Find reminders that are due based on reminder_time and still pending
     const { data: timeBasedReminders, error: fetchTimeError } = await supabase
       .from('reminders')
       .select('*')
       .eq('status', 'pending')
-      .lte('reminder_time', now.toISOString())
+      .lte('reminder_time', utcNow)
     
     if (fetchTimeError) {
+      console.error('Error fetching time-based reminders:', fetchTimeError)
       throw fetchTimeError
     }
     
@@ -46,18 +49,19 @@ serve(async (req) => {
       .eq('due_date', today)
     
     if (fetchDueDateError) {
+      console.error('Error fetching due date todos:', fetchDueDateError)
       throw fetchDueDateError
     }
     
-    // Combine and deduplicate reminders (in case a todo has both reminder_time and due_date on same day)
+    // Combine and deduplicate reminders
     const allDueReminders = [...(timeBasedReminders || []), ...(dueDateTodos || [])]
     const uniqueReminders = allDueReminders.filter((reminder, index, self) => 
       index === self.findIndex(r => r.id === reminder.id)
     )
     
-    console.log(`Found ${uniqueReminders.length} due reminders to process`)
-    console.log(`Time-based reminders: ${timeBasedReminders?.length || 0}`)
-    console.log(`Due date todos: ${dueDateTodos?.length || 0}`)
+    console.log(`📋 Found ${uniqueReminders.length} due reminders to process`)
+    console.log(`⏰ Time-based reminders: ${timeBasedReminders?.length || 0}`)
+    console.log(`📅 Due date todos: ${dueDateTodos?.length || 0}`)
     
     if (uniqueReminders.length === 0) {
       return new Response(
@@ -72,6 +76,8 @@ serve(async (req) => {
     // Process each reminder
     for (const reminder of uniqueReminders) {
       try {
+        console.log(`📧 Processing reminder: ${reminder.id} - "${reminder.title}"`);
+        
         // Determine notification title and body based on reminder type and trigger
         let notificationTitle = reminder.title
         let notificationBody = reminder.description || reminder.title
@@ -82,26 +88,56 @@ serve(async (req) => {
           notificationBody = `Your todo "${reminder.title}" is due today!`
         }
         
+        // Add time context for study reminders
+        if (reminder.type === 'study_event' || reminder.type === 'study') {
+          const reminderTime = new Date(reminder.reminder_time)
+          const timeStr = reminderTime.toLocaleTimeString('en-AU', { 
+            timeZone: 'Australia/Sydney',
+            hour: '2-digit', 
+            minute: '2-digit' 
+          })
+          notificationTitle = `Study Reminder - ${timeStr} AEST`
+          notificationBody = `${reminder.title}\n\n${reminder.description || 'Time to focus on your studies!'}`
+        }
+        
+        console.log(`📬 Notification title: "${notificationTitle}"`);
+        console.log(`📝 Delivery methods: ${JSON.stringify(reminder.delivery_methods)}`);
+        
         // Send notification for each delivery method
         for (const method of reminder.delivery_methods) {
+          console.log(`📤 Sending ${method} notification...`);
+          
           if (method === 'in_app') {
             // In-app notifications just need status update
+            console.log('✅ In-app notification processed (status update only)');
             continue
           } else if (method === 'email' || method === 'whatsapp') {
-            // Call the send-notification function
-            const notificationResponse = await supabase.functions.invoke('send-notification', {
-              body: { 
-                userId: reminder.user_id,
-                type: method,
-                subject: notificationTitle,
-                body: notificationBody
+            try {
+              // Call the send-notification function
+              const notificationResponse = await supabase.functions.invoke('send-notification', {
+                body: { 
+                  userId: reminder.user_id,
+                  type: method,
+                  subject: notificationTitle,
+                  body: notificationBody,
+                  reminderData: {
+                    type: reminder.type,
+                    due_date: reminder.due_date,
+                    priority: reminder.priority,
+                    escalation_level: reminder.escalation_level
+                  }
+                }
+              })
+              
+              if (notificationResponse.error) {
+                console.error(`❌ Failed to send ${method} notification for reminder ${reminder.id}:`, notificationResponse.error)
+                throw new Error(`${method} notification failed: ${notificationResponse.error.message}`)
+              } else {
+                console.log(`✅ Successfully sent ${method} notification for reminder ${reminder.id}`)
               }
-            })
-            
-            if (notificationResponse.error) {
-              console.error(`Failed to send ${method} notification for reminder ${reminder.id}:`, notificationResponse.error)
-            } else {
-              console.log(`Successfully sent ${method} notification for reminder ${reminder.id}`)
+            } catch (notifyError) {
+              console.error(`❌ Error sending ${method} notification:`, notifyError)
+              // Don't throw here, continue with other delivery methods
             }
           }
         }
@@ -109,16 +145,25 @@ serve(async (req) => {
         // Update reminder status to 'sent'
         const { error: updateError } = await supabase
           .from('reminders')
-          .update({ status: 'sent' })
+          .update({ 
+            status: 'sent',
+            updated_at: utcNow
+          })
           .eq('id', reminder.id)
         
         if (updateError) {
+          console.error('❌ Error updating reminder status:', updateError)
           throw updateError
         }
+        
+        console.log(`✅ Updated reminder ${reminder.id} status to 'sent'`);
         
         // Handle recurrence - create next reminder if needed (only for time-based reminders, not due date todos)
         if (reminder.recurrence !== 'none' && reminder.recurrence && reminder.reminder_time) {
           const nextReminderTime = calculateNextReminderTime(reminder.reminder_time, reminder.recurrence)
+          
+          console.log(`🔄 Creating recurring reminder for ${reminder.recurrence} schedule`);
+          console.log(`⏰ Next reminder time: ${nextReminderTime.toISOString()}`);
           
           // Create next recurring reminder
           const { error: recurrenceError } = await supabase
@@ -134,24 +179,28 @@ serve(async (req) => {
               event_id: reminder.event_id,
               goal_id: reminder.goal_id,
               user_id: reminder.user_id,
-              // Don't copy due_date for recurring reminders as it's a different concept
               priority: reminder.priority,
               auto_tags: reminder.auto_tags,
+              escalation_level: reminder.escalation_level,
+              grace_period_days: reminder.grace_period_days
             })
           
           if (recurrenceError) {
-            console.error('Error creating recurring reminder:', recurrenceError)
+            console.error('❌ Error creating recurring reminder:', recurrenceError)
           } else {
-            console.log(`Created new recurring reminder for ${reminder.id}`)
+            console.log(`✅ Created new recurring reminder for ${reminder.id}`)
           }
         }
         
         processedReminders.push(reminder.id)
       } catch (error) {
-        console.error(`Error processing reminder ${reminder.id}:`, error)
+        console.error(`❌ Error processing reminder ${reminder.id}:`, error)
         failedReminders.push({ id: reminder.id, error: error.message })
       }
     }
+    
+    const successMessage = `✅ Reminder processing complete: ${processedReminders.length} processed, ${failedReminders.length} failed`
+    console.log(successMessage)
     
     return new Response(
       JSON.stringify({ 
@@ -160,7 +209,8 @@ serve(async (req) => {
         failed: failedReminders.length,
         failedIds: failedReminders,
         timeBasedCount: timeBasedReminders?.length || 0,
-        dueDateCount: dueDateTodos?.length || 0
+        dueDateCount: dueDateTodos?.length || 0,
+        processedIds: processedReminders
       }),
       { 
         status: 200, 
@@ -168,7 +218,7 @@ serve(async (req) => {
       }
     )
   } catch (error) {
-    console.error('Error in process-reminders function:', error)
+    console.error('💥 Critical error in process-reminders function:', error)
     
     return new Response(
       JSON.stringify({ error: error.message || 'Internal server error' }),

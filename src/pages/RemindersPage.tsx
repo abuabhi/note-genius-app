@@ -2,6 +2,7 @@
 import Layout from "@/components/layout/Layout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { StandardPageHeader } from "@/components/ui/StandardPageHeader";
+import { ReminderDebugPanel } from "@/components/debug/ReminderDebugPanel";
 import { Bell } from "lucide-react";
 
 const RemindersPage = () => {
@@ -44,8 +45,10 @@ const RemindersPage = () => {
         
         <div className="container mx-auto px-6 py-8">
           <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-mint-100 p-6 shadow-lg">
+            <ReminderDebugPanel />
+            
             <div className="mt-8">
-              <p className="text-gray-500">Reminders functionality coming soon...</p>
+              <p className="text-gray-500">Additional reminders functionality coming soon...</p>
             </div>
           </div>
         </div>
