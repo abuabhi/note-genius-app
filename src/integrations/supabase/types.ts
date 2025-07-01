@@ -2065,6 +2065,36 @@ export type Database = {
         }
         Relationships: []
       }
+      reminder_cleanup_config: {
+        Row: {
+          auto_cleanup_enabled: boolean | null
+          cleanup_schedule: string | null
+          created_at: string | null
+          id: string
+          last_cleanup_at: string | null
+          retention_days: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          auto_cleanup_enabled?: boolean | null
+          cleanup_schedule?: string | null
+          created_at?: string | null
+          id?: string
+          last_cleanup_at?: string | null
+          retention_days?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          auto_cleanup_enabled?: boolean | null
+          cleanup_schedule?: string | null
+          created_at?: string | null
+          id?: string
+          last_cleanup_at?: string | null
+          retention_days?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       reminders: {
         Row: {
           archived_reason: string | null
@@ -3390,6 +3420,18 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      cleanup_old_reminders: {
+        Args: { retention_days?: number }
+        Returns: {
+          deleted_count: number
+          archived_count: number
+          cleanup_summary: Json
+        }[]
+      }
+      create_next_recurring_reminder: {
+        Args: { original_reminder_id: string }
+        Returns: string
+      }
       dismiss_announcement: {
         Args: { announcement_uuid: string }
         Returns: boolean
@@ -3436,6 +3478,10 @@ export type Database = {
           escalation_level: string
           priority: string
         }[]
+      }
+      get_reminder_system_health: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       get_user_email_for_feedback: {
         Args: { feedback_user_id: string }
