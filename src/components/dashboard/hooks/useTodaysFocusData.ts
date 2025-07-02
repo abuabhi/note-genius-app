@@ -16,7 +16,7 @@ export const useTodaysFocusData = () => {
   console.log('🔍 useTodaysFocusData hook called with user:', user?.id);
 
   const { data: todaysItems = { reminders: [], goals: [], overdue: [], todos: [] }, isLoading, error } = useQuery({
-    queryKey: ['todays-focus', user?.id],
+    queryKey: ['todays-focus', user?.id, allReminders.length],
     queryFn: async () => {
       console.log('📡 Fetching todays focus data for user:', user?.id);
       
