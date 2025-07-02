@@ -1058,6 +1058,66 @@ export type Database = {
         }
         Relationships: []
       }
+      help_topics: {
+        Row: {
+          category: string
+          content: string
+          created_at: string | null
+          created_by: string | null
+          description: string
+          id: string
+          is_active: boolean | null
+          last_edited_by: string | null
+          priority: number
+          quick_tips: Json | null
+          tags: Json | null
+          title: string
+          updated_at: string | null
+          video_chapters: Json | null
+          video_duration: string | null
+          video_title: string | null
+          video_url: string | null
+        }
+        Insert: {
+          category: string
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          description: string
+          id?: string
+          is_active?: boolean | null
+          last_edited_by?: string | null
+          priority?: number
+          quick_tips?: Json | null
+          tags?: Json | null
+          title: string
+          updated_at?: string | null
+          video_chapters?: Json | null
+          video_duration?: string | null
+          video_title?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string
+          id?: string
+          is_active?: boolean | null
+          last_edited_by?: string | null
+          priority?: number
+          quick_tips?: Json | null
+          tags?: Json | null
+          title?: string
+          updated_at?: string | null
+          video_chapters?: Json | null
+          video_duration?: string | null
+          video_title?: string | null
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       learning_insights: {
         Row: {
           confidence_score: number | null
