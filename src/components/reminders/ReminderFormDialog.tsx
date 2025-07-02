@@ -1,211 +1,128 @@
 
 import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Calendar, CalendarDays, Zap } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useUnifiedReminderSystem } from '@/hooks/useUnifiedReminderSystem';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/auth';
 
 interface ReminderFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: () => void;
 }
 
-type ReminderPriority = 'low' | 'medium' | 'high';
-type ReminderType = 'general' | 'study' | 'event' | 'goal' | 'todo';
-type ReminderRecurrence = 'none' | 'daily' | 'weekly' | 'monthly';
+export const ReminderFormDialog = ({ open, onOpenChange }: ReminderFormDialogProps) => {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [reminderTime, setReminderTime] = useState('');
+  const [type, setType] = useState('todo');
+  const [priority, setPriority] = useState('medium');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-interface ReminderFormData {
-  title: string;
-  description: string;
-  reminderTime: Date;
-  type: ReminderType;
-  priority: ReminderPriority;
-  deliveryMethods: string[];
-  recurrence: ReminderRecurrence;
-}
-
-export const ReminderFormDialog = ({ 
-  open, 
-  onOpenChange, 
-  onSuccess 
-}: ReminderFormDialogProps) => {
-  const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
-  
-  const [formData, setFormData] = useState<ReminderFormData>({
-    title: '',
-    description: '',
-    reminderTime: new Date(),
-    type: 'general',
-    priority: 'medium',
-    deliveryMethods: ['in_app'],
-    recurrence: 'none',
-  });
+  const { createReminder } = useUnifiedReminderSystem();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user) {
-      toast.error('Please sign in to create reminders');
+    if (!title.trim() || !reminderTime) {
+      toast.error('Please fill in title and reminder time');
       return;
     }
 
-    if (!formData.title.trim()) {
-      toast.error('Please enter a reminder title');
-      return;
-    }
-
-    setIsLoading(true);
-
+    setIsSubmitting(true);
     try {
-      const { error } = await supabase
-        .from('reminders')
-        .insert({
-          user_id: user.id,
-          title: formData.title.trim(),
-          description: formData.description.trim() || null,
-          reminder_time: formData.reminderTime.toISOString(),
-          type: formData.type,
-          priority: formData.priority,
-          delivery_methods: formData.deliveryMethods,
-          recurrence: formData.recurrence,
-          status: 'pending',
-        });
-
-      if (error) throw error;
+      await createReminder({
+        title: title.trim(),
+        description: description.trim() || undefined,
+        reminder_time: new Date(reminderTime).toISOString(),
+        type,
+        priority,
+        delivery_methods: ['in_app'],
+        recurrence: 'none',
+        status: 'pending'
+      });
 
       toast.success('Reminder created successfully');
-      onSuccess?.();
-      onOpenChange(false);
       
       // Reset form
-      setFormData({
-        title: '',
-        description: '',
-        reminderTime: new Date(),
-        type: 'general',
-        priority: 'medium',
-        deliveryMethods: ['in_app'],
-        recurrence: 'none',
-      });
+      setTitle('');
+      setDescription('');
+      setReminderTime('');
+      setType('todo');
+      setPriority('medium');
+      
+      onOpenChange(false);
     } catch (error) {
       console.error('Error creating reminder:', error);
       toast.error('Failed to create reminder');
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
-  };
-
-  const handleInputChange = (field: keyof ReminderFormData, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const formatDateTimeLocal = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-blue-600" />
-            Create Reminder
-          </DialogTitle>
-          <DialogDescription>
-            Set up a reminder to stay on track with your goals
-          </DialogDescription>
+          <DialogTitle>Create New Reminder</DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid w-full gap-1.5">
-            <Label htmlFor="title">Title *</Label>
+          <div className="space-y-2">
+            <Label htmlFor="title">Title</Label>
             <Input
               id="title"
-              value={formData.title}
-              onChange={(e) => handleInputChange('title', e.target.value)}
-              placeholder="What do you want to be reminded about?"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Enter reminder title"
               required
             />
           </div>
 
-          <div className="grid w-full gap-1.5">
-            <Label htmlFor="description">Description</Label>
+          <div className="space-y-2">
+            <Label htmlFor="description">Description (optional)</Label>
             <Textarea
               id="description"
-              value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              placeholder="Add more details (optional)"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Enter description"
               rows={3}
             />
           </div>
 
-          <div className="grid w-full gap-1.5">
-            <Label htmlFor="reminderTime">Reminder Time *</Label>
+          <div className="space-y-2">
+            <Label htmlFor="reminderTime">Reminder Time</Label>
             <Input
               id="reminderTime"
               type="datetime-local"
-              value={formatDateTimeLocal(formData.reminderTime)}
-              onChange={(e) => handleInputChange('reminderTime', new Date(e.target.value))}
+              value={reminderTime}
+              onChange={(e) => setReminderTime(e.target.value)}
               required
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="grid w-full gap-1.5">
+            <div className="space-y-2">
               <Label htmlFor="type">Type</Label>
-              <Select
-                value={formData.type}
-                onValueChange={(value: ReminderType) => handleInputChange('type', value)}
-              >
+              <Select value={type} onValueChange={setType}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="general">General</SelectItem>
-                  <SelectItem value="study">Study</SelectItem>
-                  <SelectItem value="event">Event</SelectItem>
-                  <SelectItem value="goal">Goal</SelectItem>
                   <SelectItem value="todo">Todo</SelectItem>
+                  <SelectItem value="study_session">Study Session</SelectItem>
+                  <SelectItem value="goal_deadline">Goal Deadline</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="grid w-full gap-1.5">
+            <div className="space-y-2">
               <Label htmlFor="priority">Priority</Label>
-              <Select
-                value={formData.priority}
-                onValueChange={(value: ReminderPriority) => handleInputChange('priority', value)}
-              >
+              <Select value={priority} onValueChange={setPriority}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -218,57 +135,19 @@ export const ReminderFormDialog = ({
             </div>
           </div>
 
-          <div className="grid w-full gap-1.5">
-            <Label htmlFor="recurrence">Recurrence</Label>
-            <Select
-              value={formData.recurrence}
-              onValueChange={(value: ReminderRecurrence) => handleInputChange('recurrence', value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No Repeat</SelectItem>
-                <SelectItem value="daily">Daily</SelectItem>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid w-full gap-1.5">
-            <Label>Delivery Methods</Label>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="in_app"
-                checked={formData.deliveryMethods.includes('in_app')}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    handleInputChange('deliveryMethods', [...formData.deliveryMethods, 'in_app']);
-                  } else {
-                    handleInputChange('deliveryMethods', formData.deliveryMethods.filter(m => m !== 'in_app'));
-                  }
-                }}
-              />
-              <Label htmlFor="in_app" className="text-sm font-normal">
-                In-App Notification
-              </Label>
-            </div>
-          </div>
-
-          <DialogFooter>
+          <div className="flex justify-end space-x-2 pt-4">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              disabled={isLoading}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Creating...' : 'Create Reminder'}
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Creating...' : 'Create Reminder'}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

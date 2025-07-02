@@ -69,13 +69,13 @@ export const ReminderNavPopover = () => {
         <Button 
           variant="ghost" 
           size="icon" 
-          className="relative h-9 w-9 rounded-full hover:bg-mint-50 transition-colors"
+          className="relative h-9 w-9 rounded-full hover:bg-gray-50 transition-colors"
           aria-label={`${totalCount} reminders`}
         >
-          <Bell className="h-5 w-5 text-mint-600" />
+          <Bell className="h-5 w-5 text-gray-600" />
           {totalCount > 0 && (
             <Badge 
-              className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs font-medium bg-mint-500 text-white shadow-md"
+              className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs font-medium bg-red-500 text-white shadow-md"
             >
               {totalCount > 99 ? '99+' : totalCount}
             </Badge>
@@ -83,27 +83,27 @@ export const ReminderNavPopover = () => {
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-96 p-0 shadow-xl border-0 bg-white/95 backdrop-blur-sm" 
+        className="w-96 p-0 shadow-xl border bg-white" 
         align="end"
         sideOffset={8}
       >
         {/* Header */}
-        <div className="flex justify-between items-center p-4 border-b bg-mint-50">
+        <div className="flex justify-between items-center p-4 border-b bg-gray-50">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-mint-100 rounded-full">
-              <Bell className="h-4 w-4 text-mint-600" />
+            <div className="p-2 bg-gray-100 rounded-full">
+              <Bell className="h-4 w-4 text-gray-600" />
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-mint-800">Reminders</h4>
+              <h4 className="text-sm font-semibold text-gray-800">Reminders</h4>
               {totalCount > 0 && (
-                <div className="flex items-center gap-2 text-xs text-mint-600">
+                <div className="flex items-center gap-2 text-xs text-gray-600">
                   {pendingCount > 0 && (
-                    <Badge variant="outline" className="bg-mint-50 text-mint-700 border-mint-200">
+                    <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
                       {pendingCount} pending
                     </Badge>
                   )}
                   {sentCount > 0 && (
-                    <Badge variant="outline" className="bg-mint-50 text-mint-700 border-mint-200">
+                    <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
                       {sentCount} sent
                     </Badge>
                   )}
@@ -118,11 +118,11 @@ export const ReminderNavPopover = () => {
                 size="sm"
                 onClick={handleDismissAll}
                 disabled={isDismissing}
-                className="text-xs px-2 py-1 h-auto hover:bg-mint-100 text-mint-700"
+                className="text-xs px-2 py-1 h-auto hover:bg-gray-100 text-gray-700"
               >
                 {isDismissing ? (
                   <>
-                    <div className="w-3 h-3 border border-mint-500 border-t-transparent rounded-full animate-spin mr-1" />
+                    <div className="w-3 h-3 border border-gray-500 border-t-transparent rounded-full animate-spin mr-1" />
                     Dismissing...
                   </>
                 ) : (
@@ -137,15 +137,15 @@ export const ReminderNavPopover = () => {
               variant="ghost"
               size="icon"
               onClick={() => setOpen(false)}
-              className="h-6 w-6 hover:bg-mint-100 text-mint-600"
+              className="h-6 w-6 hover:bg-gray-100 text-gray-600"
             >
               <X className="h-3 w-3" />
             </Button>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="max-h-[500px] overflow-hidden">
+        {/* Content - FIXED SCROLLING HERE */}
+        <div className="max-h-[500px] overflow-y-auto">
           <ScalableRemindersList 
             reminders={reminders}
             loading={isLoading}
@@ -157,10 +157,10 @@ export const ReminderNavPopover = () => {
         </div>
 
         {/* Footer */}
-        <div className="border-t px-4 py-2 bg-mint-50">
-          <div className="flex items-center justify-center text-xs text-mint-600">
+        <div className="border-t px-4 py-2 bg-gray-50">
+          <div className="flex items-center justify-center text-xs text-gray-600">
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-mint-400 rounded-full"></div>
+              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
               <span>Real-time updates enabled</span>
             </div>
           </div>
