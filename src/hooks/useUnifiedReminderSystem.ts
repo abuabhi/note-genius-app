@@ -148,7 +148,7 @@ export const useUnifiedReminderSystem = (options: UseUnifiedReminderSystemOption
     };
   }, [enableRealtime, user?.id, queryClient, queryKey]);
   
-  // Dismiss single reminder
+  // Dismiss single reminder - FIXED VERSION
   const dismissReminderMutation = useMutation({
     mutationFn: async (reminderId: string) => {
       console.log('🗑️ Dismissing reminder via UNIFIED SYSTEM:', reminderId);
@@ -165,36 +165,81 @@ export const useUnifiedReminderSystem = (options: UseUnifiedReminderSystemOption
       if (error) throw error;
       return reminderId;
     },
-    onSuccess: (reminderId) => {
-      queryClient.invalidateQueries({ queryKey });
-      console.log('✅ Reminder dismissed successfully via UNIFIED SYSTEM:', reminderId);
+    onMutate: async (reminderId) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey });
+      
+      // Snapshot the previous value
+      const previousReminders = queryClient.getQueryData(queryKey);
+      
+      // Optimistically update to immediately remove the reminder
+      queryClient.setQueryData(queryKey, (oldData: SimpleReminder[] | undefined) => {
+        if (!oldData) return [];
+        return oldData.filter(reminder => reminder.id !== reminderId);
+      });
+      
+      return { previousReminders };
     },
-    onError: (error) => {
+    onError: (error, reminderId, context) => {
+      // Rollback on error
+      if (context?.previousReminders) {
+        queryClient.setQueryData(queryKey, context.previousReminders);
+      }
       console.error('❌ Error dismissing reminder via UNIFIED SYSTEM:', error);
       toast.error('Failed to dismiss reminder');
+    },
+    onSuccess: (reminderId) => {
+      // Only invalidate, don't refresh manually
+      queryClient.invalidateQueries({ queryKey });
+      console.log('✅ Reminder dismissed successfully via UNIFIED SYSTEM:', reminderId);
     }
   });
   
-  // Batch dismiss reminders
+  // Batch dismiss reminders - FIXED VERSION  
   const batchDismissRemindersMutation = useMutation({
     mutationFn: async (reminderIds: string[]) => {
-      console.log('🗑️ Batch dismissing reminders via UNIFIED SYSTEM:', reminderIds.length);
+      console.log('🗑️ Batch dismissing reminders via UNIFIED SYSTEM:', reminderIds.length, 'IDs:', reminderIds);
       
       const { data, error } = await supabase.rpc('batch_dismiss_reminders', {
         p_user_id: user?.id,
         p_reminder_ids: reminderIds
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Batch dismiss database error:', error);
+        throw error;
+      }
+      
+      console.log('📊 Batch dismiss result:', data);
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
-      console.log('✅ Batch dismiss completed via UNIFIED SYSTEM');
+    onMutate: async (reminderIds) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey });
+      
+      // Snapshot the previous value
+      const previousReminders = queryClient.getQueryData(queryKey);
+      
+      // Optimistically update to immediately remove all dismissed reminders
+      queryClient.setQueryData(queryKey, (oldData: SimpleReminder[] | undefined) => {
+        if (!oldData) return [];
+        return oldData.filter(reminder => !reminderIds.includes(reminder.id));
+      });
+      
+      return { previousReminders };
     },
-    onError: (error) => {
+    onError: (error, reminderIds, context) => {
+      // Rollback on error
+      if (context?.previousReminders) {
+        queryClient.setQueryData(queryKey, context.previousReminders);
+      }
       console.error('❌ Error batch dismissing reminders via UNIFIED SYSTEM:', error);
       toast.error('Failed to dismiss reminders');
+    },
+    onSuccess: (data) => {
+      // Only invalidate, don't refresh manually
+      queryClient.invalidateQueries({ queryKey });
+      console.log('✅ Batch dismiss completed via UNIFIED SYSTEM:', data);
     }
   });
   
@@ -223,14 +268,19 @@ export const useUnifiedReminderSystem = (options: UseUnifiedReminderSystemOption
     }
   });
   
-  // Dismiss all sent reminders
+  // Dismiss all sent reminders - FIXED VERSION
   const dismissAll = () => {
     const sentReminderIds = reminders
       .filter(r => r.status === 'sent')
       .map(r => r.id);
     
+    console.log('🗑️ Dismiss All triggered - Found sent reminders:', sentReminderIds);
+    
     if (sentReminderIds.length > 0) {
       batchDismissRemindersMutation.mutate(sentReminderIds);
+    } else {
+      console.log('ℹ️ No sent reminders to dismiss');
+      toast.info('No sent reminders to dismiss');
     }
   };
   

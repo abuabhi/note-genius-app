@@ -18,7 +18,7 @@ export const ScalableReminderPopover = () => {
     reminders, 
     isLoading, 
     dismissReminder,
-    batchDismissReminders,
+    dismissAll,
     isDismissing,
     totalCount,
     unreadCount,
@@ -38,39 +38,31 @@ export const ScalableReminderPopover = () => {
     r => r.status === 'pending' && r.reminder_time && new Date(r.reminder_time) < now
   );
 
-  // Handle dismiss all with proper error handling
+  // Handle dismiss all - FIXED VERSION
   const handleDismissAll = useCallback(async () => {
-    console.log('🗑️ Starting dismiss all operation');
+    console.log('🗑️ HandleDismissAll called - Current reminders:', reminders.length);
+    console.log('📊 Reminder statuses:', reminders.map(r => ({ id: r.id, status: r.status, title: r.title })));
+    
     const sentReminderIds = reminders
       .filter(r => r.status === 'sent')
       .map(r => r.id);
+    
+    console.log('🎯 Sent reminder IDs to dismiss:', sentReminderIds);
     
     if (sentReminderIds.length === 0) {
       toast.info('No sent reminders to dismiss');
       return;
     }
     
-    try {
-      await batchDismissReminders(sentReminderIds);
-      toast.success(`Dismissed ${sentReminderIds.length} reminders`);
-      setTimeout(() => refresh(), 500);
-    } catch (error) {
-      console.error('❌ Batch dismiss failed:', error);
-      toast.error('Failed to dismiss all reminders');
-    }
-  }, [reminders, batchDismissReminders, refresh]);
+    // Call the dismissAll function directly - no manual handling
+    dismissAll();
+  }, [reminders, dismissAll]);
 
-  // Handle single dismiss with proper error handling
+  // Handle single dismiss - FIXED VERSION
   const handleDismissSingle = useCallback(async (id: string) => {
-    try {
-      await dismissReminder(id);
-      toast.success('Reminder dismissed');
-      setTimeout(() => refresh(), 500);
-    } catch (error) {
-      console.error('❌ Single dismiss failed:', error);
-      toast.error('Failed to dismiss reminder');
-    }
-  }, [dismissReminder, refresh]);
+    console.log('🗑️ Dismissing single reminder:', id);
+    dismissReminder(id);
+  }, [dismissReminder]);
 
   const isReminderDismissing = (id: string) => isDismissing;
 
@@ -139,7 +131,7 @@ export const ScalableReminderPopover = () => {
                 ) : (
                   <>
                     <CheckCircle2 className="w-3 h-3 mr-1" />
-                    Dismiss All
+                    Dismiss All ({sentCount})
                   </>
                 )}
               </Button>
@@ -173,7 +165,7 @@ export const ScalableReminderPopover = () => {
             <div className="flex items-center justify-center text-xs text-gray-600">
               <div className="flex items-center gap-1">
                 <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span>Fresh start - {totalCount} reminders</span>
+                <span>UNIFIED System - {totalCount} reminders</span>
               </div>
             </div>
           </div>

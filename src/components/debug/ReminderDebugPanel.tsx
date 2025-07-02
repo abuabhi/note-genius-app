@@ -1,255 +1,130 @@
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { useUnifiedReminderSystem } from '@/hooks/useUnifiedReminderSystem';
-import { useAuth } from '@/contexts/auth';
+import { Button } from '@/components/ui/button';
+import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { Bell, Play, TestTube, Plus, Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/auth';
 
 export const ReminderDebugPanel = () => {
   const { user } = useAuth();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isTestingEmail, setIsTestingEmail] = useState(false);
-  const [isCreatingReminder, setIsCreatingReminder] = useState(false);
-  
-  const { 
-    reminders, 
-    isLoading, 
-    refresh,
-    totalCount 
-  } = useUnifiedReminderSystem({
+  const { reminders, totalCount, isLoading, refresh } = useUnifiedReminderSystem({
     limit: 1000,
-    enableRealtime: false,
-    status: ['pending', 'sent', 'failed', 'cancelled']
+    enableRealtime: true,
   });
-
-  const handleProcessNow = async () => {
-    setIsProcessing(true);
-    try {
-      console.log('🔄 Manually triggering reminder processing...');
-      
-      const { data, error } = await supabase.functions.invoke('process-reminders');
-      
-      if (error) {
-        console.error('❌ Manual processing failed:', error);
-        toast.error(`Processing failed: ${error.message}`);
-        return;
-      }
-      
-      console.log('✅ Manual processing result:', data);
-      toast.success(`Processing completed: ${data?.processed || 0} reminders processed`);
-      
-      // Refresh the reminders list
-      setTimeout(() => refresh(), 1000);
-      
-    } catch (error) {
-      console.error('❌ Manual processing error:', error);
-      toast.error('Failed to process reminders');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleTestEmail = async () => {
-    setIsTestingEmail(true);
-    try {
-      console.log('🧪 Testing email notification system...');
-      
-      const { data, error } = await supabase.functions.invoke('send-test-digest');
-      
-      if (error) {
-        console.error('❌ Email test failed:', error);
-        toast.error(`Email test failed: ${error.message}`);
-        return;
-      }
-      
-      console.log('✅ Email test result:', data);
-      toast.success('Test email sent successfully!');
-      
-    } catch (error) {
-      console.error('❌ Email test error:', error);
-      toast.error('Failed to send test email');
-    } finally {
-      setIsTestingEmail(false);
-    }
-  };
-
-  const handleCreateTestReminder = async () => {
+  
+  const [debugInfo, setDebugInfo] = useState<string>('');
+  
+  // Debug function to check database state
+  const debugDatabaseState = async () => {
     if (!user) return;
     
-    setIsCreatingReminder(true);
     try {
-      console.log('➕ Creating test reminder...');
+      console.log('🔍 Starting database debug...');
       
-      // Create a reminder for 1 minute from now
-      const reminderTime = new Date(Date.now() + 60000).toISOString();
-      
-      const { data, error } = await supabase
+      // Get ALL reminders for this user regardless of status
+      const { data: allReminders, error } = await supabase
         .from('reminders')
-        .insert({
-          user_id: user.id,
-          title: 'Test Email Reminder',
-          description: 'This is a test reminder to verify email notifications work',
-          reminder_time: reminderTime,
-          type: 'other',
-          status: 'pending',
-          priority: 'medium',
-          delivery_methods: ['in_app', 'email'], // Include email delivery
-          recurrence: 'none'
-        })
-        .select()
-        .single();
+        .select('id, title, status, created_at, updated_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
       
       if (error) {
-        console.error('❌ Failed to create test reminder:', error);
-        toast.error(`Failed to create reminder: ${error.message}`);
+        console.error('❌ Debug query error:', error);
+        setDebugInfo(`Error: ${error.message}`);
         return;
       }
       
-      console.log('✅ Test reminder created:', data);
-      toast.success('Test reminder created! It will trigger in 1 minute.');
+      const statusCounts = allReminders?.reduce((acc, reminder) => {
+        acc[reminder.status] = (acc[reminder.status] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) || {};
       
-      // Refresh the reminders list
-      setTimeout(() => refresh(), 500);
+      const debugOutput = {
+        totalInDatabase: allReminders?.length || 0,
+        statusBreakdown: statusCounts,
+        currentlyShown: reminders.length,
+        recentReminders: allReminders?.slice(0, 5).map(r => ({
+          id: r.id.slice(-8),
+          title: r.title,
+          status: r.status,
+          created: new Date(r.created_at).toLocaleString(),
+          updated: new Date(r.updated_at).toLocaleString()
+        })) || []
+      };
+      
+      console.log('🔍 Database debug result:', debugOutput);
+      setDebugInfo(JSON.stringify(debugOutput, null, 2));
       
     } catch (error) {
-      console.error('❌ Test reminder creation error:', error);
-      toast.error('Failed to create test reminder');
-    } finally {
-      setIsCreatingReminder(false);
+      console.error('❌ Debug error:', error);
+      setDebugInfo(`Debug error: ${error}`);
     }
   };
 
-  // Group reminders by status for better display
-  const remindersByStatus = reminders.reduce((acc, reminder) => {
-    if (!acc[reminder.status]) {
-      acc[reminder.status] = [];
-    }
-    acc[reminder.status].push(reminder);
-    return acc;
-  }, {} as Record<string, typeof reminders>);
+  if (isLoading) {
+    return <div className="p-4 bg-blue-50 rounded-lg">Loading debug panel...</div>;
+  }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5 text-blue-600" />
-            Reminder System Debug Panel
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Control Buttons */}
-          <div className="flex flex-wrap gap-2">
-            <Button
-              onClick={handleProcessNow}
-              disabled={isProcessing}
-              className="flex items-center gap-2"
-            >
-              {isProcessing ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Play className="h-4 w-4" />
-              )}
-              Process Now
+    <div className="bg-gray-50 p-6 rounded-lg border">
+      <h3 className="font-semibold text-lg mb-4">🐛 Reminder System Debug Panel</h3>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div className="bg-white p-3 rounded border">
+          <h4 className="font-medium text-gray-700">Current Query</h4>
+          <p className="text-2xl font-bold text-blue-600">{totalCount}</p>
+          <p className="text-xs text-gray-500">Filtered reminders</p>
+        </div>
+        
+        <div className="bg-white p-3 rounded border">
+          <h4 className="font-medium text-gray-700">Status Breakdown</h4>
+          <div className="text-sm">
+            <div>Pending: {reminders.filter(r => r.status === 'pending').length}</div>
+            <div>Sent: {reminders.filter(r => r.status === 'sent').length}</div>
+          </div>
+        </div>
+        
+        <div className="bg-white p-3 rounded border">
+          <h4 className="font-medium text-gray-700">Actions</h4>
+          <div className="space-y-2">
+            <Button size="sm" onClick={refresh} className="w-full">
+              Refresh Query
             </Button>
-            
-            <Button
-              onClick={handleTestEmail}
-              disabled={isTestingEmail}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              {isTestingEmail ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <TestTube className="h-4 w-4" />
-              )}
-              Test Email
-            </Button>
-            
-            <Button
-              onClick={handleCreateTestReminder}
-              disabled={isCreatingReminder}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              {isCreatingReminder ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Plus className="h-4 w-4" />
-              )}
-              Create Test Reminder
+            <Button size="sm" variant="outline" onClick={debugDatabaseState} className="w-full">
+              Debug Database
             </Button>
           </div>
+        </div>
+      </div>
 
-          {/* Summary Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-blue-600">{totalCount}</div>
-                <div className="text-sm text-muted-foreground">Total</div>
-              </CardContent>
-            </Card>
-            
-            {Object.entries(remindersByStatus).map(([status, statusReminders]) => (
-              <Card key={status}>
-                <CardContent className="p-4 text-center">
-                  <div className="text-2xl font-bold text-gray-600">{statusReminders.length}</div>
-                  <div className="text-sm text-muted-foreground capitalize">{status}</div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Detailed Reminder List */}
-          {isLoading ? (
-            <div className="text-center py-4">Loading reminders...</div>
-          ) : reminders.length > 0 ? (
-            <div className="space-y-2">
-              <h4 className="font-semibold">Recent Reminders:</h4>
-              <div className="max-h-96 overflow-y-auto space-y-2">
-                {reminders.slice(0, 20).map((reminder) => (
-                  <div key={reminder.id} className="p-3 border rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h5 className="font-medium truncate">{reminder.title}</h5>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">
-                          {reminder.status}
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          {reminder.priority}
-                        </Badge>
-                      </div>
-                    </div>
-                    
-                    <div className="text-sm text-muted-foreground space-y-1">
-                      <div>Type: {reminder.type.replace('_', ' ')}</div>
-                      <div>
-                        Delivery: {Array.isArray(reminder.delivery_methods) 
-                          ? reminder.delivery_methods.join(', ') 
-                          : 'in_app'}
-                      </div>
-                      <div>
-                        Time: {reminder.reminder_time ? 
-                          new Date(reminder.reminder_time).toLocaleString() : 
-                          'Not set'}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+      {debugInfo && (
+        <div className="bg-gray-800 text-green-400 p-3 rounded font-mono text-xs overflow-auto max-h-40">
+          <pre>{debugInfo}</pre>
+        </div>
+      )}
+      
+      <div className="mt-4">
+        <h4 className="font-medium mb-2">Current Reminders:</h4>
+        <div className="space-y-1 max-h-40 overflow-auto">
+          {reminders.map((reminder) => (
+            <div key={reminder.id} className="bg-white p-2 rounded border text-xs">
+              <div className="flex justify-between items-center">
+                <span className="font-medium">{reminder.title}</span>
+                <span className={`px-2 py-1 rounded text-xs ${
+                  reminder.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                  reminder.status === 'sent' ? 'bg-red-100 text-red-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {reminder.status}
+                </span>
+              </div>
+              <div className="text-gray-500 mt-1">
+                ID: {reminder.id.slice(-8)} | Created: {new Date(reminder.created_at).toLocaleString()}
               </div>
             </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              No reminders found. Create a test reminder to get started.
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
