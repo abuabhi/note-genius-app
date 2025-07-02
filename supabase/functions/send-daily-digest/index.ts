@@ -1,368 +1,467 @@
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { Resend } from 'npm:resend@4.0.0'
-import React from 'npm:react@18.3.1'
-import { renderAsync } from 'npm:@react-email/components@0.0.22'
-import { EnhancedDailyDigestEmail } from './_templates/enhanced-daily-digest.tsx'
+import { Resend } from 'https://esm.sh/resend@2.0.0'
 
-// Define CORS headers
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    // Initialize clients
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-    const resendApiKey = Deno.env.get('RESEND_API_KEY') || ''
+    const resendApiKey = Deno.env.get('RESEND_API_KEY')
     
     if (!resendApiKey) {
-      throw new Error('RESEND_API_KEY is not configured')
+      console.error('RESEND_API_KEY not configured')
+      return new Response(
+        JSON.stringify({ error: 'Email service not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey)
     const resend = new Resend(resendApiKey)
+
+    console.log('🌅 Starting enhanced daily digest processing...')
     
-    console.log('Starting enhanced daily digest process...')
-
-    // Get current time and date
     const now = new Date()
-    const today = now.toISOString().split('T')[0]
-    const currentHour = now.getUTCHours()
-    const currentMinute = now.getUTCMinutes()
-    const currentTime = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}:00`
+    const currentUtcHour = now.getUTCHours()
+    const currentUtcMinute = now.getUTCMinutes()
+    const currentUtcTime = `${currentUtcHour.toString().padStart(2, '0')}:${currentUtcMinute.toString().padStart(2, '0')}:00`
+    
+    console.log(`Current UTC time: ${currentUtcTime}`)
 
-    console.log(`Processing digests for time: ${currentTime}`)
-
-    // Get users who should receive digest at this time
-    const { data: digestUsers, error: fetchError } = await supabase
-      .from('email_digest_preferences')
-      .select(`
-        *,
-        profiles!inner(username)
-      `)
-      .eq('digest_enabled', true)
-      .eq('frequency', 'daily')
-      .eq('digest_time', currentTime)
-      .or(`last_digest_sent_at.is.null,last_digest_sent_at.lt.${today}`)
-
-    if (fetchError) {
-      throw fetchError
-    }
-
-    console.log(`Found ${digestUsers?.length || 0} users to process`)
-
-    if (!digestUsers || digestUsers.length === 0) {
-      return new Response(
-        JSON.stringify({ message: 'No users found for digest at this time' }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    const processedUsers = []
-    const failedUsers = []
-
-    // Process each user
-    for (const user of digestUsers) {
+    // Helper function to convert user's local time to UTC
+    const convertLocalTimeToUtc = (localTime: string, timezone: string): string => {
       try {
-        console.log(`Processing enhanced digest for user: ${user.user_id}`)
-
-        // Get user's email from auth.users
-        const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(user.user_id)
+        // Create a date object for today with the user's local time
+        const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD
+        const localDateTime = new Date(`${today}T${localTime}`)
         
-        if (authError || !authUser.user?.email) {
-          console.error(`Failed to get email for user ${user.user_id}:`, authError)
-          failedUsers.push({ userId: user.user_id, error: 'No email found' })
-          continue
-        }
-
-        // Initialize content arrays
-        let goals = []
-        let todos = []
-        let notes = []
-        let flashcards = []
-        let quizzes = []
-        let studySessions = []
-
-        // Fetch user's goals
-        if (user.include_goals) {
-          const goalsQuery = supabase
-            .from('study_goals')
-            .select('*')
-            .eq('user_id', user.user_id)
-            .or('status.eq.active,status.is.null')
-            .eq('is_completed', false)
-            .order('end_date', { ascending: true })
-            .limit(10)
-
-          const { data: goalsData, error: goalsError } = await goalsQuery
-
-          if (goalsError) {
-            console.error(`Error fetching goals for user ${user.user_id}:`, goalsError)
-          } else {
-            goals = goalsData || []
-          }
-        }
-
-        // Fetch user's todos
-        if (user.include_todos) {
-          let todosQuery = supabase
-            .from('reminders')
-            .select('*')
-            .eq('user_id', user.user_id)
-            .eq('type', 'todo')
-            .eq('status', 'pending')
-            .is('auto_archived_at', null)
-
-          if (user.only_urgent) {
-            todosQuery = todosQuery.in('escalation_level', ['urgent', 'critical'])
-          }
-
-          todosQuery = todosQuery.order('due_date', { ascending: true }).limit(user.todos_limit || 15)
-
-          const { data: todosData, error: todosError } = await todosQuery
-
-          if (todosError) {
-            console.error(`Error fetching todos for user ${user.user_id}:`, todosError)
-          } else {
-            // Calculate days overdue for each todo
-            todos = (todosData || []).map(todo => {
-              if (todo.due_date) {
-                const dueDate = new Date(todo.due_date)
-                const today = new Date()
-                const diffTime = today.getTime() - dueDate.getTime()
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-                return {
-                  ...todo,
-                  days_overdue: diffDays > 0 ? diffDays : 0
-                }
-              }
-              return todo
-            })
-          }
-        }
-
-        // Fetch user's recent notes
-        if (user.include_notes) {
-          const { data: notesData, error: notesError } = await supabase
-            .from('notes')
-            .select('*')
-            .eq('user_id', user.user_id)
-            .neq('archived', true)
-            .order('updated_at', { ascending: false })
-            .limit(user.notes_limit || 5)
-
-          if (notesError) {
-            console.error(`Error fetching notes for user ${user.user_id}:`, notesError)
-          } else {
-            notes = notesData || []
-          }
-        }
-
-        // Fetch user's flashcard sets
-        if (user.include_flashcards) {
-          const { data: flashcardsData, error: flashcardsError } = await supabase
-            .from('flashcard_sets')
-            .select(`
-              *,
-              user_flashcard_progress(last_reviewed_at)
-            `)
-            .eq('user_id', user.user_id)
-            .order('updated_at', { ascending: false })
-            .limit(user.flashcards_limit || 5)
-
-          if (flashcardsError) {
-            console.error(`Error fetching flashcards for user ${user.user_id}:`, flashcardsError)
-          } else {
-            flashcards = (flashcardsData || []).map(set => ({
-              ...set,
-              needs_review: set.user_flashcard_progress?.some(p => 
-                !p.last_reviewed_at || 
-                new Date(p.last_reviewed_at) < new Date(Date.now() - 24*60*60*1000)
-              )
-            }))
-          }
-        }
-
-        // Fetch user's recent quiz results
-        if (user.include_quizzes) {
-          const { data: quizzesData, error: quizzesError } = await supabase
-            .from('quiz_results')
-            .select(`
-              *,
-              quizzes(title)
-            `)
-            .eq('user_id', user.user_id)
-            .order('completed_at', { ascending: false })
-            .limit(user.quizzes_limit || 3)
-
-          if (quizzesError) {
-            console.error(`Error fetching quizzes for user ${user.user_id}:`, quizzesError)
-          } else {
-            quizzes = (quizzesData || []).map(result => ({
-              ...result,
-              title: result.quizzes?.title || 'Untitled Quiz'
-            }))
-          }
-        }
-
-        // Fetch user's recent study sessions
-        if (user.include_study_sessions) {
-          const { data: sessionsData, error: sessionsError } = await supabase
-            .from('study_sessions')
-            .select('*')
-            .eq('user_id', user.user_id)
-            .not('end_time', 'is', null)
-            .order('start_time', { ascending: false })
-            .limit(user.study_sessions_limit || 5)
-
-          if (sessionsError) {
-            console.error(`Error fetching study sessions for user ${user.user_id}:`, sessionsError)
-          } else {
-            studySessions = sessionsData || []
-          }
-        }
-
-        // Calculate study streak (simplified)
-        let studyStreak = 0
-        if (user.include_streaks) {
-          const { data: streakData } = await supabase
-            .from('study_sessions')
-            .select('start_time')
-            .eq('user_id', user.user_id)
-            .not('end_time', 'is', null)
-            .gte('start_time', new Date(Date.now() - 7*24*60*60*1000).toISOString())
-            .order('start_time', { ascending: false })
-
-          if (streakData) {
-            const uniqueDays = new Set(streakData.map(s => 
-              new Date(s.start_time).toISOString().split('T')[0]
-            ))
-            studyStreak = uniqueDays.size
-          }
-        }
-
-        // Count overdue items
-        const overdueCount = todos.filter(todo => 
-          todo.due_date && new Date(todo.due_date) < new Date()
-        ).length
-
-        // Count completed items today (simplified)
-        const completedToday = todos.filter(todo => 
-          todo.status === 'completed' && 
-          todo.updated_at && 
-          new Date(todo.updated_at).toDateString() === new Date().toDateString()
-        ).length
-
-        // Skip if no content to send
-        const hasContent = goals.length > 0 || todos.length > 0 || notes.length > 0 || 
-                          flashcards.length > 0 || quizzes.length > 0 || studySessions.length > 0 ||
-                          overdueCount > 0 || studyStreak > 0
-
-        if (!hasContent) {
-          console.log(`Skipping user ${user.user_id} - no content to digest`)
-          continue
-        }
-
-        // Generate email HTML
-        const appUrl = supabaseUrl.replace('supabase.co', 'supabase.app')
-        const unsubscribeUrl = `${appUrl}/settings/notifications`
-
-        const emailHtml = await renderAsync(
-          React.createElement(EnhancedDailyDigestEmail, {
-            user_name: user.profiles?.username || 'there',
-            goals: goals.slice(0, 10),
-            todos: todos.slice(0, 15),
-            notes: notes.slice(0, user.notes_limit || 5),
-            flashcards: flashcards.slice(0, user.flashcards_limit || 5),
-            quizzes: quizzes.slice(0, user.quizzes_limit || 3),
-            study_sessions: studySessions.slice(0, user.study_sessions_limit || 5),
-            overdue_count: overdueCount,
-            completed_today: completedToday,
-            study_streak: studyStreak,
-            app_url: appUrl,
-            unsubscribe_url: unsubscribeUrl,
-            preferences: {
-              include_goals: user.include_goals,
-              include_todos: user.include_todos,
-              include_notes: user.include_notes,
-              include_flashcards: user.include_flashcards,
-              include_quizzes: user.include_quizzes,
-              include_study_sessions: user.include_study_sessions,
-              include_streaks: user.include_streaks,
-              include_recommendations: user.include_recommendations,
-            }
-          })
-        )
-
-        // Generate subject line based on content
-        const contentCounts = [
-          goals.length > 0 ? `${goals.length} goals` : '',
-          todos.length > 0 ? `${todos.length} tasks` : '',
-          notes.length > 0 ? `${notes.length} notes` : '',
-          flashcards.length > 0 ? `${flashcards.length} flashcard sets` : '',
-          quizzes.length > 0 ? `${quizzes.length} quiz results` : '',
-          studySessions.length > 0 ? `${studySessions.length} study sessions` : ''
-        ].filter(Boolean).join(', ')
-
-        const subject = `Your Daily Study Digest${contentCounts ? ` - ${contentCounts}` : ''}`
-
-        // Send email
-        const { error: emailError } = await resend.emails.send({
-          from: 'PrepGenie <digest@yourdomain.com>',
-          to: [authUser.user.email],
-          subject: subject,
-          html: emailHtml,
-        })
-
-        if (emailError) {
-          throw emailError
-        }
-
-        // Update last digest sent timestamp
-        await supabase
-          .from('email_digest_preferences')
-          .update({ last_digest_sent_at: now.toISOString() })
-          .eq('user_id', user.user_id)
-
-        processedUsers.push(user.user_id)
-        console.log(`Successfully sent enhanced digest to user: ${user.user_id}`)
-
+        // Get timezone offset
+        const utcTime = new Date(localDateTime.toLocaleString('en-US', { timeZone: 'UTC' }))
+        const localTimeInUserTz = new Date(localDateTime.toLocaleString('en-US', { timeZone: timezone }))
+        
+        // Calculate offset in milliseconds
+        const offsetMs = localTimeInUserTz.getTime() - utcTime.getTime()
+        
+        // Apply offset to get UTC time
+        const utcDateTime = new Date(localDateTime.getTime() - offsetMs)
+        
+        return utcDateTime.toTimeString().split(' ')[0] // Returns HH:MM:SS
       } catch (error) {
-        console.error(`Error processing user ${user.user_id}:`, error)
-        failedUsers.push({ 
-          userId: user.user_id, 
-          error: error.message || 'Unknown error' 
-        })
+        console.error(`Error converting time for timezone ${timezone}:`, error)
+        return localTime // Fallback to original time
       }
     }
 
-    console.log(`Enhanced digest process completed. Processed: ${processedUsers.length}, Failed: ${failedUsers.length}`)
+    // Get users who should receive digests at this time
+    const { data: eligibleUsers, error: usersError } = await supabase
+      .from('email_digest_preferences')
+      .select(`
+        *,
+        profiles!inner(id, email, full_name)
+      `)
+      .eq('digest_enabled', true)
+      .not('profiles.email', 'is', null)
+
+    if (usersError) {
+      console.error('Error fetching users:', usersError)
+      throw usersError
+    }
+
+    console.log(`Found ${eligibleUsers?.length || 0} users with digest preferences`)
+
+    let processedCount = 0
+    let sentCount = 0
+    let errorCount = 0
+
+    for (const userPref of eligibleUsers || []) {
+      try {
+        processedCount++
+        console.log(`Processing user ${processedCount}: ${userPref.profiles.email}`)
+        
+        // Convert user's local digest time to UTC for comparison
+        const userUtcTime = convertLocalTimeToUtc(
+          userPref.digest_time || '08:00:00',
+          userPref.timezone || 'UTC'
+        )
+        
+        console.log(`User ${userPref.profiles.email}: local time ${userPref.digest_time} (${userPref.timezone}) = UTC ${userUtcTime}`)
+        
+        // Check if current UTC time matches user's converted digest time (within 30-minute window)
+        const [userHour, userMinute] = userUtcTime.split(':').map(Number)
+        const userTotalMinutes = userHour * 60 + userMinute
+        const currentTotalMinutes = currentUtcHour * 60 + currentUtcMinute
+        
+        // Allow 30-minute window for matching
+        const timeDiff = Math.abs(currentTotalMinutes - userTotalMinutes)
+        const isTimeMatch = timeDiff <= 30 || timeDiff >= (24 * 60 - 30) // Handle day boundary
+        
+        if (!isTimeMatch) {
+          console.log(`⏰ Skipping user ${userPref.profiles.email} - time mismatch (diff: ${timeDiff} minutes)`)
+          continue
+        }
+
+        // Check if digest was already sent today
+        const today = now.toISOString().split('T')[0]
+        if (userPref.last_digest_sent_at) {
+          const lastSentDate = new Date(userPref.last_digest_sent_at).toISOString().split('T')[0]
+          if (lastSentDate === today) {
+            console.log(`📧 Already sent digest today for ${userPref.profiles.email}`)
+            continue
+          }
+        }
+
+        console.log(`✅ Generating digest for ${userPref.profiles.email}`)
+
+        // Fetch user's data for digest
+        const userId = userPref.user_id
+        
+        // Get goals
+        const { data: goals } = await supabase
+          .from('study_goals')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('status', 'active')
+          .limit(userPref.include_goals ? 5 : 0)
+
+        // Get todos (from reminders table)
+        const { data: todos } = await supabase
+          .from('reminders')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('type', 'todo')
+          .eq('status', 'pending')
+          .limit(userPref.include_todos ? 10 : 0)
+
+        // Get recent notes
+        const { data: notes } = await supabase
+          .from('notes')
+          .select('id, title, created_at')
+          .eq('user_id', userId)
+          .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+          .order('created_at', { ascending: false })
+          .limit(userPref.include_notes ? userPref.notes_limit || 5 : 0)
+
+        // Get flashcard sets
+        const { data: flashcards } = await supabase
+          .from('flashcard_sets')
+          .select('id, title, created_at, card_count')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(userPref.include_flashcards ? userPref.flashcards_limit || 5 : 0)
+
+        // Get recent quiz results
+        const { data: quizResults } = await supabase
+          .from('quiz_results')
+          .select('*, quizzes(title)')
+          .eq('user_id', userId)
+          .gte('completed_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+          .order('completed_at', { ascending: false })
+          .limit(userPref.include_quizzes ? userPref.quizzes_limit || 3 : 0)
+
+        // Get recent study sessions
+        const { data: studySessions } = await supabase
+          .from('study_sessions')
+          .select('*')
+          .eq('user_id', userId)
+          .gte('start_time', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+          .order('start_time', { ascending: false })
+          .limit(userPref.include_study_sessions ? userPref.study_sessions_limit || 5 : 0)
+
+        // Calculate study streak
+        let studyStreak = 0
+        if (userPref.include_streaks) {
+          const { data: recentSessions } = await supabase
+            .from('study_sessions')
+            .select('start_time')
+            .eq('user_id', userId)
+            .gte('start_time', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+            .order('start_time', { ascending: false })
+
+          if (recentSessions && recentSessions.length > 0) {
+            const sessionDates = [...new Set(recentSessions.map(s => 
+              new Date(s.start_time).toISOString().split('T')[0]
+            ))].sort().reverse()
+            
+            let currentDate = new Date().toISOString().split('T')[0]
+            studyStreak = 0
+            
+            for (const sessionDate of sessionDates) {
+              if (sessionDate === currentDate) {
+                studyStreak++
+                const date = new Date(currentDate)
+                date.setDate(date.getDate() - 1)
+                currentDate = date.toISOString().split('T')[0]
+              } else {
+                break
+              }
+            }
+          }
+        }
+
+        // Generate email content
+        const userName = userPref.profiles.full_name || userPref.profiles.email.split('@')[0]
+        
+        let emailContent = `
+          <div style="max-width: 600px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+              <h1 style="margin: 0; font-size: 28px; font-weight: 600;">📚 Your Daily Study Digest</h1>
+              <p style="margin: 10px 0 0 0; opacity: 0.9; font-size: 16px;">Hello ${userName}! Here's your personalized study summary</p>
+            </div>
+            
+            <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        `
+
+        // Add study streak
+        if (userPref.include_streaks && studyStreak > 0) {
+          emailContent += `
+            <div style="background: #f0f9ff; border-left: 4px solid #0ea5e9; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
+              <h3 style="margin: 0 0 5px 0; color: #0ea5e9; font-size: 16px;">🔥 Study Streak</h3>
+              <p style="margin: 0; color: #1e293b; font-size: 14px;">You're on a ${studyStreak}-day study streak! Keep it up!</p>
+            </div>
+          `
+        }
+
+        // Add active goals
+        if (userPref.include_goals && goals && goals.length > 0) {
+          emailContent += `
+            <div style="margin-bottom: 25px;">
+              <h3 style="color: #1e293b; font-size: 18px; margin-bottom: 15px; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px;">🎯 Active Goals</h3>
+          `
+          
+          goals.forEach(goal => {
+            const daysLeft = Math.max(0, Math.ceil((new Date(goal.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+            emailContent += `
+              <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; margin-bottom: 10px; border-radius: 5px;">
+                <h4 style="margin: 0 0 5px 0; color: #92400e; font-size: 14px; font-weight: 600;">${goal.title}</h4>
+                <p style="margin: 0; color: #78350f; font-size: 12px;">${daysLeft} days remaining • ${goal.progress || 0}% complete</p>
+              </div>
+            `
+          })
+          
+          emailContent += `</div>`
+        }
+
+        // Add pending todos
+        if (userPref.include_todos && todos && todos.length > 0) {
+          emailContent += `
+            <div style="margin-bottom: 25px;">
+              <h3 style="color: #1e293b; font-size: 18px; margin-bottom: 15px; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px;">✅ Pending Tasks</h3>
+          `
+          
+          todos.slice(0, 5).forEach(todo => {
+            const isOverdue = todo.due_date && new Date(todo.due_date) < new Date()
+            const priority = todo.priority || 'medium'
+            const priorityColor = priority === 'high' ? '#ef4444' : priority === 'low' ? '#6b7280' : '#f59e0b'
+            
+            emailContent += `
+              <div style="background: ${isOverdue ? '#fef2f2' : '#f8fafc'}; border-left: 4px solid ${isOverdue ? '#ef4444' : priorityColor}; padding: 12px; margin-bottom: 10px; border-radius: 5px;">
+                <h4 style="margin: 0 0 5px 0; color: ${isOverdue ? '#dc2626' : '#1e293b'}; font-size: 14px; font-weight: 600;">${todo.title}</h4>
+                ${todo.due_date ? `<p style="margin: 0; color: ${isOverdue ? '#dc2626' : '#6b7280'}; font-size: 12px;">Due: ${new Date(todo.due_date).toLocaleDateString()}${isOverdue ? ' (Overdue)' : ''}</p>` : ''}
+              </div>
+            `
+          })
+          
+          emailContent += `</div>`
+        }
+
+        // Add recent notes
+        if (userPref.include_notes && notes && notes.length > 0) {
+          emailContent += `
+            <div style="margin-bottom: 25px;">
+              <h3 style="color: #1e293b; font-size: 18px; margin-bottom: 15px; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px;">📝 Recent Notes</h3>
+          `
+          
+          notes.forEach(note => {
+            emailContent += `
+              <div style="background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 12px; margin-bottom: 10px; border-radius: 5px;">
+                <h4 style="margin: 0 0 5px 0; color: #1d4ed8; font-size: 14px; font-weight: 600;">${note.title}</h4>
+                <p style="margin: 0; color: #1e40af; font-size: 12px;">Created ${new Date(note.created_at).toLocaleDateString()}</p>
+              </div>
+            `
+          })
+          
+          emailContent += `</div>`
+        }
+
+        // Add flashcard sets
+        if (userPref.include_flashcards && flashcards && flashcards.length > 0) {
+          emailContent += `
+            <div style="margin-bottom: 25px;">
+              <h3 style="color: #1e293b; font-size: 18px; margin-bottom: 15px; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px;">🃏 Flashcard Sets</h3>
+          `
+          
+          flashcards.forEach(set => {
+            emailContent += `
+              <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 12px; margin-bottom: 10px; border-radius: 5px;">
+                <h4 style="margin: 0 0 5px 0; color: #15803d; font-size: 14px; font-weight: 600;">${set.title}</h4>
+                <p style="margin: 0; color: #166534; font-size: 12px;">${set.card_count || 0} cards</p>
+              </div>
+            `
+          })
+          
+          emailContent += `</div>`
+        }
+
+        // Add recent quiz results
+        if (userPref.include_quizzes && quizResults && quizResults.length > 0) {
+          emailContent += `
+            <div style="margin-bottom: 25px;">
+              <h3 style="color: #1e293b; font-size: 18px; margin-bottom: 15px; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px;">🧠 Recent Quiz Results</h3>
+          `
+          
+          quizResults.forEach(result => {
+            const percentage = Math.round((result.score / result.total_questions) * 100)
+            const scoreColor = percentage >= 80 ? '#22c55e' : percentage >= 60 ? '#f59e0b' : '#ef4444'
+            
+            emailContent += `
+              <div style="background: #fefce8; border-left: 4px solid ${scoreColor}; padding: 12px; margin-bottom: 10px; border-radius: 5px;">
+                <h4 style="margin: 0 0 5px 0; color: #713f12; font-size: 14px; font-weight: 600;">${result.quizzes?.title || 'Quiz'}</h4>
+                <p style="margin: 0; color: #a16207; font-size: 12px;">Score: ${result.score}/${result.total_questions} (${percentage}%)</p>
+              </div>
+            `
+          })
+          
+          emailContent += `</div>`
+        }
+
+        // Add recent study sessions with quality metrics
+        if (userPref.include_study_sessions && studySessions && studySessions.length > 0) {
+          emailContent += `
+            <div style="margin-bottom: 25px;">
+              <h3 style="color: #1e293b; font-size: 18px; margin-bottom: 15px; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px;">⏱️ Recent Study Sessions</h3>
+          `
+          
+          studySessions.forEach(session => {
+            const duration = session.duration ? Math.round(session.duration / 60) : 0
+            const qualityColor = session.session_quality === 'excellent' ? '#22c55e' : 
+                               session.session_quality === 'good' ? '#3b82f6' : 
+                               session.session_quality === 'needs_improvement' ? '#f59e0b' : '#ef4444'
+            
+            emailContent += `
+              <div style="background: #fafafa; border-left: 4px solid ${qualityColor}; padding: 12px; margin-bottom: 10px; border-radius: 5px;">
+                <h4 style="margin: 0 0 5px 0; color: #1e293b; font-size: 14px; font-weight: 600;">${session.title}</h4>
+                <p style="margin: 0; color: #6b7280; font-size: 12px;">
+                  ${duration} minutes • Quality: ${session.session_quality || 'good'}
+                  ${session.subject ? ` • ${session.subject}` : ''}
+                </p>
+              </div>
+            `
+          })
+          
+          emailContent += `</div>`
+        }
+
+        // Add AI recommendations if enabled
+        if (userPref.include_recommendations) {
+          const recommendations = []
+          
+          if (goals && goals.length > 0) {
+            const overdueGoals = goals.filter(g => new Date(g.end_date) < new Date())
+            if (overdueGoals.length > 0) {
+              recommendations.push("📅 You have overdue goals. Consider extending deadlines or breaking them into smaller tasks.")
+            }
+          }
+          
+          if (todos && todos.length > 5) {
+            recommendations.push("📋 You have many pending tasks. Try prioritizing the most important ones first.")
+          }
+          
+          if (studyStreak === 0) {
+            recommendations.push("🚀 Start a new study streak today! Even 15 minutes of focused study can make a difference.")
+          }
+          
+          if (studySessions && studySessions.length === 0) {
+            recommendations.push("📚 No recent study sessions detected. Schedule some focused study time today.")
+          }
+          
+          if (recommendations.length > 0) {
+            emailContent += `
+              <div style="background: #f8fafc; border: 2px solid #e2e8f0; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                <h3 style="color: #1e293b; font-size: 18px; margin-bottom: 15px;">🤖 AI Recommendations</h3>
+            `
+            
+            recommendations.forEach(rec => {
+              emailContent += `<p style="margin: 8px 0; color: #475569; font-size: 14px; line-height: 1.5;">${rec}</p>`
+            })
+            
+            emailContent += `</div>`
+          }
+        }
+
+        // Close email content
+        emailContent += `
+              <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                <p style="margin: 0; color: #6b7280; font-size: 14px;">
+                  Keep up the great work! 🌟<br>
+                  <a href="https://zuhcmwujzfddmafozubd.supabase.co" style="color: #3b82f6; text-decoration: none;">Visit your dashboard</a>
+                </p>
+                <p style="margin: 10px 0 0 0; color: #9ca3af; font-size: 12px;">
+                  You can update your digest preferences in your account settings.
+                </p>
+              </div>
+            </div>
+          </div>
+        `
+
+        // Send email
+        const emailResult = await resend.emails.send({
+          from: 'StudyBuddy <onboarding@resend.dev>',
+          to: [userPref.profiles.email],
+          subject: `📚 Your Study Digest - ${new Date().toLocaleDateString()}`,
+          html: emailContent,
+        })
+
+        if (emailResult.error) {
+          console.error(`Failed to send digest to ${userPref.profiles.email}:`, emailResult.error)
+          errorCount++
+        } else {
+          console.log(`✅ Digest sent successfully to ${userPref.profiles.email}`)
+          sentCount++
+
+          // Update last_digest_sent_at
+          await supabase
+            .from('email_digest_preferences')
+            .update({ last_digest_sent_at: new Date().toISOString() })
+            .eq('user_id', userId)
+        }
+
+      } catch (error) {
+        console.error(`Error processing digest for user:`, error)
+        errorCount++
+      }
+    }
+
+    console.log(`📊 Digest processing complete: ${sentCount} sent, ${errorCount} errors out of ${processedCount} processed`)
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: true,
-        processed: processedUsers.length,
-        failed: failedUsers.length,
-        processedUsers,
-        failedUsers,
+        message: `Enhanced daily digest processing complete`,
+        stats: {
+          processed: processedCount,
+          sent: sentCount,
+          errors: errorCount,
+          timestamp: new Date().toISOString()
+        }
       }),
       { 
         status: 200, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     )
-    
+
   } catch (error) {
-    console.error('Error in enhanced send-daily-digest function:', error)
+    console.error('Error in send-daily-digest function:', error)
     
     return new Response(
       JSON.stringify({ error: error.message || 'Internal server error' }),
