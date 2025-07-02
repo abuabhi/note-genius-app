@@ -144,6 +144,14 @@ export const ReminderNavPopover = () => {
             </div>
           </div>
           <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowAddReminder(true)}
+              className="text-xs px-2 py-1 h-auto hover:bg-gray-100 text-gray-700"
+            >
+              + Add
+            </Button>
             {sentCount > 0 && (
               <Button
                 variant="ghost"
@@ -193,7 +201,7 @@ export const ReminderNavPopover = () => {
           <div className="flex items-center justify-center text-xs text-gray-600">
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-              <span>Clean slate - {totalCount} reminders total</span>
+              <span>Email reminders enabled - {totalCount} reminders total</span>
             </div>
           </div>
         </div>
