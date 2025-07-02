@@ -4,8 +4,6 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/auth';
 import { UserSection } from '@/components/ui/sidebar/UserSection';
 import { ReminderNavPopover } from '@/components/reminders/ReminderNavPopover';
-import { HelpCircle } from 'lucide-react';
-import { useHelp } from '@/contexts/HelpContext';
 
 interface DesktopAuthSectionProps {
   isPublicRoute: boolean;
@@ -13,25 +11,6 @@ interface DesktopAuthSectionProps {
 
 export const DesktopAuthSection = ({ isPublicRoute }: DesktopAuthSectionProps) => {
   const { user } = useAuth();
-  
-  // Safely use help context
-  let helpContext = null;
-  try {
-    helpContext = useHelp();
-  } catch (error) {
-    console.warn('Help context not available:', error);
-  }
-
-  const handleHelpClick = () => {
-    if (helpContext?.openHelp) {
-      const contextualHelp = helpContext.getContextualHelp?.() || [];
-      if (contextualHelp.length > 0) {
-        helpContext.openHelp(contextualHelp[0]);
-      } else {
-        helpContext.openHelp();
-      }
-    }
-  };
 
   if (!user) {
     return (
@@ -68,19 +47,6 @@ export const DesktopAuthSection = ({ isPublicRoute }: DesktopAuthSectionProps) =
       <div className="flex items-center space-x-2 bg-gray-50/60 rounded-full px-3 py-1 backdrop-blur-sm border border-gray-200/50">
         {/* Reminder Bell Icon */}
         <ReminderNavPopover />
-        
-        {/* Help Icon - Next to Reminder */}
-        {helpContext && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleHelpClick}
-            className="h-8 w-8 p-0 hover:bg-mint-100 rounded-full transition-colors"
-            title="Get Help"
-          >
-            <HelpCircle className="h-5 w-5 text-mint-600" />
-          </Button>
-        )}
       </div>
       
       {/* User Profile Section */}

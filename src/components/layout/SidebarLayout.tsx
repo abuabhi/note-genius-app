@@ -5,33 +5,13 @@ import AuthSidebar from './AuthSidebar';
 import Footer from './Footer';
 import { ReminderNavPopover } from '@/components/reminders/ReminderNavPopover';
 import { UserSection } from '@/components/ui/sidebar/UserSection';
-import { useHelp } from '@/contexts/HelpContext';
-import { Button } from '@/components/ui/button';
-import { HelpCircle, Menu } from 'lucide-react';
+import { Menu } from 'lucide-react';
 
 interface SidebarLayoutProps {
   children: React.ReactNode;
 }
 
 const SidebarLayout = ({ children }: SidebarLayoutProps) => {
-  // Safely use help context
-  let helpContext = null;
-  try {
-    helpContext = useHelp();
-  } catch (error) {
-    console.warn('Help context not available:', error);
-  }
-
-  const handleHelpClick = () => {
-    if (helpContext?.openHelp) {
-      const contextualHelp = helpContext.getContextualHelp?.() || [];
-      if (contextualHelp.length > 0) {
-        helpContext.openHelp(contextualHelp[0]);
-      } else {
-        helpContext.openHelp();
-      }
-    }
-  };
 
   return (
     <div className="min-h-screen flex w-full bg-gradient-to-br from-mint-50 via-white to-blue-50">
@@ -65,19 +45,6 @@ const SidebarLayout = ({ children }: SidebarLayoutProps) => {
               <div className="flex items-center gap-2 bg-white/60 rounded-xl px-4 py-2 backdrop-blur-sm border border-gray-200/50 shadow-sm">
                 {/* Reminder Bell Icon */}
                 <ReminderNavPopover />
-                
-                {/* Help Icon */}
-                {helpContext && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleHelpClick}
-                    className="h-8 w-8 p-0 hover:bg-mint-100 rounded-lg transition-all duration-200"
-                    title="Get Help"
-                  >
-                    <HelpCircle className="h-4 w-4 text-mint-600" />
-                  </Button>
-                )}
               </div>
               
               {/* Enhanced User Profile Section */}
