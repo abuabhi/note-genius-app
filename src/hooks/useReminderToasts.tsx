@@ -17,6 +17,7 @@ export const useReminderToasts = () => {
     
     switch (type) {
       case 'study_event':
+      case 'study_session':
         return Clock;
       case 'goal_deadline':
         return CalendarClock;

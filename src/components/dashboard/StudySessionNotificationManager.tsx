@@ -10,10 +10,11 @@ export const StudySessionNotificationManager = () => {
     limit: 50
   });
 
-  // Filter for study-related notifications
+  // Filter for study-related notifications that are currently sent
   const studyNotifications = reminders.filter(reminder => 
-    reminder.type === 'study_session' || 
-    reminder.type === 'flashcard_review' ||
+    (reminder.type === 'study_session' || 
+     reminder.type === 'flashcard_review' ||
+     reminder.type === 'study_event') &&
     reminder.status === 'sent'
   );
 
@@ -21,7 +22,6 @@ export const StudySessionNotificationManager = () => {
     // Show immediate notifications as toasts for high priority study reminders
     studyNotifications
       .filter(notification => 
-        notification.status === 'sent' && 
         notification.priority === 'high'
       )
       .forEach(notification => {
@@ -42,6 +42,7 @@ export const StudySessionNotificationManager = () => {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'study_session':
+      case 'study_event':
         return <BookOpen className="h-4 w-4" />;
       case 'flashcard_review':
         return <Target className="h-4 w-4 text-orange-500" />;

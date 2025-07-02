@@ -2,9 +2,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
+import { useUnifiedReminderSystem } from "@/hooks/useUnifiedReminderSystem";
 
 export const useTodaysFocusData = () => {
   const { user } = useAuth();
+  
+  // Use unified reminder system instead of separate queries
+  const { reminders: allReminders } = useUnifiedReminderSystem({
+    enableRealtime: false,
+    limit: 1000 // Get more reminders to filter properly
+  });
 
   console.log('🔍 useTodaysFocusData hook called with user:', user?.id);
 
@@ -22,24 +29,6 @@ export const useTodaysFocusData = () => {
       console.log('📅 Today date:', today);
       
       try {
-        // Get due reminders (excluding todos)
-        console.log('🔔 Fetching reminders...');
-        const { data: reminders, error: remindersError } = await supabase
-          .from('reminders')
-          .select('*')
-          .eq('user_id', user.id)
-          .neq('type', 'todo') // Exclude todos from reminders
-          .in('status', ['pending', 'sent'])
-          .or(`due_date.eq.${today},reminder_time.gte.${today}T00:00:00,reminder_time.lte.${today}T23:59:59`)
-          .order('reminder_time', { ascending: true })
-          .limit(5);
-
-        if (remindersError) {
-          console.error('❌ Error fetching reminders:', remindersError);
-        } else {
-          console.log('✅ Fetched reminders:', reminders?.length || 0);
-        }
-
         // Get active goals that should be worked on today
         console.log('🎯 Fetching goals...');
         const { data: goals, error: goalsError } = await supabase
@@ -58,88 +47,46 @@ export const useTodaysFocusData = () => {
           console.log('✅ Fetched goals:', goals?.length || 0);
         }
 
-        // Get overdue items (excluding todos)
-        console.log('⚠️ Fetching overdue items...');
-        const { data: overdue, error: overdueError } = await supabase
-          .from('reminders')
-          .select('*')
-          .eq('user_id', user.id)
-          .neq('type', 'todo') // Exclude todos from overdue
-          .eq('status', 'pending')
-          .lt('due_date', today)
-          .order('due_date', { ascending: true })
-          .limit(3);
-
-        if (overdueError) {
-          console.error('❌ Error fetching overdue items:', overdueError);
-        } else {
-          console.log('✅ Fetched overdue items:', overdue?.length || 0);
-        }
-
-        // Get ALL todos for this user first to debug
-        console.log('📝 Fetching ALL todos for debugging...');
-        const { data: allUserTodos, error: allTodosError } = await supabase
-          .from('reminders')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('type', 'todo');
-
-        console.log('📝 DEBUG - All todos for user:', allUserTodos?.length || 0);
-        
-        if (allUserTodos && allUserTodos.length > 0) {
-          console.log('📝 DEBUG - All todos with details:');
-          allUserTodos.forEach((todo, index) => {
-            console.log(`📝 Todo ${index + 1}:`, {
-              id: todo.id,
-              title: todo.title,
-              due_date: todo.due_date,
-              status: todo.status,
-              type: todo.type,
-              is_due_today: todo.due_date === today,
-              is_overdue: todo.due_date && todo.due_date < today,
-              has_no_due_date: !todo.due_date
-            });
-          });
-        }
-
-        if (allTodosError) {
-          console.error('❌ Error fetching all todos:', allTodosError);
-        }
-
-        // Simplified approach: Get ALL todos regardless of status and filter later
-        console.log('📝 Fetching todos for today\'s focus (all statuses)...');
-        const { data: todos, error: todosError } = await supabase
-          .from('reminders')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('type', 'todo')
-          .order('due_date', { ascending: true });
-
-        console.log('📝 Raw todos data received:', todos);
-        console.log('📝 Number of todos:', todos?.length || 0);
-
-        let filteredTodos = [];
-        if (todos && todos.length > 0) {
-          console.log('📝 Processing todos...');
-          // For now, let's show ALL todos to see if they appear
-          filteredTodos = todos.slice(0, 5); // Show first 5 todos regardless of due date
+        // Filter reminders from unified system instead of making separate queries
+        console.log('🔔 Processing reminders from unified system...');
+        const dueReminders = allReminders.filter(reminder => {
+          // Due reminders (excluding todos)
+          if (reminder.type === 'todo') return false;
+          if (reminder.status === 'cancelled') return false;
           
-          console.log('📝 Filtered todos (showing all):', filteredTodos);
-        } else {
-          console.log('📝 No todos found or todos array is empty');
-        }
+          const reminderDate = reminder.reminder_time ? new Date(reminder.reminder_time).toISOString().split('T')[0] : null;
+          const dueDate = reminder.due_date;
+          
+          return (dueDate === today) || 
+                 (reminderDate === today) ||
+                 (reminder.status === 'sent' && (!reminderDate || reminderDate <= today));
+        }).slice(0, 5);
 
-        if (todosError) {
-          console.error('❌ Error fetching todos:', todosError);
-        } else {
-          console.log('✅ Final todos to display:', filteredTodos?.length || 0);
-        }
+        console.log('✅ Filtered due reminders:', dueReminders.length);
+
+        // Filter overdue items from unified system
+        console.log('⚠️ Processing overdue items...');
+        const overdueItems = allReminders.filter(reminder => {
+          if (reminder.type === 'todo') return false;
+          if (reminder.status !== 'pending') return false;
+          return reminder.due_date && reminder.due_date < today;
+        }).slice(0, 3);
+
+        console.log('✅ Filtered overdue items:', overdueItems.length);
+
+        // Filter todos from unified system
+        console.log('📝 Processing todos...');
+        const todoItems = allReminders.filter(reminder => {
+          return reminder.type === 'todo' && reminder.status === 'pending';
+        }).slice(0, 5);
+
+        console.log('✅ Filtered todos:', todoItems.length);
 
         const result = {
-          reminders: reminders || [],
+          reminders: dueReminders || [],
           goals: goals || [],
-          overdue: overdue || [],
-          todos: filteredTodos || []
+          overdue: overdueItems || [],
+          todos: todoItems || []
         };
 
         console.log('📊 Final result summary:', {
@@ -149,14 +96,13 @@ export const useTodaysFocusData = () => {
           todos: result.todos.length
         });
         
-        console.log('📊 Complete final result:', result);
         return result;
       } catch (error) {
         console.error('💥 Error fetching today\'s items:', error);
         return { reminders: [], goals: [], overdue: [], todos: [] };
       }
     },
-    enabled: !!user,
+    enabled: !!user && allReminders.length >= 0, // Wait for reminders to load
     staleTime: 1 * 60 * 1000, // 1 minute
   });
 
