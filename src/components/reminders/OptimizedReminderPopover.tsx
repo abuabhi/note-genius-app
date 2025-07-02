@@ -9,7 +9,7 @@ import {
 import { Bell, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { OptimizedRemindersList } from './OptimizedRemindersList';
-import { useOptimizedReminderNotifications } from '@/hooks/reminders/useOptimizedReminderNotifications';
+import { useUnifiedReminderSystem } from '@/hooks/useUnifiedReminderSystem';
 
 export const OptimizedReminderPopover = () => {
   const { 
@@ -19,7 +19,10 @@ export const OptimizedReminderPopover = () => {
     dismissReminder, 
     dismissAll,
     isDismissing 
-  } = useOptimizedReminderNotifications();
+  } = useUnifiedReminderSystem({
+    enableRealtime: true,
+    enableNotifications: true,
+  });
   const [open, setOpen] = useState(false);
   
   // Get any overdue reminders for urgent styling
@@ -27,6 +30,8 @@ export const OptimizedReminderPopover = () => {
   const hasOverdueReminders = reminders.some(
     r => r.status === 'pending' && r.reminder_time && new Date(r.reminder_time) < now
   );
+  
+  console.log('🔔 OptimizedReminderPopover - UNIFIED SYSTEM ONLY - Unread:', unreadCount);
   
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -54,7 +59,7 @@ export const OptimizedReminderPopover = () => {
         {/* Header */}
         <div className="flex justify-between items-center p-4 border-b">
           <div className="flex items-center gap-2">
-            <h4 className="text-sm font-medium">Reminders</h4>
+            <h4 className="text-sm font-medium">Reminders (Unified System)</h4>
             {unreadCount > 0 && (
               <Badge 
                 variant="outline" 
@@ -94,6 +99,7 @@ export const OptimizedReminderPopover = () => {
               reminders={reminders}
               loading={isLoading}
               onDismiss={async (id) => {
+                console.log('🗑️ Dismissing via UNIFIED SYSTEM:', id);
                 dismissReminder(id);
               }}
             />
@@ -104,10 +110,10 @@ export const OptimizedReminderPopover = () => {
         {reminders.length > 0 && (
           <div className="border-t px-4 py-2 bg-gray-50">
             <div className="flex items-center justify-between text-xs text-gray-500">
-              <span>Real-time updates enabled</span>
+              <span>UNIFIED SYSTEM - Real-time updates</span>
               <div className="flex items-center gap-1">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span>Optimized</span>
+                <span>Single Source</span>
               </div>
             </div>
           </div>

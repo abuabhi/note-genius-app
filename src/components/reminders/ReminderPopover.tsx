@@ -18,14 +18,13 @@ export const ReminderPopover = () => {
     isLoading, 
     dismissReminder 
   } = useUnifiedReminderSystem({
-    // Remove hardcoded limit - get ALL reminders
     limit: 1000,
     enableRealtime: true,
     enableNotifications: true
   });
   const [open, setOpen] = useState(false);
   
-  // Count pending reminders (not dismissed/cancelled)
+  // Count pending reminders (not dismissed/cancelled) - UNIFIED SYSTEM ONLY
   const pendingCount = reminders.filter(r => r.status === 'pending').length;
   
   // Get any overdue reminders
@@ -34,7 +33,7 @@ export const ReminderPopover = () => {
     r => r.status === 'pending' && new Date(r.reminder_time) < now
   );
   
-  console.log('🔔 ReminderPopover - Total count:', totalCount, 'Pending count:', pendingCount, 'Displayed reminders:', reminders.length);
+  console.log('🔔 ReminderPopover - UNIFIED SYSTEM ONLY - Total:', totalCount, 'Pending:', pendingCount);
   
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -58,7 +57,7 @@ export const ReminderPopover = () => {
       </PopoverTrigger>
       <PopoverContent className="w-80 p-4" align="end">
         <div className="flex justify-between items-center mb-4">
-          <h4 className="text-sm font-medium">Reminders</h4>
+          <h4 className="text-sm font-medium">Reminders (Unified System)</h4>
           {totalCount > 0 && (
             <Badge variant="outline">
               {totalCount} total {pendingCount > 0 && `(${pendingCount} pending)`}
@@ -70,6 +69,7 @@ export const ReminderPopover = () => {
             reminders={reminders}
             loading={isLoading}
             onDismiss={(id) => {
+              console.log('🗑️ Dismissing via UNIFIED SYSTEM:', id);
               dismissReminder(id);
               return Promise.resolve(true);
             }}

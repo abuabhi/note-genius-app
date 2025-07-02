@@ -36,12 +36,12 @@ export const useUnifiedReminderSystem = (options: UnifiedReminderSystemOptions =
   const queryClient = useQueryClient();
   const { 
     limit = 50,
-    status = ['pending', 'sent'] 
+    status = ['pending', 'sent'] // EXPLICITLY EXCLUDE 'cancelled' to prevent dismissed reminders from reappearing
   } = options;
 
-  console.log('🔄 useUnifiedReminderSystem initialized');
+  console.log('🔄 useUnifiedReminderSystem initialized - SINGLE SOURCE OF TRUTH');
 
-  // Simple query without problematic options
+  // Single query for all reminders - NO OTHER SYSTEMS
   const {
     data: reminders = [],
     isLoading,
@@ -54,7 +54,7 @@ export const useUnifiedReminderSystem = (options: UnifiedReminderSystemOptions =
         return [];
       }
 
-      console.log('🔔 Fetching reminders for user:', user.id);
+      console.log('🔔 Fetching reminders with status filter:', status);
       
       const { data, error } = await supabase
         .from('reminders')
@@ -64,7 +64,7 @@ export const useUnifiedReminderSystem = (options: UnifiedReminderSystemOptions =
           goals:study_goals(id, title)
         `)
         .eq('user_id', user.id)
-        .in('status', status)
+        .in('status', status) // This ensures 'cancelled' reminders are excluded
         .order('created_at', { ascending: false })
         .limit(limit);
 
@@ -73,7 +73,7 @@ export const useUnifiedReminderSystem = (options: UnifiedReminderSystemOptions =
         throw error;
       }
 
-      console.log('✅ Fetched reminders:', data?.length || 0);
+      console.log('✅ Fetched reminders (excluding cancelled):', data?.length || 0);
       
       // Transform the data to match our SimpleReminder interface
       const transformedData: SimpleReminder[] = (data || []).map(item => ({
@@ -110,7 +110,7 @@ export const useUnifiedReminderSystem = (options: UnifiedReminderSystemOptions =
   // Dismiss single reminder with optimistic update
   const dismissMutation = useMutation({
     mutationFn: async (reminderId: string) => {
-      console.log('🗑️ Dismissing reminder:', reminderId);
+      console.log('🗑️ UNIFIED SYSTEM: Dismissing reminder permanently:', reminderId);
       
       const { error } = await supabase
         .from('reminders')
@@ -152,7 +152,7 @@ export const useUnifiedReminderSystem = (options: UnifiedReminderSystemOptions =
       toast.error('Failed to dismiss reminder');
     },
     onSuccess: () => {
-      console.log('✅ Reminder dismissed successfully');
+      console.log('✅ Reminder dismissed permanently via UNIFIED SYSTEM');
       toast.success('Reminder dismissed');
     }
   });
@@ -160,7 +160,7 @@ export const useUnifiedReminderSystem = (options: UnifiedReminderSystemOptions =
   // Batch dismiss with optimistic update
   const batchDismissMutation = useMutation({
     mutationFn: async (reminderIds: string[]) => {
-      console.log('🗑️ Batch dismissing reminders:', reminderIds.length);
+      console.log('🗑️ UNIFIED SYSTEM: Batch dismissing reminders permanently:', reminderIds.length);
       
       const { error } = await supabase
         .from('reminders')
@@ -202,7 +202,7 @@ export const useUnifiedReminderSystem = (options: UnifiedReminderSystemOptions =
       toast.error('Failed to dismiss reminders');
     },
     onSuccess: (reminderIds) => {
-      console.log('✅ Batch dismissed reminders:', reminderIds.length);
+      console.log('✅ Batch dismissed reminders permanently via UNIFIED SYSTEM:', reminderIds.length);
       toast.success(`Dismissed ${reminderIds.length} reminders`);
     }
   });

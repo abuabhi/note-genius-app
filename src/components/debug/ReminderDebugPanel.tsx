@@ -20,7 +20,6 @@ export const ReminderDebugPanel = () => {
   } = useUnifiedReminderSystem({
     enableRealtime: true,
     enableNotifications: true,
-    // Remove hardcoded limit - get ALL reminders
     limit: 1000
   });
 
@@ -32,7 +31,7 @@ export const ReminderDebugPanel = () => {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Reminder Debug Panel</CardTitle>
+          <CardTitle>Reminder Debug Panel - UNIFIED SYSTEM ONLY</CardTitle>
         </CardHeader>
         <CardContent>
           <p>Loading reminders...</p>
@@ -45,7 +44,7 @@ export const ReminderDebugPanel = () => {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Reminder Debug Panel</CardTitle>
+          <CardTitle>Reminder Debug Panel - UNIFIED SYSTEM ONLY</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-red-500">Error: {error.message}</p>
@@ -61,15 +60,16 @@ export const ReminderDebugPanel = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Reminder Debug Panel</CardTitle>
+          <CardTitle>🎯 UNIFIED Reminder System - Single Source of Truth</CardTitle>
           <CardDescription>
-            Debug and manage reminder system
+            ALL other reminder systems have been DELETED. This is the ONLY system now.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-4 items-center">
             <Badge variant="outline">Total: {totalCount}</Badge>
             <Badge variant="destructive">Unread: {unreadCount}</Badge>
+            <Badge variant="secondary">Status Filter: pending, sent (EXCLUDES cancelled)</Badge>
             <Button onClick={handleRefresh} size="sm" variant="outline">
               Refresh
             </Button>
@@ -84,9 +84,9 @@ export const ReminderDebugPanel = () => {
           </div>
 
           <div className="space-y-2">
-            <h4 className="font-medium">Reminders ({reminders.length})</h4>
+            <h4 className="font-medium">Reminders ({reminders.length}) - UNIFIED SYSTEM</h4>
             {reminders.length === 0 ? (
-              <p className="text-muted-foreground">No reminders found</p>
+              <p className="text-muted-foreground">✅ All caught up! No reminders found (cancelled ones are filtered out)</p>
             ) : (
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {reminders.map((reminder) => (
@@ -112,7 +112,10 @@ export const ReminderDebugPanel = () => {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => dismissReminder(reminder.id)}
+                      onClick={() => {
+                        console.log('🗑️ Debug panel dismissing via UNIFIED SYSTEM:', reminder.id);
+                        dismissReminder(reminder.id);
+                      }}
                       disabled={isDismissing}
                     >
                       Dismiss

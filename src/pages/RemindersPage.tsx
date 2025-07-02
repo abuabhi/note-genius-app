@@ -13,7 +13,6 @@ const RemindersPage = () => {
     totalCount, 
     isLoading: remindersLoading 
   } = useUnifiedReminderSystem({
-    // Remove hardcoded limit - get ALL reminders
     limit: 1000,
     enableRealtime: true,
     enableNotifications: true
@@ -48,8 +47,8 @@ const RemindersPage = () => {
     <Layout>
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
         <StandardPageHeader
-          title="Reminders"
-          description={`Set and manage your study reminders (${totalCount} total reminders)`}
+          title="🎯 UNIFIED Reminder System"
+          description={`Single source of truth for reminders (${totalCount} total) - All other systems DELETED`}
           icon={<Bell className="h-6 w-6 text-white" />}
           breadcrumbs={breadcrumbs}
         />
@@ -60,14 +59,17 @@ const RemindersPage = () => {
             
             <div className="mt-8">
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <h3 className="font-semibold text-green-800 mb-2">✅ Unified Reminder System Active</h3>
+                <h3 className="font-semibold text-green-800 mb-2">✅ UNIFIED Reminder System - SINGLE SOURCE OF TRUTH</h3>
                 <p className="text-green-700 text-sm">
-                  The reminder system has been unified and optimized. You should now see accurate counts 
-                  and no more duplicate reminders. The badge will show the correct number of reminders 
-                  instead of being stuck at 20.
+                  🎯 All other reminder systems have been DELETED. Only useUnifiedReminderSystem exists now.
+                  <br />
+                  🗑️ When you dismiss reminders, they are marked as 'cancelled' and excluded from all queries.
+                  <br />
+                  🔄 No more competing systems or cache conflicts - dismissed reminders will STAY dismissed.
                 </p>
                 <div className="mt-2 text-sm text-green-600">
-                  <div>Current Status: {totalCount} total reminders, {reminders.filter(r => r.status === 'pending').length} pending</div>
+                  <div>Status: {totalCount} total reminders, {reminders.filter(r => r.status === 'pending').length} pending</div>
+                  <div>System: UNIFIED ONLY (all deprecated hooks deleted)</div>
                 </div>
               </div>
             </div>

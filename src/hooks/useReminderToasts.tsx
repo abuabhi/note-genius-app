@@ -1,11 +1,15 @@
 
 import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
-import { useReminderNotifications } from './useReminderNotifications';
+import { useUnifiedReminderSystem } from './useUnifiedReminderSystem';
 import { Bell, Clock, CalendarClock, BrainCircuit, Calendar } from 'lucide-react';
 
 export const useReminderToasts = () => {
-  const { pendingReminders, dismissReminder } = useReminderNotifications();
+  const { reminders, dismissReminder } = useUnifiedReminderSystem({
+    enableRealtime: true,
+    enableNotifications: true,
+    limit: 1000
+  });
   const shownReminders = useRef(new Set<string>());
 
   const getReminderIcon = (type: string, isDueDate: boolean = false) => {
@@ -52,21 +56,21 @@ export const useReminderToasts = () => {
   };
 
   useEffect(() => {
-    console.log('🔔 useReminderToasts - All pending reminders:', pendingReminders);
+    console.log('🔔 useReminderToasts - Using UNIFIED SYSTEM ONLY:', reminders.length);
     
     // Check for newly sent reminders (status = 'sent') that haven't been shown yet
-    const newReminders = pendingReminders.filter(reminder => 
+    const newReminders = reminders.filter(reminder => 
       reminder.status === 'sent' && 
       !shownReminders.current.has(reminder.id)
     );
 
-    console.log('🔔 useReminderToasts - New reminders to show as toast:', newReminders);
+    console.log('🔔 New reminders to show as toast via UNIFIED SYSTEM:', newReminders.length);
 
     newReminders.forEach(reminder => {
       const messageInfo = getReminderMessage(reminder);
       const Icon = getReminderIcon(reminder.type, messageInfo.isDueDate);
       
-      console.log('🔔 Showing toast for reminder:', messageInfo.title);
+      console.log('🔔 Showing toast for reminder via UNIFIED SYSTEM:', messageInfo.title);
       
       // Mark this reminder as shown
       shownReminders.current.add(reminder.id);
@@ -78,19 +82,19 @@ export const useReminderToasts = () => {
         action: {
           label: 'Dismiss',
           onClick: async () => {
-            console.log('Reminder dismissed via toast:', reminder.id);
-            await dismissReminder(reminder.id);
+            console.log('Reminder dismissed via toast (UNIFIED SYSTEM):', reminder.id);
+            dismissReminder(reminder.id);
           }
         }
       });
     });
 
     // Clean up shown reminders that are no longer in pending list
-    const currentReminderIds = new Set(pendingReminders.map(r => r.id));
+    const currentReminderIds = new Set(reminders.map(r => r.id));
     const toRemove = Array.from(shownReminders.current).filter(id => !currentReminderIds.has(id));
     toRemove.forEach(id => shownReminders.current.delete(id));
 
-  }, [pendingReminders, dismissReminder]);
+  }, [reminders, dismissReminder]);
 
-  return { pendingReminders };
+  return { pendingReminders: reminders };
 };

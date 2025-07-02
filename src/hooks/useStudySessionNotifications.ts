@@ -1,7 +1,7 @@
 
 import { useEffect, useMemo } from 'react';
 import { useActiveStudySessionData } from './useActiveStudySessionData';
-import { useOptimizedReminderNotifications } from './reminders/useOptimizedReminderNotifications';
+import { useUnifiedReminderSystem } from './useUnifiedReminderSystem';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -19,7 +19,14 @@ interface StudySessionNotification {
 export const useStudySessionNotifications = () => {
   const { user } = useAuth();
   const sessionData = useActiveStudySessionData();
-  const { reminders, dismissReminder } = useOptimizedReminderNotifications();
+  
+  // Use ONLY the unified reminder system
+  const { reminders, dismissReminder } = useUnifiedReminderSystem({
+    enableRealtime: true,
+    enableNotifications: true,
+  });
+
+  console.log('📚 Study Session Notifications using UNIFIED SYSTEM ONLY');
 
   // Generate smart notifications based on study session data with unique IDs
   const studyNotifications = useMemo((): StudySessionNotification[] => {
@@ -127,12 +134,12 @@ export const useStudySessionNotifications = () => {
         });
 
       if (error) {
-        console.error('Error creating study reminder:', error);
+        console.error('Error creating study reminder via UNIFIED SYSTEM:', error);
       } else {
-        console.log('Study reminder created:', notification.title);
+        console.log('Study reminder created via UNIFIED SYSTEM:', notification.title);
       }
     } catch (error) {
-      console.error('Failed to create study reminder:', error);
+      console.error('Failed to create study reminder via UNIFIED SYSTEM:', error);
     }
   };
 
@@ -181,13 +188,14 @@ export const useStudySessionNotifications = () => {
   }, [user, sessionData.hasActivePlans, sessionData.todayProgress.completionPercentage]);
 
   const dismissStudyNotification = (notificationId: string) => {
-    // Find corresponding reminder and dismiss it
+    // Find corresponding reminder and dismiss it via UNIFIED SYSTEM
     const reminder = reminders.find(r => 
       r.type === 'study_event' && 
       r.title.toLowerCase().includes(notificationId.split('-')[0])
     );
     
     if (reminder) {
+      console.log('Dismissing study notification via UNIFIED SYSTEM:', reminder.id);
       dismissReminder(reminder.id);
     }
   };
