@@ -1,7 +1,7 @@
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { ChevronsUpDown, Settings, Shield, LogOut, Bell } from "lucide-react";
+import { ChevronsUpDown, Settings, Shield, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { 
@@ -76,15 +76,6 @@ export const UserSection = ({ isCollapsed }: UserSectionProps) => {
           align="end" 
           className="w-56 bg-white/95 backdrop-blur-md border border-gray-200/60 shadow-lg"
         >
-          <DropdownMenuItem
-            asChild
-            className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-mint-50"
-          >
-            <Link to="/notifications">
-              <Bell className="h-4 w-4 text-gray-600" /> 
-              <span>Notifications</span>
-            </Link>
-          </DropdownMenuItem>
           <DropdownMenuItem
             asChild
             className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-mint-50"
