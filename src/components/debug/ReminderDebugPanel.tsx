@@ -61,6 +61,11 @@ export const ReminderDebugPanel = () => {
     }
   };
 
+  // Fix the refresh handler to match button onClick signature
+  const handleRefresh = () => {
+    refresh();
+  };
+
   if (isLoading) {
     return <div className="p-4 bg-blue-50 rounded-lg">Loading debug panel...</div>;
   }
@@ -87,7 +92,7 @@ export const ReminderDebugPanel = () => {
         <div className="bg-white p-3 rounded border">
           <h4 className="font-medium text-gray-700">Actions</h4>
           <div className="space-y-2">
-            <Button size="sm" onClick={refresh} className="w-full">
+            <Button size="sm" onClick={handleRefresh} className="w-full">
               Refresh Query
             </Button>
             <Button size="sm" variant="outline" onClick={debugDatabaseState} className="w-full">
