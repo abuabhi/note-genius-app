@@ -1,81 +1,114 @@
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu"
+import { useAuth } from "@/contexts/auth"
+import { useSettings } from "@/contexts/settings"
+import { HelpCircle, LogOut, User } from "lucide-react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { ThemeToggle } from "../theme/ThemeToggle"
+import { NotificationPopover } from '@/components/reminders/NotificationPopover';
 
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { UserMenu } from './UserMenu';
-import { useAuth } from '@/contexts/auth';
-import { NotificationPanel } from '@/components/notifications/NotificationPanel';
-import { ScalableReminderPopover } from '@/components/reminders/ScalableReminderPopover';
-import { Menu } from 'lucide-react';
+export const Header = () => {
+  const { user, signOut } = useAuth()
+  const { settings, updateSettings } = useSettings()
+  const router = useRouter()
+  const [mounted, setMounted] = useState(false)
 
-interface HeaderProps {
-  onMenuClick?: () => void;
-  showMenuButton?: boolean;
-}
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
-const Header: React.FC<HeaderProps> = ({ onMenuClick, showMenuButton = false }) => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
+  const handleSignOut = async () => {
+    await signOut()
+    router.push("/login")
+  }
+
+  if (!mounted) {
+    return null
+  }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
-          {/* Left side - Logo and Menu */}
-          <div className="flex items-center gap-4">
-            {showMenuButton && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onMenuClick}
-                className="md:hidden"
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
-            )}
-            
-            <Link to="/" className="flex items-center gap-2">
-              <div className="text-2xl font-bold bg-gradient-to-r from-mint-600 to-blue-600 bg-clip-text text-transparent">
-                PrepGenie
-              </div>
+    <header className="bg-white border-b border-gray-200 relative z-50">
+      <div className="px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex items-center space-x-4">
+            <Link href="/" className="font-bold text-xl">
+              PrepGenie
             </Link>
+            <nav className="hidden md:flex space-x-6">
+              <Link href="/dashboard" className="hover:text-gray-500 transition">
+                Dashboard
+              </Link>
+              <Link href="/library" className="hover:text-gray-500 transition">
+                Library
+              </Link>
+              <Link href="/community" className="hover:text-gray-500 transition">
+                Community
+              </Link>
+            </nav>
           </div>
-
-          {/* Right side - Actions */}
-          <div className="flex items-center gap-2">
-            {user ? (
-              <>
-                {/* Scalable Reminder System */}
-                <ScalableReminderPopover />
-                
-                {/* Notification Panel */}
-                <NotificationPanel />
-                
-                {/* User Menu */}
-                <UserMenu />
-              </>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant="ghost" 
-                  onClick={() => navigate('/login')}
-                  className="text-gray-700 hover:text-gray-900"
-                >
-                  Sign In
+          
+          <div className="flex items-center space-x-4">
+            {user && <NotificationPopover />}
+            <Button variant="ghost" size="icon" asChild>
+              <Link href="/help">
+                <HelpCircle className="h-5 w-5" />
+              </Link>
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user?.user_metadata?.avatar_url} />
+                    <AvatarFallback>
+                      <User className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
                 </Button>
-                <Button 
-                  onClick={() => navigate('/signup')}
-                  className="bg-mint-600 hover:bg-mint-700 text-white"
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">Profile</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings">Settings</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Preferences</DropdownMenuLabel>
+                <DropdownMenuCheckboxItem
+                  checked={settings?.aiEnabled}
+                  onCheckedChange={(checked) =>
+                    updateSettings({ aiEnabled: checked })
+                  }
                 >
-                  Get Started
-                </Button>
-              </div>
-            )}
+                  Enable AI
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuSeparator />
+                <ThemeToggle />
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
     </header>
   );
 };
-
-export default Header;

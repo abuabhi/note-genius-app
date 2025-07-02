@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { AuthProvider } from './contexts/auth/AuthProvider';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
@@ -6,8 +5,11 @@ import { AppProviders } from './components/app/AppProviders';
 import { QueryProvider } from './components/app/QueryProvider';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import AppRoutes from './components/app/AppRoutes';
+import { useNotificationToasts } from '@/hooks/useNotificationToasts';
 
 function App() {
+  useNotificationToasts(); // Add this line to enable notification toasts
+  
   useEffect(() => {
     document.title = 'PrepGenie';
   }, []);
