@@ -57,21 +57,25 @@ export const useReminderToasts = () => {
   };
 
   useEffect(() => {
-    console.log('🔔 useReminderToasts - Using UNIFIED SYSTEM ONLY:', reminders.length);
+    console.log('🔔 useReminderToasts - Simplified System:', reminders.length);
     
-    // Check for newly sent reminders (status = 'sent') that haven't been shown yet
-    const newReminders = reminders.filter(reminder => 
-      reminder.status === 'sent' && 
-      !shownReminders.current.has(reminder.id)
-    );
+    // Show toasts for new active reminders that need attention
+    const newReminders = reminders.filter(reminder => {
+      // Check if this reminder should show a toast
+      const reminderTime = new Date(reminder.reminder_time);
+      const now = new Date();
+      const shouldShow = reminderTime <= now && !shownReminders.current.has(reminder.id);
+      
+      return shouldShow;
+    });
 
-    console.log('🔔 New reminders to show as toast via UNIFIED SYSTEM:', newReminders.length);
+    console.log('🔔 New reminders to show as toast:', newReminders.length);
 
     newReminders.forEach(reminder => {
       const messageInfo = getReminderMessage(reminder);
       const Icon = getReminderIcon(reminder.type, messageInfo.isDueDate);
       
-      console.log('🔔 Showing toast for reminder via UNIFIED SYSTEM:', messageInfo.title);
+      console.log('🔔 Showing toast for reminder:', messageInfo.title);
       
       // Mark this reminder as shown
       shownReminders.current.add(reminder.id);
@@ -79,23 +83,23 @@ export const useReminderToasts = () => {
       toast(messageInfo.title, {
         description: messageInfo.description,
         icon: <Icon className="h-4 w-4" />,
-        duration: messageInfo.isDueDate ? 10000 : 8000, // Show due date notifications longer
+        duration: messageInfo.isDueDate ? 10000 : 8000,
         action: {
           label: 'Dismiss',
           onClick: async () => {
-            console.log('Reminder dismissed via toast (UNIFIED SYSTEM):', reminder.id);
+            console.log('Reminder dismissed via toast:', reminder.id);
             dismissReminder(reminder.id);
           }
         }
       });
     });
 
-    // Clean up shown reminders that are no longer in pending list
+    // Clean up shown reminders that are no longer active
     const currentReminderIds = new Set(reminders.map(r => r.id));
     const toRemove = Array.from(shownReminders.current).filter(id => !currentReminderIds.has(id));
     toRemove.forEach(id => shownReminders.current.delete(id));
 
   }, [reminders, dismissReminder]);
 
-  return { pendingReminders: reminders };
+  return { activeReminders: reminders };
 };

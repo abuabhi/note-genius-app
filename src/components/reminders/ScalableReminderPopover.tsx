@@ -28,37 +28,21 @@ export const ScalableReminderPopover = () => {
     enableRealtime: true,
   });
   
-  // Count pending reminders
-  const pendingCount = reminders.filter(r => r.status === 'pending').length;
-  const sentCount = reminders.filter(r => r.status === 'sent').length;
-  
-  // Get overdue reminders for styling
-  const now = new Date();
-  const hasOverdueReminders = reminders.some(
-    r => r.status === 'pending' && r.reminder_time && new Date(r.reminder_time) < now
-  );
+  console.log('🔔 ScalableReminderPopover - Total reminders:', totalCount);
 
-  // Handle dismiss all - FIXED VERSION
+  // Handle dismiss all - simplified
   const handleDismissAll = useCallback(async () => {
     console.log('🗑️ HandleDismissAll called - Current reminders:', reminders.length);
-    console.log('📊 Reminder statuses:', reminders.map(r => ({ id: r.id, status: r.status, title: r.title })));
     
-    const sentReminderIds = reminders
-      .filter(r => r.status === 'sent')
-      .map(r => r.id);
-    
-    console.log('🎯 Sent reminder IDs to dismiss:', sentReminderIds);
-    
-    if (sentReminderIds.length === 0) {
-      toast.info('No sent reminders to dismiss');
+    if (reminders.length === 0) {
+      toast.info('No reminders to dismiss');
       return;
     }
     
-    // Call the dismissAll function directly - no manual handling
     dismissAll();
-  }, [reminders, dismissAll]);
+  }, [reminders.length, dismissAll]);
 
-  // Handle single dismiss - FIXED VERSION
+  // Handle single dismiss - simplified
   const handleDismissSingle = useCallback(async (id: string) => {
     console.log('🗑️ Dismissing single reminder:', id);
     dismissReminder(id);
@@ -90,7 +74,7 @@ export const ScalableReminderPopover = () => {
         align="end"
         sideOffset={8}
       >
-        {/* Header */}
+        {/* Simplified Header - no confusing status badges */}
         <div className="flex justify-between items-center p-4 border-b bg-gray-50">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-gray-100 rounded-full">
@@ -99,23 +83,12 @@ export const ScalableReminderPopover = () => {
             <div>
               <h4 className="text-sm font-semibold text-gray-800">Reminders</h4>
               {totalCount > 0 && (
-                <div className="flex items-center gap-2 text-xs text-gray-600">
-                  {pendingCount > 0 && (
-                    <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
-                      {pendingCount} pending
-                    </Badge>
-                  )}
-                  {sentCount > 0 && (
-                    <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
-                      {sentCount} sent
-                    </Badge>
-                  )}
-                </div>
+                <p className="text-xs text-gray-600">{totalCount} active</p>
               )}
             </div>
           </div>
           <div className="flex items-center gap-1">
-            {sentCount > 0 && (
+            {totalCount > 0 && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -131,7 +104,7 @@ export const ScalableReminderPopover = () => {
                 ) : (
                   <>
                     <CheckCircle2 className="w-3 h-3 mr-1" />
-                    Dismiss All ({sentCount})
+                    Dismiss All
                   </>
                 )}
               </Button>
@@ -159,13 +132,13 @@ export const ScalableReminderPopover = () => {
           />
         </div>
 
-        {/* Footer */}
+        {/* Simplified Footer */}
         {totalCount > 0 && (
           <div className="border-t px-4 py-2 bg-gray-50">
             <div className="flex items-center justify-center text-xs text-gray-600">
               <div className="flex items-center gap-1">
                 <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span>UNIFIED System - {totalCount} reminders</span>
+                <span>Simplified System - {totalCount} active</span>
               </div>
             </div>
           </div>

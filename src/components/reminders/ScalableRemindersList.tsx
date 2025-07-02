@@ -5,7 +5,7 @@ import { CheckCircle, Trash2, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 
-// Using the SimpleReminder interface from useUnifiedReminderSystem
+// Simplified reminder interface
 interface SimpleReminder {
   id: string;
   user_id: string;
@@ -69,10 +69,8 @@ export const ScalableRemindersList = ({
     );
   }
 
-  // Sort by status (sent first) then by time
+  // Sort by reminder time
   const sortedReminders = [...reminders].sort((a, b) => {
-    if (a.status === 'sent' && b.status !== 'sent') return -1;
-    if (a.status !== 'sent' && b.status === 'sent') return 1;
     return new Date(a.reminder_time).getTime() - new Date(b.reminder_time).getTime();
   });
 
@@ -95,11 +93,12 @@ export const ScalableRemindersList = ({
                 <p className="text-sm font-medium text-gray-900 truncate">
                   {reminder.title}
                 </p>
+                {/* Simplified type badge - no status confusion */}
                 <Badge 
-                  variant={reminder.status === 'sent' ? 'destructive' : 'default'}
+                  variant="outline"
                   className="text-xs bg-gray-100 text-gray-800 border-gray-200"
                 >
-                  {reminder.status}
+                  {reminder.type.replace('_', ' ')}
                 </Badge>
               </div>
               
@@ -117,7 +116,6 @@ export const ScalableRemindersList = ({
                     'No time'
                   }
                 </span>
-                <span className="capitalize">{reminder.type.replace('_', ' ')}</span>
                 <span className="capitalize">{reminder.priority}</span>
               </div>
             </div>
