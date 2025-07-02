@@ -1,255 +1,205 @@
 
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Plus, X, Send, Copy, Users, Trophy, Gift } from 'lucide-react';
-import { toast } from 'sonner';
+import { Gift, Users, Trophy, Share2, Copy, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import { useReferralData } from '@/hooks/referrals/useReferralData';
 import { useSendReferralEmails } from '@/hooks/referrals/useSendReferralEmails';
-import { useSharingUtils } from '@/hooks/referrals/useSharingUtils';
 
 export const SimplifiedReferralForm = () => {
-  const { referralData, loading: dataLoading } = useReferralData();
-  const { sendReferralEmails, isLoading: emailLoading } = useSendReferralEmails();
-  const { shareReferralLink, copyReferralLink } = useSharingUtils();
+  const { toast } = useToast();
+  const { referralStats, isLoading } = useReferralData();
+  const { generateReferralLink, copyReferralLink } = useReferralData();
+  const { sendReferralEmails, isLoading: isSendingEmails } = useSendReferralEmails();
   
-  const [emails, setEmails] = useState<string[]>(['']);
-  const [currentEmail, setCurrentEmail] = useState('');
-  const [message, setMessage] = useState(
-    "Hey! I've been using PrepGenie for my studies and it's been amazing. You should check it out - they have great tools for flashcards, notes, and study planning. Use my referral link to get started!"
-  );
-
-  const addEmailField = () => {
-    if (emails.length < 10) {
-      setEmails([...emails, '']);
-    }
-  };
-
-  const removeEmailField = (index: number) => {
-    if (emails.length > 1) {
-      const newEmails = emails.filter((_, i) => i !== index);
-      setEmails(newEmails);
-    }
-  };
-
-  const updateEmail = (index: number, value: string) => {
-    const newEmails = [...emails];
-    newEmails[index] = value;
-    setEmails(newEmails);
-  };
-
-  const addCurrentEmail = () => {
-    if (currentEmail && !emails.includes(currentEmail)) {
-      setEmails([...emails.filter(e => e !== ''), currentEmail]);
-      setCurrentEmail('');
-    }
-  };
+  const [emails, setEmails] = useState('');
+  const [message, setMessage] = useState('');
 
   const handleSendInvitations = async () => {
-    const validEmails = emails.filter(email => email.trim() && email.includes('@'));
+    if (!emails.trim()) {
+      toast({
+        title: "No emails provided",
+        description: "Please enter at least one email address",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!referralStats?.referralCode) {
+      toast({
+        title: "Error",
+        description: "Could not get your referral code. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const emailList = emails.split(',').map(email => email.trim()).filter(Boolean);
     
-    if (validEmails.length === 0) {
-      toast.error('Please enter at least one valid email address');
+    if (emailList.length === 0) {
+      toast({
+        title: "Invalid emails",
+        description: "Please enter valid email addresses separated by commas",
+        variant: "destructive"
+      });
       return;
     }
 
-    if (!referralData?.referralCode) {
-      toast.error('Unable to get your referral code. Please try again.');
-      return;
-    }
-
-    const success = await sendReferralEmails(validEmails, message, referralData.referralCode);
+    const success = await sendReferralEmails(emailList, message, referralStats.referralCode);
     
     if (success) {
-      // Clear the form on success
-      setEmails(['']);
-      setCurrentEmail('');
+      setEmails('');
+      setMessage('');
     }
   };
 
   const handleCopyLink = async () => {
-    if (referralData?.referralCode) {
-      await copyReferralLink(referralData.referralCode);
+    if (referralStats?.referralCode) {
+      await copyReferralLink(referralStats.referralCode);
     }
   };
 
-  const handleShareLink = async () => {
-    if (referralData?.referralCode) {
-      await shareReferralLink(referralData.referralCode);
-    }
-  };
-
-  if (dataLoading) {
+  if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-mint-500" />
-          <span className="ml-2 text-gray-600">Loading referral data...</span>
-        </div>
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin text-mint-500" />
+        <span className="ml-2 text-gray-600">Loading referral data...</span>
       </div>
     );
   }
 
+  const referralLink = referralStats?.referralCode ? generateReferralLink(referralStats.referralCode) : '';
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="space-y-8">
+      {/* Hero Section */}
+      <div className="text-center space-y-4">
+        <div className="flex items-center justify-center mb-4">
+          <div className="bg-gradient-to-r from-purple-100 to-pink-100 p-4 rounded-full">
+            <Gift className="h-8 w-8 text-purple-600" />
+          </div>
+        </div>
+        <h1 className="text-3xl font-bold text-gray-900">
+          Invite Friends & Earn Rewards! 🎉
+        </h1>
+        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          Share PrepGenie with your friends and both of you get amazing benefits. 
+          The more friends you invite, the more you earn!
+        </p>
+      </div>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg-gradient-to-br from-mint-50 to-white border-mint-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-mint-600">Total Referrals</p>
-                <p className="text-3xl font-bold text-mint-700">{referralData?.totalReferrals || 0}</p>
-              </div>
-              <Users className="h-8 w-8 text-mint-500" />
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+          <CardContent className="p-6 text-center">
+            <Users className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+            <div className="text-2xl font-bold text-blue-900">
+              {referralStats?.totalReferrals || 0}
             </div>
+            <p className="text-blue-700 text-sm">Total Referrals</p>
           </CardContent>
         </Card>
-
-        <Card className="bg-gradient-to-br from-purple-50 to-white border-purple-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-purple-600">Points Earned</p>
-                <p className="text-3xl font-bold text-purple-700">{referralData?.totalPoints || 0}</p>
-              </div>
-              <Trophy className="h-8 w-8 text-purple-500" />
+        
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+          <CardContent className="p-6 text-center">
+            <Trophy className="h-8 w-8 text-green-600 mx-auto mb-2" />
+            <div className="text-2xl font-bold text-green-900">
+              {referralStats?.completedReferrals || 0}
             </div>
+            <p className="text-green-700 text-sm">Successful Referrals</p>
           </CardContent>
         </Card>
-
-        <Card className="bg-gradient-to-br from-orange-50 to-white border-orange-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-orange-600">Rewards</p>
-                <p className="text-3xl font-bold text-orange-700">Coming Soon</p>
-              </div>
-              <Gift className="h-8 w-8 text-orange-500" />
+        
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+          <CardContent className="p-6 text-center">
+            <Gift className="h-8 w-8 text-purple-600 mx-auto mb-2" />
+            <div className="text-2xl font-bold text-purple-900">
+              {referralStats?.totalPointsEarned || 0}
             </div>
+            <p className="text-purple-700 text-sm">Points Earned</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Referral Code Card */}
+      {/* Referral Link Section */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Gift className="h-5 w-5 text-mint-600" />
-            Your Referral Code
+            <Share2 className="h-5 w-5 text-mint-600" />
+            Your Referral Link
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
-            <div className="flex-1">
-              <p className="text-sm text-gray-600 mb-1">Your unique referral code:</p>
-              <p className="text-lg font-mono font-semibold text-gray-900">
-                {referralData?.referralCode || 'Loading...'}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleCopyLink}>
-                <Copy className="h-4 w-4 mr-1" />
-                Copy Link
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleShareLink}>
-                <Send className="h-4 w-4 mr-1" />
-                Share
-              </Button>
-            </div>
+        <CardContent className="space-y-4">
+          <div className="flex gap-2">
+            <Input 
+              value={referralLink}
+              readOnly
+              className="font-mono text-sm"
+            />
+            <Button onClick={handleCopyLink} variant="outline" size="sm">
+              <Copy className="h-4 w-4" />
+            </Button>
           </div>
+          <p className="text-sm text-gray-600">
+            Share this link with your friends. When they sign up using your link, you'll both get rewards!
+          </p>
         </CardContent>
       </Card>
 
-      {/* Send Invitations Card */}
+      {/* Send Invitations Section */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Send className="h-5 w-5 text-mint-600" />
+            <Users className="h-5 w-5 text-mint-600" />
             Send Invitations
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Quick Add Email */}
-          <div className="flex gap-2">
-            <Input
-              placeholder="Enter friend's email address"
-              value={currentEmail}
-              onChange={(e) => setCurrentEmail(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && addCurrentEmail()}
-              className="flex-1"
-            />
-            <Button onClick={addCurrentEmail} variant="outline" size="sm">
-              <Plus className="h-4 w-4" />
-              Add
-            </Button>
-          </div>
-
-          {/* Email List */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Email Recipients:</label>
-            {emails.map((email, index) => (
-              <div key={index} className="flex gap-2">
-                <Input
-                  placeholder={`Email ${index + 1}`}
-                  value={email}
-                  onChange={(e) => updateEmail(index, e.target.value)}
-                  className="flex-1"
-                />
-                {emails.length > 1 && (
-                  <Button
-                    onClick={() => removeEmailField(index)}
-                    variant="outline"
-                    size="sm"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            ))}
-            {emails.length < 10 && (
-              <Button onClick={addEmailField} variant="outline" size="sm" className="w-full">
-                <Plus className="h-4 w-4 mr-1" />
-                Add Another Email
-              </Button>
-            )}
-          </div>
-
-          {/* Custom Message */}
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
-              Personal Message (Optional):
-            </label>
+            <Label htmlFor="emails">Friend's Email Addresses</Label>
             <Textarea
-              placeholder="Add a personal touch to your invitation..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              id="emails"
+              placeholder="Enter email addresses separated by commas (e.g., friend1@email.com, friend2@email.com)"
+              value={emails}
+              onChange={(e) => setEmails(e.target.value)}
+              className="mt-1"
               rows={3}
-              className="resize-none"
             />
-            <p className="text-xs text-gray-500 mt-1">
-              This message will be included in the invitation email along with your referral link.
+            <p className="text-sm text-gray-500 mt-1">
+              Separate multiple email addresses with commas
             </p>
           </div>
-
-          {/* Send Button */}
-          <Button
+          
+          <div>
+            <Label htmlFor="message">Personal Message (Optional)</Label>
+            <Textarea
+              id="message"
+              placeholder="Add a personal message to your invitation..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              className="mt-1"
+              rows={3}
+            />
+          </div>
+          
+          <Button 
             onClick={handleSendInvitations}
-            disabled={emailLoading || !referralData?.referralCode}
-            className="w-full bg-mint-600 hover:bg-mint-700 text-white"
-            size="lg"
+            className="w-full bg-gradient-to-r from-mint-500 to-mint-600 hover:from-mint-600 hover:to-mint-700"
+            disabled={isSendingEmails}
           >
-            {emailLoading ? (
+            {isSendingEmails ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Sending Invitations...
               </>
             ) : (
               <>
-                <Send className="h-4 w-4 mr-2" />
+                <Gift className="h-4 w-4 mr-2" />
                 Send Invitations
               </>
             )}
@@ -258,37 +208,37 @@ export const SimplifiedReferralForm = () => {
       </Card>
 
       {/* How it Works */}
-      <Card>
+      <Card className="bg-gradient-to-br from-mint-50 to-mint-100 border-mint-200">
         <CardHeader>
-          <CardTitle>How Referrals Work</CardTitle>
+          <CardTitle className="text-center text-mint-800">How It Works</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center p-4">
-              <div className="w-12 h-12 bg-mint-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Send className="h-6 w-6 text-mint-600" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+            <div>
+              <div className="bg-mint-200 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-mint-700 font-bold">1</span>
               </div>
-              <h3 className="font-semibold mb-2">1. Share Your Link</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="font-semibold text-mint-800 mb-2">Share Your Link</h3>
+              <p className="text-mint-700 text-sm">
                 Send your unique referral link to friends via email or social media
               </p>
             </div>
-            <div className="text-center p-4">
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Users className="h-6 w-6 text-purple-600" />
+            <div>
+              <div className="bg-mint-200 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-mint-700 font-bold">2</span>
               </div>
-              <h3 className="font-semibold mb-2">2. Friends Sign Up</h3>
-              <p className="text-sm text-gray-600">
-                When they register using your link, they join PrepGenie with your referral
+              <h3 className="font-semibold text-mint-800 mb-2">Friend Signs Up</h3>
+              <p className="text-mint-700 text-sm">
+                Your friend creates an account using your referral link
               </p>
             </div>
-            <div className="text-center p-4">
-              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Trophy className="h-6 w-6 text-orange-600" />
+            <div>
+              <div className="bg-mint-200 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-mint-700 font-bold">3</span>
               </div>
-              <h3 className="font-semibold mb-2">3. Earn Rewards</h3>
-              <p className="text-sm text-gray-600">
-                Get points for each successful referral and unlock exclusive rewards
+              <h3 className="font-semibold text-mint-800 mb-2">Both Get Rewards</h3>
+              <p className="text-mint-700 text-sm">
+                You and your friend both receive points and premium features
               </p>
             </div>
           </div>

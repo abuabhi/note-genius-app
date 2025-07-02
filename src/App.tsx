@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { QueryProvider } from './components/app/QueryProvider';
 import { AuthProvider } from './contexts/auth/AuthProvider';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
+import { HelpProvider } from './contexts/HelpContext';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import AppRoutes from './components/app/AppRoutes';
 import { useNotificationToasts } from '@/hooks/useNotificationToasts';
@@ -26,9 +27,11 @@ function App() {
     <QueryProvider>
       <AuthProvider>
         <SubscriptionProvider>
-          <SidebarProvider>
-            <AppContent />
-          </SidebarProvider>
+          <HelpProvider>
+            <SidebarProvider>
+              <AppContent />
+            </SidebarProvider>
+          </HelpProvider>
         </SubscriptionProvider>
       </AuthProvider>
     </QueryProvider>
