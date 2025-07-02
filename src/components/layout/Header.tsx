@@ -59,7 +59,7 @@ export const Header = () => {
           
           <div className="flex items-center space-x-4">
             {user && <NotificationPopover />}
-            <Button variant="ghost" size="icon" asChild className="h-10 w-10">
+            <Button variant="ghost" size="icon" asChild className="h-10 w-10 text-gray-600 hover:text-gray-900 hover:bg-gray-100">
               <Link to="/help">
                 <HelpCircle className="h-5 w-5" />
                 <span className="sr-only">Help</span>

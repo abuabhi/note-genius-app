@@ -31,7 +31,7 @@ export const TodosSection = () => {
         .select('*')
         .eq('user_id', user.id)
         .eq('type', 'todo')
-        .eq('status', 'pending')
+        .in('status', ['pending', 'dismissed']) // Include dismissed since they should show as active todos
         .order('due_date', { ascending: true })
         .limit(4);
 

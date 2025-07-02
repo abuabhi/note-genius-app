@@ -12,6 +12,10 @@ export const mapDatabaseStatusToTodoStatus = (dbStatus: string): TodoStatus => {
     case 'completed':
       console.log('✅ Mapped to completed');
       return 'completed';
+    case 'dismissed':
+      // For todos, dismissed should be treated as pending since todos don't have dismiss functionality
+      console.log('✅ Mapped dismissed to pending for todo');
+      return 'pending';
     default:
       console.log('⚠️ Unknown status, defaulting to pending:', dbStatus);
       return 'pending'; // Default fallback

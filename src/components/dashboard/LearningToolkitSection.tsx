@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -99,7 +98,6 @@ export const LearningToolkitSection = () => {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-6">
           <div className="animate-pulse bg-gray-200 h-6 w-48 rounded"></div>
-          <div className="animate-pulse bg-gray-200 h-9 w-32 rounded"></div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -112,16 +110,8 @@ export const LearningToolkitSection = () => {
 
   return (
     <div className="mb-8">
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6">
         <h2 className="text-xl font-semibold text-gray-800">Learning Toolkit</h2>
-        <Button 
-          variant="outline" 
-          onClick={() => navigate('/dashboard')}
-          className="text-mint-600 border-mint-200 hover:bg-mint-50 font-medium"
-        >
-          View All
-          <ArrowRight className="h-4 w-4 ml-2" />
-        </Button>
       </div>
       
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
