@@ -1,44 +1,52 @@
 
 import { useEffect } from 'react';
-import { useStudySessionNotifications } from '@/hooks/useStudySessionNotifications';
+import { useUnifiedReminderSystem } from '@/hooks/useUnifiedReminderSystem';
 import { toast } from 'sonner';
 import { Bell, BookOpen, Target, Trophy } from 'lucide-react';
 
 export const StudySessionNotificationManager = () => {
-  const { studyNotifications, dismissStudyNotification } = useStudySessionNotifications();
+  const { reminders, dismissReminder } = useUnifiedReminderSystem({
+    enableRealtime: true,
+    limit: 50
+  });
+
+  // Filter for study-related notifications
+  const studyNotifications = reminders.filter(reminder => 
+    reminder.type === 'study_session' || 
+    reminder.type === 'flashcard_review' ||
+    reminder.status === 'sent'
+  );
 
   useEffect(() => {
-    // Show immediate notifications as toasts
+    // Show immediate notifications as toasts for high priority study reminders
     studyNotifications
       .filter(notification => 
-        notification.timing === 'immediate' && 
-        notification.urgency !== 'low'
+        notification.status === 'sent' && 
+        notification.priority === 'high'
       )
       .forEach(notification => {
         const icon = getNotificationIcon(notification.type);
         
         toast(notification.title, {
-          description: notification.message,
+          description: notification.description || 'Time for your study session!',
           action: {
-            label: notification.actionText,
+            label: 'Start Studying',
             onClick: () => handleNotificationAction(notification)
           },
-          onDismiss: () => dismissStudyNotification(notification.id),
-          duration: notification.urgency === 'high' ? 10000 : 5000,
+          onDismiss: () => dismissReminder(notification.id),
+          duration: 10000,
         });
       });
-  }, [studyNotifications, dismissStudyNotification]);
+  }, [studyNotifications, dismissReminder]);
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'session_reminder':
+      case 'study_session':
         return <BookOpen className="h-4 w-4" />;
-      case 'streak_warning':
+      case 'flashcard_review':
         return <Target className="h-4 w-4 text-orange-500" />;
-      case 'milestone_celebration':
+      case 'goal_deadline':
         return <Trophy className="h-4 w-4 text-yellow-500" />;
-      case 'gentle_nudge':
-        return <Bell className="h-4 w-4 text-blue-500" />;
       default:
         return <Bell className="h-4 w-4" />;
     }
@@ -46,15 +54,15 @@ export const StudySessionNotificationManager = () => {
 
   const handleNotificationAction = (notification: any) => {
     // Navigate to study session or dashboard
-    if (notification.studyPlanId) {
-      // Navigate to specific study plan session
-      window.location.href = `/dashboard?startStudy=${notification.studyPlanId}`;
+    if (notification.events?.id) {
+      // Navigate to specific study session
+      window.location.href = `/dashboard?startStudy=${notification.events.id}`;
     } else {
       // Navigate to dashboard
       window.location.href = '/dashboard';
     }
     
-    dismissStudyNotification(notification.id);
+    dismissReminder(notification.id);
   };
 
   // This component doesn't render anything visible - it just manages notifications
