@@ -27,6 +27,22 @@ export const useDashboardAnalytics = () => {
     percentageChange: analytics.weeklyChange
   };
 
+  // Create subjects data for StudySuggestions
+  const subjects = [
+    {
+      name: 'Mathematics',
+      completionPercentage: Math.min(100, (analytics.totalStudyTime / 10) * 100), // Mock calculation
+      last7DaysTime: analytics.weeklyStudyTimeMinutes,
+      sessionsCount: analytics.totalSessions
+    },
+    {
+      name: 'Science', 
+      completionPercentage: Math.min(100, (analytics.totalCardsMastered / 50) * 100), // Mock calculation
+      last7DaysTime: Math.floor(analytics.weeklyStudyTimeMinutes * 0.3),
+      sessionsCount: Math.floor(analytics.totalSessions * 0.4)
+    }
+  ].filter(subject => subject.completionPercentage > 0 || subject.last7DaysTime > 0);
+
   const dashboardData = {
     totalSessions: analytics.totalSessions,
     totalStudyTime: analytics.totalStudyTime,
@@ -40,6 +56,7 @@ export const useDashboardAnalytics = () => {
     weeklyComparison,
     weeklyGoalProgress: analytics.weeklyGoalProgress,
     weeklyGoalHours: analytics.weeklyGoalHours,
+    subjects,
     isLoading
   };
 

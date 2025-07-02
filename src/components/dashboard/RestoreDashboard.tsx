@@ -3,12 +3,17 @@ import React from 'react';
 import { useAuth } from '@/contexts/auth';
 import { EnhancedDashboardHeroSection } from './EnhancedDashboardHeroSection';
 import { LearningToolkitSection } from './LearningToolkitSection';
-import { TodaysFocusSection } from './TodaysFocusSection';
+import { StudySuggestions } from '@/components/analytics/StudySuggestions';
+import { StudyPlannerSection } from './StudyPlannerSection';
+import { GoalsSection } from './GoalsSection';
+import { TodosSection } from './TodosSection';
 import { EnhancedQuickActionsGrid } from './EnhancedQuickActionsGrid';
 import { LearningAnalyticsDashboard } from './LearningAnalyticsDashboard';
+import { useDashboardAnalytics } from '@/hooks/useDashboardAnalytics';
 
 export const RestoreDashboard = () => {
   const { user, loading } = useAuth();
+  const analytics = useDashboardAnalytics();
 
   if (loading) {
     return (
@@ -28,16 +33,30 @@ export const RestoreDashboard = () => {
         {/* Hero Section with Welcome and Study Session Prompts */}
         <EnhancedDashboardHeroSection />
         
+        {/* AI Study Suggestions */}
+        <StudySuggestions subjectAnalytics={analytics} />
+        
         {/* Learning Toolkit Section */}
         <LearningToolkitSection />
         
-        {/* Today's Focus Section (Goals, Todos, etc.) */}
-        <TodaysFocusSection />
+        {/* Three-Panel Study Section: Study Plans, Goals, and Todos */}
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Your Study Dashboard</h2>
+            <p className="text-gray-600">Manage your study plans, goals, and tasks all in one place</p>
+          </div>
+          
+          <div className="grid gap-6 lg:grid-cols-3 md:grid-cols-2 grid-cols-1">
+            <StudyPlannerSection />
+            <GoalsSection />
+            <TodosSection />
+          </div>
+        </div>
         
         {/* Quick Actions Grid */}
         <EnhancedQuickActionsGrid />
         
-        {/* Learning Analytics Dashboard (AI Suggestions) */}
+        {/* Learning Analytics Dashboard */}
         <LearningAnalyticsDashboard />
       </div>
     </div>

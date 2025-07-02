@@ -25,7 +25,7 @@ export const StudyPlannerSection = () => {
             <div className="p-1.5 bg-gradient-to-br from-mint-500 to-mint-600 rounded-lg">
               <Calendar className="h-4 w-4 text-white" />
             </div>
-            Today's Study Plans
+            Study Plans
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -48,7 +48,7 @@ export const StudyPlannerSection = () => {
             <div className="p-1.5 bg-gradient-to-br from-mint-500 to-mint-600 rounded-lg">
               <Calendar className="h-4 w-4 text-white" />
             </div>
-            Today's Study Plans
+            Study Plans
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -58,7 +58,7 @@ export const StudyPlannerSection = () => {
                 <Calendar className="h-8 w-8 text-mint-500" />
               </div>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No study plans for today</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No study plans yet</h3>
             <p className="text-gray-500 mb-4">
               Create a study plan to organize your learning schedule and track progress.
             </p>
@@ -77,12 +77,25 @@ export const StudyPlannerSection = () => {
   return (
     <Card className="bg-white border-mint-200">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold flex items-center gap-2">
-          <div className="p-1.5 bg-gradient-to-br from-mint-500 to-mint-600 rounded-lg">
-            <Calendar className="h-4 w-4 text-white" />
-          </div>
-          Today's Study Plans
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+            <div className="p-1.5 bg-gradient-to-br from-mint-500 to-mint-600 rounded-lg">
+              <Calendar className="h-4 w-4 text-white" />
+            </div>
+            Study Plans
+            {todaysPlans.length > 0 && (
+              <Badge variant="secondary" className="text-xs">
+                {todaysPlans.length} active
+              </Badge>
+            )}
+          </CardTitle>
+          <Button asChild size="sm" variant="outline">
+            <Link to="/study-planner">
+              <Plus className="h-4 w-4 mr-1" />
+              New Plan
+            </Link>
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-3">
         {todaysPlans.map(plan => (
