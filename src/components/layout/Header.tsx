@@ -57,9 +57,9 @@ export const Header = () => {
             </nav>
           </div>
           
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             {user && <NotificationPopover />}
-            <Button variant="ghost" size="icon" asChild className="h-10 w-10 text-gray-600 hover:text-gray-900 hover:bg-gray-100">
+            <Button variant="ghost" size="icon" asChild className="h-10 w-10 text-gray-600 hover:text-gray-900 hover:bg-gray-100 flex-shrink-0">
               <Link to="/help">
                 <HelpCircle className="h-5 w-5" />
                 <span className="sr-only">Help</span>
@@ -67,7 +67,7 @@ export const Header = () => {
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0 rounded-full">
+                <Button variant="ghost" className="h-8 w-8 p-0 rounded-full flex-shrink-0">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={user?.user_metadata?.avatar_url} />
                     <AvatarFallback>
