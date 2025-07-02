@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useUnifiedReminderSystem } from '@/hooks/useUnifiedReminderSystem';
+import { useAuth } from '@/contexts/auth';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface ReminderFormDialogProps {
@@ -16,40 +17,50 @@ interface ReminderFormDialogProps {
 }
 
 export const ReminderFormDialog = ({ open, onOpenChange }: ReminderFormDialogProps) => {
+  const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [reminderTime, setReminderTime] = useState('');
   const [type, setType] = useState('todo');
   const [priority, setPriority] = useState('medium');
-  const [deliveryMethods, setDeliveryMethods] = useState<string[]>(['in_app', 'email']);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { createReminder } = useUnifiedReminderSystem();
 
-  const handleDeliveryMethodChange = (method: string, checked: boolean) => {
-    if (checked) {
-      setDeliveryMethods(prev => [...prev, method]);
-    } else {
-      setDeliveryMethods(prev => prev.filter(m => m !== method));
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title.trim() || !reminderTime) {
+    if (!title.trim() || !reminderTime || !user) {
       toast.error('Please fill in title and reminder time');
-      return;
-    }
-
-    if (deliveryMethods.length === 0) {
-      toast.error('Please select at least one delivery method');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      console.log('🔔 Creating reminder with delivery methods:', deliveryMethods);
+      console.log('🔔 Creating reminder...');
+      
+      // Get user's email notification preferences from their profile
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('notification_preferences')
+        .eq('id', user.id)
+        .single();
+      
+      // Determine delivery methods based on user preferences
+      let deliveryMethods = ['in_app']; // Always include in-app
+      
+      if (profileData?.notification_preferences) {
+        const prefs = typeof profileData.notification_preferences === 'string' 
+          ? JSON.parse(profileData.notification_preferences)
+          : profileData.notification_preferences;
+          
+        // Add email if user has email notifications enabled
+        if (prefs.email === true) {
+          deliveryMethods.push('email');
+        }
+      }
+      
+      console.log('📧 Using delivery methods:', deliveryMethods);
       
       await createReminder({
         title: title.trim(),
@@ -62,7 +73,7 @@ export const ReminderFormDialog = ({ open, onOpenChange }: ReminderFormDialogPro
         status: 'pending'
       });
 
-      toast.success('Reminder created successfully with delivery methods: ' + deliveryMethods.join(', '));
+      toast.success(`Reminder created with delivery methods: ${deliveryMethods.join(', ')}`);
       
       // Reset form
       setTitle('');
@@ -70,7 +81,6 @@ export const ReminderFormDialog = ({ open, onOpenChange }: ReminderFormDialogPro
       setReminderTime('');
       setType('todo');
       setPriority('medium');
-      setDeliveryMethods(['in_app', 'email']);
       
       onOpenChange(false);
     } catch (error) {
@@ -122,36 +132,6 @@ export const ReminderFormDialog = ({ open, onOpenChange }: ReminderFormDialogPro
             />
           </div>
 
-          {/* Delivery Methods Section */}
-          <div className="space-y-3">
-            <Label>Delivery Methods</Label>
-            <div className="flex flex-col space-y-2">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="in_app"
-                  checked={deliveryMethods.includes('in_app')}
-                  onCheckedChange={(checked) => handleDeliveryMethodChange('in_app', checked as boolean)}
-                />
-                <Label htmlFor="in_app" className="text-sm font-normal">
-                  In-App Notification
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="email"
-                  checked={deliveryMethods.includes('email')}
-                  onCheckedChange={(checked) => handleDeliveryMethodChange('email', checked as boolean)}
-                />
-                <Label htmlFor="email" className="text-sm font-normal">
-                  Email Notification
-                </Label>
-              </div>
-            </div>
-            <p className="text-xs text-gray-600">
-              Selected: {deliveryMethods.length > 0 ? deliveryMethods.join(', ') : 'None'}
-            </p>
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="type">Type</Label>
@@ -181,6 +161,13 @@ export const ReminderFormDialog = ({ open, onOpenChange }: ReminderFormDialogPro
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="bg-blue-50 p-3 rounded-lg">
+            <p className="text-sm text-blue-800">
+              <strong>Notification Settings:</strong> This reminder will use your notification preferences from Settings. 
+              Email notifications will be sent if you have them enabled.
+            </p>
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
