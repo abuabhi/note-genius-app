@@ -10,6 +10,7 @@ import { Bell, X, CheckCircle2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useUnifiedReminderSystem } from '@/hooks/useUnifiedReminderSystem';
 import { ScalableRemindersList } from './ScalableRemindersList';
+import { toast } from 'sonner';
 
 export const ScalableReminderPopover = () => {
   const [open, setOpen] = useState(false);
@@ -20,7 +21,8 @@ export const ScalableReminderPopover = () => {
     batchDismissReminders,
     isDismissing,
     totalCount,
-    unreadCount
+    unreadCount,
+    refresh
   } = useUnifiedReminderSystem({
     limit: 20,
     enableRealtime: true,
@@ -37,20 +39,38 @@ export const ScalableReminderPopover = () => {
   );
 
   // Handle dismiss all with proper error handling
-  const handleDismissAll = useCallback(() => {
+  const handleDismissAll = useCallback(async () => {
+    console.log('🗑️ Starting dismiss all operation');
     const sentReminderIds = reminders
       .filter(r => r.status === 'sent')
       .map(r => r.id);
     
-    if (sentReminderIds.length > 0) {
-      batchDismissReminders(sentReminderIds);
+    if (sentReminderIds.length === 0) {
+      toast.info('No sent reminders to dismiss');
+      return;
     }
-  }, [reminders, batchDismissReminders]);
+    
+    try {
+      await batchDismissReminders(sentReminderIds);
+      toast.success(`Dismissed ${sentReminderIds.length} reminders`);
+      setTimeout(() => refresh(), 500);
+    } catch (error) {
+      console.error('❌ Batch dismiss failed:', error);
+      toast.error('Failed to dismiss all reminders');
+    }
+  }, [reminders, batchDismissReminders, refresh]);
 
   // Handle single dismiss with proper error handling
-  const handleDismissSingle = useCallback((id: string) => {
-    dismissReminder(id);
-  }, [dismissReminder]);
+  const handleDismissSingle = useCallback(async (id: string) => {
+    try {
+      await dismissReminder(id);
+      toast.success('Reminder dismissed');
+      setTimeout(() => refresh(), 500);
+    } catch (error) {
+      console.error('❌ Single dismiss failed:', error);
+      toast.error('Failed to dismiss reminder');
+    }
+  }, [dismissReminder, refresh]);
 
   const isReminderDismissing = (id: string) => isDismissing;
 
@@ -153,7 +173,7 @@ export const ScalableReminderPopover = () => {
             <div className="flex items-center justify-center text-xs text-gray-600">
               <div className="flex items-center gap-1">
                 <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span>Optimized for {totalCount} reminders</span>
+                <span>Fresh start - {totalCount} reminders</span>
               </div>
             </div>
           </div>

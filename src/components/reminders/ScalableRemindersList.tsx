@@ -46,10 +46,10 @@ export const ScalableRemindersList = ({
       <div className="space-y-3 p-4">
         {[1, 2, 3].map((i) => (
           <div key={i} className="flex items-center space-x-3 animate-pulse">
-            <div className="h-10 w-10 bg-mint-200 rounded-full"></div>
+            <div className="h-10 w-10 bg-gray-200 rounded-full"></div>
             <div className="space-y-2 flex-1">
-              <div className="h-4 bg-mint-200 rounded w-3/4"></div>
-              <div className="h-3 bg-mint-200 rounded w-1/2"></div>
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-3 bg-gray-200 rounded w-1/2"></div>
             </div>
           </div>
         ))}
@@ -60,11 +60,11 @@ export const ScalableRemindersList = ({
   if (reminders.length === 0) {
     return (
       <div className="text-center py-12 px-6">
-        <div className="w-16 h-16 bg-mint-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle className="h-8 w-8 text-mint-600" />
+        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <CheckCircle className="h-8 w-8 text-gray-600" />
         </div>
-        <h3 className="font-medium text-mint-800 mb-2">All caught up!</h3>
-        <p className="text-sm text-mint-600">No reminders to show right now.</p>
+        <h3 className="font-medium text-gray-800 mb-2">All caught up!</h3>
+        <p className="text-sm text-gray-600">No reminders to show right now.</p>
       </div>
     );
   }
@@ -77,13 +77,13 @@ export const ScalableRemindersList = ({
   });
 
   return (
-    <div className="divide-y divide-mint-100">
+    <div className="divide-y divide-gray-100">
       {sortedReminders.map((reminder) => (
-        <div key={reminder.id} className="p-4 hover:bg-mint-50/50 transition-colors relative">
+        <div key={reminder.id} className="p-4 hover:bg-gray-50 transition-colors relative">
           {isReminderDismissing(reminder.id) && (
             <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-10">
-              <div className="flex items-center gap-2 text-sm text-mint-600">
-                <div className="w-4 h-4 border-2 border-mint-500 border-t-transparent rounded-full animate-spin"></div>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin"></div>
                 <span>Dismissing...</span>
               </div>
             </div>
@@ -92,24 +92,24 @@ export const ScalableRemindersList = ({
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <p className="text-sm font-medium text-mint-900 truncate">
+                <p className="text-sm font-medium text-gray-900 truncate">
                   {reminder.title}
                 </p>
                 <Badge 
                   variant={reminder.status === 'sent' ? 'destructive' : 'default'}
-                  className="text-xs bg-mint-100 text-mint-800 border-mint-200"
+                  className="text-xs bg-gray-100 text-gray-800 border-gray-200"
                 >
                   {reminder.status}
                 </Badge>
               </div>
               
               {reminder.description && (
-                <p className="text-xs text-mint-700 mb-2 line-clamp-1">
+                <p className="text-xs text-gray-700 mb-2 line-clamp-1">
                   {reminder.description}
                 </p>
               )}
               
-              <div className="flex items-center gap-3 text-xs text-mint-600">
+              <div className="flex items-center gap-3 text-xs text-gray-600">
                 <span className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   {reminder.reminder_time ? 
@@ -127,7 +127,7 @@ export const ScalableRemindersList = ({
               size="sm"
               onClick={() => onDismiss(reminder.id)}
               disabled={isReminderDismissing(reminder.id)}
-              className="flex-shrink-0 ml-2 h-8 w-8 p-0 hover:bg-mint-100 hover:text-mint-700"
+              className="flex-shrink-0 ml-2 h-8 w-8 p-0 hover:bg-gray-100 hover:text-gray-700"
             >
               <Trash2 className="h-3 w-3" />
             </Button>
@@ -142,7 +142,7 @@ export const ScalableRemindersList = ({
             size="sm" 
             onClick={onLoadMore}
             disabled={loading}
-            className="text-mint-600 border-mint-200 hover:bg-mint-50"
+            className="text-gray-600 border-gray-200 hover:bg-gray-50"
           >
             {loading ? 'Loading...' : 'Load More'}
           </Button>

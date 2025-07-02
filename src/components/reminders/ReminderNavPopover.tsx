@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { useUnifiedReminderSystem } from '@/hooks/useUnifiedReminderSystem';
 import { ScalableRemindersList } from './ScalableRemindersList';
 import { ReminderFormDialog } from './ReminderFormDialog';
+import { toast } from 'sonner';
 
 export const ReminderNavPopover = () => {
   const [open, setOpen] = useState(false);
@@ -26,7 +27,6 @@ export const ReminderNavPopover = () => {
     isDismissing,
     refresh
   } = useUnifiedReminderSystem({
-    // Remove hardcoded limit - get ALL reminders
     limit: 1000,
     enableRealtime: true,
     enableNotifications: true,
@@ -42,21 +42,53 @@ export const ReminderNavPopover = () => {
     r => r.status === 'pending' && r.reminder_time && new Date(r.reminder_time) < now
   );
 
-  // Handle dismiss all with proper batch function
-  const handleDismissAll = useCallback(() => {
+  // Handle dismiss all with proper error handling and logging
+  const handleDismissAll = useCallback(async () => {
+    console.log('🗑️ Starting dismiss all operation');
     const sentReminderIds = reminders
       .filter(r => r.status === 'sent')
       .map(r => r.id);
     
-    if (sentReminderIds.length > 0) {
-      batchDismissReminders(sentReminderIds);
+    console.log('🗑️ Found sent reminders to dismiss:', sentReminderIds.length);
+    
+    if (sentReminderIds.length === 0) {
+      toast.info('No sent reminders to dismiss');
+      return;
     }
-  }, [reminders, batchDismissReminders]);
+    
+    try {
+      console.log('🗑️ Calling batch dismiss with IDs:', sentReminderIds);
+      await batchDismissReminders(sentReminderIds);
+      console.log('✅ Batch dismiss completed successfully');
+      toast.success(`Dismissed ${sentReminderIds.length} reminders`);
+      
+      // Force refresh to ensure UI updates
+      setTimeout(() => {
+        refresh();
+      }, 500);
+    } catch (error) {
+      console.error('❌ Batch dismiss failed:', error);
+      toast.error('Failed to dismiss all reminders');
+    }
+  }, [reminders, batchDismissReminders, refresh]);
 
-  // Handle single dismiss
-  const handleDismissSingle = useCallback((id: string) => {
-    dismissReminder(id);
-  }, [dismissReminder]);
+  // Handle single dismiss with better error handling
+  const handleDismissSingle = useCallback(async (id: string) => {
+    console.log('🗑️ Dismissing single reminder:', id);
+    try {
+      await dismissReminder(id);
+      console.log('✅ Single dismiss completed successfully:', id);
+      toast.success('Reminder dismissed');
+      
+      // Force refresh to ensure UI updates
+      setTimeout(() => {
+        refresh();
+      }, 500);
+    } catch (error) {
+      console.error('❌ Single dismiss failed:', error);
+      toast.error('Failed to dismiss reminder');
+    }
+  }, [dismissReminder, refresh]);
 
   // Mock functions for ScalableRemindersList compatibility
   const isReminderDismissing = (id: string) => isDismissing;
@@ -128,7 +160,7 @@ export const ReminderNavPopover = () => {
                 ) : (
                   <>
                     <CheckCircle2 className="w-3 h-3 mr-1" />
-                    Dismiss All
+                    Dismiss All ({sentCount})
                   </>
                 )}
               </Button>
@@ -161,7 +193,7 @@ export const ReminderNavPopover = () => {
           <div className="flex items-center justify-center text-xs text-gray-600">
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-              <span>Real-time updates enabled</span>
+              <span>Clean slate - {totalCount} reminders total</span>
             </div>
           </div>
         </div>
