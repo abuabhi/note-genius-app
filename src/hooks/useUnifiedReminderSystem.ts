@@ -60,8 +60,8 @@ export const useUnifiedReminderSystem = (options: UnifiedReminderSystemOptions =
         .from('reminders')
         .select(`
           *,
-          events!reminders_event_id_fkey(id, title),
-          goals!reminders_goal_id_fkey(id, title)
+          events(id, title),
+          goals:study_goals(id, title)
         `)
         .eq('user_id', user.id)
         .in('status', status)
@@ -77,10 +77,23 @@ export const useUnifiedReminderSystem = (options: UnifiedReminderSystemOptions =
       
       // Transform the data to match our SimpleReminder interface
       const transformedData: SimpleReminder[] = (data || []).map(item => ({
-        ...item,
+        id: item.id,
+        user_id: item.user_id,
+        title: item.title,
+        description: item.description,
+        reminder_time: item.reminder_time,
+        due_date: item.due_date,
+        type: item.type,
+        status: item.status,
+        recurrence: item.recurrence || 'none',
+        priority: item.priority || 'medium',
+        created_at: item.created_at,
+        updated_at: item.updated_at,
         delivery_methods: Array.isArray(item.delivery_methods) 
           ? item.delivery_methods as string[]
-          : ['in_app'] // Default fallback
+          : ['in_app'], // Default fallback
+        events: item.events ? { id: item.events.id, title: item.events.title } : null,
+        goals: item.goals ? { id: item.goals.id, title: item.goals.title } : null
       }));
       
       return transformedData;
