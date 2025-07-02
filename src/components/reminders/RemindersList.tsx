@@ -3,11 +3,29 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CheckCircle, AlertTriangle, Sparkles } from "lucide-react";
-import { Reminder } from "@/hooks/useReminders";
 import { ReminderCard } from "./ReminderCard";
 
+// Using the SimpleReminder interface from useUnifiedReminderSystem
+interface SimpleReminder {
+  id: string;
+  user_id: string;
+  title: string;
+  description?: string;
+  reminder_time: string;
+  due_date?: string | null;
+  type: string;
+  status: string;
+  recurrence: string;
+  delivery_methods: string[];
+  priority: string;
+  created_at: string;
+  updated_at: string;
+  events?: { id: string; title: string } | null;
+  goals?: { id: string; title: string } | null;
+}
+
 interface RemindersListProps {
-  reminders: Reminder[];
+  reminders: SimpleReminder[];
   loading: boolean;
   onDismiss: (id: string) => Promise<boolean>;
 }

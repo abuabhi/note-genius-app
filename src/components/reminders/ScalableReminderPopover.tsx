@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/popover';
 import { Bell, X, CheckCircle2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { useScalableReminders } from '@/hooks/reminders/useScalableReminders';
+import { useUnifiedReminderSystem } from '@/hooks/useUnifiedReminderSystem';
 import { ScalableRemindersList } from './ScalableRemindersList';
 
 export const ScalableReminderPopover = () => {
@@ -19,11 +19,9 @@ export const ScalableReminderPopover = () => {
     dismissReminder,
     batchDismissReminders,
     isDismissing,
-    isBatchDismissing,
-    isReminderDismissing,
-    hasMore,
-    loadMore
-  } = useScalableReminders({
+    totalCount,
+    unreadCount
+  } = useUnifiedReminderSystem({
     limit: 20,
     status: ['pending', 'sent'],
     enableRealtime: true,
@@ -32,7 +30,6 @@ export const ScalableReminderPopover = () => {
   // Count pending reminders
   const pendingCount = reminders.filter(r => r.status === 'pending').length;
   const sentCount = reminders.filter(r => r.status === 'sent').length;
-  const totalCount = pendingCount + sentCount;
   
   // Get overdue reminders for styling
   const now = new Date();
@@ -55,6 +52,8 @@ export const ScalableReminderPopover = () => {
   const handleDismissSingle = useCallback((id: string) => {
     dismissReminder(id);
   }, [dismissReminder]);
+
+  const isReminderDismissing = (id: string) => isDismissing;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -110,10 +109,10 @@ export const ScalableReminderPopover = () => {
                 variant="ghost"
                 size="sm"
                 onClick={handleDismissAll}
-                disabled={isBatchDismissing}
+                disabled={isDismissing}
                 className="text-xs px-2 py-1 h-auto hover:bg-mint-100 text-mint-700"
               >
-                {isBatchDismissing ? (
+                {isDismissing ? (
                   <>
                     <div className="w-3 h-3 border border-mint-500 border-t-transparent rounded-full animate-spin mr-1" />
                     Dismissing...
@@ -142,9 +141,9 @@ export const ScalableReminderPopover = () => {
           <ScalableRemindersList 
             reminders={reminders}
             loading={isLoading}
-            hasMore={hasMore}
+            hasMore={false}
             onDismiss={handleDismissSingle}
-            onLoadMore={loadMore}
+            onLoadMore={() => {}}
             isReminderDismissing={isReminderDismissing}
           />
         </div>

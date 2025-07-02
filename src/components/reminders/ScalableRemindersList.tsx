@@ -1,13 +1,31 @@
 
-import { useState, useCallback } from "react";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle, AlertTriangle, Sparkles, ChevronDown } from "lucide-react";
-import { Reminder } from "@/hooks/reminders/types";
-import { ReminderCard } from "./ReminderCard";
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { CheckCircle, Trash2, Clock } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { formatDistanceToNow } from 'date-fns';
+
+// Using the SimpleReminder interface from useUnifiedReminderSystem
+interface SimpleReminder {
+  id: string;
+  user_id: string;
+  title: string;
+  description?: string;
+  reminder_time: string;
+  due_date?: string | null;
+  type: string;
+  status: string;
+  recurrence: string;
+  delivery_methods: string[];
+  priority: string;
+  created_at: string;
+  updated_at: string;
+  events?: { id: string; title: string } | null;
+  goals?: { id: string; title: string } | null;
+}
 
 interface ScalableRemindersListProps {
-  reminders: Reminder[];
+  reminders: SimpleReminder[];
   loading: boolean;
   hasMore: boolean;
   onDismiss: (id: string) => void;
@@ -19,179 +37,115 @@ export const ScalableRemindersList = ({
   reminders, 
   loading, 
   hasMore,
-  onDismiss, 
+  onDismiss,
   onLoadMore,
   isReminderDismissing
 }: ScalableRemindersListProps) => {
-  const [expandedView, setExpandedView] = useState(false);
-
-  const handleDismiss = useCallback(async (id: string) => {
-    if (isReminderDismissing(id)) return;
-    onDismiss(id);
-  }, [onDismiss, isReminderDismissing]);
-
   if (loading && reminders.length === 0) {
     return (
-      <div className="p-4">
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="p-3 rounded-lg bg-mint-50 animate-pulse border border-mint-200">
-              <div className="flex gap-3">
-                <Skeleton className="h-8 w-8 rounded-full bg-mint-200" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-3/4 bg-mint-200" />
-                  <Skeleton className="h-3 w-1/2 bg-mint-200" />
-                  <Skeleton className="h-3 w-1/4 bg-mint-200" />
-                </div>
-              </div>
+      <div className="space-y-3 p-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="flex items-center space-x-3 animate-pulse">
+            <div className="h-10 w-10 bg-mint-200 rounded-full"></div>
+            <div className="space-y-2 flex-1">
+              <div className="h-4 bg-mint-200 rounded w-3/4"></div>
+              <div className="h-3 bg-mint-200 rounded w-1/2"></div>
             </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-  
-  if (reminders.length === 0) {
-    return (
-      <div className="text-center py-12 px-6">
-        <div className="relative mb-6">
-          <div className="w-20 h-20 bg-mint-50 rounded-full flex items-center justify-center mx-auto shadow-sm border border-mint-200">
-            <CheckCircle className="h-10 w-10 text-mint-600" />
-          </div>
-          <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-r from-mint-400 to-mint-500 rounded-full flex items-center justify-center shadow-sm">
-            <Sparkles className="h-3 w-3 text-white" />
-          </div>
-        </div>
-        
-        <h3 className="font-bold text-lg text-mint-800 mb-2">All caught up!</h3>
-        <p className="text-mint-700 leading-relaxed max-w-sm mx-auto">
-          You're doing amazing! No pending reminders at the moment. Keep up the great work!
-        </p>
-        
-        <div className="mt-6 flex items-center justify-center gap-2 text-sm text-mint-600">
-          <div className="w-2 h-2 bg-mint-300 rounded-full"></div>
-          <span>Stay organized and focused</span>
-          <div className="w-2 h-2 bg-mint-300 rounded-full"></div>
-        </div>
-      </div>
-    );
-  }
-  
-  // Sort reminders by urgency and time
-  const sortedReminders = [...reminders].sort((a, b) => {
-    const now = new Date();
-    const aOverdue = a.reminder_time && new Date(a.reminder_time) < now;
-    const bOverdue = b.reminder_time && new Date(b.reminder_time) < now;
-    
-    // Overdue reminders first
-    if (aOverdue && !bOverdue) return -1;
-    if (!aOverdue && bOverdue) return 1;
-    
-    // Then by reminder time
-    if (a.reminder_time && b.reminder_time) {
-      return new Date(a.reminder_time).getTime() - new Date(b.reminder_time).getTime();
-    }
-    
-    return 0;
-  });
-  
-  // Show limited reminders initially for performance
-  const displayedReminders = expandedView ? sortedReminders : sortedReminders.slice(0, 5);
-  const remainingCount = sortedReminders.length - displayedReminders.length;
-  
-  // Check for overdue reminders
-  const now = new Date();
-  const overdueReminders = sortedReminders.filter(
-    reminder => new Date(reminder.reminder_time) < now && reminder.status === 'pending'
-  );
-  
-  return (
-    <div className="space-y-4 p-4">
-      {/* Overdue alert */}
-      {overdueReminders.length > 0 && (
-        <div className="p-3 rounded-lg bg-mint-50 border border-mint-300">
-          <div className="flex items-center gap-3">
-            <div className="p-1.5 bg-mint-200 rounded-full">
-              <AlertTriangle className="h-3 w-3 text-mint-600" />
-            </div>
-            <div>
-              <h4 className="font-semibold text-mint-800 text-sm">
-                {overdueReminders.length} Overdue Reminder{overdueReminders.length !== 1 ? 's' : ''}
-              </h4>
-              <p className="text-mint-700 text-xs">
-                These reminders need your attention
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Reminders list */}
-      <div className="space-y-3">
-        {displayedReminders.map((reminder) => (
-          <div key={reminder.id} className="relative">
-            {isReminderDismissing(reminder.id) && (
-              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
-                <div className="flex items-center gap-2 text-sm text-mint-600">
-                  <div className="w-4 h-4 border-2 border-mint-500 border-t-transparent rounded-full animate-spin"></div>
-                  <span>Dismissing...</span>
-                </div>
-              </div>
-            )}
-            <ReminderCard 
-              reminder={reminder} 
-              onDismiss={handleDismiss}
-              compact={true}
-            />
           </div>
         ))}
       </div>
-      
-      {/* Expand/Collapse button */}
-      {remainingCount > 0 && (
-        <div className="text-center pt-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setExpandedView(!expandedView)}
-            className="text-xs text-mint-600 hover:text-mint-800 hover:bg-mint-100"
-          >
-            <ChevronDown className={`w-3 h-3 mr-1 transition-transform ${expandedView ? 'rotate-180' : ''}`} />
-            {expandedView ? 'Show Less' : `Show ${remainingCount} More`}
-          </Button>
-        </div>
-      )}
+    );
+  }
 
-      {/* Load More button for pagination */}
-      {hasMore && expandedView && (
-        <div className="text-center pt-2">
-          <Button
-            variant="outline"
-            size="sm"
+  if (reminders.length === 0) {
+    return (
+      <div className="text-center py-12 px-6">
+        <div className="w-16 h-16 bg-mint-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <CheckCircle className="h-8 w-8 text-mint-600" />
+        </div>
+        <h3 className="font-medium text-mint-800 mb-2">All caught up!</h3>
+        <p className="text-sm text-mint-600">No reminders to show right now.</p>
+      </div>
+    );
+  }
+
+  // Sort by status (sent first) then by time
+  const sortedReminders = [...reminders].sort((a, b) => {
+    if (a.status === 'sent' && b.status !== 'sent') return -1;
+    if (a.status !== 'sent' && b.status === 'sent') return 1;
+    return new Date(a.reminder_time).getTime() - new Date(b.reminder_time).getTime();
+  });
+
+  return (
+    <div className="divide-y divide-mint-100">
+      {sortedReminders.map((reminder) => (
+        <div key={reminder.id} className="p-4 hover:bg-mint-50/50 transition-colors relative">
+          {isReminderDismissing(reminder.id) && (
+            <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-10">
+              <div className="flex items-center gap-2 text-sm text-mint-600">
+                <div className="w-4 h-4 border-2 border-mint-500 border-t-transparent rounded-full animate-spin"></div>
+                <span>Dismissing...</span>
+              </div>
+            </div>
+          )}
+          
+          <div className="flex items-start justify-between">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <p className="text-sm font-medium text-mint-900 truncate">
+                  {reminder.title}
+                </p>
+                <Badge 
+                  variant={reminder.status === 'sent' ? 'destructive' : 'default'}
+                  className="text-xs bg-mint-100 text-mint-800 border-mint-200"
+                >
+                  {reminder.status}
+                </Badge>
+              </div>
+              
+              {reminder.description && (
+                <p className="text-xs text-mint-700 mb-2 line-clamp-1">
+                  {reminder.description}
+                </p>
+              )}
+              
+              <div className="flex items-center gap-3 text-xs text-mint-600">
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {reminder.reminder_time ? 
+                    formatDistanceToNow(new Date(reminder.reminder_time), { addSuffix: true }) : 
+                    'No time'
+                  }
+                </span>
+                <span className="capitalize">{reminder.type.replace('_', ' ')}</span>
+                <span className="capitalize">{reminder.priority}</span>
+              </div>
+            </div>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onDismiss(reminder.id)}
+              disabled={isReminderDismissing(reminder.id)}
+              className="flex-shrink-0 ml-2 h-8 w-8 p-0 hover:bg-mint-100 hover:text-mint-700"
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+      ))}
+      
+      {hasMore && (
+        <div className="p-4 text-center">
+          <Button 
+            variant="outline" 
+            size="sm" 
             onClick={onLoadMore}
             disabled={loading}
-            className="text-xs border-mint-200 text-mint-700 hover:bg-mint-50"
+            className="text-mint-600 border-mint-200 hover:bg-mint-50"
           >
-            {loading ? (
-              <>
-                <div className="w-3 h-3 border border-mint-500 border-t-transparent rounded-full animate-spin mr-1" />
-                Loading...
-              </>
-            ) : (
-              'Load More Reminders'
-            )}
+            {loading ? 'Loading...' : 'Load More'}
           </Button>
-        </div>
-      )}
-      
-      {/* Performance footer */}
-      {sortedReminders.length > 10 && (
-        <div className="text-center pt-2">
-          <div className="inline-flex items-center gap-2 text-xs text-mint-600 bg-mint-50 px-3 py-1.5 rounded-full border border-mint-200">
-            <div className="w-1 h-1 bg-mint-400 rounded-full"></div>
-            <span>Showing {displayedReminders.length} of {sortedReminders.length} reminders</span>
-            <div className="w-1 h-1 bg-mint-400 rounded-full"></div>
-          </div>
         </div>
       )}
     </div>

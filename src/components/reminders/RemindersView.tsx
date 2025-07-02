@@ -25,6 +25,10 @@ export const RemindersView = () => {
 
   console.log('📋 RemindersView - UNIFIED SYSTEM ONLY - Total:', totalCount);
 
+  const handleRefresh = () => {
+    refresh();
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -64,7 +68,7 @@ export const RemindersView = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={refresh}
+            onClick={handleRefresh}
             disabled={isLoading}
           >
             <RefreshCw className="h-4 w-4 mr-2" />

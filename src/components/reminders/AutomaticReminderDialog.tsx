@@ -1,262 +1,175 @@
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { format } from 'date-fns';
-import { Clock, Bell } from 'lucide-react';
-import { ReminderFormValues, ReminderRecurrence, DeliveryMethod, ReminderType } from '@/hooks/useReminders';
 
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle,
-  DialogDescription
-} from "@/components/ui/dialog";
+import React, { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Switch } from '@/components/ui/switch';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon, Plus } from 'lucide-react';
+import { format } from 'date-fns';
+import { ReminderType, DeliveryMethod, ReminderRecurrence } from '@/hooks/reminders/types';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/auth';
+import { toast } from '@/components/ui/use-toast';
 
-const reminderSchema = z.object({
-  enableReminder: z.boolean(),
-  advanceDays: z.coerce.number().min(0).max(30),
-  recurrence: z.enum(['none', 'daily', 'weekly', 'monthly']),
-  delivery_methods: z.array(z.enum(['in_app', 'email', 'whatsapp']).transform(val => val as DeliveryMethod)),
-});
+interface AutomaticReminderDialogProps {
+  trigger?: React.ReactNode;
+  onReminderCreated?: () => void;
+}
 
-type AutomaticReminderDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onConfirm: (reminderConfig: AutomaticReminderConfig | null) => void;
-  title?: string;
-  targetDate?: Date;
-  reminderType: ReminderType;
-};
-
-export type AutomaticReminderConfig = {
-  advanceDays: number;
-  recurrence: ReminderRecurrence;
-  delivery_methods: DeliveryMethod[];
-};
-
-export function AutomaticReminderDialog({
-  open,
-  onOpenChange,
-  onConfirm,
-  title = "Item",
-  targetDate,
-  reminderType
-}: AutomaticReminderDialogProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const form = useForm<z.infer<typeof reminderSchema>>({
-    resolver: zodResolver(reminderSchema),
-    defaultValues: {
-      enableReminder: true,
-      advanceDays: 1,
-      recurrence: 'none',
-      delivery_methods: ['in_app'] as DeliveryMethod[],
-    }
+export const AutomaticReminderDialog = ({ 
+  trigger, 
+  onReminderCreated 
+}: AutomaticReminderDialogProps) => {
+  const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [reminderData, setReminderData] = useState({
+    title: '',
+    description: '',
+    type: 'other' as ReminderType,
+    deliveryMethods: ['in_app'] as DeliveryMethod[],
+    recurrence: 'none' as ReminderRecurrence,
+    reminderDate: new Date()
   });
-  
-  const enableReminder = form.watch('enableReminder');
-  
-  const handleSubmit = (data: z.infer<typeof reminderSchema>) => {
-    setIsSubmitting(true);
-    
+
+  const handleCreateReminder = async () => {
+    if (!user || !reminderData.title) return;
+
+    setIsLoading(true);
     try {
-      if (!data.enableReminder) {
-        onConfirm(null);
-        return;
-      }
+      const { error } = await supabase
+        .from('reminders')
+        .insert({
+          user_id: user.id,
+          title: reminderData.title,
+          description: reminderData.description,
+          type: reminderData.type,
+          delivery_methods: reminderData.deliveryMethods,
+          recurrence: reminderData.recurrence,
+          reminder_time: reminderData.reminderDate.toISOString(),
+          status: 'pending',
+          priority: 'medium'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Reminder created successfully'
+      });
+
+      setOpen(false);
+      onReminderCreated?.();
       
-      const config: AutomaticReminderConfig = {
-        advanceDays: data.advanceDays,
-        recurrence: data.recurrence as ReminderRecurrence,
-        delivery_methods: data.delivery_methods as DeliveryMethod[],
-      };
-      
-      onConfirm(config);
+      // Reset form
+      setReminderData({
+        title: '',
+        description: '',
+        type: 'other',
+        deliveryMethods: ['in_app'],
+        recurrence: 'none',
+        reminderDate: new Date()
+      });
     } catch (error) {
-      console.error("Error configuring reminder:", error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create reminder',
+        variant: 'destructive'
+      });
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
-  
-  const deliveryMethods = [
-    { id: 'in_app' as const, label: 'In-App' },
-    { id: 'email' as const, label: 'Email' },
-    { id: 'whatsapp' as const, label: 'WhatsApp' }
-  ];
-  
-  const targetDateFormatted = targetDate ? format(targetDate, "PPP") : "the scheduled date";
-  
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {trigger || (
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Reminder
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Set Up Reminder</DialogTitle>
-          <DialogDescription>
-            Configure automatic reminder for "{title}"
-          </DialogDescription>
+          <DialogTitle>Create Reminder</DialogTitle>
         </DialogHeader>
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="enableReminder"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                  <div className="space-y-0.5">
-                    <FormLabel>Enable Reminder</FormLabel>
-                    <FormDescription>
-                      Send a notification before {targetDateFormatted}
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="title">Title</Label>
+            <Input
+              id="title"
+              value={reminderData.title}
+              onChange={(e) => setReminderData(prev => ({ ...prev, title: e.target.value }))}
+              placeholder="Enter reminder title"
             />
-            
-            {enableReminder && (
-              <>
-                <FormField
-                  control={form.control}
-                  name="advanceDays"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Remind me</FormLabel>
-                      <Select
-                        value={field.value.toString()}
-                        onValueChange={(value) => field.onChange(parseInt(value))}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select days in advance" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="0">On the day</SelectItem>
-                          <SelectItem value="1">1 day before</SelectItem>
-                          <SelectItem value="2">2 days before</SelectItem>
-                          <SelectItem value="3">3 days before</SelectItem>
-                          <SelectItem value="5">5 days before</SelectItem>
-                          <SelectItem value="7">1 week before</SelectItem>
-                          <SelectItem value="14">2 weeks before</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+          </div>
+          
+          <div>
+            <Label htmlFor="description">Description</Label>
+            <Input
+              id="description"
+              value={reminderData.description}
+              onChange={(e) => setReminderData(prev => ({ ...prev, description: e.target.value }))}
+              placeholder="Enter description (optional)"
+            />
+          </div>
+
+          <div>
+            <Label>Type</Label>
+            <Select 
+              value={reminderData.type} 
+              onValueChange={(value: ReminderType) => 
+                setReminderData(prev => ({ ...prev, type: value }))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="study_event">Study Event</SelectItem>
+                <SelectItem value="goal_deadline">Goal Deadline</SelectItem>
+                <SelectItem value="flashcard_review">Flashcard Review</SelectItem>
+                <SelectItem value="todo">Todo</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label>Reminder Date</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-full justify-start text-left font-normal">
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {format(reminderData.reminderDate, 'PPP')}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={reminderData.reminderDate}
+                  onSelect={(date) => date && setReminderData(prev => ({ ...prev, reminderDate: date }))}
+                  initialFocus
                 />
-                
-                <FormField
-                  control={form.control}
-                  name="recurrence"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Recurrence</FormLabel>
-                      <Select 
-                        value={field.value} 
-                        onValueChange={field.onChange}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select recurrence" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="none">None</SelectItem>
-                          <SelectItem value="daily">Daily</SelectItem>
-                          <SelectItem value="weekly">Weekly</SelectItem>
-                          <SelectItem value="monthly">Monthly</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="delivery_methods"
-                  render={() => (
-                    <FormItem>
-                      <div className="mb-2">
-                        <FormLabel>Notification Methods</FormLabel>
-                      </div>
-                      <div className="flex flex-wrap gap-4">
-                        {deliveryMethods.map((method) => (
-                          <FormField
-                            key={method.id}
-                            control={form.control}
-                            name="delivery_methods"
-                            render={({ field }) => {
-                              return (
-                                <FormItem
-                                  key={method.id}
-                                  className="flex flex-row items-center space-x-2 space-y-0"
-                                >
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={field.value?.includes(method.id)}
-                                      onCheckedChange={(checked) => {
-                                        const updatedValue = checked
-                                          ? [...field.value, method.id]
-                                          : field.value?.filter(
-                                              (value) => value !== method.id
-                                            );
-                                        field.onChange(updatedValue);
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <FormLabel className="text-sm font-normal">
-                                    {method.label}
-                                  </FormLabel>
-                                </FormItem>
-                              );
-                            }}
-                          />
-                        ))}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </>
-            )}
-            
-            <DialogFooter className="pt-2">
-              <Button 
-                variant="outline" 
-                onClick={() => onOpenChange(false)}
-                type="button"
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Saving..." : "Confirm"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateReminder} disabled={isLoading || !reminderData.title}>
+              {isLoading ? 'Creating...' : 'Create Reminder'}
+            </Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
-}
+};
