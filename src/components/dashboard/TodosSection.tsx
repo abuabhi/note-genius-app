@@ -9,12 +9,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { format, isToday, isPast } from "date-fns";
 
+interface TodoItem {
+  id: string;
+  title: string;
+  description?: string;
+  due_date?: string;
+  status: string;
+  priority: string;
+}
+
 export const TodosSection = () => {
   const { user } = useAuth();
 
   const { data: todos = [], isLoading } = useQuery({
     queryKey: ['dashboard-todos', user?.id],
-    queryFn: async () => {
+    queryFn: async (): Promise<TodoItem[]> => {
       if (!user) return [];
       
       const { data, error } = await supabase
@@ -22,12 +31,19 @@ export const TodosSection = () => {
         .select('*')
         .eq('user_id', user.id)
         .eq('type', 'todo')
-        .eq('is_completed', false)
+        .eq('status', 'pending')
         .order('due_date', { ascending: true })
         .limit(4);
 
       if (error) throw error;
-      return data || [];
+      return (data || []).map(item => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        due_date: item.due_date,
+        status: item.status,
+        priority: item.priority
+      }));
     },
     enabled: !!user,
     staleTime: 2 * 60 * 1000,
@@ -102,7 +118,7 @@ export const TodosSection = () => {
                     <h4 className="font-medium text-red-900 mb-1">{todo.title}</h4>
                     <div className="flex items-center gap-1 text-xs text-red-600">
                       <AlertCircle className="h-3 w-3" />
-                      Overdue - {format(new Date(todo.due_date), 'MMM d')}
+                      Overdue - {todo.due_date && format(new Date(todo.due_date), 'MMM d')}
                     </div>
                   </div>
                 </div>

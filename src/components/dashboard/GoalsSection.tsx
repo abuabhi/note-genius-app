@@ -101,7 +101,7 @@ export const GoalsSection = () => {
                       </div>
                       <div className="flex items-center gap-1">
                         <CheckCircle2 className="h-3 w-3" />
-                        {Math.round((goal.current_hours / goal.target_hours) * 100)}% complete
+                        {goal.progress || 0}% complete
                       </div>
                     </div>
                   </div>
