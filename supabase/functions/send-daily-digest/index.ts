@@ -44,17 +44,24 @@ serve(async (req) => {
       try {
         // Enhanced time check with detailed logging
         const now = new Date();
+        // Properly convert UTC time to user's timezone
         const userTime = new Date(now.toLocaleString("en-US", {timeZone: user.timezone || 'UTC'}));
         const currentHour = userTime.getHours();
+        const currentMinute = userTime.getMinutes();
         const digestHour = parseInt(user.digest_time.split(':')[0]);
+        const digestMinute = parseInt(user.digest_time.split(':')[1] || '0');
         
-        // Check if we're within 2 hours of digest time
-        const hourDiff = Math.abs(currentHour - digestHour);
-        const inTimeWindow = hourDiff <= 1 || hourDiff >= 23; // Handle midnight wraparound
+        // Create exact digest time for today in user's timezone
+        const todayDigestTime = new Date(userTime);
+        todayDigestTime.setHours(digestHour, digestMinute, 0, 0);
         
-        console.log(`🕐 User ${user.email} time check: current=${currentHour}h, target=${digestHour}h, diff=${hourDiff}h, inWindow=${inTimeWindow}, timezone=${user.timezone}`);
+        // Check if we're within 30 minutes of digest time (before or after)
+        const timeDiff = Math.abs(userTime.getTime() - todayDigestTime.getTime());
+        const withinWindow = timeDiff <= 30 * 60 * 1000; // 30 minutes in milliseconds
         
-        if (!inTimeWindow) {
+        console.log(`🕐 User ${user.email} time check: current=${currentHour}:${currentMinute.toString().padStart(2, '0')}, target=${digestHour}:${digestMinute.toString().padStart(2, '0')}, diff=${Math.round(timeDiff/60000)}min, inWindow=${withinWindow}, timezone=${user.timezone}`);
+        
+        if (!withinWindow) {
           console.log(`⏰ Skipping user ${user.email}: not in time window`);
           continue;
         }
