@@ -44,6 +44,8 @@ export interface UserProfile {
 }
 
 export const useRequireAuth = () => {
+  console.log('🔐 [USE REQUIRE AUTH] Hook initializing');
+  
   const { user, loading: authLoading } = useAuth();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [tierLimits, setTierLimits] = useState<TierLimits | null>(null);
@@ -51,16 +53,37 @@ export const useRequireAuth = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
+  console.log('🔐 [USE REQUIRE AUTH] Initial state:', {
+    userId: user?.id,
+    authLoading,
+    currentPath: location.pathname
+  });
+  
   // Define which routes are public
   const publicRoutes = ['/', '/about', '/pricing', '/faq', '/contact', '/blog', '/features', '/login', '/signup'];
   const isPublicRoute = publicRoutes.includes(location.pathname);
   
+  console.log('🔐 [USE REQUIRE AUTH] Route analysis:', {
+    currentPath: location.pathname,
+    isPublicRoute
+  });
+  
   useEffect(() => {
+    console.log('🔐 [USE REQUIRE AUTH] Effect running:', {
+      authLoading,
+      userId: user?.id,
+      isPublicRoute
+    });
+    
     // Don't do anything while the auth is still loading
-    if (authLoading) return;
+    if (authLoading) {
+      console.log('🔐 [USE REQUIRE AUTH] Auth still loading, waiting...');
+      return;
+    }
     
     // Only redirect to login if the user is not authenticated AND we're not on a public route
     if (!user && !isPublicRoute) {
+      console.log('🔐 [USE REQUIRE AUTH] No user and not public route - redirecting to login');
       navigate('/login');
       setLoading(false);
       return;
@@ -68,8 +91,12 @@ export const useRequireAuth = () => {
     
     // If user is authenticated, fetch user data
     if (user) {
+      console.log('🔐 [USE REQUIRE AUTH] User authenticated, fetching profile data for:', user.id);
+      
       const fetchUserData = async () => {
         try {
+          console.log('🔐 [USE REQUIRE AUTH] Starting profile fetch...');
+          
           // Reduced timeout from 8000ms to 3000ms for better UX
           const timeoutPromise = new Promise((_, reject) => {
             setTimeout(() => reject(new Error('Profile fetch timeout')), 3000);
@@ -87,13 +114,20 @@ export const useRequireAuth = () => {
             timeoutPromise
           ]) as any;
 
+          console.log('🔐 [USE REQUIRE AUTH] Profile fetch result:', {
+            profileData: profileData?.id,
+            profileError: profileError?.message
+          });
+
           if (profileError && profileError.code !== 'PGRST116') {
-            console.error('Error fetching user profile:', profileError);
+            console.error('🔐 [USE REQUIRE AUTH] Error fetching user profile:', profileError);
             // Don't throw on profile errors, continue with default values
           }
 
           // Fetch tier limits based on user's tier if profile exists
           if (profileData) {
+            console.log('🔐 [USE REQUIRE AUTH] Fetching tier limits for tier:', profileData.user_tier);
+            
             try {
               const { data: tierData, error: tierError } = await supabase
                 .from('tier_limits')
@@ -102,8 +136,9 @@ export const useRequireAuth = () => {
                 .single();
 
               if (tierError) {
-                console.error('Error fetching tier limits:', tierError);
+                console.error('🔐 [USE REQUIRE AUTH] Error fetching tier limits:', tierError);
               } else {
+                console.log('🔐 [USE REQUIRE AUTH] Tier limits loaded successfully');
                 setTierLimits(tierData);
               }
 
@@ -131,15 +166,19 @@ export const useRequireAuth = () => {
                 updated_at: profileData.updated_at || ''
               };
 
+              console.log('🔐 [USE REQUIRE AUTH] Profile set successfully for user:', typedProfile.username);
               setUserProfile(typedProfile);
             } catch (tierError) {
-              console.error('Error fetching tier data:', tierError);
+              console.error('🔐 [USE REQUIRE AUTH] Error fetching tier data:', tierError);
             }
+          } else {
+            console.log('🔐 [USE REQUIRE AUTH] No profile data found, continuing without profile');
           }
         } catch (error) {
-          console.error('Error in useRequireAuth:', error);
+          console.error('🔐 [USE REQUIRE AUTH] Error in fetchUserData:', error);
           // Continue without profile data rather than blocking the app
         } finally {
+          console.log('🔐 [USE REQUIRE AUTH] Setting loading to false');
           setLoading(false);
         }
       };
@@ -148,6 +187,7 @@ export const useRequireAuth = () => {
     } else {
       // If we're on a public route but not authenticated,
       // just set loading to false without redirecting
+      console.log('🔐 [USE REQUIRE AUTH] Public route or no user, setting loading to false');
       setLoading(false);
     }
     
@@ -158,5 +198,18 @@ export const useRequireAuth = () => {
     
   }, [user, authLoading, navigate, location.pathname, isPublicRoute]);
 
-  return { user, userProfile, loading: authLoading || loading, tierLimits };
+  const finalResult = { 
+    user, 
+    userProfile, 
+    loading: authLoading || loading, 
+    tierLimits 
+  };
+  
+  console.log('🔐 [USE REQUIRE AUTH] Final return values:', {
+    userId: finalResult.user?.id,
+    profileId: finalResult.userProfile?.id,
+    loading: finalResult.loading
+  });
+
+  return finalResult;
 };
