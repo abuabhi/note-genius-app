@@ -28,10 +28,14 @@ export const OptimizedReminderPopover = () => {
   // Get any overdue reminders for urgent styling
   const now = new Date();
   const hasOverdueReminders = reminders.some(
-    r => r.status === 'pending' && r.reminder_time && new Date(r.reminder_time) < now
+    r => r.status === 'active' && r.reminder_time && new Date(r.reminder_time) < now
   );
   
   console.log('🔔 OptimizedReminderPopover - UNIFIED SYSTEM ONLY - Unread:', unreadCount);
+  
+  const handleDismissAll = () => {
+    dismissAll();
+  };
   
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -65,7 +69,7 @@ export const OptimizedReminderPopover = () => {
                 variant="outline" 
                 className={hasOverdueReminders ? 'text-red-600 border-red-300' : ''}
               >
-                {unreadCount} pending
+                {unreadCount} active
               </Badge>
             )}
           </div>
@@ -74,7 +78,7 @@ export const OptimizedReminderPopover = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={dismissAll}
+                onClick={handleDismissAll}
                 disabled={isDismissing}
                 className="text-xs px-2 py-1 h-auto"
               >

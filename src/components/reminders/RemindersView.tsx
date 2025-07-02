@@ -29,6 +29,10 @@ export const RemindersView = () => {
     refresh();
   };
 
+  const handleDismissAll = () => {
+    dismissAll();
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -78,7 +82,7 @@ export const RemindersView = () => {
             <Button
               variant="destructive"
               size="sm"
-              onClick={dismissAll}
+              onClick={handleDismissAll}
               disabled={isDismissing}
             >
               <Trash2 className="h-4 w-4 mr-2" />
@@ -92,7 +96,7 @@ export const RemindersView = () => {
           <div className="text-center py-8 text-muted-foreground">
             <Bell className="h-12 w-12 mx-auto mb-2 opacity-50" />
             <p className="text-lg font-medium">✅ All caught up!</p>
-            <p className="text-sm">No reminders to show (cancelled ones are filtered out)</p>
+            <p className="text-sm">No reminders to show (dismissed ones are filtered out)</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -104,14 +108,6 @@ export const RemindersView = () => {
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center gap-2">
                     <p className="font-medium">{reminder.title}</p>
-                    <Badge
-                      variant={
-                        reminder.status === 'pending' ? 'default' :
-                        reminder.status === 'sent' ? 'destructive' : 'secondary'
-                      }
-                    >
-                      {reminder.status}
-                    </Badge>
                     <Badge variant="outline" className="text-xs">
                       {reminder.type}
                     </Badge>
