@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 // Simple types that match database reality
 interface SimpleReminder {
@@ -74,7 +74,16 @@ export const useUnifiedReminderSystem = (options: UnifiedReminderSystemOptions =
       }
 
       console.log('✅ Fetched reminders:', data?.length || 0);
-      return data || [];
+      
+      // Transform the data to match our SimpleReminder interface
+      const transformedData: SimpleReminder[] = (data || []).map(item => ({
+        ...item,
+        delivery_methods: Array.isArray(item.delivery_methods) 
+          ? item.delivery_methods as string[]
+          : ['in_app'] // Default fallback
+      }));
+      
+      return transformedData;
     },
     enabled: !!user?.id,
     staleTime: 1000 * 60 * 2, // 2 minutes
