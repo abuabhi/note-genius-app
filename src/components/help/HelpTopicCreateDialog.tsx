@@ -8,12 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { RichTextEditor } from '@/components/ui/rich-text/RichTextEditor';
 import { X, Plus } from 'lucide-react';
-import { useUpdateHelpTopic, HelpTopic } from '@/hooks/help/useHelpTopics';
+import { useCreateHelpTopic } from '@/hooks/help/useHelpTopics';
 import { htmlToMarkdown, markdownToHtml } from '@/utils/markdownConverter';
 import { toast } from 'sonner';
 
-interface HelpTopicEditDialogProps {
-  topic: HelpTopic;
+interface HelpTopicCreateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -32,24 +31,24 @@ const categories = [
   { value: 'advanced', label: 'Advanced' }
 ];
 
-export const HelpTopicEditDialog = ({ topic, open, onOpenChange }: HelpTopicEditDialogProps) => {
+export const HelpTopicCreateDialog = ({ open, onOpenChange }: HelpTopicCreateDialogProps) => {
   const [formData, setFormData] = useState({
-    title: topic.title,
-    description: topic.description,
-    content: topic.content,
-    category: topic.category,
-    priority: topic.priority,
-    video_url: topic.video_url || '',
-    video_title: topic.video_title || '',
-    video_duration: topic.video_duration || '',
-    tags: topic.tags || [],
-    quick_tips: topic.quick_tips || []
+    title: '',
+    description: '',
+    content: '',
+    category: 'getting-started',
+    priority: 1,
+    video_url: '',
+    video_title: '',
+    video_duration: '',
+    tags: [] as string[],
+    quick_tips: [] as string[]
   });
 
   const [newTag, setNewTag] = useState('');
   const [newTip, setNewTip] = useState('');
 
-  const updateTopic = useUpdateHelpTopic();
+  const createTopic = useCreateHelpTopic();
 
   const addTag = () => {
     if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
@@ -89,16 +88,30 @@ export const HelpTopicEditDialog = ({ topic, open, onOpenChange }: HelpTopicEdit
     e.preventDefault();
     
     try {
-      await updateTopic.mutateAsync({
-        id: topic.id,
-        ...formData
+      await createTopic.mutateAsync({
+        ...formData,
+        is_active: true
       });
       
-      toast.success('Help topic updated successfully!');
+      toast.success('Help topic created successfully!');
       onOpenChange(false);
+      
+      // Reset form
+      setFormData({
+        title: '',
+        description: '',
+        content: '',
+        category: 'getting-started',
+        priority: 1,
+        video_url: '',
+        video_title: '',
+        video_duration: '',
+        tags: [],
+        quick_tips: []
+      });
     } catch (error) {
-      console.error('Error updating help topic:', error);
-      toast.error('Failed to update help topic');
+      console.error('Error creating help topic:', error);
+      toast.error('Failed to create help topic');
     }
   };
 
@@ -106,7 +119,7 @@ export const HelpTopicEditDialog = ({ topic, open, onOpenChange }: HelpTopicEdit
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Help Topic</DialogTitle>
+          <DialogTitle>Create New Help Topic</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -276,8 +289,8 @@ export const HelpTopicEditDialog = ({ topic, open, onOpenChange }: HelpTopicEdit
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={updateTopic.isPending}>
-              {updateTopic.isPending ? 'Saving...' : 'Save Changes'}
+            <Button type="submit" disabled={createTopic.isPending}>
+              {createTopic.isPending ? 'Creating...' : 'Create Topic'}
             </Button>
           </div>
         </form>

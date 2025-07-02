@@ -6,12 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Plus, Edit, Trash2, Search, Eye } from 'lucide-react';
 import { useAllHelpTopics, useDeleteHelpTopic, HelpTopic } from '@/hooks/help/useHelpTopics';
 import { HelpTopicEditDialog } from '@/components/help/HelpTopicEditDialog';
+import { HelpTopicCreateDialog } from '@/components/help/HelpTopicCreateDialog';
 import { toast } from 'sonner';
 
 const AdminHelpManagementPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [editingTopic, setEditingTopic] = useState<HelpTopic | null>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   const { data: topics = [], isLoading } = useAllHelpTopics();
   const deleteTopic = useDeleteHelpTopic();
@@ -100,7 +102,10 @@ const AdminHelpManagementPage = () => {
           </div>
 
           {/* Add New Button */}
-          <Button className="flex items-center gap-2">
+          <Button 
+            className="flex items-center gap-2"
+            onClick={() => setShowCreateDialog(true)}
+          >
             <Plus className="h-4 w-4" />
             Add Topic
           </Button>
@@ -213,6 +218,12 @@ const AdminHelpManagementPage = () => {
           onOpenChange={(open) => !open && setEditingTopic(null)}
         />
       )}
+
+      {/* Create Dialog */}
+      <HelpTopicCreateDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+      />
     </div>
   );
 };

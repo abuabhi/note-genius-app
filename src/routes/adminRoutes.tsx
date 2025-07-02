@@ -15,6 +15,7 @@ import AdminFeedbackPage from "@/pages/AdminFeedbackPage";
 import AdminFeedbackSettingsPage from "@/pages/AdminFeedbackSettingsPage";
 import AdminSystemMonitoringPage from "@/pages/AdminSystemMonitoringPage";
 import AdminContactSubmissionsPage from "@/pages/AdminContactSubmissionsPage";
+import AdminHelpManagementPage from "@/pages/AdminHelpManagementPage";
 import { RouteConfig } from './publicRoutes';
 
 // Admin routes - wrapped with SidebarLayout for sidebar/header
@@ -33,4 +34,5 @@ export const adminRoutes: RouteConfig[] = [
   { path: "/admin/subjects", element: <SidebarLayout><AdminSubjectsPage /></SidebarLayout> },
   { path: "/admin/csv-import", element: <SidebarLayout><AdminCSVImportPage /></SidebarLayout> },
   { path: "/admin/tier-limits", element: <SidebarLayout><AdminTierLimitsPage /></SidebarLayout> },
+  { path: "/admin/help", element: <SidebarLayout><AdminHelpManagementPage /></SidebarLayout> },
 ];
