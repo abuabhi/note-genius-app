@@ -66,10 +66,8 @@ export const DesktopAuthSection = ({ isPublicRoute }: DesktopAuthSectionProps) =
       
       {/* Action buttons with subtle styling */}
       <div className="flex items-center space-x-2 bg-gray-50/60 rounded-full px-3 py-1 backdrop-blur-sm border border-gray-200/50">
-        {/* Reminder Bell Icon - Now mint green */}
-        <div className="[&>button>svg]:text-mint-600">
-          <ReminderNavPopover />
-        </div>
+        {/* Reminder Bell Icon */}
+        <ReminderNavPopover />
         
         {/* Help Icon - Next to Reminder */}
         {helpContext && (
@@ -80,7 +78,7 @@ export const DesktopAuthSection = ({ isPublicRoute }: DesktopAuthSectionProps) =
             className="h-8 w-8 p-0 hover:bg-mint-100 rounded-full transition-colors"
             title="Get Help"
           >
-            <HelpCircle className="h-4 w-4 text-mint-600" />
+            <HelpCircle className="h-5 w-5 text-mint-600" />
           </Button>
         )}
       </div>
