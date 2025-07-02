@@ -4,16 +4,13 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import './index.css'
-import { ThemeProvider } from './components/theme-provider'
 
 const root = createRoot(document.getElementById('root')!)
 
 root.render(
   <StrictMode>
     <BrowserRouter>
-      <ThemeProvider defaultTheme="light" storageKey="ui-theme">
-        <App />
-      </ThemeProvider>
+      <App />
     </BrowserRouter>
   </StrictMode>,
 )

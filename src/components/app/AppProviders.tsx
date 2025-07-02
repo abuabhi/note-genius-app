@@ -1,6 +1,5 @@
 
 import React, { ReactNode } from 'react';
-import { AuthProvider } from '@/contexts/auth/AuthProvider';
 import { QueryProvider } from '@/components/app/QueryProvider';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from '@/components/ui/toaster';
@@ -18,20 +17,16 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   return (
     <MonitoringProvider>
       <SecurityErrorBoundary>
-        <QueryProvider>
-          <AuthProvider>
-            <SecurityProvider>
-              <HelpProvider>
-                <ErrorProvider>
-                  <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-                    <Toaster />
-                    {children}
-                  </ThemeProvider>
-                </ErrorProvider>
-              </HelpProvider>
-            </SecurityProvider>
-          </AuthProvider>
-        </QueryProvider>
+        <HelpProvider>
+          <ErrorProvider>
+            <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+              <SecurityProvider>
+                <Toaster />
+                {children}
+              </SecurityProvider>
+            </ThemeProvider>
+          </ErrorProvider>
+        </HelpProvider>
       </SecurityErrorBoundary>
     </MonitoringProvider>
   );

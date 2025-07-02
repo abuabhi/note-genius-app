@@ -1,215 +1,116 @@
 
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/auth';
+import { useNavigate } from 'react-router-dom';
+import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
-// Define available user tiers as enum
-export enum UserTier {
-  SCHOLAR = 'SCHOLAR',
-  GRADUATE = 'GRADUATE',
-  MASTER = 'MASTER',
-  DEAN = 'DEAN'
+interface UseRequireAuthReturn {
+  user: User | null;
+  userProfile: any | null;
+  loading: boolean;
 }
 
-export type TierLimits = {
-  max_notes: number;
-  max_flashcard_sets: number;
-  max_storage_mb: number;
-  ai_features_enabled: boolean;
-  ai_flashcard_generation: boolean;
-  ocr_enabled: boolean;
-  collaboration_enabled: boolean;
-  chat_enabled: boolean;
-  priority_support: boolean;
-  note_enrichment_enabled: boolean;
-  note_enrichment_limit_per_month?: number;
-};
-
-export interface UserProfile {
-  id: string;
-  username: string;
-  avatar_url: string | null;
-  user_tier: UserTier;
-  do_not_disturb: boolean;
-  dnd_start_time: string | null;
-  dnd_end_time: string | null;
-  notification_preferences: {
-    email: boolean;
-    in_app: boolean;
-    whatsapp: boolean;
-  };
-  created_at: string;
-  updated_at: string;
-}
-
-export const useRequireAuth = () => {
-  console.log('🔐 [USE REQUIRE AUTH] Hook initializing');
-  
-  const { user, loading: authLoading } = useAuth();
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [tierLimits, setTierLimits] = useState<TierLimits | null>(null);
+export const useRequireAuth = (): UseRequireAuthReturn => {
+  const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const location = useLocation();
-  
-  console.log('🔐 [USE REQUIRE AUTH] Initial state:', {
-    userId: user?.id,
-    authLoading,
-    currentPath: location.pathname
-  });
-  
-  // Define which routes are public
-  const publicRoutes = ['/', '/about', '/pricing', '/faq', '/contact', '/blog', '/features', '/login', '/signup'];
-  const isPublicRoute = publicRoutes.includes(location.pathname);
-  
-  console.log('🔐 [USE REQUIRE AUTH] Route analysis:', {
-    currentPath: location.pathname,
-    isPublicRoute
-  });
-  
+
+  console.log('🔐 [USE REQUIRE AUTH] Hook starting');
+
   useEffect(() => {
-    console.log('🔐 [USE REQUIRE AUTH] Effect running:', {
-      authLoading,
-      userId: user?.id,
-      isPublicRoute
-    });
-    
-    // Don't do anything while the auth is still loading
-    if (authLoading) {
-      console.log('🔐 [USE REQUIRE AUTH] Auth still loading, waiting...');
-      return;
-    }
-    
-    // Only redirect to login if the user is not authenticated AND we're not on a public route
-    if (!user && !isPublicRoute) {
-      console.log('🔐 [USE REQUIRE AUTH] No user and not public route - redirecting to login');
-      navigate('/login');
-      setLoading(false);
-      return;
-    }
-    
-    // If user is authenticated, fetch user data
-    if (user) {
-      console.log('🔐 [USE REQUIRE AUTH] User authenticated, fetching profile data for:', user.id);
-      
-      const fetchUserData = async () => {
-        try {
-          console.log('🔐 [USE REQUIRE AUTH] Starting profile fetch...');
+    let mounted = true;
+
+    const getUser = async () => {
+      try {
+        console.log('🔐 [USE REQUIRE AUTH] Getting current session...');
+        
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('🔐 [USE REQUIRE AUTH] Session error:', sessionError);
+          if (mounted) {
+            setLoading(false);
+            navigate('/login');
+          }
+          return;
+        }
+
+        if (!session?.user) {
+          console.log('🔐 [USE REQUIRE AUTH] No session found, redirecting to login');
+          if (mounted) {
+            setLoading(false);
+            navigate('/login');
+          }
+          return;
+        }
+
+        console.log('🔐 [USE REQUIRE AUTH] Session found:', {
+          userId: session.user.id,
+          email: session.user.email
+        });
+
+        if (mounted) {
+          setUser(session.user);
           
-          // Reduced timeout from 8000ms to 3000ms for better UX
-          const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Profile fetch timeout')), 3000);
-          });
-
-          // Fetch the user profile
-          const profilePromise = supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-
-          const { data: profileData, error: profileError } = await Promise.race([
-            profilePromise,
-            timeoutPromise
-          ]) as any;
-
-          console.log('🔐 [USE REQUIRE AUTH] Profile fetch result:', {
-            profileData: profileData?.id,
-            profileError: profileError?.message
-          });
-
-          if (profileError && profileError.code !== 'PGRST116') {
-            console.error('🔐 [USE REQUIRE AUTH] Error fetching user profile:', profileError);
-            // Don't throw on profile errors, continue with default values
-          }
-
-          // Fetch tier limits based on user's tier if profile exists
-          if (profileData) {
-            console.log('🔐 [USE REQUIRE AUTH] Fetching tier limits for tier:', profileData.user_tier);
+          // Try to get user profile
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
             
-            try {
-              const { data: tierData, error: tierError } = await supabase
-                .from('tier_limits')
-                .select('*')
-                .eq('tier', profileData.user_tier)
-                .single();
-
-              if (tierError) {
-                console.error('🔐 [USE REQUIRE AUTH] Error fetching tier limits:', tierError);
-              } else {
-                console.log('🔐 [USE REQUIRE AUTH] Tier limits loaded successfully');
-                setTierLimits(tierData);
-              }
-
-              // Transform the profileData to match the UserProfile interface
-              const notificationPrefs = profileData.notification_preferences ? 
-                (typeof profileData.notification_preferences === 'string' 
-                  ? JSON.parse(profileData.notification_preferences)
-                  : profileData.notification_preferences) 
-                : { email: false, in_app: true, whatsapp: false };
-
-              const typedProfile: UserProfile = {
-                id: profileData.id,
-                username: profileData.username || '',
-                avatar_url: profileData.avatar_url,
-                user_tier: profileData.user_tier as UserTier,
-                do_not_disturb: profileData.do_not_disturb || false,
-                dnd_start_time: profileData.dnd_start_time,
-                dnd_end_time: profileData.dnd_end_time,
-                notification_preferences: {
-                  email: notificationPrefs.email === true,
-                  in_app: notificationPrefs.in_app !== false,
-                  whatsapp: notificationPrefs.whatsapp === true
-                },
-                created_at: profileData.created_at || '',
-                updated_at: profileData.updated_at || ''
-              };
-
-              console.log('🔐 [USE REQUIRE AUTH] Profile set successfully for user:', typedProfile.username);
-              setUserProfile(typedProfile);
-            } catch (tierError) {
-              console.error('🔐 [USE REQUIRE AUTH] Error fetching tier data:', tierError);
+            if (mounted) {
+              setUserProfile(profile);
             }
-          } else {
-            console.log('🔐 [USE REQUIRE AUTH] No profile data found, continuing without profile');
+          } catch (profileError) {
+            console.log('🔐 [USE REQUIRE AUTH] No profile found (this is ok):', profileError);
           }
-        } catch (error) {
-          console.error('🔐 [USE REQUIRE AUTH] Error in fetchUserData:', error);
-          // Continue without profile data rather than blocking the app
-        } finally {
-          console.log('🔐 [USE REQUIRE AUTH] Setting loading to false');
+          
           setLoading(false);
         }
-      };
+      } catch (error) {
+        console.error('🔐 [USE REQUIRE AUTH] Error in getUser:', error);
+        if (mounted) {
+          setLoading(false);
+          navigate('/login');
+        }
+      }
+    };
 
-      fetchUserData();
-    } else {
-      // If we're on a public route but not authenticated,
-      // just set loading to false without redirecting
-      console.log('🔐 [USE REQUIRE AUTH] Public route or no user, setting loading to false');
-      setLoading(false);
-    }
-    
-    // Store the current path as the last visited page
-    if (location.pathname !== '/login' && location.pathname !== '/signup') {
-      localStorage.setItem('lastVisitedPage', location.pathname);
-    }
-    
-  }, [user, authLoading, navigate, location.pathname, isPublicRoute]);
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('🔐 [USE REQUIRE AUTH] Auth state changed:', event, { userId: session?.user?.id });
+        
+        if (event === 'SIGNED_OUT' || !session) {
+          if (mounted) {
+            setUser(null);
+            setUserProfile(null);
+            setLoading(false);
+            navigate('/login');
+          }
+        } else if (event === 'SIGNED_IN' && session) {
+          if (mounted) {
+            setUser(session.user);
+            setLoading(false);
+          }
+        }
+      }
+    );
 
-  const finalResult = { 
-    user, 
-    userProfile, 
-    loading: authLoading || loading, 
-    tierLimits 
+    getUser();
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
+
+  return {
+    user,
+    userProfile,
+    loading
   };
-  
-  console.log('🔐 [USE REQUIRE AUTH] Final return values:', {
-    userId: finalResult.user?.id,
-    profileId: finalResult.userProfile?.id,
-    loading: finalResult.loading
-  });
-
-  return finalResult;
 };

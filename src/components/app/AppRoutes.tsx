@@ -1,6 +1,8 @@
 
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/auth/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useEffect, useState } from 'react';
+import { User } from '@supabase/supabase-js';
 import LoginPage from '@/pages/LoginPage';
 import { publicRoutes } from '@/routes/publicRoutes';
 import { standardRoutes } from '@/routes/standardRoutes';
@@ -11,10 +13,34 @@ import { LazyLoadWrapper } from '@/components/performance/LazyLoadWrapper';
 import { Suspense } from 'react';
 
 const AppRoutes = () => {
-  const { user } = useAuth();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-    return user ? children : <Navigate to="/login" />;
+    if (loading) {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mint-600"></div>
+        </div>
+      );
+    }
+    return user ? <>{children}</> : <Navigate to="/login" />;
   };
 
   const LoadingSkeleton = () => (
@@ -22,6 +48,10 @@ const AppRoutes = () => {
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mint-600"></div>
     </div>
   );
+
+  if (loading) {
+    return <LoadingSkeleton />;
+  }
 
   return (
     <Routes>
