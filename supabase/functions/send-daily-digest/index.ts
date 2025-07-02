@@ -13,7 +13,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
-    console.log('📧 Starting daily digest processing...');
+    console.log('📧 Starting daily digest processing at:', new Date().toISOString());
     
     // Get users ready for digest
     const { data: users, error: usersError } = await supabase
@@ -42,7 +42,7 @@ serve(async (req) => {
     
     for (const user of users) {
       try {
-        // Simple time check - within 2 hour window
+        // Enhanced time check with detailed logging
         const now = new Date();
         const userTime = new Date(now.toLocaleString("en-US", {timeZone: user.timezone || 'UTC'}));
         const currentHour = userTime.getHours();
@@ -52,8 +52,10 @@ serve(async (req) => {
         const hourDiff = Math.abs(currentHour - digestHour);
         const inTimeWindow = hourDiff <= 1 || hourDiff >= 23; // Handle midnight wraparound
         
+        console.log(`🕐 User ${user.email} time check: current=${currentHour}h, target=${digestHour}h, diff=${hourDiff}h, inWindow=${inTimeWindow}, timezone=${user.timezone}`);
+        
         if (!inTimeWindow) {
-          console.log(`⏰ Skipping user ${user.user_id}: not in time window (current: ${currentHour}, target: ${digestHour})`);
+          console.log(`⏰ Skipping user ${user.email}: not in time window`);
           continue;
         }
         
@@ -82,11 +84,16 @@ serve(async (req) => {
           .order('start_time', { ascending: false })
           .limit(5);
         
+        // Enhanced content logging
+        const reminderCount = reminders?.length || 0;
+        const goalCount = goals?.length || 0;
+        const sessionCount = sessions?.length || 0;
+        
+        console.log(`📊 User ${user.email} content: ${reminderCount} reminders, ${goalCount} goals, ${sessionCount} sessions`);
+        
         // Skip if no content
-        if ((!reminders || reminders.length === 0) && 
-            (!goals || goals.length === 0) && 
-            (!sessions || sessions.length === 0)) {
-          console.log(`📭 Skipping user ${user.user_id}: no content for digest`);
+        if (reminderCount === 0 && goalCount === 0 && sessionCount === 0) {
+          console.log(`📭 Skipping user ${user.email}: no content for digest`);
           continue;
         }
         

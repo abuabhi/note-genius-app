@@ -3456,6 +3456,17 @@ export type Database = {
           dismissible: boolean
         }[]
       }
+      get_digest_users: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          user_id: string
+          email: string
+          username: string
+          digest_time: string
+          timezone: string
+          last_digest_sent_at: string
+        }[]
+      }
       get_overdue_goals: {
         Args: { p_user_id: string }
         Returns: {
