@@ -13,7 +13,7 @@ import {
   DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/contexts/auth"
-import { HelpCircle, LogOut, User } from "lucide-react"
+import { LogOut, User } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { useEffect, useState } from "react"
 import { NotificationPopover } from '@/components/reminders/NotificationPopover';
@@ -59,12 +59,6 @@ export const Header = () => {
           
           <div className="flex items-center space-x-3">
             {user && <NotificationPopover />}
-            <Button variant="ghost" size="icon" asChild className="h-10 w-10 text-gray-600 hover:text-gray-900 hover:bg-gray-100 flex-shrink-0">
-              <Link to="/help">
-                <HelpCircle className="h-5 w-5" />
-                <span className="sr-only">Help</span>
-              </Link>
-            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 p-0 rounded-full flex-shrink-0">

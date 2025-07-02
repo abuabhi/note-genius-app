@@ -18,6 +18,7 @@ import {
   Gift,
   Heart,
   Calendar,
+  HelpCircle,
   Settings
 } from "lucide-react";
 
@@ -141,6 +142,15 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   WIN
                 </Badge>
               }
+            />
+            
+            {/* Help */}
+            <NavLink
+              to="/help"
+              icon={HelpCircle}
+              label="Help"
+              isActive={pathname.startsWith("/help")}
+              isCollapsed={isCollapsed}
             />
             
             {/* Settings */}
