@@ -4,7 +4,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import AuthContext from './AuthContext';
 import { signOutAndCleanup } from '@/utils/authUtils';
-import { useOnboardingCheck } from '@/hooks/auth/useOnboardingCheck';
 import { useAuthRedirects } from '@/hooks/auth/useAuthRedirects';
 import { ReferralSignupHandler } from '@/components/referrals/ReferralSignupHandler';
 
@@ -16,11 +15,56 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [onboardingCompleted, setOnboardingCompleted] = useState<boolean | null>(null);
+  const [onboardingLoading, setOnboardingLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Check onboarding status
-  const { onboardingCompleted, onboardingLoading } = useOnboardingCheck(user?.id);
+  console.log('🔐 [AUTH PROVIDER] State:', { 
+    userId: user?.id, 
+    loading, 
+    onboardingCompleted, 
+    onboardingLoading,
+    currentPath: location.pathname 
+  });
+  
+  // Check onboarding status when user changes
+  const checkOnboardingStatus = async (userId: string) => {
+    if (!userId) {
+      setOnboardingCompleted(null);
+      setOnboardingLoading(false);
+      return;
+    }
+
+    try {
+      console.log('🔐 [AUTH PROVIDER] Checking onboarding status for:', userId);
+      setOnboardingLoading(true);
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('onboarding_completed')
+        .eq('id', userId)
+        .single();
+      
+      if (error) throw error;
+      
+      const completed = data?.onboarding_completed ?? false;
+      console.log('🔐 [AUTH PROVIDER] Onboarding status result:', completed);
+      setOnboardingCompleted(completed);
+    } catch (error) {
+      console.error('🔐 [AUTH PROVIDER] Error checking onboarding status:', error);
+      setOnboardingCompleted(false);
+    } finally {
+      setOnboardingLoading(false);
+    }
+  };
+
+  // Refresh onboarding status function
+  const refreshOnboardingStatus = async () => {
+    if (user?.id) {
+      await checkOnboardingStatus(user.id);
+    }
+  };
   
   // Handle auth redirects based on onboarding status
   useAuthRedirects({
@@ -35,10 +79,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     
     // Set up the session listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_, session) => {
+      (event, session) => {
         if (!mounted) return;
+        console.log('🔐 [AUTH PROVIDER] Auth state changed:', event, { userId: session?.user?.id });
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // Check onboarding status when user signs in
+        if (event === 'SIGNED_IN' && session?.user) {
+          setTimeout(() => {
+            checkOnboardingStatus(session.user.id);
+          }, 0);
+        } else if (event === 'SIGNED_OUT') {
+          setOnboardingCompleted(null);
+          setOnboardingLoading(false);
+        }
       }
     );
 
@@ -65,6 +120,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setSession(session);
           setUser(session?.user ?? null);
           setLoading(false);
+          
+          // Check onboarding status if user exists
+          if (session?.user) {
+            checkOnboardingStatus(session.user.id);
+          }
         }
       } catch (error) {
         console.error('Failed to get initial session:', error);
@@ -131,12 +191,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     session,
     loading,
+    onboardingCompleted,
+    onboardingLoading,
     signIn,
     signUp,
     signOut,
     resetPassword,
     updatePassword,
-    signInWithGoogle
+    signInWithGoogle,
+    refreshOnboardingStatus
   };
 
   return (

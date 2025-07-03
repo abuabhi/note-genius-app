@@ -1,8 +1,5 @@
 
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { useEffect, useState } from 'react';
-import { User } from '@supabase/supabase-js';
 import LoginPage from '@/pages/LoginPage';
 import { publicRoutes } from '@/routes/publicRoutes';
 import { standardRoutes } from '@/routes/standardRoutes';
@@ -11,26 +8,12 @@ import { authCallbackRoutes } from '@/routes/authCallbackRoutes';
 import { miscRoutes } from '@/routes/miscRoutes';
 import { LazyLoadWrapper } from '@/components/performance/LazyLoadWrapper';
 import { Suspense } from 'react';
+import { useAuth } from '@/contexts/auth';
 
 const AppRoutes = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  const { user, loading } = useAuth();
+  
+  console.log('🚦 [APP ROUTES] Auth state:', { userId: user?.id, loading });
 
   const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     if (loading) {

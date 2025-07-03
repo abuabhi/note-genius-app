@@ -21,7 +21,7 @@ export interface OnboardingData {
 }
 
 export const OnboardingWizard = () => {
-  const { user } = useAuth();
+  const { user, refreshOnboardingStatus } = useAuth();
   const navigate = useNavigate();
   
   const [currentStep, setCurrentStep] = useState(1);
@@ -94,6 +94,10 @@ export const OnboardingWizard = () => {
         .insert(subjectsToAdd);
         
       if (subjectsError) throw subjectsError;
+      
+      // Refresh onboarding status in auth context
+      console.log('📋 [ONBOARDING WIZARD] Onboarding completed, refreshing auth status');
+      await refreshOnboardingStatus();
       
       // Move to completion step
       nextStep();

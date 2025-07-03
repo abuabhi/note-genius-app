@@ -6,12 +6,15 @@ export interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  onboardingCompleted: boolean | null;
+  onboardingLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, metadata?: any) => Promise<{ error: any; data: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
   updatePassword: (password: string) => Promise<{ error: any }>;
   signInWithGoogle: () => Promise<void>;
+  refreshOnboardingStatus: () => Promise<void>;
 }
 
 // Create the context with undefined as default
