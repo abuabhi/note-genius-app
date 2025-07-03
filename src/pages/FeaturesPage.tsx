@@ -6,6 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Sparkles, BookOpen, Brain, Scan, BarChart3, Zap, Calendar, Target, MessageSquare, Clock, TrendingUp, Play, Eye, Layers, CheckCircle, Award, Bot, FileText, LayoutDashboard, HelpCircle } from 'lucide-react';
+import { GoalSettingDemo } from '@/components/features/GoalSettingDemo';
+import { AIChatDemo } from '@/components/features/AIChatDemo';
+import { FeatureComingSoonBanner } from '@/components/features/FeatureComingSoonBanner';
 
 // Demo data for interactive components
 const demoData = {
@@ -120,7 +123,7 @@ const expandedFeatures = [
     icon: Target,
     highlight: "",
     color: "from-purple-400 to-purple-600",
-    demoComponent: null
+    demoComponent: "goalSetting"
   },
   {
     name: "AI Study Assistant Chat",
@@ -129,61 +132,61 @@ const expandedFeatures = [
     icon: MessageSquare,
     highlight: "24/7",
     color: "from-indigo-400 to-indigo-600",
-    demoComponent: null
+    demoComponent: "aiChat"
   },
   {
     name: "Spaced Repetition System",
     description: "Optimize your memory retention with scientifically-backed spaced repetition algorithms for long-term learning.",
     longDescription: "Maximize retention with our advanced spaced repetition system based on cognitive science research. The algorithm tracks your memory performance for each piece of information and schedules reviews at optimal intervals. This approach significantly improves long-term retention while minimizing the time spent on already-mastered material.",
     icon: Clock,
-    highlight: "Science-Based",
+    highlight: "Coming Soon",
     color: "from-orange-400 to-orange-600",
-    demoComponent: null
+    demoComponent: "comingSoon"
   },
   {
     name: "Progress Forecasting",
     description: "Predict your future performance and readiness for exams using advanced analytics and machine learning.",
     longDescription: "Get data-driven predictions about your readiness for upcoming exams and assignments. Our machine learning models analyze your study patterns, performance trends, and learning velocity to forecast your likely performance. Receive early warnings about potential difficulties and recommendations for improvement strategies.",
     icon: TrendingUp,
-    highlight: "Predictive",
+    highlight: "Coming Soon",
     color: "from-red-400 to-red-600",
-    demoComponent: null
+    demoComponent: "comingSoon"
   },
   {
     name: "Interactive Study Sessions",
     description: "Engage in dynamic study sessions with interactive elements, gamification, and real-time feedback.",
     longDescription: "Make studying engaging and effective with interactive elements that keep you motivated. Features include gamified study sessions, real-time feedback, progress streaks, achievement systems, and adaptive difficulty. The system creates a engaging learning environment that makes studying feel less like work and more like play.",
     icon: Play,
-    highlight: "Engaging",
+    highlight: "Coming Soon",
     color: "from-green-400 to-green-600",
-    demoComponent: null
+    demoComponent: "comingSoon"
   },
   {
     name: "Visual Learning Tools",
     description: "Create mind maps, diagrams, and visual study aids to enhance comprehension and memory retention.",
     longDescription: "Leverage visual learning techniques with our comprehensive set of visual tools. Create mind maps, concept diagrams, flowcharts, and other visual aids that help you understand complex relationships and remember information more effectively. The tools integrate with your notes and flashcards for a cohesive learning experience.",
     icon: Eye,
-    highlight: "",
+    highlight: "Coming Soon",
     color: "from-teal-400 to-teal-600",
-    demoComponent: null
+    demoComponent: "comingSoon"
   },
   {
     name: "Multi-Subject Organization",
     description: "Organize and manage study materials across multiple subjects with intelligent categorization and cross-references.",
     longDescription: "Keep all your subjects organized and interconnected with intelligent categorization systems. The platform automatically tags content, identifies cross-subject relationships, and helps you discover connections between different areas of study. Features include subject-specific dashboards, integrated calendars, and unified search across all materials.",
     icon: Layers,
-    highlight: "",
+    highlight: "Coming Soon",
     color: "from-cyan-400 to-cyan-600",
-    demoComponent: null
+    demoComponent: "comingSoon"
   },
   {
     name: "Mastery Verification",
     description: "Verify your understanding with comprehensive assessments and receive certification for mastered topics.",
     longDescription: "Prove your mastery with rigorous assessment tools that verify deep understanding rather than memorization. The system creates comprehensive tests that evaluate knowledge from multiple angles, provides detailed feedback on areas of strength and weakness, and awards certificates for truly mastered topics that you can share with teachers or employers.",
     icon: CheckCircle,
-    highlight: "Certification",
+    highlight: "Coming Soon",
     color: "from-emerald-400 to-emerald-600",
-    demoComponent: null
+    demoComponent: "comingSoon"
   },
   {
     name: "Achievement System",
@@ -279,7 +282,16 @@ const FeaturesPage = () => {
               </CardContent>
             </Card>
           </div>
-        );
+          );
+
+      case 'goalSetting':
+        return <GoalSettingDemo />;
+
+      case 'aiChat':
+        return <AIChatDemo />;
+
+      case 'comingSoon':
+        return null; // Will be handled separately
 
       case 'dashboard':
         return (
@@ -540,7 +552,7 @@ const FeaturesPage = () => {
                       </div>
 
                       {/* Interactive Demo Section */}
-                      {feature.demoComponent ? (
+                      {feature.demoComponent && feature.demoComponent !== 'comingSoon' ? (
                         <div className="bg-gradient-to-r from-mint-50 to-blue-50 rounded-xl p-6 border border-mint-100">
                           <div className="flex items-center justify-between mb-4">
                             <h4 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
@@ -553,23 +565,23 @@ const FeaturesPage = () => {
                               className="bg-white hover:bg-mint-50 border-mint-200 text-mint-700"
                               onClick={() => setActiveDemo(activeDemo === feature.demoComponent ? null : feature.demoComponent)}
                             >
-                              {activeDemo === feature.demoComponent ? 'Hide Demo' : 'Try Demo'}
+                              {activeDemo === feature.demoComponent ? 'Hide Demo' : 'Coming Soon'}
                               <ArrowRight className="ml-2 h-3 w-3" />
                             </Button>
                           </div>
                           
                           {activeDemo === feature.demoComponent && renderInteractiveDemo(feature.demoComponent)}
                         </div>
+                      ) : feature.demoComponent === 'comingSoon' ? (
+                        <FeatureComingSoonBanner 
+                          title={`${feature.name} Demo`}
+                          description="Experience this powerful feature with an interactive demonstration in our upcoming release."
+                        />
                       ) : (
-                        <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
-                          <div className="flex items-center justify-center py-8">
-                            <div className="text-center">
-                              <feature.icon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                              <p className="text-gray-600 font-medium">Interactive demo coming soon</p>
-                              <p className="text-sm text-gray-500 mt-2">This feature will have a live demo in future updates</p>
-                            </div>
-                          </div>
-                        </div>
+                        <FeatureComingSoonBanner 
+                          title={`${feature.name} Demo`}
+                          description="Interactive demonstration will be available soon. This feature is currently in development."
+                        />
                       )}
                     </div>
                   </div>
