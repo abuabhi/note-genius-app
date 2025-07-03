@@ -73,7 +73,7 @@ export const InfluencerManagementTable: React.FC<InfluencerManagementTableProps>
     avgOrderValue: 50.01
   };
 
-  const mockSocialStats = {
+  const mockSocialStats: Record<string, any> = {
     instagram: { handle: '@james_study', followers: 15200 },
     tiktok: { handle: '@jameslearns', followers: 8900 },
     youtube: { handle: 'James Study Channel', subscribers: 3400 }
@@ -344,9 +344,15 @@ export const InfluencerManagementTable: React.FC<InfluencerManagementTableProps>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="font-bold">{data.followers?.toLocaleString() || data.subscribers?.toLocaleString()}</div>
+                          <div className="font-bold">
+                            {'followers' in data ? data.followers?.toLocaleString() : 
+                             'subscribers' in data ? data.subscribers?.toLocaleString() :
+                             'connections' in data ? data.connections?.toLocaleString() : '0'}
+                          </div>
                           <div className="text-sm text-muted-foreground">
-                            {data.followers ? 'followers' : 'subscribers'}
+                            {'followers' in data ? 'followers' : 
+                             'subscribers' in data ? 'subscribers' :
+                             'connections' in data ? 'connections' : 'count'}
                           </div>
                         </div>
                       </CardContent>

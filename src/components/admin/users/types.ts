@@ -22,6 +22,8 @@ export interface InfluencerMetadata {
     handle: string;
     connections: number;
   };
+  couponPercentage?: number;
+  [key: string]: any; // Allow for JSON compatibility
 }
 
 export interface User {
@@ -38,4 +40,5 @@ export interface User {
   influencer_promoted_by?: string;
   influencer_expires_at?: string;
   influencer_notes?: string;
+  influencer_coupon_percentage?: number;
 }
