@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useInfluencerManagement } from "@/hooks/admin/useInfluencerManagement";
 import { InfluencerManagementTable } from "@/components/admin/influencers/InfluencerManagementTable";
 import { InfluencerExpirationAlerts } from "@/components/admin/influencers/InfluencerExpirationAlerts";
+import { InfluencerAnalyticsDashboard } from "@/components/admin/influencers/InfluencerAnalyticsDashboard";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const AdminInfluencersPage = () => {
   const { userProfile, loading } = useRequireAuth();
@@ -69,44 +71,57 @@ const AdminInfluencersPage = () => {
       <div className="container mx-auto px-6 py-8">
         <InfluencerExpirationAlerts influencers={influencers} />
         
-        <div className="mb-6 flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Search influencers by email or username..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-full sm:w-[200px]">
-              <SelectValue placeholder="Filter influencers" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Influencers</SelectItem>
-              <SelectItem value="expiring">Expiring Soon</SelectItem>
-              <SelectItem value="expired">Expired</SelectItem>
-              <SelectItem value="graduate">Graduate Tier</SelectItem>
-              <SelectItem value="master">Master Tier</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <Tabs defaultValue="analytics" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="analytics">Analytics Dashboard</TabsTrigger>
+            <TabsTrigger value="management">Influencer Management</TabsTrigger>
+          </TabsList>
 
-        {influencersLoading ? (
-          <div className="flex items-center justify-center h-64 bg-white rounded-lg border">
-            <div className="text-center">
-              <Loader className="h-8 w-8 animate-spin mx-auto mb-4" />
-              <p className="text-muted-foreground">Loading influencers...</p>
+          <TabsContent value="analytics" className="space-y-4">
+            <InfluencerAnalyticsDashboard />
+          </TabsContent>
+
+          <TabsContent value="management" className="space-y-4">
+            <div className="mb-6 flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Search influencers by email or username..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={filter} onValueChange={setFilter}>
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <SelectValue placeholder="Filter influencers" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Influencers</SelectItem>
+                  <SelectItem value="expiring">Expiring Soon</SelectItem>
+                  <SelectItem value="expired">Expired</SelectItem>
+                  <SelectItem value="graduate">Graduate Tier</SelectItem>
+                  <SelectItem value="master">Master Tier</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          </div>
-        ) : (
-          <InfluencerManagementTable
-            influencers={influencers}
-            revokeInfluencer={revokeInfluencer}
-            extendInfluencer={extendInfluencer}
-          />
-        )}
+
+            {influencersLoading ? (
+              <div className="flex items-center justify-center h-64 bg-white rounded-lg border">
+                <div className="text-center">
+                  <Loader className="h-8 w-8 animate-spin mx-auto mb-4" />
+                  <p className="text-muted-foreground">Loading influencers...</p>
+                </div>
+              </div>
+            ) : (
+              <InfluencerManagementTable
+                influencers={influencers}
+                revokeInfluencer={revokeInfluencer}
+                extendInfluencer={extendInfluencer}
+              />
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </AdminLayout>
   );

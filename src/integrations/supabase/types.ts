@@ -484,6 +484,53 @@ export type Database = {
         }
         Relationships: []
       }
+      coupon_usage: {
+        Row: {
+          commission_amount: number | null
+          commission_rate: number | null
+          coupon_code: string
+          created_at: string | null
+          id: string
+          influencer_id: string | null
+          order_value: number | null
+          status: string | null
+          usage_date: string | null
+          user_id: string | null
+        }
+        Insert: {
+          commission_amount?: number | null
+          commission_rate?: number | null
+          coupon_code: string
+          created_at?: string | null
+          id?: string
+          influencer_id?: string | null
+          order_value?: number | null
+          status?: string | null
+          usage_date?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          commission_amount?: number | null
+          commission_rate?: number | null
+          coupon_code?: string
+          created_at?: string | null
+          id?: string
+          influencer_id?: string | null
+          order_value?: number | null
+          status?: string | null
+          usage_date?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_usage_influencer_id_fkey"
+            columns: ["influencer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       curriculum_topics: {
         Row: {
           created_at: string | null
@@ -1117,6 +1164,62 @@ export type Database = {
           video_url?: string | null
         }
         Relationships: []
+      }
+      influencer_payouts: {
+        Row: {
+          created_at: string | null
+          id: string
+          influencer_id: string
+          payment_method: string | null
+          payment_reference: string | null
+          period_end: string
+          period_start: string
+          processed_at: string | null
+          processed_by: string | null
+          status: string | null
+          total_commission: number
+          total_usage_count: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          influencer_id: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          period_end: string
+          period_start: string
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: string | null
+          total_commission?: number
+          total_usage_count?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          influencer_id?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          period_end?: string
+          period_start?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: string | null
+          total_commission?: number
+          total_usage_count?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_payouts_influencer_id_fkey"
+            columns: ["influencer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       influencer_promotions_audit: {
         Row: {
