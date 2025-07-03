@@ -17,9 +17,17 @@ interface UserTableProps {
   users: User[];
   updateUserTier: (userId: string, newTier: UserTier) => Promise<void>;
   updateOnboardingStatus: (userId: string, completed: boolean) => Promise<void>;
+  promoteToInfluencer: (userId: string, tier: 'GRADUATE' | 'MASTER', metadata: any, expirationMonths: number, notes?: string) => Promise<void>;
+  revokeInfluencer: (userId: string, reason?: string) => Promise<void>;
 }
 
-const UserTable: React.FC<UserTableProps> = ({ users, updateUserTier, updateOnboardingStatus }) => {
+const UserTable: React.FC<UserTableProps> = ({ 
+  users, 
+  updateUserTier, 
+  updateOnboardingStatus, 
+  promoteToInfluencer, 
+  revokeInfluencer 
+}) => {
   return (
     <div className="rounded-md border">
       <Table>
@@ -29,9 +37,10 @@ const UserTable: React.FC<UserTableProps> = ({ users, updateUserTier, updateOnbo
             <TableHead>Email</TableHead>
             <TableHead>Username</TableHead>
             <TableHead>Current Tier</TableHead>
+            <TableHead>Influencer</TableHead>
             <TableHead>Onboarding</TableHead>
             <TableHead>Created</TableHead>
-            <TableHead className="w-[250px]">Actions</TableHead>
+            <TableHead className="w-[300px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -42,11 +51,13 @@ const UserTable: React.FC<UserTableProps> = ({ users, updateUserTier, updateOnbo
                 user={user} 
                 updateUserTier={updateUserTier}
                 updateOnboardingStatus={updateOnboardingStatus}
+                promoteToInfluencer={promoteToInfluencer}
+                revokeInfluencer={revokeInfluencer}
               />
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+              <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
                 No users found matching your search criteria.
               </TableCell>
             </TableRow>

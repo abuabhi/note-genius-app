@@ -18,7 +18,9 @@ const UserTierManagement: React.FC = () => {
     setFilter, 
     fetchUsers,
     updateUserTier,
-    updateOnboardingStatus
+    updateOnboardingStatus,
+    promoteToInfluencer,
+    revokeInfluencer
   } = useUserManagement();
 
   if (loading) {
@@ -49,6 +51,8 @@ const UserTierManagement: React.FC = () => {
         users={filteredUsers} 
         updateUserTier={updateUserTier}
         updateOnboardingStatus={updateOnboardingStatus}
+        promoteToInfluencer={promoteToInfluencer}
+        revokeInfluencer={revokeInfluencer}
       />
 
       <div className="flex justify-end">

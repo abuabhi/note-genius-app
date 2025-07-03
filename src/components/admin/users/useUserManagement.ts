@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UserTier } from "@/hooks/useRequireAuth";
-import { User } from "./types";
+import { User, InfluencerMetadata } from "./types";
+import { useAuth } from "@/contexts/auth";
 
 export const useUserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -11,6 +12,7 @@ export const useUserManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState<string>("all");
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchUsers();
@@ -22,7 +24,11 @@ export const useUserManagement = () => {
       // Fetch user profiles from the profiles table
       const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('id, username, user_tier, created_at, avatar_url, onboarding_completed');
+        .select(`
+          id, username, user_tier, created_at, avatar_url, onboarding_completed,
+          is_influencer, influencer_tier, influencer_metadata, influencer_promoted_at,
+          influencer_promoted_by, influencer_expires_at, influencer_notes
+        `);
         
       if (error) throw error;
       
@@ -41,6 +47,13 @@ export const useUserManagement = () => {
           user_tier: profile.user_tier as UserTier,
           created_at: profile.created_at || new Date().toISOString(),
           onboarding_completed: profile.onboarding_completed ?? false,
+          is_influencer: profile.is_influencer ?? false,
+          influencer_tier: profile.influencer_tier,
+          influencer_metadata: profile.influencer_metadata as InfluencerMetadata,
+          influencer_promoted_at: profile.influencer_promoted_at,
+          influencer_promoted_by: profile.influencer_promoted_by,
+          influencer_expires_at: profile.influencer_expires_at,
+          influencer_notes: profile.influencer_notes,
         };
       });
       
@@ -113,6 +126,116 @@ export const useUserManagement = () => {
     }
   };
 
+  const promoteToInfluencer = async (
+    userId: string, 
+    tier: 'GRADUATE' | 'MASTER',
+    metadata: any,
+    expirationMonths: number,
+    notes?: string
+  ) => {
+    try {
+      const expirationDate = new Date();
+      expirationDate.setMonth(expirationDate.getMonth() + expirationMonths);
+      
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          is_influencer: true,
+          influencer_tier: tier,
+          influencer_metadata: metadata,
+          influencer_promoted_at: new Date().toISOString(),
+          influencer_promoted_by: user?.id,
+          influencer_expires_at: expirationDate.toISOString(),
+          influencer_notes: notes,
+          user_tier: tier // Also update the actual tier
+        })
+        .eq('id', userId);
+      
+      if (profileError) throw profileError;
+
+      // Create audit record
+      const { error: auditError } = await supabase
+        .from('influencer_promotions_audit')
+        .insert({
+          user_id: userId,
+          promoted_by: user?.id,
+          from_tier: users.find(u => u.id === userId)?.user_tier || 'SCHOLAR',
+          to_tier: tier,
+          expires_at: expirationDate.toISOString(),
+          metadata,
+          notes
+        });
+
+      if (auditError) throw auditError;
+      
+      // Update local state
+      setUsers(users.map(u => 
+        u.id === userId ? { 
+          ...u, 
+          is_influencer: true,
+          influencer_tier: tier,
+          influencer_metadata: metadata,
+          influencer_promoted_at: new Date().toISOString(),
+          influencer_expires_at: expirationDate.toISOString(),
+          influencer_notes: notes,
+          user_tier: tier as UserTier
+        } : u
+      ));
+      
+      toast({
+        title: "User promoted to influencer",
+        description: `User has been promoted to ${tier} tier as an influencer.`,
+      });
+    } catch (error) {
+      console.error("Error promoting user to influencer:", error);
+      toast({
+        title: "Error promoting user",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const revokeInfluencer = async (userId: string, reason?: string) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          is_influencer: false,
+          influencer_tier: null,
+          influencer_metadata: {},
+          influencer_expires_at: null,
+          influencer_notes: reason ? `Revoked: ${reason}` : 'Revoked',
+          user_tier: 'SCHOLAR' // Revert to scholar
+        })
+        .eq('id', userId);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setUsers(users.map(u => 
+        u.id === userId ? { 
+          ...u, 
+          is_influencer: false,
+          influencer_tier: undefined,
+          user_tier: UserTier.SCHOLAR
+        } : u
+      ));
+      
+      toast({
+        title: "Influencer status revoked",
+        description: "User has been reverted to SCHOLAR tier.",
+      });
+    } catch (error) {
+      console.error("Error revoking influencer:", error);
+      toast({
+        title: "Error revoking influencer",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Filter users by search term and tier
   const filteredUsers = users.filter(user => {
     // Filter by search term
@@ -120,7 +243,14 @@ export const useUserManagement = () => {
                         user.username?.toLowerCase().includes(searchTerm.toLowerCase());
     
     // Filter by tier
-    const matchesTier = filter === "all" || user.user_tier === filter;
+    let matchesTier = true;
+    if (filter === "influencers") {
+      matchesTier = user.is_influencer === true;
+    } else if (filter === "non-influencers") {
+      matchesTier = user.is_influencer !== true;
+    } else if (filter !== "all") {
+      matchesTier = user.user_tier === filter;
+    }
     
     return matchesSearch && matchesTier;
   });
@@ -135,6 +265,8 @@ export const useUserManagement = () => {
     setFilter, 
     fetchUsers,
     updateUserTier,
-    updateOnboardingStatus
+    updateOnboardingStatus,
+    promoteToInfluencer,
+    revokeInfluencer
   };
 };

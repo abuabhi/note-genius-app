@@ -1118,6 +1118,45 @@ export type Database = {
         }
         Relationships: []
       }
+      influencer_promotions_audit: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          from_tier: string | null
+          id: string
+          metadata: Json | null
+          notes: string | null
+          promoted_by: string
+          promotion_type: string | null
+          to_tier: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          from_tier?: string | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          promoted_by: string
+          promotion_type?: string | null
+          to_tier?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          from_tier?: string | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          promoted_by?: string
+          promotion_type?: string | null
+          to_tier?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       learning_insights: {
         Row: {
           confidence_score: number | null
@@ -1641,6 +1680,13 @@ export type Database = {
           do_not_disturb: boolean | null
           grade: Database["public"]["Enums"]["grade_level"] | null
           id: string
+          influencer_expires_at: string | null
+          influencer_metadata: Json | null
+          influencer_notes: string | null
+          influencer_promoted_at: string | null
+          influencer_promoted_by: string | null
+          influencer_tier: string | null
+          is_influencer: boolean | null
           notification_preferences: Json | null
           onboarding_completed: boolean | null
           referral_code: string | null
@@ -1662,6 +1708,13 @@ export type Database = {
           do_not_disturb?: boolean | null
           grade?: Database["public"]["Enums"]["grade_level"] | null
           id: string
+          influencer_expires_at?: string | null
+          influencer_metadata?: Json | null
+          influencer_notes?: string | null
+          influencer_promoted_at?: string | null
+          influencer_promoted_by?: string | null
+          influencer_tier?: string | null
+          is_influencer?: boolean | null
           notification_preferences?: Json | null
           onboarding_completed?: boolean | null
           referral_code?: string | null
@@ -1683,6 +1736,13 @@ export type Database = {
           do_not_disturb?: boolean | null
           grade?: Database["public"]["Enums"]["grade_level"] | null
           id?: string
+          influencer_expires_at?: string | null
+          influencer_metadata?: Json | null
+          influencer_notes?: string | null
+          influencer_promoted_at?: string | null
+          influencer_promoted_by?: string | null
+          influencer_tier?: string | null
+          is_influencer?: boolean | null
           notification_preferences?: Json | null
           onboarding_completed?: boolean | null
           referral_code?: string | null

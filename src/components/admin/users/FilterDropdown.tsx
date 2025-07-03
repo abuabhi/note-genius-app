@@ -24,7 +24,9 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({ filter, setFilter }) =>
           <SelectValue placeholder="Filter by tier" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Tiers</SelectItem>
+          <SelectItem value="all">All Users</SelectItem>
+          <SelectItem value="influencers">Influencers Only</SelectItem>
+          <SelectItem value="non-influencers">Non-Influencers Only</SelectItem>
           <SelectItem value={UserTier.SCHOLAR}>Scholar</SelectItem>
           <SelectItem value={UserTier.GRADUATE}>Graduate</SelectItem>
           <SelectItem value={UserTier.MASTER}>Master</SelectItem>
