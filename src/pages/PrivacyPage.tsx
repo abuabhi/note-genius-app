@@ -155,7 +155,7 @@ const PrivacyPage = () => {
                 </p>
                 <div className="bg-mint-50 p-6 rounded-lg border border-mint-200">
                   <div className="space-y-2">
-                    <p className="text-gray-700 font-medium">Email: privacy@prepgenie.com</p>
+                    <p className="text-gray-700 font-medium">Email: hello@prepgenie.io</p>
                     <p className="text-gray-700">Subject: Privacy Policy Inquiry</p>
                     <p className="text-gray-700 text-sm mt-4">
                       We typically respond to privacy-related inquiries within 24-48 hours.

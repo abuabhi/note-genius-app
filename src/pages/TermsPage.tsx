@@ -123,7 +123,7 @@ const TermsPage = () => {
                   If you have any questions about these Terms of Service, please contact us at:
                 </p>
                 <div className="bg-mint-50 p-4 rounded-lg border border-mint-200">
-                  <p className="text-gray-700 font-medium">Email: support@prepgenie.com</p>
+                  <p className="text-gray-700 font-medium">Email: hello@prepgenie.io</p>
                   <p className="text-gray-700">Subject: Terms of Service Inquiry</p>
                 </div>
               </section>
