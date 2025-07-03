@@ -1,6 +1,7 @@
 
 import React from "react";
 import Layout from "@/components/layout/Layout";
+import AdminLayout from "@/components/layout/AdminLayout";
 import { useRequireAuth, UserTier } from "@/hooks/useRequireAuth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader, ShieldAlert, Users } from "lucide-react";
@@ -50,7 +51,7 @@ const AdminUsersPage = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+      <AdminLayout>
         <StandardPageHeader
           title="User Management"
           description="Manage user accounts, roles, and permissions"
@@ -61,7 +62,7 @@ const AdminUsersPage = () => {
         <div className="container mx-auto px-6 py-8">
           <UserTierManagement />
         </div>
-      </div>
+      </AdminLayout>
     </Layout>
   );
 };

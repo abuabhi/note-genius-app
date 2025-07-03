@@ -1,12 +1,29 @@
 import React from "react";
+import AdminLayout from "@/components/layout/AdminLayout";
 import Layout from "@/components/layout/Layout";
 import { useRequireAuth, UserTier } from "@/hooks/useRequireAuth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader, ShieldAlert, Crown } from "lucide-react";
+import { Loader, ShieldAlert, Crown, Search } from "lucide-react";
 import { StandardPageHeader } from "@/components/ui/StandardPageHeader";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useInfluencerManagement } from "@/hooks/admin/useInfluencerManagement";
+import { InfluencerManagementTable } from "@/components/admin/influencers/InfluencerManagementTable";
+import { InfluencerExpirationAlerts } from "@/components/admin/influencers/InfluencerExpirationAlerts";
 
 const AdminInfluencersPage = () => {
   const { userProfile, loading } = useRequireAuth();
+  const {
+    influencers,
+    loading: influencersLoading,
+    searchTerm,
+    setSearchTerm,
+    filter,
+    setFilter,
+    fetchInfluencers,
+    revokeInfluencer,
+    extendInfluencer,
+  } = useInfluencerManagement();
   
   if (loading) {
     return (
@@ -47,7 +64,7 @@ const AdminInfluencersPage = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+      <AdminLayout>
         <StandardPageHeader
           title="Influencer Management"
           description="Manage influencer accounts and track performance"
@@ -56,16 +73,48 @@ const AdminInfluencersPage = () => {
         />
         
         <div className="container mx-auto px-6 py-8">
-          <div className="bg-white rounded-lg border p-8 text-center">
-            <Crown className="h-16 w-16 text-yellow-500 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Dedicated Influencer Dashboard</h3>
-            <p className="text-muted-foreground mb-4">
-              This dedicated influencer management dashboard is coming soon. 
-              For now, you can manage influencers from the User Management page.
-            </p>
+          <InfluencerExpirationAlerts influencers={influencers} />
+          
+          <div className="mb-6 flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Search influencers by email or username..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={filter} onValueChange={setFilter}>
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectValue placeholder="Filter influencers" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Influencers</SelectItem>
+                <SelectItem value="expiring">Expiring Soon</SelectItem>
+                <SelectItem value="expired">Expired</SelectItem>
+                <SelectItem value="graduate">Graduate Tier</SelectItem>
+                <SelectItem value="master">Master Tier</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+
+          {influencersLoading ? (
+            <div className="flex items-center justify-center h-64 bg-white rounded-lg border">
+              <div className="text-center">
+                <Loader className="h-8 w-8 animate-spin mx-auto mb-4" />
+                <p className="text-muted-foreground">Loading influencers...</p>
+              </div>
+            </div>
+          ) : (
+            <InfluencerManagementTable
+              influencers={influencers}
+              revokeInfluencer={revokeInfluencer}
+              extendInfluencer={extendInfluencer}
+            />
+          )}
         </div>
-      </div>
+      </AdminLayout>
     </Layout>
   );
 };
