@@ -62,6 +62,7 @@ const demoData = {
 };
 
 const expandedFeatures = [
+  // Current features with demos (top section)
   {
     name: "AI Flashcard Generation",
     description: "Transform your notes into smart flashcards automatically with AI-powered content processing and spaced repetition.",
@@ -99,15 +100,6 @@ const expandedFeatures = [
     demoComponent: "smartNotes"
   },
   {
-    name: "Document Scanning & OCR",
-    description: "Scan handwritten notes, textbooks, and documents with OCR technology for instant digitization and processing.",
-    longDescription: "Convert any physical document into searchable, editable digital content. Our advanced OCR technology accurately recognizes text from handwritten notes, printed materials, and complex layouts. The system preserves formatting, handles multiple languages, and can process mathematical equations and diagrams for comprehensive digitization.",
-    icon: Scan,
-    highlight: "",
-    color: "from-mint-500 to-mint-600",
-    demoComponent: null
-  },
-  {
     name: "Learning Analytics Dashboard",
     description: "Track your study time, performance trends, mastery levels, and get personalized insights to improve faster.",
     longDescription: "Gain deep insights into your learning patterns with comprehensive analytics. Monitor study time across subjects, track performance trends, identify strengths and weaknesses, and receive personalized recommendations. The dashboard provides detailed reports on retention rates, learning velocity, and optimal study times to help you maximize efficiency.",
@@ -134,6 +126,35 @@ const expandedFeatures = [
     color: "from-indigo-400 to-indigo-600",
     demoComponent: "aiChat"
   },
+  {
+    name: "Document Scanning & OCR",
+    description: "Scan handwritten notes, textbooks, and documents with OCR technology for instant digitization and processing.",
+    longDescription: "Convert any physical document into searchable, editable digital content. Our advanced OCR technology accurately recognizes text from handwritten notes, printed materials, and complex layouts. The system preserves formatting, handles multiple languages, and can process mathematical equations and diagrams for comprehensive digitization.",
+    icon: Scan,
+    highlight: "",
+    color: "from-mint-500 to-mint-600",
+    demoComponent: null
+  },
+  {
+    name: "Achievement System",
+    description: "Stay motivated with comprehensive achievement badges, progress streaks, and milestone celebrations.",
+    longDescription: "Maintain motivation through our comprehensive gamification system. Earn badges for various achievements like study streaks, mastery milestones, collaboration contributions, and improvement metrics. The system celebrates your progress with personalized celebrations and provides clear pathways to unlock new achievements.",
+    icon: Award,
+    highlight: "Motivational",
+    color: "from-yellow-400 to-yellow-600",
+    demoComponent: null
+  },
+  {
+    name: "AI Content Generation",
+    description: "Generate practice questions, summaries, and study materials from any content using advanced AI technology.",
+    longDescription: "Leverage cutting-edge AI to automatically generate high-quality study materials from any source. Upload textbooks, lecture notes, or web articles and receive comprehensive study packages including practice questions, detailed summaries, key concept lists, and related topics. The AI adapts content to your learning level and style preferences.",
+    icon: Bot,
+    highlight: "Advanced AI",
+    color: "from-violet-400 to-violet-600",
+    demoComponent: null
+  },
+  
+  // Coming soon features (bottom section)
   {
     name: "Spaced Repetition System",
     description: "Optimize your memory retention with scientifically-backed spaced repetition algorithms for long-term learning.",
@@ -187,24 +208,6 @@ const expandedFeatures = [
     highlight: "Coming Soon",
     color: "from-emerald-400 to-emerald-600",
     demoComponent: "comingSoon"
-  },
-  {
-    name: "Achievement System",
-    description: "Stay motivated with comprehensive achievement badges, progress streaks, and milestone celebrations.",
-    longDescription: "Maintain motivation through our comprehensive gamification system. Earn badges for various achievements like study streaks, mastery milestones, collaboration contributions, and improvement metrics. The system celebrates your progress with personalized celebrations and provides clear pathways to unlock new achievements.",
-    icon: Award,
-    highlight: "Motivational",
-    color: "from-yellow-400 to-yellow-600",
-    demoComponent: null
-  },
-  {
-    name: "AI Content Generation",
-    description: "Generate practice questions, summaries, and study materials from any content using advanced AI technology.",
-    longDescription: "Leverage cutting-edge AI to automatically generate high-quality study materials from any source. Upload textbooks, lecture notes, or web articles and receive comprehensive study packages including practice questions, detailed summaries, key concept lists, and related topics. The AI adapts content to your learning level and style preferences.",
-    icon: Bot,
-    highlight: "Advanced AI",
-    color: "from-violet-400 to-violet-600",
-    demoComponent: null
   }
 ];
 
@@ -565,7 +568,7 @@ const FeaturesPage = () => {
                               className="bg-white hover:bg-mint-50 border-mint-200 text-mint-700"
                               onClick={() => setActiveDemo(activeDemo === feature.demoComponent ? null : feature.demoComponent)}
                             >
-                              {activeDemo === feature.demoComponent ? 'Hide Demo' : 'Coming Soon'}
+                              {activeDemo === feature.demoComponent ? 'Hide Demo' : 'Live Demo'}
                               <ArrowRight className="ml-2 h-3 w-3" />
                             </Button>
                           </div>
