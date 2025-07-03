@@ -47,7 +47,7 @@ export const PayoutManagement = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as PayoutRecord[];
+      return data as any;
     },
   });
 

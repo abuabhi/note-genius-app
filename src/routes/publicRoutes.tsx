@@ -10,6 +10,7 @@ import ContactPage from "@/pages/ContactPage";
 import FeaturesPage from "@/pages/FeaturesPage";
 import TermsPage from "@/pages/TermsPage";
 import PrivacyPage from "@/pages/PrivacyPage";
+import PublicCouponPage from "@/pages/PublicCouponPage";
 import { SignUpForm } from "@/components/auth/SignUpForm";
 
 export interface RouteConfig {
@@ -27,5 +28,6 @@ export const publicRoutes: RouteConfig[] = [
   { path: "/contact", element: <ContactPage /> }, // ContactPage already has Layout internally
   { path: "/terms", element: <TermsPage /> }, // TermsPage already has Layout internally
   { path: "/privacy", element: <PrivacyPage /> }, // PrivacyPage already has Layout internally
-  { path: "/features", element: <FeaturesPage /> } // FeaturesPage already has Layout internally
+  { path: "/features", element: <FeaturesPage /> }, // FeaturesPage already has Layout internally
+  { path: "/coupon/:code", element: <PublicCouponPage /> } // Public coupon redemption page
 ];

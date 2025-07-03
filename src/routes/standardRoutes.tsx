@@ -23,6 +23,7 @@ const ChatPage = lazy(() => import('@/pages/ChatPage'));
 const HelpPage = lazy(() => import('@/pages/HelpPage'));
 const FAQPage = lazy(() => import('@/pages/FAQPage'));
 const StudyPlannerPage = lazy(() => import('@/pages/StudyPlannerPage'));
+const InfluencerDashboardPage = lazy(() => import('@/pages/InfluencerDashboardPage'));
 
 // Legacy route redirects
 const ProgressPage = lazy(() => import('@/pages/AnalyticsPage'));
@@ -121,5 +122,9 @@ export const standardRoutes: RouteConfig[] = [
   {
     path: '/faq',
     element: <SidebarLayout><FAQPage /></SidebarLayout>
+  },
+  {
+    path: '/influencer',
+    element: <SidebarLayout><InfluencerDashboardPage /></SidebarLayout>
   }
 ];
