@@ -173,7 +173,7 @@ export const useNoteEnrichment = (note?: Note) => {
     enhancementOptions,
     currentUsage,
     monthlyLimit,
-    isEnabled: userTier && ['PROFESSOR', 'DEAN', 'MASTER'].includes(userTier),
+    isEnabled: userTier && ['MASTER', 'DEAN'].includes(userTier),
     initialize,
     processEnhancement,
     enrichNote,

@@ -80,7 +80,7 @@ export const PremiumFeatureNotice = ({ isPremium, onAIExtract }: PremiumFeatureN
   return (
     <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-800">
       <p className="font-medium">Premium Feature</p>
-      <p>Upgrade to Professor or Dean tier for AI-assisted content extraction and improved flashcard generation.</p>
+      <p>Upgrade to Master or Dean tier for AI-assisted content extraction and improved flashcard generation.</p>
     </div>
   );
 };

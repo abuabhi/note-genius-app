@@ -79,7 +79,8 @@ export const TargetingSection = ({ control }: TargetingSectionProps) => {
                 <SelectContent>
                   <SelectItem value="all">All Tiers</SelectItem>
                   <SelectItem value="SCHOLAR">Scholar</SelectItem>
-                  <SelectItem value="PROFESSOR">Professor</SelectItem>
+                  <SelectItem value="GRADUATE">Graduate</SelectItem>
+                  <SelectItem value="MASTER">Master</SelectItem>
                   <SelectItem value="DEAN">Dean</SelectItem>
                 </SelectContent>
               </Select>

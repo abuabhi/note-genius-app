@@ -19,8 +19,8 @@ const InfluencerDashboardPage = () => {
     );
   }
   
-  // Check if user is an influencer (PROFESSOR tier or higher)
-  if (!userProfile || !['PROFESSOR', 'DEAN'].includes(userProfile.user_tier)) {
+  // Check if user is an influencer
+  if (!userProfile || !userProfile.is_influencer) {
     return (
       <div className="container mx-auto p-6">
         <Alert variant="destructive">

@@ -38,6 +38,7 @@ export interface UserProfile {
   created_at: string;
   onboarding_completed?: boolean;
   avatar_url?: string;
+  is_influencer?: boolean;
 }
 
 interface UseRequireAuthReturn {
@@ -106,7 +107,8 @@ export const useRequireAuth = (): UseRequireAuthReturn => {
                 user_tier: profile.user_tier as UserTier || UserTier.SCHOLAR,
                 created_at: profile.created_at,
                 onboarding_completed: profile.onboarding_completed,
-                avatar_url: profile.avatar_url
+                avatar_url: profile.avatar_url,
+                is_influencer: profile.is_influencer
               });
 
               // Get tier limits
