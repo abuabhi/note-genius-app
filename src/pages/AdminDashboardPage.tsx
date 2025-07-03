@@ -13,7 +13,8 @@ import {
   BookOpen,
   Upload,
   Settings,
-  Activity
+  Activity,
+  HelpCircle
 } from 'lucide-react';
 
 const AdminDashboardPage = () => {
@@ -94,6 +95,13 @@ const AdminDashboardPage = () => {
       icon: Settings,
       href: '/admin/tier-limits',
       color: 'bg-gray-500'
+    },
+    {
+      title: 'Help Management',
+      description: 'Manage help topics and documentation',
+      icon: HelpCircle,
+      href: '/admin/help',
+      color: 'bg-indigo-500'
     }
   ];
 

@@ -3,10 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Plus, Edit, Trash2, Search, Eye } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Eye, Settings } from 'lucide-react';
 import { useAllHelpTopics, useDeleteHelpTopic, HelpTopic } from '@/hooks/help/useHelpTopics';
 import { HelpTopicEditDialog } from '@/components/help/HelpTopicEditDialog';
 import { HelpTopicCreateDialog } from '@/components/help/HelpTopicCreateDialog';
+import { CategoryManagementDialog } from '@/components/help/CategoryManagementDialog';
 import { toast } from 'sonner';
 
 const AdminHelpManagementPage = () => {
@@ -14,6 +15,7 @@ const AdminHelpManagementPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [editingTopic, setEditingTopic] = useState<HelpTopic | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showCategoryDialog, setShowCategoryDialog] = useState(false);
 
   const { data: topics = [], isLoading } = useAllHelpTopics();
   const deleteTopic = useDeleteHelpTopic();
@@ -101,14 +103,24 @@ const AdminHelpManagementPage = () => {
             ))}
           </div>
 
-          {/* Add New Button */}
-          <Button 
-            className="flex items-center gap-2"
-            onClick={() => setShowCreateDialog(true)}
-          >
-            <Plus className="h-4 w-4" />
-            Add Topic
-          </Button>
+          {/* Action Buttons */}
+          <div className="flex gap-2">
+            <Button 
+              variant="outline"
+              className="flex items-center gap-2"
+              onClick={() => setShowCategoryDialog(true)}
+            >
+              <Settings className="h-4 w-4" />
+              Manage Categories
+            </Button>
+            <Button 
+              className="flex items-center gap-2"
+              onClick={() => setShowCreateDialog(true)}
+            >
+              <Plus className="h-4 w-4" />
+              Add Topic
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -223,6 +235,12 @@ const AdminHelpManagementPage = () => {
       <HelpTopicCreateDialog
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
+      />
+
+      {/* Category Management Dialog */}
+      <CategoryManagementDialog
+        open={showCategoryDialog}
+        onOpenChange={setShowCategoryDialog}
       />
     </div>
   );
