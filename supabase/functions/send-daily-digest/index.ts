@@ -90,16 +90,57 @@ serve(async (req) => {
           .gte('start_time', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
           .order('start_time', { ascending: false })
           .limit(5);
+
+        // Get user's todos
+        const { data: todos } = await supabase
+          .from('reminders')
+          .select('*')
+          .eq('user_id', user.user_id)
+          .eq('type', 'todo')
+          .eq('status', 'pending')
+          .order('due_date', { ascending: true })
+          .limit(5);
+
+        // Get pending flashcards for review
+        const { data: flashcardProgress } = await supabase
+          .from('user_flashcard_progress')
+          .select(`
+            *,
+            flashcards!inner(
+              front,
+              flashcard_sets!inner(title)
+            )
+          `)
+          .eq('user_id', user.user_id)
+          .lte('next_review_at', new Date().toISOString())
+          .order('next_review_at', { ascending: true })
+          .limit(10);
+
+        // Get pending quizzes (quizzes created by user that haven't been taken recently)
+        const { data: quizzes } = await supabase
+          .from('quizzes')
+          .select(`
+            id,
+            title,
+            description,
+            created_at
+          `)
+          .eq('user_id', user.user_id)
+          .order('created_at', { ascending: false })
+          .limit(5);
         
         // Enhanced content logging
         const reminderCount = reminders?.length || 0;
         const goalCount = goals?.length || 0;
         const sessionCount = sessions?.length || 0;
+        const todoCount = todos?.length || 0;
+        const flashcardCount = flashcardProgress?.length || 0;
+        const quizCount = quizzes?.length || 0;
         
-        console.log(`📊 User ${user.email} content: ${reminderCount} reminders, ${goalCount} goals, ${sessionCount} sessions`);
+        console.log(`📊 User ${user.email} content: ${reminderCount} reminders, ${goalCount} goals, ${sessionCount} sessions, ${todoCount} todos, ${flashcardCount} flashcards, ${quizCount} quizzes`);
         
-        // Skip if no content
-        if (reminderCount === 0 && goalCount === 0 && sessionCount === 0) {
+        // Skip if no content (keep any content as we have more sections now)
+        if (reminderCount === 0 && goalCount === 0 && sessionCount === 0 && todoCount === 0 && flashcardCount === 0 && quizCount === 0) {
           console.log(`📭 Skipping user ${user.email}: no content for digest`);
           continue;
         }
@@ -112,6 +153,9 @@ serve(async (req) => {
             reminders: reminders || [],
             goals: goals || [],
             sessions: sessions || [],
+            todos: todos || [],
+            flashcards: flashcardProgress || [],
+            quizzes: quizzes || [],
             timezone: user.timezone || 'UTC'
           }
         });
