@@ -1,25 +1,21 @@
-import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, InfluencerMetadata } from "./types";
-import { UserTier } from "@/hooks/useRequireAuth";
+
+import React, { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { User, InfluencerMetadata } from './types';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Crown, Percent, Calendar, Gift } from 'lucide-react';
 
 interface InfluencerPromotionDialogProps {
-  user: User | null;
+  user: User;
   open: boolean;
   onClose: () => void;
-  onPromote: (
-    userId: string,
-    tier: 'GRADUATE' | 'MASTER',
-    metadata: InfluencerMetadata,
-    expirationMonths: number,
-    notes?: string
-  ) => void;
+  onPromote: (userId: string, tier: 'GRADUATE' | 'MASTER', metadata: InfluencerMetadata, expirationMonths: number, notes?: string) => Promise<void>;
 }
 
 export const InfluencerPromotionDialog: React.FC<InfluencerPromotionDialogProps> = ({
@@ -28,214 +24,236 @@ export const InfluencerPromotionDialog: React.FC<InfluencerPromotionDialogProps>
   onClose,
   onPromote
 }) => {
-  const [tier, setTier] = useState<'GRADUATE' | 'MASTER'>('GRADUATE');
+  const [loading, setLoading] = useState(false);
+  const [influencerTier, setInfluencerTier] = useState<'GRADUATE' | 'MASTER'>('GRADUATE');
+  const [couponPercentage, setCouponPercentage] = useState<number>(10);
   const [expirationMonths, setExpirationMonths] = useState<number>(12);
   const [notes, setNotes] = useState('');
-  const [metadata, setMetadata] = useState<InfluencerMetadata>({});
+  const [metadata, setMetadata] = useState<InfluencerMetadata>({
+    instagram: { handle: '', followers: 0 },
+    tiktok: { handle: '', followers: 0 },
+    youtube: { handle: '', subscribers: 0 },
+    twitter: { handle: '', followers: 0 },
+    linkedin: { handle: '', connections: 0 }
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const generatePreviewCouponCode = () => {
+    const firstName = user.username?.split(' ')[0] || user.username?.split('.')[0] || user.username?.split('_')[0] || 'USER';
+    return `${firstName.toUpperCase()}${couponPercentage}`;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    setLoading(true);
     
-    onPromote(user.id, tier, metadata, expirationMonths, notes);
-    onClose();
-    
-    // Reset form
-    setTier('GRADUATE');
-    setExpirationMonths(12);
-    setNotes('');
-    setMetadata({});
+    try {
+      await onPromote(user.id, influencerTier, metadata, expirationMonths, notes);
+      onClose();
+      // Reset form
+      setInfluencerTier('GRADUATE');
+      setCouponPercentage(10);
+      setExpirationMonths(12);
+      setNotes('');
+      setMetadata({
+        instagram: { handle: '', followers: 0 },
+        tiktok: { handle: '', followers: 0 },
+        youtube: { handle: '', subscribers: 0 },
+        twitter: { handle: '', followers: 0 },
+        linkedin: { handle: '', connections: 0 }
+      });
+    } catch (error) {
+      console.error('Error promoting user:', error);
+    } finally {
+      setLoading(false);
+    }
   };
-
-  const updatePlatformMetadata = (platform: keyof InfluencerMetadata, handle: string, count: number) => {
-    setMetadata(prev => ({
-      ...prev,
-      [platform]: { handle, [platform === 'youtube' ? 'subscribers' : platform === 'linkedin' ? 'connections' : 'followers']: count }
-    }));
-  };
-
-  if (!user) return null;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Promote User to Influencer</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Crown className="h-5 w-5 text-yellow-500" />
+            Promote {user.username} to Influencer
+          </DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-mint-50 p-4 rounded-lg">
-            <h3 className="font-medium text-mint-900 mb-2">User Information</h3>
-            <p className="text-sm text-mint-700">
-              <strong>Email:</strong> {user.email}
-            </p>
-            <p className="text-sm text-mint-700">
-              <strong>Current Tier:</strong> {user.user_tier}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="tier">Influencer Tier</Label>
-              <Select value={tier} onValueChange={(value) => setTier(value as 'GRADUATE' | 'MASTER')}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="GRADUATE">Graduate (Mid-tier Influencer)</SelectItem>
-                  <SelectItem value="MASTER">Master (Top-tier Influencer)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="expiration">Expires In</Label>
-              <Select value={expirationMonths.toString()} onValueChange={(value) => setExpirationMonths(parseInt(value))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">1 Month</SelectItem>
-                  <SelectItem value="3">3 Months</SelectItem>
-                  <SelectItem value="6">6 Months</SelectItem>
-                  <SelectItem value="12">12 Months</SelectItem>
-                  <SelectItem value="24">24 Months</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <Card>
+          {/* Auto-Generated Coupon Preview */}
+          <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
             <CardHeader>
-              <CardTitle className="text-lg">Social Media Platforms</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Gift className="h-5 w-5 text-yellow-600" />
+                Auto-Generated Coupon
+              </CardTitle>
+              <CardDescription>
+                A unique coupon will be automatically created for this influencer
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Instagram */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Instagram Handle</Label>
-                  <Input
-                    placeholder="@username"
-                    value={metadata.instagram?.handle || ''}
-                    onChange={(e) => updatePlatformMetadata('instagram', e.target.value, metadata.instagram?.followers || 0)}
-                  />
-                </div>
-                <div>
-                  <Label>Followers</Label>
-                  <Input
-                    type="number"
-                    placeholder="0"
-                    value={metadata.instagram?.followers || ''}
-                    onChange={(e) => updatePlatformMetadata('instagram', metadata.instagram?.handle || '', parseInt(e.target.value) || 0)}
-                  />
-                </div>
+            <CardContent>
+              <div className="flex items-center justify-center p-4 bg-white rounded-lg border-2 border-dashed border-yellow-300">
+                <Badge className="text-2xl font-bold bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-6 py-2">
+                  {generatePreviewCouponCode()}
+                </Badge>
               </div>
-
-              {/* TikTok */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>TikTok Handle</Label>
-                  <Input
-                    placeholder="@username"
-                    value={metadata.tiktok?.handle || ''}
-                    onChange={(e) => updatePlatformMetadata('tiktok', e.target.value, metadata.tiktok?.followers || 0)}
-                  />
-                </div>
-                <div>
-                  <Label>Followers</Label>
-                  <Input
-                    type="number"
-                    placeholder="0"
-                    value={metadata.tiktok?.followers || ''}
-                    onChange={(e) => updatePlatformMetadata('tiktok', metadata.tiktok?.handle || '', parseInt(e.target.value) || 0)}
-                  />
-                </div>
-              </div>
-
-              {/* YouTube */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>YouTube Handle</Label>
-                  <Input
-                    placeholder="@channel"
-                    value={metadata.youtube?.handle || ''}
-                    onChange={(e) => updatePlatformMetadata('youtube', e.target.value, metadata.youtube?.subscribers || 0)}
-                  />
-                </div>
-                <div>
-                  <Label>Subscribers</Label>
-                  <Input
-                    type="number"
-                    placeholder="0"
-                    value={metadata.youtube?.subscribers || ''}
-                    onChange={(e) => updatePlatformMetadata('youtube', metadata.youtube?.handle || '', parseInt(e.target.value) || 0)}
-                  />
-                </div>
-              </div>
-
-              {/* Twitter */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Twitter Handle</Label>
-                  <Input
-                    placeholder="@username"
-                    value={metadata.twitter?.handle || ''}
-                    onChange={(e) => updatePlatformMetadata('twitter', e.target.value, metadata.twitter?.followers || 0)}
-                  />
-                </div>
-                <div>
-                  <Label>Followers</Label>
-                  <Input
-                    type="number"
-                    placeholder="0"
-                    value={metadata.twitter?.followers || ''}
-                    onChange={(e) => updatePlatformMetadata('twitter', metadata.twitter?.handle || '', parseInt(e.target.value) || 0)}
-                  />
-                </div>
-              </div>
-
-              {/* LinkedIn */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>LinkedIn Handle</Label>
-                  <Input
-                    placeholder="linkedin.com/in/username"
-                    value={metadata.linkedin?.handle || ''}
-                    onChange={(e) => updatePlatformMetadata('linkedin', e.target.value, metadata.linkedin?.connections || 0)}
-                  />
-                </div>
-                <div>
-                  <Label>Connections</Label>
-                  <Input
-                    type="number"
-                    placeholder="0"
-                    value={metadata.linkedin?.connections || ''}
-                    onChange={(e) => updatePlatformMetadata('linkedin', metadata.linkedin?.handle || '', parseInt(e.target.value) || 0)}
-                  />
-                </div>
-              </div>
+              <p className="text-sm text-muted-foreground mt-2 text-center">
+                {couponPercentage}% discount • Valid for {expirationMonths} months
+              </p>
             </CardContent>
           </Card>
 
-          <div>
-            <Label htmlFor="notes">Notes (Optional)</Label>
+          <div className="grid grid-cols-2 gap-4">
+            {/* Influencer Tier */}
+            <div className="space-y-2">
+              <Label htmlFor="tier">Influencer Tier</Label>
+              <Select value={influencerTier} onValueChange={(value: 'GRADUATE' | 'MASTER') => setInfluencerTier(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="GRADUATE">Graduate Influencer</SelectItem>
+                  <SelectItem value="MASTER">Master Influencer</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Coupon Percentage */}
+            <div className="space-y-2">
+              <Label htmlFor="percentage" className="flex items-center gap-2">
+                <Percent className="h-4 w-4" />
+                Coupon Discount
+              </Label>
+              <Select value={couponPercentage.toString()} onValueChange={(value) => setCouponPercentage(Number(value))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10% Discount</SelectItem>
+                  <SelectItem value="15">15% Discount</SelectItem>
+                  <SelectItem value="20">20% Discount</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Expiration */}
+          <div className="space-y-2">
+            <Label htmlFor="expiration" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Influencer Status Duration (Months)
+            </Label>
+            <Input
+              type="number"
+              value={expirationMonths}
+              onChange={(e) => setExpirationMonths(Number(e.target.value))}
+              min="1"
+              max="24"
+              placeholder="12"
+            />
+          </div>
+
+          {/* Social Media Metadata */}
+          <div className="space-y-4">
+            <Label className="text-base font-semibold">Social Media Profiles (Optional)</Label>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Instagram Handle</Label>
+                <Input
+                  value={metadata.instagram?.handle || ''}
+                  onChange={(e) => setMetadata(prev => ({
+                    ...prev,
+                    instagram: { ...prev.instagram, handle: e.target.value }
+                  }))}
+                  placeholder="@username"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Instagram Followers</Label>
+                <Input
+                  type="number"
+                  value={metadata.instagram?.followers || 0}
+                  onChange={(e) => setMetadata(prev => ({
+                    ...prev,
+                    instagram: { ...prev.instagram, followers: Number(e.target.value) }
+                  }))}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>TikTok Handle</Label>
+                <Input
+                  value={metadata.tiktok?.handle || ''}
+                  onChange={(e) => setMetadata(prev => ({
+                    ...prev,
+                    tiktok: { ...prev.tiktok, handle: e.target.value }
+                  }))}
+                  placeholder="@username"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>TikTok Followers</Label>
+                <Input
+                  type="number"
+                  value={metadata.tiktok?.followers || 0}
+                  onChange={(e) => setMetadata(prev => ({
+                    ...prev,
+                    tiktok: { ...prev.tiktok, followers: Number(e.target.value) }
+                  }))}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>YouTube Channel</Label>
+                <Input
+                  value={metadata.youtube?.handle || ''}
+                  onChange={(e) => setMetadata(prev => ({
+                    ...prev,
+                    youtube: { ...prev.youtube, handle: e.target.value }
+                  }))}
+                  placeholder="Channel name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>YouTube Subscribers</Label>
+                <Input
+                  type="number"
+                  value={metadata.youtube?.subscribers || 0}
+                  onChange={(e) => setMetadata(prev => ({
+                    ...prev,
+                    youtube: { ...prev.youtube, subscribers: Number(e.target.value) }
+                  }))}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div className="space-y-2">
+            <Label htmlFor="notes">Promotion Notes (Optional)</Label>
             <Textarea
-              id="notes"
-              placeholder="Add any additional notes about this influencer..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
+              placeholder="Add any notes about this promotion..."
               rows={3}
             />
           </div>
 
-          <div className="flex justify-end space-x-3">
+          <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-gradient-to-r from-mint-600 to-mint-500">
-              Promote to Influencer
+            <Button type="submit" disabled={loading} className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600">
+              {loading ? 'Promoting...' : 'Promote to Influencer'}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

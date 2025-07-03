@@ -1,28 +1,24 @@
+
 import React, { useState } from 'react';
-import { User } from '@/components/admin/users/types';
-import { 
-  Table, 
-  TableBody, 
-  TableCaption, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Crown, 
-  ExternalLink, 
-  AlertTriangle, 
-  Calendar,
-  XCircle,
-  Plus
+  Calendar, 
+  TrendingUp, 
+  DollarSign, 
+  Users, 
+  Gift,
+  ExternalLink,
+  AlertTriangle,
+  CheckCircle,
+  Clock
 } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { InfluencerMetadataViewer } from './InfluencerMetadataViewer';
+import { User } from '../users/types';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface InfluencerManagementTableProps {
   influencers: User[];
@@ -36,185 +32,347 @@ export const InfluencerManagementTable: React.FC<InfluencerManagementTableProps>
   extendInfluencer
 }) => {
   const [selectedInfluencer, setSelectedInfluencer] = useState<User | null>(null);
-  const [extensionMonths, setExtensionMonths] = useState(3);
-  const [revokeReason, setRevokeReason] = useState('');
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
-  const getExpiryStatus = (expiryDate: string) => {
-    const now = new Date();
-    const expiry = new Date(expiryDate);
-    const daysUntilExpiry = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  const getStatusColor = (user: User) => {
+    if (!user.influencer_expires_at) return 'bg-gray-500';
     
-    if (daysUntilExpiry < 0) {
-      return { status: 'expired', color: 'destructive', text: 'Expired' };
-    } else if (daysUntilExpiry <= 7) {
-      return { status: 'expiring', color: 'orange', text: `${daysUntilExpiry} days left` };
-    } else if (daysUntilExpiry <= 30) {
-      return { status: 'warning', color: 'yellow', text: `${daysUntilExpiry} days left` };
-    } else {
-      return { status: 'active', color: 'green', text: `${daysUntilExpiry} days left` };
-    }
+    const now = new Date();
+    const expiryDate = new Date(user.influencer_expires_at);
+    const daysUntilExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysUntilExpiry < 0) return 'bg-red-500'; // Expired
+    if (daysUntilExpiry <= 7) return 'bg-yellow-500'; // Expiring soon
+    return 'bg-green-500'; // Active
   };
 
+  const getStatusText = (user: User) => {
+    if (!user.influencer_expires_at) return 'Active';
+    
+    const now = new Date();
+    const expiryDate = new Date(user.influencer_expires_at);
+    const daysUntilExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysUntilExpiry < 0) return 'Expired';
+    if (daysUntilExpiry <= 7) return `Expires in ${daysUntilExpiry} days`;
+    return 'Active';
+  };
+
+  const handleViewDetails = (influencer: User) => {
+    setSelectedInfluencer(influencer);
+    setShowDetailsDialog(true);
+  };
+
+  const mockCouponData = {
+    couponCode: 'JAMES10',
+    totalUses: 45,
+    totalRevenue: 2250.50,
+    totalCommission: 112.25,
+    thisMonthUses: 12,
+    thisMonthCommission: 35.75,
+    avgOrderValue: 50.01
+  };
+
+  const mockSocialStats = {
+    instagram: { handle: '@james_study', followers: 15200 },
+    tiktok: { handle: '@jameslearns', followers: 8900 },
+    youtube: { handle: 'James Study Channel', subscribers: 3400 }
+  };
+
+  if (influencers.length === 0) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center h-64">
+          <Crown className="h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold text-muted-foreground">No Influencers Found</h3>
+          <p className="text-sm text-muted-foreground">No influencers match your current filters.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <div className="rounded-md border bg-white">
-      <Table>
-        <TableCaption>
-          Active influencer accounts and their status
-        </TableCaption>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Influencer</TableHead>
-            <TableHead>Tier</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Promoted</TableHead>
-            <TableHead>Expires</TableHead>
-            <TableHead>Social Media</TableHead>
-            <TableHead className="w-[200px]">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {influencers.length > 0 ? (
-            influencers.map((influencer) => {
-              const expiryStatus = influencer.influencer_expires_at 
-                ? getExpiryStatus(influencer.influencer_expires_at)
-                : null;
-              
-              return (
-                <TableRow key={influencer.id}>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{influencer.email}</span>
-                      {influencer.username && (
-                        <span className="text-sm text-muted-foreground">@{influencer.username}</span>
-                      )}
-                    </div>
-                  </TableCell>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Crown className="h-5 w-5 text-yellow-500" />
+            Influencer Management ({influencers.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Influencer</TableHead>
+                  <TableHead>Tier</TableHead>
+                  <TableHead>Coupon Code</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Performance</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {influencers.map((influencer) => {
+                  const statusColor = getStatusColor(influencer);
+                  const statusText = getStatusText(influencer);
                   
-                  <TableCell>
-                    <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white flex items-center gap-1 w-fit">
-                      <Crown className="h-3 w-3" />
-                      {influencer.influencer_tier}
-                    </Badge>
-                  </TableCell>
-                  
-                  <TableCell>
-                    {expiryStatus && (
-                      <Badge 
-                        variant={expiryStatus.status === 'expired' ? 'destructive' : 'secondary'}
-                        className={`${
-                          expiryStatus.status === 'expiring' ? 'bg-orange-100 text-orange-800 border-orange-200' :
-                          expiryStatus.status === 'warning' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                          expiryStatus.status === 'active' ? 'bg-green-100 text-green-800 border-green-200' : ''
-                        }`}
-                      >
-                        {expiryStatus.status === 'expired' && <AlertTriangle className="h-3 w-3 mr-1" />}
-                        {expiryStatus.text}
-                      </Badge>
-                    )}
-                  </TableCell>
-                  
-                  <TableCell>
-                    {influencer.influencer_promoted_at && (
-                      <span className="text-sm text-muted-foreground">
-                        {new Date(influencer.influencer_promoted_at).toLocaleDateString()}
-                      </span>
-                    )}
-                  </TableCell>
-                  
-                  <TableCell>
-                    {influencer.influencer_expires_at && (
-                      <span className="text-sm">
-                        {new Date(influencer.influencer_expires_at).toLocaleDateString()}
-                      </span>
-                    )}
-                  </TableCell>
-                  
-                  <TableCell>
-                    <InfluencerMetadataViewer metadata={influencer.influencer_metadata} />
-                  </TableCell>
-                  
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button size="sm" variant="outline" className="h-8 px-2">
-                            <Plus className="h-3 w-3 mr-1" />
+                  return (
+                    <TableRow key={influencer.id}>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="font-medium">{influencer.username}</div>
+                          <div className="text-sm text-muted-foreground">{influencer.email}</div>
+                          <div className="text-xs text-muted-foreground">
+                            Promoted: {influencer.influencer_promoted_at ? 
+                              new Date(influencer.influencer_promoted_at).toLocaleDateString() : 'Unknown'}
+                          </div>
+                        </div>
+                      </TableCell>
+                      
+                      <TableCell>
+                        <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+                          {influencer.influencer_tier}
+                        </Badge>
+                      </TableCell>
+                      
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-mono">
+                            {mockCouponData.couponCode}
+                          </Badge>
+                          <Gift className="h-4 w-4 text-yellow-500" />
+                        </div>
+                      </TableCell>
+                      
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full ${statusColor}`}></div>
+                          <span className="text-sm">{statusText}</span>
+                        </div>
+                        {influencer.influencer_expires_at && (
+                          <div className="text-xs text-muted-foreground">
+                            Expires: {new Date(influencer.influencer_expires_at).toLocaleDateString()}
+                          </div>
+                        )}
+                      </TableCell>
+                      
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1 text-sm">
+                            <Users className="h-3 w-3" />
+                            {mockCouponData.totalUses} uses
+                          </div>
+                          <div className="flex items-center gap-1 text-sm text-green-600">
+                            <DollarSign className="h-3 w-3" />
+                            ${mockCouponData.totalCommission} earned
+                          </div>
+                        </div>
+                      </TableCell>
+                      
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleViewDetails(influencer)}
+                          >
+                            <ExternalLink className="h-3 w-3 mr-1" />
+                            View Details
+                          </Button>
+                          
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => extendInfluencer(influencer.id, 6)}
+                          >
+                            <Calendar className="h-3 w-3 mr-1" />
                             Extend
                           </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Extend Influencer Status</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <Label htmlFor="months">Extension (months)</Label>
-                              <Input
-                                id="months"
-                                type="number"
-                                min="1"
-                                max="12"
-                                value={extensionMonths}
-                                onChange={(e) => setExtensionMonths(parseInt(e.target.value))}
-                              />
-                            </div>
-                            <Button 
-                              onClick={() => extendInfluencer(influencer.id, extensionMonths)}
-                              className="w-full"
-                            >
-                              <Calendar className="h-4 w-4 mr-2" />
-                              Extend Status
-                            </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                      
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button size="sm" variant="destructive" className="h-8 px-2">
-                            <XCircle className="h-3 w-3 mr-1" />
+                          
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => revokeInfluencer(influencer.id, 'Manual revocation by admin')}
+                          >
                             Revoke
                           </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Revoke Influencer Status</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <Label htmlFor="reason">Reason (optional)</Label>
-                              <Input
-                                id="reason"
-                                placeholder="Enter reason for revocation..."
-                                value={revokeReason}
-                                onChange={(e) => setRevokeReason(e.target.value)}
-                              />
-                            </div>
-                            <Button 
-                              onClick={() => revokeInfluencer(influencer.id, revokeReason)}
-                              variant="destructive"
-                              className="w-full"
-                            >
-                              <XCircle className="h-4 w-4 mr-2" />
-                              Revoke Status
-                            </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Influencer Details Dialog */}
+      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Crown className="h-5 w-5 text-yellow-500" />
+              {selectedInfluencer?.username} - Influencer Details
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedInfluencer && (
+            <Tabs defaultValue="overview" className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="performance">Performance</TabsTrigger>
+                <TabsTrigger value="social">Social Media</TabsTrigger>
+                <TabsTrigger value="payouts">Payouts</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="overview" className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">Influencer Status</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="flex justify-between">
+                        <span>Tier:</span>
+                        <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+                          {selectedInfluencer.influencer_tier}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Status:</span>
+                        <span className={`flex items-center gap-1 ${getStatusColor(selectedInfluencer).replace('bg-', 'text-')}`}>
+                          {getStatusText(selectedInfluencer) === 'Active' ? <CheckCircle className="h-3 w-3" /> : 
+                           getStatusText(selectedInfluencer).includes('Expires') ? <Clock className="h-3 w-3" /> :
+                           <AlertTriangle className="h-3 w-3" />}
+                          {getStatusText(selectedInfluencer)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Promoted:</span>
+                        <span>{selectedInfluencer.influencer_promoted_at ? 
+                          new Date(selectedInfluencer.influencer_promoted_at).toLocaleDateString() : 'Unknown'}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Gift className="h-4 w-4" />
+                        Coupon Details
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="flex justify-between">
+                        <span>Code:</span>
+                        <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-mono">
+                          {mockCouponData.couponCode}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Discount:</span>
+                        <span>10%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Status:</span>
+                        <Badge className="bg-green-100 text-green-800">Active</Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="performance" className="space-y-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        Total Uses
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{mockCouponData.totalUses}</div>
+                      <p className="text-sm text-green-600">+{mockCouponData.thisMonthUses} this month</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <DollarSign className="h-4 w-4" />
+                        Commission Earned
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">${mockCouponData.totalCommission}</div>
+                      <p className="text-sm text-green-600">+${mockCouponData.thisMonthCommission} this month</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4" />
+                        Avg Order Value
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">${mockCouponData.avgOrderValue}</div>
+                      <p className="text-sm text-muted-foreground">Per transaction</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="social" className="space-y-4">
+                <div className="grid grid-cols-1 gap-4">
+                  {Object.entries(mockSocialStats).map(([platform, data]) => (
+                    <Card key={platform}>
+                      <CardContent className="flex items-center justify-between p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                            {platform[0].toUpperCase()}
                           </div>
-                        </DialogContent>
-                      </Dialog>
+                          <div>
+                            <div className="font-medium capitalize">{platform}</div>
+                            <div className="text-sm text-muted-foreground">{data.handle}</div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold">{data.followers?.toLocaleString() || data.subscribers?.toLocaleString()}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {data.followers ? 'followers' : 'subscribers'}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="payouts" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Payout History</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center text-muted-foreground py-8">
+                      <DollarSign className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No payouts processed yet</p>
+                      <p className="text-sm">Commission payouts will appear here once processed</p>
                     </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })
-          ) : (
-            <TableRow>
-              <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
-                No influencers found matching your criteria.
-              </TableCell>
-            </TableRow>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
           )}
-        </TableBody>
-      </Table>
-    </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };

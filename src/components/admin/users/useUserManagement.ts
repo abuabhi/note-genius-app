@@ -1,68 +1,56 @@
 
-import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { UserTier } from "@/hooks/useRequireAuth";
-import { User, InfluencerMetadata } from "./types";
-import { useAuth } from "@/contexts/auth";
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { User, InfluencerMetadata } from './types';
+import { UserTier } from '@/hooks/useRequireAuth';
 
 export const useUserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filter, setFilter] = useState<string>("all");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filter, setFilter] = useState('all');
   const { toast } = useToast();
-  const { user } = useAuth();
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
 
   const fetchUsers = async () => {
-    setLoading(true);
     try {
-      // Fetch user profiles from the profiles table
-      const { data: profiles, error } = await supabase
+      setLoading(true);
+      
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select(`
-          id, username, user_tier, created_at, avatar_url, onboarding_completed,
-          is_influencer, influencer_tier, influencer_metadata, influencer_promoted_at,
-          influencer_promoted_by, influencer_expires_at, influencer_notes
-        `);
+          id,
+          username,
+          user_tier,
+          created_at,
+          onboarding_completed,
+          is_influencer,
+          influencer_tier,
+          influencer_metadata,
+          influencer_promoted_at,
+          influencer_promoted_by,
+          influencer_expires_at,
+          influencer_notes,
+          influencer_coupon_percentage
+        `)
+        .order('created_at', { ascending: false });
         
-      if (error) throw error;
+      if (profileError) throw profileError;
       
-      // Since we can't reliably access user emails directly,
-      // we'll create user data using available profile information
-      const userData: User[] = profiles.map(profile => {
-        // Create email from username or use a placeholder
-        const emailAddress = profile.username 
-          ? `${profile.username}@example.com` 
-          : `user-${profile.id.substring(0, 8)}@example.com`;
-        
-        return {
-          id: profile.id,
-          email: emailAddress,
-          username: profile.username || '',
-          user_tier: profile.user_tier as UserTier,
-          created_at: profile.created_at || new Date().toISOString(),
-          onboarding_completed: profile.onboarding_completed ?? false,
-          is_influencer: profile.is_influencer ?? false,
-          influencer_tier: profile.influencer_tier,
-          influencer_metadata: profile.influencer_metadata as InfluencerMetadata,
-          influencer_promoted_at: profile.influencer_promoted_at,
-          influencer_promoted_by: profile.influencer_promoted_by,
-          influencer_expires_at: profile.influencer_expires_at,
-          influencer_notes: profile.influencer_notes,
-        };
-      });
+      // Add placeholder emails - in production you'd want to join with auth.users
+      const usersWithEmails = profileData?.map(profile => ({
+        ...profile,
+        email: profile.username ? `${profile.username}@example.com` : `user-${profile.id.slice(0, 8)}@example.com`,
+        user_tier: profile.user_tier as UserTier,
+        influencer_metadata: profile.influencer_metadata as InfluencerMetadata
+      })) as User[] || [];
       
-      setUsers(userData);
+      setUsers(usersWithEmails);
     } catch (error) {
-      console.error("Error fetching users:", error);
+      console.error('Error fetching users:', error);
       toast({
-        title: "Error fetching users",
-        description: "Please try again later.",
+        title: "Error",
+        description: "Failed to fetch users",
         variant: "destructive",
       });
     } finally {
@@ -76,23 +64,20 @@ export const useUserManagement = () => {
         .from('profiles')
         .update({ user_tier: newTier })
         .eq('id', userId);
-      
+
       if (error) throw error;
-      
-      // Update local state
-      setUsers(users.map(user => 
-        user.id === userId ? { ...user, user_tier: newTier } : user
-      ));
-      
+
       toast({
-        title: "User tier updated",
-        description: "The user's tier has been successfully updated.",
+        title: "Success",
+        description: "User tier updated successfully",
       });
+
+      fetchUsers();
     } catch (error) {
-      console.error("Error updating user tier:", error);
+      console.error('Error updating user tier:', error);
       toast({
-        title: "Error updating user tier",
-        description: "Please try again later.",
+        title: "Error",
+        description: "Failed to update user tier",
         variant: "destructive",
       });
     }
@@ -104,23 +89,20 @@ export const useUserManagement = () => {
         .from('profiles')
         .update({ onboarding_completed: completed })
         .eq('id', userId);
-      
+
       if (error) throw error;
-      
-      // Update local state
-      setUsers(users.map(user => 
-        user.id === userId ? { ...user, onboarding_completed: completed } : user
-      ));
-      
+
       toast({
-        title: "Onboarding status updated",
-        description: `User's onboarding has been ${completed ? 'completed' : 'reset'}.`,
+        title: "Success",
+        description: `Onboarding status ${completed ? 'completed' : 'reset'}`,
       });
+
+      fetchUsers();
     } catch (error) {
-      console.error("Error updating onboarding status:", error);
+      console.error('Error updating onboarding status:', error);
       toast({
-        title: "Error updating onboarding status",
-        description: "Please try again later.",
+        title: "Error",
+        description: "Failed to update onboarding status",
         variant: "destructive",
       });
     }
@@ -128,69 +110,62 @@ export const useUserManagement = () => {
 
   const promoteToInfluencer = async (
     userId: string, 
-    tier: 'GRADUATE' | 'MASTER',
-    metadata: any,
+    tier: 'GRADUATE' | 'MASTER', 
+    metadata: InfluencerMetadata, 
     expirationMonths: number,
     notes?: string
   ) => {
     try {
+      const { data: currentUser } = await supabase.auth.getUser();
+      if (!currentUser.user) throw new Error('Not authenticated');
+
       const expirationDate = new Date();
       expirationDate.setMonth(expirationDate.getMonth() + expirationMonths);
-      
-      const { error: profileError } = await supabase
+
+      // Get coupon percentage from metadata or default
+      const couponPercentage = metadata.couponPercentage || 10;
+
+      const { error } = await supabase
         .from('profiles')
         .update({
           is_influencer: true,
           influencer_tier: tier,
           influencer_metadata: metadata,
           influencer_promoted_at: new Date().toISOString(),
-          influencer_promoted_by: user?.id,
+          influencer_promoted_by: currentUser.user.id,
           influencer_expires_at: expirationDate.toISOString(),
           influencer_notes: notes,
-          user_tier: tier // Also update the actual tier
+          influencer_coupon_percentage: couponPercentage
         })
         .eq('id', userId);
-      
-      if (profileError) throw profileError;
+
+      if (error) throw error;
 
       // Create audit record
-      const { error: auditError } = await supabase
+      await supabase
         .from('influencer_promotions_audit')
         .insert({
           user_id: userId,
-          promoted_by: user?.id,
-          from_tier: users.find(u => u.id === userId)?.user_tier || 'SCHOLAR',
+          promoted_by: currentUser.user.id,
+          from_tier: 'SCHOLAR',
           to_tier: tier,
+          promotion_type: 'influencer',
           expires_at: expirationDate.toISOString(),
-          metadata,
-          notes
+          metadata: metadata,
+          notes: notes
         });
 
-      if (auditError) throw auditError;
-      
-      // Update local state
-      setUsers(users.map(u => 
-        u.id === userId ? { 
-          ...u, 
-          is_influencer: true,
-          influencer_tier: tier,
-          influencer_metadata: metadata,
-          influencer_promoted_at: new Date().toISOString(),
-          influencer_expires_at: expirationDate.toISOString(),
-          influencer_notes: notes,
-          user_tier: tier as UserTier
-        } : u
-      ));
-      
       toast({
-        title: "User promoted to influencer",
-        description: `User has been promoted to ${tier} tier as an influencer.`,
+        title: "Success",
+        description: "User promoted to influencer successfully! Coupon auto-generated.",
       });
+
+      fetchUsers();
     } catch (error) {
-      console.error("Error promoting user to influencer:", error);
+      console.error('Error promoting to influencer:', error);
       toast({
-        title: "Error promoting user",
-        description: "Please try again later.",
+        title: "Error",
+        description: "Failed to promote user to influencer",
         variant: "destructive",
       });
     }
@@ -203,70 +178,79 @@ export const useUserManagement = () => {
         .update({
           is_influencer: false,
           influencer_tier: null,
-          influencer_metadata: {},
+          influencer_metadata: null,
           influencer_expires_at: null,
-          influencer_notes: reason ? `Revoked: ${reason}` : 'Revoked',
-          user_tier: 'SCHOLAR' // Revert to scholar
+          influencer_notes: reason || 'Manually revoked',
+          influencer_coupon_percentage: null
         })
         .eq('id', userId);
-      
+
       if (error) throw error;
-      
-      // Update local state
-      setUsers(users.map(u => 
-        u.id === userId ? { 
-          ...u, 
-          is_influencer: false,
-          influencer_tier: undefined,
-          user_tier: UserTier.SCHOLAR
-        } : u
-      ));
-      
+
+      // Deactivate associated coupons
+      await supabase
+        .from('influencer_coupons')
+        .update({ is_active: false })
+        .eq('influencer_id', userId);
+
       toast({
-        title: "Influencer status revoked",
-        description: "User has been reverted to SCHOLAR tier.",
+        title: "Success",
+        description: "Influencer status revoked successfully",
       });
+
+      fetchUsers();
     } catch (error) {
-      console.error("Error revoking influencer:", error);
+      console.error('Error revoking influencer:', error);
       toast({
-        title: "Error revoking influencer",
-        description: "Please try again later.",
+        title: "Error",
+        description: "Failed to revoke influencer status",
         variant: "destructive",
       });
     }
   };
 
-  // Filter users by search term and tier
   const filteredUsers = users.filter(user => {
-    // Filter by search term
-    const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                        user.username?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (user.username || '').toLowerCase().includes(searchTerm.toLowerCase());
     
-    // Filter by tier
-    let matchesTier = true;
-    if (filter === "influencers") {
-      matchesTier = user.is_influencer === true;
-    } else if (filter === "non-influencers") {
-      matchesTier = user.is_influencer !== true;
-    } else if (filter !== "all") {
-      matchesTier = user.user_tier === filter;
+    if (!matchesSearch) return false;
+
+    switch (filter) {
+      case 'influencers':
+        return user.is_influencer;
+      case 'dean':
+        return user.user_tier === UserTier.DEAN;
+      case 'master':
+        return user.user_tier === UserTier.MASTER;
+      case 'graduate':
+        return user.user_tier === UserTier.GRADUATE;
+      case 'scholar':
+        return user.user_tier === UserTier.SCHOLAR;
+      case 'onboarded':
+        return user.onboarding_completed;
+      case 'not_onboarded':
+        return !user.onboarding_completed;
+      default:
+        return true;
     }
-    
-    return matchesSearch && matchesTier;
   });
 
-  return { 
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  return {
     users,
-    filteredUsers, 
-    loading, 
-    searchTerm, 
-    setSearchTerm, 
-    filter, 
-    setFilter, 
+    filteredUsers,
+    loading,
+    searchTerm,
+    setSearchTerm,
+    filter,
+    setFilter,
     fetchUsers,
     updateUserTier,
     updateOnboardingStatus,
     promoteToInfluencer,
-    revokeInfluencer
+    revokeInfluencer,
   };
 };
