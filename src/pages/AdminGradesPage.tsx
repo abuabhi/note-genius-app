@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import Layout from "@/components/layout/Layout";
+import AdminLayout from "@/components/layout/AdminLayout";
 import { useRequireAuth, UserTier } from "@/hooks/useRequireAuth";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,19 +34,19 @@ const AdminGradesPage = () => {
   // Check if user is admin (DEAN tier)
   if (loading) {
     return (
-      <Layout>
+      <AdminLayout>
         <div className="container mx-auto p-6">
           <div className="flex justify-center items-center h-64">
             <span>Loading...</span>
           </div>
         </div>
-      </Layout>
+      </AdminLayout>
     );
   }
   
   if (userProfile?.user_tier !== UserTier.DEAN) {
     return (
-      <Layout>
+      <AdminLayout>
         <div className="container mx-auto p-6">
           <Alert variant="destructive">
             <ShieldAlert className="h-4 w-4" />
@@ -55,14 +55,14 @@ const AdminGradesPage = () => {
             </AlertDescription>
           </Alert>
         </div>
-      </Layout>
+      </AdminLayout>
     );
   }
 
   return (
-    <Layout>
+    <AdminLayout>
       <GradesContent />
-    </Layout>
+    </AdminLayout>
   );
 };
 
