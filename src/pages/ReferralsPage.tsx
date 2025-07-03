@@ -3,9 +3,9 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Loader2, Gift } from "lucide-react";
 import { SimplifiedReferralForm } from "@/components/referrals/SimplifiedReferralForm";
 import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
-import { Suspense } from "react";
+import { Suspense, memo, useMemo } from "react";
 
-const ReferralsPageContent = () => {
+const ReferralsPageContent = memo(() => {
   console.log('🎯 ReferralsPage component rendering');
   
   const { user, loading } = useRequireAuth();
@@ -31,10 +31,16 @@ const ReferralsPageContent = () => {
 
   console.log('✅ Referrals page rendering main content');
   
+  // Memoize breadcrumb props to prevent unnecessary re-renders
+  const breadcrumbProps = useMemo(() => ({
+    pageName: "Invite Friends & Earn Rewards",
+    pageIcon: <Gift className="h-4 w-4" />
+  }), []);
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
       <div className="max-w-4xl mx-auto p-6 space-y-8">
-        <PageBreadcrumb pageName="Invite Friends & Earn Rewards" pageIcon={<Gift className="h-4 w-4" />} />
+        <PageBreadcrumb {...breadcrumbProps} />
         
         <Suspense fallback={
           <div className="flex items-center justify-center py-8">
@@ -47,9 +53,9 @@ const ReferralsPageContent = () => {
       </div>
     </div>
   );
-};
+});
 
-const ReferralsPage = () => {
+const ReferralsPage = memo(() => {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
@@ -64,6 +70,9 @@ const ReferralsPage = () => {
       <ReferralsPageContent />
     </Suspense>
   );
-};
+});
+
+ReferralsPage.displayName = 'ReferralsPage';
+ReferralsPageContent.displayName = 'ReferralsPageContent';
 
 export default ReferralsPage;

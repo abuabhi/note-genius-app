@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { memo, useMemo, useCallback } from 'react';
 import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
 import { NotesHeader } from './NotesHeader';
 import { NotesDisplay } from './NotesDisplay';
@@ -13,7 +13,7 @@ interface NotesContentProps {
   onImportNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
 }
 
-export const NotesContent: React.FC<NotesContentProps> = ({
+export const NotesContent: React.FC<NotesContentProps> = memo(({
   onSaveNote,
   onScanNote,
   onImportNote
@@ -52,8 +52,33 @@ export const NotesContent: React.FC<NotesContentProps> = ({
     return <ErrorState message={error || 'Failed to load notes'} />;
   }
 
+  // Memoize expensive calculations
+  const totalPages = useMemo(() => Math.ceil(totalCount / 20), [totalCount]);
+  
+  const isFiltered = useMemo(() => 
+    !!(searchTerm || selectedSubject !== 'all'), 
+    [searchTerm, selectedSubject]
+  );
+
+  // Memoize callback functions to prevent unnecessary re-renders
+  const handleAddNote = useCallback(async (noteData: Omit<Note, 'id'>) => {
+    const result = await addNote(noteData);
+    if (result) {
+      return result;
+    }
+    throw new Error('Failed to add note');
+  }, [addNote]);
+
+  const handlePinNote = useCallback(async (id: string, pinned: boolean) => {
+    await updateNote(id, { pinned });
+  }, [updateNote]);
+
+  const handleArchiveNote = useCallback(async (id: string) => {
+    await updateNote(id, { archived: true });
+  }, [updateNote]);
+
   // Map the optimized context to the legacy interface
-  const legacyContextValue = {
+  const legacyContextValue = useMemo(() => ({
     notes,
     filteredNotes: notes,
     paginatedNotes: notes,
@@ -67,26 +92,35 @@ export const NotesContent: React.FC<NotesContentProps> = ({
     setSelectedSubject,
     currentPage,
     setCurrentPage,
-    totalPages: Math.ceil(totalCount / 20),
+    totalPages,
     loading,
     availableSubjects: [],
     // Map functions with compatibility wrapper
-    addNote: async (noteData: Omit<Note, 'id'>) => {
-      const result = await addNote(noteData);
-      if (result) {
-        return result;
-      }
-      throw new Error('Failed to add note');
-    },
+    addNote: handleAddNote,
     updateNote,
     deleteNote,
-    pinNote: async (id: string, pinned: boolean) => {
-      await updateNote(id, { pinned });
-    },
-    archiveNote: async (id: string) => {
-      await updateNote(id, { archived: true });
-    }
-  };
+    pinNote: handlePinNote,
+    archiveNote: handleArchiveNote
+  }), [
+    notes,
+    searchTerm,
+    setSearchTerm,
+    sortType,
+    setSortType,
+    showArchived,
+    setShowArchived,
+    selectedSubject,
+    setSelectedSubject,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    loading,
+    handleAddNote,
+    updateNote,
+    deleteNote,
+    handlePinNote,
+    handleArchiveNote
+  ]);
 
   return (
     <div className="space-y-6">
@@ -100,9 +134,11 @@ export const NotesContent: React.FC<NotesContentProps> = ({
         notes={legacyContextValue.notes}
         paginatedNotes={legacyContextValue.paginatedNotes}
         loading={legacyContextValue.loading}
-        isFiltered={!!(searchTerm || selectedSubject !== 'all')}
+        isFiltered={isFiltered}
         activeSubject={selectedSubject}
       />
     </div>
   );
-};
+});
+
+NotesContent.displayName = 'NotesContent';
