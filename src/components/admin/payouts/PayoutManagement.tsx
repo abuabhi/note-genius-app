@@ -24,8 +24,8 @@ interface PayoutRecord {
   period_start: string;
   period_end: string;
   orders_count: number;
-  created_at: string;
   processed_at?: string;
+  created_at: string;
   profiles?: {
     username: string;
     email: string;
