@@ -1,9 +1,13 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/integrations/supabase/client';
+import { useTabVisibility } from '@/hooks/performance/useTabVisibility';
+import { useRequestDebounce } from '@/hooks/performance/useRequestDebounce';
 
 export const useReminderSubscription = (onReminderChange: () => void) => {
   const { user } = useAuth();
+  const isTabVisible = useTabVisibility();
+  const { debouncedCallback: debouncedReminderChange } = useRequestDebounce(onReminderChange, 1000);
 
   useEffect(() => {
     if (!user) return;
@@ -21,16 +25,19 @@ export const useReminderSubscription = (onReminderChange: () => void) => {
         },
         () => {
           console.log('🔄 Real-time reminder change detected, refreshing...');
-          onReminderChange();
+          debouncedReminderChange();
         }
       )
       .subscribe();
       
-    // Run the fetchPendingReminders function every 30 seconds to keep it updated
+    // Run the fetchPendingReminders function periodically, but only when tab is visible
+    // Increased interval for production performance (2 minutes)
     const intervalId = setInterval(() => {
-      console.log('🔄 Periodic reminder check...');
-      onReminderChange();
-    }, 30000);
+      if (isTabVisible) {
+        console.log('🔄 Periodic reminder check...');
+        debouncedReminderChange();
+      }
+    }, 120000); // 2 minutes instead of 30 seconds
 
     return () => {
       supabase.removeChannel(channel);

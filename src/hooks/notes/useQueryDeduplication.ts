@@ -10,7 +10,7 @@ interface QueryState {
 
 export const useQueryDeduplication = () => {
   const activeQueries = useRef<QueryState>({});
-  const QUERY_TIMEOUT = 5000; // Reduced to 5 seconds for better performance
+  const QUERY_TIMEOUT = 30000; // Increased to 30 seconds for production stability
 
   const deduplicateQuery = useCallback(async <T>(
     queryKey: string,

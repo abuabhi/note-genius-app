@@ -1,3 +1,3 @@
 
-// Re-export the consolidated performance monitor for backwards compatibility
-export { useConsolidatedPerformanceMonitor as useUnifiedPerformanceMonitor } from './useConsolidatedPerformanceMonitor';
+// Re-export the optimized performance monitor for production use
+export { useOptimizedPerformanceMonitor as useUnifiedPerformanceMonitor } from './useOptimizedPerformanceMonitor';
