@@ -33,17 +33,17 @@ const AboutPage = () => {
               <div className="mb-12">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">The Spark That Started It All</h3>
                 <p className="text-gray-700 leading-relaxed mb-6">
-                  In late 2022, our founder was watching her younger sister Sarah struggle through endless hours of note-taking for her pre-med courses. 
-                  Despite being a brilliant student, Sarah was drowning in unorganized notes, spending more time searching for information than actually learning. 
-                  That's when we asked ourselves: <span className="font-medium text-mint-700">"What if AI could help students study smarter, not harder?"</span>
+                  In late 2022, Abhinav Sharma was watching his daughter Alaysa struggle through endless hours of note-taking for her pre-med courses. 
+                  Despite being a brilliant student, Alaysa was drowning in unorganized notes, spending more time searching for information than actually learning. 
+                  That's when he asked himself: <span className="font-medium text-mint-700">"What if AI could help students study smarter, not harder?"</span>
                 </p>
                 
                 <div className="bg-mint-50 border-l-4 border-mint-500 p-6 rounded-r-lg mb-8">
                   <p className="text-gray-700 italic">
-                    "I watched my sister highlight the same textbook page five times because she couldn't find her previous notes. 
+                    "I watched my daughter highlight the same textbook page five times because she couldn't find her previous notes. 
                     That moment made me realize we needed to revolutionize how students interact with their study materials."
                   </p>
-                  <p className="text-mint-700 font-medium mt-2">- Maya Chen, Founder & CEO</p>
+                  <p className="text-mint-700 font-medium mt-2">- Abhinav Sharma, CEO & Founder</p>
                 </div>
               </div>
 
