@@ -1,9 +1,62 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Sparkles, BookOpen, Brain, Scan, BarChart3, Zap, Calendar, Users, Target, MessageSquare, Clock, TrendingUp, Play, Eye, Layers, CheckCircle, Award, Bot } from 'lucide-react';
+import { ArrowRight, Sparkles, BookOpen, Brain, Scan, BarChart3, Zap, Calendar, Target, MessageSquare, Clock, TrendingUp, Play, Eye, Layers, CheckCircle, Award, Bot, FileText, LayoutDashboard, HelpCircle } from 'lucide-react';
+
+// Demo data for interactive components
+const demoData = {
+  smartNotes: {
+    before: {
+      title: "My Biology Notes - Photosynthesis",
+      content: "photosynthesis is when plants make food from sunlight. they use co2 and water. makes glucose and oxygen. happens in chloroplasts. light reactions and calvin cycle are the two parts. need chlorophyll."
+    },
+    after: {
+      title: "Enhanced Biology Notes - Photosynthesis",
+      content: "**Photosynthesis Process Overview**\n\n**Definition:** The biological process where plants convert light energy into chemical energy (glucose)\n\n**Key Inputs:**\n• Sunlight (light energy)\n• Carbon dioxide (CO₂)\n• Water (H₂O)\n\n**Products:**\n• Glucose (C₆H₁₂O₆) - energy storage\n• Oxygen (O₂) - released as byproduct\n\n**Location:** Chloroplasts (contains chlorophyll)\n\n**Two Main Stages:**\n1. **Light Reactions** - Convert light to chemical energy\n2. **Calvin Cycle** - Use chemical energy to make glucose",
+      summary: "Photosynthesis converts sunlight, CO₂, and water into glucose and oxygen through light reactions and the Calvin cycle in chloroplasts.",
+      keyPoints: ["Energy conversion: Light → Chemical", "Occurs in chloroplasts", "Two-stage process", "Essential for plant survival"]
+    }
+  },
+  dashboard: {
+    stats: {
+      studyStreak: 15,
+      completedSets: 8,
+      accuracyRate: 87,
+      weeklyGoal: 12
+    },
+    recentActivity: [
+      "Completed Biology flashcards",
+      "Generated quiz from Chemistry notes", 
+      "Updated study plan schedule"
+    ]
+  },
+  studyPlan: {
+    title: "HSC Biology Preparation",
+    timeline: "6 weeks remaining",
+    progress: 68,
+    todaysTasks: [
+      "Review Photosynthesis flashcards (30 min)",
+      "Complete Cellular Respiration practice quiz",
+      "Read Chapter 5: Genetics (45 min)"
+    ]
+  },
+  flashcard: {
+    front: "What is the overall equation for photosynthesis?",
+    back: "6CO₂ + 6H₂O + light energy → C₆H₁₂O₆ + 6O₂ + ATP",
+    difficulty: "Medium",
+    mastery: "Learning"
+  },
+  quiz: {
+    question: "Which organelle is responsible for photosynthesis in plant cells?",
+    options: ["Mitochondria", "Chloroplast", "Nucleus", "Ribosome"],
+    correct: 1,
+    explanation: "Chloroplasts contain chlorophyll and are the site where photosynthesis occurs in plant cells."
+  }
+};
 
 const expandedFeatures = [
   {
@@ -13,7 +66,7 @@ const expandedFeatures = [
     icon: Brain,
     highlight: "Popular",
     color: "from-mint-500 to-mint-600",
-    demo: "Upload any text or notes → AI identifies key concepts → Generates optimized flashcard pairs → Schedules reviews based on your memory performance"
+    demoComponent: "flashcard"
   },
   {
     name: "Smart Quiz Creation",
@@ -22,7 +75,7 @@ const expandedFeatures = [
     icon: Zap,
     highlight: "AI-Powered",
     color: "from-mint-400 to-mint-500",
-    demo: "Select your content → Choose quiz parameters → AI generates varied question types → Take adaptive quiz → Receive detailed performance analytics"
+    demoComponent: "quiz"
   },
   {
     name: "Personalized Study Plans",
@@ -31,7 +84,7 @@ const expandedFeatures = [
     icon: Calendar,
     highlight: "New",
     color: "from-mint-600 to-mint-700",
-    demo: "Set your goals and deadlines → Input your available study time → AI creates personalized schedule → Track daily progress → Automatic adjustments based on performance"
+    demoComponent: "studyPlan"
   },
   {
     name: "Smart Note Enhancement",
@@ -40,7 +93,7 @@ const expandedFeatures = [
     icon: BookOpen,
     highlight: "",
     color: "from-mint-300 to-mint-400",
-    demo: "Upload your notes or documents → AI processes and analyzes content → Generates summaries and explanations → Creates interactive study guides → Suggests related topics"
+    demoComponent: "smartNotes"
   },
   {
     name: "Document Scanning & OCR",
@@ -49,7 +102,7 @@ const expandedFeatures = [
     icon: Scan,
     highlight: "",
     color: "from-mint-500 to-mint-600",
-    demo: "Capture image of document → OCR processes and extracts text → Edit and organize digital content → Convert to flashcards or study materials → Search through all content"
+    demoComponent: null
   },
   {
     name: "Learning Analytics Dashboard",
@@ -58,16 +111,7 @@ const expandedFeatures = [
     icon: BarChart3,
     highlight: "Analytics",
     color: "from-mint-400 to-mint-600",
-    demo: "Study using our tools → System tracks all interactions → Generates detailed performance reports → Provides personalized insights → Suggests optimization strategies"
-  },
-  {
-    name: "Collaborative Study Groups",
-    description: "Join or create study groups to share flashcards, quizzes, and notes with classmates and friends.",
-    longDescription: "Connect with classmates and study together more effectively. Share your flashcard sets, collaborate on study plans, participate in group challenges, and learn from each other's progress. Features include real-time collaboration, shared study sessions, group performance tracking, and peer-to-peer learning recommendations.",
-    icon: Users,
-    highlight: "Social",
-    color: "from-blue-400 to-blue-600",
-    demo: "Create or join study group → Share flashcards and notes → Participate in group challenges → Track collective progress → Engage in peer learning"
+    demoComponent: "dashboard"
   },
   {
     name: "Goal Setting & Tracking",
@@ -76,7 +120,7 @@ const expandedFeatures = [
     icon: Target,
     highlight: "",
     color: "from-purple-400 to-purple-600",
-    demo: "Define your learning goals → Set target dates and metrics → Follow structured study plan → Monitor daily progress → Celebrate achievements and milestones"
+    demoComponent: null
   },
   {
     name: "AI Study Assistant Chat",
@@ -85,7 +129,7 @@ const expandedFeatures = [
     icon: MessageSquare,
     highlight: "24/7",
     color: "from-indigo-400 to-indigo-600",
-    demo: "Ask any study question → Receive detailed explanations → Get personalized study tips → Access subject-specific guidance → Build on previous conversations"
+    demoComponent: null
   },
   {
     name: "Spaced Repetition System",
@@ -94,7 +138,7 @@ const expandedFeatures = [
     icon: Clock,
     highlight: "Science-Based",
     color: "from-orange-400 to-orange-600",
-    demo: "Study flashcards → System tracks your performance → Calculates optimal review intervals → Schedules future reviews → Adapts based on memory strength"
+    demoComponent: null
   },
   {
     name: "Progress Forecasting",
@@ -103,7 +147,7 @@ const expandedFeatures = [
     icon: TrendingUp,
     highlight: "Predictive",
     color: "from-red-400 to-red-600",
-    demo: "Study consistently using our platform → AI analyzes your patterns → Generates performance predictions → Provides readiness assessments → Suggests improvement strategies"
+    demoComponent: null
   },
   {
     name: "Interactive Study Sessions",
@@ -112,7 +156,7 @@ const expandedFeatures = [
     icon: Play,
     highlight: "Engaging",
     color: "from-green-400 to-green-600",
-    demo: "Start interactive study session → Engage with gamified content → Receive real-time feedback → Earn points and achievements → Maintain study streaks"
+    demoComponent: null
   },
   {
     name: "Visual Learning Tools",
@@ -121,7 +165,7 @@ const expandedFeatures = [
     icon: Eye,
     highlight: "",
     color: "from-teal-400 to-teal-600",
-    demo: "Input your study topics → Create visual mind maps → Build concept relationships → Generate diagrams → Export and share visual aids"
+    demoComponent: null
   },
   {
     name: "Multi-Subject Organization",
@@ -130,7 +174,7 @@ const expandedFeatures = [
     icon: Layers,
     highlight: "",
     color: "from-cyan-400 to-cyan-600",
-    demo: "Add content from different subjects → AI categorizes and tags → Discovers cross-subject connections → Provides unified search → Manages integrated study schedule"
+    demoComponent: null
   },
   {
     name: "Mastery Verification",
@@ -139,7 +183,7 @@ const expandedFeatures = [
     icon: CheckCircle,
     highlight: "Certification",
     color: "from-emerald-400 to-emerald-600",
-    demo: "Complete study materials → Take comprehensive mastery test → Receive detailed performance analysis → Earn mastery certificates → Share achievements"
+    demoComponent: null
   },
   {
     name: "Achievement System",
@@ -148,7 +192,7 @@ const expandedFeatures = [
     icon: Award,
     highlight: "Motivational",
     color: "from-yellow-400 to-yellow-600",
-    demo: "Complete study activities → Earn achievement badges → Build study streaks → Unlock milestone rewards → Share accomplishments with friends"
+    demoComponent: null
   },
   {
     name: "AI Content Generation",
@@ -157,11 +201,254 @@ const expandedFeatures = [
     icon: Bot,
     highlight: "Advanced AI",
     color: "from-violet-400 to-violet-600",
-    demo: "Upload any study content → AI analyzes and processes → Generates comprehensive study materials → Customizes to your level → Creates practice assessments"
+    demoComponent: null
   }
 ];
 
 const FeaturesPage = () => {
+  const [activeDemo, setActiveDemo] = useState<string | null>(null);
+
+  // Filter out collaboration features - remove the collaborative study groups feature
+  const filteredFeatures = expandedFeatures.filter(feature => 
+    feature.name !== "Collaborative Study Groups"
+  );
+
+  const renderInteractiveDemo = (demoType: string) => {
+    switch (demoType) {
+      case 'smartNotes':
+        return (
+          <div className="grid md:grid-cols-2 gap-6 mt-6">
+            {/* Before - Raw Notes */}
+            <Card className="border-gray-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-gray-700">
+                  <FileText className="h-5 w-5" />
+                  Before AI Enhancement
+                  <Badge variant="outline" className="text-xs">Raw Notes</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">{demoData.smartNotes.before.title}</h3>
+                  <div className="bg-gray-50 p-4 rounded-lg min-h-[200px]">
+                    <p className="text-gray-700 text-sm leading-relaxed">
+                      {demoData.smartNotes.before.content}
+                    </p>
+                  </div>
+                  <div className="text-xs text-gray-500 italic">
+                    Unstructured, missing key details, hard to study from
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* After - Enhanced Notes */}
+            <Card className="border-mint-200 shadow-md">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-mint-700">
+                  <Brain className="h-5 w-5" />
+                  After AI Enhancement
+                  <Badge className="bg-mint-100 text-mint-700 text-xs">AI Enhanced</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">{demoData.smartNotes.after.title}</h3>
+                  <div className="bg-mint-50 p-4 rounded-lg min-h-[200px]">
+                    <div className="prose prose-sm text-gray-700">
+                      {demoData.smartNotes.after.content.split('\n').map((line, index) => (
+                        <div key={index} className="mb-1">
+                          {line.startsWith('**') ? (
+                            <div className="font-semibold text-mint-800">{line.replace(/\*\*/g, '')}</div>
+                          ) : line.startsWith('•') ? (
+                            <div className="ml-4 text-sm">{line}</div>
+                          ) : line.startsWith('1.') || line.startsWith('2.') ? (
+                            <div className="ml-2 text-sm font-medium text-mint-700">{line}</div>
+                          ) : (
+                            <div className="text-sm">{line}</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="bg-mint-100 p-3 rounded-lg">
+                    <h4 className="font-medium text-mint-800 mb-2 text-sm">AI Summary:</h4>
+                    <p className="text-mint-700 text-sm">{demoData.smartNotes.after.summary}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+
+      case 'dashboard':
+        return (
+          <Card className="border-mint-200 mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <LayoutDashboard className="h-5 w-5 text-mint-600" />
+                Study Dashboard
+                <Badge className="bg-mint-100 text-mint-700 text-xs">Real-time</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div className="bg-gradient-to-br from-mint-50 to-mint-100 p-4 rounded-xl text-center">
+                  <div className="text-2xl font-bold text-mint-700">{demoData.dashboard.stats.studyStreak}</div>
+                  <div className="text-sm text-mint-600">Day Streak</div>
+                </div>
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl text-center">
+                  <div className="text-2xl font-bold text-blue-700">{demoData.dashboard.stats.completedSets}</div>
+                  <div className="text-sm text-blue-600">Sets Completed</div>
+                </div>
+                <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl text-center">
+                  <div className="text-2xl font-bold text-green-700">{demoData.dashboard.stats.accuracyRate}%</div>
+                  <div className="text-sm text-green-600">Accuracy</div>
+                </div>
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl text-center">
+                  <div className="text-2xl font-bold text-purple-700">{demoData.dashboard.stats.weeklyGoal}/12</div>
+                  <div className="text-sm text-purple-600">Weekly Goal</div>
+                </div>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-medium mb-3">Recent Activity</h4>
+                <div className="space-y-2">
+                  {demoData.dashboard.recentActivity.map((activity, index) => (
+                    <div key={index} className="flex items-center gap-2 text-sm text-gray-600">
+                      <div className="w-2 h-2 bg-mint-500 rounded-full"></div>
+                      {activity}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      case 'studyPlan':
+        return (
+          <Card className="border-mint-200 mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-mint-600" />
+                Personalized Study Plan
+                <Badge className="bg-mint-100 text-mint-700 text-xs">AI Generated</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-semibold text-lg">{demoData.studyPlan.title}</h3>
+                    <p className="text-sm text-gray-600">{demoData.studyPlan.timeline}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-mint-600">{demoData.studyPlan.progress}%</div>
+                    <div className="text-sm text-gray-500">Complete</div>
+                  </div>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div 
+                    className="bg-gradient-to-r from-mint-500 to-mint-600 h-3 rounded-full transition-all duration-300"
+                    style={{ width: `${demoData.studyPlan.progress}%` }}
+                  ></div>
+                </div>
+                <div className="bg-mint-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-mint-800 mb-3">Today's Tasks</h4>
+                  <div className="space-y-2">
+                    {demoData.studyPlan.todaysTasks.map((task, index) => (
+                      <div key={index} className="flex items-center gap-3">
+                        <input type="checkbox" className="rounded border-mint-300 text-mint-600" />
+                        <span className="text-sm text-gray-700">{task}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      case 'flashcard':
+        return (
+          <Card className="border-mint-200 mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Brain className="h-5 w-5 text-mint-600" />
+                AI-Generated Flashcard
+                <Badge className="bg-mint-100 text-mint-700 text-xs">Auto-generated</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-white border-2 border-mint-200 rounded-xl p-8 min-h-[250px] flex flex-col justify-center items-center text-center mb-4">
+                <div className="space-y-6 w-full">
+                  <div className="space-y-4">
+                    <div className="text-sm text-mint-600 font-medium">Question</div>
+                    <p className="text-lg font-medium text-gray-900">{demoData.flashcard.front}</p>
+                  </div>
+                  <div className="border-t border-gray-200 pt-4 space-y-4">
+                    <div className="text-sm text-mint-600 font-medium">Answer</div>
+                    <p className="text-lg text-gray-700">{demoData.flashcard.back}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <div className="flex gap-4">
+                  <span className="text-gray-500">Difficulty: <span className="font-medium text-orange-600">{demoData.flashcard.difficulty}</span></span>
+                  <span className="text-gray-500">Status: <span className="font-medium text-blue-600">{demoData.flashcard.mastery}</span></span>
+                </div>
+                <Button size="sm" className="bg-mint-600 hover:bg-mint-700">
+                  Next Card
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      case 'quiz':
+        return (
+          <Card className="border-mint-200 mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <HelpCircle className="h-5 w-5 text-mint-600" />
+                Adaptive Quiz Question
+                <Badge className="bg-mint-100 text-mint-700 text-xs">AI Generated</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <h3 className="font-semibold text-lg">{demoData.quiz.question}</h3>
+                <div className="space-y-3">
+                  {demoData.quiz.options.map((option, index) => (
+                    <button
+                      key={index}
+                      className={`w-full text-left p-4 rounded-lg border transition-colors ${
+                        index === demoData.quiz.correct
+                          ? 'border-green-300 bg-green-50 text-green-800'
+                          : 'border-gray-200 hover:border-mint-300 hover:bg-mint-50'
+                      }`}
+                    >
+                      <span className="font-medium">{String.fromCharCode(65 + index)}.</span> {option}
+                      {index === demoData.quiz.correct && (
+                        <span className="ml-2 text-green-600 text-sm">✓ Correct</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                <div className="bg-mint-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-mint-800 mb-2">Explanation:</h4>
+                  <p className="text-mint-700 text-sm">{demoData.quiz.explanation}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   return (
     <Layout>
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
@@ -222,7 +509,7 @@ const FeaturesPage = () => {
             </div>
 
             <div className="space-y-12">
-              {expandedFeatures.map((feature, index) => (
+              {filteredFeatures.map((feature, index) => (
                 <div
                   key={feature.name}
                   className="relative group"
@@ -252,14 +539,38 @@ const FeaturesPage = () => {
                         <p className="text-gray-600 leading-relaxed">{feature.longDescription}</p>
                       </div>
 
-                      {/* Demo Section */}
-                      <div className="bg-gradient-to-r from-mint-50 to-blue-50 rounded-xl p-6 border border-mint-100">
-                        <h4 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                          <Play className="h-5 w-5 text-mint-600 mr-2" />
-                          Interactive Demo Flow
-                        </h4>
-                        <p className="text-gray-700 leading-relaxed font-medium">{feature.demo}</p>
-                      </div>
+                      {/* Interactive Demo Section */}
+                      {feature.demoComponent ? (
+                        <div className="bg-gradient-to-r from-mint-50 to-blue-50 rounded-xl p-6 border border-mint-100">
+                          <div className="flex items-center justify-between mb-4">
+                            <h4 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                              <Play className="h-5 w-5 text-mint-600" />
+                              Interactive Demo
+                            </h4>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="bg-white hover:bg-mint-50 border-mint-200 text-mint-700"
+                              onClick={() => setActiveDemo(activeDemo === feature.demoComponent ? null : feature.demoComponent)}
+                            >
+                              {activeDemo === feature.demoComponent ? 'Hide Demo' : 'Try Demo'}
+                              <ArrowRight className="ml-2 h-3 w-3" />
+                            </Button>
+                          </div>
+                          
+                          {activeDemo === feature.demoComponent && renderInteractiveDemo(feature.demoComponent)}
+                        </div>
+                      ) : (
+                        <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
+                          <div className="flex items-center justify-center py-8">
+                            <div className="text-center">
+                              <feature.icon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                              <p className="text-gray-600 font-medium">Interactive demo coming soon</p>
+                              <p className="text-sm text-gray-500 mt-2">This feature will have a live demo in future updates</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -269,24 +580,34 @@ const FeaturesPage = () => {
         </div>
 
         {/* CTA Section */}
-        <div className="py-20 bg-gradient-to-r from-mint-600 to-blue-600">
-          <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-              Ready to transform your studying?
-            </h2>
-            <p className="text-xl text-mint-100 mb-8 max-w-2xl mx-auto">
-              Join thousands of students who are already studying smarter with PrepGenie's powerful features.
+        <div className="mt-16 text-center">
+          <div className="bg-gradient-to-r from-mint-50 to-blue-50 rounded-2xl p-8 border border-mint-100">
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">Ready to Transform Your Study Experience?</h3>
+            <p className="text-lg text-gray-600 mb-6 max-w-2xl mx-auto">
+              Join thousands of students who are already studying smarter with our AI-powered tools
             </p>
-            <Button 
-              size="lg" 
-              className="bg-white text-mint-700 hover:bg-gray-50 px-8 py-3 text-lg shadow-lg hover:shadow-xl transition-all duration-200"
-              asChild
-            >
-              <Link to="/signup">
-                Start Your Free Trial
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button
+                size="lg"
+                className="bg-mint-600 hover:bg-mint-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                asChild
+              >
+                <Link to="/signup">
+                  Start Free Trial
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                className="border-2 border-mint-300 text-mint-700 hover:bg-white hover:border-mint-400 bg-transparent shadow-md hover:shadow-lg transition-all duration-200"
+                asChild
+              >
+                <Link to="/pricing">
+                  View Pricing
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
