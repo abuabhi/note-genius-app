@@ -27,8 +27,8 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const { tier, billing } = await req.json();
-    logStep("Request data", { tier, billing });
+    const { tier, billing, coupon_code } = await req.json();
+    logStep("Request data", { tier, billing, coupon_code });
 
     if (!tier || !billing) {
       throw new Error("Missing tier or billing parameter");
@@ -88,31 +88,74 @@ serve(async (req) => {
 
     logStep("Pricing calculated", { tier, billing, unitAmount, productName, interval });
 
+    // Handle coupon validation if provided
+    let discountAmount = 0;
+    let couponDetails = null;
+    let finalAmount = unitAmount;
+
+    if (coupon_code) {
+      logStep("Validating coupon", { coupon_code });
+      
+      const { data: couponValidation, error: couponError } = await supabaseClient
+        .rpc('validate_coupon', { coupon_code_param: coupon_code });
+
+      if (couponError) {
+        logStep("Coupon validation error", { error: couponError.message });
+        throw new Error(`Coupon validation failed: ${couponError.message}`);
+      }
+
+      if (!couponValidation.valid) {
+        logStep("Invalid coupon", { error: couponValidation.error });
+        throw new Error(couponValidation.error || 'Invalid coupon');
+      }
+
+      couponDetails = couponValidation;
+      
+      // Calculate discount
+      if (couponValidation.discount_percentage) {
+        discountAmount = Math.round((unitAmount * couponValidation.discount_percentage) / 100);
+      } else if (couponValidation.discount_amount) {
+        discountAmount = Math.min(couponValidation.discount_amount * 100, unitAmount); // Convert to cents
+      }
+
+      finalAmount = Math.max(0, unitAmount - discountAmount);
+      logStep("Coupon applied", { discountAmount, finalAmount, couponDetails });
+    }
+
     const origin = req.headers.get("origin") || "http://localhost:3000";
+    
+    // Prepare line items
+    const lineItems = [];
+    
+    // Main subscription item
+    lineItems.push({
+      price_data: {
+        currency: "aud",
+        product_data: { 
+          name: productName,
+          description: `${tier} tier access with premium features`
+        },
+        unit_amount: finalAmount,
+        recurring: { interval },
+      },
+      quantity: 1,
+    });
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
-      line_items: [
-        {
-          price_data: {
-            currency: "aud",
-            product_data: { 
-              name: productName,
-              description: `${tier} tier access with premium features`
-            },
-            unit_amount: unitAmount,
-            recurring: { interval },
-          },
-          quantity: 1,
-        },
-      ],
+      line_items: lineItems,
       mode: "subscription",
       success_url: `${origin}/settings?tab=subscription&success=true`,
       cancel_url: `${origin}/settings?tab=subscription&cancelled=true`,
       metadata: {
         user_id: user.id,
         tier: tier,
-        billing: billing
+        billing: billing,
+        coupon_code: coupon_code || '',
+        original_amount: unitAmount.toString(),
+        discount_amount: discountAmount.toString(),
+        influencer_id: couponDetails?.influencer_id || ''
       }
     });
 

@@ -1,10 +1,11 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { InfluencerKPICards } from './InfluencerKPICards';
 import { TopPerformersSection } from './TopPerformersSection';
 import { PayoutSummarySection } from './PayoutSummarySection';
-import { TrendingUp, Users, DollarSign, Award } from 'lucide-react';
+import { TrendingUp, Users, DollarSign, Award, Ticket } from 'lucide-react';
 
 export const InfluencerAnalyticsDashboard = () => {
   return (
@@ -14,8 +15,9 @@ export const InfluencerAnalyticsDashboard = () => {
 
       {/* Detailed Analytics */}
       <Tabs defaultValue="performance" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="coupons">Coupons</TabsTrigger>
           <TabsTrigger value="payouts">Payouts</TabsTrigger>
           <TabsTrigger value="trends">Trends</TabsTrigger>
           <TabsTrigger value="management">Management</TabsTrigger>
@@ -55,6 +57,20 @@ export const InfluencerAnalyticsDashboard = () => {
                 </div>
               </CardContent>
             </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="coupons" className="space-y-4">
+          <div className="text-center py-8">
+            <p className="text-muted-foreground mb-4">
+              Coupon management is now available in a dedicated section.
+            </p>
+            <Button asChild>
+              <a href="/admin/coupons">
+                <Ticket className="h-4 w-4 mr-2" />
+                Manage Coupons
+              </a>
+            </Button>
           </div>
         </TabsContent>
 

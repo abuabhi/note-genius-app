@@ -1165,6 +1165,112 @@ export type Database = {
         }
         Relationships: []
       }
+      influencer_coupons: {
+        Row: {
+          coupon_code: string
+          created_at: string | null
+          current_usage: number | null
+          discount_amount: number | null
+          discount_percentage: number | null
+          expires_at: string | null
+          id: string
+          influencer_id: string
+          is_active: boolean | null
+          updated_at: string | null
+          usage_limit: number | null
+        }
+        Insert: {
+          coupon_code: string
+          created_at?: string | null
+          current_usage?: number | null
+          discount_amount?: number | null
+          discount_percentage?: number | null
+          expires_at?: string | null
+          id?: string
+          influencer_id: string
+          is_active?: boolean | null
+          updated_at?: string | null
+          usage_limit?: number | null
+        }
+        Update: {
+          coupon_code?: string
+          created_at?: string | null
+          current_usage?: number | null
+          discount_amount?: number | null
+          discount_percentage?: number | null
+          expires_at?: string | null
+          id?: string
+          influencer_id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+          usage_limit?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_coupons_influencer_id_fkey"
+            columns: ["influencer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      influencer_orders: {
+        Row: {
+          commission_amount: number | null
+          commission_rate: number | null
+          coupon_code: string | null
+          created_at: string | null
+          customer_email: string | null
+          discount_amount: number | null
+          id: string
+          influencer_id: string | null
+          order_amount: number | null
+          processed_at: string | null
+          status: string | null
+          stripe_session_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          commission_amount?: number | null
+          commission_rate?: number | null
+          coupon_code?: string | null
+          created_at?: string | null
+          customer_email?: string | null
+          discount_amount?: number | null
+          id?: string
+          influencer_id?: string | null
+          order_amount?: number | null
+          processed_at?: string | null
+          status?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          commission_amount?: number | null
+          commission_rate?: number | null
+          coupon_code?: string | null
+          created_at?: string | null
+          customer_email?: string | null
+          discount_amount?: number | null
+          id?: string
+          influencer_id?: string | null
+          order_amount?: number | null
+          processed_at?: string | null
+          status?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_orders_influencer_id_fkey"
+            columns: ["influencer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       influencer_payouts: {
         Row: {
           created_at: string | null
@@ -3663,6 +3769,10 @@ export type Database = {
         Args: { note_id: string }
         Returns: boolean
       }
+      generate_influencer_coupon_code: {
+        Args: { influencer_username: string }
+        Returns: string
+      }
       get_active_announcements: {
         Args: { user_tier_param?: string; current_page?: string }
         Returns: {
@@ -3748,6 +3858,10 @@ export type Database = {
       process_referral_signup: {
         Args: { referred_user_id: string; referral_code_used: string }
         Returns: boolean
+      }
+      validate_coupon: {
+        Args: { coupon_code_param: string }
+        Returns: Json
       }
     }
     Enums: {
