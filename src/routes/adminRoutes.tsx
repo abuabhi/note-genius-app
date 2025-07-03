@@ -16,6 +16,7 @@ import AdminFeedbackSettingsPage from "@/pages/AdminFeedbackSettingsPage";
 import AdminSystemMonitoringPage from "@/pages/AdminSystemMonitoringPage";
 import AdminContactSubmissionsPage from "@/pages/AdminContactSubmissionsPage";
 import AdminHelpManagementPage from "@/pages/AdminHelpManagementPage";
+import AdminInfluencersPage from "@/pages/AdminInfluencersPage";
 import { RouteConfig } from './publicRoutes';
 
 // Admin routes - wrapped with SidebarLayout for sidebar/header
@@ -23,6 +24,7 @@ export const adminRoutes: RouteConfig[] = [
   { path: "/admin", element: <SidebarLayout><AdminDashboardPage /></SidebarLayout> },
   { path: "/admin/system-monitoring", element: <SidebarLayout><AdminSystemMonitoringPage /></SidebarLayout> },
   { path: "/admin/users", element: <SidebarLayout><AdminUsersPage /></SidebarLayout> },
+  { path: "/admin/influencers", element: <SidebarLayout><AdminInfluencersPage /></SidebarLayout> },
   { path: "/admin/contact-submissions", element: <SidebarLayout><AdminContactSubmissionsPage /></SidebarLayout> },
   { path: "/admin/feedback", element: <SidebarLayout><AdminFeedbackPage /></SidebarLayout> },
   { path: "/admin/feedback/settings", element: <SidebarLayout><AdminFeedbackSettingsPage /></SidebarLayout> },

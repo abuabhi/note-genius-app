@@ -1,6 +1,6 @@
 
 import React from "react";
-import Layout from "@/components/layout/Layout";
+import AdminLayout from "@/components/layout/AdminLayout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { UserTier } from "@/hooks/useRequireAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,20 +13,18 @@ const AdminAnnouncementsPage = () => {
 
   if (!user || userProfile?.user_tier !== UserTier.DEAN) {
     return (
-      <Layout>
-        <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
-          <div className="container mx-auto p-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Access Denied</CardTitle>
-                <CardDescription>
-                  You need Dean-tier access to manage announcements.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
+      <AdminLayout>
+        <div className="container mx-auto p-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Access Denied</CardTitle>
+              <CardDescription>
+                You need Dean-tier access to manage announcements.
+              </CardDescription>
+            </CardHeader>
+          </Card>
         </div>
-      </Layout>
+      </AdminLayout>
     );
   }
 
@@ -36,20 +34,18 @@ const AdminAnnouncementsPage = () => {
   ];
 
   return (
-    <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
-        <StandardPageHeader
-          title="Announcement Management"
-          description="Create and manage system-wide announcements for users"
-          icon={<Megaphone className="h-6 w-6 text-white" />}
-          breadcrumbs={breadcrumbs}
-        />
-        
-        <div className="container mx-auto px-6 py-8">
-          <AnnouncementManagement />
-        </div>
+    <AdminLayout>
+      <StandardPageHeader
+        title="Announcement Management"
+        description="Create and manage system-wide announcements for users"
+        icon={<Megaphone className="h-6 w-6 text-white" />}
+        breadcrumbs={breadcrumbs}
+      />
+      
+      <div className="container mx-auto px-6 py-8">
+        <AnnouncementManagement />
       </div>
-    </Layout>
+    </AdminLayout>
   );
 };
 

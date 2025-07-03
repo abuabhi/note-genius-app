@@ -14,7 +14,8 @@ import {
   Upload,
   Settings,
   Activity,
-  HelpCircle
+  HelpCircle,
+  Crown
 } from 'lucide-react';
 
 const AdminDashboardPage = () => {
@@ -32,6 +33,13 @@ const AdminDashboardPage = () => {
       icon: Users,
       href: '/admin/users',
       color: 'bg-blue-500'
+    },
+    {
+      title: 'Influencer Management',
+      description: 'Manage influencer accounts and track performance',
+      icon: Crown,
+      href: '/admin/influencers',
+      color: 'bg-amber-500'
     },
     {
       title: 'Feedback Management',
