@@ -42,7 +42,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
       duration: 0.5
     }
   }} className={cn("relative overflow-hidden rounded-3xl border-2 bg-white shadow-lg transition-all duration-300 hover:shadow-xl", plan.isPopular ? "border-mint-500 shadow-mint-100 ring-2 ring-mint-500/20" : "border-gray-200 hover:border-mint-300", "flex flex-col min-h-full p-8")}>
-      {plan.isPopular && <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-10">
+      {plan.isPopular && <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-20">
           <div className="bg-gradient-to-r from-mint-600 to-mint-500 text-white px-6 rounded-full flex items-center shadow-lg py-[10px] mx-[4px] my-0">
             <Star className="h-4 w-4 fill-current mr-2" />
             <span className="font-semibold text-sm">Most Popular</span>
