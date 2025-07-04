@@ -2,28 +2,42 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { UserProgressState } from '@/hooks/useUserProgressState';
 
 export interface StudySuggestion {
   id: string;
-  type: 'schedule' | 'performance' | 'motivation' | 'focus';
+  type: 'schedule' | 'performance' | 'motivation' | 'focus' | 'onboarding';
   priority: 'high' | 'medium' | 'low';
   title: string;
   description: string;
   actionable: boolean;
-  icon: '🎯' | '📚' | '⚡' | '🔥' | '📈' | '💪' | '🎉';
+  icon: '🎯' | '📚' | '⚡' | '🔥' | '📈' | '💪' | '🎉' | '🚀' | '✨' | '📝';
   subject?: string;
 }
 
-export const useStudySuggestions = (subjectAnalytics?: any) => {
+export const useStudySuggestions = (subjectAnalytics?: any, progressState?: UserProgressState) => {
   const { user } = useAuth();
 
   const { data: suggestions, isLoading } = useQuery({
-    queryKey: ['study-suggestions', user?.id, subjectAnalytics?.subjects?.length],
+    queryKey: ['study-suggestions', user?.id, progressState?.userType, progressState?.totalItems],
     queryFn: async () => {
       if (!user) throw new Error('User not authenticated');
-      if (!subjectAnalytics?.subjects) return [];
+      
+      console.log('🤖 Generating AI study suggestions for user type:', progressState?.userType);
 
-      console.log('🤖 Generating AI study suggestions');
+      // Handle different user types
+      if (!progressState || progressState.userType === 'new') {
+        return generateNewUserSuggestions(progressState);
+      }
+      
+      if (progressState.userType === 'intermediate') {
+        return generateIntermediateUserSuggestions(progressState, user.id);
+      }
+      
+      // Advanced users - use existing complex analytics if available
+      if (!subjectAnalytics?.subjects) {
+        return generateAdvancedFallbackSuggestions(progressState, user.id);
+      }
 
       // Fetch study plans and recent sessions
       const [studyPlansResult, recentSessionsResult] = await Promise.all([
@@ -180,12 +194,178 @@ export const useStudySuggestions = (subjectAnalytics?: any) => {
       // Limit to top 4 suggestions
       return suggestions.slice(0, 4);
     },
-    enabled: !!user && !!subjectAnalytics?.subjects,
+    enabled: !!user,
     staleTime: 10 * 60 * 1000, // 10 minutes cache
   });
 
   return {
     suggestions: suggestions || [],
-    isLoading: isLoading || !subjectAnalytics?.subjects
+    isLoading: isLoading || (progressState?.isLoading ?? true)
   };
 };
+
+// New user suggestions - no existing content
+function generateNewUserSuggestions(progressState?: UserProgressState): StudySuggestion[] {
+  return [
+    {
+      id: 'create-first-note',
+      type: 'onboarding',
+      priority: 'high',
+      title: 'Create your first note',
+      description: 'Start by adding study materials, lecture notes, or textbook content to organize your learning',
+      actionable: true,
+      icon: '📝'
+    },
+    {
+      id: 'set-study-goal',
+      type: 'onboarding',
+      priority: 'high', 
+      title: 'Set your first study goal',
+      description: 'Define what you want to achieve this week to stay motivated and track progress',
+      actionable: true,
+      icon: '🎯'
+    },
+    {
+      id: 'explore-features',
+      type: 'motivation',
+      priority: 'medium',
+      title: 'Explore AI-powered features',
+      description: 'Discover how PrepGenie can transform your notes into flashcards and quizzes automatically',
+      actionable: true,
+      icon: '✨'
+    },
+    {
+      id: 'import-materials',
+      type: 'onboarding',
+      priority: 'medium',
+      title: 'Import existing study materials',
+      description: 'Upload PDFs, documents, or connect with Google Docs to get started quickly',
+      actionable: true,
+      icon: '📚'
+    }
+  ];
+}
+
+// Intermediate user suggestions - some content exists
+async function generateIntermediateUserSuggestions(progressState: UserProgressState, userId: string): Promise<StudySuggestion[]> {
+  const suggestions: StudySuggestion[] = [];
+  
+  // Content expansion suggestions
+  if (progressState.hasNotes && !progressState.hasFlashcards) {
+    suggestions.push({
+      id: 'notes-to-flashcards',
+      type: 'focus',
+      priority: 'high',
+      title: 'Transform notes into flashcards',
+      description: 'Convert your existing notes into interactive flashcards for better memorization',
+      actionable: true,
+      icon: '🚀'
+    });
+  }
+  
+  if (progressState.hasNotes && !progressState.hasQuizzes) {
+    suggestions.push({
+      id: 'create-quiz',
+      type: 'focus',
+      priority: 'high',
+      title: 'Test your knowledge with quizzes',
+      description: 'Create quizzes from your notes to identify knowledge gaps and improve retention',
+      actionable: true,
+      icon: '🎯'
+    });
+  }
+  
+  if (!progressState.hasGoals) {
+    suggestions.push({
+      id: 'set-goals',
+      type: 'motivation',
+      priority: 'medium',
+      title: 'Set study goals to stay on track',
+      description: 'Define clear objectives to maintain motivation and measure your progress',
+      actionable: true,
+      icon: '📈'
+    });
+  }
+  
+  if (progressState.hasFlashcards || progressState.hasQuizzes) {
+    suggestions.push({
+      id: 'study-session',
+      type: 'schedule',
+      priority: 'medium',
+      title: 'Start a focused study session',
+      description: 'Review your flashcards or take a quiz to reinforce your learning',
+      actionable: true,
+      icon: '⚡'
+    });
+  }
+  
+  // Fallback motivation
+  suggestions.push({
+    id: 'progress-celebration',
+    type: 'motivation',
+    priority: 'low',
+    title: 'Great progress so far!',
+    description: `You've created ${progressState.totalItems} study items. Keep building your knowledge base!`,
+    actionable: false,
+    icon: '💪'
+  });
+  
+  return suggestions.slice(0, 4);
+}
+
+// Advanced user fallback when analytics not available
+async function generateAdvancedFallbackSuggestions(progressState: UserProgressState, userId: string): Promise<StudySuggestion[]> {
+  const suggestions: StudySuggestion[] = [];
+  
+  // Check for recent activity
+  const { data: recentSessions } = await supabase
+    .from('study_sessions')
+    .select('*')
+    .eq('user_id', userId)
+    .gte('start_time', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+    .order('start_time', { ascending: false });
+  
+  if (!recentSessions || recentSessions.length === 0) {
+    suggestions.push({
+      id: 'resume-studying',
+      type: 'schedule',
+      priority: 'high',
+      title: 'Resume your study routine',
+      description: 'You haven\'t studied today yet. Even a short session helps maintain momentum',
+      actionable: true,
+      icon: '⚡'
+    });
+  }
+  
+  suggestions.push({
+    id: 'review-content',
+    type: 'performance',
+    priority: 'medium',
+    title: 'Review your study materials',
+    description: 'Go through your flashcards and notes to reinforce long-term retention',
+    actionable: true,
+    icon: '📚'
+  });
+  
+  suggestions.push({
+    id: 'optimize-studying',
+    type: 'performance',
+    priority: 'medium',
+    title: 'Optimize your study approach',
+    description: 'Analyze your performance data to identify the most effective study methods',
+    actionable: true,
+    icon: '📈'
+  });
+  
+  suggestions.push({
+    id: 'advanced-motivation',
+    type: 'motivation',
+    priority: 'low',
+    title: 'You\'re doing amazing!',
+    description: `With ${progressState.totalItems} study items, you're building a comprehensive knowledge base`,
+    actionable: false,
+    icon: '🎉'
+  });
+  
+  return suggestions.slice(0, 4);
+}

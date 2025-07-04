@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { useStudySuggestions } from "@/hooks/useStudySuggestions";
-import { Clock, Target, TrendingUp, BookOpen, ArrowRight } from "lucide-react";
+import { useUserProgressState } from "@/hooks/useUserProgressState";
+import { Clock, Target, TrendingUp, BookOpen, ArrowRight, FileText, Rocket, Sparkles } from "lucide-react";
 
 interface StudySuggestionsProps {
   subjectAnalytics?: any;
@@ -12,13 +13,16 @@ interface StudySuggestionsProps {
 
 export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) => {
   const navigate = useNavigate();
-  const { suggestions, isLoading } = useStudySuggestions(subjectAnalytics);
+  const progressState = useUserProgressState();
+  const { suggestions, isLoading } = useStudySuggestions(subjectAnalytics, progressState);
 
   const getIcon = (type: string, iconEmoji: string) => {
     switch (type) {
       case 'schedule': return <Clock className="h-4 w-4" />;
       case 'performance': return <TrendingUp className="h-4 w-4" />;
       case 'focus': return <Target className="h-4 w-4" />;
+      case 'onboarding': return <Rocket className="h-4 w-4" />;
+      case 'motivation': return <Sparkles className="h-4 w-4" />;
       default: return <BookOpen className="h-4 w-4" />;
     }
   };
@@ -32,18 +36,51 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
   };
 
   const handleSuggestionAction = (suggestion: any) => {
-    switch (suggestion.type) {
-      case 'schedule':
-        navigate('/study-planner');
+    switch (suggestion.id) {
+      case 'create-first-note':
+        navigate('/notes');
         break;
-      case 'focus':
+      case 'set-study-goal':
+      case 'set-goals':
+        navigate('/goals');
+        break;
+      case 'notes-to-flashcards':
+        navigate('/notes/study/convert');
+        break;
+      case 'create-quiz':
+        navigate('/quiz/create');
+        break;
+      case 'import-materials':
+        navigate('/notes?import=true');
+        break;
+      case 'study-session':
+      case 'resume-studying':
+        navigate('/study-sessions');
+        break;
+      case 'review-content':
         navigate('/flashcards');
         break;
-      case 'performance':
+      case 'optimize-studying':
+      case 'explore-features':
         navigate('/analytics');
         break;
       default:
-        navigate('/dashboard');
+        // Fallback based on type
+        switch (suggestion.type) {
+          case 'schedule':
+            navigate('/study-planner');
+            break;
+          case 'focus':
+          case 'onboarding':
+            navigate('/flashcards');
+            break;
+          case 'performance':
+            navigate('/analytics');
+            break;
+          default:
+            navigate('/dashboard');
+            break;
+        }
         break;
     }
   };
@@ -51,24 +88,37 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
   if (isLoading) {
     return (
       <Card className="mb-8 bg-white border-gray-200 shadow-sm">
-        <CardContent className="p-8">
-          <div className="animate-pulse space-y-4">
-            <div className="h-6 bg-gray-200 rounded w-1/3"></div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {[1, 2].map((i) => (
-                <div key={i} className="h-40 bg-gray-100 rounded-lg"></div>
-              ))}
-            </div>
+      <CardContent className="p-8">
+        <div className="animate-pulse space-y-4">
+          <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-40 bg-gray-100 rounded-lg"></div>
+            ))}
           </div>
-        </CardContent>
+        </div>
+      </CardContent>
       </Card>
     );
   }
 
-  // Show up to 2 suggestions with wide layout, prioritize actionable ones
-  const limitedSuggestions = suggestions
-    .filter(s => s.actionable || s.priority === 'high')
-    .slice(0, 2);
+  // Ensure at least 3 suggestions are shown, with priority for actionable ones
+  const prioritizedSuggestions = suggestions
+    .sort((a, b) => {
+      // Priority order: actionable high > actionable medium > high > actionable low > medium > low
+      const getPriorityScore = (suggestion: any) => {
+        if (suggestion.actionable && suggestion.priority === 'high') return 6;
+        if (suggestion.actionable && suggestion.priority === 'medium') return 5;
+        if (suggestion.priority === 'high') return 4;
+        if (suggestion.actionable && suggestion.priority === 'low') return 3;
+        if (suggestion.priority === 'medium') return 2;
+        return 1;
+      };
+      return getPriorityScore(b) - getPriorityScore(a);
+    });
+
+  // Always show at least 3 suggestions, up to 4 max
+  const limitedSuggestions = prioritizedSuggestions.slice(0, Math.max(3, Math.min(4, suggestions.length)));
 
   if (limitedSuggestions.length === 0) {
     return (
@@ -98,7 +148,7 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {limitedSuggestions.map((suggestion, index) => (
             <div 
               key={suggestion.id}
