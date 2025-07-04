@@ -23,17 +23,11 @@ export const IntermediateDashboard = ({ progressState }: IntermediateDashboardPr
         {/* Hero Section with Study Session Prompts */}
         <EnhancedDashboardHeroSection />
         
-        {/* Progress guidance for intermediate users */}
-        <div className="grid gap-6 lg:grid-cols-3 md:grid-cols-2 grid-cols-1">
-          <div className="lg:col-span-2">
-            {/* AI Study Suggestions with contextual tips */}
-            <StudySuggestions subjectAnalytics={analytics} />
-          </div>
-          <div>
-            {/* Simplified onboarding checklist */}
-            <OnboardingChecklist />
-          </div>
-        </div>
+        {/* Onboarding Checklist - Full Width Horizontal Section */}
+        <OnboardingChecklist />
+        
+        {/* AI Study Suggestions - Full Width */}
+        <StudySuggestions subjectAnalytics={analytics} />
         
         {/* Learning Toolkit Section */}
         <LearningToolkitSection />
