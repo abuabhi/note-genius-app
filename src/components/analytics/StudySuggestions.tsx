@@ -54,9 +54,9 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
         <CardContent className="p-8">
           <div className="animate-pulse space-y-4">
             <div className="h-6 bg-gray-200 rounded w-1/3"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="h-32 bg-gray-100 rounded-lg"></div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {[1, 2].map((i) => (
+                <div key={i} className="h-40 bg-gray-100 rounded-lg"></div>
               ))}
             </div>
           </div>
@@ -65,10 +65,10 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
     );
   }
 
-  // Show up to 6 suggestions with responsive layout, prioritize actionable ones
+  // Show up to 2 suggestions with wide layout, prioritize actionable ones
   const limitedSuggestions = suggestions
     .filter(s => s.actionable || s.priority === 'high')
-    .slice(0, 6);
+    .slice(0, 2);
 
   if (limitedSuggestions.length === 0) {
     return (
@@ -98,27 +98,27 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {limitedSuggestions.map((suggestion, index) => (
             <div 
               key={suggestion.id}
-              className="p-4 bg-gray-50 rounded-lg border border-gray-200 hover:shadow-sm transition-all duration-200"
+              className="p-6 bg-gray-50 rounded-lg border border-gray-200 hover:shadow-md transition-all duration-200 min-h-[180px]"
             >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-mint-100 rounded-md text-mint-600">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-mint-100 rounded-md text-mint-600">
                     {getIcon(suggestion.type, suggestion.icon)}
                   </div>
-                  <Badge className={`text-xs font-medium ${getPriorityColor(suggestion.priority)}`}>
+                  <Badge className={`text-sm font-medium px-3 py-1 ${getPriorityColor(suggestion.priority)}`}>
                     {suggestion.priority.toUpperCase()}
                   </Badge>
                 </div>
               </div>
               
-              <h4 className="font-semibold text-gray-800 mb-2 text-sm">
+              <h4 className="font-semibold text-gray-800 mb-3 text-lg">
                 {suggestion.title}
               </h4>
-              <p className="text-xs text-gray-600 mb-3 font-medium">
+              <p className="text-sm text-gray-600 mb-4 font-medium leading-relaxed">
                 {/* Fix percentage formatting to show whole numbers */}
                 {suggestion.description.replace(/(\d+\.\d+)%/g, (match, num) => `${Math.round(parseFloat(num))}%`)}
               </p>
@@ -126,12 +126,12 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
               {suggestion.actionable && (
                 <Button 
                   variant="outline"
-                  size="sm"
+                  size="default"
                   onClick={() => handleSuggestionAction(suggestion)}
-                  className="w-full text-mint-600 border-mint-200 hover:bg-mint-50 font-medium"
+                  className="w-full text-mint-600 border-mint-200 hover:bg-mint-50 font-medium py-2 text-sm"
                 >
                   Take Action
-                  <ArrowRight className="h-3 w-3 ml-1" />
+                  <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               )}
             </div>
