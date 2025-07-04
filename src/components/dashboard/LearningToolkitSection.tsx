@@ -111,7 +111,7 @@ export const LearningToolkitSection = () => {
   return (
     <div className="mb-8">
       <div className="mb-6">
-        <h2 className="text-xl font-semibold text-gray-800">Learning Toolkit</h2>
+        <h2 className="text-2xl font-semibold text-mint-900">Learning Toolkit</h2>
       </div>
       
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">

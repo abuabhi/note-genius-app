@@ -212,7 +212,7 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
               <Lightbulb className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">AI Study Suggestions</h2>
+              <h2 className="text-2xl font-semibold text-mint-900">AI Study Suggestions</h2>
               <p className="text-gray-600 text-sm font-medium">Smart recommendations based on your learning patterns</p>
             </div>
           </div>

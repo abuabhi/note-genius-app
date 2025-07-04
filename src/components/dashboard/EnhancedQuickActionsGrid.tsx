@@ -90,7 +90,7 @@ export const EnhancedQuickActionsGrid = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-mint-900">Quick Actions</h2>
+        <h2 className="text-2xl font-semibold text-mint-900">Quick Actions</h2>
       </div>
 
       {/* Primary Actions - Study Tools */}

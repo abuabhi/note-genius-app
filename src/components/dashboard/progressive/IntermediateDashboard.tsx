@@ -35,7 +35,7 @@ export const IntermediateDashboard = ({ progressState }: IntermediateDashboardPr
         {/* Three-Panel Study Section: Study Plans, Goals, and Todos */}
         <div className="space-y-6">
           <div>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Your Study Dashboard</h2>
+            <h2 className="text-2xl font-semibold text-mint-900 mb-2">Your Study Dashboard</h2>
             <p className="text-gray-600">Continue building your learning routine</p>
           </div>
           
