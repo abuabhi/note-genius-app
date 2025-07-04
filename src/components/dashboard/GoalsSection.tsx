@@ -144,13 +144,7 @@ export const GoalsSection = () => {
                           </Badge>
                         )}
                       </div>
-                      <div className={`flex items-center gap-3 text-sm ${
-                        goal.isOverdue
-                          ? "text-red-600"
-                          : goal.isAlmostDue
-                          ? "text-orange-600"
-                          : "text-gray-600"
-                      }`}>
+                      <div className="flex items-center gap-3 text-sm text-mint-600">
                         <div className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
                           {goal.target_hours}h target

@@ -116,7 +116,7 @@ export const TodosSection = () => {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <h4 className="font-medium text-red-900 mb-1">{todo.title}</h4>
-                    <div className="flex items-center gap-1 text-xs text-red-600">
+                    <div className="flex items-center gap-1 text-xs text-mint-600">
                       <AlertCircle className="h-3 w-3" />
                       Overdue - {todo.due_date && format(new Date(todo.due_date), 'MMM d')}
                     </div>
@@ -131,7 +131,7 @@ export const TodosSection = () => {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <h4 className="font-medium text-orange-900 mb-1">{todo.title}</h4>
-                    <div className="flex items-center gap-1 text-xs text-orange-600">
+                    <div className="flex items-center gap-1 text-xs text-mint-600">
                       <Clock className="h-3 w-3" />
                       Due today
                     </div>
@@ -147,7 +147,7 @@ export const TodosSection = () => {
                   <div className="flex-1">
                     <h4 className="font-medium text-blue-900 mb-1">{todo.title}</h4>
                     {todo.due_date && (
-                      <div className="flex items-center gap-1 text-xs text-blue-600">
+                      <div className="flex items-center gap-1 text-xs text-mint-600">
                         <Clock className="h-3 w-3" />
                         Due {format(new Date(todo.due_date), 'MMM d')}
                       </div>
