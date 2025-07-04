@@ -1,12 +1,12 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, BookOpen, Plus } from "lucide-react";
+import { Calendar, Clock, BookOpen, Plus, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useActiveStudyPlans } from "@/hooks/useActiveStudyPlans";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 
 export const StudyPlannerSection = () => {
   const { studyPlans, isLoading } = useActiveStudyPlans();
@@ -98,24 +98,59 @@ export const StudyPlannerSection = () => {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        {todaysPlans.map(plan => (
-          <div key={plan.id} className="p-4 border border-mint-100 rounded-xl bg-white hover:bg-mint-50 transition-all duration-200">
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-sm text-gray-800 line-clamp-1">{plan.title}</h4>
-                {plan.topic && (
-                  <p className="text-xs text-gray-600 mt-1 line-clamp-1">{plan.topic}</p>
-                )}
+        {todaysPlans.map(plan => {
+          const endDate = new Date(plan.end_date);
+          const now = new Date();
+          const daysUntilEnd = differenceInDays(endDate, now);
+          const isOverdue = daysUntilEnd < 0;
+          const isDueSoon = daysUntilEnd >= 0 && daysUntilEnd <= 3;
+          
+          return (
+            <div 
+              key={plan.id} 
+              className={`p-4 rounded-xl transition-all duration-200 ${
+                isOverdue 
+                  ? 'border-2 border-red-200 bg-red-50/50 hover:bg-red-50' 
+                  : isDueSoon 
+                    ? 'border-2 border-orange-200 bg-orange-50/50 hover:bg-orange-50'
+                    : 'border border-mint-100 bg-white hover:bg-mint-50'
+              }`}
+            >
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-medium text-sm text-gray-800 line-clamp-1">{plan.title}</h4>
+                    {isOverdue && <AlertTriangle className="h-3 w-3 text-red-500 flex-shrink-0" />}
+                  </div>
+                  {plan.topic && (
+                    <p className="text-xs text-gray-600 mt-1 line-clamp-1">{plan.topic}</p>
+                  )}
+                  {isOverdue && (
+                    <p className="text-xs text-red-600 font-medium mt-1">
+                      {Math.abs(daysUntilEnd)} day{Math.abs(daysUntilEnd) !== 1 ? 's' : ''} overdue
+                    </p>
+                  )}
+                  {isDueSoon && (
+                    <p className="text-xs text-orange-600 font-medium mt-1">
+                      Due in {daysUntilEnd} day{daysUntilEnd !== 1 ? 's' : ''}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 ml-3">
+                  <Badge 
+                    variant="outline" 
+                    className={`text-xs ${
+                      isOverdue 
+                        ? 'bg-red-100 text-red-700 border-red-200' 
+                        : isDueSoon 
+                          ? 'bg-orange-100 text-orange-700 border-orange-200'
+                          : 'bg-mint-100 text-mint-700 border-mint-200'
+                    }`}
+                  >
+                    {isOverdue ? 'OVERDUE' : isDueSoon ? 'DUE SOON' : 'Active'}
+                  </Badge>
+                </div>
               </div>
-              <div className="flex items-center gap-2 ml-3">
-                <Badge 
-                  variant="outline" 
-                  className="text-xs bg-mint-100 text-mint-700 border-mint-200"
-                >
-                  Active
-                </Badge>
-              </div>
-            </div>
             
             <div className="flex items-center gap-4 mt-2">
               <div className="flex items-center gap-1">
@@ -132,7 +167,7 @@ export const StudyPlannerSection = () => {
               </div>
             </div>
           </div>
-        ))}
+        )})}
         
         <div className="pt-3 border-t border-mint-100">
           <Button variant="ghost" size="sm" asChild className="w-full text-mint-600 hover:text-mint-700 hover:bg-mint-50">
