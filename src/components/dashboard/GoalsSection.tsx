@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Target, Plus, Calendar, CheckCircle2 } from "lucide-react";
+import { Target, Plus, Calendar, CheckCircle2, AlertCircle, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -89,25 +89,99 @@ export const GoalsSection = () => {
           </div>
         ) : (
           <div className="space-y-3">
-            {goals.map((goal) => (
-              <div key={goal.id} className="p-4 bg-gradient-to-r from-mint-50 to-blue-50 rounded-lg border border-mint-100">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h4 className="font-medium text-gray-900 mb-1">{goal.title}</h4>
-                    <div className="flex items-center gap-3 text-sm text-gray-600">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {goal.target_hours}h target
+            {goals
+              .map((goal) => {
+                // Calculate days left
+                const endDate = new Date(goal.end_date);
+                const today = new Date();
+                const daysLeft = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                
+                // Determine status
+                const isOverdue = daysLeft < 0 && !goal.is_completed;
+                const isAlmostDue = daysLeft <= 3 && daysLeft >= 0 && !goal.is_completed;
+                
+                return { ...goal, daysLeft, isOverdue, isAlmostDue };
+              })
+              .sort((a, b) => {
+                // Sort overdue first, then almost due, then normal
+                if (a.isOverdue && !b.isOverdue) return -1;
+                if (!a.isOverdue && b.isOverdue) return 1;
+                if (a.isAlmostDue && !b.isAlmostDue) return -1;
+                if (!a.isAlmostDue && b.isAlmostDue) return 1;
+                return 0;
+              })
+              .map((goal) => (
+                <div 
+                  key={goal.id} 
+                  className={`p-4 rounded-lg border ${
+                    goal.isOverdue
+                      ? "bg-red-50 border-red-200"
+                      : goal.isAlmostDue
+                      ? "bg-orange-50 border-orange-200"
+                      : "bg-gradient-to-r from-mint-50 to-blue-50 border-mint-100"
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className={`font-medium ${
+                          goal.isOverdue
+                            ? "text-red-900"
+                            : goal.isAlmostDue
+                            ? "text-orange-900"
+                            : "text-gray-900"
+                        }`}>
+                          {goal.title}
+                        </h4>
+                        {goal.isOverdue && (
+                          <Badge variant="outline" className="bg-red-100 text-red-800 text-xs">
+                            Overdue
+                          </Badge>
+                        )}
+                        {goal.isAlmostDue && (
+                          <Badge variant="outline" className="bg-orange-100 text-orange-800 text-xs">
+                            Due Soon
+                          </Badge>
+                        )}
                       </div>
-                      <div className="flex items-center gap-1">
-                        <CheckCircle2 className="h-3 w-3" />
-                        {goal.progress || 0}% complete
+                      <div className={`flex items-center gap-3 text-sm ${
+                        goal.isOverdue
+                          ? "text-red-600"
+                          : goal.isAlmostDue
+                          ? "text-orange-600"
+                          : "text-gray-600"
+                      }`}>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {goal.target_hours}h target
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3" />
+                          {goal.progress || 0}% complete
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {goal.isOverdue ? (
+                            <>
+                              <AlertCircle className="h-3 w-3" />
+                              {Math.abs(goal.daysLeft)} days overdue
+                            </>
+                          ) : goal.isAlmostDue ? (
+                            <>
+                              <Clock className="h-3 w-3" />
+                              {goal.daysLeft} days left
+                            </>
+                          ) : (
+                            <>
+                              <Clock className="h-3 w-3" />
+                              {goal.daysLeft} days left
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
             <div className="pt-2">
               <Button asChild variant="outline" className="w-full">
                 <Link to="/goals">
