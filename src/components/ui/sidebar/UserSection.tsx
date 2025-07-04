@@ -58,9 +58,9 @@ export const UserSection = ({ isCollapsed }: UserSectionProps) => {
             >
               {!isCollapsed && (
                 <>
-                    <div className="text-left">
+                     <div className="text-left">
                      <p className="text-sm font-medium text-gray-900">
-                       PrepGenie {userProfile?.user_tier || "SCHOLAR"}
+                       {userProfile?.user_tier ? `PrepGenie ${userProfile.user_tier}` : "Loading..."}
                      </p>
                      <p className="text-xs text-gray-500">
                        {user?.email}
