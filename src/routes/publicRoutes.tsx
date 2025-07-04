@@ -13,7 +13,7 @@ import PrivacyPage from "@/pages/PrivacyPage";
 import PublicCouponPage from "@/pages/PublicCouponPage";
 import TierSelectionPage from "@/pages/TierSelectionPage";
 import PaymentPage from "@/pages/PaymentPage";
-import { SignUpForm } from "@/components/auth/SignUpForm";
+import SignupPage from "@/pages/SignupPage";
 
 export interface RouteConfig {
   path: string;
@@ -26,7 +26,7 @@ export const publicRoutes: RouteConfig[] = [
   { path: "/about", element: <AboutPage /> }, // AboutPage already has Layout internally  
   { path: "/pricing", element: <PricingPage /> }, // PricingPage already has Layout internally
   { path: "/login", element: <LoginPage /> }, // LoginPage already has Layout internally
-  { path: "/signup", element: <Layout><SignUpForm /></Layout> },
+  { path: "/signup", element: <SignupPage /> },
   { path: "/tier-selection", element: <TierSelectionPage /> },
   { path: "/payment", element: <PaymentPage /> },
   { path: "/contact", element: <ContactPage /> }, // ContactPage already has Layout internally
