@@ -7,7 +7,8 @@ import { StudyPlan } from '@/types/studyPlanner';
 import { useStudyPlanSession } from '@/hooks/useStudyPlanSession';
 import { useConvertStudyPlanToGoal } from '@/hooks/useConvertStudyPlanToGoal';
 import { useStudyPlannerAnalytics } from '@/hooks/useStudyPlannerAnalytics';
-import { Play, Settings, Target, Calendar, Clock, BookOpen, TrendingUp, Hash } from 'lucide-react';
+import { useStudyPlanActions } from '@/hooks/useStudyPlanActions';
+import { Play, Settings, Target, Calendar, Clock, BookOpen, TrendingUp, Hash, AlertTriangle, RotateCcw, CheckCircle } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { GoalFormDialog } from '@/components/goals/GoalFormDialog';
 import { SessionSettingsDialog } from './SessionSettingsDialog';
@@ -20,12 +21,17 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
   const { startStudyPlanSession, isStudyPlanActive } = useStudyPlanSession();
   const { convertToGoal, isLoading: isConverting } = useConvertStudyPlanToGoal();
   const { analytics } = useStudyPlannerAnalytics(studyPlan.id); // Get plan-specific analytics
+  const { extendPlan, completePlan, isExtending, isCompleting } = useStudyPlanActions();
   const [showGoalDialog, setShowGoalDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   
   const isActive = isStudyPlanActive(studyPlan.id);
   const daysLeft = differenceInDays(new Date(studyPlan.end_date), new Date());
   const hoursPerDay = Math.round(studyPlan.total_duration_hours / 7);
+  
+  // Check if plan is overdue
+  const isOverdue = daysLeft < 0;
+  const isDueSoon = daysLeft <= 3 && daysLeft >= 0;
 
   const handleStartSession = async () => {
     await startStudyPlanSession(studyPlan);
@@ -39,6 +45,22 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
     }
   };
 
+  const handleExtendPlan = () => {
+    // Extend by 2 weeks from current end date
+    const currentEndDate = new Date(studyPlan.end_date);
+    const newEndDate = new Date(currentEndDate);
+    newEndDate.setDate(newEndDate.getDate() + 14);
+    
+    extendPlan({
+      planId: studyPlan.id,
+      newEndDate: newEndDate.toISOString().split('T')[0]
+    });
+  };
+
+  const handleCompletePlan = () => {
+    completePlan(studyPlan.id);
+  };
+
   // Format time display - show hours and minutes for better readability
   const formatTime = (minutes: number) => {
     if (minutes < 60) {
@@ -49,11 +71,28 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
     return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
   };
 
+  // Get appropriate styling based on status
+  const getCardStyling = () => {
+    if (isOverdue) {
+      return "group relative cursor-pointer transition-all duration-300 ease-out bg-red-50 border border-red-200 hover:border-red-300 hover:shadow-lg hover:shadow-red-500/10 hover:-translate-y-0.5 rounded-xl overflow-hidden";
+    }
+    if (isDueSoon) {
+      return "group relative cursor-pointer transition-all duration-300 ease-out bg-orange-50 border border-orange-200 hover:border-orange-300 hover:shadow-lg hover:shadow-orange-500/10 hover:-translate-y-0.5 rounded-xl overflow-hidden";
+    }
+    return "group relative cursor-pointer transition-all duration-300 ease-out bg-white border border-gray-200/60 hover:border-mint-300/60 hover:shadow-lg hover:shadow-mint-500/10 hover:-translate-y-0.5 rounded-xl overflow-hidden";
+  };
+
   return (
     <>
-      <Card className="group relative cursor-pointer transition-all duration-300 ease-out bg-white border border-gray-200/60 hover:border-mint-300/60 hover:shadow-lg hover:shadow-mint-500/10 hover:-translate-y-0.5 rounded-xl overflow-hidden">
+      <Card className={getCardStyling()}>
         {/* Gradient overlay for depth */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-transparent to-mint-50/20 pointer-events-none" />
+        <div className={`absolute inset-0 bg-gradient-to-br ${
+          isOverdue 
+            ? 'from-red-50/80 via-transparent to-red-100/20' 
+            : isDueSoon 
+            ? 'from-orange-50/80 via-transparent to-orange-100/20'
+            : 'from-white/80 via-transparent to-mint-50/20'
+        } pointer-events-none`} />
         
         <CardContent className="relative p-5 space-y-4">
           {/* Header Section */}
@@ -78,7 +117,19 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
                   {studyPlan.topic}
                 </Badge>
                 
-                {/* Active Badge */}
+                {/* Status Badges */}
+                {isOverdue && (
+                  <Badge className="bg-red-100 text-red-800 border-red-200 font-medium px-2.5 py-1 rounded-full flex-shrink-0 shadow-sm">
+                    <AlertTriangle className="h-3 w-3 mr-1.5" />
+                    OVERDUE
+                  </Badge>
+                )}
+                {isDueSoon && !isOverdue && (
+                  <Badge className="bg-orange-100 text-orange-800 border-orange-200 font-medium px-2.5 py-1 rounded-full flex-shrink-0 shadow-sm">
+                    <AlertTriangle className="h-3 w-3 mr-1.5" />
+                    DUE SOON
+                  </Badge>
+                )}
                 {isActive && (
                   <Badge className="bg-gradient-to-r from-green-100 to-emerald-50 text-green-800 border-green-200 font-medium animate-pulse px-2.5 py-1 rounded-full flex-shrink-0 shadow-sm">
                     <div className="h-2 w-2 bg-green-500 rounded-full mr-1.5" />
@@ -91,10 +142,14 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
 
           {/* Stats Section with Plan-Specific Data */}
           <div className="flex items-center gap-4 min-w-0 flex-1">
-            {/* Days Left */}
-            <div className="flex items-center gap-1.5 text-xs text-green-600">
+            {/* Days Left/Overdue */}
+            <div className={`flex items-center gap-1.5 text-xs ${
+              isOverdue ? 'text-red-600' : isDueSoon ? 'text-orange-600' : 'text-green-600'
+            }`}>
               <Calendar className="h-3 w-3" />
-              <span className="truncate font-medium">{daysLeft} days left</span>
+              <span className="truncate font-medium">
+                {isOverdue ? `${Math.abs(daysLeft)} days overdue` : `${daysLeft} days left`}
+              </span>
             </div>
             
             {/* Plan Total Study Time */}
@@ -142,35 +197,64 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-between gap-4">
-            <Button
-              onClick={handleStartSession}
-              disabled={isActive}
-              className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white px-4 py-2 h-8 text-xs font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex-1"
-            >
-              <Play className="h-3 w-3 mr-1.5" />
-              {isActive ? 'Active Session' : 'Start Session'}
-            </Button>
-            
-            <Button
-              onClick={() => setShowGoalDialog(true)}
-              variant="outline"
-              size="sm"
-              disabled={isConverting || studyPlan.is_converted_to_goals}
-              className="border-mint-200 text-mint-700 hover:bg-gradient-to-r hover:from-mint-50 hover:to-mint-100 hover:border-mint-300 transition-all duration-200 rounded-lg h-8 w-8 p-0"
-            >
-              <Target className="h-3 w-3" />
-            </Button>
-            
-            <Button
-              onClick={() => setShowSettingsDialog(true)}
-              variant="outline"
-              size="sm"
-              className="border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 rounded-lg h-8 w-8 p-0"
-            >
-              <Settings className="h-3 w-3" />
-            </Button>
-          </div>
+          {isOverdue ? (
+            // Overdue plan actions
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={handleExtendPlan}
+                  disabled={isExtending}
+                  className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 h-8 text-xs font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex-1"
+                >
+                  <RotateCcw className="h-3 w-3 mr-1.5" />
+                  {isExtending ? 'Extending...' : 'Extend +2 weeks'}
+                </Button>
+                
+                <Button
+                  onClick={handleCompletePlan}
+                  disabled={isCompleting}
+                  className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 h-8 text-xs font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex-1"
+                >
+                  <CheckCircle className="h-3 w-3 mr-1.5" />
+                  {isCompleting ? 'Completing...' : 'Mark Complete'}
+                </Button>
+              </div>
+              <div className="text-xs text-red-600 text-center bg-red-50 py-1 px-2 rounded border border-red-200">
+                This plan is overdue. Extend the deadline or mark it as complete.
+              </div>
+            </div>
+          ) : (
+            // Normal plan actions
+            <div className="flex items-center justify-between gap-4">
+              <Button
+                onClick={handleStartSession}
+                disabled={isActive}
+                className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white px-4 py-2 h-8 text-xs font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex-1"
+              >
+                <Play className="h-3 w-3 mr-1.5" />
+                {isActive ? 'Active Session' : 'Start Session'}
+              </Button>
+              
+              <Button
+                onClick={() => setShowGoalDialog(true)}
+                variant="outline"
+                size="sm"
+                disabled={isConverting || studyPlan.is_converted_to_goals}
+                className="border-mint-200 text-mint-700 hover:bg-gradient-to-r hover:from-mint-50 hover:to-mint-100 hover:border-mint-300 transition-all duration-200 rounded-lg h-8 w-8 p-0"
+              >
+                <Target className="h-3 w-3" />
+              </Button>
+              
+              <Button
+                onClick={() => setShowSettingsDialog(true)}
+                variant="outline"
+                size="sm"
+                className="border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 rounded-lg h-8 w-8 p-0"
+              >
+                <Settings className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
         </CardContent>
         
         {/* Subtle bottom border for separation */}

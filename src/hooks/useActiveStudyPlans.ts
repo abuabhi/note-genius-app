@@ -54,7 +54,23 @@ export const useActiveStudyPlans = () => {
         } as StudyPlan;
       }) || [];
 
-      return transformedData;
+      // Sort plans: overdue first, then by end date
+      const now = new Date();
+      const sortedData = transformedData.sort((a, b) => {
+        const aEndDate = new Date(a.end_date);
+        const bEndDate = new Date(b.end_date);
+        const aIsOverdue = aEndDate < now;
+        const bIsOverdue = bEndDate < now;
+        
+        // Overdue plans first
+        if (aIsOverdue && !bIsOverdue) return -1;
+        if (!aIsOverdue && bIsOverdue) return 1;
+        
+        // Then sort by end date (closest first)
+        return aEndDate.getTime() - bEndDate.getTime();
+      });
+
+      return sortedData;
     }
   });
 
