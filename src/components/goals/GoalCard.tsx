@@ -1,6 +1,6 @@
 
-import { format } from 'date-fns';
-import { CalendarClock, Clock, Edit, Trash2, Trophy, Zap, Star } from 'lucide-react';
+import { format, addWeeks } from 'date-fns';
+import { CalendarClock, Clock, Edit, Trash2, Trophy, Zap, Star, Calendar, CheckCircle } from 'lucide-react';
 import { StudyGoal } from '@/hooks/useStudyGoals';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useGoalActions } from '@/hooks/useGoalActions';
 
 interface GoalCardProps {
   goal: StudyGoal;
@@ -18,12 +19,22 @@ interface GoalCardProps {
 export const GoalCard = ({ goal, onEdit, onDelete }: GoalCardProps) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const { extendGoal, markGoalComplete, isExtending, isCompleting } = useGoalActions();
 
   const handleDelete = async () => {
     setIsDeleting(true);
     await onDelete(goal.id);
     setIsDeleting(false);
     setShowDeleteConfirm(false);
+  };
+
+  const handleExtendGoal = () => {
+    const newEndDate = addWeeks(new Date(goal.end_date), 2);
+    extendGoal({ goalId: goal.id, newEndDate: newEndDate.toISOString().split('T')[0] });
+  };
+
+  const handleMarkComplete = () => {
+    markGoalComplete(goal.id);
   };
   
   const startDate = new Date(goal.start_date);
@@ -195,23 +206,52 @@ export const GoalCard = ({ goal, onEdit, onDelete }: GoalCardProps) => {
         </CardContent>
         
         <CardFooter className="pt-2">
-          <div className="flex justify-end gap-2 w-full">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => onEdit(goal)}
-            >
-              <Edit className="h-3.5 w-3.5 mr-1" />
-              Edit
-            </Button>
-            <Button 
-              variant="destructive" 
-              size="sm"
-              onClick={() => setShowDeleteConfirm(true)}
-            >
-              <Trash2 className="h-3.5 w-3.5 mr-1" />
-              Delete
-            </Button>
+          <div className="w-full space-y-2">
+            {/* Quick action buttons for overdue/almost due goals */}
+            {(isOverdue || isAlmostDue) && !goal.is_completed && (
+              <div className="flex gap-2 w-full">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleExtendGoal}
+                  disabled={isExtending}
+                  className="flex-1"
+                >
+                  <Calendar className="h-3.5 w-3.5 mr-1" />
+                  {isExtending ? 'Extending...' : 'Extend +2 weeks'}
+                </Button>
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  onClick={handleMarkComplete}
+                  disabled={isCompleting}
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                >
+                  <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                  {isCompleting ? 'Completing...' : 'Mark Complete'}
+                </Button>
+              </div>
+            )}
+            
+            {/* Regular action buttons */}
+            <div className="flex justify-end gap-2 w-full">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => onEdit(goal)}
+              >
+                <Edit className="h-3.5 w-3.5 mr-1" />
+                Edit
+              </Button>
+              <Button 
+                variant="destructive" 
+                size="sm"
+                onClick={() => setShowDeleteConfirm(true)}
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-1" />
+                Delete
+              </Button>
+            </div>
           </div>
         </CardFooter>
       </Card>
