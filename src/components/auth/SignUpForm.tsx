@@ -32,7 +32,7 @@ export const SignUpForm = () => {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -40,7 +40,20 @@ export const SignUpForm = () => {
         }
       });
 
+      console.log('🔐 [SIGNUP] Result:', { data, error });
+
       if (error) {
+        // Handle case where user already exists
+        if (error.message?.includes('already') || error.message?.includes('exists')) {
+          toast({
+            title: "Account exists",
+            description: "This email is already registered. Please sign in instead.",
+            variant: "destructive"
+          });
+          navigate('/login');
+          return;
+        }
+        
         toast({
           title: "Error",
           description: error.message,
@@ -52,6 +65,8 @@ export const SignUpForm = () => {
           email,
           timestamp: Date.now()
         }));
+        
+        console.log('🔐 [SIGNUP] Stored signup flag, navigating to tier selection');
         
         toast({
           title: "Success",
