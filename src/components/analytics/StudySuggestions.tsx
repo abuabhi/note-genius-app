@@ -54,8 +54,8 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
         <CardContent className="p-8">
           <div className="animate-pulse space-y-4">
             <div className="h-6 bg-gray-200 rounded w-1/3"></div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[1, 2, 3].map((i) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div key={i} className="h-32 bg-gray-100 rounded-lg"></div>
               ))}
             </div>
@@ -65,10 +65,10 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
     );
   }
 
-  // Limit to only 3 suggestions and prioritize actionable ones
+  // Show up to 6 suggestions with responsive layout, prioritize actionable ones
   const limitedSuggestions = suggestions
     .filter(s => s.actionable || s.priority === 'high')
-    .slice(0, 3);
+    .slice(0, 6);
 
   if (limitedSuggestions.length === 0) {
     return (
@@ -98,7 +98,7 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {limitedSuggestions.map((suggestion, index) => (
             <div 
               key={suggestion.id}
