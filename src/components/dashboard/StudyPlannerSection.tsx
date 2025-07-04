@@ -125,9 +125,9 @@ export const StudyPlannerSection = () => {
                     {isOverdue && <AlertTriangle className="h-3 w-3 text-red-500 flex-shrink-0" />}
                   </div>
                   {plan.topic && (
-                    <p className={`text-xs mt-1 line-clamp-1 ${
-                      isOverdue ? 'text-red-700' : isDueSoon ? 'text-orange-700' : 'text-gray-600'
-                    }`}>{plan.topic}</p>
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs mt-1">
+                      {plan.topic}
+                    </Badge>
                   )}
                   {isOverdue && (
                     <p className="text-xs text-red-600 font-medium mt-1">
@@ -158,22 +158,14 @@ export const StudyPlannerSection = () => {
             
             <div className="flex items-center gap-4 mt-2">
               <div className="flex items-center gap-1">
-                <Clock className={`h-3 w-3 ${
-                  isOverdue ? 'text-red-500' : isDueSoon ? 'text-orange-500' : 'text-mint-500'
-                }`} />
-                <span className={`text-xs font-medium ${
-                  isOverdue ? 'text-red-600' : isDueSoon ? 'text-orange-600' : 'text-mint-600'
-                }`}>
+                <Clock className="h-3 w-3 text-mint-500" />
+                <span className="text-xs font-medium text-mint-600">
                   {plan.daily_duration_minutes}min daily
                 </span>
               </div>
               <div className="flex items-center gap-1">
-                <BookOpen className={`h-3 w-3 ${
-                  isOverdue ? 'text-red-500' : isDueSoon ? 'text-orange-500' : 'text-mint-500'
-                }`} />
-                <span className={`text-xs font-medium ${
-                  isOverdue ? 'text-red-600' : isDueSoon ? 'text-orange-600' : 'text-mint-600'
-                }`}>
+                <BookOpen className="h-3 w-3 text-mint-500" />
+                <span className="text-xs font-medium text-mint-600">
                   {plan.completion_percentage}% complete
                 </span>
               </div>
@@ -183,7 +175,7 @@ export const StudyPlannerSection = () => {
         
         <div className="pt-3 border-t border-mint-100">
           <Button variant="outline" size="sm" asChild className="w-full">
-            <Link to="/study-planner" className="text-sm font-medium">
+            <Link to="/study-planner">
               View All Study Plans
             </Link>
           </Button>
