@@ -49,7 +49,7 @@ export const UserSection = ({ isCollapsed }: UserSectionProps) => {
           >
             <Avatar className='rounded-full size-8 ring-2 ring-mint-100'>
               <AvatarFallback className="bg-gradient-to-br from-mint-500 to-mint-600 text-white font-medium">
-                {userProfile?.first_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || "P"}
+                P{userProfile?.user_tier?.charAt(0) || "S"}
               </AvatarFallback>
             </Avatar>
             <motion.div
@@ -58,9 +58,9 @@ export const UserSection = ({ isCollapsed }: UserSectionProps) => {
             >
               {!isCollapsed && (
                 <>
-                   <div className="text-left">
+                    <div className="text-left">
                      <p className="text-sm font-medium text-gray-900">
-                       {userProfile?.first_name || "PrepGenie User"}
+                       PrepGenie {userProfile?.user_tier || "SCHOLAR"}
                      </p>
                      <p className="text-xs text-gray-500">
                        {user?.email}

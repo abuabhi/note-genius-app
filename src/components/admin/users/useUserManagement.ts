@@ -16,25 +16,48 @@ export const useUserManagement = () => {
     try {
       setLoading(true);
       
+      console.log('🔍 Fetching users via get-admin-users edge function...');
+      
       // Call the admin edge function to get users with real emails
       const { data: usersData, error: usersError } = await supabase.functions.invoke('get-admin-users');
       
-      if (usersError) throw usersError;
+      console.log('📊 Edge function response:', { usersData, usersError });
       
-      const usersWithTypedData = usersData?.map((user: any) => ({
+      if (usersError) {
+        console.error('❌ Edge function error:', usersError);
+        throw usersError;
+      }
+      
+      if (!usersData) {
+        console.warn('⚠️ No users data returned from edge function');
+        setUsers([]);
+        return;
+      }
+      
+      console.log('✅ Raw users data:', usersData);
+      
+      const usersWithTypedData = usersData.map((user: any) => ({
         ...user,
         user_tier: user.user_tier as UserTier,
         influencer_metadata: user.influencer_metadata as InfluencerMetadata | null
-      })) as User[] || [];
+      })) as User[];
+      
+      console.log('🎯 Processed users:', usersWithTypedData);
       
       setUsers(usersWithTypedData);
+      
+      toast({
+        title: "Success",
+        description: `Loaded ${usersWithTypedData.length} users`,
+      });
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error('❌ Error fetching users:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch users",
+        description: `Failed to fetch users: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
+      setUsers([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
