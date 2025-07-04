@@ -42,7 +42,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       const { data, error } = await supabase
         .from('profiles')
-        .select('onboarding_completed')
+        .select('onboarding_completed, first_name, user_tier')
         .eq('id', userId)
         .single();
       

@@ -1887,6 +1887,7 @@ export type Database = {
           dnd_end_time: string | null
           dnd_start_time: string | null
           do_not_disturb: boolean | null
+          first_name: string | null
           grade: Database["public"]["Enums"]["grade_level"] | null
           id: string
           influencer_expires_at: string | null
@@ -1915,6 +1916,7 @@ export type Database = {
           dnd_end_time?: string | null
           dnd_start_time?: string | null
           do_not_disturb?: boolean | null
+          first_name?: string | null
           grade?: Database["public"]["Enums"]["grade_level"] | null
           id: string
           influencer_expires_at?: string | null
@@ -1943,6 +1945,7 @@ export type Database = {
           dnd_end_time?: string | null
           dnd_start_time?: string | null
           do_not_disturb?: boolean | null
+          first_name?: string | null
           grade?: Database["public"]["Enums"]["grade_level"] | null
           id?: string
           influencer_expires_at?: string | null
@@ -3854,6 +3857,10 @@ export type Database = {
           created_at: string
           updated_at: string
         }[]
+      }
+      is_dean_user: {
+        Args: { user_id_param: string }
+        Returns: boolean
       }
       process_referral_signup: {
         Args: { referred_user_id: string; referral_code_used: string }

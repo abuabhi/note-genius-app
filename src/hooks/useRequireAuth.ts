@@ -34,6 +34,7 @@ export interface TierLimits {
 export interface UserProfile {
   id: string;
   username?: string;
+  first_name?: string;
   user_tier: UserTier;
   created_at: string;
   onboarding_completed?: boolean;
@@ -104,6 +105,7 @@ export const useRequireAuth = (): UseRequireAuthReturn => {
               setUserProfile({
                 id: profile.id,
                 username: profile.username,
+                first_name: profile.first_name,
                 user_tier: profile.user_tier as UserTier || UserTier.SCHOLAR,
                 created_at: profile.created_at,
                 onboarding_completed: profile.onboarding_completed,

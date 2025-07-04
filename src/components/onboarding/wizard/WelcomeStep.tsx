@@ -1,6 +1,8 @@
 
 import { Button } from "@/components/ui/button";
-import { Sparkles, GraduationCap } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Sparkles, GraduationCap, User } from "lucide-react";
 import { GradeSelection } from "../GradeSelection";
 import { SchoolInput } from "../SchoolInput";
 import { OnboardingData } from "../OnboardingWizard";
@@ -12,7 +14,7 @@ interface WelcomeStepProps {
 }
 
 export const WelcomeStep = ({ data, updateData, onNext }: WelcomeStepProps) => {
-  const canProceed = data.grade !== "";
+  const canProceed = data.grade !== "" && data.firstName.trim() !== "";
 
   return (
     <div className="space-y-8">
@@ -37,6 +39,21 @@ export const WelcomeStep = ({ data, updateData, onNext }: WelcomeStepProps) => {
         </div>
         
         <div className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="firstName" className="text-sm font-medium text-slate-700 flex items-center gap-2">
+              <User className="h-4 w-4 text-mint-600" />
+              First Name
+            </Label>
+            <Input
+              id="firstName"
+              type="text"
+              value={data.firstName}
+              onChange={(e) => updateData({ firstName: e.target.value })}
+              placeholder="Enter your first name"
+              className="border-mint-200 focus:border-mint-500 focus:ring-mint-500"
+            />
+          </div>
+
           <GradeSelection 
             grade={data.grade} 
             setGrade={(grade) => updateData({ grade })} 

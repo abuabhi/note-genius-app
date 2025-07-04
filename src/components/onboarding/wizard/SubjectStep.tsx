@@ -92,21 +92,6 @@ export const SubjectStep = ({ data, updateData, onNext, onPrev }: SubjectStepPro
         </p>
       </div>
 
-      {/* Quick Setup */}
-      <div className="bg-blue-50/50 rounded-xl p-6 border border-blue-100">
-        <h3 className="font-semibold text-slate-800 mb-3">Quick Setup</h3>
-        <p className="text-sm text-slate-600 mb-4">
-          Based on your grade level, here are some recommended subjects:
-        </p>
-        <Button
-          onClick={() => selectBundle(recommendedBundle)}
-          variant="outline"
-          className="border-blue-200 hover:bg-blue-50"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Recommended Subjects
-        </Button>
-      </div>
 
       {/* Subject Selection */}
       <div className="space-y-4">

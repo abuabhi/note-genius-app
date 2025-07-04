@@ -13,6 +13,7 @@ import { WizardProgress } from "./wizard/WizardProgress";
 import { Card, CardContent } from "@/components/ui/card";
 
 export interface OnboardingData {
+  firstName: string;
   grade: GradeLevel | "";
   school: string;
   selectedSubjects: Set<string>;
@@ -27,9 +28,10 @@ export const OnboardingWizard = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [data, setData] = useState<OnboardingData>({
+    firstName: "",
     grade: "",
     school: "",
-    selectedSubjects: new Set(),
+    selectedSubjects: new Set(["English", "Mathematics", "Science", "Technology", "Languages"]),
     studyGoal: 5,
     notifications: true,
   });
@@ -58,6 +60,11 @@ export const OnboardingWizard = () => {
       return;
     }
     
+    if (!data.firstName.trim()) {
+      toast.error("Please enter your first name");
+      return;
+    }
+    
     if (!data.grade) {
       toast.error("Please select your grade/education level");
       return;
@@ -69,19 +76,30 @@ export const OnboardingWizard = () => {
     }
     
     setIsSubmitting(true);
+    console.log('📋 [ONBOARDING WIZARD] Starting onboarding completion...', {
+      firstName: data.firstName,
+      grade: data.grade,
+      school: data.school,
+      subjectCount: data.selectedSubjects.size
+    });
     
     try {
       // Update user profile
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ 
+          first_name: data.firstName.trim(),
           grade: data.grade as GradeLevel,
           school: data.school.trim() || null,
           onboarding_completed: true
         })
         .eq('id', user.id);
         
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('📋 [ONBOARDING WIZARD] Profile update error:', profileError);
+        throw profileError;
+      }
+      console.log('📋 [ONBOARDING WIZARD] Profile updated successfully');
       
       // Save selected subjects
       const subjectsToAdd = Array.from(data.selectedSubjects).map(name => ({
@@ -93,7 +111,11 @@ export const OnboardingWizard = () => {
         .from('user_subjects')
         .insert(subjectsToAdd);
         
-      if (subjectsError) throw subjectsError;
+      if (subjectsError) {
+        console.error('📋 [ONBOARDING WIZARD] Subjects insert error:', subjectsError);
+        throw subjectsError;
+      }
+      console.log('📋 [ONBOARDING WIZARD] Subjects saved successfully');
       
       // Refresh onboarding status in auth context
       console.log('📋 [ONBOARDING WIZARD] Onboarding completed, refreshing auth status');

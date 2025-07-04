@@ -49,7 +49,7 @@ export const UserSection = ({ isCollapsed }: UserSectionProps) => {
           >
             <Avatar className='rounded-full size-8 ring-2 ring-mint-100'>
               <AvatarFallback className="bg-gradient-to-br from-mint-500 to-mint-600 text-white font-medium">
-                {user?.email?.charAt(0).toUpperCase() || "S"}
+                {userProfile?.first_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || "P"}
               </AvatarFallback>
             </Avatar>
             <motion.div
@@ -58,14 +58,14 @@ export const UserSection = ({ isCollapsed }: UserSectionProps) => {
             >
               {!isCollapsed && (
                 <>
-                  <div className="text-left">
-                    <p className="text-sm font-medium text-gray-900">
-                      {userProfile?.username || "StudyApp"}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {user?.email}
-                    </p>
-                  </div>
+                   <div className="text-left">
+                     <p className="text-sm font-medium text-gray-900">
+                       {userProfile?.first_name || "PrepGenie User"}
+                     </p>
+                     <p className="text-xs text-gray-500">
+                       {user?.email}
+                     </p>
+                   </div>
                   <ChevronsUpDown className="h-4 w-4 text-gray-400" />
                 </>
               )}
@@ -94,7 +94,7 @@ export const UserSection = ({ isCollapsed }: UserSectionProps) => {
               >
                 <Link to="/admin">
                   <Shield className="h-4 w-4 text-gray-600" /> 
-                  <span>Admin Panel</span>
+                  <span>Admin Dashboard</span>
                 </Link>
               </DropdownMenuItem>
             </>
