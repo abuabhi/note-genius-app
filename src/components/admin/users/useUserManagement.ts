@@ -16,35 +16,18 @@ export const useUserManagement = () => {
     try {
       setLoading(true);
       
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select(`
-          id,
-          username,
-          user_tier,
-          created_at,
-          onboarding_completed,
-          is_influencer,
-          influencer_tier,
-          influencer_metadata,
-          influencer_promoted_at,
-          influencer_promoted_by,
-          influencer_expires_at,
-          influencer_notes
-        `)
-        .order('created_at', { ascending: false });
-        
-      if (profileError) throw profileError;
+      // Call the admin edge function to get users with real emails
+      const { data: usersData, error: usersError } = await supabase.functions.invoke('get-admin-users');
       
-      // Add placeholder emails - in production you'd want to join with auth.users
-      const usersWithEmails = profileData?.map(profile => ({
-        ...profile,
-        email: profile.username ? `${profile.username}@example.com` : `user-${profile.id.slice(0, 8)}@example.com`,
-        user_tier: profile.user_tier as UserTier,
-        influencer_metadata: profile.influencer_metadata as InfluencerMetadata | null
+      if (usersError) throw usersError;
+      
+      const usersWithTypedData = usersData?.map((user: any) => ({
+        ...user,
+        user_tier: user.user_tier as UserTier,
+        influencer_metadata: user.influencer_metadata as InfluencerMetadata | null
       })) as User[] || [];
       
-      setUsers(usersWithEmails);
+      setUsers(usersWithTypedData);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
