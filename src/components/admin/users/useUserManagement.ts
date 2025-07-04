@@ -121,53 +121,83 @@ export const useUserManagement = () => {
     notes?: string
   ) => {
     try {
+      console.log('🚀 Starting influencer promotion...', { userId, tier, expirationMonths });
+      
       const { data: currentUser } = await supabase.auth.getUser();
-      if (!currentUser.user) throw new Error('Not authenticated');
+      if (!currentUser.user) {
+        console.error('❌ User not authenticated');
+        throw new Error('Not authenticated');
+      }
+      
+      console.log('✅ Current user authenticated:', currentUser.user.id);
 
       const expirationDate = new Date();
       expirationDate.setMonth(expirationDate.getMonth() + expirationMonths);
 
-      // Get coupon percentage from metadata or default
-      const couponPercentage = (metadata as any)?.couponPercentage || 10;
+      console.log('📅 Calculated expiration date:', expirationDate.toISOString());
 
-      const { error } = await supabase
+      const updateData = {
+        is_influencer: true,
+        influencer_tier: tier,
+        influencer_metadata: metadata,
+        influencer_promoted_at: new Date().toISOString(),
+        influencer_promoted_by: currentUser.user.id,
+        influencer_expires_at: expirationDate.toISOString(),
+        influencer_notes: notes || `Promoted to ${tier} influencer`
+      };
+
+      console.log('📊 Update data:', updateData);
+
+      const { data: updateResult, error } = await supabase
         .from('profiles')
-        .update({
-          is_influencer: true,
-          influencer_tier: tier,
-          influencer_metadata: metadata as any,
-          influencer_promoted_at: new Date().toISOString(),
-          influencer_promoted_by: currentUser.user.id,
-          influencer_expires_at: expirationDate.toISOString(),
-          influencer_notes: notes
-        })
-        .eq('id', userId);
+        .update(updateData)
+        .eq('id', userId)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Database update error:', error);
+        throw error;
+      }
 
-      // Create audit record (skipping for now since table doesn't exist in types)
-      console.log('Would create audit record:', {
-        user_id: userId,
-        promoted_by: currentUser.user.id,
-        from_tier: 'SCHOLAR',
-        to_tier: tier,
-        promotion_type: 'influencer',
-        expires_at: expirationDate.toISOString(),
-        metadata: metadata,
-        notes: notes
-      });
+      console.log('✅ Database update successful:', updateResult);
+
+      // Try to create audit record
+      try {
+        const { error: auditError } = await supabase
+          .from('influencer_promotions_audit')
+          .insert({
+            user_id: userId,
+            promoted_by: currentUser.user.id,
+            from_tier: 'SCHOLAR',
+            to_tier: tier,
+            promotion_type: 'influencer',
+            expires_at: expirationDate.toISOString(),
+            metadata: metadata,
+            notes: notes
+          });
+
+        if (auditError) {
+          console.warn('⚠️ Audit record creation failed (non-critical):', auditError);
+        } else {
+          console.log('✅ Audit record created successfully');
+        }
+      } catch (auditErr) {
+        console.warn('⚠️ Audit record creation error (non-critical):', auditErr);
+      }
 
       toast({
         title: "Success",
-        description: "User promoted to influencer successfully! Coupon auto-generated.",
+        description: `User promoted to ${tier} influencer successfully!`,
       });
 
-      fetchUsers();
+      // Refresh the users list
+      await fetchUsers();
+      
     } catch (error) {
-      console.error('Error promoting to influencer:', error);
+      console.error('❌ Error promoting to influencer:', error);
       toast({
         title: "Error",
-        description: "Failed to promote user to influencer",
+        description: `Failed to promote user: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
     }

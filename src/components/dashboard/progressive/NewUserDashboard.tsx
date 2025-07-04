@@ -22,13 +22,13 @@ export const NewUserDashboard = ({ progressState }: NewUserDashboardProps) => {
         {/* Quick Start Actions - Replace Learning Toolkit */}
         <QuickStartActions />
         
-        {/* Two-Panel Section: Onboarding Checklist */}
-        <div className="grid gap-6 lg:grid-cols-2 md:grid-cols-1">
-          <OnboardingChecklist />
-          
-          {/* Welcome Tips Card */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Welcome to PrepGenie! 🎉</h3>
+        {/* Full-Width Onboarding Checklist */}
+        <OnboardingChecklist />
+        
+        {/* Welcome Tips Card */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Welcome to PrepGenie! 🎉</h3>
+          <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-3 text-sm text-gray-600">
               <p>
                 <strong>Step 1:</strong> Start by creating your first note from study materials, textbooks, or lecture notes.
@@ -43,10 +43,17 @@ export const NewUserDashboard = ({ progressState }: NewUserDashboardProps) => {
                 <strong>Step 4:</strong> Use quizzes to test your knowledge and identify areas for improvement.
               </p>
             </div>
-            <div className="mt-4 p-3 bg-mint-50 border border-mint-200 rounded-lg">
-              <p className="text-sm text-mint-800 font-medium">
-                💡 Pro Tip: Import your existing study materials to get started quickly!
-              </p>
+            <div className="space-y-3">
+              <div className="p-3 bg-mint-50 border border-mint-200 rounded-lg">
+                <p className="text-sm text-mint-800 font-medium">
+                  💡 Pro Tip: Import your existing study materials to get started quickly!
+                </p>
+              </div>
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800 font-medium">
+                  ✨ Use AI features to enhance your notes and generate flashcards automatically!
+                </p>
+              </div>
             </div>
           </div>
         </div>

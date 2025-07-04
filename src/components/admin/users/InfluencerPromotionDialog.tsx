@@ -44,11 +44,30 @@ export const InfluencerPromotionDialog: React.FC<InfluencerPromotionDialogProps>
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    console.log('🎯 Form submitted - promoting user:', user.id, 'to tier:', influencerTier);
+    
+    if (!user.id) {
+      console.error('❌ No user ID provided');
+      return;
+    }
+
     setLoading(true);
     
     try {
+      console.log('📋 Promotion data:', {
+        userId: user.id,
+        tier: influencerTier,
+        metadata,
+        expirationMonths,
+        notes
+      });
+
       await onPromote(user.id, influencerTier, metadata, expirationMonths, notes);
+      
+      console.log('✅ Promotion successful, closing dialog');
       onClose();
+      
       // Reset form
       setInfluencerTier('GRADUATE');
       setCouponPercentage(10);
@@ -62,7 +81,8 @@ export const InfluencerPromotionDialog: React.FC<InfluencerPromotionDialogProps>
         linkedin: { handle: '', connections: 0 }
       });
     } catch (error) {
-      console.error('Error promoting user:', error);
+      console.error('❌ Error in form submission:', error);
+      // Error handling is already done in the onPromote function
     } finally {
       setLoading(false);
     }
