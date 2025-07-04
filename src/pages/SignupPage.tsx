@@ -76,23 +76,24 @@ const SignupPage = () => {
     setIsSubmitting(true);
     
     try {
-      // Store signup completion flag immediately for tier selection access
+      // Store signup info for the confirmation page
       sessionStorage.setItem('signup_completed', JSON.stringify({
         email: formData.email,
         timestamp: Date.now()
       }));
       
-      console.log('🔐 [SIGNUP] Stored signup flag, attempting signup');
-      
-      await signUp(formData.email, formData.password, {
+      const { error } = await signUp(formData.email, formData.password, {
         username: formData.name || formData.email.split('@')[0],
-        referral_code: formData.referralCode.trim() || null, // Include referral code in metadata
+        referral_code: formData.referralCode.trim() || null,
       });
       
-      console.log('🔐 [SIGNUP] Signup successful, navigating to tier selection');
-      navigate('/tier-selection');
+      if (error) {
+        throw error;
+      }
+      
+      // Navigate to confirmation page instead of tier selection
+      navigate('/confirm-email');
     } catch (error: any) {
-      // Clear signup flag on error
       sessionStorage.removeItem('signup_completed');
       setError(error.message || "Failed to create account");
     } finally {

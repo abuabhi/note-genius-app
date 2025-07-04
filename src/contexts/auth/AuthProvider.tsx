@@ -160,7 +160,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return await supabase.auth.signUp({
       email,
       password,
-      options: { data: metadata }
+      options: { 
+        data: metadata,
+        emailRedirectTo: `${window.location.origin}/tier-selection`
+      }
     });
   };
 

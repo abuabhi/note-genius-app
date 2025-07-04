@@ -13,29 +13,17 @@ const TierSelectionPage = () => {
   const [signupInfo, setSignupInfo] = useState<{ email: string; timestamp: number } | null>(null);
 
   useEffect(() => {
-    // Check for signup completion flag
+    // Check for signup completion flag (for showing email confirmation message)
     const signupData = sessionStorage.getItem('signup_completed');
     if (signupData) {
       try {
         const parsed = JSON.parse(signupData);
-        // Only consider signup valid if it's within the last 10 minutes
-        if (Date.now() - parsed.timestamp < 10 * 60 * 1000) {
-          setSignupInfo(parsed);
-        } else {
-          sessionStorage.removeItem('signup_completed');
-        }
+        setSignupInfo(parsed);
       } catch (error) {
         sessionStorage.removeItem('signup_completed');
       }
     }
   }, []);
-
-  useEffect(() => {
-    // Redirect to login only if not authenticated AND no recent signup
-    if (!loading && !user && !signupInfo) {
-      navigate('/login', { replace: true });
-    }
-  }, [user, loading, signupInfo, navigate]);
 
   // Tier selection specific pricing data
   const tierPlans = [
@@ -110,16 +98,20 @@ const TierSelectionPage = () => {
     );
   }
 
-  // Allow access if user is authenticated OR if they just signed up
-  if (!user && !signupInfo) {
-    return null; // Will redirect to login
+  // Show loading while auth is being determined
+  if (loading) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+          <LoadingState message="Loading tier selection..." />
+        </div>
+      </Layout>
+    );
   }
 
   const handleTierSelection = (planName: string, billing: 'monthly' | 'yearly') => {
     // Clear signup flag after tier selection
-    if (signupInfo) {
-      sessionStorage.removeItem('signup_completed');
-    }
+    sessionStorage.removeItem('signup_completed');
     
     if (planName === 'SCHOLAR') {
       // Free tier - go directly to onboarding
@@ -139,15 +131,26 @@ const TierSelectionPage = () => {
     <Layout>
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
         <div className="container mx-auto px-4 py-8">
-          {/* Email confirmation alert for unconfirmed users */}
-          {signupInfo && !user && (
+          {/* Welcome message for different user states */}
+          {!user && signupInfo && (
             <div className="mb-6">
               <Alert className="border-blue-200 bg-blue-50">
                 <Mail className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Check your email!</strong> We've sent a confirmation link to{' '}
-                  <span className="font-medium">{signupInfo.email}</span>. You can still select your plan below, 
-                  but you'll need to confirm your email to access all features.
+                  <strong>Almost there!</strong> We've sent a confirmation link to{' '}
+                  <span className="font-medium">{signupInfo.email}</span>. 
+                  Click the link in your email to confirm your account, then return here to select your plan.
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
+          
+          {user && (
+            <div className="mb-6">
+              <Alert className="border-mint-200 bg-mint-50">
+                <Mail className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Email confirmed!</strong> Your account is ready. Choose your plan below to continue.
                 </AlertDescription>
               </Alert>
             </div>
