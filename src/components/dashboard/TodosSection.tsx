@@ -80,7 +80,7 @@ export const TodosSection = () => {
             <CheckSquare className="h-5 w-5 text-blue-600" />
             Your Todos
             {todos.length > 0 && (
-              <Badge variant="secondary" className="text-xs">
+              <Badge variant="secondary" className="text-xs text-mint-600">
                 {todos.length} pending
               </Badge>
             )}

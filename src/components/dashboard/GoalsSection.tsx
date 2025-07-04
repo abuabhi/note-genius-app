@@ -59,7 +59,7 @@ export const GoalsSection = () => {
             <Target className="h-5 w-5 text-mint-600" />
             Your Goals
             {goals.length > 0 && (
-              <Badge variant="secondary" className="text-xs">
+              <Badge variant="secondary" className="text-xs text-mint-600">
                 {goals.length} active
               </Badge>
             )}
