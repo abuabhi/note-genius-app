@@ -18,6 +18,7 @@ export function Pricing({
   plans,
   title = "Choose Your Plan",
   description = "Select the perfect plan for your learning journey\nAll plans include access to our comprehensive study tools and features.",
+  onTierSelect,
 }: PricingProps) {
   const [isMonthly, setIsMonthly] = useState(true);
   const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -55,6 +56,13 @@ export function Pricing({
 
   const handleSubscribe = async (planName: string, billing: 'monthly' | 'yearly') => {
     try {
+      // If onTierSelect is provided (tier selection flow), use it
+      if (onTierSelect) {
+        onTierSelect(planName, billing);
+        return;
+      }
+      
+      // Otherwise, use the standard subscription flow
       if (planName === 'GRADUATE' || planName === 'MASTER') {
         await createCheckoutSession(planName, billing);
         toast.success(`Redirecting to checkout for ${planName} plan...`);

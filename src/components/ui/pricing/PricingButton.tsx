@@ -26,18 +26,26 @@ export const PricingButton: React.FC<PricingButtonProps> = ({
   };
 
   const handleClick = () => {
-    if (isFree) {
-      // For free plan, redirect to signup
+    if (onSubscribe) {
+      // Use the onSubscribe handler if provided (tier selection flow)
+      const billing = isMonthly ? 'monthly' : 'yearly';
+      onSubscribe(plan.name, billing);
       return;
     }
     
-    if (onSubscribe && (plan.name === 'GRADUATE' || plan.name === 'MASTER')) {
+    if (isFree) {
+      // For free plan, redirect to signup if no onSubscribe handler
+      return;
+    }
+    
+    // Standard subscription flow for paid plans
+    if (plan.name === 'GRADUATE' || plan.name === 'MASTER') {
       const billing = isMonthly ? 'monthly' : 'yearly';
-      onSubscribe(plan.name, billing);
+      onSubscribe?.(plan.name, billing);
     }
   };
 
-  if (isFree) {
+  if (isFree && !onSubscribe) {
     return (
       <Link
         to="/signup"

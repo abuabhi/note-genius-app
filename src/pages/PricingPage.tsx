@@ -38,9 +38,9 @@ const PricingPage = () => {
         "Collaboration features",
         "Email support"
       ],
-      description: "Ideal for dedicated students",
+      description: "Ideal for dedicated students", 
       buttonText: "Choose Graduate",
-      href: "/pricing",
+      href: "/signup",
       isPopular: true,
     },
     {
@@ -60,8 +60,8 @@ const PricingPage = () => {
         "Custom integrations"
       ],
       description: "For serious academic achievers",
-      buttonText: "Choose Master",
-      href: "/pricing",
+      buttonText: "Choose Master", 
+      href: "/signup",
       isPopular: false,
     },
   ];

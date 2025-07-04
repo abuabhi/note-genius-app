@@ -15,4 +15,5 @@ export interface PricingProps {
   plans: PricingPlan[];
   title?: string;
   description?: string;
+  onTierSelect?: (planName: string, billing: 'monthly' | 'yearly') => void;
 }

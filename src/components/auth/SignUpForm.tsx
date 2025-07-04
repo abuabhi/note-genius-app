@@ -49,9 +49,9 @@ export const SignUpForm = () => {
       } else {
         toast({
           title: "Success",
-          description: "Please check your email to confirm your account",
+          description: "Account created successfully! Please select your plan.",
         });
-        navigate('/login');
+        navigate('/tier-selection');
       }
     } catch (error) {
       toast({

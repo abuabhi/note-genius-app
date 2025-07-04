@@ -11,6 +11,8 @@ import FeaturesPage from "@/pages/FeaturesPage";
 import TermsPage from "@/pages/TermsPage";
 import PrivacyPage from "@/pages/PrivacyPage";
 import PublicCouponPage from "@/pages/PublicCouponPage";
+import TierSelectionPage from "@/pages/TierSelectionPage";
+import PaymentPage from "@/pages/PaymentPage";
 import { SignUpForm } from "@/components/auth/SignUpForm";
 
 export interface RouteConfig {
@@ -25,6 +27,8 @@ export const publicRoutes: RouteConfig[] = [
   { path: "/pricing", element: <PricingPage /> }, // PricingPage already has Layout internally
   { path: "/login", element: <LoginPage /> }, // LoginPage already has Layout internally
   { path: "/signup", element: <Layout><SignUpForm /></Layout> },
+  { path: "/tier-selection", element: <TierSelectionPage /> },
+  { path: "/payment", element: <PaymentPage /> },
   { path: "/contact", element: <ContactPage /> }, // ContactPage already has Layout internally
   { path: "/terms", element: <TermsPage /> }, // TermsPage already has Layout internally
   { path: "/privacy", element: <PrivacyPage /> }, // PrivacyPage already has Layout internally
