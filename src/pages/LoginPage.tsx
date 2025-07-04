@@ -1,12 +1,12 @@
 
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/auth";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, CheckCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const LoginPage = () => {
@@ -16,8 +16,11 @@ const LoginPage = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { signIn, signInWithGoogle, user } = useAuth();
+  
+  const isEmailConfirmed = searchParams.get('confirmed') === 'true';
 
   useEffect(() => {
     // Redirect if user is already logged in
@@ -40,8 +43,12 @@ const LoginPage = () => {
     setIsSubmitting(true);
     
     try {
-      await signIn(formData.email, formData.password);
-      // Navigation will be handled by the auth state change listener
+      const { error } = await signIn(formData.email, formData.password);
+      if (!error && isEmailConfirmed) {
+        // Redirect to tier selection after successful login from email confirmation
+        navigate('/tier-selection');
+      }
+      // Otherwise, navigation will be handled by the auth state change listener
     } catch (error: any) {
       setError(error.message || "Login failed. Please check your credentials.");
     } finally {
@@ -76,6 +83,14 @@ const LoginPage = () => {
 
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
           <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+            {isEmailConfirmed && (
+              <Alert className="mb-6 border-primary bg-primary/5">
+                <CheckCircle className="h-4 w-4 text-primary" />
+                <AlertDescription className="text-primary">
+                  <strong>Email confirmed successfully!</strong> Please sign in to continue with your account setup.
+                </AlertDescription>
+              </Alert>
+            )}
             {error && (
               <Alert variant="destructive" className="mb-6">
                 <AlertCircle className="h-4 w-4" />
