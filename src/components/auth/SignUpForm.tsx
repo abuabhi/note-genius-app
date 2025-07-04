@@ -47,6 +47,12 @@ export const SignUpForm = () => {
           variant: "destructive"
         });
       } else {
+        // Store signup completion flag for tier selection access
+        sessionStorage.setItem('signup_completed', JSON.stringify({
+          email,
+          timestamp: Date.now()
+        }));
+        
         toast({
           title: "Success",
           description: "Account created successfully! Please select your plan.",

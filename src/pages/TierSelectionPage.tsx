@@ -1,20 +1,41 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
 import Layout from '@/components/layout/Layout';
 import { Pricing } from '@/components/ui/pricing';
 import { LoadingState } from '@/components/notes/page/LoadingState';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Mail } from 'lucide-react';
 
 const TierSelectionPage = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const [signupInfo, setSignupInfo] = useState<{ email: string; timestamp: number } | null>(null);
 
   useEffect(() => {
-    // Redirect to login if not authenticated
-    if (!loading && !user) {
+    // Check for signup completion flag
+    const signupData = sessionStorage.getItem('signup_completed');
+    if (signupData) {
+      try {
+        const parsed = JSON.parse(signupData);
+        // Only consider signup valid if it's within the last 10 minutes
+        if (Date.now() - parsed.timestamp < 10 * 60 * 1000) {
+          setSignupInfo(parsed);
+        } else {
+          sessionStorage.removeItem('signup_completed');
+        }
+      } catch (error) {
+        sessionStorage.removeItem('signup_completed');
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    // Redirect to login only if not authenticated AND no recent signup
+    if (!loading && !user && !signupInfo) {
       navigate('/login', { replace: true });
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, signupInfo, navigate]);
 
   // Tier selection specific pricing data
   const tierPlans = [
@@ -89,11 +110,17 @@ const TierSelectionPage = () => {
     );
   }
 
-  if (!user) {
+  // Allow access if user is authenticated OR if they just signed up
+  if (!user && !signupInfo) {
     return null; // Will redirect to login
   }
 
   const handleTierSelection = (planName: string, billing: 'monthly' | 'yearly') => {
+    // Clear signup flag after tier selection
+    if (signupInfo) {
+      sessionStorage.removeItem('signup_completed');
+    }
+    
     if (planName === 'SCHOLAR') {
       // Free tier - go directly to onboarding
       navigate('/onboarding');
@@ -112,6 +139,20 @@ const TierSelectionPage = () => {
     <Layout>
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
         <div className="container mx-auto px-4 py-8">
+          {/* Email confirmation alert for unconfirmed users */}
+          {signupInfo && !user && (
+            <div className="mb-6">
+              <Alert className="border-blue-200 bg-blue-50">
+                <Mail className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Check your email!</strong> We've sent a confirmation link to{' '}
+                  <span className="font-medium">{signupInfo.email}</span>. You can still select your plan below, 
+                  but you'll need to confirm your email to access all features.
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
+
           {/* Welcome Message */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
