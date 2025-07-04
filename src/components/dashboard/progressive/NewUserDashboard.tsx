@@ -4,6 +4,7 @@ import { GetStartedHeroSection } from './GetStartedHeroSection';
 import { OnboardingChecklist } from './OnboardingChecklist';
 import { QuickStartActions } from './QuickStartActions';
 import { GettingStartedGuide } from './GettingStartedGuide';
+import { StudySuggestions } from '@/components/analytics/StudySuggestions';
 
 interface NewUserDashboardProps {
   progressState: UserProgressState;
@@ -24,6 +25,9 @@ export const NewUserDashboard = ({ progressState }: NewUserDashboardProps) => {
         
         {/* Full-Width Onboarding Checklist */}
         <OnboardingChecklist />
+        
+        {/* AI Study Suggestions - Full Width */}
+        <StudySuggestions />
         
         {/* Welcome Tips Card */}
         <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
