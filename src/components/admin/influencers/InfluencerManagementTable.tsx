@@ -19,6 +19,8 @@ import {
 import { User } from '../users/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useInfluencerPerformance } from '@/hooks/admin/useInfluencerPerformance';
+import { InfluencerTableRow } from './InfluencerTableRow';
 
 interface InfluencerManagementTableProps {
   influencers: User[];
@@ -63,15 +65,10 @@ export const InfluencerManagementTable: React.FC<InfluencerManagementTableProps>
     setShowDetailsDialog(true);
   };
 
-  const mockCouponData = {
-    couponCode: 'JAMES10',
-    totalUses: 45,
-    totalRevenue: 2250.50,
-    totalCommission: 112.25,
-    thisMonthUses: 12,
-    thisMonthCommission: 35.75,
-    avgOrderValue: 50.01
-  };
+  // Real performance data for the selected influencer details
+  const { data: selectedInfluencerPerformance } = useInfluencerPerformance(
+    selectedInfluencer?.id || ''
+  );
 
   const mockSocialStats: Record<string, any> = {
     instagram: { handle: '@james_study', followers: 15200 },
@@ -114,95 +111,17 @@ export const InfluencerManagementTable: React.FC<InfluencerManagementTableProps>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {influencers.map((influencer) => {
-                  const statusColor = getStatusColor(influencer);
-                  const statusText = getStatusText(influencer);
-                  
-                  return (
-                    <TableRow key={influencer.id}>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="font-medium">{influencer.username}</div>
-                          <div className="text-sm text-muted-foreground">{influencer.email}</div>
-                          <div className="text-xs text-muted-foreground">
-                            Promoted: {influencer.influencer_promoted_at ? 
-                              new Date(influencer.influencer_promoted_at).toLocaleDateString() : 'Unknown'}
-                          </div>
-                        </div>
-                      </TableCell>
-                      
-                      <TableCell>
-                        <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
-                          {influencer.influencer_tier}
-                        </Badge>
-                      </TableCell>
-                      
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-mono">
-                            {mockCouponData.couponCode}
-                          </Badge>
-                          <Gift className="h-4 w-4 text-yellow-500" />
-                        </div>
-                      </TableCell>
-                      
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className={`w-2 h-2 rounded-full ${statusColor}`}></div>
-                          <span className="text-sm">{statusText}</span>
-                        </div>
-                        {influencer.influencer_expires_at && (
-                          <div className="text-xs text-muted-foreground">
-                            Expires: {new Date(influencer.influencer_expires_at).toLocaleDateString()}
-                          </div>
-                        )}
-                      </TableCell>
-                      
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1 text-sm">
-                            <Users className="h-3 w-3" />
-                            {mockCouponData.totalUses} uses
-                          </div>
-                          <div className="flex items-center gap-1 text-sm text-green-600">
-                            <DollarSign className="h-3 w-3" />
-                            ${mockCouponData.totalCommission} earned
-                          </div>
-                        </div>
-                      </TableCell>
-                      
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleViewDetails(influencer)}
-                          >
-                            <ExternalLink className="h-3 w-3 mr-1" />
-                            View Details
-                          </Button>
-                          
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => extendInfluencer(influencer.id, 6)}
-                          >
-                            <Calendar className="h-3 w-3 mr-1" />
-                            Extend
-                          </Button>
-                          
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => revokeInfluencer(influencer.id, 'Manual revocation by admin')}
-                          >
-                            Revoke
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                {influencers.map((influencer) => (
+                  <InfluencerTableRow
+                    key={influencer.id}
+                    influencer={influencer}
+                    onViewDetails={handleViewDetails}
+                    onExtend={extendInfluencer}
+                    onRevoke={revokeInfluencer}
+                    getStatusColor={getStatusColor}
+                    getStatusText={getStatusText}
+                  />
+                ))}
               </TableBody>
             </Table>
           </div>
@@ -270,7 +189,7 @@ export const InfluencerManagementTable: React.FC<InfluencerManagementTableProps>
                       <div className="flex justify-between">
                         <span>Code:</span>
                         <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-mono">
-                          {mockCouponData.couponCode}
+                          {selectedInfluencerPerformance?.couponCode || 'N/A'}
                         </Badge>
                       </div>
                       <div className="flex justify-between">
@@ -296,8 +215,8 @@ export const InfluencerManagementTable: React.FC<InfluencerManagementTableProps>
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{mockCouponData.totalUses}</div>
-                      <p className="text-sm text-green-600">+{mockCouponData.thisMonthUses} this month</p>
+                      <div className="text-2xl font-bold">{selectedInfluencerPerformance?.totalUses || 0}</div>
+                      <p className="text-sm text-green-600">+{selectedInfluencerPerformance?.thisMonthUses || 0} this month</p>
                     </CardContent>
                   </Card>
 
@@ -309,8 +228,8 @@ export const InfluencerManagementTable: React.FC<InfluencerManagementTableProps>
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">${mockCouponData.totalCommission}</div>
-                      <p className="text-sm text-green-600">+${mockCouponData.thisMonthCommission} this month</p>
+                      <div className="text-2xl font-bold">${selectedInfluencerPerformance?.totalCommission.toFixed(2) || '0.00'}</div>
+                      <p className="text-sm text-green-600">+${selectedInfluencerPerformance?.thisMonthCommission.toFixed(2) || '0.00'} this month</p>
                     </CardContent>
                   </Card>
 
@@ -322,7 +241,7 @@ export const InfluencerManagementTable: React.FC<InfluencerManagementTableProps>
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">${mockCouponData.avgOrderValue}</div>
+                      <div className="text-2xl font-bold">${selectedInfluencerPerformance?.avgOrderValue.toFixed(2) || '0.00'}</div>
                       <p className="text-sm text-muted-foreground">Per transaction</p>
                     </CardContent>
                   </Card>

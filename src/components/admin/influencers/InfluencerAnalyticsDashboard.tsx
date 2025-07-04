@@ -5,9 +5,12 @@ import { Button } from '@/components/ui/button';
 import { InfluencerKPICards } from './InfluencerKPICards';
 import { TopPerformersSection } from './TopPerformersSection';
 import { PayoutSummarySection } from './PayoutSummarySection';
-import { TrendingUp, Users, DollarSign, Award, Ticket } from 'lucide-react';
+import { useInfluencerRevenueBreakdown } from '@/hooks/admin/useInfluencerRevenueBreakdown';
+import { TrendingUp, Users, DollarSign, Award, Ticket, Loader } from 'lucide-react';
 
 export const InfluencerAnalyticsDashboard = () => {
+  const { data: revenueBreakdown, isLoading: isLoadingRevenue } = useInfluencerRevenueBreakdown();
+
   return (
     <div className="space-y-6">
       {/* KPI Overview */}
@@ -38,23 +41,35 @@ export const InfluencerAnalyticsDashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">MASTER Tier</span>
-                    <span className="text-sm text-muted-foreground">$12,450 (65%)</span>
+                {isLoadingRevenue ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader className="h-6 w-6 animate-spin" />
                   </div>
-                  <div className="w-full bg-secondary rounded-full h-2">
-                    <div className="bg-primary h-2 rounded-full" style={{ width: '65%' }}></div>
+                ) : (
+                  <div className="space-y-4">
+                    {revenueBreakdown?.map((tier, index) => (
+                      <div key={tier.tier}>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium">{tier.tier} Tier</span>
+                          <span className="text-sm text-muted-foreground">
+                            ${tier.totalRevenue.toLocaleString()} ({Math.round(tier.percentage)}%)
+                          </span>
+                        </div>
+                        <div className="w-full bg-secondary rounded-full h-2">
+                          <div 
+                            className={`h-2 rounded-full ${index === 0 ? 'bg-primary' : 'bg-blue-500'}`}
+                            style={{ width: `${tier.percentage}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    ))}
+                    {(!revenueBreakdown || revenueBreakdown.length === 0) && (
+                      <div className="text-center py-4 text-muted-foreground">
+                        No revenue data available yet
+                      </div>
+                    )}
                   </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">GRADUATE Tier</span>
-                    <span className="text-sm text-muted-foreground">$6,780 (35%)</span>
-                  </div>
-                  <div className="w-full bg-secondary rounded-full h-2">
-                    <div className="bg-blue-500 h-2 rounded-full" style={{ width: '35%' }}></div>
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </div>
