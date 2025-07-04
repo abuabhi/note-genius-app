@@ -37,6 +37,27 @@ export const useAuthRedirects = ({
       return;
     }
     
+    // Check for signup completion flag for tier-selection access
+    const signupInfo = sessionStorage.getItem('signup_completed');
+    let hasRecentSignup = false;
+    
+    if (signupInfo) {
+      try {
+        const parsed = JSON.parse(signupInfo);
+        hasRecentSignup = Date.now() - parsed.timestamp < 10 * 60 * 1000; // Valid for 10 minutes
+      } catch (error) {
+        // Invalid signup info, clear it
+        sessionStorage.removeItem('signup_completed');
+      }
+    }
+    
+    // Allow access to tier-selection/payment if user just signed up
+    if (!user && !hasRecentSignup && !isPublicRoute) {
+      console.log('🚦 [AUTH REDIRECTS] Redirecting unauthenticated user to login');
+      navigate('/login', { replace: true });
+      return;
+    }
+    
     // Only redirect if user exists and we know their onboarding status
     if (user && onboardingCompleted !== null) {
       // Handle onboarding redirection
@@ -56,6 +77,5 @@ export const useAuthRedirects = ({
         navigate('/dashboard', { replace: true });
       }
     }
-    // We don't redirect non-authenticated users on public routes
   }, [user, onboardingCompleted, onboardingLoading, navigate, location.pathname, loading, isPublicRoute]);
 };
