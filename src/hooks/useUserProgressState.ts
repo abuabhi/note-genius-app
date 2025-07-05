@@ -47,6 +47,17 @@ export const useUserProgressState = (): UserProgressState => {
       userType = 'advanced';
     }
 
+    console.log('🔍 [UserProgressState] Progress calculation:', { 
+      totalNotes, 
+      totalFlashcardSets, 
+      totalQuizzes, 
+      totalGoals, 
+      totalTodos, 
+      totalItems, 
+      userType, 
+      isLoading 
+    });
+
     return {
       userType,
       totalItems,

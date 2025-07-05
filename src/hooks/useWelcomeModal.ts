@@ -4,16 +4,25 @@ import { useUserProgressState } from './useUserProgressState';
 export const useWelcomeModal = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
-  const { userType } = useUserProgressState();
+  const { userType, isLoading } = useUserProgressState();
 
   useEffect(() => {
     // Show welcome modal for new users who haven't seen it before
     const hasSeenWelcome = localStorage.getItem('prepgenie-welcome-modal-seen');
     
-    if (userType === 'new' && !hasSeenWelcome) {
+    console.log('🔍 [WelcomeModal] Modal logic:', { 
+      userType, 
+      isLoading, 
+      hasSeenWelcome, 
+      shouldShowModal: userType === 'new' && !hasSeenWelcome,
+      debugHint: 'To test modal, clear localStorage or run: localStorage.removeItem("prepgenie-welcome-modal-seen")'
+    });
+    
+    if (userType === 'new' && !hasSeenWelcome && !isLoading) {
+      console.log('🎉 [WelcomeModal] Opening welcome modal for new user');
       setIsOpen(true);
     }
-  }, [userType]);
+  }, [userType, isLoading]);
 
   const closeModal = () => {
     setIsOpen(false);

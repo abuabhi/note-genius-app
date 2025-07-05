@@ -18,7 +18,7 @@ export function WelcomeBanner() {
       
       const { data, error } = await supabase
         .from('profiles')
-        .select('first_name')
+        .select('first_name, username')
         .eq('id', user.id)
         .single();
       
@@ -27,6 +27,7 @@ export function WelcomeBanner() {
         return null;
       }
       
+      console.log('🔍 [WelcomeBanner] User profile data:', data);
       return data;
     },
     enabled: !!user,
@@ -46,8 +47,14 @@ export function WelcomeBanner() {
     return `${hours.toFixed(1)}h`;
   };
 
-  // Get user's first name from profile, fall back to first part of email if no first_name
-  const displayName = userProfile?.first_name || user?.email?.split('@')[0] || "Genius";
+  // Get user's first name from profile, with fallbacks to username and email
+  const displayName = userProfile?.first_name || userProfile?.username || user?.email?.split('@')[0] || "Genius";
+  console.log('🔍 [WelcomeBanner] Display name logic:', { 
+    first_name: userProfile?.first_name, 
+    username: userProfile?.username, 
+    email_prefix: user?.email?.split('@')[0], 
+    final_displayName: displayName 
+  });
   const timeOfDay = getTimeOfDay();
 
   if (isLoading) {
