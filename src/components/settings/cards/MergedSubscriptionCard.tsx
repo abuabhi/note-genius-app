@@ -168,7 +168,7 @@ export const MergedSubscriptionCard = () => {
           )}
 
           {/* Subscribed users (Graduate/Master tier) */}
-          {subscribed && !isDeanTier && (
+          {subscribed && !isDeanTier && userTier !== UserTier.SCHOLAR && (
             <div className="bg-gradient-to-r from-mint-50 to-emerald-50 rounded-xl p-4 border border-mint-200/50">
               <div className="flex items-center justify-between">
                 <div className="space-y-2">
@@ -205,6 +205,37 @@ export const MergedSubscriptionCard = () => {
                     <Settings className="h-3 w-3 mr-1" />
                     Billing History
                   </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Scholar tier users who appear subscribed (data inconsistency) */}
+          {subscribed && userTier === UserTier.SCHOLAR && !isDeanTier && (
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200/50">
+              <div className="text-center space-y-3">
+                <Badge variant="outline" className="text-xs px-2 py-1 border-amber-300 text-amber-700">
+                  SCHOLAR TIER
+                </Badge>
+                <div>
+                  <p className="text-gray-700 text-sm mb-3">
+                    Your account shows as subscribed but you're on Scholar tier. This may be a data sync issue.
+                  </p>
+                  <div className="flex gap-2 justify-center flex-wrap">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={checkSubscriptionStatus}
+                      disabled={subLoading}
+                      className="text-xs px-3 py-1"
+                    >
+                      <RefreshCw className={`h-3 w-3 mr-1 ${subLoading ? 'animate-spin' : ''}`} />
+                      Refresh Status
+                    </Button>
+                    <Button onClick={() => handleUpgrade(UserTier.GRADUATE)} size="sm" className="text-xs px-3 py-1 bg-mint-600 hover:bg-mint-700">
+                      Upgrade to Graduate $9.99/mo
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

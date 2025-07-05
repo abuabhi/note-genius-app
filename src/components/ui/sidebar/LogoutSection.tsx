@@ -32,6 +32,7 @@ export const LogoutSection = ({ isCollapsed }: LogoutSectionProps) => {
 
   // Debug logging
   console.log('🔧 [SIDEBAR] User tier:', userTier, 'Loading:', isLoading);
+  console.log('🔧 [SIDEBAR] Is collapsed:', isCollapsed);
 
   const handleLogout = async () => {
     try {
@@ -84,11 +85,24 @@ export const LogoutSection = ({ isCollapsed }: LogoutSectionProps) => {
   const upgradeSuggestion = getUpgradeSuggestion();
   console.log('🔧 [SIDEBAR] Upgrade suggestion:', upgradeSuggestion, 'Collapsed:', isCollapsed);
 
+  // Don't render anything if still loading
+  if (isLoading) {
+    console.log('🔧 [SIDEBAR] Still loading, not rendering upgrade section');
+    return (
+      <div className="flex flex-col p-2 space-y-2">
+        <div className="h-8 w-full bg-gray-100 animate-pulse rounded"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col p-2 space-y-2">
-      {/* Upgrade Suggestion */}
+      {/* Upgrade Suggestion - Always show for Scholar tier */}
       {upgradeSuggestion && !isCollapsed && (
-        <div className="bg-gradient-to-r from-mint-50 to-emerald-50 border border-mint-200/50 rounded-md p-2">
+        <div 
+          className="bg-gradient-to-r from-mint-50 to-emerald-50 border border-mint-200/50 rounded-md p-2"
+          style={{ minHeight: '60px' }} // Ensure minimum height for visibility
+        >
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <upgradeSuggestion.icon className="h-3 w-3 text-mint-600" />
@@ -99,7 +113,7 @@ export const LogoutSection = ({ isCollapsed }: LogoutSectionProps) => {
             </div>
             <button
               onClick={() => handleUpgrade(upgradeSuggestion.tier)}
-              className="text-xs bg-mint-600 text-white px-2 py-1 rounded hover:bg-mint-700 transition-colors"
+              className="text-xs bg-mint-600 text-white px-2 py-1 rounded hover:bg-mint-700 transition-colors flex items-center"
             >
               <ArrowUp className="h-3 w-3" />
             </button>
@@ -116,6 +130,13 @@ export const LogoutSection = ({ isCollapsed }: LogoutSectionProps) => {
           >
             <ArrowUp className="h-2 w-2" />
           </Badge>
+        </div>
+      )}
+
+      {/* Debug info - only in development */}
+      {process.env.NODE_ENV === 'development' && !isCollapsed && (
+        <div className="text-xs text-gray-500 p-1 bg-gray-50 rounded">
+          Tier: {userTier} | Suggestion: {upgradeSuggestion ? 'Yes' : 'No'}
         </div>
       )}
 
