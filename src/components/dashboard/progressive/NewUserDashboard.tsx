@@ -17,17 +17,11 @@ export const NewUserDashboard = ({ progressState }: NewUserDashboardProps) => {
         {/* Hero Section for New Users */}
         <GetStartedHeroSection />
         
-        {/* Getting Started Guide - Tips for new users */}
-        <GettingStartedGuide />
+        {/* Onboarding Checklist - First after hero section */}
+        <OnboardingChecklist />
         
         {/* Quick Start Actions - Replace Learning Toolkit */}
         <QuickStartActions />
-        
-        {/* Full-Width Onboarding Checklist */}
-        <OnboardingChecklist />
-        
-        {/* AI Study Suggestions - Full Width */}
-        <StudySuggestions />
         
         {/* Welcome Tips Card */}
         <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">

@@ -30,6 +30,13 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
   const progressState = useUserProgressState();
   const { suggestions, isLoading } = useEnhancedStudySuggestions(progressState);
 
+  // Only show for users who have created library items (not brand new users)
+  const hasContent = progressState.totalItems > 0;
+  
+  if (!hasContent) {
+    return null; // Don't render anything for brand new users
+  }
+
   const getIcon = (type: string, iconEmoji: string) => {
     switch (type) {
       case 'urgent': return <AlertTriangle className="h-5 w-5" />;
