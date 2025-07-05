@@ -34,10 +34,7 @@ export const SignUpForm = () => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`
-        }
+        password
       });
 
       console.log('🔐 [SIGNUP] Result:', { data, error });
@@ -59,14 +56,9 @@ export const SignUpForm = () => {
           description: error.message,
           variant: "destructive"
         });
-      } else {
-        // Store signup completion flag for tier selection access
-        sessionStorage.setItem('signup_completed', JSON.stringify({
-          email,
-          timestamp: Date.now()
-        }));
-        
-        console.log('🔐 [SIGNUP] Stored signup flag, navigating to tier selection');
+      } else if (data.user) {
+        // With email confirmation disabled, user is immediately logged in
+        console.log('🔐 [SIGNUP] User created and logged in, navigating to tier selection');
         
         toast({
           title: "Success",

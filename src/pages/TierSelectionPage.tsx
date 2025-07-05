@@ -10,20 +10,7 @@ import { Mail } from 'lucide-react';
 const TierSelectionPage = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const [signupInfo, setSignupInfo] = useState<{ email: string; timestamp: number } | null>(null);
-
-  useEffect(() => {
-    // Check for signup completion flag (for showing email confirmation message)
-    const signupData = sessionStorage.getItem('signup_completed');
-    if (signupData) {
-      try {
-        const parsed = JSON.parse(signupData);
-        setSignupInfo(parsed);
-      } catch (error) {
-        sessionStorage.removeItem('signup_completed');
-      }
-    }
-  }, []);
+  // No longer need signup info since we have instant signup
 
   // Tier selection specific pricing data
   const tierPlans = [
@@ -110,9 +97,6 @@ const TierSelectionPage = () => {
   }
 
   const handleTierSelection = (planName: string, billing: 'monthly' | 'yearly') => {
-    // Clear signup flag after tier selection
-    sessionStorage.removeItem('signup_completed');
-    
     if (planName === 'SCHOLAR') {
       // Free tier - go directly to onboarding
       navigate('/onboarding');
@@ -131,26 +115,13 @@ const TierSelectionPage = () => {
     <Layout>
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
         <div className="container mx-auto px-4 py-8">
-          {/* Welcome message for different user states */}
-          {!user && signupInfo && (
-            <div className="mb-6">
-              <Alert className="border-blue-200 bg-blue-50">
-                <Mail className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Almost there!</strong> We've sent a confirmation link to{' '}
-                  <span className="font-medium">{signupInfo.email}</span>. 
-                  Click the link in your email to confirm your account, then return here to select your plan.
-                </AlertDescription>
-              </Alert>
-            </div>
-          )}
-          
+          {/* Welcome message for authenticated users */}
           {user && (
             <div className="mb-6">
               <Alert className="border-mint-200 bg-mint-50">
                 <Mail className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Email confirmed!</strong> Your account is ready. Choose your plan below to continue.
+                  <strong>Welcome to PrepGenie!</strong> Your account is ready. Choose your plan below to continue.
                 </AlertDescription>
               </Alert>
             </div>
