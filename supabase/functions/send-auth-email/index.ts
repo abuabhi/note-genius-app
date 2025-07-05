@@ -78,7 +78,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "PrepGenie <noreply@resend.dev>",
+        from: "PrepGenie <onboarding@resend.dev>",
         to: [user.email],
         subject: "Confirm Your PrepGenie Account",
         html
@@ -86,7 +86,13 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     if (!response.ok) {
-      throw new Error(`Resend API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error("❌ Resend API error:", {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText
+      });
+      throw new Error(`Resend API error: ${response.status} - ${errorText}`);
     }
 
     console.log("✅ Email sent successfully to:", user.email);
