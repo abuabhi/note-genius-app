@@ -11,9 +11,13 @@ import { motion } from "framer-motion";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useAuth } from "@/contexts/auth"; // Updated import path
+import { useUserTier, UserTier } from "@/hooks/useUserTier";  
+import { useSubscription } from "@/contexts/SubscriptionContext";
 import { itemVariants } from "./motion";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
+import { ArrowUp, Crown, Zap } from "lucide-react";
 
 interface LogoutSectionProps {
   isCollapsed: boolean;
@@ -22,6 +26,8 @@ interface LogoutSectionProps {
 export const LogoutSection = ({ isCollapsed }: LogoutSectionProps) => {
   const { user, userProfile } = useRequireAuth();
   const { signOut } = useAuth();
+  const { userTier } = useUserTier();
+  const { createCheckoutSession } = useSubscription();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -35,8 +41,75 @@ export const LogoutSection = ({ isCollapsed }: LogoutSectionProps) => {
     }
   };
 
+  const handleUpgrade = async (targetTier: 'GRADUATE' | 'MASTER') => {
+    try {
+      await createCheckoutSession(targetTier, 'monthly');
+    } catch (error) {
+      console.error('Error upgrading:', error);
+      toast.error('Failed to start upgrade process');
+    }
+  };
+
+  // Determine upgrade suggestion based on current tier
+  const getUpgradeSuggestion = () => {
+    if (userTier === UserTier.SCHOLAR) {
+      return {
+        tier: 'GRADUATE' as const,
+        name: 'Graduate',
+        icon: Crown,
+        price: '$9.99/mo',
+        badgeText: 'Upgrade Available'
+      };
+    } else if (userTier === UserTier.GRADUATE) {
+      return {
+        tier: 'MASTER' as const,
+        name: 'Master', 
+        icon: Zap,
+        price: '$19.99/mo',
+        badgeText: 'Master Available'
+      };
+    }
+    return null;
+  };
+
+  const upgradeSuggestion = getUpgradeSuggestion();
+
   return (
-    <div className="flex flex-col p-2">
+    <div className="flex flex-col p-2 space-y-2">
+      {/* Upgrade Suggestion */}
+      {upgradeSuggestion && !isCollapsed && (
+        <div className="bg-gradient-to-r from-mint-50 to-emerald-50 border border-mint-200/50 rounded-md p-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <upgradeSuggestion.icon className="h-3 w-3 text-mint-600" />
+              <div>
+                <p className="text-xs font-medium text-gray-900">{upgradeSuggestion.name}</p>
+                <p className="text-xs text-gray-600">{upgradeSuggestion.price}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => handleUpgrade(upgradeSuggestion.tier)}
+              className="text-xs bg-mint-600 text-white px-2 py-1 rounded hover:bg-mint-700 transition-colors"
+            >
+              <ArrowUp className="h-3 w-3" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Compact upgrade badge for collapsed sidebar */}
+      {upgradeSuggestion && isCollapsed && (
+        <div className="flex justify-center">
+          <Badge 
+            onClick={() => handleUpgrade(upgradeSuggestion.tier)}
+            className="bg-mint-500 hover:bg-mint-600 text-white cursor-pointer text-xs px-1 py-0.5"
+          >
+            <ArrowUp className="h-2 w-2" />
+          </Badge>
+        </div>
+      )}
+
+      {/* User Menu */}
       <div>
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger className="w-full">

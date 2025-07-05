@@ -193,7 +193,7 @@ export const MergedSubscriptionCard = () => {
                     className="h-8 px-3 text-xs"
                   >
                     <Settings className="h-3 w-3 mr-1" />
-                    Manage
+                    Billing History
                   </Button>
                 </div>
               </div>
@@ -202,21 +202,21 @@ export const MergedSubscriptionCard = () => {
 
           {/* Non-subscribed users (Scholar tier) */}
           {!subscribed && !isDeanTier && (
-            <div className="bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl p-4 border border-gray-200/50">
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200/50">
               <div className="text-center space-y-3">
-                <Badge variant="outline" className="text-xs px-2 py-1">
+                <Badge variant="outline" className="text-xs px-2 py-1 border-amber-300 text-amber-700">
                   SCHOLAR TIER
                 </Badge>
                 <div>
                   <p className="text-gray-700 text-sm mb-3">
-                    Currently on the free tier
+                    Unlock AI features, more storage, and advanced analytics
                   </p>
                   <div className="flex gap-2 justify-center flex-wrap">
-                    <Button onClick={() => handleUpgrade(UserTier.GRADUATE)} size="sm" className="text-xs px-3 py-1">
-                      Graduate $9.99/mo
+                    <Button onClick={() => handleUpgrade(UserTier.GRADUATE)} size="sm" className="text-xs px-3 py-1 bg-mint-600 hover:bg-mint-700">
+                      Upgrade to Graduate $9.99/mo
                     </Button>
-                    <Button onClick={() => handleUpgrade(UserTier.MASTER)} variant="outline" size="sm" className="text-xs px-3 py-1">
-                      Master $19.99/mo
+                    <Button onClick={() => handleUpgrade(UserTier.MASTER)} variant="outline" size="sm" className="text-xs px-3 py-1 border-mint-600 text-mint-600 hover:bg-mint-50">
+                      Try Master $19.99/mo
                     </Button>
                   </div>
                 </div>
@@ -249,6 +249,16 @@ export const MergedSubscriptionCard = () => {
                     value={getUsagePercentage(usageStats?.notesCount || 0, tierLimits.max_notes)}
                     className="h-1.5"
                   />
+                  {/* Show upgrade prompt when approaching limit */}
+                  {tierLimits.max_notes !== -1 && getUsagePercentage(usageStats?.notesCount || 0, tierLimits.max_notes) >= 80 && userTier !== UserTier.DEAN && (
+                    <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-200">
+                      <span>
+                        You're using {getUsagePercentage(usageStats?.notesCount || 0, tierLimits.max_notes)}% of your notes limit. 
+                        {userTier === UserTier.SCHOLAR && " Upgrade to Graduate for 100 notes."}
+                        {userTier === UserTier.GRADUATE && " Upgrade to Master for 250 notes."}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-1">
@@ -262,6 +272,16 @@ export const MergedSubscriptionCard = () => {
                     value={getUsagePercentage(usageStats?.flashcardSetsCount || 0, tierLimits.max_flashcard_sets)}
                     className="h-1.5"
                   />
+                  {/* Show upgrade prompt when approaching limit */}
+                  {tierLimits.max_flashcard_sets !== -1 && getUsagePercentage(usageStats?.flashcardSetsCount || 0, tierLimits.max_flashcard_sets) >= 80 && userTier !== UserTier.DEAN && (
+                    <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-200">
+                      <span>
+                        You're using {getUsagePercentage(usageStats?.flashcardSetsCount || 0, tierLimits.max_flashcard_sets)}% of your flashcard sets limit.
+                        {userTier === UserTier.SCHOLAR && " Upgrade to Graduate for 25 sets."}
+                        {userTier === UserTier.GRADUATE && " Upgrade to Master for 50 sets."}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-1">
@@ -275,6 +295,16 @@ export const MergedSubscriptionCard = () => {
                     value={getUsagePercentage(usageStats?.storageUsed || 0, tierLimits.max_storage_mb)}
                     className="h-1.5"
                   />
+                  {/* Show upgrade prompt when approaching limit */}
+                  {tierLimits.max_storage_mb !== -1 && getUsagePercentage(usageStats?.storageUsed || 0, tierLimits.max_storage_mb) >= 80 && userTier !== UserTier.DEAN && (
+                    <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-200">
+                      <span>
+                        You're using {getUsagePercentage(usageStats?.storageUsed || 0, tierLimits.max_storage_mb)}% of your storage limit.
+                        {userTier === UserTier.SCHOLAR && " Upgrade to Graduate for 500MB."}
+                        {userTier === UserTier.GRADUATE && " Upgrade to Master for 2GB."}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
