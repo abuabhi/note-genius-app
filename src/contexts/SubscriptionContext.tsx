@@ -92,23 +92,39 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const openCustomerPortal = async () => {
-    if (!user) throw new Error('User not authenticated');
+    if (!user) {
+      console.error('🏦 [PORTAL] User not authenticated');
+      throw new Error('User not authenticated');
+    }
+
+    console.log('🏦 [PORTAL] Opening customer portal for user:', user.email);
 
     try {
       const token = await getAuthToken();
+      console.log('🏦 [PORTAL] Got auth token:', !!token);
+      
       const { data, error } = await supabase.functions.invoke('customer-portal', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      if (error) throw error;
+      console.log('🏦 [PORTAL] Function response:', { data, error });
 
-      if (data.url) {
+      if (error) {
+        console.error('🏦 [PORTAL] Function error:', error);
+        throw error;
+      }
+
+      if (data?.url) {
+        console.log('🏦 [PORTAL] Opening URL:', data.url);
         window.open(data.url, '_blank');
+      } else {
+        console.error('🏦 [PORTAL] No URL returned from function');
+        throw new Error('No portal URL returned');
       }
     } catch (error) {
-      console.error('Error opening customer portal:', error);
+      console.error('🏦 [PORTAL] Error opening customer portal:', error);
       throw error;
     }
   };

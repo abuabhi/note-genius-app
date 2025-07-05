@@ -26,9 +26,12 @@ interface LogoutSectionProps {
 export const LogoutSection = ({ isCollapsed }: LogoutSectionProps) => {
   const { user, userProfile } = useRequireAuth();
   const { signOut } = useAuth();
-  const { userTier } = useUserTier();
+  const { userTier, isLoading } = useUserTier();
   const { createCheckoutSession } = useSubscription();
   const navigate = useNavigate();
+
+  // Debug logging
+  console.log('🔧 [SIDEBAR] User tier:', userTier, 'Loading:', isLoading);
 
   const handleLogout = async () => {
     try {
@@ -52,7 +55,10 @@ export const LogoutSection = ({ isCollapsed }: LogoutSectionProps) => {
 
   // Determine upgrade suggestion based on current tier
   const getUpgradeSuggestion = () => {
+    console.log('🔧 [SIDEBAR] Calculating upgrade suggestion for tier:', userTier);
+    
     if (userTier === UserTier.SCHOLAR) {
+      console.log('🔧 [SIDEBAR] Scholar tier - showing Graduate upgrade');
       return {
         tier: 'GRADUATE' as const,
         name: 'Graduate',
@@ -61,6 +67,7 @@ export const LogoutSection = ({ isCollapsed }: LogoutSectionProps) => {
         badgeText: 'Upgrade Available'
       };
     } else if (userTier === UserTier.GRADUATE) {
+      console.log('🔧 [SIDEBAR] Graduate tier - showing Master upgrade');
       return {
         tier: 'MASTER' as const,
         name: 'Master', 
@@ -69,10 +76,13 @@ export const LogoutSection = ({ isCollapsed }: LogoutSectionProps) => {
         badgeText: 'Master Available'
       };
     }
+    
+    console.log('🔧 [SIDEBAR] No upgrade suggestion for tier:', userTier);
     return null;
   };
 
   const upgradeSuggestion = getUpgradeSuggestion();
+  console.log('🔧 [SIDEBAR] Upgrade suggestion:', upgradeSuggestion, 'Collapsed:', isCollapsed);
 
   return (
     <div className="flex flex-col p-2 space-y-2">

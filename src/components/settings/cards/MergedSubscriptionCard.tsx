@@ -6,10 +6,12 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { useUserTier, UserTier } from "@/hooks/useUserTier";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { useAuth } from "@/contexts/auth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader, Crown, Zap, Shield, Check, X, CreditCard, RefreshCw, Settings, Calendar, Sparkles } from "lucide-react";
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 const tierBadgeVariants = {
   [UserTier.SCHOLAR]: "outline",
@@ -33,6 +35,7 @@ const tierPricing = {
 };
 
 export const MergedSubscriptionCard = () => {
+  const { user } = useAuth();
   const { userTier, tierLimits, isLoading } = useUserTier();
   const { 
     subscribed, 
@@ -88,10 +91,17 @@ export const MergedSubscriptionCard = () => {
   };
 
   const handleManageSubscription = async () => {
+    console.log('🏦 [BILLING] Opening customer portal...');
     try {
+      console.log('🏦 [BILLING] User authenticated:', !!user);
+      console.log('🏦 [BILLING] Subscribed:', subscribed);
+      console.log('🏦 [BILLING] Subscription tier:', subscriptionTier);
+      
       await openCustomerPortal();
+      console.log('🏦 [BILLING] Portal opened successfully');
     } catch (error) {
-      console.error('Error opening customer portal:', error);
+      console.error('🏦 [BILLING] Error opening customer portal:', error);
+      toast.error('Failed to open billing history. Please try again.');
     }
   };
 
