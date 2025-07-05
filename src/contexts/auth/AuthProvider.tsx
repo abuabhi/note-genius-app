@@ -161,8 +161,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       email,
       password,
       options: { 
-        data: metadata,
-        emailRedirectTo: `${window.location.origin}/login?confirmed=true`
+        data: metadata
       }
     });
   };

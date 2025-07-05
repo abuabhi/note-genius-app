@@ -76,12 +76,6 @@ const SignupPage = () => {
     setIsSubmitting(true);
     
     try {
-      // Store signup info for the confirmation page
-      sessionStorage.setItem('signup_completed', JSON.stringify({
-        email: formData.email,
-        timestamp: Date.now()
-      }));
-      
       const { error } = await signUp(formData.email, formData.password, {
         username: formData.name || formData.email.split('@')[0],
         referral_code: formData.referralCode.trim() || null,
@@ -91,10 +85,9 @@ const SignupPage = () => {
         throw error;
       }
       
-      // Navigate to confirmation page instead of tier selection
-      navigate('/confirm-email');
+      // With instant signup, navigate directly to tier selection
+      navigate('/tier-selection');
     } catch (error: any) {
-      sessionStorage.removeItem('signup_completed');
       setError(error.message || "Failed to create account");
     } finally {
       setIsSubmitting(false);

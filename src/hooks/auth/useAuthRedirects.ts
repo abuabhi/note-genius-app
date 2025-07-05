@@ -19,7 +19,7 @@ export const useAuthRedirects = ({
   const location = useLocation();
   
   // Define which routes are public
-  const publicRoutes = ['/', '/about', '/pricing', '/faq', '/contact', '/blog', '/features', '/login', '/signup', '/tier-selection', '/payment', '/confirm-email'];
+  const publicRoutes = ['/', '/about', '/pricing', '/faq', '/contact', '/blog', '/features', '/login', '/signup', '/tier-selection', '/payment'];
   const isPublicRoute = publicRoutes.includes(location.pathname);
   
   useEffect(() => {
