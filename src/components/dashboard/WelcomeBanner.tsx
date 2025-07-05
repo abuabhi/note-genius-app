@@ -18,7 +18,7 @@ export function WelcomeBanner() {
       
       const { data, error } = await supabase
         .from('profiles')
-        .select('username')
+        .select('first_name')
         .eq('id', user.id)
         .single();
       
@@ -46,8 +46,8 @@ export function WelcomeBanner() {
     return `${hours.toFixed(1)}h`;
   };
 
-  // Get user's name from profile, fall back to first part of email if no username
-  const displayName = userProfile?.username || user?.email?.split('@')[0] || "Genius";
+  // Get user's first name from profile, fall back to first part of email if no first_name
+  const displayName = userProfile?.first_name || user?.email?.split('@')[0] || "Genius";
   const timeOfDay = getTimeOfDay();
 
   if (isLoading) {

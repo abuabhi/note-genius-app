@@ -77,7 +77,7 @@ const SignupPage = () => {
     
     try {
       const { error } = await signUp(formData.email, formData.password, {
-        username: formData.name || formData.email.split('@')[0],
+        first_name: formData.name.split(' ')[0] || formData.email.split('@')[0],
         referral_code: formData.referralCode.trim() || null,
       });
       
