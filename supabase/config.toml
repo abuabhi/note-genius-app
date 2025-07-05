@@ -30,6 +30,9 @@ port = 54325
 [functions.stripe-webhook]
 verify_jwt = false
 
+[functions.send-auth-email]
+verify_jwt = false
+
 [functions.process-payouts]
 verify_jwt = true
 
