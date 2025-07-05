@@ -57,10 +57,35 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // 🔍 DEBUG: Check if RESEND_API_KEY is available
+    const resendKey = Deno.env.get("RESEND_API_KEY");
+    console.log("🔍 [DEBUG] RESEND_API_KEY status:", resendKey ? "✅ Present" : "❌ Missing");
+    
+    if (!resendKey) {
+      console.error("❌ CRITICAL: RESEND_API_KEY not found in environment");
+      return new Response(JSON.stringify({ 
+        error: "Email service not configured - missing API key" 
+      }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
     const { user, email_data }: AuthEmailRequest = await req.json();
+    console.log("🔍 [DEBUG] Request data:", {
+      userEmail: user?.email,
+      hasTokenHash: !!email_data?.token_hash,
+      emailActionType: email_data?.email_action_type,
+      siteUrl: email_data?.site_url
+    });
     
     // Basic validation only
     if (!user?.email || !email_data?.token_hash || email_data.email_action_type !== "signup") {
+      console.error("❌ Validation failed:", {
+        hasEmail: !!user?.email,
+        hasTokenHash: !!email_data?.token_hash,
+        actionType: email_data?.email_action_type
+      });
       return new Response("Invalid request", { 
         status: 400, 
         headers: corsHeaders 
@@ -68,35 +93,61 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const confirmationUrl = `${email_data.site_url}/auth/v1/verify?token=${email_data.token_hash}&type=${email_data.email_action_type}&redirect_to=${encodeURIComponent(email_data.redirect_to)}`;
-    const html = createMinimalEmail(confirmationUrl, user.email);
+    console.log("🔍 [DEBUG] Confirmation URL generated:", confirmationUrl.substring(0, 100) + "...");
+    
+    // Ultra-minimal HTML for testing
+    const simpleHtml = `
+    <h1>Confirm Your Account</h1>
+    <p>Click here: <a href="${confirmationUrl}">Confirm</a></p>
+    `;
+
+    const emailPayload = {
+      from: "PrepGenie <onboarding@resend.dev>",
+      to: [user.email],
+      subject: "Confirm Account",
+      html: simpleHtml
+    };
+
+    console.log("🔍 [DEBUG] Email payload:", {
+      from: emailPayload.from,
+      to: emailPayload.to,
+      subject: emailPayload.subject,
+      htmlLength: emailPayload.html.length
+    });
 
     // Direct Resend API call using fetch - fastest method
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${Deno.env.get("RESEND_API_KEY")}`,
+        "Authorization": `Bearer ${resendKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        from: "PrepGenie <onboarding@resend.dev>",
-        to: [user.email],
-        subject: "Confirm Your PrepGenie Account",
-        html
-      }),
+      body: JSON.stringify(emailPayload),
     });
+
+    console.log("🔍 [DEBUG] Resend response status:", response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error("❌ Resend API error:", {
         status: response.status,
         statusText: response.statusText,
-        body: errorText
+        body: errorText,
+        headers: Object.fromEntries(response.headers.entries())
       });
       throw new Error(`Resend API error: ${response.status} - ${errorText}`);
     }
 
-    console.log("✅ Email sent successfully to:", user.email);
-    return new Response(JSON.stringify({ success: true }), {
+    const responseData = await response.json();
+    console.log("✅ Email sent successfully:", {
+      to: user.email,
+      responseId: responseData.id
+    });
+    
+    return new Response(JSON.stringify({ 
+      success: true, 
+      emailId: responseData.id 
+    }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
@@ -104,8 +155,15 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
   } catch (error: any) {
-    console.error("❌ Email send error:", error.message);
-    return new Response(JSON.stringify({ error: "Failed to send email" }), {
+    console.error("❌ Email send error:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    return new Response(JSON.stringify({ 
+      error: "Failed to send email",
+      details: error.message 
+    }), {
       status: 500,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
