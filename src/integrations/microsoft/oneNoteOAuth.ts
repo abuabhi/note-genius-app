@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 
 // Microsoft OAuth configuration - client ID will be fetched from Supabase
 let clientId: string | null = null;
-const redirectUri = `${window.location.origin}/auth/microsoft-callback`;
+const redirectUri = `${window.location.origin}/auth/microsoft/callback`;
 const tenantId = "common"; // Use "common" for multi-tenant applications
 const scopes = ["Notes.Read", "Notes.ReadWrite", "User.Read"];
 
