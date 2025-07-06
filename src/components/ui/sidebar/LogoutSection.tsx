@@ -17,7 +17,9 @@ import { itemVariants } from "./motion";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUp, Crown, Zap } from "lucide-react";
+import { UpgradeDialog } from "@/components/ui/UpgradeDialog";
+import { ArrowUp, Crown, Zap, Sparkles, Brain } from "lucide-react";
+import { useState } from "react";
 
 interface LogoutSectionProps {
   isCollapsed: boolean;
@@ -29,6 +31,8 @@ export const LogoutSection = ({ isCollapsed }: LogoutSectionProps) => {
   const { userTier, isLoading } = useUserTier();
   const { createCheckoutSession } = useSubscription();
   const navigate = useNavigate();
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
+  const [selectedUpgradeTier, setSelectedUpgradeTier] = useState<'GRADUATE' | 'MASTER'>('GRADUATE');
 
   // Debug logging
   console.log('🔧 [SIDEBAR] User tier:', userTier, 'Loading:', isLoading);
@@ -47,13 +51,9 @@ export const LogoutSection = ({ isCollapsed }: LogoutSectionProps) => {
     }
   };
 
-  const handleUpgrade = async (targetTier: 'GRADUATE' | 'MASTER') => {
-    try {
-      await createCheckoutSession(targetTier, 'monthly');
-    } catch (error) {
-      console.error('Error upgrading:', error);
-      toast.error('Failed to start upgrade process');
-    }
+  const handleUpgrade = (targetTier: 'GRADUATE' | 'MASTER') => {
+    setSelectedUpgradeTier(targetTier);
+    setUpgradeDialogOpen(true);
   };
 
   // Determine upgrade suggestion based on current tier
@@ -66,8 +66,9 @@ export const LogoutSection = ({ isCollapsed }: LogoutSectionProps) => {
         tier: 'GRADUATE' as const,
         name: 'Graduate',
         icon: Crown,
-        price: '$9.99/mo',
-        badgeText: 'Upgrade Available'
+        tagline: 'AI + More Storage',
+        badgeText: 'Ready to level up?',
+        description: 'Unlock AI features'
       };
     } else if (userTier === UserTier.GRADUATE) {
       console.log('🔧 [SIDEBAR] Graduate tier - showing Master upgrade');
@@ -75,8 +76,9 @@ export const LogoutSection = ({ isCollapsed }: LogoutSectionProps) => {
         tier: 'MASTER' as const,
         name: 'Master', 
         icon: Zap,
-        price: '$19.99/mo',
-        badgeText: 'Master Available'
+        tagline: 'Ultimate Experience',
+        badgeText: 'Go Pro',
+        description: 'Advanced AI + more'
       };
     }
     
@@ -104,23 +106,26 @@ export const LogoutSection = ({ isCollapsed }: LogoutSectionProps) => {
       {/* Upgrade Suggestion - Always show for Scholar tier */}
       {upgradeSuggestion && !isCollapsed && (
         <div 
-          className="bg-gradient-to-r from-mint-50 to-emerald-50 border border-mint-200/50 rounded-md p-2"
-          style={{ minHeight: '60px' }} // Ensure minimum height for visibility
+          className="bg-gradient-to-r from-mint-50 to-emerald-50 border border-mint-200/50 rounded-lg p-3 cursor-pointer hover:from-mint-100 hover:to-emerald-100 transition-all"
+          onClick={() => handleUpgrade(upgradeSuggestion.tier)}
         >
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <upgradeSuggestion.icon className="h-3 w-3 text-mint-600" />
-              <div>
-                <p className="text-xs font-medium text-gray-900">{upgradeSuggestion.name}</p>
-                <p className="text-xs text-gray-600">{upgradeSuggestion.price}</p>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-mint-100 rounded-full flex items-center justify-center">
+                  <upgradeSuggestion.icon className="h-3 w-3 text-mint-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-gray-900">Unlock {upgradeSuggestion.name}</p>
+                  <p className="text-xs text-mint-600">{upgradeSuggestion.tagline}</p>
+                </div>
               </div>
+              <ArrowUp className="h-4 w-4 text-mint-600" />
             </div>
-            <button
-              onClick={() => handleUpgrade(upgradeSuggestion.tier)}
-              className="text-xs bg-mint-600 text-white px-2 py-1 rounded hover:bg-mint-700 transition-colors flex items-center"
-            >
-              <ArrowUp className="h-3 w-3" />
-            </button>
+            <div className="flex items-center gap-1">
+              <Sparkles className="h-3 w-3 text-mint-600" />
+              <span className="text-xs text-gray-600">{upgradeSuggestion.description}</span>
+            </div>
           </div>
         </div>
       )}
@@ -189,6 +194,14 @@ export const LogoutSection = ({ isCollapsed }: LogoutSectionProps) => {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {/* Upgrade Dialog */}
+      <UpgradeDialog
+        open={upgradeDialogOpen}
+        onOpenChange={setUpgradeDialogOpen}
+        currentTier={userTier}
+        targetTier={selectedUpgradeTier}
+      />
     </div>
   );
 };

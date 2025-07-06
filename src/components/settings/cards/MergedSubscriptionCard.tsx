@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -9,6 +9,7 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useAuth } from "@/contexts/auth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { UpgradeDialog } from "@/components/ui/UpgradeDialog";
 import { Loader, Crown, Zap, Shield, Check, X, CreditCard, RefreshCw, Settings, Calendar, Sparkles } from "lucide-react";
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -46,6 +47,8 @@ export const MergedSubscriptionCard = () => {
     openCustomerPortal,
     createCheckoutSession 
   } = useSubscription();
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
+  const [selectedUpgradeTier, setSelectedUpgradeTier] = useState<'GRADUATE' | 'MASTER'>('GRADUATE');
   
   // Fetch usage stats
   const { data: usageStats, isLoading: isLoadingUsage } = useQuery({
@@ -105,16 +108,10 @@ export const MergedSubscriptionCard = () => {
     }
   };
 
-  const handleUpgrade = async (targetTier: UserTier) => {
-    try {
-      if (targetTier === UserTier.GRADUATE) {
-        await createCheckoutSession('GRADUATE', 'monthly');
-      } else if (targetTier === UserTier.MASTER) {
-        await createCheckoutSession('MASTER', 'monthly');
-      }
-    } catch (error) {
-      console.error('Error creating checkout session:', error);
-    }
+  const handleUpgrade = (targetTier: UserTier) => {
+    const tier = targetTier === UserTier.GRADUATE ? 'GRADUATE' : 'MASTER';
+    setSelectedUpgradeTier(tier);
+    setUpgradeDialogOpen(true);
   };
 
   const isDeanTier = userTier === UserTier.DEAN;
@@ -233,7 +230,7 @@ export const MergedSubscriptionCard = () => {
                       Refresh Status
                     </Button>
                     <Button onClick={() => handleUpgrade(UserTier.GRADUATE)} size="sm" className="text-xs px-3 py-1 bg-mint-600 hover:bg-mint-700">
-                      Upgrade to Graduate $9.99/mo
+                      Unlock Graduate Features
                     </Button>
                   </div>
                 </div>
@@ -254,10 +251,10 @@ export const MergedSubscriptionCard = () => {
                   </p>
                   <div className="flex gap-2 justify-center flex-wrap">
                     <Button onClick={() => handleUpgrade(UserTier.GRADUATE)} size="sm" className="text-xs px-3 py-1 bg-mint-600 hover:bg-mint-700">
-                      Upgrade to Graduate $9.99/mo
+                      Unlock Graduate Features
                     </Button>
                     <Button onClick={() => handleUpgrade(UserTier.MASTER)} variant="outline" size="sm" className="text-xs px-3 py-1 border-mint-600 text-mint-600 hover:bg-mint-50">
-                      Try Master $19.99/mo
+                      Unlock Master Features
                     </Button>
                   </div>
                 </div>
@@ -416,6 +413,14 @@ export const MergedSubscriptionCard = () => {
           </div>
         )}
       </CardContent>
+
+      {/* Upgrade Dialog */}
+      <UpgradeDialog
+        open={upgradeDialogOpen}
+        onOpenChange={setUpgradeDialogOpen}
+        currentTier={userTier}
+        targetTier={selectedUpgradeTier}
+      />
     </Card>
   );
 };
