@@ -16,7 +16,7 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!api|_next/static|_next/image|favicon.ico|\\.well-known|.*\\.(?:svg|png|jpg|jpeg|gif|webp|js|css|woff|woff2|ttf|eot|ico|map)).*)",
+      "source": "/((?!api|_next|favicon.ico|\\.well-known)(?!.*\\.(svg|png|jpg|jpeg|gif|webp|js|css|woff|woff2|ttf|eot|ico|map)).*)",
       "destination": "/index.html"
     }
   ]
