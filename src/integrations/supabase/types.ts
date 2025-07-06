@@ -1702,6 +1702,8 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string | null
+          video_metadata: Json | null
+          video_url: string | null
         }
         Insert: {
           archived?: boolean | null
@@ -1732,6 +1734,8 @@ export type Database = {
           title: string
           updated_at?: string
           user_id?: string | null
+          video_metadata?: Json | null
+          video_url?: string | null
         }
         Update: {
           archived?: boolean | null
@@ -1762,6 +1766,8 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string | null
+          video_metadata?: Json | null
+          video_url?: string | null
         }
         Relationships: [
           {

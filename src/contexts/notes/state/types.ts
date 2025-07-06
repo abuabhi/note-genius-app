@@ -12,7 +12,7 @@ export interface FilterOptions {
   dateFrom?: Date;
   dateTo?: Date;
   subject?: string; // Note academic subject filtering
-  sourceType?: 'manual' | 'scan' | 'import' | ('manual' | 'scan' | 'import')[];
+  sourceType?: 'manual' | 'scan' | 'import' | 'youtube' | ('manual' | 'scan' | 'import' | 'youtube')[];
   hasTags?: boolean;
   tags?: string[];
   subjectId?: string; // Foreign key reference to user_subjects

@@ -15,7 +15,7 @@ export interface Note {
   date: string;
   subject: string; // Academic subject for notes (e.g., "Mathematics", "Science")
   content?: string;
-  sourceType: 'manual' | 'scan' | 'import';
+  sourceType: 'manual' | 'scan' | 'import' | 'youtube';
   archived?: boolean;
   pinned?: boolean;
   tags?: { id?: string; name: string; color: string }[];
@@ -30,6 +30,17 @@ export interface Note {
     fileType?: string;
     importedAt?: string;
   };
+  
+  // YouTube-specific fields
+  video_url?: string; // Original YouTube URL
+  video_metadata?: {
+    title?: string;
+    duration?: number;
+    thumbnail?: string;
+    channel?: string;
+    publishedAt?: string;
+  };
+  
   subject_id?: string; // Foreign key reference to user_subjects table
   
   // Enhancement fields with comprehensive status tracking

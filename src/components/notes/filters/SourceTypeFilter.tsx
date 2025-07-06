@@ -3,15 +3,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { FilterOption } from "./FilterOption";
 
 interface SourceTypeFilterProps {
-  sourceType?: ('manual' | 'scan' | 'import')[];
-  onSourceTypeChange: (sourceType: ('manual' | 'scan' | 'import')[]) => void;
+  sourceType?: ('manual' | 'scan' | 'import' | 'youtube')[];
+  onSourceTypeChange: (sourceType: ('manual' | 'scan' | 'import' | 'youtube')[]) => void;
 }
 
 export const SourceTypeFilter = ({
   sourceType = [],
   onSourceTypeChange
 }: SourceTypeFilterProps) => {
-  const handleChange = (type: 'manual' | 'scan' | 'import', isChecked: boolean) => {
+  const handleChange = (type: 'manual' | 'scan' | 'import' | 'youtube', isChecked: boolean) => {
     if (isChecked) {
       onSourceTypeChange([...sourceType, type]);
     } else {
@@ -61,6 +61,20 @@ export const SourceTypeFilter = ({
             className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
           >
             Imported Files
+          </label>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <Checkbox 
+            id="youtube" 
+            checked={sourceType.includes('youtube')}
+            onCheckedChange={(checked) => handleChange('youtube', checked === true)}
+          />
+          <label
+            htmlFor="youtube"
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          >
+            YouTube Videos
           </label>
         </div>
       </div>

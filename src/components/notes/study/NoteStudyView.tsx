@@ -3,6 +3,7 @@ import React from "react";
 import { Note } from "@/types/note";
 import { StudyViewHeader } from "./header/StudyViewHeader";
 import { NoteStudyViewContent } from "./viewer/NoteStudyViewContent";
+import { YouTubeVideoPlayer } from "../display/YouTubeVideoPlayer";
 import { useStudyViewState } from "./hooks/useStudyViewState";
 import { useNoteStudyEditor } from "./hooks/useNoteStudyEditor";
 import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
@@ -98,6 +99,16 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
         onTitleChange={handleTitleChange}
         onEnhance={handleEnhance}
       />
+      {/* YouTube Video Player for video-based notes */}
+      {note.sourceType === 'youtube' && note.video_url && (
+        <div className="container mx-auto px-4 pb-4">
+          <YouTubeVideoPlayer 
+            videoUrl={note.video_url} 
+            title={note.title}
+            className="max-w-4xl mx-auto"
+          />
+        </div>
+      )}
       <div className="container mx-auto px-4 py-6">
         <NoteStudyViewContent
           note={note}
