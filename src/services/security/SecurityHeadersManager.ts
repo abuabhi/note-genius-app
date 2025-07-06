@@ -52,13 +52,14 @@ class SecurityHeadersManager {
   }
 
   private applyHeaders(): void {
-    // Apply meta tags for CSP (primary method for client-side apps)
+    // Only apply CSP via meta tags (X-Frame-Options must be set by server)
     this.addMetaTag('Content-Security-Policy', this.headers['Content-Security-Policy']);
-    this.addMetaTag('Referrer-Policy', this.headers['Referrer-Policy']);
     
     // Log security configuration
     if (config.isDevelopment) {
-      console.log('🔒 Security headers configured:', this.headers);
+      console.log('🔒 Security headers configured (client-side):', {
+        'Content-Security-Policy': this.headers['Content-Security-Policy']
+      });
     }
   }
 
