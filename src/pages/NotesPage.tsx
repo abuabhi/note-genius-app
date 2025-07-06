@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { OptimizedNotesProvider } from '@/contexts/OptimizedNotesContext';
 import { useViewPreferences } from '@/hooks/useViewPreferences';
 import { useState } from 'react';
-import { ImportDialog } from '@/components/notes/import/ImportDialog';
+import { useUserTier } from '@/hooks/useUserTier';
+import { EnhancedImportDialog } from '@/components/notes/import/EnhancedImportDialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CreateNoteForm } from '@/components/notes/page/CreateNoteForm';
 import { Note } from '@/types/note';
@@ -49,6 +50,7 @@ const NotesPage = () => {
   const { viewMode, setViewMode } = useViewPreferences('notes');
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
+  const { userTier } = useUserTier();
 
   // Convert ViewMode to the expected type for the header and content
   const convertedViewMode: 'grid' | 'list' = viewMode === 'compact' ? 'grid' : viewMode as 'grid' | 'list';
@@ -91,12 +93,13 @@ const NotesPage = () => {
       </div>
 
       {/* Import Dialog */}
-      <ImportDialog 
+      <EnhancedImportDialog 
         isVisible={isImportDialogOpen} 
         onClose={() => setIsImportDialogOpen(false)}
         onSaveNote={async (note) => {
           return true;
         }}
+        isPremiumUser={userTier === 'GRADUATE' || userTier === 'MASTER'}
       />
 
       {/* Manual Note Creation Dialog */}
