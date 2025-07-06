@@ -19,9 +19,11 @@ export const OneNoteConnection = ({ onConnected }: OneNoteConnectionProps) => {
   const [userInfo, setUserInfo] = useState<{name?: string, email?: string} | null>(null);
   
   // When authentication changes and we have an access token, call the callback
-  if (isAuthenticated && accessToken) {
-    onConnected(accessToken);
-  }
+  useEffect(() => {
+    if (isAuthenticated && accessToken) {
+      onConnected(accessToken);
+    }
+  }, [isAuthenticated, accessToken, onConnected]);
 
   // Fetch user info when authenticated
   useEffect(() => {

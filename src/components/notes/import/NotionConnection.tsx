@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { useNotionAuth } from "@/integrations/notion/notionOAuth";
 import { CircleCheck, Loader2, LogIn, LogOut } from "lucide-react";
+import { useEffect } from "react";
 
 interface NotionConnectionProps {
   onConnected: (token: string) => void;
@@ -11,9 +12,11 @@ export const NotionConnection = ({ onConnected }: NotionConnectionProps) => {
   const { isAuthenticated, accessToken, workspaceName, loading, error, connect, disconnect } = useNotionAuth();
   
   // Effect to call onConnected when authenticated
-  if (isAuthenticated && accessToken) {
-    onConnected(accessToken);
-  }
+  useEffect(() => {
+    if (isAuthenticated && accessToken) {
+      onConnected(accessToken);
+    }
+  }, [isAuthenticated, accessToken, onConnected]);
 
   return (
     <div className="space-y-4">
