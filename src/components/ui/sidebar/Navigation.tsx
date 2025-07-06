@@ -8,6 +8,7 @@ import { NavLink } from "./NavLink";
 import { useLocation } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { LogoutSection } from "./LogoutSection";
 import { 
   LayoutDashboard, 
   FileText, 
@@ -212,6 +213,11 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
             </div>
           </div>
         </ScrollArea>
+      </div>
+      
+      {/* User section with logout and upgrade */}
+      <div className="border-t border-border/50 bg-white/50">
+        <LogoutSection isCollapsed={isCollapsed} />
       </div>
     </motion.div>
   );

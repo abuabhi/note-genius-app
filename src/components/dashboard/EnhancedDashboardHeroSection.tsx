@@ -5,16 +5,65 @@ import { format } from "date-fns";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useActiveStudySessionData } from "@/hooks/useActiveStudySessionData";
 import { StudySessionPromptCard } from "./StudySessionPromptCard";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export const EnhancedDashboardHeroSection = () => {
   const today = format(new Date(), "EEEE, MMMM do");
   const { user } = useAuth();
   const sessionData = useActiveStudySessionData();
   
-  // Get first name from user email or use fallback
-  const getFirstName = () => {
-    if (user?.user_metadata?.full_name) {
-      return user.user_metadata.full_name.split(' ')[0];
+  // Fetch user profile data from database
+  const { data: userProfile } = useQuery({
+    queryKey: ["userProfile", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('first_name, username')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  // Check if user has any activity (to determine new vs returning)
+  const { data: userActivity } = useQuery({
+    queryKey: ["userActivity", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      // Check for any notes, flashcard sets, or study sessions
+      const [notesResult, flashcardsResult, sessionsResult] = await Promise.all([
+        supabase.from('notes').select('id').eq('user_id', user.id).limit(1),
+        supabase.from('flashcard_sets').select('id').eq('user_id', user.id).limit(1),
+        supabase.from('study_sessions').select('id').eq('user_id', user.id).limit(1)
+      ]);
+      
+      const hasActivity = (notesResult.data && notesResult.data.length > 0) ||
+                         (flashcardsResult.data && flashcardsResult.data.length > 0) ||
+                         (sessionsResult.data && sessionsResult.data.length > 0);
+      
+      return { hasActivity };
+    },
+    enabled: !!user,
+  });
+
+  // Get display name with proper fallbacks
+  const getDisplayName = () => {
+    if (userProfile?.first_name) {
+      return userProfile.first_name;
+    }
+    if (userProfile?.username) {
+      return userProfile.username;
     }
     if (user?.email) {
       const emailPart = user.email.split('@')[0];
@@ -23,6 +72,10 @@ export const EnhancedDashboardHeroSection = () => {
     }
     return 'there';
   };
+
+  // Determine if user is new or returning
+  const isReturningUser = userActivity?.hasActivity || false;
+  const displayName = getDisplayName();
 
   return (
     <div className="space-y-4">
@@ -42,7 +95,7 @@ export const EnhancedDashboardHeroSection = () => {
               <div className="flex items-center gap-2">
                 <Star className="h-5 w-5 text-mint-200" />
                 <h1 className="text-2xl font-bold">
-                  Welcome back, {getFirstName()}!
+                  {isReturningUser ? `Welcome back, ${displayName}!` : `Welcome to PrepGenie, ${displayName}!`}
                 </h1>
               </div>
             </div>

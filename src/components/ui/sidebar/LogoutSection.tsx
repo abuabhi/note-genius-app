@@ -33,6 +33,8 @@ export const LogoutSection = ({ isCollapsed }: LogoutSectionProps) => {
   // Debug logging
   console.log('🔧 [SIDEBAR] User tier:', userTier, 'Loading:', isLoading);
   console.log('🔧 [SIDEBAR] Is collapsed:', isCollapsed);
+  console.log('🔧 [SIDEBAR] User object:', user?.id);
+  console.log('🔧 [SIDEBAR] Profile object:', userProfile);
 
   const handleLogout = async () => {
     try {
@@ -83,7 +85,9 @@ export const LogoutSection = ({ isCollapsed }: LogoutSectionProps) => {
   };
 
   const upgradeSuggestion = getUpgradeSuggestion();
-  console.log('🔧 [SIDEBAR] Upgrade suggestion:', upgradeSuggestion, 'Collapsed:', isCollapsed);
+  console.log('🔧 [SIDEBAR] Upgrade suggestion:', upgradeSuggestion);
+  console.log('🔧 [SIDEBAR] Should show upgrade?', upgradeSuggestion && !isCollapsed);
+  console.log('🔧 [SIDEBAR] Collapsed:', isCollapsed);
 
   // Don't render anything if still loading
   if (isLoading) {
