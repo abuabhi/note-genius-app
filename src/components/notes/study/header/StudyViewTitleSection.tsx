@@ -74,15 +74,15 @@ export const StudyViewTitleSection = ({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 ml-6">
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold text-foreground leading-tight">{note?.title}</h1>
+        <h1 className="text-2xl font-bold text-primary leading-tight">{note?.title}</h1>
         
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        <div className="flex items-center gap-4 text-sm">
           {subjectName && subjectName !== "No Subject" && (
             <div className="flex items-center gap-2">
-              <Tag className="h-4 w-4" />
-              <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">
+              <Tag className="h-4 w-4 text-primary" />
+              <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20 font-medium">
                 {subjectName}
               </Badge>
             </div>
@@ -90,8 +90,8 @@ export const StudyViewTitleSection = ({
           
           {formattedDate && (
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              <span>{formattedDate}</span>
+              <Calendar className="h-4 w-4 text-primary" />
+              <span className="text-primary font-medium">{formattedDate}</span>
             </div>
           )}
         </div>

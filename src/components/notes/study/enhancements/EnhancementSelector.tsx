@@ -60,25 +60,32 @@ export const EnhancementSelector = ({
   );
   
   // FIXED: Only show processing when content is actually being generated AND doesn't exist
+  // For new notes, ensure all status fields are null/undefined and don't show processing
   const summaryStatus = note.summary_status;
   const isGeneratingSummary = summaryStatus === 'generating' || summaryStatus === 'pending';
   const hasSummaryError = summaryStatus === 'failed';
+  // Don't show processing for new notes - only when actively generating and content doesn't exist
+  const showSummaryProcessing = Boolean(isGeneratingSummary && !hasSummary && summaryStatus);
 
   const keyPointsStatus = note.key_points_status;
   const isGeneratingKeyPoints = keyPointsStatus === 'generating' || keyPointsStatus === 'pending';
   const hasKeyPointsError = keyPointsStatus === 'failed';
+  const showKeyPointsProcessing = Boolean(isGeneratingKeyPoints && !hasKeyPoints && keyPointsStatus);
 
   const markdownStatus = note.markdown_content_status;
   const isGeneratingMarkdown = markdownStatus === 'generating' || markdownStatus === 'pending';
   const hasMarkdownError = markdownStatus === 'failed';
+  const showMarkdownProcessing = Boolean(isGeneratingMarkdown && !hasMarkdown && markdownStatus);
 
   const improvedStatus = note.improved_content_status;
   const isGeneratingImproved = improvedStatus === 'generating' || improvedStatus === 'pending';
   const hasImprovedError = improvedStatus === 'failed';
+  const showImprovedProcessing = Boolean(isGeneratingImproved && !hasImprovedClarity && improvedStatus);
 
   const enrichedStatus = note.enriched_status;
   const isGeneratingEnriched = enrichedStatus === 'generating' || enrichedStatus === 'pending';
   const hasEnrichedError = enrichedStatus === 'failed';
+  const showEnrichedProcessing = Boolean(isGeneratingEnriched && !hasEnrichedContent && enrichedStatus);
 
   console.log("🔍 EnhancementSelector - FIXED Content availability check:", {
     noteId: note.id,
@@ -121,7 +128,7 @@ export const EnhancementSelector = ({
       icon: Code,
       description: 'Original note formatted',
       hasContent: hasMarkdown,
-      isGenerating: isGeneratingMarkdown && !hasMarkdown,
+      isGenerating: showMarkdownProcessing,
       hasError: hasMarkdownError
     },
     {
@@ -130,7 +137,7 @@ export const EnhancementSelector = ({
       icon: Target,
       description: 'AI-generated concise summary',
       hasContent: hasSummary,
-      isGenerating: isGeneratingSummary && !hasSummary,
+      isGenerating: showSummaryProcessing,
       hasError: hasSummaryError
     },
     {
@@ -139,7 +146,7 @@ export const EnhancementSelector = ({
       icon: List,
       description: 'Essential highlights extracted',
       hasContent: hasKeyPoints,
-      isGenerating: isGeneratingKeyPoints && !hasKeyPoints,
+      isGenerating: showKeyPointsProcessing,
       hasError: hasKeyPointsError
     },
     {
@@ -148,7 +155,7 @@ export const EnhancementSelector = ({
       icon: Sparkles,
       description: 'Enhanced notes version',
       hasContent: hasImprovedClarity,
-      isGenerating: isGeneratingImproved && !hasImprovedClarity,
+      isGenerating: showImprovedProcessing,
       hasError: hasImprovedError
     },
     {
@@ -157,7 +164,7 @@ export const EnhancementSelector = ({
       icon: Flame,
       description: '50-70% more detailed content',
       hasContent: hasEnrichedContent,
-      isGenerating: isGeneratingEnriched && !hasEnrichedContent,
+      isGenerating: showEnrichedProcessing,
       hasError: hasEnrichedError
     }
   ];
