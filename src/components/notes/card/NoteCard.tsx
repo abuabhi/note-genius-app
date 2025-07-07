@@ -6,6 +6,7 @@ import { NoteCardHeader } from "./components/NoteCardHeader";
 import { NoteCardContent } from "./components/NoteCardContent";
 import { NoteCardMetadata } from "./components/NoteCardMetadata";
 import { NoteCardActions } from "./NoteCardActions";
+import { NoteActionsMenu } from "./actions/NoteActionsMenu";
 import { StandardListCard } from "@/components/ui/StandardListCard";
 import { stripMarkdown } from "./utils/markdownUtils";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
@@ -90,7 +91,7 @@ export const NoteCard = ({
           className: "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-4 py-2 h-8 text-xs font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
         }}
         menuActions={
-          <NoteCardActions 
+          <NoteActionsMenu
             noteId={note.id}
             noteTitle={note.title}
             noteContent={note.content || note.description || ""}
