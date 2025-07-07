@@ -63,28 +63,34 @@ export const ContentExpansionContextMenu = ({
   return (
     <div
       ref={menuRef}
-      className="fixed z-[9999] bg-card rounded-lg shadow-lg border border-border p-2 min-w-48"
+      className="fixed z-[9999] bg-white rounded-xl shadow-2xl border-2 border-primary/20 p-4 min-w-64 max-w-80 animate-in fade-in-0 zoom-in-95 duration-200"
       style={{
-        left: Math.min(position.x, window.innerWidth - 200),
-        top: Math.min(position.y, window.innerHeight - 100),
+        left: Math.max(16, Math.min(position.x - 160, window.innerWidth - 320)),
+        top: Math.max(16, position.y - 20),
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(34, 197, 94, 0.1)'
       }}
     >
-      <div className="text-xs text-muted-foreground mb-2 px-2 truncate max-w-44">
-        "{selectedText.substring(0, 50)}{selectedText.length > 50 ? '...' : ''}"
+      <div className="text-sm text-muted-foreground mb-3 px-1 font-medium">
+        Selected: "{selectedText.substring(0, 60)}{selectedText.length > 60 ? '...' : ''}"
       </div>
       
       <Button
         onClick={handleExpand}
         disabled={isExpanding}
-        className="w-full justify-start text-sm h-8"
-        variant="ghost"
+        className="w-full justify-center text-base h-12 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+        size="lg"
       >
         {isExpanding ? (
-          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          <>
+            <Loader2 className="h-5 w-5 mr-3 animate-spin" />
+            Expanding content...
+          </>
         ) : (
-          <Expand className="h-4 w-4 mr-2" />
+          <>
+            <Expand className="h-5 w-5 mr-3" />
+            Expand this topic
+          </>
         )}
-        {isExpanding ? 'Expanding...' : 'Expand this topic'}
       </Button>
     </div>
   );

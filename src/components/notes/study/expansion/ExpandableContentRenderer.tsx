@@ -68,6 +68,10 @@ export const ExpandableContentRenderer = ({
         
         const expansionBlock = `
 
+---
+
+<div class="ai-expansion-indicator">🧠 AI Expanded Content</div>
+
 *${expansion.expandedContent.split('\n').map(line => line.trim()).join(' ')}*
 
 <div class="expansion-remove-wrapper" data-expansion-id="${expansion.id}">
@@ -175,6 +179,21 @@ export const ExpandableContentRenderer = ({
 
       <style dangerouslySetInnerHTML={{
         __html: `
+        .ai-expansion-indicator {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 0.875rem;
+          font-weight: 600;
+          color: #059669;
+          background: linear-gradient(to right, #ecfdf5, #d1fae5);
+          border: 1px solid #a7f3d0;
+          border-radius: 0.5rem;
+          padding: 0.5rem 0.75rem;
+          margin: 1rem 0 0.5rem 0;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        
         .expansion-remove-wrapper {
           position: absolute;
           top: 8px;

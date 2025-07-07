@@ -168,14 +168,14 @@
 /* Enhanced header within enriched sections */
 .nuclear-content-container .enriched-header {
   color: #15803d;
-  font-weight: bold;
+  font-weight: normal;
   font-size: 1.1em;
   margin-bottom: 1rem;
   display: block;
   font-family: inherit !important;
 }
 
-/* Enhanced content within enriched sections - CONSISTENT FONTS */
+/* Enhanced content within enriched sections - CONSISTENT FONTS, NO FORCED BOLD */
 .nuclear-content-container .enriched-content-section h1,
 .nuclear-content-container .enriched-content-section h2,
 .nuclear-content-container .enriched-content-section h3,
@@ -185,18 +185,21 @@
   color: #15803d;
   margin-top: 1rem !important;
   font-family: inherit !important;
+  font-weight: inherit !important;
 }
 
 .nuclear-content-container .enriched-content-section p {
   color: #166534;
   line-height: 1.7 !important;
   font-family: inherit !important;
+  font-weight: inherit !important;
 }
 
 .nuclear-content-container .enriched-content-section ul,
 .nuclear-content-container .enriched-content-section ol {
   color: #166534;
   font-family: inherit !important;
+  font-weight: inherit !important;
 }
 
 .nuclear-content-container .enriched-content-section strong {
@@ -208,6 +211,7 @@
 .nuclear-content-container .enriched-content-section em {
   color: #15803d;
   font-family: inherit !important;
+  font-weight: inherit !important;
 }
 
 /* ALL TEXT IN ENRICHED SECTIONS INHERITS FONT */
