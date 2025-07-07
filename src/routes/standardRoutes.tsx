@@ -7,6 +7,7 @@ import SidebarLayout from '@/components/layout/SidebarLayout';
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const FlashcardsPage = lazy(() => import('@/pages/FlashcardsPage'));
 const NotesPage = lazy(() => import('@/pages/NotesPage'));
+const NoteStudyPage = lazy(() => import('@/pages/NoteStudyPage'));
 const QuizPage = lazy(() => import('@/pages/QuizPage'));
 const TakeQuizPage = lazy(() => import('@/pages/TakeQuizPage'));
 const CreateQuizPage = lazy(() => import('@/pages/CreateQuizPage'));
@@ -37,6 +38,10 @@ export const standardRoutes: RouteConfig[] = [
   {
     path: '/flashcards/*',
     element: <SidebarLayout><FlashcardsPage /></SidebarLayout>
+  },
+  {
+    path: '/notes/study/:noteId',
+    element: <SidebarLayout><NoteStudyPage /></SidebarLayout>
   },
   {
     path: '/notes/*',
