@@ -10,7 +10,6 @@ import {
   FileText, 
   BookOpen,
   Eye,
-  MoreHorizontal,
   Star,
   Sparkles
 } from "lucide-react";

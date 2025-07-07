@@ -53,7 +53,6 @@ const NotesPageContent = () => {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
   const { userTier } = useUserTier();
-  const { addNote } = useOptimizedNotes();
 
   // Convert ViewMode to the expected type for the header and content
   const convertedViewMode: 'grid' | 'list' = viewMode === 'compact' ? 'grid' : viewMode as 'grid' | 'list';
@@ -62,12 +61,16 @@ const NotesPageContent = () => {
     setViewMode(mode);
   };
 
+  const { addNote, refreshNotes } = useOptimizedNotes();
+
   const handleSaveNote = async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
     try {
       const newNote = await addNote(noteData);
       if (newNote) {
         toast.success('Note created successfully!');
         setIsManualDialogOpen(false);
+        // Trigger immediate refresh to show the new note
+        await refreshNotes();
         return newNote;
       }
       return null;
