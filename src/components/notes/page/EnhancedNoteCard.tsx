@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { stripMarkdown } from "../card/utils/markdownUtils";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { NoteCardActions } from "../card/NoteCardActions";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
 
 interface EnhancedNoteCardProps {
@@ -97,41 +97,15 @@ export const EnhancedNoteCard = ({
             <span className="ml-1">{subjectName}</span>
           </Badge>
           
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="h-6 w-6 hover:bg-gray-100 shrink-0"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <MoreHorizontal className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem onClick={(e) => onShowDetails(note, e)}>
-                <Eye className="h-3 w-3 mr-2" />
-                View Details
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => {
-                e.stopPropagation();
-                onPin(note.id, note.pinned);
-              }}>
-                <Pin className="h-3 w-3 mr-2" />
-                {note.pinned ? 'Unpin' : 'Pin'} Note
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                className="text-red-600 focus:text-red-600"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(note.id);
-                }}
-              >
-                <Trash2 className="h-3 w-3 mr-2" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <NoteCardActions
+            noteId={note.id}
+            noteTitle={note.title}
+            noteContent={note.content || note.description}
+            isPinned={note.pinned}
+            onPin={onPin}
+            onDelete={onDelete}
+            iconSize={3}
+          />
         </div>
 
         {/* Title */}

@@ -11,6 +11,7 @@ const NoteStudyPage = lazy(() => import('@/pages/NoteStudyPage'));
 const QuizPage = lazy(() => import('@/pages/QuizPage'));
 const TakeQuizPage = lazy(() => import('@/pages/TakeQuizPage'));
 const CreateQuizPage = lazy(() => import('@/pages/CreateQuizPage'));
+const NoteToFlashcardPage = lazy(() => import('@/pages/NoteToFlashcardPage'));
 const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
 const GoalsPage = lazy(() => import('@/pages/GoalsPage'));
 const TodoPage = lazy(() => import('@/pages/TodoPage'));
@@ -62,6 +63,14 @@ export const standardRoutes: RouteConfig[] = [
   {
     path: '/quiz/create',
     element: <SidebarLayout><CreateQuizPage /></SidebarLayout>
+  },
+  {
+    path: '/create-quiz',
+    element: <SidebarLayout><CreateQuizPage /></SidebarLayout>
+  },
+  {
+    path: '/note-to-flashcard',
+    element: <SidebarLayout><NoteToFlashcardPage /></SidebarLayout>
   },
   {
     path: '/quiz/:id/take',
