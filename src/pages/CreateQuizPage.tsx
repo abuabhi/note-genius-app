@@ -1,13 +1,14 @@
 
 import { useState } from "react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { OptimizedNotesProvider } from "@/contexts/OptimizedNotesContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreateQuizForm } from "@/components/quiz/CreateQuizForm";
 import { NoteToQuiz } from "@/components/quiz/NoteToQuiz";
 import { StandardPageHeader } from "@/components/ui/StandardPageHeader";
 import { PlusCircle } from "lucide-react";
 
-const CreateQuizPage = () => {
+const CreateQuizPageContent = () => {
   const { userProfile } = useRequireAuth();
   const [activeTab, setActiveTab] = useState("notes");
 
@@ -52,6 +53,14 @@ const CreateQuizPage = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+const CreateQuizPage = () => {
+  return (
+    <OptimizedNotesProvider>
+      <CreateQuizPageContent />
+    </OptimizedNotesProvider>
   );
 };
 

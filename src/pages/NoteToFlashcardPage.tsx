@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useOptimizedNotes } from "@/contexts/OptimizedNotesContext";
+import { OptimizedNotesProvider } from "@/contexts/OptimizedNotesContext";
+import { FlashcardProvider } from "@/contexts/flashcards";
 import Layout from "@/components/layout/Layout";
 import { BulkNoteConversion } from "@/components/notes/conversion/BulkNoteConversion";
 import { NoteToFlashcardBreadcrumb } from "@/components/notes/conversion/NoteToFlashcardBreadcrumb";
@@ -10,7 +12,7 @@ import { FlashcardSet } from "@/types/flashcard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 
-const NoteToFlashcardPage = () => {
+const NoteToFlashcardPageContent = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const noteId = searchParams.get('noteId');
@@ -126,6 +128,16 @@ const NoteToFlashcardPage = () => {
         </div>
       </div>
     </Layout>
+  );
+};
+
+const NoteToFlashcardPage = () => {
+  return (
+    <OptimizedNotesProvider>
+      <FlashcardProvider>
+        <NoteToFlashcardPageContent />
+      </FlashcardProvider>
+    </OptimizedNotesProvider>
   );
 };
 
