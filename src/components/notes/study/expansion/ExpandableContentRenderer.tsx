@@ -68,13 +68,11 @@ export const ExpandableContentRenderer = ({
         
         const expansionBlock = `
 
-> 🤖 **AI Expansion**
-> 
-> ${expansion.expandedContent.split('\n').map(line => `> ${line}`).join('\n')}
-> 
-> <div class="expansion-remove-wrapper" data-expansion-id="${expansion.id}">
->   <button class="expansion-remove-btn" onclick="window.removeExpansion('${expansion.id}')">×</button>
-> </div>
+*${expansion.expandedContent.split('\n').map(line => line.trim()).join(' ')}*
+
+<div class="expansion-remove-wrapper" data-expansion-id="${expansion.id}">
+  <button class="expansion-remove-btn" onclick="window.removeExpansion('${expansion.id}')">×</button>
+</div>
 
 `;
         
