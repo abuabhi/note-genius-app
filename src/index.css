@@ -180,3 +180,47 @@
 .custom-calendar .rbc-event-content {
   @apply text-xs font-medium whitespace-nowrap overflow-hidden text-ellipsis px-1;
 }
+
+/* Content Expansion Animations */
+.content-expansion {
+  animation: expansion-fadeIn 0.4s ease-out forwards;
+  transform-origin: top left;
+}
+
+@keyframes expansion-fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.expansion-remove-btn {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.expansion-remove-btn:hover {
+  transform: scale(1.1);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* Improved text selection for expansion feature */
+.expandable-content {
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+}
+
+.expandable-content::selection {
+  background-color: hsl(var(--primary) / 0.2);
+  color: hsl(var(--primary-foreground));
+}
+
+.expandable-content::-moz-selection {
+  background-color: hsl(var(--primary) / 0.2);
+  color: hsl(var(--primary-foreground));
+}

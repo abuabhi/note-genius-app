@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw, Sparkles } from "lucide-react";
 import { EnhancementError } from "../../enrichment/EnhancementError";
 import { LoadingAnimations } from "./LoadingAnimations";
-import { UnifiedContentRenderer } from "./UnifiedContentRenderer";
+import { ExpandableContentRenderer } from "../expansion/ExpandableContentRenderer";
 
 interface EnhancementContentProps {
   content: string;
@@ -98,14 +98,15 @@ export const EnhancementContent = ({
     );
   }
 
-  // SIMPLIFIED: Always use UnifiedContentRenderer with markdown=true for ALL content
+  // Use ExpandableContentRenderer for interactive content expansion
   return (
     <div className="animate-fade-in px-6 py-4">
-      <UnifiedContentRenderer 
+      <ExpandableContentRenderer 
         content={content} 
         fontSize={fontSize} 
         textAlign={textAlign}
-        isMarkdown={true}
+        contentType={enhancementType}
+        noteTitle={title}
         className="text-foreground"
       />
     </div>
