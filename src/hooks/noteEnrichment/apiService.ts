@@ -78,7 +78,7 @@ export const callEnrichmentAPI = async (
       throw new Error('The AI service did not return enhanced content. Please try again.');
     }
     
-    console.log('Enhancement completed successfully:', {
+    console.log('✅ Enhancement completed successfully:', {
       contentLength: data.enhancedContent.length,
       hasTokenUsage: !!data.tokenUsage,
       enhancementType

@@ -14,6 +14,7 @@ interface EnhancementDisplayPanelProps {
   isLoading?: boolean;
   onRetryEnhancement?: (enhancementType: string) => Promise<void>;
   onCancelEnhancement?: () => void;
+  enhancedContents?: Record<string, string>;
   className?: string;
 }
 
@@ -25,6 +26,7 @@ export const EnhancementDisplayPanel = ({
   isLoading = false,
   onRetryEnhancement,
   onCancelEnhancement,
+  enhancedContents = {},
   className = ""
 }: EnhancementDisplayPanelProps) => {
   
@@ -67,27 +69,34 @@ export const EnhancementDisplayPanel = ({
   const getContentForType = (type: EnhancementContentType): string => {
     let content = '';
     
-    switch (type) {
-      case 'summary': 
-        content = note.summary || '';
-        break;
-      case 'keyPoints': 
-        content = note.key_points || '';
-        break;
-      case 'improved': 
-        content = note.improved_content || '';
-        break;
-      case 'markdown': 
-        content = note.markdown_content || '';
-        break;
-      case 'enriched': 
-        content = note.enriched_content || '';
-        break;
-      case 'original': 
-        content = note.content || note.description || '';
-        break;
-      default: 
-        content = '';
+    // Check in-memory enhanced contents first
+    const enhancementType = getEnhancementTypeForRetry(type);
+    if (enhancedContents[enhancementType]) {
+      content = enhancedContents[enhancementType];
+    } else {
+      // Fallback to note database fields
+      switch (type) {
+        case 'summary': 
+          content = note.summary || '';
+          break;
+        case 'keyPoints': 
+          content = note.key_points || '';
+          break;
+        case 'improved': 
+          content = note.improved_content || '';
+          break;
+        case 'markdown': 
+          content = note.markdown_content || '';
+          break;
+        case 'enriched': 
+          content = note.enriched_content || '';
+          break;
+        case 'original': 
+          content = note.content || note.description || '';
+          break;
+        default: 
+          content = '';
+      }
     }
     
     console.log(`🎯 EnhancementDisplayPanel - Getting content for ${type}:`, {

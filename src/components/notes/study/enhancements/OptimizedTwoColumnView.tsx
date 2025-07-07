@@ -4,6 +4,7 @@ import { Note } from "@/types/note";
 import { TextAlignType } from "../hooks/useStudyViewState";
 import { EnhancementSelector, EnhancementContentType } from "./EnhancementSelector";
 import { EnhancementDisplayPanel } from "./EnhancementDisplayPanel";
+import { useEnrichmentProcessor } from "@/hooks/noteEnrichment/useEnrichmentProcessor";
 
 interface OptimizedTwoColumnViewProps {
   note: Note;
@@ -24,21 +25,29 @@ export const OptimizedTwoColumnView = ({
   onRetryEnhancement,
   isEditOperation = false
 }: OptimizedTwoColumnViewProps) => {
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [enhancedContents, setEnhancedContents] = useState<Record<string, string>>({});
+  const { isLoading, processEnhancement } = useEnrichmentProcessor();
 
   const handleRetryEnhancement = async (enhancementType: string) => {
-    if (!onRetryEnhancement) return;
-    
-    console.log("🔄 OptimizedTwoColumnView - Starting enhancement:", enhancementType);
-    setIsGenerating(true);
+    console.log("🔄 Generating enhancement:", enhancementType);
     
     try {
-      await onRetryEnhancement(enhancementType);
-      console.log("✅ OptimizedTwoColumnView - Enhancement completed:", enhancementType);
+      const result = await processEnhancement(
+        note.id,
+        note.content || '',
+        enhancementType as any,
+        note.title
+      );
+      
+      if (result.success) {
+        setEnhancedContents(prev => ({
+          ...prev,
+          [enhancementType]: result.content
+        }));
+        console.log("✅ Enhancement completed and stored:", enhancementType);
+      }
     } catch (error) {
-      console.error("❌ OptimizedTwoColumnView - Enhancement failed:", error);
-    } finally {
-      setIsGenerating(false);
+      console.error("❌ Enhancement failed:", error);
     }
   };
 
@@ -46,13 +55,8 @@ export const OptimizedTwoColumnView = ({
     noteId: note.id,
     activeContentType,
     isEditOperation,
-    isGenerating,
-    hasContent: {
-      summary: Boolean(note.summary?.trim()),
-      keyPoints: Boolean(note.key_points?.trim()),
-      markdown: Boolean(note.markdown_content?.trim()),
-      improved: Boolean(note.improved_content?.trim())
-    }
+    isLoading,
+    enhancedContentsKeys: Object.keys(enhancedContents)
   });
 
   return (
@@ -74,8 +78,9 @@ export const OptimizedTwoColumnView = ({
           contentType={activeContentType}
           fontSize={fontSize}
           textAlign={textAlign}
-          isLoading={isGenerating}
+          isLoading={isLoading}
           onRetryEnhancement={handleRetryEnhancement}
+          enhancedContents={enhancedContents}
           className="h-full"
         />
       </div>
