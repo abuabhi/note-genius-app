@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { StudyViewTitleSection } from "./StudyViewTitleSection";
 import { StudyViewEnhancementDropdown } from "./StudyViewEnhancementDropdown";
 import { StudyViewExportDropdown } from "./StudyViewExportDropdown";
+import { StudyViewConversionDropdown } from "./StudyViewConversionDropdown";
 import { ExpansionCleanupButton } from "@/components/debug/ExpansionCleanupButton";
 
 interface StudyViewHeaderProps {
@@ -89,6 +90,8 @@ export const StudyViewHeader = ({
         <div className="flex items-center gap-2">
           {!isEditing && (
             <>
+              <StudyViewConversionDropdown note={note} />
+              
               <StudyViewEnhancementDropdown
                 note={note}
                 processingEnhancement={processingEnhancement}

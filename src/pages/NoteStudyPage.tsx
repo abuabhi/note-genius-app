@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { NoteStudyView } from "@/components/notes/study/NoteStudyView";
 import { NoteChatToggle } from "@/components/notes/study/chat/NoteChatToggle";
 import { NoteChatSidebar } from "@/components/notes/study/chat/NoteChatSidebar";
+import { StudyBreadcrumb } from "@/components/notes/study/navigation/StudyBreadcrumb";
 import { Loader2, ArrowLeft, AlertCircle } from "lucide-react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useOptimizedNoteStudy } from "@/hooks/notes/useOptimizedNoteStudy";
@@ -80,6 +81,9 @@ const NoteStudyPageContent = () => {
 
   return (
     <div className="relative">
+      <div className="container mx-auto p-6">
+        <StudyBreadcrumb note={note} />
+      </div>
       <NoteStudyView note={note} />
       
       {/* AI Chat Toggle Button */}
