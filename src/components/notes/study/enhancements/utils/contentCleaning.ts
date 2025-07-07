@@ -8,26 +8,43 @@ export const stripAllHtmlAndProse = (content: string): string => {
     return '';
   }
 
-  console.log("🧹 NUCLEAR HTML STRIPPING - Input:", {
+  console.log("🧹 SMART HTML CLEANING - Input:", {
     length: content.length,
     hasHTML: /<[^>]*>/g.test(content),
     hasProse: /prose/.test(content)
   });
 
   let cleaned = content
-    // Remove ALL HTML tags completely
-    .replace(/<[^>]*>/g, '')
-    // Remove any remaining tag-like structures
-    .replace(/&lt;[^&]*&gt;/g, '')
-    // Remove prose classes and any class attributes
+    // First convert HTML to markdown BEFORE stripping (preserve formatting)
+    .replace(/<h([1-6])[^>]*>(.*?)<\/h[1-6]>/gi, (match, level, text) => {
+      const hashes = '#'.repeat(parseInt(level));
+      return `\n\n${hashes} ${text.trim()}\n\n`;
+    })
+    .replace(/<p[^>]*>(.*?)<\/p>/gi, '\n\n$1\n\n')
+    .replace(/<strong[^>]*>(.*?)<\/strong>/gi, '**$1**')
+    .replace(/<b[^>]*>(.*?)<\/b>/gi, '**$1**')
+    .replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*')
+    .replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*')
+    .replace(/<ul[^>]*>/gi, '\n')
+    .replace(/<\/ul>/gi, '\n')
+    .replace(/<ol[^>]*>/gi, '\n')
+    .replace(/<\/ol>/gi, '\n')
+    .replace(/<li[^>]*>(.*?)<\/li>/gi, '\n- $1\n')
+    .replace(/<br[^>]*\/?>/gi, '\n')
+    .replace(/<code[^>]*>(.*?)<\/code>/gi, '`$1`')
+    
+    // NOW remove editor-specific attributes and classes
     .replace(/class="[^"]*prose[^"]*"/gi, '')
     .replace(/class='[^']*prose[^']*'/gi, '')
-    // Remove TipTap and other editor specific attributes
     .replace(/data-[^=]*="[^"]*"/gi, '')
     .replace(/contenteditable="[^"]*"/gi, '')
     .replace(/spellcheck="[^"]*"/gi, '')
-    // Remove inline styles completely
     .replace(/style="[^"]*"/gi, '')
+    
+    // Remove any remaining empty HTML tags
+    .replace(/<[^>]*><\/[^>]*>/g, '')
+    .replace(/<[^>]*\/>/g, '')
+    
     // Clean up HTML entities
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
@@ -37,20 +54,17 @@ export const stripAllHtmlAndProse = (content: string): string => {
     .replace(/&nbsp;/g, ' ')
     .replace(/&mdash;/g, '—')
     .replace(/&ndash;/g, '–')
-    // Remove any remaining attribute-like patterns
-    .replace(/\w+="[^"]*"/g, '')
-    .replace(/\w+='[^']*'/g, '')
-    // Clean up excessive whitespace
-    .replace(/\s+/g, ' ')
-    .replace(/\n\s*\n/g, '\n\n')
+    
+    // Clean up whitespace while preserving structure
+    .replace(/\n{4,}/g, '\n\n\n')
+    .replace(/\n{3}/g, '\n\n')
     .replace(/^\s+|\s+$/gm, '')
     .trim();
 
-  console.log("✅ NUCLEAR HTML STRIPPING - Output:", {
+  console.log("✅ SMART HTML CLEANING - Output:", {
     length: cleaned.length,
     hasHTML: /<[^>]*>/g.test(cleaned),
-    hasProse: /prose/.test(cleaned),
-    preview: cleaned.substring(0, 100)
+    preview: cleaned.substring(0, 200)
   });
 
   return cleaned;
@@ -78,13 +92,13 @@ export const detectTipTapContent = (content: string): boolean => {
 };
 
 export const convertHtmlToMarkdown = (html: string): string => {
-  console.log("🔄 Converting HTML to Markdown:", {
+  console.log("🔄 ENHANCED HTML to Markdown conversion:", {
     inputLength: html.length,
     inputPreview: html.substring(0, 100)
   });
 
   let markdown = html
-    // Convert headers (preserve spacing)
+    // Convert headers with better spacing
     .replace(/<h([1-6])[^>]*>(.*?)<\/h[1-6]>/gi, (match, level, text) => {
       const hashes = '#'.repeat(parseInt(level));
       return `\n\n${hashes} ${text.trim()}\n\n`;
@@ -100,49 +114,62 @@ export const convertHtmlToMarkdown = (html: string): string => {
     
     // Convert code
     .replace(/<code[^>]*>(.*?)<\/code>/gi, '`$1`')
-    .replace(/<pre[^>]*><code[^>]*>(.*?)<\/code><\/pre>/gi, '\n```\n$1\n```\n')
-    .replace(/<pre[^>]*>(.*?)<\/pre>/gi, '\n```\n$1\n```\n')
+    .replace(/<pre[^>]*><code[^>]*>(.*?)<\/code><\/pre>/gi, '\n\n```\n$1\n```\n\n')
+    .replace(/<pre[^>]*>(.*?)<\/pre>/gi, '\n\n```\n$1\n```\n\n')
     
-    // Convert unordered lists
-    .replace(/<ul[^>]*>/gi, '\n')
-    .replace(/<\/ul>/gi, '\n')
+    // IMPROVED: Convert unordered lists with proper spacing
+    .replace(/<ul[^>]*>/gi, '\n\n')
+    .replace(/<\/ul>/gi, '\n\n')
     
-    // Convert ordered lists
-    .replace(/<ol[^>]*>/gi, '\n')
-    .replace(/<\/ol>/gi, '\n')
+    // IMPROVED: Convert ordered lists with proper spacing
+    .replace(/<ol[^>]*>/gi, '\n\n')
+    .replace(/<\/ol>/gi, '\n\n')
     
-    // Convert list items
+    // IMPROVED: Convert list items with proper spacing between items
     .replace(/<li[^>]*>(.*?)<\/li>/gi, (match, content) => {
-      return `\n- ${content.trim()}`;
+      const cleanContent = content.trim().replace(/<[^>]*>/g, '');
+      return `\n- ${cleanContent}\n`;
     })
     
-    // Convert paragraphs
-    .replace(/<p[^>]*>(.*?)<\/p>/gi, '\n\n$1\n\n')
+    // IMPROVED: Convert paragraphs with consistent spacing
+    .replace(/<p[^>]*>(.*?)<\/p>/gi, (match, content) => {
+      const cleanContent = content.trim().replace(/<[^>]*>/g, '');
+      return `\n\n${cleanContent}\n\n`;
+    })
     
     // Convert line breaks
     .replace(/<br[^>]*\/?>/gi, '\n')
     
-    // Convert divs (preserve content but remove tags)
-    .replace(/<div[^>]*>(.*?)<\/div>/gi, '\n\n$1\n\n')
+    // IMPROVED: Convert divs with better spacing
+    .replace(/<div[^>]*>(.*?)<\/div>/gi, (match, content) => {
+      const cleanContent = content.trim().replace(/<[^>]*>/g, '');
+      return cleanContent ? `\n\n${cleanContent}\n\n` : '';
+    })
     
     // Convert spans (just remove tags, keep content)
     .replace(/<span[^>]*>(.*?)<\/span>/gi, '$1')
     
-    // Handle blockquotes
-    .replace(/<blockquote[^>]*>(.*?)<\/blockquote>/gi, '\n> $1\n')
+    // Handle blockquotes with proper spacing
+    .replace(/<blockquote[^>]*>(.*?)<\/blockquote>/gi, '\n\n> $1\n\n')
     
-    // Clean up multiple newlines
-    .replace(/\n{4,}/g, '\n\n\n')
+    // IMPROVED: Clean up excessive newlines more carefully
+    .replace(/\n{5,}/g, '\n\n\n')
+    .replace(/\n{4}/g, '\n\n\n')
     .replace(/\n{3}/g, '\n\n')
     
-    // Clean up whitespace around markdown elements
-    .replace(/\n\s*\n/g, '\n\n')
+    // IMPROVED: Ensure list items have proper spacing
+    .replace(/(\n- [^\n]+)\n(\n- )/g, '$1\n$2')
+    .replace(/(\n- [^\n]+)(\n- )/g, '$1\n$2')
+    
+    // Clean up whitespace
     .replace(/^\s+|\s+$/gm, '')
     .trim();
 
-  console.log("✅ HTML to Markdown conversion complete:", {
+  console.log("✅ ENHANCED HTML to Markdown complete:", {
     outputLength: markdown.length,
-    outputPreview: markdown.substring(0, 100)
+    outputPreview: markdown.substring(0, 200),
+    hasBulletPoints: markdown.includes('- '),
+    listItemCount: (markdown.match(/\n- /g) || []).length
   });
 
   return markdown;

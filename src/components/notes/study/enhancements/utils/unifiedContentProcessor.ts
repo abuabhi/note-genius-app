@@ -67,30 +67,32 @@ export const processContentForRendering = (rawContent: string): ProcessedContent
       .replace(/<\/div>/g, '\n\n---\n\n');
   }
 
-  // Step 3: Process ENRICHED content - IMPROVED HTML approach with proper spacing
+  // Step 3: Process ENRICHED content - BULLETPROOF HTML approach
   const hasEnrichedContent = processed.includes('[ENRICHED]') || processed.includes('**[ENRICHED]**');
   if (hasEnrichedContent) {
-    console.log("🔥 PROCESSING ENRICHED CONTENT MARKERS - IMPROVED HTML APPROACH");
+    console.log("🔥 PROCESSING ENRICHED CONTENT MARKERS - BULLETPROOF APPROACH");
     
-    // IMPROVED: Clean up any existing malformed HTML first
+    // BULLETPROOF: Clean up any existing malformed HTML first
     processed = processed
       .replace(/<div class="enriched-content-section">\s*\*\*🔥 Enhanced Content:\*\*/g, 
                '\n\n<div class="enriched-content-section">\n\n**🔥 Enhanced Content:**\n\n')
       .replace(/<\/div>\s*<div class="enriched-content-section">/g, 
                '\n\n</div>\n\n<div class="enriched-content-section">\n\n');
     
-    // Convert enriched markers to properly spaced HTML that ReactMarkdown can render with rehypeRaw
+    // BULLETPROOF: Convert enriched markers with MAXIMUM spacing for ReactMarkdown + rehypeRaw
     processed = processed
       // Handle **[ENRICHED]** markers (from new AI responses)
-      .replace(/\*\*\[ENRICHED\]\*\*/g, '\n\n<div class="enriched-content-section">\n\n**🔥 Enhanced Content:**\n\n')
-      .replace(/\*\*\[\/ENRICHED\]\*\*/g, '\n\n</div>\n\n')
+      .replace(/\*\*\[ENRICHED\]\*\*/g, '\n\n\n<div class="enriched-content-section">\n\n**🔥 Enhanced Content:**\n\n')
+      .replace(/\*\*\[\/ENRICHED\]\*\*/g, '\n\n</div>\n\n\n')
       // Handle plain [ENRICHED] markers (fallback)
-      .replace(/\[ENRICHED\]/g, '\n\n<div class="enriched-content-section">\n\n**🔥 Enhanced Content:**\n\n')
-      .replace(/\[\/ENRICHED\]/g, '\n\n</div>\n\n');
+      .replace(/\[ENRICHED\]/g, '\n\n\n<div class="enriched-content-section">\n\n**🔥 Enhanced Content:**\n\n')
+      .replace(/\[\/ENRICHED\]/g, '\n\n</div>\n\n\n');
     
-    console.log("✅ Enriched markers processed to HTML div containers:", {
+    console.log("✅ BULLETPROOF Enriched markers processed:", {
       hasEnrichedDivs: processed.includes('<div class="enriched-content-section">'),
-      processedPreview: processed.substring(0, 400)
+      divCount: (processed.match(/<div class="enriched-content-section">/g) || []).length,
+      closingDivCount: (processed.match(/<\/div>/g) || []).length,
+      processedPreview: processed.substring(0, 500)
     });
   }
 

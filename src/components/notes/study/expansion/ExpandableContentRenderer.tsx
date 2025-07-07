@@ -1,11 +1,11 @@
 import React, { useState, useRef, useMemo } from 'react';
-import ReactMarkdown from 'react-markdown';
 import { ContentExpansionContextMenu } from './ContentExpansionContextMenu';
 import { ExpansionPreviewDialog } from './ExpansionPreviewDialog';
 import { useContentExpansion } from './useContentExpansion';
 import { TextAlignType } from '../hooks/useStudyViewState';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
+import { NuclearContentRenderer } from '../enhancements/NuclearContentRenderer';
 
 interface ExpandableContentRendererProps {
   content: string;
@@ -140,32 +140,18 @@ export const ExpandableContentRenderer = ({
         ref={contentRef}
         className={`expandable-content ${className}`}
         style={{
-          fontSize: `${fontSize}px`,
-          textAlign,
-          lineHeight: 1.6,
           userSelect: 'text'
         }}
         onMouseUp={handleTextSelection}
         onTouchEnd={handleTextSelection}
       >
-        <ReactMarkdown
-          components={{
-            blockquote: ({ children, ...props }) => {
-              // Check if this is an expansion blockquote
-              const childText = React.Children.toArray(children).join('').toString();
-              if (childText.includes('🤖 **AI Expansion**')) {
-                return (
-                  <div className="content-expansion my-4 p-4 bg-accent/30 border-l-4 border-l-primary rounded-r-lg relative">
-                    {children}
-                  </div>
-                );
-              }
-              return <blockquote {...props}>{children}</blockquote>;
-            }
-          }}
-        >
-          {processedContent}
-        </ReactMarkdown>
+        {/* FIXED: Use NuclearContentRenderer for consistent, beautiful formatting */}
+        <NuclearContentRenderer
+          content={processedContent}
+          fontSize={fontSize}
+          textAlign={textAlign}
+          className="w-full"
+        />
       </div>
 
       <ContentExpansionContextMenu
