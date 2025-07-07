@@ -2,8 +2,10 @@
 import { useState, useEffect } from "react";
 import { Note } from "@/types/note";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { NoteTagList } from "../../details/NoteTagList";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
+import { Calendar, Tag } from "lucide-react";
 
 interface StudyViewTitleSectionProps {
   note: Note;
@@ -72,16 +74,31 @@ export const StudyViewTitleSection = ({
   }
 
   return (
-    <div className="space-y-1">
-      <h2 className="text-xl font-bold text-green-700">{note?.title}</h2>
-      <div className="text-sm flex flex-wrap gap-2 items-center">
-        <span className="font-bold text-gray-600">{formattedDate}</span>
-        {subjectName && (
-          <span className="text-green-600 font-medium">{subjectName}</span>
-        )}
+    <div className="space-y-3">
+      <div className="space-y-2">
+        <h1 className="text-2xl font-bold text-foreground leading-tight">{note?.title}</h1>
+        
+        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          {subjectName && subjectName !== "No Subject" && (
+            <div className="flex items-center gap-2">
+              <Tag className="h-4 w-4" />
+              <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">
+                {subjectName}
+              </Badge>
+            </div>
+          )}
+          
+          {formattedDate && (
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              <span>{formattedDate}</span>
+            </div>
+          )}
+        </div>
       </div>
+
       {note?.tags && note?.tags.length > 0 && (
-        <div className="mt-2">
+        <div className="pt-1">
           <NoteTagList tags={note?.tags} />
         </div>
       )}

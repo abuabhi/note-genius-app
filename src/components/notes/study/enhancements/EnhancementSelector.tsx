@@ -59,24 +59,24 @@ export const EnhancementSelector = ({
     note.enriched_content.trim().length > 20
   );
   
-  // FIXED: Check enhancement statuses for ALL types
-  const summaryStatus = note.summary_status || "completed";
+  // FIXED: Only show processing when content is actually being generated AND doesn't exist
+  const summaryStatus = note.summary_status;
   const isGeneratingSummary = summaryStatus === 'generating' || summaryStatus === 'pending';
   const hasSummaryError = summaryStatus === 'failed';
 
-  const keyPointsStatus = note.key_points_status || "completed";
+  const keyPointsStatus = note.key_points_status;
   const isGeneratingKeyPoints = keyPointsStatus === 'generating' || keyPointsStatus === 'pending';
   const hasKeyPointsError = keyPointsStatus === 'failed';
 
-  const markdownStatus = note.markdown_content_status || "completed";
+  const markdownStatus = note.markdown_content_status;
   const isGeneratingMarkdown = markdownStatus === 'generating' || markdownStatus === 'pending';
   const hasMarkdownError = markdownStatus === 'failed';
 
-  const improvedStatus = note.improved_content_status || "completed";
+  const improvedStatus = note.improved_content_status;
   const isGeneratingImproved = improvedStatus === 'generating' || improvedStatus === 'pending';
   const hasImprovedError = improvedStatus === 'failed';
 
-  const enrichedStatus = note.enriched_status || "completed";
+  const enrichedStatus = note.enriched_status;
   const isGeneratingEnriched = enrichedStatus === 'generating' || enrichedStatus === 'pending';
   const hasEnrichedError = enrichedStatus === 'failed';
 
