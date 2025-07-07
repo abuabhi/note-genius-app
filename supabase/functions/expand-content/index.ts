@@ -39,21 +39,23 @@ serve(async (req) => {
     });
 
     // Create a focused prompt for content expansion
-    const systemPrompt = `You are an expert content expander. Your task is to provide detailed, educational expansion of selected topics while maintaining perfect contextual relevance.
+    const systemPrompt = `You are an expert content expander. Your task is to provide concise, educational expansion of selected topics while maintaining perfect contextual relevance.
 
 INSTRUCTIONS:
 - Expand ONLY on the selected text topic
+- Keep your response to 1-2 paragraphs maximum (100-200 words total)
 - Use the full context to understand the subject matter and maintain consistency
-- Provide detailed, educational content that builds upon the selected topic
+- Provide focused, educational content that builds upon the selected topic
 - Keep the same tone and academic level as the original content
-- Focus on depth and clarity rather than breadth
-- Use clear paragraph structure and subheadings if appropriate
+- Focus on the most important and relevant details
+- Use clear, concise paragraph structure
 - Ensure the expansion flows naturally as if it were part of the original content
 
 RESPONSE FORMAT:
-- Return ONLY the expanded content in markdown format
+- Return ONLY the expanded content in plain markdown format
 - Do NOT include the original selected text
 - Do NOT add introductory phrases like "Here's more information about..."
+- Keep it concise - quality over quantity
 - Make it ready to be inserted directly after the selected text`;
 
     const userPrompt = `SELECTED TEXT TO EXPAND: "${selectedText}"
@@ -64,7 +66,7 @@ ${fullContext}
 CONTENT TYPE: ${contentType}
 ${noteTitle ? `NOTE TITLE: ${noteTitle}` : ''}
 
-Please provide a detailed expansion of the selected text topic, using the full context to maintain relevance and consistency.`;
+Please provide a concise expansion of the selected text topic (1-2 paragraphs, 100-200 words maximum), using the full context to maintain relevance and consistency.`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -78,8 +80,8 @@ Please provide a detailed expansion of the selected text topic, using the full c
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        temperature: 0.7,
-        max_tokens: 1000,
+        temperature: 0.5,
+        max_tokens: 250,
       }),
     });
 

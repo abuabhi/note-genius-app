@@ -56,20 +56,20 @@ export const ContentExpansionContextMenu = ({
     }
   };
 
-  if (!isVisible || !selectedText.trim()) {
+  if (!isVisible || !selectedText.trim() || selectedText.length < 10) {
     return null;
   }
 
   return (
     <div
       ref={menuRef}
-      className="fixed z-[9999] bg-white rounded-lg shadow-lg border border-gray-200 p-2 min-w-48"
+      className="fixed z-[9999] bg-card rounded-lg shadow-lg border border-border p-2 min-w-48"
       style={{
         left: Math.min(position.x, window.innerWidth - 200),
         top: Math.min(position.y, window.innerHeight - 100),
       }}
     >
-      <div className="text-xs text-gray-500 mb-2 px-2 truncate max-w-44">
+      <div className="text-xs text-muted-foreground mb-2 px-2 truncate max-w-44">
         "{selectedText.substring(0, 50)}{selectedText.length > 50 ? '...' : ''}"
       </div>
       

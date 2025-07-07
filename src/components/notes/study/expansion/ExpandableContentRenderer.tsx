@@ -1,223 +1,240 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { UnifiedContentRenderer } from '../enhancements/UnifiedContentRenderer';
+import React, { useState, useRef, useMemo } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { ContentExpansionContextMenu } from './ContentExpansionContextMenu';
-import { useContentExpansion, ContentExpansion } from './useContentExpansion';
-import { Button } from '@/components/ui/button';
-import { X, Undo2 } from 'lucide-react';
+import { ExpansionPreviewDialog } from './ExpansionPreviewDialog';
+import { useContentExpansion } from './useContentExpansion';
 import { TextAlignType } from '../hooks/useStudyViewState';
+import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
 
 interface ExpandableContentRendererProps {
   content: string;
-  fontSize?: number;
-  textAlign?: TextAlignType;
-  className?: string;
+  fontSize: number;
+  textAlign: TextAlignType;
   contentType: string;
-  noteTitle?: string;
+  noteTitle: string;
+  noteId: string;
+  className?: string;
 }
 
 export const ExpandableContentRenderer = ({
   content,
-  fontSize = 16,
-  textAlign = 'left',
-  className = '',
+  fontSize,
+  textAlign,
   contentType,
-  noteTitle
+  noteTitle,
+  noteId,
+  className = ""
 }: ExpandableContentRendererProps) => {
   const [selectedText, setSelectedText] = useState('');
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
-  const [showContextMenu, setShowContextMenu] = useState(false);
+  const [isMenuVisible, setIsMenuVisible] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const { expansions, isExpanding, expandContent, removeExpansion, clearAllExpansions } = 
-    useContentExpansion(content, contentType, noteTitle);
+  const {
+    expansions,
+    pendingExpansion,
+    isExpanding,
+    isRegenerating,
+    expandContent,
+    regenerateExpansion,
+    confirmExpansion,
+    cancelExpansion,
+    removeExpansion
+  } = useContentExpansion(noteId, content, contentType, noteTitle);
 
-  // Insert expansions into content
-  const getContentWithExpansions = useCallback(() => {
+  // Process content with expansions inserted at correct positions
+  const processedContent = useMemo(() => {
     if (expansions.length === 0) return content;
 
-    // Sort expansions by position (descending) so we can insert from end to beginning
-    const sortedExpansions = [...expansions].sort((a, b) => b.position - a.position);
+    let processedText = content;
     
-    let modifiedContent = content;
-    
-    sortedExpansions.forEach((expansion) => {
-      const expansionHtml = `
-        <div class="content-expansion bg-green-50 border-l-4 border-green-500 pl-4 my-4 rounded-r-md" data-expansion-id="${expansion.id}">
-          <div class="flex items-center justify-between mb-2">
-            <div class="flex items-center gap-2">
-              <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                AI Expanded
-              </span>
-              <span class="text-xs text-gray-500">${expansion.timestamp.toLocaleTimeString()}</span>
-            </div>
-            <button class="expansion-remove-btn text-gray-400 hover:text-red-500 p-1" data-expansion-id="${expansion.id}">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
-            </button>
-          </div>
-          <div class="expanded-content text-sm">
-            ${expansion.expandedContent}
-          </div>
-        </div>
-      `;
-
-      // Insert after the original text position
-      const beforeText = modifiedContent.substring(0, expansion.position);
-      const afterText = modifiedContent.substring(expansion.position);
-      modifiedContent = beforeText + expansionHtml + afterText;
+    // Sort expansions by position to process them in order
+    const sortedExpansions = [...expansions].sort((a, b) => {
+      // Find position using position marker
+      const aPos = processedText.indexOf(a.originalText);
+      const bPos = processedText.indexOf(b.originalText);
+      return aPos - bPos;
     });
 
-    return modifiedContent;
+    // Insert expansions from end to beginning to maintain position accuracy
+    for (let i = sortedExpansions.length - 1; i >= 0; i--) {
+      const expansion = sortedExpansions[i];
+      const position = processedText.indexOf(expansion.originalText);
+      
+      if (position !== -1) {
+        const beforeText = processedText.substring(0, position + expansion.originalText.length);
+        const afterText = processedText.substring(position + expansion.originalText.length);
+        
+        const expansionBlock = `
+
+> 🤖 **AI Expansion**
+> 
+> ${expansion.expandedContent.split('\n').map(line => `> ${line}`).join('\n')}
+> 
+> <div class="expansion-remove-wrapper" data-expansion-id="${expansion.id}">
+>   <button class="expansion-remove-btn" onclick="window.removeExpansion('${expansion.id}')">×</button>
+> </div>
+
+`;
+        
+        processedText = beforeText + expansionBlock + afterText;
+      }
+    }
+
+    return processedText;
   }, [content, expansions]);
 
-  const handleTextSelection = useCallback((event: React.MouseEvent) => {
+  const handleTextSelection = () => {
     const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) {
-      setShowContextMenu(false);
+    if (!selection || selection.rangeCount === 0) return;
+
+    const text = selection.toString().trim();
+    if (text.length < 10) { // Minimum selection length
+      setIsMenuVisible(false);
       return;
     }
 
-    const selectedText = selection.toString().trim();
-    if (!selectedText || selectedText.length < 3) {
-      setShowContextMenu(false);
-      return;
-    }
-
-    // Don't show context menu for selections within existing expansions
     const range = selection.getRangeAt(0);
-    const expansionElement = range.commonAncestorContainer.parentElement?.closest('.content-expansion');
-    if (expansionElement) {
-      setShowContextMenu(false);
-      return;
-    }
+    const rect = range.getBoundingClientRect();
+    
+    setSelectedText(text);
+    setMenuPosition({
+      x: rect.left + rect.width / 2,
+      y: rect.bottom + window.scrollY + 5
+    });
+    setIsMenuVisible(true);
+  };
 
-    setSelectedText(selectedText);
-    setMenuPosition({ x: event.clientX, y: event.clientY });
-    setShowContextMenu(true);
-  }, []);
-
-  const handleContextMenu = useCallback((event: React.MouseEvent) => {
-    event.preventDefault();
-    handleTextSelection(event);
-  }, [handleTextSelection]);
-
-  const handleExpand = useCallback(async (text: string) => {
+  const handleExpand = async (text: string) => {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return;
 
     const range = selection.getRangeAt(0);
-    const selectionPosition = range.startOffset;
+    const startOffset = range.startOffset;
     
-    await expandContent(text, selectionPosition);
-    setShowContextMenu(false);
-    
-    // Clear selection
+    await expandContent(text, startOffset);
+    setIsMenuVisible(false);
     selection.removeAllRanges();
-  }, [expandContent]);
+  };
 
-  const handleRemoveExpansion = useCallback((event: React.MouseEvent) => {
-    const button = event.target as HTMLElement;
-    const expansionId = button.closest('[data-expansion-id]')?.getAttribute('data-expansion-id');
-    if (expansionId) {
-      removeExpansion(expansionId);
-    }
-  }, [removeExpansion]);
+  const handleCloseMenu = () => {
+    setIsMenuVisible(false);
+    setSelectedText('');
+  };
 
-  // Handle clicks on remove buttons within expansions
+  // Expose removeExpansion function globally for button clicks
   React.useEffect(() => {
-    const handleClick = (event: MouseEvent) => {
-      const button = (event.target as HTMLElement).closest('.expansion-remove-btn');
-      if (button) {
-        const expansionId = button.getAttribute('data-expansion-id');
-        if (expansionId) {
-          removeExpansion(expansionId);
-        }
-      }
+    (window as any).removeExpansion = (expansionId: string) => {
+      removeExpansion(expansionId);
     };
-
-    if (contentRef.current) {
-      contentRef.current.addEventListener('click', handleClick);
-    }
-
+    
     return () => {
-      if (contentRef.current) {
-        contentRef.current.removeEventListener('click', handleClick);
-      }
+      delete (window as any).removeExpansion;
     };
   }, [removeExpansion]);
 
   return (
-    <div className={`relative ${className}`}>
-      {/* Expansion controls */}
-      {expansions.length > 0 && (
-        <div className="flex items-center gap-2 mb-4 p-2 bg-green-50 rounded-md border border-green-200">
-          <span className="text-sm text-green-700 font-medium">
-            {expansions.length} expansion{expansions.length > 1 ? 's' : ''} added
-          </span>
-          <Button
-            onClick={clearAllExpansions}
-            variant="ghost"
-            size="sm"
-            className="h-6 px-2 text-xs text-green-600 hover:text-green-800"
-          >
-            <Undo2 className="h-3 w-3 mr-1" />
-            Clear all
-          </Button>
-        </div>
-      )}
-
-      {/* Content with expansions */}
+    <>
       <div
         ref={contentRef}
+        className={`expandable-content ${className}`}
+        style={{
+          fontSize: `${fontSize}px`,
+          textAlign,
+          lineHeight: 1.6,
+          userSelect: 'text'
+        }}
         onMouseUp={handleTextSelection}
-        onContextMenu={handleContextMenu}
-        className="select-text cursor-text"
+        onTouchEnd={handleTextSelection}
       >
-        <UnifiedContentRenderer
-          content={getContentWithExpansions()}
-          fontSize={fontSize}
-          textAlign={textAlign}
-          className="expandable-content"
-        />
+        <ReactMarkdown
+          components={{
+            blockquote: ({ children, ...props }) => {
+              // Check if this is an expansion blockquote
+              const childText = React.Children.toArray(children).join('').toString();
+              if (childText.includes('🤖 **AI Expansion**')) {
+                return (
+                  <div className="content-expansion my-4 p-4 bg-accent/30 border-l-4 border-l-primary rounded-r-lg relative">
+                    {children}
+                  </div>
+                );
+              }
+              return <blockquote {...props}>{children}</blockquote>;
+            }
+          }}
+        >
+          {processedContent}
+        </ReactMarkdown>
       </div>
 
-      {/* Context menu */}
       <ContentExpansionContextMenu
         selectedText={selectedText}
         position={menuPosition}
         onExpand={handleExpand}
-        onClose={() => setShowContextMenu(false)}
-        isVisible={showContextMenu}
+        onClose={handleCloseMenu}
+        isVisible={isMenuVisible}
       />
 
-      {/* Custom CSS classes are handled via Tailwind */}
+      <ExpansionPreviewDialog
+        isOpen={!!pendingExpansion}
+        expansion={pendingExpansion ? {
+          originalText: pendingExpansion.originalText,
+          expandedContent: pendingExpansion.expandedContent,
+          contentType
+        } : null}
+        isRegenerating={isRegenerating}
+        onConfirm={confirmExpansion}
+        onRegenerate={regenerateExpansion}
+        onCancel={cancelExpansion}
+      />
+
       <style dangerouslySetInnerHTML={{
         __html: `
-          .expandable-content .content-expansion {
-            animation: fadeIn 0.3s ease-in-out;
+        .expansion-remove-wrapper {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+        }
+        
+        .expansion-remove-btn {
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          border: none;
+          background: hsl(var(--destructive));
+          color: white;
+          font-size: 14px;
+          font-weight: bold;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0.7;
+          transition: all 0.2s ease;
+        }
+        
+        .expansion-remove-btn:hover {
+          opacity: 1;
+          transform: scale(1.1);
+        }
+        
+        .content-expansion {
+          animation: expansion-fadeIn 0.4s ease-out forwards;
+        }
+        
+        @keyframes expansion-fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(-8px) scale(0.98);
           }
-
-          @keyframes fadeIn {
-            from {
-              opacity: 0;
-              transform: translateY(-10px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
           }
-
-          .expandable-content .expansion-remove-btn {
-            transition: all 0.2s ease;
-          }
-
-          .expandable-content .expansion-remove-btn:hover {
-            transform: scale(1.1);
-          }
+        }
         `
       }} />
-    </div>
+    </>
   );
 };

@@ -14,6 +14,7 @@ interface EnhancementContentProps {
   isLoading?: boolean;
   hasError?: boolean;
   enhancementType?: string;
+  noteId?: string;
   onRetry?: (enhancementType: string) => void;
   onCancel?: () => void;
 }
@@ -26,6 +27,7 @@ export const EnhancementContent = ({
   isLoading = false,
   hasError = false,
   enhancementType = "",
+  noteId,
   onRetry,
   onCancel
 }: EnhancementContentProps) => {
@@ -102,11 +104,12 @@ export const EnhancementContent = ({
   return (
     <div className="animate-fade-in px-6 py-4">
       <ExpandableContentRenderer 
-        content={content} 
-        fontSize={fontSize} 
+        content={content}
+        fontSize={fontSize}
         textAlign={textAlign}
         contentType={enhancementType}
         noteTitle={title}
+        noteId={noteId || crypto.randomUUID()}
         className="text-foreground"
       />
     </div>

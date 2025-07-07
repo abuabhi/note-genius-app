@@ -1595,6 +1595,50 @@ export type Database = {
           },
         ]
       }
+      note_content_expansions: {
+        Row: {
+          content_type: string
+          created_at: string | null
+          expanded_content: string
+          id: string
+          note_id: string
+          original_text: string
+          position_marker: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content_type: string
+          created_at?: string | null
+          expanded_content: string
+          id?: string
+          note_id: string
+          original_text: string
+          position_marker: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content_type?: string
+          created_at?: string | null
+          expanded_content?: string
+          id?: string
+          note_id?: string
+          original_text?: string
+          position_marker?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "note_content_expansions_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       note_enrichment_usage: {
         Row: {
           completion_tokens: number
