@@ -127,7 +127,7 @@ export const NoteCard = ({
       `}
       onClick={() => onNoteClick(note)}
     >
-      {/* Actions positioned absolutely - always visible in grid view */}
+      {/* Actions positioned absolutely - only for grid view */}
       <div className="absolute top-3 right-3 z-10">
         <NoteCardActions 
           noteId={note.id}
