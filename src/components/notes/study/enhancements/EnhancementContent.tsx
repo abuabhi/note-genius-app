@@ -14,7 +14,8 @@ interface EnhancementContentProps {
   isLoading?: boolean;
   hasError?: boolean;
   enhancementType?: string;
-  noteId?: string;
+  noteId: string;
+  contentType: string;
   onRetry?: (enhancementType: string) => void;
   onCancel?: () => void;
 }
@@ -28,6 +29,7 @@ export const EnhancementContent = ({
   hasError = false,
   enhancementType = "",
   noteId,
+  contentType,
   onRetry,
   onCancel
 }: EnhancementContentProps) => {
@@ -40,7 +42,17 @@ export const EnhancementContent = ({
     isLoading,
     hasError,
     enhancementType,
+    contentType,
+    noteId: noteId?.substring(0, 8) + '...',
     contentPreview: content?.substring(0, 100)
+  });
+
+  // CRITICAL: Verify noteId and contentType are correct
+  console.log("🔧 FIXED PROPAGATION CHECK:", {
+    noteId: noteId ? 'VALID' : 'MISSING',
+    contentType: contentType || 'MISSING',
+    enhancementType: enhancementType || 'MISSING',
+    tabIsolationKey: `${noteId}-${contentType}`
   });
 
   // SIMPLIFIED: ALL CONTENT IS MARKDOWN - NO EXCEPTIONS
@@ -107,9 +119,9 @@ export const EnhancementContent = ({
         content={content}
         fontSize={fontSize}
         textAlign={textAlign}
-        contentType={enhancementType}
+        contentType={contentType}
         noteTitle={title}
-        noteId={noteId || crypto.randomUUID()}
+        noteId={noteId}
         className="text-foreground"
       />
     </div>

@@ -162,6 +162,8 @@ export const EnhancementDisplayPanel = ({
             fontSize={fontSize}
             textAlign={textAlign}
             enhancementType={enhancementType}
+            noteId={note.id}
+            contentType={contentType}
             onRetry={handleExplicitRetry}
           />
         </div>
@@ -176,6 +178,8 @@ export const EnhancementDisplayPanel = ({
             fontSize={fontSize}
             textAlign={textAlign}
             enhancementType={enhancementType}
+            noteId={note.id}
+            contentType={contentType}
             onRetry={handleExplicitRetry}
           />
         </div>

@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { StudyViewTitleSection } from "./StudyViewTitleSection";
 import { StudyViewEnhancementDropdown } from "./StudyViewEnhancementDropdown";
 import { StudyViewExportDropdown } from "./StudyViewExportDropdown";
+import { ExpansionCleanupButton } from "@/components/debug/ExpansionCleanupButton";
 
 interface StudyViewHeaderProps {
   note: Note;
@@ -95,6 +96,8 @@ export const StudyViewHeader = ({
               />
               
               <StudyViewExportDropdown note={note} />
+              
+              <ExpansionCleanupButton />
             </>
           )}
 
