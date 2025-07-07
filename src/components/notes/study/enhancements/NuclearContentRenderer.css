@@ -135,7 +135,7 @@
   margin: 1rem 0;
 }
 
-/* ENRICHED CONTENT STYLING - FIXED FONT INHERITANCE */
+/* ENRICHED CONTENT STYLING - NUCLEAR FONT FIX */
 .nuclear-content-container .enriched-content-section {
   background: linear-gradient(to right, #f0fdf4, #ecfdf5);
   border: 2px solid #22c55e;
@@ -145,11 +145,32 @@
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   position: relative;
   
-  /* FONT INHERITANCE FIX */
+  /* NUCLEAR FONT INHERITANCE FIX */
   font-family: inherit !important;
   font-size: inherit !important;
   line-height: 1.6 !important;
-  color: inherit;
+  color: inherit !important;
+  font-weight: normal !important;
+}
+
+/* NUCLEAR LEVEL CSS - MAXIMUM SPECIFICITY FOR BOLD FIX */
+body .nuclear-content-container .enriched-content-section,
+body .nuclear-content-container .enriched-content-section *:not(strong):not(b) {
+  font-weight: normal !important;
+}
+
+body .nuclear-content-container .enriched-content-section p,
+body .nuclear-content-container .enriched-content-section div,
+body .nuclear-content-container .enriched-content-section span,
+body .nuclear-content-container .enriched-content-section li,
+body .nuclear-content-container .enriched-content-section h1,
+body .nuclear-content-container .enriched-content-section h2,
+body .nuclear-content-container .enriched-content-section h3,
+body .nuclear-content-container .enriched-content-section h4,
+body .nuclear-content-container .enriched-content-section h5,
+body .nuclear-content-container .enriched-content-section h6 {
+  font-weight: normal !important;
+  font-family: inherit !important;
 }
 
 .nuclear-content-container .enriched-content-section::before {

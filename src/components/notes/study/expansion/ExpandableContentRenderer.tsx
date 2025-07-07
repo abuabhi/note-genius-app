@@ -70,9 +70,11 @@ export const ExpandableContentRenderer = ({
 
 ---
 
-<div class="ai-expansion-indicator">🧠 AI Expanded Content</div>
+<div class="ai-expansion-header">🧠 AI Expanded Content</div>
 
-*${expansion.expandedContent.split('\n').map(line => line.trim()).join(' ')}*
+<div class="ai-expansion-content">
+${expansion.expandedContent.split('\n').map(line => line.trim()).filter(line => line.length > 0).join('\n\n')}
+</div>
 
 <div class="expansion-remove-wrapper" data-expansion-id="${expansion.id}">
   <button class="expansion-remove-btn" onclick="window.removeExpansion('${expansion.id}')">×</button>
@@ -88,11 +90,20 @@ export const ExpandableContentRenderer = ({
   }, [content, expansions]);
 
   const handleTextSelection = () => {
+    console.log("🎯 SELECTION: Text selection handler triggered");
+    
     const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return;
+    if (!selection || selection.rangeCount === 0) {
+      console.log("❌ SELECTION: No selection or range");
+      setIsMenuVisible(false);
+      return;
+    }
 
     const text = selection.toString().trim();
+    console.log("📝 SELECTION: Selected text:", text, "Length:", text.length);
+    
     if (text.length < 10) { // Minimum selection length
+      console.log("⚠️ SELECTION: Text too short, hiding menu");
       setIsMenuVisible(false);
       return;
     }
@@ -100,12 +111,16 @@ export const ExpandableContentRenderer = ({
     const range = selection.getRangeAt(0);
     const rect = range.getBoundingClientRect();
     
+    console.log("📍 SELECTION: Position rect:", rect);
+    
     setSelectedText(text);
     setMenuPosition({
-      x: rect.left + rect.width / 2,
-      y: rect.bottom + window.scrollY + 5
+      x: rect.left + (rect.width / 2),
+      y: rect.top + window.scrollY - 10
     });
     setIsMenuVisible(true);
+    
+    console.log("✅ SELECTION: Menu should be visible now");
   };
 
   const handleExpand = async (text: string) => {
@@ -146,6 +161,7 @@ export const ExpandableContentRenderer = ({
         }}
         onMouseUp={handleTextSelection}
         onTouchEnd={handleTextSelection}
+        onSelect={handleTextSelection}
       >
         {/* FIXED: Use NuclearContentRenderer for consistent, beautiful formatting */}
         <NuclearContentRenderer
@@ -179,7 +195,7 @@ export const ExpandableContentRenderer = ({
 
       <style dangerouslySetInnerHTML={{
         __html: `
-        .ai-expansion-indicator {
+        .ai-expansion-header {
           display: inline-flex;
           align-items: center;
           gap: 0.5rem;
@@ -190,8 +206,31 @@ export const ExpandableContentRenderer = ({
           border: 1px solid #a7f3d0;
           border-radius: 0.5rem;
           padding: 0.5rem 0.75rem;
-          margin: 1rem 0 0.5rem 0;
+          margin: 1.5rem 0 0.75rem 0;
           box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .ai-expansion-content {
+          background: linear-gradient(to right, #f0fdf4, #ecfdf5);
+          border-left: 3px solid #22c55e;
+          padding: 1rem 1.25rem;
+          margin: 0.5rem 0 1.5rem 0;
+          border-radius: 0 0.5rem 0.5rem 0;
+          font-style: italic;
+          color: #166534;
+          line-height: 1.6;
+          position: relative;
+        }
+        
+        .ai-expansion-content::before {
+          content: '';
+          position: absolute;
+          left: -3px;
+          top: 0;
+          bottom: 0;
+          width: 3px;
+          background: linear-gradient(to bottom, #22c55e, #16a34a);
+          border-radius: 0 0 0 0.125rem;
         }
         
         .expansion-remove-wrapper {
