@@ -83,28 +83,33 @@ export const EnhancementContent = ({
   
   if (!content || content.trim() === '') {
     return (
-      <div className="p-8 bg-accent/50 rounded-lg border border-border text-center">
-        <div className="flex flex-col items-center space-y-4">
-          <Sparkles className="h-12 w-12 text-primary" />
+      <div className="p-8 bg-gradient-to-br from-mint-50/50 to-mint-100/30 rounded-xl border-2 border-mint-200/50 text-center shadow-sm">
+        <div className="flex flex-col items-center space-y-6">
+          <div className="p-4 bg-mint-100/60 rounded-full shadow-sm">
+            <Sparkles className="h-8 w-8 text-mint-600" />
+          </div>
           <div>
-            <h3 className="text-lg font-medium text-foreground mb-2">No {safeTitle.toLowerCase()} available</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Click the button below to generate AI-enhanced {safeTitle.toLowerCase()}
+            <h3 className="text-xl font-semibold text-mint-900 mb-3">Generate {safeTitle}</h3>
+            <p className="text-sm text-mint-700/80 mb-2 max-w-md mx-auto leading-relaxed">
+              AI will analyze your note and create {safeTitle.toLowerCase()} tailored to your content.
+            </p>
+            <p className="text-xs text-mint-600/70 mb-6">
+              Processing typically takes 10-30 seconds
             </p>
           </div>
           {onRetry && (
             <Button 
-              variant="outline" 
-              size="sm" 
+              size="lg" 
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 console.log("🎯 USER EXPLICITLY CLICKED GENERATE BUTTON for:", enhancementType);
                 onRetry(enhancementType);
               }}
-              className="text-primary hover:text-primary/80 border-primary/20 hover:border-primary/30"
+              className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
             >
-              <RefreshCw className="mr-2 h-4 w-4" /> Generate {safeTitle}
+              <Sparkles className="mr-3 h-5 w-5" /> 
+              Generate {safeTitle}
             </Button>
           )}
         </div>

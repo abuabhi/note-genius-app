@@ -1,5 +1,6 @@
 
-import { Loader2, Brain, Sparkles, Zap, Wand2, Stars } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Loader2, Brain, Sparkles, Zap, Wand2, Stars, Clock, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface LoadingAnimationsProps {
@@ -13,6 +14,32 @@ export const LoadingAnimations = ({
   message = "Processing...",
   className
 }: LoadingAnimationsProps) => {
+  const [progress, setProgress] = useState(0);
+  const [timeElapsed, setTimeElapsed] = useState(0);
+  
+  useEffect(() => {
+    const progressInterval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 85) return prev; // Don't complete until actual completion
+        return prev + Math.random() * 3;
+      });
+    }, 1500);
+
+    const timeInterval = setInterval(() => {
+      setTimeElapsed(prev => prev + 1);
+    }, 1000);
+
+    return () => {
+      clearInterval(progressInterval);
+      clearInterval(timeInterval);
+    };
+  }, []);
+  
+  const getEstimatedTime = () => {
+    if (timeElapsed < 15) return "Usually takes 10-30 seconds";
+    if (timeElapsed < 45) return "Taking a bit longer, please wait...";
+    return "Almost done, hang tight!";
+  };
   const getAnimationForEnhancement = () => {
     switch (enhancementType) {
       case 'summarize':
@@ -148,8 +175,32 @@ export const LoadingAnimations = ({
   };
 
   return (
-    <div className={cn("p-8 bg-gradient-to-br from-mint-50 to-blue-50 rounded-lg border border-mint-200", className)}>
-      {getAnimationForEnhancement()}
+    <div className={cn("p-12 bg-gradient-to-br from-mint-50/50 to-mint-100/30 rounded-xl border-2 border-mint-200/50 shadow-sm", className)}>
+      <div className="space-y-8">
+        {getAnimationForEnhancement()}
+        
+        {/* Progress Information */}
+        <div className="text-center space-y-4">
+          {/* Progress Bar */}
+          <div className="w-64 bg-mint-100 rounded-full h-2 mx-auto">
+            <div 
+              className="bg-gradient-to-r from-mint-500 to-mint-600 h-2 rounded-full transition-all duration-1000 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          
+          {/* Time Information */}
+          <div className="flex items-center justify-center space-x-2 text-mint-700">
+            <Clock className="h-4 w-4" />
+            <span className="text-sm">{getEstimatedTime()}</span>
+          </div>
+          
+          {/* Time Elapsed */}
+          <div className="text-xs text-mint-600/80">
+            Processing for {timeElapsed}s
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

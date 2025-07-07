@@ -9,6 +9,7 @@ import { useNoteStudyEditor } from "./hooks/useNoteStudyEditor";
 import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
 import { useNoteEnhancementRetry } from "./hooks/useNoteEnhancementRetry";
 import { UserSubject } from "@/types/subject";
+import { EnhancementDebugger } from "@/components/debug/EnhancementDebugger";
 
 interface NoteStudyViewProps {
   note: Note;
@@ -80,6 +81,13 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+      {/* Debug Panel - Only show in development */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="container mx-auto px-4 py-4">
+          <EnhancementDebugger />
+        </div>
+      )}
+      
       <StudyViewHeader
         note={note}
         fontSize={fontSize}

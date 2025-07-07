@@ -1,99 +1,122 @@
-
 import React from 'react';
+import { AlertTriangle, RefreshCw, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, RefreshCcw, XCircle } from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface EnhancementErrorProps {
   error: string;
-  onRetry: () => void;
-  onCancel?: () => void;
+  onRetry?: () => void;
   title?: string;
   enhancementType?: string;
 }
 
-export const EnhancementError: React.FC<EnhancementErrorProps> = ({
+export const EnhancementError = ({
   error,
   onRetry,
-  onCancel,
-  title = "Enhancement failed",
-  enhancementType
-}) => {
-  // Parse error message to provide more user-friendly information
-  const getDisplayError = () => {
-    if (error.includes("limit")) {
-      return "You've reached your monthly limit for AI enhancements.";
+  title = "Enhancement Failed",
+  enhancementType = ""
+}: EnhancementErrorProps) => {
+  
+  const getErrorMessage = (error: string, enhancementType: string) => {
+    if (error.includes('timeout') || error.includes('timed out')) {
+      return {
+        title: "Request Timed Out",
+        message: "The AI service is taking longer than expected. This sometimes happens during high demand periods.",
+        suggestion: "Please try again in a moment. If the issue persists, the service may be experiencing temporary delays."
+      };
     }
     
-    if (error.includes("timeout") || error.includes("timed out")) {
-      return "The request took too long to process. Please try again.";
+    if (error.includes('network') || error.includes('fetch')) {
+      return {
+        title: "Network Error",
+        message: "Unable to connect to the AI enhancement service.",
+        suggestion: "Please check your internet connection and try again."
+      };
     }
     
-    if (error.includes("token") || error.includes("tokens")) {
-      return "Your note is too long for the AI to process at once. Try splitting it into smaller sections.";
+    if (error.includes('limit') || error.includes('quota')) {
+      return {
+        title: "Usage Limit Reached",
+        message: "You've reached your monthly enhancement limit for your current tier.",
+        suggestion: "Upgrade to a higher tier for more AI enhancements, or wait until next month."
+      };
     }
     
-    if (error.includes("content") || error.includes("empty")) {
-      return "No content was found to enhance. Please add some text to your note.";
+    if (error.includes('API key') || error.includes('authentication')) {
+      return {
+        title: "Service Configuration Error",
+        message: "There's a temporary issue with the AI service configuration.",
+        suggestion: "Please try again in a few minutes. If the issue persists, contact support."
+      };
     }
     
-    if (error.includes("network") || error.includes("offline")) {
-      return "Network connection issue. Please check your internet connection and try again.";
-    }
-    
-    if (error.includes("API") || error.includes("server")) {
-      return "Our AI service is currently experiencing issues. Please try again later.";
-    }
-    
-    // Default error message
-    return error;
+    return {
+      title: "Enhancement Failed",
+      message: error || "An unexpected error occurred while processing your request.",
+      suggestion: "Please try again. If the problem continues, the AI service may be temporarily unavailable."
+    };
   };
   
+  const errorDetails = getErrorMessage(error, enhancementType);
+  
   return (
-    <Card className="p-4 bg-red-50 border border-red-200 rounded-md">
-      <div className="flex items-start gap-3">
-        <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
-        <div className="flex-1">
-          <h3 className="text-red-700 font-medium mb-1">{title}</h3>
-          {enhancementType && (
-            <p className="text-xs font-medium text-red-600 mb-1">
-              Type: {enhancementType}
-            </p>
-          )}
-          <p className="text-red-600 text-sm mb-3">{getDisplayError()}</p>
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="text-red-600 border-red-300 hover:bg-red-50"
-              onClick={onRetry}
-            >
-              <RefreshCcw className="h-3 w-3 mr-1" />
-              Try Again
-            </Button>
-            
-            {onCancel && (
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={onCancel}
-                className="text-gray-500"
-              >
-                <XCircle className="h-3 w-3 mr-1" />
-                Cancel
-              </Button>
-            )}
+    <Card className="m-6 border-red-200 bg-red-50/50">
+      <CardContent className="p-8">
+        <div className="flex flex-col items-center text-center space-y-6">
+          {/* Error Icon */}
+          <div className="p-4 bg-red-100 rounded-full">
+            <AlertTriangle className="h-8 w-8 text-red-600" />
           </div>
           
-          {/* Technical details for debugging (collapsed) */}
-          <details className="mt-3">
-            <summary className="text-xs text-red-500 cursor-pointer">Technical details</summary>
-            <pre className="mt-1 text-xs bg-red-100 p-2 rounded overflow-auto max-h-24">
-              {error}
-            </pre>
+          {/* Error Title */}
+          <div>
+            <h3 className="text-xl font-semibold text-red-900 mb-2">
+              {errorDetails.title}
+            </h3>
+            <p className="text-red-700/80 mb-3 max-w-md">
+              {errorDetails.message}
+            </p>
+            <p className="text-red-600/70 text-sm max-w-md">
+              {errorDetails.suggestion}
+            </p>
+          </div>
+          
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            {onRetry && (
+              <Button 
+                onClick={onRetry}
+                variant="outline"
+                className="border-red-300 text-red-700 hover:bg-red-50 hover:border-red-400"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Try Again
+              </Button>
+            )}
+            
+            <Button 
+              variant="ghost"
+              size="sm"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              onClick={() => window.open('https://help.lovable.dev', '_blank')}
+            >
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Get Help
+            </Button>
+          </div>
+          
+          {/* Technical Details (Collapsible) */}
+          <details className="w-full max-w-md">
+            <summary className="text-xs text-red-500 cursor-pointer hover:text-red-600">
+              Technical Details
+            </summary>
+            <div className="mt-2 p-3 bg-red-100 rounded text-xs text-red-700 font-mono text-left">
+              Enhancement Type: {enhancementType}<br/>
+              Error: {error}
+            </div>
           </details>
         </div>
-      </div>
+      </CardContent>
     </Card>
   );
 };

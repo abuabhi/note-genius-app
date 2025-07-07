@@ -28,11 +28,18 @@ export const callEnrichmentAPI = async (
     // Set reasonable timeout for the function call with AbortController
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
-      console.error('Enhancement request timed out after 90 seconds');
+      console.error('Enhancement request timed out after 2 minutes');
       controller.abort();
-    }, 90000); // 90 second timeout
+    }, 120000); // 2 minute timeout for better reliability
     
-    console.log('Calling enrich-note function...');
+    console.log('Calling enrich-note function with enhanced logging...');
+    console.log('Request details:', {
+      noteId: note.id.substring(0, 8) + '...',
+      titleLength: (note.title || '').length,
+      contentLength: note.content.length,
+      enhancementType,
+      timestamp: new Date().toISOString()
+    });
     
     // Call the edge function
     const { data, error } = await supabase.functions.invoke('enrich-note', {
@@ -52,14 +59,30 @@ export const callEnrichmentAPI = async (
     
     if (error) {
       console.error('Error calling enrich-note function:', error);
-      throw new Error('Failed to enrich note: ' + error.message);
+      console.error('Full error details:', JSON.stringify(error, null, 2));
+      
+      // Provide more specific error handling
+      if (error.message?.includes('timeout') || error.message?.includes('aborted')) {
+        throw new Error('The AI service is taking longer than expected. Please try again in a moment.');
+      }
+      
+      if (error.message?.includes('quota') || error.message?.includes('limit')) {
+        throw new Error('AI service quota exceeded. Please try again later or upgrade your plan.');
+      }
+      
+      throw new Error(`Enhancement failed: ${error.message || 'Unknown error occurred'}`);
     }
     
     if (!data?.enhancedContent) {
-      throw new Error('No enhanced content returned from AI service');
+      console.error('No enhanced content in response:', data);
+      throw new Error('The AI service did not return enhanced content. Please try again.');
     }
     
-    console.log('Enhancement completed successfully');
+    console.log('Enhancement completed successfully:', {
+      contentLength: data.enhancedContent.length,
+      hasTokenUsage: !!data.tokenUsage,
+      enhancementType
+    });
     
     // Return the content directly
     const enhancedContent = data.enhancedContent.trim();
