@@ -12,6 +12,8 @@ import { EnhancedImportDialog } from '@/components/notes/import/EnhancedImportDi
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CreateNoteForm } from '@/components/notes/page/CreateNoteForm';
 import { Note } from '@/types/note';
+import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
+import { toast } from 'sonner';
 
 // Enhanced error fallback component with better debugging
 const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) => {
@@ -46,11 +48,12 @@ const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetError
   );
 };
 
-const NotesPage = () => {
+const NotesPageContent = () => {
   const { viewMode, setViewMode } = useViewPreferences('notes');
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
   const { userTier } = useUserTier();
+  const { addNote } = useOptimizedNotes();
 
   // Convert ViewMode to the expected type for the header and content
   const convertedViewMode: 'grid' | 'list' = viewMode === 'compact' ? 'grid' : viewMode as 'grid' | 'list';
@@ -60,9 +63,19 @@ const NotesPage = () => {
   };
 
   const handleSaveNote = async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
-    // This will be implemented by the form's internal logic
-    setIsManualDialogOpen(false);
-    return null;
+    try {
+      const newNote = await addNote(noteData);
+      if (newNote) {
+        toast.success('Note created successfully!');
+        setIsManualDialogOpen(false);
+        return newNote;
+      }
+      return null;
+    } catch (error) {
+      console.error('Failed to create note:', error);
+      toast.error('Failed to create note. Please try again.');
+      return null;
+    }
   };
 
   return (
@@ -86,9 +99,7 @@ const NotesPage = () => {
             console.error('Notes page error caught by boundary:', error, errorInfo);
           }}
         >
-          <OptimizedNotesProvider>
-            <OptimizedNotesContent viewMode={convertedViewMode} />
-          </OptimizedNotesProvider>
+          <OptimizedNotesContent viewMode={convertedViewMode} />
         </ErrorBoundary>
       </div>
 
@@ -112,6 +123,14 @@ const NotesPage = () => {
         </DialogContent>
       </Dialog>
     </div>
+  );
+};
+
+const NotesPage = () => {
+  return (
+    <OptimizedNotesProvider>
+      <NotesPageContent />
+    </OptimizedNotesProvider>
   );
 };
 
