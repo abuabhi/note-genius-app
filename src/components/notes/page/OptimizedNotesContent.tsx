@@ -4,12 +4,8 @@ import { ProgressiveLoader } from '@/components/performance/ProgressiveLoader';
 import { EmptyNotesState } from '@/components/notes/EmptyNotesState';
 import { useVirtualizationMetrics } from '@/hooks/notes/useVirtualizationMetrics';
 
-// Optimized selective hooks to minimize re-renders
-import { 
-  useNotesWithPagination, 
-  useNotesFiltersOnly, 
-  useNotesOperationsOnly 
-} from '@/hooks/notes/useSelectiveNotesContext';
+// Use the unified OptimizedNotesContext instead of selective hooks
+import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
 
 // New smaller components
 import { NotesErrorHandler } from './components/NotesErrorHandler';
@@ -23,24 +19,18 @@ interface OptimizedNotesContentProps {
 }
 
 export const OptimizedNotesContent = React.memo(({ viewMode }: OptimizedNotesContentProps) => {
-  // Use selective hooks instead of the monolithic context
+  // Use the unified OptimizedNotesContext for consistent state management
   const {
     notes,
     totalCount,
     loading,
     hasMore,
-    loadMore
-  } = useNotesWithPagination();
-
-  const {
+    loadMore,
     searchTerm,
-    selectedSubject
-  } = useNotesFiltersOnly();
-
-  const {
+    selectedSubject,
     updateNote,
     deleteNote
-  } = useNotesOperationsOnly();
+  } = useOptimizedNotes();
 
   // Virtualization control with memoized threshold - no UI toggle needed
   const virtualizationThreshold = useMemo(() => 50, []);

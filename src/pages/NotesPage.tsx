@@ -65,18 +65,25 @@ const NotesPageContent = () => {
 
   const handleSaveNote = async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
     try {
+      console.log('🚀 Creating note and closing dialog...');
+      
+      // Close dialog immediately to prevent UI lag
+      setIsManualDialogOpen(false);
+      
+      // Create the note
       const newNote = await addNote(noteData);
       if (newNote) {
         toast.success('Note created successfully!');
-        setIsManualDialogOpen(false);
-        // Trigger immediate refresh to show the new note
-        await refreshNotes();
+        // The OptimizedNotesContext will automatically update the notes list
+        console.log('✅ Note created, context will handle UI update');
         return newNote;
       }
       return null;
     } catch (error) {
       console.error('Failed to create note:', error);
       toast.error('Failed to create note. Please try again.');
+      // Reopen dialog if creation failed
+      setIsManualDialogOpen(true);
       return null;
     }
   };

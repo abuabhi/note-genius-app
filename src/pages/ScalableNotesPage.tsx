@@ -11,13 +11,13 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { DialogManager } from "@/components/notes/page/header/DialogManager";
 import { useUserTier } from "@/hooks/useUserTier";
-import { useNotesOperationsOnly } from "@/hooks/notes/useSelectiveNotesContext";
+import { useOptimizedNotes } from "@/contexts/OptimizedNotesContext";
 import { useViewPreferences } from "@/hooks/useViewPreferences";
 
 // Inner component that uses the context
 const ScalableNotesPageContent = () => {
-  // Use the new selective hooks instead of the old useOptimizedNotes
-  const { addNote } = useNotesOperationsOnly();
+  // Use the unified OptimizedNotesContext
+  const { addNote } = useOptimizedNotes();
   const { tierLimits } = useUserTier();
   const { viewMode } = useViewPreferences('notes');
   
@@ -30,15 +30,23 @@ const ScalableNotesPageContent = () => {
 
   const handleSaveNote = async (noteData: Omit<Note, 'id'>): Promise<Note> => {
     try {
+      console.log('🚀 Creating note and closing dialog...');
+      
+      // Close dialog immediately to prevent UI lag
+      setIsManualDialogOpen(false);
+      
       const savedNote = await addNote(noteData);
       if (savedNote) {
         toast.success("Note saved successfully!");
+        console.log('✅ Note created, context will handle UI update');
         return savedNote;
       } else {
         throw new Error("Failed to save note");
       }
     } catch (error) {
       toast.error("Failed to save note");
+      // Reopen dialog if creation failed
+      setIsManualDialogOpen(true);
       throw error;
     }
   };
