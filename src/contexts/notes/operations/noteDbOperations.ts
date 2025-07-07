@@ -18,19 +18,19 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
         pinned: noteData.pinned || false,
         summary: noteData.summary,
         summary_generated_at: noteData.summary_generated_at,
-        summary_status: noteData.summary_status || 'pending',
+        summary_status: noteData.summary_status, // Only set if explicitly provided
         key_points: noteData.key_points,
         key_points_generated_at: noteData.key_points_generated_at,
-        key_points_status: noteData.key_points_status || 'pending',
+        key_points_status: noteData.key_points_status, // Only set if explicitly provided
         markdown_content: noteData.markdown_content,
         markdown_content_generated_at: noteData.markdown_content_generated_at,
-        markdown_content_status: noteData.markdown_content_status || 'pending',
+        markdown_content_status: noteData.markdown_content_status, // Only set if explicitly provided
         improved_content: noteData.improved_content,
         improved_content_generated_at: noteData.improved_content_generated_at,
-        improved_content_status: noteData.improved_content_status || 'pending',
+        improved_content_status: noteData.improved_content_status, // Only set if explicitly provided
         enriched_content: noteData.enriched_content,
         enriched_content_generated_at: noteData.enriched_content_generated_at,
-        enriched_status: noteData.enriched_status || 'pending',
+        enriched_status: noteData.enriched_status, // Only set if explicitly provided
         subject_id: noteData.subject_id
       })
       .select()

@@ -59,33 +59,32 @@ export const EnhancementSelector = ({
     note.enriched_content.trim().length > 20
   );
   
-  // FIXED: Only show processing when content is actually being generated AND doesn't exist
-  // For new notes, ensure all status fields are null/undefined and don't show processing
+  // FIXED: Only show processing when content is actually being generated (NOT pending)
+  // For new notes, status fields are null/undefined and won't show processing
   const summaryStatus = note.summary_status;
-  const isGeneratingSummary = summaryStatus === 'generating' || summaryStatus === 'pending';
+  const isGeneratingSummary = summaryStatus === 'generating'; // ONLY show progress when actively generating
   const hasSummaryError = summaryStatus === 'failed';
-  // Don't show processing for new notes - only when actively generating and content doesn't exist
-  const showSummaryProcessing = Boolean(isGeneratingSummary && !hasSummary && summaryStatus);
+  const showSummaryProcessing = Boolean(isGeneratingSummary && !hasSummary);
 
   const keyPointsStatus = note.key_points_status;
-  const isGeneratingKeyPoints = keyPointsStatus === 'generating' || keyPointsStatus === 'pending';
+  const isGeneratingKeyPoints = keyPointsStatus === 'generating'; // ONLY show progress when actively generating
   const hasKeyPointsError = keyPointsStatus === 'failed';
-  const showKeyPointsProcessing = Boolean(isGeneratingKeyPoints && !hasKeyPoints && keyPointsStatus);
+  const showKeyPointsProcessing = Boolean(isGeneratingKeyPoints && !hasKeyPoints);
 
   const markdownStatus = note.markdown_content_status;
-  const isGeneratingMarkdown = markdownStatus === 'generating' || markdownStatus === 'pending';
+  const isGeneratingMarkdown = markdownStatus === 'generating'; // ONLY show progress when actively generating
   const hasMarkdownError = markdownStatus === 'failed';
-  const showMarkdownProcessing = Boolean(isGeneratingMarkdown && !hasMarkdown && markdownStatus);
+  const showMarkdownProcessing = Boolean(isGeneratingMarkdown && !hasMarkdown);
 
   const improvedStatus = note.improved_content_status;
-  const isGeneratingImproved = improvedStatus === 'generating' || improvedStatus === 'pending';
+  const isGeneratingImproved = improvedStatus === 'generating'; // ONLY show progress when actively generating
   const hasImprovedError = improvedStatus === 'failed';
-  const showImprovedProcessing = Boolean(isGeneratingImproved && !hasImprovedClarity && improvedStatus);
+  const showImprovedProcessing = Boolean(isGeneratingImproved && !hasImprovedClarity);
 
   const enrichedStatus = note.enriched_status;
-  const isGeneratingEnriched = enrichedStatus === 'generating' || enrichedStatus === 'pending';
+  const isGeneratingEnriched = enrichedStatus === 'generating'; // ONLY show progress when actively generating
   const hasEnrichedError = enrichedStatus === 'failed';
-  const showEnrichedProcessing = Boolean(isGeneratingEnriched && !hasEnrichedContent && enrichedStatus);
+  const showEnrichedProcessing = Boolean(isGeneratingEnriched && !hasEnrichedContent);
 
   console.log("🔍 EnhancementSelector - FIXED Content availability check:", {
     noteId: note.id,
