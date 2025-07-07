@@ -4,7 +4,6 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useOptimizedNotes } from "@/contexts/OptimizedNotesContext";
 import { OptimizedNotesProvider } from "@/contexts/OptimizedNotesContext";
 import { FlashcardProvider } from "@/contexts/flashcards";
-import Layout from "@/components/layout/Layout";
 import { BulkNoteConversion } from "@/components/notes/conversion/BulkNoteConversion";
 import { NoteToFlashcardBreadcrumb } from "@/components/notes/conversion/NoteToFlashcardBreadcrumb";
 import { Note } from "@/types/note";
@@ -71,13 +70,13 @@ const NoteToFlashcardPageContent = () => {
       return (
         <div className="text-center py-12">
           <div className="max-w-md mx-auto">
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Note Not Found</h2>
-            <p className="text-gray-600 mb-4">
+            <h2 className="text-xl font-semibold text-foreground mb-2">Note Not Found</h2>
+            <p className="text-muted-foreground mb-4">
               The note you're trying to convert could not be found. It may have been deleted or you may not have access to it.
             </p>
             <button 
               onClick={handleCancel}
-              className="px-4 py-2 bg-mint-600 text-white rounded-lg hover:bg-mint-700 transition-colors"
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
             >
               Go Back
             </button>
@@ -101,13 +100,13 @@ const NoteToFlashcardPageContent = () => {
     return (
       <div className="text-center py-12">
         <div className="max-w-md mx-auto">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">No Note Selected</h2>
-          <p className="text-gray-600 mb-4">
+          <h2 className="text-xl font-semibold text-foreground mb-2">No Note Selected</h2>
+          <p className="text-muted-foreground mb-4">
             Please select a note to convert to flashcards.
           </p>
           <button 
             onClick={() => navigate('/notes')}
-            className="px-4 py-2 bg-mint-600 text-white rounded-lg hover:bg-mint-700 transition-colors"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
           >
             Browse Notes
           </button>
@@ -117,17 +116,13 @@ const NoteToFlashcardPageContent = () => {
   };
 
   return (
-    <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
-        <div className="container mx-auto p-4 md:p-6">
-          {/* Breadcrumb Navigation */}
-          <NoteToFlashcardBreadcrumb />
-          
-          {/* Main Content */}
-          {renderContent()}
-        </div>
-      </div>
-    </Layout>
+    <div className="container mx-auto p-4 md:p-6">
+      {/* Breadcrumb Navigation */}
+      <NoteToFlashcardBreadcrumb />
+      
+      {/* Main Content */}
+      {renderContent()}
+    </div>
   );
 };
 
