@@ -29,7 +29,7 @@ export const OptimizedTwoColumnView = ({
   const { isLoading, processEnhancement } = useEnrichmentProcessor();
 
   const handleRetryEnhancement = async (enhancementType: string) => {
-    console.log("🔄 Generating enhancement:", enhancementType);
+    console.log("🚀 Starting enhancement generation:", enhancementType);
     
     try {
       const result = await processEnhancement(
@@ -45,9 +45,20 @@ export const OptimizedTwoColumnView = ({
           [enhancementType]: result.content
         }));
         console.log("✅ Enhancement completed and stored:", enhancementType);
+      } else {
+        console.error("❌ Enhancement failed:", result.error);
+        // Keep error in state for user feedback
+        setEnhancedContents(prev => ({
+          ...prev,
+          [enhancementType]: `Error: ${result.error}`
+        }));
       }
     } catch (error) {
-      console.error("❌ Enhancement failed:", error);
+      console.error("❌ Enhancement processing error:", error);
+      setEnhancedContents(prev => ({
+        ...prev,
+        [enhancementType]: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
+      }));
     }
   };
 

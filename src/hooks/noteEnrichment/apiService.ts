@@ -17,7 +17,7 @@ export const callEnrichmentAPI = async (
   },
   enhancementType: EnhancementFunction
 ): Promise<string> => {
-  console.log(`Enriching note with ${enhancementType}`);
+  console.log(`🚀 Starting enhancement: ${enhancementType} for note ${note.id.substring(0, 8)}`);
   
   // If the note doesn't have content, throw an error
   if (!note.content) {
@@ -25,15 +25,15 @@ export const callEnrichmentAPI = async (
   }
   
   try {
-    // Set reasonable timeout for the function call with AbortController
+    // Set 30 second timeout for faster failure detection
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
-      console.error('Enhancement request timed out after 2 minutes');
+      console.error('❌ Enhancement request timed out after 30 seconds');
       controller.abort();
-    }, 120000); // 2 minute timeout for better reliability
+    }, 30000); // 30 second timeout for production use
     
-    console.log('Calling enrich-note function with enhanced logging...');
-    console.log('Request details:', {
+    console.log('🔄 Calling enrich-note function...');
+    console.log('📋 Request details:', {
       noteId: note.id.substring(0, 8) + '...',
       titleLength: (note.title || '').length,
       contentLength: note.content.length,
@@ -41,7 +41,7 @@ export const callEnrichmentAPI = async (
       timestamp: new Date().toISOString()
     });
     
-    // Call the edge function
+    // Call the edge function (Supabase doesn't support AbortSignal)
     const { data, error } = await supabase.functions.invoke('enrich-note', {
       body: {
         noteId: note.id,
@@ -58,16 +58,20 @@ export const callEnrichmentAPI = async (
     }
     
     if (error) {
-      console.error('Error calling enrich-note function:', error);
-      console.error('Full error details:', JSON.stringify(error, null, 2));
+      console.error('❌ Error calling enrich-note function:', error);
+      console.error('📄 Full error details:', JSON.stringify(error, null, 2));
       
-      // Provide more specific error handling
+      // Provide more specific error handling with retry information
       if (error.message?.includes('timeout') || error.message?.includes('aborted')) {
-        throw new Error('The AI service is taking longer than expected. Please try again in a moment.');
+        throw new Error('Request timed out after 30 seconds. Please try again.');
       }
       
       if (error.message?.includes('quota') || error.message?.includes('limit')) {
         throw new Error('AI service quota exceeded. Please try again later or upgrade your plan.');
+      }
+      
+      if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        throw new Error('Network error. Please check your connection and try again.');
       }
       
       throw new Error(`Enhancement failed: ${error.message || 'Unknown error occurred'}`);

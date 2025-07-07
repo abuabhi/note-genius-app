@@ -1,98 +1,75 @@
+import { useState } from 'react';
+import { callEnrichmentAPI } from "./apiService";
+import { EnhancementFunction } from "./types";
+import { supabase } from "@/integrations/supabase/client";
 
-import { useState, useCallback } from 'react';
-import { toast } from 'sonner';
-import { EnhancementFunction, EnhancementResult } from './types';
-import { enrichNote } from './enrichmentService';
-import { useEnrichmentUsageStats } from './useEnrichmentUsageStats';
-import { getEnhancementDetails } from './enhancementOptions';
+interface EnrichmentResult {
+  success: boolean;
+  content: string;
+  error?: string;
+}
 
-/**
- * Hook for processing note enhancements
- */
 export const useEnrichmentProcessor = () => {
-  const [isProcessing, setIsProcessing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [enhancedContent, setEnhancedContent] = useState('');
-  const [error, setError] = useState('');
-  const [selectedEnhancement, setSelectedEnhancement] = useState<EnhancementFunction | null>(null);
-  
-  const { hasReachedLimit, fetchUsageStats } = useEnrichmentUsageStats();
 
-  const initialize = useCallback(() => {
-    setIsProcessing(false);
-    setIsLoading(false);
-    setError('');
-    setEnhancedContent('');
-    setSelectedEnhancement(null);
-  }, []);
-
-  // Process enhancement and determine how to apply it
-  const processEnhancement = useCallback(async (
-    noteId: string,
-    noteContent: string,
-    enhancementType: EnhancementFunction,
-    noteTitle: string = ""
-  ): Promise<EnhancementResult> => {
-    if (!noteContent) {
-      const error = 'No content to enhance';
-      setError(error);
-      return { success: false, content: '', error };
-    }
+  const updateNoteStatus = async (noteId: string, enhancementType: string, status: 'generating' | 'completed' | 'failed') => {
+    const statusField = `${enhancementType.replace(/-/g, '_')}_status`;
     
-    // Check if user has reached their monthly limit
-    if (hasReachedLimit()) {
-      const error = 'You have reached your monthly limit for note enhancements';
-      setError(error);
-      toast.error(error);
-      return { success: false, content: '', error };
-    }
-
-    setIsLoading(true);
-    setIsProcessing(true);
-    setError('');
-    setSelectedEnhancement(enhancementType);
-
     try {
-      // Call the real enrichment API
-      const enhanced = await enrichNote({
-        id: noteId,
-        title: noteTitle,
-        content: noteContent
-      }, enhancementType);
+      const { error } = await supabase
+        .from('notes')
+        .update({ [statusField]: status })
+        .eq('id', noteId);
+        
+      if (error) {
+        console.warn(`Failed to update ${statusField}:`, error);
+      } else {
+        console.log(`✅ Updated ${statusField} to ${status}`);
+      }
+    } catch (error) {
+      console.warn(`Failed to update note status:`, error);
+    }
+  };
+
+  const processEnhancement = async (
+    noteId: string,
+    content: string,
+    enhancementType: EnhancementFunction,
+    title?: string
+  ): Promise<EnrichmentResult> => {
+    console.log("🚀 Starting enhancement processing:", enhancementType);
+    setIsLoading(true);
+    
+    // Update status to generating immediately
+    await updateNoteStatus(noteId, enhancementType, 'generating');
+    
+    try {
+      const result = await callEnrichmentAPI(
+        { id: noteId, content, title },
+        enhancementType
+      );
       
-      setEnhancedContent(enhanced);
-      setIsLoading(false);
+      console.log("✅ Enhancement completed successfully");
       
-      // Get the enhancement details
-      const enhancementDetails = getEnhancementDetails(enhancementType);
+      // Update status to completed
+      await updateNoteStatus(noteId, enhancementType, 'completed');
+      
+      return { success: true, content: result };
+    } catch (error) {
+      console.error("❌ Enhancement failed:", error);
+      
+      // Update status to failed
+      await updateNoteStatus(noteId, enhancementType, 'failed');
       
       return { 
-        success: true, 
-        content: enhanced, 
-        error: '',
-        enhancementType: enhancementDetails?.outputType 
+        success: false, 
+        content: '', 
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      setError(errorMessage);
-      setIsLoading(false);
-      return { success: false, content: '', error: errorMessage };
     } finally {
-      setIsProcessing(false);
-      // Refresh usage stats after operation
-      await fetchUsageStats();
+      setIsLoading(false);
     }
-  }, [hasReachedLimit, fetchUsageStats]);
-
-  return {
-    isProcessing,
-    isLoading,
-    enhancedContent,
-    setEnhancedContent,
-    error,
-    selectedEnhancement,
-    setSelectedEnhancement,
-    initialize,
-    processEnhancement
   };
+
+  return { processEnhancement, isLoading };
 };

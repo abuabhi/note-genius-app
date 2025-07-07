@@ -30,19 +30,19 @@ export const EnhancementDisplayPanel = ({
   className = ""
 }: EnhancementDisplayPanelProps) => {
   
-  // FIXED: Check generating status for ALL enhancement types
+  // Check generating status for enhancement types (only 'generating', not 'pending')
   const getGeneratingStatus = (type: EnhancementContentType): boolean => {
     switch (type) {
       case 'summary':
-        return note.summary_status === 'generating' || note.summary_status === 'pending';
+        return note.summary_status === 'generating';
       case 'keyPoints':
-        return note.key_points_status === 'generating' || note.key_points_status === 'pending';
+        return note.key_points_status === 'generating';
       case 'improved':
-        return note.improved_content_status === 'generating' || note.improved_content_status === 'pending';
+        return note.improved_content_status === 'generating';
       case 'markdown':
-        return note.markdown_content_status === 'generating' || note.markdown_content_status === 'pending';
+        return note.markdown_content_status === 'generating';
       case 'enriched':
-        return note.enriched_status === 'generating' || note.enriched_status === 'pending';
+        return note.enriched_status === 'generating';
       case 'original':
         return false; // Original content doesn't have generating status
       default:
@@ -123,11 +123,15 @@ export const EnhancementDisplayPanel = ({
     return titles[type] || 'Content';
   };
 
-  // CRITICAL FIX: Only handle explicit retry calls, never auto-generate
+  // Handle explicit retry calls with proper error handling
   const handleExplicitRetry = async (enhancementType: string) => {
-    console.log("🎯 EXPLICIT RETRY CALLED for:", enhancementType);
+    console.log("🚀 Enhancement generation requested for:", enhancementType);
     if (onRetryEnhancement) {
-      await onRetryEnhancement(enhancementType);
+      try {
+        await onRetryEnhancement(enhancementType);
+      } catch (error) {
+        console.error("❌ Enhancement generation failed:", error);
+      }
     }
   };
 
