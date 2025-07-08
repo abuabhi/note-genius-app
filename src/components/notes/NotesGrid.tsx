@@ -8,7 +8,7 @@ import { NoteCard } from "./card/NoteCard";
 import { EmptyNotesState } from "./EmptyNotesState";
 import { ViewMode } from "@/hooks/useViewPreferences";
 import { extractErrorMessage } from "@/utils/errorUtils";
-import { useOptimizedNotes } from "@/contexts/OptimizedNotesContext";
+import { useSimpleNotes } from "@/hooks/useSimpleNotes";
 
 interface NotesGridProps {
   notes: Note[];
@@ -17,7 +17,7 @@ interface NotesGridProps {
 
 export const NotesGrid = ({ notes, viewMode = 'grid' }: NotesGridProps) => {
   // Use OptimizedNotesContext for unified data management
-  const { deleteNote, pinNote } = useOptimizedNotes();
+  const { deleteNote, pinNote } = useSimpleNotes();
   
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);

@@ -1,7 +1,7 @@
 
 import React, { memo } from 'react';
 import { NotesFilters } from '@/components/notes/NotesFilters';
-import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
+import { useSimpleNotes } from '@/hooks/useSimpleNotes';
 
 export const OptimizedNotesFilters = memo(() => {
   const { 
@@ -16,7 +16,7 @@ export const OptimizedNotesFilters = memo(() => {
     sortType,
     setSortType,
     refreshNotes
-  } = useOptimizedNotes();
+  } = useSimpleNotes();
 
   const handleFiltersChange = (filters: {
     search?: string;

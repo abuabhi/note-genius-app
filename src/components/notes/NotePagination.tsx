@@ -7,10 +7,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
+import { useSimpleNotes } from '@/hooks/useSimpleNotes';
 
 export const NotePagination = () => {
-  const { currentPage, setCurrentPage, totalPages } = useOptimizedNotes();
+  const { currentPage, setCurrentPage, totalPages } = useSimpleNotes();
   const notesPerPage = 20; // Fixed for optimized version
   
   const setNotesPerPage = (value: number) => {

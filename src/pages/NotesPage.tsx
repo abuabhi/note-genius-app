@@ -4,7 +4,7 @@ import { NotesPageHeader } from '@/components/notes/page/NotesPageHeader';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { OptimizedNotesProvider, useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
+import { useSimpleNotes } from '@/hooks/useSimpleNotes';
 import { useViewPreferences } from '@/hooks/useViewPreferences';
 import { useState, useCallback } from 'react';
 import { Note } from '@/types/note';
@@ -47,7 +47,7 @@ const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetError
 
 const NotesPageContent = () => {
   const { viewMode, setViewMode } = useViewPreferences('notes');
-  const { addNote } = useOptimizedNotes();
+  const { addNote } = useSimpleNotes();
   
   // Dialog state
   const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
@@ -162,11 +162,7 @@ const NotesPageContent = () => {
 };
 
 const NotesPage = () => {
-  return (
-    <OptimizedNotesProvider>
-      <NotesPageContent />
-    </OptimizedNotesProvider>
-  );
+  return <NotesPageContent />;
 };
 
 export default NotesPage;

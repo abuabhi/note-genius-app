@@ -2,12 +2,12 @@
 import { useState, useCallback } from 'react';
 import { Note } from '@/types/note';
 import { useNavigate } from 'react-router-dom';
-import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
+import { useSimpleNotes } from '@/hooks/useSimpleNotes';
 import { toast } from 'sonner';
 
 export const useNoteDetails = (note: Note, onClose: (open: boolean) => void) => {
   const navigate = useNavigate();
-  const { updateNote, deleteNote } = useOptimizedNotes();
+  const { updateNote, deleteNote } = useSimpleNotes();
   const [noteContent, setNoteContent] = useState(note.content || '');
   const [isDeleting, setIsDeleting] = useState(false);
 

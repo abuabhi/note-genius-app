@@ -8,10 +8,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ArrowUpDown, Calendar, CalendarDays, SortAsc } from 'lucide-react';
-import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
+import { useSimpleNotes } from '@/hooks/useSimpleNotes';
 
 export const NoteSorter = () => {
-  const { sortType, setSortType } = useOptimizedNotes();
+  const { sortType, setSortType } = useSimpleNotes();
 
   const sortOptions = [
     { value: 'newest', label: 'Newest First', icon: CalendarDays },
