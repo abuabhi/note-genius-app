@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { NoteTagList } from "../../details/NoteTagList";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
 import { Calendar, Tag } from "lucide-react";
+import { getSubjectColorClasses } from "@/utils/subjectColors";
 
 interface StudyViewTitleSectionProps {
   note: Note;
@@ -48,6 +49,7 @@ export const StudyViewTitleSection = ({
   };
 
   const subjectName = getSubjectName();
+  const subjectColorClasses = getSubjectColorClasses(subjectName);
 
   // Get browser's default timezone
   const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -82,7 +84,7 @@ export const StudyViewTitleSection = ({
           {subjectName && subjectName !== "No Subject" && (
             <div className="flex items-center gap-2">
               <Tag className="h-4 w-4 text-green-700" />
-              <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200 hover:bg-green-200 font-medium">
+              <Badge variant="secondary" className={`border font-medium hover:opacity-80 ${subjectColorClasses}`}>
                 {subjectName}
               </Badge>
             </div>

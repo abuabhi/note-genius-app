@@ -6,6 +6,7 @@ import { Book } from "lucide-react";
 import { ViewMode } from "@/hooks/useViewPreferences";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
 import { stripMarkdown } from "../utils/markdownUtils";
+import { getSubjectColorClasses } from "@/utils/subjectColors";
 
 interface NoteCardHeaderProps {
   note: Note;
@@ -29,12 +30,13 @@ export const NoteCardHeader = ({ note, onPin, onDelete, viewMode = 'grid' }: Not
 
   const subjectName = getSubjectName();
   const isListView = viewMode === 'list';
+  const subjectColorClasses = getSubjectColorClasses(subjectName);
 
   if (isListView) {
     return (
       <div className="flex items-center gap-3">
         {/* Subject badge - no truncation */}
-        <Badge className="bg-gray-100 text-gray-700 border-0 text-xs font-medium flex-shrink-0">
+        <Badge className={`border-0 text-xs font-medium flex-shrink-0 ${subjectColorClasses}`}>
           <Book className="h-3 w-3 mr-1" />
           <span>{subjectName}</span>
         </Badge>
@@ -51,7 +53,7 @@ export const NoteCardHeader = ({ note, onPin, onDelete, viewMode = 'grid' }: Not
   return (
     <div className="space-y-3">
       {/* Subject badge at top-left */}
-      <Badge className="bg-gray-100 text-gray-700 border-0 text-xs font-medium">
+      <Badge className={`border-0 text-xs font-medium ${subjectColorClasses}`}>
         <Book className="h-3 w-3 mr-1" />
         {subjectName}
       </Badge>

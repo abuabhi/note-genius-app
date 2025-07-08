@@ -17,6 +17,7 @@ import { formatDistanceToNow } from "date-fns";
 import { stripMarkdown } from "../card/utils/markdownUtils";
 import { NoteCardActions } from "../card/NoteCardActions";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
+import { getSubjectColorClasses } from "@/utils/subjectColors";
 
 interface EnhancedNoteCardProps {
   note: Note;
@@ -66,6 +67,7 @@ export const EnhancedNoteCard = ({
     : note.description.substring(0, 120) + (note.description.length > 120 ? '...' : '');
 
   const subjectName = getSubjectName();
+  const subjectColorClasses = getSubjectColorClasses(subjectName);
 
   return (
     <Card 
@@ -91,7 +93,7 @@ export const EnhancedNoteCard = ({
       <CardHeader className="relative p-6 pb-4">
         {/* Header with subject and actions */}
         <div className="flex items-center justify-between mb-3">
-          <Badge className="bg-mint-100 border-mint-200 text-green-700 border font-medium">
+          <Badge className={`border font-medium ${subjectColorClasses}`}>
             {getSourceIcon()}
             <span className="ml-1">{subjectName}</span>
           </Badge>
