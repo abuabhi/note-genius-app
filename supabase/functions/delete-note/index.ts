@@ -89,38 +89,46 @@ serve(async (req) => {
       console.log("Edge function delete-note - Successfully deleted scan data");
     }
     
-    console.log("Edge function delete-note - Using optimized database function");
-    const { data: deleteResult, error: deleteError } = await supabase
-      .rpc("force_delete_note_optimized", { note_id: noteId });
+    console.log("Edge function delete-note - Step 4: Finally deleting the note");
+    const { error: noteError } = await supabase
+      .from("notes")
+      .delete()
+      .eq("id", noteId);
     
-    if (deleteError || !deleteResult) {
-      console.error("Edge function delete-note - Optimized delete failed:", deleteError);
+    if (noteError) {
+      console.error("Edge function delete-note - Error deleting note:", noteError);
       
-      // Fallback to manual deletion if function fails
+      // If regular deletion fails, try using the database function as fallback
       try {
-        console.log("Edge function delete-note - Attempting manual deletion sequence");
+        console.log("Edge function delete-note - Attempting force delete via database function");
+        const { data: forceDeleteData, error: forceDeleteError } = await supabase
+          .rpc("force_delete_note", { note_id: noteId });
         
-        // Delete in correct order
-        await supabase.from("note_enrichment_usage").delete().eq("note_id", noteId);
-        await supabase.from("note_tags").delete().eq("note_id", noteId);
-        await supabase.from("scan_data").delete().eq("note_id", noteId);
-        
-        const { error: noteError } = await supabase
-          .from("notes")
-          .delete()
-          .eq("id", noteId);
-        
-        if (noteError) {
-          throw noteError;
+        if (forceDeleteError) {
+          console.error("Edge function delete-note - Force delete failed:", forceDeleteError);
+          return new Response(
+            JSON.stringify({ 
+              error: "Failed to delete note", 
+              details: forceDeleteError.message 
+            }),
+            { 
+              status: 500, 
+              headers: { ...corsHeaders, "Content-Type": "application/json" } 
+            }
+          );
         }
         
-        console.log("Edge function delete-note - Manual deletion succeeded");
-      } catch (manualError) {
-        console.error("Edge function delete-note - All deletion attempts failed:", manualError);
+        console.log("Edge function delete-note - Force delete succeeded:", forceDeleteData);
+        return new Response(
+          JSON.stringify({ message: "Note deleted successfully using force delete", success: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      } catch (forceError) {
+        console.error("Edge function delete-note - All deletion attempts failed:", forceError);
         return new Response(
           JSON.stringify({ 
             error: "Failed to delete note", 
-            details: deleteError?.message || "Database function returned false"
+            details: noteError.message 
           }),
           { 
             status: 500, 

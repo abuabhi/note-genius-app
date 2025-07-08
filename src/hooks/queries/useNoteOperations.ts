@@ -135,24 +135,18 @@ export const useUpdateNoteMutation = () => {
   });
 };
 
-// Delete note mutation - FIXED to use edge function
+// Delete note mutation
 export const useDeleteNoteMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (noteId: string) => {
-      console.log('🗑️ useDeleteNoteMutation - Calling edge function for:', noteId);
-      
-      const { data, error } = await supabase.functions.invoke('delete-note', {
-        body: { noteId }
-      });
+      const { error } = await supabase
+        .from('notes')
+        .delete()
+        .eq('id', noteId);
 
-      if (error) {
-        console.error('Delete note edge function error:', error);
-        throw error;
-      }
-      
-      console.log('✅ Delete note edge function success:', data);
+      if (error) throw error;
       return noteId;
     },
     onMutate: async (noteId) => {

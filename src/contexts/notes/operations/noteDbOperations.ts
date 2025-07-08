@@ -112,7 +112,7 @@ export const deleteNoteFromDatabase = async (id: string): Promise<void> => {
 
     if (edgeFunctionError) {
       console.error('Edge function delete error:', edgeFunctionError);
-      throw new Error(`Delete failed: ${edgeFunctionError.message}`);
+      throw edgeFunctionError;
     } else {
       console.log("Note deleted successfully via edge function", data);
     }

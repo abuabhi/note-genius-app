@@ -3,14 +3,14 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useProductionNotes } from '@/contexts/ProductionNotesContext';
+import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
 
 // Simple cache for search results
 const searchCache = new Map<string, { timestamp: number; results: any }>();
 const CACHE_DURATION = 30 * 1000; // 30 seconds
 
 export const NoteSearch = () => {
-  const { searchTerm, setSearchTerm } = useProductionNotes();
+  const { searchTerm, setSearchTerm } = useOptimizedNotes();
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
   const [searchHistory, setSearchHistory] = useState<string[]>(() => {
     try {
