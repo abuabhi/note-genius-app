@@ -64,13 +64,13 @@ const NotesDataProviderInner = React.memo(({ children }: { children: ReactNode }
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
       // Only handle successful updates to notes list queries
       if (event.type === 'updated' && 
-          event.query.queryKey.some(key => 
-            Array.isArray(key) && key[0] === 'notes' && key[1] === 'list'
-          ) &&
+          event.query.queryKey[0] === 'notes' && 
+          event.query.queryKey[1] === 'list' &&
           event.query.state.status === 'success' &&
           event.query.state.data) {
         
         console.log('🔄 [CACHE SYNC] React Query cache updated, syncing to state machine');
+        console.log('🔄 [CACHE SYNC] Query key:', event.query.queryKey);
         const data = event.query.state.data as any;
         
         // Immediately sync cache data to state machine for instant UI updates
