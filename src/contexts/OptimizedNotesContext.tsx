@@ -14,6 +14,7 @@ interface OptimizedNotesContextType {
   totalCount: number;
   loading: boolean;
   isLoading: boolean; // Alias for compatibility
+  isInitialLoading: boolean; // From state machine
   error: string | null;
   
   // Pagination
@@ -108,6 +109,7 @@ const OptimizedNotesProviderInner = React.memo(({ children }: { children: ReactN
     totalCount: dataContext.totalCount,
     loading: dataContext.loading,
     isLoading: dataContext.loading,
+    isInitialLoading: dataContext.isInitialLoading,
     error: dataContext.error,
     
     // Pagination
