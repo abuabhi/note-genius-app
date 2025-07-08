@@ -3827,6 +3827,10 @@ export type Database = {
         Args: { note_id: string }
         Returns: boolean
       }
+      force_delete_note_optimized: {
+        Args: { note_id: string }
+        Returns: boolean
+      }
       generate_influencer_coupon_code: {
         Args: { influencer_username: string }
         Returns: string
