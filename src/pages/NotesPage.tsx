@@ -75,10 +75,14 @@ const NotesPageContent = () => {
         return result;
       } else {
         console.error('❌ [NOTES PAGE] Note creation failed - no result returned');
+        // Still close the dialog even if creation failed
+        setIsManualDialogOpen(false);
         return null;
       }
     } catch (error) {
       console.error('❌ [NOTES PAGE] Error creating note:', error);
+      // Close dialog on error too
+      setIsManualDialogOpen(false);
       return null;
     } finally {
       setIsSubmitting(false);
