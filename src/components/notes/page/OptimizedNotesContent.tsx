@@ -8,9 +8,6 @@ import { Note } from '@/types/note';
 // Use the unified OptimizedNotesContext instead of selective hooks
 import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
 
-// Import NotesHeader for note creation
-import { NotesHeader } from './NotesHeader';
-
 // New smaller components
 import { NotesErrorHandler } from './components/NotesErrorHandler';
 import { NotesFiltersSection } from './components/NotesFiltersSection';
@@ -34,37 +31,8 @@ export const OptimizedNotesContent = React.memo(({ viewMode }: OptimizedNotesCon
     searchTerm,
     selectedSubject,
     updateNote,
-    deleteNote,
-    addNote
+    deleteNote
   } = useOptimizedNotes();
-
-  // Note creation handlers using OptimizedNotesContext
-  const handleSaveNote = useCallback(async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
-    try {
-      console.log('📝 [OPTIMIZED NOTES CONTENT] Creating note via OptimizedNotesContext:', noteData.title);
-      const result = await addNote(noteData);
-      if (result) {
-        console.log('✅ [OPTIMIZED NOTES CONTENT] Note created successfully - UI should update immediately:', result.id);
-        return result;
-      } else {
-        console.error('❌ [OPTIMIZED NOTES CONTENT] Note creation failed - no result returned');
-        return null;
-      }
-    } catch (error) {
-      console.error('❌ [OPTIMIZED NOTES CONTENT] Error creating note:', error);
-      return null;
-    }
-  }, [addNote]);
-
-  const handleScanNote = useCallback(async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
-    console.log('📷 [OPTIMIZED NOTES CONTENT] Scanning note via OptimizedNotesContext');
-    return handleSaveNote({ ...noteData, sourceType: 'scan' });
-  }, [handleSaveNote]);
-
-  const handleImportNote = useCallback(async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
-    console.log('📥 [OPTIMIZED NOTES CONTENT] Importing note via OptimizedNotesContext');
-    return handleSaveNote({ ...noteData, sourceType: 'import' });
-  }, [handleSaveNote]);
 
   // Virtualization control with memoized threshold - no UI toggle needed
   const virtualizationThreshold = useMemo(() => 50, []);
@@ -96,13 +64,6 @@ export const OptimizedNotesContent = React.memo(({ viewMode }: OptimizedNotesCon
 
   return (
     <div className="space-y-6">
-      {/* Note Creation Header */}
-      <NotesHeader
-        onSaveNote={handleSaveNote}
-        onScanNote={handleScanNote}
-        onImportNote={handleImportNote}
-      />
-
       {/* Error handling */}
       <NotesErrorHandler />
 
