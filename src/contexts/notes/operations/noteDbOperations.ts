@@ -94,7 +94,7 @@ export const deleteNoteFromDatabase = async (id: string): Promise<void> => {
     
     // Use the optimized database function that handles all foreign key constraints
     const { data, error } = await supabase.rpc('force_delete_note_optimized', {
-      note_id: id
+      note_id_param: id
     });
 
     if (error) {

@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Note } from '@/types/note';
 import { toast } from 'sonner';
 import { notesQueryKeys } from './useNotesQueries';
+import { extractErrorMessage } from '@/utils/errorUtils';
 
 // Create note mutation
 export const useCreateNoteMutation = () => {
@@ -141,12 +142,23 @@ export const useDeleteNoteMutation = () => {
 
   return useMutation({
     mutationFn: async (noteId: string) => {
-      const { data, error } = await supabase
-        .rpc('force_delete_note_optimized', { note_id: noteId });
-
-      if (error) throw error;
-      if (!data) throw new Error('Failed to delete note');
+      console.log("useDeleteNoteMutation - Starting deletion for note:", noteId);
       
+      const { data, error } = await supabase
+        .rpc('force_delete_note_optimized', { note_id_param: noteId });
+
+      console.log("useDeleteNoteMutation - RPC response:", { data, error });
+
+      if (error) {
+        console.error("useDeleteNoteMutation - Supabase RPC error:", error);
+        throw error;
+      }
+      if (!data) {
+        console.error("useDeleteNoteMutation - Function returned false");
+        throw new Error('Database function returned false - deletion failed');
+      }
+      
+      console.log("useDeleteNoteMutation - Successfully deleted note:", noteId);
       return noteId;
     },
     onMutate: async (noteId) => {
@@ -172,8 +184,15 @@ export const useDeleteNoteMutation = () => {
     onError: (error, noteId) => {
       // Revert optimistic updates
       queryClient.invalidateQueries({ queryKey: notesQueryKeys.lists() });
-      console.error('Failed to delete note:', error);
-      toast.error('Failed to delete note');
+      const errorMessage = extractErrorMessage(error);
+      console.error('useDeleteNoteMutation - Failed to delete note:', { 
+        noteId, 
+        error, 
+        message: errorMessage.message,
+        details: errorMessage.details,
+        code: errorMessage.code 
+      });
+      // Don't show toast here - let the component handle it for better UX
     }
   });
 };
