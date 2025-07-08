@@ -142,23 +142,75 @@ export const useDeleteNoteMutation = () => {
 
   return useMutation({
     mutationFn: async (noteId: string) => {
-      console.log("useDeleteNoteMutation - Starting deletion for note:", noteId);
+      console.log("🔥 [DELETE MUTATION] Starting deletion for note:", noteId);
+      console.log("🔥 [DELETE MUTATION] Note ID type:", typeof noteId);
+      console.log("🔥 [DELETE MUTATION] Note ID length:", noteId?.length);
+      
+      // Test database connection first
+      console.log("🔥 [DELETE MUTATION] Testing database connection...");
+      const { data: testData, error: testError } = await supabase.from('notes').select('id').limit(1);
+      console.log("🔥 [DELETE MUTATION] Database connection test:", { testData, testError });
+      
+      // Check if note exists before deletion
+      console.log("🔥 [DELETE MUTATION] Checking if note exists...");
+      const { data: existingNote, error: checkError } = await supabase
+        .from('notes')
+        .select('id, title, user_id')
+        .eq('id', noteId)
+        .single();
+      
+      console.log("🔥 [DELETE MUTATION] Note existence check:", { existingNote, checkError });
+      
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error("❌ [DELETE MUTATION] Error checking note existence:", checkError);
+        throw new Error(`Failed to verify note exists: ${checkError.message}`);
+      }
+      
+      if (!existingNote) {
+        console.error("❌ [DELETE MUTATION] Note not found:", noteId);
+        throw new Error('Note not found');
+      }
+      
+      console.log("🔥 [DELETE MUTATION] Calling force_delete_note_optimized function...");
+      console.log("🔥 [DELETE MUTATION] Parameters:", { note_id_param: noteId });
       
       const { data, error } = await supabase
         .rpc('force_delete_note_optimized', { note_id_param: noteId });
 
-      console.log("useDeleteNoteMutation - RPC response:", { data, error });
+      console.log("🔥 [DELETE MUTATION] RPC response:", { data, error });
+      console.log("🔥 [DELETE MUTATION] RPC data type:", typeof data);
+      console.log("🔥 [DELETE MUTATION] RPC data value:", data);
 
       if (error) {
-        console.error("useDeleteNoteMutation - Supabase RPC error:", error);
+        console.error("❌ [DELETE MUTATION] Supabase RPC error:", error);
+        console.error("❌ [DELETE MUTATION] Error code:", error.code);
+        console.error("❌ [DELETE MUTATION] Error message:", error.message);
+        console.error("❌ [DELETE MUTATION] Error details:", error.details);
+        console.error("❌ [DELETE MUTATION] Error hint:", error.hint);
         throw error;
       }
-      if (!data) {
-        console.error("useDeleteNoteMutation - Function returned false");
-        throw new Error('Database function returned false - deletion failed');
+      
+      if (data === false || data === null || data === undefined) {
+        console.error("❌ [DELETE MUTATION] Function returned false/null/undefined:", data);
+        throw new Error(`Database function returned ${data} - deletion failed`);
       }
       
-      console.log("useDeleteNoteMutation - Successfully deleted note:", noteId);
+      // Verify deletion was successful
+      console.log("🔥 [DELETE MUTATION] Verifying deletion...");
+      const { data: verifyData, error: verifyError } = await supabase
+        .from('notes')
+        .select('id')
+        .eq('id', noteId)
+        .single();
+        
+      console.log("🔥 [DELETE MUTATION] Verification result:", { verifyData, verifyError });
+      
+      if (verifyData) {
+        console.error("❌ [DELETE MUTATION] Note still exists after deletion!");
+        throw new Error('Note still exists after deletion attempt');
+      }
+      
+      console.log("✅ [DELETE MUTATION] Successfully deleted and verified note:", noteId);
       return noteId;
     },
     onMutate: async (noteId) => {
@@ -185,14 +237,15 @@ export const useDeleteNoteMutation = () => {
       // Revert optimistic updates
       queryClient.invalidateQueries({ queryKey: notesQueryKeys.lists() });
       const errorMessage = extractErrorMessage(error);
-      console.error('useDeleteNoteMutation - Failed to delete note:', { 
+      console.error('❌ [DELETE MUTATION ERROR] Failed to delete note:', { 
         noteId, 
         error, 
         message: errorMessage.message,
         details: errorMessage.details,
         code: errorMessage.code 
       });
-      // Don't show toast here - let the component handle it for better UX
+      console.error('❌ [DELETE MUTATION ERROR] Full error object:', error);
+      toast.error(`Failed to delete note: ${errorMessage.message}`);
     }
   });
 };

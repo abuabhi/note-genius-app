@@ -11,19 +11,28 @@ interface DeleteActionProps {
 export const DeleteAction = ({ noteId, onDelete }: DeleteActionProps) => {
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log("DeleteAction - Starting delete for note ID:", noteId);
+    console.log("🗑️ [DELETE ACTION] Starting delete for note ID:", noteId);
+    console.log("🗑️ [DELETE ACTION] Event details:", { type: e.type, target: e.target });
     
     // Show confirmation dialog
+    console.log("🗑️ [DELETE ACTION] Showing confirmation dialog...");
     const confirmed = window.confirm("Are you sure you want to delete this note? This action cannot be undone.");
+    console.log("🗑️ [DELETE ACTION] User confirmation result:", confirmed);
     
     if (confirmed) {
       try {
+        console.log("🗑️ [DELETE ACTION] Calling onDelete function with noteId:", noteId);
         await onDelete(noteId);
-        console.log("DeleteAction - Delete completed for note ID:", noteId);
+        console.log("✅ [DELETE ACTION] Delete completed successfully for note ID:", noteId);
       } catch (error) {
-        console.error("DeleteAction - Delete failed for note ID:", noteId, error);
+        console.error("❌ [DELETE ACTION] Delete failed for note ID:", noteId);
+        console.error("❌ [DELETE ACTION] Error details:", error);
+        console.error("❌ [DELETE ACTION] Error message:", error instanceof Error ? error.message : 'Unknown error');
+        console.error("❌ [DELETE ACTION] Error stack:", error instanceof Error ? error.stack : 'No stack');
         throw error;
       }
+    } else {
+      console.log("🚫 [DELETE ACTION] User cancelled deletion for note ID:", noteId);
     }
   };
 
