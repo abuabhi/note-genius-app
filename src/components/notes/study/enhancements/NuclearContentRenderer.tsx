@@ -55,7 +55,7 @@ export const NuclearContentRenderer = ({
   console.log("🎨 NUCLEAR RENDERER: Final content going to ReactMarkdown:", processedData.content);
 
   const containerStyle = {
-    fontSize: `${fontSize}px`,
+    fontSize: '16px', // Fixed base font size instead of dynamic
     textAlign: textAlign === 'left' ? 'left' as const : 
              textAlign === 'center' ? 'center' as const : 
              'justify' as const

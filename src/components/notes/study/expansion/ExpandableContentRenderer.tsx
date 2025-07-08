@@ -66,10 +66,9 @@ export const ExpandableContentRenderer = ({
         const beforeText = processedText.substring(0, position + expansion.originalText.length);
         const afterText = processedText.substring(position + expansion.originalText.length);
         
-        // Clean the expanded content - remove markdown formatting and bold text
+        // Clean the expanded content - keep as plain text but format for italics
         const cleanExpandedContent = expansion.expandedContent
           .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markdown
-          .replace(/\*(.*?)\*/g, '$1')     // Remove italic markdown
           .replace(/#{1,6}\s*/g, '')       // Remove headers
           .replace(/^\s*[-*+]\s*/gm, '')   // Remove bullet points
           .replace(/^\s*\d+\.\s*/gm, '')   // Remove numbered lists
@@ -228,10 +227,10 @@ ${cleanExpandedContent}
         }}
         onMouseUp={handleTextSelection}
       >
-        {/* FIXED: Use NuclearContentRenderer for consistent, beautiful formatting */}
+        {/* FIXED: Use NuclearContentRenderer with consistent font size */}
         <NuclearContentRenderer
           content={processedContent}
-          fontSize={fontSize}
+          fontSize={16} // Fixed font size for consistency
           textAlign={textAlign}
           className="w-full"
         />
@@ -281,11 +280,13 @@ ${cleanExpandedContent}
           padding: 1rem 1.25rem;
           margin: 0.5rem 0 1.5rem 0;
           border-radius: 0 0.5rem 0.5rem 0;
-          font-style: normal;
-          font-weight: normal;
+          font-style: italic !important;
+          font-weight: normal !important;
           color: #166534;
           line-height: 1.6;
           position: relative;
+          font-size: 16px !important;
+          font-family: inherit !important;
         }
         
         .ai-expansion-content::before {
