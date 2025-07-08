@@ -5,43 +5,33 @@ import { useNotesDataStateMachine } from '@/hooks/notes/useNotesDataStateMachine
 import { useOptimizedNotesWithQuery } from '@/hooks/useOptimizedNotesWithQuery';
 
 interface NotesDataContextType {
-  // Core data from state machine
+  // Core data
   notes: Note[];
   totalCount: number;
   error: string | null;
   
-  // Enhanced loading states from state machine
+  // Simplified loading states
   loading: boolean;
   isInitialLoading: boolean;
-  isBackgroundLoading: boolean;
-  isRefreshing: boolean;
-  isFiltering: boolean;
-  isPaginating: boolean;
   
-  // Pagination from state machine
+  // Pagination
   hasMore: boolean;
   currentPage: number;
   setCurrentPage: (page: number) => void;
   loadMore: () => void;
   
-  // Pagination mode from state machine
+  // Pagination mode
   paginationMode: 'regular' | 'infinite';
   setPaginationMode: (mode: 'regular' | 'infinite') => void;
   
-  // Data refresh with enhanced error handling
+  // Actions
   refreshNotes: () => void;
   
-  // Error handling from state machine
-  hasError: boolean;
-  canRetry: boolean;
-  clearError: () => void;
-  retry: () => void;
-  
-  // Data state selectors from state machine
+  // Data state
   hasNotes: boolean;
   isEmpty: boolean;
   
-  // State machine state for debugging
+  // State for debugging
   state: string;
 }
 
@@ -51,64 +41,31 @@ const NotesDataProviderInner = React.memo(({ children }: { children: ReactNode }
   const dataStateMachine = useNotesDataStateMachine();
   const queryHook = useOptimizedNotesWithQuery();
 
-  // Simplified single effect for state synchronization
+  // Direct synchronization - no complex state machine logic
   React.useEffect(() => {
-    // Handle loading state changes
-    if (queryHook.loading && (dataStateMachine.isIdle || dataStateMachine.isInitialLoading)) {
-      if (dataStateMachine.notes.length === 0 && !dataStateMachine.isInitialLoading) {
-        dataStateMachine.actions.startInitialLoad();
-      } else if (dataStateMachine.notes.length > 0) {
-        dataStateMachine.actions.startBackgroundLoad();
-      }
-    }
-    
-    // Handle success state
-    else if (!queryHook.loading && !queryHook.error && queryHook.notes.length >= 0) {
+    if (queryHook.loading) {
+      dataStateMachine.actions.startLoading();
+    } else if (queryHook.error) {
+      dataStateMachine.actions.fetchError(queryHook.error);
+    } else {
       dataStateMachine.actions.fetchSuccess(
         queryHook.notes,
         queryHook.totalCount,
-        queryHook.hasMore,
-        false
+        queryHook.hasMore
       );
     }
-    
-    // Handle error state
-    else if (queryHook.error) {
-      dataStateMachine.actions.fetchError(queryHook.error);
-    }
-  }, [
-    queryHook.loading, 
-    queryHook.error, 
-    queryHook.notes, 
-    queryHook.totalCount, 
-    queryHook.hasMore,
-    dataStateMachine.isIdle,
-    dataStateMachine.isInitialLoading,
-    dataStateMachine.notes.length
-  ]);
+  }, [queryHook.loading, queryHook.error, queryHook.notes, queryHook.totalCount, queryHook.hasMore]);
 
-  // Enhanced load more function
-  const loadMore = React.useCallback(async () => {
-    if (dataStateMachine.hasMore && !dataStateMachine.loading) {
-      dataStateMachine.actions.startPaginate();
-      try {
-        await queryHook.loadMore();
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to load more notes';
-        dataStateMachine.actions.fetchError(errorMessage);
-      }
+  // Simplified load more function
+  const loadMore = React.useCallback(() => {
+    if (dataStateMachine.hasMore && !dataStateMachine.isLoading) {
+      queryHook.loadMore();
     }
-  }, [dataStateMachine.hasMore, dataStateMachine.loading, queryHook.loadMore]);
+  }, [dataStateMachine.hasMore, dataStateMachine.isLoading, queryHook.loadMore]);
 
-  // Enhanced refresh function
-  const refreshNotes = React.useCallback(async () => {
-    dataStateMachine.actions.startRefresh();
-    try {
-      await queryHook.refreshNotes();
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to refresh notes';
-      dataStateMachine.actions.fetchError(errorMessage);
-    }
+  // Simplified refresh function
+  const refreshNotes = React.useCallback(() => {
+    queryHook.refreshNotes();
   }, [queryHook.refreshNotes]);
 
   // Enhanced page change
@@ -123,56 +80,41 @@ const NotesDataProviderInner = React.memo(({ children }: { children: ReactNode }
     queryHook.setPaginationMode(mode);
   }, [queryHook.setPaginationMode]);
 
-  // Memoized context value that uses state machine for enhanced data management
+  // Simplified context value
   const contextValue = useMemo(() => ({
-    // Core data from state machine
+    // Core data
     notes: dataStateMachine.notes,
     totalCount: dataStateMachine.totalCount,
     error: dataStateMachine.error,
     
-    // Enhanced loading states from state machine
-    loading: dataStateMachine.loading,
-    isInitialLoading: dataStateMachine.isInitialLoading,
-    isBackgroundLoading: dataStateMachine.isBackgroundLoading,
-    isRefreshing: dataStateMachine.isRefreshing,
-    isFiltering: dataStateMachine.isFiltering,
-    isPaginating: dataStateMachine.isPaginating,
+    // Simplified loading states
+    loading: dataStateMachine.isLoading,
+    isInitialLoading: dataStateMachine.isLoading,
     
-    // Pagination from state machine
+    // Pagination
     hasMore: dataStateMachine.hasMore,
     currentPage: dataStateMachine.currentPage,
     setCurrentPage,
     loadMore,
     
-    // Pagination mode from state machine
+    // Pagination mode
     paginationMode: dataStateMachine.paginationMode,
     setPaginationMode,
     
-    // Data refresh with enhanced error handling
+    // Actions
     refreshNotes,
     
-    // Error handling from state machine
-    hasError: dataStateMachine.hasError,
-    canRetry: dataStateMachine.canRetry,
-    clearError: dataStateMachine.actions.clearError,
-    retry: dataStateMachine.retry,
-    
-    // Data state selectors from state machine
+    // Data state
     hasNotes: dataStateMachine.hasNotes,
     isEmpty: dataStateMachine.isEmpty,
     
-    // State machine state for debugging
+    // State for debugging
     state: dataStateMachine.state,
   }), [
     dataStateMachine.notes,
     dataStateMachine.totalCount,
     dataStateMachine.error,
-    dataStateMachine.loading,
-    dataStateMachine.isInitialLoading,
-    dataStateMachine.isBackgroundLoading,
-    dataStateMachine.isRefreshing,
-    dataStateMachine.isFiltering,
-    dataStateMachine.isPaginating,
+    dataStateMachine.isLoading,
     dataStateMachine.hasMore,
     dataStateMachine.currentPage,
     setCurrentPage,
@@ -180,10 +122,6 @@ const NotesDataProviderInner = React.memo(({ children }: { children: ReactNode }
     dataStateMachine.paginationMode,
     setPaginationMode,
     refreshNotes,
-    dataStateMachine.hasError,
-    dataStateMachine.canRetry,
-    dataStateMachine.actions.clearError,
-    dataStateMachine.retry,
     dataStateMachine.hasNotes,
     dataStateMachine.isEmpty,
     dataStateMachine.state,

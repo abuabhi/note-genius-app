@@ -36,8 +36,8 @@ export const useOptimizedNotesWithQuery = () => {
     pageSize: 20
   });
 
-  // Extract data from the appropriate query based on mode
-  const { data, isLoading, error, refetch } = paginationMode === 'infinite' ? infiniteQuery : regularQuery;
+  // Extract data from the appropriate query based on mode - use React Query's built-in states
+  const { data, isLoading, error, refetch, isFetching } = paginationMode === 'infinite' ? infiniteQuery : regularQuery;
   
   // Get infinite query specific properties safely
   const fetchNextPage = paginationMode === 'infinite' ? infiniteQuery.fetchNextPage : undefined;
@@ -132,11 +132,11 @@ export const useOptimizedNotesWithQuery = () => {
   }), [createNoteMutation, updateNoteMutation, deleteNoteMutation, pinNoteMutation]);
 
   return {
-    // Data
+    // Data - use React Query's optimized loading states
     notes,
     totalCount,
     hasMore,
-    loading: isLoading || createNoteMutation.isPending,
+    loading: isFetching || createNoteMutation.isPending,
     error: error?.message || null,
     
     // Filter state
