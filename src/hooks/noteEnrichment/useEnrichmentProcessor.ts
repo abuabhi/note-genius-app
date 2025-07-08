@@ -13,8 +13,20 @@ interface EnrichmentResult {
 export const useEnrichmentProcessor = () => {
   const [isLoading, setIsLoading] = useState(false);
 
+  const getStatusFieldName = (enhancementType: string): string => {
+    const mappings: Record<string, string> = {
+      'summarize': 'summary_status',
+      'extract-key-points': 'key_points_status', 
+      'improve-clarity': 'improved_content_status',
+      'convert-to-markdown': 'markdown_content_status',
+      'enrich-note': 'enriched_status'
+    };
+    
+    return mappings[enhancementType] || 'enriched_status';
+  };
+
   const updateNoteStatus = async (noteId: string, enhancementType: string, status: 'generating' | 'completed' | 'failed') => {
-    const statusField = `${enhancementType.replace(/-/g, '_')}_status`;
+    const statusField = getStatusFieldName(enhancementType);
     
     try {
       const { error } = await supabase
@@ -35,7 +47,7 @@ export const useEnrichmentProcessor = () => {
 
   const saveEnhancedContent = async (noteId: string, enhancementType: string, content: string) => {
     const contentField = getContentFieldName(enhancementType);
-    const statusField = `${enhancementType.replace(/-/g, '_')}_status`;
+    const statusField = getStatusFieldName(enhancementType);
     const generatedAtField = getGeneratedAtFieldName(enhancementType);
     
     try {
