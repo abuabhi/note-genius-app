@@ -8,29 +8,30 @@ import { trackTokenUsage } from "./tokenTracking";
  * @param note The note to enrich
  * @param enhancementType The type of enhancement to perform
  */
-export const callEnrichmentAPI = async (
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const callEnrichmentAPIWithRetry = async (
   note: { 
     id: string; 
     title?: string; 
     content?: string;
     category?: string;
   },
-  enhancementType: EnhancementFunction
+  enhancementType: EnhancementFunction,
+  attempt: number = 1
 ): Promise<string> => {
-  console.log(`🚀 Starting enhancement: ${enhancementType} for note ${note.id.substring(0, 8)}`);
+  const maxRetries = 2;
+  const timeout = 60000; // 60 seconds
   
-  // If the note doesn't have content, throw an error
-  if (!note.content) {
-    throw new Error('No content to enhance');
-  }
+  console.log(`🚀 Enhancement attempt ${attempt}/${maxRetries + 1}: ${enhancementType} for note ${note.id.substring(0, 8)}`);
   
   try {
-    // Set 30 second timeout for faster failure detection
+    // Call the edge function with timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
-      console.error('❌ Enhancement request timed out after 30 seconds');
+      console.error(`❌ Enhancement request timed out after ${timeout/1000} seconds`);
       controller.abort();
-    }, 30000); // 30 second timeout for production use
+    }, timeout);
     
     console.log('🔄 Calling enrich-note function...');
     console.log('📋 Request details:', {
@@ -38,10 +39,10 @@ export const callEnrichmentAPI = async (
       titleLength: (note.title || '').length,
       contentLength: note.content.length,
       enhancementType,
+      attempt,
       timestamp: new Date().toISOString()
     });
     
-    // Call the edge function (Supabase doesn't support AbortSignal)
     const { data, error } = await supabase.functions.invoke('enrich-note', {
       body: {
         noteId: note.id,
@@ -54,67 +55,86 @@ export const callEnrichmentAPI = async (
     clearTimeout(timeoutId);
     
     if (controller.signal.aborted) {
-      throw new Error('Request timed out. The AI service may be experiencing delays. Please try again.');
+      throw new Error('timeout');
     }
     
     if (error) {
       console.error('❌ Error calling enrich-note function:', error);
       console.error('📄 Full error details:', JSON.stringify(error, null, 2));
-      
-      // Provide more specific error handling with retry information
-      if (error.message?.includes('timeout') || error.message?.includes('aborted')) {
-        throw new Error('Request timed out after 30 seconds. Please try again.');
-      }
-      
-      if (error.message?.includes('quota') || error.message?.includes('limit')) {
-        throw new Error('AI service quota exceeded. Please try again later or upgrade your plan.');
-      }
-      
-      if (error.message?.includes('network') || error.message?.includes('fetch')) {
-        throw new Error('Network error. Please check your connection and try again.');
-      }
-      
-      throw new Error(`Enhancement failed: ${error.message || 'Unknown error occurred'}`);
+      throw error;
     }
     
     if (!data?.enhancedContent) {
       console.error('No enhanced content in response:', data);
-      throw new Error('The AI service did not return enhanced content. Please try again.');
+      throw new Error('No enhanced content returned from AI service');
     }
     
     console.log('✅ Enhancement completed successfully:', {
       contentLength: data.enhancedContent.length,
       hasTokenUsage: !!data.tokenUsage,
-      enhancementType
+      enhancementType,
+      attempt
     });
     
-    // Return the content directly
-    const enhancedContent = data.enhancedContent.trim();
-    
-    // Track token usage (if available) to calculate usage limits
+    // Track token usage (if available)
     if (data.tokenUsage) {
       try {
         await trackTokenUsage(note.id, data.tokenUsage);
       } catch (trackError) {
-        // Continue even if tracking fails - don't block the main flow
         console.error('Error tracking token usage:', trackError);
       }
     }
 
-    return enhancedContent;
+    return data.enhancedContent.trim();
   } catch (error) {
-    console.error('Error enriching note:', error);
+    console.error(`❌ Enhancement attempt ${attempt} failed:`, error);
     
-    // Provide more specific error messages
+    // Check if we should retry
+    const isRetryableError = (
+      error instanceof Error && (
+        error.message.includes('timeout') ||
+        error.message.includes('network') ||
+        error.message.includes('fetch') ||
+        error.message === 'timeout'
+      )
+    );
+    
+    if (isRetryableError && attempt <= maxRetries) {
+      console.log(`🔄 Retrying enhancement in ${attempt * 2} seconds... (attempt ${attempt + 1}/${maxRetries + 1})`);
+      await sleep(attempt * 2000); // Exponential backoff
+      return callEnrichmentAPIWithRetry(note, enhancementType, attempt + 1);
+    }
+    
+    // Final error handling
     if (error instanceof Error) {
-      if (error.message.includes('timeout') || error.message.includes('aborted')) {
-        throw new Error('The AI service is taking longer than expected. Please try again in a moment.');
+      if (error.message.includes('timeout') || error.message === 'timeout') {
+        throw new Error(`Request timed out after ${timeout/1000} seconds. The AI service may be experiencing high load. Please try again.`);
       }
-      if (error.message.includes('network')) {
+      if (error.message?.includes('quota') || error.message?.includes('limit')) {
+        throw new Error('AI service quota exceeded. Please try again later or upgrade your plan.');
+      }
+      if (error.message?.includes('network') || error.message?.includes('fetch')) {
         throw new Error('Network error occurred. Please check your connection and try again.');
       }
     }
     
-    throw error;
+    throw new Error(`Enhancement failed: ${error instanceof Error ? error.message : 'Unknown error occurred'}`);
   }
+};
+
+export const callEnrichmentAPI = async (
+  note: { 
+    id: string; 
+    title?: string; 
+    content?: string;
+    category?: string;
+  },
+  enhancementType: EnhancementFunction
+): Promise<string> => {
+  // Validate inputs
+  if (!note.content) {
+    throw new Error('No content to enhance');
+  }
+  
+  return callEnrichmentAPIWithRetry(note, enhancementType, 1);
 };

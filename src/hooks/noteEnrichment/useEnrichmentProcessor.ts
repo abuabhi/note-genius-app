@@ -31,6 +31,44 @@ export const useEnrichmentProcessor = () => {
     }
   };
 
+  const saveEnhancedContent = async (noteId: string, enhancementType: string, content: string) => {
+    const contentField = getContentFieldName(enhancementType);
+    const statusField = `${enhancementType.replace(/-/g, '_')}_status`;
+    
+    try {
+      const { error } = await supabase
+        .from('notes')
+        .update({ 
+          [contentField]: content,
+          [statusField]: 'completed',
+          [`${enhancementType.replace(/-/g, '_')}_generated_at`]: new Date().toISOString()
+        })
+        .eq('id', noteId);
+        
+      if (error) {
+        console.error(`Failed to save ${contentField}:`, error);
+        throw error;
+      } else {
+        console.log(`✅ Saved content to ${contentField}`);
+      }
+    } catch (error) {
+      console.error(`Failed to save enhanced content:`, error);
+      throw error;
+    }
+  };
+
+  const getContentFieldName = (enhancementType: string): string => {
+    const mappings: Record<string, string> = {
+      'summarize': 'summary',
+      'extract-key-points': 'key_points', 
+      'improve-clarity': 'improved_content',
+      'convert-to-markdown': 'markdown_content',
+      'enrich-note': 'enriched_content'
+    };
+    
+    return mappings[enhancementType] || 'enriched_content';
+  };
+
   const processEnhancement = async (
     noteId: string,
     content: string,
@@ -49,10 +87,10 @@ export const useEnrichmentProcessor = () => {
         enhancementType
       );
       
-      console.log("✅ Enhancement completed successfully");
+      console.log("✅ Enhancement completed successfully, saving to database");
       
-      // Update status to completed
-      await updateNoteStatus(noteId, enhancementType, 'completed');
+      // CRITICAL FIX: Save the actual content to the database
+      await saveEnhancedContent(noteId, enhancementType, result);
       
       return { success: true, content: result };
     } catch (error) {

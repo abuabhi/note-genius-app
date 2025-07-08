@@ -1,10 +1,11 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Note } from "@/types/note";
 import { TextAlignType } from "../hooks/useStudyViewState";
 import { EnhancementSelector, EnhancementContentType } from "./EnhancementSelector";
 import { EnhancementDisplayPanel } from "./EnhancementDisplayPanel";
 import { useEnrichmentProcessor } from "@/hooks/noteEnrichment/useEnrichmentProcessor";
+import { useOptimizedNotes } from "@/contexts/OptimizedNotesContext";
 
 interface OptimizedTwoColumnViewProps {
   note: Note;
@@ -27,6 +28,13 @@ export const OptimizedTwoColumnView = ({
 }: OptimizedTwoColumnViewProps) => {
   const [enhancedContents, setEnhancedContents] = useState<Record<string, string>>({});
   const { isLoading, processEnhancement } = useEnrichmentProcessor();
+  const { refreshNotes } = useOptimizedNotes();
+
+  // Force refresh the note data when component mounts to get latest content
+  useEffect(() => {
+    console.log("🔄 Refreshing note data to get latest enhancements");
+    refreshNotes();
+  }, [refreshNotes]);
 
   const handleRetryEnhancement = async (enhancementType: string) => {
     console.log("🚀 Starting enhancement generation:", enhancementType);
@@ -40,11 +48,17 @@ export const OptimizedTwoColumnView = ({
       );
       
       if (result.success) {
+        // Store content in local state for immediate UI updates
         setEnhancedContents(prev => ({
           ...prev,
           [enhancementType]: result.content
         }));
-        console.log("✅ Enhancement completed and stored:", enhancementType);
+        
+        // Refresh the note data from database to ensure UI shows persisted data
+        console.log("🔄 Refreshing note from database after enhancement");
+        await refreshNotes();
+        
+        console.log("✅ Enhancement completed, saved to database, and UI refreshed");
       } else {
         console.error("❌ Enhancement failed:", result.error);
         // Keep error in state for user feedback
