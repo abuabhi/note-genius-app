@@ -50,21 +50,54 @@ export const useCreateNoteMutation = () => {
       } as Note;
     },
     onSuccess: (newNote) => {
-      // Optimistic update - add to all relevant queries
+      console.log('🚀 [CREATE MUTATION] ✅ Note creation successful:', newNote);
+      console.log('🚀 [CREATE MUTATION] Updating cache with new note...');
+      
+      // Enhanced optimistic update - add to ALL relevant queries with detailed logging
+      const queries = queryClient.getQueriesData({ queryKey: notesQueryKeys.lists() });
+      console.log('🚀 [CREATE MUTATION] Found queries to update:', queries.length);
+      
       queryClient.setQueriesData(
         { queryKey: notesQueryKeys.lists() },
         (oldData: any) => {
-          if (!oldData) return oldData;
-          return {
+          console.log('🚀 [CREATE MUTATION] Updating query data:', {
+            hasOldData: !!oldData,
+            oldNotesCount: oldData?.notes?.length || 0,
+            oldTotalCount: oldData?.totalCount || 0
+          });
+          
+          if (!oldData) {
+            console.log('🚀 [CREATE MUTATION] No old data - creating new structure');
+            return {
+              notes: [newNote],
+              totalCount: 1,
+              hasMore: false
+            };
+          }
+          
+          const updatedData = {
             ...oldData,
             notes: [newNote, ...oldData.notes],
             totalCount: oldData.totalCount + 1
           };
+          
+          console.log('🚀 [CREATE MUTATION] Updated data structure:', {
+            newNotesCount: updatedData.notes.length,
+            newTotalCount: updatedData.totalCount,
+            firstNoteId: updatedData.notes[0]?.id,
+            firstNoteTitle: updatedData.notes[0]?.title
+          });
+          
+          return updatedData;
         }
       );
       
-      // Invalidate to ensure consistency
+      console.log('🚀 [CREATE MUTATION] Cache updated - triggering invalidation...');
+      
+      // Force invalidation to ensure UI updates immediately
       queryClient.invalidateQueries({ queryKey: notesQueryKeys.lists() });
+      
+      console.log('🚀 [CREATE MUTATION] ✅ All cache operations completed');
       toast.success('Note created successfully');
     },
     onError: (error) => {
@@ -214,23 +247,59 @@ export const useDeleteNoteMutation = () => {
       return noteId;
     },
     onMutate: async (noteId) => {
+      console.log('🗑️ [DELETE MUTATION] onMutate - Optimistic update starting for:', noteId);
+      
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: notesQueryKeys.lists() });
+      console.log('🗑️ [DELETE MUTATION] onMutate - Cancelled pending queries');
+      
+      // Get current queries for logging
+      const queries = queryClient.getQueriesData({ queryKey: notesQueryKeys.lists() });
+      console.log('🗑️ [DELETE MUTATION] onMutate - Found queries to update:', queries.length);
       
       // Optimistically remove from all list queries
       queryClient.setQueriesData(
         { queryKey: notesQueryKeys.lists() },
         (oldData: any) => {
-          if (!oldData?.notes) return oldData;
-          return {
+          console.log('🗑️ [DELETE MUTATION] onMutate - Updating query data:', {
+            hasOldData: !!oldData,
+            oldNotesCount: oldData?.notes?.length || 0,
+            oldTotalCount: oldData?.totalCount || 0,
+            removingNoteId: noteId
+          });
+          
+          if (!oldData?.notes) {
+            console.log('🗑️ [DELETE MUTATION] onMutate - No old data or notes array');
+            return oldData;
+          }
+          
+          const updatedData = {
             ...oldData,
             notes: oldData.notes.filter((note: Note) => note.id !== noteId),
             totalCount: Math.max(0, oldData.totalCount - 1)
           };
+          
+          console.log('🗑️ [DELETE MUTATION] onMutate - Updated data structure:', {
+            newNotesCount: updatedData.notes.length,
+            newTotalCount: updatedData.totalCount,
+            wasNoteRemoved: !updatedData.notes.some((note: Note) => note.id === noteId)
+          });
+          
+          return updatedData;
         }
       );
+      
+      console.log('🗑️ [DELETE MUTATION] onMutate - ✅ Optimistic update completed');
     },
-    onSuccess: () => {
+    onSuccess: (deletedNoteId) => {
+      console.log('🗑️ [DELETE MUTATION] ✅ Delete operation successful:', deletedNoteId);
+      console.log('🗑️ [DELETE MUTATION] Cache should already be updated via onMutate');
+      
+      // Additional cache invalidation to ensure consistency
+      console.log('🗑️ [DELETE MUTATION] Triggering cache invalidation for safety...');
+      queryClient.invalidateQueries({ queryKey: notesQueryKeys.lists() });
+      
+      console.log('🗑️ [DELETE MUTATION] ✅ All delete operations completed');
       toast.success('Note deleted successfully');
     },
     onError: (error, noteId) => {

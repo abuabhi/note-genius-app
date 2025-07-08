@@ -59,19 +59,48 @@ const NotesDataProviderInner = React.memo(({ children }: { children: ReactNode }
     }
   }, [queryHook.loading, queryHook.error, queryHook.notes, queryHook.totalCount, queryHook.hasMore]);
 
-  // Cache synchronization - watch for React Query cache updates from mutations
+  // Enhanced cache synchronization - watch for ALL React Query cache updates from mutations
   React.useEffect(() => {
+    console.log('🎯 [CACHE SYNC] Setting up enhanced cache subscription listener');
+    
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
-      // Only handle successful updates to notes list queries
-      if (event.type === 'updated' && 
-          event.query.queryKey[0] === 'notes' && 
-          event.query.queryKey[1] === 'list' &&
-          event.query.state.status === 'success' &&
-          event.query.state.data) {
-        
-        console.log('🔄 [CACHE SYNC] React Query cache updated, syncing to state machine');
+      console.log('🔍 [CACHE SYNC] Cache event detected:', {
+        type: event.type,
+        queryKey: event.query.queryKey,
+        status: event.query.state.status,
+        hasData: !!event.query.state.data
+      });
+
+      // Enhanced pattern matching for notes queries - catch ALL notes list queries
+      const isNotesQuery = event.query.queryKey[0] === 'notes';
+      const isListQuery = event.query.queryKey.includes('list') || 
+                         event.query.queryKey.includes('infinite') ||
+                         event.query.queryKey.length >= 2; // Catch any notes query with filters
+      
+      const isSuccessfulUpdate = event.type === 'updated' && 
+                                event.query.state.status === 'success' &&
+                                event.query.state.data;
+
+      console.log('🔍 [CACHE SYNC] Query analysis:', {
+        isNotesQuery,
+        isListQuery,
+        isSuccessfulUpdate,
+        fullQueryKey: event.query.queryKey
+      });
+
+      if (isNotesQuery && isListQuery && isSuccessfulUpdate) {
+        console.log('🔄 [CACHE SYNC] ✅ MATCHING QUERY FOUND - Syncing to state machine');
         console.log('🔄 [CACHE SYNC] Query key:', event.query.queryKey);
+        console.log('🔄 [CACHE SYNC] Event type:', event.type);
+        
         const data = event.query.state.data as any;
+        console.log('🔄 [CACHE SYNC] Cache data structure:', {
+          hasNotes: !!data.notes,
+          notesCount: data.notes?.length || 0,
+          hasTotalCount: !!data.totalCount,
+          totalCount: data.totalCount,
+          hasMore: data.hasMore
+        });
         
         // Immediately sync cache data to state machine for instant UI updates
         dataStateMachine.actions.fetchSuccess(
@@ -79,10 +108,17 @@ const NotesDataProviderInner = React.memo(({ children }: { children: ReactNode }
           data.totalCount || 0,
           data.hasMore || false
         );
+        
+        console.log('🔄 [CACHE SYNC] ✅ State machine updated with fresh cache data');
+      } else {
+        console.log('🔄 [CACHE SYNC] ❌ Query ignored - no match');
       }
     });
 
-    return unsubscribe;
+    return () => {
+      console.log('🎯 [CACHE SYNC] Cleaning up cache subscription listener');
+      unsubscribe();
+    };
   }, [queryClient, dataStateMachine.actions]);
 
   // Simplified load more function

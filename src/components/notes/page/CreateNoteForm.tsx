@@ -33,19 +33,50 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !selectedSubject || !content.trim()) return;
+    
+    console.log('📝 [CREATE FORM] Form submission attempt:', {
+      title: title.trim(),
+      selectedSubject,
+      content: content.trim(),
+      hasTitle: !!title.trim(),
+      hasSubject: !!selectedSubject,
+      hasContent: !!content.trim()
+    });
+
+    // Enhanced validation - prevent empty subject default behavior
+    if (!title.trim()) {
+      console.log('❌ [CREATE FORM] Validation failed: Empty title');
+      return;
+    }
+    
+    if (!selectedSubject || selectedSubject.trim() === '') {
+      console.log('❌ [CREATE FORM] Validation failed: No subject selected');
+      return;
+    }
+    
+    if (!content.trim()) {
+      console.log('❌ [CREATE FORM] Validation failed: Empty content');
+      return;
+    }
 
     setIsSubmitting(true);
+    console.log('📝 [CREATE FORM] ✅ Validation passed - proceeding with save');
+    
     try {
       // Find the subject_id for the selected subject name
       const selectedSubjectObj = userSubjects.find(s => s.name === selectedSubject);
+      console.log('📝 [CREATE FORM] Subject lookup:', {
+        selectedSubject,
+        selectedSubjectObj,
+        userSubjectsCount: userSubjects.length
+      });
       
       const noteData: Omit<Note, 'id'> = {
         title: title.trim(),
         description: description.trim(),
         content: content.trim(),
         date: initialData?.date || new Date().toISOString().split('T')[0],
-        subject: selectedSubject || '',
+        subject: selectedSubject,
         subject_id: selectedSubjectObj?.id || null,
         sourceType: initialData?.sourceType || 'manual',
         archived: initialData?.archived || false,
@@ -53,18 +84,24 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
         tags: initialData?.tags || []
       };
 
+      console.log('📝 [CREATE FORM] Calling onSave with note data:', noteData);
       const result = await onSave(noteData);
+      
       if (result && !initialData) {
+        console.log('📝 [CREATE FORM] ✅ Note saved successfully - resetting form');
         // Reset form only for new notes (not when editing)
         setTitle('');
         setDescription('');
         setContent('');
         setSelectedSubject('');
+      } else if (!result) {
+        console.log('❌ [CREATE FORM] Save operation returned null/undefined');
       }
     } catch (error) {
-      console.error('Error saving note:', error);
+      console.error('❌ [CREATE FORM] Error saving note:', error);
     } finally {
       setIsSubmitting(false);
+      console.log('📝 [CREATE FORM] Form submission completed');
     }
   };
 
@@ -83,9 +120,16 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
       
       <div>
         <Label htmlFor="subject">Subject <span className="text-red-500">*</span></Label>
-        <Select value={selectedSubject} onValueChange={setSelectedSubject} required>
-          <SelectTrigger>
-            <SelectValue placeholder="Select a subject" />
+        <Select 
+          value={selectedSubject} 
+          onValueChange={(value) => {
+            console.log('📝 [CREATE FORM] Subject changed to:', value);
+            setSelectedSubject(value);
+          }}
+          required
+        >
+          <SelectTrigger className={!selectedSubject ? 'border-red-200' : ''}>
+            <SelectValue placeholder="Select a subject (required)" />
           </SelectTrigger>
           <SelectContent>
             {subjectsLoading ? (
@@ -101,6 +145,9 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
             )}
           </SelectContent>
         </Select>
+        {!selectedSubject && (
+          <p className="text-sm text-red-500 mt-1">Please select a subject</p>
+        )}
       </div>
 
       <div>
