@@ -92,30 +92,22 @@ export const deleteNoteFromDatabase = async (id: string): Promise<void> => {
   try {
     console.log("Starting delete note operation for ID:", id);
     
-    // First, verify if the note exists and log its details
-    const { data: noteData, error: checkError } = await supabase
-      .from('notes')
-      .select('*')  // Select all columns for better debugging
-      .eq('id', id)
-      .single();
-
-    if (checkError) {
-      console.log(`Note check error: ${checkError.message}`);
-    } else {
-      console.log(`Note to be deleted:`, noteData);
-    }
-    
-    // Always use the edge function which handles related records properly
-    const { data, error: edgeFunctionError } = await supabase.functions.invoke('delete-note', {
-      body: { noteId: id }
+    // Use the optimized database function that handles all foreign key constraints
+    const { data, error } = await supabase.rpc('force_delete_note_optimized', {
+      note_id: id
     });
 
-    if (edgeFunctionError) {
-      console.error('Edge function delete error:', edgeFunctionError);
-      throw edgeFunctionError;
-    } else {
-      console.log("Note deleted successfully via edge function", data);
+    if (error) {
+      console.error('Database function delete error:', error);
+      throw error;
     }
+
+    if (!data) {
+      console.error('Delete operation failed - note may not exist:', id);
+      throw new Error('Failed to delete note - note may not exist');
+    }
+
+    console.log("Note deleted successfully via database function:", id);
   } catch (error) {
     console.error('Error deleting note:', error);
     throw error;
