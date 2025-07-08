@@ -61,7 +61,22 @@ const callEnrichmentAPIWithRetry = async (
     if (error) {
       console.error('❌ Error calling enrich-note function:', error);
       console.error('📄 Full error details:', JSON.stringify(error, null, 2));
-      throw error;
+      
+      // Extract detailed error information from Supabase response
+      let errorMessage = 'API call failed';
+      
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error.error_description) {
+        errorMessage = error.error_description;
+      } else if (error.details) {
+        errorMessage = error.details;
+      }
+      
+      console.error('🔍 Extracted error message:', errorMessage);
+      throw new Error(errorMessage);
     }
     
     if (!data?.enhancedContent) {
@@ -118,7 +133,32 @@ const callEnrichmentAPIWithRetry = async (
       }
     }
     
-    throw new Error(`Enhancement failed: ${error instanceof Error ? error.message : 'Unknown error occurred'}`);
+    // Preserve the original error details instead of generic message
+    const originalError = error instanceof Error ? error.message : String(error);
+    console.error('🔍 Final error being thrown:', originalError);
+    throw new Error(originalError);
+  }
+};
+
+/**
+ * Test the health of the enrich-note edge function
+ */
+export const testEnrichmentHealth = async (): Promise<{ status: string; details: any }> => {
+  try {
+    console.log('🏥 Testing enrich-note function health...');
+    
+    const { data, error } = await supabase.functions.invoke('enrich-note/health');
+    
+    if (error) {
+      console.error('❌ Health check failed:', error);
+      return { status: 'unhealthy', details: error };
+    }
+    
+    console.log('✅ Health check passed:', data);
+    return { status: 'healthy', details: data };
+  } catch (error) {
+    console.error('❌ Health check exception:', error);
+    return { status: 'error', details: error };
   }
 };
 
@@ -135,6 +175,11 @@ export const callEnrichmentAPI = async (
   if (!note.content) {
     throw new Error('No content to enhance');
   }
+  
+  // Add pre-flight health check for debugging
+  console.log('🏥 Running pre-flight health check...');
+  const healthCheck = await testEnrichmentHealth();
+  console.log('🏥 Health check result:', healthCheck);
   
   return callEnrichmentAPIWithRetry(note, enhancementType, 1);
 };

@@ -95,14 +95,29 @@ export const useEnrichmentProcessor = () => {
       return { success: true, content: result };
     } catch (error) {
       console.error("❌ Enhancement failed:", error);
+      console.error("❌ Error type:", typeof error);
+      console.error("❌ Error constructor:", error?.constructor?.name);
       
       // Update status to failed
       await updateNoteStatus(noteId, enhancementType, 'failed');
       
+      // Enhanced error message extraction
+      let errorMessage = 'Unknown error';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error && typeof error === 'object') {
+        errorMessage = JSON.stringify(error);
+      }
+      
+      console.error("🔍 Final error message being returned:", errorMessage);
+      
       return { 
         success: false, 
         content: '', 
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: errorMessage
       };
     } finally {
       setIsLoading(false);

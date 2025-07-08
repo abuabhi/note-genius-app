@@ -13,19 +13,40 @@ const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
 const openaiApiKey = Deno.env.get('OPENAI_API_KEY') || '';
 
 serve(async (req) => {
-  console.log("Received request to enrich-note function");
+  const startTime = Date.now();
+  console.log("🚀 Received request to enrich-note function");
+  console.log("📋 Request details:", {
+    method: req.method,
+    url: req.url,
+    timestamp: new Date().toISOString()
+  });
   
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
   
+  // Health check endpoint
+  if (req.url.includes('/health')) {
+    return createCorsResponse({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      openaiConfigured: !!openaiApiKey,
+      supabaseConfigured: !!(supabaseUrl && supabaseAnonKey)
+    });
+  }
+  
   try {
     // Check if OpenAI API key is available
     if (!openaiApiKey) {
-      console.error('OpenAI API key is not set');
+      console.error('❌ OpenAI API key is not set');
+      console.error('🔍 Environment check:', {
+        hasOpenAIKey: !!openaiApiKey,
+        hasSupabaseUrl: !!supabaseUrl,
+        hasSupabaseKey: !!supabaseAnonKey
+      });
       return createCorsResponse(
-        { error: 'OpenAI API key is not configured' } as ErrorResponse,
+        { error: 'OpenAI API key is not configured. Please check your environment variables.' } as ErrorResponse,
         500
       );
     }
@@ -40,9 +61,17 @@ serve(async (req) => {
       );
       console.log("User authenticated:", userId);
     } catch (authError) {
-      console.error('Authentication error:', authError);
+      console.error('❌ Authentication error:', authError);
+      console.error('🔍 Auth details:', {
+        hasAuthHeader: !!req.headers.get('Authorization'),
+        authHeaderLength: req.headers.get('Authorization')?.length || 0,
+        errorMessage: authError.message
+      });
       return createCorsResponse(
-        { error: authError.message } as ErrorResponse,
+        { 
+          error: `Authentication failed: ${authError.message}`,
+          details: 'Please check your authentication token'
+        } as ErrorResponse,
         401
       );
     }
@@ -88,27 +117,46 @@ serve(async (req) => {
       tokenUsage = openAIResult.tokenUsage;
       console.log("Enhancement successful. Content length:", enhancedContent.length);
     } catch (openAIError) {
-      console.error('OpenAI API error:', openAIError);
+      console.error('❌ OpenAI API error:', openAIError);
+      console.error('🔍 OpenAI error details:', {
+        errorType: typeof openAIError,
+        errorMessage: openAIError.message,
+        errorStack: openAIError.stack
+      });
       return createCorsResponse(
         { 
-          error: 'OpenAI API error', 
-          details: openAIError.message 
+          error: `OpenAI API error: ${openAIError.message}`, 
+          details: 'The AI service is experiencing issues. Please try again.'
         } as ErrorResponse,
         502
       );
     }
     
     // Return the enhanced content
+    const duration = Date.now() - startTime;
+    console.log(`✅ Enhancement completed successfully in ${duration}ms`);
     return createCorsResponse({ 
       enhancedContent,
       enhancementType,
-      tokenUsage 
+      tokenUsage,
+      processingTime: duration
     });
     
   } catch (error) {
-    console.error('Error in enrich-note function:', error);
+    const duration = Date.now() - startTime;
+    console.error('❌ Critical error in enrich-note function:', error);
+    console.error('🔍 Critical error details:', {
+      errorType: typeof error,
+      errorMessage: error.message,
+      errorStack: error.stack,
+      duration
+    });
     return createCorsResponse(
-      { error: 'Internal server error', details: error.message } as ErrorResponse,
+      { 
+        error: `Internal server error: ${error.message}`, 
+        details: 'An unexpected error occurred in the enhancement service',
+        timestamp: new Date().toISOString()
+      } as ErrorResponse,
       500
     );
   }
