@@ -141,12 +141,12 @@ export const useDeleteNoteMutation = () => {
 
   return useMutation({
     mutationFn: async (noteId: string) => {
-      const { error } = await supabase
-        .from('notes')
-        .delete()
-        .eq('id', noteId);
+      const { data, error } = await supabase
+        .rpc('force_delete_note_optimized', { note_id: noteId });
 
       if (error) throw error;
+      if (!data) throw new Error('Failed to delete note');
+      
       return noteId;
     },
     onMutate: async (noteId) => {
