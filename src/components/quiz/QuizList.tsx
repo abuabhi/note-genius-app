@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { EmptyState } from '@/components/ui/empty-state';
-import { QuizFilters } from './QuizFilters';
+import { EnhancedQuizFilters } from './EnhancedQuizFilters';
 import { QuizGrid } from './components/QuizGrid';
 import { QuizListView } from './components/QuizListView';
 import { Badge } from '@/components/ui/badge';
@@ -64,11 +64,10 @@ const QuizList = ({ viewMode }: QuizListProps) => {
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <QuizFilters
+      <EnhancedQuizFilters
         onFiltersChange={handleFiltersChange}
-        subjects={filterOptions?.subjects || []}
-        isLoading={isLoading}
         totalQuizzes={totalQuizzes}
+        isLoading={isLoading}
       />
 
       {/* Stats */}

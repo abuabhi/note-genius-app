@@ -47,7 +47,7 @@ const fetchNotes = async (options: {
   }
 
   if (selectedSubject && selectedSubject !== 'all') {
-    // Filter by both subject field and subject_id relationship
+    // Filter by subject field or by the joined user_subjects.name
     query = query.or(`subject.eq.${selectedSubject},user_subjects.name.eq.${selectedSubject}`);
   }
 
