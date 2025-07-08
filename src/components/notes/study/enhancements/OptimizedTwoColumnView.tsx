@@ -59,7 +59,14 @@ export const OptimizedTwoColumnView = ({
         console.log("🔄 Refreshing note from database after enhancement");
         await refreshNotes();
         
-        console.log("✅ Enhancement completed, saved to database, and UI refreshed");
+        // Force switch to the newly generated content tab for immediate feedback
+        if (enhancementType === 'summarize') setActiveContentType('summary');
+        else if (enhancementType === 'extract-key-points') setActiveContentType('keyPoints');
+        else if (enhancementType === 'improve-clarity') setActiveContentType('improved');
+        else if (enhancementType === 'convert-to-markdown') setActiveContentType('markdown');
+        else if (enhancementType === 'enrich-note') setActiveContentType('enriched');
+        
+        console.log("✅ Enhancement completed, saved to database, UI refreshed, and tab switched");
       } else {
         console.error("❌ Enhancement failed:", result.error);
         // Keep error in state for user feedback

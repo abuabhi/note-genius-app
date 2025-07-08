@@ -102,7 +102,7 @@ ${expansion.expandedContent.split('\n').map(line => line.trim()).filter(line => 
     const text = selection.toString().trim();
     console.log("📝 SELECTION: Selected text:", text, "Length:", text.length);
     
-    if (text.length < 10) { // Minimum selection length
+    if (text.length < 5) { // Reduced minimum selection length
       console.log("⚠️ SELECTION: Text too short, hiding menu");
       setIsMenuVisible(false);
       return;

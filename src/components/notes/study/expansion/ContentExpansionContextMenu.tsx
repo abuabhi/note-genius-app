@@ -56,18 +56,19 @@ export const ContentExpansionContextMenu = ({
     }
   };
 
-  if (!isVisible || !selectedText.trim() || selectedText.length < 10) {
+  if (!isVisible || !selectedText.trim() || selectedText.length < 5) {
     return null;
   }
 
   return (
     <div
       ref={menuRef}
-      className="fixed z-[9999] bg-white rounded-xl shadow-2xl border-2 border-primary/20 p-4 min-w-64 max-w-80 animate-in fade-in-0 zoom-in-95 duration-200"
+      className="fixed z-[9999] bg-white rounded-xl shadow-2xl border-2 border-green-200 p-4 min-w-64 max-w-80"
       style={{
         left: Math.max(16, Math.min(position.x - 160, window.innerWidth - 320)),
-        top: Math.max(16, position.y - 20),
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(34, 197, 94, 0.1)'
+        top: Math.max(16, Math.min(position.y - 80, window.innerHeight - 120)),
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(34, 197, 94, 0.3)',
+        backgroundColor: 'white'
       }}
     >
       <div className="text-sm text-muted-foreground mb-3 px-1 font-medium">
